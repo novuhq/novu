@@ -5,37 +5,6 @@ import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
 import { StepExecutionDetailDto } from '../dtos/workflow-run-response.dto';
 
-export function mapRequestLogToResponseDto({
-  id,
-  createdAt,
-  method,
-  path,
-  statusCode,
-  transactionId,
-  requestBody,
-  responseBody,
-}: {
-  id: string;
-  createdAt: Date;
-  method: string;
-  path: string;
-  statusCode: number;
-  transactionId: string;
-  requestBody: string;
-  responseBody: string;
-}): RequestLogResponseDto {
-  return {
-    id,
-    createdAt: new Date(`${createdAt} UTC`).toISOString(),
-    method,
-    path,
-    statusCode,
-    transactionId,
-    requestBody,
-    responseBody,
-  };
-}
-
 export function mapWorkflowRunStatusToDto(workflowRunStatus: WorkflowRunStatusEnum): WorkflowRunStatusDtoEnum {
   switch (workflowRunStatus) {
     case WorkflowRunStatusEnum.COMPLETED:

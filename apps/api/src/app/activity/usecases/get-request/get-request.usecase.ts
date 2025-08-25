@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { QueryBuilder, RequestLog, RequestLogRepository, Trace, TraceLogRepository } from '@novu/application-generic';
 import { GetRequestResponseDto, TraceResponseDto } from '../../dtos/get-request.response.dto';
-import { mapRequestLogToResponseDto, mapTraceToResponseDto } from '../../shared/mappers';
+import { mapTraceToResponseDto } from '../../shared/mappers';
 import { requestLogSelectColumns, traceSelectColumns } from '../../shared/select.const';
 import { GetRequestCommand } from './get-request.command';
 
@@ -42,16 +42,6 @@ export class GetRequest {
       select: traceSelectColumns,
     });
 
-    const mappedRequest = mapRequestLogToResponseDto({
-      id: request.data.id,
-      createdAt: request.data.created_at,
-      method: request.data.method,
-      path: request.data.path,
-      statusCode: request.data.status_code,
-      transactionId: request.data.transaction_id,
-      requestBody: request.data.request_body,
-      responseBody: request.data.response_body,
-    });
     const mappedTraces: TraceResponseDto[] = traceResult.data.map((trace) =>
       mapTraceToResponseDto({
         id: trace.id,
@@ -72,7 +62,26 @@ export class GetRequest {
     );
 
     return {
-      request: mappedRequest,
+      request: {
+        id: request.data.id,
+        createdAt: new Date(`${request.data.created_at} UTC`).toISOString(),
+        url: request.data.url,
+        urlPattern: request.data.url_pattern,
+        method: request.data.method,
+        statusCode: request.data.status_code,
+        path: request.data.path,
+        hostname: request.data.hostname,
+        ip: request.data.ip,
+        userAgent: request.data.user_agent,
+        requestBody: request.data.request_body,
+        responseBody: request.data.response_body,
+        userId: request.data.user_id,
+        organizationId: request.data.organization_id,
+        environmentId: request.data.environment_id,
+        authType: request.data.auth_type,
+        durationMs: request.data.duration_ms,
+        transactionId: request.data.transaction_id,
+      },
       traces: mappedTraces,
     };
   }

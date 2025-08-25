@@ -45,7 +45,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     limit: limit,
     status: filters.status,
     transactionId: filters.transactionId || undefined,
-    url_pattern: filters.url_pattern || undefined,
+    urlPattern: filters.urlPattern || undefined,
     createdGte: filters.createdGte ? Number(filters.createdGte) : undefined,
   });
 

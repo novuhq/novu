@@ -69,18 +69,6 @@ export class GetRequestsDto {
   statusCodes?: number[];
 
   @ApiPropertyOptional({
-    description: 'Filter by request URL',
-    maxLength: 500,
-  })
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&"()*+,;=%]*$/, {
-    message: 'URL contains invalid characters',
-  })
-  url?: string;
-
-  @ApiPropertyOptional({
     description: 'Filter by URL pattern',
     maxLength: 500,
   })
@@ -90,7 +78,7 @@ export class GetRequestsDto {
   @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&"()*+,;=%]*$/, {
     message: 'URL pattern contains invalid characters',
   })
-  url_pattern?: string;
+  urlPattern?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by transaction identifier',

@@ -6,9 +6,8 @@ import { format, isAfter, subHours } from 'date-fns';
 import { generateTransactionId } from '../../shared/helpers';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
-import { mapRequestLogToResponseDto } from '../shared/mappers';
 
-describe('Activity - /activity/requests (GET) #novu-v2', () => {
+describe.only('Activity - /activity/requests (GET) #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
   let requestLogRepository: RequestLogRepository;
@@ -30,7 +29,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       created_at: format(new Date(), 'yyyy-MM-dd HH:mm:ss') as any,
       path: '/test-path',
       url: '/test-url',
-      url_pattern: '/test-url-pattern',
+      url_pattern: '/test-url-pattern/:id',
       hostname: 'localhost',
       method: 'GET',
       ip: '127.0.0.1',
@@ -53,18 +52,26 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
     expect(body.total).to.be.equal(2);
     expect(body.pageSize).to.be.equal(10);
 
-    const expectedLog = normalizeRequestLogForTesting(
-      mapRequestLogToResponseDto({
-        id: 'req_123',
-        createdAt: requestLog.created_at,
-        method: requestLog.method,
-        path: requestLog.path,
-        statusCode: requestLog.status_code,
-        transactionId: requestLog.transaction_id,
-        requestBody: requestLog.request_body,
-        responseBody: requestLog.response_body,
-      })
-    );
+    const expectedLog = normalizeRequestLogForTesting({
+      id: 'req_123',
+      createdAt: new Date(`${requestLog.created_at} UTC`).toISOString(),
+      method: requestLog.method,
+      path: requestLog.path,
+      transactionId: requestLog.transaction_id,
+      requestBody: requestLog.request_body,
+      responseBody: requestLog.response_body,
+      url: requestLog.url,
+      urlPattern: requestLog.url_pattern,
+      hostname: requestLog.hostname,
+      ip: requestLog.ip,
+      userAgent: requestLog.user_agent,
+      authType: requestLog.auth_type,
+      durationMs: requestLog.duration_ms,
+      userId: requestLog.user_id,
+      organizationId: requestLog.organization_id,
+      environmentId: requestLog.environment_id,
+      statusCode: requestLog.status_code,
+    });
     const responseLog = normalizeRequestLogForTesting(body.data[0]);
     expect(responseLog).to.deep.equal(expectedLog);
   });
@@ -77,7 +84,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       transaction_id: generateTransactionId(),
       created_at: format(new Date(), 'yyyy-MM-dd HH:mm:ss') as any,
       path: '/test-path',
-      url_pattern: '/test-url-pattern',
+      url_pattern: '/test-url-pattern/:id',
       hostname: 'localhost',
       method: 'GET',
       ip: '127.0.0.1',
@@ -148,7 +155,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
     expect(urlFilterResponse.body.data.length, 'urlFilterResponse.body.data.length').to.be.equal(3);
     expect(urlFilterResponse.body.total, 'urlFilterResponse.body.total').to.be.equal(3);
 
-    const urls = urlFilterResponse.body.data.map((log: RequestLogResponseDto) => log.path);
+    const urls = urlFilterResponse.body.data.map((log: RequestLogResponseDto) => log.url);
     urls.forEach((url: string) => {
       expect(url).to.include('api');
     });
@@ -164,7 +171,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
 
     const combinedResult = combinedFilterResponse.body.data[0];
     expect(combinedResult.statusCode).to.be.equal(200);
-    expect(combinedResult.path).to.include('workflows');
+    expect(combinedResult.url).to.include('workflows');
 
     // Test 4: Filter by transaction ID
     const transactionFilterResponse = await session.testAgent

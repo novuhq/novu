@@ -1,3 +1,5 @@
+import { RequestLog, Trace } from '@novu/application-generic';
+
 export const traceSelectColumns = [
   'id',
   'created_at',
@@ -14,6 +16,7 @@ export const traceSelectColumns = [
   'external_subscriber_id',
   'subscriber_id',
 ] as const;
+type GetTraceFetchResult = Pick<Trace, (typeof traceSelectColumns)[number]>;
 
 export const requestLogSelectColumns = [
   'id',
@@ -24,4 +27,16 @@ export const requestLogSelectColumns = [
   'transaction_id',
   'request_body',
   'response_body',
+  'url',
+  'url_pattern',
+  'hostname',
+  'ip',
+  'user_agent',
+  'auth_type',
+  'duration_ms',
+  'user_id',
+  'organization_id',
+  'environment_id',
+  'transaction_id',
 ] as const;
+type GetRequestLogFetchResult = Pick<RequestLog, (typeof requestLogSelectColumns)[number]>;

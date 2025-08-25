@@ -27,6 +27,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { RequestAnalytics } from '../events/events.controller';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
@@ -142,6 +143,7 @@ export class WorkflowController {
     );
   }
 
+  @RequestAnalytics()
   @Put(':workflowId')
   @ExternalApiAccessible()
   @ApiOperation({
@@ -173,6 +175,7 @@ export class WorkflowController {
     );
   }
 
+  @RequestAnalytics()
   @Get(':workflowId')
   @ExternalApiAccessible()
   @ApiOperation({
@@ -203,6 +206,7 @@ export class WorkflowController {
     );
   }
 
+  @RequestAnalytics()
   @Delete(':workflowId')
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -226,6 +230,7 @@ export class WorkflowController {
     );
   }
 
+  @RequestAnalytics()
   @Get('')
   @ExternalApiAccessible()
   @ApiOperation({
@@ -253,6 +258,7 @@ export class WorkflowController {
     );
   }
 
+  @RequestAnalytics()
   @Post(':workflowId/duplicate')
   @ApiOperation({
     summary: 'Duplicate a workflow',
@@ -277,6 +283,7 @@ export class WorkflowController {
     );
   }
 
+  @RequestAnalytics()
   @Post('/:workflowId/step/:stepId/preview')
   @ApiOperation({
     summary: 'Generate step preview',
@@ -303,6 +310,7 @@ export class WorkflowController {
     );
   }
 
+  @RequestAnalytics()
   @Get('/:workflowId/steps/:stepId')
   @ApiOperation({
     summary: 'Retrieve workflow step',
@@ -323,6 +331,7 @@ export class WorkflowController {
     );
   }
 
+  @RequestAnalytics()
   @Patch('/:workflowId')
   @ExternalApiAccessible()
   @ApiOperation({
@@ -343,6 +352,7 @@ export class WorkflowController {
     );
   }
 
+  @RequestAnalytics()
   @Get('/:workflowId/test-data')
   @ApiOperation({
     summary: 'Retrieve workflow test data',

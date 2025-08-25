@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LogRepository, QueryBuilder, RequestLog, RequestLogRepository } from '@novu/application-generic';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
-import { mapRequestLogToResponseDto } from '../../shared/mappers';
 import { requestLogSelectColumns } from '../../shared/select.const';
 import { GetRequestsCommand } from './get-requests.command';
 
@@ -26,8 +25,8 @@ export class GetRequests {
       queryBuilder.whereLike('url', `%${command.url}%`);
     }
 
-    if (command.url_pattern) {
-      queryBuilder.whereEquals('url', command.url_pattern);
+    if (command.urlPattern) {
+      queryBuilder.whereEquals('url_pattern', command.urlPattern);
     }
 
     if (command.transactionId) {
@@ -40,7 +39,6 @@ export class GetRequests {
 
     const safeWhere = queryBuilder.build();
 
-    // Execute both queries in parallel (all queries are secure by default)
     const [findResult, total] = await Promise.all([
       this.requestLogRepository.find({
         where: safeWhere,
@@ -53,18 +51,28 @@ export class GetRequests {
       this.requestLogRepository.count({ where: safeWhere }),
     ]);
 
-    const mappedData: RequestLogResponseDto[] = findResult.data.map((request) =>
-      mapRequestLogToResponseDto({
+    const mappedData: RequestLogResponseDto[] = findResult.data.map((request) => {
+      return {
         id: request.id,
-        createdAt: request.created_at,
+        createdAt: new Date(`${request.created_at} UTC`).toISOString(),
         method: request.method,
         path: request.path,
         statusCode: request.status_code,
         transactionId: request.transaction_id,
         requestBody: request.request_body,
         responseBody: request.response_body,
-      })
-    );
+        url: request.url,
+        urlPattern: request.url_pattern,
+        hostname: request.hostname,
+        ip: request.ip,
+        userAgent: request.user_agent,
+        authType: request.auth_type,
+        durationMs: request.duration_ms,
+        userId: request.user_id,
+        organizationId: request.organization_id,
+        environmentId: request.environment_id,
+      };
+    });
 
     return {
       data: mappedData,

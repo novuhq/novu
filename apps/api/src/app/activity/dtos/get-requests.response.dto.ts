@@ -11,6 +11,14 @@ export class RequestLogResponseDto {
   @IsString()
   createdAt: string;
 
+  @ApiProperty({ description: 'Request URL' })
+  @IsString()
+  url: string;
+
+  @ApiProperty({ description: 'URL pattern' })
+  @IsString()
+  urlPattern: string;
+
   @ApiProperty({ description: 'HTTP method' })
   @IsString()
   method: string;
@@ -23,10 +31,22 @@ export class RequestLogResponseDto {
   @IsString()
   path: string;
 
+  @ApiProperty({ description: 'Request hostname' })
+  @IsString()
+  hostname: string;
+
   @ApiPropertyOptional({ description: 'Transaction identifier', nullable: true })
   @IsOptional()
   @IsString()
   transactionId: string | null;
+
+  @ApiProperty({ description: 'Client IP address' })
+  @IsString()
+  ip: string;
+
+  @ApiProperty({ description: 'User agent string' })
+  @IsString()
+  userAgent: string;
 
   @ApiProperty({ description: 'Request body' })
   @IsString()
@@ -35,6 +55,26 @@ export class RequestLogResponseDto {
   @ApiProperty({ description: 'Response body' })
   @IsString()
   responseBody: string;
+
+  @ApiProperty({ description: 'User identifier' })
+  @IsString()
+  userId: string;
+
+  @ApiProperty({ description: 'Organization identifier' })
+  @IsString()
+  organizationId: string;
+
+  @ApiProperty({ description: 'Environment identifier' })
+  @IsString()
+  environmentId: string;
+
+  @ApiProperty({ description: 'Authentication type' })
+  @IsString()
+  authType: string;
+
+  @ApiProperty({ description: 'Request duration in milliseconds' })
+  @IsNumber()
+  durationMs: number;
 }
 
 export class GetRequestsResponseDto {
