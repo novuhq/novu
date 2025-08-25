@@ -1,4 +1,4 @@
-import { ChannelEndpointRoutingTypeEnum } from '@novu/shared';
+import { ChatProviderIdEnum, ProvidersIdEnumConst } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { ChannelEndpointDBModel } from './channel-endpoint.entity';
@@ -8,7 +8,13 @@ const routingSchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: Object.values(ChannelEndpointRoutingTypeEnum),
+      enum: [
+        ...Object.values(ProvidersIdEnumConst.EmailProviderIdEnum),
+        ...Object.values(ProvidersIdEnumConst.SmsProviderIdEnum),
+        ...Object.values(ProvidersIdEnumConst.PushProviderIdEnum),
+        ...Object.values(ProvidersIdEnumConst.InAppProviderIdEnum),
+        ...Object.values(ProvidersIdEnumConst.ChatProviderIdEnum),
+      ],
     },
   },
   {
@@ -32,7 +38,7 @@ const slackRoutingSchema = new Schema(
   { _id: false }
 );
 
-routingSchema.discriminator(ChannelEndpointRoutingTypeEnum.SLACK, slackRoutingSchema);
+routingSchema.discriminator(ChatProviderIdEnum.Slack, slackRoutingSchema);
 
 const channelEndpointSchema = new Schema<ChannelEndpointDBModel>(
   {

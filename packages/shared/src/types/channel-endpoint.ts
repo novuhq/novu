@@ -1,9 +1,7 @@
-export enum ChannelEndpointRoutingTypeEnum {
-  SLACK = 'slack',
-}
+import { ChatProviderIdEnum } from './providers';
 
 export type SlackRouting = {
-  type: ChannelEndpointRoutingTypeEnum.SLACK;
+  type: ChatProviderIdEnum.Slack;
   channelId?: string;
   userId?: string;
 };
