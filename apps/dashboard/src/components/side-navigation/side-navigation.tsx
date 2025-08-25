@@ -58,7 +58,6 @@ const BottomSection = ({
   if (IS_SELF_HOSTED) {
     return (
       <div className="relative mt-auto gap-8 pt-4">
-        <ChangelogStack />
         <HomeMenuItem />
       </div>
     );
