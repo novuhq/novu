@@ -21,6 +21,12 @@ import { API_HOSTNAME, IS_SELF_HOSTED, WEBSOCKET_HOSTNAME } from '../config';
 import { useFetchApiKeys, useRegenerateApiKeys } from '../hooks/use-fetch-api-keys';
 import { useHasPermission } from '../hooks/use-has-permission';
 
+// Convert https:// to wss:// for WebSocket URLs
+const getWebSocketUrl = (url: string) => {
+  if (!url) return url;
+  return url.replace(/^https:\/\//, 'wss://');
+};
+
 interface ApiKeysFormData {
   apiKey: string;
   environmentId: string;
@@ -157,7 +163,7 @@ export function ApiKeysPage() {
                     <SettingField
                       label="Novu WebSocket Hostname"
                       tooltip="Your self-hosted Novu WebSocket endpoint"
-                      value={WEBSOCKET_HOSTNAME}
+                      value={getWebSocketUrl(WEBSOCKET_HOSTNAME)}
                     />
                   </div>
                 </CardContent>
