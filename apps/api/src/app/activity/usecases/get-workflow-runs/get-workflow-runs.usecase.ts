@@ -346,7 +346,7 @@ export class GetWorkflowRuns {
 
   private async mapWorkflowRunToDto(
     workflowRun: WorkflowRunFetchResult,
-    stepRuns: StepRun[]
+    stepRuns: StepRunFetchResult[]
   ): Promise<GetWorkflowRunsDto> {
     return {
       id: workflowRun.workflow_run_id,

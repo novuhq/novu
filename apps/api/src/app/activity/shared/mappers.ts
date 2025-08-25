@@ -100,7 +100,7 @@ export function mapTraceToResponseDto({
   };
 }
 
-export function mapExecutionDetailsToDto(
+export function mapTraceToExecutionDetailDto(
   traces: Pick<Trace, 'entity_id' | 'id' | 'status' | 'title' | 'raw_data' | 'created_at'>[]
 ): StepExecutionDetailDto[] {
   return traces.map((trace) => ({

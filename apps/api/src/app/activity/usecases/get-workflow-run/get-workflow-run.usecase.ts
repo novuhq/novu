@@ -10,9 +10,8 @@ import {
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
-import { mapExecutionDetailsToDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
+import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
 const workflowRunSelectColumns = [
@@ -75,44 +74,6 @@ export class GetWorkflowRun {
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
-  }
-
-  private mapTraceStatusToExecutionStatus(traceStatus: string): ExecutionDetailsStatusEnum {
-    switch (traceStatus.toLowerCase()) {
-      case 'success':
-        return ExecutionDetailsStatusEnum.SUCCESS;
-      case 'error':
-      case 'failed':
-        return ExecutionDetailsStatusEnum.FAILED;
-      case 'warning':
-        return ExecutionDetailsStatusEnum.WARNING;
-      case 'pending':
-        return ExecutionDetailsStatusEnum.PENDING;
-      case 'queued':
-        return ExecutionDetailsStatusEnum.QUEUED;
-      default:
-        return ExecutionDetailsStatusEnum.PENDING;
-    }
-  }
-
-  /**
-   * Parses ClickHouse timestamp format as UTC
-   * ClickHouse returns timestamps in format "YYYY-MM-DD HH:mm:ss.SSS" which should be treated as UTC
-   * but JavaScript's Date constructor interprets them as local time by default
-   */
-  private parseClickHouseTimestamp(timestamp: string | Date): Date {
-    // If already a Date object, return as-is
-    if (timestamp instanceof Date) {
-      return timestamp;
-    }
-
-    /*
-     * ClickHouse format: "2025-07-23 13:52:52.860"
-     * Convert to ISO format with explicit UTC: "2025-07-23T13:52:52.860Z"
-     */
-    const isoFormat = `${timestamp.replace(' ', 'T')}Z`;
-
-    return new Date(isoFormat);
   }
 
   private async getJobDigestDataByTransactionId(
@@ -265,13 +226,7 @@ export class GetWorkflowRun {
           existingTraces.push(trace);
         }
         // biome-ignore lint/style/noNonNullAssertion: <explanation> because we otherwise the if statement would set it to the map
-        executionDetailsByEntityId.get(trace.entity_id)!.push({
-          id: trace.id,
-          title: trace.title,
-          status: this.mapTraceStatusToExecutionStatus(trace.status),
-          created_at: this.parseClickHouseTimestamp(trace.created_at),
-          raw_data: trace.raw_data,
-        });
+        executionDetailsByEntityId.get(trace.entity_id)!.push(trace);
       }
 
       return executionDetailsByEntityId;
@@ -294,7 +249,7 @@ export class GetWorkflowRun {
       status: stepRun.status,
       createdAt: new Date(stepRun.created_at),
       updatedAt: new Date(stepRun.updated_at),
-      executionDetails: mapExecutionDetailsToDto(stepRun.executionDetails || []),
+      executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || []),
     };
   }
 
