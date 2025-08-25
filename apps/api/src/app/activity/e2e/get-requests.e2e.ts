@@ -7,7 +7,7 @@ import { generateTransactionId } from '../../shared/helpers';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
 
-describe.only('Activity - /activity/requests (GET) #novu-v2', () => {
+describe('Activity - /activity/requests (GET) #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
   let requestLogRepository: RequestLogRepository;
