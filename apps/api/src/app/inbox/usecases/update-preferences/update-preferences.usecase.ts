@@ -44,19 +44,23 @@ export class UpdatePreferences {
 
   @InstrumentUsecase()
   async execute(command: UpdatePreferencesCommand): Promise<InboxPreference> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    const subscriber =
+      command.subscriber ??
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
     let workflowId: string | undefined;
 
     if (command.level === PreferenceLevelEnum.TEMPLATE && command.workflowIdOrIdentifier) {
-      const workflow = await this.getWorkflowByIdsUsecase.execute(
-        GetWorkflowByIdsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          workflowIdOrInternalId: command.workflowIdOrIdentifier,
-        })
-      );
+      const workflow =
+        command.workflow ??
+        (await this.getWorkflowByIdsUsecase.execute(
+          GetWorkflowByIdsCommand.create({
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            workflowIdOrInternalId: command.workflowIdOrIdentifier,
+          })
+        ));
 
       if (workflow.critical) {
         throw new BadRequestException(
@@ -127,13 +131,15 @@ export class UpdatePreferences {
     subscriber: SubscriberEntity
   ): Promise<InboxPreference> {
     if (command.level === PreferenceLevelEnum.TEMPLATE && command.workflowIdOrIdentifier) {
-      const workflow = await this.getWorkflowByIdsUsecase.execute(
-        GetWorkflowByIdsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          workflowIdOrInternalId: command.workflowIdOrIdentifier,
-        })
-      );
+      const workflow =
+        command.workflow ??
+        (await this.getWorkflowByIdsUsecase.execute(
+          GetWorkflowByIdsCommand.create({
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            workflowIdOrInternalId: command.workflowIdOrIdentifier,
+          })
+        ));
 
       const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
         GetSubscriberTemplatePreferenceCommand.create({
