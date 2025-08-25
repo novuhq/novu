@@ -46,17 +46,20 @@ function generateSharedInboxCode(
 ): string {
   // Use custom URLs if provided, otherwise fall back to region-based URLs
   const finalBackendUrl = backendUrl || (region === 'eu' ? 'https://eu.api.novu.co' : null);
-  const finalSocketUrl = socketUrl || (region === 'eu' ? 'https://eu.ws.novu.co' : null);
+  const finalSocketUrl = socketUrl || (region === 'eu' ? 'wss://eu.ws.novu.co' : null);
+
+  const escapeString = (str: string) =>
+    str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 
   // Build URL props string
   let urlProps = '';
   if (finalBackendUrl || finalSocketUrl) {
     const props = [];
     if (finalBackendUrl) {
-      props.push(`backendUrl="${finalBackendUrl}"`);
+      props.push(`backendUrl="${escapeString(finalBackendUrl)}"`);
     }
     if (finalSocketUrl) {
-      props.push(`socketUrl="${finalSocketUrl}"`);
+      props.push(`socketUrl="${escapeString(finalSocketUrl)}"`);
     }
     urlProps = `\n    ${props.join(' ')}`;
   }
@@ -67,7 +70,7 @@ function generateSharedInboxCode(
 
 export function NovuInbox() {
  // ${subscriberId ? 'Using provided subscriber ID - replace with your actual subscriber ID from your auth system' : 'TODO: Replace with your actual subscriber ID from your auth system'}
- const temporarySubscriberId = ${subscriberId ? `"${subscriberId.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : '""'};
+ const temporarySubscriberId = ${subscriberId ? `"${escapeString(subscriberId)}"` : '""'};
 
   const tabs = [
     // Basic tab with no filtering (shows all notifications)

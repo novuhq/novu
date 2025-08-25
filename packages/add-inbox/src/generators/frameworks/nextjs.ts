@@ -34,7 +34,7 @@ export function generateNextJsComponent(
   // Define region-specific configuration
   const regionConfig: IRegionConfigs = {
     eu: {
-      socketUrl: 'https://eu.ws.novu.co',
+      socketUrl: 'wss://eu.ws.novu.co',
       backendUrl: 'https://eu.api.novu.co',
     },
   };

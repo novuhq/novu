@@ -375,9 +375,14 @@ function validateBackendUrl(backendUrl: string | undefined): boolean {
     return false;
   }
 
-  // Basic URL validation
+  // URL validation with HTTP/HTTPS protocol enforcement
   try {
-    new URL(backendUrl);
+    const url = new URL(backendUrl);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      logger.error('Invalid backendUrl provided. Backend URL must use HTTP or HTTPS protocol.');
+      
+      return false;
+    }
   } catch {
     logger.error('Invalid backendUrl provided. It must be a valid URL.');
 
@@ -395,9 +400,14 @@ function validateSocketUrl(socketUrl: string | undefined): boolean {
     return false;
   }
 
-  // Basic URL validation
+  // URL validation with WebSocket protocol enforcement
   try {
-    new URL(socketUrl);
+    const url = new URL(socketUrl);
+    if (url.protocol !== 'ws:' && url.protocol !== 'wss:') {
+      logger.error('Invalid socketUrl provided. WebSocket URL must use WS or WSS protocol.');
+      
+      return false;
+    }
   } catch {
     logger.error('Invalid socketUrl provided. It must be a valid URL.');
 
