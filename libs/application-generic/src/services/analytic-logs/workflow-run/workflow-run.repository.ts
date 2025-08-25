@@ -292,7 +292,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     }
   }
 
-  // Overload for when select is provided
+  // Overload for column array selection
   async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
     where: Where<WorkflowRun>;
     cursor?: {
@@ -308,7 +308,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     rows: number;
   }>;
 
-  // Overload for when select is not provided
+  // Overload for "*" all columns selection
   async findWithCursor(options: {
     where: Where<WorkflowRun>;
     cursor?: {
@@ -318,7 +318,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     limit?: number;
     orderDirection?: 'ASC' | 'DESC';
     useFinal?: boolean;
-    select?: undefined;
+    select: '*';
   }): Promise<{
     data: WorkflowRun[];
     rows: number;
@@ -329,7 +329,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
    * Handles timestamp collisions by using both created_at and workflow_run_id.
    * All queries are secure by default with mandatory tenant isolation.
    */
-  async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
+  async findWithCursor<T extends readonly WorkflowRunColumns[] | '*'>(options: {
     where: Where<WorkflowRun>;
     cursor?: {
       created_at: string;
@@ -338,9 +338,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     limit?: number;
     orderDirection?: 'ASC' | 'DESC';
     useFinal?: boolean;
-    select?: T;
+    select: T;
   }): Promise<{
-    data: WorkflowRun[] | SelectedWorkflowRun<T>[];
+    data: WorkflowRun[] | SelectedWorkflowRun<T extends readonly WorkflowRunColumns[] ? T : never>[];
     rows: number;
   }> {
     const { where, cursor, limit = 100, orderDirection = 'DESC', useFinal = false, select } = options;
@@ -395,7 +395,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
     const finalModifier = useFinal ? ' FINAL' : '';
     const orderByClause = `ORDER BY created_at ${orderDirection}, workflow_run_id ${orderDirection}`;
-    const selectClause = select && select.length > 0 ? select.join(', ') : '*';
+
+    // Build SELECT clause - use provided columns or all columns if "*" is specified
+    const selectClause = select === '*' ? '*' : (select as readonly string[]).join(', ');
 
     const query = `
       SELECT ${selectClause}
@@ -408,7 +410,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     this.logger.debug('Executing compound cursor query with tenant enforcement', {
       query: query.replace(/\s+/g, ' ').trim(),
       cursor: cursor ? 'present' : 'none',
-      selectedColumns: select ? select.length : 'all',
+      selectedColumns: select === '*' ? 'all' : (select as readonly string[]).length,
       tenantEnforcement: '__unsafe' in where ? 'bypassed' : 'enforced',
     });
 
@@ -417,9 +419,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       params,
     });
 
-    return {
-      data: result.data as WorkflowRun[] | SelectedWorkflowRun<T>[],
-      rows: result.rows,
+    return result as {
+      data: WorkflowRun[] | SelectedWorkflowRun<T extends readonly WorkflowRunColumns[] ? T : never>[];
+      rows: number;
     };
   }
 

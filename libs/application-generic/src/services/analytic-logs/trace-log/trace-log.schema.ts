@@ -7,6 +7,7 @@ import {
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
 import { Prettify } from '../../../utils/prettify.type';
+import { StepType } from '..';
 
 export const TABLE_NAME = 'traces';
 
@@ -149,8 +150,6 @@ export type EventType =
 export type EntityType = 'request' | 'step_run';
 
 export type TraceStatus = 'success' | 'error' | 'warning' | 'pending';
-
-export type StepType = 'in_app' | 'email' | 'sms' | 'chat' | 'push' | 'digest' | 'delay';
 
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 

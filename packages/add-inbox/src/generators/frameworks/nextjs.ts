@@ -20,7 +20,12 @@ interface IRegionConfigs {
   eu: IRegionConfig;
 }
 
-export function generateNextJsComponent(subscriberId: string | null = null, region: 'us' | 'eu' = 'us'): string {
+export function generateNextJsComponent(
+  subscriberId: string | null = null, 
+  region: 'us' | 'eu' = 'us',
+  backendUrl: string | null = null,
+  socketUrl: string | null = null
+): string {
   // Define common filter patterns
   const filterByTags = (tags: string[]): IFilterByTags => ({ tags });
   const filterByData = (data: Record<string, unknown>): IFilterByData => ({ data });
@@ -29,13 +34,30 @@ export function generateNextJsComponent(subscriberId: string | null = null, regi
   // Define region-specific configuration
   const regionConfig: IRegionConfigs = {
     eu: {
-      socketUrl: 'https://eu.ws.novu.co',
+      socketUrl: 'wss://eu.ws.novu.co',
       backendUrl: 'https://eu.api.novu.co',
     },
   };
 
+  // Use custom URLs if provided, otherwise fall back to region-based URLs
+  const finalBackendUrl = backendUrl || (region === 'eu' ? regionConfig.eu.backendUrl : null);
+  const finalSocketUrl = socketUrl || (region === 'eu' ? regionConfig.eu.socketUrl : null);
+
   const escapeString = (str: string) =>
     str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+
+  // Build URL props string
+  let urlProps = '';
+  if (finalBackendUrl || finalSocketUrl) {
+    const props = [];
+    if (finalBackendUrl) {
+      props.push(`backendUrl="${escapeString(finalBackendUrl)}"`);
+    }
+    if (finalSocketUrl) {
+      props.push(`socketUrl="${escapeString(finalSocketUrl)}"`);
+    }
+    urlProps = `\n    ${props.join(' ')}`;
+  }
 
   const componentCode = `'use client';
 
@@ -90,13 +112,7 @@ export default function NovuInbox() {
   return <Inbox 
     applicationIdentifier={process.env.NEXT_PUBLIC_NOVU_APP_ID as string}
     subscriberId={temporarySubscriberId} 
-    tabs={tabs} ${
-      region === 'eu'
-        ? `
-    socketUrl="${regionConfig.eu.socketUrl}" 
-    backendUrl="${regionConfig.eu.backendUrl}"`
-        : ''
-    }
+    tabs={tabs}${urlProps}
     appearance={{
       // To enable dark theme support, uncomment the following line:
       // baseTheme: dark,

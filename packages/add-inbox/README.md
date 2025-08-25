@@ -20,11 +20,13 @@ This will guide you through an interactive process to add the Novu Inbox compone
 - ✅ Automatic dependency installation
 - ✅ Component creation in your project's component directory
 - ✅ Environment variable setup for Novu configuration
+- ✅ Custom backend and socket URL configuration
+- ✅ Region-based configuration (US/EU)
 
 ## Example Usage in Your App
 
 ```jsx
-import NovuInbox from '@/components/ui/inbox/novuInbox';
+import NovuInbox from '@/components/ui/inbox/NovuInbox';
 
 // Inside your component
 return (
@@ -50,3 +52,19 @@ For Next.js:
 ```
 NEXT_PUBLIC_NOVU_APP_ID=your_novu_app_id_here
 ```
+
+## Custom Backend Configuration
+
+When using custom backend and socket URLs, the generated component will include the appropriate props:
+
+```jsx
+<Inbox 
+  applicationIdentifier={process.env.NEXT_PUBLIC_NOVU_APP_ID}
+  subscriberId={subscriberId}
+  backendUrl="https://api.my-novu-instance.com"
+  socketUrl="wss://ws.my-novu-instance.com"
+  // ... other props
+/>
+```
+
+If no custom URLs are provided, the component will use Novu's default URLs or region-specific URLs (EU region uses `https://eu.api.novu.co` and `wss://eu.ws.novu.co`).

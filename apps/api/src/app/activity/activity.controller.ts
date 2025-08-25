@@ -6,7 +6,7 @@ import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { GetChartsRequestDto } from './dtos/get-charts.request.dto';
 import { GetChartsResponseDto } from './dtos/get-charts.response.dto';
-import { GetRequestResponseDto } from './dtos/get-request-traces.response.dto';
+import { GetRequestResponseDto } from './dtos/get-request.response.dto';
 import { GetRequestsDto } from './dtos/get-requests.dto';
 import { GetRequestsResponseDto } from './dtos/get-requests.response.dto';
 import { GetWorkflowRunResponseDto } from './dtos/workflow-run-response.dto';
