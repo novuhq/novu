@@ -36,6 +36,23 @@ const workflowRunSelectColumns = [
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
+const stepRunSelectColumns = [
+  'id',
+  'step_run_id',
+  'step_id',
+  'workflow_run_id',
+  'subscriber_id',
+  'external_subscriber_id',
+  'step_type',
+  'step_name',
+  'provider_id',
+  'status',
+  'transaction_id',
+  'created_at',
+  'updated_at',
+] as const;
+type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
+
 @Injectable()
 export class GetWorkflowRuns {
   constructor(
@@ -282,7 +299,7 @@ export class GetWorkflowRuns {
   private async getStepRunsForWorkflowRuns(
     command: GetWorkflowRunsCommand,
     workflowRuns: WorkflowRunFetchResult[]
-  ): Promise<Map<string, StepRun[]>> {
+  ): Promise<Map<string, StepRunFetchResult[]>> {
     if (workflowRuns.length === 0) {
       return new Map();
     }
@@ -300,10 +317,11 @@ export class GetWorkflowRuns {
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
+        select: stepRunSelectColumns,
       });
 
       // Group step runs by composite key: subscriber_id:transaction_id
-      const stepRunsByCompositeKey = new Map<string, StepRun[]>();
+      const stepRunsByCompositeKey = new Map<string, StepRunFetchResult[]>();
 
       for (const stepRun of stepRunsResult.data) {
         const compositeKey = `${stepRun.subscriber_id}:${stepRun.transaction_id}`;
@@ -328,7 +346,7 @@ export class GetWorkflowRuns {
 
   private async mapWorkflowRunToDto(
     workflowRun: WorkflowRunFetchResult,
-    stepRuns: StepRun[]
+    stepRuns: StepRunFetchResult[]
   ): Promise<GetWorkflowRunsDto> {
     return {
       id: workflowRun.workflow_run_id,

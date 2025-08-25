@@ -32,7 +32,7 @@ describe('UnifonicSmsProvider', () => {
 
     expect(mockedAxios.post).toHaveBeenCalledWith(
       'https://el.cloud.unifonic.com/rest/SMS/messages',
-      expect.stringContaining('AppSid=2W950KLy4G0Ljq7S0GKNbRoBtgKr1T'),
+      expect.stringContaining('AppSid=testSender'),
       expect.objectContaining({
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

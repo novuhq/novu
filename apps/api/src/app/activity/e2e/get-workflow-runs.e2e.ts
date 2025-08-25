@@ -191,6 +191,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
         enforced: { environmentId: session.environment._id },
         conditions: [{ field: 'workflow_run_id', operator: '=', value: secondPage.data[0].id }],
       },
+      select: '*',
     });
     expect(secondPageWorkflowRun, 'secondPageWorkflowRun should exist').to.not.be.null;
     expect(secondPageWorkflowRun.data, 'secondPageWorkflowRun.data should exist').to.not.be.undefined;
@@ -260,6 +261,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
             enforced: { environmentId: session.environment._id },
             conditions: [{ field: 'workflow_run_id', operator: '=', value: workflowRun.id }],
           },
+          select: '*',
         });
         expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
         expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
@@ -570,6 +572,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
           enforced: { environmentId: session.environment._id },
           conditions: [{ field: 'workflow_run_id', operator: '=', value: workflowRun.id }],
         },
+        select: '*',
       });
       expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
       expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
