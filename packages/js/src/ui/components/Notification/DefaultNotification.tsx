@@ -55,18 +55,6 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const { navigate, status } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
 
-  const deliveredAtIconClass = style({
-    key: 'notificationDeliveredAt__icon',
-    className: 'nt-size-3',
-    iconKey: 'clock',
-  });
-
-  const snoozedUntilIconClass = style({
-    key: 'notificationSnoozedUntil__icon',
-    className: 'nt-size-3',
-    iconKey: 'clock',
-  });
-
   const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
 
@@ -161,6 +149,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             'nt-bg-severity-low group-hover:nt-bg-severity-low-alpha-500':
               props.notification.severity === SeverityLevelEnum.LOW,
           }),
+          context: { notification: props.notification } satisfies Parameters<AppearanceCallback['notificationBar']>[0],
         })}
       />
 
@@ -174,6 +163,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                 class={style({
                   key: 'notificationImageLoadingFallback',
                   className: 'nt-size-8 nt-rounded-lg nt-shrink-0 nt-aspect-square',
+                  context: { notification: props.notification } satisfies Parameters<
+                    AppearanceCallback['notificationImageLoadingFallback']
+                  >[0],
                 })}
               />
             }
@@ -182,6 +174,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               class={style({
                 key: 'notificationImage',
                 className: 'nt-size-8 nt-rounded-lg nt-object-cover nt-aspect-square',
+                context: { notification: props.notification } satisfies Parameters<
+                  AppearanceCallback['notificationImage']
+                >[0],
               })}
               src={props.notification.avatar}
             />
@@ -195,11 +190,17 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         class={style({
           key: 'notificationContent',
           className: 'nt-flex nt-flex-col nt-gap-2 nt-w-full',
+          context: { notification: props.notification } satisfies Parameters<
+            AppearanceCallback['notificationContent']
+          >[0],
         })}
       >
         <div
           class={style({
             key: 'notificationTextContainer',
+            context: { notification: props.notification } satisfies Parameters<
+              AppearanceCallback['notificationTextContainer']
+            >[0],
           })}
         >
           <Show
@@ -211,6 +212,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                     appearanceKey="notificationSubject"
                     class="nt-text-start nt-font-medium nt-whitespace-pre-wrap [word-break:break-word]"
                     strongAppearanceKey="notificationSubject__strong"
+                    context={{ notification: props.notification }}
                   >
                     {subject()}
                   </Markdown>
@@ -227,6 +229,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                 appearanceKey="notificationBody"
                 strongAppearanceKey="notificationBody__strong"
                 class="nt-text-start nt-whitespace-pre-wrap nt-text-foreground-alpha-600 [word-break:break-word]"
+                context={{ notification: props.notification }}
               >
                 {props.notification.body}
               </Markdown>
@@ -243,6 +246,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               class={style({
                 key: 'notificationDefaultActions',
                 className: `nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5`,
+                context: { notification: props.notification } satisfies Parameters<
+                  AppearanceCallback['notificationDefaultActions']
+                >[0],
               })}
             >
               {renderNotificationActions(props.notification, status)}
@@ -262,6 +268,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                 class={style({
                   key: 'notificationCustomActions',
                   className: 'nt-flex nt-flex-wrap nt-gap-2',
+                  context: { notification: props.notification } satisfies Parameters<
+                    AppearanceCallback['notificationCustomActions']
+                  >[0],
                 })}
               >
                 <Show when={props.notification.primaryAction} keyed>
@@ -270,6 +279,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                       appearanceKey="notificationPrimaryAction__button"
                       variant="default"
                       onClick={(e) => handleActionButtonClick(ActionTypeEnum.PRIMARY, e)}
+                      context={{ notification: props.notification }}
                     >
                       {primaryAction.label}
                     </Button>
@@ -281,6 +291,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                       appearanceKey="notificationSecondaryAction__button"
                       variant="secondary"
                       onClick={(e) => handleActionButtonClick(ActionTypeEnum.SECONDARY, e)}
+                      context={{ notification: props.notification }}
                     >
                       {secondaryAction.label}
                     </Button>
@@ -299,6 +310,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           class={style({
             key: 'notificationDate',
             className: 'nt-text-foreground-alpha-400 nt-flex nt-items-center nt-gap-1',
+            context: { notification: props.notification } satisfies Parameters<
+              AppearanceCallback['notificationDate']
+            >[0],
           })}
         >
           <Show
@@ -313,11 +327,32 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         <>
                           <Show when={index() === 0}>{date} ·</Show>
                           <Show when={index() === 1}>
-                            <Badge appearanceKey="notificationDeliveredAt__badge">
+                            <Badge
+                              appearanceKey="notificationDeliveredAt__badge"
+                              context={{ notification: props.notification }}
+                            >
                               <IconRendererWrapper
                                 iconKey="clock"
-                                class={deliveredAtIconClass}
-                                fallback={<DefaultClock class={deliveredAtIconClass} />}
+                                class={style({
+                                  key: 'notificationDeliveredAt__icon',
+                                  className: 'nt-size-3',
+                                  iconKey: 'clock',
+                                  context: { notification: props.notification } satisfies Parameters<
+                                    AppearanceCallback['notificationDeliveredAt__icon']
+                                  >[0],
+                                })}
+                                fallback={
+                                  <DefaultClock
+                                    class={style({
+                                      key: 'notificationDeliveredAt__icon',
+                                      className: 'nt-size-3',
+                                      iconKey: 'clock',
+                                      context: { notification: props.notification } satisfies Parameters<
+                                        AppearanceCallback['notificationDeliveredAt__icon']
+                                      >[0],
+                                    })}
+                                  />
+                                }
                               />
                               {date}
                             </Badge>
@@ -334,8 +369,26 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <>
                 <IconRendererWrapper
                   iconKey="clock"
-                  class={snoozedUntilIconClass}
-                  fallback={<DefaultClock class={snoozedUntilIconClass} />}
+                  class={style({
+                    key: 'notificationSnoozedUntil__icon',
+                    className: 'nt-size-3',
+                    iconKey: 'clock',
+                    context: { notification: props.notification } satisfies Parameters<
+                      AppearanceCallback['notificationSnoozedUntil__icon']
+                    >[0],
+                  })}
+                  fallback={
+                    <DefaultClock
+                      class={style({
+                        key: 'notificationSnoozedUntil__icon',
+                        className: 'nt-size-3',
+                        iconKey: 'clock',
+                        context: { notification: props.notification } satisfies Parameters<
+                          AppearanceCallback['notificationSnoozedUntil__icon']
+                        >[0],
+                      })}
+                    />
+                  }
                 />
                 {t('notification.snoozedUntil')} · {snoozedUntil()}
               </>
@@ -350,6 +403,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             class={style({
               key: 'notificationDot',
               className: 'nt-size-1.5 nt-bg-primary nt-rounded-full',
+              context: { notification: props.notification } satisfies Parameters<
+                AppearanceCallback['notificationDot']
+              >[0],
             })}
           />
         </Show>

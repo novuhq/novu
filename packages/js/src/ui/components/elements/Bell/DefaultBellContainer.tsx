@@ -25,10 +25,6 @@ const SEVERITY_TO_CONTAINER_KEYS: Record<SeverityLevelEnum, AppearanceKey> = {
 
 export const BellContainer = (props: DefaultBellContainerProps) => {
   const style = useStyle();
-  const bellIconStyle = style({
-    key: 'bellIcon',
-    className: 'nt-size-4',
-  });
 
   const severity = createMemo(() => {
     if (props.unreadCount.severity[SeverityLevelEnum.HIGH] > 0) {
@@ -75,16 +71,34 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
               'nt-bg-severity-low-alpha-100 before:nt-bg-severity-low-alpha-200': severity() === SeverityLevelEnum.LOW,
             }
           ),
+          context: { unreadCount: unreadCount() } satisfies Parameters<AppearanceCallback['bellContainer']>[0],
         })}
       />
 
-      <IconRendererWrapper iconKey="bell" class={bellIconStyle} fallback={<DefaultBell class={bellIconStyle} />} />
+      <IconRendererWrapper
+        iconKey="bell"
+        class={style({
+          key: 'bellIcon',
+          className: 'nt-size-4',
+          context: { unreadCount: unreadCount() } satisfies Parameters<AppearanceCallback['bellIcon']>[0],
+        })}
+        fallback={
+          <DefaultBell
+            class={style({
+              key: 'bellIcon',
+              className: 'nt-size-4',
+              context: { unreadCount: unreadCount() } satisfies Parameters<AppearanceCallback['bellIcon']>[0],
+            })}
+          />
+        }
+      />
       <Show when={props.unreadCount.total > 0}>
         <span
           class={style({
             key: 'bellDot',
             className:
               'nt-absolute nt-top-0 nt-right-0 nt-block nt-size-2 nt-transform nt-bg-counter nt-rounded-full nt-border nt-border-background',
+            context: { unreadCount: unreadCount() } satisfies Parameters<AppearanceCallback['bellDot']>[0],
           })}
         />
       </Show>

@@ -35,18 +35,6 @@ export const PreferencesRow = (props: {
     }))
   );
 
-  const iconClass = style({
-    key: 'workflowLabelIcon',
-    className: 'nt-text-foreground-alpha-600 nt-size-3.5',
-    iconKey: 'cogs',
-  });
-
-  const arrowDropDownIconClass = style({
-    key: 'workflowArrow__icon',
-    className: 'nt-text-foreground-alpha-600 nt-size-4',
-    iconKey: 'arrowDropDown',
-  });
-
   const DefaultIconComponent = iconKeyToComponentMap[props.iconKey];
 
   return (
@@ -66,6 +54,9 @@ export const PreferencesRow = (props: {
             key: 'workflowLabelContainer',
             className:
               'nt-flex nt-justify-between nt-p-1 nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center nt-overflow-hidden',
+            context: { preference: props.preference } satisfies Parameters<
+              AppearanceCallback['workflowLabelContainer']
+            >[0],
           })}
           onClick={() => {
             setIsOpenChannels((prev) => !prev);
@@ -75,21 +66,41 @@ export const PreferencesRow = (props: {
             class={style({
               key: 'workflowLabelHeader',
               className: 'nt-overflow-hidden',
+              context: { preference: props.preference } satisfies Parameters<
+                AppearanceCallback['workflowLabelHeader']
+              >[0],
             })}
           >
             <div
               class={style({
                 key: 'workflowLabelHeaderContainer',
                 className: 'nt-flex nt-items-center nt-gap-1',
+                context: { preference: props.preference } satisfies Parameters<
+                  AppearanceCallback['workflowLabelHeaderContainer']
+                >[0],
               })}
             >
               <IconRendererWrapper
                 iconKey={props.iconKey}
-                class={iconClass}
+                class={style({
+                  key: 'workflowLabelIcon',
+                  className: 'nt-text-foreground-alpha-600 nt-size-3.5',
+                  iconKey: 'cogs',
+                  context: { preference: props.preference } satisfies Parameters<
+                    AppearanceCallback['workflowLabelIcon']
+                  >[0],
+                })}
                 fallback={
                   DefaultIconComponent &&
                   DefaultIconComponent({
-                    class: iconClass,
+                    class: style({
+                      key: 'workflowLabelIcon',
+                      className: 'nt-text-foreground-alpha-600 nt-size-3.5',
+                      iconKey: 'cogs',
+                      context: { preference: props.preference } satisfies Parameters<
+                        AppearanceCallback['workflowLabelIcon']
+                      >[0],
+                    }),
                   })
                 }
               />
@@ -97,6 +108,9 @@ export const PreferencesRow = (props: {
                 class={style({
                   key: 'workflowLabel',
                   className: 'nt-text-sm nt-font-semibold nt-truncate nt-text-start',
+                  context: { preference: props.preference } satisfies Parameters<
+                    AppearanceCallback['workflowLabel']
+                  >[0],
                 })}
                 data-localization={props.preference?.workflow?.identifier ?? 'preferences.global'}
                 data-open={isOpenChannels()}
@@ -109,6 +123,7 @@ export const PreferencesRow = (props: {
                 channels={props.preference?.channels ?? {}}
                 appearanceKey="workflowDescription"
                 class="nt-overflow-hidden"
+                preference={props.preference}
               />
             </Collapsible>
           </div>
@@ -117,13 +132,34 @@ export const PreferencesRow = (props: {
               key: 'workflowContainerRight__icon',
               className:
                 'nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180',
+              context: { preference: props.preference } satisfies Parameters<
+                AppearanceCallback['workflowContainerRight__icon']
+              >[0],
             })}
             data-open={isOpenChannels()}
           >
             <IconRendererWrapper
               iconKey="arrowDropDown"
-              class={arrowDropDownIconClass}
-              fallback={<DefaultArrowDropDown class={arrowDropDownIconClass} />}
+              class={style({
+                key: 'workflowArrow__icon',
+                className: 'nt-text-foreground-alpha-600 nt-size-4',
+                iconKey: 'arrowDropDown',
+                context: { preference: props.preference } satisfies Parameters<
+                  AppearanceCallback['workflowArrow__icon']
+                >[0],
+              })}
+              fallback={
+                <DefaultArrowDropDown
+                  class={style({
+                    key: 'workflowArrow__icon',
+                    className: 'nt-text-foreground-alpha-600 nt-size-4',
+                    iconKey: 'arrowDropDown',
+                    context: { preference: props.preference } satisfies Parameters<
+                      AppearanceCallback['workflowArrow__icon']
+                    >[0],
+                  })}
+                />
+              }
             />
           </span>
         </div>
@@ -133,6 +169,9 @@ export const PreferencesRow = (props: {
               key: 'channelsContainer',
               className:
                 'nt-flex nt-bg-background nt-border nt-border-neutral-alpha-200 nt-rounded-lg nt-p-2 nt-flex-col nt-gap-1 nt-overflow-hidden',
+              context: { preference: props.preference } satisfies Parameters<
+                AppearanceCallback['channelsContainer']
+              >[0],
             })}
           >
             <Index each={channels()}>
@@ -141,6 +180,7 @@ export const PreferencesRow = (props: {
                   channel={channel()}
                   workflowId={props.preference?.workflow?.id}
                   onChange={props.onChange(props.preference?.workflow?.identifier)}
+                  preference={props.preference}
                 />
               )}
             </Index>
@@ -154,6 +194,7 @@ export const PreferencesRow = (props: {
 type WorkflowDescriptionProps = JSX.IntrinsicElements['div'] & {
   channels: ChannelPreference;
   appearanceKey: AppearanceKey;
+  preference: Preference;
 };
 
 const WorkflowDescription = (props: WorkflowDescriptionProps) => {
@@ -171,6 +212,7 @@ const WorkflowDescription = (props: WorkflowDescriptionProps) => {
             class={style({
               key: 'channelName',
               className: 'data-[disabled=true]:nt-text-foreground-alpha-400',
+              context: { preference: props.preference } satisfies Parameters<AppearanceCallback['channelName']>[0],
             })}
             data-disabled={isDisabled}
           >

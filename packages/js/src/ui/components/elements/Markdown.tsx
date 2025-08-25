@@ -23,9 +23,10 @@ type MarkdownProps = JSX.HTMLAttributes<HTMLParagraphElement> & {
   appearanceKey: AppearanceKey;
   strongAppearanceKey: AppearanceKey;
   children: string;
+  context?: Record<string, unknown>;
 };
 const Markdown = (props: MarkdownProps) => {
-  const [local, rest] = splitProps(props, ['class', 'children', 'appearanceKey', 'strongAppearanceKey']);
+  const [local, rest] = splitProps(props, ['class', 'children', 'appearanceKey', 'strongAppearanceKey', 'context']);
   const style = useStyle();
 
   const tokens = createMemo(() => parseMarkdownIntoTokens(local.children));
@@ -35,6 +36,7 @@ const Markdown = (props: MarkdownProps) => {
       class={style({
         key: local.appearanceKey,
         className: cn(local.class),
+        context: local.context,
       })}
       {...rest}
     >
