@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { IIntegration } from '@novu/shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { updateIntegration, UpdateIntegrationData } from '../api/integrations';
 import { useEnvironment } from '../context/environment/hooks';
 import { QueryKeys } from '../utils/query-keys';
-import { updateIntegration, UpdateIntegrationData } from '../api/integrations';
 
 type UpdateIntegrationVariables = {
   integrationId: string;
@@ -19,6 +19,7 @@ export function useUpdateIntegration() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow, currentEnvironment?._id] });
     },
   });
 }
