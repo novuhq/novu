@@ -53,10 +53,7 @@ export type DefaultInboxProps = {
   placementOffset?: InboxProps['placementOffset'];
 };
 
-type KeylessBaseProps = {} & { [K in string]?: never }; // empty object,disallows all unknown keys
-
 type StandardBaseProps = {
-  applicationIdentifier: string;
   subscriberHash?: string;
   backendUrl?: string;
   socketUrl?: string;
@@ -72,14 +69,22 @@ type StandardBaseProps = {
       /** @deprecated Use subscriber prop instead */
       subscriberId: string;
       subscriber?: never;
+      applicationIdentifier: string;
     }
   | {
       subscriber: Subscriber | string;
       subscriberId?: never;
+      applicationIdentifier: string;
+    }
+  | {
+      // Keyless mode - no subscriber or subscriberId or applicationIdentifier
+      subscriber?: never;
+      subscriberId?: never;
+      applicationIdentifier?: never;
     }
 );
 
-export type BaseProps = KeylessBaseProps | StandardBaseProps;
+export type BaseProps = StandardBaseProps;
 
 export type NotificationRendererProps = {
   renderNotification: NotificationsRenderer;

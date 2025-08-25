@@ -14,16 +14,18 @@ export const useStyle = () => {
 
   const styleFuncMemo = createMemo(
     () =>
-      (
-        appearanceKey: AppearanceKey,
-        className?: string,
-        {
-          iconKey,
-        }: {
-          iconKey?: IconKey;
-        } = {}
-      ) => {
-        const appearanceKeyParts = appearanceKey.split('__');
+      ({
+        key,
+        className,
+        iconKey,
+        context,
+      }: {
+        key: AppearanceKey;
+        className?: string;
+        iconKey?: IconKey;
+        context?: any;
+      }) => {
+        const appearanceKeyParts = key.split('__');
         let finalAppearanceKeys: (keyof Elements)[] = [];
         for (let i = 0; i < appearanceKeyParts.length; i += 1) {
           const accumulated = appearanceKeyParts.slice(i).join('__');
@@ -59,8 +61,11 @@ export const useStyle = () => {
         let appearanceClassnames: string[] = [];
         const reversedFinalAppearanceKeys = finalAppearanceKeys.reverse();
         for (let i = 0; i < reversedFinalAppearanceKeys.length; i += 1) {
-          if (typeof appearance.elements()[reversedFinalAppearanceKeys[i]] === 'string') {
-            appearanceClassnames.push(appearance.elements()[reversedFinalAppearanceKeys[i]] as string);
+          const elementStyles = appearance.elements()[reversedFinalAppearanceKeys[i]];
+          if (typeof elementStyles === 'string') {
+            appearanceClassnames.push(elementStyles);
+          } else if (typeof elementStyles === 'function') {
+            appearanceClassnames.push(elementStyles(context));
           }
         }
 

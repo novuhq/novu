@@ -7,6 +7,7 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import {
+  DeliveryLifecycleStatus,
   DigestTypeEnum,
   FeatureFlagsKeysEnum,
   IDigestBaseMetadata,
@@ -108,7 +109,8 @@ export class CreateNotificationJobs {
   private async createWorkflowRun(notification: NotificationEntity, command: CreateNotificationJobsCommand) {
     try {
       await this.workflowRunRepository.create(notification, command.template, {
-        status: WorkflowRunStatusEnum.PENDING,
+        status: WorkflowRunStatusEnum.PROCESSING,
+        deliveryLifecycleStatus: DeliveryLifecycleStatus.PENDING,
         userId: command.userId,
         externalSubscriberId: command.subscriber.subscriberId,
       });

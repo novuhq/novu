@@ -16,10 +16,10 @@ import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnSte
 import { AddJob } from '../add-job';
 import { ProcessUnsnoozeJob, ProcessUnsnoozeJobCommand } from '../process-unsnooze-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
+import { SendMessageStatus } from '../send-message/send-message-type.usecase';
 import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
 import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
 import { RunJobCommand } from './run-job.command';
-import { SendMessageStatus } from '../send-message/send-message-type.usecase';
 
 const nr = require('newrelic');
 
@@ -174,7 +174,12 @@ export class RunJob {
           });
         }
       } else if (sendMessageResult.status === SendMessageStatus.SKIPPED) {
-        await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.CANCELED, sendMessageResult.deliveryLifecycleState);
+        await this.jobRepository.updateStatus(
+          job._environmentId,
+          job._id,
+          JobStatusEnum.CANCELED,
+          sendMessageResult.deliveryLifecycleState
+        );
         await this.stepRunRepository.create(job, {
           status: JobStatusEnum.CANCELED,
         });
@@ -268,7 +273,7 @@ export class RunJob {
 
         shouldContinueQueueNextJob = false;
 
-        if(addJobResult.workflowStatus === WorkflowRunStatusEnum.COMPLETED) {
+        if (addJobResult.workflowStatus === WorkflowRunStatusEnum.COMPLETED) {
           await this.workflowRunService.updateDeliveryLifecycle({
             notificationId: nextJob._notificationId,
             environmentId: nextJob._environmentId,
@@ -276,7 +281,6 @@ export class RunJob {
             subscriberId: nextJob._subscriberId,
           });
         }
-
       } catch (error: any) {
         if (!nextJob) {
           // Fallback: update workflow run status if nextJob is unexpectedly missing

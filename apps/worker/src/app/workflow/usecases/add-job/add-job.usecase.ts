@@ -52,13 +52,13 @@ export enum BackoffStrategiesEnum {
 }
 
 /*
-  * @description: This is the result of the add job usecase
-  * 
-  * Returns undefined when the end result is not determined yet
-  */
+ * @description: This is the result of the add job usecase
+ *
+ * Returns undefined when the end result is not determined yet
+ */
 type AddJobResult = {
   workflowStatus: WorkflowRunStatusEnum | null;
-  deliveryLifecycleStatus: DeliveryLifecycleStatus| null;
+  deliveryLifecycleStatus: DeliveryLifecycleStatus | null;
 };
 
 const LOG_CONTEXT = 'AddJob';
@@ -81,7 +81,7 @@ export class AddJob {
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
     private executeBridgeJob: ExecuteBridgeJob,
     private stepRunRepository: StepRunRepository,
-    private subscriberRepository: SubscriberRepository,
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   @InstrumentUsecase()
@@ -102,8 +102,9 @@ export class AddJob {
 
     Logger.log(`Scheduling New Job ${job._id} of type: ${job.type}`, LOG_CONTEXT);
 
-    const result = isJobDeferredType(job.type) ? await this.executeDeferredJob(command) : await this.executeNoneDeferredJob(command);
- 
+    const result = isJobDeferredType(job.type)
+      ? await this.executeDeferredJob(command)
+      : await this.executeNoneDeferredJob(command);
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -115,7 +116,7 @@ export class AddJob {
         isRetry: false,
       })
     );
-    
+
     return result;
   }
 

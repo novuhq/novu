@@ -65,7 +65,10 @@ export const TabsRoot = (props: TabsRootProps) => {
     <TabsContext.Provider value={{ activeTab, setActiveTab, visibleTabs, setVisibleTabs }}>
       <div
         ref={setTabsContainer}
-        class={style(local.appearanceKey || 'tabsRoot', cn(tabsRootVariants(), local.class))}
+        class={style({
+          key: local.appearanceKey || 'tabsRoot',
+          className: cn(tabsRootVariants(), local.class),
+        })}
         {...rest}
       >
         {local.children}
