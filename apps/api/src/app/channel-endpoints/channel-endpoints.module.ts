@@ -8,12 +8,19 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { ChannelEndpointsController } from './channel-endpoints.controller';
+import { CreateChannelEndpoint } from './usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { DeleteChannelEndpoint } from './usecases/delete-channel-endpoint/delete-channel-endpoint.usecase';
 import { GetChannelEndpoint } from './usecases/get-channel-endpoint/get-channel-endpoint.usecase';
 import { GetChannelEndpoints } from './usecases/get-channel-endpoints/get-channel-endpoints.usecase';
-import { UpsertChannelEndpoint } from './usecases/upsert-channel-endpoint/upsert-channel-endpoint.usecase';
+import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update-channel-endpoint.usecase';
 
-const USE_CASES = [GetChannelEndpoints, GetChannelEndpoint, UpsertChannelEndpoint, DeleteChannelEndpoint];
+const USE_CASES = [
+  GetChannelEndpoints,
+  GetChannelEndpoint,
+  CreateChannelEndpoint,
+  UpdateChannelEndpoint,
+  DeleteChannelEndpoint,
+];
 
 const DAL_MODELS = [
   ChannelEndpointRepository,

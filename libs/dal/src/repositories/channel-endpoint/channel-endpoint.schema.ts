@@ -44,7 +44,6 @@ const channelEndpointSchema = new Schema<ChannelEndpointDBModel>(
   {
     identifier: {
       type: Schema.Types.String,
-      unique: true,
       required: true,
     },
     _organizationId: {
@@ -67,6 +66,16 @@ const channelEndpointSchema = new Schema<ChannelEndpointDBModel>(
     },
   },
   schemaOptions
+);
+
+channelEndpointSchema.index(
+  {
+    _environmentId: 1,
+    identifier: 1,
+  },
+  {
+    unique: true,
+  }
 );
 
 export const ChannelEndpoint =

@@ -2,14 +2,10 @@ import { ChannelEndpointRouting } from '@novu/shared';
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
-export class UpsertChannelEndpointCommand extends EnvironmentWithSubscriber {
-  @IsOptional()
-  @IsString()
-  identifier?: string;
-
+export class UpdateChannelEndpointCommand extends EnvironmentWithSubscriber {
   @IsString()
   @IsDefined()
-  integrationIdentifier: string;
+  identifier: string;
 
   @IsString()
   @IsDefined()

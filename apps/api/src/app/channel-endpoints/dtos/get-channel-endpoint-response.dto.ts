@@ -12,20 +12,20 @@ export class GetChannelEndpointResponseDto {
     description: 'The channel type (email, sms, push, chat, etc.).',
     enum: ChannelTypeEnum,
   })
-  channel: ChannelTypeEnum | 'missing integration';
+  channel: ChannelTypeEnum | null;
 
   @ApiProperty({
     description: 'The provider identifier (e.g., sendgrid, twilio, slack, etc.).',
     enum: Object.values(ProvidersIdEnumConst),
   })
-  provider: ProvidersIdEnum | 'missing integration';
+  provider: ProvidersIdEnum | null;
 
   @ApiProperty({
     description: 'The identifier of the integration to use for this channel endpoint.',
     type: String,
     example: 'slack-prod',
   })
-  integrationIdentifier: string;
+  integrationIdentifier: string | null;
 
   @ApiProperty({
     description: 'The endpoint address/destination (e.g., email address, phone number, webhook URL).',

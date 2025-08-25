@@ -3,8 +3,8 @@ import { decryptCredentials } from '@novu/application-generic';
 import { ChannelTypeEnum, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import axios from 'axios';
-import { UpsertChannelEndpointCommand } from '../../../../channel-endpoints/usecases/upsert-channel-endpoint/upsert-channel-endpoint.command';
-import { UpsertChannelEndpoint } from '../../../../channel-endpoints/usecases/upsert-channel-endpoint/upsert-channel-endpoint.usecase';
+import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
+import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import {
   GenerateSlackOauthUrl,
   StateData,
@@ -20,7 +20,7 @@ export class SlackOauthCallback {
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
-    private upsertChannelEndpoint: UpsertChannelEndpoint
+    private createChannelEndpoint: CreateChannelEndpoint
   ) {}
 
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -29,25 +29,8 @@ export class SlackOauthCallback {
 
     const token = await this.exchangeCodeForToken(command.providerCode, integration);
 
-    await this.createChannelEndpoint(stateData, integration, token);
-
-    return {
-      type: ResponseTypeEnum.HTML,
-      result: this.SCRIPT_CLOSE_TAB,
-    };
-  }
-
-  private async createChannelEndpoint(
-    stateData: {
-      subscriberId: string;
-      environmentId: string;
-      organizationId: string;
-    },
-    integration: IntegrationEntity,
-    token: string
-  ): Promise<void> {
-    await this.upsertChannelEndpoint.execute(
-      UpsertChannelEndpointCommand.create({
+    await this.createChannelEndpoint.execute(
+      CreateChannelEndpointCommand.create({
         organizationId: stateData.organizationId,
         environmentId: stateData.environmentId,
         integrationIdentifier: integration.identifier,
@@ -55,6 +38,11 @@ export class SlackOauthCallback {
         endpoint: token,
       })
     );
+
+    return {
+      type: ResponseTypeEnum.HTML,
+      result: this.SCRIPT_CLOSE_TAB,
+    };
   }
 
   private async getIntegration(stateData: StateData): Promise<IntegrationEntity> {
