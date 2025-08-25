@@ -56,12 +56,23 @@ async function promptUserConfiguration(analytics?: AnalyticsService): Promise<IU
     return null;
   }
 
+  // Determine effective region and show warnings
+  let effectiveRegion = region;
+  if (backendUrl || socketUrl) {
+    // When custom URLs are provided, region is not needed
+    if (region !== 'us') {
+      logger.warning('\n⚠️  Custom backend/socket URLs provided. Region parameter will be ignored.');
+      logger.gray('   The custom URLs will take precedence over region-based configuration.');
+    }
+    effectiveRegion = 'us'; // Default to 'us' when custom URLs are provided
+  }
+
   // Use detected framework directly without prompting
   const initialResponses: Partial<IUserConfig> = {
     framework: detectedFramework,
     appId,
     subscriberId,
-    region,
+    region: effectiveRegion,
     backendUrl,
     socketUrl,
   };
@@ -401,7 +412,7 @@ function parseCommandLineArgs() {
   program
     .option('--appId <id>', 'Novu Application Identifier')
     .option('--subscriberId <id>', 'Novu Subscriber Identifier')
-    .option('--region <region>', 'Novu Region (eu or us)', 'us')
+    .option('--region <region>', 'Novu Region (eu or us). Optional when using custom URLs.', 'us')
     .option('--backendUrl <url>', 'Custom backend URL for Novu API')
     .option('--socketUrl <url>', 'Custom socket URL for Novu WebSocket connection')
     .parse(process.argv);
