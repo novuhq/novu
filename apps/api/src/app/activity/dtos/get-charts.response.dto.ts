@@ -125,13 +125,13 @@ export class WorkflowRunsTrendDataPointDto {
   @IsString()
   timestamp: string;
 
-  @ApiProperty({ description: 'Pending workflow runs count' })
+  @ApiProperty({ description: 'Processing workflow runs count' })
   @IsNumber()
-  pending: number;
+  processing: number;
 
-  @ApiProperty({ description: 'Successful workflow runs count' })
+  @ApiProperty({ description: 'Completed workflow runs count' })
   @IsNumber()
-  success: number;
+  completed: number;
 
   @ApiProperty({ description: 'Failed workflow runs count' })
   @IsNumber()
@@ -144,6 +144,12 @@ export class ActiveSubscribersTrendDataPointDto {
   timestamp: string;
 
   @ApiProperty({ description: 'Active subscribers count' })
+  @IsNumber()
+  count: number;
+}
+
+export class WorkflowRunsCountDataPointDto {
+  @ApiProperty({ description: 'Workflow runs count' })
   @IsNumber()
   count: number;
 }
@@ -164,5 +170,6 @@ export class GetChartsResponseDto {
     | TotalInteractionsDataPointDto
     | WorkflowRunsTrendDataPointDto[]
     | ActiveSubscribersTrendDataPointDto[]
+    | WorkflowRunsCountDataPointDto
   >;
 }

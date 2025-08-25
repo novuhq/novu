@@ -115,13 +115,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       stepId,
     } = renderCommand;
 
-    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
-      defaultValue: false,
-      environment: { _id: environmentId },
-      organization: { _id: organizationId },
-    });
-
     // Step 1: Apply translations to subject (already liquid-interpolated)
     const translatedSubject = await this.processSubjectTranslations(
       controlSubject as string,
@@ -133,30 +126,18 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     );
 
     // Step 2: Process body content (with translations applied before rendering)
-    let renderedHtml = '';
-    if (isLayoutsPageActive) {
-      renderedHtml = await this.renderWithLayout({
-        body,
-        layoutId,
-        payload: fullPayloadForRender,
-        environmentId,
-        organizationId,
-        workflowId,
-        locale,
-        skipLayoutRendering,
-        jobId,
-        stepId,
-      });
-    } else {
-      renderedHtml = await this.processBodyContent({
-        body,
-        payload: fullPayloadForRender,
-        environmentId,
-        organizationId,
-        workflowId,
-        locale,
-      });
-    }
+    const renderedHtml = await this.renderWithLayout({
+      body,
+      layoutId,
+      payload: fullPayloadForRender,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+      skipLayoutRendering,
+      jobId,
+      stepId,
+    });
 
     // Step 3: Add Novu branding
     const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId);
@@ -550,8 +531,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       parent.content = parent.content.filter((pNode) => pNode !== node);
     }
 
-    // @ts-ignore
-    delete node.attrs[MailyAttrsEnum.SHOW_IF_KEY];
+    delete (node.attrs as Record<string, string>)[MailyAttrsEnum.SHOW_IF_KEY];
 
     return shouldShow;
   }

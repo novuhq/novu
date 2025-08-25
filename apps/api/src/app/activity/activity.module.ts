@@ -10,6 +10,7 @@ import { BuildMessagesDeliveredChart } from './usecases/build-messages-delivered
 import { BuildProviderByVolumeChart } from './usecases/build-provider-by-volume-chart/build-provider-by-volume-chart.usecase';
 import { BuildTotalInteractionsChart } from './usecases/build-total-interactions-chart/build-total-interactions-chart.usecase';
 import { BuildWorkflowByVolumeChart } from './usecases/build-workflow-by-volume-chart/build-workflow-by-volume-chart.usecase';
+import { BuildWorkflowRunsCountChart } from './usecases/build-workflow-runs-count-chart/build-workflow-runs-count-chart.usecase';
 import { BuildWorkflowRunsMetricChart } from './usecases/build-workflow-runs-metric-chart/build-workflow-runs-metric-chart.usecase';
 import { BuildWorkflowRunsTrendChart } from './usecases/build-workflow-runs-trend-chart/build-workflow-runs-trend-chart.usecase';
 import { GetCharts } from './usecases/get-charts/get-charts.usecase';
@@ -17,6 +18,7 @@ import { GetRequest } from './usecases/get-request/get-request.usecase';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
+import { WorkflowRunService } from '@novu/application-generic';
 
 const USE_CASES = [
   GetRequests,
@@ -31,10 +33,12 @@ const USE_CASES = [
   BuildActiveSubscribersChart,
   BuildActiveSubscribersTrendChart,
   BuildAvgMessagesPerSubscriberChart,
+  BuildWorkflowRunsCountChart,
   BuildWorkflowRunsMetricChart,
   BuildTotalInteractionsChart,
   BuildWorkflowRunsTrendChart,
   GetRequest,
+  WorkflowRunService,
 ];
 
 @Module({

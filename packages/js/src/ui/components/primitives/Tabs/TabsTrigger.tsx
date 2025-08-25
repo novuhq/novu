@@ -36,7 +36,10 @@ export const TabsTrigger = (props: TabsTriggerProps) => {
       ref={local.ref}
       id={local.value}
       appearanceKey={local.appearanceKey ?? 'tabsTrigger'}
-      class={local.class ? local.class : style(local.appearanceKey || 'tabsTrigger', tabsTriggerVariants())}
+      class={style({
+        key: local.appearanceKey || 'tabsTrigger',
+        className: cn(tabsTriggerVariants(), local.class),
+      })}
       onClick={local.onClick ?? clickHandler}
       role="tab"
       tabIndex={0}

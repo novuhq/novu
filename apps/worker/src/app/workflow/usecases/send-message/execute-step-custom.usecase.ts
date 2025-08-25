@@ -3,7 +3,7 @@ import { CreateExecutionDetails, InstrumentUsecase } from '@novu/application-gen
 import { JobRepository, MessageRepository } from '@novu/dal';
 
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult, SendMessageType } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
 export class ExecuteStepCustom extends SendMessageType {
@@ -25,7 +25,7 @@ export class ExecuteStepCustom extends SendMessageType {
     );
 
     return {
-      status: 'success',
+      status: SendMessageStatus.SUCCESS,
     };
   }
 }

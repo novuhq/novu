@@ -6,6 +6,7 @@ export {
   InboxContent,
   Notifications,
   NovuProvider,
+  PreferenceLevel,
   Preferences,
   SeverityLevelEnum,
   useCounts,

@@ -1,6 +1,6 @@
 import { EnvironmentCommand } from '@novu/application-generic';
-import { IsArray, IsDateString, IsDefined, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
-import { ReportTypeEnum } from '../../dtos/shared.dto';
+import { IsArray, IsDateString, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
+import { ReportTypeEnum, WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 
 export class GetChartsCommand extends EnvironmentCommand {
   @IsDateString()
@@ -15,4 +15,33 @@ export class GetChartsCommand extends EnvironmentCommand {
   @IsDefined()
   @IsArray()
   reportType: ReportTypeEnum[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  workflowIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  subscriberIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  transactionIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(WorkflowRunStatusDtoEnum, { each: true })
+  statuses?: WorkflowRunStatusDtoEnum[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  channels?: string[];
+
+  @IsOptional()
+  @IsString()
+  topicKey?: string;
 }

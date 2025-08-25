@@ -11,6 +11,16 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.String,
       default: JobStatusEnum.PENDING,
     },
+    deliveryLifecycleState: {
+      type: {
+        status: {
+          type: Schema.Types.String,
+        },
+        detail: {
+          type: Schema.Types.String,
+        },
+      },
+    },
     payload: {
       type: Schema.Types.Mixed,
     },
@@ -398,6 +408,7 @@ jobSchema.index(
  * This index was created to push entries to Online Archive
  */
 jobSchema.index({ createdAt: 1 });
+
 jobSchema.index(
   {
     subscriberId: 1,

@@ -3,6 +3,8 @@ import { StepRunStatus } from '@novu/application-generic';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsIn, IsObject, IsOptional, IsString } from 'class-validator';
+import { DigestMetadataDto } from '../../notifications/dtos/activities-response.dto';
+
 import { GetWorkflowRunResponseBaseDto } from './shared.dto';
 
 export class StepExecutionDetailDto {
@@ -84,6 +86,12 @@ export class StepRunDto {
   @ApiProperty({ description: 'Execution details', type: [StepExecutionDetailDto] })
   @Type(() => StepExecutionDetailDto)
   executionDetails: StepExecutionDetailDto[];
+
+  @ApiPropertyOptional({
+    description: 'Optional digest for the job, including metadata and events',
+    type: DigestMetadataDto,
+  })
+  digest?: DigestMetadataDto;
 }
 
 export class GetWorkflowRunResponseDto extends GetWorkflowRunResponseBaseDto {

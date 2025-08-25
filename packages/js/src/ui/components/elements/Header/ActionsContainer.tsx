@@ -1,5 +1,4 @@
 import { Show } from 'solid-js';
-import { useAppearance } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { Cogs as DefaultCogs } from '../../../icons';
 import { Button } from '../../primitives';
@@ -12,12 +11,19 @@ type ActionsContainerProps = {
 
 export const ActionsContainer = (props: ActionsContainerProps) => {
   const style = useStyle();
-  const cogsIconClass = style('icon', 'nt-size-5', {
+  const cogsIconClass = style({
+    key: 'icon',
+    className: 'nt-size-5',
     iconKey: 'cogs',
   });
 
   return (
-    <div class={style('moreActionsContainer', 'nt-flex nt-gap-3')}>
+    <div
+      class={style({
+        key: 'moreActionsContainer',
+        className: 'nt-flex nt-gap-3',
+      })}
+    >
       <MoreActionsDropdown />
       <Show when={props.showPreferences}>
         {(showPreferences) => (

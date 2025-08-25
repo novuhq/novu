@@ -11,7 +11,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 /**
  * Status of the trigger
  */
-export const Status = {
+export const TriggerEventResponseDtoStatus = {
   Error: "error",
   TriggerNotActive: "trigger_not_active",
   NoWorkflowActiveStepsDefined: "no_workflow_active_steps_defined",
@@ -23,7 +23,9 @@ export const Status = {
 /**
  * Status of the trigger
  */
-export type Status = ClosedEnum<typeof Status>;
+export type TriggerEventResponseDtoStatus = ClosedEnum<
+  typeof TriggerEventResponseDtoStatus
+>;
 
 export type TriggerEventResponseDto = {
   /**
@@ -33,7 +35,7 @@ export type TriggerEventResponseDto = {
   /**
    * Status of the trigger
    */
-  status: Status;
+  status: TriggerEventResponseDtoStatus;
   /**
    * In case of an error, this field will contain the error message(s)
    */
@@ -45,22 +47,24 @@ export type TriggerEventResponseDto = {
 };
 
 /** @internal */
-export const Status$inboundSchema: z.ZodNativeEnum<typeof Status> = z
-  .nativeEnum(Status);
+export const TriggerEventResponseDtoStatus$inboundSchema: z.ZodNativeEnum<
+  typeof TriggerEventResponseDtoStatus
+> = z.nativeEnum(TriggerEventResponseDtoStatus);
 
 /** @internal */
-export const Status$outboundSchema: z.ZodNativeEnum<typeof Status> =
-  Status$inboundSchema;
+export const TriggerEventResponseDtoStatus$outboundSchema: z.ZodNativeEnum<
+  typeof TriggerEventResponseDtoStatus
+> = TriggerEventResponseDtoStatus$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Status$ {
-  /** @deprecated use `Status$inboundSchema` instead. */
-  export const inboundSchema = Status$inboundSchema;
-  /** @deprecated use `Status$outboundSchema` instead. */
-  export const outboundSchema = Status$outboundSchema;
+export namespace TriggerEventResponseDtoStatus$ {
+  /** @deprecated use `TriggerEventResponseDtoStatus$inboundSchema` instead. */
+  export const inboundSchema = TriggerEventResponseDtoStatus$inboundSchema;
+  /** @deprecated use `TriggerEventResponseDtoStatus$outboundSchema` instead. */
+  export const outboundSchema = TriggerEventResponseDtoStatus$outboundSchema;
 }
 
 /** @internal */
@@ -70,7 +74,7 @@ export const TriggerEventResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   acknowledged: z.boolean(),
-  status: Status$inboundSchema,
+  status: TriggerEventResponseDtoStatus$inboundSchema,
   error: z.array(z.string()).optional(),
   transactionId: z.string().optional(),
 });
@@ -90,7 +94,7 @@ export const TriggerEventResponseDto$outboundSchema: z.ZodType<
   TriggerEventResponseDto
 > = z.object({
   acknowledged: z.boolean(),
-  status: Status$outboundSchema,
+  status: TriggerEventResponseDtoStatus$outboundSchema,
   error: z.array(z.string()).optional(),
   transactionId: z.string().optional(),
 });

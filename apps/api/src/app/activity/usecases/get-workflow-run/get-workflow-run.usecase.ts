@@ -9,6 +9,8 @@ import {
   WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
+import { JobRepository } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
 import { mapExecutionDetailsToDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
@@ -33,6 +35,7 @@ const workflowRunSelectColumns = [
   'digested_workflow_run_id',
   'created_at',
   'updated_at',
+  'delivery_lifecycle_status',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -68,9 +71,77 @@ export class GetWorkflowRun {
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
     private traceLogRepository: TraceLogRepository,
+    private jobRepository: JobRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  private mapTraceStatusToExecutionStatus(traceStatus: string): ExecutionDetailsStatusEnum {
+    switch (traceStatus.toLowerCase()) {
+      case 'success':
+        return ExecutionDetailsStatusEnum.SUCCESS;
+      case 'error':
+      case 'failed':
+        return ExecutionDetailsStatusEnum.FAILED;
+      case 'warning':
+        return ExecutionDetailsStatusEnum.WARNING;
+      case 'pending':
+        return ExecutionDetailsStatusEnum.PENDING;
+      case 'queued':
+        return ExecutionDetailsStatusEnum.QUEUED;
+      default:
+        return ExecutionDetailsStatusEnum.PENDING;
+    }
+  }
+
+  /**
+   * Parses ClickHouse timestamp format as UTC
+   * ClickHouse returns timestamps in format "YYYY-MM-DD HH:mm:ss.SSS" which should be treated as UTC
+   * but JavaScript's Date constructor interprets them as local time by default
+   */
+  private parseClickHouseTimestamp(timestamp: string | Date): Date {
+    // If already a Date object, return as-is
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+
+    /*
+     * ClickHouse format: "2025-07-23 13:52:52.860"
+     * Convert to ISO format with explicit UTC: "2025-07-23T13:52:52.860Z"
+     */
+    const isoFormat = `${timestamp.replace(' ', 'T')}Z`;
+
+    return new Date(isoFormat);
+  }
+
+  private async getJobDigestDataByTransactionId(
+    transactionId: string,
+    command: GetWorkflowRunCommand
+  ): Promise<Map<string, any>> {
+    try {
+      const jobs = await this.jobRepository.find({
+        transactionId,
+        _environmentId: command.environmentId,
+      });
+
+      const digestDataByStepId = new Map<string, any>();
+
+      for (const job of jobs) {
+        if (job.digest && job.step?.stepId) {
+          digestDataByStepId.set(job._id, job.digest);
+        }
+      }
+
+      return digestDataByStepId;
+    } catch (error) {
+      this.logger.warn('Failed to get job digest data', {
+        error: error.message,
+        transactionId,
+      });
+
+      return new Map();
+    }
   }
 
   async execute(command: GetWorkflowRunCommand): Promise<GetWorkflowRunResponseDto> {
@@ -141,10 +212,12 @@ export class GetWorkflowRun {
 
       const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
       const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(stepRunIds, command);
+      const digestDataByStepId = await this.getJobDigestDataByTransactionId(workflowRun.transaction_id, command);
 
       return stepRunsResult.data.map((stepRun) => ({
         ...stepRun,
         executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
+        digest: digestDataByStepId.get(stepRun.step_run_id),
       }));
     } catch (error) {
       this.logger.warn('Failed to get step runs for workflow run', {
@@ -191,6 +264,14 @@ export class GetWorkflowRun {
         if (existingTraces) {
           existingTraces.push(trace);
         }
+        // biome-ignore lint/style/noNonNullAssertion: <explanation> because we otherwise the if statement would set it to the map
+        executionDetailsByEntityId.get(trace.entity_id)!.push({
+          id: trace.id,
+          title: trace.title,
+          status: this.mapTraceStatusToExecutionStatus(trace.status),
+          created_at: this.parseClickHouseTimestamp(trace.created_at),
+          raw_data: trace.raw_data,
+        });
       }
 
       return executionDetailsByEntityId;
@@ -229,10 +310,8 @@ export class GetWorkflowRun {
       environmentId: workflowRun.environment_id,
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
-      status: mapWorkflowRunStatusToDto(
-        workflowRun.status,
-        stepRuns.map((stepRun) => stepRun.step_type)
-      ),
+      status: mapWorkflowRunStatusToDto(workflowRun.status),
+      deliveryLifecycleStatus: workflowRun.delivery_lifecycle_status,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

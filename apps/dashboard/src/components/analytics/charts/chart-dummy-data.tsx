@@ -91,8 +91,8 @@ export function generateDummyWorkflowRunsData(): WorkflowRunsChartData[] {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
 
-    const success = Math.floor(Math.random() * 300) + 100;
-    const pending = Math.floor(Math.random() * 50) + 10;
+    const completed = Math.floor(Math.random() * 300) + 100;
+    const processing = Math.floor(Math.random() * 50) + 10;
     const error = Math.floor(Math.random() * 30) + 5;
 
     dummyData.push({
@@ -100,8 +100,8 @@ export function generateDummyWorkflowRunsData(): WorkflowRunsChartData[] {
         month: 'short',
         day: 'numeric',
       }),
-      success,
-      pending,
+      completed,
+      processing,
       error,
       timestamp: date.toISOString(),
     });

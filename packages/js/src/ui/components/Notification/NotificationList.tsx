@@ -5,7 +5,11 @@ import { DEFAULT_LIMIT, useInboxContext, useNewMessagesCount } from '../../conte
 import { useStyle } from '../../helpers';
 import { useNotificationVisibility } from '../../helpers/useNotificationVisibility';
 import type {
+  AppearanceCallback,
+  AvatarRenderer,
   BodyRenderer,
+  CustomActionsRenderer,
+  DefaultActionsRenderer,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
@@ -17,8 +21,11 @@ import { NotificationListSkeleton } from './NotificationListSkeleton';
 
 type NotificationListProps = {
   renderNotification?: NotificationRenderer;
+  renderAvatar?: AvatarRenderer;
   renderSubject?: SubjectRenderer;
   renderBody?: BodyRenderer;
+  renderDefaultActions?: DefaultActionsRenderer;
+  renderCustomActions?: CustomActionsRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -51,17 +58,22 @@ export const NotificationList = (props: NotificationListProps) => {
 
   return (
     <div
-      class={style(
-        'notificationListContainer',
-        'nt-relative nt-border-t nt-border-t-neutral-alpha-200 nt-h-full nt-overflow-hidden'
-      )}
+      class={style({
+        key: 'notificationListContainer',
+        className: 'nt-relative nt-border-t nt-border-t-neutral-alpha-200 nt-h-full nt-overflow-hidden',
+        context: { notifications: data() } satisfies Parameters<AppearanceCallback['notificationListContainer']>[0],
+      })}
     >
       <NewMessagesCta count={count()} onClick={handleOnNewMessagesClick} />
       <div
         ref={(el) => {
           notificationListElement = el;
         }}
-        class={style('notificationList', 'nt-relative nt-h-full nt-flex nt-flex-col nt-overflow-y-auto')}
+        class={style({
+          key: 'notificationList',
+          className: 'nt-relative nt-h-full nt-flex nt-flex-col nt-overflow-y-auto',
+          context: { notifications: data() } satisfies Parameters<AppearanceCallback['notificationList']>[0],
+        })}
       >
         <Show when={data().length > 0} fallback={<NotificationListSkeleton loading={initialLoading()} />}>
           <For each={ids()}>
@@ -100,8 +112,11 @@ export const NotificationList = (props: NotificationListProps) => {
                   <Notification
                     notification={notification()}
                     renderNotification={props.renderNotification}
+                    renderAvatar={props.renderAvatar}
                     renderSubject={props.renderSubject}
                     renderBody={props.renderBody}
+                    renderDefaultActions={props.renderDefaultActions}
+                    renderCustomActions={props.renderCustomActions}
                     onNotificationClick={props.onNotificationClick}
                     onPrimaryActionClick={props.onPrimaryActionClick}
                     onSecondaryActionClick={props.onSecondaryActionClick}

@@ -15,8 +15,11 @@ import type {
 import type { ReactNode } from 'react';
 
 export type NotificationsRenderer = (notification: Notification) => React.ReactNode;
+export type AvatarRenderer = (notification: Notification) => React.ReactNode;
 export type SubjectRenderer = (notification: Notification) => React.ReactNode;
 export type BodyRenderer = (notification: Notification) => React.ReactNode;
+export type DefaultActionsRenderer = (notification: Notification) => React.ReactNode;
+export type CustomActionsRenderer = (notification: Notification) => React.ReactNode;
 export type BellRenderer = (unreadCount: UnreadCount) => React.ReactNode;
 
 export type ReactIconRendererProps = { class?: string };
@@ -37,8 +40,11 @@ export type ReactAppearance = ReactTheme & {
 export type DefaultInboxProps = {
   open?: boolean;
   renderNotification?: NotificationsRenderer;
+  renderAvatar?: AvatarRenderer;
   renderSubject?: SubjectRenderer;
   renderBody?: BodyRenderer;
+  renderDefaultActions?: DefaultActionsRenderer;
+  renderCustomActions?: CustomActionsRenderer;
   renderBell?: BellRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
@@ -47,10 +53,7 @@ export type DefaultInboxProps = {
   placementOffset?: InboxProps['placementOffset'];
 };
 
-type KeylessBaseProps = {} & { [K in string]?: never }; // empty object,disallows all unknown keys
-
 type StandardBaseProps = {
-  applicationIdentifier: string;
   subscriberHash?: string;
   backendUrl?: string;
   socketUrl?: string;
@@ -66,31 +69,48 @@ type StandardBaseProps = {
       /** @deprecated Use subscriber prop instead */
       subscriberId: string;
       subscriber?: never;
+      applicationIdentifier: string;
     }
   | {
       subscriber: Subscriber | string;
       subscriberId?: never;
+      applicationIdentifier: string;
+    }
+  | {
+      // Keyless mode - no subscriber or subscriberId or applicationIdentifier
+      subscriber?: never;
+      subscriberId?: never;
+      applicationIdentifier?: never;
     }
 );
 
-export type BaseProps = KeylessBaseProps | StandardBaseProps;
+export type BaseProps = StandardBaseProps;
 
 export type NotificationRendererProps = {
   renderNotification: NotificationsRenderer;
+  renderAvatar?: never;
   renderSubject?: never;
   renderBody?: never;
+  renderDefaultActions?: never;
+  renderCustomActions?: never;
 };
 
 export type SubjectBodyRendererProps = {
   renderNotification?: never;
+  renderAvatar?: AvatarRenderer;
   renderSubject?: SubjectRenderer;
   renderBody?: BodyRenderer;
+  renderDefaultActions?: DefaultActionsRenderer;
+  renderCustomActions?: CustomActionsRenderer;
 };
 
 export type NoRendererProps = {
   renderNotification?: undefined;
+  renderAvatar?: undefined;
   renderSubject?: undefined;
   renderBody?: undefined;
+  renderDefaultActions?: undefined;
+  renderCustomActions?: undefined;
 };
 
 export type DefaultProps = BaseProps &

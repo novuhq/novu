@@ -19,8 +19,11 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
     onNotificationClick,
     onPrimaryActionClick,
     renderNotification,
+    renderAvatar,
     renderSubject,
     renderBody,
+    renderDefaultActions,
+    renderCustomActions,
     onSecondaryActionClick,
     initialPage,
     hideNav,
@@ -51,10 +54,17 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
         name: 'InboxContent',
         element,
         props: {
+          renderAvatar: renderAvatar ? (el, notification) => mountElement(el, renderAvatar(notification)) : undefined,
           renderSubject: renderSubject
             ? (el, notification) => mountElement(el, renderSubject(notification))
             : undefined,
           renderBody: renderBody ? (el, notification) => mountElement(el, renderBody(notification)) : undefined,
+          renderDefaultActions: renderDefaultActions
+            ? (el, notification) => mountElement(el, renderDefaultActions(notification))
+            : undefined,
+          renderCustomActions: renderCustomActions
+            ? (el, notification) => mountElement(el, renderCustomActions(notification))
+            : undefined,
           onNotificationClick,
           onPrimaryActionClick,
           onSecondaryActionClick,
@@ -63,7 +73,17 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
         },
       });
     },
-    [renderNotification, renderSubject, renderBody, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
+    [
+      renderNotification,
+      renderAvatar,
+      renderSubject,
+      renderBody,
+      renderDefaultActions,
+      renderCustomActions,
+      onNotificationClick,
+      onPrimaryActionClick,
+      onSecondaryActionClick,
+    ]
   );
 
   return <Mounter mount={mount} />;

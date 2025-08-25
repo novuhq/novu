@@ -1,4 +1,4 @@
-import { StepType, Trace, TraceStatus, WorkflowRunStatusEnum } from '@novu/application-generic';
+import { Trace, TraceStatus, WorkflowRunStatusEnum } from '@novu/application-generic';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { TraceResponseDto } from '../dtos/get-request.response.dto';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
@@ -36,25 +36,18 @@ export function mapRequestLogToResponseDto({
   };
 }
 
-// tmp workaround to map workflow run status to response DTO status, this logic will be overridden by the new status and delivery lifecycle feature.
-export function mapWorkflowRunStatusToDto(workflowRunStatus: WorkflowRunStatusEnum, stepRunsType: StepType[]): any {
-  // Filter for channel steps (exclude non-channel steps like trigger, delay, digest, custom)
-  const channelSteps = stepRunsType.filter((stepType) => ['in_app', 'email', 'sms', 'chat', 'push'].includes(stepType));
-
-  // If no channel steps, determine based on workflow status
-  if (channelSteps.length === 0) {
-    switch (workflowRunStatus) {
-      case WorkflowRunStatusEnum.SUCCESS:
-      case 'completed' as WorkflowRunStatusEnum: // legacy
-        return WorkflowRunStatusDtoEnum.SUCCESS;
-      case WorkflowRunStatusEnum.ERROR:
-      case 'failed' as WorkflowRunStatusEnum: // legacy
-        return WorkflowRunStatusDtoEnum.ERROR;
-      case WorkflowRunStatusEnum.PENDING:
-        return WorkflowRunStatusDtoEnum.PENDING;
-      default:
-        return WorkflowRunStatusDtoEnum.PENDING;
-    }
+export function mapWorkflowRunStatusToDto(workflowRunStatus: WorkflowRunStatusEnum): WorkflowRunStatusDtoEnum {
+  switch (workflowRunStatus) {
+    case WorkflowRunStatusEnum.COMPLETED:
+    case WorkflowRunStatusEnum.SUCCESS:
+      return WorkflowRunStatusDtoEnum.COMPLETED;
+    case WorkflowRunStatusEnum.ERROR:
+      return WorkflowRunStatusDtoEnum.ERROR;
+    case WorkflowRunStatusEnum.PENDING:
+    case WorkflowRunStatusEnum.PROCESSING:
+      return WorkflowRunStatusDtoEnum.PROCESSING;
+    default:
+      return WorkflowRunStatusDtoEnum.PROCESSING;
   }
 }
 

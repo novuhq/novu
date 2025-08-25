@@ -24,9 +24,10 @@ export const novuComponents = {
   Bell,
   Notifications: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => {
     if (props.renderNotification) {
-      const { renderBody, renderSubject, ...propsWithoutBodyAndSubject } = props;
+      const { renderBody, renderSubject, renderAvatar, renderDefaultActions, renderCustomActions, ...otherProps } =
+        props;
 
-      return <InboxContent {...propsWithoutBodyAndSubject} hideNav={true} initialPage={InboxPage.Notifications} />;
+      return <InboxContent {...otherProps} hideNav={true} initialPage={InboxPage.Notifications} />;
     }
 
     const { renderNotification, ...propsWithoutRenderNotification } = props;
@@ -35,9 +36,10 @@ export const novuComponents = {
   },
   Preferences: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => {
     if (props.renderNotification) {
-      const { renderBody, renderSubject, ...propsWithoutBodyAndSubject } = props;
+      const { renderBody, renderSubject, renderAvatar, renderDefaultActions, renderCustomActions, ...otherProps } =
+        props;
 
-      return <InboxContent {...propsWithoutBodyAndSubject} hideNav={true} initialPage={InboxPage.Preferences} />;
+      return <InboxContent {...otherProps} hideNav={true} initialPage={InboxPage.Preferences} />;
     }
 
     const { renderNotification, ...propsWithoutRenderNotification } = props;

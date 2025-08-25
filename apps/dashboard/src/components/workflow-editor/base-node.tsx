@@ -1,8 +1,9 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { cva, VariantProps } from 'class-variance-authority';
-import { ReactNode, useState } from 'react';
-import { RiErrorWarningFill } from 'react-icons/ri';
-
+import { motion } from 'motion/react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { RiDraggable, RiErrorWarningFill } from 'react-icons/ri';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
@@ -148,21 +149,265 @@ const nodeVariants = cva(
 export interface BaseNodeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof nodeVariants> {
   pill?: ReactNode;
   onPillClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  nodeId?: string;
+  isDraggable?: boolean;
+  isDragHandleVisible?: boolean;
+  onNodeDragStart?: (nodeId: string, position: { x: number; y: number }) => void;
+  onNodeDragMove?: (position: { x: number; y: number }) => void;
+  onNodeDragEnd?: () => void;
 }
 
-export const Node = (props: BaseNodeProps) => {
-  const { children, variant, className, pill, onPillClick, ...rest } = props;
-  return (
-    <div className={nodeVariants({ variant, className })} {...rest}>
-      {pill && (
-        <div
-          className="border-neutral-alpha-200 text-foreground-600 absolute left-0 top-0 flex -translate-y-full items-center gap-1 rounded-t-lg border border-b-0 bg-neutral-50 px-1.5 py-0.5 text-xs font-medium"
-          onClick={onPillClick}
-        >
-          {pill}
-        </div>
+// Separate component for the dragged node to isolate re-renders
+const DraggedNode = ({
+  children,
+  variant,
+  className,
+  initialPosition,
+  clickOffset,
+  onMove,
+  nodeId,
+}: {
+  children: ReactNode;
+  variant?: VariantProps<typeof nodeVariants>['variant'];
+  className?: string;
+  initialPosition: { x: number; y: number };
+  clickOffset: { x: number; y: number };
+  onMove?: (position: { x: number; y: number }) => void;
+  nodeId?: string;
+}) => {
+  const draggedNodeRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>();
+  const lastPositionRef = useRef(initialPosition);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      // Cancel any pending animation frame
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+
+      // Use requestAnimationFrame to throttle updates
+      rafRef.current = requestAnimationFrame(() => {
+        const newX = e.clientX - clickOffset.x;
+        const newY = e.clientY - clickOffset.y;
+
+        // Update transform directly for better performance
+        if (draggedNodeRef.current) {
+          draggedNodeRef.current.style.transform = `translate(${newX}px, ${newY}px) rotate(-4deg)`;
+          draggedNodeRef.current.style.transformOrigin = 'top left';
+          draggedNodeRef.current.style.transition = 'transform 0.1s ease';
+        }
+
+        // Only call onMove if position changed significantly (throttle callbacks)
+        const dx = Math.abs(newX - lastPositionRef.current.x);
+        const dy = Math.abs(newY - lastPositionRef.current.y);
+        if ((dx > 5 || dy > 5) && onMove) {
+          lastPositionRef.current = { x: newX, y: newY };
+          onMove({ x: e.clientX, y: e.clientY });
+        }
+      });
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, [clickOffset, onMove]);
+
+  return createPortal(
+    <div
+      ref={draggedNodeRef}
+      className={cn(
+        nodeVariants({ variant, className }),
+        'transition-all fixed pointer-events-none z-[9999] !cursor-grab rotate-[-4deg]'
       )}
+      style={{
+        left: 0,
+        top: 0,
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        transform: `translate(${initialPosition.x}px, ${initialPosition.y}px) rotate(0)`,
+        willChange: 'transform',
+        transformOrigin: 'top left',
+        transition: 'transform 0.1s ease',
+      }}
+    >
+      <div
+        className="absolute top-2 -left-6 bg-background rounded-4 shadow-md size-4 flex items-center justify-center !cursor-grab"
+        data-draggable-node-id={nodeId}
+      >
+        <RiDraggable className="size-3 text-text-soft" />
+      </div>
       <span>{children}</span>
-    </div>
+    </div>,
+    document.body
+  );
+};
+
+export const Node = (props: BaseNodeProps) => {
+  const {
+    children,
+    variant,
+    className,
+    pill,
+    onPillClick,
+    nodeId,
+    isDraggable = true,
+    isDragHandleVisible = false,
+    onNodeDragStart,
+    onNodeDragMove,
+    onNodeDragEnd,
+    ...rest
+  } = props;
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isPotentialDrag, setIsPotentialDrag] = useState(false);
+  const [mouseDownPosition, setMouseDownPosition] = useState<{ x: number; y: number } | null>(null);
+  const [dragInfo, setDragInfo] = useState<{
+    initial: { x: number; y: number };
+    offset: { x: number; y: number };
+  } | null>(null);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isDraggable || !nodeId) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const rect = nodeRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      // Calculate the offset of the click position relative to the node's top-left corner
+      const offsetX = e.clientX - rect.left;
+      const offsetY = e.clientY - rect.top;
+
+      const initialPosition = {
+        x: e.clientX - offsetX,
+        y: e.clientY - offsetY,
+      };
+
+      // Store info for potential drag but don't start dragging yet
+      setIsPotentialDrag(true);
+      setMouseDownPosition({ x: e.clientX, y: e.clientY });
+      setDragInfo({
+        initial: initialPosition,
+        offset: { x: offsetX, y: offsetY },
+      });
+    },
+    [isDraggable, nodeId]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+      setDragInfo(null);
+      if (onNodeDragEnd) {
+        onNodeDragEnd();
+      }
+    }
+
+    // Reset potential drag state
+    setIsPotentialDrag(false);
+    setMouseDownPosition(null);
+  }, [isDragging, onNodeDragEnd]);
+
+  useEffect(() => {
+    if (isDragging || isPotentialDrag) {
+      document.addEventListener('mouseup', handleMouseUp);
+
+      return () => {
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, isPotentialDrag, handleMouseUp]);
+
+  // Monitor mouse movement after mouse down to start drag
+  useEffect(() => {
+    if (!isPotentialDrag || !mouseDownPosition || !onNodeDragStart) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Check if mouse has moved enough to start dragging (5px threshold)
+      const dx = Math.abs(e.clientX - mouseDownPosition.x);
+      const dy = Math.abs(e.clientY - mouseDownPosition.y);
+
+      if (dx > 5 || dy > 5) {
+        // Start the actual drag
+        setIsDragging(true);
+        setIsPotentialDrag(false);
+
+        if (onNodeDragStart && nodeId) {
+          onNodeDragStart(nodeId, { x: e.clientX, y: e.clientY });
+        }
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isPotentialDrag, mouseDownPosition, onNodeDragStart, nodeId]);
+
+  return (
+    <>
+      <div
+        ref={nodeRef}
+        className={cn('cursor-pointer', nodeVariants({ variant, className }))}
+        data-droppable-node-id={nodeId}
+        {...rest}
+      >
+        {isDragHandleVisible && (
+          <motion.div
+            className="action-bar-trigger pointer-events-auto absolute top-0 -left-8 z-50 p-2"
+            initial={{ opacity: 0 }}
+            animate={{
+              opacity: 1,
+              transition: {
+                delay: 0.6,
+                ease: 'easeInOut',
+              },
+            }}
+            exit={{
+              opacity: 0,
+              transition: {
+                duration: 0.15,
+                ease: 'easeInOut',
+              },
+            }}
+            onMouseDown={handleMouseDown}
+            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+          >
+            <div className="bg-background rounded-4 shadow-md size-4 flex items-center justify-center cursor-grab border border-neutral-200">
+              <RiDraggable className="size-3 text-text-soft" />
+            </div>
+          </motion.div>
+        )}
+        {pill && (
+          <div
+            className="border-neutral-alpha-200 text-foreground-600 absolute left-0 top-0 flex -translate-y-full items-center gap-1 rounded-t-lg border border-b-0 bg-neutral-50 px-1.5 py-0.5 text-xs font-medium"
+            onClick={onPillClick}
+          >
+            {pill}
+          </div>
+        )}
+        <span>{children}</span>
+      </div>
+      {isDragging && dragInfo && (
+        <DraggedNode
+          variant={variant}
+          initialPosition={dragInfo.initial}
+          clickOffset={dragInfo.offset}
+          onMove={onNodeDragMove}
+          nodeId={nodeId}
+        >
+          {children}
+        </DraggedNode>
+      )}
+    </>
   );
 };

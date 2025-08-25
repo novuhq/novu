@@ -93,20 +93,6 @@ describe('Upsert Workflow #novu-v2', () => {
     });
 
     describe('email step layoutId functionality', () => {
-      beforeEach(async () => {
-        // @ts-ignore - Setting environment variables
-        process.env.IS_LAYOUTS_PAGE_ACTIVE = 'true';
-        // @ts-ignore - Setting environment variables
-        process.env.IS_HTML_EDITOR_ENABLED = 'true';
-      });
-
-      afterEach(async () => {
-        // @ts-ignore - Setting environment variables
-        process.env.IS_LAYOUTS_PAGE_ACTIVE = 'false';
-        // @ts-ignore - Setting environment variables
-        process.env.IS_HTML_EDITOR_ENABLED = 'false';
-      });
-
       it('should skip layout rendering when converting Maily JSON to HTML with assigned layoutId', async () => {
         // First create a layout with distinctive HTML content
         const layout = await createLayout({

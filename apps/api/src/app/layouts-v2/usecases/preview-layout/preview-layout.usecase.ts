@@ -59,7 +59,6 @@ export class PreviewLayoutUsecase {
       );
 
       const { previewTemplateData } = this.controlValueSanitizer.processControlValues(
-        true,
         sanitizedControls,
         variableSchema,
         variablesObject

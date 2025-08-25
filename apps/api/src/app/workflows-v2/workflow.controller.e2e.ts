@@ -1036,7 +1036,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
     describe('steps validation', () => {
       it('should throw 400 when name is empty', async () => {
-        // @ts-ignore
+        // @ts-expect-error
         const overrideDto = { steps: [{ ...buildEmailStep(), name: '' } as unknown as StepUpsertDto] };
         const createWorkflowDto: CreateWorkflowDto = buildWorkflow();
         const dtoWithoutName = { ...createWorkflowDto, ...overrideDto };
@@ -1090,9 +1090,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         });
 
         it('should always show issues for illegal variables in control values', async () => {
-          const oldIsHtmlEditorEnabled = process.env.IS_HTML_EDITOR_ENABLED;
-          // @ts-ignore
-          process.env.IS_HTML_EDITOR_ENABLED = 'false';
           const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
             steps: [
               {
@@ -1110,9 +1107,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           expect(stepData.issues?.controls?.body, 'Step data should have body issues').to.exist;
           expect(stepData.issues?.controls?.body?.[0]?.variableName).to.equal('{{}}');
           expect(stepData.issues?.controls?.body?.[0]?.issueType).to.equal('ILLEGAL_VARIABLE_IN_CONTROL_VALUE');
-
-          // @ts-ignore
-          process.env.IS_HTML_EDITOR_ENABLED = oldIsHtmlEditorEnabled;
         });
       });
     });
