@@ -22,6 +22,8 @@ interface IUserConfig {
   appId?: string;
   subscriberId?: string;
   region: string;
+  backendUrl?: string;
+  socketUrl?: string;
   packageManager: IPackageManager;
   overwriteComponents: boolean;
   updateEnvExample: boolean;
@@ -40,7 +42,7 @@ interface IPackageJson {
 
 async function promptUserConfiguration(analytics?: AnalyticsService): Promise<IUserConfig | null> {
   // Parse command line arguments
-  const { appId, subscriberId, region } = parseCommandLineArgs();
+  const { appId, subscriberId, region, backendUrl, socketUrl } = parseCommandLineArgs();
 
   // Detect framework first
   const detectedFramework = detectFramework();
@@ -54,12 +56,25 @@ async function promptUserConfiguration(analytics?: AnalyticsService): Promise<IU
     return null;
   }
 
+  // Determine effective region and show warnings
+  let effectiveRegion = region;
+  if (backendUrl || socketUrl) {
+    // When custom URLs are provided, region is not needed
+    if (region !== 'us') {
+      logger.warning('\n⚠️  Custom backend/socket URLs provided. Region parameter will be ignored.');
+      logger.gray('   The custom URLs will take precedence over region-based configuration.');
+    }
+    effectiveRegion = 'us'; // Default to 'us' when custom URLs are provided
+  }
+
   // Use detected framework directly without prompting
   const initialResponses: Partial<IUserConfig> = {
     framework: detectedFramework,
     appId,
     subscriberId,
-    region,
+    region: effectiveRegion,
+    backendUrl,
+    socketUrl,
   };
 
   // Detect package manager
@@ -352,18 +367,72 @@ function validateRegion(region: string): boolean {
   return true;
 }
 
+function validateBackendUrl(backendUrl: string | undefined): boolean {
+  if (backendUrl === undefined || backendUrl === null) return true; // Optional
+  if (typeof backendUrl !== 'string' || backendUrl.trim().length === 0) {
+    logger.error('Invalid backendUrl provided. It must be a non-empty string.');
+
+    return false;
+  }
+
+  // URL validation with HTTP/HTTPS protocol enforcement
+  try {
+    const url = new URL(backendUrl);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      logger.error('Invalid backendUrl provided. Backend URL must use HTTP or HTTPS protocol.');
+      
+      return false;
+    }
+  } catch {
+    logger.error('Invalid backendUrl provided. It must be a valid URL.');
+
+    return false;
+  }
+
+  return true;
+}
+
+function validateSocketUrl(socketUrl: string | undefined): boolean {
+  if (socketUrl === undefined || socketUrl === null) return true; // Optional
+  if (typeof socketUrl !== 'string' || socketUrl.trim().length === 0) {
+    logger.error('Invalid socketUrl provided. It must be a non-empty string.');
+
+    return false;
+  }
+
+  // URL validation with WebSocket protocol enforcement
+  try {
+    const url = new URL(socketUrl);
+    if (url.protocol !== 'ws:' && url.protocol !== 'wss:') {
+      logger.error('Invalid socketUrl provided. WebSocket URL must use WS or WSS protocol.');
+      
+      return false;
+    }
+  } catch {
+    logger.error('Invalid socketUrl provided. It must be a valid URL.');
+
+    return false;
+  }
+
+  return true;
+}
+
 function parseCommandLineArgs() {
   const program = new Command();
   program
     .option('--appId <id>', 'Novu Application Identifier')
     .option('--subscriberId <id>', 'Novu Subscriber Identifier')
-    .option('--region <region>', 'Novu Region (eu or us)', 'us')
+    .option('--region <region>', 'Novu Region (eu or us). Optional when using custom URLs.', 'us')
+    .option('--backendUrl <url>', 'Custom backend URL for Novu API')
+    .option('--socketUrl <url>', 'Custom socket URL for Novu WebSocket connection')
     .parse(process.argv);
 
   return {
     appId: program.opts().appId,
     subscriberId: program.opts().subscriberId,
     region: program.opts().region,
+    backendUrl: program.opts().backendUrl,
+    socketUrl: program.opts().socketUrl,
   };
 }
 
@@ -381,7 +450,7 @@ function validateProjectStructure() {
 }
 
 async function performInstallation(config: IUserConfig, analytics?: AnalyticsService) {
-  const { framework, packageManager, overwriteComponents, updateEnvExample, appId, subscriberId, region } = config;
+  const { framework, packageManager, overwriteComponents, updateEnvExample, appId, subscriberId, region, backendUrl, socketUrl } = config;
 
   try {
     logger.step(1, 'Checking framework and package manager');
@@ -390,6 +459,12 @@ async function performInstallation(config: IUserConfig, analytics?: AnalyticsSer
     logger.gray(`    Setup: ${framework.setup}`);
     logger.success(`  ✓ Detected package manager: ${logger.bold(packageManager.name)}`);
     logger.success(`  ✓ Region: ${logger.bold(region)}`);
+    if (backendUrl) {
+      logger.success(`  ✓ Custom backend URL: ${logger.bold(backendUrl)}`);
+    }
+    if (socketUrl) {
+      logger.success(`  ✓ Custom socket URL: ${logger.bold(socketUrl)}`);
+    }
 
     logger.step(2, 'Installing dependencies');
     await installDependencies(framework, packageManager, analytics);
@@ -399,7 +474,9 @@ async function performInstallation(config: IUserConfig, analytics?: AnalyticsSer
       framework,
       overwriteComponents,
       subscriberId || null,
-      region as 'us' | 'eu' | undefined
+      region as 'us' | 'eu' | undefined,
+      backendUrl || null,
+      socketUrl || null
     );
 
     if (updateEnvExample) {
@@ -492,7 +569,7 @@ function trackCliCompleted(analytics: AnalyticsService, config: IUserConfig, con
 }
 
 async function init() {
-  const { appId, subscriberId, region } = parseCommandLineArgs();
+  const { appId, subscriberId, region, backendUrl, socketUrl } = parseCommandLineArgs();
   const analytics = new AnalyticsService(subscriberId);
   let config: IUserConfig | null = null;
   let errorOrCancelled = false;
@@ -502,13 +579,19 @@ async function init() {
     analytics.track({ event: AnalyticsEventEnum.CLI_STARTED });
 
     // Parse and validate command line arguments
-    const argsValid = validateAppId(appId) && validateSubscriberId(subscriberId) && validateRegion(region);
+    const argsValid = validateAppId(appId) && 
+                     validateSubscriberId(subscriberId) && 
+                     validateRegion(region) &&
+                     validateBackendUrl(backendUrl) &&
+                     validateSocketUrl(socketUrl);
     if (!argsValid) {
       trackCliError(analytics, 'Invalid command line arguments', undefined, {
         step: 'validateArgs',
         appId,
         subscriberId,
         region,
+        backendUrl,
+        socketUrl,
       });
       errorOrCancelled = true;
       process.exit(1);
@@ -547,7 +630,7 @@ async function init() {
       trackCliCompleted(analytics, config);
     }
   } catch (error) {
-    trackCliError(analytics, error, config ?? undefined, { step: 'init', appId, subscriberId, region });
+    trackCliError(analytics, error, config ?? undefined, { step: 'init', appId, subscriberId, region, backendUrl, socketUrl });
     logger.error('\n❌ An unexpected error occurred:');
     logger.error(error instanceof Error ? error.message : String(error));
     errorOrCancelled = true;
@@ -566,4 +649,4 @@ if (typeof require !== 'undefined' && require.main === module) {
   });
 }
 
-export { init, parseCommandLineArgs, validateAppId, validateSubscriberId, validateProjectStructure, validateRegion };
+export { init, parseCommandLineArgs, validateAppId, validateSubscriberId, validateProjectStructure, validateRegion, validateBackendUrl, validateSocketUrl };
