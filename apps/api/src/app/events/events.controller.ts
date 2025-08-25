@@ -39,7 +39,7 @@ import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/proces
 import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
-export function RequestAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnum.BASIC) {
+function RequestAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnum.BASIC) {
   return (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) => {
     // Set analytics strategy as a property on the method
     const originalMethod = descriptor.value;
