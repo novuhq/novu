@@ -69,8 +69,8 @@ export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsT
         month: 'short',
         day: 'numeric',
       }),
-      success: dataPoint.success,
-      pending: dataPoint.pending,
+      completed: dataPoint.completed,
+      processing: dataPoint.processing,
       error: dataPoint.error,
       timestamp: dataPoint.timestamp,
     }));
@@ -78,7 +78,7 @@ export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsT
 
   const hasDataChecker = useCallback(
     createDateBasedHasDataChecker<WorkflowRunsChartData>((dataPoint: WorkflowRunsChartData) => {
-      return (dataPoint.success || 0) > 0 || (dataPoint.pending || 0) > 0 || (dataPoint.error || 0) > 0;
+      return (dataPoint.completed || 0) > 0 || (dataPoint.processing || 0) > 0 || (dataPoint.error || 0) > 0;
     }),
     []
   );
@@ -100,8 +100,8 @@ export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsT
             domain={['dataMin', 'dataMax']}
           />
           {includeTooltip && <ChartTooltip cursor={false} content={<NovuTooltip showTotal={false} />} />}
-          <Line dataKey="success" name="Completed" stroke="#34d399" strokeWidth={2} dot={false} type="monotone" />
-          <Line dataKey="pending" name="Pending" stroke="#facc15" strokeWidth={2} dot={false} type="monotone" />
+          <Line dataKey="completed" name="Completed" stroke="#34d399" strokeWidth={2} dot={false} type="monotone" />
+          <Line dataKey="processing" name="Processing" stroke="#facc15" strokeWidth={2} dot={false} type="monotone" />
           <Line dataKey="error" name="Error" stroke="#ef4444" strokeWidth={2} dot={false} type="monotone" />
         </LineChart>
       </ChartContainer>

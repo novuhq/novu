@@ -18,6 +18,7 @@ import { GetRequest } from './usecases/get-request/get-request.usecase';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
+import { WorkflowRunService } from '@novu/application-generic';
 
 const USE_CASES = [
   GetRequests,
@@ -37,6 +38,7 @@ const USE_CASES = [
   BuildTotalInteractionsChart,
   BuildWorkflowRunsTrendChart,
   GetRequest,
+  WorkflowRunService,
 ];
 
 @Module({

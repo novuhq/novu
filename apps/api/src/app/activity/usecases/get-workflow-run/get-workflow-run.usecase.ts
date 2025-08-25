@@ -60,7 +60,7 @@ export class GetWorkflowRun {
 
       const workflowRun = workflowRunResult.data;
       const stepRuns = await this.getStepRunsForWorkflowRun(command, workflowRun);
-      const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns);
+      const workflowRunDto = await this.mapWorkflowRunToDto(workflowRun, stepRuns);
 
       return workflowRunDto;
     } catch (error) {
@@ -146,6 +146,7 @@ export class GetWorkflowRun {
           executionDetailsByEntityId.set(trace.entity_id, []);
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: <explanation> because we otherwise the if statement would set it to the map
         executionDetailsByEntityId.get(trace.entity_id)!.push({
           _id: trace.id,
           detail: trace.title,
@@ -236,7 +237,10 @@ export class GetWorkflowRun {
     return new Date(isoFormat);
   }
 
-  private mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: IStepRunWithDetails[]): GetWorkflowRunResponseDto {
+  private async mapWorkflowRunToDto(
+    workflowRun: WorkflowRun,
+    stepRuns: IStepRunWithDetails[]
+  ): Promise<GetWorkflowRunResponseDto> {
     return {
       id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
@@ -245,7 +249,8 @@ export class GetWorkflowRun {
       environmentId: workflowRun.environment_id,
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
-      status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns),
+      status: mapWorkflowRunStatusToDto(workflowRun.status),
+      deliveryLifecycleStatus: workflowRun.delivery_lifecycle_status,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

@@ -1,8 +1,10 @@
 import {
   GetSubscriberTemplatePreference,
   GetWorkflowByIdsUseCase,
+  MessageInteractionService,
   StorageHelperService,
   UpsertControlValuesUseCase,
+  WorkflowRunService,
 } from '@novu/application-generic';
 import { CommunityUserRepository } from '@novu/dal';
 import { GenerateUniqueApiKey } from '../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
@@ -46,4 +48,6 @@ export const USE_CASES = [
   ParseEventRequest,
   VerifyPayload,
   StorageHelperService,
+  MessageInteractionService,
+  WorkflowRunService,
 ];

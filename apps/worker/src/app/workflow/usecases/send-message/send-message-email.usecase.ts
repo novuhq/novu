@@ -31,6 +31,8 @@ import {
 import { EmailOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -46,7 +48,7 @@ import inlineCss from 'inline-css';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageEmail';
 
@@ -119,8 +121,8 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
       };
     }
 
@@ -153,8 +155,8 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
@@ -269,8 +271,8 @@ export class SendMessageEmail extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, error.message);
 
       return {
-        status: 'failed',
-        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -423,8 +425,11 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return {
-        status: 'skipped',
-        reason: DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS,
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_EMAIL,
+        },
       };
     }
 
@@ -446,14 +451,14 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
     return {
-      status: 'failed',
-      reason: DetailEnum.PROVIDER_ERROR,
+      status: SendMessageStatus.FAILED,
+      errorMessage: DetailEnum.PROVIDER_ERROR,
     };
   }
 
@@ -508,8 +513,8 @@ export class SendMessageEmail extends SendMessageBase {
 
       if (!result?.id) {
         return {
-          status: 'failed',
-          reason: DetailEnum.PROVIDER_ERROR,
+          status: SendMessageStatus.FAILED,
+          errorMessage: DetailEnum.PROVIDER_ERROR,
         };
       }
 
@@ -523,7 +528,7 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return {
-        status: 'success',
+        status: SendMessageStatus.SUCCESS,
       };
     } catch (error) {
       await this.sendErrorStatus(
@@ -570,8 +575,8 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.PROVIDER_ERROR,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.PROVIDER_ERROR,
       };
     }
   }
