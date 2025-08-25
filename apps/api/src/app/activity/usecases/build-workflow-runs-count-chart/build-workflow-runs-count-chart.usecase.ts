@@ -5,10 +5,12 @@ import {
   QueryBuilder,
   WorkflowRun,
   WorkflowRunRepository,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { WorkflowRunsCountDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildWorkflowRunsCountChartCommand } from './build-workflow-runs-count-chart.command';
-
+import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
+ 
 @Injectable()
 export class BuildWorkflowRunsCountChart {
   constructor(
@@ -60,7 +62,20 @@ export class BuildWorkflowRunsCountChart {
       }
 
       if (statuses?.length) {
-        queryBuilder.whereIn('status', statuses);
+        const mappedStatuses = statuses.map((status) => { //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
+          if (status === WorkflowRunStatusDtoEnum.PROCESSING) {
+            return [WorkflowRunStatusEnum.PENDING, WorkflowRunStatusEnum.PROCESSING];
+          }
+          if (status === WorkflowRunStatusDtoEnum.COMPLETED) {
+            return [WorkflowRunStatusEnum.SUCCESS, WorkflowRunStatusEnum.COMPLETED];
+          }
+          if (status === WorkflowRunStatusDtoEnum.ERROR) {
+            return [WorkflowRunStatusEnum.ERROR];
+          }
+          return status;
+        });
+
+        queryBuilder.whereIn('status', mappedStatuses.flat());
       }
 
       if (channels?.length) {

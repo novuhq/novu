@@ -21,17 +21,21 @@ export const PreferencesListSkeleton = (props: PreferencesListSkeletonProps) => 
 
   return (
     <div
-      class={style(
-        'preferencesListEmptyNoticeContainer',
-        'nt-flex nt-flex-col nt-items-center nt-h-fit nt-w-full nt-text-sm nt-text-foreground-alpha-400 nt-text-center'
-      )}
+      class={style({
+        key: 'preferencesListEmptyNoticeContainer',
+        className:
+          'nt-flex nt-flex-col nt-items-center nt-h-fit nt-w-full nt-text-sm nt-text-foreground-alpha-400 nt-text-center',
+      })}
     >
       <Motion.div
         animate={{
           scale: props.loading ? 1 : 0.7,
         }}
         transition={{ duration: 0.6, easing: [0.39, 0.24, 0.3, 1], delay: 0.3 }}
-        class={style('preferencesList__skeleton', 'nt-flex nt-relative nt-mx-auto nt-flex-col nt-w-full nt-mb-4')}
+        class={style({
+          key: 'preferencesList__skeleton',
+          className: 'nt-flex nt-relative nt-mx-auto nt-flex-col nt-w-full nt-mb-4',
+        })}
       >
         {Array.from({ length: 5 }).map((_, i) => {
           const Icon = channelIcons[i];
@@ -44,15 +48,23 @@ export const PreferencesListSkeleton = (props: PreferencesListSkeletonProps) => 
                 borderRadius: props.loading ? 0 : 'var(--nv-radius-lg)',
               }}
               transition={{ duration: 0.5, delay: 0.3, easing: 'ease-in-out' }}
-              class={style(
-                'preferencesList__skeletonContent',
-                'nt-flex nt-border-neutral-alpha-50 nt-items-center nt-gap-3 nt-p-3 nt-bg-neutral-alpha-25'
-              )}
+              class={style({
+                key: 'preferencesList__skeletonContent',
+                className: 'nt-flex nt-border-neutral-alpha-50 nt-items-center nt-gap-3 nt-p-3 nt-bg-neutral-alpha-25',
+              })}
             >
               <Icon
-                class={style('preferencesList__skeletonIcon', 'nt-size-8 nt-p-2 nt-rounded-lg nt-bg-neutral-alpha-100')}
+                class={style({
+                  key: 'preferencesList__skeletonIcon',
+                  className: 'nt-size-8 nt-p-2 nt-rounded-lg nt-bg-neutral-alpha-100',
+                })}
               />
-              <div class={style('preferencesList__skeletonItem', 'nt-flex nt-flex-col nt-gap-2 nt-flex-1')}>
+              <div
+                class={style({
+                  key: 'preferencesList__skeletonItem',
+                  className: 'nt-flex nt-flex-col nt-gap-2 nt-flex-1',
+                })}
+              >
                 <SkeletonText
                   appearanceKey="notificationList__skeletonText"
                   class="nt-h-2 nt-w-1/3 nt-bg-neutral-alpha-50 nt-rounded"
@@ -71,10 +83,11 @@ export const PreferencesListSkeleton = (props: PreferencesListSkeletonProps) => 
           );
         })}
         <div
-          class={style(
-            'notificationListEmptyNoticeOverlay',
-            'nt-absolute nt-size-full nt-z-10 nt-inset-0 nt-bg-gradient-to-b nt-from-transparent nt-to-background'
-          )}
+          class={style({
+            key: 'notificationListEmptyNoticeOverlay',
+            className:
+              'nt-absolute nt-size-full nt-z-10 nt-inset-0 nt-bg-gradient-to-b nt-from-transparent nt-to-background',
+          })}
         />
       </Motion.div>
       <Show when={!props.loading}>
@@ -82,7 +95,10 @@ export const PreferencesListSkeleton = (props: PreferencesListSkeletonProps) => 
           initial={{ opacity: 0, y: -4, filter: 'blur(4px)' }}
           animate={{ opacity: props.loading ? 0 : 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.7, easing: [0.39, 0.24, 0.3, 1], delay: 0.6 }}
-          class={(style('preferencesListEmptyNotice'), 'nt-text-center')}
+          class={style({
+            key: 'preferencesListEmptyNotice',
+            className: 'nt-text-center',
+          })}
           data-localization="preferences.emptyNotice"
         >
           {t('preferences.emptyNotice')}

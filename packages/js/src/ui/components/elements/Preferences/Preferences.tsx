@@ -1,5 +1,5 @@
 import { createEffect, createMemo, Show } from 'solid-js';
-
+import { AppearanceCallback } from 'src/ui/types';
 import { Preference } from '../../../../preferences/preference';
 import { ChannelPreference, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
@@ -23,7 +23,7 @@ export const Preferences = () => {
   });
 
   const allPreferences = createMemo(() => {
-    const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
+    const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL)!;
     const workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
 
     return { globalPreference, workflowPreferences };
@@ -103,10 +103,14 @@ export const Preferences = () => {
 
   return (
     <div
-      class={style(
-        'preferencesContainer',
-        'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]'
-      )}
+      class={style({
+        key: 'preferencesContainer',
+        className:
+          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
+        context: { preferences: preferences(), groups: groupedPreferences() } satisfies Parameters<
+          AppearanceCallback['preferencesContainer']
+        >[0],
+      })}
     >
       <PreferencesRow
         iconKey="cogs"

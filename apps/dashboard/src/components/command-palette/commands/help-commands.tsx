@@ -38,19 +38,7 @@ export function useHelpCommands(_context: CommandExecutionContext): Command[] {
         }
       },
     },
-    {
-      id: 'help-shortcuts',
-      label: 'Keyboard Shortcuts',
-      description: 'View all available keyboard shortcuts',
-      category: 'help',
-      icon: <RiQuestionLine />,
-      priority: 'low',
-      keywords: ['shortcuts', 'keyboard', 'hotkeys', 'commands'],
-      execute: () => {
-        // TODO: Implement shortcuts modal in later phase
-        console.log('Keyboard shortcuts modal coming soon...');
-      },
-    },
+
   ];
 
   if (import.meta.env.VITE_INKEEP_API_KEY) {

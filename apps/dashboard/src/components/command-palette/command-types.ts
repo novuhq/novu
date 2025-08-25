@@ -20,7 +20,6 @@ export interface Command {
   category: CommandCategory;
   keywords?: string[];
   icon?: ReactNode;
-  shortcut?: string;
   priority?: CommandPriority;
   metadata?: {
     slug?: string;

@@ -79,7 +79,10 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
 
   return (
     <div
-      class={style(local.appearanceKey || 'timePicker', cn('nt-flex nt-items-center nt-gap-1', local.class))}
+      class={style({
+        key: local.appearanceKey || 'timePicker',
+        className: cn('nt-flex nt-items-center nt-gap-1', local.class),
+      })}
       onClick={(e) => e.stopPropagation()}
       {...rest}
     >
@@ -98,13 +101,14 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
           enforceMinMax(e.currentTarget);
           handleHourChange(Number(e.currentTarget.value));
         }}
-        class={style(
-          'timePickerHour__input',
-          'nt-flex nt-font-mono nt-justify-center nt-items-center nt-text-center nt-h-7 nt-w-[calc(2ch+2rem)] nt-px-2'
-        )}
+        class={style({
+          key: 'timePickerHour__input',
+          className:
+            'nt-flex nt-font-mono nt-justify-center nt-items-center nt-text-center nt-h-7 nt-w-[calc(2ch+2rem)] nt-px-2',
+        })}
       />
 
-      <span class={style('timePicker__separator', 'nt-text-xl')}>:</span>
+      <span class={style({ key: 'timePicker__separator', className: 'nt-text-xl' })}>:</span>
 
       <Input
         size="sm"
@@ -121,14 +125,18 @@ export const TimePicker: Component<TimePickerProps> = (props) => {
           enforceMinMax(e.currentTarget);
           handleMinuteChange(Number(e.currentTarget.value));
         }}
-        class={style(
-          'timePickerHour__input',
-          'nt-flex nt-font-mono nt-justify-center nt-items-center nt-text-center nt-h-7 nt-w-[calc(2ch+2rem)] nt-px-2'
-        )}
+        class={style({
+          key: 'timePickerHour__input',
+          className:
+            'nt-flex nt-font-mono nt-justify-center nt-items-center nt-text-center nt-h-7 nt-w-[calc(2ch+2rem)] nt-px-2',
+        })}
       />
 
       <select
-        class={style('timePicker__periodSelect', `${inputVariants({ size: 'sm' })} nt-h-7 nt-font-mono`)}
+        class={style({
+          key: 'timePicker__periodSelect',
+          className: cn(inputVariants({ size: 'sm' }), 'nt-h-7 nt-font-mono'),
+        })}
         value={isPM() ? 'PM' : 'AM'}
         onClick={(e) => e.stopPropagation()}
         onChange={(e) => {

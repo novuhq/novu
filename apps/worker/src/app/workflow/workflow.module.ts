@@ -25,6 +25,7 @@ import {
   TriggerEvent,
   TriggerMulticast,
   WorkflowInMemoryProviderService,
+  WorkflowRunService,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -173,6 +174,7 @@ const USE_CASES = [
   InboundEmailParse,
   ExecuteBridgeJob,
   GetPreferences,
+  WorkflowRunService,
 ];
 
 const PROVIDERS: Provider[] = [];

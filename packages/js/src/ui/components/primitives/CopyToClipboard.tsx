@@ -38,7 +38,12 @@ export function CopyToClipboard(props: CopyToClipboardProps) {
     <Tooltip.Root open={isCopied()} placement="top" animationDuration={0.15}>
       <Tooltip.Trigger
         asChild={(triggerProps) => (
-          <button type="button" {...triggerProps} onClick={handleCopy} class={style('button', 'nt-cursor-pointer')}>
+          <button
+            type="button"
+            {...triggerProps}
+            onClick={handleCopy}
+            class={style({ key: 'button', className: 'nt-cursor-pointer' })}
+          >
             {props.children}
           </button>
         )}
