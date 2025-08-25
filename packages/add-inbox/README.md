@@ -62,9 +62,9 @@ When using custom backend and socket URLs, the generated component will include 
   applicationIdentifier={process.env.NEXT_PUBLIC_NOVU_APP_ID}
   subscriberId={subscriberId}
   backendUrl="https://api.my-novu-instance.com"
-  socketUrl="https://ws.my-novu-instance.com"
+  socketUrl="wss://ws.my-novu-instance.com"
   // ... other props
 />
 ```
 
-If no custom URLs are provided, the component will use Novu's default URLs or region-specific URLs (EU region uses `https://eu.api.novu.co` and `https://eu.ws.novu.co`).
+If no custom URLs are provided, the component will use Novu's default URLs or region-specific URLs (EU region uses `https://eu.api.novu.co` and `wss://eu.ws.novu.co`).
