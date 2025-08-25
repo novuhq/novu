@@ -6,6 +6,7 @@ import {
 } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   SmsProviderIdEnum,
   StepTypeEnum,
@@ -148,7 +149,9 @@ export class GetActiveIntegrationsStatus {
   ) {
     const primaryNovuProviders = activeIntegrations.filter(
       (integration) =>
-        (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) &&
+        (integration.providerId === EmailProviderIdEnum.Novu ||
+          integration.providerId === SmsProviderIdEnum.Novu ||
+          integration.providerId === ChatProviderIdEnum.Novu) &&
         integration.primary
     );
 

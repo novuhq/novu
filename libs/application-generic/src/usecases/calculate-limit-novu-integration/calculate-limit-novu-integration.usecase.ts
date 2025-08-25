@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { endOfMonth, startOfMonth } from 'date-fns';
 
 import { areNovuEmailCredentialsSet, areNovuSmsCredentialsSet } from '../../utils/novu-integrations';
@@ -13,6 +13,8 @@ export class CalculateLimitNovuIntegration {
   static MAX_NOVU_INTEGRATION_MAIL_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_MAIL_REQUESTS || '300', 10);
 
   static MAX_NOVU_INTEGRATION_SMS_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_SMS_REQUESTS || '20', 10);
+
+  static MAX_NOVU_INTEGRATION_CHAT_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_CHAT_REQUESTS || '300', 10);
 
   async execute(command: CalculateLimitNovuIntegrationCommand): Promise<{ limit: number; count: number } | undefined> {
     const { channelType } = command;
@@ -30,10 +32,7 @@ export class CalculateLimitNovuIntegration {
     if (providerId === undefined) {
       return;
     }
-    const limit =
-      channelType === ChannelTypeEnum.EMAIL
-        ? CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS
-        : CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_SMS_REQUESTS;
+    const limit = CalculateLimitNovuIntegration.getLimit(channelType);
 
     const messagesCount = await this.messageRepository.count(
       {
@@ -60,8 +59,23 @@ export class CalculateLimitNovuIntegration {
         return EmailProviderIdEnum.Novu;
       case ChannelTypeEnum.SMS:
         return SmsProviderIdEnum.Novu;
+      case ChannelTypeEnum.CHAT:
+        return ChatProviderIdEnum.Novu;
       default:
         return undefined;
+    }
+  }
+
+  static getLimit(type: ChannelTypeEnum): number {
+    switch (type) {
+      case ChannelTypeEnum.EMAIL:
+        return CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS;
+      case ChannelTypeEnum.SMS:
+        return CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_SMS_REQUESTS;
+      case ChannelTypeEnum.CHAT:
+        return CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_CHAT_REQUESTS;
+      default:
+        return 0;
     }
   }
 }

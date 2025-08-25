@@ -14,6 +14,7 @@ export class ChatOauthCallback {
 
     switch (providerId) {
       case ChatProviderIdEnum.Slack:
+      case ChatProviderIdEnum.Novu:
         return await this.slackOauthCallback.execute(
           SlackOauthCallbackCommand.create({
             providerCode: command.providerCode,

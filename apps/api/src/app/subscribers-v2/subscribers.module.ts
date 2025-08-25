@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import {
   analyticsService,
   CacheInMemoryProviderService,
+  CalculateLimitNovuIntegration,
   CreateOrUpdateSubscriberUseCase,
   cacheService,
   featureFlagsService,
+  GetNovuProviderCredentials,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetWorkflowByIdsUseCase,
@@ -96,6 +98,8 @@ const DAL_MODELS = [
     CommunityOrganizationRepository,
     featureFlagsService,
     EnvironmentRepository,
+    GetNovuProviderCredentials,
+    CalculateLimitNovuIntegration,
   ],
 })
 export class SubscribersModule {}

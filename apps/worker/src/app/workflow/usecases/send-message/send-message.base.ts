@@ -19,6 +19,7 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -80,7 +81,11 @@ export abstract class SendMessageBase extends SendMessageType {
       return;
     }
 
-    if (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) {
+    if (
+      integration.providerId === EmailProviderIdEnum.Novu ||
+      integration.providerId === SmsProviderIdEnum.Novu ||
+      integration.providerId === ChatProviderIdEnum.Novu
+    ) {
       integration.credentials = await this.getNovuProviderCredentials.execute({
         channelType: integration.channel,
         providerId: integration.providerId,

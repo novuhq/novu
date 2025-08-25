@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash } from '@novu/application-generic';
+import { createHash, GetNovuProviderCredentials, GetNovuProviderCredentialsCommand } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
@@ -30,12 +30,14 @@ export class GenerateSlackOauthUrl {
 
   constructor(
     private integrationRepository: IntegrationRepository,
-    private environmentRepository: EnvironmentRepository
+    private environmentRepository: EnvironmentRepository,
+    private getNovuProviderCredentials: GetNovuProviderCredentials
   ) {}
 
   async execute(command: GenerateSlackOauthUrlCommand): Promise<string> {
-    const { clientId } = await this.getIntegrationCredentials(command);
-    const secureState = await this.createSecureState(command);
+    const integration = await this.getIntegration(command);
+    const { clientId } = await this.getIntegrationCredentials(integration);
+    const secureState = await this.createSecureState(integration, command.subscriberId);
 
     return this.getOAuthUrl(clientId!, secureState);
   }
@@ -51,18 +53,20 @@ export class GenerateSlackOauthUrl {
     return `${this.SLACK_OAUTH_URL}${oauthParams.toString()}`;
   }
 
-  private async createSecureState(command: GenerateSlackOauthUrlCommand): Promise<string> {
+  private async createSecureState(integration: IntegrationEntity, subscriberId: string): Promise<string> {
+    const { _environmentId, _organizationId, identifier, providerId } = integration;
+
     const stateData: StateData = {
-      subscriberId: command.subscriberId,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      integrationIdentifier: command.integrationIdentifier,
-      providerId: ChatProviderIdEnum.Slack,
+      subscriberId,
+      environmentId: _environmentId,
+      organizationId: _organizationId,
+      integrationIdentifier: identifier,
+      providerId: providerId as ChatProviderIdEnum,
       timestamp: Date.now(),
     };
 
     const payload = JSON.stringify(stateData);
-    const secret = await this.getEnvironmentApiKey(command.environmentId);
+    const secret = await this.getEnvironmentApiKey(_environmentId);
     const signature = createHash(secret, payload);
 
     return Buffer.from(`${payload}.${signature}`).toString('base64url');
@@ -111,36 +115,47 @@ export class GenerateSlackOauthUrl {
     return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
-  private async getIntegrationCredentials(command: GenerateSlackOauthUrlCommand): Promise<ICredentialsEntity> {
-    const integration = await this.findSlackIntegration(command);
+  private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
+    if (integration.providerId === ChatProviderIdEnum.Novu) {
+      return this.getDemoNovuSlackCredentials(integration);
+    }
 
-    if (!integration.credentials?.clientId) {
-      throw new NotFoundException(`Slack integration missing clientId in environment ${command.environmentId}`);
+    if (!integration.credentials) {
+      throw new NotFoundException(`Slack integration missing credentials `);
+    }
+
+    if (!integration.credentials.clientId) {
+      throw new NotFoundException(`Slack integration missing required OAuth credentials (clientId) `);
     }
 
     return integration.credentials;
   }
 
-  private async findSlackIntegration(command: GenerateSlackOauthUrlCommand): Promise<IntegrationEntity> {
-    const query: Partial<IntegrationEntity> & { _environmentId: string } = {
+  private async getDemoNovuSlackCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
+    return await this.getNovuProviderCredentials.execute(
+      GetNovuProviderCredentialsCommand.create({
+        channelType: integration.channel,
+        providerId: integration.providerId,
+        environmentId: integration._environmentId,
+        organizationId: integration._organizationId,
+        userId: 'system',
+      })
+    );
+  }
+
+  private async getIntegration(command: GenerateSlackOauthUrlCommand): Promise<IntegrationEntity> {
+    const integration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       channel: ChannelTypeEnum.CHAT,
-      providerId: ChatProviderIdEnum.Slack,
+      providerId: { $in: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu] },
       identifier: command.integrationIdentifier,
-    };
-
-    const integration = await this.integrationRepository.findOne(query);
+    });
 
     if (!integration) {
       throw new NotFoundException(
-        `Slack integration not found in environment ${command.environmentId} ` +
-          `with identifier: ${command.integrationIdentifier}`
+        `Slack integration not found: ${command.integrationIdentifier} in environment ${command.environmentId}`
       );
-    }
-
-    if (!integration.credentials) {
-      throw new NotFoundException(`Slack integration missing credentials in environment ${command.environmentId}`);
     }
 
     return integration;

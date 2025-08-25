@@ -1,4 +1,10 @@
-import { EmailProviderIdEnum, InAppProviderIdEnum, ProvidersIdEnum, SmsProviderIdEnum } from '../../types';
+import {
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  InAppProviderIdEnum,
+  ProvidersIdEnum,
+  SmsProviderIdEnum,
+} from '../../types';
 import { chatProviders, emailProviders, inAppProviders, pushProviders, smsProviders } from './channels';
 import { IProviderConfig } from './provider.interface';
 
@@ -16,6 +22,7 @@ export const NOVU_PROVIDERS: ProvidersIdEnum[] = [
   InAppProviderIdEnum.Novu,
   SmsProviderIdEnum.Novu,
   EmailProviderIdEnum.Novu,
+  ChatProviderIdEnum.Novu,
 ];
 
 export const NOVU_SMS_EMAIL_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];

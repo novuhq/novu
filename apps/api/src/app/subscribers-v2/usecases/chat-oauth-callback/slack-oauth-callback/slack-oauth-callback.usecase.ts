@@ -1,6 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { decryptCredentials } from '@novu/application-generic';
-import { ChannelTypeEnum, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  decryptCredentials,
+  GetNovuProviderCredentials,
+  GetNovuProviderCredentialsCommand,
+} from '@novu/application-generic';
+import {
+  ChannelTypeEnum,
+  EnvironmentRepository,
+  ICredentialsEntity,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
@@ -20,14 +30,16 @@ export class SlackOauthCallback {
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
-    private createChannelEndpoint: CreateChannelEndpoint
+    private createChannelEndpoint: CreateChannelEndpoint,
+    private getNovuProviderCredentials: GetNovuProviderCredentials
   ) {}
 
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
     const stateData = await this.decodeSlackState(command.state);
     const integration = await this.getIntegration(stateData);
+    const credentials = await this.getIntegrationCredentials(integration);
 
-    const token = await this.exchangeCodeForToken(command.providerCode, integration);
+    const token = await this.exchangeCodeForToken(command.providerCode, credentials);
 
     await this.createChannelEndpoint.execute(
       CreateChannelEndpointCommand.create({
@@ -46,15 +58,13 @@ export class SlackOauthCallback {
   }
 
   private async getIntegration(stateData: StateData): Promise<IntegrationEntity> {
-    const query: Partial<IntegrationEntity> & { _environmentId: string } = {
+    const integration = await this.integrationRepository.findOne({
       _environmentId: stateData.environmentId,
       _organizationId: stateData.organizationId,
       channel: ChannelTypeEnum.CHAT,
-      providerId: ChatProviderIdEnum.Slack,
+      providerId: { $in: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu] },
       identifier: stateData.integrationIdentifier,
-    };
-
-    const integration = await this.integrationRepository.findOne(query);
+    });
 
     if (!integration) {
       throw new NotFoundException(
@@ -62,21 +72,42 @@ export class SlackOauthCallback {
       );
     }
 
-    if (!integration.credentials) {
-      throw new NotFoundException(`Slack integration missing credentials in environment ${stateData.environmentId}`);
-    }
-
-    if (!integration.credentials.clientId || !integration.credentials.secretKey) {
-      throw new NotFoundException(
-        `Slack integration missing required OAuth credentials (clientId/clientSecret) in environment ${stateData.environmentId}`
-      );
-    }
-
     return integration;
   }
 
-  private async exchangeCodeForToken(providerCode: string, integration: IntegrationEntity): Promise<string> {
-    const credentials = decryptCredentials(integration.credentials);
+  private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
+    if (integration.providerId === ChatProviderIdEnum.Novu) {
+      return this.getDemoNovuSlackCredentials(integration);
+    }
+
+    if (!integration.credentials) {
+      throw new NotFoundException(`Slack integration missing credentials `);
+    }
+
+    if (!integration.credentials.clientId || !integration.credentials.secretKey) {
+      throw new NotFoundException(`Slack integration missing required OAuth credentials (clientId/clientSecret) `);
+    }
+
+    return integration.credentials;
+  }
+
+  private async getDemoNovuSlackCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
+    return await this.getNovuProviderCredentials.execute(
+      GetNovuProviderCredentialsCommand.create({
+        channelType: integration.channel,
+        providerId: integration.providerId,
+        environmentId: integration._environmentId,
+        organizationId: integration._organizationId,
+        userId: 'system',
+      })
+    );
+  }
+
+  private async exchangeCodeForToken(
+    providerCode: string,
+    integrationCredentials: ICredentialsEntity
+  ): Promise<string> {
+    const credentials = decryptCredentials(integrationCredentials);
 
     const body = {
       redirect_uri: GenerateSlackOauthUrl.buildRedirectUri(),

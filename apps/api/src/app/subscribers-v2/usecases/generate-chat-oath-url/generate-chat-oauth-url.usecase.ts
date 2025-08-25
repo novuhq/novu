@@ -10,6 +10,7 @@ export class GenerateChatOauthUrl {
   async execute(command: GenerateChatOauthUrlCommand): Promise<string> {
     switch (command.providerId) {
       case ChatProviderIdEnum.Slack:
+      case ChatProviderIdEnum.Novu:
         return this.generateSlackOAuthUrl.execute(command);
 
       default:
