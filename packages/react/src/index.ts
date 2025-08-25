@@ -12,16 +12,18 @@ export type {
   NovuError,
   NovuOptions,
   Preference,
-  PreferenceLevel,
   PreferencesResponse,
   SocketEventNames,
   UnreadCount,
   WebSocketEvent,
 } from '@novu/js';
-export { SeverityLevelEnum } from '@novu/js';
+export { PreferenceLevel, SeverityLevelEnum } from '@novu/js';
 
 export type {
   Appearance,
+  AppearanceCallback,
+  AppearanceCallbackFunction,
+  AppearanceCallbackKeys,
   AppearanceKey,
   ElementStyles,
   Elements,

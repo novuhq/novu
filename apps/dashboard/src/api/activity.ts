@@ -491,8 +491,8 @@ export type TotalInteractionsDataPoint = {
 
 export type WorkflowRunsTrendDataPoint = {
   timestamp: string;
-  pending: number;
-  success: number;
+  processing: number;
+  completed: number;
   error: number;
 };
 

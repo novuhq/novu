@@ -21,7 +21,7 @@ export class GetRequestsCommand extends EnvironmentCommand {
 
   @IsString()
   @IsOptional()
-  public url_pattern?: string;
+  urlPattern?: string;
 
   @IsString()
   @IsOptional()

@@ -80,7 +80,7 @@ export class RequestLogResponseDto {
 export class GetRequestsResponseDto {
   @ApiProperty({ description: 'Request log data', type: [RequestLogResponseDto] })
   @Type(() => RequestLogResponseDto)
-  data: RequestLogResponseDto[];
+  data: RequestLogResponseDto[]; // todo not reuse the get request response dto, instead make it leaner
 
   @ApiProperty({ description: 'Total number of requests' })
   @IsNumber()

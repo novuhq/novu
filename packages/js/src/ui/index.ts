@@ -4,6 +4,9 @@ export type { BaseNovuUIOptions, NovuUIOptions } from './novuUI';
 export { NovuUI } from './novuUI';
 export {
   Appearance,
+  AppearanceCallback,
+  AppearanceCallbackFunction,
+  AppearanceCallbackKeys,
   AppearanceKey,
   BellRenderer,
   BodyRenderer,

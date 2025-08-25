@@ -70,31 +70,41 @@ export class BulkUpdatePreferences {
     }
 
     // deduplicate preferences by workflow document ID, it ensures we only process one update per actual workflow document
-    const workflowPreferencesMap = new Map<string, BulkUpdatePreferenceItemDto>();
+    const workflowPreferencesMap = new Map<
+      string,
+      { preference: BulkUpdatePreferenceItemDto; workflow: NotificationTemplateEntity }
+    >();
     for (const preference of command.preferences) {
       const workflow = allValidWorkflowsMap.get(preference.workflowId);
       if (workflow) {
-        workflowPreferencesMap.set(workflow._id, preference);
+        workflowPreferencesMap.set(workflow._id, {
+          preference,
+          workflow,
+        });
       }
     }
 
-    const updatePromises = Array.from(workflowPreferencesMap.entries()).map(async ([workflowId, preferenceItem]) => {
-      return this.updatePreferencesUsecase.execute(
-        UpdatePreferencesCommand.create({
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          environmentId: command.environmentId,
-          level: PreferenceLevelEnum.TEMPLATE,
-          chat: preferenceItem.chat,
-          email: preferenceItem.email,
-          in_app: preferenceItem.in_app,
-          push: preferenceItem.push,
-          sms: preferenceItem.sms,
-          workflowIdOrIdentifier: workflowId,
-          includeInactiveChannels: false,
-        })
-      );
-    });
+    const updatePromises = Array.from(workflowPreferencesMap.entries()).map(
+      async ([workflowId, { preference, workflow }]) => {
+        return this.updatePreferencesUsecase.execute(
+          UpdatePreferencesCommand.create({
+            organizationId: command.organizationId,
+            subscriberId: command.subscriberId,
+            environmentId: command.environmentId,
+            level: PreferenceLevelEnum.TEMPLATE,
+            chat: preference.chat,
+            email: preference.email,
+            in_app: preference.in_app,
+            push: preference.push,
+            sms: preference.sms,
+            workflowIdOrIdentifier: workflowId,
+            workflow,
+            includeInactiveChannels: false,
+            subscriber,
+          })
+        );
+      }
+    );
 
     const updatedPreferences = await Promise.all(updatePromises);
 

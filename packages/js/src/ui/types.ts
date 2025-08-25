@@ -1,6 +1,6 @@
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
-import type { NotificationFilter, NovuOptions, Preference, UnreadCount } from '../types';
+import { type NotificationFilter, type NovuOptions, type Preference, type UnreadCount } from '../types';
 import { appearanceKeys } from './config';
 import { Localization } from './context/LocalizationContext';
 
@@ -51,8 +51,134 @@ export type Variables = {
   colorSeverityLow?: string;
 };
 
+export type AppearanceCallback = {
+  // Bell
+  bellDot: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  bellIcon: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  bellContainer: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  severityHigh__bellContainer: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+  severityMedium__bellContainer: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+  severityLow__bellContainer: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  bellSeverityGlow: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  severityGlowHigh__bellSeverityGlow: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+  severityGlowMedium__bellSeverityGlow: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+  severityGlowLow__bellSeverityGlow: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+
+  // Preferences list shared between preferences and grouped preferences
+  preferencesContainer: (context: {
+    preferences?: Preference[];
+    groups: Array<{ name: string; preferences: Preference[] }>;
+  }) => string;
+
+  // Preference
+  workflowContainer: (context: { preference: Preference }) => string;
+  workflowLabelContainer: (context: { preference: Preference }) => string;
+  workflowLabelHeader: (context: { preference: Preference }) => string;
+  workflowLabelHeaderContainer: (context: { preference: Preference }) => string;
+  workflowLabelIcon: (context: { preference: Preference }) => string;
+  workflowLabel: (context: { preference: Preference }) => string;
+  workflowArrow__icon: (context: { preference: Preference }) => string;
+  workflowContainerRight__icon: (context: { preference: Preference }) => string;
+
+  // Channel
+  channelsContainer: (context: { preference: Preference }) => string;
+  channelName: (context: { preference: Preference }) => string;
+
+  // Channel Row shared between preferences and grouped preferences
+  channelContainer: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channelLabelContainer: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channelIconContainer: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channelLabel: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channelSwitchContainer: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channel__icon: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+
+  // Preferences Group
+  preferencesGroupContainer: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupHeader: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupLabelContainer: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupLabelIcon: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupLabel: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupActionsContainer: (context: {
+    preferenceGroup: { name: string; preferences: Preference[] };
+  }) => string;
+  preferencesGroupActionsContainerRight__icon: (context: {
+    preferenceGroup: { name: string; preferences: Preference[] };
+  }) => string;
+  preferencesGroupBody: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupChannels: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupInfo: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupInfoIcon: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupWorkflows: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+
+  // Notification list
+  notificationList: (context: { notifications: Notification[] }) => string;
+  notificationListContainer: (context: { notifications: Notification[] }) => string;
+
+  // Notification
+  notification: (context: { notification: Notification }) => string;
+  severityHigh__notification: (context: { notification: Notification }) => string;
+  severityMedium__notification: (context: { notification: Notification }) => string;
+  severityLow__notification: (context: { notification: Notification }) => string;
+  notificationBar: (context: { notification: Notification }) => string;
+  severityHigh__notificationBar: (context: { notification: Notification }) => string;
+  severityMedium__notificationBar: (context: { notification: Notification }) => string;
+  severityLow__notificationBar: (context: { notification: Notification }) => string;
+  notificationImageLoadingFallback: (context: { notification: Notification }) => string;
+  notificationImage: (context: { notification: Notification }) => string;
+  notificationContent: (context: { notification: Notification }) => string;
+  notificationTextContainer: (context: { notification: Notification }) => string;
+  notificationSubject: (context: { notification: Notification }) => string;
+  notificationBody: (context: { notification: Notification }) => string;
+  notificationDefaultActions: (context: { notification: Notification }) => string;
+  notificationCustomActions: (context: { notification: Notification }) => string;
+  notificationPrimaryAction__button: (context: { notification: Notification }) => string;
+  notificationSecondaryAction__button: (context: { notification: Notification }) => string;
+  notificationDate: (context: { notification: Notification }) => string;
+  notificationDeliveredAt__badge: (context: { notification: Notification }) => string;
+  notificationDeliveredAt__icon: (context: { notification: Notification }) => string;
+  notificationSnoozedUntil__icon: (context: { notification: Notification }) => string;
+  notificationDot: (context: { notification: Notification }) => string;
+};
+export type AppearanceCallbackKeys = keyof AppearanceCallback;
+export type AppearanceCallbackFunction<K extends AppearanceCallbackKeys> = AppearanceCallback[K];
 export type AppearanceKey = (typeof appearanceKeys)[number];
-export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
+export type Elements = Partial<
+  {
+    // regular appearance keys with static styles
+    [K in Exclude<AppearanceKey, AppearanceCallbackKeys>]: ElementStyles;
+  } & {
+    // callback keys that can be either static styles or callback functions
+    [K in Extract<AppearanceKey, AppearanceCallbackKeys>]: ElementStyles | AppearanceCallbackFunction<K>;
+  }
+>;
 
 export type IconKey =
   | 'bell'

@@ -34,6 +34,7 @@ import {
   telnyxConfig,
   termiiConfig,
   twilioConfig,
+  unifonicConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 
@@ -299,6 +300,14 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'afro-sms.png', dark: 'afro-sms.png' },
   },
   {
+    id: SmsProviderIdEnum.Unifonic,
+    displayName: 'Unifonic',
+    channel: ChannelTypeEnum.SMS,
+    credentials: unifonicConfig,
+    docReference: 'https://docs.unifonic.com/articles/#!products-documentation/getting-started-with-unifonic',
+    logoFileName: { light: 'unifonic.svg', dark: 'unifonic.svg' },
+  },
+    {
     id: SmsProviderIdEnum.Smsmode,
     displayName: 'smsmode',
     channel: ChannelTypeEnum.SMS,

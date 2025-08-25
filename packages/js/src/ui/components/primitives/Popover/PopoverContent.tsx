@@ -29,7 +29,10 @@ const PopoverContentBody = (props: PopoverContentProps) => {
   return (
     <div
       ref={setFloating}
-      class={style(local.appearanceKey || 'popoverContent', cn(popoverContentVariants(), local.class))}
+      class={style({
+        key: local.appearanceKey || 'popoverContent',
+        className: cn(popoverContentVariants(), local.class),
+      })}
       style={floatingStyles()}
       data-open={open()}
       {...rest}

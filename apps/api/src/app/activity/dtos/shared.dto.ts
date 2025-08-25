@@ -1,13 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { DeliveryLifecycleStatus } from '@novu/shared';
 import { IsIn, IsOptional, IsString } from 'class-validator';
 
 export enum WorkflowRunStatusDtoEnum {
-  SUCCESS = 'success',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
   ERROR = 'error',
-  PENDING = 'pending',
-  SKIPPED = 'skipped',
-  CANCELED = 'canceled',
-  MERGED = 'merged',
 }
 
 export class GetWorkflowRunResponseBaseDto {
@@ -46,6 +44,13 @@ export class GetWorkflowRunResponseBaseDto {
   })
   @IsIn(Object.values(WorkflowRunStatusDtoEnum))
   status: WorkflowRunStatusDtoEnum;
+
+  @ApiProperty({
+    description: 'Workflow run delivery lifecycle status',
+    enum: DeliveryLifecycleStatus,
+  })
+  @IsIn(Object.values(DeliveryLifecycleStatus))
+  deliveryLifecycleStatus: DeliveryLifecycleStatus;
 
   @ApiProperty({ description: 'Trigger identifier' })
   @IsString()

@@ -27,6 +27,9 @@ import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dt
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
+const traceFindColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'created_at'] as const;
+type TraceFindResult = Pick<Trace, (typeof traceFindColumns)[number]>;
+
 @Injectable()
 export class GetActivityFeed {
   constructor(
@@ -300,12 +303,13 @@ export class GetActivityFeed {
       where: traceQuery,
       orderBy: 'created_at',
       orderDirection: 'ASC',
+      select: traceFindColumns,
     });
 
     const executionDetailsByEntityId = new Map<string, ExecutionDetailFeedItem[]>();
 
     // Group traces by entity ID
-    const traceLogsByEntityId = new Map<string, typeof traceResult.data>();
+    const traceLogsByEntityId = new Map<string, TraceFindResult[]>();
     for (const trace of traceResult.data) {
       if (!traceLogsByEntityId.has(trace.entity_id)) {
         traceLogsByEntityId.set(trace.entity_id, []);
@@ -318,7 +322,7 @@ export class GetActivityFeed {
 
     // Convert traces to execution details for each entity
     for (const [entityId, traces] of traceLogsByEntityId) {
-      const executionDetails: ExecutionDetailFeedItem[] = traces.map((trace: Trace) => ({
+      const executionDetails: ExecutionDetailFeedItem[] = traces.map((trace: TraceFindResult) => ({
         _id: trace.id,
         providerId: undefined,
         detail: trace.title,

@@ -23,6 +23,7 @@ export * from './entities/step';
 export * from './entities/subscriber-preference';
 export * from './entities/tenant';
 export * from './entities/user';
+export * from './entities/workflow-run';
 export * from './entities/workflow-override';
 export * from './services';
 export * from './types';
