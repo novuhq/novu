@@ -1,7 +1,6 @@
 import { useFormContext } from 'react-hook-form';
-
-import { ControlInput } from '@/components/workflow-editor/control-input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { capitalize, containsHTMLEntities, containsVariables } from '@/utils/string';

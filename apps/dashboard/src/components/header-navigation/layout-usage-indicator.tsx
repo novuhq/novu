@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { RiRouteFill } from 'react-icons/ri';
+import type { IResourceDependency, IResourceDiffResult } from '@/api/environments';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import type { IResourceDiffResult, IResourceDependency } from '@/api/environments';
 
 type LayoutUsageIndicatorProps = {
   layoutResource: IResourceDiffResult;

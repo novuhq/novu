@@ -8,6 +8,7 @@ import {
   Post,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import {
   ApiRateLimitCostEnum,
   IBulkInviteResponse,
@@ -15,24 +16,23 @@ import {
   MemberRoleEnum,
   UserSessionData,
 } from '@novu/shared';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
-import { UserSession } from '../shared/framework/user.decorator';
-import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
-import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
-import { InviteMemberDto, InviteWebhookDto } from './dtos/invite-member.dto';
-import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
-import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
-import { BulkInviteCommand } from './usecases/bulk-invite/bulk-invite.command';
-import { InviteMember } from './usecases/invite-member/invite-member.usecase';
-import { BulkInvite } from './usecases/bulk-invite/bulk-invite.usecase';
-import { AcceptInvite } from './usecases/accept-invite/accept-invite.usecase';
-import { GetInvite } from './usecases/get-invite/get-invite.usecase';
-import { ResendInviteDto } from './dtos/resend-invite.dto';
-import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
-import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { UserSession } from '../shared/framework/user.decorator';
+import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
+import { InviteMemberDto, InviteWebhookDto } from './dtos/invite-member.dto';
+import { ResendInviteDto } from './dtos/resend-invite.dto';
+import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
+import { AcceptInvite } from './usecases/accept-invite/accept-invite.usecase';
+import { BulkInviteCommand } from './usecases/bulk-invite/bulk-invite.command';
+import { BulkInvite } from './usecases/bulk-invite/bulk-invite.usecase';
+import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
+import { GetInvite } from './usecases/get-invite/get-invite.usecase';
+import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
+import { InviteMember } from './usecases/invite-member/invite-member.usecase';
+import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
+import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiCommonResponses()

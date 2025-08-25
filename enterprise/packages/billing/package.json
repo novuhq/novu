@@ -9,7 +9,8 @@
     "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "test": "echo 'skip test in the ci'",
-    "lint": "eslint src --no-error-on-unmatched-pattern",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts",
     "start:proxy": "ngrok http http://localhost:3000"
   },

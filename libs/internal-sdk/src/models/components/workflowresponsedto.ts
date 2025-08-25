@@ -81,12 +81,12 @@ import {
 /**
  * User last name
  */
-export type LastName = {};
+export type WorkflowResponseDtoLastName = {};
 
 /**
  * User who last updated the workflow
  */
-export type UpdatedBy = {
+export type WorkflowResponseDtoUpdatedBy = {
   /**
    * User ID
    */
@@ -98,7 +98,34 @@ export type UpdatedBy = {
   /**
    * User last name
    */
-  lastName?: LastName | null | undefined;
+  lastName?: WorkflowResponseDtoLastName | null | undefined;
+  /**
+   * User external ID
+   */
+  externalId?: string | null | undefined;
+};
+
+/**
+ * User last name
+ */
+export type WorkflowResponseDtoLastPublishedByLastName = {};
+
+/**
+ * User who last published the workflow
+ */
+export type LastPublishedBy = {
+  /**
+   * User ID
+   */
+  id: string;
+  /**
+   * User first name
+   */
+  firstName?: string | null | undefined;
+  /**
+   * User last name
+   */
+  lastName?: WorkflowResponseDtoLastPublishedByLastName | null | undefined;
   /**
    * User external ID
    */
@@ -167,7 +194,15 @@ export type WorkflowResponseDto = {
   /**
    * User who last updated the workflow
    */
-  updatedBy?: UpdatedBy | null | undefined;
+  updatedBy?: WorkflowResponseDtoUpdatedBy | null | undefined;
+  /**
+   * Timestamp of the last workflow publication
+   */
+  lastPublishedAt?: string | null | undefined;
+  /**
+   * User who last published the workflow
+   */
+  lastPublishedBy?: LastPublishedBy | null | undefined;
   /**
    * Steps of the workflow
    */
@@ -182,7 +217,7 @@ export type WorkflowResponseDto = {
     | (CustomStepResponseDto & { type: "custom" })
   >;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
   origin: ResourceOriginEnum;
   /**
@@ -208,58 +243,65 @@ export type WorkflowResponseDto = {
 };
 
 /** @internal */
-export const LastName$inboundSchema: z.ZodType<
-  LastName,
+export const WorkflowResponseDtoLastName$inboundSchema: z.ZodType<
+  WorkflowResponseDtoLastName,
   z.ZodTypeDef,
   unknown
 > = z.object({});
 
 /** @internal */
-export type LastName$Outbound = {};
+export type WorkflowResponseDtoLastName$Outbound = {};
 
 /** @internal */
-export const LastName$outboundSchema: z.ZodType<
-  LastName$Outbound,
+export const WorkflowResponseDtoLastName$outboundSchema: z.ZodType<
+  WorkflowResponseDtoLastName$Outbound,
   z.ZodTypeDef,
-  LastName
+  WorkflowResponseDtoLastName
 > = z.object({});
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace LastName$ {
-  /** @deprecated use `LastName$inboundSchema` instead. */
-  export const inboundSchema = LastName$inboundSchema;
-  /** @deprecated use `LastName$outboundSchema` instead. */
-  export const outboundSchema = LastName$outboundSchema;
-  /** @deprecated use `LastName$Outbound` instead. */
-  export type Outbound = LastName$Outbound;
+export namespace WorkflowResponseDtoLastName$ {
+  /** @deprecated use `WorkflowResponseDtoLastName$inboundSchema` instead. */
+  export const inboundSchema = WorkflowResponseDtoLastName$inboundSchema;
+  /** @deprecated use `WorkflowResponseDtoLastName$outboundSchema` instead. */
+  export const outboundSchema = WorkflowResponseDtoLastName$outboundSchema;
+  /** @deprecated use `WorkflowResponseDtoLastName$Outbound` instead. */
+  export type Outbound = WorkflowResponseDtoLastName$Outbound;
 }
 
-export function lastNameToJSON(lastName: LastName): string {
-  return JSON.stringify(LastName$outboundSchema.parse(lastName));
+export function workflowResponseDtoLastNameToJSON(
+  workflowResponseDtoLastName: WorkflowResponseDtoLastName,
+): string {
+  return JSON.stringify(
+    WorkflowResponseDtoLastName$outboundSchema.parse(
+      workflowResponseDtoLastName,
+    ),
+  );
 }
 
-export function lastNameFromJSON(
+export function workflowResponseDtoLastNameFromJSON(
   jsonString: string,
-): SafeParseResult<LastName, SDKValidationError> {
+): SafeParseResult<WorkflowResponseDtoLastName, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => LastName$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'LastName' from JSON`,
+    (x) => WorkflowResponseDtoLastName$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'WorkflowResponseDtoLastName' from JSON`,
   );
 }
 
 /** @internal */
-export const UpdatedBy$inboundSchema: z.ZodType<
-  UpdatedBy,
+export const WorkflowResponseDtoUpdatedBy$inboundSchema: z.ZodType<
+  WorkflowResponseDtoUpdatedBy,
   z.ZodTypeDef,
   unknown
 > = z.object({
   _id: z.string(),
   firstName: z.nullable(z.string()).optional(),
-  lastName: z.nullable(z.lazy(() => LastName$inboundSchema)).optional(),
+  lastName: z.nullable(z.lazy(() => WorkflowResponseDtoLastName$inboundSchema))
+    .optional(),
   externalId: z.nullable(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -268,22 +310,23 @@ export const UpdatedBy$inboundSchema: z.ZodType<
 });
 
 /** @internal */
-export type UpdatedBy$Outbound = {
+export type WorkflowResponseDtoUpdatedBy$Outbound = {
   _id: string;
   firstName?: string | null | undefined;
-  lastName?: LastName$Outbound | null | undefined;
+  lastName?: WorkflowResponseDtoLastName$Outbound | null | undefined;
   externalId?: string | null | undefined;
 };
 
 /** @internal */
-export const UpdatedBy$outboundSchema: z.ZodType<
-  UpdatedBy$Outbound,
+export const WorkflowResponseDtoUpdatedBy$outboundSchema: z.ZodType<
+  WorkflowResponseDtoUpdatedBy$Outbound,
   z.ZodTypeDef,
-  UpdatedBy
+  WorkflowResponseDtoUpdatedBy
 > = z.object({
   id: z.string(),
   firstName: z.nullable(z.string()).optional(),
-  lastName: z.nullable(z.lazy(() => LastName$outboundSchema)).optional(),
+  lastName: z.nullable(z.lazy(() => WorkflowResponseDtoLastName$outboundSchema))
+    .optional(),
   externalId: z.nullable(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -295,26 +338,166 @@ export const UpdatedBy$outboundSchema: z.ZodType<
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace UpdatedBy$ {
-  /** @deprecated use `UpdatedBy$inboundSchema` instead. */
-  export const inboundSchema = UpdatedBy$inboundSchema;
-  /** @deprecated use `UpdatedBy$outboundSchema` instead. */
-  export const outboundSchema = UpdatedBy$outboundSchema;
-  /** @deprecated use `UpdatedBy$Outbound` instead. */
-  export type Outbound = UpdatedBy$Outbound;
+export namespace WorkflowResponseDtoUpdatedBy$ {
+  /** @deprecated use `WorkflowResponseDtoUpdatedBy$inboundSchema` instead. */
+  export const inboundSchema = WorkflowResponseDtoUpdatedBy$inboundSchema;
+  /** @deprecated use `WorkflowResponseDtoUpdatedBy$outboundSchema` instead. */
+  export const outboundSchema = WorkflowResponseDtoUpdatedBy$outboundSchema;
+  /** @deprecated use `WorkflowResponseDtoUpdatedBy$Outbound` instead. */
+  export type Outbound = WorkflowResponseDtoUpdatedBy$Outbound;
 }
 
-export function updatedByToJSON(updatedBy: UpdatedBy): string {
-  return JSON.stringify(UpdatedBy$outboundSchema.parse(updatedBy));
+export function workflowResponseDtoUpdatedByToJSON(
+  workflowResponseDtoUpdatedBy: WorkflowResponseDtoUpdatedBy,
+): string {
+  return JSON.stringify(
+    WorkflowResponseDtoUpdatedBy$outboundSchema.parse(
+      workflowResponseDtoUpdatedBy,
+    ),
+  );
 }
 
-export function updatedByFromJSON(
+export function workflowResponseDtoUpdatedByFromJSON(
   jsonString: string,
-): SafeParseResult<UpdatedBy, SDKValidationError> {
+): SafeParseResult<WorkflowResponseDtoUpdatedBy, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => UpdatedBy$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'UpdatedBy' from JSON`,
+    (x) => WorkflowResponseDtoUpdatedBy$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'WorkflowResponseDtoUpdatedBy' from JSON`,
+  );
+}
+
+/** @internal */
+export const WorkflowResponseDtoLastPublishedByLastName$inboundSchema:
+  z.ZodType<WorkflowResponseDtoLastPublishedByLastName, z.ZodTypeDef, unknown> =
+    z.object({});
+
+/** @internal */
+export type WorkflowResponseDtoLastPublishedByLastName$Outbound = {};
+
+/** @internal */
+export const WorkflowResponseDtoLastPublishedByLastName$outboundSchema:
+  z.ZodType<
+    WorkflowResponseDtoLastPublishedByLastName$Outbound,
+    z.ZodTypeDef,
+    WorkflowResponseDtoLastPublishedByLastName
+  > = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace WorkflowResponseDtoLastPublishedByLastName$ {
+  /** @deprecated use `WorkflowResponseDtoLastPublishedByLastName$inboundSchema` instead. */
+  export const inboundSchema =
+    WorkflowResponseDtoLastPublishedByLastName$inboundSchema;
+  /** @deprecated use `WorkflowResponseDtoLastPublishedByLastName$outboundSchema` instead. */
+  export const outboundSchema =
+    WorkflowResponseDtoLastPublishedByLastName$outboundSchema;
+  /** @deprecated use `WorkflowResponseDtoLastPublishedByLastName$Outbound` instead. */
+  export type Outbound = WorkflowResponseDtoLastPublishedByLastName$Outbound;
+}
+
+export function workflowResponseDtoLastPublishedByLastNameToJSON(
+  workflowResponseDtoLastPublishedByLastName:
+    WorkflowResponseDtoLastPublishedByLastName,
+): string {
+  return JSON.stringify(
+    WorkflowResponseDtoLastPublishedByLastName$outboundSchema.parse(
+      workflowResponseDtoLastPublishedByLastName,
+    ),
+  );
+}
+
+export function workflowResponseDtoLastPublishedByLastNameFromJSON(
+  jsonString: string,
+): SafeParseResult<
+  WorkflowResponseDtoLastPublishedByLastName,
+  SDKValidationError
+> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      WorkflowResponseDtoLastPublishedByLastName$inboundSchema.parse(
+        JSON.parse(x),
+      ),
+    `Failed to parse 'WorkflowResponseDtoLastPublishedByLastName' from JSON`,
+  );
+}
+
+/** @internal */
+export const LastPublishedBy$inboundSchema: z.ZodType<
+  LastPublishedBy,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  _id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(
+    z.lazy(() => WorkflowResponseDtoLastPublishedByLastName$inboundSchema),
+  ).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    "_id": "id",
+  });
+});
+
+/** @internal */
+export type LastPublishedBy$Outbound = {
+  _id: string;
+  firstName?: string | null | undefined;
+  lastName?:
+    | WorkflowResponseDtoLastPublishedByLastName$Outbound
+    | null
+    | undefined;
+  externalId?: string | null | undefined;
+};
+
+/** @internal */
+export const LastPublishedBy$outboundSchema: z.ZodType<
+  LastPublishedBy$Outbound,
+  z.ZodTypeDef,
+  LastPublishedBy
+> = z.object({
+  id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(
+    z.lazy(() => WorkflowResponseDtoLastPublishedByLastName$outboundSchema),
+  ).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    id: "_id",
+  });
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace LastPublishedBy$ {
+  /** @deprecated use `LastPublishedBy$inboundSchema` instead. */
+  export const inboundSchema = LastPublishedBy$inboundSchema;
+  /** @deprecated use `LastPublishedBy$outboundSchema` instead. */
+  export const outboundSchema = LastPublishedBy$outboundSchema;
+  /** @deprecated use `LastPublishedBy$Outbound` instead. */
+  export type Outbound = LastPublishedBy$Outbound;
+}
+
+export function lastPublishedByToJSON(
+  lastPublishedBy: LastPublishedBy,
+): string {
+  return JSON.stringify(LastPublishedBy$outboundSchema.parse(lastPublishedBy));
+}
+
+export function lastPublishedByFromJSON(
+  jsonString: string,
+): SafeParseResult<LastPublishedBy, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => LastPublishedBy$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'LastPublishedBy' from JSON`,
   );
 }
 
@@ -454,7 +637,12 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
   slug: z.string(),
   updatedAt: z.string(),
   createdAt: z.string(),
-  updatedBy: z.nullable(z.lazy(() => UpdatedBy$inboundSchema)).optional(),
+  updatedBy: z.nullable(
+    z.lazy(() => WorkflowResponseDtoUpdatedBy$inboundSchema),
+  ).optional(),
+  lastPublishedAt: z.nullable(z.string()).optional(),
+  lastPublishedBy: z.nullable(z.lazy(() => LastPublishedBy$inboundSchema))
+    .optional(),
   steps: z.array(
     z.union([
       InAppStepResponseDto$inboundSchema.and(
@@ -525,7 +713,9 @@ export type WorkflowResponseDto$Outbound = {
   slug: string;
   updatedAt: string;
   createdAt: string;
-  updatedBy?: UpdatedBy$Outbound | null | undefined;
+  updatedBy?: WorkflowResponseDtoUpdatedBy$Outbound | null | undefined;
+  lastPublishedAt?: string | null | undefined;
+  lastPublishedBy?: LastPublishedBy$Outbound | null | undefined;
   steps: Array<
     | (InAppStepResponseDto$Outbound & { type: "in_app" })
     | (EmailStepResponseDto$Outbound & { type: "email" })
@@ -562,7 +752,12 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
   slug: z.string(),
   updatedAt: z.string(),
   createdAt: z.string(),
-  updatedBy: z.nullable(z.lazy(() => UpdatedBy$outboundSchema)).optional(),
+  updatedBy: z.nullable(
+    z.lazy(() => WorkflowResponseDtoUpdatedBy$outboundSchema),
+  ).optional(),
+  lastPublishedAt: z.nullable(z.string()).optional(),
+  lastPublishedBy: z.nullable(z.lazy(() => LastPublishedBy$outboundSchema))
+    .optional(),
   steps: z.array(
     z.union([
       InAppStepResponseDto$outboundSchema.and(

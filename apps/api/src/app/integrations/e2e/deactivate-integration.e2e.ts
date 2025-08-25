@@ -2,7 +2,7 @@ import { IntegrationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Deactivate Integration #novu-v2', function () {
+describe('Deactivate Integration #novu-v2', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 
@@ -11,7 +11,7 @@ describe('Deactivate Integration #novu-v2', function () {
     await session.initialize();
   });
 
-  it('should not deactivate old providers when a new provider is created', async function () {
+  it('should not deactivate old providers when a new provider is created', async () => {
     const payload = {
       providerId: 'mailgun',
       channel: 'email',

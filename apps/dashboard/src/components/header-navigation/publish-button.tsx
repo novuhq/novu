@@ -1,25 +1,26 @@
-import { useState, useEffect } from 'react';
-import { RiGitPullRequestFill, RiArrowDownSLine } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
+import type { IEnvironment } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'motion/react';
-import { Button } from '../primitives/button';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useState } from 'react';
+import { LuBookUp2 } from 'react-icons/lu';
+import { RiArrowDownSLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import type { IEnvironmentDiffResponse, IEnvironmentPublishResponse, ResourceToPublish } from '@/api/environments';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { useAuth } from '@/context/auth/hooks';
+import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environments';
+import { QueryKeys } from '@/utils/query-keys';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { Badge } from '../primitives/badge';
+import { Button } from '../primitives/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../primitives/dropdown-menu';
 import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Skeleton } from '../primitives/skeleton';
 import TruncatedText from '../truncated-text';
-import { useAuth } from '@/context/auth/hooks';
-import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
-import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environments';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { NoChangesModal } from './no-changes-modal';
 import { PublishModal } from './publish-modal';
 import { PublishSuccessModal } from './publish-success-modal';
-import { NoChangesModal } from './no-changes-modal';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { QueryKeys } from '@/utils/query-keys';
-import type { IEnvironment } from '@novu/shared';
-import type { IEnvironmentPublishResponse, IEnvironmentDiffResponse, ResourceToPublish } from '@/api/environments';
 
 type ModalState = 'closed' | 'publish' | 'success' | 'no-changes';
 
@@ -57,23 +58,46 @@ export const PublishButton = () => {
   // Invalidate diff cache when workflows change
   useInvalidateDiffOnWorkflowChange(!!targetEnvironment);
 
-  const handleEnvironmentSelect = (environment: IEnvironment, hasChanges: boolean) => {
-    if (!environment?._id) {
-      console.warn('Cannot select environment: missing environment ID');
-      return;
-    }
+  const handleEnvironmentSelect = useCallback(
+    (environment: IEnvironment, hasChanges: boolean) => {
+      if (!environment?._id) {
+        console.warn('Cannot select environment: missing environment ID');
+        return;
+      }
 
-    setIsDropdownOpen(false);
+      setIsDropdownOpen(false);
 
-    // Force refetch diff data to get latest changes
-    queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
+      // Force refetch diff data to get latest changes
+      queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
 
-    if (hasChanges) {
-      actions.openPublishModal(environment);
-    } else {
-      actions.openNoChangesModal(environment);
-    }
-  };
+      if (hasChanges) {
+        actions.openPublishModal(environment);
+      } else {
+        actions.openNoChangesModal(environment);
+      }
+    },
+    [queryClient, actions]
+  );
+
+  // Listen for custom event from command palette
+  useEffect(() => {
+    const handleOpenPublishModal = (event: CustomEvent) => {
+      const { targetEnvironment: eventTargetEnv } = event.detail;
+      if (eventTargetEnv) {
+        // Force refetch diff data to get latest changes
+        queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
+
+        // Check if there are changes and open appropriate modal
+        handleEnvironmentSelect(eventTargetEnv, true); // Assume there are changes for now
+      }
+    };
+
+    window.addEventListener('open-publish-modal', handleOpenPublishModal as EventListener);
+
+    return () => {
+      window.removeEventListener('open-publish-modal', handleOpenPublishModal as EventListener);
+    };
+  }, [queryClient, handleEnvironmentSelect]);
 
   const handlePublish = async (selectedResources?: ResourceToPublish[]) => {
     if (!state.selectedEnvironment?._id || !currentEnvironment?._id) {
@@ -107,7 +131,6 @@ export const PublishButton = () => {
     actions.close();
   };
 
-  // Render single environment button
   if (isSingleEnvironment && targetEnvironment) {
     return (
       <>
@@ -116,9 +139,8 @@ export const PublishButton = () => {
           className="h-[26px]"
           mode="outline"
           size="2xs"
-          leadingIcon={RiGitPullRequestFill}
+          leadingIcon={LuBookUp2}
           onClick={() => handleEnvironmentSelect(targetEnvironment, changesCount > 0)}
-          disabled={isDiffLoading}
         >
           <div className="flex items-center">
             Publish changes
@@ -161,7 +183,7 @@ export const PublishButton = () => {
             className="h-[26px]"
             mode="outline"
             size="2xs"
-            leadingIcon={RiGitPullRequestFill}
+            leadingIcon={LuBookUp2}
             trailingIcon={RiArrowDownSLine}
             disabled={otherEnvironments.length === 0}
           >
@@ -339,7 +361,6 @@ const EnvironmentOption = ({ environment, currentEnvironmentId, onSelect, isDrop
     }
   };
 
-  // Ensure we have required data before rendering
   if (!environment._id || !environment.name) {
     return null;
   }

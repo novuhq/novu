@@ -1,8 +1,8 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { USE_CASES } from './usecases';
-import { SharedModule } from '../shared/shared.module';
-import { WorkflowOverridesController } from './workflow-overrides.controller';
 import { AuthModule } from '../auth/auth.module';
+import { SharedModule } from '../shared/shared.module';
+import { USE_CASES } from './usecases';
+import { WorkflowOverridesController } from './workflow-overrides.controller';
 
 @Module({
   imports: [SharedModule, AuthModule],

@@ -1,15 +1,3 @@
-import { updateClerkOrgMetadata } from '@/api/organization';
-import { identifyUser } from '@/api/telemetry';
-import { StepIndicator } from '@/components/auth/shared';
-import { Button } from '@/components/primitives/button';
-import { CardDescription, CardTitle } from '@/components/primitives/card';
-import { Form, FormRoot } from '@/components/primitives/form/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
-import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
-import { useSegment } from '@/context/segment/hooks';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { useOrganization, useUser } from '@clerk/clerk-react';
 import {
   CompanySizeEnum,
@@ -23,6 +11,18 @@ import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { updateClerkOrgMetadata } from '@/api/organization';
+import { identifyUser } from '@/api/telemetry';
+import { StepIndicator } from '@/components/auth/shared';
+import { Button } from '@/components/primitives/button';
+import { CardDescription, CardTitle } from '@/components/primitives/card';
+import { Form, FormRoot } from '@/components/primitives/form/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { useSegment } from '@/context/segment/hooks';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 interface QuestionnaireFormData {
   jobTitle: JobTitleEnum;

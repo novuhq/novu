@@ -1,8 +1,8 @@
+import { Novu } from '@novu/api';
+import { LocalizationResourceEnum } from '@novu/dal';
+import { ApiServiceLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Novu } from '@novu/api';
-import { StepTypeEnum, WorkflowCreationSourceEnum, ApiServiceLevelEnum } from '@novu/shared';
-import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #novu-v2', async () => {
@@ -153,7 +153,7 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
     }
 
     // Test valid filename patterns
-    const validFilenames = ['en_US.json', 'fr_FR.json', 'zh_Hans_CN.json'];
+    const validFilenames = ['en_US.json', 'fr_FR.json', 'zh_CN.json'];
 
     for (const filename of validFilenames) {
       const { body } = await session.testAgent

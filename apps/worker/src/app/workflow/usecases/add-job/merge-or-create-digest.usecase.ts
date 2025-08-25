@@ -1,4 +1,13 @@
-import { forwardRef, Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  Instrument,
+  InstrumentUsecase,
+  RetryOnError,
+  StepRunRepository,
+} from '@novu/application-generic';
 import { IDelayOrDigestJobResult, JobEntity, JobRepository, NotificationRepository } from '@novu/dal';
 import {
   DigestCreationResultEnum,
@@ -10,14 +19,6 @@ import {
   IDigestTimedMetadata,
   JobStatusEnum,
 } from '@novu/shared';
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-  Instrument,
-  InstrumentUsecase,
-  RetryOnError,
-} from '@novu/application-generic';
 import { isBefore } from 'date-fns';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 
@@ -29,7 +30,8 @@ export class MergeOrCreateDigest {
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => CreateExecutionDetails))
     private createExecutionDetails: CreateExecutionDetails,
-    private notificationRepository: NotificationRepository
+    private notificationRepository: NotificationRepository,
+    private stepRunRepository: StepRunRepository
   ) {}
 
   @InstrumentUsecase()
@@ -84,6 +86,12 @@ export class MergeOrCreateDigest {
     activeDigestId: string,
     activeNotificationId: string
   ): Promise<DigestCreationResultEnum> {
+    const childJobsUpdated = await this.jobRepository.updateAllChildJobStatus(
+      job,
+      JobStatusEnum.MERGED,
+      activeDigestId
+    );
+
     await Promise.all([
       this.jobRepository.update(
         {
@@ -97,7 +105,6 @@ export class MergeOrCreateDigest {
           },
         }
       ),
-      this.jobRepository.updateAllChildJobStatus(job, JobStatusEnum.MERGED, activeDigestId),
       this.digestMergedExecutionDetails(job),
       this.notificationRepository.update(
         {
@@ -110,6 +117,9 @@ export class MergeOrCreateDigest {
           },
         }
       ),
+      this.stepRunRepository.createMany([job, ...childJobsUpdated], {
+        status: JobStatusEnum.MERGED,
+      }),
     ]);
 
     return DigestCreationResultEnum.MERGED;

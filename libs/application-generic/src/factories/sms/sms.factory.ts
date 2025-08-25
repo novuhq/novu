@@ -5,6 +5,7 @@ import {
   AzureSmsHandler,
   BandwidthHandler,
   BrevoSmsHandler,
+  BulkSmsHandler,
   BurstSmsHandler,
   ClickatellHandler,
   ClicksendSmsHandler,
@@ -13,6 +14,7 @@ import {
   FortySixElksHandler,
   GenericSmsHandler,
   GupshupSmsHandler,
+  IMediaHandler,
   InfobipSmsHandler,
   ISendSmsHandler,
   KannelSmsHandler,
@@ -31,8 +33,9 @@ import {
   TelnyxHandler,
   TermiiSmsHandler,
   TwilioHandler,
-  BulkSmsHandler,
+  UnifonicHandler,
 } from './handlers';
+import { SmsmodeHandler } from './handlers/smsmode.handler';
 import { ISmsFactory, ISmsHandler } from './interfaces';
 
 export class SmsFactory implements ISmsFactory {
@@ -46,6 +49,7 @@ export class SmsFactory implements ISmsFactory {
     new ClickatellHandler(),
     new GupshupSmsHandler(),
     new FiretextSmsHandler(),
+    new IMediaHandler(),
     new InfobipSmsHandler(),
     new BurstSmsHandler(),
     new FortySixElksHandler(),
@@ -68,6 +72,8 @@ export class SmsFactory implements ISmsFactory {
     new EazySmsHandler(),
     new MobishastraHandler(),
     new AfroSmsHandler(),
+    new UnifonicHandler(),
+    new SmsmodeHandler(),
     new BulkSmsHandler(),
   ];
 

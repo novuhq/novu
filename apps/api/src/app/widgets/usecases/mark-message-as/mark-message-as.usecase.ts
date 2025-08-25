@@ -1,21 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY, WebSocketEventEnum } from '@novu/shared';
 import {
   AnalyticsService,
   buildFeedKey,
   buildMessageCountKey,
   buildSubscriberKey,
   CachedResponse,
-  InvalidateCacheService,
-  WebSocketsQueueService,
-  TraceLogRepository,
   EventType,
-  Trace,
-  PinoLogger,
+  InvalidateCacheService,
   LogRepository,
   mapEventTypeToTitle,
+  MessageInteractionService,
+  MessageInteractionTrace,
+  messageWebhookMapper,
+  PinoLogger,
+  SendWebhookMessage,
+  StepType,
+  Trace,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
+import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 
@@ -27,8 +31,9 @@ export class MarkMessageAs {
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
-    private traceLogRepository: TraceLogRepository,
-    private logger: PinoLogger
+    private messageInteractionService: MessageInteractionService,
+    private logger: PinoLogger,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -57,54 +62,70 @@ export class MarkMessageAs {
 
     await this.messageRepository.changeStatus(command.environmentId, subscriber._id, command.messageIds, command.mark);
 
-    const messages = await this.messageRepository.find({
+    const updatedMessages = await this.messageRepository.find({
       _environmentId: command.environmentId,
       _id: {
         $in: command.messageIds,
       },
     });
 
-    const allTraceData: Omit<Trace, 'id' | 'expires_at'>[] = [];
+    const allTraceData: MessageInteractionTrace[] = [];
 
     if (command.mark.seen != null) {
-      await this.updateServices(command, subscriber, messages, MarkEnum.SEEN);
+      await this.updateServices(command, subscriber, updatedMessages, MarkEnum.SEEN);
 
-      const seenTraces = this.prepareTrace(
-        messages,
+      allTraceData.push(...this.prepareTrace(
+        updatedMessages,
         command.mark.seen ? 'message_seen' : 'message_unseen',
         command.subscriberId
-      );
-      allTraceData.push(...seenTraces);
+      ));
+
+      if (command.mark.seen === true) {
+        await this.sendWebhookForMessages(
+          updatedMessages,
+          WebhookEventEnum.MESSAGE_SEEN,
+          command.organizationId,
+          command.environmentId,
+          command.subscriberId
+        );
+      }
     }
 
-    if (command.mark.read != null) {
-      await this.updateServices(command, subscriber, messages, MarkEnum.READ);
+    if (command.mark.read !== undefined || command.mark.read !== null) {
+      await this.updateServices(command, subscriber, updatedMessages, MarkEnum.READ);
 
-      const readTraces = this.prepareTrace(
-        messages,
+      allTraceData.push(...this.prepareTrace(
+        updatedMessages,
         command.mark.read ? 'message_read' : 'message_unread',
         command.subscriberId
+      ));
+
+      await this.sendWebhookForMessages(
+        updatedMessages,
+        command.mark.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD,
+        command.organizationId,
+        command.environmentId,
+        command.subscriberId
       );
-      allTraceData.push(...readTraces);
     }
 
     if (allTraceData.length > 0) {
       try {
-        await this.traceLogRepository.createMany(allTraceData);
+        await this.messageInteractionService.trace(allTraceData);
       } catch (error) {
-        this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);
+        this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} traces`);
       }
     }
 
-    return messages;
+    return updatedMessages;
   }
 
   private prepareTrace(
     messages: MessageEntity[],
     eventType: EventType,
     userId: string
-  ): Omit<Trace, 'id' | 'expires_at'>[] {
-    const traceDataArray: Omit<Trace, 'id' | 'expires_at'>[] = [];
+  ): MessageInteractionTrace[] {
+    const traceDataArray: MessageInteractionTrace[] = [];
 
     for (const message of messages) {
       if (message._jobId) {
@@ -122,6 +143,9 @@ export class MarkMessageAs {
           entity_type: 'step_run',
           entity_id: message._jobId,
           external_subscriber_id: message._subscriberId,
+          step_run_type: message.channel as StepType,
+          workflow_run_identifier: message.templateIdentifier,
+          _notificationId: message._notificationId,
         });
       }
     }
@@ -155,16 +179,26 @@ export class MarkMessageAs {
     });
   }
 
-  private async sendAnalyticsEventForInviteTeamNudge(messages: MessageEntity[]) {
-    const inviteTeamMemberNudgeMessage = messages.find(
-      (message) => message?.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY] === true
+  private async sendWebhookForMessages(
+    messages: MessageEntity[],
+    eventType: WebhookEventEnum,
+    organizationId: string,
+    environmentId: string,
+    subscriberId: string
+  ): Promise<void> {
+    const webhookPromises = messages.map((message) =>
+      this.sendWebhookMessage.execute({
+        eventType: eventType,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, subscriberId),
+        },
+        organizationId: organizationId,
+        environmentId: environmentId,
+      })
     );
 
-    if (inviteTeamMemberNudgeMessage) {
-      this.analyticsService.track('Invite Nudge Seen', inviteTeamMemberNudgeMessage._subscriberId, {
-        _organization: inviteTeamMemberNudgeMessage._organizationId,
-      });
-    }
+    await Promise.all(webhookPromises);
   }
 
   @CachedResponse({

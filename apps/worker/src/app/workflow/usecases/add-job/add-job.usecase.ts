@@ -1,22 +1,4 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { parseExpression as parseCronExpression } from 'cron-parser';
-import { differenceInMilliseconds } from 'date-fns';
-import _ from 'lodash';
-
-import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
-import {
-  castUnitToDigestUnitEnum,
-  DigestCreationResultEnum,
-  DigestTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IDigestBaseMetadata,
-  IDigestRegularMetadata,
-  IDigestTimedMetadata,
-  IWorkflowStepMetadata,
-  StepTypeEnum,
-} from '@novu/shared';
-import { DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   ComputeJobWaitDurationService,
   ConditionsFilter,
@@ -38,18 +20,46 @@ import {
   StepRunRepository,
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-
+import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
+import { DigestOutput, ExecuteOutput } from '@novu/framework/internal';
+import {
+  castUnitToDigestUnitEnum,
+  DeliveryLifecycleStatus,
+  DigestCreationResultEnum,
+  DigestTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IDigestBaseMetadata,
+  IDigestRegularMetadata,
+  IDigestTimedMetadata,
+  IWorkflowStepMetadata,
+  StepTypeEnum,
+} from '@novu/shared';
+import { parseExpression as parseCronExpression } from 'cron-parser';
+import { differenceInMilliseconds } from 'date-fns';
+import _ from 'lodash';
+import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 import { AddDelayJob } from './add-delay-job.usecase';
+import { AddJobCommand } from './add-job.command';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
-import { AddJobCommand } from './add-job.command';
 import { validateDigest } from './validation';
-import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
 }
+
+/*
+ * @description: This is the result of the add job usecase
+ *
+ * Returns undefined when the end result is not determined yet
+ */
+type AddJobResult = {
+  workflowStatus: WorkflowRunStatusEnum | null;
+  deliveryLifecycleStatus: DeliveryLifecycleStatus | null;
+};
 
 const LOG_CONTEXT = 'AddJob';
 
@@ -76,7 +86,7 @@ export class AddJob {
 
   @InstrumentUsecase()
   @LogDecorator()
-  public async execute(command: AddJobCommand): Promise<void> {
+  public async execute(command: AddJobCommand): Promise<AddJobResult> {
     Logger.verbose('Getting Job', LOG_CONTEXT);
     const { job } = command;
     Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
@@ -84,16 +94,17 @@ export class AddJob {
     if (!job) {
       Logger.warn(`Job was null in both the input and search`, LOG_CONTEXT);
 
-      return;
+      return {
+        workflowStatus: null,
+        deliveryLifecycleStatus: null,
+      };
     }
 
     Logger.log(`Scheduling New Job ${job._id} of type: ${job.type}`, LOG_CONTEXT);
 
-    if (isJobDeferredType(job.type)) {
-      await this.executeDeferredJob(command);
-    } else {
-      await this.executeNoneDeferredJob(command);
-    }
+    const result = isJobDeferredType(job.type)
+      ? await this.executeDeferredJob(command)
+      : await this.executeNoneDeferredJob(command);
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -105,9 +116,11 @@ export class AddJob {
         isRetry: false,
       })
     );
+
+    return result;
   }
 
-  private async executeDeferredJob(command: AddJobCommand): Promise<void> {
+  private async executeDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 
     let digestAmount: number | undefined;
@@ -149,7 +162,19 @@ export class AddJob {
       digestResult = await this.handleDigest(command, filterVariables, job, digestAmount, filtered);
 
       if (isShouldHaltJobExecution(digestResult.digestCreationResult)) {
-        return;
+        if (digestResult.digestCreationResult === DigestCreationResultEnum.MERGED) {
+          return {
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatus.MERGED,
+          };
+        }
+
+        if (digestResult.digestCreationResult === DigestCreationResultEnum.SKIPPED) {
+          return {
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatus.SKIPPED,
+          };
+        }
       }
 
       digestAmount = digestResult.digestAmount;
@@ -161,7 +186,10 @@ export class AddJob {
       if (delayAmount === undefined) {
         Logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`, LOG_CONTEXT);
 
-        return;
+        return {
+          workflowStatus: null,
+          deliveryLifecycleStatus: null,
+        };
       }
     }
 
@@ -182,6 +210,11 @@ export class AddJob {
     });
 
     await this.queueJob(job, delay);
+
+    return {
+      workflowStatus: null,
+      deliveryLifecycleStatus: null,
+    };
   }
 
   private async validateDeferDuration(
@@ -221,7 +254,7 @@ export class AddJob {
     return true;
   }
 
-  private async executeNoneDeferredJob(command: AddJobCommand): Promise<void> {
+  private async executeNoneDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 
     Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
@@ -232,6 +265,11 @@ export class AddJob {
     });
 
     await this.queueJob(job, 0);
+
+    return {
+      workflowStatus: null,
+      deliveryLifecycleStatus: null,
+    };
   }
 
   private async handleDelay(command: AddJobCommand, filterVariables: IFilterVariables) {
@@ -400,7 +438,6 @@ export class AddJob {
     }
 
     // Update the job digest directly to avoid an extra database call
-    // eslint-disable-next-line no-param-reassign
     command.job.digest = { ...command.job.digest, ...metadata } as IWorkflowStepMetadata;
 
     const subscriber = await this.subscriberRepository.findOne(
@@ -416,7 +453,6 @@ export class AddJob {
 
     validateDigest(job);
 
-    // eslint-disable-next-line no-param-reassign
     digestAmount =
       bridgeAmount ??
       this.computeJobWaitDurationService.calculateDelay({
@@ -524,7 +560,6 @@ export class AddJob {
 
     if (delay) {
       const logMessage =
-        // eslint-disable-next-line no-nested-ternary
         job.type === StepTypeEnum.DELAY
           ? 'Delay is active, Creating execution details'
           : job.type === StepTypeEnum.DIGEST

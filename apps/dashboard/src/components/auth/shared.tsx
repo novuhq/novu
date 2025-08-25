@@ -1,6 +1,6 @@
 import { RiArrowLeftSLine } from 'react-icons/ri';
-import { cn } from '../../utils/ui';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '../../utils/ui';
 
 interface StepIndicatorProps {
   step: number;

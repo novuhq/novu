@@ -1,12 +1,11 @@
+import { ChannelTypeEnum, IActor, IMessageCTA, SeverityLevelEnum } from '@novu/shared';
 import { Exclude } from 'class-transformer';
-import { ChannelTypeEnum, IActor, IMessageCTA } from '@novu/shared';
-
+import type { ChangePropsValueType } from '../../types/helpers';
+import type { EnvironmentId } from '../environment';
 import { IEmailBlock } from '../message-template';
-import { SubscriberEntity } from '../subscriber';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
-import type { EnvironmentId } from '../environment';
-import type { ChangePropsValueType } from '../../types/helpers';
+import { SubscriberEntity } from '../subscriber';
 
 export class MessageEntity {
   _id: string;
@@ -92,9 +91,6 @@ export class MessageEntity {
 
   errorText: string;
 
-  @Exclude()
-  providerResponse: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-
   payload: Record<string, unknown>;
 
   data?: Record<string, unknown>;
@@ -110,6 +106,8 @@ export class MessageEntity {
   tags?: string[];
 
   avatar?: string;
+
+  severity?: SeverityLevelEnum;
 }
 
 export type MessageDBModel = ChangePropsValueType<

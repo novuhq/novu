@@ -1,6 +1,5 @@
-import { expect, test, vi } from 'vitest';
-
 import { CheckIntegrationResponseEnum, IEmailOptions, ISendMessageSuccessResponse } from '@novu/stateless';
+import { expect, test, vi } from 'vitest';
 import { IEmailJsConfig } from './emailjs.config';
 import { EmailJsProvider } from './emailjs.provider';
 
@@ -29,7 +28,7 @@ test('should trigger emailjs with expected parameters', async () => {
   const response = await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toBeCalledWith({
+  expect(spy).toHaveBeenCalledWith({
     to: mockNovuMessage.to,
     subject: mockNovuMessage.subject,
     html: mockNovuMessage.html,

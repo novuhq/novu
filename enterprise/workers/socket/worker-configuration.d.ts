@@ -6,7 +6,6 @@
  */
 
 declare namespace Cloudflare {
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	interface Env {
 		/**
 		 * Durable Object namespace for WebSocket rooms

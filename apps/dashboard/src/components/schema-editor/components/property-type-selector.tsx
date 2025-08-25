@@ -3,6 +3,8 @@ import type { Control, UseFormGetValues, UseFormSetValue } from 'react-hook-form
 import { useWatch } from 'react-hook-form';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { SCHEMA_TYPE_OPTIONS } from '../constants';
+import { useSchemaPropertyType } from '../hooks/use-schema-property-type';
 import type { JSONSchema7, JSONSchema7TypeName } from '../json-schema';
 import {
   ensureArray,
@@ -13,8 +15,6 @@ import {
   ensureObject,
   ensureString,
 } from '../utils/json-helpers';
-import { SCHEMA_TYPE_OPTIONS } from '../constants';
-import { useSchemaPropertyType } from '../hooks/use-schema-property-type';
 
 type PropertyTypeSelectorProps = {
   definitionPath: string;

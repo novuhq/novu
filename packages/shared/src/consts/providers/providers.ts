@@ -1,8 +1,8 @@
+import { EmailProviderIdEnum, InAppProviderIdEnum, ProvidersIdEnum, SmsProviderIdEnum } from '../../types';
+import { chatProviders, emailProviders, inAppProviders, pushProviders, smsProviders } from './channels';
 import { IProviderConfig } from './provider.interface';
-import { chatProviders, emailProviders, smsProviders, pushProviders, inAppProviders } from './channels';
-import { InAppProviderIdEnum, EmailProviderIdEnum, ProvidersIdEnum, SmsProviderIdEnum } from '../../types';
 
-export { chatProviders, emailProviders, smsProviders, pushProviders, inAppProviders } from './channels';
+export { chatProviders, emailProviders, inAppProviders, pushProviders, smsProviders } from './channels';
 
 export const providers: IProviderConfig[] = [
   ...emailProviders,

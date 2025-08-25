@@ -1,7 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-import { setTimeout } from 'timers/promises';
-
 import {
   BullMqService,
   PinoLogger,
@@ -9,11 +6,11 @@ import {
   WorkflowInMemoryProviderService,
   WorkflowQueueService,
 } from '@novu/application-generic';
-
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { WorkflowWorker } from './workflow.worker';
-
+import { expect } from 'chai';
+import { setTimeout } from 'timers/promises';
 import { WorkflowModule } from '../workflow.module';
+import { WorkflowWorker } from './workflow.worker';
 
 let workflowQueueService: WorkflowQueueService;
 let workflowWorker: WorkflowWorker;

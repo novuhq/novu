@@ -1,7 +1,7 @@
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteWorkflow } from '@/api/workflows';
-import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironment } from '@/context/environment/hooks';
+import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 
 type DeleteWorkflowParameters = OmitEnvironmentFromParameters<typeof deleteWorkflow>;
@@ -19,7 +19,7 @@ export const useDeleteWorkflow = (options?: UseMutationOptions<void, unknown, De
       });
 
       // Invalidate diff environment queries when workflows are deleted
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
 

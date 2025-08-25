@@ -1,8 +1,8 @@
-import { cn } from '@/utils/ui';
 import { DirectionEnum } from '@novu/shared';
 import { cva } from 'class-variance-authority';
 import * as React from 'react';
 import { RiArrowDownSFill, RiArrowUpSFill, RiExpandUpDownFill } from 'react-icons/ri';
+import { cn } from '@/utils/ui';
 
 interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
   containerClassname?: string;

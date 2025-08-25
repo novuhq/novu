@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { AnalyticsService, buildFeedKey, CachedQuery } from '@novu/application-generic';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
 
@@ -6,9 +6,9 @@ import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { GetNotificationsResponseDto } from '../../dtos/get-notifications-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
+import { NotificationFilter } from '../../utils/types';
 import { validateDataStructure } from '../../utils/validate-data';
 import type { GetNotificationsCommand } from './get-notifications.command';
-import { NotificationFilter } from '../../utils/types';
 
 @Injectable()
 export class GetNotifications {
@@ -54,6 +54,11 @@ export class GetNotifications {
       }
     }
 
+    const severity = command.severity
+      ? Array.isArray(command.severity)
+        ? command.severity
+        : [command.severity]
+      : undefined;
     const { data: feed, hasMore } = await this.messageRepository.paginate(
       {
         environmentId: command.environmentId,
@@ -65,6 +70,7 @@ export class GetNotifications {
         snoozed: command.snoozed,
         seen: command.seen,
         data: parsedData,
+        severity,
       },
       {
         limit: command.limit,
@@ -88,6 +94,7 @@ export class GetNotifications {
       snoozed: command.snoozed,
       seen: command.seen,
       data: parsedData,
+      severity: command.severity,
     };
 
     return {

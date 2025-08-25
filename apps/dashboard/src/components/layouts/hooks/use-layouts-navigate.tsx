@@ -1,6 +1,6 @@
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 export const useLayoutsNavigate = () => {
   const navigate = useNavigate();

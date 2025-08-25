@@ -1,9 +1,9 @@
-import { InMemoryCache } from './in-memory-cache';
-import type { Cache } from './types';
 import { NovuEventEmitter, PreferenceEvents } from '../event-emitter';
-import { PreferenceLevel } from '../types';
 import { Preference } from '../preferences/preference';
 import { ListPreferencesArgs } from '../preferences/types';
+import { PreferenceLevel } from '../types';
+import { InMemoryCache } from './in-memory-cache';
+import type { Cache } from './types';
 
 // these events should update the preferences in the cache
 const updateEvents: PreferenceEvents[] = [
@@ -13,8 +13,8 @@ const updateEvents: PreferenceEvents[] = [
   'preferences.bulk_update.resolved',
 ];
 
-const excludeEmpty = ({ tags }: ListPreferencesArgs) =>
-  Object.entries({ tags }).reduce((acc, [key, value]) => {
+const excludeEmpty = ({ tags, severity }: ListPreferencesArgs) =>
+  Object.entries({ tags, severity }).reduce((acc, [key, value]) => {
     if (value === null || value === undefined || (Array.isArray(value) && value.length === 0)) {
       return acc;
     }
@@ -24,8 +24,8 @@ const excludeEmpty = ({ tags }: ListPreferencesArgs) =>
     return acc;
   }, {});
 
-const getCacheKey = ({ tags }: ListPreferencesArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags }));
+const getCacheKey = ({ tags, severity }: ListPreferencesArgs): string => {
+  return JSON.stringify(excludeEmpty({ tags, severity }));
 };
 
 export class PreferencesCache {

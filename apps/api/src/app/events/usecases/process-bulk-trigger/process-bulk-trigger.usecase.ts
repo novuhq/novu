@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { AddressingTypeEnum, TriggerEventStatusEnum, TriggerRequestCategoryEnum } from '@novu/shared';
-
-import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
-
 import { TriggerEventResponseDto } from '../../dtos';
-import { ParseEventRequest } from '../parse-event-request/parse-event-request.usecase';
 import { ParseEventRequestMulticastCommand } from '../parse-event-request/parse-event-request.command';
+import { ParseEventRequest } from '../parse-event-request/parse-event-request.usecase';
+import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
 
 @Injectable()
 export class ProcessBulkTrigger {
@@ -31,6 +29,7 @@ export class ProcessBulkTrigger {
             addressingType: AddressingTypeEnum.MULTICAST,
             requestCategory: TriggerRequestCategoryEnum.BULK,
             bridgeUrl: event.bridgeUrl,
+            requestId: command.requestId,
           })
         )) as unknown as TriggerEventResponseDto;
       } catch (e) {

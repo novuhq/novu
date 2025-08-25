@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber, ValidateNested, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ResourceTypeEnum, DependencyReasonEnum } from '../types/sync.types';
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { DependencyReasonEnum, ResourceTypeEnum } from '../types/sync.types';
 
 export class DiffEnvironmentRequestDto {
   @ApiPropertyOptional({

@@ -1,34 +1,33 @@
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import {
   Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Put,
   Query,
   UseInterceptors,
-  Headers,
 } from '@nestjs/common';
-import { UserSessionData, PermissionsEnum } from '@novu/shared';
-
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
+import { PermissionsEnum, UserSessionData } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UpdateVercelIntegrationRequestDto } from './dtos/update-vercel-integration-request.dto';
 import { CreateVercelIntegrationRequestDto } from './dtos/create-vercel-integration-request.dto';
 import { CreateVercelIntegrationResponseDto } from './dtos/create-vercel-integration-response.dto';
+import { UpdateVercelIntegrationRequestDto } from './dtos/update-vercel-integration-request.dto';
+import { CreateVercelIntegrationCommand } from './usecases/create-vercel-integration/create-vercel-integration.command';
+import { CreateVercelIntegration } from './usecases/create-vercel-integration/create-vercel-integration.usecase';
 import { GetVercelIntegrationCommand } from './usecases/get-vercel-integration/get-vercel-integration.command';
 import { GetVercelIntegration } from './usecases/get-vercel-integration/get-vercel-integration.usecase';
 import { GetVercelIntegrationProjectsCommand } from './usecases/get-vercel-projects/get-vercel-integration-projects.command';
 import { GetVercelIntegrationProjects } from './usecases/get-vercel-projects/get-vercel-integration-projects.usecase';
-import { CreateVercelIntegrationCommand } from './usecases/create-vercel-integration/create-vercel-integration.command';
-import { CreateVercelIntegration } from './usecases/create-vercel-integration/create-vercel-integration.usecase';
+import { ProcessVercelWebhookCommand } from './usecases/process-vercel-webhook/process-vercel-webhook.command';
+import { ProcessVercelWebhook } from './usecases/process-vercel-webhook/process-vercel-webhook.usecase';
 import { UpdateVercelIntegrationCommand } from './usecases/update-vercel-integration/update-vercel-integration.command';
 import { UpdateVercelIntegration } from './usecases/update-vercel-integration/update-vercel-integration.usecase';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ProcessVercelWebhook } from './usecases/process-vercel-webhook/process-vercel-webhook.usecase';
-import { ProcessVercelWebhookCommand } from './usecases/process-vercel-webhook/process-vercel-webhook.command';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)

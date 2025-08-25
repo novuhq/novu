@@ -1,14 +1,14 @@
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { Navigate } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import { DashboardLayout } from '@/components/dashboard-layout';
-import { TranslationList } from '@/components/translations/translation-list';
 import { PageMeta } from '@/components/page-meta';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum, EnvironmentTypeEnum } from '@novu/shared';
-import { ROUTES } from '@/utils/routes';
-import { Navigate } from 'react-router-dom';
 import { Badge } from '@/components/primitives/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { TranslationList } from '@/components/translations/translation-list';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { ROUTES } from '@/utils/routes';
 
 export const TranslationsPage = () => {
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);

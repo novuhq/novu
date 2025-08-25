@@ -1,4 +1,4 @@
-import { it, describe, beforeEach, expect, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MissingSecretKeyError } from '../../errors';
 import { workflow } from './workflow.resource';
 
@@ -348,7 +348,7 @@ describe('workflow function', () => {
           payload: {},
           to: 'test@test.com',
         })
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         `Workflow with id: \`test-workflow\` has invalid \`payload\`. Please provide the correct payload`
       );
     });

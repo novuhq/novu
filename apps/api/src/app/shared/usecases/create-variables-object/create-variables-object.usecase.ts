@@ -1,15 +1,13 @@
-import _ from 'lodash';
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
-
+import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import _ from 'lodash';
+import { JsonSchemaMock } from '../../../workflows-v2/util/json-schema-mock';
 import { collectKeys, keysToObject } from '../../../workflows-v2/util/utils';
-import { buildVariables } from '../../utils/build-variables';
-import { CreateVariablesObjectCommand } from './create-variables-object.command';
+import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { MailyAttrsEnum } from '../../helpers/maily.types';
 import { isStringifiedMailyJSONContent } from '../../helpers/maily-utils';
-import { JsonSchemaMock } from '../../../workflows-v2/util/json-schema-mock';
-import { JSONSchemaDto } from '../../dtos/json-schema.dto';
+import { buildVariables } from '../../utils/build-variables';
+import { CreateVariablesObjectCommand } from './create-variables-object.command';
 
 export type ArrayVariable = {
   path: string;
@@ -22,20 +20,10 @@ export const DEFAULT_ARRAY_ELEMENTS = 3;
  */
 @Injectable()
 export class CreateVariablesObject {
-  constructor(private readonly featureFlagService: FeatureFlagsService) {}
-
   @InstrumentUsecase()
   async execute(command: CreateVariablesObjectCommand): Promise<Record<string, unknown>> {
-    const isHtmlEditorEnabled = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      defaultValue: false,
-    });
-
     const variables = this.extractAllVariables({
       controlValues: command.controlValues,
-      isHtmlEditorEnabled,
       variableSchema: command.variableSchema,
     });
     const arrayVariables = this.extractArrayVariables(command.controlValues);
@@ -56,17 +44,7 @@ export class CreateVariablesObject {
     const hasStepsWithEvents = Object.keys(stepsObject).length > 0;
     const hasPayloadSchema = !!command.payloadSchema;
 
-    let isPayloadSchemaEnabled = false;
-
-    // Only check feature flag if we have both steps and payload schema
-    if (hasStepsWithEvents && hasPayloadSchema) {
-      isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
-        defaultValue: false,
-        organization: { _id: command.organizationId },
-        environment: { _id: command.environmentId },
-      });
-    }
+    const isPayloadSchemaEnabled = hasStepsWithEvents && hasPayloadSchema;
 
     Object.keys(stepsObject).forEach((stepId) => {
       const step = stepsObject[stepId] as Record<string, unknown>;
@@ -179,16 +157,13 @@ export class CreateVariablesObject {
   @Instrument()
   private extractAllVariables({
     controlValues,
-    isHtmlEditorEnabled,
     variableSchema,
   }: {
     controlValues: unknown[];
-    isHtmlEditorEnabled: boolean;
     variableSchema?: JSONSchemaDto;
   }): string[] {
     const variables = controlValues.flatMap((value) => {
       const templateVariables = buildVariables({
-        useNewLiquidParser: isHtmlEditorEnabled,
         variableSchema,
         controlValue: value,
       });

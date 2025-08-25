@@ -1,18 +1,18 @@
 import type {
-  CountArgs,
-  ListNotificationsArgs,
-  Notification,
-  ListNotificationsResponse,
-  CountResponse,
-  ReadArgs,
   ArchivedArgs,
   CompleteArgs,
+  CountArgs,
+  CountResponse,
+  ListNotificationsArgs,
+  ListNotificationsResponse,
+  Notification,
+  ReadArgs,
   RevertArgs,
+  SeenArgs,
+  SnoozeArgs,
   UnarchivedArgs,
   UnreadArgs,
-  SnoozeArgs,
   UnsnoozeArgs,
-  SeenArgs,
 } from '../notifications';
 import { Preference } from '../preferences/preference';
 import { ListPreferencesArgs, UpdatePreferenceArgs } from '../preferences/types';
@@ -83,7 +83,7 @@ type SocketEvents = {
 } & {
   [key in NotificationUnseenEvent]: { result: number };
 } & {
-  [key in NotificationUnreadEvent]: { result: number };
+  [key in NotificationUnreadEvent]: { result: { total: number; severity: Record<string, number> } };
 };
 
 /**

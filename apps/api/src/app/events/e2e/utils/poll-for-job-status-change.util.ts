@@ -28,7 +28,6 @@ export async function pollForJobStatusChange({
 }: IPollForJobOptions & { findMultiple?: boolean }): Promise<JobEntity | JobEntity[] | null> {
   const startTime = Date.now();
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     if (findMultiple) {
       const jobs = await jobRepository.find(query);

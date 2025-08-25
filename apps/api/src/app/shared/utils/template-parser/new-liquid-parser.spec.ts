@@ -1,7 +1,7 @@
-import { expect } from 'chai';
 import { JsonSchemaTypeEnum } from '@novu/dal';
-import { extractLiquidTemplateVariables } from './new-liquid-parser';
+import { expect } from 'chai';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
+import { extractLiquidTemplateVariables } from './new-liquid-parser';
 
 describe('extractLiquidTemplateVariables', () => {
   // Define a common schema that can be used across multiple describe blocks

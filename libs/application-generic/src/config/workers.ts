@@ -12,14 +12,10 @@ interface IWorkerConfig {
 }
 
 const getDefaultConcurrency = () =>
-  process.env.WORKER_DEFAULT_CONCURRENCY
-    ? Number(process.env.WORKER_DEFAULT_CONCURRENCY)
-    : undefined;
+  process.env.WORKER_DEFAULT_CONCURRENCY ? Number(process.env.WORKER_DEFAULT_CONCURRENCY) : undefined;
 
 const getDefaultLockDuration = () =>
-  process.env.WORKER_DEFAULT_LOCK_DURATION
-    ? Number(process.env.WORKER_DEFAULT_LOCK_DURATION)
-    : undefined;
+  process.env.WORKER_DEFAULT_LOCK_DURATION ? Number(process.env.WORKER_DEFAULT_LOCK_DURATION) : undefined;
 
 const getWorkerConfig = (worker: WorkerEnum): IWorkerConfig => {
   const workersConfig = {
@@ -48,17 +44,12 @@ const getWorkerConfig = (worker: WorkerEnum): IWorkerConfig => {
   return workersConfig[worker];
 };
 
-export const getInboundParseMailWorkerOptions = () =>
-  getWorkerConfig(WorkerEnum.INBOUND_PARSE_MAIL);
+export const getInboundParseMailWorkerOptions = () => getWorkerConfig(WorkerEnum.INBOUND_PARSE_MAIL);
 
-export const getSubscriberProcessWorkerOptions = () =>
-  getWorkerConfig(WorkerEnum.SUBSCRIBER_PROCESS);
+export const getSubscriberProcessWorkerOptions = () => getWorkerConfig(WorkerEnum.SUBSCRIBER_PROCESS);
 
-export const getStandardWorkerOptions = () =>
-  getWorkerConfig(WorkerEnum.STANDARD);
+export const getStandardWorkerOptions = () => getWorkerConfig(WorkerEnum.STANDARD);
 
-export const getWebSocketWorkerOptions = () =>
-  getWorkerConfig(WorkerEnum.WEB_SOCKET);
+export const getWebSocketWorkerOptions = () => getWorkerConfig(WorkerEnum.WEB_SOCKET);
 
-export const getWorkflowWorkerOptions = () =>
-  getWorkerConfig(WorkerEnum.WORKFLOW);
+export const getWorkflowWorkerOptions = () => getWorkerConfig(WorkerEnum.WORKFLOW);

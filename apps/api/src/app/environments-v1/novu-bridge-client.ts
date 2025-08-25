@@ -1,8 +1,8 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
 import { PostActionEnum, type Workflow } from '@novu/framework/internal';
 import { Client, NovuHandler, NovuRequestHandler } from '@novu/framework/nest';
-import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
+import type { Request, Response } from 'express';
 import { ConstructFrameworkWorkflow, ConstructFrameworkWorkflowCommand } from './usecases/construct-framework-workflow';
 
 /*

@@ -1,7 +1,7 @@
-import { Queue } from 'bullmq';
 import { setTimeout } from 'node:timers/promises';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
+import { Queue } from 'bullmq';
 import { TestingQueueService } from './testing-queue.service';
 
 /**
@@ -61,8 +61,6 @@ export class JobsService {
         }),
         0
       );
-
-      // console.log('AwaitRunningJobs:>', metrics);
     } while (redisJobsCount > 0 || mongoJobsCount > 0);
   }
 

@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React from 'react';
 
 export function Avatar(props: React.ComponentPropsWithoutRef<'svg'>) {

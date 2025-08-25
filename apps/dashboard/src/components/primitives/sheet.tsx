@@ -1,9 +1,8 @@
 import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
-
-import { cn } from '@/utils/ui';
 import { RiCloseLine } from 'react-icons/ri';
+import { cn } from '@/utils/ui';
 import { CompactButton } from './button-compact';
 
 const Sheet = SheetPrimitive.Root;

@@ -1,17 +1,31 @@
-import { v4 as uuidv4 } from 'uuid';
-import { Body, Controller, Delete, InternalServerErrorException, Param, Post, Scope } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Req, Scope } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions, ResourceCategory } from '@novu/application-generic';
 import {
   AddressingTypeEnum,
   ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
+  PermissionsEnum,
   ResourceEnum,
   TriggerRequestCategoryEnum,
   UserSessionData,
-  PermissionsEnum,
 } from '@novu/shared';
-import { ResourceCategory, RequirePermissions } from '@novu/application-generic';
-
+import { v4 as uuidv4 } from 'uuid';
+import { PayloadValidationExceptionDto } from '../../error-dto';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
+import { AnalyticsStrategyEnum, LogAnalytics } from '../shared/framework/analytics-logs.interceptor';
+import {
+  ApiCommonResponses,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiResponse,
+} from '../shared/framework/response.decorator';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
+import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
+import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
 import {
   BulkTriggerEventDto,
   TestSendEmailRequestDto,
@@ -22,26 +36,11 @@ import {
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
-import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
-
-import { UserSession } from '../shared/framework/user.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import {
-  ApiCommonResponses,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiResponse,
-} from '../shared/framework/response.decorator';
-import { PayloadValidationExceptionDto } from '../../error-dto';
-import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
-import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
-import { AnalyticsStrategyEnum, LogAnalytics } from '../shared/framework/analytics-logs.interceptor';
+import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
 function RequestAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnum.BASIC) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) => {
     // Set analytics strategy as a property on the method
     const originalMethod = descriptor.value;
     originalMethod._analyticsStrategy = strategy;
@@ -89,6 +88,7 @@ export class EventsController {
   @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async trigger(
     @UserSession() user: UserSessionData,
+    @Req() req: RequestWithReqId,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const result = await this.parseEventRequest.execute(
@@ -107,6 +107,7 @@ export class EventsController {
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
         bridgeUrl: body.bridgeUrl,
         controls: body.controls,
+        requestId: req._nvRequestId,
       })
     );
 
@@ -135,7 +136,8 @@ export class EventsController {
   @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async triggerBulk(
     @UserSession() user: UserSessionData,
-    @Body() body: BulkTriggerEventDto
+    @Body() body: BulkTriggerEventDto,
+    @Req() req: RequestWithReqId
   ): Promise<TriggerEventResponseDto[]> {
     return this.processBulkTriggerUsecase.execute(
       ProcessBulkTriggerCommand.create({
@@ -143,6 +145,7 @@ export class EventsController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         events: body.events,
+        requestId: req._nvRequestId,
       })
     );
   }
@@ -171,7 +174,8 @@ export class EventsController {
   @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async broadcastEventToAll(
     @UserSession() user: UserSessionData,
-    @Body() body: TriggerEventToAllRequestDto
+    @Body() body: TriggerEventToAllRequestDto,
+    @Req() req: RequestWithReqId
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
 
@@ -186,6 +190,7 @@ export class EventsController {
         transactionId,
         overrides: body.overrides || {},
         actor: body.actor,
+        requestId: req._nvRequestId,
       })
     );
   }

@@ -1,9 +1,8 @@
+import { IEnvironment, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { useEffect } from 'react';
-import { IEnvironment } from '@novu/shared';
+import { createWorkflow } from '../api/workflows';
 import { ONBOARDING_DEMO_WORKFLOW_ID } from '../config';
 import { useFetchWorkflows } from './use-fetch-workflows';
-import { createWorkflow } from '../api/workflows';
-import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 
 async function createDemoWorkflow({ environment }: { environment: IEnvironment }) {
   await createWorkflow({

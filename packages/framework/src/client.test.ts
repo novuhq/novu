@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Client } from './client';
+import { PostActionEnum } from './constants';
 import {
   ExecutionEventPayloadInvalidError,
   ExecutionStateCorruptError,
@@ -11,7 +12,6 @@ import {
 } from './errors';
 import { workflow } from './resources';
 import { Event, Step } from './types';
-import { PostActionEnum } from './constants';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -1199,8 +1199,9 @@ describe('Novu Client', () => {
         subscriber: { email: 'test@example.com' },
         state: [],
         controls: {
-          body: 'Hello {{t.welcome}} {{payload.name}}! Click {{t.button.submit}} to continue.',
-          subject: 'Welcome {{t.title}} - {{payload.name}}',
+          body: 'Hello body {{payload.name}}! {{t.single}} {{t.with-dash}} {{t.with_underscore}} {{t.123}} {{t.你好}}', // single, no nesting
+          subject:
+            'Hello subject {{payload.name}}! {{t.nested.single}} {{t.nested-with-dash.single}} {{t.nested_with_underscore.single}} {{t.123.single}} {{t.你好.single}}', // with nesting
         },
       };
 
@@ -1208,8 +1209,9 @@ describe('Novu Client', () => {
 
       // Translation patterns should be preserved when t.* values are undefined
       expect(emailExecutionResult.outputs).toEqual({
-        body: 'Hello {{t.welcome}} John! Click {{t.button.submit}} to continue.',
-        subject: 'Welcome {{t.title}} - John',
+        body: 'Hello body John! {{t.single}} {{t.with-dash}} {{t.with_underscore}} {{t.123}} {{t.你好}}',
+        subject:
+          'Hello subject John! {{t.nested.single}} {{t.nested-with-dash.single}} {{t.nested_with_underscore.single}} {{t.123.single}} {{t.你好.single}}',
       });
     });
 
@@ -2007,7 +2009,6 @@ describe('Novu Client', () => {
 
       const executionResult = await client.executeWorkflow(event);
       expect(executionResult.outputs).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((executionResult.outputs.data as any).someVal).toBe(link);
     });
 

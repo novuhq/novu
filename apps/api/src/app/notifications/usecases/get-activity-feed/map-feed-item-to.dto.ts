@@ -15,6 +15,7 @@ import {
   IDigestTimedMetadata,
   IWorkflowStepMetadata,
   ProvidersIdEnum,
+  SeverityLevelEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import { MessageTemplateDto } from '../../../shared/dtos/message.template.dto';
@@ -81,6 +82,7 @@ export function mapFeedItemToDto(entity: NotificationFeedItemEntity): ActivityNo
     to: entity.to,
     subscriber: entity.subscriber ? buildSubscriberDto(entity.subscriber) : undefined,
     template: entity.template ? buildTemplate(entity.template) : undefined,
+    severity: entity.severity ?? SeverityLevelEnum.NONE,
   };
 }
 
@@ -189,7 +191,7 @@ function isDigestTimedMetadata(item: IWorkflowStepMetadata): item is IDigestTime
   return item.type === DigestTypeEnum.TIMED;
 }
 
-function mapDigest(
+export function mapDigest(
   digestItem?: IWorkflowStepMetadata & {
     events?: any[];
   }

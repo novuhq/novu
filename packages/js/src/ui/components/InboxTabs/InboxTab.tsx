@@ -1,5 +1,5 @@
 import { ComponentProps, createMemo, JSX, Show } from 'solid-js';
-import { useInboxContext, useUnreadCount } from '../../context';
+import { useFilteredUnreadCount, useInboxContext } from '../../context';
 import { ClassName, cn, getTagsFromTab, useStyle } from '../../helpers';
 import { NotificationStatus, Tab } from '../../types';
 import { Dropdown, dropdownItemVariants, Tabs } from '../primitives';
@@ -13,10 +13,10 @@ export const InboxTabUnreadNotificationsCount = (props: { count: number }) => {
 
   return (
     <span
-      class={style(
-        'notificationsTabsTriggerCount',
-        'nt-rounded-full nt-bg-counter nt-px-[6px] nt-text-counter-foreground nt-text-sm'
-      )}
+      class={style({
+        key: 'notificationsTabsTriggerCount',
+        className: 'nt-rounded-full nt-bg-counter nt-px-[6px] nt-text-counter-foreground nt-text-sm',
+      })}
     >
       {displayCount()}
     </span>
@@ -26,14 +26,26 @@ export const InboxTabUnreadNotificationsCount = (props: { count: number }) => {
 export const InboxTab = (props: Tab & { class?: ClassName }) => {
   const { status } = useInboxContext();
   const style = useStyle();
-  const unreadCount = useUnreadCount({ filter: { tags: getTagsFromTab(props), data: props.filter?.data } });
+  const unreadCount = useFilteredUnreadCount({
+    filter: { tags: getTagsFromTab(props), data: props.filter?.data, severity: props.filter?.severity },
+  });
 
   return (
     <Tabs.Trigger
       value={props.label}
-      class={style('notificationsTabs__tabsTrigger', cn(tabsTriggerVariants(), 'nt-flex nt-gap-2', props.class))}
+      class={style({
+        key: 'notificationsTabs__tabsTrigger',
+        className: cn(tabsTriggerVariants(), 'nt-flex nt-gap-2', props.class),
+      })}
     >
-      <span class={style('notificationsTabsTriggerLabel', 'nt-text-sm nt-font-medium')}>{props.label}</span>
+      <span
+        class={style({
+          key: 'notificationsTabsTriggerLabel',
+          className: 'nt-text-sm nt-font-medium',
+        })}
+      >
+        {props.label}
+      </span>
       <Show when={status() !== NotificationStatus.ARCHIVED && unreadCount()}>
         <InboxTabUnreadNotificationsCount count={unreadCount()} />
       </Show>
@@ -48,14 +60,26 @@ type InboxDropdownTabProps = Pick<ComponentProps<(typeof Dropdown)['Item']>, 'on
 export const InboxDropdownTab = (props: InboxDropdownTabProps) => {
   const { status } = useInboxContext();
   const style = useStyle();
-  const unreadCount = useUnreadCount({ filter: { tags: getTagsFromTab(props), data: props.filter?.data } });
+  const unreadCount = useFilteredUnreadCount({
+    filter: { tags: getTagsFromTab(props), data: props.filter?.data, severity: props.filter?.severity },
+  });
 
   return (
     <Dropdown.Item
-      class={style('moreTabs__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-justify-between nt-gap-2'))}
+      class={style({
+        key: 'moreTabs__dropdownItem',
+        className: cn(dropdownItemVariants(), 'nt-flex nt-justify-between nt-gap-2'),
+      })}
       onClick={props.onClick}
     >
-      <span class={style('moreTabs__dropdownItemLabel', 'nt-mr-auto')}>{props.label}</span>
+      <span
+        class={style({
+          key: 'moreTabs__dropdownItemLabel',
+          className: 'nt-mr-auto',
+        })}
+      >
+        {props.label}
+      </span>
       {props.rightIcon}
       <Show when={status() !== NotificationStatus.ARCHIVED && unreadCount()}>
         <InboxTabUnreadNotificationsCount count={unreadCount()} />

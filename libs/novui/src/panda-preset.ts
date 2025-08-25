@@ -1,9 +1,30 @@
 import { definePreset } from '@pandacss/dev';
+import {
+  BUTTON_RECIPE,
+  CHECKBOX_RECIPE,
+  CODE_BLOCK_RECIPE,
+  INPUT_EDITOR_WIDGET_RECIPE,
+  INPUT_RECIPE,
+  JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE,
+  JSON_SCHEMA_FORM_SECTION_RECIPE,
+  LOADING_OVERLAY_RECIPE,
+  SELECT_RECIPE,
+  TABS_RECIPE,
+  TEXT_RECIPE,
+  TITLE_RECIPE,
+  VARIABLE_SUGGESTION_LIST_RECIPE,
+} from './recipes';
 import { BORDER_TOKENS, BORDER_WIDTH_TOKENS } from './tokens/borders.tokens';
 import { COLOR_PALETTE_TOKENS, LEGACY_COLOR_TOKENS } from './tokens/colors.tokens';
 import { GRADIENT_TOKENS, LEGACY_GRADIENT_TOKENS } from './tokens/gradients.tokens';
+import { LEGACY_OPACITY_TOKENS, OPACITY_TOKENS } from './tokens/opacity.tokens';
 import { LEGACY_RADIUS_TOKENS, RADIUS_TOKENS } from './tokens/radius.tokens';
 import { COLOR_SEMANTIC_TOKENS, LEGACY_COLOR_SEMANTIC_TOKENS } from './tokens/semanticColors.tokens';
+import { SEMANTIC_OPACITY_TOKENS } from './tokens/semanticOpacity.tokens';
+import { SEMANTIC_RADIUS_TOKENS } from './tokens/semanticRadius.tokens';
+import { SEMANTIC_SIZES_TOKENS } from './tokens/semanticSizes.tokens';
+import { SEMANTIC_SPACING_TOKENS } from './tokens/semanticSpacing.tokens';
+import { SEMANTIC_FONT_SIZE_TOKENS, SEMANTIC_LINE_HEIGHT_TOKENS } from './tokens/semanticTypography.tokens';
 import { LEGACY_SHADOW_TOKENS } from './tokens/shadow.tokens';
 import { SIZES_TOKENS } from './tokens/sizes.tokens';
 import { SPACING_TOKENS } from './tokens/spacing.tokens';
@@ -16,28 +37,7 @@ import {
   LETTER_SPACING_TOKENS,
   LINE_HEIGHT_TOKENS,
 } from './tokens/typography.tokens';
-import { SEMANTIC_FONT_SIZE_TOKENS, SEMANTIC_LINE_HEIGHT_TOKENS } from './tokens/semanticTypography.tokens';
 import { Z_INDEX_TOKENS } from './tokens/zIndex.tokens';
-import { SEMANTIC_SIZES_TOKENS } from './tokens/semanticSizes.tokens';
-import { SEMANTIC_SPACING_TOKENS } from './tokens/semanticSpacing.tokens';
-import { SEMANTIC_RADIUS_TOKENS } from './tokens/semanticRadius.tokens';
-import { LEGACY_OPACITY_TOKENS, OPACITY_TOKENS } from './tokens/opacity.tokens';
-import { SEMANTIC_OPACITY_TOKENS } from './tokens/semanticOpacity.tokens';
-import {
-  INPUT_RECIPE,
-  TEXT_RECIPE,
-  TITLE_RECIPE,
-  BUTTON_RECIPE,
-  TABS_RECIPE,
-  SELECT_RECIPE,
-  CHECKBOX_RECIPE,
-  CODE_BLOCK_RECIPE,
-  LOADING_OVERLAY_RECIPE,
-  JSON_SCHEMA_FORM_SECTION_RECIPE,
-  JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE,
-  VARIABLE_SUGGESTION_LIST_RECIPE,
-  INPUT_EDITOR_WIDGET_RECIPE,
-} from './recipes';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).

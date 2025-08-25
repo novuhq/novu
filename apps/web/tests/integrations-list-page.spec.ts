@@ -978,7 +978,6 @@ test('should show the Novu Email integration sidebar', async ({ page }) => {
     page,
     modifyBody: (body) => {
       const [firstIntegration] = body.data;
-      // eslint-disable-next-line no-param-reassign
       body.data = [
         {
           _id: EmailProviderIdEnum.Novu,
@@ -1040,7 +1039,6 @@ test('should show the Novu SMS integration sidebar', async ({ page }) => {
     page,
     modifyBody: (body) => {
       const [firstIntegration] = body.data;
-      // eslint-disable-next-line no-param-reassign
       body.data = [
         {
           _id: SmsProviderIdEnum.Novu,

@@ -1,42 +1,46 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
-
 import {
-  NotificationStepEntity,
-  SubscriberRepository,
-  MessageRepository,
-  MessageEntity,
-  IntegrationEntity,
-  IChannelSettings,
-} from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  LogCodeEnum,
-  ChatProviderIdEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  ProvidersIdEnum,
-  ITenantDefine,
-} from '@novu/shared';
-import {
-  InstrumentUsecase,
-  DetailEnum,
+  ChatFactory,
   CompileTemplate,
   CompileTemplateCommand,
-  ChatFactory,
-  SelectIntegration,
-  GetNovuProviderCredentials,
-  SelectVariant,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  InstrumentUsecase,
+  messageWebhookMapper,
+  SelectIntegration,
+  SelectVariant,
+  SendWebhookMessage,
 } from '@novu/application-generic';
-import { ChatOutput, ExecuteOutput } from '@novu/framework/internal';
 
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageBase } from './send-message.base';
+import {
+  IChannelSettings,
+  IntegrationEntity,
+  MessageEntity,
+  MessageRepository,
+  NotificationStepEntity,
+  SubscriberRepository,
+} from '@novu/dal';
+import { ChatOutput, ExecuteOutput } from '@novu/framework/internal';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  ITenantDefine,
+  ProvidersIdEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+} from '@novu/shared';
+import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageBase } from './send-message.base';
+import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';
 
@@ -52,7 +56,8 @@ export class SendMessageChat extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected createExecutionDetails: CreateExecutionDetails,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -66,7 +71,7 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Chat',
     });
@@ -103,8 +108,8 @@ export class SendMessageChat extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return {
-        status: 'failed',
-        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -114,6 +119,7 @@ export class SendMessageChat extends SendMessageBase {
       ) || [];
 
     const { phone } = subscriber;
+    // @ts-ignore
     chatChannels.push({
       providerId: ChatProviderIdEnum.WhatsAppBusiness,
       credentials: {
@@ -134,17 +140,19 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
       };
     }
 
-    let allFailed = true;
+    let status: SendMessageStatus = SendMessageStatus.FAILED;
     for (const channel of chatChannels) {
       try {
         const result = await this.sendChannelMessage(command, channel, step, content);
-        if (result.status === 'success') {
-          allFailed = false;
+        if (result.status === SendMessageStatus.SUCCESS) {
+          status = SendMessageStatus.SUCCESS;
+        } else if (result.status === SendMessageStatus.SKIPPED && status !== SendMessageStatus.SUCCESS) {
+          status = SendMessageStatus.SKIPPED;
         }
       } catch (e) {
         /*
@@ -155,7 +163,7 @@ export class SendMessageChat extends SendMessageBase {
       }
     }
 
-    if (allFailed) {
+    if (status === SendMessageStatus.FAILED) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -168,22 +176,41 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
+        status,
+        errorMessage: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
+      };
+    } else if (status === SendMessageStatus.SKIPPED) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.CHAT_SOME_CHANNELS_SKIPPED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return {
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_CREDENTIALS,
+        },
       };
     }
 
     return {
-      status: 'success',
+      status,
     };
   }
 
   private async sendChannelMessage(
-    command: SendMessageCommand,
+    command: SendMessageChannelCommand,
     subscriberChannel: IChannelSettings,
     chatChannel: NotificationStepEntity,
     content: string
-  ) {
+  ): Promise<SendMessageResult> {
     const getIntegrationParams: {
       id?: string;
       providerId?: ProvidersIdEnum;
@@ -232,8 +259,8 @@ export class SendMessageChat extends SendMessageBase {
         );
 
         return {
-          status: 'failed',
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          status: SendMessageStatus.FAILED,
+          errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
         };
       }
     } else if (!integration) {
@@ -252,8 +279,8 @@ export class SendMessageChat extends SendMessageBase {
        * TODO: Need to handle a proper execution log error for this case
        */
       return {
-        status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
@@ -279,6 +306,7 @@ export class SendMessageChat extends SendMessageBase {
       providerId: subscriberChannel.providerId,
       _jobId: command.jobId,
       tags: command.tags,
+      severity: command.severity,
     });
 
     await this.sendSelectedIntegrationExecution(command.job, integration);
@@ -332,7 +360,7 @@ export class SendMessageChat extends SendMessageBase {
     chatWebhookUrl: string,
     integration: IntegrationEntity,
     message: MessageEntity,
-    command: SendMessageCommand,
+    command: SendMessageChannelCommand,
     phoneNumber?: string
   ): Promise<SendMessageResult> {
     if (integration?.providerId === ChatProviderIdEnum.WhatsAppBusiness && !phoneNumber) {
@@ -361,8 +389,11 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.CHAT_MISSING_PHONE_NUMBER,
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_PHONE,
+        },
       };
     } else if (!chatWebhookUrl) {
       await this.messageRepository.updateMessageStatus(
@@ -390,8 +421,11 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_WEBHOOK_URL,
+        },
       };
     }
     if (!integration) {
@@ -419,14 +453,14 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
     return {
-      status: 'failed',
-      reason: DetailEnum.PROVIDER_ERROR,
+      status: SendMessageStatus.FAILED,
+      errorMessage: DetailEnum.PROVIDER_ERROR,
     };
   }
 
@@ -435,7 +469,7 @@ export class SendMessageChat extends SendMessageBase {
     integration: IntegrationEntity,
     content: string,
     message: MessageEntity,
-    command: SendMessageCommand,
+    command: SendMessageChannelCommand,
     channelSpecification?: string | undefined,
     phoneNumber?: string | undefined
   ): Promise<SendMessageResult> {
@@ -478,8 +512,21 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
 
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId, {
+            providerResponseId: result.id,
+            webhookUrl: chatWebhookUrl,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+
       return {
-        status: 'success',
+        status: SendMessageStatus.SUCCESS,
       };
     } catch (e) {
       await this.sendErrorStatus(
@@ -500,13 +547,29 @@ export class SendMessageChat extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(e),
+          raw:
+            e.response?.data && typeof e.response.data === 'object'
+              ? JSON.stringify(e.response.data)
+              : JSON.stringify(e),
         })
       );
 
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId),
+          error: {
+            message: e.message || e.name || 'Error while sending chat with provider',
+          },
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+
       return {
-        status: 'failed',
-        reason: DetailEnum.PROVIDER_ERROR,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.PROVIDER_ERROR,
       };
     }
   }

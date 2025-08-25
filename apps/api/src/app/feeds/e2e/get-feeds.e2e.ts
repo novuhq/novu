@@ -1,5 +1,5 @@
-import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('Get Feeds - /feeds (GET) #novu-v0', async () => {
   let session: UserSession;
@@ -9,7 +9,7 @@ describe('Get Feeds - /feeds (GET) #novu-v0', async () => {
     await session.initialize();
   });
 
-  it('should get all feeds', async function () {
+  it('should get all feeds', async () => {
     await session.testAgent.post(`/v1/feeds`).send({
       name: 'Test name',
     });
@@ -26,7 +26,7 @@ describe('Get Feeds - /feeds (GET) #novu-v0', async () => {
     expect(feed._environmentId).to.equal(session.environment._id);
   });
 
-  it('should create default feed if none exists', async function () {
+  it('should create default feed if none exists', async () => {
     const { body } = await session.testAgent.get(`/v1/feeds`);
     expect(body.data.length).to.equal(2);
     const defaultFeed = body.data[0];

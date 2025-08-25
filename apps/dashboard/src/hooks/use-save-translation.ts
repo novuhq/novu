@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEnvironment } from '@/context/environment/hooks';
 import { saveTranslation } from '@/api/translations';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
-import { showSuccessToast, showErrorToast } from '@/components/primitives/sonner-helpers';
 
 type SaveTranslationParameters = OmitEnvironmentFromParameters<typeof saveTranslation>;
 
@@ -47,14 +47,14 @@ export const useSaveTranslation = () => {
 
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchTranslationGroups] });
 
-      // Also invalidate translation keys if this is a default locale update
-      queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslationKeys, variables.resourceId, variables.locale, currentEnvironment?._id],
-      });
+      queryClient.refetchQueries({ queryKey: [QueryKeys.fetchTranslationKeys] });
 
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
+
+      // Invalidate preview queries to refetch with updated translations
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] });
 
       showSuccessToast('Translation saved successfully');
     },

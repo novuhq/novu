@@ -7,19 +7,21 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import {
+  DeliveryLifecycleStatus,
   DigestTypeEnum,
+  FeatureFlagsKeysEnum,
   IDigestBaseMetadata,
   IWorkflowStepMetadata,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
 } from '@novu/shared';
-
-import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 import { InstrumentUsecase } from '../../instrumentation';
-import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
-import { PlatformException } from '../../utils/exceptions';
+import { FeatureFlagsService } from '../../services';
+import { WorkflowRunRepository, WorkflowRunStatusEnum } from '../../services/analytic-logs';
 import { getNestedValue } from '../../utils';
-import { WorkflowRunRepository } from '../../services/analytic-logs';
+import { PlatformException } from '../../utils/exceptions';
+import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
+import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -29,7 +31,8 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
-    private workflowRunRepository: WorkflowRunRepository
+    private workflowRunRepository: WorkflowRunRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -77,6 +80,12 @@ export class CreateNotificationJobs {
   }
 
   private async createNotification(command: CreateNotificationJobsCommand, channels: StepTypeEnum[]) {
+    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
     const notification = await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -89,6 +98,7 @@ export class CreateNotificationJobs {
       channels,
       controls: command.controls,
       tags: command.template.tags,
+      severity: isNotificationSeverityEnabled ? command.template.severity : undefined,
     });
 
     await this.createWorkflowRun(notification, command);
@@ -99,12 +109,12 @@ export class CreateNotificationJobs {
   private async createWorkflowRun(notification: NotificationEntity, command: CreateNotificationJobsCommand) {
     try {
       await this.workflowRunRepository.create(notification, command.template, {
-        status: 'pending',
+        status: WorkflowRunStatusEnum.PROCESSING,
+        deliveryLifecycleStatus: DeliveryLifecycleStatus.PENDING,
         userId: command.userId,
         externalSubscriberId: command.subscriber.subscriberId,
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(
         { error: error instanceof Error ? error.message : 'Unknown error', notificationId: notification._id },
         'Failed to create workflow run'

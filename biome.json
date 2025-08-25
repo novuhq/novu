@@ -1,0 +1,289 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!**/.nx",
+      "!**/coverage",
+      "!**/.git",
+      "!**/*.log",
+      "!**/*.d.ts",
+      "!**/*.generated.ts",
+      "!**/pnpm-lock.yaml",
+      "!**/swagger-spec.json",
+      "!apps/web",
+      "!playground",
+      "!libs/internal-sdk",
+      "!libs/design-system",
+      "!.github",
+      "!scripts",
+      "!packages/framework/scripts",
+      "!packages/framework/src/jsonSchemaFaker.js"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "noLabelWithoutControl": "warn",
+        "noNoninteractiveElementToInteractiveRole": "warn",
+        "noNoninteractiveTabindex": "warn",
+        "noRedundantRoles": "warn",
+        "noStaticElementInteractions": "warn",
+        "useAriaPropsForRole": "warn",
+        "useAriaPropsSupportedByRole": "warn",
+        "useFocusableInteractive": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useSemanticElements": "warn",
+        "useValidAnchor": "warn",
+        "noSvgWithoutTitle": "off",
+        "useAltText": "off",
+        "useButtonType": "off"
+      },
+      "complexity": {
+        "noForEach": "warn"
+      },
+      "correctness": {
+        "noEmptyCharacterClassInRegex": "warn",
+        "noInnerDeclarations": "warn",
+        "noSwitchDeclarations": "warn",
+        "noUnsafeOptionalChaining": "warn",
+        "noVoidTypeReturn": "warn",
+        "useExhaustiveDependencies": "warn",
+        "useYield": "warn"
+      },
+      "security": {
+        "noBlankTarget": "warn"
+      },
+      "style": {
+        "useArrayLiterals": "error",
+        "useAsConstAssertion": "error",
+        "noCommonJs": "warn",
+        "noNamespace": "warn",
+        "useConst": "warn",
+        "useImportType": "off",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'"
+            }
+          }
+        }
+      },
+      "suspicious": {
+        "noAsyncPromiseExecutor": "warn",
+        "noAssignInExpressions": "warn",
+        "noControlCharactersInRegex": "warn",
+        "noDoubleEquals": "warn",
+        "noDuplicateTestHooks": "warn",
+        "noExplicitAny": "warn",
+        "noExportsInTest": "warn",
+        "noFallthroughSwitchClause": "warn",
+        "noImplicitAnyLet": "warn",
+        "noRedeclare": "warn",
+        "noShadowRestrictedNames": "warn",
+        "noThenProperty": "warn",
+        "noArrayIndexKey": "off",
+        "noPrototypeBuiltins": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "es5",
+      "jsxQuoteStyle": "double"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    }
+  },
+  "json": {
+    "formatter": {
+      "indentStyle": "space",
+      "indentWidth": 2
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/**/*.{ts,tsx,js}", "libs/**/*.{ts,js}"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noUselessTypeConstraint": "error"
+          },
+          "correctness": {
+            "noUnusedVariables": "warn"
+          },
+          "style": {
+            "useNamingConvention": {
+              "level": "warn",
+              "options": {
+                "strictCase": false,
+                "requireAscii": false,
+                "conventions": [
+                  {
+                    "selector": { "kind": "enumMember" },
+                    "formats": ["CONSTANT_CASE"]
+                  },
+                  {
+                    "selector": { "kind": "typeParameter" },
+                    "formats": ["PascalCase"]
+                  },
+                  {
+                    "selector": { "kind": "class" },
+                    "formats": ["PascalCase"]
+                  },
+                  {
+                    "selector": { "kind": "interface" },
+                    "formats": ["PascalCase"]
+                  },
+                  { "match": ".*" }
+                ]
+              }
+            }
+          },
+          "suspicious": {
+            "noEmptyBlockStatements": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/dashboard/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useHookAtTopLevel": "error"
+          },
+          "style": {
+            "useComponentExportOnlyModules": "warn"
+          },
+          "suspicious": {
+            "noExtraNonNullAssertion": "error",
+            "noMisleadingInstantiator": "error",
+            "noUnsafeDeclarationMerging": "error",
+            "useNamespaceKeyword": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/api/**/*.{ts,tsx,js}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
+                  "@nestjs/common": {
+                    "importNames": ["Logger"],
+                    "message": "Please use the PinoLogger from @novu/application-generic instead"
+                  },
+                  "@novu/application-generic": {
+                    "importNames": ["Logger"],
+                    "message": "Please use the PinoLogger from @novu/application-generic instead"
+                  },
+                  "svix": {
+                    "importNames": ["Svix"],
+                    "message": "Please use the SvixClient from @novu/application-generic instead"
+                  },
+                  "@nestjs/swagger": {
+                    "importNames": [
+                      "ApiOkResponse",
+                      "ApiCreatedResponse",
+                      "ApiAcceptedResponse",
+                      "ApiNoContentResponse",
+                      "ApiMovedPermanentlyResponse",
+                      "ApiFoundResponse",
+                      "ApiBadRequestResponse",
+                      "ApiUnauthorizedResponse",
+                      "ApiTooManyRequestsResponse",
+                      "ApiNotFoundResponse",
+                      "ApiInternalServerErrorResponse",
+                      "ApiBadGatewayResponse",
+                      "ApiConflictResponse",
+                      "ApiForbiddenResponse",
+                      "ApiGatewayTimeoutResponse",
+                      "ApiGoneResponse",
+                      "ApiMethodNotAllowedResponse",
+                      "ApiNotAcceptableResponse",
+                      "ApiNotImplementedResponse",
+                      "ApiPreconditionFailedResponse",
+                      "ApiPayloadTooLargeResponse",
+                      "ApiRequestTimeoutResponse",
+                      "ApiServiceUnavailableResponse",
+                      "ApiUnprocessableEntityResponse",
+                      "ApiUnsupportedMediaTypeResponse",
+                      "ApiDefaultResponse"
+                    ],
+                    "message": "Use 'Api<Error>Response' from '/shared/framework/response.decorator' instead."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["libs/application-generic/**/*.{ts,tsx,js}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "svix": {
+                    "importNames": ["Svix"],
+                    "message": "Please use the SvixClient from @novu/application-generic instead"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.test.{ts,tsx,js}", "**/*.spec.{ts,tsx,js}", "**/*.e2e.{ts,js}"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off",
+            "noImplicitAnyLet": "off"
+          }
+        }
+      }
+    }
+  ],
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}

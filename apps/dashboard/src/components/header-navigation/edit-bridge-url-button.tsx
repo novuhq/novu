@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PermissionsEnum } from '@novu/shared';
 import { useLayoutEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiLinkM, RiPencilFill } from 'react-icons/ri';
 import * as z from 'zod';
-
 import {
   Form,
   FormControl,
@@ -15,16 +15,15 @@ import {
 } from '@/components/primitives/form/form';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchBridgeHealthCheck } from '@/hooks/use-fetch-bridge-health-check';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useUpdateBridgeUrl } from '@/hooks/use-update-bridge-url';
 import { useValidateBridgeUrl } from '@/hooks/use-validate-bridge-url';
 import { ConnectionStatus } from '@/utils/types';
 import { cn } from '@/utils/ui';
 import { Input } from '../primitives/input';
+import { PermissionButton } from '../primitives/permission-button';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '../primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { PermissionsEnum } from '@novu/shared';
-import { useHasPermission } from '@/hooks/use-has-permission';
-import { PermissionButton } from '../primitives/permission-button';
 
 const formSchema = z.object({ bridgeUrl: z.string().url() });
 

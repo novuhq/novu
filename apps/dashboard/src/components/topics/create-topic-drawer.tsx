@@ -1,3 +1,5 @@
+import { forwardRef, useState } from 'react';
+import { RiArrowRightSLine, RiDiscussLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { Separator } from '@/components/primitives/separator';
 import {
@@ -14,8 +16,6 @@ import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { cn } from '@/utils/ui';
-import { forwardRef, useState } from 'react';
-import { RiArrowRightSLine, RiDiscussLine } from 'react-icons/ri';
 import { CreateTopicForm } from './create-topic-form';
 
 type CreateTopicDrawerProps = {

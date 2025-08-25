@@ -1,3 +1,8 @@
+import { DEFAULT_LOCALE, PermissionsEnum } from '@novu/shared';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiBookMarkedLine, RiRouteFill } from 'react-icons/ri';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
 import { Form, FormControl, FormField, FormItem } from '@/components/primitives/form/form';
@@ -7,13 +12,7 @@ import { TimelineContainer, TimelineStep } from '@/components/primitives/timelin
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
-import { ROUTES, buildRoute } from '@/utils/routes';
-
-import { DEFAULT_LOCALE, PermissionsEnum } from '@novu/shared';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiBookMarkedLine, RiRouteFill } from 'react-icons/ri';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { EmptyTranslationsIllustration } from './empty-translations-illustration';
 
 type TranslationOnboardingFormData = {
@@ -131,7 +130,7 @@ export const TranslationOnboardingPage = () => {
                     description={
                       <>
                         Don't worry about getting this perfect — you can add more languages anytime.{' '}
-                        <Link to="https://docs.novu.co/platform/translations" className="underline">
+                        <Link to="https://docs.novu.co/platform/workflow/translations" className="underline">
                           Learn more.
                         </Link>
                       </>
@@ -202,7 +201,7 @@ export const TranslationOnboardingPage = () => {
               View workflows
             </Button>
 
-            <Link to="https://docs.novu.co/platform/translations" target="_blank">
+            <Link to="https://docs.novu.co/platform/workflow/translations" target="_blank">
               <LinkButton variant="gray" leadingIcon={RiBookMarkedLine} size="sm">
                 Learn more in docs
               </LinkButton>

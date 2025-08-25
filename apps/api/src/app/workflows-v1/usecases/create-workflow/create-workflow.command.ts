@@ -1,4 +1,25 @@
 import {
+  ContentIssue,
+  EnvironmentWithUserCommand,
+  JSONSchema,
+  NotificationStep,
+  PreferencesRequired,
+} from '@novu/application-generic';
+import { ClientSession } from '@novu/dal';
+import {
+  CustomDataType,
+  INotificationGroup,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_NAME_LENGTH,
+  MAX_TAG_LENGTH,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  RuntimeIssue,
+  SeverityLevelEnum,
+  WorkflowStatusEnum,
+} from '@novu/shared';
+import { Exclude, Type } from 'class-transformer';
+import {
   ArrayUnique,
   IsArray,
   IsBoolean,
@@ -12,28 +33,6 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-
-import {
-  RuntimeIssue,
-  CustomDataType,
-  INotificationGroup,
-  ResourceOriginEnum,
-  WorkflowStatusEnum,
-  ResourceTypeEnum,
-  MAX_DESCRIPTION_LENGTH,
-  MAX_NAME_LENGTH,
-  MAX_TAG_LENGTH,
-} from '@novu/shared';
-
-import { Exclude, Type } from 'class-transformer';
-import { ClientSession } from '@novu/dal';
-import {
-  EnvironmentWithUserCommand,
-  ContentIssue,
-  JSONSchema,
-  NotificationStep,
-  PreferencesRequired,
-} from '@novu/application-generic';
 
 export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -158,4 +157,8 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @Exclude()
   session?: ClientSession | null;
+
+  @IsOptional()
+  @IsEnum(SeverityLevelEnum)
+  severity?: SeverityLevelEnum;
 }

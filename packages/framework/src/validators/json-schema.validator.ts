@@ -1,11 +1,11 @@
+import type { ValidateFunction as AjvValidateFunction, ErrorObject } from 'ajv';
 import Ajv from 'ajv';
-import type { ErrorObject, ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
+import { ImportRequirement } from '../types/import.types';
+import type { FromSchema, FromSchemaUnvalidated, JsonSchema, Schema } from '../types/schema.types';
 import type { ValidateResult, Validator } from '../types/validator.types';
-import type { FromSchema, FromSchemaUnvalidated, Schema, JsonSchema } from '../types/schema.types';
 import { cloneData } from '../utils/clone.utils';
 import { checkDependencies } from '../utils/import.utils';
-import { ImportRequirement } from '../types/import.types';
 
 export class JsonSchemaValidator implements Validator<JsonSchema> {
   /**

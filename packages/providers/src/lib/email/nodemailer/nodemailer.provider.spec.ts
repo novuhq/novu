@@ -1,12 +1,11 @@
-import { vi, describe, test, expect, afterEach } from 'vitest';
+import { fail } from 'assert';
 
 import nodemailer from 'nodemailer';
 import { ConnectionOptions } from 'tls';
-import { fail } from 'assert';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { NodemailerProvider } from './nodemailer.provider';
 
 const sendMailMock = vi.fn().mockReturnValue(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return {} as any;
 });
 

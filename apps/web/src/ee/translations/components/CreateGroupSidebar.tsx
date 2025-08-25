@@ -87,7 +87,6 @@ export const CreateGroupSidebar = ({
     }
 
     setValue('identifier', newIdentifier);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
 
   const onSubmit = async (data: any) => {

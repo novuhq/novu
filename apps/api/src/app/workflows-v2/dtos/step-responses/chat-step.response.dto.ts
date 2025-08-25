@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { StepResponseDto } from '../step.response.dto';
-import { ControlsMetadataDto } from '../controls-metadata.dto';
+import { ValidateNested } from 'class-validator';
 import { ChatControlDto } from '../controls/chat-control.dto';
+import { ControlsMetadataDto } from '../controls-metadata.dto';
+import { StepResponseDto } from '../step.response.dto';
 
 class ChatControlsMetadataResponseDto extends ControlsMetadataDto {
   @ApiProperty({

@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { LogRepository } from '../log.repository';
-import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
-import { requestLogSchema, ORDER_BY, RequestLog } from './request-log.schema';
+import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { LogRepository } from '../log.repository';
 import { getInsertOptions } from '../shared';
-
-export const TABLE_NAME = 'requests';
+import { ORDER_BY, RequestLog, requestLogSchema, TABLE_NAME } from './request-log.schema';
 
 const REQUEST_LOG_INSERT_OPTIONS: InsertOptions = getInsertOptions(
   process.env.REQUEST_LOGS_ASYNC_INSERT,
@@ -28,7 +26,7 @@ export class RequestLogRepository extends LogRepository<typeof requestLogSchema,
   }
 
   public async create(
-    data: Omit<RequestLog, 'id' | 'expires_at'>,
+    data: Omit<RequestLog, 'expires_at'>,
     context: {
       organizationId?: string;
       environmentId?: string;
@@ -39,7 +37,7 @@ export class RequestLogRepository extends LogRepository<typeof requestLogSchema,
   }
 
   public async createMany(
-    data: Omit<RequestLog, 'id' | 'expires_at'>[],
+    data: Omit<RequestLog, 'expires_at'>[],
     context: {
       organizationId?: string;
       environmentId?: string;

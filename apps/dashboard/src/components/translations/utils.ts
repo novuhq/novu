@@ -1,4 +1,4 @@
-import { locales } from '@/utils/locales';
+import { getLocaleByIso } from '@novu/shared';
 
 /**
  * Get a human-readable display name for a locale code
@@ -6,7 +6,7 @@ import { locales } from '@/utils/locales';
  * @returns A formatted display name (e.g., 'English, United States')
  */
 export function getLocaleDisplayName(localeCode: string): string {
-  const locale = locales.find((l) => l.langIso === localeCode);
+  const locale = getLocaleByIso(localeCode);
 
   if (locale?.langName) {
     // Extract language and country from langName like "Spanish (Spain)" -> "Spanish, Spain"

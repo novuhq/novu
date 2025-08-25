@@ -2,18 +2,19 @@ import {
   AnalyticsService,
   GetSubscriberTemplatePreference,
   GetWorkflowByIdsUseCase,
+  SendWebhookMessage,
   UpsertPreferences,
 } from '@novu/application-generic';
 import { SubscriberRepository } from '@novu/dal';
-import { PreferenceLevelEnum } from '@novu/shared';
+import { PreferenceLevelEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AnalyticsEventsEnum } from '../../utils';
-import { UpdatePreferences } from './update-preferences.usecase';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
+import { AnalyticsEventsEnum } from '../../utils';
+import { UpdatePreferences } from './update-preferences.usecase';
 
 const mockedSubscriber: any = {
   _id: '6447aff3d89122e250412c29',
@@ -42,6 +43,7 @@ const mockedWorkflow: any = {
   triggers: [{ identifier: 'test-trigger' }],
   tags: [],
   data: undefined,
+  severity: SeverityLevelEnum.NONE,
 };
 
 describe('UpdatePreferences', () => {
@@ -52,6 +54,7 @@ describe('UpdatePreferences', () => {
   let getSubscriberTemplatePreferenceUsecase: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
   let upsertPreferencesMock: sinon.SinonStubbedInstance<UpsertPreferences>;
   let getWorkflowByIdsUsecase: sinon.SinonStubbedInstance<GetWorkflowByIdsUseCase>;
+  let sendWebhookMessageMock: sinon.SinonStubbedInstance<SendWebhookMessage>;
 
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
@@ -60,6 +63,7 @@ describe('UpdatePreferences', () => {
     getSubscriberTemplatePreferenceUsecase = sinon.createStubInstance(GetSubscriberTemplatePreference);
     upsertPreferencesMock = sinon.createStubInstance(UpsertPreferences);
     getWorkflowByIdsUsecase = sinon.createStubInstance(GetWorkflowByIdsUseCase);
+    sendWebhookMessageMock = sinon.createStubInstance(SendWebhookMessage);
 
     updatePreferences = new UpdatePreferences(
       subscriberRepositoryMock as any,
@@ -67,7 +71,8 @@ describe('UpdatePreferences', () => {
       getSubscriberGlobalPreferenceMock as any,
       getSubscriberTemplatePreferenceUsecase as any,
       upsertPreferencesMock as any,
-      getWorkflowByIdsUsecase as any
+      getWorkflowByIdsUsecase as any,
+      sendWebhookMessageMock as any
     );
   });
 
@@ -184,6 +189,7 @@ describe('UpdatePreferences', () => {
         critical: mockedWorkflow.critical,
         tags: mockedWorkflow.tags,
         data: mockedWorkflow.data,
+        severity: mockedWorkflow.severity,
       },
     });
   });
@@ -232,6 +238,7 @@ describe('UpdatePreferences', () => {
         critical: mockedWorkflow.critical,
         tags: mockedWorkflow.tags,
         data: mockedWorkflow.data,
+        severity: mockedWorkflow.severity,
       },
     });
   });

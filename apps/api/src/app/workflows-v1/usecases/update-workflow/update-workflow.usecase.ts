@@ -1,10 +1,34 @@
-/* eslint-disable global-require */
-// eslint-ignore max-len
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-
+import {
+  AnalyticsService,
+  ContentService,
+  CreateChange,
+  CreateChangeCommand,
+  CreateMessageTemplate,
+  CreateMessageTemplateCommand,
+  DeleteMessageTemplate,
+  DeleteMessageTemplateCommand,
+  DeletePreferencesCommand,
+  DeletePreferencesUseCase,
+  GetPreferences,
+  Instrument,
+  InstrumentUsecase,
+  isVariantEmpty,
+  NotificationStep,
+  NotificationStepVariantCommand,
+  PinoLogger,
+  PlatformException,
+  ResourceValidatorService,
+  UpdateMessageTemplate,
+  UpdateMessageTemplateCommand,
+  UpsertPreferences,
+  UpsertUserWorkflowPreferencesCommand,
+  UpsertWorkflowPreferencesCommand,
+} from '@novu/application-generic';
 import {
   ChangeRepository,
+  ClientSession,
   ControlValuesRepository,
   LocalizationResourceEnum,
   MessageTemplateRepository,
@@ -13,7 +37,6 @@ import {
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-  ClientSession,
 } from '@novu/dal';
 import {
   buildWorkflowPreferences,
@@ -23,37 +46,10 @@ import {
   PreferencesTypeEnum,
   ResourceOriginEnum,
 } from '@novu/shared';
-
-import {
-  AnalyticsService,
-  ContentService,
-  CreateChange,
-  CreateChangeCommand,
-  CreateMessageTemplate,
-  CreateMessageTemplateCommand,
-  DeletePreferencesCommand,
-  DeletePreferencesUseCase,
-  GetPreferences,
-  UpsertPreferences,
-  UpsertUserWorkflowPreferencesCommand,
-  UpsertWorkflowPreferencesCommand,
-  NotificationStep,
-  NotificationStepVariantCommand,
-  DeleteMessageTemplate,
-  DeleteMessageTemplateCommand,
-  UpdateMessageTemplate,
-  UpdateMessageTemplateCommand,
-  Instrument,
-  InstrumentUsecase,
-  ResourceValidatorService,
-  isVariantEmpty,
-  PlatformException,
-  PinoLogger,
-} from '@novu/application-generic';
-import { UpdateWorkflowCommand } from './update-workflow.command';
+import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
-import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
+import { UpdateWorkflowCommand } from './update-workflow.command';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -99,6 +95,10 @@ export class UpdateWorkflow {
 
     if (command.active !== undefined) {
       updatePayload.active = command.active;
+    }
+
+    if (command.severity !== undefined) {
+      updatePayload.severity = command.severity;
     }
 
     if (command.description !== undefined) {
@@ -366,7 +366,7 @@ export class UpdateWorkflow {
 
   private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: UpdateWorkflowCommand) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
 
     if (!isEnterprise || isSelfHosted) {
       return;

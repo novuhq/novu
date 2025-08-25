@@ -1,16 +1,15 @@
-import { motion } from 'motion/react';
-import { RiRouteFill, RiCloseLine } from 'react-icons/ri';
 import { IActivity, IEnvironment } from '@novu/shared';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
-
-import { cn } from '@/utils/ui';
-import { fadeIn } from '@/utils/animation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'motion/react';
+import { RiCloseLine, RiRouteFill } from 'react-icons/ri';
+import { getActivityList } from '@/api/activity';
 import { Button } from '@/components/primitives/button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { triggerWorkflow } from '../../api/workflows';
-import { QueryKeys } from '@/utils/query-keys';
-import { getActivityList } from '@/api/activity';
 import { useEnvironment } from '@/context/environment/hooks';
+import { fadeIn } from '@/utils/animation';
+import { QueryKeys } from '@/utils/query-keys';
+import { cn } from '@/utils/ui';
+import { triggerWorkflow } from '../../api/workflows';
 import { RepeatPlay } from '../icons/repeat-play';
 
 type ActivityHeaderProps = {

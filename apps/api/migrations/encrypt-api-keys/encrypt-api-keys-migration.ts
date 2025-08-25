@@ -1,11 +1,10 @@
-/* eslint-disable */
 import '../../src/config';
 
-import { EnvironmentRepository, IApiKey } from '@novu/dal';
+import { NestFactory } from '@nestjs/core';
 import { encryptSecret, PinoLogger } from '@novu/application-generic';
+import { EnvironmentRepository, IApiKey } from '@novu/dal';
 import { EncryptedSecret } from '@novu/shared';
 import { createHash } from 'crypto';
-import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from '../../src/app.module';
 
@@ -32,7 +31,7 @@ export async function encryptApiKeysMigration() {
 
     if (
       environment.apiKeys.every((key) => {
-        isEncrypted(key.key);
+        return isEncrypted(key.key);
       })
     ) {
       logger.info(`environment ${environment._id} - api keys are already encrypted, skipping..`);

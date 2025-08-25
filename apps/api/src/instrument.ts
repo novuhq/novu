@@ -1,4 +1,3 @@
-/* eslint-disable import/first */
 import './config/env.config';
 
 require('newrelic');

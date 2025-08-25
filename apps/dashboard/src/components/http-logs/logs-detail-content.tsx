@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { RiArrowUpSLine, RiArrowDownSLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { formatDateSimple } from '@/utils/format-date';
 import { RequestLog } from '../../types/logs';
-import { HttpStatusBadge } from './http-status-badge';
-import { EditableJsonViewer } from '../workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
 import { CopyButton } from '../primitives/copy-button';
 import { Separator } from '../primitives/separator';
+import { EditableJsonViewer } from '../workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
+import { HttpStatusBadge } from './http-status-badge';
 import { TransactionIdDisplay } from './transaction-id-display';
 
 type LogsDetailContentProps = {
@@ -178,7 +178,7 @@ export function LogsDetailContent({ log }: LogsDetailContentProps) {
             <div className="flex items-center justify-between">
               <span className="text-text-soft font-mono text-xs font-medium tracking-[-0.24px]">Source</span>
               <span className="text-text-sub font-mono text-xs font-normal tracking-[-0.24px]">
-                {log.schemaType === 'Bearer' ? 'Dashboard' : 'API'}
+                {log.authType === 'Bearer' ? 'Dashboard' : 'API'}
               </span>
             </div>
           </div>

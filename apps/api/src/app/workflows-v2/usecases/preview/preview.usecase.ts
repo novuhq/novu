@@ -1,23 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, ResourceOriginEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import {
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
-  FeatureFlagsService,
 } from '@novu/application-generic';
+import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { BuildStepDataUsecase } from '../build-step-data';
-import { PreviewCommand } from './preview.command';
+// Import new services
+import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { GeneratePreviewResponseDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
-// Import new services
-import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
+import { BuildStepDataUsecase } from '../build-step-data';
+import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
-import { SchemaBuilderService } from './services/schema-builder.service';
 import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
+import { SchemaBuilderService } from './services/schema-builder.service';
 import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()
@@ -31,8 +30,7 @@ export class PreviewUsecase {
     private readonly payloadMerger: PayloadMergerService,
     private readonly schemaBuilder: SchemaBuilderService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
-    private readonly errorHandler: PreviewErrorHandler,
-    private readonly featureFlagService: FeatureFlagsService
+    private readonly errorHandler: PreviewErrorHandler
   ) {}
 
   @InstrumentUsecase()
@@ -46,16 +44,7 @@ export class PreviewUsecase {
         context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
       );
 
-      const isHtmlEditorEnabled = await this.featureFlagService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
-        organization: { _id: command.user.organizationId },
-        environment: { _id: command.user.environmentId },
-        user: { _id: command.user._id },
-        defaultValue: false,
-      });
-
       const { previewTemplateData } = this.controlValueSanitizer.processControlValues(
-        isHtmlEditorEnabled,
         sanitizedControls,
         context.variableSchema,
         context.variablesObject
@@ -72,11 +61,7 @@ export class PreviewUsecase {
       payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
-      const schema = await this.schemaBuilder.buildPreviewPayloadSchema(
-        payloadExample,
-        context.workflow.payloadSchema,
-        context.workflow
-      );
+      const schema = await this.schemaBuilder.buildPreviewPayloadSchema(payloadExample, context.workflow.payloadSchema);
 
       try {
         const executeOutput = await this.executePreviewUsecase(

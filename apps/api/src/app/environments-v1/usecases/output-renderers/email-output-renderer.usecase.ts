@@ -1,8 +1,19 @@
-/* eslint-disable no-param-reassign */
-import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
+import { JSONContent as MailyJSONContent, render as mailyRender } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Liquid } from 'liquidjs';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  EmailControlType,
+  FeatureFlagsService,
+  InstrumentUsecase,
+  LayoutControlType,
+  PinoLogger,
+  sanitizeHTML,
+} from '@novu/application-generic';
+import { ControlValuesEntity, ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
+import { createLiquidEngine } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
   EmailRenderOutput,
@@ -11,21 +22,10 @@ import {
   FeatureFlagsKeysEnum,
   LAYOUT_CONTENT_VARIABLE,
 } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  sanitizeHTML,
-  FeatureFlagsService,
-  PinoLogger,
-  EmailControlType,
-  LayoutControlType,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '@novu/application-generic';
-import { createLiquidEngine } from '@novu/framework/internal';
-import { ControlValuesEntity, ControlValuesRepository, JobRepository } from '@novu/dal';
-
-import { FullPayloadForRender, RenderCommand } from './render-command';
+import { Liquid } from 'liquidjs';
+import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import {
   hasShow,
@@ -37,12 +37,10 @@ import {
   replaceMailyNodesByCondition,
   wrapMailyInLiquid,
 } from '../../../shared/helpers/maily-utils';
-import { NOVU_BRANDING_HTML } from './novu-branding-html';
-import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
-import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
 import { removeBrandingFromHtml } from '../../../shared/utils/html';
-import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+import { NOVU_BRANDING_HTML } from './novu-branding-html';
+import { FullPayloadForRender, RenderCommand } from './render-command';
 
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
@@ -53,6 +51,7 @@ export class EmailOutputRendererCommand extends RenderCommand {
   locale?: string;
   skipLayoutRendering?: boolean;
   jobId?: string;
+  stepId: string;
 }
 
 function isJsonString(str: string): boolean {
@@ -105,15 +104,16 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       };
     }
 
-    const { fullPayloadForRender, environmentId, organizationId, workflowId, locale, skipLayoutRendering, jobId } =
-      renderCommand;
-
-    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
-      defaultValue: false,
-      environment: { _id: environmentId },
-      organization: { _id: organizationId },
-    });
+    const {
+      fullPayloadForRender,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+      skipLayoutRendering,
+      jobId,
+      stepId,
+    } = renderCommand;
 
     // Step 1: Apply translations to subject (already liquid-interpolated)
     const translatedSubject = await this.processSubjectTranslations(
@@ -126,40 +126,30 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     );
 
     // Step 2: Process body content (with translations applied before rendering)
-    let renderedHtml = '';
-    if (isLayoutsPageActive) {
-      renderedHtml = await this.renderWithLayout({
-        body,
-        layoutId,
-        payload: fullPayloadForRender,
-        environmentId,
-        organizationId,
-        workflowId,
-        locale,
-        skipLayoutRendering,
-        jobId,
-      });
-    } else {
-      renderedHtml = await this.processBodyContent({
-        body,
-        payload: fullPayloadForRender,
-        environmentId,
-        organizationId,
-        workflowId,
-        locale,
-      });
-    }
+    const renderedHtml = await this.renderWithLayout({
+      body,
+      layoutId,
+      payload: fullPayloadForRender,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+      skipLayoutRendering,
+      jobId,
+      stepId,
+    });
 
     // Step 3: Add Novu branding
     const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId);
+    const cleanedHtml = this.cleanupRenderedHtml(htmlWithBranding);
 
     // Step 4: Sanitize output if needed
     if (disableOutputSanitization) {
-      return { subject: translatedSubject, body: htmlWithBranding };
+      return { subject: translatedSubject, body: cleanedHtml };
     }
 
     const sanitizedSubject = sanitizeHTML(translatedSubject);
-    const sanitizedBody = sanitizeHTML(htmlWithBranding);
+    const sanitizedBody = sanitizeHTML(cleanedHtml);
 
     return {
       subject: sanitizedSubject,
@@ -167,9 +157,47 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     };
   }
 
+  private async getOverrideLayoutId({
+    job,
+    stepId,
+  }: {
+    job: JobEntity;
+    stepId: string;
+  }): Promise<string | null | undefined> {
+    const { overrides, step } = job;
+    let layoutIdentifier: string | null | undefined;
+
+    // Step 1: Check step-level override (highest priority)
+    const id = overrides?.steps?.[step._id ?? ''] ? step._id : stepId;
+    const stepOverrides = overrides?.steps?.[id ?? ''];
+    if (stepOverrides?.layoutId !== undefined) {
+      layoutIdentifier = stepOverrides.layoutId;
+    }
+    // Step 2: Check channel-level override for email
+    else if (overrides?.channels?.email?.layoutId !== undefined) {
+      layoutIdentifier = overrides.channels.email.layoutId;
+    }
+    // Step 3: Check deprecated layoutIdentifier (backward compatibility)
+    else if (overrides?.layoutIdentifier) {
+      layoutIdentifier = overrides.layoutIdentifier;
+    }
+
+    // If no override is specified, return undefined (use step configuration)
+    if (layoutIdentifier === undefined) {
+      return undefined;
+    }
+
+    // If explicitly set to null, return null (no layout)
+    if (layoutIdentifier === null) {
+      return null;
+    }
+
+    return layoutIdentifier;
+  }
+
   private async renderWithLayout({
     body,
-    layoutId,
+    layoutId: controlValueLayoutId,
     payload,
     environmentId,
     organizationId,
@@ -177,6 +205,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale,
     skipLayoutRendering,
     jobId,
+    stepId,
   }: {
     body: string;
     layoutId?: string | null;
@@ -187,32 +216,40 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale?: string;
     skipLayoutRendering?: boolean;
     jobId?: string;
+    stepId: string;
   }): Promise<string> {
+    let job: JobEntity | null = null;
+    let overrideLayoutId: string | null | undefined;
+    if (jobId) {
+      job = await this.jobRepository.findOne({
+        _id: jobId,
+        _environmentId: environmentId,
+      });
+      if (job) {
+        overrideLayoutId = await this.getOverrideLayoutId({ job, stepId });
+      }
+    }
+
+    const layoutId = overrideLayoutId || (overrideLayoutId === null ? null : controlValueLayoutId);
+
     let layoutControlsEntity: ControlValuesEntity | null = null;
     // if the step control values have a layoutId then find layout controls entity
     if (layoutId) {
-      const layout = await this.getLayoutUseCase.execute(
-        GetLayoutCommand.create({
-          layoutIdOrInternalId: layoutId,
-          environmentId,
-          organizationId,
-          skipAdditionalFields: true,
-        })
-      );
-
-      layoutControlsEntity = await this.controlValuesRepository.findOne({
-        _organizationId: organizationId,
-        _environmentId: environmentId,
-        _layoutId: layout._id,
-        level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
-      });
-
-      if (jobId) {
-        const job = await this.jobRepository.findOne({
-          _id: jobId,
+      try {
+        const layout = await this.getLayoutUseCase.execute(
+          GetLayoutCommand.create({
+            layoutIdOrInternalId: layoutId,
+            environmentId,
+            organizationId,
+            skipAdditionalFields: true,
+          })
+        );
+        layoutControlsEntity = await this.controlValuesRepository.findOne({
+          _organizationId: organizationId,
           _environmentId: environmentId,
+          _layoutId: layout._id,
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
         });
-
         if (job) {
           this.createExecutionDetails
             .execute(
@@ -226,10 +263,32 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
                 raw: JSON.stringify({ name: layout.name, layoutId: layout.layoutId }),
               })
             )
-            .catch((error) => {
-              this.logger.error({ err: error }, 'Failed to create execution details');
+            .catch((promiseError) => {
+              this.logger.error({ error: promiseError }, 'Failed to create execution details');
             });
         }
+      } catch (error) {
+        if (job) {
+          this.createExecutionDetails
+            .execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+                detail: DetailEnum.LAYOUT_NOT_FOUND,
+                source: ExecutionDetailsSourceEnum.INTERNAL,
+                status: ExecutionDetailsStatusEnum.FAILED,
+                isTest: false,
+                isRetry: false,
+                raw: JSON.stringify({
+                  layoutId,
+                  error: error.message,
+                }),
+              })
+            )
+            .catch((promiseError) => {
+              this.logger.error({ error: promiseError }, 'Failed to create execution details');
+            });
+        }
+        throw error;
       }
     }
 
@@ -316,9 +375,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       });
       const parsedMaily = await this.parseMailyContentByLiquid(translatedMaily, escapedPayloadForJson);
 
-      const renderedHtml = await mailyRender(parsedMaily, { noHtmlWrappingTags });
-
-      return this.cleanupRenderedHtml(renderedHtml);
+      return await mailyRender(parsedMaily, { noHtmlWrappingTags });
     } else {
       // For simple text body, apply translations directly
       const processedHtml = await this.processTextTranslations({
@@ -330,7 +387,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         locale,
       });
 
-      return this.cleanupRenderedHtml(processedHtml);
+      return processedHtml;
     }
   }
 
@@ -474,8 +531,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       parent.content = parent.content.filter((pNode) => pNode !== node);
     }
 
-    // @ts-ignore
-    delete node.attrs[MailyAttrsEnum.SHOW_IF_KEY];
+    delete (node.attrs as Record<string, string>)[MailyAttrsEnum.SHOW_IF_KEY];
 
     return shouldShow;
   }

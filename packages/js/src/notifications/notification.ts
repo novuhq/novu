@@ -1,13 +1,14 @@
 import { InboxService } from '../api';
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
 import { ActionTypeEnum, InboxNotification, Result } from '../types';
-import { archive, completeAction, read, revertAction, unarchive, unread, snooze, unsnooze, seen } from './helpers';
+import { archive, completeAction, read, revertAction, seen, snooze, unarchive, unread, unsnooze } from './helpers';
 
 export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotification {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
 
   readonly id: InboxNotification['id'];
+  readonly transactionId: InboxNotification['transactionId'];
   readonly subject?: InboxNotification['subject'];
   readonly body: InboxNotification['body'];
   readonly to: InboxNotification['to'];
@@ -29,12 +30,14 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
   readonly redirect: InboxNotification['redirect'];
   readonly data?: InboxNotification['data'];
   readonly workflow?: InboxNotification['workflow'];
+  readonly severity: InboxNotification['severity'];
 
   constructor(notification: InboxNotification, emitter: NovuEventEmitter, inboxService: InboxService) {
     this.#emitter = emitter;
     this.#inboxService = inboxService;
 
     this.id = notification.id;
+    this.transactionId = notification.transactionId;
     this.subject = notification.subject;
     this.body = notification.body;
     this.to = notification.to;
@@ -56,6 +59,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
     this.redirect = notification.redirect;
     this.data = notification.data;
     this.workflow = notification.workflow;
+    this.severity = notification.severity;
   }
 
   read(): Result<Notification> {

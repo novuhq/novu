@@ -2,21 +2,18 @@ import { Badge } from '@/components/primitives/badge';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { useTelemetry } from '@/hooks/use-telemetry';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
-import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
 import {
   RiBarChartBoxLine,
-  RiChat1Line,
   RiDatabase2Line,
   RiDiscussLine,
   RiGroup2Line,
   RiKey2Line,
   RiLayout5Line,
+  RiLineChartLine,
   RiRouteFill,
   RiSettings4Line,
   RiSignalTowerLine,
@@ -29,7 +26,7 @@ import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { FreeTrialCard } from './free-trial-card';
-import { GettingStartedMenuItem } from './getting-started-menu-item';
+import { HomeMenuItem } from './getting-started-menu-item';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 import { UsageCard } from './usage-card';
@@ -58,24 +55,11 @@ const BottomSection = ({
   subscription,
   daysLeft,
 }: BottomNavigationProps) => {
-  const track = useTelemetry();
-
-  const showPlainLiveChat = () => {
-    track(TelemetryEvent.SHARE_FEEDBACK_LINK_CLICKED);
-
-    try {
-      window?.Plain?.open();
-    } catch (error) {
-      Sentry.captureException(error);
-      console.error('Error opening plain chat:', error);
-    }
-  };
-
   if (IS_SELF_HOSTED) {
     return (
       <div className="relative mt-auto gap-8 pt-4">
         <ChangelogStack />
-        <GettingStartedMenuItem />
+        <HomeMenuItem />
       </div>
     );
   }
@@ -89,17 +73,11 @@ const BottomSection = ({
 
       {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
       <NavigationGroup>
-        <button onClick={showPlainLiveChat} className="w-full">
-          <NavigationLink>
-            <RiChat1Line className="size-4" />
-            <span>Share Feedback</span>
-          </NavigationLink>
-        </button>
         <NavigationLink to={ROUTES.SETTINGS_TEAM}>
           <RiUserAddLine className="size-4" />
           <span>Invite teammates</span>
         </NavigationLink>
-        <GettingStartedMenuItem />
+        <HomeMenuItem />
       </NavigationGroup>
     </div>
   );
@@ -111,9 +89,9 @@ export const SideNavigation = () => {
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
-  const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
+  const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -123,7 +101,7 @@ export const SideNavigation = () => {
   };
 
   return (
-    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col overflow-auto">
+    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
         <EnvironmentDropdown
@@ -131,7 +109,7 @@ export const SideNavigation = () => {
           data={environments}
           onChange={onEnvironmentChange}
         />
-        <nav className="flex h-full flex-1 flex-col">
+        <nav className="flex h-full flex-1 flex-col overflow-auto">
           <div className="flex flex-col gap-4">
             <NavigationGroup>
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
@@ -140,14 +118,14 @@ export const SideNavigation = () => {
                   <span>Workflows</span>
                 </NavigationLink>
               </Protect>
-              {isEmailLayoutsPageActive && (
-                <Protect permission={PermissionsEnum.WORKFLOW_READ}>
-                  <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-                    <RiLayout5Line className="size-4" />
-                    <span>Email Layouts</span>
-                  </NavigationLink>
-                </Protect>
-              )}
+
+              <Protect permission={PermissionsEnum.WORKFLOW_READ}>
+                <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                  <RiLayout5Line className="size-4" />
+                  <span>Email Layouts</span>
+                </NavigationLink>
+              </Protect>
+
               {isTranslationEnabled && (
                 <NavigationLink
                   to={buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}
@@ -184,7 +162,7 @@ export const SideNavigation = () => {
               <NavigationGroup label="Monitor">
                 <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
                   <NavigationLink
-                    to={buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_RUNS : ROUTES.ACTIVITY_FEED, {
+                    to={buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_WORKFLOW_RUNS : ROUTES.ACTIVITY_FEED, {
                       environmentSlug: currentEnvironment?.slug ?? '',
                     })}
                   >
@@ -192,6 +170,21 @@ export const SideNavigation = () => {
                     <span>Activity Feed</span>
                   </NavigationLink>
                 </Protect>
+                {isAnalyticsPageEnabled && (
+                  <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <NavigationLink
+                      to={buildRoute(ROUTES.ANALYTICS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                    >
+                      <RiLineChartLine className="size-4" />
+                      <span>
+                        Analytics{' '}
+                        <Badge variant="lighter" className="text-xs">
+                          BETA
+                        </Badge>
+                      </span>
+                    </NavigationLink>
+                  </Protect>
+                )}
               </NavigationGroup>
             </Protect>
             <Protect

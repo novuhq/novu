@@ -1,5 +1,5 @@
+import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 import { RiErrorWarningLine } from 'react-icons/ri';
-
 import { Code2 } from '@/components/icons/code-2';
 import { DigestVariableIcon } from '@/components/icons/digest-variable-icon';
 import { RepeatVariable } from '@/components/icons/repeat-variable';
@@ -26,7 +26,7 @@ export const VariableIcon = ({
     return <RiErrorWarningLine className="text-error-base size-3.5 min-w-3.5" />;
   }
 
-  if (context === 'translations') {
+  if (context === 'translations' || variableName === TRANSLATION_NAMESPACE_SEPARATOR) {
     return <TranslateVariableIcon className="text-feature size-3.5 min-w-3.5" />;
   }
 

@@ -64,6 +64,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
     ...STATUS_TO_FILTER[NotificationStatus.UNREAD_READ],
     tags: props.tabs.length > 0 ? getTagsFromTab(props.tabs[0]) : [],
     data: props.tabs.length > 0 ? props.tabs[0].filter?.data : {},
+    severity: props.tabs.length > 0 ? props.tabs[0].filter?.severity : undefined,
   });
   const [hideBranding, setHideBranding] = createSignal(false);
   const [isDevelopmentMode, setIsDevelopmentMode] = createSignal(false);
@@ -78,7 +79,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
 
   const setNewStatus = (newStatus: NotificationStatus) => {
     setStatus(newStatus);
-    setFilter((old) => ({ ...STATUS_TO_FILTER[newStatus], tags: old.tags, data: old.data }));
+    setFilter((old) => ({ ...STATUS_TO_FILTER[newStatus], tags: old.tags, data: old.data, severity: old.severity }));
   };
 
   const setNewActiveTab = (newActiveTab: string) => {
@@ -89,7 +90,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
     }
 
     setActiveTab(newActiveTab);
-    setFilter((old) => ({ ...old, tags, data: tab?.filter?.data }));
+    setFilter((old) => ({ ...old, tags, data: tab?.filter?.data, severity: tab?.filter?.severity }));
   };
 
   const navigate = (url?: string, target?: Redirect['target']) => {
@@ -120,7 +121,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
     const firstTab = props.tabs[0];
     const tags = getTagsFromTab(firstTab);
     setActiveTab(firstTab?.label ?? '');
-    setFilter((old) => ({ ...old, tags, data: firstTab?.filter?.data }));
+    setFilter((old) => ({ ...old, tags, data: firstTab?.filter?.data, severity: firstTab?.filter?.severity }));
 
     setPreferencesFilter(props.preferencesFilter);
     setPreferenceGroups(props.preferenceGroups);

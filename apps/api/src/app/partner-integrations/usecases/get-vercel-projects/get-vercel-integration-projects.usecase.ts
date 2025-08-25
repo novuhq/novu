@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { OrganizationRepository } from '@novu/dal';
+import { lastValueFrom } from 'rxjs';
 
 import { GetVercelIntegrationProjectsCommand } from './get-vercel-integration-projects.command';
 

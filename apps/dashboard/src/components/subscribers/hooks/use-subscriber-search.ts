@@ -1,6 +1,6 @@
-import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
 import { DirectionEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
+import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
 
 export type SearchField = 'subscriberId' | 'email' | 'phone' | 'name';
 

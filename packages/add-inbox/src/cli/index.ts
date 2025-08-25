@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
 import { execSync } from 'child_process';
-import prompts from 'prompts';
 import { Command } from 'commander';
-import logger from '../utils/logger';
-import fileUtils from '../utils/file';
+import prompts from 'prompts';
 import { detectFramework, IFramework } from '../config/framework';
 import { detectPackageManager } from '../config/package-manager';
+import { FRAMEWORKS } from '../constants';
 import { createComponentStructure } from '../generators/component';
 import { setupEnvExampleNextJs, setupEnvExampleReact } from '../generators/env';
-import { FRAMEWORKS } from '../constants';
-import { AnalyticsService, AnalyticsEventEnum } from '../utils/analytics';
+import { AnalyticsEventEnum, AnalyticsService } from '../utils/analytics';
+import fileUtils from '../utils/file';
+import logger from '../utils/logger';
 
 interface IPackageManager {
   name: string;

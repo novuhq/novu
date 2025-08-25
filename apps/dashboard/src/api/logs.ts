@@ -1,6 +1,6 @@
 import { IEnvironment } from '@novu/shared';
+import { RequestLog, RequestTraces } from '../types/logs';
 import { get } from './api.client';
-import { RequestLog } from '../types/logs';
 
 export interface GetRequestLogsParams {
   environment: IEnvironment;
@@ -32,7 +32,21 @@ export async function getRequestLogs(params: GetRequestLogsParams): Promise<GetR
   });
 
   const queryString = searchParams.toString();
-  const endpoint = `/logs/requests${queryString ? `?${queryString}` : ''}`;
+  const endpoint = `/activity/requests${queryString ? `?${queryString}` : ''}`;
 
   return get<GetRequestLogsResponse>(endpoint, { environment });
+}
+
+export interface GetRequestTracesParams {
+  environment: IEnvironment;
+  requestId: string;
+}
+
+export async function getRequestTraces(params: GetRequestTracesParams): Promise<RequestTraces> {
+  const { environment, requestId } = params;
+  const endpoint = `/activity/requests/${requestId}`;
+
+  const response = await get<{ data: RequestTraces }>(endpoint, { environment });
+
+  return response?.data;
 }

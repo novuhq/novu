@@ -1,14 +1,14 @@
+import { ImportRequirement } from '../types/import.types';
 import type {
   FromSchema,
   FromSchemaUnvalidated,
-  Schema,
   JsonSchema,
-  ZodSchemaMinimal,
+  Schema,
   ZodSchema,
+  ZodSchemaMinimal,
 } from '../types/schema.types';
 import type { ValidateResult, Validator } from '../types/validator.types';
 import { checkDependencies } from '../utils/import.utils';
-import { ImportRequirement } from '../types/import.types';
 
 export class ZodValidator implements Validator<ZodSchema> {
   readonly requiredImports: readonly ImportRequirement[] = [

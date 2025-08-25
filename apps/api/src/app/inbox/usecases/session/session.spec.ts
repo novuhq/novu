@@ -1,15 +1,4 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import {
-  CommunityOrganizationRepository,
-  EnvironmentRepository,
-  IntegrationRepository,
-  NotificationTemplateRepository,
-  MessageTemplateRepository,
-  PreferencesRepository,
-  CommunityUserRepository,
-} from '@novu/dal';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberUseCase,
@@ -18,18 +7,29 @@ import {
   SelectIntegration,
   UpsertControlValuesUseCase,
 } from '@novu/application-generic';
+import {
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
+  EnvironmentRepository,
+  IntegrationRepository,
+  MessageRepository,
+  MessageTemplateRepository,
+  NotificationTemplateRepository,
+  PreferencesRepository,
+} from '@novu/dal';
 import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { AuthService } from '../../../auth/services/auth.service';
-import { Session } from './session.usecase';
-import { SessionCommand } from './session.command';
-import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
-import { AnalyticsEventsEnum } from '../../utils';
-// eslint-disable-next-line import/no-namespace
-import * as encryption from '../../utils/encryption';
-import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
+import { AnalyticsEventsEnum } from '../../utils';
+import * as encryption from '../../utils/encryption';
+import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
+import { SessionCommand } from './session.command';
+import { Session } from './session.usecase';
 
 const mockIntegration = {
   _id: '_id',
@@ -69,6 +69,7 @@ describe('Session', () => {
   let getOrganizationSettingsUsecase: sinon.SinonStubbedInstance<GetOrganizationSettings>;
   let logger: sinon.SinonStubbedInstance<PinoLogger>;
   let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
+  let messageRepository: sinon.SinonStubbedInstance<MessageRepository>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -90,6 +91,7 @@ describe('Session', () => {
     getOrganizationSettingsUsecase = sinon.createStubInstance(GetOrganizationSettings);
     logger = sinon.createStubInstance(PinoLogger);
     featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
+    messageRepository = sinon.createStubInstance(MessageRepository);
 
     session = new Session(
       environmentRepository as any,
@@ -106,6 +108,7 @@ describe('Session', () => {
       communityUserRepository as any,
       notificationTemplateRepository as any,
       messageTemplateRepository as any,
+      messageRepository as any,
       preferencesRepository as any,
       upsertControlValuesUseCase as any,
       getOrganizationSettingsUsecase as any,

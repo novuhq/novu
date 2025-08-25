@@ -1,9 +1,5 @@
 {
-  "terminals": [],
-  "install": "git submodule update --init --recursive && pnpm install && pnpm build:v2",
-  "start": "cd scripts && node setup-env-files.js && cd .. && pnpm start:api & pnpm start:dashboard & pnpm start:worker &",
-  "build": {
-    "context": ".",
-    "dockerfile": "Dockerfile"
-  }
+  "snapshot": "snapshot-20250818-b0a88022-18f9-481d-9b50-a4497236b0f7",
+  "install": "pnpm install:with-ee && pnpm build:agents",
+  "terminals": []
 }

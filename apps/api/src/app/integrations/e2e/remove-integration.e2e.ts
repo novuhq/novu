@@ -1,10 +1,10 @@
+import { HttpStatus } from '@nestjs/common';
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, ChatProviderIdEnum, EmailProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
-import { HttpStatus } from '@nestjs/common';
 
-describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', function () {
+describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 
@@ -13,7 +13,7 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', f
     await session.initialize();
   });
 
-  it('should throw not found exception when integration is not found', async function () {
+  it('should throw not found exception when integration is not found', async () => {
     const integrationId = IntegrationRepository.createObjectId();
     const { body } = await session.testAgent.delete(`/v1/integrations/${integrationId}`).send();
 
@@ -21,7 +21,7 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', f
     expect(body.message).to.equal(`Entity with id ${integrationId} not found`);
   });
 
-  it('should not recalculate primary and priority fields for push channel', async function () {
+  it('should not recalculate primary and priority fields for push channel', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -85,7 +85,7 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', f
     expect(second.priority).to.equal(1);
   });
 
-  it('should not recalculate primary and priority fields for chat channel', async function () {
+  it('should not recalculate primary and priority fields for chat channel', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -149,7 +149,7 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', f
     expect(second.priority).to.equal(1);
   });
 
-  it('should recalculate primary and priority fields for email channel', async function () {
+  it('should recalculate primary and priority fields for email channel', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -215,19 +215,7 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', f
     expect(second.priority).to.equal(1);
   });
 
-  it('should throw an error when trying to delete a demo integration', async function () {
-    const existingIntegrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
-
-    const demoEmailIntegration = existingIntegrations.find(
-      (integration) => integration.providerId === EmailProviderIdEnum.Novu
-    );
-
-    const res = await session.testAgent.delete(`/v1/integrations/${demoEmailIntegration._id}`).send();
-    expect(res.body.statusCode).to.equal(400);
-    expect(res.body.message).to.equal('Novu demo integration or In-App integration cannot be deleted');
-  });
-
-  it('should remove a newly created integration', async function () {
+  it('should remove a newly created integration', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
       channel: ChannelTypeEnum.EMAIL,

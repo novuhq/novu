@@ -1,5 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
+  filteredPreference,
+  GetPreferences,
+  GetPreferencesResponseDto,
+  Instrument,
+  InstrumentUsecase,
+  MergePreferences,
+  MergePreferencesCommand,
+  mapTemplateConfiguration,
+  overridePreferences,
+  PreferenceSet,
+} from '@novu/application-generic';
+import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferencesEntity,
@@ -14,19 +26,6 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import _ from 'lodash';
-
-import {
-  GetPreferences,
-  GetPreferencesResponseDto,
-  Instrument,
-  InstrumentUsecase,
-  MergePreferences,
-  MergePreferencesCommand,
-  PreferenceSet,
-  filteredPreference,
-  mapTemplateConfiguration,
-  overridePreferences,
-} from '@novu/application-generic';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 
 @Injectable()
@@ -48,6 +47,7 @@ export class GetSubscriberPreference {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       tags: command.tags,
+      severity: command.severity,
     });
 
     const workflowIds = workflowList.map((wf) => wf._id);
@@ -148,43 +148,45 @@ export class GetSubscriberPreference {
         setImmediate(() => resolve());
       });
 
-      const chunkResults = chunk.map((workflow) => {
-        const preferences = workflowPreferenceSets[workflow._id];
+      const chunkResults = chunk
+        .map((workflow) => {
+          const preferences = workflowPreferenceSets[workflow._id];
 
-        if (!preferences) {
-          return;
-        }
+          if (!preferences) {
+            return null;
+          }
 
-        const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
+          const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
 
-        const includedChannels = this.getChannels(workflow, includeInactiveChannels);
+          const includedChannels = this.getChannels(workflow, includeInactiveChannels);
 
-        const initialChannels = filteredPreference(
-          {
-            email: true,
-            sms: true,
-            in_app: true,
-            chat: true,
-            push: true,
-          },
-          includedChannels
-        );
+          const initialChannels = filteredPreference(
+            {
+              email: true,
+              sms: true,
+              in_app: true,
+              chat: true,
+              push: true,
+            },
+            includedChannels
+          );
 
-        const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
+          const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
 
-        return {
-          preference: {
-            channels,
-            enabled: true,
-            overrides,
-          },
-          template: mapTemplateConfiguration({
-            ...workflow,
-            critical: merged.preferences.all.readOnly,
-          }),
-          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-        };
-      });
+          return {
+            preference: {
+              channels,
+              enabled: true,
+              overrides,
+            },
+            template: mapTemplateConfiguration({
+              ...workflow,
+              critical: merged.preferences.all.readOnly,
+            }),
+            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+          };
+        })
+        .filter(Boolean);
 
       results.push(...chunkResults);
     }

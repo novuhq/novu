@@ -1,5 +1,5 @@
-import { HoverCard, HoverCardContent, HoverCardPortal, HoverCardTrigger } from '@/components/primitives/hover-card';
 import { formatDistanceToNow } from 'date-fns';
+import { HoverCard, HoverCardContent, HoverCardPortal, HoverCardTrigger } from '@/components/primitives/hover-card';
 import { cn } from '@/utils/ui';
 
 interface TimeDisplayHoverCardProps {

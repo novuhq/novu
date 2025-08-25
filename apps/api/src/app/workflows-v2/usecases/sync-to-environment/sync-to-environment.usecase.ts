@@ -1,9 +1,27 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
-import { PreferencesEntity, PreferencesRepository, ClientSession, LocalizationResourceEnum } from '@novu/dal';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
-import { SyncToEnvironmentCommand } from './sync-to-environment.command';
+import { Instrument, InstrumentUsecase, SendWebhookMessage } from '@novu/application-generic';
+import {
+  ClientSession,
+  LocalizationResourceEnum,
+  NotificationTemplateRepository,
+  PreferencesEntity,
+  PreferencesRepository,
+} from '@novu/dal';
+import {
+  PreferencesTypeEnum,
+  ResourceOriginEnum,
+  StepTypeEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
+import {
+  LayoutSyncToEnvironmentCommand,
+  LayoutSyncToEnvironmentUseCase,
+} from '../../../layouts-v2/usecases/sync-to-environment';
+import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
+import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import {
   UpsertStepDataCommand,
@@ -11,12 +29,7 @@ import {
   UpsertWorkflowDataCommand,
   UpsertWorkflowUseCase,
 } from '../upsert-workflow';
-import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
-import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
-import {
-  LayoutSyncToEnvironmentCommand,
-  LayoutSyncToEnvironmentUseCase,
-} from '../../../layouts-v2/usecases/sync-to-environment';
+import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 
 export const SYNCABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
 
@@ -37,7 +50,10 @@ export class SyncToEnvironmentUseCase {
     private preferencesRepository: PreferencesRepository,
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
     private layoutSyncToEnvironmentUseCase: LayoutSyncToEnvironmentUseCase,
-    private moduleRef: ModuleRef
+    private moduleRef: ModuleRef,
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    @Optional()
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -90,18 +106,38 @@ export class SyncToEnvironmentUseCase {
 
     await this.publishTranslationGroup(sourceWorkflow.workflowId, command);
 
+    // Update the source workflow with publish information
+    await this.notificationTemplateRepository.updatePublishFields(
+      sourceWorkflow._id,
+      command.user.environmentId,
+      command.user._id,
+      command.session
+    );
+
+    if (this.sendWebhookMessage) {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.WORKFLOW_PUBLISHED,
+        objectType: WebhookObjectTypeEnum.WORKFLOW,
+        payload: {
+          object: upsertedWorkflow as unknown as Record<string, unknown>,
+          previousObject: sourceWorkflow as unknown as Record<string, unknown>,
+        },
+        organizationId: command.user.organizationId,
+        environmentId: command.user.environmentId,
+      });
+    }
+
     return upsertedWorkflow;
   }
 
   private async publishTranslationGroup(workflowIdentifier: string, command: SyncToEnvironmentCommand): Promise<void> {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
 
     if (!isEnterprise || isSelfHosted) {
       return;
     }
 
-    // eslint-disable-next-line global-require
     const publishTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.PublishTranslationGroup, {
       strict: false,
     });

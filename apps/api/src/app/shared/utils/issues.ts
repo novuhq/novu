@@ -1,6 +1,6 @@
+import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
-import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
 
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { capitalize } from '../services/helper/helper.service';
@@ -135,17 +135,14 @@ export const processControlValuesByLiquid = ({
   currentPath,
   issues,
   variableSchema,
-  useNewLiquidParser,
 }: {
   currentValue: unknown;
   currentPath: string[];
   issues: ControlIssues;
   variableSchema: JSONSchemaDto | undefined;
-  useNewLiquidParser: boolean;
 }) => {
   if (!currentValue || typeof currentValue !== 'object') {
     const liquidTemplateIssues = buildVariables({
-      useNewLiquidParser,
       variableSchema,
       controlValue: currentValue,
       suggestPayloadNamespace: false,
@@ -155,33 +152,31 @@ export const processControlValuesByLiquid = ({
     if (liquidTemplateIssues.invalidVariables.length > 0) {
       const controlKey = currentPath.join('.');
 
-      // eslint-disable-next-line no-param-reassign
       issues.controls = issues.controls || {};
 
-      // eslint-disable-next-line no-param-reassign
       issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((invalidVariable) => {
         const message = invalidVariable.message ? invalidVariable.message.split(' line:')[0] : '';
+        const variableName = invalidVariable.name === 'unknown' ? '{{}}' : invalidVariable.name;
+
         if ('filterMessage' in invalidVariable) {
           return {
-            message: `Filter "${invalidVariable.filterMessage}" in "${invalidVariable.name}"`,
+            message: `Filter "${invalidVariable.filterMessage}" in "${variableName}"`,
             issueType: ContentIssueEnum.INVALID_FILTER_ARG_IN_VARIABLE,
-            variableName: invalidVariable.name,
+            variableName: variableName,
           };
         }
 
         return {
-          message: `Variable "${invalidVariable.name}" ${message}`.trim(),
+          message: `Variable "${variableName}" ${message}`.trim(),
           issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
-          variableName: invalidVariable.name,
+          variableName: variableName,
         };
       });
     } else {
       const contentControlKey = currentPath.join('.');
       const contentIssue = validateContentCompilation(contentControlKey, currentValue);
       if (contentIssue) {
-        // eslint-disable-next-line no-param-reassign
         issues.controls = issues.controls || {};
-        // eslint-disable-next-line no-param-reassign
         issues.controls[contentControlKey] = [contentIssue];
 
         return;
@@ -197,7 +192,6 @@ export const processControlValuesByLiquid = ({
       currentPath: [...currentPath, key],
       issues,
       variableSchema,
-      useNewLiquidParser,
     });
   }
 };

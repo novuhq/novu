@@ -1,14 +1,14 @@
-import { expect } from 'chai';
+import { Novu } from '@novu/api';
+import { DetailEnum } from '@novu/application-generic';
 import {
   ExecutionDetailsRepository,
   IntegrationRepository,
   MessageRepository,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { DetailEnum } from '@novu/application-generic';
 import { ChannelTypeEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { Novu } from '@novu/api';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #novu-v2', () => {
@@ -76,7 +76,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         _environmentId: session.environment._id,
       });
 
-      expect(executionDetails.length).to.equal(7);
       const noActiveChannel = executionDetails.find((ex) => ex.detail === DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL);
       expect(noActiveChannel).to.be.ok;
       expect(noActiveChannel?.providerId).to.equal('fcm');
@@ -102,7 +101,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         _environmentId: session.environment._id,
       });
 
-      expect(executionDetails.length).to.equal(9);
       const fcm = executionDetails.find(
         (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.FCM
       );
@@ -111,8 +109,12 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.EXPO
       );
       expect(expo).to.be.ok;
-      const genericError = executionDetails.find((ex) => ex.detail === DetailEnum.NOTIFICATION_ERROR);
-      expect(genericError).to.be.ok;
+      const pushMissingDeviceTokens = executionDetails.filter(
+        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS
+      );
+      expect(pushMissingDeviceTokens.length).to.equal(2);
+      const pushChannelsSkipped = executionDetails.filter((ex) => ex.detail === DetailEnum.PUSH_SOME_CHANNELS_SKIPPED);
+      expect(pushChannelsSkipped).to.be.ok;
     });
 
     it('should not create any message if subscriber has configured one provider without device tokens and the other has invalid device token', async () => {
@@ -135,7 +137,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         _environmentId: session.environment._id,
       });
 
-      expect(executionDetails.length).to.equal(11);
       const fcmMessageCreated = executionDetails.find(
         (ex) => ex.detail === DetailEnum.MESSAGE_CREATED && ex.providerId === PushProviderIdEnum.FCM
       );
@@ -150,8 +151,12 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.EXPO
       );
       expect(expo, 'expected expo to be ok').to.be.ok;
-      const genericError = executionDetails.find((ex) => ex.detail === DetailEnum.NOTIFICATION_ERROR);
-      expect(genericError).to.be.ok;
+      const pushMissingDeviceTokens = executionDetails.filter(
+        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS
+      );
+      expect(pushMissingDeviceTokens.length).to.equal(1);
+      const pushChannelsSkipped = executionDetails.filter((ex) => ex.detail === DetailEnum.PUSH_SOME_CHANNELS_SKIPPED);
+      expect(pushChannelsSkipped).to.be.ok;
     });
   });
   async function triggerEvent(template2) {

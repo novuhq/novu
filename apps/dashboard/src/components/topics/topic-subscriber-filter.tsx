@@ -1,9 +1,9 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { useEnvironment } from '@/context/environment/hooks';
 import { cn } from '@/utils/ui';
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
 
 type TopicSubscriberFilterProps = {
   topicKey: string;

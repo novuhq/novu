@@ -1,3 +1,4 @@
+/.eslintcache
 /examples/node_modules
 .env
 .env.local
@@ -8,7 +9,6 @@
 .DS_Store
 /mcp-server
 /bin
-/.eslintcache
 /models
 /models/errors
 /types

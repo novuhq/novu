@@ -1,15 +1,13 @@
-import { ReactNode, useState, useCallback, useMemo, useEffect, useId, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
+  RiArrowRightUpLine,
   RiDeleteBin2Line,
+  RiErrorWarningLine,
+  RiListView,
   RiQuestionLine,
   RiSearchLine,
-  RiArrowRightUpLine,
-  RiListView,
-  RiErrorWarningLine,
 } from 'react-icons/ri';
-
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { LinkButton } from '@/components/primitives/button-link';
 import {
   Command,
   CommandEmpty,
@@ -20,10 +18,18 @@ import {
   CommandSeparator,
 } from '@/components/primitives/command';
 import { FormControl, FormItem, FormMessagePure } from '@/components/primitives/form/form';
-import { Input, InputRoot, InputPure, InputWrapper } from '@/components/primitives/input';
+import { Input, InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
+import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
+import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { Code2 } from '../icons/code-2';
+import { Button } from '../primitives/button';
+import { Separator } from '../primitives/separator';
 import { FilterItem } from './components/filter-item';
 import { ReorderFiltersGroup } from './components/reorder-filters-group';
 import { useFilterManager } from './hooks/use-filter-manager';
@@ -32,13 +38,6 @@ import { useVariableParser } from './hooks/use-variable-parser';
 import { useVariableValidation } from './hooks/use-variable-validation';
 import type { Filters, FilterWithParam } from './types';
 import { formatLiquidVariable } from './utils';
-import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
-import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
-import { Button } from '../primitives/button';
-import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
-import { LinkButton } from '@/components/primitives/button-link';
-import { Code2 } from '../icons/code-2';
-import { Separator } from '../primitives/separator';
 
 // Helper functions
 const calculateAliasFor = (name: string, parsedAliasRoot: string): string => {

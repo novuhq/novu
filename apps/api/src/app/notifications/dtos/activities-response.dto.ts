@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   DaysEnum,
   DigestTypeEnum,
@@ -11,9 +11,10 @@ import {
   OrdinalValueEnum,
   ProvidersIdEnum,
   ProvidersIdEnumConst,
+  ResourceOriginEnum,
+  SeverityLevelEnum,
   StepTypeEnum,
   TriggerTypeEnum,
-  ResourceOriginEnum,
 } from '@novu/shared';
 import { IsArray, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { StepFilterDto } from '../../shared/dtos/step-filter-dto';
@@ -441,6 +442,14 @@ export class ActivityNotificationResponseDto {
 
   @ApiPropertyOptional({ description: 'Topics of the notification', type: [ActivityTopicDto] })
   topics?: ActivityTopicDto[];
+
+  @ApiHideProperty()
+  /* @ApiPropertyOptional({
+    description: 'Severity of the notification',
+    enum: [...Object.values(SeverityLevelEnum)],
+    enumName: 'SeverityLevelEnum',
+  }) */
+  severity: SeverityLevelEnum;
 }
 
 // Activities Response DTO

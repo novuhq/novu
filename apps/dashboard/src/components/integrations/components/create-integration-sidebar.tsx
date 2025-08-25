@@ -1,20 +1,20 @@
-import { useNavigate, useParams } from 'react-router-dom';
 import { providers as novuProviders } from '@novu/shared';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
-import { useIntegrationList } from './hooks/use-integration-list';
-import { useSidebarNavigationManager } from './hooks/use-sidebar-navigation-manager';
-import { IntegrationSheet } from './integration-sheet';
-import { ChannelTabs } from './channel-tabs';
-import { IntegrationConfiguration } from './integration-configuration';
-import { handleIntegrationError } from './utils/handle-integration-error';
-import { useSetPrimaryIntegration } from '../../../hooks/use-set-primary-integration';
-import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
-import { IntegrationFormData } from '../types';
-import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { buildRoute, ROUTES } from '../../../utils/routes';
 import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
+import { useSetPrimaryIntegration } from '../../../hooks/use-set-primary-integration';
+import { buildRoute, ROUTES } from '../../../utils/routes';
 import { Button } from '../../primitives/button';
+import { IntegrationFormData } from '../types';
+import { ChannelTabs } from './channel-tabs';
+import { useIntegrationList } from './hooks/use-integration-list';
+import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
+import { useSidebarNavigationManager } from './hooks/use-sidebar-navigation-manager';
+import { IntegrationConfiguration } from './integration-configuration';
+import { IntegrationSheet } from './integration-sheet';
+import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
+import { handleIntegrationError } from './utils/handle-integration-error';
 
 export type CreateIntegrationSidebarProps = {
   isOpened: boolean;

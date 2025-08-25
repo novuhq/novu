@@ -1,3 +1,8 @@
+import { PermissionsEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
+import { ComponentProps, useState } from 'react';
+import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -12,11 +17,8 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { formatDateSimple } from '@/utils/format-date';
+import { Protect } from '@/utils/protect';
 import { QueryKeys } from '@/utils/query-keys';
-import { useQueryClient } from '@tanstack/react-query';
-import { ComponentProps, useState } from 'react';
-import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
 import { useEnvironment } from '../../context/environment/hooks';
 import { buildRoute, ROUTES } from '../../utils/routes';
 import { cn } from '../../utils/ui';
@@ -24,8 +26,6 @@ import { showErrorToast } from '../primitives/sonner-helpers';
 import { useDeleteTopic } from './hooks/use-delete-topic';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { Topic } from './types';
-import { Protect } from '@/utils/protect';
-import { PermissionsEnum } from '@novu/shared';
 
 type TopicRowProps = {
   topic: Topic;

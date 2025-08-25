@@ -22,7 +22,6 @@ describe('List subscriber subscriptions - /v2/subscribers/:subscriberId/subscrip
     subscriber = await subscribersService.createSubscriber();
 
     // Create multiple topics
-    // eslint-disable-next-line no-plusplus
     for (let i = 0; i < 3; i++) {
       const topicKey = `topic-key-${Date.now()}-${i}`;
       topicKeys.push(topicKey);

@@ -1,12 +1,31 @@
-import { captureException } from '@sentry/node';
-import { MessageEntity, MessageRepository } from '@novu/dal';
-import { CreateExecutionDetails } from '@novu/application-generic';
-import { SendMessageCommand } from './send-message.command';
+import { CreateExecutionDetails, DetailEnum } from '@novu/application-generic';
+import { DeliveryLifecycleState, MessageEntity, MessageRepository } from '@novu/dal';
+import { SendMessageChannelCommand } from './send-message-channel.command';
 
-export type SendMessageResult = {
-  status: 'success' | 'failed' | 'canceled';
-  reason?: string;
+export enum SendMessageStatus {
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  SKIPPED = 'skipped',
+}
+
+export type SendMessageResultPassed = {
+  status: SendMessageStatus.SUCCESS;
+  extraData?: string;
 };
+
+export type SendMessageResultSkipped = {
+  status: SendMessageStatus.SKIPPED;
+  deliveryLifecycleState?: DeliveryLifecycleState;
+  extraData?: string;
+};
+
+export type SendMessageResultFailed = {
+  status: SendMessageStatus.FAILED;
+  errorMessage: DetailEnum;
+  extraData?: string;
+};
+
+export type SendMessageResult = SendMessageResultPassed | SendMessageResultSkipped | SendMessageResultFailed;
 
 export abstract class SendMessageType {
   protected constructor(
@@ -14,14 +33,14 @@ export abstract class SendMessageType {
     protected createExecutionDetails: CreateExecutionDetails
   ) {}
 
-  public abstract execute(command: SendMessageCommand): Promise<SendMessageResult>;
+  public abstract execute(command: SendMessageChannelCommand): Promise<SendMessageResult>;
 
   protected async sendErrorStatus(
     message: MessageEntity,
     status: 'error' | 'sent' | 'warning',
     errorId: string,
     errorMessageFallback: string,
-    command: SendMessageCommand,
+    command: SendMessageChannelCommand,
     error?: any
   ): Promise<void> {
     const errorString = this.stringifyError(error) || errorMessageFallback;

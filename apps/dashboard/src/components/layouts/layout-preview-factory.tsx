@@ -1,8 +1,7 @@
-import { useFormContext } from 'react-hook-form';
-
-import { useLayoutEditor } from './layout-editor-provider';
-import { EmailCorePreview } from '../workflow-editor/steps/preview/previews/email-preview-wrapper';
 import { ResourceOriginEnum } from '@novu/shared';
+import { useFormContext } from 'react-hook-form';
+import { EmailCorePreview } from '../workflow-editor/steps/preview/previews/email-preview-wrapper';
+import { useLayoutEditor } from './layout-editor-provider';
 
 export const LayoutPreviewFactory = () => {
   const { layout, isPreviewPending, previewData } = useLayoutEditor();

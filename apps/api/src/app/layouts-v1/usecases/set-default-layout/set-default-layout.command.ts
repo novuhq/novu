@@ -1,8 +1,7 @@
-import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
-
 import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-import { LayoutId } from '../../types';
+import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { LayoutId } from '../../types';
 
 export class SetDefaultLayoutCommand extends EnvironmentWithUserCommand {
   @IsString()

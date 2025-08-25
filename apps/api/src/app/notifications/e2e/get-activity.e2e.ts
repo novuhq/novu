@@ -1,9 +1,9 @@
-import { MessageRepository, NotificationRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
-import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { ActivityNotificationResponseDto } from '@novu/api/models/components';
+import { MessageRepository, NotificationRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async () => {

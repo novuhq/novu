@@ -1,15 +1,14 @@
 import './instrument';
 
-import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import bodyParser from 'body-parser';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
-
-import { CONTEXT_PATH, validateEnv } from './config';
-import { AppModule } from './app.module';
+import bodyParser from 'body-parser';
+import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
+import { AppModule } from './app.module';
+import { CONTEXT_PATH, validateEnv } from './config';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 

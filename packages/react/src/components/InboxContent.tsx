@@ -1,9 +1,9 @@
+import type { InboxPage, NotificationActionClickHandler, NotificationClickHandler } from '@novu/js/ui';
 import React from 'react';
-import type { NotificationClickHandler, NotificationActionClickHandler, InboxPage } from '@novu/js/ui';
-import { Mounter } from './Mounter';
-import { NoRendererProps, SubjectBodyRendererProps, NotificationRendererProps } from '../utils/types';
-import { useRenderer } from '../context/RendererContext';
 import { useNovuUI } from '../context/NovuUIContext';
+import { useRenderer } from '../context/RendererContext';
+import { NoRendererProps, NotificationRendererProps, SubjectBodyRendererProps } from '../utils/types';
+import { Mounter } from './Mounter';
 import { withRenderer } from './Renderer';
 
 export type InboxContentProps = {
@@ -19,8 +19,11 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
     onNotificationClick,
     onPrimaryActionClick,
     renderNotification,
+    renderAvatar,
     renderSubject,
     renderBody,
+    renderDefaultActions,
+    renderCustomActions,
     onSecondaryActionClick,
     initialPage,
     hideNav,
@@ -51,10 +54,17 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
         name: 'InboxContent',
         element,
         props: {
+          renderAvatar: renderAvatar ? (el, notification) => mountElement(el, renderAvatar(notification)) : undefined,
           renderSubject: renderSubject
             ? (el, notification) => mountElement(el, renderSubject(notification))
             : undefined,
           renderBody: renderBody ? (el, notification) => mountElement(el, renderBody(notification)) : undefined,
+          renderDefaultActions: renderDefaultActions
+            ? (el, notification) => mountElement(el, renderDefaultActions(notification))
+            : undefined,
+          renderCustomActions: renderCustomActions
+            ? (el, notification) => mountElement(el, renderCustomActions(notification))
+            : undefined,
           onNotificationClick,
           onPrimaryActionClick,
           onSecondaryActionClick,
@@ -63,7 +73,17 @@ const _InboxContent = React.memo((props: InboxContentProps) => {
         },
       });
     },
-    [renderNotification, renderSubject, renderBody, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
+    [
+      renderNotification,
+      renderAvatar,
+      renderSubject,
+      renderBody,
+      renderDefaultActions,
+      renderCustomActions,
+      onNotificationClick,
+      onPrimaryActionClick,
+      onSecondaryActionClick,
+    ]
   );
 
   return <Mounter mount={mount} />;

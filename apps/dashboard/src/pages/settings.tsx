@@ -11,8 +11,8 @@ import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
-  getFeatureForTierAsBoolean,
   GetSubscriptionDto,
+  getFeatureForTierAsBoolean,
 } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -181,7 +181,7 @@ export function SettingsPage() {
           <TabsContent value="team" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
-                <div className="pb-6 pt-4">
+                <div className={`pb-6 pt-4 ${isRbacEnabled ? 'show-role-column' : 'hide-role-column'}`}>
                   {isRbacEnabledFlag && !isRbacEnabled && (
                     <InlineToast
                       title="Tip:"

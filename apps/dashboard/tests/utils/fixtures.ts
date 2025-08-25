@@ -1,5 +1,5 @@
+import { EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 import { test as base } from '@playwright/test';
-import { UserEntity, OrganizationEntity, EnvironmentEntity } from '@novu/dal';
 
 import { Session } from './session';
 

@@ -1,4 +1,3 @@
-/* eslint-disable local-rules/no-class-without-style */
 import { JSX, ParentProps, Ref, splitProps } from 'solid-js';
 import { cn, useStyle } from '../../../helpers';
 import type { AppearanceKey } from '../../../types';
@@ -16,7 +15,10 @@ export const TabsList = (props: TabsListProps) => {
     <>
       <div
         ref={local.ref}
-        class={style(local.appearanceKey || 'tabsList', cn(tabsListVariants(), local.class))}
+        class={style({
+          key: local.appearanceKey || 'tabsList',
+          className: cn(tabsListVariants(), local.class),
+        })}
         role="tablist"
         {...rest}
       >

@@ -1,13 +1,12 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
 import { AnalyticsService } from '@novu/application-generic';
 import { ControlValuesRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-
-import { DuplicateLayoutUseCase } from './duplicate-layout.use-case';
-import { DuplicateLayoutCommand } from './duplicate-layout.command';
-import { UpsertLayout } from '../upsert-layout';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { GetLayoutUseCase } from '../get-layout';
+import { UpsertLayout } from '../upsert-layout';
+import { DuplicateLayoutCommand } from './duplicate-layout.command';
+import { DuplicateLayoutUseCase } from './duplicate-layout.use-case';
 
 describe('DuplicateLayoutUseCase', () => {
   let getLayoutUseCaseMock: sinon.SinonStubbedInstance<GetLayoutUseCase>;

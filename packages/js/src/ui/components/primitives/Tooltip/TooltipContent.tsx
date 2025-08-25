@@ -4,8 +4,8 @@ import { useAppearance, useFocusManager } from '../../../context';
 import { useStyle } from '../../../helpers';
 import type { AppearanceKey } from '../../../types';
 import { Root } from '../../elements';
-import { useTooltip } from './TooltipRoot';
 import { Motion } from '../Motion';
+import { useTooltip } from './TooltipRoot';
 
 export const tooltipContentVariants = () =>
   'nt-bg-foreground nt-p-2 nt-shadow-tooltip nt-rounded-lg nt-text-background nt-text-xs';
@@ -35,7 +35,11 @@ const TooltipContentBody = (props: TooltipContentProps) => {
       animate={open() ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
       transition={{ duration: effectiveAnimationDuration(), easing: 'ease-in-out' }}
       ref={setFloating}
-      class={local.class ? local.class : style(local.appearanceKey || 'tooltipContent', tooltipContentVariants())}
+      class={
+        local.class
+          ? local.class
+          : style({ key: local.appearanceKey || 'tooltipContent', className: tooltipContentVariants() })
+      }
       style={{ ...floatingStyles(), 'z-index': 99999 }}
       {...rest}
     >

@@ -1,7 +1,7 @@
-import { Card, CardContent } from '../primitives/card';
 import { ChannelTypeEnum } from '@novu/shared';
-import { Usecase } from './usecases-list.utils';
+import { Card, CardContent } from '../primitives/card';
 import { StepIndicator } from './shared';
+import { Usecase } from './usecases-list.utils';
 
 interface UsecaseSelectOnboardingProps {
   onHover: (id: ChannelTypeEnum | null) => void;

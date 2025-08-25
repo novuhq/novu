@@ -1,5 +1,5 @@
+import { SeverityLevelEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
-
 import { schemaOptions } from '../schema-default.options';
 import { NotificationDBModel } from './notification.entity';
 
@@ -54,6 +54,11 @@ const notificationSchema = new Schema<NotificationDBModel>(
     },
     tags: {
       type: [Schema.Types.String],
+    },
+    severity: {
+      type: Schema.Types.String,
+      enum: SeverityLevelEnum,
+      default: SeverityLevelEnum.NONE,
     },
   },
   schemaOptions

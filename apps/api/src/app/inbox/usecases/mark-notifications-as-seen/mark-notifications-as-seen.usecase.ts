@@ -1,23 +1,27 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
-  WebSocketsQueueService,
-  TraceLogRepository,
-  PinoLogger,
   LogRepository,
-  Trace,
   mapEventTypeToTitle,
+  MessageInteractionService,
+  MessageInteractionTrace,
+  messageWebhookMapper,
+  PinoLogger,
+  SendWebhookMessage,
+  StepType,
+  Trace,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
-import { WebSocketEventEnum } from '@novu/shared';
+import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
-import { MarkNotificationsAsSeenCommand } from './mark-notifications-as-seen.command';
 import { validateDataStructure } from '../../utils/validate-data';
+import { MarkNotificationsAsSeenCommand } from './mark-notifications-as-seen.command';
 
 @Injectable()
 export class MarkNotificationsAsSeen {
@@ -27,8 +31,9 @@ export class MarkNotificationsAsSeen {
     private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
-    private traceLogRepository: TraceLogRepository,
-    private logger: PinoLogger
+    private messageInteractionService: MessageInteractionService,
+    private logger: PinoLogger,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -51,14 +56,29 @@ export class MarkNotificationsAsSeen {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
+    let updatedMessages: MessageEntity[] = [];
     // If notificationIds are provided, use them; otherwise use filters
     if (notificationIds && notificationIds.length > 0) {
-      await this.messageRepository.updateMessagesStatusByIds({
+      updatedMessages = await this.messageRepository.updateMessagesStatusByIds({
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
         ids: notificationIds,
         seen: true,
       });
+
+      const webhookPromises = updatedMessages.map((message) =>
+        this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_SEEN,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, subscriber.subscriberId),
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        })
+      );
+
+      await Promise.all(webhookPromises);
 
       await this.logTraces({
         command,
@@ -192,7 +212,7 @@ export class MarkNotificationsAsSeen {
       return;
     }
 
-    const allTraceData: Omit<Trace, 'id' | 'expires_at'>[] = [];
+    const allTraceData: MessageInteractionTrace[] = [];
 
     for (const message of messages) {
       if (!message._jobId) continue;
@@ -209,7 +229,7 @@ export class MarkNotificationsAsSeen {
 
     if (allTraceData.length > 0) {
       try {
-        await this.traceLogRepository.createMany(allTraceData);
+        await this.messageInteractionService.trace(allTraceData);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create seen traces for ${allTraceData.length} messages`);
       }
@@ -226,7 +246,7 @@ export class MarkNotificationsAsSeen {
     command: MarkNotificationsAsSeenCommand;
     subscriberId: string;
     _subscriberId: string;
-  }): Omit<Trace, 'id' | 'expires_at'> {
+  }): MessageInteractionTrace {
     return {
       created_at: LogRepository.formatDateTime64(new Date()),
       organization_id: message._organizationId,
@@ -241,6 +261,9 @@ export class MarkNotificationsAsSeen {
       status: 'success',
       entity_type: 'step_run',
       entity_id: message._jobId,
+      step_run_type: message.channel as StepType,
+      workflow_run_identifier: message.templateIdentifier,
+      _notificationId: message._notificationId,
     };
   }
 }

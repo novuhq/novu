@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ResourceOriginEnum } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
-
-import { LayoutSyncToEnvironmentCommand } from './layout-sync-to-environment.command';
+import { ResourceOriginEnum } from '@novu/shared';
 import { LayoutResponseDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
-import { UpsertLayoutCommand, UpsertLayoutDataCommand, UpsertLayout } from '../upsert-layout';
+import { UpsertLayout, UpsertLayoutCommand, UpsertLayoutDataCommand } from '../upsert-layout';
+import { LayoutSyncToEnvironmentCommand } from './layout-sync-to-environment.command';
 
 export const SYNCABLE_LAYOUT_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
 

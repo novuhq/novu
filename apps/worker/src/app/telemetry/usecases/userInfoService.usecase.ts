@@ -2,8 +2,8 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
-  CommunityUserRepository,
   CommunityOrganizationRepository,
+  CommunityUserRepository,
   IntegrationRepository,
   NotificationRepository,
   NotificationTemplateRepository,

@@ -1,5 +1,5 @@
-import { IsDefined, IsString, IsOptional, IsBoolean } from 'class-validator';
 import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
+import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class TestSendEmailRequestDto {
   @IsDefined()
@@ -7,7 +7,7 @@ export class TestSendEmailRequestDto {
   contentType: MessageTemplateContentType;
 
   @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: any;
 
   @IsDefined()
   @IsString()

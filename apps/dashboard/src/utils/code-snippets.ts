@@ -7,12 +7,21 @@ export type CodeSnippet = {
   secretKey?: string;
 };
 
+export type TriggerCurlCommandOptions = {
+  workflowId: string;
+  to: unknown;
+  payload: string | Record<string, unknown>;
+  apiKey: string;
+  baseUrl?: string;
+  addDashboardSource?: boolean;
+};
+
 const SECRET_KEY_ENV_KEY = 'NOVU_SECRET_KEY';
 
 const safeParsePayload = (payload: string) => {
   try {
     return JSON.parse(payload);
-  } catch (e) {
+  } catch {
     return {};
   }
 };
@@ -61,6 +70,98 @@ export const createCurlSnippet = ({ identifier, to, payload, secretKey = SECRET_
     2
   )}'
   `;
+};
+
+export const createTriggerRequestBody = ({
+  workflowId,
+  to,
+  payload,
+  addDashboardSource = true,
+}: Omit<TriggerCurlCommandOptions, 'apiKey' | 'baseUrl'>) => {
+  let parsedPayload = {};
+
+  try {
+    parsedPayload = typeof payload === 'string' ? JSON.parse(payload) : payload;
+  } catch {
+    parsedPayload = {};
+  }
+
+  return {
+    name: workflowId,
+    to,
+    payload: addDashboardSource ? { ...parsedPayload, __source: 'dashboard' } : parsedPayload,
+  };
+};
+
+export const generateTriggerCurlCommand = ({
+  workflowId,
+  to,
+  payload,
+  apiKey,
+  baseUrl = API_HOSTNAME ?? 'https://api.novu.co',
+  addDashboardSource = true,
+}: TriggerCurlCommandOptions) => {
+  const body = createTriggerRequestBody({ workflowId, to, payload, addDashboardSource });
+
+  return `curl -X POST "${baseUrl}/v1/events/trigger" \\
+  -H "Authorization: ApiKey ${apiKey}" \\
+  -H "Content-Type: application/json" \\
+  -d '${JSON.stringify(body, null, 2)}'`;
+};
+
+export type PostmanCollectionOptions = {
+  workflowId: string;
+  to: unknown;
+  payload: string | Record<string, unknown>;
+  apiKey: string;
+  baseUrl?: string;
+  addDashboardSource?: boolean;
+};
+
+export const generatePostmanCollection = ({
+  workflowId,
+  to,
+  payload,
+  apiKey,
+  baseUrl = API_HOSTNAME ?? 'https://api.novu.co',
+  addDashboardSource = true,
+}: PostmanCollectionOptions) => {
+  const body = createTriggerRequestBody({ workflowId, to, payload, addDashboardSource });
+
+  return {
+    info: {
+      name: `Novu - Trigger ${workflowId}`,
+      schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+    },
+    item: [
+      {
+        name: `Trigger ${workflowId}`,
+        request: {
+          method: 'POST',
+          header: [
+            {
+              key: 'Authorization',
+              value: `ApiKey ${apiKey}`,
+            },
+            {
+              key: 'Content-Type',
+              value: 'application/json',
+            },
+          ],
+          body: {
+            mode: 'raw',
+            raw: JSON.stringify(body, null, 2),
+            options: {
+              raw: {
+                language: 'json',
+              },
+            },
+          },
+          url: `${baseUrl}/v1/events/trigger`,
+        },
+      },
+    ],
+  };
 };
 
 export const createFrameworkSnippet = ({ identifier, to, payload }: CodeSnippet) => {

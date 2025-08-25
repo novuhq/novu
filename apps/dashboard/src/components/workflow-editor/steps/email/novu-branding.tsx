@@ -1,15 +1,15 @@
-import { HTMLAttributes } from 'react';
-import { cn } from '@/utils/ui';
-import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { Switch } from '@/components/primitives/switch';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, ResourceOriginEnum } from '@novu/shared';
+import { HTMLAttributes } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/utils/routes';
 import { Separator } from '@/components/primitives/separator';
+import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
+import { ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
 
 type NovuBrandingProps = HTMLAttributes<HTMLDivElement> & {
   resourceOrigin: ResourceOriginEnum;

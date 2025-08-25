@@ -1,9 +1,9 @@
-import { usePreviewStep } from '@/hooks/use-preview-step';
-import { PushPreview } from './push-preview';
 import * as Sentry from '@sentry/react';
-import { useWorkflow } from '../../workflow-provider';
-import { useParams } from 'react-router-dom';
 import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { usePreviewStep } from '@/hooks/use-preview-step';
+import { useWorkflow } from '../../workflow-provider';
+import { PushPreview } from './push-preview';
 
 export function ConfigurePushStepPreview() {
   const {

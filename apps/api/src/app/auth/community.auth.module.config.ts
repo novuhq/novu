@@ -1,21 +1,21 @@
 import { MiddlewareConsumer, ModuleMetadata, Provider, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import passport from 'passport';
+import { CommunityMemberRepository, CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
-import { CommunityUserRepository, CommunityOrganizationRepository, CommunityMemberRepository } from '@novu/dal';
-import { JwtStrategy } from './services/passport/jwt.strategy';
-import { AuthController } from './auth.controller';
-import { UserModule } from '../user/user.module';
-import { USE_CASES } from './usecases';
-import { SharedModule } from '../shared/shared.module';
-import { GitHubStrategy } from './services/passport/github.strategy';
+import passport from 'passport';
 import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
-import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
+import { SharedModule } from '../shared/shared.module';
+import { UserModule } from '../user/user.module';
+import { AuthController } from './auth.controller';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
-import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { AuthService } from './services/auth.service';
 import { CommunityAuthService } from './services/community.auth.service';
+import { ApiKeyStrategy } from './services/passport/apikey.strategy';
+import { GitHubStrategy } from './services/passport/github.strategy';
+import { JwtStrategy } from './services/passport/jwt.strategy';
+import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
+import { USE_CASES } from './usecases';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 

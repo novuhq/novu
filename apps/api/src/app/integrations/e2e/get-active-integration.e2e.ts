@@ -1,9 +1,9 @@
-import { UserSession, IntegrationService } from '@novu/testing';
-import { expect } from 'chai';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { IntegrationEntity } from '@novu/dal';
+import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { IntegrationService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
-describe('Get Active Integrations - Multi-Provider Configuration - /integrations/active (GET) #novu-v2', function () {
+describe('Get Active Integrations - Multi-Provider Configuration - /integrations/active (GET) #novu-v2', () => {
   let session: UserSession;
   const integrationService = new IntegrationService();
 
@@ -12,7 +12,7 @@ describe('Get Active Integrations - Multi-Provider Configuration - /integrations
     await session.initialize();
   });
 
-  it('should get active integrations', async function () {
+  it('should get active integrations', async () => {
     await integrationService.createIntegration({
       environmentId: session.environment._id,
       organizationId: session.organization._id,
@@ -57,7 +57,7 @@ describe('Get Active Integrations - Multi-Provider Configuration - /integrations
     }
   });
 
-  it('should have return empty array if no active integration are exist', async function () {
+  it('should have return empty array if no active integration are exist', async () => {
     await integrationService.deleteAllForOrganization(session.organization._id);
     const response = await session.testAgent.get(`/v1/integrations/active`);
 
@@ -66,7 +66,7 @@ describe('Get Active Integrations - Multi-Provider Configuration - /integrations
     expect(normalizeIntegration.length).to.equal(0);
   });
 
-  it('should have additional unselected integration after creating a new one', async function () {
+  it('should have additional unselected integration after creating a new one', async () => {
     const initialActiveIntegrations: IntegrationEntity[] = (await session.testAgent.get(`/v1/integrations/active`)).body
       .data;
     const { emailIntegration: initialEmailIntegrations } = splitByChannels(initialActiveIntegrations);

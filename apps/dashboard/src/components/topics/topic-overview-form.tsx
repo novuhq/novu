@@ -1,3 +1,11 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiDeleteBin2Line } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
+import { ExternalToast } from 'sonner';
+import { z } from 'zod';
 import { deleteTopic, updateTopic } from '@/api/topics';
 import { Button } from '@/components/primitives/button';
 import { Card, CardContent } from '@/components/primitives/card';
@@ -23,14 +31,6 @@ import { formatDateSimple } from '@/utils/format-date';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiDeleteBin2Line } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
-import { ExternalToast } from 'sonner';
-import { z } from 'zod';
 import { ConfirmationModal } from '../confirmation-modal';
 import { Topic } from './types';
 

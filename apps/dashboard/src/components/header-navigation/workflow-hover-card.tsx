@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { RiAddBoxLine, RiDeleteBin2Line, RiGitCommitFill } from 'react-icons/ri';
+import type { IResourceDiffResult } from '@/api/environments';
 import { Badge, BadgeIcon } from '../primitives/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import type { IResourceDiffResult } from '@/api/environments';
 
 type WorkflowChangeType = {
   type: 'configuration' | 'steps' | 'translations';
@@ -51,6 +51,8 @@ export function WorkflowHoverCard({ workflowResource, children }: WorkflowHoverC
         if (change.action && change.action in stepActionCounts) {
           stepActionCounts[change.action as keyof typeof stepActionCounts]++;
         }
+      } else if (change.resourceType === 'localization_group') {
+        hasTranslationChanges = true;
       }
     });
 
@@ -94,7 +96,7 @@ export function WorkflowHoverCard({ workflowResource, children }: WorkflowHoverC
       types.push({
         type: 'translations',
         label: 'Translations',
-        action: 'added',
+        action: 'modified',
         count: 1,
       });
     }

@@ -1,11 +1,11 @@
-import * as React from 'react';
-import * as TabsPrimitive from '@radix-ui/react-tabs';
-import { SegmentedControlList } from './segmented-control';
-import { cn } from '@/utils/ui';
-import { cva, VariantProps } from 'class-variance-authority';
-import { useTabObserver } from '@/hooks/use-tab-observer';
-import mergeRefs from 'merge-refs';
 import { Slottable } from '@radix-ui/react-slot';
+import * as TabsPrimitive from '@radix-ui/react-tabs';
+import { cva, VariantProps } from 'class-variance-authority';
+import mergeRefs from 'merge-refs';
+import * as React from 'react';
+import { useTabObserver } from '@/hooks/use-tab-observer';
+import { cn } from '@/utils/ui';
+import { SegmentedControlList } from './segmented-control';
 
 const tabsListVariants = cva('inline-flex', {
   variants: {

@@ -1,9 +1,9 @@
-import { STEP_TYPE_TO_COLOR } from '@/utils/color';
-import { StepTypeEnum } from '@/utils/enums';
-import { cn } from '@/utils/ui';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
+import { STEP_TYPE_TO_COLOR } from '@/utils/color';
+import { StepTypeEnum } from '@/utils/enums';
+import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { Badge } from '../primitives/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
@@ -70,9 +70,11 @@ const MenuItem = ({
 
 export const AddStepMenu = ({
   visible = false,
+  className,
   onMenuItemClick,
 }: {
   visible?: boolean;
+  className?: string;
   onMenuItemClick: (stepType: StepTypeEnum) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -93,9 +95,13 @@ export const AddStepMenu = ({
         <span data-testid="add-step-menu-button">
           <Node
             variant="sm"
-            className={cn('opacity-0 transition duration-300 ease-out hover:opacity-100', {
-              'opacity-100': isPopoverOpen || visible,
-            })}
+            className={cn(
+              'opacity-0 transition duration-300 ease-out hover:opacity-100',
+              {
+                'opacity-100': isPopoverOpen || visible,
+              },
+              className
+            )}
           >
             <RiAddLine className="h-4 w-4" />
           </Node>

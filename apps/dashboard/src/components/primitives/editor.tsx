@@ -1,16 +1,6 @@
-import {
-  autocompleteFooter,
-  autocompleteHeader,
-  codeIcon,
-  digestIcon,
-  functionIcon,
-  keyIcon,
-} from '@/components/primitives/constants';
-import { useDataRef } from '@/hooks/use-data-ref';
+import { type TagStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import createTheme from '@uiw/codemirror-themes';
-import { type TagStyle } from '@codemirror/language';
-
 import {
   default as CodeMirror,
   EditorView,
@@ -20,6 +10,15 @@ import {
 import { cva } from 'class-variance-authority';
 import React, { useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
+import {
+  autocompleteFooter,
+  autocompleteHeader,
+  codeIcon,
+  digestIcon,
+  functionIcon,
+  keyIcon,
+} from '@/components/primitives/constants';
+import { useDataRef } from '@/hooks/use-data-ref';
 
 const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
   variants: {
@@ -47,6 +46,25 @@ const baseTheme = (options: { multiline?: boolean }) =>
             overflow: 'hidden',
           },
         }),
+    '.cm-line span.cm-matchingBracket': {
+      backgroundColor: 'hsl(var(--highlighted) / 0.1)',
+    },
+    // important to show the cursor at the beginning of the line
+    '.cm-line': {
+      marginLeft: '1px',
+      lineHeight: '20px',
+    },
+    'div.cm-content': {
+      padding: 0,
+    },
+    'div.cm-gutters': {
+      backgroundColor: 'transparent',
+      borderRight: 'none',
+      color: 'hsl(var(--foreground-400))',
+    },
+    '.cm-placeholder': {
+      fontWeight: 'normal',
+    },
     '.cm-tooltip-autocomplete .cm-completionIcon-variable, .cm-tooltip-autocomplete .cm-completionIcon-local, .cm-tooltip-autocomplete .cm-completionIcon-property':
       {
         '&:before': {
@@ -166,34 +184,6 @@ const baseTheme = (options: { multiline?: boolean }) =>
       padding: '0',
       width: '16px',
       height: '16px',
-    },
-    '.cm-line span.cm-matchingBracket': {
-      backgroundColor: 'hsl(var(--highlighted) / 0.1)',
-    },
-    // important to show the cursor at the beginning of the line
-    '.cm-line': {
-      marginLeft: '1px',
-      lineHeight: '20px',
-    },
-    'div.cm-content': {
-      padding: 0,
-      ...(options.multiline
-        ? {
-            whiteSpace: 'pre-wrap',
-            width: '100%',
-          }
-        : {
-            whiteSpace: 'preserve nowrap',
-            width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
-          }),
-    },
-    'div.cm-gutters': {
-      backgroundColor: 'transparent',
-      borderRight: 'none',
-      color: 'hsl(var(--foreground-400))',
-    },
-    '.cm-placeholder': {
-      fontWeight: 'normal',
     },
     '.cm-tooltip .cm-completionInfo': {
       marginInline: '0.375rem',
@@ -326,6 +316,7 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
         foldGutter,
         highlightActiveLine: false,
         highlightActiveLineGutter: false,
+        highlightSelectionMatches: false,
         defaultKeymap: multiline,
         ...((typeof basicSetupProp === 'object' ? basicSetupProp : {}) ?? {}),
       }),

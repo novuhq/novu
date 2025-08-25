@@ -1,3 +1,13 @@
+## v3.8.1 (2025-08-13)
+
+### 🩹 Fixes
+
+- **root:** nx release publish issue for syntax error fixes NV-6506 ([#8922](https://github.com/novuhq/novu/pull/8922))
+
+### ❤️ Thank You
+
+- Himanshu Garg @merrcury
+
 ## v3.7.0 (2025-07-22)
 
 ### 🩹 Fixes

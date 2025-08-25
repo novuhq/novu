@@ -1,13 +1,12 @@
-import { expect } from 'chai';
-import sinon from 'sinon';
-import { UnprocessableEntityException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum, TriggerTypeEnum } from '@novu/shared';
-
-import { BulkUpdatePreferences } from './bulk-update-preferences.usecase';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { BulkUpdatePreferencesCommand } from './bulk-update-preferences.command';
+import { BulkUpdatePreferences } from './bulk-update-preferences.usecase';
 
 const mockedSubscriber: any = {
   _id: '6447aff3d89122e250412c29',
@@ -162,7 +161,7 @@ describe('BulkUpdatePreferences', () => {
       expect.fail('Should throw an exception');
     } catch (error) {
       expect(error).to.be.instanceOf(UnprocessableEntityException);
-      expect(error.message).to.equal('Exceeded maximum limit of 100 preferences for bulk update');
+      expect(error.message).to.equal('preferences must contain no more than 100 elements');
     }
   });
 

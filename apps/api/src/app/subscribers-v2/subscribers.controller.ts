@@ -10,41 +10,45 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
-  UserSession,
   RequirePermissions,
+  UserSession,
 } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
   DirectionEnum,
+  PermissionsEnum,
   SubscriberCustomData,
   UserSessionData,
-  PermissionsEnum,
 } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { GetPreferencesResponseDto } from '../inbox/dtos/get-preferences-response.dto';
+import { BulkUpdatePreferencesCommand } from '../inbox/usecases/bulk-update-preferences/bulk-update-preferences.command';
+import { BulkUpdatePreferences } from '../inbox/usecases/bulk-update-preferences/bulk-update-preferences.usecase';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { SubscriberResponseDto } from '../subscribers/dtos';
 import { ListSubscriberSubscriptionsQueryDto } from '../topics-v2/dtos/list-subscriber-subscriptions-query.dto';
 import { ListTopicSubscriptionsResponseDto } from '../topics-v2/dtos/list-topic-subscriptions-response.dto';
 import { ListSubscriberSubscriptionsCommand } from '../topics-v2/usecases/list-subscriber-subscriptions/list-subscriber-subscriptions.command';
 import { ListSubscriberSubscriptionsUseCase } from '../topics-v2/usecases/list-subscriber-subscriptions/list-subscriber-subscriptions.usecase';
+import { BulkUpdateSubscriberPreferencesDto } from './dtos/bulk-update-subscriber-preferences.dto';
 import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
 import { GetSubscriberPreferencesDto } from './dtos/get-subscriber-preferences.dto';
 import { ListSubscribersQueryDto } from './dtos/list-subscribers-query.dto';
 import { ListSubscribersResponseDto } from './dtos/list-subscribers-response.dto';
-import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferences.dto';
 import { PatchSubscriberRequestDto } from './dtos/patch-subscriber.dto';
+import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferences.dto';
 import { RemoveSubscriberResponseDto } from './dtos/remove-subscriber.dto';
-import { GetSubscriberPreferencesCommand } from './usecases/get-subscriber-preferences/get-subscriber-preferences.command';
-import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
 import { GetSubscriberCommand } from './usecases/get-subscriber/get-subscriber.command';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
+import { GetSubscriberPreferencesCommand } from './usecases/get-subscriber-preferences/get-subscriber-preferences.command';
+import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
 import { ListSubscribersCommand } from './usecases/list-subscribers/list-subscribers.command';
 import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
 import { mapSubscriberEntityToDto } from './usecases/list-subscribers/map-subscriber-entity-to.dto';
@@ -70,6 +74,7 @@ export class SubscribersController {
     private removeSubscriberUsecase: RemoveSubscriber,
     private getSubscriberPreferencesUsecase: GetSubscriberPreferences,
     private updateSubscriberPreferencesUsecase: UpdateSubscriberPreferences,
+    private bulkUpdatePreferencesUsecase: BulkUpdatePreferences,
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private listSubscriberSubscriptionsUsecase: ListSubscriberSubscriptionsUseCase
   ) {}
@@ -135,12 +140,22 @@ export class SubscribersController {
     description: `Create a subscriber with the subscriber attributes. 
       **subscriberId** is a required field, rest other fields are optional, if the subscriber already exists, it will be updated`,
   })
+  @ApiQuery({
+    name: 'failIfExists',
+    required: false,
+    type: Boolean,
+    description: 'If true, the request will fail if a subscriber with the same subscriberId already exists',
+  })
   @ApiResponse(SubscriberResponseDto, 201)
+  @ApiResponse(SubscriberResponseDto, 409, false, false, {
+    description: 'Subscriber already exists (when query param failIfExists=true)',
+  })
   @SdkMethodName('create')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async createSubscriber(
     @UserSession() user: UserSessionData,
-    @Body() body: CreateSubscriberRequestDto
+    @Body() body: CreateSubscriberRequestDto,
+    @Query('failIfExists') failIfExists?: boolean
   ): Promise<SubscriberResponseDto> {
     const subscriberEntity = await this.createOrUpdateSubscriberUsecase.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -160,6 +175,7 @@ export class SubscribersController {
          * TODO: In Subscriber V2 API endpoint we haven't added channels yet.
          * channels: body.channels || [],
          */
+        failIfExists,
       })
     );
 
@@ -235,6 +251,41 @@ export class SubscribersController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
+      })
+    );
+  }
+
+  @Patch('/:subscriberId/preferences/bulk')
+  @ExternalApiAccessible()
+  @ApiOperation({
+    summary: 'Bulk update subscriber preferences',
+    description: `Bulk update subscriber preferences by its unique key identifier **subscriberId**. 
+    This API allows updating multiple workflow preferences in a single request.`,
+  })
+  @ApiResponse(GetPreferencesResponseDto, 200, true)
+  @SdkGroupName('Subscribers.Preferences')
+  @SdkMethodName('bulkUpdate')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
+  async bulkUpdateSubscriberPreferences(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: BulkUpdateSubscriberPreferencesDto
+  ): Promise<GetPreferencesResponseDto[]> {
+    const preferences = body.preferences.map((preference) => ({
+      workflowId: preference.workflowId,
+      email: preference.channels.email,
+      sms: preference.channels.sms,
+      in_app: preference.channels.in_app,
+      push: preference.channels.push,
+      chat: preference.channels.chat,
+    }));
+
+    return await this.bulkUpdatePreferencesUsecase.execute(
+      BulkUpdatePreferencesCommand.create({
+        organizationId: user.organizationId,
+        subscriberId,
+        environmentId: user.environmentId,
+        preferences,
       })
     );
   }

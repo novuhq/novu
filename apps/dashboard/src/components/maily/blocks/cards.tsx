@@ -1,12 +1,12 @@
+import { BlockItem } from '@maily-to/core/blocks';
 import { CardBlocks } from '@/components/icons/cards-blocks';
 import { HorizontalCardWithImage } from '@/components/icons/horizontal-card-with-image';
 import { InformationCardWithLogo } from '@/components/icons/information-card-with-logo';
 import { ParagraphWithImage } from '@/components/icons/paragraph-with-image';
+import { Badge } from '@/components/primitives/badge';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { BlockItem } from '@maily-to/core/blocks';
 import { BlockCustomPreview } from './block-custom-preview';
-import { Badge } from '@/components/primitives/badge';
 
 const createHorizontalCardWithCta: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
@@ -156,6 +156,7 @@ const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry
                 isExternalLinkVariable: false,
                 isSrcVariable: false,
                 showIfKey: null,
+                lockAspectRatio: false,
               },
             },
             { type: 'spacer', attrs: { height: 8, showIfKey: null } },
@@ -295,7 +296,7 @@ const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelem
                 {
                   type: 'column',
                   attrs: {
-                    width: '5',
+                    width: 5,
                     verticalAlign: 'top',
                   },
                   content: [

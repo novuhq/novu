@@ -4,6 +4,7 @@ import {
   ChannelTypeEnum,
   MessageActionStatusEnum,
   MessagesStatusEnum,
+  SeverityLevelEnum,
 } from '@novu/shared';
 import { FilterQuery, Types } from 'mongoose';
 
@@ -74,6 +75,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       snoozed?: boolean;
       payload?: object;
       data?: Record<string, unknown>;
+      severity?: SeverityLevelEnum[];
     } = {},
     createdAt?: {
       $gte: Date;
@@ -126,16 +128,39 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.archived = { $in: [true, false] };
     }
 
+    const snoozedCondition: Array<MessageQuery> = [];
     if (query.snoozed != null) {
       if (query.snoozed) {
         requestQuery.snoozedUntil = { $ne: null };
       } else {
-        requestQuery.$or = [{ snoozedUntil: { $exists: false } }, { snoozedUntil: null }];
+        snoozedCondition.push({ snoozedUntil: { $exists: false } }, { snoozedUntil: null });
+      }
+    }
+
+    const severityCondition: Array<MessageQuery> = [];
+    if (query.severity && query.severity?.length > 0) {
+      if (query.severity.includes(SeverityLevelEnum.NONE)) {
+        severityCondition.push({ severity: { $exists: false } }, { severity: { $in: query.severity } });
+      } else {
+        requestQuery.severity = { $in: query.severity };
       }
     }
 
     if (createdAt != null) {
       requestQuery.createdAt = createdAt;
+    }
+
+    // combine all $or conditions properly
+    const orConditions: Array<MessageQuery> = [];
+    if (severityCondition.length > 0) {
+      orConditions.push({ $or: severityCondition });
+    }
+    if (snoozedCondition.length > 0) {
+      orConditions.push({ $or: snoozedCondition });
+    }
+
+    if (orConditions.length > 0) {
+      requestQuery.$and = [...(requestQuery.$and ?? []), ...orConditions];
     }
 
     if (query.payload) {
@@ -196,6 +221,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       snoozed,
       seen,
       data,
+      severity: severityArray,
     }: {
       environmentId: string;
       subscriberId: string;
@@ -206,6 +232,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       snoozed?: boolean;
       seen?: boolean;
       data?: Record<string, unknown>;
+      severity?: SeverityLevelEnum[];
     },
     options: { limit: number; offset: number; after?: string }
   ) {
@@ -214,6 +241,15 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _subscriberId: subscriberId,
       channel,
     };
+
+    const severityCondition: Array<MessageQuery> = [];
+    if (severityArray && severityArray?.length > 0) {
+      if (severityArray.includes(SeverityLevelEnum.NONE)) {
+        severityCondition.push({ severity: { $exists: false } }, { severity: { $in: severityArray } });
+      } else {
+        query.severity = { $in: severityArray };
+      }
+    }
 
     if (tags && tags?.length > 0) {
       query.tags = { $in: tags };
@@ -225,14 +261,28 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       query.read = { $in: [true, false] };
     }
 
+    const archivedCondition: Array<MessageQuery> = [];
     if (typeof archived === 'boolean') {
       if (!archived) {
-        query.$or = [{ archived: { $exists: false } }, { archived: false }];
+        archivedCondition.push({ archived: { $exists: false } }, { archived: false });
       } else {
         query.archived = true;
       }
     } else {
-      query.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
+      archivedCondition.push({ archived: { $exists: false } }, { archived: { $in: [true, false] } });
+    }
+
+    // combine all $or conditions properly
+    const orConditions: Array<MessageQuery> = [];
+    if (severityCondition.length > 0) {
+      orConditions.push({ $or: severityCondition });
+    }
+    if (archivedCondition.length > 0) {
+      orConditions.push({ $or: archivedCondition });
+    }
+
+    if (orConditions.length > 0) {
+      query.$and = [...(query.$and ?? []), ...orConditions];
     }
 
     if (typeof snoozed === 'boolean') {
@@ -268,7 +318,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
           .populate('actorSubscriber', '_id firstName lastName avatar subscriberId')
           .populate({
             path: 'template',
-            select: '_id name tags data critical triggers',
+            select: '_id name tags data critical triggers severity',
             options: {
               withDeleted: true,
             },
@@ -289,6 +339,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       snoozed?: boolean;
       payload?: object;
       data?: Record<string, unknown>;
+      severity?: SeverityLevelEnum[];
     } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
     createdAt?: {
@@ -309,11 +360,33 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         payload: query.payload,
         snoozed: query.snoozed,
         data: query.data,
+        severity: query.severity,
       },
       createdAt
     );
 
     return this.MongooseModel.countDocuments(requestQuery, options).read(readPreference);
+  }
+
+  async getCountBySeverity(
+    environmentId: string,
+    subscriberId: string,
+    channel: ChannelTypeEnum,
+    query: {
+      read?: boolean;
+      snoozed?: boolean;
+    } = {},
+    options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
+  ): Promise<{ severity: SeverityLevelEnum; count: number }[]> {
+    const severityLevels = Object.values(SeverityLevelEnum);
+
+    const promises = severityLevels.map((severity) =>
+      this.getCount(environmentId, subscriberId, channel, { ...query, severity: [severity] }, options)
+    );
+
+    const results = await Promise.all(promises);
+
+    return results.map((result, index) => ({ severity: severityLevels[index], count: result }));
   }
 
   private getReadSeenUpdateQuery(
@@ -433,8 +506,29 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
-    return await this.update(updateQuery, {
-      $set: updatePayload,
+    // Find documents that will be updated (only fetch IDs for performance)
+    const documentsToUpdate = await this.find(updateQuery, '_id');
+
+    if (documentsToUpdate.length === 0) {
+      return [];
+    }
+
+    // Extract IDs for targeted update
+    const documentIds = documentsToUpdate.map((doc) => doc._id);
+
+    // Perform the update using document IDs
+    await this.update(
+      {
+        _id: { $in: documentIds },
+        _environmentId: environmentId,
+      },
+      { $set: updatePayload }
+    );
+
+    // Fetch and return the updated documents
+    return this.find({
+      _id: { $in: documentIds },
+      _environmentId: environmentId,
     });
   }
 
@@ -453,7 +547,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     id: string,
     status: 'error' | 'sent' | 'warning',
-    // eslint-disable-next-line
     providerPayload: any = {},
     errorId: string,
     errorText: string
@@ -484,7 +577,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string;
     messageIds: string[];
     markAs: MessagesStatusEnum;
-  }) {
+  }): Promise<MessageEntity[]> {
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
     await this.update(
@@ -501,6 +594,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         $set: updatePayload,
       }
     );
+
+    return this.find({
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      _id: { $in: messageIds.map((id) => new Types.ObjectId(id)) },
+    });
   }
 
   /**
@@ -556,7 +655,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     read?: boolean;
     archived?: boolean;
     snoozedUntil?: Date | null;
-  }) {
+  }): Promise<MessageEntity[]> {
     const query: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
@@ -567,7 +666,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       },
     };
 
-    await this.updateMessagesStatus({
+    return await this.updateMessagesStatus({
       query,
       seen,
       read,
@@ -596,7 +695,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read?: boolean;
       archived?: boolean;
     };
-  }) {
+  }): Promise<MessageEntity[]> {
     const isFromSeen = from.seen !== undefined;
     const isFromRead = from.read !== undefined;
     const isFromArchived = from.archived !== undefined;
@@ -621,7 +720,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       query.seen = from.seen;
     }
 
-    await this.updateMessagesStatus({
+    return await this.updateMessagesStatus({
       query,
       ...to,
     });
@@ -653,7 +752,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     read?: boolean;
     archived?: boolean;
     snoozedUntil?: Date | null;
-  }) {
+  }): Promise<MessageEntity[]> {
     const isUpdatingSeen = seen !== undefined;
     const isUpdatingRead = read !== undefined;
     const isUpdatingArchived = archived !== undefined;
@@ -703,17 +802,28 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     }
 
+    // Find documents that will be updated (only fetch IDs for performance)
+    const documentsToUpdate = await this.find(query, '_id');
+
+    if (documentsToUpdate.length === 0) {
+      return [];
+    }
+
+    // Extract IDs for targeted update
+    const documentIds = documentsToUpdate.map((doc) => doc._id);
+    const idQuery = { _id: { $in: documentIds }, _environmentId: query._environmentId };
+
     // Handle firstSeenDate logic separately for operations that mark as seen
     const shouldMarkAsSeen = isUpdatingArchived || isUpdatingRead || (isUpdatingSeen && seen) || isUpdatingSnoozed;
 
     if (shouldMarkAsSeen) {
       // First, update all matching documents with the main update
-      await this.update(query, { $set: updatePayload });
+      await this.update(idQuery, { $set: updatePayload });
 
       // Then, set firstSeenDate only for documents that don't already have it
       await this.update(
         {
-          ...query,
+          ...idQuery,
           firstSeenDate: { $exists: false },
         },
         {
@@ -722,10 +832,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       );
     } else {
       // For non-seen operations, just do the regular update
-      await this.update(query, { $set: updatePayload });
+      await this.update(idQuery, { $set: updatePayload });
     }
 
-    return this.find(query);
+    return this.find(idQuery);
   }
 
   async updateActionStatus({

@@ -12,7 +12,7 @@
   // Add the IDs of extensions you want installed when the container is created.
   "customizations": {
     "vscode": {
-      "extensions": ["dbaeumer.vscode-eslint", "mongodb.mongodb-vscode"]
+      "extensions": ["biomejs.biome"]
     }
   },
   // Use 'forwardPorts' to make a list of ports inside the container available locally.

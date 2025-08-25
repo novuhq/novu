@@ -1,15 +1,14 @@
-import { SubscriberRepository } from '@novu/dal';
-import { UserSession, SubscribersService } from '@novu/testing';
 import { Test } from '@nestjs/testing';
-
-import { UpdateSubscriber } from './update-subscriber.usecase';
-import { UpdateSubscriberCommand } from './update-subscriber.command';
+import { SubscriberRepository } from '@novu/dal';
+import { SubscribersService, UserSession } from '@novu/testing';
 import {
-  CacheService,
   CacheInMemoryProviderService,
-  InvalidateCacheService,
+  CacheService,
   InMemoryProviderEnum,
+  InvalidateCacheService,
 } from '../../services';
+import { UpdateSubscriberCommand } from './update-subscriber.command';
+import { UpdateSubscriber } from './update-subscriber.usecase';
 
 const cacheInMemoryProviderService = {
   provide: CacheInMemoryProviderService,
@@ -23,14 +22,13 @@ const cacheInMemoryProviderService = {
 const cacheService = {
   provide: CacheService,
   useFactory: async () => {
-    const factoryInMemoryProviderService =
-      await cacheInMemoryProviderService.useFactory();
+    const factoryInMemoryProviderService = await cacheInMemoryProviderService.useFactory();
 
     return new CacheService(factoryInMemoryProviderService);
   },
 };
 
-describe('Update Subscriber', function () {
+describe('Update Subscriber', () => {
   let updateUsecase: UpdateSubscriber;
   let session: UserSession;
   const subscriberRepository = new SubscriberRepository();
@@ -46,11 +44,8 @@ describe('Update Subscriber', function () {
     updateUsecase = moduleRef.get<UpdateSubscriber>(UpdateSubscriber);
   });
 
-  it('should update subscribers name', async function () {
-    const subscriberService = new SubscribersService(
-      session.organization._id,
-      session.environment._id,
-    );
+  it('should update subscribers name', async () => {
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
     await updateUsecase.execute(
       UpdateSubscriberCommand.create({
@@ -59,7 +54,7 @@ describe('Update Subscriber', function () {
         lastName: 'Test Last Name',
         locale: 'sv',
         environmentId: session.environment._id,
-      }),
+      })
     );
 
     const updatedSubscriber = await subscriberRepository.findOne({

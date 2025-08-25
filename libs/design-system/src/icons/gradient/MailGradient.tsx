@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { ISvgPropsInterface } from '../interfaces/svg-props.interface';
-/* eslint-disable */
 export function MailGradient({ disabled = false, width = '30px', height = '31px', ...props }: ISvgPropsInterface) {
   return (
     <svg width={width} height={height} viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

@@ -1,4 +1,5 @@
-import { StepTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, WorkflowPreferences } from '../../types';
+import { SeverityLevelEnum } from '../../consts';
+import { ResourceOriginEnum, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowPreferences } from '../../types';
 import { Slug } from '../../types/utils';
 import { RuntimeIssue } from '../../utils/issues';
 import type { JSONSchemaDto } from './json-schema-dto';
@@ -48,6 +49,7 @@ export type WorkflowCommonsFields = {
   active?: boolean;
   validatePayload?: boolean;
   isTranslationEnabled?: boolean;
+  severity?: SeverityLevelEnum;
 };
 
 export type PreferencesResponseDto = {
