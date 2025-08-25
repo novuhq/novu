@@ -290,7 +290,7 @@ export class AppComponent implements AfterViewInit {
     const novu = new NovuUI({
       options: {
         applicationIdentifier: '123',
-        subscriberId: '456',
+        subscriberId: '456',${!isDefaultApi ? `\n        backendUrl: '${API_HOSTNAME}',` : ''}${!isDefaultWs ? `\n        socketUrl: '${WEBSOCKET_HOSTNAME}',` : ''}
       },
     });
 
@@ -323,7 +323,7 @@ export class AppComponent implements AfterViewInit {
  const novu = new NovuUI({
   options: {
     applicationIdentifier: '123',
-    subscriberId: '456',
+    subscriberId: '456',${!isDefaultApi ? `\n    backendUrl: '${API_HOSTNAME}',` : ''}${!isDefaultWs ? `\n    socketUrl: '${WEBSOCKET_HOSTNAME}',` : ''}
   },
 });
 
