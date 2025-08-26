@@ -192,13 +192,30 @@ function isDigestTimedMetadata(item: IWorkflowStepMetadata): item is IDigestTime
 }
 
 export function mapDigest(
-  digestItem?: IWorkflowStepMetadata & {
-    events?: any[];
-  }
+  digestData?:
+    | (IWorkflowStepMetadata & {
+        events?: any[];
+      })
+    | string
+    | null
 ): DigestMetadataDto | undefined {
+  if (!digestData) {
+    return undefined;
+  }
+
+  const digestItem =
+    typeof digestData === 'string'
+      ? (JSON.parse(digestData) as IWorkflowStepMetadata & {
+          events?: any[];
+        })
+      : (digestData as IWorkflowStepMetadata & {
+          events?: any[];
+        });
+
   if (!digestItem) {
     return undefined;
   }
+
   // Type guarding and mapping based on the type of item
   if (isDigestRegularMetadata(digestItem)) {
     // If it's IDigestRegularMetadata

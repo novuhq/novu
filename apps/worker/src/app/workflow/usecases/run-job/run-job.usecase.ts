@@ -138,6 +138,9 @@ export class RunJob {
         })
       );
 
+      // while we sending a message the job can me updated, like in digest case, therefore we want to have the most updated job
+      job = sendMessageResult.job ?? job;
+
       if (sendMessageResult.status === 'success') {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
 

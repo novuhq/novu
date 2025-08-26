@@ -37,6 +37,9 @@ const schemaDefinition = {
   // Execution details
   status: { type: CHLowCardinality(CHString()) }, // pending, queued, running, completed, failed, skipped, cancelled
 
+  // Digest data
+  digest: { type: CHNullable(CHString()) }, // JSON string of digest metadata
+
   // Error handling
   error_code: { type: CHNullable(CHString()) },
   error_message: { type: CHNullable(CHString()) },

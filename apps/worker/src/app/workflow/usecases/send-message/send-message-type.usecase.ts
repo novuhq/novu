@@ -1,5 +1,5 @@
 import { CreateExecutionDetails, DetailEnum } from '@novu/application-generic';
-import { DeliveryLifecycleState, MessageEntity, MessageRepository } from '@novu/dal';
+import { DeliveryLifecycleState, JobEntity, MessageEntity, MessageRepository } from '@novu/dal';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 
 export enum SendMessageStatus {
@@ -11,18 +11,21 @@ export enum SendMessageStatus {
 export type SendMessageResultPassed = {
   status: SendMessageStatus.SUCCESS;
   extraData?: string;
+  job?: JobEntity;
 };
 
 export type SendMessageResultSkipped = {
   status: SendMessageStatus.SKIPPED;
   deliveryLifecycleState?: DeliveryLifecycleState;
   extraData?: string;
+  job?: JobEntity;
 };
 
 export type SendMessageResultFailed = {
   status: SendMessageStatus.FAILED;
   errorMessage: DetailEnum;
   extraData?: string;
+  job?: JobEntity;
 };
 
 export type SendMessageResult = SendMessageResultPassed | SendMessageResultSkipped | SendMessageResultFailed;

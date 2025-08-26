@@ -9,7 +9,8 @@ import {
   WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
-import { JobRepository } from '@novu/dal';
+import { JobEntity, JobRepository } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
 import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
@@ -54,6 +55,7 @@ const stepRunSelectColumns = [
   'transaction_id',
   'created_at',
   'updated_at',
+  'digest',
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
@@ -76,21 +78,29 @@ export class GetWorkflowRun {
     this.logger.setContext(this.constructor.name);
   }
 
+  /**
+   * BACKWARD COMPATIBILITY: This method fetches digest data from Job entities at runtime
+   * for step runs that don't have digest data stored in ClickHouse.
+   * TODO: Remove this method as part of task nv-6576 once all step runs have digest data stored
+   */
   private async getJobDigestDataByTransactionId(
     transactionId: string,
     command: GetWorkflowRunCommand
-  ): Promise<Map<string, any>> {
+  ): Promise<Map<string, string | null>> {
     try {
-      const jobs = await this.jobRepository.find({
-        transactionId,
-        _environmentId: command.environmentId,
-      });
+      const jobs: Pick<JobEntity, '_id' | 'step' | 'digest'>[] = await this.jobRepository.find(
+        {
+          transactionId,
+          _environmentId: command.environmentId,
+        },
+        '_id step digest'
+      );
 
-      const digestDataByStepId = new Map<string, any>();
+      const digestDataByStepId = new Map<string, string | null>();
 
       for (const job of jobs) {
         if (job.digest && job.step?.stepId) {
-          digestDataByStepId.set(job._id, job.digest);
+          digestDataByStepId.set(job._id, JSON.stringify(job.digest));
         }
       }
 
@@ -173,13 +183,25 @@ export class GetWorkflowRun {
 
       const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
       const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(stepRunIds, command);
-      const digestDataByStepId = await this.getJobDigestDataByTransactionId(workflowRun.transaction_id, command);
 
-      return stepRunsResult.data.map((stepRun) => ({
-        ...stepRun,
-        executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
-        digest: digestDataByStepId.get(stepRun.step_run_id),
-      }));
+      // BACKWARD COMPATIBILITY: Check if any step runs are missing digest data
+      // TODO: Remove this logic as part of task nv-6576 once all step runs have digest data stored
+      const stepRunsWithoutDigest = stepRunsResult.data.filter(
+        (stepRun) => !stepRun.digest && stepRun.step_type === StepTypeEnum.DIGEST
+      );
+      const digestDataByStepId =
+        stepRunsWithoutDigest.length > 0
+          ? await this.getJobDigestDataByTransactionId(workflowRun.transaction_id, command)
+          : new Map<string, string | null>();
+
+      return stepRunsResult.data.map(
+        (stepRun) =>
+          ({
+            ...stepRun,
+            executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
+            digest: stepRun.digest ? JSON.parse(stepRun.digest) : digestDataByStepId.get(stepRun.step_run_id),
+          }) satisfies IStepRunWithDetails
+      );
     } catch (error) {
       this.logger.warn('Failed to get step runs for workflow run', {
         error: error.message,
