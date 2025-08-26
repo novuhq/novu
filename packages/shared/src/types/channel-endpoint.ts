@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum } from './providers';
 
 export type SlackRouting = {
-  type: ChatProviderIdEnum.Slack;
+  providerId: ChatProviderIdEnum.Slack;
   channelId?: string;
   userId?: string;
 };

@@ -5,7 +5,7 @@ import { ChannelEndpointDBModel } from './channel-endpoint.entity';
 
 const routingSchema = new Schema(
   {
-    type: {
+    providerId: {
       type: String,
       required: true,
       enum: [
@@ -19,7 +19,7 @@ const routingSchema = new Schema(
   },
   {
     _id: false,
-    discriminatorKey: 'type',
+    discriminatorKey: 'providerId',
   }
 );
 
