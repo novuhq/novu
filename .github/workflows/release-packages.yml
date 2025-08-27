@@ -99,16 +99,42 @@ jobs:
         run: pnpm run build:packages
 
       - name: Publish packages (nightly only)
-        if: ${{ github.event.inputs.nightly }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          export NX_RELEASE_TAG=nightly
-          pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
+          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
+            export NX_RELEASE_TAG=nightly
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
+          else
+            echo "Skipping publish for non-nightly release"
+          fi
+
+      - name: Debug git status
+        run: |
+          echo "=== Git Status ==="
+          git status
+          echo "=== Git Log (last 3 commits) ==="
+          git log --oneline -3
+          echo "=== Changed Files ==="
+          git diff --name-only HEAD~1 || echo "No commits to compare against"
+          
+      - name: Reset to clean state for PR creation
+        run: |
+          echo "=== Resetting any commits made by NX ==="
+          # If NX created commits, reset to the original commit but keep changes
+          if [ "$(git log --oneline HEAD~1..HEAD | wc -l)" -gt "0" ]; then
+            echo "Found $(git log --oneline HEAD~1..HEAD | wc -l) commits since start"
+            git reset --soft HEAD~$(git log --oneline HEAD~1..HEAD | wc -l)
+            echo "Reset commits, changes are now staged"
+            git status
+          else
+            echo "No commits to reset"
+            # Stage any unstaged changes
+            git add -A
+          fi
 
       - name: Create Pull Request
         id: create-pr
-        if: ${{ !github.event.inputs.nightly }}
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -127,11 +153,12 @@ jobs:
             ### 🔄 Changes:
             - Updated package versions to ${{ github.event.inputs.version }}
             - Generated changelogs from ${{ github.event.inputs.previous_tag }}
-            - Built and published packages to NPM
+            - Built packages for release
             
             **Please review the changes and merge when ready for the release to be tagged and GitHub releases to be created.**
           branch: release-${{ github.event.inputs.version }}
           base: next
+          delete-branch: false
 
   post_release:
     needs: release
