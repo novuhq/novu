@@ -99,12 +99,15 @@ jobs:
         run: pnpm run build:packages
 
       - name: Publish packages (nightly only)
-        if: ${{ github.event.inputs.nightly }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          export NX_RELEASE_TAG=nightly
-          pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
+          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
+            export NX_RELEASE_TAG=nightly
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
+          else
+            echo "Skipping publish for non-nightly release"
+          fi
 
       - name: Create Pull Request
         id: create-pr
