@@ -161,6 +161,7 @@ export class InboxController {
         environmentId: subscriberSession._environmentId,
         tags: query.tags,
         severity: query.severity,
+        criticality: query.criticality,
       })
     );
   }

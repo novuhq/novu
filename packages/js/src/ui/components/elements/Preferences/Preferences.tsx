@@ -20,6 +20,7 @@ export const Preferences = () => {
   const { preferences, loading } = usePreferences({
     tags: preferencesFilter()?.tags,
     severity: preferencesFilter()?.severity,
+    criticality: preferencesFilter()?.criticality,
   });
 
   const allPreferences = createMemo(() => {

@@ -47,6 +47,7 @@ import { BulkUpdateSubscriberPreferencesDto } from './dtos/bulk-update-subscribe
 import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
 import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
 import { GetSubscriberPreferencesDto } from './dtos/get-subscriber-preferences.dto';
+import { GetSubscriberPreferencesRequestDto } from './dtos/get-subscriber-preferences-request.dto';
 import { ListSubscribersQueryDto } from './dtos/list-subscribers-query.dto';
 import { ListSubscribersResponseDto } from './dtos/list-subscribers-response.dto';
 import { PatchSubscriberRequestDto } from './dtos/patch-subscriber.dto';
@@ -264,13 +265,15 @@ export class SubscribersController {
   @RequireAuthentication()
   async getSubscriberPreferences(
     @UserSession() user: UserSessionData,
-    @Param('subscriberId') subscriberId: string
+    @Param('subscriberId') subscriberId: string,
+    @Query() query: GetSubscriberPreferencesRequestDto
   ): Promise<GetSubscriberPreferencesDto> {
     return await this.getSubscriberPreferencesUsecase.execute(
       GetSubscriberPreferencesCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
+        criticality: query.criticality,
       })
     );
   }

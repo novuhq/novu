@@ -25,6 +25,7 @@ import {
   MessagesStatusEnum,
   PreferenceLevelEnum,
   TriggerTypeEnum,
+  WorkflowCriticalityEnum,
 } from '@novu/shared';
 import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
@@ -419,6 +420,7 @@ export class WidgetsController {
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       includeInactiveChannels: false,
+      criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
 
     return await this.getSubscriberPreferenceUsecase.execute(command);
