@@ -9,8 +9,6 @@ run-name: >
     github.event.inputs.build_dashboard == 'true' && 'dashboard, ' || ''
   }}${{
     github.event.inputs.build_ws == 'true' && 'ws ' || ''
-  }}${{
-    github.event.inputs.prerelease == 'true' && '(pre-release)' || ''
   }}
 
 env:
@@ -43,11 +41,7 @@ on:
         required: true
         type: boolean
         default: true
-      prerelease:
-        description: 'Is this a pre-release? (if yes, will not be tagged as latest)'
-        required: false
-        type: boolean
-        default: false
+
 
 permissions:
   contents: write
@@ -77,16 +71,16 @@ jobs:
           services=()
 
           if [ "${{ github.event.inputs.build_api }}" == "true" ]; then
-            services+=("\"novu/api-ee\"")
+            services+=("\"api-ee\"")
           fi
           if [ "${{ github.event.inputs.build_worker }}" == "true" ]; then
-            services+=("\"novu/worker-ee\"")
+            services+=("\"worker-ee\"")
           fi
           if [ "${{ github.event.inputs.build_dashboard }}" == "true" ]; then
-            services+=("\"novu/dashboard-ee\"")
+            services+=("\"dashboard-ee\"")
           fi
           if [ "${{ github.event.inputs.build_ws }}" == "true" ]; then
-            services+=("\"novu/ws-ee\"")
+            services+=("\"ws-ee\"")
           fi
 
           matrix="[$(IFS=','; echo "${services[*]}")]"
@@ -98,6 +92,7 @@ jobs:
     needs: setup_matrix
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    environment: Production
     strategy:
       fail-fast: false
       matrix:
@@ -113,14 +108,12 @@ jobs:
       - name: Variables
         shell: bash
         run: |
-          service=${{ matrix.name }}
+          SERVICE_NAME="${{ matrix.name }}"
           LATEST_VERSION="${{ github.event.inputs.version }}"
-          SERVICE_NAME=$(basename "${service//-/-}")
           SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
           echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
           echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
           echo "SERVICE_COMMON_NAME=$SERVICE_COMMON_NAME" >> $GITHUB_ENV
-          echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
           echo "This is the service name: $SERVICE_NAME and release version: $LATEST_VERSION"
 
       - name: Install pnpm
@@ -147,62 +140,48 @@ jobs:
       - name: Prepare Variables
         run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      - name: Build ${{ matrix.name }} Docker Image
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
         shell: bash
         env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: novu
+          SERVICE: ${{ env.SERVICE_NAME }}
+          IMAGE_TAG: ${{ env.LATEST_VERSION }}
           DOCKER_BUILD_ARGUMENTS: >
             --platform=linux/amd64
-            --output=type=image,name=ghcr.io/$REGISTRY_OWNER/${{ matrix.name }},push-by-digest=true,name-canonical=true
+            --output=type=image,name=$REGISTRY/$REPOSITORY/$SERVICE,push-by-digest=true,name-canonical=true
         run: |
           cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
           cd apps/$SERVICE_COMMON_NAME
 
-          if [[ "${{ env.SERVICE_COMMON_NAME }}" =~ ^(api|worker|ws)$ ]]; then
+          if [[ "$SERVICE_COMMON_NAME" =~ ^(api|worker|ws)$ ]]; then
             cd src/ && echo -e "\nIS_SELF_HOSTED=true\nNOVU_ENTERPRISE=true" >> .example.env && cd ..
           fi
 
           # Switch from PM2 cluster mode to single node process to support K8s deployments
-          if [[ "${{ env.SERVICE_COMMON_NAME }}" =~ ^(api|worker|ws)$ ]]; then
-            echo "Switching ${{ env.SERVICE_COMMON_NAME }} from PM2 cluster mode to single node process to support K8s deployments"
+          if [[ "$SERVICE_COMMON_NAME" =~ ^(api|worker|ws)$ ]]; then
+            echo "Switching $SERVICE_COMMON_NAME from PM2 cluster mode to single node process to support K8s deployments"
             sed -i.bak 's/pm2-runtime start dist\/main\.js -i max/node dist\/main.js/g' Dockerfile && rm -f Dockerfile.bak
           fi
 
           pnpm run docker:build
-          docker images
-
-      - name: Tag and Push docker image
-        shell: bash
-        run: |
-          # Always tag and push with the specific version
-          docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
-          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
-
-          # Only tag as latest if not marked as pre-release
-          if [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
-            echo "Pre-release flag is set, skipping latest tag"
-          else
-            echo "Stable release (pre-release flag not set), tagging as latest"
-            docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
-            docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
-          fi
+          docker tag novu-$SERVICE_COMMON_NAME $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
 
       - name: Output image details
         run: |
           echo "Successfully built and pushed:"
-          echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}"
-
-          if [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
-            echo "  (latest tag skipped - pre-release flag set)"
-          else
-            echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest"
-          fi
-
+          echo "  - $REGISTRY/novu/$SERVICE_NAME:$IMAGE_TAG"
           echo "Platform: linux/amd64 (x86)"
           echo "Type: Enterprise Self-hosted"
