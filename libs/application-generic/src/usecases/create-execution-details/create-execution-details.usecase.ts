@@ -99,6 +99,9 @@ const mapDetailToEventType = {
   [DetailEnum.REPLY_CALLBACK_NOT_CONFIGURATION]: 'reply_callback_misconfigured',
   [DetailEnum.REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION]: 'reply_mx_record_missing',
   [DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION]: 'reply_mx_domain_missing',
+
+  // Skipped step events
+  [DetailEnum.SKIPPED_STEP]: 'step_skipped',
 } satisfies Record<DetailEnum, EventType>;
 
 @Injectable()
