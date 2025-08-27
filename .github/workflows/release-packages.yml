@@ -110,7 +110,6 @@ jobs:
           fi
 
       - name: Debug git status
-        if: ${{ !github.event.inputs.nightly }}
         run: |
           echo "=== Git Status ==="
           git status
@@ -120,7 +119,6 @@ jobs:
           git diff --name-only HEAD~1 || echo "No commits to compare against"
           
       - name: Reset to clean state for PR creation
-        if: ${{ !github.event.inputs.nightly }}
         run: |
           echo "=== Resetting any commits made by NX ==="
           # If NX created commits, reset to the original commit but keep changes
@@ -137,7 +135,6 @@ jobs:
 
       - name: Create Pull Request
         id: create-pr
-        if: ${{ !github.event.inputs.nightly }}
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
