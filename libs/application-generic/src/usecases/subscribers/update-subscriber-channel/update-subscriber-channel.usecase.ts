@@ -1,11 +1,6 @@
 import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
-import {
-  IChannelSettings,
-  IntegrationEntity,
-  IntegrationRepository,
-  SubscriberEntity,
-  SubscriberRepository,
-} from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { IChannelSettings } from '@novu/shared';
 import { isEqual } from 'lodash';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../../services';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';

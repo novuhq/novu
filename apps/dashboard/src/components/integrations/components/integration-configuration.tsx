@@ -93,7 +93,11 @@ export function IntegrationConfiguration({
 
   return (
     <Form {...form}>
-      <FormRoot id="integration-configuration-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+      <FormRoot
+        id={`integration-configuration-form-${provider.id}`}
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col"
+      >
         <div className="flex items-center justify-between gap-2 p-3">
           <Label className="text-sm" htmlFor="environmentId">
             Environment
@@ -142,12 +146,8 @@ export function IntegrationConfiguration({
             <InlineToast
               variant={'warning'}
               title="Demo Integration"
-              description={`This is a demo ${
-                provider?.channel === 'email' ? 'email' : 'SMS'
-              } integration intended for testing purposes only. It is limited to 300 ${
-                provider?.channel === 'email' ? 'messages' : 'SMS'
-              } per month.${
-                provider?.channel === 'email'
+              description={`This is a demo ${provider?.channel.toLowerCase()} integration intended for testing purposes only. It is limited to 300 notifications per month.${
+                provider?.channel === ChannelTypeEnum.EMAIL
                   ? ' You can only send emails from it to the email address you are logged in with.'
                   : ''
               }`}

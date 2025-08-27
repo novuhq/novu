@@ -12,6 +12,14 @@ import { IConfigCredentials, IProviderConfig } from '../provider.interface';
 
 export const chatProviders: IProviderConfig[] = [
   {
+    id: ChatProviderIdEnum.Novu,
+    displayName: 'Novu Slack',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference: `https://docs.novu.co/platform/integrations/chat/slack${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
+  },
+  {
     id: ChatProviderIdEnum.Slack,
     displayName: 'Slack',
     channel: ChannelTypeEnum.CHAT,

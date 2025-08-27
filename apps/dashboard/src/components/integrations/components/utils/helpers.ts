@@ -1,5 +1,9 @@
-import { EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
 export function isDemoIntegration(providerId: string) {
-  return providerId === EmailProviderIdEnum.Novu || providerId === SmsProviderIdEnum.Novu;
+  return (
+    providerId === EmailProviderIdEnum.Novu ||
+    providerId === SmsProviderIdEnum.Novu ||
+    providerId === ChatProviderIdEnum.Novu
+  );
 }
