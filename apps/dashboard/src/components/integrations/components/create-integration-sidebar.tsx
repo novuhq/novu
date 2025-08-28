@@ -123,7 +123,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
               <Button
                 type="submit"
                 variant="secondary"
-                form="integration-configuration-form"
+                form={`integration-configuration-form-${provider.id}`}
                 isLoading={isPending || isSettingPrimary}
                 size="xs"
               >
