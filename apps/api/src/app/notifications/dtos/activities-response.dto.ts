@@ -205,7 +205,7 @@ export class ActivityNotificationExecutionDetailResponseDto {
   @IsString()
   @IsOptional()
   @IsEnum(ProvidersIdEnumConst)
-  providerId: ProvidersIdEnum;
+  providerId?: ProvidersIdEnum;
 
   @ApiPropertyOptional({ description: 'Raw data of the execution', type: String })
   raw?: string | null;
