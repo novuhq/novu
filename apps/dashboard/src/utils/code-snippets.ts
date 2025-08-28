@@ -28,18 +28,18 @@ const safeParsePayload = (payload: string) => {
 
 export const createNodeJsSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env['${SECRET_KEY_ENV_KEY}']`;
-  let serverUrl = '';
+  let serverConfig = '';
 
   if (IS_EU) {
-    serverUrl = `,\n  serverURL: 'https://eu.api.novu.co'`;
+    serverConfig = `,\n  serverIdx: 1`;
   } else if (IS_SELF_HOSTED) {
-    serverUrl = `,\n  serverURL: '${API_HOSTNAME}'`;
+    serverConfig = `,\n  serverURL: '${API_HOSTNAME}'`;
   }
 
   return `import { Novu } from '@novu/api'; 
 
 const novu = new Novu({ 
-  secretKey: ${renderedSecretKey}${serverUrl}
+  secretKey: ${renderedSecretKey}${serverConfig}
 });
 
 novu.trigger(${JSON.stringify(
@@ -216,10 +216,15 @@ export const createPhpSnippet = ({ identifier, to, payload, secretKey }: CodeSni
   const renderedSecretKey = secretKey
     ? `'${secretKey}'`
     : `$_ENV['${SECRET_KEY_ENV_KEY}'] ?? getenv('${SECRET_KEY_ENV_KEY}')`;
-  const euServerUrl = IS_EU
-    ? `
-    ->setServerURL('https://eu.api.novu.co')`
-    : '';
+  let serverConfig = '';
+
+  if (IS_EU) {
+    serverConfig = `
+    ->setServerIndex(1)`;
+  } else if (IS_SELF_HOSTED) {
+    serverConfig = `
+    ->setServerURL('${API_HOSTNAME}')`;
+  }
 
   return `use novu;
 use novu\\Models\\Components;
@@ -232,7 +237,7 @@ $dotenv->load();
 // Get API key from environment variable
 $apiKey = ${renderedSecretKey};
 
-$sdk = novu\\Novu::builder()${euServerUrl}
+$sdk = novu\\Novu::builder()${serverConfig}
     ->setSecurity($apiKey)
     ->build();
 
@@ -249,16 +254,20 @@ $response = $sdk->events->trigger($request);`;
 
 export const createPythonSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `os.environ['${SECRET_KEY_ENV_KEY}']`;
-  const euServerUrl = IS_EU ? `,\n    server_url='https://eu.api.novu.co'` : '';
-  const selfHostedUrl = IS_SELF_HOSTED ? `,\n    server_url='${API_HOSTNAME}'` : '';
-  const serverUrlConfig = IS_EU ? euServerUrl : IS_SELF_HOSTED ? selfHostedUrl : '';
+  let serverConfig = '';
+
+  if (IS_EU) {
+    serverConfig = `,\n    server_idx=1`;
+  } else if (IS_SELF_HOSTED) {
+    serverConfig = `,\n    server_url='${API_HOSTNAME}'`;
+  }
 
   return `import novu_py
 from novu_py import Novu
 import os
 
 with Novu(
-    secret_key=${renderedSecretKey}${serverUrlConfig}
+    secret_key=${renderedSecretKey}${serverConfig}
 ) as novu:
 
     res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
@@ -272,7 +281,13 @@ with Novu(
 
 export const createGoSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `"${secretKey}"` : `os.Getenv("${SECRET_KEY_ENV_KEY}")`;
-  const euServerUrl = IS_EU ? `\n		novugo.WithServerURL("https://eu.api.novu.co"),` : '';
+  let serverConfig = '';
+
+  if (IS_EU) {
+    serverConfig = `\n		novugo.WithServerIndex(1),`;
+  } else if (IS_SELF_HOSTED) {
+    serverConfig = `\n		novugo.WithServerURL("${API_HOSTNAME}"),`;
+  }
 
   return `package main
 
@@ -288,7 +303,7 @@ func main() {
 	ctx := context.Background()
 
 	s := novugo.New(
-		novugo.WithSecurity(${renderedSecretKey}),${euServerUrl}
+		novugo.WithSecurity(${renderedSecretKey}),${serverConfig}
 	)
 
 	res, err := s.Trigger(ctx, components.TriggerEventRequestDto{

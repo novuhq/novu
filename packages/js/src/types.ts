@@ -65,6 +65,12 @@ export enum SeverityLevelEnum {
   NONE = 'none',
 }
 
+export enum WorkflowCriticalityEnum {
+  CRITICAL = 'critical',
+  NON_CRITICAL = 'nonCritical',
+  ALL = 'all',
+}
+
 export type UnreadCount = {
   total: number;
   severity: Record<SeverityLevelEnum, number>;

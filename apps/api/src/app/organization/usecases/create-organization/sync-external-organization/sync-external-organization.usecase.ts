@@ -47,8 +47,12 @@ export class SyncExternalOrganization {
       throw new BadRequestException('User not found');
     }
 
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+
     const organization = await this.organizationRepository.create({
       externalId: command.externalId,
+      apiServiceLevel: isSelfHosted && isEnterprise ? 'unlimited' : undefined,
     });
 
     const devEnv = await this.createEnvironmentUsecase.execute(

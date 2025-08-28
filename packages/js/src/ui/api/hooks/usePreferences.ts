@@ -7,9 +7,9 @@ export const usePreferences = (options?: FetchPreferencesArgs) => {
   const novu = useNovu();
 
   const [loading, setLoading] = createSignal(true);
-  const [preferences, { mutate, refetch }] = createResource(options || {}, async ({ tags, severity }) => {
+  const [preferences, { mutate, refetch }] = createResource(options || {}, async ({ tags, severity, criticality }) => {
     try {
-      const response = await novu.preferences.list({ tags, severity });
+      const response = await novu.preferences.list({ tags, severity, criticality });
 
       return response.data;
     } catch (error) {

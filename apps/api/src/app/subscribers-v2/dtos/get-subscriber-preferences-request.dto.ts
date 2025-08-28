@@ -1,8 +1,7 @@
 import { WorkflowCriticalityEnum } from '@novu/shared';
 import { IsEnum, IsOptional } from 'class-validator';
-import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
-export class GetSubscriberPreferencesCommand extends EnvironmentWithSubscriber {
+export class GetSubscriberPreferencesRequestDto {
   @IsEnum(WorkflowCriticalityEnum)
   @IsOptional()
   criticality: WorkflowCriticalityEnum = WorkflowCriticalityEnum.NON_CRITICAL;

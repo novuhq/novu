@@ -26,10 +26,15 @@ export class CreateOrganization {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new BadRequestException('User not found');
 
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const defaultApiServiceLevel =
+      isSelfHosted && isEnterprise ? ApiServiceLevelEnum.UNLIMITED : ApiServiceLevelEnum.FREE;
+
     const createdOrganization = await this.organizationRepository.create({
       logo: command.logo,
       name: command.name,
-      apiServiceLevel: command.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      apiServiceLevel: command.apiServiceLevel || defaultApiServiceLevel,
       domain: command.domain,
       language: command.language,
     });
