@@ -1,14 +1,8 @@
 import { SubscriberEntity } from '@novu/dal';
-import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, IChannelCredentials, ISubscriberChannel, PushProviderIdEnum } from '@novu/shared';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentCommand } from '../../../commands';
 import { OAuthHandlerEnum } from '../types';
-
-export class SubscriberChannel {
-  providerId: ChatProviderIdEnum | PushProviderIdEnum;
-
-  credentials: IChannelCredentials;
-}
 
 export class IChannelCredentialsCommand implements IChannelCredentials {
   @IsString()
@@ -39,7 +33,7 @@ export class IChannelCredentialsCommand implements IChannelCredentials {
   externalUrl?: string;
 }
 
-export class UpdateSubscriberChannelCommand extends EnvironmentCommand implements SubscriberChannel {
+export class UpdateSubscriberChannelCommand extends EnvironmentCommand implements ISubscriberChannel {
   @IsString()
   subscriberId: string;
 

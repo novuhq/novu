@@ -20,7 +20,6 @@ export * from './entities/notification-template';
 export * from './entities/notification-trigger';
 export * from './entities/organization';
 export * from './entities/step';
-export * from './entities/subscriber';
 export * from './entities/subscriber-preference';
 export * from './entities/tenant';
 export * from './entities/user';

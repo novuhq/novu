@@ -16,7 +16,6 @@ import {
 } from '@novu/application-generic';
 
 import {
-  IChannelSettings,
   IntegrationEntity,
   MessageEntity,
   MessageRepository,
@@ -31,6 +30,7 @@ import {
   DeliveryLifecycleStatus,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IChannelSettings,
   ITenantDefine,
   ProvidersIdEnum,
   WebhookEventEnum,
@@ -119,7 +119,7 @@ export class SendMessageChat extends SendMessageBase {
       ) || [];
 
     const { phone } = subscriber;
-    // @ts-ignore
+    // @ts-expect-error
     chatChannels.push({
       providerId: ChatProviderIdEnum.WhatsAppBusiness,
       credentials: {
