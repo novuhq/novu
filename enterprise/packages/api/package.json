@@ -15,7 +15,9 @@
   "dependencies": {
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
-    "@novu/shared": "workspace:*"
+    "@novu/shared": "workspace:*",
+    "class-validator": "0.14.1",
+    "@novu/stateless": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.15.0",
