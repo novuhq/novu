@@ -1,4 +1,5 @@
 import { Info } from 'lucide-react';
+import { useId } from 'react';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { RiLayoutLine } from 'react-icons/ri';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
@@ -30,6 +31,7 @@ const previewStyles: PreviewStyle[] = [
 
 export function CustomizeInbox({ form }: CustomizeInboxProps) {
   const selectedStyle = form.watch('selectedStyle');
+  const enableTabsId = useId();
 
   return (
     <div className="space-y-3 p-3">
@@ -52,13 +54,13 @@ export function CustomizeInbox({ form }: CustomizeInboxProps) {
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      id="enable-tabs-toggle"
+                      id={enableTabsId}
                       className="text-[#7D52F4]"
                     />
                   )}
                 />
                 <label
-                  htmlFor="enable-tabs-toggle"
+                  htmlFor={enableTabsId}
                   className="text-foreground cursor-pointer select-none text-xs font-normal"
                 >
                   Enable Tabs
@@ -96,8 +98,8 @@ function StylePreviewCard({
   onSelect: () => void;
 }) {
   return (
-    <div
-      key={style.id}
+    <button
+      type="button"
       className={`group relative h-[100px] cursor-pointer overflow-hidden rounded-lg border transition-all duration-200 active:scale-[0.98] ${
         isSelected ? 'border-2 border-neutral-200' : 'border border-neutral-100 hover:border-neutral-200'
       }`}
@@ -107,16 +109,14 @@ function StylePreviewCard({
         backgroundPosition: 'top',
       }}
       onClick={onSelect}
-      role="radio"
-      aria-checked={isSelected}
-      tabIndex={0}
+      aria-pressed={isSelected}
     >
       <div
         className={`absolute bottom-0 w-full translate-y-full transform border-t bg-neutral-50/90 text-center opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 ${isSelected ? '!translate-y-0 !opacity-100' : ''}`}
       >
         <span className="text-xs leading-6">{style.label}</span>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -150,7 +150,7 @@ function ColorPickerSection({ form }: { form: UseFormReturn<CustomizeInboxFormDa
         <p className="text-foreground-400 leading-[21px]">
           The Inbox is completely customizable, using the{' '}
           <a
-            href="https://docs.novu.co/platform/inbox/react/styling#appearance-prop"
+            href="https://docs.novu.co/platform/inbox/configuration/styling"
             className="cursor-pointer underline"
             target="_blank"
             rel="noopener noreferrer"
