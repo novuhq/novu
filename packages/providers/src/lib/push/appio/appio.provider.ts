@@ -2,7 +2,6 @@ import { PushProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, IPushOptions, IPushProvider } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { WithPassthrough } from '../../../utils/types';
 
 export class AppioPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.AppIO;
@@ -16,25 +15,23 @@ export class AppioPushProvider extends BaseProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const data = this.transform(bridgeProviderData, options);
+    const fiscalCode = options.target?.[0];
+    if (!fiscalCode) {
+      throw new Error('Missing target (fiscal_code) in push options');
+    }
 
-    const {
-      fiscalCode,
-      content, // markdown
-      title, // subject
-    } = data as unknown as {
-      fiscalCode: string;
-      content: string;
-      title: string;
-    };
+    const { title, content } = options;
+    if (!title || !content) {
+      throw new Error('Missing title or content in push options');
+    }
 
-    const apiKey = (bridgeProviderData as any)?.apiKey;
+    const apiKey = bridgeProviderData?.apiKey as string;
     const baseUrl = this.config?.AppIOBaseUrl || 'https://api.io.italia.it/api/v1';
 
     if (!apiKey) {
-      throw new Error('Missing App IO API key (must be passed via overrides.apiKey)');
+      throw new Error('Missing App IO API key (must be passed via bridgeProviderData.apiKey)');
     }
 
     const profileRes = await this.axiosInstance.post(
@@ -47,6 +44,10 @@ export class AppioPushProvider extends BaseProvider implements IPushProvider {
         },
       }
     );
+
+    if (!profileRes) {
+      throw new Error('Invalid response from App IO profile API');
+    }
 
     if (profileRes.status !== 200 || profileRes.data?.sender_allowed !== true) {
       throw new Error('Recipient is not allowed or not found in App IO');
@@ -69,8 +70,12 @@ export class AppioPushProvider extends BaseProvider implements IPushProvider {
       }
     );
 
+    if (!messageRes || !messageRes.data) {
+      throw new Error('Invalid response from App IO message API');
+    }
+
     return {
-      id: messageRes.data?.id || '',
+      id: messageRes.data.id || '',
       date: new Date().toISOString(),
     };
   }
