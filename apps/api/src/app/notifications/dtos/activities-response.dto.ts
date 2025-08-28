@@ -196,13 +196,15 @@ export class ActivityNotificationExecutionDetailResponseDto {
   @ApiProperty({ description: 'Whether the execution is a test or not', type: Boolean })
   isTest: boolean;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     enum: [...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))])],
     enumName: 'ProvidersIdEnum',
     description: 'Provider ID of the execution',
     type: String,
+    nullable: true,
   })
   @IsString()
+  @IsOptional()
   @IsEnum(ProvidersIdEnumConst)
   providerId: ProvidersIdEnum;
 
