@@ -286,6 +286,7 @@ export class SubscribersController {
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('bulkUpdate')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
+  @RequireAuthentication()
   async bulkUpdateSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
