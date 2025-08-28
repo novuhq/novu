@@ -24,10 +24,11 @@ export function useFirstTriggerDetection({
   const [hasDetectedFirstTrigger, setHasDetectedFirstTrigger] = useState(false);
   const [isWaitingForTrigger, setIsWaitingForTrigger] = useState(false);
   const [workflowSlug, setWorkflowSlug] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const { currentEnvironment } = useEnvironment();
 
   // First, fetch workflows to find the demo workflow slug
-  const { data: workflowsData } = useQuery({
+  const { data: workflowsData, isPending: isWorkflowsLoading } = useQuery({
     queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id, ONBOARDING_DEMO_WORKFLOW_ID],
     queryFn: () => {
       if (!currentEnvironment) throw new Error('Environment not available');
@@ -42,7 +43,7 @@ export function useFirstTriggerDetection({
         status: [],
       });
     },
-    enabled: enabled && !!currentEnvironment?._id && !workflowSlug,
+    enabled: enabled && !!currentEnvironment?._id && !workflowSlug && !notFound,
     refetchOnWindowFocus: false,
     staleTime: 30000, // Cache for 30 seconds since slug doesn't change
   });
@@ -53,6 +54,11 @@ export function useFirstTriggerDetection({
       const demoWorkflow = workflowsData.workflows.find((w) => w.workflowId === ONBOARDING_DEMO_WORKFLOW_ID);
       if (demoWorkflow?.slug && demoWorkflow.slug !== workflowSlug) {
         setWorkflowSlug(demoWorkflow.slug);
+        setNotFound(false);
+      } else if (!demoWorkflow) {
+        // Workflow not found in search results
+        setNotFound(true);
+        setIsWaitingForTrigger(false);
       }
     }
   }, [workflowsData, workflowSlug]);
@@ -71,8 +77,8 @@ export function useFirstTriggerDetection({
         workflowSlug: workflowSlug,
       });
     },
-    enabled: enabled && !!currentEnvironment?._id && !!workflowSlug,
-    refetchInterval: isWaitingForTrigger && !hasDetectedFirstTrigger ? 2000 : false,
+    enabled: enabled && !!currentEnvironment?._id && !!workflowSlug && !notFound,
+    refetchInterval: isWaitingForTrigger && !hasDetectedFirstTrigger && !notFound ? 2000 : false,
     refetchOnWindowFocus: false,
     staleTime: 0,
   });
@@ -97,6 +103,14 @@ export function useFirstTriggerDetection({
       const triggerTime = new Date(workflow.lastTriggeredAt).getTime();
       const visitTime = new Date(firstVisitTimestamp).getTime();
 
+      // Validate that visitTime is a valid timestamp
+      if (!Number.isFinite(visitTime) || Number.isNaN(visitTime)) {
+        console.error('Invalid firstVisitTimestamp provided:', firstVisitTimestamp);
+        setIsWaitingForTrigger(false);
+        setHasDetectedFirstTrigger(false);
+        return;
+      }
+
       if (triggerTime > visitTime) {
         setHasDetectedFirstTrigger(true);
         setIsWaitingForTrigger(false);
@@ -107,17 +121,18 @@ export function useFirstTriggerDetection({
 
   // Start waiting for trigger
   const startWaiting = useCallback(() => {
-    if (hasDetectedFirstTrigger) {
+    if (hasDetectedFirstTrigger || notFound) {
       return;
     }
     setIsWaitingForTrigger(true);
-  }, [hasDetectedFirstTrigger]);
+  }, [hasDetectedFirstTrigger, notFound]);
 
   // Reset detection state
   const resetDetection = useCallback(() => {
     setHasDetectedFirstTrigger(false);
     setIsWaitingForTrigger(false);
     setWorkflowSlug(null);
+    setNotFound(false);
   }, []);
 
   return {
@@ -125,10 +140,11 @@ export function useFirstTriggerDetection({
     isWaitingForTrigger,
     startWaiting,
     resetDetection,
-    isLoading: isPending,
+    isLoading: isPending || isWorkflowsLoading,
     workflow,
     workflowSlug,
     lastTriggeredAt: workflow?.lastTriggeredAt,
     error,
+    notFound,
   };
 }

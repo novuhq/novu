@@ -69,15 +69,19 @@ function updateFrameworkCode(
 ): Framework {
   return {
     ...framework,
-    installSteps: framework.installSteps.map((step) => ({
-      ...step,
-      code: step.code
-        ?.replace(/YOUR_APP_ID/g, environmentIdentifier)
-        ?.replace(/YOUR_APPLICATION_IDENTIFIER/g, environmentIdentifier)
-        ?.replace(/YOUR_SUBSCRIBER_ID/g, subscriberId)
-        ?.replace(/YOUR_PRIMARY_COLOR/g, primaryColor)
-        ?.replace(/YOUR_FOREGROUND_COLOR/g, foregroundColor),
-    })),
+    installSteps: framework.installSteps.map((step) => {
+      if (!step.code) return step;
+
+      return {
+        ...step,
+        code: step.code
+          .replace(/YOUR_APP_ID/g, () => environmentIdentifier)
+          .replace(/YOUR_APPLICATION_IDENTIFIER/g, () => environmentIdentifier)
+          .replace(/YOUR_SUBSCRIBER_ID/g, () => subscriberId)
+          .replace(/YOUR_PRIMARY_COLOR/g, () => primaryColor)
+          .replace(/YOUR_FOREGROUND_COLOR/g, () => foregroundColor),
+      };
+    }),
   };
 }
 
@@ -142,7 +146,7 @@ export function InboxFrameworkGuide({
               Watching for Inbox Integration
             </span>
           </div>
-          <p className="text-foreground-400 text-xs">Follow the steps below to initialize your Inbox component</p>
+          <p className="text-foreground-400 text-xs">Follow the steps below to initialize your Inbox component.</p>
         </div>
       </motion.div>
 

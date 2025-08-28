@@ -378,6 +378,8 @@
 /* Hide scrollbar in Novu notification list */
 .nv-no-scrollbar .nv-notificationList::-webkit-scrollbar {
   display: none;
+  width: 0;
+  height: 0;
 }
 
 .nv-no-scrollbar .nv-notificationList {

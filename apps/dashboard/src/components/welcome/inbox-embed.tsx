@@ -11,6 +11,11 @@ import { TelemetryEvent } from '../../utils/telemetry';
 import { InboxConnectedGuide } from './inbox-connected-guide';
 import { InboxFrameworkGuide } from './inbox-framework-guide';
 
+const LAYOUT_CONSTANTS = {
+  MAIN_PADDING_LEFT: 'pl-[100px]',
+  FOOTER_MARGIN_LEFT: '-ml-[100px]',
+} as const;
+
 export function InboxEmbed(): JSX.Element | null {
   const [showConfetti, setShowConfetti] = useState(false);
   const { currentUser } = useAuth();
@@ -47,7 +52,7 @@ export function InboxEmbed(): JSX.Element | null {
 
   if (!foundIntegration) {
     return (
-      <main className="pl-[100px]">
+      <main className={LAYOUT_CONSTANTS.MAIN_PADDING_LEFT}>
         <InboxFrameworkGuide
           currentEnvironment={selectedEnvironment}
           subscriberId={subscriberId}
@@ -55,7 +60,7 @@ export function InboxEmbed(): JSX.Element | null {
           foregroundColor={foregroundColor}
         />
 
-        <footer className="pt-32 pb-6 -ml-[100px]">
+        <footer className={`pt-32 pb-6 ${LAYOUT_CONSTANTS.FOOTER_MARGIN_LEFT}`}>
           <div className="flex justify-center">
             <button
               className="px-6 py-2 text-xs font-medium hover:underline hover:underline-offset-2 transition-colors"
@@ -76,7 +81,7 @@ export function InboxEmbed(): JSX.Element | null {
   }
 
   return (
-    <main className="pl-[100px]">
+    <main className={LAYOUT_CONSTANTS.MAIN_PADDING_LEFT}>
       {showConfetti && <ReactConfetti recycle={false} numberOfPieces={1000} />}
       {foundIntegration?.connected ? (
         <InboxConnectedGuide subscriberId={subscriberId} environment={selectedEnvironment} />
@@ -89,7 +94,7 @@ export function InboxEmbed(): JSX.Element | null {
         />
       )}
 
-      <footer className="pt-32 pb-6 -ml-[100px]">
+      <footer className={`pt-32 pb-6 ${LAYOUT_CONSTANTS.FOOTER_MARGIN_LEFT}`}>
         <div className="flex justify-center">
           <button
             className="px-6 py-2 text-xs font-medium hover:underline hover:underline-offset-2 transition-colors"

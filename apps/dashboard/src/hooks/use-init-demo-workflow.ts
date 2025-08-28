@@ -55,7 +55,7 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
             controlValues: {
               subject: 'Notification with Multiple Actions',
               body: 'Add **Primary** and **Secondary Actions** to give users more choices, like **View** or **Dismiss**.',
-              avatar: `${window.location.origin}/images/novu.svg`,
+              avatar: window.location.origin + '/images/novu.svg',
               primaryAction: {
                 label: 'Primary Action',
                 redirect: {},
@@ -72,7 +72,7 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
             controlValues: {
               subject: 'Notification with a Single Action',
               body: 'Use a single, clear **Primary Action** to send users to a specific page or feature',
-              avatar: `${window.location.origin}/images/novu.svg`,
+              avatar: window.location.origin + '/images/novu.svg',
               primaryAction: {
                 label: 'Primary Action',
                 redirect: {},
@@ -85,7 +85,7 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
             controlValues: {
               subject: 'Basic Notification',
               body: 'No buttons, just a simple message. Perfect for announcements or alerts',
-              avatar: `${window.location.origin}/images/novu.svg`,
+              avatar: window.location.origin + '/images/novu.svg',
             },
           },
         ],
@@ -111,11 +111,10 @@ export function useInitDemoWorkflow(environment: IEnvironment | undefined) {
   useEffect(() => {
     if (!data || !environment) return;
 
-    const envKey = environment.identifier;
     const envId = environment._id;
 
     // Check if this environment has already been initialized
-    if (initializedSet.current.has(envKey)) return;
+    if (initializedSet.current.has(envId)) return;
 
     const initializeDemoWorkflow = async () => {
       // Double-check if workflow exists (in case of race conditions)
@@ -125,7 +124,7 @@ export function useInitDemoWorkflow(environment: IEnvironment | undefined) {
         try {
           await createDemoWorkflow({ environment });
           // Mark this environment as initialized after successful creation
-          initializedSet.current.add(envKey);
+          initializedSet.current.add(envId);
           // Refetch workflows after creation to update the cache
           await refetch();
         } catch (error) {
@@ -133,7 +132,7 @@ export function useInitDemoWorkflow(environment: IEnvironment | undefined) {
         }
       } else if (workflow) {
         // If workflow already exists, mark this environment as initialized
-        initializedSet.current.add(envKey);
+        initializedSet.current.add(envId);
       }
     };
 

@@ -1,5 +1,5 @@
 import { IEnvironment } from '@novu/shared';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { RiCheckboxCircleFill, RiLoader3Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
@@ -14,7 +14,7 @@ import { ROUTES } from '../../utils/routes';
 import { Button } from '../primitives/button';
 import { CodeBlock } from '../primitives/code-block';
 import { ToastIcon } from '../primitives/sonner';
-import { showToast } from '../primitives/sonner-helpers';
+import { showErrorToast, showToast } from '../primitives/sonner-helpers';
 
 type InboxConnectedGuideProps = {
   subscriberId: string;
@@ -24,6 +24,10 @@ type InboxConnectedGuideProps = {
 function generateCurlSnippet(userId: string, apiKey: string): string {
   if (!apiKey) {
     throw new Error('API key not found');
+  }
+
+  if (!userId || !userId.trim()) {
+    throw new Error('User ID not found');
   }
 
   const snippetProps: CodeSnippet = {
@@ -37,9 +41,11 @@ function generateCurlSnippet(userId: string, apiKey: string): string {
 }
 
 function WorkflowIntegrationSteps({ userId, apiKey }: { userId: string; apiKey: string }) {
+  const curl = useMemo(() => generateCurlSnippet(userId, apiKey), [userId, apiKey]);
+
   return (
     <div className="mt-5 w-full min-w-0">
-      <CodeBlock code={generateCurlSnippet(userId, apiKey)} language="shell" title="Terminal" />
+      <CodeBlock code={curl} language="shell" title="Terminal" />
     </div>
   );
 }
@@ -72,7 +78,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
   const hasValidApiKey = !apiKeysQuery.isLoading && !apiKeysQuery.error && apiKey;
 
   // Track page visit timestamp (created when component mounts)
-  const { visitTimestamp } = usePageVisitTimestamp();
+  const visitTimestamp = usePageVisitTimestamp();
 
   // First trigger detection - uses the page visit timestamp
   const { hasDetectedFirstTrigger, isWaitingForTrigger, startWaiting } = useFirstTriggerDetection({
@@ -97,9 +103,22 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
     }
   }, [hasValidApiKey, hasDetectedFirstTrigger, isWaitingForTrigger, startWaiting]);
 
-  function handleCompleteOnboarding() {
-    telemetry(TelemetryEvent.ONBOARDING_COMPLETED);
-    navigate(ROUTES.WELCOME);
+  async function handleCompleteOnboarding() {
+    try {
+      // Track telemetry event
+      await telemetry(TelemetryEvent.ONBOARDING_COMPLETED);
+    } catch (error) {
+      console.error('Failed to track onboarding completion telemetry:', error);
+      // Continue with navigation even if telemetry fails
+    }
+
+    try {
+      // Navigate to welcome page
+      navigate(ROUTES.WELCOME);
+    } catch (error) {
+      console.error('Failed to navigate after onboarding completion:', error);
+      showErrorToast('Failed to complete onboarding. Please try refreshing the page.', 'Navigation Error');
+    }
   }
 
   return (
@@ -152,11 +171,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
                     onClick={handleCompleteOnboarding}
                     disabled={!hasDetectedFirstTrigger}
                     variant="primary"
-                    className={`px-6 py-2 ${
-                      !hasDetectedFirstTrigger
-                        ? 'cursor-not-allowed bg-gray-800 text-white border-gray-900 hover:bg-gray-800'
-                        : ''
-                    }`}
+                    className="px-6 py-2 disabled:cursor-not-allowed disabled:bg-gray-800 disabled:text-white disabled:border-gray-900"
                   >
                     <RiCheckboxCircleFill className="mr-2 h-4 w-4" />
                     Complete Onboarding

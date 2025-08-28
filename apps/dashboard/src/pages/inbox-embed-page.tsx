@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatedPage } from '@/components/onboarding/animated-page';
 import { AuthCard } from '../components/auth/auth-card';
@@ -13,23 +13,55 @@ import { TelemetryEvent } from '../utils/telemetry';
 
 export function InboxEmbedPage() {
   const telemetry = useTelemetry();
-  const { integrations } = useFetchIntegrations({ refetchInterval: 1000, refetchOnWindowFocus: true });
   const { environments } = useEnvironment();
   const [searchParams] = useSearchParams();
   const environmentHint = searchParams.get('environmentId');
 
-  const selectedEnvironment = environments?.find((env) =>
-    environmentHint ? env._id === environmentHint : !env._parentId
+  const selectedEnvironment = useMemo(
+    () => environments?.find((env) => (environmentHint ? env._id === environmentHint : !env._parentId)),
+    [environments, environmentHint]
   );
 
-  const foundIntegration = integrations?.find(
-    (integration) =>
-      integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
+  const { integrations } = useFetchIntegrations({
+    refetchInterval: undefined,
+    refetchOnWindowFocus: false,
+  });
+
+  const inAppIntegration = useMemo(
+    () =>
+      integrations?.find(
+        (integration) =>
+          integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
+      ),
+    [integrations, selectedEnvironment?._id]
   );
 
-  const isConnected = foundIntegration?.connected;
+  const isInAppConnected = inAppIntegration?.connected;
 
+  // Adaptive polling: only poll if not connected
+  const adaptivePollingOptions = useMemo(
+    () => ({
+      refetchInterval: isInAppConnected ? undefined : 1000,
+      refetchOnWindowFocus: false,
+    }),
+    [isInAppConnected]
+  );
 
+  // Re-fetch integrations with adaptive options
+  const { integrations: polledIntegrations } = useFetchIntegrations(adaptivePollingOptions);
+
+  const currentIntegrations = polledIntegrations || integrations;
+
+  const currentInAppIntegration = useMemo(
+    () =>
+      currentIntegrations?.find(
+        (integration) =>
+          integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
+      ),
+    [currentIntegrations, selectedEnvironment?._id]
+  );
+
+  const isConnected = currentInAppIntegration?.connected;
 
   useEffect(() => {
     telemetry(TelemetryEvent.INBOX_EMBED_PAGE_VIEWED);

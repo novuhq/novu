@@ -14,6 +14,8 @@ export enum TelemetryEvent {
   INBOX_NOTIFICATION_SENT = 'Inbox notification sent - [Onboarding]',
   INBOX_CUSTOMIZATION_CHANGED = 'Inbox customization changed - [Onboarding]',
   INBOX_NEXT_STEP_CLICKED = 'Inbox next step clicked - [Onboarding]',
+  /** @deprecated Use INBOX_NEXT_STEP_CLICKED instead */
+  INBOX_IMPLEMENTATION_CLICKED = 'Inbox next step clicked - [Onboarding]',
   INBOX_PREVIEW_STYLE_CHANGED = 'Inbox preview style changed - [Onboarding]',
   INBOX_FRAMEWORK_SELECTED = 'Inbox framework selected - [Onboarding]',
   SKIP_ONBOARDING_CLICKED = 'Skip onboarding clicked - [Onboarding]',

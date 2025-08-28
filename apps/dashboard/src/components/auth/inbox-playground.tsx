@@ -83,10 +83,15 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
     }
   };
 
-  const handleImplementClick = () => {
-    telemetry(TelemetryEvent.INBOX_NEXT_STEP_CLICKED, {});
-    const queryParams = new URLSearchParams({}).toString();
-    navigate(`${ROUTES.INBOX_EMBED}?${queryParams}`);
+  const handleNextStepClick = () => {
+    if (!appId) {
+      return;
+    }
+
+    telemetry(TelemetryEvent.INBOX_NEXT_STEP_CLICKED);
+    const queryParams = new URLSearchParams();
+    const qs = queryParams.toString();
+    navigate(qs ? `${ROUTES.INBOX_EMBED}?${qs}` : ROUTES.INBOX_EMBED);
   };
 
   return (
@@ -148,7 +153,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
             </Button>
           ) : (
             <Button
-              onClick={handleImplementClick}
+              onClick={handleNextStepClick}
               disabled={!appId}
               size="xs"
               trailingIcon={RiArrowRightSLine}
