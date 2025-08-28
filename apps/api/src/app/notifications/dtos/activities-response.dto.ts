@@ -201,7 +201,6 @@ export class ActivityNotificationExecutionDetailResponseDto {
     enumName: 'ProvidersIdEnum',
     description: 'Provider ID of the execution',
     type: String,
-    nullable: true,
   })
   @IsString()
   @IsOptional()
