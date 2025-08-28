@@ -1,3 +1,9 @@
+import { Badge } from '@/components/primitives/badge';
+import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { Protect } from '@/utils/protect';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
 import { ReactNode } from 'react';
 import {
@@ -15,13 +21,7 @@ import {
   RiTranslate2,
   RiUserAddLine,
 } from 'react-icons/ri';
-import { Badge } from '@/components/primitives/badge';
-import { SidebarContent } from '@/components/side-navigation/sidebar';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { Protect } from '@/utils/protect';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { IS_SELF_HOSTED } from '../../config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
@@ -58,7 +58,6 @@ const BottomSection = ({
   if (IS_SELF_HOSTED) {
     return (
       <div className="relative mt-auto gap-8 pt-4">
-        <ChangelogStack />
         <HomeMenuItem />
       </div>
     );
@@ -233,7 +232,7 @@ export const SideNavigation = () => {
                 </Protect>
               </NavigationGroup>
             </Protect>
-            {!IS_SELF_HOSTED ? (
+            {!IS_SELF_HOSTED || IS_ENTERPRISE ? (
               <NavigationGroup label="Application">
                 <NavigationLink to={ROUTES.SETTINGS}>
                   <RiSettings4Line className="size-4" />

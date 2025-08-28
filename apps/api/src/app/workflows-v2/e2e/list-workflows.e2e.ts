@@ -47,11 +47,11 @@ describe('List Workflows - /workflows (GET) #novu-v2', () => {
     });
 
     it('should correctly search workflows by name', async () => {
-      const searchTerm = 'SEARCHABLE_WORKFLOW';
+      const searchTerm = 'SEARCHABLE-WORKFLOW';
 
       // Create workflows with different names
-      await createWorkflow(`${searchTerm}_1`);
-      await createWorkflow(`${searchTerm}_2`);
+      await createWorkflow(`${searchTerm}-1`);
+      await createWorkflow(`${searchTerm}-2`);
       await createWorkflow('Different Workflow');
 
       const { result } = await novuClient.workflows.list({ query: searchTerm });

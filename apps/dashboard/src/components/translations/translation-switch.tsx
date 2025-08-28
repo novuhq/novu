@@ -1,8 +1,8 @@
-import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, PermissionsEnum } from '@novu/shared';
 import { Switch } from '@/components/primitives/switch';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, PermissionsEnum } from '@novu/shared';
 import { PermissionSwitch } from '../primitives/permission-switch';
 
 type TranslationSwitchProps = {
@@ -19,7 +19,8 @@ export function TranslationSwitch({ id, value, onChange, isReadOnly }: Translati
     getFeatureForTierAsBoolean(
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) && !IS_SELF_HOSTED;
+    ) &&
+    (!IS_SELF_HOSTED || IS_ENTERPRISE);
 
   const disabled = !canUseTranslationFeature || isLoading || isReadOnly;
   const checked = disabled ? false : value;

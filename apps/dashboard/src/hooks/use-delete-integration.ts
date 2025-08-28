@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteIntegration as deleteIntegrationApi } from '../api/integrations';
 import { QueryKeys } from '../utils/query-keys';
 
@@ -23,6 +23,7 @@ export function useDeleteIntegration() {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id],
       });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow, currentEnvironment?._id] });
     },
   });
 

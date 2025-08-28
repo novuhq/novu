@@ -1,6 +1,6 @@
 import { Button } from '@/components/primitives/button';
 import { openInNewTab } from '@/utils/url';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 import { CircleCheck } from '../icons/circle-check';
 import { Plug } from '../icons/plug';
 import { ShieldZap } from '../icons/shield-zap';
@@ -18,9 +18,13 @@ export function AuthSideBanner() {
         {IS_SELF_HOSTED ? (
           <div className="flex hidden flex-col items-start justify-start gap-4 md:block">
             <div className="flex flex-col items-start justify-start gap-1.5 self-stretch">
-              <div className="text-2xl font-medium leading-8 text-neutral-950">Welcome to Novu Self-Hosted!</div>
+              <div className="text-2xl font-medium leading-8 text-neutral-950">
+                {IS_ENTERPRISE ? 'Welcome to Novu Enterprise' : 'Welcome to Novu Self-Hosted!'}
+              </div>
               <div className="text-sm leading-snug text-neutral-500">
-                Full control over your notification infrastructure. Backed by a vibrant community.
+                {IS_ENTERPRISE
+                  ? 'Enterprise-grade notification infrastructure with premium support and advanced features.'
+                  : 'Full control over your notification infrastructure. Backed by a vibrant community.'}
               </div>
             </div>
           </div>
@@ -44,18 +48,34 @@ export function AuthSideBanner() {
         <div className="hidden md:flex md:flex-col md:items-start md:justify-start md:gap-8 md:self-stretch">
           <AuthFeatureRow
             icon={<Plug className="h-6 w-6 text-[#DD2450]" />}
-            title="Full Data Control & Unlimited Customization"
-            description="Host Novu on your own infrastructure, tailor it to your exact needs, and own your data."
+            title={
+              IS_ENTERPRISE ? 'Enterprise Data Sovereignty & Compliance' : 'Full Data Control & Unlimited Customization'
+            }
+            description={
+              IS_ENTERPRISE
+                ? 'Complete data residency control with enterprise-grade security, compliance certifications, and audit trails.'
+                : 'Host Novu on your own infrastructure, tailor it to your exact needs, and own your data.'
+            }
           />
           <AuthFeatureRow
             icon={<Sparkling className="h-6 w-6" />}
-            title="Community-Driven & Transparent"
-            description="Leverage the power of open-source. Contribute, inspect the code, and be part of our active community."
+            title={IS_ENTERPRISE ? 'Premium Support & Professional Services' : 'Community-Driven & Transparent'}
+            description={
+              IS_ENTERPRISE
+                ? 'Dedicated account management, priority support, and professional services for seamless deployment and optimization.'
+                : 'Leverage the power of open-source. Contribute, inspect the code, and be part of our active community.'
+            }
           />
           <AuthFeatureRow
             icon={<ShieldZap className="h-6 w-6" />}
-            title="Scalable, Secure, and Enterprise-Ready"
-            description="Built to handle any volume, ensuring reliable delivery for your mission-critical notifications."
+            title={
+              IS_ENTERPRISE ? 'Enterprise-Grade Performance & Reliability' : 'Scalable, Secure, and Enterprise-Ready'
+            }
+            description={
+              IS_ENTERPRISE
+                ? 'Mission-critical SLAs, advanced monitoring, and enterprise integrations built for large-scale operations.'
+                : 'Built to handle any volume, ensuring reliable delivery for your mission-critical notifications.'
+            }
           />
         </div>
       ) : (
@@ -77,7 +97,7 @@ export function AuthSideBanner() {
           />
         </div>
       )}
-      {IS_SELF_HOSTED && (
+      {IS_SELF_HOSTED && !IS_ENTERPRISE && (
         <div className="border-stroke-soft rounded-8 hidden flex-col items-start justify-start gap-3 self-stretch border from-blue-50/80 to-transparent p-6 shadow-md md:flex">
           <h3 className="text-lg font-semibold text-neutral-900">Looking for a Managed Solution?</h3>
           <p className="text-sm text-neutral-600">

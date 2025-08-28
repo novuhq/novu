@@ -106,7 +106,9 @@ export enum SmsProviderIdEnum {
   EazySms = 'eazy-sms',
   Mobishastra = 'mobishastra',
   AfroSms = 'afro-message',
+  // cspell:disable-next-line
   Unifonic = 'unifonic',
+  // cspell:disable-next-line
   Smsmode = 'smsmode',
   IMedia = 'imedia',
 }
