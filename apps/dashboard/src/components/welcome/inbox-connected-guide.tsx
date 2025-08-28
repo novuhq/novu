@@ -4,6 +4,7 @@ import { RiCheckboxCircleFill, RiLoader3Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useFirstTriggerDetection } from '@/hooks/use-first-trigger-detection';
+import { usePageVisitTimestamp } from '@/hooks/use-page-visit-timestamp';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { type CodeSnippet, createCurlSnippet } from '@/utils/code-snippets';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -70,9 +71,13 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
   const apiKey = apiKeys[0]?.key ?? '';
   const hasValidApiKey = !apiKeysQuery.isLoading && !apiKeysQuery.error && apiKey;
 
-  // First trigger detection
+  // Track page visit timestamp (created when component mounts)
+  const { visitTimestamp } = usePageVisitTimestamp();
+
+  // First trigger detection - uses the page visit timestamp
   const { hasDetectedFirstTrigger, isWaitingForTrigger, startWaiting } = useFirstTriggerDetection({
     enabled: true,
+    firstVisitTimestamp: visitTimestamp,
     onFirstTriggerDetected: () => {
       showStatusToast('success', 'API trigger detected');
     },

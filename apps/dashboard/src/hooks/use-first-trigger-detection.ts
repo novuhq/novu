@@ -8,14 +8,19 @@ import { useEnvironment } from '../context/environment/hooks';
 type FirstTriggerDetectionOptions = {
   enabled?: boolean;
   onFirstTriggerDetected?: () => void;
+  firstVisitTimestamp?: string | null; // ISO timestamp of current page visit to compare against
 };
 
 /**
  * Hook to detect if a workflow has been triggered
- * Uses the workflow's lastTriggeredAt field to detect if it has been triggered at any point
- * If the workflow was already triggered before, it's considered as completed
+ * Uses the workflow's lastTriggeredAt field to detect if it has been triggered after the current page visit
+ * If firstVisitTimestamp is provided, only triggers after that timestamp are considered
  */
-export function useFirstTriggerDetection({ enabled = true, onFirstTriggerDetected }: FirstTriggerDetectionOptions) {
+export function useFirstTriggerDetection({
+  enabled = true,
+  onFirstTriggerDetected,
+  firstVisitTimestamp,
+}: FirstTriggerDetectionOptions) {
   const [hasDetectedFirstTrigger, setHasDetectedFirstTrigger] = useState(false);
   const [isWaitingForTrigger, setIsWaitingForTrigger] = useState(false);
   const [workflowSlug, setWorkflowSlug] = useState<string | null>(null);
@@ -72,19 +77,33 @@ export function useFirstTriggerDetection({ enabled = true, onFirstTriggerDetecte
     staleTime: 0,
   });
 
-  // Check if workflow was already triggered (either before or during current session)
+  // Check if workflow was triggered after the first visit timestamp
   useEffect(() => {
     if (!enabled || isPending || hasDetectedFirstTrigger || !workflow) {
       return;
     }
 
-    // If lastTriggeredAt exists, the workflow has been triggered
+    // If lastTriggeredAt exists, check if it happened after the current page visit
     if (workflow.lastTriggeredAt) {
-      setHasDetectedFirstTrigger(true);
-      setIsWaitingForTrigger(false);
-      onFirstTriggerDetected?.();
+      // If no firstVisitTimestamp is provided, use the old behavior (any trigger counts)
+      if (!firstVisitTimestamp) {
+        setHasDetectedFirstTrigger(true);
+        setIsWaitingForTrigger(false);
+        onFirstTriggerDetected?.();
+        return;
+      }
+
+      // Compare timestamps - only count triggers that happened after the current page visit
+      const triggerTime = new Date(workflow.lastTriggeredAt).getTime();
+      const visitTime = new Date(firstVisitTimestamp).getTime();
+
+      if (triggerTime > visitTime) {
+        setHasDetectedFirstTrigger(true);
+        setIsWaitingForTrigger(false);
+        onFirstTriggerDetected?.();
+      }
     }
-  }, [workflow, isPending, hasDetectedFirstTrigger, enabled, onFirstTriggerDetected]);
+  }, [workflow, isPending, hasDetectedFirstTrigger, enabled, onFirstTriggerDetected, firstVisitTimestamp]);
 
   // Start waiting for trigger
   const startWaiting = useCallback(() => {
