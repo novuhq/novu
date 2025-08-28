@@ -1,3 +1,25 @@
+## v3.9.1 (2025-08-27)
+
+### 🚀 Features
+
+- **js,react,nextjs:** inbox appearance keys as a callback with the context prop fixes NV-6447 ([#8983](https://github.com/novuhq/novu/pull/8983))
+- **js,react:** inbox render props for avatar, default and custom actions fixes NV-6535 ([#8977](https://github.com/novuhq/novu/pull/8977))
+- **dashboard:** edited the product onboarding fixes MRK-1000 ([#8945](https://github.com/novuhq/novu/pull/8945))
+- **js:** auto-load new notifications on first inbox open fixes NV-5976 ([#8935](https://github.com/novuhq/novu/pull/8935))
+- **js,react,api-service,ws:** support severity in inbox components and hooks fixes NV-6470 ([#8913](https://github.com/novuhq/novu/pull/8913))
+- **js:** severity support in js sdk fixes NV-6469 ([#8884](https://github.com/novuhq/novu/pull/8884))
+
+### 🩹 Fixes
+
+- **js:** unread dot indicator layout shift fixes NV-6461 ([#8943](https://github.com/novuhq/novu/pull/8943))
+- **js:** new notification count in banner with multiple tabs fixes NV-6514 ([#8934](https://github.com/novuhq/novu/pull/8934))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Emil Pearce @iampearceman
+- Paweł Tymczuk @LetItRock
+
 ## v3.8.1 (2025-08-13)
 
 ### 🚀 Features
