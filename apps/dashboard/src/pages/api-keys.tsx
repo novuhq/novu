@@ -1,7 +1,3 @@
-import { PermissionsEnum } from '@novu/shared';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { PageMeta } from '@/components/page-meta';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -10,6 +6,10 @@ import { Input } from '@/components/primitives/input';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
+import { PermissionsEnum } from '@novu/shared';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { Button } from '../components/primitives/button';
 import { Container } from '../components/primitives/container';
@@ -17,9 +17,15 @@ import { HelpTooltipIndicator } from '../components/primitives/help-tooltip-indi
 import { showErrorToast, showSuccessToast } from '../components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../components/primitives/tooltip';
 import { RegenerateApiKeysDialog } from '../components/regenerate-api-keys-dialog';
-import { API_HOSTNAME } from '../config';
+import { API_HOSTNAME, IS_SELF_HOSTED, WEBSOCKET_HOSTNAME } from '../config';
 import { useFetchApiKeys, useRegenerateApiKeys } from '../hooks/use-fetch-api-keys';
 import { useHasPermission } from '../hooks/use-has-permission';
+
+// Convert https:// to wss:// for WebSocket URLs
+const getWebSocketUrl = (url: string) => {
+  if (!url) return url;
+  return url.replace(/^https:\/\//, 'wss://');
+};
 
 interface ApiKeysFormData {
   apiKey: string;
@@ -119,7 +125,10 @@ export function ApiKeysPage() {
               <CardHeader>
                 API URLs
                 <p className="text-foreground-500 mt-1 text-xs font-normal">
-                  {`URLs for Novu Cloud in the ${region} region. `}
+                  {IS_SELF_HOSTED 
+                    ? 'API endpoint for your self-hosted Novu instance. '
+                    : `URLs for Novu Cloud in the ${region} region. `
+                  }
                   <ExternalLink href="https://docs.novu.co/api-reference/overview" className="text-foreground-500">
                     Learn more
                   </ExternalLink>
@@ -129,12 +138,37 @@ export function ApiKeysPage() {
                 <div className="space-y-4">
                   <SettingField
                     label="Novu API Hostname"
-                    tooltip={`For Novu Cloud in the ${region} region`}
+                    tooltip={IS_SELF_HOSTED 
+                      ? 'Your self-hosted Novu API endpoint'
+                      : `For Novu Cloud in the ${region} region`
+                    }
                     value={API_HOSTNAME}
                   />
                 </div>
               </CardContent>
             </Card>
+            {IS_SELF_HOSTED && (
+              <Card className="w-full overflow-hidden shadow-none">
+                <CardHeader>
+                  WebSocket URLs
+                  <p className="text-foreground-500 mt-1 text-xs font-normal">
+                    WebSocket endpoint for your self-hosted Novu instance.{' '}
+                    <ExternalLink href="https://docs.novu.co/platform/sdks/overview" className="text-foreground-500">
+                      Learn more
+                    </ExternalLink>
+                  </p>
+                </CardHeader>
+                <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+                  <div className="space-y-4">
+                    <SettingField
+                      label="Novu WebSocket Hostname"
+                      tooltip="Your self-hosted Novu WebSocket endpoint"
+                      value={getWebSocketUrl(WEBSOCKET_HOSTNAME)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </Form>
         </Container>
       </DashboardLayout>

@@ -19,14 +19,15 @@ export class WorkflowInMemoryProviderService {
 
   /**
    * Rules for the provider selection:
-   * - For our self hosted users we assume all of them have a single node Redis
-   * instance.
-   * - For Novu we will use MemoryDB. We fallback to a Redis Cluster configuration
+   * - For ALL self hosted users (enterprise and non-enterprise) we use a single 
+   * node Redis instance for BullMQ queues. This is simpler and more reliable 
+   * for queue operations which are write-heavy and sequential.
+   * - For Novu cloud we use MemoryDB. We fallback to a Redis Cluster configuration
    * if MemoryDB not configured properly. That's happening in the provider
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED && process.env.NOVU_ENTERPRISE === 'false') {
+    if (process.env.IS_SELF_HOSTED) {
       return InMemoryProviderEnum.REDIS;
     }
 

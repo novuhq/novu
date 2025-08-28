@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '@novu/application-generic';
-import { PreferenceLevelEnum } from '@novu/shared';
+import { PreferenceLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
 import { plainToInstance } from 'class-transformer';
 import { UpdatePreferencesCommand } from '../../../inbox/usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../../../inbox/usecases/update-preferences/update-preferences.usecase';
@@ -45,6 +45,7 @@ export class UpdateSubscriberPreferences {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       subscriberId: command.subscriberId,
+      criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
 
     return plainToInstance(GetSubscriberPreferencesDto, {

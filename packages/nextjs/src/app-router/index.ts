@@ -10,5 +10,6 @@ export {
   PreferenceLevel,
   Preferences,
   SeverityLevelEnum,
+  WorkflowCriticalityEnum,
 } from '@novu/react';
 export { Inbox } from './Inbox';

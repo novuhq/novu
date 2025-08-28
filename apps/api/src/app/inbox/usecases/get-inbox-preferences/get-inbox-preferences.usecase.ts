@@ -51,6 +51,7 @@ export class GetInboxPreferences {
         tags: command.tags,
         severity,
         includeInactiveChannels: false,
+        criticality: command.criticality,
       })
     );
     const workflowPreferences = subscriberWorkflowPreferences.map((subscriberWorkflowPreference) => {

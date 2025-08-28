@@ -2,7 +2,7 @@ import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { PreferencesCache } from '../cache/preferences-cache';
 import { NovuEventEmitter } from '../event-emitter';
-import { Result } from '../types';
+import { Result, WorkflowCriticalityEnum } from '../types';
 import { bulkUpdatePreference, updatePreference } from './helpers';
 import { Preference } from './preference';
 import type { BasePreferenceArgs, InstancePreferenceArgs, ListPreferencesArgs, UpdatePreferenceArgs } from './types';
@@ -38,7 +38,11 @@ export class Preferences extends BaseModule {
         this._emitter.emit('preferences.list.pending', { args, data });
 
         if (!data) {
-          const response = await this._inboxService.fetchPreferences(args.tags, args.severity);
+          const response = await this._inboxService.fetchPreferences({
+            tags: args.tags,
+            severity: args.severity,
+            criticality: args.criticality ?? WorkflowCriticalityEnum.NON_CRITICAL,
+          });
           data = response.map(
             (el) =>
               new Preference(el, {
