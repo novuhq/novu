@@ -159,7 +159,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           {!isReadOnly && (
             <Button
               type="submit"
-              form="integration-configuration-form"
+              form={`integration-configuration-form-${provider.id}`}
               className="ml-auto"
               isLoading={isUpdating || isSettingPrimary}
               disabled={isReadOnly}

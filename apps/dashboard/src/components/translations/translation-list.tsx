@@ -184,12 +184,21 @@ function TranslationListContainer({
 type TranslationListProps = HTMLAttributes<HTMLDivElement>;
 
 export function TranslationList(props: TranslationListProps) {
-  const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =
-    useTranslationListLogic();
-
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings } = useFetchOrganizationSettings();
+  const { subscription } = useFetchSubscription();
+
+  const canUseTranslationFeature =
+    getFeatureForTierAsBoolean(
+      FeatureNameEnum.AUTO_TRANSLATIONS,
+      subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+    ) &&
+    (!IS_SELF_HOSTED || IS_ENTERPRISE);
+
+  // Only make API call if user has proper tier
+  const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =
+    useTranslationListLogic({ enabled: canUseTranslationFeature });
 
   const handleTranslationClick = (translation: TranslationGroup) => {
     if (currentEnvironment?.slug) {
@@ -209,15 +218,6 @@ export function TranslationList(props: TranslationListProps) {
 
   const { deleteModalTranslation, isDeletePending, handleDeleteClick, handleDeleteConfirm, handleDeleteCancel } =
     useDeleteTranslationModal();
-
-  const { subscription } = useFetchSubscription();
-
-  const canUseTranslationFeature =
-    getFeatureForTierAsBoolean(
-      FeatureNameEnum.AUTO_TRANSLATIONS,
-      subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) &&
-    (!IS_SELF_HOSTED || IS_ENTERPRISE);
 
   const limit = data?.limit || DEFAULT_TRANSLATIONS_LIMIT;
 

@@ -26,7 +26,7 @@ export class CreateChannelEndpointRequestDto {
     description: 'The endpoint address/destination (e.g., OAuth token, webhook URL, phone number).',
     type: String,
     // cspell:disable-next-line
-    example: 'xoxb-1234567890-abcdefghijklmnop',
+    example: 'some-sample-secret-token',
   })
   @IsString()
   @IsDefined()

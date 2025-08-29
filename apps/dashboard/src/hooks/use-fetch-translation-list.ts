@@ -3,7 +3,12 @@ import { getTranslationsList, TranslationsFilter } from '@/api/translations';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
-export const useFetchTranslationList = (filterValues: TranslationsFilter) => {
+interface UseFetchTranslationListOptions {
+  enabled?: boolean;
+}
+
+export const useFetchTranslationList = (filterValues: TranslationsFilter, options: UseFetchTranslationListOptions = {}) => {
+  const { enabled = true } = options;
   const { currentEnvironment } = useEnvironment();
 
   return useQuery({
@@ -18,6 +23,6 @@ export const useFetchTranslationList = (filterValues: TranslationsFilter) => {
         ...filterValues,
       });
     },
-    enabled: !!currentEnvironment,
+    enabled: !!currentEnvironment && enabled,
   });
 };
