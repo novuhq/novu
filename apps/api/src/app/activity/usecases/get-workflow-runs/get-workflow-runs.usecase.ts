@@ -9,6 +9,7 @@ import {
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
+import { SeverityLevelEnum } from '@novu/shared';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
@@ -33,6 +34,8 @@ const workflowRunSelectColumns = [
   'created_at',
   'updated_at',
   'delivery_lifecycle_status',
+  'severity',
+  'critical',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -119,6 +122,36 @@ export class GetWorkflowRuns {
             field: 'channels',
             operator: 'LIKE',
             value: `%"${channel}"%`,
+          }))
+        );
+      }
+
+      const severity =
+        command.severity && Array.isArray(command.severity)
+          ? command.severity
+          : command.severity
+            ? [command.severity]
+            : [];
+      if (severity.length) {
+        if (severity.includes(SeverityLevelEnum.NONE)) {
+          queryBuilder.orWhere([
+            {
+              field: 'severity',
+              operator: 'IS NULL',
+            },
+            {
+              field: 'severity',
+              operator: '=',
+              value: SeverityLevelEnum.NONE,
+            },
+          ]);
+        }
+        const severityWithoutNone = severity.filter((severity) => severity !== SeverityLevelEnum.NONE);
+        queryBuilder.orWhere(
+          severityWithoutNone.map((severity) => ({
+            field: 'severity',
+            operator: '=',
+            value: severity,
           }))
         );
       }
@@ -368,6 +401,8 @@ export class GetWorkflowRuns {
         stepType: stepRun.step_type,
         status: stepRun.status,
       })),
+      severity: workflowRun.severity ? (workflowRun.severity as SeverityLevelEnum) : undefined,
+      critical: workflowRun.critical ? (workflowRun.critical as boolean) : undefined,
     };
   }
 }

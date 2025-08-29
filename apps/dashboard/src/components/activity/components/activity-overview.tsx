@@ -11,6 +11,7 @@ import { TopicDrawerButton } from '@/components/topics/topic-drawer';
 import { useEnvironment } from '@/context/environment/hooks';
 import { fadeIn } from '@/utils/animation';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { capitalize } from '@/utils/string';
 import { cn } from '@/utils/ui';
 import { JOB_STATUS_CONFIG } from '../constants';
 import { getActivityStatus } from '../helpers';
@@ -139,6 +140,20 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
             {status || 'QUEUED'}
           </span>
         </OverviewItem>
+        {typeof activity.severity !== 'undefined' && (
+          <OverviewItem label="Severity">
+            <span className={cn('font-mono text-xs')} data-testid="activity-severity">
+              {capitalize(activity.severity.toString())}
+            </span>
+          </OverviewItem>
+        )}
+        {typeof activity.critical === 'boolean' && (
+          <OverviewItem label="Critical">
+            <span className={cn('font-mono text-xs')} data-testid="activity-severity">
+              {activity.critical ? 'true' : 'false'}
+            </span>
+          </OverviewItem>
+        )}
       </div>
     </motion.div>
   );

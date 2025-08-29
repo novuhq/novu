@@ -24,10 +24,15 @@ const CLICKHOUSE_OPERATORS = [
   'NOT IN',
   'GLOBAL IN',
   'GLOBAL NOT IN',
+  'IS NULL',
+  'IS NOT NULL',
 ] as const;
 
 // Define array operators that require array values
 type ArrayOperators = 'IN' | 'NOT IN' | 'GLOBAL IN' | 'GLOBAL NOT IN';
+
+// Define null operators that don't require values
+type NullOperators = 'IS NULL' | 'IS NOT NULL';
 
 // Generate the type from the const array - this ensures single source of truth
 export type ClickhouseOperator = (typeof CLICKHOUSE_OPERATORS)[number];
@@ -51,7 +56,7 @@ type FieldCondition<T> = {
     [O in ClickhouseOperator]: {
       field: K;
       operator: O;
-      value: O extends ArrayOperators ? T[K][] : T[K];
+      value: O extends NullOperators ? never : O extends ArrayOperators ? T[K][] : T[K];
     };
   }[ClickhouseOperator];
 }[keyof T];
@@ -208,15 +213,22 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
       }
 
       // Handle structured conditions {field, operator, value}
-      if (!('field' in condition) || !('operator' in condition) || !('value' in condition)) {
-        throw new Error('Each condition must have field, operator, and value properties');
+      if (!('field' in condition) || !('operator' in condition)) {
+        throw new Error('Each condition must have field and operator properties');
       }
 
       const { field, operator, value } = condition;
       this.validateColumnName(field as SchemaKeys<TSchema>);
       this.validateOperator(operator);
 
-      if (value === null || value === undefined) {
+      // NULL operators don't need values
+      const nullOperators: NullOperators[] = ['IS NULL', 'IS NOT NULL'];
+      if (nullOperators.includes(operator as NullOperators)) {
+        return `${String(field)} ${operator}`;
+      }
+
+      // For non-NULL operators, value is required
+      if (!nullOperators.includes(operator as NullOperators) && (value === null || value === undefined)) {
         throw new Error(`Invalid value for column '${String(field)}': value cannot be null or undefined`);
       }
 
@@ -672,7 +684,7 @@ export class QueryBuilder<T> {
     orConditions: Array<{
       field: K;
       operator: O;
-      value: O extends ArrayOperators ? T[K][] : T[K];
+      value?: O extends ArrayOperators ? T[K][] : T[K];
     }>
   ): this {
     if (orConditions.length > 0) {

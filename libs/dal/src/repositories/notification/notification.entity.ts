@@ -42,6 +42,7 @@ export class NotificationEntity {
   tags?: string[];
   controls?: StatelessControls;
   severity?: SeverityLevelEnum;
+  critical?: boolean;
 }
 
 export type NotificationDBModel = ChangePropsValueType<

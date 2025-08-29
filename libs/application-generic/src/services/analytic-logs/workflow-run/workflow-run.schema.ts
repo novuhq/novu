@@ -1,5 +1,6 @@
 import { DeliveryLifecycleStatus } from '@novu/shared';
 import {
+  CHBoolean,
   CHDateTime64,
   CHLowCardinality,
   CHNullable,
@@ -54,6 +55,9 @@ const schemaDefinition = {
 
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
+
+  severity: { type: CHNullable(CHString()) }, // severity of the workflow run
+  critical: { type: CHNullable(CHBoolean()) }, // critical flag of the workflow run
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = ['organization_id', 'workflow_run_id'];
