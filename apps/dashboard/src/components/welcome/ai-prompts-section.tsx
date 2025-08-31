@@ -30,15 +30,42 @@ export function AiPromptsSection({
   const track = useTelemetry();
   const [isCopied, setIsCopied] = useState(false);
 
-  const prompt = getFrameworkPrompt(
-    frameworkName,
-    IS_EU,
-    applicationIdentifier,
-    subscriberId,
-    backendUrl,
-    socketUrl,
-    codeSnippet
-  );
+  let prompt: string;
+  try {
+    prompt = getFrameworkPrompt(
+      frameworkName,
+      IS_EU,
+      applicationIdentifier,
+      subscriberId,
+      backendUrl,
+      socketUrl,
+      codeSnippet
+    );
+  } catch (error) {
+    // If required parameters are missing, show a helpful message
+    if (error instanceof Error && error.message.includes('Missing required environment variables')) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className={className}
+        >
+          <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg w-full max-w-[57.8125rem] transition-all duration-200 shadow-sm mb-3">
+            <div className="flex-1">
+              <p className="text-sm text-amber-800">
+                Please provide all required environment variables (application identifier, subscriber ID, backend URL,
+                and socket URL) to generate the AI prompt.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      );
+    }
+
+    // For other errors, re-throw them
+    throw error;
+  }
 
   const handleCopyPrompt = async () => {
     try {

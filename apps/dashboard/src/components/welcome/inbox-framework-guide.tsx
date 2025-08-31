@@ -136,11 +136,16 @@ export function InboxFrameworkGuide({
 
   const frameworks = getFrameworks(installationMethod);
 
-  // Get the actual code snippet from the selected framework
-  const selectedFrameworkWithCode = frameworks.find((f) => f.name === selectedFramework.name);
-  const codeSnippet = selectedFrameworkWithCode?.installSteps.find(
-    (step) => step.title.includes('Add the inbox code') || step.title.includes('Create the Inbox')
-  )?.code;
+  // Get the actual code snippet from the selected framework with placeholder substitutions
+  const codeSnippet =
+    selectedFramework?.installSteps.find(
+      (step) => step.title.includes('Add the inbox code') || step.title.includes('Create the Inbox')
+    )?.code ||
+    frameworks
+      .find((f) => f.name === selectedFramework?.name)
+      ?.installSteps.find(
+        (step) => step.title.includes('Add the inbox code') || step.title.includes('Create the Inbox')
+      )?.code;
 
   return (
     <>

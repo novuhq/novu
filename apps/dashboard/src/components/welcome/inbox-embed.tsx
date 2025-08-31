@@ -1,7 +1,7 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import ReactConfetti from 'react-confetti';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { IS_EU, MODE } from '../../config';
 import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment } from '../../context/environment/hooks';
@@ -21,9 +21,10 @@ export function InboxEmbed(): JSX.Element | null {
   const [showConfetti, setShowConfetti] = useState(false);
   const { currentUser } = useAuth();
   const { integrations } = useFetchIntegrations({ refetchInterval: 1000, refetchOnWindowFocus: true });
-  const { environments } = useEnvironment();
+  const { environments, areEnvironmentsInitialLoading } = useEnvironment();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const telemetry = useTelemetry();
   const environmentHint = searchParams.get('environmentId');
 
@@ -40,17 +41,44 @@ export function InboxEmbed(): JSX.Element | null {
   const primaryColor = searchParams.get('primaryColor') || '#DD2450';
   const foregroundColor = searchParams.get('foregroundColor') || '#0E121B';
 
+  // Helper function to safely validate URLs
+  const validateUrl = (urlString: string | null, allowedProtocols: string[]): string | undefined => {
+    if (!urlString) return undefined;
+
+    const trimmedUrl = urlString.trim();
+    if (!trimmedUrl) return undefined;
+
+    try {
+      const url = new URL(trimmedUrl);
+      return allowedProtocols.includes(url.protocol) ? trimmedUrl : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
   // Only show backendUrl and socketUrl if not production and not EU region
   const shouldShowCustomUrls = MODE !== 'production' && !IS_EU;
-  const backendUrl = shouldShowCustomUrls ? searchParams.get('backendUrl') || undefined : undefined;
-  const socketUrl = shouldShowCustomUrls ? searchParams.get('socketUrl') || undefined : undefined;
+  const backendUrl = shouldShowCustomUrls
+    ? validateUrl(searchParams.get('backendUrl'), ['http:', 'https:'])
+    : undefined;
+  const socketUrl = shouldShowCustomUrls
+    ? validateUrl(searchParams.get('socketUrl'), ['ws:', 'wss:', 'http:', 'https:'])
+    : undefined;
+
+  // Check if we're already on the WELCOME route to prevent redirect loops
+  const isOnWelcomeRoute = location.pathname.includes('/welcome');
 
   useEffect(() => {
-    if (!subscriberId || !selectedEnvironment) {
-      navigate(ROUTES.WELCOME);
+    // Wait for environments to load and ensure we're not already on WELCOME route
+    if (areEnvironmentsInitialLoading || isOnWelcomeRoute) {
       return;
     }
-  }, [subscriberId, selectedEnvironment, navigate]);
+
+    if (!subscriberId || !selectedEnvironment) {
+      navigate(ROUTES.WELCOME, { replace: true });
+      return;
+    }
+  }, [subscriberId, selectedEnvironment, navigate, areEnvironmentsInitialLoading, isOnWelcomeRoute]);
 
   useEffect(() => {
     if (foundIntegration?.connected) {
@@ -60,6 +88,16 @@ export function InboxEmbed(): JSX.Element | null {
       return () => clearTimeout(timer);
     }
   }, [foundIntegration]);
+
+  // Don't render if we're on the WELCOME route to avoid redirect loops
+  if (isOnWelcomeRoute) {
+    return null;
+  }
+
+  // Don't render while environments are still loading
+  if (areEnvironmentsInitialLoading) {
+    return null;
+  }
 
   if (!subscriberId || !selectedEnvironment) return null;
 
@@ -84,7 +122,7 @@ export function InboxEmbed(): JSX.Element | null {
                 telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
                   skippedFrom: 'inbox-embed',
                 });
-                navigate(ROUTES.WELCOME);
+                navigate(ROUTES.WELCOME, { replace: true });
               }}
             >
               Skip to the Dashboard
@@ -120,7 +158,7 @@ export function InboxEmbed(): JSX.Element | null {
               telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
                 skippedFrom: foundIntegration?.connected ? 'inbox-connected-guide' : 'inbox-embed',
               });
-              navigate(ROUTES.HOME);
+              navigate(ROUTES.HOME, { replace: true });
             }}
           >
             Skip to the Dashboard

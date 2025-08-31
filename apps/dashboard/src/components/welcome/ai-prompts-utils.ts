@@ -158,10 +158,10 @@ function getEffectiveUrls(backendUrl?: string, socketUrl?: string) {
   const isDefaultApi = API_HOSTNAME === 'https://api.novu.co';
   const isDefaultWs = WEBSOCKET_HOSTNAME === 'https://ws.novu.co';
 
-  // Convert https:// to wss:// for WebSocket URLs
+  // Convert https:// to wss:// and http:// to ws:// for WebSocket URLs
   const getWebSocketUrl = (url: string) => {
     if (!url) return url;
-    return url.replace(/^https:\/\//, 'wss://');
+    return url.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
   };
 
   const effectiveBackendUrl = backendUrl || (!isDefaultApi ? API_HOSTNAME : '');
@@ -184,7 +184,7 @@ export const REGION_CONFIG_PATTERNS: Record<string, Partial<NovuConfig>> = {
 // EU region-specific configuration patterns (only needed for EU users)
 const EU_REGION_BASE_CONFIG: Partial<NovuConfig> = {
   backendUrl: 'https://api.eu.novu.co',
-  socketUrl: 'https://ws.eu.novu.co',
+  socketUrl: 'wss://ws.eu.novu.co',
 };
 
 export const EU_REGION_CONFIG_PATTERNS: Record<string, Partial<NovuConfig>> = Object.fromEntries(
@@ -308,10 +308,32 @@ function getEnvSetupCode(
   backendUrl?: string,
   socketUrl?: string
 ): string {
-  const appId = applicationIdentifier || 'YOUR_APPLICATION_IDENTIFIER';
-  const subId = subscriberId || 'YOUR_SUBSCRIBER_ID';
-  const backend = backendUrl || 'YOUR_BACKEND_URL';
-  const socket = socketUrl || 'YOUR_SOCKET_URL';
+  // Validate required environment variables
+  const missingVars: string[] = [];
+
+  if (!applicationIdentifier) {
+    missingVars.push('applicationIdentifier');
+  }
+  if (!subscriberId) {
+    missingVars.push('subscriberId');
+  }
+  if (!backendUrl) {
+    missingVars.push('backendUrl');
+  }
+  if (!socketUrl) {
+    missingVars.push('socketUrl');
+  }
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missingVars.join(', ')}. Please provide all required values before generating setup code.`
+    );
+  }
+
+  const appId = applicationIdentifier;
+  const subId = subscriberId;
+  const backend = backendUrl;
+  const socket = socketUrl;
 
   if (framework === 'Angular') {
     return `export const environment = {
@@ -382,6 +404,28 @@ export function generateFrameworkSpecificSetup(
   socketUrl?: string,
   codeSnippet?: string
 ): SetupStep[] {
+  // Validate required environment variables
+  const missingVars: string[] = [];
+
+  if (!applicationIdentifier) {
+    missingVars.push('applicationIdentifier');
+  }
+  if (!subscriberId) {
+    missingVars.push('subscriberId');
+  }
+  if (!backendUrl) {
+    missingVars.push('backendUrl');
+  }
+  if (!socketUrl) {
+    missingVars.push('socketUrl');
+  }
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missingVars.join(', ')}. Please provide all required values before generating setup code.`
+    );
+  }
+
   const steps: SetupStep[] = [];
 
   // Environment variable setup
@@ -403,12 +447,12 @@ export function generateFrameworkSpecificSetup(
     ),
     notes: [
       `${envVarName}: Found in the Novu dashboard under **API Keys**.`,
-      subscriberId ? 'Subscriber ID: Generated from your authentication system or provided for testing.' : '',
-      effectiveBackendUrl ? 'Backend URL: Custom Novu backend endpoint.' : '',
-      effectiveSocketUrl ? 'Socket URL: Custom Novu WebSocket endpoint.' : '',
+      'Subscriber ID: Generated from your authentication system or provided for testing.',
+      'Backend URL: Custom Novu backend endpoint.',
+      'Socket URL: Custom Novu WebSocket endpoint.',
       'Make sure to restart your development server after adding environment variables.',
       ...getEnvNotes(framework),
-    ].filter(Boolean),
+    ],
   });
 
   // Use the actual code snippet from the framework guides if provided
@@ -425,10 +469,9 @@ export function generateFrameworkSpecificSetup(
       ],
     });
   } else {
-    // Fallback to generated code if no actual snippet is provided
-    const authPattern = AUTH_PATTERNS[framework];
-    const appIdentifier = applicationIdentifier ? `"${escapeForDoubleQuotes(applicationIdentifier)}"` : envAccess;
-    const subscriberIdValue = subscriberId ? `"${escapeForDoubleQuotes(subscriberId)}"` : authPattern;
+    // Use validated values since we've already checked they exist
+    const appIdentifier = `"${escapeForDoubleQuotes(applicationIdentifier!)}"`;
+    const subscriberIdValue = `"${escapeForDoubleQuotes(subscriberId!)}"`;
 
     // Build the configuration object
     const config: Partial<NovuConfig> = {
@@ -478,9 +521,7 @@ export default function RootLayout({
 }`,
           notes: [
             'The getTemporarySubscriberId() function is included for reference and future use.',
-            subscriberId
-              ? 'Subscriber ID is provided and ready to use.'
-              : 'Create a getTemporarySubscriberId() function that returns a unique ID for testing (e.g., "user-" + Date.now()).',
+            'Subscriber ID is provided and ready to use.',
             'For production: Replace with dynamic ID from your authentication solution.',
             'Common patterns: useUser()?.id (Clerk), user.id (Auth0), session.user.id (NextAuth), etc.',
             "Note: subscriberId comes from your app's authentication, not from the Novu dashboard.",
@@ -503,6 +544,28 @@ export function generateCriticalInstructions(
   backendUrl?: string,
   socketUrl?: string
 ): CriticalInstructions {
+  // Validate required environment variables
+  const missingVars: string[] = [];
+
+  if (!applicationIdentifier) {
+    missingVars.push('applicationIdentifier');
+  }
+  if (!subscriberId) {
+    missingVars.push('subscriberId');
+  }
+  if (!backendUrl) {
+    missingVars.push('backendUrl');
+  }
+  if (!socketUrl) {
+    missingVars.push('socketUrl');
+  }
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missingVars.join(', ')}. Please provide all required values before generating critical instructions.`
+    );
+  }
+
   // Get effective URLs using the same logic as manual setup
   const { effectiveBackendUrl, effectiveSocketUrl } = getEffectiveUrls(backendUrl, socketUrl);
   const always = [...COMMON_CRITICAL_INSTRUCTIONS.always];
@@ -518,19 +581,11 @@ export function generateCriticalInstructions(
   always.push(`Use ${envVarName} environment variable.`);
   always.push('Use dynamic subscriber ID from authentication solution.');
 
-  // Add instructions for provided values
-  if (applicationIdentifier) {
-    always.push('Use the provided application identifier.');
-  }
-  if (subscriberId) {
-    always.push('Use the provided subscriber ID.');
-  }
-  if (effectiveBackendUrl) {
-    always.push('Use the provided backend URL.');
-  }
-  if (effectiveSocketUrl) {
-    always.push('Use the provided socket URL.');
-  }
+  // Add instructions for provided values (all are now guaranteed to exist)
+  always.push('Use the provided application identifier.');
+  always.push('Use the provided subscriber ID.');
+  always.push('Use the provided backend URL.');
+  always.push('Use the provided socket URL.');
 
   // Add framework-specific implementation notes
   switch (framework) {
@@ -577,6 +632,28 @@ export function generateVerificationSteps(
   backendUrl?: string,
   socketUrl?: string
 ): VerificationSteps {
+  // Validate required environment variables
+  const missingVars: string[] = [];
+
+  if (!applicationIdentifier) {
+    missingVars.push('applicationIdentifier');
+  }
+  if (!subscriberId) {
+    missingVars.push('subscriberId');
+  }
+  if (!backendUrl) {
+    missingVars.push('backendUrl');
+  }
+  if (!socketUrl) {
+    missingVars.push('socketUrl');
+  }
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missingVars.join(', ')}. Please provide all required values before generating verification steps.`
+    );
+  }
+
   // Get effective URLs using the same logic as manual setup
   const { effectiveBackendUrl, effectiveSocketUrl } = getEffectiveUrls(backendUrl, socketUrl);
   const steps = [...COMMON_VERIFICATION.steps];
@@ -594,19 +671,11 @@ export function generateVerificationSteps(
   steps.push('Proper error handling for authentication and environment failures.');
   steps.push('Loading states are implemented for authentication state.');
 
-  // Add verification for provided values
-  if (applicationIdentifier) {
-    steps.push('Application identifier is properly configured.');
-  }
-  if (subscriberId) {
-    steps.push('Subscriber ID is properly used in the component.');
-  }
-  if (effectiveBackendUrl) {
-    steps.push('Backend URL is properly configured.');
-  }
-  if (effectiveSocketUrl) {
-    steps.push('Socket URL is properly configured.');
-  }
+  // Add verification for provided values (all are now guaranteed to exist)
+  steps.push('Application identifier is properly configured.');
+  steps.push('Subscriber ID is properly used in the component.');
+  steps.push('Backend URL is properly configured.');
+  steps.push('Socket URL is properly configured.');
 
   consequences.push("Missing environment variable ⇒ inbox won't load.");
   consequences.push('Hardcoded subscriber ID ⇒ security and functionality issues.');
@@ -733,6 +802,28 @@ export function generateResponseTemplate(
   backendUrl?: string,
   socketUrl?: string
 ): string[] {
+  // Validate required environment variables
+  const missingVars: string[] = [];
+
+  if (!applicationIdentifier) {
+    missingVars.push('applicationIdentifier');
+  }
+  if (!subscriberId) {
+    missingVars.push('subscriberId');
+  }
+  if (!backendUrl) {
+    missingVars.push('backendUrl');
+  }
+  if (!socketUrl) {
+    missingVars.push('socketUrl');
+  }
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missingVars.join(', ')}. Please provide all required values before generating response template.`
+    );
+  }
+
   // Get effective URLs using the same logic as manual setup
   const { effectiveBackendUrl, effectiveSocketUrl } = getEffectiveUrls(backendUrl, socketUrl);
   const template = [
@@ -787,26 +878,16 @@ export function generateResponseTemplate(
   // Add common template items
   template.push('Create a getTemporarySubscriberId() function for testing purposes.');
   template.push('Show how to use dynamic subscriber ID from authentication for production.');
-  template.push(
-    applicationIdentifier
-      ? 'Use the provided application identifier.'
-      : 'Show how to retrieve applicationIdentifier from dashboard API Keys.'
-  );
+  template.push('Use the provided application identifier.');
   template.push('Explain how to verify subscriberId in dashboard after integration (not for copying).');
   template.push('Illustrate complete workflow creation and triggering process.');
   template.push('Reject or correct any outdated SDKs, env vars, or integration patterns.');
   template.push('Emphasize the importance of using dynamic subscriber IDs from authentication.');
 
-  // Add template items for provided values
-  if (subscriberId) {
-    template.push('Use the provided subscriber ID in the component configuration.');
-  }
-  if (effectiveBackendUrl) {
-    template.push('Configure the provided backend URL.');
-  }
-  if (effectiveSocketUrl) {
-    template.push('Configure the provided socket URL.');
-  }
+  // Add template items for provided values (all are now guaranteed to exist)
+  template.push('Use the provided subscriber ID in the component configuration.');
+  template.push('Configure the provided backend URL.');
+  template.push('Configure the provided socket URL.');
 
   return template;
 }

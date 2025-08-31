@@ -28,7 +28,7 @@ export function InboxEmbedPage() {
         (integration: IIntegration) =>
           integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
       );
-      return inAppIntegration?.connected ? undefined : 1000;
+      return inAppIntegration?.connected ? false : 1000;
     },
     refetchOnWindowFocus: false,
   });

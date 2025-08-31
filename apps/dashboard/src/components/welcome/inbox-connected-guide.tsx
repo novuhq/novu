@@ -81,13 +81,38 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
   const visitTimestamp = usePageVisitTimestamp();
 
   // First trigger detection - uses the page visit timestamp
-  const { hasDetectedFirstTrigger, isWaitingForTrigger, startWaiting } = useFirstTriggerDetection({
+  const {
+    hasDetectedFirstTrigger,
+    isWaitingForTrigger,
+    startWaiting,
+    isLoading: isTriggerDetectionLoading,
+    error: triggerDetectionError,
+    isError: isTriggerDetectionError,
+    workflowsError,
+    isWorkflowsError,
+  } = useFirstTriggerDetection({
     enabled: true,
     firstVisitTimestamp: visitTimestamp,
     onFirstTriggerDetected: () => {
       showStatusToast('success', 'API trigger detected');
     },
   });
+
+  // Handle trigger detection errors
+  useEffect(() => {
+    if (isTriggerDetectionError && triggerDetectionError) {
+      console.error('Trigger detection error:', triggerDetectionError);
+      showErrorToast('Failed to detect API trigger. Please refresh the page and try again.', 'Detection Error');
+    }
+  }, [isTriggerDetectionError, triggerDetectionError]);
+
+  // Handle workflows loading errors
+  useEffect(() => {
+    if (isWorkflowsError && workflowsError) {
+      console.error('Workflows loading error:', workflowsError);
+      showErrorToast('Failed to load workflows. Please refresh the page and try again.', 'Loading Error');
+    }
+  }, [isWorkflowsError, workflowsError]);
 
   // Auto-start waiting when component mounts and API key is available
   useEffect(() => {
@@ -147,7 +172,13 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
             {/* Second section - Waiting for trigger */}
             <div className="relative flex gap-8">
               <div className="absolute -left-[38px] flex h-5 w-5 items-center justify-center rounded-full bg-white">
-                {hasDetectedFirstTrigger ? (
+                {isTriggerDetectionLoading ? (
+                  <RiLoader3Line className="h-4 w-4 text-primary animate-spin" />
+                ) : isTriggerDetectionError || isWorkflowsError ? (
+                  <div className="h-4 w-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <span className="text-red-600 text-xs">!</span>
+                  </div>
+                ) : hasDetectedFirstTrigger ? (
                   <RiCheckboxCircleFill className="text-success h-4 w-4" />
                 ) : (
                   <RiLoader3Line className="h-4 w-4 text-primary animate-spin" />
@@ -156,20 +187,35 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">
-                    {hasDetectedFirstTrigger ? 'Ready to complete onboarding' : 'Waiting for your first API trigger...'}
+                    {isTriggerDetectionLoading
+                      ? 'Loading trigger detection...'
+                      : isTriggerDetectionError || isWorkflowsError
+                        ? 'Error loading trigger detection'
+                        : hasDetectedFirstTrigger
+                          ? 'Ready to complete onboarding'
+                          : 'Waiting for your first API trigger...'}
                   </span>
                 </div>
                 <p className="text-foreground-400 text-xs">
-                  {hasDetectedFirstTrigger
-                    ? 'Great! We detected your API trigger. Click the button to complete your onboarding.'
-                    : "Copy and run the code snippet below to trigger your first notification. We'll detect it automatically."}
+                  {isTriggerDetectionLoading
+                    ? 'Setting up trigger detection...'
+                    : isTriggerDetectionError || isWorkflowsError
+                      ? 'There was an error setting up trigger detection. Please refresh the page.'
+                      : hasDetectedFirstTrigger
+                        ? 'Great! We detected your API trigger. Click the button to complete your onboarding.'
+                        : "Copy and run the code snippet below to trigger your first notification. We'll detect it automatically."}
                 </p>
 
                 {/* Complete onboarding button - positioned under the waiting text */}
                 <div className="flex justify-start mt-4">
                   <Button
                     onClick={handleCompleteOnboarding}
-                    disabled={!hasDetectedFirstTrigger}
+                    disabled={
+                      !hasDetectedFirstTrigger ||
+                      isTriggerDetectionLoading ||
+                      isTriggerDetectionError ||
+                      isWorkflowsError
+                    }
                     variant="primary"
                     className="px-6 py-2 disabled:cursor-not-allowed disabled:bg-gray-800 disabled:text-white disabled:border-gray-900"
                   >

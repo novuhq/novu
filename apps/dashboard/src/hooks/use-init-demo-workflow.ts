@@ -110,11 +110,18 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
 export function useInitDemoWorkflow(environment: IEnvironment | undefined) {
   const { data, refetch } = useFetchWorkflows({ query: ONBOARDING_DEMO_WORKFLOW_ID });
   const initializedSet = useRef<Set<string>>(new Set());
+  const currentEnvIdRef = useRef<string | undefined>(environment?._id);
 
   useEffect(() => {
     if (!data || !environment) return;
 
     const envId = environment._id;
+
+    // Guard against stale data: verify that the environment hasn't changed since the data was fetched
+    if (currentEnvIdRef.current !== envId) {
+      // Environment has changed, skip processing this stale data
+      return;
+    }
 
     // Check if this environment has already been initialized
     if (initializedSet.current.has(envId)) return;
@@ -141,4 +148,9 @@ export function useInitDemoWorkflow(environment: IEnvironment | undefined) {
 
     initializeDemoWorkflow();
   }, [data, environment?._id, refetch]);
+
+  // Update the current environment ID ref when environment changes
+  useEffect(() => {
+    currentEnvIdRef.current = environment?._id;
+  }, [environment?._id]);
 }

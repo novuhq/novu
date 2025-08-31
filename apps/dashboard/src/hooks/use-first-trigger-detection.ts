@@ -27,8 +27,18 @@ export function useFirstTriggerDetection({
   const [notFound, setNotFound] = useState(false);
   const { currentEnvironment } = useEnvironment();
 
+  // Create a stable reference for the callback
+  const stableOnFirstTriggerDetected = useCallback(() => {
+    onFirstTriggerDetected?.();
+  }, [onFirstTriggerDetected]);
+
   // First, fetch workflows to find the demo workflow slug
-  const { data: workflowsData, isPending: isWorkflowsLoading } = useQuery({
+  const {
+    data: workflowsData,
+    isPending: isWorkflowsLoading,
+    error: workflowsError,
+    isError: isWorkflowsError,
+  } = useQuery({
     queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id, ONBOARDING_DEMO_WORKFLOW_ID],
     queryFn: () => {
       if (!currentEnvironment) throw new Error('Environment not available');
@@ -67,7 +77,8 @@ export function useFirstTriggerDetection({
   const {
     data: workflow,
     isPending,
-    error,
+    error: workflowError,
+    isError: isWorkflowError,
   } = useQuery({
     queryKey: [QueryKeys.fetchWorkflow, currentEnvironment?._id, workflowSlug],
     queryFn: () => {
@@ -95,7 +106,7 @@ export function useFirstTriggerDetection({
       if (!firstVisitTimestamp) {
         setHasDetectedFirstTrigger(true);
         setIsWaitingForTrigger(false);
-        onFirstTriggerDetected?.();
+        stableOnFirstTriggerDetected();
         return;
       }
 
@@ -140,7 +151,7 @@ export function useFirstTriggerDetection({
         if (triggerTime > visitTime) {
           setHasDetectedFirstTrigger(true);
           setIsWaitingForTrigger(false);
-          onFirstTriggerDetected?.();
+          stableOnFirstTriggerDetected();
         }
       } catch (error) {
         console.error('Error parsing timestamps:', {
@@ -151,7 +162,7 @@ export function useFirstTriggerDetection({
         setIsWaitingForTrigger(false);
       }
     }
-  }, [workflow, isPending, hasDetectedFirstTrigger, enabled, onFirstTriggerDetected, firstVisitTimestamp]);
+  }, [workflow, isPending, hasDetectedFirstTrigger, enabled, stableOnFirstTriggerDetected, firstVisitTimestamp]);
 
   // Start waiting for trigger
   const startWaiting = useCallback(() => {
@@ -178,7 +189,10 @@ export function useFirstTriggerDetection({
     workflow,
     workflowSlug,
     lastTriggeredAt: workflow?.lastTriggeredAt,
-    error,
+    error: workflowError,
+    isError: isWorkflowError,
+    workflowsError,
+    isWorkflowsError,
     notFound,
   };
 }
