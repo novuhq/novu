@@ -1,7 +1,7 @@
-import { JSX, JSXElement, Show } from 'solid-js';
+import { JSXElement } from 'solid-js';
 import { JSX as SolidJSX } from 'solid-js/jsx-runtime';
 import { useArchiveAll, useArchiveAllRead, useReadAll } from '../../../api';
-import { StringLocalizationKey, useAppearance, useInboxContext, useLocalization } from '../../../context';
+import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { MarkAsArchived, MarkAsArchivedRead, MarkAsRead } from '../../../icons';
 import { IconKey, IconOverrides } from '../../../types';
@@ -51,13 +51,18 @@ export const ActionsItem = (props: {
   const style = useStyle();
   const { t } = useLocalization();
   const DefaultIconComponent = iconKeyToComponentMap[props.iconKey];
-  const moreActionsIconClass = style('moreActions__dropdownItemLeft__icon', 'nt-size-3', {
+  const moreActionsIconClass = style({
+    key: 'moreActions__dropdownItemLeft__icon',
+    className: 'nt-size-3',
     iconKey: props.iconKey,
   });
 
   return (
     <Dropdown.Item
-      class={style('moreActions__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-2'))}
+      class={style({
+        key: 'moreActions__dropdownItem',
+        className: cn(dropdownItemVariants(), 'nt-flex nt-gap-2'),
+      })}
       onClick={props.onClick}
     >
       <IconRendererWrapper
@@ -72,7 +77,10 @@ export const ActionsItem = (props: {
       />
       <span
         data-localization={props.localizationKey}
-        class={style('moreActions__dropdownItemLabel', 'nt-leading-none')}
+        class={style({
+          key: 'moreActions__dropdownItemLabel',
+          className: 'nt-leading-none',
+        })}
       >
         {t(props.localizationKey)}
       </span>

@@ -1,4 +1,15 @@
 name: Prepare Enterprise Self-hosted Release
+run-name: >
+  Building enterprise v${{ github.event.inputs.version }}:
+  ${{
+    github.event.inputs.build_api == 'true' && 'api, ' || ''
+  }}${{
+    github.event.inputs.build_worker == 'true' && 'worker, ' || ''
+  }}${{
+    github.event.inputs.build_dashboard == 'true' && 'dashboard, ' || ''
+  }}${{
+    github.event.inputs.build_ws == 'true' && 'ws ' || ''
+  }}
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -10,17 +21,27 @@ on:
         description: 'Version to release (e.g., 1.0.0)'
         required: true
         type: string
-      services:
-        description: 'Services to build'
+      build_api:
+        description: 'Build API service'
         required: true
-        type: choice
-        options:
-          - 'all'
-          - 'api'
-          - 'worker'
-          - 'dashboard'
-          - 'ws'
-        default: 'all'
+        type: boolean
+        default: true
+      build_worker:
+        description: 'Build Worker service'
+        required: true
+        type: boolean
+        default: true
+      build_dashboard:
+        description: 'Build Dashboard service'
+        required: true
+        type: boolean
+        default: true
+      build_ws:
+        description: 'Build WebSocket service'
+        required: true
+        type: boolean
+        default: true
+
 
 permissions:
   contents: write
@@ -34,118 +55,133 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Set up build matrix
+      - name: Validate Selected Services
+        run: |
+          if [ "${{ github.event.inputs.build_api }}" != "true" ] && \
+             [ "${{ github.event.inputs.build_worker }}" != "true" ] && \
+             [ "${{ github.event.inputs.build_dashboard }}" != "true" ] && \
+             [ "${{ github.event.inputs.build_ws }}" != "true" ]; then
+            echo "Error: At least one service must be selected for building."
+            exit 1
+          fi
+
+      - name: Generate Build Matrix
         id: set-matrix
         run: |
-          if [ "${{ github.event.inputs.services }}" = "all" ]; then
-            echo 'matrix=["novu/api-ee", "novu/worker-ee", "novu/dashboard-ee", "novu/ws-ee"]' >> $GITHUB_OUTPUT
-          else
-            echo 'matrix=["novu/${{ github.event.inputs.services }}-ee"]' >> $GITHUB_OUTPUT
+          services=()
+
+          if [ "${{ github.event.inputs.build_api }}" == "true" ]; then
+            services+=("\"api-ee\"")
           fi
+          if [ "${{ github.event.inputs.build_worker }}" == "true" ]; then
+            services+=("\"worker-ee\"")
+          fi
+          if [ "${{ github.event.inputs.build_dashboard }}" == "true" ]; then
+            services+=("\"dashboard-ee\"")
+          fi
+          if [ "${{ github.event.inputs.build_ws }}" == "true" ]; then
+            services+=("\"ws-ee\"")
+          fi
+
+          matrix="[$(IFS=','; echo "${services[*]}")]"
+
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "Building services: $matrix"
 
   build_docker:
     needs: setup_matrix
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    environment: Production
     strategy:
       fail-fast: false
       matrix:
         name: ${{ fromJson(needs.setup_matrix.outputs.matrix) }}
     steps:
-      - name: Git Checkout
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Variables
         shell: bash
         run: |
-          service=${{ matrix.name }}
+          SERVICE_NAME="${{ matrix.name }}"
           LATEST_VERSION="${{ github.event.inputs.version }}"
-          SERVICE_NAME=$(basename "${service//-/-}")
           SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
           echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
           echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
           echo "SERVICE_COMMON_NAME=$SERVICE_COMMON_NAME" >> $GITHUB_ENV
-          echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
           echo "This is the service name: $SERVICE_NAME and release version: $LATEST_VERSION"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+          run_install: false
 
-      - name: Use Node.js
+      - name: Setup Node Version
         uses: actions/setup-node@v4
         with:
-          node-version: 20.19.0
+          node-version: '20.19.0'
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: Install Dependencies
+        shell: bash
         run: pnpm install --frozen-lockfile
-
-      - name: Setup Docker
-        uses: crazy-max/ghaction-setup-docker@v2
-        with:
-          version: v24.0.6
-          daemon-config: |
-            {
-              "features": {
-                "containerd-snapshotter": true
-              }
-            }
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: linux/amd64
 
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: 'image=moby/buildkit:v0.13.1'
 
-      - uses: ./.github/actions/free-space
-        name: Extend space in Action Container
+      - name: Prepare Variables
+        run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      - name: Build ${{ env.SERVICE_NAME }} Enterprise Docker Image
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
         shell: bash
         env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: novu
+          SERVICE: ${{ env.SERVICE_NAME }}
+          IMAGE_TAG: ${{ env.LATEST_VERSION }}
           DOCKER_BUILD_ARGUMENTS: >
             --platform=linux/amd64
-            --output=type=image,name=ghcr.io/$REGISTRY_OWNER/${{ matrix.name }},push-by-digest=true,name-canonical=true
+            --output=type=image,name=$REGISTRY/$REPOSITORY/$SERVICE,push-by-digest=true,name-canonical=true
         run: |
           cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
           cd apps/$SERVICE_COMMON_NAME
 
-          if [[ "${{ env.SERVICE_COMMON_NAME }}" =~ ^(api|worker|ws)$ ]]; then
+          if [[ "$SERVICE_COMMON_NAME" =~ ^(api|worker|ws)$ ]]; then
             cd src/ && echo -e "\nIS_SELF_HOSTED=true\nNOVU_ENTERPRISE=true" >> .example.env && cd ..
           fi
 
           # Switch from PM2 cluster mode to single node process to support K8s deployments
-          if [[ "${{ env.SERVICE_NAME }}" =~ ^(api|worker|ws)$ ]]; then
-            echo "Switching ${{ env.SERVICE_NAME }} from PM2 cluster mode to single node process to support K8s deployments"
+          if [[ "$SERVICE_COMMON_NAME" =~ ^(api|worker|ws)$ ]]; then
+            echo "Switching $SERVICE_COMMON_NAME from PM2 cluster mode to single node process to support K8s deployments"
             sed -i.bak 's/pm2-runtime start dist\/main\.js -i max/node dist\/main.js/g' Dockerfile && rm -f Dockerfile.bak
           fi
 
           pnpm run docker:build
-          docker images
-
-      - name: Tag and Push docker image
-        shell: bash
-        run: |
-          docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
-          docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
-          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
-          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
+          docker tag novu-$SERVICE_COMMON_NAME $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
 
       - name: Output image details
         run: |
           echo "Successfully built and pushed:"
-          echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}"
-          echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest"
+          echo "  - $REGISTRY/novu/$SERVICE_NAME:$IMAGE_TAG"
           echo "Platform: linux/amd64 (x86)"
           echo "Type: Enterprise Self-hosted"

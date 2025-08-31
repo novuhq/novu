@@ -1,5 +1,6 @@
 import { EnvironmentCommand, WorkflowRunStatusEnum } from '@novu/application-generic';
 import { IsArray, IsDate, IsDefined, IsIn, IsOptional, IsString } from 'class-validator';
+import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 
 export class BuildWorkflowRunsCountChartCommand extends EnvironmentCommand {
   @IsDate()
@@ -28,10 +29,10 @@ export class BuildWorkflowRunsCountChartCommand extends EnvironmentCommand {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @IsIn(Object.values(WorkflowRunStatusEnum), {
+  @IsIn(Object.values(WorkflowRunStatusDtoEnum), {
     each: true,
   })
-  statuses?: WorkflowRunStatusEnum[];
+  statuses?: WorkflowRunStatusDtoEnum[];
 
   @IsOptional()
   @IsArray()

@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 
-export class GetRequestTracesDto {
+export class GetRequestRequestDto {
   @ApiProperty({
-    description: 'Request identifier to fetch traces for',
+    description: 'Request identifier',
     example: 'req_123456789',
   })
   @IsString()

@@ -8,7 +8,7 @@ export interface GetRequestLogsParams {
   limit?: number;
   statusCode?: string;
   url?: string;
-  url_pattern?: string;
+  urlPattern?: string;
   transactionId?: string;
   search?: string;
   createdGte?: number;

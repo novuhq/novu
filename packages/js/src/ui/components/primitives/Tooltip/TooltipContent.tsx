@@ -35,7 +35,11 @@ const TooltipContentBody = (props: TooltipContentProps) => {
       animate={open() ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
       transition={{ duration: effectiveAnimationDuration(), easing: 'ease-in-out' }}
       ref={setFloating}
-      class={local.class ? local.class : style(local.appearanceKey || 'tooltipContent', tooltipContentVariants())}
+      class={
+        local.class
+          ? local.class
+          : style({ key: local.appearanceKey || 'tooltipContent', className: tooltipContentVariants() })
+      }
       style={{ ...floatingStyles(), 'z-index': 99999 }}
       {...rest}
     >

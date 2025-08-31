@@ -34,7 +34,7 @@ import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -95,8 +95,8 @@ export class SendMessageInApp extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
@@ -147,8 +147,8 @@ export class SendMessageInApp extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return {
-        status: 'failed',
-        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -333,7 +333,7 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     return {
-      status: 'success',
+      status: SendMessageStatus.SUCCESS,
     };
   }
 }

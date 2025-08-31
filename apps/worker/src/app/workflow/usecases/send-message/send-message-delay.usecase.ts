@@ -8,7 +8,7 @@ import {
 import { MessageRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageResult, SendMessageType } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageDelay extends SendMessageType {
@@ -33,7 +33,7 @@ export class SendMessageDelay extends SendMessageType {
     );
 
     return {
-      status: 'success',
+      status: SendMessageStatus.SUCCESS,
     };
   }
 }

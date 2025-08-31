@@ -5,6 +5,7 @@ import { DEFAULT_LIMIT, useInboxContext, useNewMessagesCount } from '../../conte
 import { useStyle } from '../../helpers';
 import { useNotificationVisibility } from '../../helpers/useNotificationVisibility';
 import type {
+  AppearanceCallback,
   AvatarRenderer,
   BodyRenderer,
   CustomActionsRenderer,
@@ -57,17 +58,22 @@ export const NotificationList = (props: NotificationListProps) => {
 
   return (
     <div
-      class={style(
-        'notificationListContainer',
-        'nt-relative nt-border-t nt-border-t-neutral-alpha-200 nt-h-full nt-overflow-hidden'
-      )}
+      class={style({
+        key: 'notificationListContainer',
+        className: 'nt-relative nt-border-t nt-border-t-neutral-alpha-200 nt-h-full nt-overflow-hidden',
+        context: { notifications: data() } satisfies Parameters<AppearanceCallback['notificationListContainer']>[0],
+      })}
     >
       <NewMessagesCta count={count()} onClick={handleOnNewMessagesClick} />
       <div
         ref={(el) => {
           notificationListElement = el;
         }}
-        class={style('notificationList', 'nt-relative nt-h-full nt-flex nt-flex-col nt-overflow-y-auto')}
+        class={style({
+          key: 'notificationList',
+          className: 'nt-relative nt-h-full nt-flex nt-flex-col nt-overflow-y-auto',
+          context: { notifications: data() } satisfies Parameters<AppearanceCallback['notificationList']>[0],
+        })}
       >
         <Show when={data().length > 0} fallback={<NotificationListSkeleton loading={initialLoading()} />}>
           <For each={ids()}>

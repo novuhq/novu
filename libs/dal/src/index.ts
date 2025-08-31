@@ -2,6 +2,7 @@ export * from './dal.service';
 export * from './repositories/base-repository';
 export * from './repositories/base-repository';
 export * from './repositories/change';
+export * from './repositories/channel-endpoint';
 export * from './repositories/control-values';
 export * from './repositories/environment';
 export * from './repositories/execution-details';

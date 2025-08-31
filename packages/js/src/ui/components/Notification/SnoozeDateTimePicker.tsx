@@ -142,7 +142,10 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
 
   return (
     <div
-      class={style('snoozeDatePicker', 'nt-bg-background nt-rounded-md nt-shadow-lg nt-w-[260px]')}
+      class={style({
+        key: 'snoozeDatePicker',
+        className: 'nt-bg-background nt-rounded-md nt-shadow-lg nt-w-[260px]',
+      })}
       onClick={(e) => e.stopPropagation()}
     >
       <DatePicker onDateChange={(date) => setSelectedDate(date)} maxDays={maxDays()}>
@@ -152,23 +155,29 @@ export const SnoozeDateTimePicker: Component<SnoozeDateTimePickerProps> = (props
       </DatePicker>
 
       <div
-        class={style(
-          'snoozeDatePicker__timePickerContainer',
-          'nt-flex nt-flex-row nt-justify-between nt-p-2 nt-items-center nt-border-t nt-border-neutral-200 nt-border-b'
-        )}
+        class={style({
+          key: 'snoozeDatePicker__timePickerContainer',
+          className:
+            'nt-flex nt-flex-row nt-justify-between nt-p-2 nt-items-center nt-border-t nt-border-neutral-200 nt-border-b',
+        })}
       >
         <p
-          class={style(
-            'snoozeDatePicker__timePickerLabel',
-            'nt-text-sm nt-font-medium nt-text-foreground-alpha-700 nt-p-2'
-          )}
+          class={style({
+            key: 'snoozeDatePicker__timePickerLabel',
+            className: 'nt-text-sm nt-font-medium nt-text-foreground-alpha-700 nt-p-2',
+          })}
         >
           {t('snooze.datePicker.timePickerLabel')}
         </p>
         <TimePicker value={timeValue()} onChange={setTimeValue} />
       </div>
 
-      <div class={style('snoozeDatePicker__actions', 'nt-flex nt-flex-row nt-justify-end nt-gap-2 nt-p-2')}>
+      <div
+        class={style({
+          key: 'snoozeDatePicker__actions',
+          className: 'nt-flex nt-flex-row nt-justify-end nt-gap-2 nt-p-2',
+        })}
+      >
         <Button
           appearanceKey="snoozeDatePickerCancel__button"
           variant="secondary"

@@ -1,6 +1,6 @@
-import type { IconKey, IconRenderer, Appearance as JsAppearance, IconOverrides as JsIconOverrides } from '@novu/js/ui';
+import type { IconKey, Appearance as JsAppearance, IconOverrides as JsIconOverrides } from '@novu/js/ui';
 import { MountedElement } from '../context/RendererContext';
-import type { ReactAppearance, ReactIconRenderer } from './types';
+import type { ReactAppearance } from './types';
 
 export function adaptAppearanceForJs(
   appearance: ReactAppearance,
@@ -9,16 +9,15 @@ export function adaptAppearanceForJs(
   if (!appearance) {
     return undefined;
   }
+  const { icons, ...restAppearance } = appearance;
+  const jsAppearance: JsAppearance = { ...restAppearance };
 
-  const jsAppearance: JsAppearance = JSON.parse(JSON.stringify(appearance));
-
-  if (appearance.icons) {
+  if (icons) {
     const jsIcons: JsIconOverrides = {};
-    const reactIcons = appearance.icons;
-    const iconKeys = Object.keys(reactIcons) as IconKey[];
+    const iconKeys = Object.keys(icons) as IconKey[];
 
     for (const iconKey of iconKeys) {
-      const reactRenderer = reactIcons[iconKey];
+      const reactRenderer = icons[iconKey];
 
       if (reactRenderer) {
         jsIcons[iconKey] = (el: HTMLDivElement, props: { class?: string }) => {

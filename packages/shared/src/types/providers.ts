@@ -45,6 +45,8 @@ export enum CredentialsKeyEnum {
   channelId = 'channelId',
   phoneNumberIdentification = 'phoneNumberIdentification',
   ApiVersion = 'apiVersion',
+  AppSid = 'appSid',
+  SenderId = 'senderId',
 }
 
 export enum EmailProviderIdEnum {
@@ -104,6 +106,9 @@ export enum SmsProviderIdEnum {
   EazySms = 'eazy-sms',
   Mobishastra = 'mobishastra',
   AfroSms = 'afro-message',
+  // cspell:disable-next-line
+  Unifonic = 'unifonic',
+  // cspell:disable-next-line
   Smsmode = 'smsmode',
   IMedia = 'imedia',
 }
@@ -120,6 +125,7 @@ export enum ChatProviderIdEnum {
   RocketChat = 'rocket-chat',
   WhatsAppBusiness = 'whatsapp-business',
   ChatWebhook = 'chat-webhook',
+  Novu = 'novu-slack',
 }
 
 export enum PushProviderIdEnum {

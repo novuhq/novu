@@ -87,13 +87,16 @@ export const InboxContent = (props: InboxContentProps) => {
 
   return (
     <div
-      class={style(
-        'inboxContent',
-        cn('nt-h-full nt-flex nt-flex-col [&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8', {
-          '[&_.nv-preferencesContainer]:nt-pb-12 [&_.nv-notificationList]:nt-pb-12': isDevelopmentMode(),
-          '[&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8': !isDevelopmentMode(),
-        })
-      )}
+      class={style({
+        key: 'inboxContent',
+        className: cn(
+          'nt-h-full nt-flex nt-flex-col [&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8',
+          {
+            '[&_.nv-preferencesContainer]:nt-pb-12 [&_.nv-notificationList]:nt-pb-12': isDevelopmentMode(),
+            '[&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8': !isDevelopmentMode(),
+          }
+        ),
+      })}
     >
       <Switch>
         <Match when={currentPage() === InboxPage.Notifications}>
@@ -149,7 +152,7 @@ export const Inbox = (props: InboxProps) => {
     <Popover.Root open={isOpen()} onOpenChange={setIsOpened} placement={props.placement} offset={props.placementOffset}>
       <Popover.Trigger
         asChild={(triggerProps) => (
-          <Button class={style('inbox__popoverTrigger')} variant="ghost" size="icon" {...triggerProps}>
+          <Button class={style({ key: 'inbox__popoverTrigger' })} variant="ghost" size="icon" {...triggerProps}>
             <Bell renderBell={props.renderBell} />
           </Button>
         )}

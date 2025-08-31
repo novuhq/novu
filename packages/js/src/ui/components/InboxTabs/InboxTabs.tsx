@@ -44,7 +44,9 @@ export const InboxTabs = (props: InboxTabsProps) => {
     filters: dropdownTabs().map((tab) => ({ tags: getTagsFromTab(tab), data: tab.filter?.data })),
   });
 
-  const checkIconClass = style('moreTabs__dropdownItemRight__icon', 'nt-size-3', {
+  const checkIconClass = style({
+    key: 'moreTabs__dropdownItemRight__icon',
+    className: 'nt-size-3',
     iconKey: 'check',
   });
   const options = createMemo(() =>
@@ -70,7 +72,9 @@ export const InboxTabs = (props: InboxTabsProps) => {
       .includes(activeTab())
   );
 
-  const moreTabsIconClass = style('moreTabs__icon', 'nt-size-5', {
+  const moreTabsIconClass = style({
+    key: 'moreTabs__icon',
+    className: 'nt-size-5',
     iconKey: 'arrowDown',
   });
 
@@ -139,13 +143,13 @@ export const InboxTabs = (props: InboxTabsProps) => {
       {props.tabs.map((tab) => (
         <Tabs.Content
           value={tab.label}
-          class={style(
-            'notificationsTabs__tabsContent',
-            cn(
+          class={style({
+            key: 'notificationsTabs__tabsContent',
+            className: cn(
               activeTab() === tab.label ? 'nt-block' : 'nt-hidden',
               'nt-overflow-auto nt-flex-1 nt-flex nt-flex-col nt-min-h-0'
-            )
-          )}
+            ),
+          })}
         >
           <NotificationList
             renderNotification={props.renderNotification}

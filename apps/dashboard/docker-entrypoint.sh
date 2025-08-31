@@ -1,13 +1,20 @@
 #!/bin/sh
 
-# Safely build a <script> block assigning to window._env_
+# Build window._env_ object dynamically from all VITE_ environment variables
+ENV_VARS=""
+for var in $(printenv | grep '^VITE_' | cut -d= -f1); do
+  # Get the value of the environment variable
+  eval value=\$$var
+  # Escape single quotes in the value for safe JavaScript
+  escaped_value=$(printf '%s\n' "$value" | sed "s/'/\\\\'/g")
+  # Add to the ENV_VARS string
+  ENV_VARS="${ENV_VARS}    ${var}: '${escaped_value}',\n"
+done
+
+# Build the complete script block
 ENV_SCRIPT="<script>
   window._env_ = {
-    VITE_API_HOSTNAME: '${VITE_API_HOSTNAME}',
-    VITE_WEBSOCKET_HOSTNAME: '${VITE_WEBSOCKET_HOSTNAME}',
-    VITE_LEGACY_DASHBOARD_URL: '${VITE_LEGACY_DASHBOARD_URL}',
-    VITE_CLERK_PUBLISHABLE_KEY: '${VITE_CLERK_PUBLISHABLE_KEY}'
-  };
+${ENV_VARS}  };
 </script>"
 
 # Escape newlines for safe sed usage

@@ -73,25 +73,39 @@ const SnoozeDropdownItem = (props: {
   asChild?: (props: any) => JSX.Element;
 }) => {
   const style = useStyle();
-  const snoozeItemIconClass = style(
-    'notificationSnooze__dropdownItem__icon',
-    'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2',
-    {
-      iconKey: 'clock',
-    }
-  );
+  const snoozeItemIconClass = style({
+    key: 'notificationSnooze__dropdownItem__icon',
+    className: 'nt-size-3 nt-text-foreground-alpha-400 nt-mr-2',
+    iconKey: 'clock',
+  });
 
   const content = (
     <>
-      <div class={style('dropdownItem', 'nt-flex nt-items-center nt-flex-1')}>
+      <div
+        class={style({
+          key: 'dropdownItem',
+          className: 'nt-flex nt-items-center nt-flex-1',
+        })}
+      >
         <IconRendererWrapper
           iconKey="clock"
           class={snoozeItemIconClass}
           fallback={<DefaultClock class={snoozeItemIconClass} />}
         />
-        <span class={style('dropdownItemLabel')}>{props.label}</span>
+        <span
+          class={style({
+            key: 'dropdownItemLabel',
+          })}
+        >
+          {props.label}
+        </span>
       </div>
-      <span class={style('dropdownItemRight__icon', 'nt-text-foreground-alpha-300 nt-ml-2 nt-text-xs')}>
+      <span
+        class={style({
+          key: 'dropdownItemRight__icon',
+          className: 'nt-text-foreground-alpha-300 nt-ml-2 nt-text-xs',
+        })}
+      >
         {props.time}
       </span>
     </>
@@ -99,7 +113,10 @@ const SnoozeDropdownItem = (props: {
 
   if (props.asChild) {
     return props.asChild({
-      class: style('notificationSnooze__dropdownItem', dropdownItemVariants()),
+      class: style({
+        key: 'notificationSnooze__dropdownItem',
+        className: dropdownItemVariants(),
+      }),
       onClick: props.onClick,
       children: content,
     });
@@ -109,7 +126,10 @@ const SnoozeDropdownItem = (props: {
     <Dropdown.Item
       appearanceKey="notificationSnooze__dropdownItem"
       onClick={props.onClick}
-      class={style('dropdownItem', 'nt-justify-between')}
+      class={style({
+        key: 'dropdownItem',
+        className: 'nt-justify-between',
+      })}
     >
       {content}
     </Dropdown.Item>
@@ -119,7 +139,9 @@ const SnoozeDropdownItem = (props: {
 export const ReadButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const readIconClass = style('notificationRead__icon', 'nt-size-3', {
+  const readIconClass = style({
+    key: 'notificationRead__icon',
+    className: 'nt-size-3',
     iconKey: 'markAsRead',
   });
 
@@ -155,7 +177,9 @@ export const ReadButton = (props: { notification: Notification }) => {
 export const UnreadButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const unreadIconClass = style('notificationUnread__icon', 'nt-size-3', {
+  const unreadIconClass = style({
+    key: 'notificationUnread__icon',
+    className: 'nt-size-3',
     iconKey: 'markAsUnread',
   });
 
@@ -191,7 +215,9 @@ export const UnreadButton = (props: { notification: Notification }) => {
 export const ArchiveButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const archiveIconClass = style('notificationArchive__icon', 'nt-size-3', {
+  const archiveIconClass = style({
+    key: 'notificationArchive__icon',
+    className: 'nt-size-3',
     iconKey: 'markAsArchived',
   });
 
@@ -227,7 +253,9 @@ export const ArchiveButton = (props: { notification: Notification }) => {
 export const UnarchiveButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const unarchiveIconClass = style('notificationArchive__icon', 'nt-size-3', {
+  const unarchiveIconClass = style({
+    key: 'notificationArchive__icon',
+    className: 'nt-size-3',
     iconKey: 'markAsUnarchived',
   });
 
@@ -263,7 +291,9 @@ export const UnarchiveButton = (props: { notification: Notification }) => {
 export const UnsnoozeButton = (props: { notification: Notification }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const unsnoozeIconClass = style('notificationUnsnooze__icon', 'nt-size-3', {
+  const unsnoozeIconClass = style({
+    key: 'notificationUnsnooze__icon',
+    className: 'nt-size-3',
     iconKey: 'unsnooze',
   });
 
@@ -301,7 +331,9 @@ export const SnoozeButton = (props: { notification: Notification }) => {
   const { t, locale } = useLocalization();
   const { maxSnoozeDurationHours } = useInboxContext();
   const [isSnoozeDateTimePickerOpen, setIsSnoozeDateTimePickerOpen] = createSignal(false);
-  const snoozeButtonIconClass = style('notificationSnooze__icon', 'nt-size-3', {
+  const snoozeButtonIconClass = style({
+    key: 'notificationSnooze__icon',
+    className: 'nt-size-3',
     iconKey: 'clock',
   });
 
@@ -375,7 +407,10 @@ export const SnoozeButton = (props: { notification: Notification }) => {
                 />
                 <Popover.Content
                   portal
-                  class={style('notificationSnoozeCustomTime_popoverContent', 'nt-size-fit nt-w-[260px]')}
+                  class={style({
+                    key: 'notificationSnoozeCustomTime_popoverContent',
+                    className: 'nt-size-fit nt-w-[260px]',
+                  })}
                 >
                   <SnoozeDateTimePicker
                     maxDurationHours={maxSnoozeDurationHours()}

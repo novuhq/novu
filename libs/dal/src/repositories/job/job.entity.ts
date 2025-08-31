@@ -1,4 +1,6 @@
 import {
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
   ITenantDefine,
   IWorkflowStepMetadata,
   JobStatusEnum,
@@ -13,6 +15,13 @@ import { NotificationStepEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 
 export { JobStatusEnum };
+
+
+
+export type DeliveryLifecycleState = {
+  status?: DeliveryLifecycleStatus;
+  detail?: DeliveryLifecycleDetail;
+};
 
 export class JobEntity {
   _id: string;
@@ -33,6 +42,7 @@ export class JobEntity {
   delay?: number;
   _parentId?: string;
   status: JobStatusEnum;
+  deliveryLifecycleState?: DeliveryLifecycleState;
   error?: any;
   createdAt: string;
   updatedAt: string;
