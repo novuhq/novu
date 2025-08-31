@@ -366,7 +366,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     );
 
     if (options.limit < 1000) {
-      return (await this.MongooseModel.find(requestQuery, '_id', options).read(readPreference)).length;
+      return await this.MongooseModel.find(requestQuery, '_id', options).read(readPreference).count();
     }
 
     return this.MongooseModel.countDocuments(requestQuery, options).read(readPreference);
