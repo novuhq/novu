@@ -143,7 +143,7 @@ export const serve = (
           const hostHeader = extractHeader('host') || '';
 
           try {
-            if (process.env.NODE_ENV === 'development') {
+            if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'dev') {
               protocol = 'http';
             }
           } catch (error) {

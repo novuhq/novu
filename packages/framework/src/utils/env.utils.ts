@@ -24,7 +24,7 @@ export const getBridgeUrl = async (): Promise<string> => {
 
   // Local environments
   try {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'dev') {
       const response = await fetch('http://localhost:2022/.well-known/novu');
       const data = await response.json();
 
