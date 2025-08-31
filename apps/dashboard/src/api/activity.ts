@@ -46,25 +46,10 @@ export interface GetWorkflowRunsDto {
   createdAt: string;
   updatedAt: string;
   steps: StepRunDto[];
-  payload: Record<string, unknown>;
 }
 
-export type GetWorkflowRunResponse = {
-  id: string;
-  workflowRunId: string;
-  workflowId: string;
-  workflowName: string;
-  organizationId: string;
-  environmentId: string;
-  internalSubscriberId: string;
-  subscriberId?: string;
-  status: 'success' | 'error' | 'pending' | 'skipped' | 'canceled' | 'merged';
-  triggerIdentifier: string;
-  transactionId: string;
-  createdAt: string;
-  updatedAt: string;
+export type GetWorkflowRunResponse = GetWorkflowRunsDto & {
   payload: Record<string, unknown>;
-  steps: StepRunDto[];
 };
 
 export interface GetWorkflowRunsResponseDto {
@@ -73,10 +58,7 @@ export interface GetWorkflowRunsResponseDto {
   previous: string | null;
 }
 
-function mapWorkflowRunToActivity(
-  workflowRun: GetWorkflowRunResponse,
-  payload: Record<string, unknown> = {}
-): IActivity {
+function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkflowRunsDto): IActivity {
   return {
     _id: workflowRun.id,
     _templateId: workflowRun.workflowId,
@@ -88,7 +70,7 @@ function mapWorkflowRunToActivity(
     to: {
       subscriberId: workflowRun.subscriberId || workflowRun.internalSubscriberId,
     },
-    payload,
+    payload: 'payload' in workflowRun ? workflowRun.payload : {},
     tags: [], // Not available in workflow runs, empty array for compatibility
     createdAt: workflowRun.createdAt,
     updatedAt: workflowRun.updatedAt,
@@ -155,7 +137,7 @@ function mapWorkflowRunToActivity(
       _notificationId: workflowRun.id,
       status: step.status === 'queued' ? 'pending' : (step.status as any),
       _templateId: workflowRun.workflowId,
-      payload,
+      payload: 'payload' in workflowRun ? workflowRun.payload : {},
       providerId: undefined,
       overrides: {},
       transactionId: workflowRun.transactionId,
@@ -168,7 +150,7 @@ function mapWorkflowRunToActivity(
 // Mapping function to convert workflow runs to activities (legacy format)
 function mapWorkflowRunsToActivity(workflowRun: GetWorkflowRunsDto): IActivity {
   // Override the job _id to use the legacy step.id field
-  const activity = mapWorkflowRunToActivity(workflowRun, workflowRun.payload);
+  const activity = mapWorkflowRunToActivity(workflowRun);
   activity.jobs = activity.jobs.map((job, index) => ({
     ...job,
     _id: workflowRun.steps[index].stepId,

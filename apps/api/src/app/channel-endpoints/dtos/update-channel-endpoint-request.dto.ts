@@ -6,7 +6,8 @@ export class UpdateChannelEndpointRequestDto {
   @ApiProperty({
     description: 'The endpoint address/destination (e.g., OAuth token, webhook URL, phone number).',
     type: String,
-    example: 'xoxb-1234567890-abcdefghijklmnop',
+    // cspell:disable-next-line
+    example: 'some-sample-secret-token',
   })
   @IsString()
   @IsDefined()

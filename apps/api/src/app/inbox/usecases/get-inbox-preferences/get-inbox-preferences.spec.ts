@@ -8,17 +8,12 @@ import {
   PreferencesTypeEnum,
   SeverityLevelEnum,
   TriggerTypeEnum,
+  WorkflowCriticalityEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import {
-  GetSubscriberGlobalPreference,
-  GetSubscriberGlobalPreferenceCommand,
-} from '../../../subscribers/usecases/get-subscriber-global-preference';
-import {
-  GetSubscriberPreference,
-  GetSubscriberPreferenceCommand,
-} from '../../../subscribers/usecases/get-subscriber-preference';
+import { GetSubscriberGlobalPreference } from '../../../subscribers/usecases/get-subscriber-global-preference';
+import { GetSubscriberPreference } from '../../../subscribers/usecases/get-subscriber-preference';
 import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
 import { GetInboxPreferences } from './get-inbox-preferences.usecase';
 
@@ -87,11 +82,12 @@ describe('GetInboxPreferences', () => {
   });
 
   it('it should throw exception when subscriber is not found', async () => {
-    const command = {
+    const command = GetInboxPreferencesCommand.create({
       environmentId: 'env-1',
       organizationId: 'org-1',
       subscriberId: 'bad-subscriber-id',
-    };
+      criticality: WorkflowCriticalityEnum.NON_CRITICAL,
+    });
 
     getSubscriberGlobalPreferenceMock.execute.rejects(
       new Error(`Subscriber with id ${command.subscriberId} not found`)
@@ -106,11 +102,12 @@ describe('GetInboxPreferences', () => {
   });
 
   it('it should return subscriber preferences', async () => {
-    const command = {
+    const command = GetInboxPreferencesCommand.create({
       environmentId: 'env-1',
       organizationId: 'org-1',
       subscriberId: 'test-mockSubscriber',
-    };
+      criticality: WorkflowCriticalityEnum.NON_CRITICAL,
+    });
 
     getSubscriberGlobalPreferenceMock.execute.resolves({
       preference: mockedGlobalPreferences,
@@ -135,6 +132,7 @@ describe('GetInboxPreferences', () => {
       tags: undefined,
       severity: undefined,
       includeInactiveChannels: false,
+      criticality: command.criticality,
     });
 
     expect(result).to.deep.equal([
@@ -186,13 +184,14 @@ describe('GetInboxPreferences', () => {
         type: PreferencesTypeEnum.USER_WORKFLOW,
       },
     ] satisfies ISubscriberPreferenceResponse[];
-    const command: GetInboxPreferencesCommand = {
+    const command = GetInboxPreferencesCommand.create({
       environmentId: 'env-1',
       organizationId: 'org-1',
       subscriberId: 'test-mockSubscriber',
       tags: ['newsletter', 'security'],
       severity: [SeverityLevelEnum.HIGH],
-    };
+      criticality: WorkflowCriticalityEnum.NON_CRITICAL,
+    });
 
     getSubscriberGlobalPreferenceMock.execute.resolves({
       preference: mockedGlobalPreferences,
@@ -217,6 +216,7 @@ describe('GetInboxPreferences', () => {
       tags: command.tags,
       severity: command.severity,
       includeInactiveChannels: false,
+      criticality: command.criticality,
     });
 
     expect(result).to.deep.equal([

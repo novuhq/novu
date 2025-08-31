@@ -1,3 +1,10 @@
+import { Card } from '@/components/primitives/card';
+import { InlineToast } from '@/components/primitives/inline-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { OrganizationSettings } from '@/components/settings/organization-settings';
+import { IS_SELF_HOSTED } from '@/config';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { ROUTES } from '@/utils/routes';
 import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
 import { Appearance } from '@clerk/types';
 import {
@@ -9,12 +16,6 @@ import {
 } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Card } from '@/components/primitives/card';
-import { InlineToast } from '@/components/primitives/inline-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { OrganizationSettings } from '@/components/settings/organization-settings';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { ROUTES } from '@/utils/routes';
 import { Plan } from '../components/billing/plan';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
@@ -104,7 +105,10 @@ export function SettingsPage() {
         navigate(ROUTES.SETTINGS_TEAM);
         break;
       case 'billing':
-        navigate(ROUTES.SETTINGS_BILLING);
+        if (!IS_SELF_HOSTED) {
+          navigate(ROUTES.SETTINGS_BILLING);
+        }
+
         break;
     }
   };
@@ -123,12 +127,16 @@ export function SettingsPage() {
             Team
           </TabsTrigger>
 
-          <TabsTrigger variant="regular" value="billing" size="xl">
-            Billing
-          </TabsTrigger>
+          {!IS_SELF_HOSTED && (
+            <TabsTrigger variant="regular" value="billing" size="xl">
+              Billing
+            </TabsTrigger>
+          )}
         </TabsList>
 
-        <div className={`mx-auto mt-1 px-1.5 ${currentTab === 'billing' ? 'max-w-[1400px]' : 'max-w-[700px]'}`}>
+        <div
+          className={`mx-auto mt-1 px-1.5 ${currentTab === 'billing' && !IS_SELF_HOSTED ? 'max-w-[1400px]' : 'max-w-[700px]'}`}
+        >
           <TabsContent value="account" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
@@ -193,15 +201,17 @@ export function SettingsPage() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="billing" className="rounded-lg">
-            <motion.div {...FADE_ANIMATION}>
-              <Card className="border-none shadow-none">
-                <div className="pb-6 pt-4">
-                  <Plan />
-                </div>
-              </Card>
-            </motion.div>
-          </TabsContent>
+          {!IS_SELF_HOSTED && (
+            <TabsContent value="billing" className="rounded-lg">
+              <motion.div {...FADE_ANIMATION}>
+                <Card className="border-none shadow-none">
+                  <div className="pb-6 pt-4">
+                    <Plan />
+                  </div>
+                </Card>
+              </motion.div>
+            </TabsContent>
+          )}
         </div>
       </Tabs>
     </DashboardLayout>
