@@ -365,7 +365,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       createdAt
     );
 
-    return await this.MongooseModel.find(requestQuery, '_id', options).read(readPreference).count();
+    if (options.limit < 1000) {
+      return (await this.MongooseModel.find(requestQuery, '_id', options).read(readPreference)).length;
+    }
+
+    return this.MongooseModel.countDocuments(requestQuery, options).read(readPreference);
   }
 
   async getCountBySeverity(
