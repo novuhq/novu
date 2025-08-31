@@ -142,7 +142,7 @@ export const nodemailerConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.Secure,
     displayName: 'Secure',
-    type: 'boolean',
+    type: 'string',
     required: false,
   },
   {
@@ -160,7 +160,7 @@ export const nodemailerConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.TlsOptions,
     displayName: 'TLS options',
-    type: 'object',
+    type: 'string',
     required: false,
   },
   {
@@ -200,6 +200,26 @@ export const sendgridConfig: IConfigCredentials[] = [
     displayName: 'API Key',
     type: 'string',
     required: true,
+  },
+  {
+    key: CredentialsKeyEnum.InboundWebhookEnabled,
+    displayName: 'Email Activity Tracking',
+    description:
+      'When enabled, Novu will auto-configure using your existing API keys. If they lack permissions, follow the set-up guide.',
+    type: 'switch',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.InboundWebhookUrl,
+    displayName: 'Inbound Webhook URL',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.InboundWebhookSigningKey,
+    displayName: 'Inbound Webhook Signing Key',
+    type: 'string',
+    required: false,
   },
   {
     key: CredentialsKeyEnum.IpPoolName,
@@ -961,7 +981,7 @@ export const bandwidthConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.Password,
     displayName: 'Password',
-    type: 'password',
+    type: 'string',
     required: true,
   },
   {
@@ -1240,7 +1260,7 @@ export const unifonicConfig: IConfigCredentials[] = [
     required: true,
   },
   ...smsConfigBase,
- ];
+];
 export const smsmodeProviderConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,

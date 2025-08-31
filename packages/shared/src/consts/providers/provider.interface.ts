@@ -11,12 +11,14 @@ export interface IProviderConfig {
   betaVersion?: boolean;
 }
 
+type CredentialsType = 'string' | 'dropdown' | 'switch' | 'textarea' | 'text' | 'number';
+
 export interface IConfigCredentials {
   key: CredentialsKeyEnum;
   value?: unknown;
   displayName: string;
   description?: string;
-  type: string;
+  type: CredentialsType;
   required: boolean;
   tooltip?: {
     text: string;
