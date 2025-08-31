@@ -137,7 +137,7 @@ export function ApiKeysPage() {
               <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
                 <div className="space-y-4">
                   <SettingField
-                    label="Novu API Hostname"
+                    label="API Hostname"
                     tooltip={IS_SELF_HOSTED 
                       ? 'Your self-hosted Novu API endpoint'
                       : `For Novu Cloud in the ${region} region`
@@ -145,7 +145,7 @@ export function ApiKeysPage() {
                     value={API_HOSTNAME}
                   />
                   <SettingField
-                    label="Novu WebSocket Hostname"
+                    label="WebSocket Hostname"
                     tooltip={IS_SELF_HOSTED 
                       ? 'Your self-hosted Novu WebSocket endpoint'
                       : `WebSocket endpoint for Novu Cloud in the ${region} region`
