@@ -40,6 +40,13 @@ export function InboxEmbed(): JSX.Element | null {
   const foregroundColor = searchParams.get('foregroundColor') || '#0E121B';
 
   useEffect(() => {
+    if (!subscriberId || !selectedEnvironment) {
+      navigate(ROUTES.WELCOME);
+      return;
+    }
+  }, [subscriberId, selectedEnvironment, navigate]);
+
+  useEffect(() => {
     if (foundIntegration?.connected) {
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 10000);

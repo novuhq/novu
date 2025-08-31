@@ -114,7 +114,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
 
     try {
       // Navigate to welcome page
-      navigate(ROUTES.WELCOME);
+      navigate(ROUTES.INBOX_EMBED_SUCCESS);
     } catch (error) {
       console.error('Failed to navigate after onboarding completion:', error);
       showErrorToast('Failed to complete onboarding. Please try refreshing the page.', 'Navigation Error');

@@ -7,6 +7,7 @@ import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { Card, CardContent } from '../primitives/card';
 import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
+import { AiPromptsSection } from './ai-prompts-section';
 import { FrameworkCliInstructions, FrameworkInstructions } from './framework-guides';
 import { Framework, getFrameworks } from './framework-guides.instructions';
 
@@ -184,6 +185,15 @@ export function InboxFrameworkGuide({
         {/* Code block area with subtle installation method selector above */}
         {['Next.js', 'React'].includes(selectedFramework.name) ? (
           <div className="flex flex-col gap-3">
+            {/* AI Prompts Section */}
+            <div className="pl-8">
+              <AiPromptsSection
+                frameworkName={selectedFramework.name}
+                applicationIdentifier={currentEnvironment?.identifier}
+                subscriberId={subscriberId}
+              />
+            </div>
+
             {/* Header row: label left, tabs right */}
             <div className="mb-2 flex items-center gap-64 pl-8">
               <span className="text-base font-medium text-[#222]">Installation method</span>
@@ -215,10 +225,20 @@ export function InboxFrameworkGuide({
             </div>
           </div>
         ) : (
-          <div className="relative mt-2 overflow-hidden pl-0">
-            <motion.div key="manual" {...fadeIn} className="w-full">
-              <FrameworkInstructions framework={selectedFramework as Framework} />
-            </motion.div>
+          <div className="flex flex-col gap-3">
+            {/* AI Prompts Section */}
+            <div className="pl-8">
+              <AiPromptsSection
+                frameworkName={selectedFramework.name}
+                applicationIdentifier={currentEnvironment?.identifier}
+                subscriberId={subscriberId}
+              />
+            </div>
+            <div className="relative mt-2 overflow-hidden pl-0">
+              <motion.div key="manual" {...fadeIn} className="w-full">
+                <FrameworkInstructions framework={selectedFramework as Framework} />
+              </motion.div>
+            </div>
           </div>
         )}
       </motion.div>

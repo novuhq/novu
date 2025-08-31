@@ -20,7 +20,7 @@ import { InboxPreviewContent } from './inbox-preview-content';
 
 const PLAYGROUND_CONFIG = {
   title: 'The <Inbox/> your app deserves',
-  description: 'Try sending a notification',
+  description: 'See in-app notifications in action with a live preview of the inbox component',
   currentStep: 2,
   totalSteps: 4,
 } as const;
@@ -90,6 +90,11 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
 
     telemetry(TelemetryEvent.INBOX_NEXT_STEP_CLICKED);
     const queryParams = new URLSearchParams();
+
+    if (environment?._id) {
+      queryParams.set('environmentId', environment._id);
+    }
+
     const qs = queryParams.toString();
     navigate(qs ? `${ROUTES.INBOX_EMBED}?${qs}` : ROUTES.INBOX_EMBED);
   };

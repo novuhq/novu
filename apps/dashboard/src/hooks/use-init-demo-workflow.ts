@@ -41,6 +41,9 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
 
   setCreating(envId, true);
 
+  // Safe origin for SSR/tests compatibility
+  const safeOrigin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
+
   try {
     await createWorkflow({
       environment,
@@ -55,7 +58,7 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
             controlValues: {
               subject: 'Notification with Multiple Actions',
               body: 'Add **Primary** and **Secondary Actions** to give users more choices, like **View** or **Dismiss**.',
-              avatar: window.location.origin + '/images/novu.svg',
+              avatar: safeOrigin + '/images/novu.svg',
               primaryAction: {
                 label: 'Primary Action',
                 redirect: {},
@@ -72,7 +75,7 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
             controlValues: {
               subject: 'Notification with a Single Action',
               body: 'Use a single, clear **Primary Action** to send users to a specific page or feature',
-              avatar: window.location.origin + '/images/novu.svg',
+              avatar: safeOrigin + '/images/novu.svg',
               primaryAction: {
                 label: 'Primary Action',
                 redirect: {},
@@ -85,7 +88,7 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
             controlValues: {
               subject: 'Basic Notification',
               body: 'No buttons, just a simple message. Perfect for announcements or alerts',
-              avatar: window.location.origin + '/images/novu.svg',
+              avatar: safeOrigin + '/images/novu.svg',
             },
           },
         ],
