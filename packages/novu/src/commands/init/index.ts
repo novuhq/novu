@@ -87,7 +87,9 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
   if (!validation.valid) {
     console.error(`Could not create a project called ${red(`"${projectName}"`)} because of npm naming restrictions:`);
 
-    (validation as any).problems.forEach((problem: string) => console.error(`    ${red(bold('*'))} ${problem}`));
+    (validation as any).problems.forEach((problem: string) => {
+      console.error(`    ${red(bold('*'))} ${problem}`);
+    });
     process.exit(1);
   }
 

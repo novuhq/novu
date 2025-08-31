@@ -93,7 +93,7 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
     onFiltersChange({
       status: values,
       transactionId: form.getValues('transactionId'),
-      url_pattern: form.getValues('url_pattern'),
+      urlPattern: form.getValues('urlPattern'),
       createdGte: form.getValues('createdGte'),
     });
   };
@@ -103,7 +103,7 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
     onFiltersChange({
       status: form.getValues('status'),
       transactionId: value,
-      url_pattern: form.getValues('url_pattern'),
+      urlPattern: form.getValues('urlPattern'),
       createdGte: form.getValues('createdGte'),
     });
   };
@@ -114,18 +114,18 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
     onFiltersChange({
       status: form.getValues('status'),
       transactionId: form.getValues('transactionId'),
-      url_pattern: form.getValues('url_pattern'),
+      urlPattern: form.getValues('urlPattern'),
       createdGte: selectedCreatedGte,
     });
   };
 
   const handleUrlPatternChange = (values: string[]) => {
     const selectedUrlPattern = values[0]; // Single selection
-    form.setValue('url_pattern', selectedUrlPattern || '');
+    form.setValue('urlPattern', selectedUrlPattern || '');
     onFiltersChange({
       status: form.getValues('status'),
       transactionId: form.getValues('transactionId'),
-      url_pattern: selectedUrlPattern || '',
+      urlPattern: selectedUrlPattern || '',
       createdGte: form.getValues('createdGte'),
     });
   };
@@ -167,7 +167,7 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
         title="API Endpoint"
         placeholder="Filter by API endpoint"
         options={URL_PATTERN_OPTIONS}
-        selected={filters.url_pattern ? [filters.url_pattern] : []}
+        selected={filters.urlPattern ? [filters.urlPattern] : []}
         onSelect={handleUrlPatternChange}
       />
       {hasActiveFilters && (

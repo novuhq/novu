@@ -1,5 +1,5 @@
 import { JSX, ParentProps, Show, splitProps } from 'solid-js';
-import { useStyle } from '../../../helpers';
+import { cn, useStyle } from '../../../helpers';
 import type { AppearanceKey } from '../../../types';
 import { useTabsContext } from './TabsRoot';
 
@@ -18,11 +18,10 @@ export const TabsContent = (props: TabsContentProps) => {
   return (
     <Show when={activeTab() === local.value}>
       <div
-        class={
-          local.class
-            ? local.class
-            : style(local.appearanceKey || 'tabsContent', activeTab() === local.value ? 'nt-block' : 'nt-hidden')
-        }
+        class={style({
+          key: local.appearanceKey || 'tabsContent',
+          className: cn(local.class, activeTab() === local.value ? 'nt-block' : 'nt-hidden'),
+        })}
         id={`tabpanel-${local.value}`}
         role="tabpanel"
         aria-labelledby={local.value}

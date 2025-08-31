@@ -80,20 +80,20 @@ export function ChangelogStack() {
   // Helper function to convert Sanity asset reference to image URL
   const getImageUrl = (asset?: SanityAsset): string | undefined => {
     if (!asset?._ref) return undefined;
-    
+
     // Sanity asset reference format: image-{assetId}-{width}x{height}-{format}
     // Example: "image-fd1082e513db9f6ebdfaa3a8f90a9a43b2d44462-2096x1080-gif"
     const ref = asset._ref;
-    
+
     // Extract the asset ID and format - assetId can be any characters up to the next dash
     const match = ref.match(/^image-([^-]+)-(\d+x\d+)-(\w+)$/);
     if (!match) {
       console.warn('Invalid Sanity asset reference format:', ref);
       return undefined;
     }
-    
+
     const [, assetId, dimensions, format] = match;
-    
+
     // Use Sanity's CDN URL format with the constant
     return `${CONSTANTS.SANITY_CDN_URL}/${assetId}-${dimensions}.${format}?w=400&h=300&fit=crop&auto=format`;
   };
@@ -135,14 +135,14 @@ export function ChangelogStack() {
 
     const url = `${CONSTANTS.SANITY_API_URL}?query=${query}&perspective=published`;
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch changelogs from Sanity');
     }
-    
+
     const data = await response.json();
     const sanityPosts: SanityChangelogPost[] = data.result || [];
-    
+
     const transformedData = transformSanityData(sanityPosts);
     return filterChangelogs(transformedData, getDismissedChangelogs());
   };

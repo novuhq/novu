@@ -1,6 +1,5 @@
-import { CreateOrUpdateSubscriberCommand } from '@novu/application-generic';
-import { IChannelCredentials, IChannelSettings, SubscriberEntity } from '@novu/dal';
-import { SubscriberCustomData, UserSessionData } from '@novu/shared';
+import { SubscriberEntity } from '@novu/dal';
+import { IChannelCredentials, IChannelSettings } from '@novu/shared';
 import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
 import { ChannelSettingsDto, SubscriberResponseDto } from '../../subscribers/dtos';
 

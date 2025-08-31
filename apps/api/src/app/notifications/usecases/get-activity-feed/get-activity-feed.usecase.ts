@@ -27,6 +27,9 @@ import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dt
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
+const traceFindColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'created_at'] as const;
+type TraceFindResult = Pick<Trace, (typeof traceFindColumns)[number]>;
+
 @Injectable()
 export class GetActivityFeed {
   constructor(
@@ -91,11 +94,30 @@ export class GetActivityFeed {
 
     const maxRetentionMs = this.getMaxRetentionPeriodByOrganization(organization);
 
+    // For unlimited retention (self-hosted), skip retention validation
+    if (maxRetentionMs === Number.MAX_SAFE_INTEGER) {
+      const effectiveAfterDate = after ? this.parseAndValidateDate(after, 'after') : undefined;
+      const effectiveBeforeDate = before ? this.parseAndValidateDate(before, 'before') : undefined;
+
+      // Basic validation for date range if both dates are provided
+      if (effectiveAfterDate && effectiveBeforeDate && effectiveAfterDate > effectiveBeforeDate) {
+        throw new HttpException(
+          'Invalid date range: start date (after) must be earlier than end date (before)',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      return {
+        after: effectiveAfterDate?.toISOString(),
+        before: effectiveBeforeDate?.toISOString(),
+      };
+    }
+
     const earliestAllowedDate = new Date(Date.now() - maxRetentionMs);
 
     // If no after date is provided, default to the earliest allowed date
-    const effectiveAfterDate = after ? new Date(after) : earliestAllowedDate;
-    const effectiveBeforeDate = before ? new Date(before) : new Date();
+    const effectiveAfterDate = after ? this.parseAndValidateDate(after, 'after') : earliestAllowedDate;
+    const effectiveBeforeDate = before ? this.parseAndValidateDate(before, 'before') : new Date();
 
     this.validateDateRange(earliestAllowedDate, effectiveAfterDate, effectiveBeforeDate);
 
@@ -103,6 +125,19 @@ export class GetActivityFeed {
       after: effectiveAfterDate.toISOString(),
       before: effectiveBeforeDate.toISOString(),
     };
+  }
+
+  private parseAndValidateDate(dateString: string, parameterName: string): Date {
+    const parsedDate = new Date(dateString);
+    
+    if (Number.isNaN(parsedDate.getTime())) {
+      throw new HttpException(
+        `Invalid date format for parameter '${parameterName}': ${dateString}. Please provide a valid ISO 8601 date string.`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    
+    return parsedDate;
   }
 
   private validateDateRange(earliestAllowedDate: Date, afterDate: Date, beforeDate: Date) {
@@ -300,12 +335,13 @@ export class GetActivityFeed {
       where: traceQuery,
       orderBy: 'created_at',
       orderDirection: 'ASC',
+      select: traceFindColumns,
     });
 
     const executionDetailsByEntityId = new Map<string, ExecutionDetailFeedItem[]>();
 
     // Group traces by entity ID
-    const traceLogsByEntityId = new Map<string, typeof traceResult.data>();
+    const traceLogsByEntityId = new Map<string, TraceFindResult[]>();
     for (const trace of traceResult.data) {
       if (!traceLogsByEntityId.has(trace.entity_id)) {
         traceLogsByEntityId.set(trace.entity_id, []);
@@ -318,7 +354,7 @@ export class GetActivityFeed {
 
     // Convert traces to execution details for each entity
     for (const [entityId, traces] of traceLogsByEntityId) {
-      const executionDetails: ExecutionDetailFeedItem[] = traces.map((trace: Trace) => ({
+      const executionDetails: ExecutionDetailFeedItem[] = traces.map((trace: TraceFindResult) => ({
         _id: trace.id,
         providerId: undefined,
         detail: trace.title,

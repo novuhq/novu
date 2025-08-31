@@ -1036,7 +1036,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
     describe('steps validation', () => {
       it('should throw 400 when name is empty', async () => {
-        // @ts-ignore
+        // @ts-expect-error
         const overrideDto = { steps: [{ ...buildEmailStep(), name: '' } as unknown as StepUpsertDto] };
         const createWorkflowDto: CreateWorkflowDto = buildWorkflow();
         const dtoWithoutName = { ...createWorkflowDto, ...overrideDto };

@@ -8,7 +8,7 @@ import { EnvironmentEntity } from '../environment';
 import { NotificationEntity } from '../notification';
 import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
-import { JobDBModel, JobEntity, JobStatusEnum } from './job.entity';
+import { DeliveryLifecycleState, JobDBModel, JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
 
 type JobEntityPopulated = JobEntity & {
@@ -46,7 +46,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     return stored;
   }
 
-  public async updateStatus(environmentId: string, jobId: string, status: JobStatusEnum): Promise<IUpdateResult> {
+  public async updateStatus(environmentId: string, jobId: string, status: JobStatusEnum, deliveryLifecycleState?: DeliveryLifecycleState): Promise<IUpdateResult> {
     return this.MongooseModel.updateOne(
       {
         _environmentId: environmentId,
@@ -55,6 +55,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       {
         $set: {
           status,
+          deliveryLifecycleState,
         },
       }
     );

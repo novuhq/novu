@@ -8,7 +8,8 @@ import {
   InstrumentUsecase,
 } from '@novu/application-generic';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, IPreferenceChannels } from '@novu/shared';
+import { ChannelTypeEnum, IPreferenceChannels, WorkflowCriticalityEnum } from '@novu/shared';
+import { GetSubscriberPreferenceCommand } from '../get-subscriber-preference';
 import { GetSubscriberPreference } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
 
@@ -74,11 +75,12 @@ export class GetSubscriberGlobalPreference {
   @Instrument()
   private async getActiveChannels(command: GetSubscriberGlobalPreferenceCommand): Promise<ChannelTypeEnum[]> {
     const subscriberWorkflowPreferences = await this.getSubscriberPreference.execute(
-      GetSubscriberGlobalPreferenceCommand.create({
+      GetSubscriberPreferenceCommand.create({
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         includeInactiveChannels: command.includeInactiveChannels,
+        criticality: WorkflowCriticalityEnum.NON_CRITICAL,
       })
     );
 

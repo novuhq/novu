@@ -7,7 +7,7 @@ import { getMaxAvailableLogsDateRange } from '@/utils/logs-filters.utils';
 export interface LogsFilters {
   status: string[];
   transactionId: string;
-  url_pattern: string;
+  urlPattern: string;
   createdGte: string; // Timestamp string for creation time filter, defaults to calculated timestamp based on max available range
 }
 
@@ -85,7 +85,7 @@ export function useLogsUrlState(): LogsUrlState {
     (): LogsFilters => ({
       status: searchParams.getAll('status'),
       transactionId: searchParams.get('transactionId') || '',
-      url_pattern: searchParams.get('url_pattern') || '',
+      urlPattern: searchParams.get('urlPattern') || '',
       createdGte: searchParams.get('createdGte') || maxAvailableLogsDateRange, // Default to max available for user's tier
     }),
     [searchParams, maxAvailableLogsDateRange]
@@ -97,7 +97,7 @@ export function useLogsUrlState(): LogsUrlState {
         // Clear existing filter params
         prev.delete('status');
         prev.delete('transactionId');
-        prev.delete('url_pattern');
+        prev.delete('urlPattern');
         prev.delete('createdGte');
 
         // Set new filter params
@@ -113,8 +113,8 @@ export function useLogsUrlState(): LogsUrlState {
           prev.set('createdGte', newFilters.createdGte);
         }
 
-        if (newFilters.url_pattern.trim()) {
-          prev.set('url_pattern', newFilters.url_pattern);
+        if (newFilters.urlPattern.trim()) {
+          prev.set('urlPattern', newFilters.urlPattern);
         }
 
         // Reset to first page when filters change
@@ -130,7 +130,7 @@ export function useLogsUrlState(): LogsUrlState {
     setSearchParams((prev) => {
       prev.delete('status');
       prev.delete('transactionId');
-      prev.delete('url_pattern');
+      prev.delete('urlPattern');
       prev.delete('createdGte'); // Remove from URL so it uses default date range
       prev.delete('page');
       return prev;
@@ -142,7 +142,7 @@ export function useLogsUrlState(): LogsUrlState {
       filters.status.length > 0 ||
       filters.transactionId.trim() !== '' ||
       filters.createdGte !== maxAvailableLogsDateRange ||
-      filters.url_pattern.trim() !== ''
+      filters.urlPattern.trim() !== ''
     );
   }, [filters, maxAvailableLogsDateRange]);
 

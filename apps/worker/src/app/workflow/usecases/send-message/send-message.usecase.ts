@@ -29,6 +29,8 @@ import {
 } from '@novu/dal';
 import { ExecuteOutput } from '@novu/framework/internal';
 import {
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -50,7 +52,7 @@ import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessage {
@@ -113,11 +115,9 @@ export class SendMessage {
           raw: JSON.stringify({ skip: isBridgeSkipped }),
         })
       );
-
-      return { status: 'skipped', reason: DetailEnum.SKIPPED_BRIDGE_EXECUTION };
     }
 
-    const { stepCondition, channelPreference } = await this.evaluateFilters(isBridgeSkipped, command, variables);
+    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables);
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
@@ -128,10 +128,20 @@ export class SendMessage {
       );
     }
 
-    if (!stepCondition?.passed || !channelPreference.result) {
+    const conditionsShouldRun = stepCondition?.passed;
+    const preferenceShouldRun = channelPreference.result;
+    const isBridgeSkippedShouldRun = !isBridgeSkipped;
+    
+    if (!conditionsShouldRun || !preferenceShouldRun || !isBridgeSkippedShouldRun) {
+
       return {
-        status: 'skipped',
-        reason: !channelPreference.result ? channelPreference.reason : DetailEnum.FILTER_STEPS,
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: !channelPreference.result
+            ? DeliveryLifecycleDetail.SUBSCRIBER_PREFERENCE
+            : DeliveryLifecycleDetail.USER_STEP_CONDITION,
+        },
       };
     }
 
@@ -199,7 +209,7 @@ export class SendMessage {
 
     switch (stepType) {
       case StepTypeEnum.TRIGGER: {
-        return { status: 'success' };
+        return { status: SendMessageStatus.SUCCESS };
       }
       case StepTypeEnum.SMS: {
         return await this.sendMessageSms.execute(sendMessageChannelCommand);
@@ -232,19 +242,13 @@ export class SendMessage {
   }
 
   private async evaluateFilters(
-    bridgeSkip: boolean | undefined,
     command: SendMessageCommand,
     variables: IFilterVariables
   ): Promise<{
     stepCondition: IConditionsFilterResponse;
     channelPreference: { result: boolean; reason?: DetailEnum };
   }> {
-    if (bridgeSkip === true) {
-      return {
-        stepCondition: { passed: true, conditions: [], variables: {} },
-        channelPreference: { result: true },
-      };
-    }
+ 
 
     const [stepCondition, channelPreference] = await Promise.all([
       this.evaluateStepCondition(command, variables),

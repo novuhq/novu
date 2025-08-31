@@ -42,7 +42,7 @@ export class GetSubscriberTemplatePreference {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
-    const subscriber = await this.getSubscriber(command);
+    const subscriber = command.subscriber ?? (await this.getSubscriber(command));
 
     const initialChannels = await this.getChannels(command);
 

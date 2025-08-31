@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  EnforcedContext,
   PinoLogger,
   QueryBuilder,
   StepRun,
@@ -8,7 +7,9 @@ import {
   Where,
   WorkflowRun,
   WorkflowRunRepository,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
+import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
@@ -31,8 +32,26 @@ const workflowRunSelectColumns = [
   'transaction_id',
   'created_at',
   'updated_at',
+  'delivery_lifecycle_status',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
+
+const stepRunSelectColumns = [
+  'id',
+  'step_run_id',
+  'step_id',
+  'workflow_run_id',
+  'subscriber_id',
+  'external_subscriber_id',
+  'step_type',
+  'step_name',
+  'provider_id',
+  'status',
+  'transaction_id',
+  'created_at',
+  'updated_at',
+] as const;
+type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
 @Injectable()
 export class GetWorkflowRuns {
@@ -70,7 +89,20 @@ export class GetWorkflowRuns {
       }
 
       if (command.statuses?.length) {
-        queryBuilder.whereIn('status', command.statuses);
+        const statuses = command.statuses.map((status) => {
+          //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
+          if (status === WorkflowRunStatusDtoEnum.PROCESSING) {
+            return [WorkflowRunStatusEnum.PENDING, WorkflowRunStatusEnum.PROCESSING];
+          }
+          if (status === WorkflowRunStatusDtoEnum.COMPLETED) {
+            return [WorkflowRunStatusEnum.SUCCESS, WorkflowRunStatusEnum.COMPLETED];
+          }
+          if (status === WorkflowRunStatusDtoEnum.ERROR) {
+            return [WorkflowRunStatusEnum.ERROR];
+          }
+          return status;
+        });
+        queryBuilder.whereIn('status', statuses.flat());
       }
 
       if (command.createdGte) {
@@ -146,11 +178,13 @@ export class GetWorkflowRuns {
       // Fetch step runs for all workflow runs efficiently
       const stepRunsByCompositeKey = await this.getStepRunsForWorkflowRuns(command, workflowRuns);
 
-      const data = workflowRuns.map((workflowRun) => {
-        const compositeKey = `${workflowRun.subscriber_id}:${workflowRun.transaction_id}`;
+      const data = await Promise.all(
+        workflowRuns.map((workflowRun) => {
+          const compositeKey = `${workflowRun.subscriber_id}:${workflowRun.transaction_id}`;
 
-        return this.mapWorkflowRunToDto(workflowRun, stepRunsByCompositeKey.get(compositeKey) || []);
-      });
+          return this.mapWorkflowRunToDto(workflowRun, stepRunsByCompositeKey.get(compositeKey) || []);
+        })
+      );
 
       return {
         data,
@@ -265,7 +299,7 @@ export class GetWorkflowRuns {
   private async getStepRunsForWorkflowRuns(
     command: GetWorkflowRunsCommand,
     workflowRuns: WorkflowRunFetchResult[]
-  ): Promise<Map<string, StepRun[]>> {
+  ): Promise<Map<string, StepRunFetchResult[]>> {
     if (workflowRuns.length === 0) {
       return new Map();
     }
@@ -283,16 +317,18 @@ export class GetWorkflowRuns {
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
+        select: stepRunSelectColumns,
       });
 
       // Group step runs by composite key: subscriber_id:transaction_id
-      const stepRunsByCompositeKey = new Map<string, StepRun[]>();
+      const stepRunsByCompositeKey = new Map<string, StepRunFetchResult[]>();
 
       for (const stepRun of stepRunsResult.data) {
         const compositeKey = `${stepRun.subscriber_id}:${stepRun.transaction_id}`;
         if (!stepRunsByCompositeKey.has(compositeKey)) {
           stepRunsByCompositeKey.set(compositeKey, []);
         }
+        // biome-ignore lint/style/noNonNullAssertion: <explanation> because we otherwise the if statement would set it to the map
         stepRunsByCompositeKey.get(compositeKey)!.push(stepRun);
       }
 
@@ -308,7 +344,10 @@ export class GetWorkflowRuns {
     }
   }
 
-  private mapWorkflowRunToDto(workflowRun: WorkflowRunFetchResult, stepRuns: StepRun[]): GetWorkflowRunsDto {
+  private async mapWorkflowRunToDto(
+    workflowRun: WorkflowRunFetchResult,
+    stepRuns: StepRunFetchResult[]
+  ): Promise<GetWorkflowRunsDto> {
     return {
       id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
@@ -317,7 +356,8 @@ export class GetWorkflowRuns {
       environmentId: workflowRun.environment_id,
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
-      status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns),
+      status: mapWorkflowRunStatusToDto(workflowRun.status),
+      deliveryLifecycleStatus: workflowRun.delivery_lifecycle_status,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

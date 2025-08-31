@@ -57,6 +57,7 @@ export class GetSubscriberPreferences {
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         includeInactiveChannels: false,
+        criticality: command.criticality,
       })
     );
 

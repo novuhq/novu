@@ -1,8 +1,52 @@
 import { ChatProviderIdEnum, PushProviderIdEnum } from './providers';
 import { CustomDataType } from './utils';
 
+export interface ISubscriber {
+  _id?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  locale?: string;
+  subscriberId: string;
+  // @deprecated: use channelEndpoints instead
+  channels?: IChannelSettings[];
+  topics?: string[];
+  _organizationId: string;
+  _environmentId: string;
+  deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  isOnline?: boolean;
+  lastOnlineAt?: string;
+  data?: SubscriberCustomData;
+  timezone?: string;
+  __v?: number;
+}
+
+interface IChannelBase {
+  providerId: ChatProviderIdEnum | PushProviderIdEnum;
+  credentials: IChannelCredentials;
+}
+
+// Database storage (required integration ID)
+// @deprecated: use ChannelEndpoint instead
+export interface IChannelSettings extends IChannelBase {
+  _integrationId: string;
+}
+
+// API requests/payloads (optional integration identifier)
+// @deprecated: use ChannelEndpoint instead
+export interface ISubscriberChannel extends IChannelBase {
+  integrationIdentifier?: string;
+}
+
+// @deprecated: use ChannelEndpoint instead
 export interface IChannelCredentials {
+  phoneNumber?: string;
   webhookUrl?: string;
+  channel?: string;
   deviceTokens?: string[];
 }
 
@@ -10,12 +54,6 @@ export type ExternalSubscriberId = string;
 export type SubscriberId = string;
 
 export type SubscriberCustomData = CustomDataType;
-
-export interface ISubscriberChannel {
-  providerId: ChatProviderIdEnum | PushProviderIdEnum;
-  integrationIdentifier?: string;
-  credentials: IChannelCredentials;
-}
 
 export interface ISubscriberPayload {
   firstName?: string;
@@ -25,6 +63,7 @@ export interface ISubscriberPayload {
   avatar?: string;
   locale?: string;
   data?: SubscriberCustomData;
+  // @deprecated: use channelEndpoints instead
   channels?: ISubscriberChannel[];
 }
 

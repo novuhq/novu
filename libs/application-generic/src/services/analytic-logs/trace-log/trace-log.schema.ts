@@ -7,6 +7,7 @@ import {
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
 import { Prettify } from '../../../utils/prettify.type';
+import { StepType } from '..';
 
 export const TABLE_NAME = 'traces';
 
@@ -30,8 +31,8 @@ const schemaDefinition = {
   status: { type: CHLowCardinality(CHString()) },
 
   // Correlation, Hierarchy context
-  entity_type: { type: CHLowCardinality(CHString()) }, // request, workflow_run, step_run
-  entity_id: { type: CHString() }, // ID of the related entity
+  entity_type: { type: CHLowCardinality(CHString()) }, // request, step_run
+  entity_id: { type: CHString() }, // ID of the related entity, request-> request.id, step_run-> job._id
 
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
@@ -149,8 +150,6 @@ export type EventType =
 export type EntityType = 'request' | 'step_run';
 
 export type TraceStatus = 'success' | 'error' | 'warning' | 'pending';
-
-export type StepType = 'in_app' | 'email' | 'sms' | 'chat' | 'push' | 'digest' | 'delay';
 
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 

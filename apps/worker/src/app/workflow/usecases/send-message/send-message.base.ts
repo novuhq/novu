@@ -19,6 +19,7 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -32,7 +33,7 @@ import i18next from 'i18next';
 import { merge } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult, SendMessageType } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -80,7 +81,11 @@ export abstract class SendMessageBase extends SendMessageType {
       return;
     }
 
-    if (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) {
+    if (
+      integration.providerId === EmailProviderIdEnum.Novu ||
+      integration.providerId === SmsProviderIdEnum.Novu ||
+      integration.providerId === ChatProviderIdEnum.Novu
+    ) {
       integration.credentials = await this.getNovuProviderCredentials.execute({
         channelType: integration.channel,
         providerId: integration.providerId,
@@ -118,8 +123,8 @@ export abstract class SendMessageBase extends SendMessageType {
     );
 
     return {
-      status: 'failed',
-      reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      status: SendMessageStatus.FAILED,
+      errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
     };
   }
 

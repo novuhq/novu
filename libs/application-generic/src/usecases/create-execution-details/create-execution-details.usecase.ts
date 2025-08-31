@@ -1,14 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { FeatureFlagsService, LogRepository } from '../../services';
-import {
-  EntityType,
-  EventType,
-  StepType,
-  TraceLogRepository,
-  TraceStatus,
-} from '../../services/analytic-logs/trace-log';
+import { FeatureFlagsService, LogRepository, StepType } from '../../services';
+import { EntityType, EventType, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
 import { mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
 import { DetailEnum } from './types';

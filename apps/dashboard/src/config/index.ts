@@ -32,7 +32,9 @@ export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT
 
 export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';
 
-export const IS_SELF_HOSTED = import.meta.env.VITE_SELF_HOSTED;
+export const IS_SELF_HOSTED = (window._env_?.VITE_SELF_HOSTED || import.meta.env.VITE_SELF_HOSTED) === 'true';
+
+export const IS_ENTERPRISE = (window._env_?.VITE_NOVU_ENTERPRISE || import.meta.env.VITE_NOVU_ENTERPRISE) === 'true';
 
 if (!IS_SELF_HOSTED && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');

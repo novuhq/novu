@@ -32,6 +32,37 @@ import { ActivityNotificationResponseDto } from '../../dtos/activities-response.
 import { mapFeedItemToDto } from '../get-activity-feed/map-feed-item-to.dto';
 import { GetActivityCommand } from './get-activity.command';
 
+const workflowRunSelectColumns = [
+  'workflow_run_id',
+  'workflow_id',
+  'workflow_name',
+  'organization_id',
+  'environment_id',
+  'subscriber_id',
+  'external_subscriber_id',
+  'trigger_identifier',
+  'transaction_id',
+  'channels',
+  'subscriber_to',
+  'payload',
+  'topics',
+  'created_at',
+  'updated_at',
+] as const;
+
+const stepRunSelectColumns = [
+  'step_run_id',
+  'step_id',
+  'step_type',
+  'provider_id',
+  'status',
+  'created_at',
+  'updated_at',
+] as const;
+type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
+
+const traceSelectColumns = ['id', 'entity_id', 'title', 'status', 'created_at', 'raw_data'] as const;
+
 @Injectable()
 export class GetActivity {
   constructor(
@@ -79,7 +110,7 @@ export class GetActivity {
       workflowRunsEnabled,
     });
 
-    let feedItem;
+    let feedItem: NotificationFeedItemEntity | null = null;
 
     if (workflowRunsEnabled && stepRunsEnabled && tracesEnabled) {
       this.logger.debug('analytics full ingegration enabled');
@@ -145,6 +176,7 @@ export class GetActivity {
       where: traceQuery,
       orderBy: 'created_at',
       orderDirection: 'ASC',
+      select: traceSelectColumns,
     });
 
     const executionDetailsByEntityId = new Map<string, ExecutionDetailFeedItem[]>();
@@ -155,6 +187,7 @@ export class GetActivity {
       if (!traceLogsByEntityId.has(trace.entity_id)) {
         traceLogsByEntityId.set(trace.entity_id, []);
       }
+      // biome-ignore lint/style/noNonNullAssertion: <explanation> we we create it in the if above
       traceLogsByEntityId.get(trace.entity_id)!.push(trace);
     }
 
@@ -195,6 +228,7 @@ export class GetActivity {
       orderBy: 'created_at',
       orderDirection: 'ASC',
       useFinal: true,
+      select: stepRunSelectColumns,
     });
 
     if (!stepRunsResult.data || stepRunsResult.data.length === 0) {
@@ -253,6 +287,7 @@ export class GetActivity {
         orderDirection: 'ASC',
         limit: 1,
         useFinal: true,
+        select: workflowRunSelectColumns,
       });
 
       if (!workflowRunsResult.data || workflowRunsResult.data.length === 0) {
@@ -378,7 +413,7 @@ export class GetActivity {
 }
 
 function mapStepRunToJob(
-  stepRun: StepRun,
+  stepRun: StepRunFetchResult,
   executionDetailsByStepRunId: Map<string, ExecutionDetailFeedItem[]>
 ): JobFeedItem {
   const baseExecutionDetails = executionDetailsByStepRunId.get(stepRun.step_run_id) || [];

@@ -55,6 +55,7 @@ describe('Workflow Run - GET /v1/activity/workflow-runs/:workflowRunId #novu-v2'
           { field: 'subscriber_id', operator: '=', value: subscriber._id },
         ],
       },
+      select: '*',
     });
 
     const workflowRunId = workflowRun?.data?.workflow_run_id;

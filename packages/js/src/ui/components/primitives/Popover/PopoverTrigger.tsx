@@ -29,7 +29,12 @@ export const PopoverTrigger = (props: PopoverTriggerProps) => {
   }
 
   return (
-    <button ref={ref()} onClick={handleClick} class={style(local.appearanceKey || 'dropdownTrigger')} {...rest}>
+    <button
+      ref={ref()}
+      onClick={handleClick}
+      class={style({ key: local.appearanceKey || 'dropdownTrigger' })}
+      {...rest}
+    >
       {props.children}
     </button>
   );

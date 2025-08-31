@@ -5,21 +5,39 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatus, FeatureFlagsKeysEnum } from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
-import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
+import {  ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
 type WorkflowRunInsertData = Omit<WorkflowRun, 'id' | 'expires_at'>;
+type QueryNotificationEntity = Pick<
+  NotificationEntity,
+  | '_id'
+  | '_templateId'
+  | '_organizationId'
+  | '_environmentId'
+  | '_subscriberId'
+  | 'transactionId'
+  | 'channels'
+  | 'to'
+  | 'payload'
+  | 'controls'
+  | 'topics'
+  | '_digestedNotificationId'
+  | 'createdAt'
+>;
 
 interface IWorkflowRunOptions {
   status?: WorkflowRunStatusEnum;
   userId?: string;
   externalSubscriberId?: string;
+  deliveryLifecycleStatus?: DeliveryLifecycleStatus;
+  deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
 
 // Type for selected columns from the workflow run schema
@@ -159,13 +177,15 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
    * We'll need to insert a new record with updated status.
    * ReplacingMergeTree will handle deduplication based on workflow_run_id.
    */
-  async updateWorkflowRunStatus(
+  async updateWorkflowRunState(
     workflowRunId: string,
     status: WorkflowRunStatusEnum,
     context: {
       organizationId: string;
       environmentId: string;
-    }
+    },
+    deliveryLifecycleStatus?: DeliveryLifecycleStatus,
+    deliveryLifecycleDetail?: DeliveryLifecycleDetail
   ): Promise<void> {
     try {
       const isEnabled = await this.featureFlagsService.getFlag({
@@ -180,7 +200,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const notification = await this.notificationRepository.findOne(
+      const notification : QueryNotificationEntity | null = await this.notificationRepository.findOne(
         {
           _id: workflowRunId,
           _organizationId: context.organizationId,
@@ -199,6 +219,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
           controls: 1,
           topics: 1,
           _digestedNotificationId: 1,
+          createdAt: 1,
         }
       );
 
@@ -239,6 +260,8 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, {
         status,
+        deliveryLifecycleStatus,
+        deliveryLifecycleDetail,
         userId: null,
         externalSubscriberId: notification.to?.subscriberId || null,
       });
@@ -269,7 +292,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     }
   }
 
-  // Overload for when select is provided
+  // Overload for column array selection
   async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
     where: Where<WorkflowRun>;
     cursor?: {
@@ -285,7 +308,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     rows: number;
   }>;
 
-  // Overload for when select is not provided
+  // Overload for "*" all columns selection
   async findWithCursor(options: {
     where: Where<WorkflowRun>;
     cursor?: {
@@ -295,7 +318,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     limit?: number;
     orderDirection?: 'ASC' | 'DESC';
     useFinal?: boolean;
-    select?: undefined;
+    select: '*';
   }): Promise<{
     data: WorkflowRun[];
     rows: number;
@@ -306,7 +329,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
    * Handles timestamp collisions by using both created_at and workflow_run_id.
    * All queries are secure by default with mandatory tenant isolation.
    */
-  async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
+  async findWithCursor<T extends readonly WorkflowRunColumns[] | '*'>(options: {
     where: Where<WorkflowRun>;
     cursor?: {
       created_at: string;
@@ -315,9 +338,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     limit?: number;
     orderDirection?: 'ASC' | 'DESC';
     useFinal?: boolean;
-    select?: T;
+    select: T;
   }): Promise<{
-    data: WorkflowRun[] | SelectedWorkflowRun<T>[];
+    data: WorkflowRun[] | SelectedWorkflowRun<T extends readonly WorkflowRunColumns[] ? T : never>[];
     rows: number;
   }> {
     const { where, cursor, limit = 100, orderDirection = 'DESC', useFinal = false, select } = options;
@@ -372,7 +395,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
     const finalModifier = useFinal ? ' FINAL' : '';
     const orderByClause = `ORDER BY created_at ${orderDirection}, workflow_run_id ${orderDirection}`;
-    const selectClause = select && select.length > 0 ? select.join(', ') : '*';
+
+    // Build SELECT clause - use provided columns or all columns if "*" is specified
+    const selectClause = select === '*' ? '*' : (select as readonly string[]).join(', ');
 
     const query = `
       SELECT ${selectClause}
@@ -385,7 +410,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     this.logger.debug('Executing compound cursor query with tenant enforcement', {
       query: query.replace(/\s+/g, ' ').trim(),
       cursor: cursor ? 'present' : 'none',
-      selectedColumns: select ? select.length : 'all',
+      selectedColumns: select === '*' ? 'all' : (select as readonly string[]).length,
       tenantEnforcement: '__unsafe' in where ? 'bypassed' : 'enforced',
     });
 
@@ -394,22 +419,21 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       params,
     });
 
-    return {
-      data: result.data as WorkflowRun[] | SelectedWorkflowRun<T>[],
-      rows: result.rows,
+    return result as {
+      data: WorkflowRun[] | SelectedWorkflowRun<T extends readonly WorkflowRunColumns[] ? T : never>[];
+      rows: number;
     };
   }
 
   private mapNotificationToWorkflowRun(
-    notification: NotificationEntity,
+    notification: QueryNotificationEntity,
     workflow: NotificationTemplateEntity,
     options: IWorkflowRunOptions
   ): WorkflowRunInsertData {
     const now = new Date();
-    const createdAt = new Date(now);
 
     return {
-      created_at: LogRepository.formatDateTime64(createdAt),
+      created_at: LogRepository.formatDateTime64(new Date(notification.createdAt)),
       updated_at: LogRepository.formatDateTime64(now),
 
       // Core workflow run identification
@@ -443,6 +467,10 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       // Digest information
       is_digest: notification._digestedNotificationId ? 'true' : 'false',
       digested_workflow_run_id: notification._digestedNotificationId || null,
+
+      // Delivery lifecycle
+      ...(options.deliveryLifecycleStatus && { delivery_lifecycle_status: options.deliveryLifecycleStatus }),
+      ...(options.deliveryLifecycleDetail && { delivery_lifecycle_detail: options.deliveryLifecycleDetail }),
     };
   }
 
