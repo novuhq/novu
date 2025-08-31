@@ -25,7 +25,7 @@ export class WebSocketsInMemoryProviderService {
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED && process.env.NOVU_ENTERPRISE === 'false') {
+    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
       return InMemoryProviderEnum.REDIS;
     }
 
