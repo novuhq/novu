@@ -3,6 +3,7 @@ import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
 import { addDays } from 'date-fns';
 import { PinoLogger } from 'nestjs-pino';
 import { generateObjectId } from '../../utils/generate-id';
+import { Prettify } from '../../utils/prettify.type';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
 
@@ -70,8 +71,10 @@ export interface UnsafeWhere<T> {
 
 export type Where<T> = EnforcedWhere<T> | UnsafeWhere<T>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SchemaKeys<T extends ClickhouseSchema<any>> = keyof InferClickhouseSchemaType<T>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnhancedType> {
   readonly table: string;
   readonly identifierPrefix: string;
@@ -261,7 +264,7 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     },
     options: InsertOptions
   ): Promise<void> {
-    const ids = data.map((item) => `${this.identifierPrefix}${generateObjectId()}`);
+    const ids = data.map((_item) => `${this.identifierPrefix}${generateObjectId()}`);
     const expirationDate = await this.getExpirationDate(context);
     const expiresAt = LogRepository.formatDateTime64(expirationDate);
 
@@ -272,17 +275,50 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     );
   }
 
-  // Query methods with mandatory tenant enforcement
+  // Overload for column array selection
+  async find<T extends readonly (keyof InferClickhouseSchemaType<TSchema>)[]>(options: {
+    where: Where<TEnhancedType>;
+    limit?: number;
+    offset?: number;
+    orderBy?: SchemaKeys<TSchema>;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+    select: T;
+  }): Promise<{
+    data: Prettify<Pick<TEnhancedType, T[number]>>[];
+    rows: number;
+  }>;
+
+  // Overload for "*" all columns selection
   async find(options: {
     where: Where<TEnhancedType>;
     limit?: number;
     offset?: number;
-    // todo make a type validation for available orderBy columns
     orderBy?: SchemaKeys<TSchema>;
     orderDirection?: 'ASC' | 'DESC';
     useFinal?: boolean;
-  }): Promise<{ data: TEnhancedType[]; rows: number }> {
-    const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC', useFinal = false } = options;
+    select: '*';
+  }): Promise<{
+    data: TEnhancedType[];
+    rows: number;
+  }>;
+
+  // Implementation
+  async find<T extends readonly (keyof InferClickhouseSchemaType<TSchema>)[] | '*'>(options: {
+    where: Where<TEnhancedType>;
+    limit?: number;
+    offset?: number;
+    orderBy?: SchemaKeys<TSchema>;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+    select: T;
+  }): Promise<{
+    data:
+      | TEnhancedType[]
+      | Prettify<Pick<TEnhancedType, T extends readonly (keyof TEnhancedType)[] ? T[number] : never>>[];
+    rows: number;
+  }> {
+    const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC', useFinal = false, select } = options;
 
     if (limit < 0 || limit > LIMIT_MAX_THRESHOLD) {
       throw new Error(`Limit must be between 0 and ${LIMIT_MAX_THRESHOLD}`);
@@ -311,9 +347,12 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
       throw new Error(`Invalid order direction: ${orderDirection}. Allowed directions: ${ORDER_DIRECTION.join(', ')}`);
     }
 
+    // Build SELECT clause - use provided columns or all columns if "*" is specified
+    const selectClause = select === '*' ? '*' : (select as readonly string[]).join(', ');
+
     const finalModifier = useFinal ? ' FINAL' : '';
     const query = `
-      SELECT *
+      SELECT ${selectClause}
       FROM ${this.table}${finalModifier}
       ${clause}
       ${orderBy ? `ORDER BY ${String(orderBy)} ${orderDirection}` : ''}
@@ -321,14 +360,32 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
       OFFSET ${offset}
     `;
 
-    const result = await this.clickhouseService.query<TEnhancedType>({
+    const result = await this.clickhouseService.query({
       query,
       params,
     });
 
-    return result;
+    return result as {
+      data: TEnhancedType[] | Pick<TEnhancedType, T extends readonly (keyof TEnhancedType)[] ? T[number] : never>[];
+      rows: number;
+    };
   }
 
+  // Overload for column array selection
+  async findOne<T extends readonly (keyof InferClickhouseSchemaType<TSchema>)[]>(options: {
+    where: Where<TEnhancedType>;
+    limit?: number;
+    offset?: number;
+    orderBy?: SchemaKeys<TSchema>;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+    select: T;
+  }): Promise<{
+    data: Pick<TEnhancedType, T[number]>;
+    rows: number;
+  }>;
+
+  // Overload for "*" all columns selection
   async findOne(options: {
     where: Where<TEnhancedType>;
     limit?: number;
@@ -336,8 +393,41 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     orderBy?: SchemaKeys<TSchema>;
     orderDirection?: 'ASC' | 'DESC';
     useFinal?: boolean;
-  }): Promise<{ data: TEnhancedType; rows: number }> {
-    const result = await this.find({ ...options, limit: 1 });
+    select: '*';
+  }): Promise<{
+    data: TEnhancedType;
+    rows: number;
+  }>;
+
+  // Implementation
+  async findOne<T extends readonly (keyof InferClickhouseSchemaType<TSchema>)[] | '*'>(options: {
+    where: Where<TEnhancedType>;
+    limit?: number;
+    offset?: number;
+    orderBy?: SchemaKeys<TSchema>;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+    select: T;
+  }): Promise<{
+    data: TEnhancedType | Pick<TEnhancedType, T extends readonly (keyof TEnhancedType)[] ? T[number] : never>;
+    rows: number;
+  }> {
+    // Handle the "*" case explicitly
+    if (options.select === '*') {
+      const result = await this.find({
+        ...options,
+        limit: 1,
+        select: '*',
+      } as Parameters<typeof this.find>[0]);
+      return { data: result.data[0], rows: result.rows };
+    }
+
+    // Handle the array case
+    const result = await this.find({
+      ...options,
+      limit: 1,
+      select: options.select as T extends readonly (keyof InferClickhouseSchemaType<TSchema>)[] ? T : never,
+    } as Parameters<typeof this.find>[0]);
 
     return { data: result.data[0], rows: result.rows };
   }

@@ -1,6 +1,12 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CommunityUserRepository, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
-import { EmailProviderIdEnum, FeatureFlagsKeysEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  FeatureFlagsKeysEnum,
+  ICredentials,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 import { FeatureFlagsService } from '../../services';
 import { AnalyticsService } from '../../services/analytics.service';
 import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
@@ -16,7 +22,11 @@ export class GetNovuProviderCredentials {
   ) {}
 
   async execute(integration: GetNovuProviderCredentialsCommand): Promise<ICredentials> {
-    if (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) {
+    if (
+      integration.providerId === EmailProviderIdEnum.Novu ||
+      integration.providerId === SmsProviderIdEnum.Novu ||
+      integration.providerId === ChatProviderIdEnum.Novu
+    ) {
       const isTestProviderLimitsEnabled = await this.featureFlagService.getFlag({
         user: { _id: integration.userId } as UserEntity,
         environment: { _id: integration.environmentId } as EnvironmentEntity,
@@ -77,6 +87,13 @@ export class GetNovuProviderCredentials {
         accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
         token: process.env.NOVU_SMS_INTEGRATION_TOKEN,
         from: process.env.NOVU_SMS_INTEGRATION_SENDER,
+      };
+    }
+
+    if (integration.providerId === ChatProviderIdEnum.Novu) {
+      return {
+        clientId: process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID,
+        secretKey: process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET,
       };
     }
 

@@ -5,8 +5,6 @@ import {
   DetailEnum,
   InstrumentUsecase,
   PinoLogger,
-  WorkflowRunRepository,
-  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
@@ -20,7 +18,6 @@ export class HandleLastFailedJob {
     private createExecutionDetails: CreateExecutionDetails,
     private queueNextJob: QueueNextJob,
     private jobRepository: JobRepository,
-    private workflowRunRepository: WorkflowRunRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -62,38 +59,8 @@ export class HandleLastFailedJob {
           environmentId: job?._environmentId,
           organizationId: job?._organizationId,
           userId: job?._userId,
+          subscriberId: job?._subscriberId,
         })
-      );
-    } else {
-      // Update workflow run status to failed when job fails and we should halt
-      await this.updateWorkflowRunStatusToFailed(job);
-    }
-  }
-
-  private async updateWorkflowRunStatusToFailed(job: JobEntity): Promise<void> {
-    try {
-      await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, WorkflowRunStatusEnum.ERROR, {
-        organizationId: job._organizationId,
-        environmentId: job._environmentId,
-      });
-
-      this.logger.debug(
-        {
-          jobId: job._id,
-          notificationId: job._notificationId,
-          organizationId: job._organizationId,
-          environmentId: job._environmentId,
-        },
-        'Updated workflow run status to failed'
-      );
-    } catch (error) {
-      this.logger.error(
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          jobId: job._id,
-          notificationId: job._notificationId,
-        },
-        'Failed to update workflow run status to failed'
       );
     }
   }

@@ -309,7 +309,7 @@ describe('validators', () => {
     ];
 
     schemas.forEach((schema) => {
-      return describe(`using ${schema}`, () => {
+      describe(`using ${schema}`, () => {
         testCases
           .filter((testCase) => testCase.schemas[schema] !== null)
           .forEach((testCase) => {
@@ -516,7 +516,7 @@ describe('validators', () => {
     ];
 
     schemas.forEach((schema) => {
-      return describe(`using ${schema}`, () => {
+      describe(`using ${schema}`, () => {
         testCases
           .filter((testCase) => testCase.schemas[schema] !== null)
           .forEach((testCase) => {

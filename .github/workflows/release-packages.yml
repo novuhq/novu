@@ -23,11 +23,6 @@ on:
         required: true
         type: boolean
         default: false
-      create_github_release:
-        description: 'Create GitHub releases for the packages'
-        required: true
-        type: boolean
-        default: false
 
 jobs:
   release:
@@ -96,19 +91,26 @@ jobs:
           fi
 
       - name: Build packages
-        run: pnpm run build:packages
+        run: |
+          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
+            pnpm run build:packages
+          else
+            echo "Skipping build for non-nightly release"
+          fi
 
       - name: Publish packages (nightly only)
-        if: ${{ github.event.inputs.nightly }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          export NX_RELEASE_TAG=nightly
-          pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
+          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
+            export NX_RELEASE_TAG=nightly
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
+          else
+            echo "Skipping publish for non-nightly release"
+          fi
 
       - name: Create Pull Request
         id: create-pr
-        if: ${{ !github.event.inputs.nightly }}
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -127,68 +129,9 @@ jobs:
             ### 🔄 Changes:
             - Updated package versions to ${{ github.event.inputs.version }}
             - Generated changelogs from ${{ github.event.inputs.previous_tag }}
-            - Built and published packages to NPM
+            - Built packages for release
             
             **Please review the changes and merge when ready for the release to be tagged and GitHub releases to be created.**
           branch: release-${{ github.event.inputs.version }}
           base: next
-
-  post_release:
-    needs: release
-    if: ${{ !github.event.inputs.nightly && needs.release.outputs.pr_number }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      actions: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-          ref: next
-
-      - name: Wait for manual PR merge
-        id: wait_merge
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "📋 Waiting for manual merge of PR #${{ needs.release.outputs.pr_number }}"
-          echo "🔗 PR URL: ${{ needs.release.outputs.pr_url }}"
-          echo "Please review and merge the PR manually. This workflow will wait up to 30 minutes..."
-          
-          # Wait up to 30 minutes for manual merge
-          for i in {1..180}; do
-            status=$(gh pr view ${{ needs.release.outputs.pr_number }} --json state --jq '.state')
-            if [ "$status" = "MERGED" ]; then
-              echo "✅ PR has been merged!"
-              echo "merged=true" >> $GITHUB_OUTPUT
-              break
-            fi
-            
-            echo "⏳ Still waiting for manual merge... (attempt $i/180)"
-            sleep 10
-          done
-          
-          # Final check
-          status=$(gh pr view ${{ needs.release.outputs.pr_number }} --json state --jq '.state')
-          if [ "$status" != "MERGED" ]; then
-            echo "❌ PR was not merged within the timeout period (30 minutes). Current status: $status"
-            echo "You can manually run the 'Manual Post-Release' workflow after merging the PR."
-            echo "merged=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-      - name: Trigger Manual Post-Release Workflow
-        if: steps.wait_merge.outputs.merged == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "🚀 Triggering Manual Post-Release workflow..."
-          gh workflow run manual-post-release.yml \
-            -f packages="${{ github.event.inputs.packages }}" \
-            -f version="${{ github.event.inputs.version }}" \
-            -f create_github_release="${{ github.event.inputs.create_github_release }}"
-          
-          echo "✅ Manual Post-Release workflow has been triggered!"
-          echo "You can monitor its progress in the Actions tab." 
+          delete-branch: false

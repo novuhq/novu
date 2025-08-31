@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { StringLocalizationKey, useAppearance, useInboxContext, useLocalization } from '../../../context';
+import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Clock, Check as DefaultCheck, MarkAsArchived, MarkAsUnread, Unread } from '../../../icons';
 import { IconKey, NotificationStatus } from '../../../types';
@@ -67,19 +67,31 @@ export const StatusItem = (props: {
 }) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const itemIconClass = style('inboxStatus__dropdownItemLeft__icon', 'nt-size-3', {
+  const itemIconClass = style({
+    key: 'inboxStatus__dropdownItemLeft__icon',
+    className: 'nt-size-3',
     iconKey: props.iconKey,
   });
-  const checkIconClass = style('inboxStatus__dropdownItemCheck__icon', 'nt-size-3', {
+  const checkIconClass = style({
+    key: 'inboxStatus__dropdownItemCheck__icon',
+    className: 'nt-size-3',
     iconKey: 'check',
   });
 
   return (
     <Dropdown.Item
-      class={style('inboxStatus__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-8 nt-justify-between'))}
+      class={style({
+        key: 'inboxStatus__dropdownItem',
+        className: cn(dropdownItemVariants(), 'nt-flex nt-gap-8 nt-justify-between'),
+      })}
       onClick={props.onClick}
     >
-      <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
+      <span
+        class={style({
+          key: 'inboxStatus__dropdownItemLabelContainer',
+          className: 'nt-flex nt-gap-2 nt-items-center',
+        })}
+      >
         <IconRendererWrapper
           iconKey={props.iconKey}
           class={itemIconClass}
@@ -88,7 +100,10 @@ export const StatusItem = (props: {
 
         <span
           data-localization={props.localizationKey}
-          class={style('inboxStatus__dropdownItemLabel', 'nt-leading-none')}
+          class={style({
+            key: 'inboxStatus__dropdownItemLabel',
+            className: 'nt-leading-none',
+          })}
         >
           {t(props.localizationKey)}
         </span>

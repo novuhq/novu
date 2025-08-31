@@ -7,6 +7,7 @@ import { expect } from 'chai';
 import { sleep } from '../../events/e2e/utils/sleep.util';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { GetWorkflowRunsResponseDto } from '../dtos/workflow-runs-response.dto';
+import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
 
 describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
   let session: UserSession;
@@ -55,7 +56,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       subscriberId,
       payloadTemplate,
       transactionId,
-      status = WorkflowRunStatusEnum.SUCCESS,
+      status = WorkflowRunStatusEnum.COMPLETED,
       channels = [StepTypeEnum.EMAIL],
     } = options;
 
@@ -78,6 +79,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
         payload,
         controls: undefined,
         tags: [],
+        createdAt: new Date().toISOString(),
       };
 
       promises.push(
@@ -189,6 +191,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
         enforced: { environmentId: session.environment._id },
         conditions: [{ field: 'workflow_run_id', operator: '=', value: secondPage.data[0].id }],
       },
+      select: '*',
     });
     expect(secondPageWorkflowRun, 'secondPageWorkflowRun should exist').to.not.be.null;
     expect(secondPageWorkflowRun.data, 'secondPageWorkflowRun.data should exist').to.not.be.undefined;
@@ -248,6 +251,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       });
 
       expect(body.data).to.be.an('array');
+      expect(body.data.length).to.be.at.least(1);
       expect(body.data.length).to.be.at.most(2);
 
       // Check for duplicates and collect runNumbers
@@ -257,6 +261,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
             enforced: { environmentId: session.environment._id },
             conditions: [{ field: 'workflow_run_id', operator: '=', value: workflowRun.id }],
           },
+          select: '*',
         });
         expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
         expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
@@ -495,7 +500,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     await createMultipleWorkflowRunsByDb({
       count: 2,
       subscriberId: [subscriber.subscriberId],
-      status: WorkflowRunStatusEnum.SUCCESS,
+      status: WorkflowRunStatusEnum.COMPLETED,
     });
     await createMultipleWorkflowRunsByDb({
       count: 1,
@@ -505,13 +510,13 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     const { body } = await session.testAgent
       .get('/v1/activity/workflow-runs')
-      .query({ statuses: [WorkflowRunStatusEnum.SUCCESS] })
+      .query({ statuses: [WorkflowRunStatusDtoEnum.COMPLETED] })
       .expect(200);
 
     expect(body.data.length).to.be.equal(2);
 
     for (const workflowRun of body.data) {
-      expect(workflowRun.status).to.equal(WorkflowRunStatusEnum.SUCCESS);
+      expect(workflowRun.status).to.equal(WorkflowRunStatusDtoEnum.COMPLETED);
     }
   });
 
@@ -567,6 +572,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
           enforced: { environmentId: session.environment._id },
           conditions: [{ field: 'workflow_run_id', operator: '=', value: workflowRun.id }],
         },
+        select: '*',
       });
       expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
       expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
@@ -589,7 +595,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       .query({
         workflowIds: [inAppWorkflow._id],
         subscriberIds: subscriber.subscriberId,
-        statuses: [WorkflowRunStatusEnum.SUCCESS],
+        statuses: [WorkflowRunStatusDtoEnum.COMPLETED],
         limit: 10,
       })
       .expect(200);
@@ -599,7 +605,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     for (const workflowRun of body.data) {
       expect(workflowRun.workflowId).to.equal(inAppWorkflow._id);
       expect(workflowRun.subscriberId).to.equal(subscriber.subscriberId);
-      expect(workflowRun.status).to.equal(WorkflowRunStatusEnum.SUCCESS);
+      expect(workflowRun.status).to.equal(WorkflowRunStatusDtoEnum.COMPLETED);
     }
   });
 

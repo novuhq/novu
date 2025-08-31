@@ -10,26 +10,27 @@ export const StatusDropdown = () => {
   const style = useStyle();
   const { status, setStatus } = useInboxContext();
   const { t } = useLocalization();
-  const arrowDropDownIconClass = style(
-    'inboxStatus__dropdownItemRight__icon',
-    'nt-text-foreground-alpha-600 nt-size-4',
-    {
-      iconKey: 'arrowDropDown',
-    }
-  );
+  const arrowDropDownIconClass = style({
+    key: 'inboxStatus__dropdownItemRight__icon',
+    className: 'nt-text-foreground-alpha-600 nt-size-4',
+    iconKey: 'arrowDropDown',
+  });
 
   return (
     <Dropdown.Root>
       <Dropdown.Trigger
-        class={style(
-          'inboxStatus__dropdownTrigger',
-          cn(buttonVariants({ variant: 'unstyled', size: 'none' }), 'nt-gap-0.5')
-        )}
+        class={style({
+          key: 'inboxStatus__dropdownTrigger',
+          className: cn(buttonVariants({ variant: 'unstyled', size: 'none' }), 'nt-gap-0.5'),
+        })}
         asChild={(triggerProps) => (
           <Button variant="unstyled" size="none" {...triggerProps}>
             <span
               data-localization={inboxFilterLocalizationKeys[status()]}
-              class={style('inboxStatus__title', 'nt-text-base')}
+              class={style({
+                key: 'inboxStatus__title',
+                className: 'nt-text-base',
+              })}
             >
               {t(inboxFilterLocalizationKeys[status()])}
             </span>

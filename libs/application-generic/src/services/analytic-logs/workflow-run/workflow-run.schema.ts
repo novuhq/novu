@@ -1,3 +1,4 @@
+import { DeliveryLifecycleStatus } from '@novu/shared';
 import {
   CHDateTime64,
   CHLowCardinality,
@@ -13,6 +14,8 @@ export const TABLE_NAME = 'workflow_runs';
 const schemaDefinition = {
   id: { type: CHString() },
   created_at: { type: CHDateTime64(3, 'UTC') },
+
+  // todo: redundant, remove this field
   updated_at: { type: CHDateTime64(3, 'UTC') },
 
   // Core workflow run identification
@@ -28,7 +31,9 @@ const schemaDefinition = {
   external_subscriber_id: { type: CHNullable(CHString()) },
 
   // Execution metadata
-  status: { type: CHLowCardinality(CHString()) }, // pending, running, completed, failed, cancelled
+  status: { type: CHLowCardinality(CHString()) }, // processing, error, completed
+  delivery_lifecycle_status: { type: CHLowCardinality(CHString('')) },
+  delivery_lifecycle_detail: { type: CHString('') },
   trigger_identifier: { type: CHString() }, // The event identifier that triggered the workflow
 
   // Correlation and grouping
@@ -65,15 +70,24 @@ const clickhouseSchemaOptions = {
 export const workflowRunSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
 
 export enum WorkflowRunStatusEnum {
+  /**
+   * @deprecated please use processing instead nv-6562
+   */
   PENDING = 'pending',
+  PROCESSING = 'processing',
+  /**
+   * @deprecated please use COMPLETED instead nv-6562
+   */
   SUCCESS = 'success',
+  COMPLETED = 'completed',
   ERROR = 'error',
 }
 
 type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;
 
 export type WorkflowRun = Prettify<
-  Omit<NativeWorkflowRun, 'status'> & {
+  Omit<NativeWorkflowRun, 'status' | 'delivery_lifecycle_status'> & {
     status: WorkflowRunStatusEnum;
+    delivery_lifecycle_status: DeliveryLifecycleStatus;
   }
 >;

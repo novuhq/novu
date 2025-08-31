@@ -13,7 +13,10 @@ export const DropdownTrigger = (props: ComponentProps<typeof Popover.Trigger> & 
 
   return (
     <Popover.Trigger
-      class={style(local.appearanceKey || 'dropdownTrigger', cn(dropdownTriggerButtonVariants(), local.class))}
+      class={style({
+        key: local.appearanceKey || 'dropdownTrigger',
+        className: cn(dropdownTriggerButtonVariants(), local.class),
+      })}
       {...rest}
     />
   );

@@ -1,6 +1,6 @@
+import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { PreferenceLevelEnum } from '@novu/shared';
 import { IsBoolean, IsDefined, IsEnum, IsOptional, ValidateIf } from 'class-validator';
-
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class UpdatePreferencesCommand extends EnvironmentWithSubscriber {
@@ -35,4 +35,10 @@ export class UpdatePreferencesCommand extends EnvironmentWithSubscriber {
   @IsDefined()
   @IsBoolean()
   readonly includeInactiveChannels: boolean;
+
+  @IsOptional()
+  readonly subscriber?: SubscriberEntity;
+
+  @IsOptional()
+  readonly workflow?: NotificationTemplateEntity;
 }

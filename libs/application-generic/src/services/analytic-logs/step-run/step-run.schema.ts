@@ -7,6 +7,7 @@ import {
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
 import { Prettify } from '../../../utils/prettify.type';
+import { StepType } from '..';
 
 export const TABLE_NAME = 'step_runs';
 
@@ -36,6 +37,9 @@ const schemaDefinition = {
   // Execution details
   status: { type: CHLowCardinality(CHString()) }, // pending, queued, running, completed, failed, skipped, cancelled
 
+  // Digest data
+  digest: { type: CHNullable(CHString()) }, // JSON string of digest metadata
+
   // Error handling
   error_code: { type: CHNullable(CHString()) },
   error_message: { type: CHNullable(CHString()) },
@@ -59,8 +63,6 @@ const clickhouseSchemaOptions = {
 };
 
 export const stepRunSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
-
-export type StepType = 'email' | 'sms' | 'in_app' | 'push' | 'chat' | 'digest' | 'trigger' | 'delay' | 'custom';
 
 export type StepRunNonFinalStatus = 'pending' | 'queued' | 'running' | 'delayed';
 export type StepRunFinalStatus = 'completed' | 'failed' | 'canceled' | 'merged' | 'skipped';

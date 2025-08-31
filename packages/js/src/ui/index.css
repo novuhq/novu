@@ -349,5 +349,7 @@
   }
 }
 
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind */
 @tailwind components;
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind */
 @tailwind utilities;

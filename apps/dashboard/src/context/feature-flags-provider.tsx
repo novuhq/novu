@@ -1,6 +1,6 @@
+import { IS_ENTERPRISE, IS_SELF_HOSTED, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
 import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { lazy, Suspense } from 'react';
-import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
 
 const LD_CONFIG = {
   clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
@@ -17,7 +17,7 @@ const LD_CONFIG = {
 } as const;
 
 const AsyncFeatureFlagsProvider = lazy(async () => {
-  if (!LAUNCH_DARKLY_CLIENT_SIDE_ID) {
+  if (!LAUNCH_DARKLY_CLIENT_SIDE_ID || (IS_SELF_HOSTED && IS_ENTERPRISE)) {
     return {
       default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     };

@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable } from '@nes
 import {
   AnalyticsService,
   areNovuEmailCredentialsSet,
+  areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
   buildIntegrationKey,
   encryptCredentials,
@@ -11,6 +12,7 @@ import { DalException, IntegrationEntity, IntegrationQuery, IntegrationRepositor
 import {
   CHANNELS_WITH_PRIMARY,
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   InAppProviderIdEnum,
   providers,
@@ -83,7 +85,8 @@ export class CreateIntegration {
 
     if (
       (command.providerId === SmsProviderIdEnum.Novu && !areNovuSmsCredentialsSet()) ||
-      (command.providerId === EmailProviderIdEnum.Novu && !areNovuEmailCredentialsSet())
+      (command.providerId === EmailProviderIdEnum.Novu && !areNovuEmailCredentialsSet()) ||
+      (command.providerId === ChatProviderIdEnum.Novu && !areNovuSlackCredentialsSet())
     ) {
       throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
     }

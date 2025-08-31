@@ -24,5 +24,11 @@ export const PopoverClose = (props: PopoverCloseProps) => {
     return <Dynamic component={local.asChild} onClick={handleClick} {...rest} />;
   }
 
-  return <button onClick={handleClick} class={style(local.appearanceKey || 'popoverClose', local.class)} {...rest} />;
+  return (
+    <button
+      onClick={handleClick}
+      class={style({ key: local.appearanceKey || 'popoverClose', className: local.class })}
+      {...rest}
+    />
+  );
 };

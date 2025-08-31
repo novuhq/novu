@@ -1,7 +1,7 @@
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { SeverityLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 import {
   BaseStepConfigDto,
   ChatStepUpsertDto,
@@ -29,6 +29,9 @@ import { WorkflowCommonsFields } from './workflow-commons.dto';
 export class CreateWorkflowDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Unique identifier for the workflow' })
   @IsString()
+  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+    message: 'must be a valid slug format (lowercase letters, numbers, and hyphens only)',
+  })
   workflowId: string;
 
   @ApiProperty({

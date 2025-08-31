@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { isActionStepType, isMainDigest, StepRunRepository } from '@novu/application-generic';
+import {
+  isActionStepType,
+  isMainDigest,
+  StepRunRepository,
+} from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 
@@ -9,7 +13,7 @@ import { CancelDelayedCommand } from './cancel-delayed.command';
 export class CancelDelayed {
   constructor(
     private jobRepository: JobRepository,
-    private stepRunRepository: StepRunRepository
+    private stepRunRepository: StepRunRepository,
   ) {}
 
   public async execute(command: CancelDelayedCommand): Promise<boolean> {

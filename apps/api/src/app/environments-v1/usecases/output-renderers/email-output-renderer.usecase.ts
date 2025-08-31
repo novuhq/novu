@@ -531,8 +531,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       parent.content = parent.content.filter((pNode) => pNode !== node);
     }
 
-    // @ts-ignore
-    delete node.attrs[MailyAttrsEnum.SHOW_IF_KEY];
+    delete (node.attrs as Record<string, string>)[MailyAttrsEnum.SHOW_IF_KEY];
 
     return shouldShow;
   }

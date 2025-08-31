@@ -87,7 +87,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
 
         try {
           this.logger.debug({ analyticsLog }, 'Analytics log Inserting');
-          this.requestLogRepository.create(analyticsLog, {
+          await this.requestLogRepository.create(analyticsLog, {
             organizationId: user?.organizationId,
             environmentId: user?.environmentId,
             userId: user?._id,

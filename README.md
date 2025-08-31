@@ -1,5 +1,6 @@
 <div align="center">
-  <a href="https://go.novu.co/github" target="_blank">
+  <a href="https://go.novu.co/github" target="_blank" rel="noopener noreferrer"
+>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
     <img alt="Novu Logo" src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
@@ -9,15 +10,19 @@
 
 <br/>
 <p align="center">
-  <a href="https://www.producthunt.com/products/novu">
+  <a href="https://www.producthunt.com/products/novu" target="_blank" rel="noopener noreferrer"
+>
     <img src="https://img.shields.io/badge/Product%20Hunt-Golden%20Kitty%20Award%202023-yellow" alt="Product Hunt">
   </a>
-  <a href="https://news.ycombinator.com/item?id=38419513"><img src="https://img.shields.io/badge/Hacker%20News-%231-%23FF6600" alt="Hacker News"></a>
-  <a href="https://www.npmjs.com/package/@novu/react">
+  <a href="https://news.ycombinator.com/item?id=38419513" target="_blank" rel="noopener noreferrer"
+><img src="https://img.shields.io/badge/Hacker%20News-%231-%23FF6600" alt="Hacker News"></a>
+  <a href="https://www.npmjs.com/package/@novu/react" target="_blank" rel="noopener noreferrer"
+>
     <img src="https://img.shields.io/npm/v/@novu/react" alt="NPM">
   </a>
   <!-- TODO: Replace this with @novu/api as soon as the NPM download traffic switches to the new package -->
-  <a href="https://www.npmjs.com/package/@novu/node">
+  <a href="https://www.npmjs.com/package/@novu/node" target="_blank" rel="noopener noreferrer"
+>
     <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
   </a>
 </p>
@@ -36,21 +41,29 @@
   <br />
 
 <br/>
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report a bug</a>
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+" target="_blank" rel="noopener noreferrer"
+>Report a bug</a>
   ·
-  <a href="https://docs.novu.co">Docs</a>
+  <a href="https://docs.novu.co" target="_blank" rel="noopener noreferrer"
+>Docs</a>
   ·
-  <a href="https://go.novu.co/github">Website</a>
+  <a href="https://go.novu.co/github" target="_blank" rel="noopener noreferrer"
+>Website</a>
   ·
-  <a href="https://discord.novu.co">Join our Discord</a>
+  <a href="https://discord.novu.co" target="_blank" rel="noopener noreferrer"
+>Join our Discord</a>
   ·
-  <a href="https://go.novu.co/changelog">Changelog</a>
+  <a href="https://go.novu.co/changelog" target="_blank" rel="noopener noreferrer"
+>Changelog</a>
   ·
-  <a href="https://go.novu.co/roadmap">Roadmap</a>
+  <a href="https://go.novu.co/roadmap" target="_blank" rel="noopener noreferrer"
+>Roadmap</a>
   ·
-  <a href="https://twitter.com/novuhq">X</a>
+  <a href="https://twitter.com/novuhq" target="_blank" rel="noopener noreferrer"
+>X</a>
   ·
-  <a href="https://novu.co/contact-us/?utm_campaign=github-readme">Contact us</a>
+  <a href="https://novu.co/contact-us/?utm_campaign=github-readme" target="_blank" rel="noopener noreferrer"
+>Contact us</a>
 </p>
 
 ## ⭐️ Why Novu?
@@ -187,6 +200,7 @@ The following modules and folders are licensed under the enterprise license:
 
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
-<a href="https://novu.co/contributors?utm_source=github">
+<a href="https://novu.co/contributors?utm_source=github" target="_blank" rel="noopener noreferrer"
+>
   <img src="https://contributors-img.web.app/image?repo=novuhq/novu" alt="Contributors"/>
 </a>
