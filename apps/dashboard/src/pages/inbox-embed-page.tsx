@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, IIntegration } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatedPage } from '@/components/onboarding/animated-page';
@@ -23,36 +23,19 @@ export function InboxEmbedPage() {
   );
 
   const { integrations } = useFetchIntegrations({
-    refetchInterval: undefined,
+    refetchInterval: (query) => {
+      const inAppIntegration = query.state.data?.find(
+        (integration: IIntegration) =>
+          integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
+      );
+      return inAppIntegration?.connected ? undefined : 1000;
+    },
     refetchOnWindowFocus: false,
   });
 
+  const currentIntegrations = integrations;
+
   const inAppIntegration = useMemo(
-    () =>
-      integrations?.find(
-        (integration) =>
-          integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
-      ),
-    [integrations, selectedEnvironment?._id]
-  );
-
-  const isInAppConnected = inAppIntegration?.connected;
-
-  // Adaptive polling: only poll if not connected
-  const adaptivePollingOptions = useMemo(
-    () => ({
-      refetchInterval: isInAppConnected ? undefined : 1000,
-      refetchOnWindowFocus: false,
-    }),
-    [isInAppConnected]
-  );
-
-  // Re-fetch integrations with adaptive options
-  const { integrations: polledIntegrations } = useFetchIntegrations(adaptivePollingOptions);
-
-  const currentIntegrations = polledIntegrations || integrations;
-
-  const currentInAppIntegration = useMemo(
     () =>
       currentIntegrations?.find(
         (integration) =>
@@ -61,7 +44,7 @@ export function InboxEmbedPage() {
     [currentIntegrations, selectedEnvironment?._id]
   );
 
-  const isConnected = currentInAppIntegration?.connected;
+  const isConnected = inAppIntegration?.connected;
 
   useEffect(() => {
     telemetry(TelemetryEvent.INBOX_EMBED_PAGE_VIEWED);

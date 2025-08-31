@@ -99,22 +99,56 @@ export function useFirstTriggerDetection({
         return;
       }
 
-      // Compare timestamps - only count triggers that happened after the current page visit
-      const triggerTime = new Date(workflow.lastTriggeredAt).getTime();
-      const visitTime = new Date(firstVisitTimestamp).getTime();
+      let triggerTime: number;
+      let visitTime: number;
 
-      // Validate that visitTime is a valid timestamp
-      if (!Number.isFinite(visitTime) || Number.isNaN(visitTime)) {
-        console.error('Invalid firstVisitTimestamp provided:', firstVisitTimestamp);
-        setIsWaitingForTrigger(false);
-        setHasDetectedFirstTrigger(false);
-        return;
-      }
+      try {
+        // Parse both timestamps inside try/catch
+        triggerTime = new Date(workflow.lastTriggeredAt).getTime();
+        visitTime = new Date(firstVisitTimestamp).getTime();
 
-      if (triggerTime > visitTime) {
-        setHasDetectedFirstTrigger(true);
+        // Validate both timestamps are valid numbers
+        if (!Number.isFinite(triggerTime) || Number.isNaN(triggerTime)) {
+          console.error('Invalid lastTriggeredAt timestamp:', workflow.lastTriggeredAt);
+          setIsWaitingForTrigger(false);
+          return;
+        }
+
+        if (!Number.isFinite(visitTime) || Number.isNaN(visitTime)) {
+          console.error('Invalid firstVisitTimestamp:', firstVisitTimestamp);
+          setIsWaitingForTrigger(false);
+          return;
+        }
+
+        const now = Date.now();
+
+        // Check if visitTime is in the future
+        if (visitTime > now) {
+          console.warn('First visit timestamp is in the future, ignoring detection:', firstVisitTimestamp);
+          setIsWaitingForTrigger(false);
+          return;
+        }
+
+        // Check if triggerTime is in the future - treat as not detected
+        if (triggerTime > now) {
+          console.warn('Trigger timestamp is in the future, treating as not detected:', workflow.lastTriggeredAt);
+          setIsWaitingForTrigger(true);
+          return;
+        }
+
+        // All validation passed, now check if trigger happened after visit
+        if (triggerTime > visitTime) {
+          setHasDetectedFirstTrigger(true);
+          setIsWaitingForTrigger(false);
+          onFirstTriggerDetected?.();
+        }
+      } catch (error) {
+        console.error('Error parsing timestamps:', {
+          error,
+          lastTriggeredAt: workflow.lastTriggeredAt,
+          firstVisitTimestamp,
+        });
         setIsWaitingForTrigger(false);
-        onFirstTriggerDetected?.();
       }
     }
   }, [workflow, isPending, hasDetectedFirstTrigger, enabled, onFirstTriggerDetected, firstVisitTimestamp]);

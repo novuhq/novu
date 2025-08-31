@@ -8,7 +8,7 @@ export function useFetchIntegrations({
   refetchInterval,
   refetchOnWindowFocus,
 }: {
-  refetchInterval?: number;
+  refetchInterval?: number | ((query: { state: { data: IIntegration[] | undefined } }) => number | undefined);
   refetchOnWindowFocus?: boolean;
 } = {}) {
   const { currentEnvironment } = useEnvironment();

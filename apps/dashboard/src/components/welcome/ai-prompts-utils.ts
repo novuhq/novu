@@ -1,5 +1,11 @@
 import type { CriticalInstructions, SetupStep, VerificationSteps } from './ai-prompts';
 
+// Helper function to escape strings for double-quoted string literals
+function escapeForDoubleQuotes(str: string | undefined): string {
+  if (!str) return '';
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 // Common setup steps that can be reused across frameworks
 export const COMMON_SETUP_STEPS = {
   installPackage: (packageName: string): SetupStep => ({
@@ -116,42 +122,63 @@ export const ENV_ACCESS_PATTERNS: Record<string, string> = {
   JavaScript: 'process.env.NOVU_APP_IDENTIFIER',
   Angular: 'environment.novuAppIdentifier',
   Vue: 'import.meta.env.VITE_NOVU_APP_IDENTIFIER',
-  Remix: 'process.env.NOVU_APP_IDENTIFIER',
-  Native: 'process.env.NOVU_APP_IDENTIFIER',
+  Remix: 'ENV.NOVU_APP_IDENTIFIER', // Access via useLoaderData() hook
+  Native: 'process.env.EXPO_PUBLIC_NOVU_APP_IDENTIFIER', // Use EXPO_PUBLIC_ prefix for runtime access
 };
 
+// Interface for Novu configuration
+export interface NovuConfig {
+  backendUrl?: string;
+  socketUrl?: string;
+  applicationIdentifier: string;
+  subscriberId: string;
+}
+
+// Helper function to create framework-specific config string
+function createConfigString(config: Partial<NovuConfig>, framework: string): string {
+  if (!config.backendUrl && !config.socketUrl) return '';
+
+  const configEntries = Object.entries(config)
+    .filter(([_, value]) => value !== undefined)
+    .map(([key, value]) => {
+      // JavaScript uses object property syntax
+      if (framework === 'JavaScript') {
+        return `${key}: "${escapeForDoubleQuotes(value)}"`;
+      }
+      // Other frameworks use JSX attribute syntax
+      return `${key}="${escapeForDoubleQuotes(value)}"`;
+    });
+
+  return framework === 'JavaScript' ? configEntries.join(',\n  ') : configEntries.join('\n      ');
+}
+
 // Region-specific configuration patterns (US by default - no backend URL needed)
-export const REGION_CONFIG_PATTERNS: Record<string, string> = {
-  'Next.js': '',
-  React: '',
-  JavaScript: '',
-  Angular: '',
-  Vue: '',
-  Remix: '',
-  Native: '',
+export const REGION_CONFIG_PATTERNS: Record<string, Partial<NovuConfig>> = {
+  'Next.js': {},
+  React: {},
+  JavaScript: {},
+  Angular: {},
+  Vue: {},
+  Remix: {},
+  Native: {},
 };
 
 // EU region-specific configuration patterns (only needed for EU users)
-export const EU_REGION_CONFIG_PATTERNS: Record<string, string> = {
-  'Next.js': 'backendUrl="https://api.eu.novu.co"\n      socketUrl="https://ws.eu.novu.co"',
-  React: 'backendUrl="https://api.eu.novu.co"\n      socketUrl="https://ws.eu.novu.co"',
-  JavaScript: 'backendUrl: "https://api.eu.novu.co",\n  socketUrl: "https://ws.eu.novu.co"',
-  Angular: 'backendUrl="https://api.eu.novu.co"\n      socketUrl="https://ws.eu.novu.co"',
-  Vue: 'backendUrl="https://api.eu.novu.co"\n      socketUrl="https://ws.eu.novu.co"',
-  Remix: 'backendUrl="https://api.eu.novu.co"\n      socketUrl="https://ws.eu.novu.co"',
-  Native: 'backendUrl="https://api.eu.novu.co"\n      socketUrl="https://ws.eu.novu.co"',
+const EU_REGION_BASE_CONFIG: Partial<NovuConfig> = {
+  backendUrl: 'https://api.eu.novu.co',
+  socketUrl: 'https://ws.eu.novu.co',
 };
 
+export const EU_REGION_CONFIG_PATTERNS: Record<string, Partial<NovuConfig>> = Object.fromEntries(
+  Object.keys(REGION_CONFIG_PATTERNS).map((framework) => [framework, EU_REGION_BASE_CONFIG])
+);
+
 // Simple testing patterns for different frameworks (no auth complexity)
-export const AUTH_PATTERNS: Record<string, string> = {
-  'Next.js': 'getTemporarySubscriberId() // Create this function for testing',
-  React: 'getTemporarySubscriberId() // Create this function for testing',
-  JavaScript: 'getTemporarySubscriberId() // Create this function for testing',
-  Angular: 'getTemporarySubscriberId() // Create this function for testing',
-  Vue: 'getTemporarySubscriberId() // Create this function for testing',
-  Remix: 'getTemporarySubscriberId() // Create this function for testing',
-  Native: 'getTemporarySubscriberId() // Create this function for testing',
-};
+const DEFAULT_AUTH_PATTERN = 'getTemporarySubscriberId() // Create this function for testing';
+
+export const AUTH_PATTERNS: Record<string, string> = Object.fromEntries(
+  Object.keys(REGION_CONFIG_PATTERNS).map((framework) => [framework, DEFAULT_AUTH_PATTERN])
+);
 
 // Production authentication patterns (for reference)
 export const PRODUCTION_AUTH_PATTERNS: Record<string, string> = {
@@ -236,8 +263,8 @@ function getEnvVarName(framework: string): string {
     JavaScript: 'NOVU_APP_IDENTIFIER',
     Angular: 'novuAppIdentifier', // Angular uses environment object, not env vars
     Vue: 'VITE_NOVU_APP_IDENTIFIER',
-    Remix: 'NOVU_APP_IDENTIFIER',
-    Native: 'NOVU_APP_IDENTIFIER',
+    Remix: 'NOVU_APP_IDENTIFIER', // Will be passed through loader
+    Native: 'EXPO_PUBLIC_NOVU_APP_IDENTIFIER', // Expo public env var
   };
   return envVarMap[framework] || 'NOVU_APP_IDENTIFIER';
 }
@@ -271,18 +298,18 @@ function getEnvSetupCode(
   if (framework === 'Angular') {
     return `export const environment = {
   production: false,
-  novuAppIdentifier: '${appId}',
-  novuSubscriberId: '${subId}',
-  novuBackendUrl: '${backend}',
-  novuSocketUrl: '${socket}'
+  novuAppIdentifier: '${escapeForDoubleQuotes(appId)}',
+  novuSubscriberId: '${escapeForDoubleQuotes(subId)}',
+  novuBackendUrl: '${escapeForDoubleQuotes(backend)}',
+  novuSocketUrl: '${escapeForDoubleQuotes(socket)}'
 };`;
   }
 
   const envVars = [
-    `${envVarName}=${appId}`,
-    subscriberId ? `NOVU_SUBSCRIBER_ID=${subId}` : '',
-    backendUrl ? `NOVU_BACKEND_URL=${backend}` : '',
-    socketUrl ? `NOVU_SOCKET_URL=${socket}` : '',
+    `${envVarName}=${escapeForDoubleQuotes(appId)}`,
+    subscriberId ? `NOVU_SUBSCRIBER_ID=${escapeForDoubleQuotes(subId)}` : '',
+    backendUrl ? `NOVU_BACKEND_URL=${escapeForDoubleQuotes(backend)}` : '',
+    socketUrl ? `NOVU_SOCKET_URL=${escapeForDoubleQuotes(socket)}` : '',
   ].filter(Boolean);
 
   return envVars.join('\n');
@@ -342,19 +369,20 @@ export function generateFrameworkSpecificSetup(
   const envVarName = getEnvVarName(framework);
   const envAccess = ENV_ACCESS_PATTERNS[framework];
   const authPattern = AUTH_PATTERNS[framework];
-  const regionConfig = isEuRegion ? EU_REGION_CONFIG_PATTERNS[framework] : REGION_CONFIG_PATTERNS[framework];
 
-  // Use provided values or fall back to environment variables
-  const appIdentifier = applicationIdentifier ? `"${applicationIdentifier}"` : envAccess;
+  // Build the configuration object
+  const config: Partial<NovuConfig> = {
+    ...(isEuRegion ? EU_REGION_CONFIG_PATTERNS[framework] : REGION_CONFIG_PATTERNS[framework]),
+    ...(backendUrl ? { backendUrl } : {}),
+    ...(socketUrl ? { socketUrl } : {}),
+  };
 
-  // For subscriberId, always show both the function and the provided value when available
-  const subscriberIdValue = subscriberId ? `"${subscriberId}"` : authPattern;
+  // Use provided values or fall back to environment variables for required fields
+  const appIdentifier = applicationIdentifier ? `"${escapeForDoubleQuotes(applicationIdentifier)}"` : envAccess;
+  const subscriberIdValue = subscriberId ? `"${escapeForDoubleQuotes(subscriberId)}"` : authPattern;
 
-  const backendUrlValue = backendUrl ? `backendUrl="${backendUrl}"` : '';
-  const socketUrlValue = socketUrl ? `socketUrl="${socketUrl}"` : '';
-
-  // Combine URL configurations
-  const urlConfig = [backendUrlValue, socketUrlValue].filter(Boolean).join('\n      ');
+  // Generate the configuration string
+  const configString = createConfigString(config, framework);
 
   steps.push({
     title: `Set environment variables in ${getEnvFileName(framework)}`,
@@ -395,7 +423,7 @@ export default function RootLayout({
         <nav>
           <Inbox 
             applicationIdentifier={${appIdentifier}}
-            subscriberId={${subscriberIdValue}}${urlConfig ? `\n            ${urlConfig}` : ''}${regionConfig ? `\n            ${regionConfig}` : ''}
+            subscriberId={${subscriberIdValue}}${configString ? `\n            ${configString}` : ''}
             // Alternative: subscriberId={getTemporarySubscriberId()} // For testing
             // Alternative: subscriberId={user?.id} // For production with auth
           />
@@ -435,7 +463,7 @@ export function NovuInbox() {
   return (
     <Inbox
       applicationIdentifier={${appIdentifier}}
-      subscriberId={${subscriberIdValue}}${urlConfig ? `\n      ${urlConfig}` : ''}${regionConfig ? `\n      ${regionConfig}` : ''}
+      subscriberId={${subscriberIdValue}}${configString ? `\n      ${configString}` : ''}
       // Alternative: subscriberId={getTemporarySubscriberId()} // For testing
       // Alternative: subscriberId={user?.id} // For production with auth
     />
@@ -469,7 +497,7 @@ ${getEnvValidationCode(framework, envAccess)}
 
 export const novu = new Novu({
   applicationIdentifier: ${appIdentifier},
-  subscriber: ${subscriberIdValue}${urlConfig ? `,\n  ${urlConfig.replace(/backendUrl="([^"]+)"/, 'backendUrl: "$1"').replace(/socketUrl="([^"]+)"/, 'socketUrl: "$1"')}` : ''}${regionConfig ? `,\n  ${regionConfig.replace('backendUrl="', 'backendUrl: "').replace('"', '",').replace('\n      socketUrl="', '\n  socketUrl: "').replace('"', '",')}` : ''}
+  subscriber: ${subscriberIdValue}${configString ? `,\n  ${configString}` : ''}
   // Alternative: subscriber: getTemporarySubscriberId() // For testing
   // Alternative: subscriber: getCurrentUserId() // For production with auth
 });`,
@@ -557,8 +585,8 @@ export class AppComponent implements OnInit {
         title: 'Create the Inbox component',
         description: 'Create the src/components/NovuInbox.vue file:',
         code: `<script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { Novu } from '@novu/js';
+import { onMounted, onUnmounted, ref } from 'vue';
+import { NovuUI } from '@novu/js/ui';
 import { useAuth } from '@/composables/useAuth'; // your auth composable
 
 // Function to generate temporary subscriber ID for testing
@@ -568,25 +596,34 @@ function getTemporarySubscriberId(): string {
 
 const novuInbox = ref<HTMLElement>();
 const { user, isLoaded } = useAuth();
+let novuUI: NovuUI | undefined;
 
 onMounted(() => {
   ${getEnvValidationCode(framework, envAccess)}
   
   if (novuInbox.value && isLoaded.value) {
     try {
-      const novu = new Novu(${appIdentifier});
-      
-      novu.initializeInbox(novuInbox.value, {
+      novuUI = new NovuUI({
+        applicationIdentifier: ${appIdentifier},
         subscriberId: ${subscriberIdValue}, // CLI-provided subscriber ID
         // Alternative: subscriberId: getTemporarySubscriberId(), // For testing
         // Alternative: subscriberId: user.value?.id, // For production
-        subscriberEmail: user.value?.email,
-        subscriberFirstName: user.value?.firstName,
-        subscriberLastName: user.value?.lastName
+      });
+      
+      novuUI.mountComponent({
+        name: 'Inbox',
+        props: {},
+        element: novuInbox.value
       });
     } catch (error) {
       console.error('Error initializing Novu inbox:', error);
     }
+  }
+});
+
+onUnmounted(() => {
+  if (novuUI) {
+    novuUI.unmountComponent();
   }
 });
 </script>
@@ -600,6 +637,7 @@ onMounted(() => {
           'For production: Replace with dynamic ID from your authentication solution.',
           'Common patterns: useAuth composable, Pinia store, Vuex store, etc.',
           'Region configuration is automatically included for EU users only.',
+          'The component properly cleans up by unmounting on component destruction.',
         ],
       });
       break;
@@ -610,19 +648,27 @@ onMounted(() => {
         description: 'In the app directory, create a components/notification-center.tsx file:',
         code: `import { Inbox } from "@novu/react";
 import { useUser } from "@clerk/remix"; // or your auth solution
+import { useLoaderData } from "@remix-run/react";
 
 // Function to generate temporary subscriber ID for testing
 function getTemporarySubscriberId(): string {
   return 'user-' + Date.now();
 }
 
+// Note: Your route must export a loader that returns { ENV: { NOVU_APP_IDENTIFIER: string } }
+// Example loader:
+// export async function loader() {
+//   return { ENV: { NOVU_APP_IDENTIFIER: process.env.NOVU_APP_IDENTIFIER } };
+// }
+
 export function NotificationCenter() {
   const { user } = useUser();
+  const { ENV } = useLoaderData<{ ENV: { NOVU_APP_IDENTIFIER: string } }>();
   
   return (
     <Inbox
-      applicationIdentifier={${appIdentifier}}
-      subscriberId={${subscriberIdValue}}${urlConfig ? `\n      ${urlConfig}` : ''}
+      applicationIdentifier={ENV.NOVU_APP_IDENTIFIER}
+      subscriberId={${subscriberIdValue}}${configString ? `\n      ${configString}` : ''}
       // Alternative: subscriberId={getTemporarySubscriberId()} // For testing
       // Alternative: subscriberId={user?.id} // For production
     />
@@ -632,6 +678,8 @@ export function NotificationCenter() {
           'subscriberId should be dynamically retrieved from your authentication solution.',
           'Common patterns: useUser()?.id (Clerk), user.id (Auth0), useLoaderData()?.user?.id (Remix), etc.',
           'Always handle the case where user might not be authenticated.',
+          'The route must export a loader that returns the ENV object with NOVU_APP_IDENTIFIER for client-side access.',
+          'Environment variables in Remix must be passed through loaders to be available on the client.',
         ],
       });
       break;

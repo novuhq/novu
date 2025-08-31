@@ -184,7 +184,7 @@ export const AI_PROMPTS: AiPrompt[] = Object.keys(FRAMEWORK_CONFIGS).map((framew
 });
 
 // Generate AI prompts with custom parameters
-export function generateCustomAIPropmts(
+export function generateCustomAIPrompts(
   isEuRegion: boolean = false,
   applicationIdentifier?: string,
   subscriberId?: string,
@@ -234,6 +234,9 @@ export function generateCustomAIPropmts(
   });
 }
 
+// Backward-compatible alias for the old misspelled function name
+export const generateCustomAIPropmts = generateCustomAIPrompts;
+
 // Helper function to get framework prompt (maintains backward compatibility)
 export function getFrameworkPrompt(
   frameworkName: string,
@@ -245,7 +248,7 @@ export function getFrameworkPrompt(
 ): string {
   const prompts =
     applicationIdentifier || subscriberId || backendUrl || socketUrl
-      ? generateCustomAIPropmts(isEuRegion, applicationIdentifier, subscriberId, backendUrl, socketUrl)
+      ? generateCustomAIPrompts(isEuRegion, applicationIdentifier, subscriberId, backendUrl, socketUrl)
       : AI_PROMPTS;
   const prompt = prompts.find((p) => p.framework === frameworkName);
 

@@ -70,13 +70,13 @@ export function InboxEmbed(): JSX.Element | null {
         <footer className={`pt-32 pb-6 ${LAYOUT_CONSTANTS.FOOTER_MARGIN_LEFT}`}>
           <div className="flex justify-center">
             <button
-              className="px-6 py-2 text-xs font-medium hover:underline hover:underline-offset-2 transition-colors"
-              style={{ color: 'rgb(82, 88, 102)' }}
+              type="button"
+              className="px-6 py-2 text-xs font-medium text-[#525866] hover:underline hover:underline-offset-2 transition-colors"
               onClick={() => {
-                navigate(ROUTES.WELCOME);
                 telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
                   skippedFrom: 'inbox-embed',
                 });
+                navigate(ROUTES.WELCOME);
               }}
             >
               Skip to the Dashboard
@@ -104,13 +104,13 @@ export function InboxEmbed(): JSX.Element | null {
       <footer className={`pt-32 pb-6 ${LAYOUT_CONSTANTS.FOOTER_MARGIN_LEFT}`}>
         <div className="flex justify-center">
           <button
-            className="px-6 py-2 text-xs font-medium hover:underline hover:underline-offset-2 transition-colors"
-            style={{ color: 'rgb(82, 88, 102)' }}
+            type="button"
+            className="px-6 py-2 text-xs font-medium text-[#525866] hover:underline hover:underline-offset-2 transition-colors"
             onClick={() => {
-              navigate(ROUTES.WELCOME);
               telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
                 skippedFrom: foundIntegration?.connected ? 'inbox-connected-guide' : 'inbox-embed',
               });
+              navigate(ROUTES.HOME);
             }}
           >
             Skip to the Dashboard
