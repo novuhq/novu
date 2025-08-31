@@ -59,6 +59,8 @@ interface InboxFrameworkGuideProps {
   subscriberId: string;
   primaryColor: string;
   foregroundColor: string;
+  backendUrl?: string;
+  socketUrl?: string;
 }
 
 function updateFrameworkCode(
@@ -91,6 +93,8 @@ export function InboxFrameworkGuide({
   subscriberId,
   primaryColor,
   foregroundColor,
+  backendUrl,
+  socketUrl,
 }: InboxFrameworkGuideProps) {
   const track = useTelemetry();
   const [selectedFramework, setSelectedFramework] = useState<Framework>(
@@ -131,6 +135,12 @@ export function InboxFrameworkGuide({
   }
 
   const frameworks = getFrameworks(installationMethod);
+
+  // Get the actual code snippet from the selected framework
+  const selectedFrameworkWithCode = frameworks.find((f) => f.name === selectedFramework.name);
+  const codeSnippet = selectedFrameworkWithCode?.installSteps.find(
+    (step) => step.title.includes('Add the inbox code') || step.title.includes('Create the Inbox')
+  )?.code;
 
   return (
     <>
@@ -191,6 +201,9 @@ export function InboxFrameworkGuide({
                 frameworkName={selectedFramework.name}
                 applicationIdentifier={currentEnvironment?.identifier}
                 subscriberId={subscriberId}
+                backendUrl={backendUrl}
+                socketUrl={socketUrl}
+                codeSnippet={codeSnippet}
               />
             </div>
 
@@ -232,6 +245,9 @@ export function InboxFrameworkGuide({
                 frameworkName={selectedFramework.name}
                 applicationIdentifier={currentEnvironment?.identifier}
                 subscriberId={subscriberId}
+                backendUrl={backendUrl}
+                socketUrl={socketUrl}
+                codeSnippet={codeSnippet}
               />
             </div>
             <div className="relative mt-2 overflow-hidden pl-0">

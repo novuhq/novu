@@ -1,4 +1,3 @@
-// Types for better structure and type safety
 export interface FrameworkConfig {
   name: string;
   packageName: string;
@@ -36,7 +35,6 @@ export interface AiPrompt {
   responseTemplate: string[];
 }
 
-// Framework configurations - centralized and reusable
 const FRAMEWORK_CONFIGS: Record<string, FrameworkConfig> = {
   'Next.js': {
     name: 'Next.js',
@@ -119,14 +117,14 @@ import {
   generateVerificationSteps,
 } from './ai-prompts-utils';
 
-// Generate framework-specific setup steps with additional framework-specific content
 function generateFrameworkSetupWithContent(
   framework: string,
   isEuRegion: boolean = false,
   applicationIdentifier?: string,
   subscriberId?: string,
   backendUrl?: string,
-  socketUrl?: string
+  socketUrl?: string,
+  codeSnippet?: string
 ): SetupStep[] {
   const baseSteps = generateFrameworkSetup(framework);
   const config = FRAMEWORK_CONFIGS[framework];
@@ -134,21 +132,19 @@ function generateFrameworkSetupWithContent(
 
   const steps = [...baseSteps];
 
-  // Add package installation
   steps.push(COMMON_SETUP_STEPS.installPackage(config.packageName));
 
-  // Add framework-specific setup steps
   const frameworkSpecificSteps = generateFrameworkSpecificSetup(
     framework,
     isEuRegion,
     applicationIdentifier,
     subscriberId,
     backendUrl,
-    socketUrl
+    socketUrl,
+    codeSnippet
   );
   steps.push(...frameworkSpecificSteps);
 
-  // Add run app step
   const runCommand =
     framework === 'Next.js'
       ? 'npm run dev'
@@ -163,33 +159,19 @@ function generateFrameworkSetupWithContent(
               : 'npm run dev';
   steps.push(COMMON_SETUP_STEPS.runApp(runCommand));
 
-  // Add trigger and view notification steps
   steps.push(COMMON_SETUP_STEPS.triggerNotification());
   steps.push(COMMON_SETUP_STEPS.viewNotification());
 
   return steps;
 }
 
-// Generate the complete AI prompts
-export const AI_PROMPTS: AiPrompt[] = Object.keys(FRAMEWORK_CONFIGS).map((framework) => {
-  const config = FRAMEWORK_CONFIGS[framework];
-  return {
-    framework,
-    config,
-    setup: generateFrameworkSetupWithContent(framework),
-    criticalInstructions: generateCriticalInstructions(framework),
-    verification: generateVerificationSteps(framework),
-    responseTemplate: generateResponseTemplate(framework, config.docsUrl, config.packageName),
-  };
-});
-
-// Generate AI prompts with custom parameters
 export function generateCustomAIPrompts(
   isEuRegion: boolean = false,
   applicationIdentifier?: string,
   subscriberId?: string,
   backendUrl?: string,
-  socketUrl?: string
+  socketUrl?: string,
+  codeSnippet?: string
 ): AiPrompt[] {
   return Object.keys(FRAMEWORK_CONFIGS).map((framework) => {
     const config = FRAMEWORK_CONFIGS[framework];
@@ -202,7 +184,8 @@ export function generateCustomAIPrompts(
         applicationIdentifier,
         subscriberId,
         backendUrl,
-        socketUrl
+        socketUrl,
+        codeSnippet
       ),
       criticalInstructions: generateCriticalInstructions(
         framework,
@@ -234,29 +217,29 @@ export function generateCustomAIPrompts(
   });
 }
 
-// Backward-compatible alias for the old misspelled function name
-export const generateCustomAIPropmts = generateCustomAIPrompts;
-
-// Helper function to get framework prompt (maintains backward compatibility)
 export function getFrameworkPrompt(
   frameworkName: string,
   isEuRegion: boolean = false,
   applicationIdentifier?: string,
   subscriberId?: string,
   backendUrl?: string,
-  socketUrl?: string
+  socketUrl?: string,
+  codeSnippet?: string
 ): string {
-  const prompts =
-    applicationIdentifier || subscriberId || backendUrl || socketUrl
-      ? generateCustomAIPrompts(isEuRegion, applicationIdentifier, subscriberId, backendUrl, socketUrl)
-      : AI_PROMPTS;
+  const prompts = generateCustomAIPrompts(
+    isEuRegion,
+    applicationIdentifier,
+    subscriberId,
+    backendUrl,
+    socketUrl,
+    codeSnippet
+  );
   const prompt = prompts.find((p) => p.framework === frameworkName);
 
   if (!prompt) {
     return 'Help me integrate Novu inbox into my application. I need step-by-step guidance for setup and customization.';
   }
 
-  // Convert the structured data back to the original format for backward compatibility
   const sections = [
     `# Add Novu to ${prompt.config.name}`,
     '',
@@ -313,14 +296,12 @@ export function getFrameworkPrompt(
     '',
     ...prompt.responseTemplate.map((item, index) => `${index + 1}. ${item}`),
     '',
-    // Add framework-specific sections
     ...generateFrameworkSpecificSection(frameworkName),
   ];
 
   return sections.join('\n');
 }
 
-// Generate framework-specific sections for special requirements
 function generateFrameworkSpecificSection(framework: string): string[] {
   switch (framework) {
     case 'Next.js':
@@ -437,5 +418,4 @@ function generateFrameworkSpecificSection(framework: string): string[] {
   }
 }
 
-// Export individual framework configs for potential reuse
 export { FRAMEWORK_CONFIGS };

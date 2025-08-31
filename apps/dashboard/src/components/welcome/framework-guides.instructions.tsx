@@ -1,5 +1,5 @@
-import { API_HOSTNAME, IS_EU, WEBSOCKET_HOSTNAME } from '@/config';
 import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
+import { API_HOSTNAME, IS_EU, WEBSOCKET_HOSTNAME } from '@/config';
 import { Language } from '../primitives/code-block';
 
 export interface Framework {

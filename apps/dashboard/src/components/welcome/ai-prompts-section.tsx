@@ -15,6 +15,7 @@ interface AiPromptsSectionProps {
   subscriberId?: string;
   backendUrl?: string;
   socketUrl?: string;
+  codeSnippet?: string;
 }
 
 export function AiPromptsSection({
@@ -24,11 +25,20 @@ export function AiPromptsSection({
   subscriberId,
   backendUrl,
   socketUrl,
+  codeSnippet,
 }: AiPromptsSectionProps) {
   const track = useTelemetry();
   const [isCopied, setIsCopied] = useState(false);
 
-  const prompt = getFrameworkPrompt(frameworkName, IS_EU, applicationIdentifier, subscriberId, backendUrl, socketUrl);
+  const prompt = getFrameworkPrompt(
+    frameworkName,
+    IS_EU,
+    applicationIdentifier,
+    subscriberId,
+    backendUrl,
+    socketUrl,
+    codeSnippet
+  );
 
   const handleCopyPrompt = async () => {
     try {

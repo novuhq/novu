@@ -2,6 +2,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { IS_EU, MODE } from '../../config';
 import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useFetchIntegrations } from '../../hooks/use-fetch-integrations';
@@ -39,6 +40,11 @@ export function InboxEmbed(): JSX.Element | null {
   const primaryColor = searchParams.get('primaryColor') || '#DD2450';
   const foregroundColor = searchParams.get('foregroundColor') || '#0E121B';
 
+  // Only show backendUrl and socketUrl if not production and not EU region
+  const shouldShowCustomUrls = MODE !== 'production' && !IS_EU;
+  const backendUrl = shouldShowCustomUrls ? searchParams.get('backendUrl') || undefined : undefined;
+  const socketUrl = shouldShowCustomUrls ? searchParams.get('socketUrl') || undefined : undefined;
+
   useEffect(() => {
     if (!subscriberId || !selectedEnvironment) {
       navigate(ROUTES.WELCOME);
@@ -65,6 +71,8 @@ export function InboxEmbed(): JSX.Element | null {
           subscriberId={subscriberId}
           primaryColor={primaryColor}
           foregroundColor={foregroundColor}
+          backendUrl={backendUrl}
+          socketUrl={socketUrl}
         />
 
         <footer className={`pt-32 pb-6 ${LAYOUT_CONSTANTS.FOOTER_MARGIN_LEFT}`}>
@@ -98,6 +106,8 @@ export function InboxEmbed(): JSX.Element | null {
           subscriberId={subscriberId}
           primaryColor={primaryColor}
           foregroundColor={foregroundColor}
+          backendUrl={backendUrl}
+          socketUrl={socketUrl}
         />
       )}
 
