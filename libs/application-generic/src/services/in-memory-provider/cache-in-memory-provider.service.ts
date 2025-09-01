@@ -27,11 +27,11 @@ export class CacheInMemoryProviderService {
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED && process.env.NOVU_ENTERPRISE === 'false') {
+    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
       return InMemoryProviderEnum.REDIS;
     }
 
-    if (process.env.IS_SELF_HOSTED && process.env.NOVU_ENTERPRISE === 'true') {
+    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'true') {
       return InMemoryProviderEnum.REDIS_MASTER_SLAVE;
     }
 
