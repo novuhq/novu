@@ -1,3 +1,5 @@
+import { IConfigurations } from '../entities/integration/configuration.interface';
+
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',
@@ -19,9 +21,6 @@ export enum CredentialsKeyEnum {
   ProjectName = 'projectName',
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
-  InboundWebhookEnabled = 'inboundWebhook_enabled',
-  InboundWebhookUrl = 'inboundWebhook_url',
-  InboundWebhookSigningKey = 'inboundWebhook_signingKey',
   WebhookUrl = 'webhookUrl',
   RequireTls = 'requireTls',
   IgnoreTls = 'ignoreTls',
@@ -51,6 +50,8 @@ export enum CredentialsKeyEnum {
   AppSid = 'appSid',
   SenderId = 'senderId',
 }
+
+export type ConfigurationKey = keyof IConfigurations;
 
 export enum EmailProviderIdEnum {
   EmailJS = 'emailjs',

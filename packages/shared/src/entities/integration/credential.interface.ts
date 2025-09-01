@@ -47,7 +47,4 @@ export interface ICredentials {
   apiVersion?: string;
   appSid?: string;
   senderId?: string;
-  inboundWebhook_enabled?: boolean;
-  inboundWebhook_url?: string;
-  inboundWebhook_signingKey?: string;
 }

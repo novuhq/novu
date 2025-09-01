@@ -3,16 +3,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Input } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
-
-type IntegrationFormData = {
-  name: string;
-  identifier: string;
-  credentials: Record<string, string>;
-  active: boolean;
-  check: boolean;
-  primary: boolean;
-  environmentId: string;
-};
+import { IntegrationFormData } from '../types';
 
 type GeneralSettingsProps = {
   control: Control<IntegrationFormData>;
@@ -44,7 +35,7 @@ export function GeneralSettings({
               Active Integration
             </FormLabel>
             <FormControl>
-              <Switch id="active" checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
+              <Switch id={field.name} checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
             </FormControl>
           </FormItem>
         )}
@@ -65,7 +56,7 @@ export function GeneralSettings({
               </FormLabel>
               <FormControl>
                 <Switch
-                  id="primary"
+                  id={field.name}
                   checked={field.value}
                   onCheckedChange={field.onChange}
                   disabled={disabledPrimary || isReadOnly}
@@ -88,7 +79,7 @@ export function GeneralSettings({
               Name
             </FormLabel>
             <FormControl>
-              <Input id="name" {...field} disabled={isReadOnly} />
+              <Input id={field.name} {...field} disabled={isReadOnly} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -112,7 +103,7 @@ export function GeneralSettings({
             </FormLabel>
             <FormControl>
               <Input
-                id="identifier"
+                id={field.name}
                 {...field}
                 readOnly={mode === 'update' || isReadOnly}
                 hasError={!!fieldState.error}
