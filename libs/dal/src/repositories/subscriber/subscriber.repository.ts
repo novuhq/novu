@@ -16,7 +16,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     environmentId: string,
     subscriberId: string,
     secondaryRead = false,
-    select?: ProjectionType<SubscriberDBModel>
+    select?: string
   ): Promise<SubscriberEntity | null> {
     return await this.findOne(
       {
