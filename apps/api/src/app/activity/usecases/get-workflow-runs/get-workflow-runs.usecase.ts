@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  ClickhouseOperator,
+  FieldCondition,
   PinoLogger,
   QueryBuilder,
   StepRun,
@@ -126,34 +128,29 @@ export class GetWorkflowRuns {
         );
       }
 
-      const severity =
-        command.severity && Array.isArray(command.severity)
-          ? command.severity
-          : command.severity
-            ? [command.severity]
-            : [];
+      const severity = command.severity ?? [];
       if (severity.length) {
+        const orConditions: Array<FieldCondition<WorkflowRun, keyof WorkflowRun, ClickhouseOperator>> = [];
         if (severity.includes(SeverityLevelEnum.NONE)) {
-          queryBuilder.orWhere([
-            {
-              field: 'severity',
-              operator: 'IS NULL',
-            },
-            {
-              field: 'severity',
-              operator: '=',
-              value: SeverityLevelEnum.NONE,
-            },
-          ]);
+          orConditions.push({
+            field: 'severity',
+            operator: 'IS NULL',
+          });
+          orConditions.push({
+            field: 'severity',
+            operator: '=',
+            value: SeverityLevelEnum.NONE,
+          });
         }
         const severityWithoutNone = severity.filter((severity) => severity !== SeverityLevelEnum.NONE);
-        queryBuilder.orWhere(
-          severityWithoutNone.map((severity) => ({
+        for (const severity of severityWithoutNone) {
+          orConditions.push({
             field: 'severity',
             operator: '=',
             value: severity.toString(),
-          }))
-        );
+          });
+        }
+        queryBuilder.orWhere(orConditions);
       }
 
       if (command.topicKey) {

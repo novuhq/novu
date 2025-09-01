@@ -1,7 +1,6 @@
 import { SeverityLevelEnum } from '@novu/shared';
 import { Transform, Type } from 'class-transformer';
 import { IsArray, IsIn, IsInt, IsISO8601, IsOptional, IsString, Max, Min } from 'class-validator';
-import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
 import { WorkflowRunStatusDtoEnum } from './shared.dto';
 
 export class GetWorkflowRunsRequestDto {
@@ -60,6 +59,9 @@ export class GetWorkflowRunsRequestDto {
   createdLte?: string;
 
   @IsOptional()
-  @IsEnumOrArray(SeverityLevelEnum)
-  severity?: SeverityLevelEnum[] | SeverityLevelEnum;
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @IsArray()
+  @IsString({ each: true })
+  @IsIn(Object.values(SeverityLevelEnum), { each: true })
+  severity?: SeverityLevelEnum[];
 }
