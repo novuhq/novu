@@ -77,15 +77,6 @@ export class ParseEventRequest {
     const transactionId = command.transactionId || generateTransactionId();
     const requestId = command.requestId;
 
-    await this.createRequestTrace(
-      requestId,
-      command,
-      'request_received',
-      transactionId,
-      'success',
-      'Event request received'
-    );
-
     try {
       const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
 
