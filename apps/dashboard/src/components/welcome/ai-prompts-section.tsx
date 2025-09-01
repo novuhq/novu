@@ -2,48 +2,22 @@ import { motion } from 'motion/react';
 import { useState } from 'react';
 import { RiCheckLine, RiSparklingLine } from 'react-icons/ri';
 
-import { IS_EU } from '@/config';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { InlineToast } from '../primitives/inline-toast';
-import { FRAMEWORK_CONFIGS, getFrameworkPrompt } from './ai-prompts/ai-prompts';
+import { FRAMEWORK_CONFIGS } from './ai-prompts/simple-framework-configs';
+import { getFrameworkPrompt } from './ai-prompts/simple-prompt-getter';
 
 interface AiPromptsSectionProps {
   className?: string;
   frameworkName: string;
-  applicationIdentifier?: string;
-  subscriberId?: string;
-  backendUrl?: string;
-  socketUrl?: string;
-  codeSnippet?: string;
 }
 
-export function AiPromptsSection({
-  className,
-  frameworkName,
-  applicationIdentifier,
-  subscriberId,
-  backendUrl,
-  socketUrl,
-  codeSnippet,
-}: AiPromptsSectionProps) {
+export function AiPromptsSection({ className, frameworkName }: AiPromptsSectionProps) {
   const track = useTelemetry();
   const [isCopied, setIsCopied] = useState(false);
 
-  // Only applicationIdentifier and subscriberId are truly required
-  if (!applicationIdentifier || !subscriberId) {
-    return null;
-  }
-
-  const prompt = getFrameworkPrompt(
-    frameworkName,
-    IS_EU,
-    applicationIdentifier,
-    subscriberId,
-    backendUrl,
-    socketUrl,
-    codeSnippet
-  );
+  const prompt = getFrameworkPrompt(frameworkName);
 
   const handleCopyPrompt = async () => {
     try {

@@ -202,14 +202,7 @@ export function InboxFrameworkGuide({
           <div className="flex flex-col gap-3">
             {/* AI Prompts Section */}
             <div className="pl-8">
-              <AiPromptsSection
-                frameworkName={selectedFramework.name}
-                applicationIdentifier={currentEnvironment?.identifier}
-                subscriberId={subscriberId}
-                backendUrl={backendUrl}
-                socketUrl={socketUrl}
-                codeSnippet={codeSnippet}
-              />
+              <AiPromptsSection frameworkName={selectedFramework.name} />
             </div>
 
             {/* Header row: label left, tabs right */}
@@ -246,14 +239,7 @@ export function InboxFrameworkGuide({
           <div className="flex flex-col gap-3">
             {/* AI Prompts Section */}
             <div className="pl-8">
-              <AiPromptsSection
-                frameworkName={selectedFramework.name}
-                applicationIdentifier={currentEnvironment?.identifier}
-                subscriberId={subscriberId}
-                backendUrl={backendUrl}
-                socketUrl={socketUrl}
-                codeSnippet={codeSnippet}
-              />
+              <AiPromptsSection frameworkName={selectedFramework.name} />
             </div>
             <div className="relative mt-2 overflow-hidden pl-0">
               <motion.div key="manual" {...fadeIn} className="w-full">
