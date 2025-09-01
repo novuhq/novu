@@ -66,7 +66,7 @@ export function InboxEmbed(): JSX.Element | null {
     : undefined;
 
   // Check if we're already on the WELCOME route to prevent redirect loops
-  const isOnWelcomeRoute = location.pathname.includes('/welcome');
+  const isOnWelcomeRoute = location.pathname === ROUTES.WELCOME || location.pathname.startsWith(`${ROUTES.WELCOME}/`);
 
   useEffect(() => {
     // Wait for environments to load and ensure we're not already on WELCOME route
