@@ -181,7 +181,6 @@ export class TriggerOverrides {
 
   @ApiPropertyOptional({
     description: 'Override the severity of the workflow',
-    example: 'high',
     enum: [...Object.values(SeverityLevelEnum)],
     enumName: 'SeverityLevelEnum',
   })

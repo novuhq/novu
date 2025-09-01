@@ -151,7 +151,7 @@ export class GetWorkflowRuns {
           severityWithoutNone.map((severity) => ({
             field: 'severity',
             operator: '=',
-            value: severity,
+            value: severity.toString(),
           }))
         );
       }
