@@ -47,7 +47,6 @@ export const envValidators = {
   NOVU_REGION: str({ default: 'local' }),
   NOVU_SECRET_KEY: str({ default: '' }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
-  PROCESSOR: str({ default: 'EXTERNAL' }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {
