@@ -61,7 +61,7 @@ export const FRAMEWORK_CONFIGS: Record<string, FrameworkConfig> = {
     regionSupport: true,
     hmacSupport: true,
   },
-  'React Native': {
+  Native: {
     name: 'React Native',
     packageName: '@novu/react-native',
     docsUrl: 'https://docs.novu.co/inbox/react-native',

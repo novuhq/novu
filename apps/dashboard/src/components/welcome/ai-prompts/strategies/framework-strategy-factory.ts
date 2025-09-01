@@ -7,7 +7,7 @@ import { ReactStrategy } from './react-strategy';
 import { RemixStrategy } from './remix-strategy';
 import { VueStrategy } from './vue-strategy';
 
-type SupportedFramework = 'Next.js' | 'React' | 'Angular' | 'Vue' | 'Remix' | 'React Native' | 'JavaScript';
+type SupportedFramework = 'Next.js' | 'React' | 'Angular' | 'Vue' | 'Remix' | 'Native' | 'JavaScript';
 
 const frameworkStrategies = new Map<SupportedFramework, FrameworkStrategy>([
   ['Next.js', new NextJSStrategy()],
@@ -15,7 +15,7 @@ const frameworkStrategies = new Map<SupportedFramework, FrameworkStrategy>([
   ['Angular', new AngularStrategy()],
   ['Vue', new VueStrategy()],
   ['Remix', new RemixStrategy()],
-  ['React Native', new ReactNativeStrategy()],
+  ['Native', new ReactNativeStrategy()],
   ['JavaScript', new JavaScriptStrategy()],
 ]);
 
