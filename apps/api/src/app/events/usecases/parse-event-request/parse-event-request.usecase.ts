@@ -103,10 +103,12 @@ export class ParseEventRequest {
         });
       }
 
-      const template = await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: command.environmentId,
-        triggerIdentifier: command.identifier,
-      });
+      const template =
+        command.workflow ||
+        (await this.getNotificationTemplateByTriggerIdentifier({
+          environmentId: command.environmentId,
+          triggerIdentifier: command.identifier,
+        }));
 
       if (!template) {
         await this.createRequestTrace(
