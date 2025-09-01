@@ -7,6 +7,8 @@ import {
   Param,
   Post,
   Put,
+  UnauthorizedException,
+  UnprocessableEntityException,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -16,13 +18,15 @@ import {
   RequirePermissions,
   SkipPermissionsCheck,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
+  EnvironmentEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
   PermissionsEnum,
+  PROTECTED_ENVIRONMENTS,
   ProductFeatureKeyEnum,
   UserSessionData,
 } from '@novu/shared';
@@ -67,6 +71,7 @@ export class EnvironmentsControllerV1 {
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private deleteEnvironmentUsecase: DeleteEnvironment,
     private organizationRepository: CommunityOrganizationRepository,
+    private environmentRepository: EnvironmentRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
 
@@ -161,6 +166,23 @@ export class EnvironmentsControllerV1 {
     @Param('environmentId') environmentId: string,
     @Body() payload: UpdateEnvironmentRequestDto
   ) {
+    // Check if user is trying to update the name of a protected environment
+    if (payload.name !== undefined && payload.name !== null) {
+      const environment = await this.environmentRepository.findOne({
+        _id: environmentId,
+        _organizationId: user.organizationId,
+      });
+
+      if (!environment) {
+        throw new UnauthorizedException('Environment not found');
+      }
+
+      // Prevent renaming Development or Production environments
+      if (PROTECTED_ENVIRONMENTS.includes(environment.name as EnvironmentEnum)) {
+        throw new UnprocessableEntityException('Cannot update the name of Development or Production environments');
+      }
+    }
+
     return await this.updateEnvironmentUsecase.execute(
       UpdateEnvironmentCommand.create({
         environmentId,
