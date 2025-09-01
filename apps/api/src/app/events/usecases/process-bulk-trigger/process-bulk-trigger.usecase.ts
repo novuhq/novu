@@ -10,11 +10,9 @@ export class ProcessBulkTrigger {
   constructor(private parseEventRequest: ParseEventRequest) {}
 
   async execute(command: ProcessBulkTriggerCommand) {
-    const results: TriggerEventResponseDto[] = [];
-    for (const event of command.events) {
-      let result: TriggerEventResponseDto;
+    const eventPromises = command.events.map(async (event) => {
       try {
-        result = (await this.parseEventRequest.execute(
+        const result = (await this.parseEventRequest.execute(
           ParseEventRequestMulticastCommand.create({
             userId: command.userId,
             environmentId: command.environmentId,
@@ -32,6 +30,8 @@ export class ProcessBulkTrigger {
             requestId: command.requestId,
           })
         )) as unknown as TriggerEventResponseDto;
+
+        return result;
       } catch (e) {
         let error: string[];
         if (e.response?.message) {
@@ -40,15 +40,15 @@ export class ProcessBulkTrigger {
           error = [e.message];
         }
 
-        result = {
+        return {
           acknowledged: true,
           status: TriggerEventStatusEnum.ERROR,
           error,
-        };
+        } as TriggerEventResponseDto;
       }
+    });
 
-      results.push(result);
-    }
+    const results = await Promise.all(eventPromises);
 
     return results;
   }
