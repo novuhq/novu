@@ -53,9 +53,9 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     const query = this.MongooseModel.find(requestQuery, undefined, { session }).populate('steps.template');
 
-    const item = await query;
+    const items = await query;
 
-    return this.mapEntity(item);
+    return this.mapEntities(items);
   }
 
   async findByTriggerIdentifier(environmentId: string, identifier: string, session?: ClientSession | null) {
