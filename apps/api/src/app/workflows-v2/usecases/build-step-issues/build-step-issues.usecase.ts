@@ -253,7 +253,7 @@ export class BuildStepIssuesUsecase {
         [args.stepType]: [
           {
             issueType: IntegrationIssueEnum.MISSING_INTEGRATION,
-            message: `Missing active ${primaryNeeded ? 'primary' : ''} integration provider`,
+            message: `Missing active${primaryNeeded ? ' primary' : ''} integration provider`,
           },
         ],
       };
