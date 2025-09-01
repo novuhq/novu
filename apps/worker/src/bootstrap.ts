@@ -19,7 +19,6 @@ export async function bootstrap(): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
 
