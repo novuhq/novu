@@ -141,7 +141,9 @@ export function IntegrationSettings({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
+
         <Separator className="mb-0 mt-0" />
+
         {isDemo ? (
           <div className="p-3">
             <InlineToast
@@ -155,35 +157,39 @@ export function IntegrationSettings({
             />
           </div>
         ) : (
-          <div className="p-3">
-            <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-              <Accordion type="single" collapsible defaultValue="credentials">
-                <AccordionItem value="credentials">
-                  <AccordionTrigger>
-                    <div className="flex items-center gap-1 text-xs">
-                      <RiInputField className="text-feature size-5" />
-                      Configuration
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
-                      {provider.configurations?.map((group) => (
-                        <ConfigurationGroupComponent
-                          integrationId={integration?._id}
-                          key={group.groupType}
-                          group={group}
-                          control={control}
-                          isReadOnly={isReadOnly}
-                        />
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </Protect>
-          </div>
+          provider.configurations && (
+            <div className="p-3">
+              <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+                <Accordion type="single" collapsible defaultValue="credentials">
+                  <AccordionItem value="credentials">
+                    <AccordionTrigger>
+                      <div className="flex items-center gap-1 text-xs">
+                        <RiInputField className="text-feature size-5" />
+                        Configuration
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
+                        {provider.configurations?.map((group) => (
+                          <ConfigurationGroupComponent
+                            integrationId={integration?._id}
+                            key={group.groupType}
+                            group={group}
+                            control={control}
+                            isReadOnly={isReadOnly}
+                          />
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </Protect>
+            </div>
+          )
         )}
+
         <Separator className="mb-0 mt-0" />
+
         {isDemo ? (
           <div className="p-3">
             <InlineToast
