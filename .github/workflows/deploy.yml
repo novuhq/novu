@@ -73,6 +73,7 @@ jobs:
         id: set-matrix
         env:
           WORKER_SERVICE: ${{ vars.WORKER_SERVICE }}
+          API_SERVICE: ${{ vars.API_SERVICE }}
         run: |
           envs=()
           services=()
@@ -123,12 +124,14 @@ jobs:
                 deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
               done
             elif [ "$service" == "\"api\"" ]; then
-              cluster_name=api-cluster
-              container_name=api-container
-              service_name=api-service
-              task_name=api-task
-              image=api
-              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+              for api_service in $(echo "$API_SERVICE" | jq -c '.[]'); do
+                cluster_name=$(echo "$api_service" | jq -r '.cluster_name')
+                container_name=$(echo "$api_service" | jq -r '.container_name')
+                service_name=$(echo "$api_service" | jq -r '.service')
+                task_name=$(echo "$api_service" | jq -r '.task_name')
+                image=$(echo "$api_service" | jq -r '.image')
+                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+              done
             elif [ "$service" == "\"ws\"" ]; then
               cluster_name=ws-cluster
               container_name=ws-container
