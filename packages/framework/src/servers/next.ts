@@ -143,7 +143,8 @@ export const serve = (
           const hostHeader = extractHeader('host') || '';
 
           try {
-            if (process.env.NODE_ENV === 'development') {
+            // biome-ignore lint/suspicious/noExplicitAny: Needed for some edge cases
+            if (process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as any) === 'dev') {
               protocol = 'http';
             }
           } catch (error) {

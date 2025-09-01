@@ -539,6 +539,9 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
     optionalDependencies:
+      '@novu/ee-api':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/api
       '@novu/ee-auth':
         specifier: workspace:*
         version: link:../../enterprise/packages/auth
@@ -2079,6 +2082,40 @@ importers:
       tsconfig-paths:
         specifier: ~4.1.0
         version: 4.1.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+
+  enterprise/packages/api:
+    dependencies:
+      '@nestjs/common':
+        specifier: 10.4.18
+        version: 10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)
+      '@nestjs/core':
+        specifier: 10.4.18
+        version: 10.4.18(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.18)(@nestjs/websockets@10.4.18)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1)
+      '@novu/application-generic':
+        specifier: workspace:*
+        version: link:../../../libs/application-generic
+      '@novu/dal':
+        specifier: workspace:*
+        version: link:../../../libs/dal
+      '@novu/shared':
+        specifier: workspace:*
+        version: link:../../../packages/shared
+      '@novu/stateless':
+        specifier: workspace:*
+        version: link:../../../packages/stateless
+      class-validator:
+        specifier: 0.14.1
+        version: 0.14.1
+    devDependencies:
+      '@types/node':
+        specifier: ^20.15.0
+        version: 20.19.10
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)
       typescript:
         specifier: 5.6.2
         version: 5.6.2
@@ -24113,9 +24150,6 @@ packages:
   libphonenumber-js@1.11.19:
     resolution: {integrity: sha512-bW/Yp/9dod6fmyR+XqSUL1N5JE7QRxQ3KrBIbYS1FTv32e5i3SEtQVX+71CYNv8maWNSOgnlCoNp9X78f/cKiA==}
 
-  libphonenumber-js@1.11.7:
-    resolution: {integrity: sha512-x2xON4/Qg2bRIS11KIN9yCNYUjhtiEjNyptjX0mX+pyKHecxuJVLIpfX1lq9ZD6CrC/rB+y4GBi18c6CEcUR+A==}
-
   lie@3.1.1:
     resolution: {integrity: sha512-RiNhHysUjhrDQntfYSfY4MU24coXXdEOgw9WGcKHNeEwffDYbF//u87M1EWaMGzuFoSbqW0C9C6lEEhDOAswfw==}
 
@@ -30513,6 +30547,7 @@ packages:
   superagent@10.1.0:
     resolution: {integrity: sha512-JMmik7PbnXGlq7g528Gi6apHbVbTz2vrE3du6fuG4kIPSb2PnLoSOPvfjKn8aQYuJcBWAKW6ZG90qPPsE5jZxQ==}
     engines: {node: '>=14.18.0'}
+    deprecated: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
 
   superagent@8.1.2:
     resolution: {integrity: sha512-6WTxW1EB6yCxV5VFOIPQruWGHqc3yI7hEmZK6h+pyk69Lk/Ut7rLUY6W/ONF2MjBuGjvmMiIpsrVJ2vjrHlslA==}
@@ -55499,7 +55534,7 @@ snapshots:
   class-validator@0.14.1:
     dependencies:
       '@types/validator': 13.12.1
-      libphonenumber-js: 1.11.7
+      libphonenumber-js: 1.11.19
       validator: 13.12.0
 
   class-variance-authority@0.7.0:
@@ -62984,8 +63019,6 @@ snapshots:
       isomorphic.js: 0.2.5
 
   libphonenumber-js@1.11.19: {}
-
-  libphonenumber-js@1.11.7: {}
 
   lie@3.1.1:
     dependencies:
