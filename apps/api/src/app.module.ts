@@ -68,6 +68,11 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     if (require('@novu/ee-billing')?.BillingModule) {
       modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }
+
+    if (require('@novu/ee-api')?.InboundWebhooksModule) {
+      modules.push(require('@novu/ee-api')?.InboundWebhooksModule);
+    }
+
     modules.push(SupportModule);
     modules.push(OutboundWebhooksModule.forRoot());
   }
