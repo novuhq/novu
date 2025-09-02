@@ -11,13 +11,14 @@ import { getFrameworkPrompt } from './ai-prompts/simple-prompt-getter';
 interface AiPromptsSectionProps {
   className?: string;
   frameworkName: string;
+  applicationIdentifier?: string;
 }
 
-export function AiPromptsSection({ className, frameworkName }: AiPromptsSectionProps) {
+export function AiPromptsSection({ className, frameworkName, applicationIdentifier }: AiPromptsSectionProps) {
   const track = useTelemetry();
   const [isCopied, setIsCopied] = useState(false);
 
-  const prompt = getFrameworkPrompt(frameworkName);
+  const prompt = getFrameworkPrompt(frameworkName, applicationIdentifier);
 
   const handleCopyPrompt = async () => {
     try {
