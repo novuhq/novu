@@ -173,6 +173,7 @@ describe('Session', () => {
       },
     };
     const subscriber = { _id: 'subscriber-id' };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
@@ -182,6 +183,7 @@ describe('Session', () => {
       apiKeys: [{ key: 'api-key', _userId: 'user-id' }],
       name: 'Development',
     } as any);
+    organizationRepository.findOne.resolves(organization as any);
     selectIntegration.execute.resolves(mockIntegration);
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
@@ -210,11 +212,13 @@ describe('Session', () => {
       },
     };
     const subscriber = { _id: 'subscriber-id' };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
     const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findOne.resolves(organization as any);
     selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
@@ -247,6 +251,7 @@ describe('Session', () => {
       origin: 'origin',
     };
 
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
     const integration = { ...mockIntegration, credentials: { hmac: false } };
     const subscriber = { _id: 'subscriber-id' };
@@ -255,6 +260,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     selectIntegration.execute.resolves(integration);
+    organizationRepository.findOne.resolves(organization as any);
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -287,11 +293,13 @@ describe('Session', () => {
     };
 
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const integration = { ...mockIntegration, credentials: { hmac: false } };
     const subscriber = { _id: 'subscriber-id' };
     const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
+    organizationRepository.findOne.resolves(organization as any);
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     selectIntegration.execute.resolves(integration);
     createSubscriber.execute.resolves(subscriber as any);

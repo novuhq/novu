@@ -112,6 +112,17 @@ describe('GetInboxPreferences', () => {
       criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
 
+    subscriberRepositoryMock.findBySubscriberId.resolves({
+      _id: 'test-mockSubscriber',
+      subscriberId: 'test-mockSubscriber',
+      firstName: 'test',
+      lastName: 'test',
+      email: 'test@test.com',
+      _organizationId: 'org-1',
+      _environmentId: 'env-1',
+      deleted: false,
+    } as any);
+
     getSubscriberGlobalPreferenceMock.execute.resolves({
       preference: mockedGlobalPreferences,
     });
@@ -195,6 +206,17 @@ describe('GetInboxPreferences', () => {
       severity: [SeverityLevelEnum.HIGH],
       criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
+
+    subscriberRepositoryMock.findBySubscriberId.resolves({
+      _id: 'test-mockSubscriber',
+      subscriberId: 'test-mockSubscriber',
+      firstName: 'test',
+      lastName: 'test',
+      email: 'test@test.com',
+      _organizationId: 'org-1',
+      _environmentId: 'env-1',
+      deleted: false,
+    } as any);
 
     getSubscriberGlobalPreferenceMock.execute.resolves({
       preference: mockedGlobalPreferences,
