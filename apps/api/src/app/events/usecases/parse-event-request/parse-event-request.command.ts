@@ -1,3 +1,4 @@
+import { NotificationTemplateEntity } from '@novu/dal';
 import {
   AddressingTypeEnum,
   StatelessControls,
@@ -54,6 +55,9 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   requestId: string;
+
+  @IsOptional()
+  workflow?: NotificationTemplateEntity;
 }
 
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {

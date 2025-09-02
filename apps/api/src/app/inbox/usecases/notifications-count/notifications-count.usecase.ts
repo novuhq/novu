@@ -28,7 +28,8 @@ export class NotificationsCount {
     const subscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
       command.subscriberId,
-      true
+      true,
+      '_id'
     );
 
     if (!subscriber) {

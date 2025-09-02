@@ -27,7 +27,7 @@ export class WorkflowInMemoryProviderService {
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED) {
+    if (process.env.IS_SELF_HOSTED === 'true') {
       return InMemoryProviderEnum.REDIS;
     }
 
