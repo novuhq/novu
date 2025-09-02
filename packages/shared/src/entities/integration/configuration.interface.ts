@@ -1,4 +1,4 @@
 export interface IConfigurations {
-  inboundWebhookEnabled?: string;
+  inboundWebhookEnabled?: boolean;
   inboundWebhookSigningKey?: string;
 }

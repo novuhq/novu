@@ -142,8 +142,6 @@ export function IntegrationSettings({
           </AccordionItem>
         </Accordion>
 
-        <Separator className="mb-0 mt-0" />
-
         {isDemo ? (
           <div className="p-3">
             <InlineToast
@@ -187,8 +185,6 @@ export function IntegrationSettings({
             </div>
           )
         )}
-
-        <Separator className="mb-0 mt-0" />
 
         {isDemo ? (
           <div className="p-3">
