@@ -22,7 +22,6 @@ Before starting the integration, analyze the host application to understand:
 **Project Structure Analysis**:
 - [ ] Package manager (pnpm, yarn, npm, bun)
 - [ ] Next.js version and configuration
-- [ ] TypeScript configuration and strictness level
 - [ ] Existing authentication system (Clerk, NextAuth, Firebase, Supabase, custom)
 - [ ] UI framework/library (Tailwind, styled-components, CSS modules, etc.)
 - [ ] Existing component patterns and naming conventions
@@ -47,7 +46,6 @@ Before starting the integration, analyze the host application to understand:
 ### ❌ NEVER DO:
 - **External Files**: Create external appearance objects or separate files
 - **Unnecessary Wrappers**: Add wrappers, triggers, or new JSX elements
-- **Hardcoded Keys**: Include real API keys or identifiers in code examples
 - **Predefined Values**: Set appearance values in code snippets
 
 ---
@@ -55,7 +53,7 @@ Before starting the integration, analyze the host application to understand:
 ## 📋 IMPLEMENTATION CHECKLIST
 
 ### Step 1: Package Installation
-**Objective**: Install the required Novu Next.js package using the project's package manager
+**Objective**: Install the required @novu/nextjs package using the project's package manager
 
 **Actions**:
 1. Detect the project's package manager (pnpm, yarn, npm, bun)
@@ -64,7 +62,6 @@ Before starting the integration, analyze the host application to understand:
 **Verification**:
 - [ ] Package installed successfully
 - [ ] No peer dependency conflicts
-- [ ] TypeScript types available
 
 ### Step 2: Environment Variable Configuration
 **Objective**: Set up the required environment variable for Novu application identifier
@@ -118,11 +115,10 @@ appearance={{
 **Objective**: Create a self-contained component for the Inbox integration
 
 **Requirements**:
-- Create a standalone component (e.g. NotificationCenter.tsx)
+- Create a standalone component (e.g. NotificationInbox.tsx)
 - Include inline subscriber detection and appearance configuration
 - Use only documented Novu Inbox props
 - Place directly in JSX where <Inbox /> is expected
-- No wrappers, triggers, or additional JSX elements
 
 **Component Structure**:
 \`\`\`typescript
@@ -163,7 +159,6 @@ export default function InboxIntegration() {
 - **Header/Navbar**: Place in top-right area with proper spacing
 - **User Menu**: Integrate as secondary element in dropdown
 - **Sidebar**: Use as fallback option with appropriate sizing
-- **Inline Placement**: No new DOM elements, integrate seamlessly
 
 ### Step 7: Validation & Testing
 **Objective**: Ensure the integration meets all quality standards
@@ -174,7 +169,6 @@ export default function InboxIntegration() {
 
 **Console Validation**:
 - [ ] No JavaScript errors
-- [ ] Warning logs for placeholder subscriber
 - [ ] No TypeScript compilation errors
 
 ### Step 8: AI Model Verification (Internal Process)
@@ -202,55 +196,11 @@ export default function InboxIntegration() {
 **Objective**: Deliver a complete, production-ready integration
 
 **Required Deliverables**:
-- Self-contained InboxIntegration.tsx component
+- Self-contained NotificationInbox.tsx component
 - Inline appearance prop with empty placeholders
 - Subscriber detection with fallback mechanism
 - Environment variable reference via .env.local
 - TypeScript compliance with proper typing
-- Dark mode support
+- Dark mode support (if any)
 
----
-
-## 🔧 TROUBLESHOOTING GUIDE
-
-### Common Issues and Solutions:
-
-**1. Component Not Rendering**
-- Check environment variable configuration
-- Verify subscriber ID is properly set
-- Ensure proper import from @novu/nextjs
-- Check for TypeScript compilation errors
-
-**2. Styling Issues**
-- Verify appearance prop structure
-- Check for CSS conflicts with host application
-- Ensure responsive design breakpoints
-- Validate dark mode compatibility
-
-**3. Authentication Integration**
-- Verify auth hook implementation
-- Check subscriber ID extraction logic
-- Ensure proper error handling for auth states
-- Validate fallback mechanisms
-
----
-
-## 🎯 CORE PRINCIPLE
-
-The Inbox component must feel native to the host application — fully functional, fully responsive, and accessible. It should integrate inline, respecting the host app's patterns, without requiring external files or default icon modifications.
-
----
-
-## 🔄 EXECUTION FLOW
-
-1. **Analyze** the host Next.js application structure and context
-2. **Install** the required Novu package with proper dependency management
-3. **Configure** environment variables with security best practices
-4. **Detect** subscriber ID from auth system with fallback mechanisms
-5. **Create** the Inbox integration component with error boundaries
-6. **Place** the component in the appropriate UI location
-7. **Validate** all functionality, appearance, and performance
-8. **Refine** based on validation results and user feedback
-9. **Deliver** the final implementation with comprehensive documentation
-
-Remember: The goal is seamless integration that feels like a native part of the application while maintaining high standards for performance, security, and accessibility.`;
+`;
