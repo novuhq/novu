@@ -183,7 +183,7 @@ describe('Session', () => {
       apiKeys: [{ key: 'api-key', _userId: 'user-id' }],
       name: 'Development',
     } as any);
-    organizationRepository.findOne.resolves(organization as any);
+    organizationRepository.findById.resolves(organization as any);
     selectIntegration.execute.resolves(mockIntegration);
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
@@ -218,7 +218,7 @@ describe('Session', () => {
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
-    organizationRepository.findOne.resolves(organization as any);
+    organizationRepository.findById.resolves(organization as any);
     selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
@@ -260,7 +260,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     selectIntegration.execute.resolves(integration);
-    organizationRepository.findOne.resolves(organization as any);
+    organizationRepository.findById.resolves(organization as any);
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -299,7 +299,7 @@ describe('Session', () => {
     const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
-    organizationRepository.findOne.resolves(organization as any);
+    organizationRepository.findById.resolves(organization as any);
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     selectIntegration.execute.resolves(integration);
     createSubscriber.execute.resolves(subscriber as any);
@@ -311,22 +311,22 @@ describe('Session', () => {
     });
 
     // FREE plan should have 24 hours max snooze duration
-    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
+    organizationRepository.findById.resolves({ apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
     const freeResponse: SubscriberSessionResponseDto = await session.execute(command);
     expect(freeResponse.maxSnoozeDurationHours).to.equal(24);
 
     // PRO plan should have 90 days max snooze duration
-    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.PRO } as any);
+    organizationRepository.findById.resolves({ apiServiceLevel: ApiServiceLevelEnum.PRO } as any);
     const proResponse: SubscriberSessionResponseDto = await session.execute(command);
     expect(proResponse.maxSnoozeDurationHours).to.equal(90 * 24);
 
     // BUSINESS/TEAM plan should have 90 days max snooze duration
-    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.BUSINESS } as any);
+    organizationRepository.findById.resolves({ apiServiceLevel: ApiServiceLevelEnum.BUSINESS } as any);
     const businessResponse: SubscriberSessionResponseDto = await session.execute(command);
     expect(businessResponse.maxSnoozeDurationHours).to.equal(90 * 24);
 
     // ENTERPRISE plan should have 90 days max snooze duration
-    organizationRepository.findOne.resolves({ apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE } as any);
+    organizationRepository.findById.resolves({ apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE } as any);
     const enterpriseResponse: SubscriberSessionResponseDto = await session.execute(command);
     expect(enterpriseResponse.maxSnoozeDurationHours).to.equal(90 * 24);
   });

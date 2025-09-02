@@ -249,6 +249,16 @@ describe('GetInboxPreferences', () => {
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
       includeInactiveChannels: false,
+      subscriber: {
+        _id: 'test-mockSubscriber',
+        subscriberId: 'test-mockSubscriber',
+        firstName: 'test',
+        lastName: 'test',
+        email: 'test@test.com',
+        _organizationId: 'org-1',
+        _environmentId: 'env-1',
+        deleted: false,
+      },
     });
 
     expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
@@ -260,6 +270,16 @@ describe('GetInboxPreferences', () => {
       severity: command.severity,
       includeInactiveChannels: false,
       criticality: command.criticality,
+      subscriber: {
+        _id: 'test-mockSubscriber',
+        subscriberId: 'test-mockSubscriber',
+        firstName: 'test',
+        lastName: 'test',
+        email: 'test@test.com',
+        _organizationId: 'org-1',
+        _environmentId: 'env-1',
+        deleted: false,
+      },
     });
 
     expect(result).to.deep.equal([
