@@ -25,12 +25,9 @@ export class NotificationsCount {
   async execute(
     command: NotificationsCountCommand
   ): Promise<{ data: Array<{ count: number; filter: NotificationFilter }> }> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      command.subscriberId,
-      true,
-      '_id'
-    );
+    const subscriber =
+      command.subscriber ??
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId, true, '_id'));
 
     if (!subscriber) {
       throw new BadRequestException(
