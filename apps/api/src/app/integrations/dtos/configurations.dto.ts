@@ -6,7 +6,7 @@ export class ConfigurationsDto implements IConfigurations {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  inboundWebhookEnabled?: string;
+  inboundWebhookEnabled?: boolean;
 
   @ApiPropertyOptional()
   @IsString()
