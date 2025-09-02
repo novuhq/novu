@@ -229,7 +229,7 @@ export class Session {
         },
         {
           $set: {
-            connected: false,
+            connected: true,
           },
         }
       );
