@@ -177,7 +177,6 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
         return { success: false, message };
       }
 
-      // Use SendGrid's official EventWebhook for signature verification
       const eventWebhook = new EventWebhook();
       const ecdsaPublicKey = eventWebhook.convertPublicKeyToECDSA(publicKey);
 
@@ -185,7 +184,6 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
 
       return { success: result, message: 'Provider signature verification result' };
     } catch (error) {
-      // Log error in production for debugging but don't expose details
       return { success: false, message: `Error verifying signature: ${error.message}` };
     }
   }
