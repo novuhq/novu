@@ -92,15 +92,13 @@ describe('GetInboxPreferences', () => {
       criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
 
-    getSubscriberGlobalPreferenceMock.execute.rejects(
-      new Error(`Subscriber with id ${command.subscriberId} not found`)
-    );
+    subscriberRepositoryMock.findBySubscriberId.resolves(null);
 
     try {
       await getInboxPreferences.execute(command);
     } catch (error) {
       expect(error).to.be.instanceOf(Error);
-      expect(error.message).to.equal(`Subscriber with id ${command.subscriberId} not found`);
+      expect(error.message).to.equal(`Subscriber ${command.subscriberId} not found`);
     }
   });
 
@@ -136,6 +134,16 @@ describe('GetInboxPreferences', () => {
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
       includeInactiveChannels: false,
+      subscriber: {
+        _id: 'test-mockSubscriber',
+        subscriberId: 'test-mockSubscriber',
+        firstName: 'test',
+        lastName: 'test',
+        email: 'test@test.com',
+        _organizationId: 'org-1',
+        _environmentId: 'env-1',
+        deleted: false,
+      },
     });
 
     expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
@@ -147,6 +155,16 @@ describe('GetInboxPreferences', () => {
       severity: undefined,
       includeInactiveChannels: false,
       criticality: command.criticality,
+      subscriber: {
+        _id: 'test-mockSubscriber',
+        subscriberId: 'test-mockSubscriber',
+        firstName: 'test',
+        lastName: 'test',
+        email: 'test@test.com',
+        _organizationId: 'org-1',
+        _environmentId: 'env-1',
+        deleted: false,
+      },
     });
 
     expect(result).to.deep.equal([
