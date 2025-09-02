@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Label } from '@/components/primitives/label';
-import { Separator } from '@/components/primitives/separator';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Protect } from '@/utils/protect';
 import { ROUTES } from '@/utils/routes';
@@ -14,7 +13,6 @@ import { cn } from '../../../utils/ui';
 import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
 import { CredentialSection } from './credential-section';
-import { ConfigurationGroupComponent } from './integration-configurations';
 import { GeneralSettings } from './integration-general-settings';
 import { isDemoIntegration } from './utils/helpers';
 
@@ -137,12 +135,15 @@ export function IntegrationSettings({
                 isReadOnly={isReadOnly}
                 hidePrimarySelector={!isChannelSupportPrimary}
                 disabledPrimary={!hasOtherProviders && integration?.primary}
+                configurations={provider.configurations}
+                integrationId={integration?._id}
+                isDemo={isDemo}
               />
             </AccordionContent>
           </AccordionItem>
         </Accordion>
 
-        {isDemo ? (
+        {isDemo && (
           <div className="p-3">
             <InlineToast
               variant={'warning'}
@@ -154,51 +155,9 @@ export function IntegrationSettings({
               }`}
             />
           </div>
-        ) : (
-          provider.configurations && (
-            <div className="p-3">
-              <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-                <Accordion type="single" collapsible defaultValue="credentials">
-                  <AccordionItem value="credentials">
-                    <AccordionTrigger>
-                      <div className="flex items-center gap-1 text-xs">
-                        <RiInputField className="text-feature size-5" />
-                        Configuration
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
-                        {provider.configurations?.map((group) => (
-                          <ConfigurationGroupComponent
-                            integrationId={integration?._id}
-                            key={group.groupType}
-                            group={group}
-                            control={control}
-                            isReadOnly={isReadOnly}
-                          />
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </Protect>
-            </div>
-          )
         )}
 
-        {isDemo ? (
-          <div className="p-3">
-            <InlineToast
-              variant={'warning'}
-              title="Demo Integration"
-              description={`This is a demo ${provider?.channel.toLowerCase()} integration intended for testing purposes only. It is limited to 300 notifications per month.${
-                provider?.channel === ChannelTypeEnum.EMAIL
-                  ? ' You can only send emails from it to the email address you are logged in with.'
-                  : ''
-              }`}
-            />
-          </div>
-        ) : (
+        {!isDemo && (
           <div className="p-3">
             <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
               <Accordion type="single" collapsible defaultValue="credentials">

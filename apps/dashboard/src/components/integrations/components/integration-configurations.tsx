@@ -73,7 +73,7 @@ export function ConfigurationGroupComponent({
           isReadOnly={isReadOnly}
           isDisabledWithSwitch={!integrationId}
           disabledSwitchMessage={
-            !integrationId ? 'This configuration is available only for existing integrations' : undefined
+            !integrationId ? 'To enable Email activity tracking, create the integration first' : undefined
           }
         />
       )}
