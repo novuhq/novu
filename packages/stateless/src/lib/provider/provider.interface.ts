@@ -4,6 +4,7 @@ import { CheckIntegrationResponseEnum } from './provider.enum';
 export interface IProvider {
   id: string;
   channelType: ChannelTypeEnum;
+  verifySignature?: (body: any, headers: Record<string, string>) => { success: boolean; message?: string };
 }
 
 export interface IEmailOptions {
