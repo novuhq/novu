@@ -21,7 +21,7 @@ interface IRegionConfigs {
 }
 
 export function generateNextJsComponent(
-  subscriberId: string | null = null, 
+  subscriberId: string | null = null,
   region: 'us' | 'eu' = 'us',
   backendUrl: string | null = null,
   socketUrl: string | null = null
@@ -118,11 +118,11 @@ export default function NovuInbox() {
       // baseTheme: dark,
       variables: {
         // The \`variables\` object allows you to define global styling properties that can be reused throughout the inbox.
-        // Learn more: https://docs.novu.co/platform/inbox/react/styling#variables
+        // Learn more: https://docs.novu.co/platform/inbox/configuration/styling
       },
       elements: {
         // The \`elements\` object allows you to define styles for these components.
-        // Learn more: https://docs.novu.co/platform/inbox/react/styling#elements
+        // Learn more: https://docs.novu.co/platform/inbox/configuration/styling
       },
       icons: {
         // The \`icons\` object allows you to define custom icons for the inbox.
