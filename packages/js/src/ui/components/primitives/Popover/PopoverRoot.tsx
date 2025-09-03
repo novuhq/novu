@@ -1,4 +1,4 @@
-import { autoUpdate, flip, OffsetOptions, offset, Placement, shift } from '@floating-ui/dom';
+import { autoUpdate, flip, OffsetOptions, offset, Placement, shift, ShiftOptions } from '@floating-ui/dom';
 import { useFloating } from 'solid-floating-ui';
 import { Accessor, createContext, createMemo, createSignal, JSX, Setter, useContext } from 'solid-js';
 
@@ -35,7 +35,16 @@ export function PopoverRoot(props: PopoverRootProps) {
     strategy: 'absolute',
     placement: props.placement,
     whileElementsMounted: autoUpdate,
-    middleware: [offset(10), flip({ fallbackPlacements: props.fallbackPlacements }), shift()],
+    middleware: [
+      offset(10), 
+      flip({ fallbackPlacements: props.fallbackPlacements }), 
+      // Configure shift to prevent layout overflow and UI shifts
+      shift({
+        padding: 8,
+        crossAxis: false, // Prevent horizontal shifting that causes layout gaps
+        mainAxis: true    // Allow vertical shifting only
+      })
+    ],
   });
   const floatingStyles = createMemo(() => ({
     position: position.strategy,
