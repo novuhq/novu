@@ -1,22 +1,46 @@
-import { ChannelTypeEnum, CredentialsKeyEnum, ProvidersIdEnum } from '../../types';
+import { ChannelTypeEnum, ConfigurationKey, CredentialsKeyEnum, ProvidersIdEnum } from '../../types';
+
+export type ConfigConfiguration = {
+  key: ConfigurationKey;
+  value?: unknown;
+  displayName: string;
+  description?: string;
+  type: CredentialsType;
+  required: boolean;
+};
+
+export interface ILogoFileName {
+  light: string;
+  dark: string;
+}
+
+export type ConfigConfigurationGroup = {
+  groupType: CredentialsType;
+  configurations: ConfigConfiguration[];
+  enabler?: ConfigurationKey;
+  loadingLabel?: string;
+};
 
 export interface IProviderConfig {
   id: ProvidersIdEnum;
   displayName: string;
   channel: ChannelTypeEnum;
-  credentials: IConfigCredentials[];
+  credentials: IConfigCredential[];
+  configurations?: ConfigConfigurationGroup[];
   logoFileName: ILogoFileName;
   docReference: string;
   comingSoon?: boolean;
   betaVersion?: boolean;
 }
 
-export interface IConfigCredentials {
+type CredentialsType = 'string' | 'dropdown' | 'switch' | 'textarea' | 'text' | 'number' | 'inboundWebhook' | 'boolean';
+
+export interface IConfigCredential {
   key: CredentialsKeyEnum;
   value?: unknown;
   displayName: string;
   description?: string;
-  type: string;
+  type: CredentialsType;
   required: boolean;
   tooltip?: {
     text: string;
@@ -31,9 +55,4 @@ export interface IConfigCredentials {
     message?: string;
     validate?: (value: string) => boolean | string;
   };
-}
-
-export interface ILogoFileName {
-  light: string;
-  dark: string;
 }

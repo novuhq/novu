@@ -100,6 +100,7 @@ function StylePreviewCard({
   return (
     <button
       key={style.id}
+      type="button"
       className={`group relative h-[100px] cursor-pointer overflow-hidden rounded-lg border transition-all duration-200 active:scale-[0.98] ${
         isSelected ? 'border-2 border-neutral-200' : 'border border-neutral-100 hover:border-neutral-200'
       }`}
@@ -110,7 +111,6 @@ function StylePreviewCard({
       }}
       onClick={onSelect}
       aria-pressed={isSelected}
-      type="button"
     >
       <div
         className={`absolute bottom-0 w-full translate-y-full transform border-t bg-neutral-50/90 text-center opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 ${isSelected ? '!translate-y-0 !opacity-100' : ''}`}
@@ -151,7 +151,7 @@ function ColorPickerSection({ form }: { form: UseFormReturn<CustomizeInboxFormDa
         <p className="text-foreground-400 leading-[21px]">
           The Inbox is completely customizable, using the{' '}
           <a
-            href="https://docs.novu.co/platform/inbox/react/styling#appearance-prop"
+            href="https://docs.novu.co/platform/inbox/configuration/styling"
             className="cursor-pointer underline"
             target="_blank"
             rel="noopener noreferrer"

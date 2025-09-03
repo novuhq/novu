@@ -7,7 +7,7 @@ import {
   SendWebhookMessage,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-import { MessageRepository } from '@novu/dal';
+import { EnvironmentRepository, MessageRepository } from '@novu/dal';
 import { ChannelCTATypeEnum, ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -17,6 +17,11 @@ import type { UpdateAllNotificationsCommand } from './update-all-notifications.c
 import { UpdateAllNotifications } from './update-all-notifications.usecase';
 
 const mockSubscriber: any = { _id: '6447aff5d89122e250412c79', subscriberId: '6447aff5d89122e250412c79' };
+const mockEnvironment: any = {
+  _id: '6447aff3d89122e250412c23',
+  webhookAppId: 'webhook-app-id',
+  identifier: 'test-env',
+};
 
 describe('UpdateAllNotifications', () => {
   let updateAllNotifications: UpdateAllNotifications;
@@ -26,7 +31,7 @@ describe('UpdateAllNotifications', () => {
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
   let webSocketsQueueServiceMock: sinon.SinonStubbedInstance<WebSocketsQueueService>;
   let sendWebhookMessageMock: sinon.SinonStubbedInstance<SendWebhookMessage>;
-
+  let environmentRepositoryMock: sinon.SinonStubbedInstance<EnvironmentRepository>;
   const mockMessage: any = [
     {
       _id: '_id',
@@ -52,14 +57,15 @@ describe('UpdateAllNotifications', () => {
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
     webSocketsQueueServiceMock = sinon.createStubInstance(WebSocketsQueueService);
     sendWebhookMessageMock = sinon.createStubInstance(SendWebhookMessage);
-
+    environmentRepositoryMock = sinon.createStubInstance(EnvironmentRepository);
     updateAllNotifications = new UpdateAllNotifications(
       invalidateCacheMock as any,
       getSubscriberMock as any,
       analyticsServiceMock as any,
       messageRepositoryMock as any,
       webSocketsQueueServiceMock as any,
-      sendWebhookMessageMock as any
+      sendWebhookMessageMock as any,
+      environmentRepositoryMock as any
     );
   });
 
@@ -97,6 +103,7 @@ describe('UpdateAllNotifications', () => {
 
     getSubscriberMock.execute.resolves(mockSubscriber);
     messageRepositoryMock.updateMessagesFromToStatus.resolves(mockMessage);
+    environmentRepositoryMock.findOne.resolves(mockEnvironment);
     invalidateCacheMock.invalidateQuery.resolves();
     analyticsServiceMock.track.resolves();
     webSocketsQueueServiceMock.add.resolves();
@@ -125,6 +132,7 @@ describe('UpdateAllNotifications', () => {
 
     getSubscriberMock.execute.resolves(mockSubscriber);
     messageRepositoryMock.updateMessagesFromToStatus.resolves(mockMessage);
+    environmentRepositoryMock.findOne.resolves(mockEnvironment);
     invalidateCacheMock.invalidateQuery.resolves();
     analyticsServiceMock.track.resolves();
     webSocketsQueueServiceMock.add.resolves();

@@ -85,6 +85,7 @@ export class UpdatePreferences {
       },
       organizationId: command.organizationId,
       environmentId: command.environmentId,
+      environment: command.environment,
     });
 
     return newPreference;

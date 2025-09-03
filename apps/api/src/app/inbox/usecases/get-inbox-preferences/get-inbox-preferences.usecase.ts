@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
+import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum, SeverityLevelEnum } from '@novu/shared';
 import {
   GetSubscriberGlobalPreference,
@@ -18,17 +19,24 @@ export class GetInboxPreferences {
   constructor(
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private analyticsService: AnalyticsService,
-    private getSubscriberPreference: GetSubscriberPreference
+    private getSubscriberPreference: GetSubscriberPreference,
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   @InstrumentUsecase()
   async execute(command: GetInboxPreferencesCommand): Promise<InboxPreference[]> {
+    const subscriber = await this.getSubscriber(command);
+    if (!subscriber) {
+      throw new NotFoundException(`Subscriber with id ${command.subscriberId} not found`);
+    }
+
     const globalPreference = await this.getSubscriberGlobalPreference.execute(
       GetSubscriberGlobalPreferenceCommand.create({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         includeInactiveChannels: false,
+        subscriber,
       })
     );
 
@@ -50,6 +58,7 @@ export class GetInboxPreferences {
         organizationId: command.organizationId,
         tags: command.tags,
         severity,
+        subscriber,
         includeInactiveChannels: false,
         criticality: command.criticality,
       })
@@ -90,5 +99,15 @@ export class GetInboxPreferences {
     });
 
     return [updatedGlobalPreference, ...sortedWorkflowPreferences];
+  }
+
+  private async getSubscriber(command: GetInboxPreferencesCommand): Promise<SubscriberEntity> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+
+    if (!subscriber) {
+      throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
+    }
+
+    return subscriber;
   }
 }

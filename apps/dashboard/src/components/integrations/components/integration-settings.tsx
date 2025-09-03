@@ -6,14 +6,13 @@ import { useNavigate } from 'react-router-dom';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Label } from '@/components/primitives/label';
-import { Separator } from '@/components/primitives/separator';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Protect } from '@/utils/protect';
 import { ROUTES } from '@/utils/routes';
-import { InlineToast } from '../../../components/primitives/inline-toast';
 import { cn } from '../../../utils/ui';
+import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
-import { CredentialsSection } from './integration-credentials';
+import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
 import { isDemoIntegration } from './utils/helpers';
 
@@ -21,6 +20,7 @@ type IntegrationFormData = {
   name: string;
   identifier: string;
   credentials: Record<string, string>;
+  configurations: Record<string, string>;
   active: boolean;
   check: boolean;
   primary: boolean;
@@ -46,7 +46,7 @@ function generateSlug(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-export function IntegrationConfiguration({
+export function IntegrationSettings({
   provider,
   integration,
   onSubmit,
@@ -66,6 +66,7 @@ export function IntegrationConfiguration({
           active: integration.active,
           primary: integration.primary ?? false,
           credentials: integration.credentials as Record<string, string>,
+          configurations: integration.configurations as Record<string, string>,
           environmentId: integration._environmentId,
         }
       : {
@@ -74,6 +75,7 @@ export function IntegrationConfiguration({
           active: true,
           primary: true,
           credentials: {},
+          configurations: {},
           environmentId: currentEnvironment?._id ?? '',
         },
   });
@@ -118,7 +120,6 @@ export function IntegrationConfiguration({
             />
           </div>
         </div>
-
         <Accordion type="single" collapsible defaultValue="layout" className="p-3">
           <AccordionItem value="layout">
             <AccordionTrigger>
@@ -134,14 +135,15 @@ export function IntegrationConfiguration({
                 isReadOnly={isReadOnly}
                 hidePrimarySelector={!isChannelSupportPrimary}
                 disabledPrimary={!hasOtherProviders && integration?.primary}
+                configurations={provider.configurations}
+                integrationId={integration?._id}
+                isDemo={isDemo}
               />
             </AccordionContent>
           </AccordionItem>
         </Accordion>
 
-        <Separator className="mb-0 mt-0" />
-
-        {isDemo ? (
+        {isDemo && (
           <div className="p-3">
             <InlineToast
               variant={'warning'}
@@ -153,7 +155,9 @@ export function IntegrationConfiguration({
               }`}
             />
           </div>
-        ) : (
+        )}
+
+        {!isDemo && (
           <div className="p-3">
             <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
               <Accordion type="single" collapsible defaultValue="credentials">
@@ -165,7 +169,16 @@ export function IntegrationConfiguration({
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <CredentialsSection provider={provider} control={control} isReadOnly={isReadOnly} />
+                    <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
+                      {provider.credentials.map((credential) => (
+                        <CredentialSection
+                          key={credential.key}
+                          credential={credential}
+                          control={control}
+                          isReadOnly={isReadOnly}
+                        />
+                      ))}
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -179,7 +192,7 @@ export function IntegrationConfiguration({
                 className="mt-3"
                 title="Integrate in less than 4 minutes"
                 ctaLabel="Get started"
-                onCtaClick={() => navigate(ROUTES.INBOX_EMBED + `?environmentId=${integration._environmentId}`)}
+                onCtaClick={() => navigate(`${ROUTES.INBOX_EMBED}?environmentId=${integration._environmentId}`)}
               />
             ) : (
               provider?.docReference && (

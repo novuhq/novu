@@ -30334,6 +30334,7 @@ packages:
   superagent@10.1.0:
     resolution: {integrity: sha512-JMmik7PbnXGlq7g528Gi6apHbVbTz2vrE3du6fuG4kIPSb2PnLoSOPvfjKn8aQYuJcBWAKW6ZG90qPPsE5jZxQ==}
     engines: {node: '>=14.18.0'}
+    deprecated: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
 
   superagent@8.1.2:
     resolution: {integrity: sha512-6WTxW1EB6yCxV5VFOIPQruWGHqc3yI7hEmZK6h+pyk69Lk/Ut7rLUY6W/ONF2MjBuGjvmMiIpsrVJ2vjrHlslA==}

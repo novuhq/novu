@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException, UnprocessableEntity
 import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
 import {
   BaseRepository,
+  EnvironmentRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   SubscriberRepository,
@@ -22,7 +23,8 @@ export class BulkUpdatePreferences {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService,
-    private updatePreferencesUsecase: UpdatePreferences
+    private updatePreferencesUsecase: UpdatePreferences,
+    private environmentRepository: EnvironmentRepository
   ) {}
 
   @InstrumentUsecase()
@@ -84,6 +86,10 @@ export class BulkUpdatePreferences {
       }
     }
 
+    const environment = await this.environmentRepository.findOne({
+      _id: command.environmentId,
+    });
+
     const updatePromises = Array.from(workflowPreferencesMap.entries()).map(
       async ([workflowId, { preference, workflow }]) => {
         return this.updatePreferencesUsecase.execute(
@@ -101,6 +107,8 @@ export class BulkUpdatePreferences {
             workflow,
             includeInactiveChannels: false,
             subscriber,
+            // biome-ignore lint/style/noNonNullAssertion: environment is always found
+            environment: environment!,
           })
         );
       }
