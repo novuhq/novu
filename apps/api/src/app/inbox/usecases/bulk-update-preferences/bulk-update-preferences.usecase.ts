@@ -89,9 +89,6 @@ export class BulkUpdatePreferences {
     const environment = await this.environmentRepository.findOne({
       _id: command.environmentId,
     });
-    if (!environment) {
-      throw new Error(`Environment not found for id ${command.environmentId}`);
-    }
 
     const updatePromises = Array.from(workflowPreferencesMap.entries()).map(
       async ([workflowId, { preference, workflow }]) => {
@@ -110,7 +107,8 @@ export class BulkUpdatePreferences {
             workflow,
             includeInactiveChannels: false,
             subscriber,
-            environment,
+            // biome-ignore lint/style/noNonNullAssertion: environment is always found
+            environment: environment!,
           })
         );
       }
