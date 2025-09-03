@@ -52,6 +52,7 @@ export class UpsertPreferences {
       organizationId: command.organizationId,
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+      returnPreference: command.returnPreference,
     });
   }
 
@@ -93,6 +94,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+      returnPreference: command.returnPreference,
     });
   }
 
@@ -110,7 +112,7 @@ export class UpsertPreferences {
     }) as Promise<WorkflowPreferencesFull>;
   }
 
-  private async upsert(command: UpsertPreferencesCommand): Promise<PreferencesEntity> {
+  private async upsert(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
     const foundPreference = await this.getPreference(command);
 
     if (foundPreference) {
@@ -154,7 +156,11 @@ export class UpsertPreferences {
       }
     );
 
-    return await this.getPreference(command);
+    if (command.returnPreference) {
+      return await this.getPreference(command);
+    }
+
+    return undefined;
   }
 
   private async deletePreferences(command: UpsertPreferencesCommand, preferencesId: string) {

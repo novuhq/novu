@@ -211,6 +211,7 @@ export class UpdatePreferences {
           _subscriberId: item._subscriberId,
           templateId: item.workflowId,
           preferences,
+          returnPreference: false,
         })
       );
     } else {
@@ -220,6 +221,7 @@ export class UpdatePreferences {
           environmentId: item.environmentId,
           organizationId: item.organizationId,
           _subscriberId: item._subscriberId,
+          returnPreference: false,
         })
       );
     }
