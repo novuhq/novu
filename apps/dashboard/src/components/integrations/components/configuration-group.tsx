@@ -5,11 +5,14 @@ import {
   IConfigCredential,
   IProviderConfig,
 } from '@novu/shared';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Control, useWatch } from 'react-hook-form';
+import { RiCheckLine, RiCloseLine } from 'react-icons/ri';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { FormLabel } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
+import { LoadingIndicator } from '@/components/primitives/loading-indicator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { API_HOSTNAME } from '../../../config';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { useAutoConfigureIntegration } from '../../../hooks/use-auto-configure-integration';
@@ -21,7 +24,6 @@ function generateInboundWebhookUrl(environmentId: string, integrationId?: string
   return `${baseUrl}/v2/inbound-webhooks/delivery-providers/${environmentId}/${integrationId}`;
 }
 
-// Helper function to convert ConfigConfiguration to IConfigCredential format
 function configurationToCredential(config: ConfigConfiguration): IConfigCredential {
   return {
     key: config.key as CredentialsKeyEnum,
@@ -33,7 +35,7 @@ function configurationToCredential(config: ConfigConfiguration): IConfigCredenti
   } as IConfigCredential;
 }
 
-export function ConfigurationGroupComponent({
+export function ConfigurationGroup({
   integrationId,
   group,
   control,
@@ -56,6 +58,10 @@ export function ConfigurationGroupComponent({
 
   // Track the previous enabled state to detect toggle changes
   const prevIsEnabledRef = useRef<boolean | null>(null);
+
+  // Auto-configure request state
+  const [autoConfigureState, setAutoConfigureState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [autoConfigureMessage, setAutoConfigureMessage] = useState<string>('');
 
   // Find the enabler configuration (toggle field)
   const enablerConfig = enabler ? configurations.find((config) => config.key === enabler) : null;
@@ -92,21 +98,23 @@ export function ConfigurationGroupComponent({
         return;
       }
 
-      console.log('handleIntegrationCreationOrUpdate AFTER TOGGLE ON', {
-        integrationId,
-        hasRequiredConfigurations: !hasRequiredConfigurations,
-        formData,
-      });
-
       if (integrationId && !hasRequiredConfigurations && formData) {
         try {
-          console.log('Auto-configuring integration...');
+          const res = await setAutoConfigureState('loading');
+          console.log('Auto-configure state:', res);
           const response = await autoConfigureIntegration({
             integrationId,
           });
-          console.log('Auto-configured integration:', response);
+          if (response.success) {
+            setAutoConfigureState('success');
+            setAutoConfigureMessage(response.message || 'Configuration completed successfully');
+          } else {
+            setAutoConfigureState('error');
+            setAutoConfigureMessage(response.message || 'Configuration failed');
+          }
         } catch (error) {
-          console.error('Failed to auto-configure integration:', error);
+          setAutoConfigureState('error');
+          setAutoConfigureMessage(error instanceof Error ? error.message : 'Unknown error occurred');
         }
       }
     };
@@ -145,12 +153,37 @@ export function ConfigurationGroupComponent({
       )}
 
       {/* Render nested configurations only when enabled */}
-
-      {/* Render nested configurations only when enabled */}
       {isEnabled && (
         <div className="relative mt-3 space-y-2 pl-6">
           {/* Vertical line indicator */}
           <div className="absolute left-3 top-0 bottom-0 w-px bg-neutral-alpha-200" />
+
+          {/* Auto-configure status indicator */}
+          {autoConfigureState !== 'idle' && (
+            <div className="absolute left-1 -bottom-2 flex h-4 w-4 items-center justify-center rounded-full bg-background">
+              {autoConfigureState === 'loading' && <LoadingIndicator size="sm" className="size-2.5" />}
+              {autoConfigureState === 'success' && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <RiCheckLine className="size-3 text-green-600" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{autoConfigureMessage}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {autoConfigureState === 'error' && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <RiCloseLine className="size-3 text-red-600" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{autoConfigureMessage}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
 
           <FormLabel htmlFor={'inboundWebhookUrl'} optional={false}>
             Inbound Webhook URL

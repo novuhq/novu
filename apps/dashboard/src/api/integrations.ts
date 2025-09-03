@@ -64,9 +64,14 @@ export type AutoConfigureIntegrationResponse = {
 };
 
 export async function autoConfigureIntegration(integrationId: string, environment: IEnvironment) {
-  return await post<AutoConfigureIntegrationResponse>(`/integrations/${integrationId}/auto-configure`, {
-    environment: environment,
-  });
+  const response = await post<{ data: AutoConfigureIntegrationResponse }>(
+    `/integrations/${integrationId}/auto-configure`,
+    {
+      environment: environment,
+    }
+  );
+
+  return response.data;
 }
 
 export async function updateIntegration(integrationId: string, data: UpdateIntegrationData, environment: IEnvironment) {

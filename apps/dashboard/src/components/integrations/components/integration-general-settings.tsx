@@ -7,7 +7,7 @@ import { Switch } from '@/components/primitives/switch';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { Protect } from '@/utils/protect';
 import { IntegrationFormData } from '../types';
-import { ConfigurationGroupComponent } from './integration-configurations';
+import { ConfigurationGroup } from './configuration-group';
 
 type GeneralSettingsProps = {
   control: Control<IntegrationFormData>;
@@ -34,7 +34,7 @@ export function GeneralSettings({
   provider,
   formData,
 }: GeneralSettingsProps) {
-  const isInboundWebhooksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOKS_ENABLED);
+  const isInboundWebhooksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOKS_ENABLED, true);
 
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
@@ -133,7 +133,7 @@ export function GeneralSettings({
       {!isDemo && isInboundWebhooksEnabled && configurations && configurations.length > 0 && (
         <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
           {configurations.map((group) => (
-            <ConfigurationGroupComponent
+            <ConfigurationGroup
               integrationId={integrationId}
               key={group.groupType}
               group={group}
