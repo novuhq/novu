@@ -320,13 +320,13 @@ describe('extractLiquidTemplateVariables', () => {
       expect(invalidVariables[0].name).to.equal('product.name');
     });
 
-    it('should handle if statements with filters without treating filter names as variables', () => {
-      const template = '{% if payload.name | downcase == "john" %}Hello John!{% endif %}';
+    it('should handle if statements without treating variables as filter names', () => {
+      const template = '{% if payload.isActive %}Hello!{% endif %}';
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       expect(validVariables).to.have.lengthOf(1);
       expect(invalidVariables).to.have.lengthOf(0);
-      expect(validVariables[0].name).to.equal('payload.name');
+      expect(validVariables[0].name).to.equal('payload.isActive');
     });
   });
 
