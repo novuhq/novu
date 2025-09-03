@@ -1,4 +1,5 @@
 import { providers as novuProviders } from '@novu/shared';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -28,6 +29,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const { mutateAsync: createIntegration, isPending } = useCreateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
   const { integrations } = useFetchIntegrations();
+  const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown> });
 
   const handleIntegrationSelect = (integrationId: string) => {
     navigate(buildRoute(ROUTES.INTEGRATIONS_CONNECT_PROVIDER, { providerId: integrationId }), { replace: true });
@@ -118,6 +120,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                 provider={provider}
                 onSubmit={handleSubmitWithPrimaryCheck}
                 mode="create"
+                onFormStateChange={setFormState}
               />
             </div>
             <div className="bg-background flex justify-end gap-2 border-t p-3">
@@ -127,6 +130,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                 form={`integration-configuration-form-${provider.id}`}
                 isLoading={isPending || isSettingPrimary}
                 size="xs"
+                disabled={!formState.isValid}
               >
                 Create Integration
               </Button>
