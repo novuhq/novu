@@ -1,3 +1,13 @@
+## v3.9.3 (2025-09-03)
+
+### 🩹 Fixes
+
+- **js,react:** Fix ui shift for dropdown popover position fixes NV-6493 ([#9057](https://github.com/novuhq/novu/pull/9057))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+
 ## v3.9.2 (2025-09-03)
 
 ### 🚀 Features

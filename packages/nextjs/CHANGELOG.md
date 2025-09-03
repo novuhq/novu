@@ -1,3 +1,7 @@
+## v3.9.3 (2025-09-03)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
 ## v3.9.2 (2025-09-03)
 
 ### 🚀 Features
