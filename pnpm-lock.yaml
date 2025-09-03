@@ -2750,8 +2750,8 @@ importers:
         specifier: workspace:*
         version: link:../../enterprise/packages/shared-services
       '@taskforcesh/bullmq-pro':
-        specifier: 5.1.14
-        version: 5.1.14
+        specifier: 6.11.0
+        version: 6.11.0
 
   libs/automation:
     dependencies:
@@ -15113,8 +15113,8 @@ packages:
     resolution: {integrity: sha512-mPBodDGVL+fl6d90wUREepHa/7lhsghg2A3vFpakEhrhtbIlgNAZiMr7ccTgak5qbHqF14Fwy+W1yFWQt+WmYQ==}
     engines: {node: '>=12'}
 
-  '@taskforcesh/bullmq-pro@5.1.14':
-    resolution: {integrity: sha512-J/83Q1GTFWbUWn1bpsiX+CcQXktp7ADg/d1oID+wQ8ZwSB2W5l/1FV4yR1BEi3sO+UFEo+rK3qfXQuDml7aBYA==, tarball: https://npm.taskforce.sh/@taskforcesh/bullmq-pro/-/@taskforcesh/bullmq-pro-5.1.14.tgz}
+  '@taskforcesh/bullmq-pro@6.11.0':
+    resolution: {integrity: sha512-S00SeOlo6VMc3YGsAFKX7w/jDAt6b7mNn2Ks7bF4Ilmh5xd/RBPv/vd3ouvhQ5slxAuZxoFLKRnysdPCWHKORA==, tarball: https://npm.taskforce.sh/@taskforcesh/bullmq-pro/-/@taskforcesh/bullmq-pro-6.11.0.tgz}
 
   '@team-plain/typescript-sdk@5.8.0':
     resolution: {integrity: sha512-qgDGX96yDsdTo5+Yh8R+rhtInmAm90w17607B2Ugik8Ij0H1wocjjp8xtMxHruSmms5ani43Y5xRxVFPSxYVeg==}
@@ -18179,8 +18179,8 @@ packages:
   bullmq@3.10.4:
     resolution: {integrity: sha512-KHYopaoAJpf9Fe9qMjY2xxbMTqgrEIgfrQr81wU0V/wLf4eijNpjVjGVhfQ/bWuHMmwKY1xgOzSIF3+lmdkiOg==}
 
-  bullmq@3.6.6:
-    resolution: {integrity: sha512-W71jXrcTdcT3Y5tzMyTx22Cd8O3dTML7vl6KG3YdGVGrO3+UmKRLYfGLn1QwIhIoTQJVvIrSB4qfGs1hgqYRVw==}
+  bullmq@4.17.0:
+    resolution: {integrity: sha512-URnHgB01rlCP8RTpmW3kFnvv3vdd2aI1OcBMYQwnqODxGiJUlz9MibDVXE83mq7ee1eS1IvD9lMQqGszX6E5Pw==}
 
   bundle-n-require@1.1.1:
     resolution: {integrity: sha512-EB2wFjXF106LQLe/CYnKCMCdLeTW47AtcEtUfiqAOgr2a08k0+YgRklur2aLfEYHlhz6baMskZ8L2U92Hh0vyA==}
@@ -19044,10 +19044,6 @@ packages:
 
   crelt@1.0.6:
     resolution: {integrity: sha512-VQ2MBenTq1fWZUH9DJNGti7kKv6EeAuYr3cLwxUWhIu1baTaXh4Ib5W2CqHVqib4/MqbYGJqiL3Zb8GJZr3l4g==}
-
-  cron-parser@4.8.1:
-    resolution: {integrity: sha512-jbokKWGcyU4gl6jAfX97E1gDpY12DJ1cLJZmoDzaAln/shZ+S3KBFBuA2Q6WeUN4gJf/8klnV1EfvhA2lK5IRQ==}
-    engines: {node: '>=12.0.0'}
 
   cron-parser@4.9.0:
     resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
@@ -30334,7 +30330,6 @@ packages:
   superagent@10.1.0:
     resolution: {integrity: sha512-JMmik7PbnXGlq7g528Gi6apHbVbTz2vrE3du6fuG4kIPSb2PnLoSOPvfjKn8aQYuJcBWAKW6ZG90qPPsE5jZxQ==}
     engines: {node: '>=14.18.0'}
-    deprecated: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
 
   superagent@8.1.2:
     resolution: {integrity: sha512-6WTxW1EB6yCxV5VFOIPQruWGHqc3yI7hEmZK6h+pyk69Lk/Ut7rLUY6W/ONF2MjBuGjvmMiIpsrVJ2vjrHlslA==}
@@ -32941,7 +32936,7 @@ snapshots:
       cjs-module-lexer: 1.4.1
       fflate: 0.8.2
       lru-cache: 10.4.3
-      semver: 7.6.3
+      semver: 7.7.2
       typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
@@ -50403,13 +50398,13 @@ snapshots:
 
   '@tanstack/table-core@8.17.3': {}
 
-  '@taskforcesh/bullmq-pro@5.1.14':
+  '@taskforcesh/bullmq-pro@6.11.0':
     dependencies:
-      bullmq: 3.6.6
+      bullmq: 4.17.0
       lodash: 4.17.21
       msgpackr: 1.8.5
       rxjs: 6.6.7
-      tslib: 2.6.2
+      tslib: 2.8.1
       uuid: 8.3.2
     transitivePeerDependencies:
       - supports-color
@@ -54626,15 +54621,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  bullmq@3.6.6:
+  bullmq@4.17.0:
     dependencies:
-      cron-parser: 4.8.1
+      cron-parser: 4.9.0
       glob: 8.1.0
       ioredis: 5.3.2
       lodash: 4.17.21
       msgpackr: 1.8.5
-      semver: 7.6.2
-      tslib: 2.6.2
+      node-abort-controller: 3.1.1
+      semver: 7.7.2
+      tslib: 2.8.1
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
@@ -55617,11 +55613,6 @@ snapshots:
   create-require@1.1.1: {}
 
   crelt@1.0.6: {}
-
-  cron-parser@4.8.1:
-    dependencies:
-      luxon: 3.3.0
-    optional: true
 
   cron-parser@4.9.0:
     dependencies:
