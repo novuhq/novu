@@ -454,7 +454,7 @@ async function performInstallation(config: IUserConfig, analytics?: AnalyticsSer
     }
 
     logger.step(2, 'Installing dependencies');
-    await installDependencies(framework, packageManager, analytics);
+    await installDependencies(framework, packageManager);
 
     logger.step(3, 'Creating component structure');
     await createComponentStructure(
@@ -594,7 +594,7 @@ async function init() {
     }
 
     // Get user configuration
-    config = await promptUserConfiguration(analytics);
+    config = await promptUserConfiguration();
     if (!config) {
       // User cancellation
       trackCliCancelled(analytics, 'User cancelled during promptUserConfiguration', undefined);

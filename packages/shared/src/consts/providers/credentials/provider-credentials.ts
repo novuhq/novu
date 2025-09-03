@@ -561,6 +561,21 @@ export const fcmConfig: IConfigCredential[] = [
     displayName: 'Service Account (entire JSON file)',
     type: 'textarea',
     required: true,
+    validation: {
+      validate: (value: string) => {
+        if (!value || value.trim() === '') {
+          return true; // Let required validation handle empty values
+        }
+        
+        try {
+          JSON.parse(value);
+
+          return true;
+        } catch {
+          return 'Invalid JSON format. Please provide a valid JSON service account file.';
+        }
+      },
+    },
   },
   ...pushConfigBase,
 ];
@@ -662,7 +677,7 @@ export const apnsConfig: IConfigCredential[] = [
           }
 
           return true;
-        } catch (e) {
+        } catch {
           return 'Invalid private key format. Must be in PEM format.';
         }
       },
