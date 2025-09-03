@@ -8,5 +8,5 @@ export class UpsertSubscriberGlobalPreferencesCommand extends UpsertPreferencesP
 
   @IsOptional()
   @IsBoolean()
-  readonly returnPreference: boolean = true;
+  readonly returnPreference?: boolean = true;
 }

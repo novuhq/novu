@@ -8,5 +8,5 @@ export class UpsertSubscriberWorkflowPreferencesCommand extends UpsertSubscriber
 
   @IsBoolean()
   @IsOptional()
-  readonly returnPreference: boolean = true;
+  readonly returnPreference?: boolean = true;
 }
