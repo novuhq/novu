@@ -5,15 +5,14 @@ import {
   IConfigCredential,
   IProviderConfig,
 } from '@novu/shared';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Control, useWatch } from 'react-hook-form';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { FormLabel } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { API_HOSTNAME } from '../../../config';
 import { useEnvironment } from '../../../context/environment/hooks';
-import { useCreateIntegration } from '../../../hooks/use-create-integration';
-import { useUpdateIntegration } from '../../../hooks/use-update-integration';
+import { useAutoConfigureIntegration } from '../../../hooks/use-auto-configure-integration';
 import { IntegrationFormData } from '../types';
 import { CredentialSection } from './credential-section';
 
@@ -51,10 +50,12 @@ export function ConfigurationGroupComponent({
 }) {
   const { currentEnvironment } = useEnvironment();
   const { groupType, configurations, enabler } = group;
-  const { mutateAsync: createIntegration } = useCreateIntegration();
-  const { mutateAsync: updateIntegration } = useUpdateIntegration();
+  const { mutateAsync: autoConfigureIntegration } = useAutoConfigureIntegration();
   // biome-ignore lint/style/noNonNullAssertion: <explanation> x
   const inboundWebhookUrl = generateInboundWebhookUrl(currentEnvironment?._id!, integrationId);
+
+  // Track the previous enabled state to detect toggle changes
+  const prevIsEnabledRef = useRef<boolean | null>(null);
 
   // Find the enabler configuration (toggle field)
   const enablerConfig = enabler ? configurations.find((config) => config.key === enabler) : null;
@@ -74,34 +75,38 @@ export function ConfigurationGroupComponent({
 
   // Check if required configurations are missing
   const hasRequiredConfigurations = nonEnablerConfigs.every((config) => {
-    if (!config.required) return true;
     const configValue = formData?.configurations?.[config.key];
     return configValue && configValue.trim() !== '';
   });
 
   useEffect(() => {
     const handleIntegrationCreationOrUpdate = async () => {
-      // Only proceed if enabler is true and we have provider info
-      if (!isEnabled || !provider || !currentEnvironment || isReadOnly) {
+      // Check if this is a toggle change from false to true
+      const wasToggleJustEnabled = prevIsEnabledRef.current === false && isEnabled === true;
+
+      // Update the ref with the current state
+      prevIsEnabledRef.current = isEnabled;
+
+      // Only proceed if toggle was just enabled and we have required info
+      if (!wasToggleJustEnabled || !provider || !currentEnvironment || isReadOnly) {
         return;
       }
 
+      console.log('handleIntegrationCreationOrUpdate AFTER TOGGLE ON', {
+        integrationId,
+        hasRequiredConfigurations: !hasRequiredConfigurations,
+        formData,
+      });
+
       if (integrationId && !hasRequiredConfigurations && formData) {
         try {
-          await updateIntegration({
+          console.log('Auto-configuring integration...');
+          const response = await autoConfigureIntegration({
             integrationId,
-            data: {
-              name: formData.name,
-              identifier: formData.identifier,
-              active: formData.active,
-              primary: formData.primary,
-              credentials: formData.credentials || {},
-              configurations: formData.configurations || {},
-              check: formData.check,
-            },
           });
+          console.log('Auto-configured integration:', response);
         } catch (error) {
-          console.error('Failed to update integration:', error);
+          console.error('Failed to auto-configure integration:', error);
         }
       }
     };
@@ -110,12 +115,12 @@ export function ConfigurationGroupComponent({
   }, [
     isEnabled,
     integrationId,
-    hasRequiredConfigurations,
     provider,
-    formData,
     currentEnvironment,
     isReadOnly,
-    updateIntegration,
+    hasRequiredConfigurations,
+    formData,
+    autoConfigureIntegration,
   ]);
 
   if (groupType !== 'inboundWebhook') {

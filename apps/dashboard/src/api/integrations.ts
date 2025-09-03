@@ -57,6 +57,18 @@ export async function setAsPrimaryIntegration(integrationId: string, environment
   });
 }
 
+export type AutoConfigureIntegrationResponse = {
+  success: boolean;
+  message?: string;
+  integration?: IIntegration;
+};
+
+export async function autoConfigureIntegration(integrationId: string, environment: IEnvironment) {
+  return await post<AutoConfigureIntegrationResponse>(`/integrations/${integrationId}/auto-configure`, {
+    environment: environment,
+  });
+}
+
 export async function updateIntegration(integrationId: string, data: UpdateIntegrationData, environment: IEnvironment) {
   return await put<IIntegration>(`/integrations/${integrationId}`, {
     body: data,
