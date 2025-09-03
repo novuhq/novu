@@ -1,3 +1,30 @@
+## v3.9.3 (2025-09-03)
+
+### 🩹 Fixes
+
+- **js,react:** Fix ui shift for dropdown popover position fixes NV-6493 ([#9057](https://github.com/novuhq/novu/pull/9057))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+
+## v3.9.2 (2025-09-03)
+
+### 🚀 Features
+
+- **js,react,api-service:** inbox allow filtering preferences by workflow criticality fixes NV-6577 ([#9011](https://github.com/novuhq/novu/pull/9011))
+
+### 🩹 Fixes
+
+- **js:** correct archiveAllRead endpoint URL to match server implementation fixes NV-6612 ([#9052](https://github.com/novuhq/novu/pull/9052))
+- **js,react:** re-export types for the react-native package; fix partysocket event target polyfill fixes NV-6448 ([#9036](https://github.com/novuhq/novu/pull/9036))
+- **react-native:** expo unable to resolve novu internal module fixes NV-6485 ([#8965](https://github.com/novuhq/novu/pull/8965))
+
+### ❤️ Thank You
+
+- Dima Grossman
+- Paweł Tymczuk @LetItRock
+
 ## v3.9.1 (2025-08-27)
 
 ### 🚀 Features

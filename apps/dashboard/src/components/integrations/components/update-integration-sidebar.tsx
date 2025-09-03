@@ -34,6 +34,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown> });
 
   const {
     isPrimaryModalOpen,
@@ -141,6 +142,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
             mode="update"
             hasOtherProviders={!!hasOtherProviders}
             isReadOnly={isReadOnly}
+            onFormStateChange={setFormState}
           />
         </div>
 
@@ -163,7 +165,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
               form={`integration-configuration-form-${provider.id}`}
               className="ml-auto"
               isLoading={isUpdating || isSettingPrimary}
-              disabled={isReadOnly}
+              disabled={isReadOnly || !formState.isValid}
             >
               Save Changes
             </Button>
