@@ -7,11 +7,6 @@ export default function NotificationInbox({ subscriberId }: { subscriberId: stri
   // Ensure the environment variable is available
   const applicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER;
 
-  if (!applicationIdentifier) {
-    console.error('NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER is not defined');
-    return null;
-  }
-
   return (
     <Inbox
       // Required core configuration
