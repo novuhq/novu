@@ -29,7 +29,7 @@ export function AddNodeEdge({
   markerEnd,
   id,
 }: EdgeProps<AddNodeEdgeType>) {
-  const { workflow, update } = useWorkflow();
+  const { workflow, optimisticAddStep } = useWorkflow();
   const navigate = useNavigate();
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
@@ -119,23 +119,10 @@ export function AddNodeEdge({
                   if (workflow && !isFetchingLayouts) {
                     const indexToAdd = data.addStepIndex;
 
-                    const newStep = createStep(
+                    optimisticAddStep(
                       stepType,
-                      addDefaultLayout ? defaultLayoutId : undefined,
-                      workflow.severity
-                    );
-
-                    const updatedSteps = [
-                      ...workflow.steps.slice(0, indexToAdd),
-                      newStep,
-                      ...workflow.steps.slice(indexToAdd),
-                    ];
-
-                    update(
-                      {
-                        ...workflow,
-                        steps: updatedSteps,
-                      },
+                      indexToAdd,
+                      () => createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined, workflow.severity),
                       {
                         onSuccess: (data) => {
                           if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {

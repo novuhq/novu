@@ -27,15 +27,18 @@ function isIntersecting(el1: Element, el2: Element) {
 export const useCanvasNodesEdges = ({
   steps,
   isTemplateStorePreview,
+  workflow: passedWorkflow,
 }: {
   steps: Step[];
   isTemplateStorePreview?: boolean;
+  workflow?: any;
 }) => {
   const { currentEnvironment } = useEnvironment();
-  const { workflow: currentWorkflow, update } = useWorkflow();
+  const { workflow: currentWorkflow, optimisticReorderSteps } = useWorkflow();
+  const workflow = passedWorkflow || currentWorkflow;
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
-    return generateNodesAndEdges(steps, isTemplateStorePreview ?? false, currentWorkflow, currentEnvironment);
-  }, [steps, isTemplateStorePreview, currentWorkflow, currentEnvironment]);
+    return generateNodesAndEdges(steps, isTemplateStorePreview ?? false, workflow, currentEnvironment);
+  }, [steps, isTemplateStorePreview, workflow, currentEnvironment]);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
@@ -52,14 +55,14 @@ export const useCanvasNodesEdges = ({
       const { nodes, edges } = generateNodesAndEdges(
         steps,
         isTemplateStorePreview ?? false,
-        currentWorkflow,
+        workflow,
         currentEnvironment
       );
       setNodes(nodes);
       setEdges(edges);
       timeoutRef.current = null;
     }, 100);
-  }, [steps, currentWorkflow, currentEnvironment, isTemplateStorePreview, setNodes, setEdges]);
+  }, [steps, workflow, currentEnvironment, isTemplateStorePreview, setNodes, setEdges]);
 
   const removeEdges = useCallback(() => {
     setEdges([]);
@@ -142,10 +145,10 @@ export const useCanvasNodesEdges = ({
 
   const handleNodeDragEnd = useCallback(() => {
     const draggedNode = nodes.find((n) => n.id === draggedNodeId);
-    const steps = [...(currentWorkflow?.steps ?? [])];
+    const steps = [...(workflow?.steps ?? [])];
     const draggedStepIndex = steps.findIndex((s) => s.slug === draggedNode?.data.stepSlug);
 
-    if (!currentWorkflow || !draggedNode || !draggedNode.data.stepSlug || draggedStepIndex === -1) {
+    if (!workflow || !draggedNode || !draggedNode.data.stepSlug || draggedStepIndex === -1) {
       setDraggedNodeId(null);
       setIntersectingNodeId(null);
       setIntersectingEdgeId(null);
@@ -166,10 +169,7 @@ export const useCanvasNodesEdges = ({
             newSteps[draggedStepIndex],
           ];
 
-          update({
-            ...currentWorkflow,
-            steps: newSteps,
-          });
+          optimisticReorderSteps(newSteps);
         }
       }
     } else if (intersectingNodeId && isLastAddNode) {
@@ -213,10 +213,7 @@ export const useCanvasNodesEdges = ({
 
           newSteps.splice(adjustedInsertIndex, 0, draggedStep);
 
-          update({
-            ...currentWorkflow,
-            steps: newSteps,
-          });
+          optimisticReorderSteps(newSteps);
         }
       }
     }
@@ -224,7 +221,7 @@ export const useCanvasNodesEdges = ({
     setDraggedNodeId(null);
     setIntersectingNodeId(null);
     setIntersectingEdgeId(null);
-  }, [draggedNodeId, currentWorkflow, nodes, intersectingNodeId, intersectingEdgeId, edges, update]);
+  }, [draggedNodeId, workflow, nodes, intersectingNodeId, intersectingEdgeId, edges, optimisticReorderSteps]);
 
   useEffect(() => {
     forceUpdateNodesAndEdges();
