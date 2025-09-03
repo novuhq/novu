@@ -18,7 +18,8 @@ export const MoreActionsDropdown = () => {
 
   return (
     <Show when={status() !== NotificationStatus.ARCHIVED && status() !== NotificationStatus.SNOOZED}>
-      <Dropdown.Root>
+      {/* Use bottom-end placement to align dropdown properly when positioned on the right side */}
+      <Dropdown.Root placement="bottom-end" fallbackPlacements={['bottom-start', 'top-end', 'top-start']}>
         <Dropdown.Trigger
           class={style({
             key: 'moreActions__dropdownTrigger',
