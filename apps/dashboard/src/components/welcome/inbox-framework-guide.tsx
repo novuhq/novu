@@ -205,6 +205,7 @@ export function InboxFrameworkGuide({
               <AiPromptsSection
                 frameworkName={selectedFramework.name}
                 applicationIdentifier={currentEnvironment?.identifier}
+                subscriberId={subscriberId}
               />
             </div>
 
@@ -245,6 +246,7 @@ export function InboxFrameworkGuide({
               <AiPromptsSection
                 frameworkName={selectedFramework.name}
                 applicationIdentifier={currentEnvironment?.identifier}
+                subscriberId={subscriberId}
               />
             </div>
             <div className="relative mt-2 overflow-hidden pl-0">

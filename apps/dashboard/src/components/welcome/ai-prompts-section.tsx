@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { RiCheckLine, RiSparklingLine } from 'react-icons/ri';
+import { Button } from '@/components/primitives/button';
 
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
@@ -12,13 +13,19 @@ interface AiPromptsSectionProps {
   className?: string;
   frameworkName: string;
   applicationIdentifier?: string;
+  subscriberId?: string;
 }
 
-export function AiPromptsSection({ className, frameworkName, applicationIdentifier }: AiPromptsSectionProps) {
+export function AiPromptsSection({
+  className,
+  frameworkName,
+  applicationIdentifier,
+  subscriberId,
+}: AiPromptsSectionProps) {
   const track = useTelemetry();
   const [isCopied, setIsCopied] = useState(false);
 
-  const prompt = getFrameworkPrompt(frameworkName, applicationIdentifier);
+  const prompt = getFrameworkPrompt(frameworkName, applicationIdentifier, 'us', subscriberId);
 
   const handleCopyPrompt = async () => {
     try {
@@ -49,12 +56,10 @@ export function AiPromptsSection({ className, frameworkName, applicationIdentifi
           <div className="flex items-center gap-3">
             <span>
               Copy this quick-start guide as a prompt for LLMs to implement Novu in{' '}
-              {FRAMEWORK_CONFIGS[frameworkName]?.name.split(' ')[0]} application.
+              {frameworkName === 'Native' ? 'React Native' : FRAMEWORK_CONFIGS[frameworkName]?.name.split(' ')[0]}{' '}
+              application.
             </span>
-            <button
-              onClick={handleCopyPrompt}
-              className="inline-flex select-none items-center justify-center gap-2 whitespace-nowrap h-8 px-3 outline-none text-label-xs font-medium transition-all duration-300 ease-out bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
-            >
+            <Button onClick={handleCopyPrompt} variant="secondary" mode="outline" size="xs">
               <motion.div
                 key={isCopied ? 'copied' : 'copy'}
                 initial={{ y: 20, opacity: 0 }}
@@ -75,7 +80,7 @@ export function AiPromptsSection({ className, frameworkName, applicationIdentifi
                   </>
                 )}
               </motion.div>
-            </button>
+            </Button>
           </div>
         }
       />

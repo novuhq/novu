@@ -1,7 +1,7 @@
-export { ANGULAR_PROMPT } from './angular-prompt';
-export { JAVASCRIPT_PROMPT } from './javascript-prompt';
-export { NEXTJS_PROMPT } from './nextjs-prompt';
-export { REACT_NATIVE_PROMPT } from './react-native-prompt';
-export { REACT_PROMPT } from './react-prompt';
-export { REMIX_PROMPT } from './remix-prompt';
-export { VUE_PROMPT } from './vue-prompt';
+export { getAngularPromptString } from './angular-prompt';
+export { getJavaScriptPromptString } from './javascript-prompt';
+export { getNextJsPromptString } from './nextjs-prompt';
+export { getReactNativePromptString } from './react-native-prompt';
+export { getReactPromptString } from './react-prompt';
+export { getRemixPromptString } from './remix-prompt';
+export { getVuePromptString } from './vue-prompt';

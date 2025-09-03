@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IIntegration } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatedPage } from '@/components/onboarding/animated-page';
@@ -23,13 +23,7 @@ export function InboxEmbedPage() {
   );
 
   const { integrations } = useFetchIntegrations({
-    refetchInterval: (query) => {
-      const inAppIntegration = query.state.data?.find(
-        (integration: IIntegration) =>
-          integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
-      );
-      return inAppIntegration?.connected ? false : 1000;
-    },
+    refetchInterval: 1000,
     refetchOnWindowFocus: false,
   });
 
