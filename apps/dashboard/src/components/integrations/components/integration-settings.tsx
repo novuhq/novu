@@ -35,6 +35,7 @@ type IntegrationConfigurationProps = {
   isChannelSupportPrimary?: boolean;
   hasOtherProviders?: boolean;
   isReadOnly?: boolean;
+  onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown> }) => void;
 };
 
 function generateSlug(name: string): string {
@@ -54,11 +55,14 @@ export function IntegrationSettings({
   isChannelSupportPrimary,
   hasOtherProviders,
   isReadOnly,
+  onFormStateChange,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
   const { currentEnvironment, environments } = useEnvironment();
 
   const form = useForm<IntegrationFormData>({
+    mode: 'all',
+    reValidateMode: 'onChange',
     defaultValues: integration
       ? {
           name: integration.name,
@@ -80,7 +84,17 @@ export function IntegrationSettings({
         },
   });
 
-  const { handleSubmit, control, setValue } = form;
+  const { handleSubmit, control, setValue, formState } = form;
+
+  // Notify parent component of form state changes
+  useEffect(() => {
+    if (onFormStateChange) {
+      onFormStateChange({
+        isValid: formState.isValid,
+        errors: formState.errors,
+      });
+    }
+  }, [formState.isValid, formState.errors, onFormStateChange]);
 
   const name = useWatch({ control, name: 'name' });
   const environmentId = useWatch({ control, name: 'environmentId' });

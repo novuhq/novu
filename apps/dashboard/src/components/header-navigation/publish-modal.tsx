@@ -302,8 +302,8 @@ function CompactResourceRow({
   allWorkflows = [],
   dependencyMap = new Map(),
 }: SelectableResourceRowProps) {
-  const displayName = resource.targetResource?.name || resource.sourceResource?.name || 'Unnamed Resource';
-  const slug = displayName.toLowerCase().replace(/\s+/g, '-');
+  const displayName = resource.sourceResource?.name || resource.targetResource?.name || 'Unnamed Resource';
+  const slug = resource.sourceResource?.id || resource.targetResource?.id;
   const updatedAt = resource.sourceResource?.updatedAt || resource.targetResource?.updatedAt;
   const hasDependencies = dependencies && dependencies.length > 0;
 

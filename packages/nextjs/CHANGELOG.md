@@ -1,3 +1,17 @@
+## v3.9.3 (2025-09-03)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
+## v3.9.2 (2025-09-03)
+
+### 🚀 Features
+
+- **js,react,api-service:** inbox allow filtering preferences by workflow criticality fixes NV-6577 ([#9011](https://github.com/novuhq/novu/pull/9011))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
 ## v3.9.1 (2025-08-27)
 
 ### 🚀 Features
