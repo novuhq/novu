@@ -38,10 +38,14 @@ import {
 } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { AutoConfigureIntegrationRequestDto } from './dtos/auto-configure-integration-request.dto';
+import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integration-response.dto';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
+import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
+import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
@@ -72,6 +76,7 @@ export class IntegrationsController {
     private getWebhookSupportStatusUsecase: GetWebhookSupportStatus,
     private createIntegrationUsecase: CreateIntegration,
     private updateIntegrationUsecase: UpdateIntegration,
+    private autoConfigureIntegrationUsecase: AutoConfigureIntegration,
     private setIntegrationAsPrimaryUsecase: SetIntegrationAsPrimary,
     private removeIntegrationUsecase: RemoveIntegration,
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
@@ -236,6 +241,33 @@ export class IntegrationsController {
 
       throw e;
     }
+  }
+
+  @Post('/:integrationId/auto-configure')
+  @ApiResponse(AutoConfigureIntegrationResponseDto, 200)
+  @ApiNotFoundResponse({
+    description: 'The integration with the integrationId provided does not exist in the database.',
+  })
+  @ApiOperation({
+    summary: 'Auto-configure an integration for inbound webhooks',
+    description: `Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support. 
+    This will automatically generate required webhook signing keys and configure webhook endpoints.`,
+  })
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async autoConfigureIntegration(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string
+  ): Promise<AutoConfigureIntegrationResponseDto> {
+    const result = await this.autoConfigureIntegrationUsecase.execute(
+      AutoConfigureIntegrationCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        integrationId,
+      })
+    );
+
+    return result;
   }
 
   @Post('/:integrationId/set-primary')

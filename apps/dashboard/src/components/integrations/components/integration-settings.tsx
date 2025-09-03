@@ -138,6 +138,8 @@ export function IntegrationSettings({
                 configurations={provider.configurations}
                 integrationId={integration?._id}
                 isDemo={isDemo}
+                provider={provider}
+                formData={form.getValues()}
               />
             </AccordionContent>
           </AccordionItem>

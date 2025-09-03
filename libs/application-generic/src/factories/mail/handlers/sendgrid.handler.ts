@@ -1,9 +1,9 @@
 import { SendgridEmailProvider } from '@novu/providers';
 import { ChannelTypeEnum, EmailProviderIdEnum, IConfigurations, ICredentials } from '@novu/shared';
 
-import { BaseHandler } from './base.handler';
+import { BaseEmailHandler } from './base.handler';
 
-export class SendgridHandler extends BaseHandler {
+export class SendgridHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.SendGrid, ChannelTypeEnum.EMAIL);
   }

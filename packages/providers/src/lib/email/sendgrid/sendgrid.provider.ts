@@ -188,6 +188,10 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     }
   }
 
+  autoConfigureInboundWebhook(configurations: IConfigurations): { success: boolean; message?: string } {
+    return { success: true, message: 'SendGrid auto-configuration is not supported' };
+  }
+
   private getHeaderValue(headers: Record<string, string>, headerName: string): string | undefined {
     // Case-insensitive header lookup
     const lowerHeaderName = headerName.toLowerCase();

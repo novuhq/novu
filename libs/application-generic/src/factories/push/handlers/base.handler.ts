@@ -1,15 +1,18 @@
 import {} from '@novu/dal';
 import { ChannelTypeEnum, ICredentials, PushProviderIdEnum } from '@novu/shared';
 import { IPushOptions, IPushProvider } from '@novu/stateless';
+import { BaseHandler } from '../../shared/interfaces';
 import { IPushHandler } from '../interfaces';
 
-export abstract class BasePushHandler implements IPushHandler {
+export abstract class BasePushHandler extends BaseHandler implements IPushHandler {
   protected provider: IPushProvider;
 
   protected constructor(
     private providerId: PushProviderIdEnum,
     private channelType: string
-  ) {}
+  ) {
+    super();
+  }
 
   canHandle(providerId: string, channelType: ChannelTypeEnum) {
     return providerId === this.providerId && channelType === this.channelType;

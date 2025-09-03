@@ -1,8 +1,8 @@
 import { ResendEmailProvider } from '@novu/providers';
 import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
-import { BaseHandler } from './base.handler';
+import { BaseEmailHandler } from './base.handler';
 
-export class ResendHandler extends BaseHandler {
+export class ResendHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.Resend, ChannelTypeEnum.EMAIL);
   }

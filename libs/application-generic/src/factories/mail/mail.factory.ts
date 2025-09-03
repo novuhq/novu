@@ -21,9 +21,9 @@ import {
   SendinblueHandler,
   SparkPostHandler,
 } from './handlers';
-import { IMailHandler } from './interfaces/send.handler.interface';
+import { IMailFactory, IMailHandler } from './interfaces';
 
-export class MailFactory {
+export class MailFactory implements IMailFactory {
   handlers: IMailHandler[] = [
     new SendgridHandler(),
     new MailgunHandler(),

@@ -1,10 +1,19 @@
-import { ConfigConfiguration, ConfigConfigurationGroup, CredentialsKeyEnum, IConfigCredential } from '@novu/shared';
+import {
+  ConfigConfiguration,
+  ConfigConfigurationGroup,
+  CredentialsKeyEnum,
+  IConfigCredential,
+  IProviderConfig,
+} from '@novu/shared';
+import { useEffect } from 'react';
 import { Control, useWatch } from 'react-hook-form';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { FormLabel } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { API_HOSTNAME } from '../../../config';
 import { useEnvironment } from '../../../context/environment/hooks';
+import { useCreateIntegration } from '../../../hooks/use-create-integration';
+import { useUpdateIntegration } from '../../../hooks/use-update-integration';
 import { IntegrationFormData } from '../types';
 import { CredentialSection } from './credential-section';
 
@@ -30,14 +39,20 @@ export function ConfigurationGroupComponent({
   group,
   control,
   isReadOnly,
+  provider,
+  formData,
 }: {
   integrationId?: string;
   group: ConfigConfigurationGroup;
   control: Control<IntegrationFormData>;
   isReadOnly?: boolean;
+  provider?: IProviderConfig;
+  formData?: IntegrationFormData;
 }) {
   const { currentEnvironment } = useEnvironment();
   const { groupType, configurations, enabler } = group;
+  const { mutateAsync: createIntegration } = useCreateIntegration();
+  const { mutateAsync: updateIntegration } = useUpdateIntegration();
   // biome-ignore lint/style/noNonNullAssertion: <explanation> x
   const inboundWebhookUrl = generateInboundWebhookUrl(currentEnvironment?._id!, integrationId);
 
@@ -55,11 +70,57 @@ export function ConfigurationGroupComponent({
     name: toggleFieldName,
   });
 
+  const isEnabled = Boolean(watchedValue && watchedValue !== 'false');
+
+  // Check if required configurations are missing
+  const hasRequiredConfigurations = nonEnablerConfigs.every((config) => {
+    if (!config.required) return true;
+    const configValue = formData?.configurations?.[config.key];
+    return configValue && configValue.trim() !== '';
+  });
+
+  useEffect(() => {
+    const handleIntegrationCreationOrUpdate = async () => {
+      // Only proceed if enabler is true and we have provider info
+      if (!isEnabled || !provider || !currentEnvironment || isReadOnly) {
+        return;
+      }
+
+      if (integrationId && !hasRequiredConfigurations && formData) {
+        try {
+          await updateIntegration({
+            integrationId,
+            data: {
+              name: formData.name,
+              identifier: formData.identifier,
+              active: formData.active,
+              primary: formData.primary,
+              credentials: formData.credentials || {},
+              configurations: formData.configurations || {},
+              check: formData.check,
+            },
+          });
+        } catch (error) {
+          console.error('Failed to update integration:', error);
+        }
+      }
+    };
+
+    handleIntegrationCreationOrUpdate();
+  }, [
+    isEnabled,
+    integrationId,
+    hasRequiredConfigurations,
+    provider,
+    formData,
+    currentEnvironment,
+    isReadOnly,
+    updateIntegration,
+  ]);
+
   if (groupType !== 'inboundWebhook') {
     return null;
   }
-
-  const isEnabled = Boolean(watchedValue && watchedValue !== 'false');
 
   return (
     <div>
