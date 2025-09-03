@@ -56,7 +56,9 @@ export function AiPromptsSection({
           <div className="flex items-center gap-3">
             <span>
               Copy this quick-start guide as a prompt for LLMs to implement Novu in{' '}
-              {frameworkName === 'Native' ? 'React Native' : FRAMEWORK_CONFIGS[frameworkName]?.name.split(' ')[0]}{' '}
+              {frameworkName === 'Native'
+                ? 'React Native'
+                : (FRAMEWORK_CONFIGS[frameworkName]?.name?.split(' ')[0] ?? frameworkName ?? 'Framework')}{' '}
               application.
             </span>
             <Button onClick={handleCopyPrompt} variant="secondary" mode="outline" size="xs">

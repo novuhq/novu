@@ -3,15 +3,15 @@ import { PromptConfig, replaceConfigVariables } from './types';
 const KITCHEN_SINK_INBOX_SNIPPET = `'use client';
 import { Inbox } from '@novu/nextjs';
 
-// Ensure the environment variable is available
-const applicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER;
+export default function NotificationInbox({ subscriberId }: { subscriberId: string }) {
+  // Ensure the environment variable is available
+  const applicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER;
 
-if (!applicationIdentifier) {
-  console.error('NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER is not defined');
-  return null;
-}
+  if (!applicationIdentifier) {
+    console.error('NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER is not defined');
+    return null;
+  }
 
-const notificationInbox = () => {
   return (
     <Inbox
       // Required core configuration
@@ -25,7 +25,7 @@ const notificationInbox = () => {
       // Appearance configuration
       appearance={{
         // Base theme configuration
-        baseTheme: dark, // Or undefined for light theme
+        baseTheme: 'dark', // Or undefined for light theme
 
         // Variables for global styling
         variables: {
@@ -49,16 +49,14 @@ const notificationInbox = () => {
             color: '',
           },
         },
-      },
+      }}
 
       // Layout configuration
       placement=""
       placementOffset={}
     />
   );
-};
-
-export default CompleteInboxExample;
+}
 `;
 
 const NEXTJS_PROMPT = `You are an AI agent specialized in integrating the Novu Inbox component into Next.js applications. Your primary goal is to seamlessly embed the Inbox component into existing UI structures while maintaining the host application's design patterns and functionality.

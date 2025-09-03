@@ -1,6 +1,6 @@
 import { PromptConfig, replaceConfigVariables } from './types';
 
-const KITCHEN_SINK_INBOX_SNIPPET = `import { useLoaderData } from '@remix-run/react';
+const KITCHEN_SINK_INBOX_SNIPPET = `import { useLoaderData, Outlet } from '@remix-run/react';
 import { Inbox } from '@novu/react';
 import type { LoaderFunction } from '@remix-run/node';
 
@@ -59,8 +59,8 @@ export default function NotificationInbox() {
       },
 
       // Layout configuration
-      placement=""
-      placementOffset={}
+      placement="bottom"
+      placementOffset={0}
     />
   );
 }`;

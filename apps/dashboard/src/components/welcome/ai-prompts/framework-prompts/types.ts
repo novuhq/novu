@@ -15,10 +15,10 @@ export function replaceConfigVariables(prompt: string, config: PromptConfig): st
   let result = prompt;
 
   // Replace application identifier
-  result = result.replace(/YOUR_APP(?:LICATION)?_IDENTIFIER/g, config.applicationIdentifier);
+  result = result.replace(/YOUR_APP(?:LICATION)?_IDENTIFIER/g, () => config.applicationIdentifier);
 
   // Replace subscriber ID
-  result = result.replace(/YOUR_SUBSCRIBER_ID/g, config.subscriberId);
+  result = result.replace(/YOUR_SUBSCRIBER_ID/g, () => config.subscriberId);
 
   // Replace backend URL if provided
   if (config.backendUrl) {
