@@ -54,11 +54,10 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
         )}
         {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
         {!(IS_SELF_HOSTED && IS_ENTERPRISE) && <CustomerSupportButton />}
-
-        <UserProfile />
         <div className="flex pr-0.5">
           <InboxButton />
         </div>
+        <UserProfile />
       </div>
     </div>
   );
