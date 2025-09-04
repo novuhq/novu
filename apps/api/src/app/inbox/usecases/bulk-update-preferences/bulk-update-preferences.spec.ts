@@ -184,17 +184,17 @@ describe('BulkUpdatePreferences', () => {
     });
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    notificationTemplateRepositoryMock.find.resolves([mockedWorkflow1, mockedWorkflow2]);
+    notificationTemplateRepositoryMock.findForBulkPreferences.resolves([mockedWorkflow1, mockedWorkflow2]);
+    environmentRepositoryMock.findOne.resolves({ _id: 'env-1' } as any);
     updatePreferencesUsecaseMock.execute.onFirstCall().resolves(mockedInboxPreference1);
     updatePreferencesUsecaseMock.execute.onSecondCall().resolves(mockedInboxPreference2);
 
     await bulkUpdatePreferences.execute(command);
 
-    const findCallArgs = notificationTemplateRepositoryMock.find.firstCall.args[0];
-    expect(findCallArgs).to.deep.equal({
-      _environmentId: 'env-1',
-      $or: [{ _id: { $in: [mockedWorkflow1._id] } }, { 'triggers.identifier': { $in: ['test-trigger-2'] } }],
-    });
+    const findCallArgs = notificationTemplateRepositoryMock.findForBulkPreferences.firstCall.args;
+    expect(findCallArgs[0]).to.equal('env-1'); // environmentId
+    expect(findCallArgs[1]).to.deep.equal([mockedWorkflow1._id]); // internal IDs
+    expect(findCallArgs[2]).to.deep.equal(['test-trigger-2']); // identifiers
   });
 
   it('should handle mixed ID types correctly', async () => {
@@ -217,10 +217,11 @@ describe('BulkUpdatePreferences', () => {
     });
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    notificationTemplateRepositoryMock.find.resolves([
+    notificationTemplateRepositoryMock.findForBulkPreferences.resolves([
       mockedWorkflow1,
       { ...mockedWorkflow2, triggers: [{ type: TriggerTypeEnum.EVENT, identifier: nonObjectIdString }] },
     ]);
+    environmentRepositoryMock.findOne.resolves({ _id: 'env-1' } as any);
     updatePreferencesUsecaseMock.execute.onFirstCall().resolves(mockedInboxPreference1);
     updatePreferencesUsecaseMock.execute.onSecondCall().resolves({
       ...mockedInboxPreference2,
@@ -229,9 +230,9 @@ describe('BulkUpdatePreferences', () => {
 
     await bulkUpdatePreferences.execute(command);
 
-    const findCallArgs = notificationTemplateRepositoryMock.find.firstCall.args[0];
-    expect(findCallArgs?.$or?.[0]?._id?.$in).to.include(mockedWorkflow1._id);
-    expect(findCallArgs?.$or?.[1]?.['triggers.identifier']?.$in).to.include(nonObjectIdString);
+    const findCallArgs = notificationTemplateRepositoryMock.findForBulkPreferences.firstCall.args;
+    expect(findCallArgs[1]).to.include(mockedWorkflow1._id); // internal IDs
+    expect(findCallArgs[2]).to.include(nonObjectIdString); // identifiers
   });
 
   it('should deduplicate preferences when different identifiers resolve to the same workflow', async () => {
@@ -257,7 +258,8 @@ describe('BulkUpdatePreferences', () => {
     });
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    notificationTemplateRepositoryMock.find.resolves([mockedWorkflow1]);
+    notificationTemplateRepositoryMock.findForBulkPreferences.resolves([mockedWorkflow1]);
+    environmentRepositoryMock.findOne.resolves({ _id: 'env-1' } as any);
     updatePreferencesUsecaseMock.execute.resolves(mockedInboxPreference1);
 
     const result = await bulkUpdatePreferences.execute(command);
@@ -288,7 +290,7 @@ describe('BulkUpdatePreferences', () => {
     });
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    notificationTemplateRepositoryMock.find.resolves([]);
+    notificationTemplateRepositoryMock.findForBulkPreferences.resolves([]);
 
     try {
       await bulkUpdatePreferences.execute(command);
@@ -315,7 +317,7 @@ describe('BulkUpdatePreferences', () => {
     });
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    notificationTemplateRepositoryMock.find.resolves([criticalWorkflow]);
+    notificationTemplateRepositoryMock.findForBulkPreferences.resolves([criticalWorkflow]);
 
     try {
       await bulkUpdatePreferences.execute(command);
@@ -346,7 +348,8 @@ describe('BulkUpdatePreferences', () => {
     });
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    notificationTemplateRepositoryMock.find.resolves([mockedWorkflow1, mockedWorkflow2]);
+    notificationTemplateRepositoryMock.findForBulkPreferences.resolves([mockedWorkflow1, mockedWorkflow2]);
+    environmentRepositoryMock.findOne.resolves({ _id: 'env-1' } as any);
 
     updatePreferencesUsecaseMock.execute.onFirstCall().resolves(mockedInboxPreference1);
     updatePreferencesUsecaseMock.execute.onSecondCall().resolves(mockedInboxPreference2);
@@ -396,7 +399,8 @@ describe('BulkUpdatePreferences', () => {
     });
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    notificationTemplateRepositoryMock.find.resolves([mockedWorkflow1]);
+    notificationTemplateRepositoryMock.findForBulkPreferences.resolves([mockedWorkflow1]);
+    environmentRepositoryMock.findOne.resolves({ _id: 'env-1' } as any);
     updatePreferencesUsecaseMock.execute.resolves(mockedInboxPreference1);
 
     const result = await bulkUpdatePreferences.execute(command);
