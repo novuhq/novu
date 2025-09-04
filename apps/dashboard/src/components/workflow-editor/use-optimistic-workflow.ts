@@ -146,7 +146,7 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
       });
 
       const updateSteps = [
-        ...workflow.steps.slice(0, insertIndex).map(step => ({
+        ...workflow.steps.slice(0, insertIndex).map((step) => ({
           _id: step._id,
           stepId: step.stepId,
           name: step.name,
@@ -154,7 +154,7 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
           controlValues: step.controlValues,
         })),
         newStep,
-        ...workflow.steps.slice(insertIndex).map(step => ({
+        ...workflow.steps.slice(insertIndex).map((step) => ({
           _id: step._id,
           stepId: step.stepId,
           name: step.name,
