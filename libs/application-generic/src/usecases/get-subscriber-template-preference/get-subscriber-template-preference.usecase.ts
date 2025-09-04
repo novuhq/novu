@@ -165,12 +165,15 @@ export class GetSubscriberTemplatePreference {
     if (stepMissingTemplate) {
       const messageIds = activeSteps.map((step) => step._templateId);
 
-      const messageTemplates = await this.messageTemplateRepository.find({
-        _environmentId: command.environmentId,
-        _id: {
-          $in: messageIds,
+      const messageTemplates = await this.messageTemplateRepository.find(
+        {
+          _environmentId: command.environmentId,
+          _id: {
+            $in: messageIds,
+          },
         },
-      });
+        '_id type'
+      );
 
       return [
         ...new Set(messageTemplates.map((messageTemplate) => messageTemplate.type) as unknown as ChannelTypeEnum[]),
