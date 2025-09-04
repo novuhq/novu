@@ -9,6 +9,8 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
+// cspell:disable-next-line
+import { EventWebhook } from '@sendgrid/eventwebhook';
 import { MailDataRequired, MailService } from '@sendgrid/mail';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -27,6 +29,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
       from: string;
       senderName: string;
       ipPoolName?: string;
+      webhookPublicKey?: string;
     }
   ) {
     super();
@@ -154,6 +157,43 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     }
 
     return [body.id];
+  }
+
+  verifySignature(rawBody: any, headers: Record<string, string>): { success: boolean; message?: string } {
+    try {
+      const signature = this.getHeaderValue(headers, 'x-twilio-email-event-webhook-signature');
+      const timestamp = this.getHeaderValue(headers, 'x-twilio-email-event-webhook-timestamp');
+      const isSignatureVerificationEnabled = signature && timestamp;
+
+      if (!isSignatureVerificationEnabled) {
+        return { success: true, message: 'SendGrid signature verification is disabled for this request' };
+      }
+      const publicKey = this.config.webhookPublicKey;
+
+      if (!publicKey || rawBody === undefined) {
+        const message = [!publicKey ? 'Public key is undefined' : '', !rawBody ? 'Body is undefined' : '']
+          .filter(Boolean)
+          .join(',');
+        return { success: false, message };
+      }
+
+      const eventWebhook = new EventWebhook();
+      const ecdsaPublicKey = eventWebhook.convertPublicKeyToECDSA(publicKey);
+
+      const result = eventWebhook.verifySignature(ecdsaPublicKey, rawBody, signature, timestamp);
+
+      return { success: result, message: 'Provider signature verification result' };
+    } catch (error) {
+      return { success: false, message: `Error verifying signature: ${error.message}` };
+    }
+  }
+
+  private getHeaderValue(headers: Record<string, string>, headerName: string): string | undefined {
+    // Case-insensitive header lookup
+    const lowerHeaderName = headerName.toLowerCase();
+    const key = Object.keys(headers).find((k) => k.toLowerCase() === lowerHeaderName);
+
+    return key ? headers[key] : undefined;
   }
 
   parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {

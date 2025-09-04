@@ -11,7 +11,6 @@ import {
 // @ts-ignore CJS importing an ESM module, this fails only during the CJS build
 import type { Message, MessageAttachment, SMTPClient } from 'emailjs';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { WithPassthrough } from '../../../utils/types';
 import { IEmailJsConfig } from './emailjs.config';
 
 export class EmailJsProvider extends BaseProvider implements IEmailProvider {
