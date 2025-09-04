@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { API_HOSTNAME } from '../../../config';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { useAutoConfigureIntegration } from '../../../hooks/use-auto-configure-integration';
+import { InlineToast } from '../../primitives/inline-toast';
 import { IntegrationFormData } from '../types';
 import { CredentialSection } from './credential-section';
 
@@ -33,6 +34,7 @@ function configurationToCredential(config: ConfigConfiguration): IConfigCredenti
     description: config.description,
     type: config.type,
     required: config.required,
+    links: config.links,
   } as IConfigCredential;
 }
 
@@ -204,6 +206,22 @@ export function ConfigurationGroup({
             type="text"
             readOnly={true}
             trailingNode={<CopyButton valueToCopy={inboundWebhookUrl} />}
+          />
+
+          <InlineToast
+            variant={'tip'}
+            className="mt-3"
+            description={
+              <>
+                Copy this URL into your SendGrid webhook settings.
+                <br />
+                Note: Required scopes must be enabled.
+              </>
+            }
+            ctaLabel="View Guide"
+            onCtaClick={() => {
+              window.open(group?.setupWebhookUrlGuide ?? '', '_blank');
+            }}
           />
 
           {nonEnablerConfigs.length > 0 &&

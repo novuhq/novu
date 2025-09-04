@@ -8,6 +8,12 @@ const sendgridConfigurations: ConfigConfiguration[] = [
       'When enabled, Novu will auto-configure delivery webhooks using your existing API key. If they lack permissions, follow the manual set-up guide.',
     type: 'switch',
     required: false,
+    links: [
+      {
+        text: 'set-up guide',
+        url: 'https://docs.novu.co/integrations/providers/email/sendgrid#manual-setup',
+      },
+    ],
   },
   {
     key: 'inboundWebhookSigningKey',
@@ -22,6 +28,7 @@ export const sendgridGroupConfigurations: ConfigConfigurationGroup[] = [
     groupType: 'inboundWebhook',
     configurations: sendgridConfigurations,
     enabler: 'inboundWebhookEnabled',
-    loadingLabel: 'Enabling tracking…',
+    setupWebhookUrlGuide:
+      'https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook#add-an-event-webhook',
   },
 ];
