@@ -190,7 +190,7 @@ export function IntegrationSettings({
                   <AccordionTrigger>
                     <div className="flex items-center gap-1 text-xs">
                       <RiInputField className="text-feature size-5" />
-                      Integration Credentials
+                      Delivery Provider Credentials
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>

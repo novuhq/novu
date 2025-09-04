@@ -138,6 +138,8 @@ export function GeneralSettings({
         )}
       />
 
+      <Separator className="mt-2" />
+
       {!isDemo && isInboundWebhooksEnabled && configurations && configurations.length > 0 && (
         <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
           {configurations.map((group) => (
