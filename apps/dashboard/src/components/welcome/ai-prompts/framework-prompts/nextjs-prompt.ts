@@ -13,9 +13,9 @@ export default function NotificationInbox({ subscriberId }: { subscriberId: stri
       applicationIdentifier={applicationIdentifier}
       subscriberId={subscriberId}
 
-      // Backend configuration (for EU region use https://eu.api.novu.co and https://eu.ws.novu.co)
-      backendUrl=process.env.NOVU_BACKEND_URL
-      socketUrl=process.env.NOVU_SOCKET_URL
+      // Backend configuration (for EU region use https://eu.api.novu.co and wss://eu.ws.novu.co)
+      backendUrl="https://eu.api.novu.co"
+      socketUrl="wss://eu.ws.novu.co"
 
       // Appearance configuration
       appearance={{
