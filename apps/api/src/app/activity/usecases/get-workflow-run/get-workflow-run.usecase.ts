@@ -297,8 +297,8 @@ export class GetWorkflowRun {
       updatedAt: new Date(`${workflowRun.updated_at} UTC`).toISOString(),
       payload: workflowRun.payload ? JSON.parse(workflowRun.payload) : {},
       steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun)),
-      severity: workflowRun.severity ? (workflowRun.severity as SeverityLevelEnum) : undefined,
-      critical: typeof workflowRun.critical === 'boolean' ? workflowRun.critical : undefined,
+      severity: workflowRun.severity,
+      critical: workflowRun.critical,
     };
   }
 }
