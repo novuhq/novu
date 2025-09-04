@@ -375,6 +375,18 @@
   scrollbar-width: none; /* Firefox */
 }
 
+/* Hide scrollbar in Novu notification list */
+.nv-no-scrollbar .nv-notificationList::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.nv-no-scrollbar .nv-notificationList {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
 @layer utilities {
   .hide-inbox-footer
     .nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {

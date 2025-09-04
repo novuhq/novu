@@ -8,6 +8,7 @@ interface UsecasePlaygroundHeaderProps {
   title: string;
   description: string;
   skipPath?: string;
+  skipLabel?: string;
   onSkip?: () => void;
   showSkipButton?: boolean;
   showBackButton?: boolean;
@@ -20,6 +21,7 @@ export function UsecasePlaygroundHeader({
   title,
   description,
   skipPath,
+  skipLabel,
   onSkip,
   showSkipButton = false,
   showBackButton = true,
@@ -36,6 +38,14 @@ export function UsecasePlaygroundHeader({
       navigate(skipPath);
     }
   };
+
+  // Determine the skip button text
+  const getSkipButtonText = () => {
+    if (!skipPath) return null;
+    return skipLabel || 'Skip';
+  };
+
+  const skipButtonText = getSkipButtonText();
 
   return (
     <div className="flex items-center justify-between gap-4 border-b pr-6">
@@ -73,16 +83,18 @@ export function UsecasePlaygroundHeader({
 
           {/* Skip button and step indicator row */}
           <div className="flex h-4 w-[168px] items-center justify-center gap-2">
-            <LinkButton
-              variant="gray"
-              size="sm"
-              onClick={handleSkip}
-              className="text-foreground-600 h-4 !text-xs !font-medium !leading-4"
-            >
-              Skip, I'll explore myself
-            </LinkButton>
+            {skipButtonText && (
+              <LinkButton
+                variant="gray"
+                size="sm"
+                onClick={handleSkip}
+                className="text-foreground-600 h-4 !text-xs !font-medium !leading-4"
+              >
+                {skipButtonText}
+              </LinkButton>
+            )}
 
-            <div className="h-0.5 w-0.5 rounded-full bg-black/30" />
+            {skipButtonText && <div className="h-0.5 w-0.5 rounded-full bg-black/30" />}
 
             <span className="text-foreground-600 text-xs font-medium leading-4">
               {currentStep}/{totalSteps}

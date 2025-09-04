@@ -39,7 +39,9 @@ export class GetSubscriberPreference {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    const subscriber =
+      command.subscriber ??
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
     if (!subscriber) {
       throw new NotFoundException(`Subscriber with id: ${command.subscriberId} not found`);
     }

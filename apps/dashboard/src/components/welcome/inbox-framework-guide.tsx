@@ -7,6 +7,7 @@ import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { Card, CardContent } from '../primitives/card';
 import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
+import { AiPromptsSection } from './ai-prompts-section';
 import { FrameworkCliInstructions, FrameworkInstructions } from './framework-guides';
 import { Framework, getFrameworks } from './framework-guides.instructions';
 
@@ -53,13 +54,13 @@ const iconVariants = {
   },
 };
 
-type PackageManager = 'npm' | 'pnpm' | 'yarn';
-
 interface InboxFrameworkGuideProps {
   currentEnvironment: IEnvironment | undefined;
   subscriberId: string;
   primaryColor: string;
   foregroundColor: string;
+  backendUrl?: string;
+  socketUrl?: string;
 }
 
 function updateFrameworkCode(
@@ -71,15 +72,19 @@ function updateFrameworkCode(
 ): Framework {
   return {
     ...framework,
-    installSteps: framework.installSteps.map((step) => ({
-      ...step,
-      code: step.code
-        ?.replace(/YOUR_APP_ID/g, environmentIdentifier)
-        ?.replace(/YOUR_APPLICATION_IDENTIFIER/g, environmentIdentifier)
-        ?.replace(/YOUR_SUBSCRIBER_ID/g, subscriberId)
-        ?.replace(/YOUR_PRIMARY_COLOR/g, primaryColor)
-        ?.replace(/YOUR_FOREGROUND_COLOR/g, foregroundColor),
-    })),
+    installSteps: framework.installSteps.map((step) => {
+      if (!step.code) return step;
+
+      return {
+        ...step,
+        code: step.code
+          .replace(/YOUR_APP_ID/g, () => environmentIdentifier)
+          .replace(/YOUR_APPLICATION_IDENTIFIER/g, () => environmentIdentifier)
+          .replace(/YOUR_SUBSCRIBER_ID/g, () => subscriberId)
+          .replace(/YOUR_PRIMARY_COLOR/g, () => primaryColor)
+          .replace(/YOUR_FOREGROUND_COLOR/g, () => foregroundColor),
+      };
+    }),
   };
 }
 
@@ -88,13 +93,14 @@ export function InboxFrameworkGuide({
   subscriberId,
   primaryColor,
   foregroundColor,
+  backendUrl,
+  socketUrl,
 }: InboxFrameworkGuideProps) {
   const track = useTelemetry();
   const [selectedFramework, setSelectedFramework] = useState<Framework>(
     getFrameworks('cli').find((f) => f.selected) || getFrameworks('cli')[0]
   );
   const [installationMethod, setInstallationMethod] = useState<'cli' | 'manual'>('cli');
-  const [packageManager, setPackageManager] = useState<PackageManager>('npm');
 
   useEffect(() => {
     if (!currentEnvironment?.identifier || !subscriberId) return;
@@ -128,28 +134,18 @@ export function InboxFrameworkGuide({
     setSelectedFramework(framework);
   }
 
-  const getCliCommand = (framework: Framework) => {
-    const packageName =
-      framework.name.toLowerCase() === 'next.js'
-        ? '@novu/nextjs'
-        : framework.name.toLowerCase() === 'react'
-          ? '@novu/react'
-          : '@novu/js';
-
-    const command = `add inbox --appId ${currentEnvironment?.identifier} --subscriberId ${subscriberId}`;
-
-    switch (packageManager) {
-      case 'pnpm':
-        return `pnpm dlx novu ${command}`;
-      case 'yarn':
-        return `yarn dlx novu ${command}`;
-      case 'npm':
-      default:
-        return `npx novu ${command}`;
-    }
-  };
-
   const frameworks = getFrameworks(installationMethod);
+
+  // Get the actual code snippet from the selected framework with placeholder substitutions
+  const codeSnippet =
+    selectedFramework?.installSteps.find(
+      (step) => step.title.includes('Add the inbox code') || step.title.includes('Create the Inbox')
+    )?.code ||
+    frameworks
+      .find((f) => f.name === selectedFramework?.name)
+      ?.installSteps.find(
+        (step) => step.title.includes('Add the inbox code') || step.title.includes('Create the Inbox')
+      )?.code;
 
   return (
     <>
@@ -166,7 +162,7 @@ export function InboxFrameworkGuide({
               Watching for Inbox Integration
             </span>
           </div>
-          <p className="text-foreground-400 text-xs">You're just a couple steps away from your first notification.</p>
+          <p className="text-foreground-400 text-xs">Follow the steps below to initialize your Inbox component.</p>
         </div>
       </motion.div>
 
@@ -204,6 +200,15 @@ export function InboxFrameworkGuide({
         {/* Code block area with subtle installation method selector above */}
         {['Next.js', 'React'].includes(selectedFramework.name) ? (
           <div className="flex flex-col gap-3">
+            {/* AI Prompts Section */}
+            <div className="pl-8">
+              <AiPromptsSection
+                frameworkName={selectedFramework.name}
+                applicationIdentifier={currentEnvironment?.identifier}
+                subscriberId={subscriberId}
+              />
+            </div>
+
             {/* Header row: label left, tabs right */}
             <div className="mb-2 flex items-center gap-64 pl-8">
               <span className="text-base font-medium text-[#222]">Installation method</span>
@@ -235,10 +240,20 @@ export function InboxFrameworkGuide({
             </div>
           </div>
         ) : (
-          <div className="relative mt-2 overflow-hidden pl-0">
-            <motion.div key="manual" {...fadeIn} className="w-full">
-              <FrameworkInstructions framework={selectedFramework as Framework} />
-            </motion.div>
+          <div className="flex flex-col gap-3">
+            {/* AI Prompts Section */}
+            <div className="pl-8">
+              <AiPromptsSection
+                frameworkName={selectedFramework.name}
+                applicationIdentifier={currentEnvironment?.identifier}
+                subscriberId={subscriberId}
+              />
+            </div>
+            <div className="relative mt-2 overflow-hidden pl-0">
+              <motion.div key="manual" {...fadeIn} className="w-full">
+                <FrameworkInstructions framework={selectedFramework as Framework} />
+              </motion.div>
+            </div>
           </div>
         )}
       </motion.div>

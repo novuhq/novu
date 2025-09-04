@@ -5,6 +5,7 @@ import {
   ISubscribersDefine,
   ITenantDefine,
   ProvidersIdEnum,
+  SeverityLevelEnum,
   StatelessControls,
   TriggerOverrides,
   WorkflowPreferences,
@@ -54,4 +55,10 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   controls?: StatelessControls;
 
   preferences?: WorkflowPreferences;
+
+  @IsDefined()
+  severity: SeverityLevelEnum;
+
+  @IsDefined()
+  critical: boolean;
 }

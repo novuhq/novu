@@ -44,7 +44,7 @@ import { deepMerge } from './utils/object.utils';
 import { validateData } from './validators';
 
 function isRuntimeInDevelopment() {
-  return ['development', undefined].includes(process.env.NODE_ENV);
+  return ['development', undefined, 'dev'].includes(process.env.NODE_ENV);
 }
 
 export class Client {

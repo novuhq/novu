@@ -5,6 +5,7 @@ export type CreateIntegrationData = {
   providerId: string;
   channel: ChannelTypeEnum;
   credentials: Record<string, string>;
+  configurations: Record<string, string>;
   name: string;
   identifier: string;
   active: boolean;
@@ -25,6 +26,7 @@ export type UpdateIntegrationData = {
   active: boolean;
   primary: boolean;
   credentials: Record<string, string>;
+  configurations: Record<string, string>;
   check: boolean;
 };
 

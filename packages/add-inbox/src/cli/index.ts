@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 import { Command } from 'commander';
 import prompts from 'prompts';
 import { detectFramework, IFramework } from '../config/framework';
@@ -40,7 +40,7 @@ interface IPackageJson {
   name?: string;
 }
 
-async function promptUserConfiguration(analytics?: AnalyticsService): Promise<IUserConfig | null> {
+async function promptUserConfiguration(): Promise<IUserConfig | null> {
   // Parse command line arguments
   const { appId, subscriberId, region, backendUrl, socketUrl } = parseCommandLineArgs();
 
@@ -150,7 +150,7 @@ async function promptUserConfiguration(analytics?: AnalyticsService): Promise<IU
 
         return null;
       }
-    } catch (error) {
+    } catch (_error) {
       logger.yellow('\nInstallation cancelled by user.');
 
       return null;
@@ -171,30 +171,7 @@ async function promptUserConfiguration(analytics?: AnalyticsService): Promise<IU
   } as IUserConfig;
 }
 
-function checkDependencyExists(packageName: string): boolean {
-  try {
-    const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
-    if (fileUtils.exists(packageJsonPath)) {
-      const packageJson = fileUtils.readJson(packageJsonPath) as IPackageJson;
-      const dependencies = {
-        ...packageJson.dependencies,
-        ...packageJson.devDependencies,
-      };
-
-      return !!dependencies[packageName];
-    }
-  } catch (error) {
-    return false;
-  }
-
-  return false;
-}
-
-async function installDependencies(
-  framework: IFramework,
-  packageManager: IPackageManager,
-  analytics?: AnalyticsService
-): Promise<void> {
+async function installDependencies(framework: IFramework, packageManager: IPackageManager): Promise<void> {
   logger.gray('• Installing required packages...');
 
   const packagesToInstall: string[] = [];
@@ -306,7 +283,7 @@ async function installDependencies(
   }
 }
 
-function displayNextSteps(framework: IFramework) {
+function displayNextSteps() {
   const componentImportPath = './components/ui/inbox/NovuInbox';
 
   logger.info(logger.blue('\n Next Steps'));
@@ -326,10 +303,10 @@ function displayNextSteps(framework: IFramework) {
   logger.gray('   • Find your Application Identifier in the Novu dashboard.\n');
 
   logger.info(logger.blue('5. Customize your Inbox & learn more:'));
-  logger.gray(`   • Styling:     ${logger.cyan('https://docs.novu.co/platform/inbox/react/styling')}`);
-  logger.gray(`   • Hooks:       ${logger.cyan('https://docs.novu.co/platform/inbox/react/hooks')}`);
-  logger.gray(`   • Localization:${logger.cyan('https://docs.novu.co/platform/inbox/react/localization')}`);
-  logger.gray(`   • Production:  ${logger.cyan('https://docs.novu.co/platform/inbox/react/production\n')}`);
+  logger.gray(`   • Styling:     ${logger.cyan('https://docs.novu.co/platform/inbox/configuration/styling')}`);
+  logger.gray(`   • Hooks:       ${logger.cyan('https://docs.novu.co/platform/sdks/react/hooks/novu-provider')}`);
+  logger.gray(`   • Localization:${logger.cyan('https://docs.novu.co/platform/inbox/advanced-concepts/localization')}`);
+  logger.gray(`   • Production:  ${logger.cyan('https://docs.novu.co/platform/inbox/prepare-for-production\n')}`);
 
   logger.success("🎉 You're all set! Happy coding with Novu! 🎉\n");
 }
@@ -380,7 +357,7 @@ function validateBackendUrl(backendUrl: string | undefined): boolean {
     const url = new URL(backendUrl);
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       logger.error('Invalid backendUrl provided. Backend URL must use HTTP or HTTPS protocol.');
-      
+
       return false;
     }
   } catch {
@@ -405,7 +382,7 @@ function validateSocketUrl(socketUrl: string | undefined): boolean {
     const url = new URL(socketUrl);
     if (url.protocol !== 'ws:' && url.protocol !== 'wss:') {
       logger.error('Invalid socketUrl provided. WebSocket URL must use WS or WSS protocol.');
-      
+
       return false;
     }
   } catch {
@@ -450,7 +427,17 @@ function validateProjectStructure() {
 }
 
 async function performInstallation(config: IUserConfig, analytics?: AnalyticsService) {
-  const { framework, packageManager, overwriteComponents, updateEnvExample, appId, subscriberId, region, backendUrl, socketUrl } = config;
+  const {
+    framework,
+    packageManager,
+    overwriteComponents,
+    updateEnvExample,
+    appId,
+    subscriberId,
+    region,
+    backendUrl,
+    socketUrl,
+  } = config;
 
   try {
     logger.step(1, 'Checking framework and package manager');
@@ -467,7 +454,7 @@ async function performInstallation(config: IUserConfig, analytics?: AnalyticsSer
     }
 
     logger.step(2, 'Installing dependencies');
-    await installDependencies(framework, packageManager, analytics);
+    await installDependencies(framework, packageManager);
 
     logger.step(3, 'Creating component structure');
     await createComponentStructure(
@@ -490,7 +477,7 @@ async function performInstallation(config: IUserConfig, analytics?: AnalyticsSer
 
     logger.step(4, "What's next?");
 
-    displayNextSteps(framework);
+    displayNextSteps();
 
     return true;
   } catch (error) {
@@ -579,11 +566,12 @@ async function init() {
     analytics.track({ event: AnalyticsEventEnum.CLI_STARTED });
 
     // Parse and validate command line arguments
-    const argsValid = validateAppId(appId) && 
-                     validateSubscriberId(subscriberId) && 
-                     validateRegion(region) &&
-                     validateBackendUrl(backendUrl) &&
-                     validateSocketUrl(socketUrl);
+    const argsValid =
+      validateAppId(appId) &&
+      validateSubscriberId(subscriberId) &&
+      validateRegion(region) &&
+      validateBackendUrl(backendUrl) &&
+      validateSocketUrl(socketUrl);
     if (!argsValid) {
       trackCliError(analytics, 'Invalid command line arguments', undefined, {
         step: 'validateArgs',
@@ -606,7 +594,7 @@ async function init() {
     }
 
     // Get user configuration
-    config = await promptUserConfiguration(analytics);
+    config = await promptUserConfiguration();
     if (!config) {
       // User cancellation
       trackCliCancelled(analytics, 'User cancelled during promptUserConfiguration', undefined);
@@ -630,7 +618,14 @@ async function init() {
       trackCliCompleted(analytics, config);
     }
   } catch (error) {
-    trackCliError(analytics, error, config ?? undefined, { step: 'init', appId, subscriberId, region, backendUrl, socketUrl });
+    trackCliError(analytics, error, config ?? undefined, {
+      step: 'init',
+      appId,
+      subscriberId,
+      region,
+      backendUrl,
+      socketUrl,
+    });
     logger.error('\n❌ An unexpected error occurred:');
     logger.error(error instanceof Error ? error.message : String(error));
     errorOrCancelled = true;
@@ -649,4 +644,13 @@ if (typeof require !== 'undefined' && require.main === module) {
   });
 }
 
-export { init, parseCommandLineArgs, validateAppId, validateSubscriberId, validateProjectStructure, validateRegion, validateBackendUrl, validateSocketUrl };
+export {
+  init,
+  parseCommandLineArgs,
+  validateAppId,
+  validateSubscriberId,
+  validateProjectStructure,
+  validateRegion,
+  validateBackendUrl,
+  validateSocketUrl,
+};

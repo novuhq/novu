@@ -183,6 +183,7 @@ export class IntegrationsController {
           active: body.active ?? false,
           check: body.check ?? false,
           conditions: body.conditions,
+          configurations: body.configurations,
         })
       );
     } catch (e) {
@@ -225,6 +226,7 @@ export class IntegrationsController {
           active: body.active,
           check: body.check ?? false,
           conditions: body.conditions,
+          configurations: body.configurations,
         })
       );
     } catch (e) {

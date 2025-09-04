@@ -33,13 +33,16 @@ export class UpsertPreferences {
 
   @Instrument()
   public async upsertWorkflowPreferences(command: UpsertWorkflowPreferencesCommand): Promise<WorkflowPreferencesFull> {
-    return this.upsert({
+    const result = await this.upsert({
       templateId: command.templateId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       preferences: command.preferences,
       type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
-    }) as Promise<WorkflowPreferencesFull>;
+      returnPreference: true,
+    });
+
+    return result as WorkflowPreferencesFull;
   }
 
   @Instrument()
@@ -52,6 +55,7 @@ export class UpsertPreferences {
       organizationId: command.organizationId,
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+      returnPreference: command.returnPreference,
     });
   }
 
@@ -93,6 +97,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+      returnPreference: command.returnPreference,
     });
   }
 
@@ -100,17 +105,20 @@ export class UpsertPreferences {
   public async upsertUserWorkflowPreferences(
     command: UpsertUserWorkflowPreferencesCommand
   ): Promise<WorkflowPreferencesFull> {
-    return this.upsert({
+    const result = await this.upsert({
       userId: command.userId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.USER_WORKFLOW,
-    }) as Promise<WorkflowPreferencesFull>;
+      returnPreference: true,
+    });
+
+    return result as WorkflowPreferencesFull;
   }
 
-  private async upsert(command: UpsertPreferencesCommand): Promise<PreferencesEntity> {
+  private async upsert(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
     const foundPreference = await this.getPreference(command);
 
     if (foundPreference) {
@@ -154,7 +162,11 @@ export class UpsertPreferences {
       }
     );
 
-    return await this.getPreference(command);
+    if (command.returnPreference) {
+      return await this.getPreference(command);
+    }
+
+    return undefined;
   }
 
   private async deletePreferences(command: UpsertPreferencesCommand, preferencesId: string) {

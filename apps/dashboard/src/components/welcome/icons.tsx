@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 export function PointingArrow(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -14,6 +14,8 @@ export function PointingArrow(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export function NovuLogo() {
+  const gradientId = useId();
+
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="328" height="232" viewBox="0 0 328 232" fill="none">
       <g opacity="0.5">
@@ -21,7 +23,7 @@ export function NovuLogo() {
           fillRule="evenodd"
           clipRule="evenodd"
           d="M292.6 152.309C292.6 162.521 280.202 167.58 273.054 160.277L126.777 10.7707C147.089 3.62399 168.468 -0.018086 190 6.75293e-05C227.798 6.75293e-05 263.007 11.0438 292.6 30.0557V152.309ZM345.8 81.2251V152.309C345.8 210.199 275.512 238.866 235.03 197.481L77.7219 36.7057C30.59 71.2857 0 127.074 0 190C0 230.458 12.6469 267.959 34.2 298.775V228.071C34.2 170.181 104.488 141.514 144.97 182.899L302.064 343.449C349.315 308.893 380 253.033 380 190C380 149.542 367.353 112.041 345.8 81.2251ZM106.946 220.103L252.949 369.313C233.249 376.236 212.064 380 190 380C152.214 380 116.993 368.956 87.4 349.944V228.071C87.4 217.859 99.8094 212.8 106.946 220.103Z"
-          fill="url(#paint0_linear_7382_226455)"
+          fill={`url(#${gradientId})`}
         />
         <path
           fillRule="evenodd"
@@ -32,14 +34,7 @@ export function NovuLogo() {
         />
       </g>
       <defs>
-        <linearGradient
-          id="paint0_linear_7382_226455"
-          x1="4.92032"
-          y1="68.506"
-          x2="158.207"
-          y2="160.1"
-          gradientUnits="userSpaceOnUse"
-        >
+        <linearGradient id={gradientId} x1="4.92032" y1="68.506" x2="158.207" y2="160.1" gradientUnits="userSpaceOnUse">
           <stop stopColor="#EEEEEE" stopOpacity="0" />
           <stop offset="1" stopColor="#F9F9F9" />
         </linearGradient>

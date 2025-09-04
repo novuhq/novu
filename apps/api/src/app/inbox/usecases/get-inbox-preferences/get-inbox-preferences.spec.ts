@@ -1,4 +1,5 @@
 import { AnalyticsService } from '@novu/application-generic';
+import { SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ISubscriberPreferenceResponse,
@@ -64,16 +65,18 @@ describe('GetInboxPreferences', () => {
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
   let getSubscriberPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberPreference>;
-
+  let subscriberRepositoryMock: sinon.SinonStubbedInstance<SubscriberRepository>;
   beforeEach(() => {
     getSubscriberPreferenceMock = sinon.createStubInstance(GetSubscriberPreference);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
+    subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
 
     getInboxPreferences = new GetInboxPreferences(
       getSubscriberGlobalPreferenceMock as any,
       analyticsServiceMock as any,
-      getSubscriberPreferenceMock as any
+      getSubscriberPreferenceMock as any,
+      subscriberRepositoryMock as any
     );
   });
 
@@ -89,15 +92,13 @@ describe('GetInboxPreferences', () => {
       criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
 
-    getSubscriberGlobalPreferenceMock.execute.rejects(
-      new Error(`Subscriber with id ${command.subscriberId} not found`)
-    );
+    subscriberRepositoryMock.findBySubscriberId.resolves(null);
 
     try {
       await getInboxPreferences.execute(command);
     } catch (error) {
       expect(error).to.be.instanceOf(Error);
-      expect(error.message).to.equal(`Subscriber with id ${command.subscriberId} not found`);
+      expect(error.message).to.equal(`Subscriber ${command.subscriberId} not found`);
     }
   });
 
@@ -108,6 +109,17 @@ describe('GetInboxPreferences', () => {
       subscriberId: 'test-mockSubscriber',
       criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
+
+    subscriberRepositoryMock.findBySubscriberId.resolves({
+      _id: 'test-mockSubscriber',
+      subscriberId: 'test-mockSubscriber',
+      firstName: 'test',
+      lastName: 'test',
+      email: 'test@test.com',
+      _organizationId: 'org-1',
+      _environmentId: 'env-1',
+      deleted: false,
+    } as any);
 
     getSubscriberGlobalPreferenceMock.execute.resolves({
       preference: mockedGlobalPreferences,
@@ -122,6 +134,16 @@ describe('GetInboxPreferences', () => {
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
       includeInactiveChannels: false,
+      subscriber: {
+        _id: 'test-mockSubscriber',
+        subscriberId: 'test-mockSubscriber',
+        firstName: 'test',
+        lastName: 'test',
+        email: 'test@test.com',
+        _organizationId: 'org-1',
+        _environmentId: 'env-1',
+        deleted: false,
+      },
     });
 
     expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
@@ -133,6 +155,16 @@ describe('GetInboxPreferences', () => {
       severity: undefined,
       includeInactiveChannels: false,
       criticality: command.criticality,
+      subscriber: {
+        _id: 'test-mockSubscriber',
+        subscriberId: 'test-mockSubscriber',
+        firstName: 'test',
+        lastName: 'test',
+        email: 'test@test.com',
+        _organizationId: 'org-1',
+        _environmentId: 'env-1',
+        deleted: false,
+      },
     });
 
     expect(result).to.deep.equal([
@@ -193,6 +225,17 @@ describe('GetInboxPreferences', () => {
       criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
 
+    subscriberRepositoryMock.findBySubscriberId.resolves({
+      _id: 'test-mockSubscriber',
+      subscriberId: 'test-mockSubscriber',
+      firstName: 'test',
+      lastName: 'test',
+      email: 'test@test.com',
+      _organizationId: 'org-1',
+      _environmentId: 'env-1',
+      deleted: false,
+    } as any);
+
     getSubscriberGlobalPreferenceMock.execute.resolves({
       preference: mockedGlobalPreferences,
     });
@@ -206,6 +249,16 @@ describe('GetInboxPreferences', () => {
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
       includeInactiveChannels: false,
+      subscriber: {
+        _id: 'test-mockSubscriber',
+        subscriberId: 'test-mockSubscriber',
+        firstName: 'test',
+        lastName: 'test',
+        email: 'test@test.com',
+        _organizationId: 'org-1',
+        _environmentId: 'env-1',
+        deleted: false,
+      },
     });
 
     expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
@@ -217,6 +270,16 @@ describe('GetInboxPreferences', () => {
       severity: command.severity,
       includeInactiveChannels: false,
       criticality: command.criticality,
+      subscriber: {
+        _id: 'test-mockSubscriber',
+        subscriberId: 'test-mockSubscriber',
+        firstName: 'test',
+        lastName: 'test',
+        email: 'test@test.com',
+        _organizationId: 'org-1',
+        _environmentId: 'env-1',
+        deleted: false,
+      },
     });
 
     expect(result).to.deep.equal([

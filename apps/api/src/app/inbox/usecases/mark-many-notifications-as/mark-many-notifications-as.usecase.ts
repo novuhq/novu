@@ -5,17 +5,16 @@ import {
   EventType,
   InvalidateCacheService,
   LogRepository,
-  mapEventTypeToTitle,
   MessageInteractionService,
   MessageInteractionTrace,
+  mapEventTypeToTitle,
   messageWebhookMapper,
   PinoLogger,
   SendWebhookMessage,
   StepType,
-  Trace,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-import { MessageEntity, MessageRepository } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository, MessageEntity, MessageRepository } from '@novu/dal';
 import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
@@ -30,7 +29,8 @@ export class MarkManyNotificationsAs {
     private messageRepository: MessageRepository,
     private messageInteractionService: MessageInteractionService,
     private logger: PinoLogger,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private environmentRepository: EnvironmentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -75,24 +75,35 @@ export class MarkManyNotificationsAs {
       }),
     });
 
-    const webhookPromises: Promise<{ eventId: string } | undefined>[] = [];
+    const environment = await this.environmentRepository.findOne(
+      {
+        _id: command.environmentId,
+      },
+      'webhookAppId identifier'
+    );
+    if (!environment) {
+      throw new Error(`Environment not found for id ${command.environmentId}`);
+    }
+
+    const eventTypes: WebhookEventEnum[] = [];
+
     if (command.read !== undefined) {
       const eventType = command.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD;
-      webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
+      eventTypes.push(eventType);
     }
 
     if (command.archived !== undefined) {
       const eventType = command.archived ? WebhookEventEnum.MESSAGE_ARCHIVED : WebhookEventEnum.MESSAGE_UNARCHIVED;
-      webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
+      eventTypes.push(eventType);
     }
 
     if (command.snoozedUntil !== undefined) {
       // do not change to !== null, as null is a indication of unsnooze
       const eventType = command.snoozedUntil ? WebhookEventEnum.MESSAGE_SNOOZED : WebhookEventEnum.MESSAGE_UNSNOOZED;
-      webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
+      eventTypes.push(eventType);
     }
 
-    await Promise.all(webhookPromises);
+    await this.processWebhooksInBatches(eventTypes, updatedMessages, command, environment);
 
     this.webSocketsQueueService.add({
       name: 'sendMessage',
@@ -105,10 +116,40 @@ export class MarkManyNotificationsAs {
     });
   }
 
+  private async processWebhooksInBatches(
+    eventTypes: WebhookEventEnum[],
+    messages: MessageEntity[],
+    command: MarkManyNotificationsAsCommand,
+    environment: EnvironmentEntity
+  ): Promise<void> {
+    const BATCH_SIZE = 100;
+    const messageChunks = this.chunkArray(messages, BATCH_SIZE);
+
+    for (const messageChunk of messageChunks) {
+      const webhookPromises: Promise<{ eventId: string } | undefined>[] = [];
+
+      for (const eventType of eventTypes) {
+        webhookPromises.push(...this.sendWebhookEvents(messageChunk, eventType, command, environment));
+      }
+
+      await Promise.all(webhookPromises);
+    }
+  }
+
+  private chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+
+    return chunks;
+  }
+
   private sendWebhookEvents(
     updatedMessages: MessageEntity[],
     eventType: WebhookEventEnum,
-    command: MarkManyNotificationsAsCommand
+    command: MarkManyNotificationsAsCommand,
+    environment: EnvironmentEntity
   ): Promise<{ eventId: string } | undefined>[] {
     return updatedMessages.map((message) =>
       this.sendWebhookMessage.execute({
@@ -119,6 +160,7 @@ export class MarkManyNotificationsAs {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: environment,
       })
     );
   }

@@ -48,7 +48,7 @@ export class MailFactory {
   ];
 
   getHandler(
-    integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId'>,
+    integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>,
     from?: string
   ): IMailHandler {
     const handler =
@@ -56,7 +56,7 @@ export class MailFactory {
 
     if (!handler) throw new Error('Handler for provider was not found');
 
-    handler.buildProvider(integration.credentials, from);
+    handler.buildProvider({ ...integration.credentials, ...integration.configurations }, from);
 
     return handler;
   }

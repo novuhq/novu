@@ -7,6 +7,7 @@ export enum ContentIssueEnum {
 
 export enum IntegrationIssueEnum {
   MISSING_INTEGRATION = 'MISSING_INTEGRATION',
+  INBOX_NOT_CONNECTED = 'INBOX_NOT_CONNECTED',
 }
 
 export class RuntimeIssue {

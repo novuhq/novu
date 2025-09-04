@@ -185,6 +185,10 @@ export class UpdateIntegration {
       updatePayload.credentials = encryptCredentials(command.credentials);
     }
 
+    if (command.configurations) {
+      updatePayload.configurations = command.configurations;
+    }
+
     if (command.conditions) {
       updatePayload.conditions = command.conditions;
     }

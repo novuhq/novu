@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
+import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { CachedQuery } from '../../services/cache/interceptors/cached-query.interceptor';
 import { buildIntegrationKey } from '../../services/cache/key-builders/queries';
 import { ConditionsFilter, ConditionsFilterCommand } from '../conditions-filter';
@@ -19,6 +20,7 @@ export class SelectIntegration {
     private normalizeVariablesUsecase: NormalizeVariables
   ) {}
 
+  @InstrumentUsecase()
   @CachedQuery({
     builder: ({ organizationId, ...command }: SelectIntegrationCommand) =>
       buildIntegrationKey().cache({
@@ -88,6 +90,7 @@ export class SelectIntegration {
     return GetDecryptedIntegrations.getDecryptedCredentials(integration);
   }
 
+  @Instrument()
   private async getPrimaryIntegration(command: SelectIntegrationCommand): Promise<IntegrationEntity | null> {
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(command.channelType);
 

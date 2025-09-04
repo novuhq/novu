@@ -126,8 +126,8 @@ export function ApiKeysPage() {
                 API URLs
                 <p className="text-foreground-500 mt-1 text-xs font-normal">
                   {IS_SELF_HOSTED 
-                    ? 'API endpoint for your self-hosted Novu instance. '
-                    : `URLs for Novu Cloud in the ${region} region. `
+                    ? 'API and WebSocket endpoints for your self-hosted Novu instance. '
+                    : `API and WebSocket URLs for Novu Cloud in the ${region} region. `
                   }
                   <ExternalLink href="https://docs.novu.co/api-reference/overview" className="text-foreground-500">
                     Learn more
@@ -137,38 +137,24 @@ export function ApiKeysPage() {
               <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
                 <div className="space-y-4">
                   <SettingField
-                    label="Novu API Hostname"
+                    label="API Hostname"
                     tooltip={IS_SELF_HOSTED 
                       ? 'Your self-hosted Novu API endpoint'
                       : `For Novu Cloud in the ${region} region`
                     }
                     value={API_HOSTNAME}
                   />
+                  <SettingField
+                    label="WebSocket Hostname"
+                    tooltip={IS_SELF_HOSTED 
+                      ? 'Your self-hosted Novu WebSocket endpoint'
+                      : `WebSocket endpoint for Novu Cloud in the ${region} region`
+                    }
+                    value={getWebSocketUrl(WEBSOCKET_HOSTNAME)}
+                  />
                 </div>
               </CardContent>
             </Card>
-            {IS_SELF_HOSTED && (
-              <Card className="w-full overflow-hidden shadow-none">
-                <CardHeader>
-                  WebSocket URLs
-                  <p className="text-foreground-500 mt-1 text-xs font-normal">
-                    WebSocket endpoint for your self-hosted Novu instance.{' '}
-                    <ExternalLink href="https://docs.novu.co/platform/sdks/overview" className="text-foreground-500">
-                      Learn more
-                    </ExternalLink>
-                  </p>
-                </CardHeader>
-                <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
-                  <div className="space-y-4">
-                    <SettingField
-                      label="Novu WebSocket Hostname"
-                      tooltip="Your self-hosted Novu WebSocket endpoint"
-                      value={getWebSocketUrl(WEBSOCKET_HOSTNAME)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </Form>
         </Container>
       </DashboardLayout>

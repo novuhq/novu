@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "3.9.1",
+  "version": "3.9.3",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu JavaScript SDK for <Inbox />",
   "author": "",
@@ -130,6 +130,7 @@
     "@kobalte/core": "^0.13.10",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "event-target-polyfill": "^0.0.4",
     "mitt": "^3.0.1",
     "partysocket": "^1.1.4",
     "socket.io-client": "4.7.2",

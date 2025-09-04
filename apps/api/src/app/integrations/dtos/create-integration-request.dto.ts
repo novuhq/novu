@@ -7,6 +7,7 @@ import {
   IsDefined,
   IsEnum,
   IsMongoId,
+  IsObject,
   IsOptional,
   IsString,
   ValidateNested,
@@ -73,4 +74,12 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @IsOptional()
   @ValidateNested({ each: true })
   conditions?: StepFilterDto[];
+
+  @ApiPropertyOptional({
+    type: Object,
+    description: 'Configurations for the integration',
+  })
+  @IsOptional()
+  @IsObject()
+  configurations?: Record<string, string>;
 }

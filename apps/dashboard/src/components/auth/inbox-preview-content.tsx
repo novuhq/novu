@@ -1,6 +1,5 @@
 import { useUser } from '@clerk/clerk-react';
 import { Inbox, InboxContent, InboxProps } from '@novu/react';
-import { useNavigate } from 'react-router-dom';
 import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../config';
 import { useAuth } from '../../context/auth/hooks';
 import { useFetchEnvironments } from '../../context/environment/hooks';
@@ -21,7 +20,6 @@ const defaultTabs = [
 ];
 
 export function InboxPreviewContent() {
-  const navigate = useNavigate();
   const auth = useAuth();
   const { user } = useUser();
   const { environments } = useFetchEnvironments({ organizationId: auth?.currentOrganization?._id });
@@ -40,7 +38,9 @@ export function InboxPreviewContent() {
       'notifications.emptyNotice': 'Click Send Notification to see your first notification',
     },
     appearance: {
-      variables: {},
+      variables: {
+        colorPrimary: '#DD2450',
+      },
       elements: {
         inboxHeader: {
           backgroundColor: 'white',
@@ -54,6 +54,15 @@ export function InboxPreviewContent() {
         inboxContent: {
           maxHeight: '460px',
         },
+        notificationListContainer: {
+          minHeight: '100%',
+        },
+        notificationListEmptyNoticeContainer: {
+          height: '100%',
+        },
+        notificationListEmptyNotice: {
+          marginTop: '-32px',
+        },
       },
     },
     tabs: defaultTabs,
@@ -61,12 +70,7 @@ export function InboxPreviewContent() {
 
   return (
     <div className="hide-inbox-footer nv-no-scrollbar mt-1 h-[470px] w-[375px] overflow-y-auto overflow-x-hidden">
-      <Inbox
-        {...configuration}
-        routerPush={(path: string) => {
-          return navigate(path);
-        }}
-      >
+      <Inbox {...configuration}>
         <InboxContent />
       </Inbox>
     </div>
