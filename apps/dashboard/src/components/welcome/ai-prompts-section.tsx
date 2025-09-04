@@ -25,6 +25,11 @@ export function AiPromptsSection({
   const track = useTelemetry();
   const [isCopied, setIsCopied] = useState(false);
 
+  // Only show for Next.js and React
+  if (frameworkName !== 'Next.js' && frameworkName !== 'React') {
+    return null;
+  }
+
   const prompt = getFrameworkPrompt(frameworkName, applicationIdentifier, 'us', subscriberId);
 
   const handleCopyPrompt = async () => {
@@ -56,10 +61,7 @@ export function AiPromptsSection({
           <div className="flex items-center gap-3">
             <span>
               Copy this quick-start guide as a prompt for LLMs to implement Novu in{' '}
-              {frameworkName === 'Native'
-                ? 'React Native'
-                : (FRAMEWORK_CONFIGS[frameworkName]?.name?.split(' ')[0] ?? frameworkName ?? 'Framework')}{' '}
-              application.
+              {FRAMEWORK_CONFIGS[frameworkName]?.name?.split(' ')[0] ?? frameworkName ?? 'Framework'} application.
             </span>
             <Button onClick={handleCopyPrompt} variant="secondary" mode="outline" size="xs">
               <motion.div
