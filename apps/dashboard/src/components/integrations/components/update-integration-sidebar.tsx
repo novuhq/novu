@@ -11,7 +11,7 @@ import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
 import { ROUTES } from '../../../utils/routes';
 import { IntegrationFormData } from '../types';
 import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
-import { IntegrationConfiguration } from './integration-configuration';
+import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
@@ -34,6 +34,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown> });
 
   const {
     isPrimaryModalOpen,
@@ -86,6 +87,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           primary: data.primary,
           credentials: data.credentials,
           check: data.check,
+          configurations: data.configurations,
         },
       });
 
@@ -132,7 +134,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     <>
       <IntegrationSheet isOpened={isOpened} onClose={handleClose} provider={provider} mode="update">
         <div className="scrollbar-custom flex-1 overflow-y-auto">
-          <IntegrationConfiguration
+          <IntegrationSettings
             isChannelSupportPrimary={isChannelSupportPrimary}
             provider={provider}
             integration={integration}
@@ -140,6 +142,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
             mode="update"
             hasOtherProviders={!!hasOtherProviders}
             isReadOnly={isReadOnly}
+            onFormStateChange={setFormState}
           />
         </div>
 
@@ -162,7 +165,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
               form={`integration-configuration-form-${provider.id}`}
               className="ml-auto"
               isLoading={isUpdating || isSettingPrimary}
-              disabled={isReadOnly}
+              disabled={isReadOnly || !formState.isValid}
             >
               Save Changes
             </Button>

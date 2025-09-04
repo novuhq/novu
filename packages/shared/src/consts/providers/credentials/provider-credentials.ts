@@ -1,7 +1,7 @@
 import { CredentialsKeyEnum } from '../../../types';
-import { IConfigCredentials } from '../provider.interface';
+import { IConfigCredential } from '../provider.interface';
 
-const mailConfigBase: IConfigCredentials[] = [
+const mailConfigBase: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.From,
     displayName: 'From email address',
@@ -17,7 +17,7 @@ const mailConfigBase: IConfigCredentials[] = [
   },
 ];
 
-const smsConfigBase: IConfigCredentials[] = [
+const smsConfigBase: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.From,
     displayName: 'From',
@@ -26,9 +26,9 @@ const smsConfigBase: IConfigCredentials[] = [
   },
 ];
 
-const pushConfigBase: IConfigCredentials[] = [];
+const pushConfigBase: IConfigCredential[] = [];
 
-export const mailJsConfig: IConfigCredentials[] = [
+export const mailJsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -44,7 +44,7 @@ export const mailJsConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const mailgunConfig: IConfigCredentials[] = [
+export const mailgunConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -72,7 +72,7 @@ export const mailgunConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const mailjetConfig: IConfigCredentials[] = [
+export const mailjetConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -88,7 +88,7 @@ export const mailjetConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const nexmoConfig: IConfigCredentials[] = [
+export const nexmoConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -104,7 +104,7 @@ export const nexmoConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const mandrillConfig: IConfigCredentials[] = [
+export const mandrillConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -114,7 +114,7 @@ export const mandrillConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const nodemailerConfig: IConfigCredentials[] = [
+export const nodemailerConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.User,
     displayName: 'User',
@@ -160,7 +160,7 @@ export const nodemailerConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.TlsOptions,
     displayName: 'TLS options',
-    type: 'object',
+    type: 'string',
     required: false,
   },
   {
@@ -184,7 +184,7 @@ export const nodemailerConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const postmarkConfig: IConfigCredentials[] = [
+export const postmarkConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -194,7 +194,7 @@ export const postmarkConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const sendgridConfig: IConfigCredentials[] = [
+export const sendgridConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -210,7 +210,7 @@ export const sendgridConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const resendConfig: IConfigCredentials[] = [
+export const resendConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -220,7 +220,7 @@ export const resendConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const mailtrapConfig: IConfigCredentials[] = [
+export const mailtrapConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -230,7 +230,7 @@ export const mailtrapConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const plunkConfig: IConfigCredentials[] = [
+export const plunkConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -240,7 +240,7 @@ export const plunkConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const sparkpostConfig: IConfigCredentials[] = [
+export const sparkpostConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -262,7 +262,7 @@ export const sparkpostConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const netCoreConfig: IConfigCredentials[] = [
+export const netCoreConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -272,7 +272,7 @@ export const netCoreConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const sendinblueConfig: IConfigCredentials[] = [
+export const sendinblueConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -282,7 +282,7 @@ export const sendinblueConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const sesConfig: IConfigCredentials[] = [
+export const sesConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Access key ID',
@@ -304,7 +304,7 @@ export const sesConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const mailerSendConfig: IConfigCredentials[] = [
+export const mailerSendConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -314,7 +314,7 @@ export const mailerSendConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const plivoConfig: IConfigCredentials[] = [
+export const plivoConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.AccountSid,
     displayName: 'Account SID',
@@ -330,7 +330,7 @@ export const plivoConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const sms77Config: IConfigCredentials[] = [
+export const sms77Config: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -340,7 +340,7 @@ export const sms77Config: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const termiiConfig: IConfigCredentials[] = [
+export const termiiConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -350,7 +350,7 @@ export const termiiConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const burstSmsConfig: IConfigCredentials[] = [
+export const burstSmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -365,7 +365,7 @@ export const burstSmsConfig: IConfigCredentials[] = [
   },
 ];
 
-export const bulkSmsConfig: IConfigCredentials[] = [
+export const bulkSmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiToken,
     displayName: 'API Token',
@@ -374,7 +374,7 @@ export const bulkSmsConfig: IConfigCredentials[] = [
   },
 ];
 
-export const iSendSmsConfig: IConfigCredentials[] = [
+export const iSendSmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiToken,
     displayName: 'API Token',
@@ -401,7 +401,7 @@ export const iSendSmsConfig: IConfigCredentials[] = [
   },
 ];
 
-export const clickatellConfig: IConfigCredentials[] = [
+export const clickatellConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -410,7 +410,7 @@ export const clickatellConfig: IConfigCredentials[] = [
   },
 ];
 
-export const snsConfig: IConfigCredentials[] = [
+export const snsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Access key ID',
@@ -431,7 +431,7 @@ export const snsConfig: IConfigCredentials[] = [
   },
 ];
 
-export const telnyxConfig: IConfigCredentials[] = [
+export const telnyxConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -447,7 +447,7 @@ export const telnyxConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const twilioConfig: IConfigCredentials[] = [
+export const twilioConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.AccountSid,
     displayName: 'Account SID',
@@ -463,7 +463,7 @@ export const twilioConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const messagebirdConfig: IConfigCredentials[] = [
+export const messagebirdConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.AccessKey,
     displayName: 'Access key',
@@ -473,7 +473,7 @@ export const messagebirdConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const slackConfig: IConfigCredentials[] = [
+export const slackConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
     displayName: 'Application Id',
@@ -507,7 +507,7 @@ export const slackConfig: IConfigCredentials[] = [
   },
 ];
 
-export const grafanaOnCallConfig: IConfigCredentials[] = [
+export const grafanaOnCallConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.alertUid,
     displayName: 'Alert UID',
@@ -546,7 +546,7 @@ export const grafanaOnCallConfig: IConfigCredentials[] = [
   },
 ];
 
-export const getstreamConfig: IConfigCredentials[] = [
+export const getstreamConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -555,17 +555,32 @@ export const getstreamConfig: IConfigCredentials[] = [
   },
 ];
 
-export const fcmConfig: IConfigCredentials[] = [
+export const fcmConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
     displayName: 'Service Account (entire JSON file)',
     type: 'textarea',
     required: true,
+    validation: {
+      validate: (value: string) => {
+        if (!value || value.trim() === '') {
+          return true; // Let required validation handle empty values
+        }
+        
+        try {
+          JSON.parse(value);
+
+          return true;
+        } catch {
+          return 'Invalid JSON format. Please provide a valid JSON service account file.';
+        }
+      },
+    },
   },
   ...pushConfigBase,
 ];
 
-export const expoConfig: IConfigCredentials[] = [
+export const expoConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Access Token',
@@ -575,7 +590,7 @@ export const expoConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
-export const pushWebhookConfig: IConfigCredentials[] = [
+export const pushWebhookConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.WebhookUrl,
     displayName: 'Webhook URL',
@@ -593,7 +608,7 @@ export const pushWebhookConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
-export const chatWebhookConfig: IConfigCredentials[] = [
+export const chatWebhookConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Secret Hmac Key',
@@ -603,7 +618,7 @@ export const chatWebhookConfig: IConfigCredentials[] = [
   },
 ];
 
-export const oneSignalConfig: IConfigCredentials[] = [
+export const oneSignalConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
     displayName: 'Application ID',
@@ -631,7 +646,7 @@ export const oneSignalConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
-export const pushpadConfig: IConfigCredentials[] = [
+export const pushpadConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Auth Token',
@@ -647,7 +662,7 @@ export const pushpadConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
-export const apnsConfig: IConfigCredentials[] = [
+export const apnsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Private Key',
@@ -662,7 +677,7 @@ export const apnsConfig: IConfigCredentials[] = [
           }
 
           return true;
-        } catch (e) {
+        } catch {
           return 'Invalid private key format. Must be in PEM format.';
         }
       },
@@ -695,7 +710,7 @@ export const apnsConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
-export const gupshupConfig: IConfigCredentials[] = [
+export const gupshupConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.User,
     displayName: 'User id',
@@ -710,7 +725,7 @@ export const gupshupConfig: IConfigCredentials[] = [
   },
 ];
 
-export const firetextConfig: IConfigCredentials[] = [
+export const firetextConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -720,7 +735,7 @@ export const firetextConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const outlook365Config: IConfigCredentials[] = [
+export const outlook365Config: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Password,
     displayName: 'Password',
@@ -730,7 +745,7 @@ export const outlook365Config: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const infobipSMSConfig: IConfigCredentials[] = [
+export const infobipSMSConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -746,7 +761,7 @@ export const infobipSMSConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const infobipEmailConfig: IConfigCredentials[] = [
+export const infobipEmailConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -762,7 +777,7 @@ export const infobipEmailConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const brazeEmailConfig: IConfigCredentials[] = [
+export const brazeEmailConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -784,7 +799,7 @@ export const brazeEmailConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const fortySixElksConfig: IConfigCredentials[] = [
+export const fortySixElksConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.User,
     displayName: 'Username',
@@ -800,7 +815,7 @@ export const fortySixElksConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const kannelConfig: IConfigCredentials[] = [
+export const kannelConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Host,
     displayName: 'Host',
@@ -828,7 +843,7 @@ export const kannelConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const maqsamConfig: IConfigCredentials[] = [
+export const maqsamConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Access Key ID',
@@ -844,7 +859,7 @@ export const maqsamConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const smsCentralConfig: IConfigCredentials[] = [
+export const smsCentralConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.User,
     displayName: 'Username',
@@ -866,7 +881,7 @@ export const smsCentralConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const emailWebhookConfig: IConfigCredentials[] = [
+export const emailWebhookConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.WebhookUrl,
     displayName: 'Webhook URL',
@@ -884,7 +899,7 @@ export const emailWebhookConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const africasTalkingConfig: IConfigCredentials[] = [
+export const africasTalkingConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -900,7 +915,7 @@ export const africasTalkingConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const novuInAppConfig: IConfigCredentials[] = [
+export const novuInAppConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Hmac,
     displayName: 'Security HMAC encryption',
@@ -913,7 +928,7 @@ export const novuInAppConfig: IConfigCredentials[] = [
   },
 ];
 
-export const sendchampConfig: IConfigCredentials[] = [
+export const sendchampConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -923,7 +938,7 @@ export const sendchampConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const clickSendConfig: IConfigCredentials[] = [
+export const clickSendConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.User,
     displayName: 'Username',
@@ -940,7 +955,7 @@ export const clickSendConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const simpleTextingConfig: IConfigCredentials[] = [
+export const simpleTextingConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -950,7 +965,7 @@ export const simpleTextingConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const bandwidthConfig: IConfigCredentials[] = [
+export const bandwidthConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.User,
     displayName: 'Username',
@@ -961,7 +976,7 @@ export const bandwidthConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.Password,
     displayName: 'Password',
-    type: 'password',
+    type: 'string',
     required: true,
   },
   {
@@ -973,7 +988,7 @@ export const bandwidthConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const genericSmsConfig: IConfigCredentials[] = [
+export const genericSmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.BaseUrl,
     displayName: 'Base URL',
@@ -1053,7 +1068,7 @@ export const genericSmsConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const pusherBeamsConfig: IConfigCredentials[] = [
+export const pusherBeamsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.InstanceId,
     displayName: 'Instance ID',
@@ -1071,7 +1086,7 @@ export const pusherBeamsConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
-export const azureSmsConfig: IConfigCredentials[] = [
+export const azureSmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.AccessKey,
     displayName: 'Connection string',
@@ -1082,7 +1097,7 @@ export const azureSmsConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const rocketChatConfig: IConfigCredentials[] = [
+export const rocketChatConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Token,
     displayName: 'Personal Access Token (x-auth-token)',
@@ -1099,7 +1114,7 @@ export const rocketChatConfig: IConfigCredentials[] = [
   },
 ];
 
-export const ringCentralConfig: IConfigCredentials[] = [
+export const ringCentralConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ClientId,
     displayName: 'Client ID',
@@ -1130,7 +1145,7 @@ export const ringCentralConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const brevoSmsConfig: IConfigCredentials[] = [
+export const brevoSmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -1140,7 +1155,7 @@ export const brevoSmsConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const eazySmsConfig: IConfigCredentials[] = [
+export const eazySmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -1156,7 +1171,7 @@ export const eazySmsConfig: IConfigCredentials[] = [
   },
 ];
 
-export const iMediaConfig: IConfigCredentials[] = [
+export const iMediaConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Token,
     displayName: 'API Token',
@@ -1167,7 +1182,7 @@ export const iMediaConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const whatsAppBusinessConfig: IConfigCredentials[] = [
+export const whatsAppBusinessConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiToken,
     displayName: 'Access API token',
@@ -1184,7 +1199,7 @@ export const whatsAppBusinessConfig: IConfigCredentials[] = [
   },
 ];
 
-export const mobishastraConfig: IConfigCredentials[] = [
+export const mobishastraConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.BaseUrl,
     displayName: 'Base URL',
@@ -1208,7 +1223,7 @@ export const mobishastraConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const afroSmsConfig: IConfigCredentials[] = [
+export const afroSmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -1224,7 +1239,7 @@ export const afroSmsConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const unifonicConfig: IConfigCredentials[] = [
+export const unifonicConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.AppSid,
     displayName: 'App SID',
@@ -1240,8 +1255,8 @@ export const unifonicConfig: IConfigCredentials[] = [
     required: true,
   },
   ...smsConfigBase,
- ];
-export const smsmodeProviderConfig: IConfigCredentials[] = [
+];
+export const smsmodeProviderConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',

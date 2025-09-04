@@ -23,7 +23,7 @@ export class GetSubscriberGlobalPreference {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberGlobalPreferenceCommand) {
-    const subscriber = await this.getSubscriber(command);
+    const subscriber = command.subscriber ?? (await this.getSubscriber(command));
 
     const activeChannels = await this.getActiveChannels(command);
 
@@ -81,6 +81,7 @@ export class GetSubscriberGlobalPreference {
         organizationId: command.organizationId,
         includeInactiveChannels: command.includeInactiveChannels,
         criticality: WorkflowCriticalityEnum.NON_CRITICAL,
+        subscriber: command.subscriber,
       })
     );
 

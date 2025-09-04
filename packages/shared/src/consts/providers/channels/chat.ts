@@ -8,14 +8,14 @@ import {
   slackConfig,
   whatsAppBusinessConfig,
 } from '../credentials';
-import { IConfigCredentials, IProviderConfig } from '../provider.interface';
+import { IConfigCredential, IProviderConfig } from '../provider.interface';
 
 export const chatProviders: IProviderConfig[] = [
   {
     id: ChatProviderIdEnum.Novu,
     displayName: 'Novu Slack',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: [] as IConfigCredential[],
     docReference: `https://docs.novu.co/platform/integrations/chat/slack${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
   },
@@ -31,7 +31,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.Discord,
     displayName: 'Discord',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: [] as IConfigCredential[],
     docReference: `https://docs.novu.co/platform/integrations/chat/discord${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
   },
@@ -47,7 +47,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.MsTeams,
     displayName: 'MSTeams',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: [] as IConfigCredential[],
     docReference: `https://docs.novu.co/platform/integrations/chat/ms-teams${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
   },
@@ -55,7 +55,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.Mattermost,
     displayName: 'Mattermost',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: [] as IConfigCredential[],
     docReference: 'https://developers.mattermost.com/integrate/webhooks/incoming/',
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
   },
@@ -63,7 +63,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.Ryver,
     displayName: 'Ryver',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: [] as IConfigCredential[],
     docReference: 'https://api.ryver.com/ryvrest_api_examples.html#create-chat-message',
     logoFileName: { light: 'ryver.png', dark: 'ryver.png' },
   },
@@ -71,7 +71,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.Zulip,
     displayName: 'Zulip',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: [] as IConfigCredential[],
     docReference: `https://docs.novu.co/platform/integrations/chat/zulip${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'zulip.svg', dark: 'zulip.svg' },
   },

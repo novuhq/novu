@@ -1,8 +1,12 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, IConfigurations, ICredentials } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import { StepFilter } from '../notification-template';
 import type { OrganizationId } from '../organization';
+
+export type ICredentialsEntity = ICredentials;
+
+export type ConfigConfigurationEntity = IConfigurations;
 
 export class IntegrationEntity {
   _id: string;
@@ -16,6 +20,8 @@ export class IntegrationEntity {
   channel: ChannelTypeEnum;
 
   credentials: ICredentialsEntity;
+
+  configurations?: ConfigConfigurationEntity;
 
   active: boolean;
 
@@ -37,8 +43,6 @@ export class IntegrationEntity {
 
   connected?: boolean;
 }
-
-export type ICredentialsEntity = ICredentials;
 
 export type IntegrationDBModel = ChangePropsValueType<IntegrationEntity, '_environmentId' | '_organizationId'>;
 

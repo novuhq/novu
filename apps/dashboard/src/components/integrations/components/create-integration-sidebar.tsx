@@ -1,4 +1,5 @@
 import { providers as novuProviders } from '@novu/shared';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -11,7 +12,7 @@ import { ChannelTabs } from './channel-tabs';
 import { useIntegrationList } from './hooks/use-integration-list';
 import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
 import { useSidebarNavigationManager } from './hooks/use-sidebar-navigation-manager';
-import { IntegrationConfiguration } from './integration-configuration';
+import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
@@ -28,6 +29,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const { mutateAsync: createIntegration, isPending } = useCreateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
   const { integrations } = useFetchIntegrations();
+  const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown> });
 
   const handleIntegrationSelect = (integrationId: string) => {
     navigate(buildRoute(ROUTES.INTEGRATIONS_CONNECT_PROVIDER, { providerId: integrationId }), { replace: true });
@@ -45,7 +47,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   });
 
   const { integrationsByChannel } = useIntegrationList(searchQuery);
-  const provider = providers?.find((p) => p.id === (selectedIntegration || providerId));
+  const provider = providers?.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
   const {
     isPrimaryModalOpen,
     setIsPrimaryModalOpen,
@@ -69,6 +71,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         providerId: provider.id,
         channel: provider.channel,
         credentials: data.credentials,
+        configurations: data.configurations,
         name: data.name,
         identifier: data.identifier,
         active: data.active,
@@ -112,11 +115,12 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         ) : provider ? (
           <>
             <div className="scrollbar-custom flex-1 overflow-y-auto">
-              <IntegrationConfiguration
+              <IntegrationSettings
                 isChannelSupportPrimary={isChannelSupportPrimary}
                 provider={provider}
                 onSubmit={handleSubmitWithPrimaryCheck}
                 mode="create"
+                onFormStateChange={setFormState}
               />
             </div>
             <div className="bg-background flex justify-end gap-2 border-t p-3">
@@ -126,6 +130,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                 form={`integration-configuration-form-${provider.id}`}
                 isLoading={isPending || isSettingPrimary}
                 size="xs"
+                disabled={!formState.isValid}
               >
                 Create Integration
               </Button>

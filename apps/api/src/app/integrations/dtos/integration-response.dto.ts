@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
 import { StepFilterDto } from '../../shared/dtos/step-filter-dto';
+import { ConfigurationsDto } from './configurations.dto';
 import { CredentialsDto } from './credentials.dto';
 
 export class IntegrationResponseDto {
@@ -55,6 +56,12 @@ export class IntegrationResponseDto {
     type: () => CredentialsDto,
   })
   credentials: CredentialsDto;
+
+  @ApiProperty({
+    description: 'The configurations required for enabling the additional configurations of the integration.',
+    type: () => ConfigurationsDto,
+  })
+  configurations?: ConfigurationsDto;
 
   @ApiProperty({
     description:

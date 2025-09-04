@@ -38,7 +38,7 @@ export const customizationTip = {
     <>
       You can customize your inbox to match your app theme,{' '}
       <a
-        href="https://docs.novu.co/platform/inbox/react/styling#appearance-prop"
+        href="https://docs.novu.co/platform/inbox/configuration/styling"
         target="_blank"
         className="underline"
         rel="noopener"

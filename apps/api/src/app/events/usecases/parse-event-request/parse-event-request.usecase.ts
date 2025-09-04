@@ -57,7 +57,6 @@ import {
 export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private environmentRepository: EnvironmentRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
@@ -76,15 +75,6 @@ export class ParseEventRequest {
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || generateTransactionId();
     const requestId = command.requestId;
-
-    await this.createRequestTrace(
-      requestId,
-      command,
-      'request_received',
-      transactionId,
-      'success',
-      'Event request received'
-    );
 
     try {
       const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
@@ -112,10 +102,12 @@ export class ParseEventRequest {
         });
       }
 
-      const template = await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: command.environmentId,
-        triggerIdentifier: command.identifier,
-      });
+      const template =
+        command.workflow ||
+        (await this.getNotificationTemplateByTriggerIdentifier({
+          environmentId: command.environmentId,
+          triggerIdentifier: command.identifier,
+        }));
 
       if (!template) {
         await this.createRequestTrace(
@@ -387,16 +379,6 @@ export class ParseEventRequest {
     this.logger.info(
       { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
       'Event dispatched to [Workflow] Queue'
-    );
-
-    await this.createRequestTrace(
-      requestId,
-      command,
-      'request_queued',
-      transactionId,
-      'success',
-      'Event successfully dispatched to workflow queue',
-      { workflowId: discoveredWorkflow?.workflowId }
     );
 
     return {
