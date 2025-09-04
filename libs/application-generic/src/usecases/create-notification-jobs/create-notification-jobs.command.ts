@@ -56,9 +56,9 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
 
   preferences?: WorkflowPreferences;
 
-  @IsOptional()
-  severity?: SeverityLevelEnum;
+  @IsDefined()
+  severity: SeverityLevelEnum;
 
-  @IsOptional()
-  critical?: boolean;
+  @IsDefined()
+  critical: boolean;
 }

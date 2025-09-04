@@ -47,8 +47,8 @@ export interface GetWorkflowRunsDto {
   createdAt: string;
   updatedAt: string;
   steps: StepRunDto[];
-  severity?: SeverityLevelEnum;
-  critical?: boolean;
+  severity: SeverityLevelEnum;
+  critical: boolean;
 }
 
 export type GetWorkflowRunResponse = GetWorkflowRunsDto & {

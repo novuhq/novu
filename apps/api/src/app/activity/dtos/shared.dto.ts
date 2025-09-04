@@ -71,12 +71,12 @@ export class GetWorkflowRunResponseBaseDto {
   @ApiPropertyOptional({ description: 'Severity', enum: SeverityLevelEnum })
   @IsOptional()
   @IsEnum(SeverityLevelEnum)
-  severity?: SeverityLevelEnum;
+  severity: SeverityLevelEnum;
 
   @ApiPropertyOptional({ description: 'Critical flag' })
   @IsOptional()
   @IsBoolean()
-  critical?: boolean;
+  critical: boolean;
 }
 
 export enum ReportTypeEnum {

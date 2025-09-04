@@ -58,6 +58,8 @@ const stepRunSelectColumns = [
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
+const DEPLOYMENT_DATE = new Date('2025-09-04T00:00:00');
+
 @Injectable()
 export class GetWorkflowRuns {
   constructor(
@@ -151,6 +153,9 @@ export class GetWorkflowRuns {
           });
         }
         queryBuilder.orWhere(orConditions);
+
+        // TODO: Remove this in a few weeks after deployment
+        queryBuilder.whereGreaterThanOrEqual('created_at', DEPLOYMENT_DATE);
       }
 
       if (command.topicKey) {
@@ -398,8 +403,8 @@ export class GetWorkflowRuns {
         stepType: stepRun.step_type,
         status: stepRun.status,
       })),
-      severity: workflowRun.severity ? (workflowRun.severity as SeverityLevelEnum) : undefined,
-      critical: workflowRun.critical ? (workflowRun.critical as boolean) : undefined,
+      severity: workflowRun.severity,
+      critical: workflowRun.critical,
     };
   }
 }

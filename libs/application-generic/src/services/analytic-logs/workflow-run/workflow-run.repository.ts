@@ -5,7 +5,12 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { DeliveryLifecycleDetail, DeliveryLifecycleStatus, FeatureFlagsKeysEnum } from '@novu/shared';
+import {
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
+  FeatureFlagsKeysEnum,
+  SeverityLevelEnum,
+} from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
@@ -476,8 +481,8 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       ...(options.deliveryLifecycleStatus && { delivery_lifecycle_status: options.deliveryLifecycleStatus }),
       ...(options.deliveryLifecycleDetail && { delivery_lifecycle_detail: options.deliveryLifecycleDetail }),
 
-      severity: notification.severity || null,
-      critical: notification.critical || null,
+      severity: notification.severity || SeverityLevelEnum.NONE,
+      critical: notification.critical || false,
     };
   }
 
