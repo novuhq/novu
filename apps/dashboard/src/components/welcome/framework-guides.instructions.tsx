@@ -315,6 +315,7 @@ export class AppComponent implements AfterViewInit {
   }
 }`,
               codeLanguage: 'typescript',
+              codeTitle: 'app.component.ts',
               tip: customizationTip,
             },
           ],
@@ -346,6 +347,7 @@ novu.mountComponent({
   element: document.getElementById('notification-inbox'),
 });`,
               codeLanguage: 'typescript',
+              codeTitle: 'app.js',
               tip: customizationTip,
             },
           ],

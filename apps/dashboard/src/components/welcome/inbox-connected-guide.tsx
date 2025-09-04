@@ -217,7 +217,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
                       isWorkflowsError
                     }
                     variant="primary"
-                    className="px-6 py-2 disabled:cursor-not-allowed disabled:bg-gray-800 disabled:text-white disabled:border-gray-900"
+                    mode="gradient"
                   >
                     <RiCheckboxCircleFill className="mr-2 h-4 w-4" />
                     Complete Onboarding
