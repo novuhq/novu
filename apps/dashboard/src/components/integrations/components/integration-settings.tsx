@@ -154,6 +154,15 @@ export function IntegrationSettings({
                 isDemo={isDemo}
                 provider={provider}
                 formData={form.getValues()}
+                onAutoConfigureSuccess={(updatedIntegration) => {
+                  // Update form with the new integration data
+                  setValue('configurations', updatedIntegration.configurations as Record<string, string>);
+                  setValue('credentials', updatedIntegration.credentials as Record<string, string>);
+                  setValue('name', updatedIntegration.name);
+                  setValue('identifier', updatedIntegration.identifier);
+                  setValue('active', updatedIntegration.active);
+                  setValue('primary', updatedIntegration.primary ?? false);
+                }}
               />
             </AccordionContent>
           </AccordionItem>

@@ -3,6 +3,7 @@ import {
   ConfigConfigurationGroup,
   CredentialsKeyEnum,
   IConfigCredential,
+  IIntegration,
   IProviderConfig,
 } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
@@ -42,6 +43,7 @@ export function ConfigurationGroup({
   isReadOnly,
   provider,
   formData,
+  onAutoConfigureSuccess,
 }: {
   integrationId?: string;
   group: ConfigConfigurationGroup;
@@ -49,6 +51,7 @@ export function ConfigurationGroup({
   isReadOnly?: boolean;
   provider?: IProviderConfig;
   formData?: IntegrationFormData;
+  onAutoConfigureSuccess?: (integration: IIntegration) => void;
 }) {
   const { currentEnvironment } = useEnvironment();
   const { groupType, configurations, enabler } = group;
@@ -108,6 +111,11 @@ export function ConfigurationGroup({
           if (response.success) {
             setAutoConfigureState('success');
             setAutoConfigureMessage(response.message || 'Configuration completed successfully');
+
+            // Notify parent component if callback provided and integration data available
+            if (onAutoConfigureSuccess && response.integration) {
+              onAutoConfigureSuccess(response.integration);
+            }
           } else {
             setAutoConfigureState('error');
             setAutoConfigureMessage(response.message || 'Configuration failed');
@@ -129,6 +137,7 @@ export function ConfigurationGroup({
     hasRequiredConfigurations,
     formData,
     autoConfigureIntegration,
+    onAutoConfigureSuccess,
   ]);
 
   if (groupType !== 'inboundWebhook') {

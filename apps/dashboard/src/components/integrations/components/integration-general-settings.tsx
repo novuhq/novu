@@ -1,4 +1,10 @@
-import { ConfigConfigurationGroup, FeatureFlagsKeysEnum, IProviderConfig, PermissionsEnum } from '@novu/shared';
+import {
+  ConfigConfigurationGroup,
+  FeatureFlagsKeysEnum,
+  IIntegration,
+  IProviderConfig,
+  PermissionsEnum,
+} from '@novu/shared';
 import { Control } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
@@ -20,6 +26,7 @@ type GeneralSettingsProps = {
   isDemo?: boolean;
   provider?: IProviderConfig;
   formData?: IntegrationFormData;
+  onAutoConfigureSuccess?: (integration: IIntegration) => void;
 };
 
 export function GeneralSettings({
@@ -33,6 +40,7 @@ export function GeneralSettings({
   isDemo,
   provider,
   formData,
+  onAutoConfigureSuccess,
 }: GeneralSettingsProps) {
   const isInboundWebhooksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOKS_ENABLED, true);
 
@@ -141,6 +149,7 @@ export function GeneralSettings({
               isReadOnly={isReadOnly}
               provider={provider}
               formData={formData}
+              onAutoConfigureSuccess={onAutoConfigureSuccess}
             />
           ))}
         </Protect>
