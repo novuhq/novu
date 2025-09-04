@@ -43,7 +43,12 @@ export function TooltipRoot(props: TooltipRootProps) {
       flip({
         fallbackPlacements: props.fallbackPlacements || ['bottom'],
       }),
-      shift(),
+      // Configure shift to prevent layout overflow and UI shifts
+      shift({
+        padding: 8,
+        crossAxis: false, // Prevent horizontal shifting that causes layout gaps
+        mainAxis: true    // Allow vertical shifting only
+      }),
     ],
   });
 

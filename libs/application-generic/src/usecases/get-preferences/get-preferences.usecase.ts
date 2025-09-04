@@ -92,61 +92,81 @@ export class GetPreferences {
   ): IPreferenceChannels {
     const builtPreferences = buildWorkflowPreferences(workflowPreferences);
 
-    const mappedPreferences = Object.entries(builtPreferences.channels ?? {}).reduce(
-      (acc, [channel, preference]) => ({
-        ...acc,
-        [channel]: preference.enabled,
-      }),
-      {} as IPreferenceChannels
-    );
+    const mappedPreferences = Object.entries(builtPreferences.channels ?? {}).reduce((acc, [channel, preference]) => {
+      acc[channel as keyof IPreferenceChannels] = preference.enabled;
+
+      return acc;
+    }, {} as IPreferenceChannels);
 
     return mappedPreferences;
   }
 
   private async getPreferencesFromDb(command: GetPreferencesCommand): Promise<PreferenceSet> {
-    // Always fetch workflow-level preferences
-    const workflowPreferencesPromises = [
-      this.preferencesRepository.findOne({
+    // Build query conditions for all preference types
+    const queryConditions: Array<{
+      _templateId?: string;
+      _subscriberId?: string;
+      type: PreferencesTypeEnum;
+    }> = [
+      // Workflow resource preferences
+      {
         _templateId: command.templateId,
-        _environmentId: command.environmentId,
         type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      }) as Promise<PreferenceSet['workflowResourcePreference'] | null>,
-      this.preferencesRepository.findOne({
+      },
+      // User workflow preferences
+      {
         _templateId: command.templateId,
-        _environmentId: command.environmentId,
         type: PreferencesTypeEnum.USER_WORKFLOW,
-      }) as Promise<PreferenceSet['workflowUserPreference'] | null>,
+      },
     ];
 
-    // Only fetch subscriber preferences if subscriberId is provided
-    const subscriberPreferencesPromises = command.subscriberId
-      ? [
-          this.preferencesRepository.findOne({
-            _subscriberId: command.subscriberId,
-            _environmentId: command.environmentId,
-            _templateId: command.templateId,
-            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-          }) as Promise<PreferenceSet['subscriberWorkflowPreference'] | null>,
-          this.preferencesRepository.findOne({
-            _subscriberId: command.subscriberId,
-            _environmentId: command.environmentId,
-            type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-          }) as Promise<PreferenceSet['subscriberGlobalPreference'] | null>,
-        ]
-      : [Promise.resolve(null), Promise.resolve(null)];
+    // Add subscriber preferences if subscriberId is provided
+    if (command.subscriberId) {
+      queryConditions.push(
+        // Subscriber workflow preferences
+        {
+          _subscriberId: command.subscriberId,
+          _templateId: command.templateId,
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        },
+        // Subscriber global preferences
+        {
+          _subscriberId: command.subscriberId,
+          type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+        }
+      );
+    }
 
-    const [
-      workflowResourcePreference,
-      workflowUserPreference,
-      subscriberWorkflowPreference,
-      subscriberGlobalPreference,
-    ] = await Promise.all([...workflowPreferencesPromises, ...subscriberPreferencesPromises]);
+    const allPreferences = await this.preferencesRepository.find(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        $or: queryConditions,
+      },
+      undefined,
+      { readPreference: 'secondaryPreferred' }
+    );
 
-    return {
-      ...(workflowResourcePreference ? { workflowResourcePreference } : {}),
-      ...(workflowUserPreference ? { workflowUserPreference } : {}),
-      ...(subscriberWorkflowPreference ? { subscriberWorkflowPreference } : {}),
-      ...(subscriberGlobalPreference ? { subscriberGlobalPreference } : {}),
-    };
+    // Map results back to expected structure
+    const result: PreferenceSet = {};
+
+    for (const preference of allPreferences) {
+      switch (preference.type) {
+        case PreferencesTypeEnum.WORKFLOW_RESOURCE:
+          result.workflowResourcePreference = preference as PreferenceSet['workflowResourcePreference'];
+          break;
+        case PreferencesTypeEnum.USER_WORKFLOW:
+          result.workflowUserPreference = preference as PreferenceSet['workflowUserPreference'];
+          break;
+        case PreferencesTypeEnum.SUBSCRIBER_WORKFLOW:
+          result.subscriberWorkflowPreference = preference as PreferenceSet['subscriberWorkflowPreference'];
+          break;
+        case PreferencesTypeEnum.SUBSCRIBER_GLOBAL:
+          result.subscriberGlobalPreference = preference as PreferenceSet['subscriberGlobalPreference'];
+          break;
+      }
+    }
+
+    return result;
   }
 }

@@ -1,14 +1,16 @@
-import { PermissionsEnum } from '@novu/shared';
+import { PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
 import { RiFileAddLine, RiRouteFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Command, CommandExecutionContext } from '../command-types';
 
 export function useWorkflowCommands(context: CommandExecutionContext): Command[] {
   const navigate = useNavigate();
   const hasWorkflowWrite = useHasPermission();
+  const { currentEnvironment } = useEnvironment();
 
   const { data: workflowsData } = useFetchWorkflows({
     limit: 50,
@@ -17,8 +19,12 @@ export function useWorkflowCommands(context: CommandExecutionContext): Command[]
 
   const commands: Command[] = [];
 
-  // Create new workflow
-  if (hasWorkflowWrite({ permission: PermissionsEnum.WORKFLOW_WRITE }) && context.environmentSlug) {
+  // Create new workflow - only show in development environment
+  if (
+    hasWorkflowWrite({ permission: PermissionsEnum.WORKFLOW_WRITE }) && 
+    context.environmentSlug && 
+    currentEnvironment?.type === EnvironmentTypeEnum.DEV
+  ) {
     commands.push({
       id: 'workflow-create',
       label: 'Create New Workflow',
@@ -32,7 +38,10 @@ export function useWorkflowCommands(context: CommandExecutionContext): Command[]
           navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: context.environmentSlug }));
         }
       },
-      isVisible: () => hasWorkflowWrite({ permission: PermissionsEnum.WORKFLOW_WRITE }) && !!context.environmentSlug,
+      isVisible: () => 
+        hasWorkflowWrite({ permission: PermissionsEnum.WORKFLOW_WRITE }) && 
+        !!context.environmentSlug && 
+        currentEnvironment?.type === EnvironmentTypeEnum.DEV,
     });
   }
 

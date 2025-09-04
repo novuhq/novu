@@ -44,10 +44,11 @@ export class BulkUpdatePreferences {
     const workflowInternalIds = allWorkflowIds.filter((id) => BaseRepository.isInternalId(id));
     const workflowIdentifiers = allWorkflowIds.filter((id) => !BaseRepository.isInternalId(id));
 
-    const dbWorkflows = await this.notificationTemplateRepository.find({
-      _environmentId: command.environmentId,
-      $or: [{ _id: { $in: workflowInternalIds } }, { 'triggers.identifier': { $in: workflowIdentifiers } }],
-    });
+    const dbWorkflows = await this.notificationTemplateRepository.findForBulkPreferences(
+      command.environmentId,
+      workflowInternalIds,
+      workflowIdentifiers
+    );
 
     const allValidWorkflowsMap = new Map<string, NotificationTemplateEntity>();
     if (dbWorkflows && dbWorkflows.length > 0) {
