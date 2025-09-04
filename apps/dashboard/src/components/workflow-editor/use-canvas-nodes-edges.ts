@@ -1,5 +1,6 @@
 import { useEdgesState, useNodesState } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { WorkflowResponseDto } from '@novu/shared';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Step } from '@/utils/types';
 import { generateNodesAndEdges } from './node-utils';
@@ -31,10 +32,10 @@ export const useCanvasNodesEdges = ({
 }: {
   steps: Step[];
   isTemplateStorePreview?: boolean;
-  workflow?: any;
+  workflow?: WorkflowResponseDto;
 }) => {
   const { currentEnvironment } = useEnvironment();
-  const { workflow: currentWorkflow, optimisticReorderSteps } = useWorkflow();
+  const { workflow: currentWorkflow, optimisticReorderSteps, update } = useWorkflow();
   const workflow = passedWorkflow || currentWorkflow;
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
     return generateNodesAndEdges(steps, isTemplateStorePreview ?? false, workflow, currentEnvironment);
@@ -221,7 +222,7 @@ export const useCanvasNodesEdges = ({
     setDraggedNodeId(null);
     setIntersectingNodeId(null);
     setIntersectingEdgeId(null);
-  }, [draggedNodeId, workflow, nodes, intersectingNodeId, intersectingEdgeId, edges, optimisticReorderSteps]);
+  }, [draggedNodeId, workflow, nodes, intersectingNodeId, intersectingEdgeId, edges, optimisticReorderSteps, update, currentWorkflow]);
 
   useEffect(() => {
     forceUpdateNodesAndEdges();

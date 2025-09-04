@@ -100,7 +100,7 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
 
   const optimisticAddStep = useCallback(
     (
-      stepType: string,
+      _stepType: string,
       insertIndex: number,
       createStepFn: () => StepCreateDto,
       options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }
@@ -145,10 +145,28 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
         tempId,
       });
 
+      const updateSteps = [
+        ...workflow.steps.slice(0, insertIndex).map(step => ({
+          _id: step._id,
+          stepId: step.stepId,
+          name: step.name,
+          type: step.type,
+          controlValues: step.controlValues,
+        })),
+        newStep,
+        ...workflow.steps.slice(insertIndex).map(step => ({
+          _id: step._id,
+          stepId: step.stepId,
+          name: step.name,
+          type: step.type,
+          controlValues: step.controlValues,
+        })),
+      ];
+
       onUpdate(
         {
           ...workflow,
-          steps: [...workflow.steps.slice(0, insertIndex), newStep, ...workflow.steps.slice(insertIndex)],
+          steps: updateSteps,
         },
         {
           onSuccess: (updatedWorkflow) => {
