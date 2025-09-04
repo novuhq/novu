@@ -9,8 +9,8 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-// cspell:disable-next-line
 import sgClient from '@sendgrid/client';
+// cspell:disable-next-line
 import { EventWebhook } from '@sendgrid/eventwebhook';
 import { MailDataRequired, MailService } from '@sendgrid/mail';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
