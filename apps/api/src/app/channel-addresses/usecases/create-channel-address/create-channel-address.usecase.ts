@@ -62,10 +62,12 @@ export class CreateChannelAddress {
   ): Promise<ChannelAddressEntity> {
     const channelAddress = await this.channelAddressRepository.create({
       identifier,
-      _integrationId: integration._id,
-      _connectionId: connection?._id,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
+      connectionIdentifier: connection?.identifier,
+      integrationIdentifier: integration.identifier,
+      providerId: integration.providerId,
+      channel: integration.channel,
       resource: command.resource,
       type: command.type,
       address: command.address,

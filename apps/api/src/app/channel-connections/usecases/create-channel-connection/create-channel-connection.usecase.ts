@@ -43,7 +43,7 @@ export class CreateChannelConnection {
 
     const channelConnection = await this.createChannelConnection(command, identifier, integration);
 
-    return this.mapChannelConnectionEntityToDto(channelConnection, integration);
+    return this.mapChannelConnectionEntityToDto(channelConnection);
   }
 
   private async assertSingleConnectionPerResourceAndIntegration(
@@ -54,7 +54,7 @@ export class CreateChannelConnection {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       resource: command.resource,
-      _integrationId: integration._id,
+      integrationIdentifier: integration.identifier,
     });
 
     if (existingChannelConnection) {
@@ -69,7 +69,9 @@ export class CreateChannelConnection {
   ): Promise<ChannelConnectionEntity> {
     const channelConnection = await this.channelConnectionRepository.create({
       identifier,
-      _integrationId: integration._id,
+      integrationIdentifier: integration.identifier,
+      providerId: integration.providerId,
+      channel: integration.channel,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       resource: command.resource,
@@ -80,15 +82,12 @@ export class CreateChannelConnection {
     return channelConnection;
   }
 
-  private mapChannelConnectionEntityToDto(
-    channelConnection: ChannelConnectionEntity,
-    integration: IntegrationEntity
-  ): GetChannelConnectionResponseDto {
+  private mapChannelConnectionEntityToDto(channelConnection: ChannelConnectionEntity): GetChannelConnectionResponseDto {
     return {
       identifier: channelConnection.identifier,
-      channel: integration.channel,
-      provider: integration.providerId as ProvidersIdEnum,
-      integrationIdentifier: integration.identifier,
+      channel: channelConnection.channel,
+      provider: channelConnection.providerId as ProvidersIdEnum,
+      integrationIdentifier: channelConnection.integrationIdentifier,
       workspace: channelConnection.workspace,
       auth: channelConnection.auth,
       createdAt: channelConnection.createdAt,

@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -23,8 +24,8 @@ import {
 } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { CreateChannelConnectionRequestDto } from '../channel-connections/dtos/create-channel-connection-request.dto';
-import { GetChannelConnectionRequestDto } from '../channel-connections/dtos/get-channel-connection-request.dto';
 import { GetChannelConnectionResponseDto } from '../channel-connections/dtos/get-channel-connection-response.dto';
+import { GetChannelConnectionsQueryDto } from '../channel-connections/dtos/get-channel-connections-query.dto';
 import { UpdateChannelConnectionRequestDto } from '../channel-connections/dtos/update-channel-connection-request.dto';
 import { CreateChannelConnectionCommand } from '../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
@@ -32,6 +33,8 @@ import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/
 import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
 import { GetChannelConnectionCommand } from '../channel-connections/usecases/get-channel-connection/get-channel-connection.command';
 import { GetChannelConnection } from '../channel-connections/usecases/get-channel-connection/get-channel-connection.usecase';
+import { GetChannelConnectionsCommand } from '../channel-connections/usecases/get-channel-connections/get-channel-connections.command';
+import { GetChannelConnections } from '../channel-connections/usecases/get-channel-connections/get-channel-connections.usecase';
 import { UpdateChannelConnectionCommand } from '../channel-connections/usecases/update-channel-connection/update-channel-connection.command';
 import { UpdateChannelConnection } from '../channel-connections/usecases/update-channel-connection/update-channel-connection.usecase';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
@@ -50,7 +53,8 @@ export class ChannelConnectionsController {
     private readonly createChannelConnectionUsecase: CreateChannelConnection,
     private readonly updateChannelConnectionUsecase: UpdateChannelConnection,
     private readonly deleteChannelConnectionUsecase: DeleteChannelConnection,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly getChannelConnectionsUsecase: GetChannelConnections
   ) {}
 
   private async checkFeatureEnabled(user: UserSessionData) {
@@ -65,7 +69,7 @@ export class ChannelConnectionsController {
     }
   }
 
-  @Get('/:subscriberId/channel-connections')
+  @Get('/:subscriberId/channel-connections/:integrationIdentifier')
   @ApiOperation({
     summary: 'Retrieve channel connection for a subscriber for given integration',
     description: `Retrieve a channel connection belonging to a subscriber for given integration.`,
@@ -76,7 +80,7 @@ export class ChannelConnectionsController {
   async getChannelConnection(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
-    @Body() body: GetChannelConnectionRequestDto
+    @Param('integrationIdentifier') integrationIdentifier: string
   ): Promise<GetChannelConnectionResponseDto> {
     await this.checkFeatureEnabled(user);
 
@@ -85,7 +89,33 @@ export class ChannelConnectionsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         resource: makeResourceKey(RESOURCE.SUBSCRIBER, subscriberId),
-        integrationIdentifier: body.integrationIdentifier,
+        integrationIdentifier,
+      })
+    );
+  }
+
+  @Get('/:subscriberId/channel-connections')
+  @ApiOperation({
+    summary: 'Retrieve channel connections for a subscriber',
+    description: `Retrieve all channel connections for a subscriber.`,
+  })
+  @ApiResponse(GetChannelConnectionResponseDto, 200)
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
+  @RequireAuthentication()
+  async getChannelConnections(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string,
+    @Query() query: GetChannelConnectionsQueryDto
+  ): Promise<GetChannelConnectionResponseDto[]> {
+    await this.checkFeatureEnabled(user);
+
+    return await this.getChannelConnectionsUsecase.execute(
+      GetChannelConnectionsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        resource: makeResourceKey(RESOURCE.SUBSCRIBER, subscriberId),
+        channel: query.channel,
+        provider: query.provider,
       })
     );
   }

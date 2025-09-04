@@ -1,6 +1,7 @@
 import { ChannelAddressByType, ChannelAddressType } from '@novu/shared';
-import { IsDefined, IsObject, IsString } from 'class-validator';
+import { IsDefined, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { IsValidChannelAddress } from '../../../shared/validators/channel-address.validator';
 
 // @ts-expect-error - Override with more specific typing for type safety
 export class UpdateChannelAddressCommand<T extends ChannelAddressType = ChannelAddressType> extends EnvironmentCommand {
@@ -9,7 +10,7 @@ export class UpdateChannelAddressCommand<T extends ChannelAddressType = ChannelA
   identifier: string;
 
   @IsDefined()
-  @IsObject()
+  @IsValidChannelAddress()
   address: ChannelAddressByType[T];
 
   static create<T extends ChannelAddressType>(data: {

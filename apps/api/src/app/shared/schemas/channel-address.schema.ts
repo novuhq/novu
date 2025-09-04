@@ -27,6 +27,12 @@ export const CHANNEL_ADDRESS_SCHEMAS = {
     required: ['url'],
     validate: (addr: Record<string, unknown>) => typeof addr.url === 'string' && Object.keys(addr).length === 1,
   },
+  [ADDRESS_TYPES.PHONE]: {
+    description: 'Phone Address',
+    properties: { phoneNumber: { type: 'string' as const } },
+    required: ['phoneNumber'],
+    validate: (addr: Record<string, unknown>) => typeof addr.phoneNumber === 'string' && Object.keys(addr).length === 1,
+  },
 } as const;
 
 // Generate API property examples automatically

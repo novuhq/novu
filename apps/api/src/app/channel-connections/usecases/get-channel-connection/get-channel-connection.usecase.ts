@@ -1,21 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import {
-  ChannelConnectionEntity,
-  ChannelConnectionRepository,
-  IntegrationEntity,
-  IntegrationRepository,
-} from '@novu/dal';
+import { ChannelConnectionEntity, ChannelConnectionRepository } from '@novu/dal';
 import { ProvidersIdEnum } from '@novu/shared';
 import { GetChannelConnectionResponseDto } from '../../dtos/get-channel-connection-response.dto';
 import { GetChannelConnectionCommand } from './get-channel-connection.command';
 
 @Injectable()
 export class GetChannelConnection {
-  constructor(
-    private readonly channelConnectionRepository: ChannelConnectionRepository,
-    private readonly integrationRepository: IntegrationRepository
-  ) {}
+  constructor(private readonly channelConnectionRepository: ChannelConnectionRepository) {}
 
   @InstrumentUsecase()
   async execute(command: GetChannelConnectionCommand): Promise<GetChannelConnectionResponseDto> {
@@ -23,7 +15,7 @@ export class GetChannelConnection {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       resource: command.resource,
-      _integrationId: command.integrationIdentifier,
+      integrationIdentifier: command.integrationIdentifier,
     });
 
     if (!channelConnection) {
@@ -32,24 +24,15 @@ export class GetChannelConnection {
       );
     }
 
-    const integration = await this.integrationRepository.findOne({
-      _id: channelConnection._integrationId,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-    });
-
-    return this.mapChannelConnectionToDto(channelConnection, integration);
+    return this.mapChannelConnectionToDto(channelConnection);
   }
 
-  private mapChannelConnectionToDto(
-    channelConnection: ChannelConnectionEntity,
-    integration: IntegrationEntity | null
-  ): GetChannelConnectionResponseDto {
+  private mapChannelConnectionToDto(channelConnection: ChannelConnectionEntity): GetChannelConnectionResponseDto {
     return {
       identifier: channelConnection.identifier,
-      channel: integration?.channel ?? null,
-      provider: (integration?.providerId as ProvidersIdEnum) ?? null,
-      integrationIdentifier: integration?.identifier ?? null,
+      channel: channelConnection.channel,
+      provider: channelConnection.providerId as ProvidersIdEnum,
+      integrationIdentifier: channelConnection.integrationIdentifier,
       workspace: channelConnection.workspace,
       auth: channelConnection.auth,
       createdAt: channelConnection.createdAt,
