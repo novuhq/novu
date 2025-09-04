@@ -22,6 +22,7 @@ const getInitialFilters = (subscriberId: string, dateRange: string): ActivityFil
   transactionId: '',
   workflows: [],
   topicKey: '',
+  severity: [],
 });
 
 export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) => {
@@ -87,6 +88,10 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
 
     if (filters.topicKey) {
       params.set('topicKey', filters.topicKey);
+    }
+
+    if (filters.severity.length > 0) {
+      params.set('severity', filters.severity.join(','));
     }
 
     return params;

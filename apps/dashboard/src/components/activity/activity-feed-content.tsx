@@ -108,7 +108,8 @@ export function ActivityFeedContent({
       mergedFilterValues.channels.length > 0 ||
       mergedFilterValues.workflows.length > (baseFilters.workflows?.length || 0) ||
       mergedFilterValues.transactionId !== (baseFilters.transactionId || '') ||
-      mergedFilterValues.subscriberId !== (baseFilters.subscriberId || '')
+      mergedFilterValues.subscriberId !== (baseFilters.subscriberId || '') ||
+      mergedFilterValues.severity.length > 0
     );
   }, [mergedFilterValues, initialFilters]);
 

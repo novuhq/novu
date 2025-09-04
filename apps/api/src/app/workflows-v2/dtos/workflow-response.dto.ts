@@ -1,4 +1,4 @@
-import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   CreateWorkflowDto,
   ResourceOriginEnum,
@@ -189,12 +189,11 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   @IsOptional()
   payloadExample?: object | null;
 
-  @ApiHideProperty()
-  /* @ApiProperty({
+  @ApiProperty({
     description: 'Severity of the workflow',
     enum: [...Object.values(SeverityLevelEnum)],
     enumName: 'SeverityLevelEnum',
-  }) */
+  })
   @IsEnum(SeverityLevelEnum)
   severity: SeverityLevelEnum;
 }
