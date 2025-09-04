@@ -10,7 +10,7 @@ import {
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
 import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
@@ -36,6 +36,8 @@ const workflowRunSelectColumns = [
   'created_at',
   'updated_at',
   'delivery_lifecycle_status',
+  'severity',
+  'critical',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -295,6 +297,8 @@ export class GetWorkflowRun {
       updatedAt: new Date(`${workflowRun.updated_at} UTC`).toISOString(),
       payload: workflowRun.payload ? JSON.parse(workflowRun.payload) : {},
       steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun)),
+      severity: workflowRun.severity,
+      critical: workflowRun.critical,
     };
   }
 }

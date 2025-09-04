@@ -99,6 +99,7 @@ function StylePreviewCard({
 }) {
   return (
     <button
+      key={style.id}
       type="button"
       className={`group relative h-[100px] cursor-pointer overflow-hidden rounded-lg border transition-all duration-200 active:scale-[0.98] ${
         isSelected ? 'border-2 border-neutral-200' : 'border border-neutral-100 hover:border-neutral-200'

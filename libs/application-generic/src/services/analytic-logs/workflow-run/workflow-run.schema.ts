@@ -1,5 +1,6 @@
-import { DeliveryLifecycleStatus } from '@novu/shared';
+import { DeliveryLifecycleStatus, SeverityLevelEnum } from '@novu/shared';
 import {
+  CHBoolean,
   CHDateTime64,
   CHLowCardinality,
   CHNullable,
@@ -54,6 +55,9 @@ const schemaDefinition = {
 
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
+
+  severity: { type: CHLowCardinality(CHString(SeverityLevelEnum.NONE)) }, // severity of the workflow run
+  critical: { type: CHBoolean(false) }, // critical flag of the workflow run
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = ['organization_id', 'workflow_run_id'];
@@ -86,8 +90,9 @@ export enum WorkflowRunStatusEnum {
 type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;
 
 export type WorkflowRun = Prettify<
-  Omit<NativeWorkflowRun, 'status' | 'delivery_lifecycle_status'> & {
+  Omit<NativeWorkflowRun, 'status' | 'delivery_lifecycle_status' | 'severity'> & {
     status: WorkflowRunStatusEnum;
     delivery_lifecycle_status: DeliveryLifecycleStatus;
+    severity: SeverityLevelEnum;
   }
 >;

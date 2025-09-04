@@ -1,3 +1,4 @@
+import { SeverityLevelEnum } from '../../consts';
 import { ChannelTypeEnum, ISubscriber } from '../../types';
 import { IExecutionDetail } from '../execution-details';
 import { IJob as IJobBase } from '../job';
@@ -27,4 +28,6 @@ export interface IActivity {
   template?: Pick<INotificationTemplate, '_id' | 'name' | 'triggers' | 'origin'>;
   subscriber?: Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>;
   jobs: IActivityJob[];
+  severity?: SeverityLevelEnum;
+  critical?: boolean;
 }
