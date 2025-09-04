@@ -107,7 +107,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
               {`Add extra information about each notification entry that is not part of the standard notification fields, and customize each notification item rendering in <Inbox />. `}
               <Link
                 className="text-primary"
-                to="https://docs.novu.co/platform/inbox/react/components/inbox#data-object"
+                to="https://docs.novu.co/platform/inbox/configuration/data-object"
                 target="_blank"
               >
                 Learn more

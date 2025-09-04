@@ -1,6 +1,6 @@
 import type {
   ChannelTypeEnum,
-  IConfigCredentials,
+  IConfigCredential,
   ICredentials,
   ILogoFileName,
   IProviderConfig,
@@ -30,7 +30,7 @@ export interface IIntegratedProvider {
   displayName: string;
   channel: ChannelTypeEnum;
   hasCredentials?: boolean;
-  credentials: IConfigCredentials[];
+  credentials: IConfigCredential[];
   docReference: string;
   comingSoon: boolean;
   active: boolean;

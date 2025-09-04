@@ -1,3 +1,5 @@
+import { IConfigurations } from '../entities/integration/configuration.interface';
+
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',
@@ -48,6 +50,8 @@ export enum CredentialsKeyEnum {
   AppSid = 'appSid',
   SenderId = 'senderId',
 }
+
+export type ConfigurationKey = keyof IConfigurations;
 
 export enum EmailProviderIdEnum {
   EmailJS = 'emailjs',

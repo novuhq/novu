@@ -1,12 +1,12 @@
 import styled from '@emotion/styled';
 import { Box, Center, Group } from '@mantine/core';
 import { useClipboard, useDisclosure } from '@mantine/hooks';
-import { Button, Check, colors, Copy, Input, Sidebar, Text } from '@novu/design-system';
+import { Button, Check, Copy, colors, Input, Sidebar, Text } from '@novu/design-system';
 import {
   CHANNELS_WITH_PRIMARY,
   CredentialsKeyEnum,
   EmailProviderIdEnum,
-  IConfigCredentials,
+  IConfigCredential,
   IConstructIntegrationDto,
   ICredentialsDto,
   InAppProviderIdEnum,
@@ -21,8 +21,6 @@ import { Conditions, IConditions } from '../../../../../components/conditions';
 import { When } from '../../../../../components/utils/When';
 import { useEnvironment } from '../../../../../hooks';
 import { successMessage } from '../../../../../utils/notifications';
-import { Faq } from './Faq';
-import { SetupTimeline } from './SetupTimeline';
 import { FrameworkEnum } from '../../../../quick-start/consts';
 import { defaultIntegrationConditionsProps } from '../../../constants';
 import type { IIntegratedProvider } from '../../../types';
@@ -36,6 +34,8 @@ import { UpdateIntegrationSidebarHeader } from '../../UpdateIntegrationSidebarHe
 import { NovuInAppFrameworks } from '../../v2';
 import { NovuProviderSidebarContent } from '../NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from '../useSelectPrimaryIntegrationModal';
+import { Faq } from './Faq';
+import { SetupTimeline } from './SetupTimeline';
 
 interface IProviderForm {
   name: string;
@@ -346,12 +346,12 @@ export function UpdateProviderSidebar({
             docReference={selectedProvider?.docReference}
           />
           <UpdateIntegrationCommonFields provider={selectedProvider} />
-          {selectedProvider?.credentials.map((credential: IConfigCredentials) => (
+          {selectedProvider?.credentials.map((credential: IConfigCredential) => (
             <InputWrapper key={credential.key}>
               <Controller
                 name={`credentials.${credential.key}`}
                 control={control}
-                {...(credential.type === 'boolean' || credential.type === 'switch' ? { defaultValue: false } : {})}
+                {...(credential.type === 'switch' ? { defaultValue: false } : {})}
                 rules={{
                   required: credential.required ? `Please enter a ${credential.displayName.toLowerCase()}` : undefined,
                 }}

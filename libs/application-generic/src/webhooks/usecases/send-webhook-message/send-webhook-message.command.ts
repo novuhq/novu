@@ -1,5 +1,6 @@
+import { EnvironmentEntity } from '@novu/dal';
 import { WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
-import { IsDefined, IsEnum } from 'class-validator';
+import { IsDefined, IsEnum, IsOptional } from 'class-validator';
 import { EnvironmentCommand } from '../../../commands/project.command';
 
 export class SendWebhookMessageCommand extends EnvironmentCommand {
@@ -17,4 +18,7 @@ export class SendWebhookMessageCommand extends EnvironmentCommand {
     previousObject?: Record<string, unknown>;
     [key: string]: Record<string, unknown> | undefined;
   };
+
+  @IsOptional()
+  environment?: EnvironmentEntity;
 }

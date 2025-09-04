@@ -760,7 +760,9 @@
     "Bienvenido",
     "imedia",
     "Brandname",
-    "telco"
+    "telco",
+    "unifonic",
+    "smsmode"
   ],
   "flagWords": [],
   "patterns": [

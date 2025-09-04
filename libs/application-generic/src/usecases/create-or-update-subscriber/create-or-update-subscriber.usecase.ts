@@ -1,6 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
+import { InstrumentUsecase } from '../../instrumentation';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
@@ -20,6 +21,7 @@ export class CreateOrUpdateSubscriberUseCase {
     maxRetries: 3,
     delay: 500,
   })
+  @InstrumentUsecase()
   async execute(command: CreateOrUpdateSubscriberCommand) {
     const persistedSubscriber = await this.getExistingSubscriber(command);
     if (command.failIfExists && persistedSubscriber) {
@@ -38,10 +40,12 @@ export class CreateOrUpdateSubscriberUseCase {
       await this.updateCredentials(command);
     }
 
-    return await this.fetchSubscriber({
-      _environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
-    });
+    return persistedSubscriber && !command.allowUpdate
+      ? persistedSubscriber
+      : await this.fetchSubscriber({
+          _environmentId: command.environmentId,
+          subscriberId: command.subscriberId,
+        });
   }
 
   private async updateSubscriber(command: CreateOrUpdateSubscriberCommand, existingSubscriber: SubscriberEntity) {

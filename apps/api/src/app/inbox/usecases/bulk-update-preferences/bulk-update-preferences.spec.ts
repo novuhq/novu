@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
-import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
+import { EnvironmentRepository, NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum, TriggerTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -79,18 +79,19 @@ describe('BulkUpdatePreferences', () => {
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let notificationTemplateRepositoryMock: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
   let updatePreferencesUsecaseMock: sinon.SinonStubbedInstance<UpdatePreferences>;
-
+  let environmentRepositoryMock: sinon.SinonStubbedInstance<EnvironmentRepository>;
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     notificationTemplateRepositoryMock = sinon.createStubInstance(NotificationTemplateRepository);
     updatePreferencesUsecaseMock = sinon.createStubInstance(UpdatePreferences);
-
+    environmentRepositoryMock = sinon.createStubInstance(EnvironmentRepository);
     bulkUpdatePreferences = new BulkUpdatePreferences(
       notificationTemplateRepositoryMock as any,
       subscriberRepositoryMock as any,
       analyticsServiceMock as any,
-      updatePreferencesUsecaseMock as any
+      updatePreferencesUsecaseMock as any,
+      environmentRepositoryMock as any
     );
   });
 
