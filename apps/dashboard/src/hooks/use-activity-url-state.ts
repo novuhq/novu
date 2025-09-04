@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ActivityFilters } from '@/api/activity';
@@ -44,6 +44,11 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
   const dateRange = searchParams.get('dateRange');
   result.dateRange = dateRange || DEFAULT_DATE_RANGE;
 
+  const severity = searchParams.get('severity')?.split(',').filter(Boolean);
+  if (severity?.length) {
+    result.severity = severity as SeverityLevelEnum[];
+  }
+
   return result;
 }
 
@@ -57,6 +62,7 @@ function parseFilterValues(searchParams: URLSearchParams): ActivityFiltersData {
     transactionId: transactionIds.length > 0 ? transactionIds.join(', ') : '',
     subscriberId: searchParams.get('subscriberId') || '',
     topicKey: searchParams.get('topicKey') || '',
+    severity: (searchParams.get('severity')?.split(',').filter(Boolean) as SeverityLevelEnum[]) || [],
   };
 }
 
@@ -108,7 +114,9 @@ export function useActivityUrlState(): ActivityUrlState & {
           .filter(Boolean);
 
         if (transactionIds.length > 1) {
-          transactionIds.forEach((id) => newParams.append('transactionId', id));
+          for (const id of transactionIds) {
+            newParams.append('transactionId', id);
+          }
         } else {
           newParams.set('transactionId', data.transactionId);
         }
@@ -128,6 +136,10 @@ export function useActivityUrlState(): ActivityUrlState & {
 
       if (searchParams.get('page')) {
         newParams.set('page', searchParams.get('page') || '0');
+      }
+
+      if (data.severity?.length) {
+        newParams.set('severity', data.severity.join(','));
       }
 
       setSearchParams(newParams, { replace: true });

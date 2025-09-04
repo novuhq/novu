@@ -1,7 +1,8 @@
-import { ApiHideProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
 
 export class ActivitiesRequestDto {
   @ApiPropertyOptional({
@@ -45,13 +46,13 @@ export class ActivitiesRequestDto {
   @IsOptional()
   subscriberIds?: string | string[];
 
-  @ApiHideProperty()
-  /* @ApiPropertyOptional({
+  @ApiPropertyOptional({
     type: String,
     isArray: true,
     description: 'Array of severity levels or a single severity level',
-  }) */
+  })
   @IsOptional()
+  @IsEnumOrArray(SeverityLevelEnum)
   severity?: SeverityLevelEnum[] | SeverityLevelEnum;
 
   @ApiPropertyOptional({

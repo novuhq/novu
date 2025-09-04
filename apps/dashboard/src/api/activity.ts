@@ -1,4 +1,4 @@
-import { getDateRangeInMs, type IActivity, type IEnvironment } from '@novu/shared';
+import { getDateRangeInMs, type IActivity, type IEnvironment, SeverityLevelEnum } from '@novu/shared';
 import { get } from './api.client';
 
 export type ActivityFilters = {
@@ -9,6 +9,7 @@ export type ActivityFilters = {
   transactionId?: string;
   dateRange?: string;
   topicKey?: string;
+  severity?: SeverityLevelEnum[];
 };
 
 export interface ActivityResponse {
@@ -46,6 +47,8 @@ export interface GetWorkflowRunsDto {
   createdAt: string;
   updatedAt: string;
   steps: StepRunDto[];
+  severity: SeverityLevelEnum;
+  critical: boolean;
 }
 
 export type GetWorkflowRunResponse = GetWorkflowRunsDto & {
@@ -61,6 +64,8 @@ export interface GetWorkflowRunsResponseDto {
 function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkflowRunsDto): IActivity {
   return {
     _id: workflowRun.id,
+    severity: workflowRun.severity,
+    critical: workflowRun.critical,
     _templateId: workflowRun.workflowId,
     _environmentId: workflowRun.environmentId,
     _organizationId: workflowRun.organizationId,
@@ -179,6 +184,12 @@ export function getActivityList({
   if (filters?.channels?.length) {
     for (const channel of filters.channels) {
       searchParams.append('channels', channel);
+    }
+  }
+
+  if (filters?.severity?.length) {
+    for (const severity of filters.severity) {
+      searchParams.append('severity', severity);
     }
   }
 
@@ -308,6 +319,12 @@ export async function getWorkflowRunsList({
   if (filters?.dateRange) {
     const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
     searchParams.append('createdGte', after.toISOString());
+  }
+
+  if (filters?.severity?.length) {
+    for (const severity of filters.severity) {
+      searchParams.append('severity', severity);
+    }
   }
 
   const response = await get<GetWorkflowRunsResponseDto>(`/activity/workflow-runs?${searchParams.toString()}`, {

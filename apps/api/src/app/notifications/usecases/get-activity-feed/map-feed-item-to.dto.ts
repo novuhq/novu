@@ -83,6 +83,7 @@ export function mapFeedItemToDto(entity: NotificationFeedItemEntity): ActivityNo
     subscriber: entity.subscriber ? buildSubscriberDto(entity.subscriber) : undefined,
     template: entity.template ? buildTemplate(entity.template) : undefined,
     severity: entity.severity ?? SeverityLevelEnum.NONE,
+    critical: entity.critical,
   };
 }
 

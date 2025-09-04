@@ -24,10 +24,15 @@ const CLICKHOUSE_OPERATORS = [
   'NOT IN',
   'GLOBAL IN',
   'GLOBAL NOT IN',
+  'IS NULL',
+  'IS NOT NULL',
 ] as const;
 
 // Define array operators that require array values
 type ArrayOperators = 'IN' | 'NOT IN' | 'GLOBAL IN' | 'GLOBAL NOT IN';
+
+// Define null operators that don't require values
+type NullOperators = 'IS NULL' | 'IS NOT NULL';
 
 // Generate the type from the const array - this ensures single source of truth
 export type ClickhouseOperator = (typeof CLICKHOUSE_OPERATORS)[number];
@@ -46,17 +51,24 @@ export type EnforcedContext = {
   environmentId: string;
 };
 
-type FieldCondition<T> = {
-  [K in keyof T]: {
-    [O in ClickhouseOperator]: {
+type ConditionValue<T, K extends keyof T, O extends ClickhouseOperator> = O extends NullOperators
+  ? never
+  : O extends ArrayOperators
+    ? T[K][]
+    : T[K];
+
+export type FieldCondition<T, K extends keyof T, O extends ClickhouseOperator> = O extends NullOperators
+  ? {
       field: K;
       operator: O;
-      value: O extends ArrayOperators ? T[K][] : T[K];
+    }
+  : {
+      field: K;
+      operator: O;
+      value: ConditionValue<T, K, O>;
     };
-  }[ClickhouseOperator];
-}[keyof T];
 
-type WhereCondition<T> = FieldCondition<T> | OrCondition<T>;
+type WhereCondition<T> = FieldCondition<T, keyof T, ClickhouseOperator> | OrCondition<T>;
 
 export interface EnforcedWhere<T> {
   enforced: EnforcedContext;
@@ -208,15 +220,23 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
       }
 
       // Handle structured conditions {field, operator, value}
-      if (!('field' in condition) || !('operator' in condition) || !('value' in condition)) {
-        throw new Error('Each condition must have field, operator, and value properties');
+      if (!('field' in condition) || !('operator' in condition)) {
+        throw new Error('Each condition must have field and operator properties');
       }
 
-      const { field, operator, value } = condition;
+      const { field, operator } = condition;
+      const value = 'value' in condition ? condition.value : undefined;
       this.validateColumnName(field as SchemaKeys<TSchema>);
       this.validateOperator(operator);
 
-      if (value === null || value === undefined) {
+      // NULL operators don't need values
+      const nullOperators: NullOperators[] = ['IS NULL', 'IS NOT NULL'];
+      if (nullOperators.includes(operator as NullOperators)) {
+        return `${String(field)} ${operator}`;
+      }
+
+      // For non-NULL operators, value is required
+      if (!nullOperators.includes(operator as NullOperators) && (value === null || value === undefined)) {
         throw new Error(`Invalid value for column '${String(field)}': value cannot be null or undefined`);
       }
 
@@ -668,21 +688,19 @@ export class QueryBuilder<T> {
    * //   AND (workflow_id IN ['wf1', 'wf2'] OR status = 'urgent')
    * ```
    */
-  orWhere<K extends keyof T, O extends ClickhouseOperator>(
-    orConditions: Array<{
-      field: K;
-      operator: O;
-      value: O extends ArrayOperators ? T[K][] : T[K];
-    }>
-  ): this {
+  orWhere(orConditions: Array<FieldCondition<T, keyof T, ClickhouseOperator>>): this {
     if (orConditions.length > 0) {
-      const conditions: WhereCondition<T>[] = orConditions.map(
-        ({ field, operator, value }) =>
-          ({
-            field,
-            operator,
-            value,
-          }) as WhereCondition<T>
+      const conditions: WhereCondition<T>[] = orConditions.map((condition) =>
+        'value' in condition
+          ? ({
+              field: condition.field,
+              operator: condition.operator,
+              value: condition.value,
+            } as WhereCondition<T>)
+          : ({
+              field: condition.field,
+              operator: condition.operator,
+            } as WhereCondition<T>)
       );
 
       const orCondition: OrCondition<T> = {

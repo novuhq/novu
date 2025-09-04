@@ -1,4 +1,4 @@
-import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   DaysEnum,
   DigestTypeEnum,
@@ -444,13 +444,15 @@ export class ActivityNotificationResponseDto {
   @ApiPropertyOptional({ description: 'Topics of the notification', type: [ActivityTopicDto] })
   topics?: ActivityTopicDto[];
 
-  @ApiHideProperty()
-  /* @ApiPropertyOptional({
+  @ApiPropertyOptional({
     description: 'Severity of the notification',
     enum: [...Object.values(SeverityLevelEnum)],
     enumName: 'SeverityLevelEnum',
-  }) */
+  })
   severity: SeverityLevelEnum;
+
+  @ApiPropertyOptional({ description: 'Criticality of the notification', type: Boolean })
+  critical?: boolean;
 }
 
 // Activities Response DTO

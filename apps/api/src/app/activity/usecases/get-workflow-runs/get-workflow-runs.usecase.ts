@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  ClickhouseOperator,
+  FieldCondition,
   PinoLogger,
   QueryBuilder,
   StepRun,
@@ -9,6 +11,7 @@ import {
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
+import { SeverityLevelEnum } from '@novu/shared';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
@@ -33,6 +36,8 @@ const workflowRunSelectColumns = [
   'created_at',
   'updated_at',
   'delivery_lifecycle_status',
+  'severity',
+  'critical',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -52,6 +57,8 @@ const stepRunSelectColumns = [
   'updated_at',
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
+
+const DEPLOYMENT_DATE = new Date('2025-09-04T00:00:00');
 
 @Injectable()
 export class GetWorkflowRuns {
@@ -121,6 +128,34 @@ export class GetWorkflowRuns {
             value: `%"${channel}"%`,
           }))
         );
+      }
+
+      const severity = command.severity ?? [];
+      if (severity.length) {
+        const orConditions: Array<FieldCondition<WorkflowRun, keyof WorkflowRun, ClickhouseOperator>> = [];
+        if (severity.includes(SeverityLevelEnum.NONE)) {
+          orConditions.push({
+            field: 'severity',
+            operator: 'IS NULL',
+          });
+          orConditions.push({
+            field: 'severity',
+            operator: '=',
+            value: SeverityLevelEnum.NONE,
+          });
+        }
+        const severityWithoutNone = severity.filter((severity) => severity !== SeverityLevelEnum.NONE);
+        for (const severity of severityWithoutNone) {
+          orConditions.push({
+            field: 'severity',
+            operator: '=',
+            value: severity.toString(),
+          });
+        }
+        queryBuilder.orWhere(orConditions);
+
+        // TODO: Remove this in a few weeks after deployment
+        queryBuilder.whereGreaterThanOrEqual('created_at', DEPLOYMENT_DATE);
       }
 
       if (command.topicKey) {
@@ -368,6 +403,8 @@ export class GetWorkflowRuns {
         stepType: stepRun.step_type,
         status: stepRun.status,
       })),
+      severity: workflowRun.severity,
+      critical: workflowRun.critical,
     };
   }
 }

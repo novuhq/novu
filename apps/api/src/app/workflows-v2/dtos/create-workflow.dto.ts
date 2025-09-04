@@ -1,4 +1,4 @@
-import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { SeverityLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
@@ -112,13 +112,12 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
   @Type(() => PreferencesRequestDto)
   preferences?: PreferencesRequestDto;
 
-  @ApiHideProperty()
-  /*  @ApiPropertyOptional({
+  @ApiPropertyOptional({
     description: 'Severity of the workflow',
     required: false,
     enum: [...Object.values(SeverityLevelEnum)],
     enumName: 'SeverityLevelEnum',
-  }) */
+  })
   @IsOptional()
   @IsEnum(SeverityLevelEnum)
   severity?: SeverityLevelEnum;

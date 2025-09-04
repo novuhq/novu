@@ -103,4 +103,5 @@ export const defaultActivityFilters: ActivityFiltersData = {
   transactionId: '',
   subscriberId: '',
   topicKey: '',
+  severity: [],
 } as const;
