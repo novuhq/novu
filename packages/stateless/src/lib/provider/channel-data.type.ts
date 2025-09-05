@@ -1,9 +1,8 @@
-export type ChannelData = SlackChannelData | SlackUserData | RcRoomData | WebhookData | PhoneData;
+export type ChannelData = SlackChannelData | SlackUserData | WebhookData | PhoneData;
 
 export const ADDRESS_TYPES = {
   SLACK_CHANNEL: 'slack_channel',
   SLACK_USER: 'slack_user',
-  RC_ROOM: 'rc_room',
   WEBHOOK: 'webhook',
   PHONE: 'phone',
 } as const;
@@ -13,8 +12,7 @@ export type ChannelAddressType = (typeof ADDRESS_TYPES)[keyof typeof ADDRESS_TYP
 export type ChannelAddressByType = {
   [ADDRESS_TYPES.SLACK_CHANNEL]: { channelId: string };
   [ADDRESS_TYPES.SLACK_USER]: { userId: string };
-  [ADDRESS_TYPES.RC_ROOM]: { roomId: string; webhookUrl: string };
-  [ADDRESS_TYPES.WEBHOOK]: { url: string };
+  [ADDRESS_TYPES.WEBHOOK]: { url: string; channel?: string };
   [ADDRESS_TYPES.PHONE]: { phoneNumber: string };
 };
 
@@ -28,11 +26,6 @@ export type SlackUserData = {
   type: typeof ADDRESS_TYPES.SLACK_USER;
   address: ChannelAddressByType[typeof ADDRESS_TYPES.SLACK_USER];
   token: string; // OAuth/Bot token required to send
-};
-
-export type RcRoomData = {
-  type: typeof ADDRESS_TYPES.RC_ROOM;
-  address: ChannelAddressByType[typeof ADDRESS_TYPES.RC_ROOM];
 };
 
 export type WebhookData = {

@@ -32,11 +32,11 @@ export class RocketChatProvider extends BaseProvider implements IChatProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const { channelData } = options;
 
-    if (!isChannelDataOfType(channelData, ADDRESS_TYPES.RC_ROOM)) {
+    if (!isChannelDataOfType(channelData, ADDRESS_TYPES.WEBHOOK)) {
       throw new Error('Invalid channel data for RocketChat provider');
     }
 
-    const roomId = channelData.address.roomId;
+    const roomId = channelData.address.channel;
 
     const payload = {
       message: {
@@ -51,7 +51,7 @@ export class RocketChatProvider extends BaseProvider implements IChatProvider {
       'Content-Type': 'application/json',
       ...transformedData.headers,
     };
-    const baseURL = `${channelData.address.webhookUrl.toString()}/api/v1/chat.sendMessage`;
+    const baseURL = `${channelData.address.url.toString()}/api/v1/chat.sendMessage`;
     const { data } = await this.axiosInstance.post(baseURL, transformedData.body, {
       headers,
     });

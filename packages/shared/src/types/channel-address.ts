@@ -7,7 +7,6 @@ import { ResourceKey } from './resource-key';
 export const ADDRESS_TYPES = {
   SLACK_CHANNEL: 'slack_channel',
   SLACK_USER: 'slack_user',
-  RC_ROOM: 'rc_room',
   WEBHOOK: 'webhook',
   PHONE: 'phone',
 } as const;
@@ -17,8 +16,7 @@ export type ChannelAddressType = (typeof ADDRESS_TYPES)[keyof typeof ADDRESS_TYP
 export type ChannelAddressByType = {
   [ADDRESS_TYPES.SLACK_CHANNEL]: { channelId: string };
   [ADDRESS_TYPES.SLACK_USER]: { userId: string };
-  [ADDRESS_TYPES.RC_ROOM]: { roomId: string; webhookUrl: string };
-  [ADDRESS_TYPES.WEBHOOK]: { url: string };
+  [ADDRESS_TYPES.WEBHOOK]: { url: string; channel?: string };
   [ADDRESS_TYPES.PHONE]: { phoneNumber: string };
 };
 

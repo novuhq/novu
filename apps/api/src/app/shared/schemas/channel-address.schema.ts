@@ -15,15 +15,9 @@ export const CHANNEL_ADDRESS_SCHEMAS = {
     required: ['userId'],
     validate: (addr: Record<string, unknown>) => typeof addr.userId === 'string' && Object.keys(addr).length === 1,
   },
-  [ADDRESS_TYPES.RC_ROOM]: {
-    description: 'RocketChat Room Address',
-    properties: { roomId: { type: 'string' as const } },
-    required: ['roomId'],
-    validate: (addr: Record<string, unknown>) => typeof addr.roomId === 'string' && Object.keys(addr).length === 1,
-  },
   [ADDRESS_TYPES.WEBHOOK]: {
-    description: 'Webhook Address',
-    properties: { url: { type: 'string' as const } },
+    description: 'Webhook Address (with optional channel)',
+    properties: { url: { type: 'string' as const }, channel: { type: 'string' as const } },
     required: ['url'],
     validate: (addr: Record<string, unknown>) => typeof addr.url === 'string' && Object.keys(addr).length === 1,
   },

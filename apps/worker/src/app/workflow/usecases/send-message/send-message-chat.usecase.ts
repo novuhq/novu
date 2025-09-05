@@ -427,21 +427,12 @@ export class SendMessageChat extends SendMessageBase {
     const phoneNumber = subscriberChannel.credentials?.phoneNumber;
     const channelSpecification = subscriberChannel.credentials?.channel;
 
-    if (channelSpecification && chatWebhookUrl) {
-      return {
-        type: ADDRESS_TYPES.RC_ROOM,
-        address: {
-          roomId: channelSpecification,
-          webhookUrl: chatWebhookUrl,
-        },
-      };
-    }
-
     if (chatWebhookUrl) {
       return {
         type: ADDRESS_TYPES.WEBHOOK,
         address: {
           url: chatWebhookUrl,
+          ...(channelSpecification && { channel: channelSpecification }),
         },
       };
     }

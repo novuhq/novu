@@ -29,18 +29,17 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
     options: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const { content, channelData, channel, phoneNumber } = options;
-
-    if (!isChannelDataOfType(channelData, ADDRESS_TYPES.WEBHOOK)) {
+    if (!isChannelDataOfType(options.channelData, ADDRESS_TYPES.WEBHOOK)) {
       throw new Error('Invalid channel data for ChatWebhook provider');
     }
 
+    const { content, channelData, phoneNumber } = options;
     const { address } = channelData;
 
     const data = this.transform(bridgeProviderData, {
       content,
       webhookUrl: address.url,
-      channel,
+      channel: address.channel,
       phoneNumber,
     });
     const body = this.createBody(data.body);

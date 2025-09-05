@@ -33,8 +33,8 @@ export class MattermostProvider extends BaseProvider implements IChatProvider {
     const payload: IMattermostPayload = { text: data.content };
     const { address } = data.channelData;
 
-    if (data.channel) {
-      payload.channel = data.channel;
+    if (address.channel) {
+      payload.channel = address.channel;
     }
     const response = await this.axiosInstance.post(address.url, this.transform(bridgeProviderData, payload).body);
 

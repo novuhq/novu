@@ -21,10 +21,10 @@ test('should trigger rocket-chat library correctly', async () => {
   await provider.sendMessage({
     channelData: {
       address: {
-        webhookUrl: '<your-root-url>',
-        roomId: '<your-channel>',
+        url: '<your-root-url>',
+        channel: '<your-channel>',
       },
-      type: ADDRESS_TYPES.RC_ROOM,
+      type: ADDRESS_TYPES.WEBHOOK,
     },
     content: '<your-chat-message>',
   });
@@ -66,10 +66,10 @@ test('should trigger rocket-chat library correctly with _passthrough', async () 
     {
       channelData: {
         address: {
-          webhookUrl: '<your-root-url>',
-          roomId: '<your-channel>',
+          url: '<your-root-url>',
+          channel: '<your-channel>',
         },
-        type: ADDRESS_TYPES.RC_ROOM,
+        type: ADDRESS_TYPES.WEBHOOK,
       },
       content: '<your-chat-message>',
     },

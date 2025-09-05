@@ -53,11 +53,11 @@ test('should trigger mattermost library correctly, override channel', async () =
     channelData: {
       address: {
         url: testWebhookUrl,
+        channel: '@username',
       },
       type: ADDRESS_TYPES.WEBHOOK,
     },
     content: testContent,
-    channel: '@username',
   });
   expect(fakePostUserChannel).toHaveBeenCalled();
   expect(fakePostUserChannel).toHaveBeenCalledWith(testWebhookUrl, {
