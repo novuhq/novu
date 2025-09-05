@@ -127,7 +127,13 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async find(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select: ProjectionType<T_MappedEntity> = '',
-    options: { limit?: number; sort?: any; skip?: number; session?: ClientSession | null } = {}
+    options: {
+      limit?: number;
+      sort?: any;
+      skip?: number;
+      session?: ClientSession | null;
+      readPreference?: 'secondaryPreferred' | 'primary';
+    } = {}
   ): Promise<T_MappedEntity[]> {
     const { session, ...queryOptions } = options;
 
@@ -136,6 +142,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     })
       .skip(queryOptions.skip as number)
       .limit(queryOptions.limit as number)
+      .read(queryOptions.readPreference || 'primary')
       .lean();
 
     if (session) {

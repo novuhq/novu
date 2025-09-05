@@ -1,5 +1,5 @@
-import { WorkflowRunStatusEnum } from '@novu/application-generic';
-import { IsArray, IsInt, IsISO8601, IsOptional, IsString, Max, Min } from 'class-validator';
+import { SeverityLevelEnum } from '@novu/shared';
+import { IsArray, IsIn, IsInt, IsISO8601, IsOptional, IsString, Max, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 
@@ -49,4 +49,10 @@ export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsISO8601()
   createdLte?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsIn(Object.values(SeverityLevelEnum), { each: true })
+  severity?: SeverityLevelEnum[];
 }

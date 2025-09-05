@@ -30,6 +30,39 @@ describe('Upsert Workflow #novu-v2', () => {
     novuClient = initNovuClassSdkInternalAuth(session);
   });
 
+  describe('POST /v2/workflows/:workflowId', () => {
+    it('should throw error when workflowId is not a valid slug', async () => {
+      try {
+        await createWorkflow({
+          name: 'Test Workflow',
+          workflowId: '_test-workflow-123_',
+          steps: [],
+        });
+
+        // Should not reach this point
+        expect.fail('Expected BadRequestException to be thrown');
+      } catch (error) {
+        expect(error.statusCode).to.equal(422);
+        expect(error.message).to.contain('Validation Error');
+        expect(error.errors).to.exist;
+        expect(error.errors.general.messages[0]).to.contain(
+          'must be a valid slug format (lowercase letters, numbers, and hyphens only)'
+        );
+      }
+    });
+
+    it('should create a workflow with a preserved workflowId', async () => {
+      const workflow = await createWorkflow({
+        name: 'Test Workflow',
+        workflowId: 'test-workflow-123',
+        steps: [],
+      });
+
+      expect(workflow.name).to.equal('Test Workflow');
+      expect(workflow.workflowId).to.equal('test-workflow-123');
+    });
+  });
+
   describe('PUT /v2/workflows/:workflowId', () => {
     describe('single step workflows', () => {
       it('when step is deleted it should not remove variable if it is used in another step', async () => {

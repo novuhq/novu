@@ -1,4 +1,4 @@
-import { ApiHideProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SeverityLevelEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
@@ -50,11 +50,10 @@ export class GetNotificationsRequestDto
 
   @IsOptional()
   @IsEnumOrArray(SeverityLevelEnum)
-  @ApiHideProperty()
-  /* @ApiPropertyOptional({
+  @ApiPropertyOptional({
     description: 'Filter by severity levels',
     type: [String],
     enum: SeverityLevelEnum,
-  }) */
+  })
   severity?: SeverityLevelEnum | SeverityLevelEnum[];
 }

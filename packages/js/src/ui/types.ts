@@ -1,6 +1,12 @@
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
-import { type NotificationFilter, type NovuOptions, type Preference, type UnreadCount } from '../types';
+import {
+  type NotificationFilter,
+  type NovuOptions,
+  type Preference,
+  type UnreadCount,
+  WorkflowCriticalityEnum,
+} from '../types';
 import { appearanceKeys } from './config';
 import { Localization } from './context/LocalizationContext';
 
@@ -245,7 +251,9 @@ export enum NotificationStatus {
   SNOOZED = 'snoozed',
 }
 
-export type PreferencesFilter = Pick<NotificationFilter, 'tags' | 'severity'>;
+export type PreferencesFilter = Pick<NotificationFilter, 'tags' | 'severity'> & {
+  criticality?: WorkflowCriticalityEnum;
+};
 
 type PreferenceFilterFunction = (args: { preferences: Preference[] }) => Preference[];
 

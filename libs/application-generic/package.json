@@ -102,7 +102,7 @@
   },
   "optionalDependencies": {
     "@novu/ee-shared-services": "workspace:*",
-    "@taskforcesh/bullmq-pro": "5.1.14"
+    "@taskforcesh/bullmq-pro": "6.11.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

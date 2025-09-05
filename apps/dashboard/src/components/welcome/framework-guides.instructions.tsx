@@ -24,13 +24,21 @@ export interface InstallationStep {
 const isDefaultApi = API_HOSTNAME === 'https://api.novu.co';
 const isDefaultWs = WEBSOCKET_HOSTNAME === 'https://ws.novu.co';
 
+// Convert https:// to wss:// for WebSocket URLs
+const getWebSocketUrl = (url: string) => {
+  if (!url) return url;
+  return url.replace(/^https:\/\//, 'wss://');
+};
+
+const websocketUrl = getWebSocketUrl(WEBSOCKET_HOSTNAME);
+
 export const customizationTip = {
   title: 'Tip:',
   description: (
     <>
       You can customize your inbox to match your app theme,{' '}
       <a
-        href="https://docs.novu.co/platform/inbox/react/styling#appearance-prop"
+        href="https://docs.novu.co/platform/inbox/configuration/styling"
         target="_blank"
         className="underline"
         rel="noopener"
@@ -53,7 +61,7 @@ export const commonInstallStep = (packageName: string): InstallationStep => ({
 export const commonCLIInstallStep = (): InstallationStep => ({
   title: 'Run the CLI command in an existing project',
   description: `You'll notice a new folder in your project called inbox. This is where you'll find the inbox component boilerplate code. \n You can customize the <Inbox /> component to match your app theme.`,
-  code: `npx add-inbox@latest --appId YOUR_APPLICATION_IDENTIFIER --subscriberId YOUR_SUBSCRIBER_ID${IS_EU ? ' --region=eu' : ''}`,
+  code: `npx add-inbox@latest --appId YOUR_APPLICATION_IDENTIFIER --subscriberId YOUR_SUBSCRIBER_ID${isDefaultApi && IS_EU ? ' --region=eu' : ''}${!isDefaultApi ? ` --backendUrl ${API_HOSTNAME}` : ''}${!isDefaultWs ? ` --socketUrl ${WEBSOCKET_HOSTNAME}` : ''}`,
   codeLanguage: 'shell',
   codeTitle: 'Terminal',
 });
@@ -77,7 +85,7 @@ function Novu() {
   return (
     <Inbox
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${WEBSOCKET_HOSTNAME}"`}` : ''}
+      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${websocketUrl}"`}` : ''}
       appearance={{
         variables: {
           colorPrimary: "YOUR_PRIMARY_COLOR",
@@ -114,7 +122,7 @@ function Novu() {
   return (
     <Inbox
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${WEBSOCKET_HOSTNAME}"`}` : ''}
+      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${websocketUrl}"`}` : ''}
       routerPush={(path: string) => navigate(path)}
       appearance={{
         variables: {
@@ -151,7 +159,7 @@ function Novu() {
   return (
     <Inbox
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${WEBSOCKET_HOSTNAME}"`}` : ''}
+      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${websocketUrl}"`}` : ''}
       routerPush={(path: string) => navigate(path)}
       appearance={{
         variables: {
@@ -186,7 +194,7 @@ function Layout() {
   return (
      <NovuProvider
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${WEBSOCKET_HOSTNAME}"`}` : ''}
+      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${websocketUrl}"`}` : ''}
     >
       <YourCustomInbox />
     </NovuProvider>
@@ -294,8 +302,8 @@ export class AppComponent implements AfterViewInit {
   ngAfterViewInit() {
     const novu = new NovuUI({
       options: {
-        applicationIdentifier: '123',
-        subscriberId: '456',
+        applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
+        subscriber: 'YOUR_SUBSCRIBER_ID',${!isDefaultApi ? `\n        backendUrl: '${API_HOSTNAME}',` : ''}${!isDefaultWs ? `\n        socketUrl: '${websocketUrl}',` : ''}
       },
     });
 
@@ -307,6 +315,7 @@ export class AppComponent implements AfterViewInit {
   }
 }`,
               codeLanguage: 'typescript',
+              codeTitle: 'app.component.ts',
               tip: customizationTip,
             },
           ],
@@ -325,12 +334,12 @@ export class AppComponent implements AfterViewInit {
                 'You can use the Novu UI library to implement the notification center in your vanilla JavaScript application or any other non-supported framework like Vue.',
               code: `import { NovuUI } from '@novu/js/ui';
 
- const novu = new NovuUI({
-  options: {
-    applicationIdentifier: '123',
-    subscriberId: '456',
-  },
-});
+    const novu = new NovuUI({
+    options: {
+      applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
+      subscriber: 'YOUR_SUBSCRIBER_ID',${!isDefaultApi ? `\n    backendUrl: '${API_HOSTNAME}',` : ''}${!isDefaultWs ? `\n    socketUrl: '${websocketUrl}',` : ''}
+    },
+  });
 
 novu.mountComponent({
   name: 'Inbox',
@@ -338,6 +347,7 @@ novu.mountComponent({
   element: document.getElementById('notification-inbox'),
 });`,
               codeLanguage: 'typescript',
+              codeTitle: 'app.js',
               tip: customizationTip,
             },
           ],

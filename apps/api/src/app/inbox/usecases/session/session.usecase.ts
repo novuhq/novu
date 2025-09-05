@@ -163,6 +163,7 @@ export class Session {
         environmentId: environment._id,
         subscriberId: subscriber.subscriberId,
         filters: [{ read: false, snoozed: false }],
+        subscriber: subscriberEntity,
       })
     );
     const [{ count: totalUnreadCount }] = data;
@@ -201,14 +202,20 @@ export class Session {
     }
 
     const token = await this.authService.getSubscriberWidgetToken(subscriberEntity);
+    const organization = await this.organizationRepository.findById(environment._organizationId);
+
+    if (!organization) {
+      throw new NotFoundException('Organization not found');
+    }
 
     const { removeNovuBranding } = await this.getOrganizationSettingsUsecase.execute(
       GetOrganizationSettingsCommand.create({
         organizationId: environment._organizationId,
+        organization,
       })
     );
 
-    const maxSnoozeDurationHours = await this.getMaxSnoozeDurationHours(environment);
+    const maxSnoozeDurationHours = await this.getMaxSnoozeDurationHours(organization?.apiServiceLevel);
 
     /**
      * We want to prevent the playground inbox demo from marking the integration as connected
@@ -312,18 +319,14 @@ export class Session {
     return applicationIdentifier;
   }
 
-  private async getMaxSnoozeDurationHours(environment: EnvironmentEntity) {
+  private async getMaxSnoozeDurationHours(apiServiceLevel: ApiServiceLevelEnum) {
     if (process.env.NOVU_ENTERPRISE !== 'true') {
       return 0;
     }
 
-    const organization = await this.organizationRepository.findOne({
-      _id: environment._organizationId,
-    });
-
     const tierLimitMs = getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
-      organization?.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      apiServiceLevel || ApiServiceLevelEnum.FREE,
       true
     );
 

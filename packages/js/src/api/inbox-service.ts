@@ -7,6 +7,7 @@ import type {
   Session,
   SeverityLevelEnum,
   Subscriber,
+  WorkflowCriticalityEnum,
 } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
 
@@ -171,7 +172,7 @@ export class InboxService {
   }
 
   archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive/read`, {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
     });
@@ -221,10 +222,15 @@ export class InboxService {
     });
   }
 
-  fetchPreferences(
-    tags?: string[],
-    severity?: SeverityLevelEnum | SeverityLevelEnum[]
-  ): Promise<PreferencesResponse[]> {
+  fetchPreferences({
+    tags,
+    severity,
+    criticality,
+  }: {
+    tags?: string[];
+    severity?: SeverityLevelEnum | SeverityLevelEnum[];
+    criticality: WorkflowCriticalityEnum;
+  }): Promise<PreferencesResponse[]> {
     const queryParams = new URLSearchParams();
     if (tags) {
       for (const tag of tags) {
@@ -237,6 +243,9 @@ export class InboxService {
       }
     } else if (severity) {
       queryParams.append('severity', severity);
+    }
+    if (criticality) {
+      queryParams.append('criticality', criticality);
     }
 
     const query = queryParams.size ? `?${queryParams.toString()}` : '';

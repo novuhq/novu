@@ -1,6 +1,3 @@
-import { ApiServiceLevelEnum, DEFAULT_LOCALE, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
-import { HTMLAttributes } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { TranslationGroup, TranslationsFilter } from '@/api/translations';
 import { DefaultPagination } from '@/components/default-pagination';
 import {
@@ -18,6 +15,9 @@ import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-set
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { ApiServiceLevelEnum, DEFAULT_LOCALE, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { HTMLAttributes } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ListNoResults } from '../list-no-results';
 import { DEFAULT_TRANSLATIONS_LIMIT } from './constants';
 import { DeleteTranslationGroupDialog } from './delete-translation-modal';
@@ -28,6 +28,8 @@ import { TranslationListUpgradeCta } from './translation-list-upgrade-cta';
 import { TranslationOnboardingPage } from './translation-onboarding-page';
 import { TranslationRow, TranslationRowSkeleton } from './translation-row';
 import { TranslationsFilters } from './translations-filters';
+
+import { IS_ENTERPRISE } from '@/config';
 
 type TranslationListHeaderProps = HTMLAttributes<HTMLDivElement> &
   Pick<TranslationsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -182,12 +184,21 @@ function TranslationListContainer({
 type TranslationListProps = HTMLAttributes<HTMLDivElement>;
 
 export function TranslationList(props: TranslationListProps) {
-  const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =
-    useTranslationListLogic();
-
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings } = useFetchOrganizationSettings();
+  const { subscription } = useFetchSubscription();
+
+  const canUseTranslationFeature =
+    getFeatureForTierAsBoolean(
+      FeatureNameEnum.AUTO_TRANSLATIONS,
+      subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+    ) &&
+    (!IS_SELF_HOSTED || IS_ENTERPRISE);
+
+  // Only make API call if user has proper tier
+  const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =
+    useTranslationListLogic({ enabled: canUseTranslationFeature });
 
   const handleTranslationClick = (translation: TranslationGroup) => {
     if (currentEnvironment?.slug) {
@@ -207,14 +218,6 @@ export function TranslationList(props: TranslationListProps) {
 
   const { deleteModalTranslation, isDeletePending, handleDeleteClick, handleDeleteConfirm, handleDeleteCancel } =
     useDeleteTranslationModal();
-
-  const { subscription } = useFetchSubscription();
-
-  const canUseTranslationFeature =
-    getFeatureForTierAsBoolean(
-      FeatureNameEnum.AUTO_TRANSLATIONS,
-      subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) && !IS_SELF_HOSTED;
 
   const limit = data?.limit || DEFAULT_TRANSLATIONS_LIMIT;
 

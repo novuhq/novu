@@ -5,6 +5,7 @@ export type CreateIntegrationData = {
   providerId: string;
   channel: ChannelTypeEnum;
   credentials: Record<string, string>;
+  configurations: Record<string, string>;
   name: string;
   identifier: string;
   active: boolean;
@@ -25,6 +26,7 @@ export type UpdateIntegrationData = {
   active: boolean;
   primary: boolean;
   credentials: Record<string, string>;
+  configurations: Record<string, string>;
   check: boolean;
 };
 
@@ -53,6 +55,23 @@ export async function setAsPrimaryIntegration(integrationId: string, environment
   return post(`/integrations/${integrationId}/set-primary`, {
     environment: environment,
   });
+}
+
+export type AutoConfigureIntegrationResponse = {
+  success: boolean;
+  message?: string;
+  integration?: IIntegration;
+};
+
+export async function autoConfigureIntegration(integrationId: string, environment: IEnvironment) {
+  const response = await post<{ data: AutoConfigureIntegrationResponse }>(
+    `/integrations/${integrationId}/auto-configure`,
+    {
+      environment: environment,
+    }
+  );
+
+  return response.data;
 }
 
 export async function updateIntegration(integrationId: string, data: UpdateIntegrationData, environment: IEnvironment) {

@@ -10,7 +10,13 @@ import {
   SendWebhookMessage,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import {
+  EnvironmentRepository,
+  MessageEntity,
+  MessageRepository,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import { MessagesStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 import { mapMarkMessageToWebSocketEvent } from '../../../shared/helpers';
 import { MessageResponseDto } from '../../dtos/message-response.dto';
@@ -24,7 +30,8 @@ export class MarkMessageAsByMark {
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private environmentRepository: EnvironmentRepository
   ) {}
 
   async execute(command: MarkMessageAsByMarkCommand): Promise<MessageResponseDto[]> {
@@ -35,6 +42,15 @@ export class MarkMessageAsByMark {
 
     if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 
+    const environment = await this.environmentRepository.findOne(
+      {
+        _id: command.environmentId,
+      },
+      'webhookAppId identifier'
+    );
+    if (!environment) {
+      throw new Error(`Environment not found for id ${command.environmentId}`);
+    }
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
         subscriberId: command.subscriberId,
@@ -75,6 +91,7 @@ export class MarkMessageAsByMark {
           },
           organizationId: command.organizationId,
           environmentId: command.environmentId,
+          environment,
         })
       );
 

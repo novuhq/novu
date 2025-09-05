@@ -1,18 +1,14 @@
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { IEmailOptions, IEmailProvider } from '@novu/stateless';
+import { EmailProviderIdEnum } from '@novu/shared';
+import { IEmailEventBody, IEmailOptions, IEmailProvider } from '@novu/stateless';
 import { PlatformException } from '../../../utils/exceptions';
-import { IMailHandler } from '../interfaces/send.handler.interface';
+import { BaseHandler } from '../../shared/interfaces';
+import { IMailHandler } from '../interfaces';
 
-export abstract class BaseHandler implements IMailHandler {
+export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> implements IMailHandler {
   protected provider: IEmailProvider;
 
-  protected constructor(
-    private providerId: EmailProviderIdEnum,
-    private channelType: string
-  ) {}
-
-  canHandle(providerId: string, channelType: ChannelTypeEnum) {
-    return providerId === this.providerId && channelType === this.channelType;
+  protected constructor(providerId: EmailProviderIdEnum, channelType: string) {
+    super(providerId, channelType);
   }
 
   abstract buildProvider(credentials, options);
@@ -29,6 +25,35 @@ export abstract class BaseHandler implements IMailHandler {
 
   public getProvider(): IEmailProvider {
     return this.provider;
+  }
+
+  public inboundWebhookEnabled(): boolean {
+    return !!(this.provider.getMessageId && this.provider.parseEventBody);
+  }
+
+  public getMessageId(body: any): string[] {
+    if (!this.provider.getMessageId) {
+      return [];
+    }
+
+    return this.provider.getMessageId(body);
+  }
+
+  public verifySignature(body: any, headers: Record<string, string>): { success: boolean; message?: string } {
+    if (!this.provider.verifySignature) {
+      // in case verifySignature is not implemented, we return true
+      return { success: true };
+    }
+
+    return this.provider.verifySignature(body, headers);
+  }
+
+  public parseEventBody(body: any, identifier: string): IEmailEventBody | undefined {
+    if (!this.provider.parseEventBody) {
+      return undefined;
+    }
+
+    return this.provider.parseEventBody(body, identifier);
   }
 
   async check() {
