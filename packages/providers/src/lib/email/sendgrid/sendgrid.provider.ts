@@ -9,6 +9,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
+import sgClient from '@sendgrid/client';
 // cspell:disable-next-line
 import { EventWebhook } from '@sendgrid/eventwebhook';
 import { MailDataRequired, MailService } from '@sendgrid/mail';
@@ -22,6 +23,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private sendgridMail: MailService;
+  private sendgridClient: typeof sgClient;
 
   constructor(
     private config: {
@@ -35,6 +37,8 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     super();
     this.sendgridMail = new MailService();
     this.sendgridMail.setApiKey(this.config.apiKey);
+    this.sendgridClient = sgClient;
+    this.sendgridClient.setApiKey(this.config.apiKey);
   }
 
   async sendMessage(
@@ -151,12 +155,12 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     return ipPoolNameValue ? { ipPoolName: ipPoolNameValue } : {};
   }
 
-  getMessageId(body: any | any[]): string[] {
+  getMessageId(body: unknown | unknown[]): string[] {
     if (Array.isArray(body)) {
-      return body.map((item) => item.id);
+      return body.map((item: any) => item.id);
     }
 
-    return [body.id];
+    return [(body as any).id];
   }
 
   verifySignature(rawBody: any, headers: Record<string, string>): { success: boolean; message?: string } {
@@ -188,6 +192,80 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     }
   }
 
+  async autoConfigureInboundWebhook(configurations: { webhookUrl: string }): Promise<{
+    success: boolean;
+    message?: string;
+    configurations?: {
+      inboundWebhookEnabled: boolean;
+      inboundWebhookSigningKey: string;
+    };
+  }> {
+    try {
+      // Step 1: Create a new Event Webhook
+      const [createResponse, createBody] = await this.sendgridClient.request({
+        url: '/v3/user/webhooks/event/settings',
+        method: 'POST' as const,
+        body: {
+          url: configurations.webhookUrl,
+          enabled: true,
+          delivery_logs: true,
+          engagement_data: true,
+          filters: {
+            event: ['delivered', 'bounce', 'click', 'open', 'dropped', 'spam_report', 'unsubscribe', 'processed'],
+          },
+        },
+      });
+
+      if (createResponse.statusCode !== 201) {
+        return {
+          success: false,
+          message: `Failed to create webhook: ${createBody?.errors?.[0]?.message || 'Unknown error'}`,
+        };
+      }
+
+      const webhookId = createBody.id;
+
+      // Step 2: Enable Signature Verification
+      const [enableSignatureResponse, enableSignatureBody] = await this.sendgridClient.request({
+        url: `/v3/user/webhooks/event/settings/signed/${webhookId}`,
+        method: 'PATCH' as const,
+        body: {
+          enabled: true,
+        },
+      });
+
+      if (enableSignatureResponse.statusCode !== 200) {
+        return {
+          success: false,
+          message: `Failed to enable signature verification: ${enableSignatureBody?.errors?.[0]?.message || 'Unknown error'}`,
+        };
+      }
+
+      const publicKey = enableSignatureBody.public_key;
+
+      if (!publicKey) {
+        return {
+          success: false,
+          message: 'Failed to retrieve signature verification key',
+        };
+      }
+
+      return {
+        success: true,
+        message: 'SendGrid webhook configured successfully with signature verification enabled',
+        configurations: {
+          inboundWebhookEnabled: true,
+          inboundWebhookSigningKey: publicKey,
+        },
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: `Error configuring SendGrid webhook: ${error?.response?.body?.errors?.[0]?.message ? error?.response?.body?.errors?.[0]?.message : 'Unknown error'}`,
+      };
+    }
+  }
+
   private getHeaderValue(headers: Record<string, string>, headerName: string): string | undefined {
     // Case-insensitive header lookup
     const lowerHeaderName = headerName.toLowerCase();
@@ -196,16 +274,19 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     return key ? headers[key] : undefined;
   }
 
-  parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
+  parseEventBody(body: unknown | unknown[], identifier: string): IEmailEventBody | undefined {
+    let eventBody: any;
     if (Array.isArray(body)) {
-      body = body.find((item) => item.id === identifier);
+      eventBody = body.find((item: any) => item.id === identifier);
+    } else {
+      eventBody = body;
     }
 
-    if (!body) {
+    if (!eventBody) {
       return undefined;
     }
 
-    const status = this.getStatus(body.event);
+    const status = this.getStatus(eventBody.event);
 
     if (status === undefined) {
       return undefined;
@@ -214,10 +295,10 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     return {
       status,
       date: new Date().toISOString(),
-      externalId: body.id,
-      attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
-      response: body.response ? body.response : '',
-      row: body,
+      externalId: eventBody.id,
+      attempts: eventBody.attempt ? parseInt(eventBody.attempt, 10) : 1,
+      response: eventBody.response ? eventBody.response : '',
+      row: eventBody,
     };
   }
 

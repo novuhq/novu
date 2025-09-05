@@ -451,8 +451,19 @@ export class SendMessagePush extends SendMessageBase {
     step: IPushOptions['step']
   ): Promise<{ success: false; error: Error } | { success: true; error: undefined }> {
     try {
+      Logger.log(
+        { jobId: command.jobId, deviceToken, overrides, step },
+        `Sending push notification for jobId ${command.jobId}`,
+        LOG_CONTEXT
+      );
       const pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
+
+      Logger.log(
+        { jobId: command.jobId, deviceToken, overrides, step },
+        `Push handler obtained for jobId ${command.jobId}`,
+        LOG_CONTEXT
+      );
 
       const result = await pushHandler.send({
         target: [deviceToken],
@@ -498,6 +509,18 @@ export class SendMessagePush extends SendMessageBase {
 
       return { success: true, error: undefined };
     } catch (e) {
+      Logger.log(
+        {
+          jobId: command.jobId,
+          errorContent: JSON.stringify(e) || e?.message,
+          code: e?.code,
+          message: e?.message,
+          details: e?.details,
+        },
+        `Failed push delivery for jobId ${command.jobId} ${e.message || e.toString()}`,
+        LOG_CONTEXT
+      );
+
       await this.sendErrorStatus(
         message,
         'error',

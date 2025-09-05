@@ -1,8 +1,8 @@
 import { BrevoEmailProvider } from '@novu/providers';
 import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
-import { BaseHandler } from './base.handler';
+import { BaseEmailHandler } from './base.handler';
 
-export class SendinblueHandler extends BaseHandler {
+export class SendinblueHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.Sendinblue, ChannelTypeEnum.EMAIL);
   }

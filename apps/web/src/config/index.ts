@@ -34,13 +34,10 @@ export const SENTRY_DSN = window._env_.REACT_APP_SENTRY_DSN || process.env.REACT
 
 export const ENV = window._env_.REACT_APP_ENVIRONMENT || process.env.REACT_APP_ENVIRONMENT;
 
-const blueprintApiUrlByEnv =
-  ENV === 'production' || ENV === 'prod' ? 'https://api.novu.co' : 'https://api.novu-staging.co';
-
 export const BLUEPRINTS_API_URL =
   window._env_.REACT_APP_BLUEPRINTS_API_URL || isPlaywright
     ? window._env_.REACT_APP_BLUEPRINTS_API_URL || process.env.REACT_APP_BLUEPRINTS_API_URL || 'http://localhost:1336'
-    : blueprintApiUrlByEnv;
+    : API_ROOT;
 
 export const APP_ID = window._env_.REACT_APP_NOVU_APP_ID || process.env.REACT_APP_NOVU_APP_ID;
 

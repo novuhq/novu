@@ -42,7 +42,7 @@ export function UsecasePlaygroundHeader({
   // Determine the skip button text
   const getSkipButtonText = () => {
     if (!skipPath) return null;
-    return skipLabel || 'Skip';
+    return skipLabel || 'Skip, I’ll explore myself';
   };
 
   const skipButtonText = getSkipButtonText();
@@ -66,8 +66,7 @@ export function UsecasePlaygroundHeader({
       </div>
 
       {showSkipButton ? (
-        <div className="flex h-7 w-[168px] flex-col items-end gap-2">
-          {/* Progress bar */}
+        <div className="flex h-7 flex-col items-end gap-2">
           {showStepper && (
             <div className="flex h-1 w-[100px] gap-1">
               {Array.from({ length: totalSteps }, (_, index) => (
@@ -81,21 +80,18 @@ export function UsecasePlaygroundHeader({
             </div>
           )}
 
-          {/* Skip button and step indicator row */}
-          <div className="flex h-4 w-[168px] items-center justify-center gap-2">
+          <div className="flex h-4 items-center gap-2">
             {skipButtonText && (
               <LinkButton
                 variant="gray"
                 size="sm"
                 onClick={handleSkip}
-                className="text-foreground-600 h-4 !text-xs !font-medium !leading-4"
+                className="text-foreground-600 h-4 !text-xs !font-medium !leading-4 !no-underline hover:!no-underline focus:!no-underline"
               >
                 {skipButtonText}
               </LinkButton>
             )}
-
-            {skipButtonText && <div className="h-0.5 w-0.5 rounded-full bg-black/30" />}
-
+            {skipButtonText && <span className="text-foreground-400">•</span>}
             <span className="text-foreground-600 text-xs font-medium leading-4">
               {currentStep}/{totalSteps}
             </span>

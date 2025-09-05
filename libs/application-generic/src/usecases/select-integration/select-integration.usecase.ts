@@ -9,8 +9,6 @@ import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
 import { SelectIntegrationCommand } from './select-integration.command';
 
-const LOG_CONTEXT = 'SelectIntegration';
-
 @Injectable()
 export class SelectIntegration {
   constructor(

@@ -8,6 +8,7 @@ import { Textarea } from '@/components/primitives/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../primitives/form/form';
 import { IntegrationFormData } from '../types';
+import { DescriptionWithLinks } from './description-with-links';
 
 type CredentialsSectionProps = {
   credential: IConfigCredential;
@@ -141,7 +142,12 @@ export function CredentialSection({
             </>
           )}
 
-          <FormMessage>{fieldState.error?.message || credential.description}</FormMessage>
+          <FormMessage>
+            {fieldState.error?.message ||
+              (credential.description && (
+                <DescriptionWithLinks description={credential.description} links={credential.links} />
+              ))}
+          </FormMessage>
         </FormItem>
       )}
     />

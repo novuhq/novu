@@ -5,6 +5,7 @@ import {
   NormalizeVariables,
   SelectIntegration,
 } from '@novu/application-generic';
+import { AutoConfigureIntegration } from './auto-configure-integration/auto-configure-integration.usecase';
 import { CheckIntegration } from './check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
 import { CreateIntegration } from './create-integration/create-integration.usecase';
@@ -21,6 +22,7 @@ export const USE_CASES = [
   GetInAppActivated,
   GetWebhookSupportStatus,
   CreateIntegration,
+  AutoConfigureIntegration,
   ConditionsFilter,
   GetIntegrations,
   GetActiveIntegrations,

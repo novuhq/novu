@@ -93,8 +93,6 @@ export function InboxFrameworkGuide({
   subscriberId,
   primaryColor,
   foregroundColor,
-  backendUrl,
-  socketUrl,
 }: InboxFrameworkGuideProps) {
   const track = useTelemetry();
   const [selectedFramework, setSelectedFramework] = useState<Framework>(
@@ -136,16 +134,10 @@ export function InboxFrameworkGuide({
 
   const frameworks = getFrameworks(installationMethod);
 
-  // Get the actual code snippet from the selected framework with placeholder substitutions
-  const codeSnippet =
-    selectedFramework?.installSteps.find(
-      (step) => step.title.includes('Add the inbox code') || step.title.includes('Create the Inbox')
-    )?.code ||
-    frameworks
-      .find((f) => f.name === selectedFramework?.name)
-      ?.installSteps.find(
-        (step) => step.title.includes('Add the inbox code') || step.title.includes('Create the Inbox')
-      )?.code;
+  // Intentionally unused: reserved for future context-aware hints based on the selected step
+  void frameworks;
+
+  const showAiPrompt = selectedFramework.name === 'Next.js' || selectedFramework.name === 'React';
 
   return (
     <>
@@ -198,39 +190,47 @@ export function InboxFrameworkGuide({
         </div>
 
         {/* Code block area with subtle installation method selector above */}
-        {['Next.js', 'React'].includes(selectedFramework.name) ? (
-          <div className="flex flex-col gap-3">
-            {/* AI Prompts Section */}
-            <div className="pl-8">
-              <AiPromptsSection
-                frameworkName={selectedFramework.name}
-                applicationIdentifier={currentEnvironment?.identifier}
-                subscriberId={subscriberId}
-              />
-            </div>
+        <div className="flex flex-col gap-3">
+          <div className="relative flex h-[520px] flex-col overflow-hidden pl-0">
+            {showAiPrompt && (
+              <div className="pl-0">
+                <div className="flex items-center mb-4">
+                  <AiPromptsSection
+                    frameworkName={selectedFramework.name}
+                    applicationIdentifier={currentEnvironment?.identifier}
+                    subscriberId={subscriberId}
+                  />
+                </div>
+              </div>
+            )}
+            {['Next.js', 'React'].includes(selectedFramework.name) && (
+              <div className="mb-2 flex items-center gap-64 pl-8">
+                <span className="text-base font-medium text-[#222]">Installation method</span>
+                <Tabs
+                  defaultValue="cli"
+                  value={installationMethod}
+                  onValueChange={(value) => setInstallationMethod(value as 'cli' | 'manual')}
+                >
+                  <TabsList className="ml-4 h-7 w-[159px] gap-1 rounded-md bg-[#FBFBFB] p-1 shadow-none">
+                    <TabsTrigger value="cli" className={TABS_TRIGGER_CLASSES}>
+                      CLI Installation
+                    </TabsTrigger>
+                    <TabsTrigger value="manual" className={TABS_TRIGGER_CLASSES}>
+                      Manual
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            )}
 
-            {/* Header row: label left, tabs right */}
-            <div className="mb-2 flex items-center gap-64 pl-8">
-              <span className="text-base font-medium text-[#222]">Installation method</span>
-              <Tabs
-                defaultValue="cli"
-                value={installationMethod}
-                onValueChange={(value) => setInstallationMethod(value as 'cli' | 'manual')}
-              >
-                <TabsList className="ml-4 h-7 w-[159px] gap-1 rounded-md bg-[#FBFBFB] p-1 shadow-none">
-                  <TabsTrigger value="cli" className={TABS_TRIGGER_CLASSES}>
-                    CLI Installation
-                  </TabsTrigger>
-                  <TabsTrigger value="manual" className={TABS_TRIGGER_CLASSES}>
-                    Manual
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-            <div className="relative overflow-hidden pl-0">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               <AnimatePresence mode="wait">
-                <motion.div key={installationMethod} {...fadeIn} className="w-full">
-                  {installationMethod === 'cli' ? (
+                <motion.div
+                  key={['Next.js', 'React'].includes(selectedFramework.name) ? installationMethod : 'manual'}
+                  {...fadeIn}
+                  className="w-full"
+                >
+                  {['Next.js', 'React'].includes(selectedFramework.name) && installationMethod === 'cli' ? (
                     <FrameworkCliInstructions framework={selectedFramework as Framework} />
                   ) : (
                     <FrameworkInstructions framework={selectedFramework as Framework} />
@@ -239,23 +239,7 @@ export function InboxFrameworkGuide({
               </AnimatePresence>
             </div>
           </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {/* AI Prompts Section */}
-            <div className="pl-8">
-              <AiPromptsSection
-                frameworkName={selectedFramework.name}
-                applicationIdentifier={currentEnvironment?.identifier}
-                subscriberId={subscriberId}
-              />
-            </div>
-            <div className="relative mt-2 overflow-hidden pl-0">
-              <motion.div key="manual" {...fadeIn} className="w-full">
-                <FrameworkInstructions framework={selectedFramework as Framework} />
-              </motion.div>
-            </div>
-          </div>
-        )}
+        </div>
       </motion.div>
     </>
   );

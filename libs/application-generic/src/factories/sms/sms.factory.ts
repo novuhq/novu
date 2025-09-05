@@ -77,7 +77,7 @@ export class SmsFactory implements ISmsFactory {
     new BulkSmsHandler(),
   ];
 
-  getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId'>) {
+  getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {
     const handler =
       this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
 
