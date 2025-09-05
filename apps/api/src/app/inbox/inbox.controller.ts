@@ -19,7 +19,6 @@ import {
   AddressingTypeEnum,
   MessageActionStatusEnum,
   PreferenceLevelEnum,
-  Schedule,
   TriggerRequestCategoryEnum,
   UserSessionData,
 } from '@novu/shared';
