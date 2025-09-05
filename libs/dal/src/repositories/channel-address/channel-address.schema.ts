@@ -19,15 +19,21 @@ const channelAddressSchema = new Schema<ChannelAddressDBModel>(
       required: true,
       ref: 'Environment',
     },
-    _integrationId: {
-      type: Schema.Types.ObjectId,
-      required: true,
-      ref: 'Integration',
-    },
-    _connectionId: {
-      type: Schema.Types.ObjectId,
+    connectionIdentifier: {
+      type: Schema.Types.String,
       required: false,
-      ref: 'ChannelConnection',
+    },
+    integrationIdentifier: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    providerId: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    channel: {
+      type: Schema.Types.String,
+      required: true,
     },
     resource: {
       type: Schema.Types.String,

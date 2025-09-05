@@ -18,10 +18,17 @@ const channelConnectionSchema = new Schema<ChannelConnectionDBModel>(
       required: true,
       ref: 'Environment',
     },
-    _integrationId: {
-      type: Schema.Types.ObjectId,
+    integrationIdentifier: {
+      type: Schema.Types.String,
       required: true,
-      ref: 'Integration',
+    },
+    providerId: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    channel: {
+      type: Schema.Types.String,
+      required: true,
     },
     resource: {
       type: Schema.Types.String,
