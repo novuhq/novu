@@ -15,7 +15,8 @@ import type {
   UnsnoozeArgs,
 } from '../notifications';
 import { Preference } from '../preferences/preference';
-import { ListPreferencesArgs, UpdatePreferenceArgs } from '../preferences/types';
+import { Schedule } from '../preferences/schedule';
+import { ListPreferencesArgs, UpdatePreferenceArgs, UpdateScheduleArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
 import { Session, WebSocketEvent } from '../types';
 
@@ -74,6 +75,8 @@ type NotificationsReadArchivedAllEvents = BaseEvents<
 type PreferencesFetchEvents = BaseEvents<'preferences.list', ListPreferencesArgs, Preference[]>;
 type PreferenceUpdateEvents = BaseEvents<'preference.update', UpdatePreferenceArgs, Preference>;
 type PreferencesBulkUpdateEvents = BaseEvents<'preferences.bulk_update', Array<UpdatePreferenceArgs>, Preference[]>;
+type PreferenceScheduleGetEvents = BaseEvents<'preference.schedule.get', undefined, Schedule>;
+type PreferenceScheduleUpdateEvents = BaseEvents<'preference.schedule.update', UpdateScheduleArgs, Schedule>;
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
 export type NotificationUnseenEvent = `notifications.${WebSocketEvent.UNSEEN}`;
@@ -106,7 +109,10 @@ export type Events = SessionInitializeEvents &
     'preferences.list.updated': { data: Preference[] };
   } & PreferenceUpdateEvents &
   PreferencesBulkUpdateEvents &
-  SocketConnectEvents &
+  PreferenceScheduleGetEvents &
+  PreferenceScheduleUpdateEvents & {
+    'preference.schedule.get.updated': { data: Schedule };
+  } & SocketConnectEvents &
   SocketEvents &
   NotificationReadEvents &
   NotificationUnreadEvents &
@@ -138,5 +144,6 @@ export type NotificationEvents = keyof (NotificationReadEvents &
   NotificationsArchivedAllEvents &
   NotificationsReadArchivedAllEvents);
 export type PreferenceEvents = keyof (PreferenceUpdateEvents & PreferencesBulkUpdateEvents);
+export type PreferenceScheduleEvents = keyof (PreferenceScheduleGetEvents & PreferenceScheduleUpdateEvents);
 
 export type EventHandler<T = unknown> = (event: T) => void;

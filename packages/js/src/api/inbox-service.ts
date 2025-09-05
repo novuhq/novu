@@ -7,6 +7,7 @@ import type {
   Session,
   SeverityLevelEnum,
   Subscriber,
+  WeeklySchedule,
   WorkflowCriticalityEnum,
 } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
@@ -263,8 +264,15 @@ export class InboxService {
     return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/bulk`, { preferences });
   }
 
-  updateGlobalPreferences(channels: ChannelPreference): Promise<PreferencesResponse> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences`, channels);
+  updateGlobalPreferences(
+    preferences: ChannelPreference & {
+      schedule?: {
+        isEnabled: boolean;
+        weeklySchedule?: WeeklySchedule;
+      };
+    }
+  ): Promise<PreferencesResponse> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences`, preferences);
   }
 
   updateWorkflowPreferences({
@@ -277,7 +285,11 @@ export class InboxService {
     return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/${workflowId}`, channels);
   }
 
-  triggerHelloWorldEvent(): Promise<any> {
+  fetchGlobalPreferences(): Promise<PreferencesResponse> {
+    return this.#httpClient.get(`${INBOX_ROUTE}/preferences/global`);
+  }
+
+  triggerHelloWorldEvent(): Promise<unknown> {
     const payload = {
       name: 'hello-world',
       to: {
