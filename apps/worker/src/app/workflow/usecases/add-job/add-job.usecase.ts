@@ -439,8 +439,7 @@ export class AddJob {
     if (bridgeResponse) {
       metadata = await this.updateMetadata(bridgeResponse, command);
     } else {
-      // @ts-expect-error - job.digest is not typed
-      metadata = job.digest;
+      metadata = job.digest || ({} as IWorkflowStepMetadata);
     }
 
     // Update the job digest directly to avoid an extra database call
