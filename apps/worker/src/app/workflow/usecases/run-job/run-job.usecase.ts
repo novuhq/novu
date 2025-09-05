@@ -295,7 +295,7 @@ export class RunJob {
           await this.createExecutionDetails.execute(
             CreateExecutionDetailsCommand.create({
               ...CreateExecutionDetailsCommand.getDetailsFromJob(nextJob),
-              detail: DetailEnum.SKIPPED_STEP,
+              detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
               source: ExecutionDetailsSourceEnum.INTERNAL,
               status: ExecutionDetailsStatusEnum.SUCCESS,
               isTest: false,

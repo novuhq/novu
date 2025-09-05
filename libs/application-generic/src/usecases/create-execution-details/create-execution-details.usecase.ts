@@ -18,7 +18,6 @@ const mapDetailToEventType = {
   [DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES]: 'step_filtered',
   [DetailEnum.STEP_FILTERED_BY_WORKFLOW_RESOURCE_PREFERENCES]: 'step_filtered',
   [DetailEnum.STEP_FILTERED_BY_USER_WORKFLOW_PREFERENCES]: 'step_filtered',
-  [DetailEnum.FILTER_STEPS]: 'step_filtered',
   [DetailEnum.PROCESSING_STEP_FILTER]: 'step_filter_processing',
   [DetailEnum.PROCESSING_STEP_FILTER_ERROR]: 'step_filter_failed',
 
@@ -101,7 +100,7 @@ const mapDetailToEventType = {
   [DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION]: 'reply_mx_domain_missing',
 
   // Skipped step events
-  [DetailEnum.SKIPPED_STEP]: 'step_skipped',
+  [DetailEnum.SKIPPED_STEP_BY_CONDITIONS]: 'step_skipped',
 } satisfies Record<DetailEnum, EventType>;
 
 @Injectable()
