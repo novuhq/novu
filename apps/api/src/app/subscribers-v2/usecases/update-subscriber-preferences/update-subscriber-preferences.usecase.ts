@@ -38,6 +38,7 @@ export class UpdateSubscriberPreferences {
         workflowIdOrIdentifier: workflowId,
         includeInactiveChannels: false,
         ...command.channels,
+        schedule: command.schedule,
       })
     );
 

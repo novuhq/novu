@@ -27,7 +27,11 @@ export class GetSubscriberGlobalPreference {
 
     const activeChannels = await this.getActiveChannels(command);
 
-    const subscriberGlobalPreference = await this.getSubscriberGlobalPreference(command, subscriber._id);
+    const subscriberGlobalPreference = await this.getPreferences.getSubscriberGlobalPreference({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberId: subscriber._id,
+    });
 
     const channelsWithDefaults = this.buildDefaultPreferences(subscriberGlobalPreference.channels);
 
@@ -42,33 +46,8 @@ export class GetSubscriberGlobalPreference {
       preference: {
         enabled: subscriberGlobalPreference.enabled,
         channels,
+        schedule: subscriberGlobalPreference.schedule,
       },
-    };
-  }
-
-  @Instrument()
-  private async getSubscriberGlobalPreference(
-    command: GetSubscriberGlobalPreferenceCommand,
-    subscriberId: string
-  ): Promise<{
-    channels: IPreferenceChannels;
-    enabled: boolean;
-  }> {
-    const subscriberGlobalChannels = await this.getPreferences.getPreferenceChannels({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      subscriberId,
-    });
-
-    return {
-      channels: subscriberGlobalChannels ?? {
-        email: true,
-        sms: true,
-        in_app: true,
-        chat: true,
-        push: true,
-      },
-      enabled: true,
     };
   }
 

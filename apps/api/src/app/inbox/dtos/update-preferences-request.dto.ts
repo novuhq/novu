@@ -1,4 +1,6 @@
-import { IsBoolean, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
+import { ScheduleDto } from '../../shared/dtos/schedule';
 
 export class UpdatePreferencesRequestDto {
   @IsOptional()
@@ -20,4 +22,9 @@ export class UpdatePreferencesRequestDto {
   @IsOptional()
   @IsBoolean()
   readonly push?: boolean;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ScheduleDto)
+  readonly schedule?: ScheduleDto;
 }

@@ -30,6 +30,7 @@ import {
   MessageTemplateRepository,
   NotificationTemplateRepository,
   PreferencesRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
@@ -40,9 +41,11 @@ import {
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
+  PreferenceLevelEnum,
   PreferencesTypeEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  Schedule,
   StepTypeEnum,
 } from '@novu/shared';
 import { createHash } from 'crypto';
@@ -54,13 +57,20 @@ import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/cr
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
+import {
+  GetSubscriberSchedule,
+  GetSubscriberScheduleCommand,
+} from '../../../subscribers/usecases/get-subscriber-schedule';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
+import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
+import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
@@ -91,7 +101,9 @@ export class Session {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private getOrganizationSettingsUsecase: GetOrganizationSettings,
     private logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private getSubscriberSchedule: GetSubscriberSchedule,
+    private updatePreferencesUsecase: UpdatePreferences
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -242,6 +254,12 @@ export class Session {
       );
     }
 
+    const schedule = await this.createDefaultSchedule({
+      environment,
+      defaultSchedule: command.requestData.defaultSchedule,
+      subscriber: subscriberEntity,
+    });
+
     return {
       applicationIdentifier: environment.identifier,
       token,
@@ -250,7 +268,55 @@ export class Session {
       removeNovuBranding,
       maxSnoozeDurationHours,
       isDevelopmentMode: environment.name.toLowerCase() !== 'production',
+      schedule,
     };
+  }
+
+  private async createDefaultSchedule({
+    environment,
+    defaultSchedule,
+    subscriber,
+  }: {
+    environment: EnvironmentEntity;
+    defaultSchedule?: ScheduleDto;
+    subscriber: SubscriberEntity;
+  }): Promise<Schedule | undefined> {
+    const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environment._id },
+      organization: { _id: environment._organizationId },
+    });
+
+    if (!isSubscribersScheduleEnabled) {
+      return undefined;
+    }
+
+    const schedule = await this.getSubscriberSchedule.execute(
+      GetSubscriberScheduleCommand.create({
+        organizationId: environment._organizationId,
+        environmentId: environment._id,
+        _subscriberId: subscriber._id,
+      })
+    );
+
+    if (schedule || !defaultSchedule) {
+      return schedule;
+    }
+
+    const updatedGlobalPreference = await this.updatePreferencesUsecase.execute(
+      UpdatePreferencesCommand.create({
+        organizationId: environment._organizationId,
+        environmentId: environment._id,
+        subscriber,
+        subscriberId: subscriber.subscriberId,
+        level: PreferenceLevelEnum.GLOBAL,
+        includeInactiveChannels: false,
+        schedule: defaultSchedule,
+      })
+    );
+
+    return updatedGlobalPreference.schedule;
   }
 
   private validateRequestData(requestData: SubscriberSessionRequestDto): void {
