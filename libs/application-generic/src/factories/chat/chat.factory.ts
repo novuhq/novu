@@ -5,6 +5,7 @@ import { GetstreamChatHandler } from './handlers/getstream.handler';
 import { GrafanaOnCallHandler } from './handlers/grafana-on-call.handler';
 import { MattermostHandler } from './handlers/mattermost.handler';
 import { MSTeamsHandler } from './handlers/msteams.handler';
+import { NovuSlackHandler } from './handlers/novu-slack.handler';
 import { RocketChatHandler } from './handlers/rocket-chat.handler';
 import { RyverHandler } from './handlers/ryver.handler';
 import { SlackHandler } from './handlers/slack.handler';
@@ -16,6 +17,7 @@ export class ChatFactory implements IChatFactory {
   handlers: IChatHandler[] = [
     new ChatWebhookHandler(),
     new SlackHandler(),
+    new NovuSlackHandler(),
     new DiscordHandler(),
     new MSTeamsHandler(),
     new MattermostHandler(),

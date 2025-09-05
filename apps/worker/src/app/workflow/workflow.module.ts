@@ -28,6 +28,8 @@ import {
   WorkflowRunService,
 } from '@novu/application-generic';
 import {
+  ChannelAddressRepository,
+  ChannelConnectionRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
   JobRepository,
@@ -87,7 +89,14 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   return modules;
 };
 
-const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository, CommunityUserRepository];
+const REPOSITORIES = [
+  JobRepository,
+  CommunityOrganizationRepository,
+  PreferencesRepository,
+  CommunityUserRepository,
+  ChannelAddressRepository,
+  ChannelConnectionRepository,
+];
 
 const webhookProvider: Provider = {
   provide: SendWebhookMessage,

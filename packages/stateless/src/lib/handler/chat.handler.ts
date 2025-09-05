@@ -21,15 +21,15 @@ export class ChatHandler {
       content = await this.message.template(data);
     }
 
-    if (!data.$webhookUrl) {
+    if (!data.$channelData) {
       throw new Error(
-        'webhookUrl is missing in trigger payload. To send an a chat message you must specify a webhookUrl property.'
+        'Channel data is missing in trigger payload. To send an a chat message you must specify a channelData property.'
       );
     }
 
     return await this.provider.sendMessage(
       {
-        webhookUrl: data.$webhookUrl as string,
+        channelData: data.$channelData,
         content,
       },
       {}

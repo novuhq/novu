@@ -1,4 +1,5 @@
 import { ChannelTypeEnum, IAttachmentOptions } from '../template/template.interface';
+import { ChannelData } from './channel-data.type';
 import { CheckIntegrationResponseEnum } from './provider.enum';
 
 export interface IProvider {
@@ -81,9 +82,11 @@ export interface IPushOptions {
 }
 
 export interface IChatOptions {
+  /**
+   * @deprecated use channelData instead
+   */
   phoneNumber?: string;
-  webhookUrl?: string;
-  channel?: string;
+  channelData?: ChannelData;
   content: string;
   blocks?: IBlock[];
   customData?: Record<string, any>;

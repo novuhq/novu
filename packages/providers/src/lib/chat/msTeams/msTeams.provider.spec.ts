@@ -1,3 +1,4 @@
+import { ADDRESS_TYPES } from '@novu/stateless';
 import { v4 as uuidv4 } from 'uuid';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
@@ -13,7 +14,12 @@ test('should trigger msTeams webhook correctly', async () => {
   const testWebhookUrl = 'https://mycompany.webhook.office.com';
   const testContent = '{"title": "Message test title"}';
   await provider.sendMessage({
-    webhookUrl: testWebhookUrl,
+    channelData: {
+      address: {
+        url: testWebhookUrl,
+      },
+      type: ADDRESS_TYPES.WEBHOOK,
+    },
     content: testContent,
   });
 
@@ -34,7 +40,12 @@ test('should trigger msTeams webhook correctly with _passthrough', async () => {
   const testContent = '{"title": "Message test title"}';
   await provider.sendMessage(
     {
-      webhookUrl: testWebhookUrl,
+      channelData: {
+        address: {
+          url: testWebhookUrl,
+        },
+        type: ADDRESS_TYPES.WEBHOOK,
+      },
       content: testContent,
     },
     {
