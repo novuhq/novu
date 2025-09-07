@@ -1,7 +1,7 @@
 import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum, StepCreateDto } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ComponentProps, useCallback, useState } from 'react';
+import { ComponentProps, useCallback, useEffect, useState } from 'react';
 import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -31,7 +31,7 @@ export type NodeData = {
   error?: string;
   name?: string;
   stepSlug?: string;
-  controlValues?: Record<string, any>;
+  controlValues?: Record<string, unknown>;
   workflowSlug?: string;
   environment?: string;
   isTemplateStorePreview?: boolean;
@@ -301,22 +301,79 @@ const StepNode = (props: StepNodeProps) => {
 };
 
 const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data: NodeData; type: StepTypeEnum }) => {
+  const navigate = useNavigate();
+  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const isNavigatableChannelNode = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const clickCount = e.detail ?? 1;
+
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+        setClickTimeout(null);
+      }
+
+      if (clickCount > 1) {
+        if (isNavigatableChannelNode && data.stepSlug) {
+          navigate(
+            buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+              stepSlug: data.stepSlug,
+            })
+          );
+        } else {
+          navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
+        }
+
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
+        setClickTimeout(null);
+      }, 150);
+
+      setClickTimeout(timeout);
+    },
+    [clickTimeout, navigate, data.stepSlug, isNavigatableChannelNode]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
+      }
+    },
+    [navigate, data.stepSlug]
+  );
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+      }
+    };
+  }, [clickTimeout]);
+
   if (data.isTemplateStorePreview) {
     return children;
   }
 
   return (
-    <Link
-      to={buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' })}
-      onClick={(e) => {
-        // Prevent any bubbling that might interfere with the navigation
-        e.stopPropagation();
-      }}
-      className="contents"
+    <div
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      className="contents cursor-pointer"
       data-testid={`${type}-node`}
+      role="button"
+      tabIndex={0}
     >
       {children}
-    </Link>
+    </div>
   );
 };
 

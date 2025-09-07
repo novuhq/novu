@@ -3,9 +3,29 @@ import { type IconType } from 'react-icons/lib';
 import { RiCheckboxCircleFill, RiErrorWarningFill, RiForbidFill } from 'react-icons/ri';
 import { WorkflowStatusEnum } from '@/utils/enums';
 import { StatusBadge, StatusBadgeIcon } from './primitives/status-badge';
+import { WorkflowIssuesPopover } from './workflow-issues-popover';
+
+// Local type definition for step issues until the shared types are updated
+type RuntimeIssue = {
+  message: string;
+  variableName?: string;
+  issueType: string;
+};
+
+type StepIssue = {
+  controls?: Record<string, RuntimeIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
+};
+
+type StepListItem = {
+  slug: string;
+  type: string;
+  issues?: StepIssue;
+};
 
 type WorkflowStatusProps = {
   status: WorkflowStatusEnum;
+  steps?: StepListItem[];
 };
 
 const statusRenderData: Record<
@@ -34,14 +54,21 @@ const statusRenderData: Record<
 };
 
 export const WorkflowStatus = (props: WorkflowStatusProps) => {
-  const { status } = props;
+  const { status, steps = [] } = props;
   const badgeVariant = statusRenderData[status].badgeVariant;
   const Icon = statusRenderData[status].icon;
   const text = statusRenderData[status].text;
 
-  return (
+  const statusBadge = (
     <StatusBadge variant="light" status={badgeVariant}>
       <StatusBadgeIcon as={Icon} /> {text}
     </StatusBadge>
   );
+
+  // Show popover only for ERROR status and when there are steps with issues
+  if (status === WorkflowStatusEnum.ERROR && steps.length > 0) {
+    return <WorkflowIssuesPopover steps={steps}>{statusBadge}</WorkflowIssuesPopover>;
+  }
+
+  return statusBadge;
 };
