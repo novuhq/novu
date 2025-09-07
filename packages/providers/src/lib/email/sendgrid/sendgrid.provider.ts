@@ -210,9 +210,12 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
           enabled: true,
           delivery_logs: true,
           engagement_data: true,
-          filters: {
-            event: ['delivered', 'bounce', 'click', 'open', 'dropped', 'spam_report', 'unsubscribe', 'processed'],
-          },
+          friendly_name: 'Novu Inbound Webhook',
+          open: true,
+          click: true,
+          bounce: true,
+          dropped: true,
+          delivered: true,
         },
       });
 

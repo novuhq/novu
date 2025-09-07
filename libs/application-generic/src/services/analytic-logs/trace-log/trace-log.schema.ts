@@ -145,7 +145,8 @@ export type EventType =
   | 'workflow_actor_processing_started'
   | 'workflow_actor_processing_failed'
   | 'workflow_actor_processing_completed'
-  | 'workflow_execution_failed';
+  | 'workflow_execution_failed'
+  | 'step_skipped';
 
 export type EntityType = 'request' | 'step_run';
 
