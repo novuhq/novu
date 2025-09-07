@@ -32,7 +32,6 @@ export const WorkflowIssuesPopover = ({ children, steps, className }: WorkflowIs
   const [isOpen, setIsOpen] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const stepsWithIssues = steps.filter((step) => step.issues && countIssues(step.issues as any) > 0);
-  console.log('stepsWithIssues', stepsWithIssues, { steps });
 
   if (stepsWithIssues.length === 0) {
     return <>{children}</>;
