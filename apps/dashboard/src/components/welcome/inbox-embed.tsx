@@ -22,7 +22,6 @@ export function InboxEmbed(): JSX.Element | null {
   const { integrations } = useFetchIntegrations({ refetchInterval: 1000, refetchOnWindowFocus: true });
   const { environments, areEnvironmentsInitialLoading } = useEnvironment();
 
-  // Stable refs to prevent effect re-runs on object identity changes
   const lastUpdateKeyRef = useRef<string>('');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -39,19 +38,17 @@ export function InboxEmbed(): JSX.Element | null {
       integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
   );
 
-  // Compute stable boolean and key to prevent effect re-runs on object identity changes
   const isInAppConnected = foundIntegration?.connected ?? false;
 
-  // Hook to update workflows with in-app steps when inbox integration is connected
-  const { triggerWorkflowUpdate, hasWorkflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
-    enabled: !!selectedEnvironment && !!foundIntegration,
+  const { pauseAndEnableWorkflowsInLoop, workflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
+    maxToUpdate: 20,
+    maxRetries: 3,
   });
   const currentKey = `${selectedEnvironment?._id}-${foundIntegration?._id}`;
 
   const primaryColor = searchParams.get('primaryColor') || '#DD2450';
   const foregroundColor = searchParams.get('foregroundColor') || '#0E121B';
 
-  // Helper function to safely validate URLs
   const validateUrl = (urlString: string | null, allowedProtocols: string[]): string | undefined => {
     if (!urlString) return undefined;
 
@@ -66,7 +63,6 @@ export function InboxEmbed(): JSX.Element | null {
     }
   };
 
-  // Only show backendUrl and socketUrl if not production and not EU region
   const shouldShowCustomUrls = MODE !== 'production' && !IS_EU;
   const backendUrl = shouldShowCustomUrls
     ? validateUrl(searchParams.get('backendUrl'), ['http:', 'https:'])
@@ -75,11 +71,9 @@ export function InboxEmbed(): JSX.Element | null {
     ? validateUrl(searchParams.get('socketUrl'), ['ws:', 'wss:', 'http:', 'https:'])
     : undefined;
 
-  // Check if we're already on the WELCOME route to prevent redirect loops
   const isOnWelcomeRoute = location.pathname === ROUTES.WELCOME || location.pathname.startsWith(`${ROUTES.WELCOME}/`);
 
   useEffect(() => {
-    // Wait for environments to load and ensure we're not already on WELCOME route
     if (areEnvironmentsInitialLoading || isOnWelcomeRoute) {
       return;
     }
@@ -95,23 +89,19 @@ export function InboxEmbed(): JSX.Element | null {
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 10000);
 
-      // Trigger workflow update when inbox integration is connected
-      // Only trigger if this is a new connection (different environment/integration)
-      if (hasWorkflowsWithInAppSteps && lastUpdateKeyRef.current !== currentKey) {
-        triggerWorkflowUpdate();
+      if (workflowsWithInAppSteps.length > 0 && lastUpdateKeyRef.current !== currentKey) {
+        pauseAndEnableWorkflowsInLoop();
         lastUpdateKeyRef.current = currentKey;
       }
 
       return () => clearTimeout(timer);
     }
-  }, [isInAppConnected, currentKey, hasWorkflowsWithInAppSteps, triggerWorkflowUpdate]);
+  }, [isInAppConnected, currentKey, workflowsWithInAppSteps, pauseAndEnableWorkflowsInLoop]);
 
-  // Don't render if we're on the WELCOME route to avoid redirect loops
   if (isOnWelcomeRoute) {
     return null;
   }
 
-  // Don't render while environments are still loading
   if (areEnvironmentsInitialLoading) {
     return null;
   }

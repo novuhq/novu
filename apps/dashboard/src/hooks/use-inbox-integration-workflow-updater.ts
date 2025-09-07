@@ -1,34 +1,47 @@
-import { StepTypeEnum } from '@novu/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { StepTypeEnum, WorkflowListResponseDto, WorkflowResponseDto } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
+import { getWorkflow, patchWorkflow } from '@/api/workflows';
 import { useEnvironment } from '@/context/environment/hooks';
-import { QueryKeys } from '@/utils/query-keys';
 import { useFetchWorkflows } from './use-fetch-workflows';
-import { usePatchWorkflow } from './use-patch-workflow';
+import { useUpdateWorkflow } from './use-update-workflow';
 
 interface UseInboxIntegrationWorkflowUpdaterOptions {
-  enabled?: boolean;
   maxToUpdate?: number;
-  onSuccess?: (updatedWorkflows: string[]) => void;
+  maxRetries?: number;
+  concurrency?: number;
+}
+
+type WorkflowSlug = WorkflowListResponseDto['slug'];
+
+interface WorkflowOperationResult {
+  workflow: WorkflowListResponseDto;
+  success: boolean;
+  error: Error | null;
+}
+
+interface WorkflowProcessingState {
+  slugToWorkflow: Map<WorkflowSlug, WorkflowListResponseDto>;
+  slugs: WorkflowSlug[];
+  deactivated: Set<WorkflowSlug>;
+  reactivated: Set<WorkflowSlug>;
+  deactivateErrors: Map<WorkflowSlug, Error>;
+  reactivateErrors: Map<WorkflowSlug, Error>;
+  workflowCache: Map<WorkflowSlug, WorkflowResponseDto>;
 }
 
 export function useInboxIntegrationWorkflowUpdater({
-  enabled = true,
   maxToUpdate = 20,
-  onSuccess,
+  maxRetries = 3,
+  concurrency = 4,
 }: UseInboxIntegrationWorkflowUpdaterOptions = {}) {
-  if (maxToUpdate <= 0) {
-    throw new Error('maxToUpdate must be a positive integer');
-  }
   const { currentEnvironment } = useEnvironment();
-  const queryClient = useQueryClient();
-  const { data: workflowsData, isLoading: isLoadingWorkflows } = useFetchWorkflows({
+  const { data: workflowsData, isLoading } = useFetchWorkflows({
     limit: maxToUpdate,
     offset: 0,
     query: '',
   });
 
-  const { isPending: isPatching } = usePatchWorkflow();
+  const { updateWorkflow: updateWorkflowHook } = useUpdateWorkflow();
 
   const workflowsWithInAppSteps = useMemo(() => {
     return (
@@ -36,43 +49,203 @@ export function useInboxIntegrationWorkflowUpdater({
     );
   }, [workflowsData?.workflows]);
 
-  const { mutateAsync: updateWorkflowsWithInAppSteps, isPending: isUpdating } = useMutation({
-    mutationFn: async () => {
-      // Always invalidate queries to force refetch with fresh data
-      // This ensures we get the latest workflow state even if no workflows with in-app steps exist yet
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id] });
+  const retryOperation = useCallback(
+    async <T>(operation: () => Promise<T>, retryCount: number = maxRetries, baseDelay: number = 1000): Promise<T> => {
+      let lastError: Error | undefined;
 
-      // If we have workflows with in-app steps, also invalidate their individual queries
-      if (workflowsWithInAppSteps.length > 0) {
-        const workflowsToUpdate = workflowsWithInAppSteps.slice(0, maxToUpdate);
+      for (let attempt = 0; attempt <= retryCount; attempt++) {
+        try {
+          return await operation();
+        } catch (error) {
+          lastError = error as Error;
 
-        for (const workflow of workflowsToUpdate) {
-          queryClient.invalidateQueries({
-            queryKey: [QueryKeys.fetchWorkflow, currentEnvironment?._id, workflow.slug],
-          });
+          if (attempt === retryCount) {
+            throw lastError;
+          }
+
+          const delayMs = baseDelay * 2 ** attempt;
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
-
-        return workflowsToUpdate.map((w) => w.slug);
       }
 
-      return [];
+      throw lastError || new Error('Operation failed after all retries');
     },
-    onSuccess: (updatedWorkflowSlugs) => {
-      onSuccess?.(updatedWorkflowSlugs);
-    },
-  });
+    [maxRetries]
+  );
 
-  const triggerWorkflowUpdate = useCallback(() => {
-    if (enabled) {
-      updateWorkflowsWithInAppSteps();
+  const runWithConcurrency = useCallback(
+    async <T, R>(items: T[], worker: (item: T) => Promise<R>, maxConcurrency = concurrency): Promise<R[]> => {
+      const results: R[] = [];
+      let index = 0;
+
+      const runNext = async (): Promise<void> => {
+        const currentIndex = index++;
+        if (currentIndex >= items.length) return;
+
+        try {
+          const result = await worker(items[currentIndex]);
+          results.push(result);
+        } finally {
+          await runNext();
+        }
+      };
+
+      const runners = Array.from({ length: Math.min(maxConcurrency, items.length) }, () => runNext());
+      await Promise.all(runners);
+
+      return results;
+    },
+    [concurrency]
+  );
+
+  const initializeProcessingState = useCallback((workflows: WorkflowListResponseDto[]): WorkflowProcessingState => {
+    const slugToWorkflow = new Map<WorkflowSlug, WorkflowListResponseDto>(
+      workflows.map((workflow) => [workflow.slug, workflow])
+    );
+
+    return {
+      slugToWorkflow,
+      slugs: Array.from(slugToWorkflow.keys()),
+      deactivated: new Set<WorkflowSlug>(),
+      reactivated: new Set<WorkflowSlug>(),
+      deactivateErrors: new Map<WorkflowSlug, Error>(),
+      reactivateErrors: new Map<WorkflowSlug, Error>(),
+      workflowCache: new Map<WorkflowSlug, WorkflowResponseDto>(),
+    };
+  }, []);
+
+  const deactivateWorkflow = useCallback(
+    async (slug: WorkflowSlug, environment: NonNullable<typeof currentEnvironment>, state: WorkflowProcessingState) => {
+      try {
+        await retryOperation(async () => {
+          await patchWorkflow({
+            environment,
+            workflowSlug: slug,
+            workflow: { active: false },
+          });
+        });
+
+        state.deactivated.add(slug);
+      } catch (error) {
+        state.deactivateErrors.set(slug, error as Error);
+      }
+    },
+    [retryOperation]
+  );
+
+  const reactivateWorkflow = useCallback(
+    async (slug: WorkflowSlug, environment: NonNullable<typeof currentEnvironment>, state: WorkflowProcessingState) => {
+      try {
+        await retryOperation(async () => {
+          await patchWorkflow({
+            environment,
+            workflowSlug: slug,
+            workflow: { active: true },
+          });
+        });
+
+        state.reactivated.add(slug);
+      } catch (error) {
+        state.reactivateErrors.set(slug, error as Error);
+      }
+    },
+    [retryOperation]
+  );
+
+  const refreshWorkflow = useCallback(
+    async (
+      slug: WorkflowSlug,
+      environment: NonNullable<typeof currentEnvironment>,
+      state: WorkflowProcessingState,
+      forceActive?: boolean
+    ) => {
+      try {
+        let workflowData = state.workflowCache.get(slug);
+        if (!workflowData) {
+          workflowData = await retryOperation(async () => getWorkflow({ environment, workflowSlug: slug }));
+          state.workflowCache.set(slug, workflowData);
+        }
+
+        await retryOperation(async () =>
+          updateWorkflowHook({
+            workflowSlug: slug,
+            workflow: {
+              name: workflowData.name,
+              description: workflowData.description,
+              tags: workflowData.tags,
+              active: forceActive !== undefined ? forceActive : workflowData.active,
+              validatePayload: workflowData.validatePayload,
+              payloadSchema: workflowData.payloadSchema,
+              isTranslationEnabled: workflowData.isTranslationEnabled,
+              workflowId: workflowData.workflowId,
+              steps: workflowData.steps,
+              preferences: workflowData.preferences,
+              origin: workflowData.origin,
+            },
+          })
+        );
+      } catch {}
+    },
+    [retryOperation, updateWorkflowHook]
+  );
+
+  const buildResults = useCallback((state: WorkflowProcessingState): WorkflowOperationResult[] => {
+    const results: WorkflowOperationResult[] = [];
+
+    for (const slug of state.slugs) {
+      const workflow = state.slugToWorkflow.get(slug);
+      if (!workflow) continue;
+
+      const error = state.deactivateErrors.get(slug) ?? state.reactivateErrors.get(slug) ?? null;
+      results.push({
+        workflow,
+        success: !error,
+        error,
+      });
     }
-  }, [enabled, updateWorkflowsWithInAppSteps]);
+
+    return results;
+  }, []);
+
+  const pauseAndEnableWorkflowsInLoop = useCallback(async (): Promise<WorkflowOperationResult[]> => {
+    const environment = currentEnvironment;
+    if (!environment || !workflowsWithInAppSteps.length) {
+      return [];
+    }
+
+    const state = initializeProcessingState(workflowsWithInAppSteps);
+
+    await runWithConcurrency(state.slugs, async (slug) => {
+      await deactivateWorkflow(slug, environment, state);
+    });
+
+    await runWithConcurrency(Array.from(state.deactivated), async (slug) => {
+      await refreshWorkflow(slug, environment, state, false);
+    });
+
+    await runWithConcurrency(state.slugs, async (slug) => {
+      await reactivateWorkflow(slug, environment, state);
+    });
+
+    await runWithConcurrency(Array.from(state.reactivated), async (slug) => {
+      await refreshWorkflow(slug, environment, state, true);
+    });
+
+    return buildResults(state);
+  }, [
+    currentEnvironment,
+    workflowsWithInAppSteps,
+    initializeProcessingState,
+    runWithConcurrency,
+    deactivateWorkflow,
+    reactivateWorkflow,
+    refreshWorkflow,
+    buildResults,
+  ]);
 
   return {
     workflowsWithInAppSteps,
-    triggerWorkflowUpdate,
-    isLoading: isLoadingWorkflows,
-    isUpdating: isUpdating || isPatching,
-    hasWorkflowsWithInAppSteps: workflowsWithInAppSteps.length > 0,
+    pauseAndEnableWorkflowsInLoop,
+    isLoading,
   };
 }
