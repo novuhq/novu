@@ -42,7 +42,7 @@ export function InboxEmbed(): JSX.Element | null {
 
   const isInAppConnected = foundIntegration?.connected ?? false;
 
-  const { pauseAndEnableWorkflowsInLoop, workflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
+  const { updateActiveWorkflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
     maxToUpdate: 20,
   });
   const track = useTelemetry();
@@ -77,17 +77,7 @@ export function InboxEmbed(): JSX.Element | null {
 
   const handleWorkflowUpdate = useCallback(async () => {
     try {
-      const results = await pauseAndEnableWorkflowsInLoop();
-
-      const failures = results.filter((result) => !result.success);
-
-      if (failures.length > 0) {
-        track(TelemetryEvent.INBOX_WORKFLOW_UPDATE_FAILED, {
-          failedCount: failures.length,
-          totalCount: results.length,
-          errors: failures.map((f) => f.error?.message || 'Unknown error'),
-        });
-      }
+      await updateActiveWorkflowsWithInAppSteps();
     } catch (error) {
       track(TelemetryEvent.INBOX_WORKFLOW_UPDATE_FAILED, {
         failedCount: 0,
@@ -95,7 +85,7 @@ export function InboxEmbed(): JSX.Element | null {
         exception: error instanceof Error ? error.message : 'Unknown error',
       });
     }
-  }, [pauseAndEnableWorkflowsInLoop, track]);
+  }, [updateActiveWorkflowsWithInAppSteps, track]);
 
   useEffect(() => {
     if (areEnvironmentsInitialLoading || isOnWelcomeRoute) {
@@ -113,14 +103,14 @@ export function InboxEmbed(): JSX.Element | null {
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 10000);
 
-      if (workflowsWithInAppSteps.length > 0 && lastUpdateKeyRef.current !== currentKey) {
+      if (lastUpdateKeyRef.current !== currentKey) {
         handleWorkflowUpdate();
         lastUpdateKeyRef.current = currentKey;
       }
 
       return () => clearTimeout(timer);
     }
-  }, [isInAppConnected, currentKey, workflowsWithInAppSteps, handleWorkflowUpdate]);
+  }, [isInAppConnected, currentKey, handleWorkflowUpdate]);
 
   if (isOnWelcomeRoute) {
     return null;
