@@ -1,13 +1,12 @@
 import {
-  ICreateNotificationTemplateDto,
-  INotificationTemplate,
-  IGroupedBlueprint,
-  IPaginationWithQueryParams,
   IBlueprint,
+  ICreateNotificationTemplateDto,
+  IGroupedBlueprint,
+  INotificationTemplate,
+  IPaginationWithQueryParams,
 } from '@novu/shared';
-
-import { api } from './api.client';
 import { BLUEPRINTS_API_URL } from '../config';
+import { api } from './api.client';
 
 export function getNotificationsList({ page = 0, limit = 10, query }: IPaginationWithQueryParams) {
   const params = { page, limit, ...(query && { query }) };
@@ -38,7 +37,7 @@ export async function getBlueprintsGroupedByCategory(): Promise<{
   general: IGroupedBlueprint[];
   popular: IGroupedBlueprint;
 }> {
-  return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
+  return api.get(`/v1/blueprints/group-by-category`);
 }
 
 export async function getBlueprintTemplateById(id: string): Promise<IBlueprint> {
