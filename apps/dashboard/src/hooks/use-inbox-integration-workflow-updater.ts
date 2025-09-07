@@ -15,59 +15,41 @@ export function useInboxIntegrationWorkflowUpdater({
   maxToUpdate = 20,
   onSuccess,
 }: UseInboxIntegrationWorkflowUpdaterOptions = {}) {
-  // Validate maxToUpdate parameter
-  if (!Number.isInteger(maxToUpdate) || maxToUpdate <= 0) {
+  if (maxToUpdate <= 0) {
     throw new Error('maxToUpdate must be a positive integer');
   }
   const { data: workflowsData, isLoading: isLoadingWorkflows } = useFetchWorkflows({
-    limit: 20,
+    limit: maxToUpdate,
     offset: 0,
     query: '',
   });
 
-  const { patchWorkflow, isPending: isPatching } = usePatchWorkflow();
+  const { patchWorkflow: updateWorkflow, isPending: isPatching } = usePatchWorkflow();
 
-  // Filter workflows that have in-app steps
   const workflowsWithInAppSteps = useMemo(() => {
-    if (!workflowsData?.workflows) return [];
-
-    return workflowsData.workflows.filter((workflow) => {
-      // Check if workflow has in-app steps by looking at stepTypeOverviews
-      return workflow.stepTypeOverviews?.includes(StepTypeEnum.IN_APP);
-    });
+    return (
+      workflowsData?.workflows?.filter((workflow) => workflow.stepTypeOverviews?.includes(StepTypeEnum.IN_APP)) ?? []
+    );
   }, [workflowsData?.workflows]);
 
-  // Mutation to update workflows with in-app steps (limited to maxToUpdate PATCH requests)
   const { mutateAsync: updateWorkflowsWithInAppSteps, isPending: isUpdating } = useMutation({
     mutationFn: async () => {
-      if (!workflowsWithInAppSteps.length) {
-        return [];
-      }
+      if (!workflowsWithInAppSteps.length) return [];
 
-      // Limit to maximum configured number of PATCH requests
       const workflowsToUpdate = workflowsWithInAppSteps.slice(0, maxToUpdate);
+      const results = await Promise.allSettled(
+        workflowsToUpdate.map(async (workflow) => {
+          await updateWorkflow({
+            workflowSlug: workflow.slug,
+            workflow: {},
+          });
+          return workflow.slug;
+        })
+      );
 
-      const updatePromises = workflowsToUpdate.map(async (workflow) => {
-        // Patch the workflow - sending empty object to trigger without changes
-        await patchWorkflow({
-          workflowSlug: workflow.slug,
-          workflow: {},
-        });
-        return workflow.slug;
-      });
-
-      const results = await Promise.allSettled(updatePromises);
-
-      // Collect only successful slugs
-      const successfulSlugs: string[] = [];
-
-      for (const result of results) {
-        if (result.status === 'fulfilled') {
-          successfulSlugs.push(result.value);
-        }
-      }
-
-      return successfulSlugs;
+      return results
+        .filter((result) => result.status === 'fulfilled')
+        .map((result) => (result as PromiseFulfilledResult<string>).value);
     },
     onSuccess: (updatedWorkflowSlugs) => {
       onSuccess?.(updatedWorkflowSlugs);

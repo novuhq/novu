@@ -24,13 +24,6 @@ export function InboxEmbed(): JSX.Element | null {
 
   // Stable refs to prevent effect re-runs on object identity changes
   const lastUpdateKeyRef = useRef<string>('');
-
-  // Hook to update workflows with in-app steps when inbox integration is connected
-  const { triggerWorkflowUpdate, hasWorkflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
-    onSuccess: (updatedWorkflowSlugs) => {
-      console.log('Successfully updated workflows with in-app steps:', updatedWorkflowSlugs);
-    },
-  });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,6 +41,11 @@ export function InboxEmbed(): JSX.Element | null {
 
   // Compute stable boolean and key to prevent effect re-runs on object identity changes
   const isInAppConnected = foundIntegration?.connected ?? false;
+
+  // Hook to update workflows with in-app steps when inbox integration is connected
+  const { triggerWorkflowUpdate, hasWorkflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
+    enabled: !!selectedEnvironment && !!foundIntegration,
+  });
   const currentKey = `${selectedEnvironment?._id}-${foundIntegration?._id}`;
 
   const primaryColor = searchParams.get('primaryColor') || '#DD2450';
