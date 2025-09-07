@@ -6,6 +6,7 @@ import { IS_EU, MODE } from '../../config';
 import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useFetchIntegrations } from '../../hooks/use-fetch-integrations';
+import { useInboxIntegrationWorkflowUpdater } from '../../hooks/use-inbox-integration-workflow-updater';
 import { ROUTES } from '../../utils/routes';
 import { InboxConnectedGuide } from './inbox-connected-guide';
 import { InboxFrameworkGuide } from './inbox-framework-guide';
@@ -20,6 +21,16 @@ export function InboxEmbed(): JSX.Element | null {
   const { currentUser } = useAuth();
   const { integrations } = useFetchIntegrations({ refetchInterval: 1000, refetchOnWindowFocus: true });
   const { environments, areEnvironmentsInitialLoading } = useEnvironment();
+
+  // Hook to update workflows with in-app steps when inbox integration is connected
+  const { triggerWorkflowUpdate, hasWorkflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
+    onSuccess: (updatedWorkflowSlugs) => {
+      console.log('Successfully updated workflows with in-app steps:', updatedWorkflowSlugs);
+    },
+    onError: (error) => {
+      console.error('Failed to update workflows with in-app steps:', error);
+    },
+  });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -82,9 +93,14 @@ export function InboxEmbed(): JSX.Element | null {
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 10000);
 
+      // Trigger workflow update when inbox integration is connected
+      if (hasWorkflowsWithInAppSteps) {
+        triggerWorkflowUpdate();
+      }
+
       return () => clearTimeout(timer);
     }
-  }, [foundIntegration]);
+  }, [foundIntegration, hasWorkflowsWithInAppSteps, triggerWorkflowUpdate]);
 
   // Don't render if we're on the WELCOME route to avoid redirect loops
   if (isOnWelcomeRoute) {
