@@ -10,7 +10,6 @@ import { useInboxIntegrationWorkflowUpdater } from '../../hooks/use-inbox-integr
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
-import { InlineToast } from '../primitives/inline-toast';
 import { InboxConnectedGuide } from './inbox-connected-guide';
 import { InboxFrameworkGuide } from './inbox-framework-guide';
 
@@ -21,7 +20,6 @@ const LAYOUT_CONSTANTS = {
 
 export function InboxEmbed(): JSX.Element | null {
   const [showConfetti, setShowConfetti] = useState(false);
-  const [workflowUpdateError, setWorkflowUpdateError] = useState<string | null>(null);
   const { currentUser } = useAuth();
   const { integrations } = useFetchIntegrations({ refetchInterval: 1000, refetchOnWindowFocus: true });
   const { environments, areEnvironmentsInitialLoading } = useEnvironment();
@@ -46,7 +44,6 @@ export function InboxEmbed(): JSX.Element | null {
 
   const { pauseAndEnableWorkflowsInLoop, workflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
     maxToUpdate: 20,
-    maxRetries: 3,
   });
   const track = useTelemetry();
   const currentKey = `${selectedEnvironment?._id}-${foundIntegration?._id}`;
@@ -80,28 +77,18 @@ export function InboxEmbed(): JSX.Element | null {
 
   const handleWorkflowUpdate = useCallback(async () => {
     try {
-      setWorkflowUpdateError(null);
       const results = await pauseAndEnableWorkflowsInLoop();
 
       const failures = results.filter((result) => !result.success);
 
       if (failures.length > 0) {
-        const failedWorkflowNames = failures.map((f) => f.workflow.name).join(', ');
-        const errorMessage = `Failed to update ${failures.length} workflow${failures.length > 1 ? 's' : ''}: ${failedWorkflowNames}`;
-
-        setWorkflowUpdateError(errorMessage);
-
         track(TelemetryEvent.INBOX_WORKFLOW_UPDATE_FAILED, {
           failedCount: failures.length,
           totalCount: results.length,
           errors: failures.map((f) => f.error?.message || 'Unknown error'),
         });
-      } else if (results.length > 0) {
       }
     } catch (error) {
-      const errorMessage = 'Failed to update workflows for inbox integration';
-      setWorkflowUpdateError(errorMessage);
-
       track(TelemetryEvent.INBOX_WORKFLOW_UPDATE_FAILED, {
         failedCount: 0,
         totalCount: 0,
@@ -163,17 +150,6 @@ export function InboxEmbed(): JSX.Element | null {
   return (
     <main className={LAYOUT_CONSTANTS.MAIN_PADDING_LEFT}>
       {showConfetti && <ReactConfetti recycle={false} numberOfPieces={1000} />}
-      {workflowUpdateError && (
-        <div className="mb-4">
-          <InlineToast
-            variant="error"
-            title="Workflow Update Error"
-            description={workflowUpdateError}
-            ctaLabel="Dismiss"
-            onCtaClick={() => setWorkflowUpdateError(null)}
-          />
-        </div>
-      )}
       {foundIntegration?.connected ? (
         <InboxConnectedGuide subscriberId={subscriberId} environment={selectedEnvironment} />
       ) : (

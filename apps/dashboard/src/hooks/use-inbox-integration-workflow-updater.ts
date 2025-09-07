@@ -7,7 +7,6 @@ import { useUpdateWorkflow } from './use-update-workflow';
 
 interface UseInboxIntegrationWorkflowUpdaterOptions {
   maxToUpdate?: number;
-  maxRetries?: number;
   concurrency?: number;
 }
 
@@ -31,7 +30,6 @@ interface WorkflowProcessingState {
 
 export function useInboxIntegrationWorkflowUpdater({
   maxToUpdate = 20,
-  maxRetries = 3,
   concurrency = 4,
 }: UseInboxIntegrationWorkflowUpdaterOptions = {}) {
   const { currentEnvironment } = useEnvironment();
@@ -48,30 +46,6 @@ export function useInboxIntegrationWorkflowUpdater({
       workflowsData?.workflows?.filter((workflow) => workflow.stepTypeOverviews?.includes(StepTypeEnum.IN_APP)) ?? []
     );
   }, [workflowsData?.workflows]);
-
-  const retryOperation = useCallback(
-    async <T>(operation: () => Promise<T>, retryCount: number = maxRetries, baseDelay: number = 1000): Promise<T> => {
-      let lastError: Error | undefined;
-
-      for (let attempt = 0; attempt <= retryCount; attempt++) {
-        try {
-          return await operation();
-        } catch (error) {
-          lastError = error as Error;
-
-          if (attempt === retryCount) {
-            throw lastError;
-          }
-
-          const delayMs = baseDelay * 2 ** attempt;
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-        }
-      }
-
-      throw lastError || new Error('Operation failed after all retries');
-    },
-    [maxRetries]
-  );
 
   const runWithConcurrency = useCallback(
     async <T, R>(items: T[], worker: (item: T) => Promise<R>, maxConcurrency = concurrency): Promise<R[]> => {
@@ -117,12 +91,10 @@ export function useInboxIntegrationWorkflowUpdater({
   const deactivateWorkflow = useCallback(
     async (slug: WorkflowSlug, environment: NonNullable<typeof currentEnvironment>, state: WorkflowProcessingState) => {
       try {
-        await retryOperation(async () => {
-          await patchWorkflow({
-            environment,
-            workflowSlug: slug,
-            workflow: { active: false },
-          });
+        await patchWorkflow({
+          environment,
+          workflowSlug: slug,
+          workflow: { active: false },
         });
 
         state.deactivated.add(slug);
@@ -130,7 +102,7 @@ export function useInboxIntegrationWorkflowUpdater({
         state.deactivateErrors.set(slug, error as Error);
       }
     },
-    [retryOperation]
+    []
   );
 
   const reactivateWorkflow = useCallback(
@@ -141,12 +113,10 @@ export function useInboxIntegrationWorkflowUpdater({
       }
 
       try {
-        await retryOperation(async () => {
-          await patchWorkflow({
-            environment,
-            workflowSlug: slug,
-            workflow: { active: true },
-          });
+        await patchWorkflow({
+          environment,
+          workflowSlug: slug,
+          workflow: { active: true },
         });
 
         state.reactivated.add(slug);
@@ -154,7 +124,7 @@ export function useInboxIntegrationWorkflowUpdater({
         state.reactivateErrors.set(slug, error as Error);
       }
     },
-    [retryOperation]
+    []
   );
 
   const refreshWorkflow = useCallback(
@@ -167,28 +137,26 @@ export function useInboxIntegrationWorkflowUpdater({
       try {
         let workflowData = state.workflowCache.get(slug);
         if (!workflowData) {
-          workflowData = await retryOperation(async () => getWorkflow({ environment, workflowSlug: slug }));
+          workflowData = await getWorkflow({ environment, workflowSlug: slug });
           state.workflowCache.set(slug, workflowData);
         }
 
-        await retryOperation(async () =>
-          updateWorkflowHook({
-            workflowSlug: slug,
-            workflow: {
-              name: workflowData.name,
-              description: workflowData.description,
-              tags: workflowData.tags,
-              active: forceActive !== undefined ? forceActive : workflowData.active,
-              validatePayload: workflowData.validatePayload,
-              payloadSchema: workflowData.payloadSchema,
-              isTranslationEnabled: workflowData.isTranslationEnabled,
-              workflowId: workflowData.workflowId,
-              steps: workflowData.steps,
-              preferences: workflowData.preferences,
-              origin: workflowData.origin,
-            },
-          })
-        );
+        await updateWorkflowHook({
+          workflowSlug: slug,
+          workflow: {
+            name: workflowData.name,
+            description: workflowData.description,
+            tags: workflowData.tags,
+            active: forceActive !== undefined ? forceActive : workflowData.active,
+            validatePayload: workflowData.validatePayload,
+            payloadSchema: workflowData.payloadSchema,
+            isTranslationEnabled: workflowData.isTranslationEnabled,
+            workflowId: workflowData.workflowId,
+            steps: workflowData.steps,
+            preferences: workflowData.preferences,
+            origin: workflowData.origin,
+          },
+        });
       } catch (error) {
         console.error(
           `Failed to refresh workflow during inbox integration update. Slug: ${slug}, Environment: ${environment.name}`,
@@ -197,7 +165,7 @@ export function useInboxIntegrationWorkflowUpdater({
         throw error;
       }
     },
-    [retryOperation, updateWorkflowHook]
+    [updateWorkflowHook]
   );
 
   const buildResults = useCallback((state: WorkflowProcessingState): WorkflowOperationResult[] => {
