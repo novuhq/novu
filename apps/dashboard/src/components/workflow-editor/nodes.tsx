@@ -31,7 +31,7 @@ export type NodeData = {
   error?: string;
   name?: string;
   stepSlug?: string;
-  controlValues?: Record<string, any>;
+  controlValues?: Record<string, unknown>;
   workflowSlug?: string;
   environment?: string;
   isTemplateStorePreview?: boolean;
