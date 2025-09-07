@@ -7,6 +7,10 @@ export type ConfigConfiguration = {
   description?: string;
   type: CredentialsType;
   required: boolean;
+  links?: Array<{
+    text: string;
+    url: string;
+  }>;
 };
 
 export interface ILogoFileName {
@@ -18,7 +22,7 @@ export type ConfigConfigurationGroup = {
   groupType: CredentialsType;
   configurations: ConfigConfiguration[];
   enabler?: ConfigurationKey;
-  loadingLabel?: string;
+  setupWebhookUrlGuide?: string;
 };
 
 export interface IProviderConfig {
@@ -55,4 +59,8 @@ export interface IConfigCredential {
     message?: string;
     validate?: (value: string) => boolean | string;
   };
+  links?: Array<{
+    text: string;
+    url: string;
+  }>;
 }

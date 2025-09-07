@@ -46,7 +46,6 @@ export class ConditionsFilter extends Filter {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private messageRepository: MessageRepository,
-    private executionDetailsRepository: ExecutionDetailsRepository,
     private jobRepository: JobRepository,
     private environmentRepository: EnvironmentRepository,
     @Inject(forwardRef(() => CreateExecutionDetails))

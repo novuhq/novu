@@ -87,19 +87,17 @@ jest.mock('../get-decrypted-integrations', () => ({
 describe('select integration', () => {
   let useCase: SelectIntegration;
   const integrationRepository: IntegrationRepository = new IntegrationRepository();
-  const executionDetailsRepository: ExecutionDetailsRepository = new ExecutionDetailsRepository();
 
   const conditionsFilter = new ConditionsFilter(
     new SubscriberRepository(),
     new MessageRepository(),
-    executionDetailsRepository,
     new JobRepository(),
     new EnvironmentRepository(),
     new CreateExecutionDetails(new ExecutionDetailsRepository(), TraceLogRepository as any, new FeatureFlagsService()),
     new CompileTemplate()
   );
   beforeEach(async () => {
-    // @ts-ignore
+    // @ts-expect-error
     useCase = new SelectIntegration(integrationRepository, conditionsFilter, new TenantRepository());
     jest.clearAllMocks();
   });

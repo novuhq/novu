@@ -1,8 +1,8 @@
 import { PlunkEmailProvider } from '@novu/providers';
 import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
-import { BaseHandler } from './base.handler';
+import { BaseEmailHandler } from './base.handler';
 
-export class PlunkHandler extends BaseHandler {
+export class PlunkHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.Plunk, ChannelTypeEnum.EMAIL);
   }

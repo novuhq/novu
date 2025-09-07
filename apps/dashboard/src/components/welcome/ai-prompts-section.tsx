@@ -1,6 +1,5 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { RiCheckLine, RiSparklingLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 
 import { useTelemetry } from '../../hooks/use-telemetry';
@@ -64,26 +63,20 @@ export function AiPromptsSection({
               {FRAMEWORK_CONFIGS[frameworkName]?.name?.split(' ')[0] ?? frameworkName ?? 'Framework'} application.
             </span>
             <Button onClick={handleCopyPrompt} variant="secondary" mode="outline" size="xs">
-              <motion.div
-                key={isCopied ? 'copied' : 'copy'}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -20, opacity: 0 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="flex items-center gap-2"
-              >
-                {isCopied ? (
-                  <>
-                    <RiCheckLine className="size-4" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <RiSparklingLine className="size-4" />
-                    <span>Copy Prompt</span>
-                  </>
-                )}
-              </motion.div>
+              <div className="grid place-items-center">
+                <div
+                  className={`col-start-1 row-start-1 flex items-center ${isCopied ? 'opacity-0' : 'opacity-100'}`}
+                  aria-hidden={isCopied}
+                >
+                  <span>Copy</span>
+                </div>
+                <div
+                  className={`col-start-1 row-start-1 flex items-center ${isCopied ? 'opacity-100' : 'opacity-0'}`}
+                  aria-hidden={!isCopied}
+                >
+                  <span>Copied</span>
+                </div>
+              </div>
             </Button>
           </div>
         }

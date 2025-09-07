@@ -109,14 +109,14 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       res = await this.messaging.sendEachForMulticast(multicastMessage);
     }
 
+    const app = getApp(this.appName);
+    await deleteApp(app);
+
     if (res.successCount === 0) {
       throw new Error(
         `Sending message failed due to "${res.responses.find((i) => i.success === false).error.message}"`
       );
     }
-
-    const app = getApp(this.appName);
-    await deleteApp(app);
 
     return {
       ids:

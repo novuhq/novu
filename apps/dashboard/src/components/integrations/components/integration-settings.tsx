@@ -152,6 +152,17 @@ export function IntegrationSettings({
                 configurations={provider.configurations}
                 integrationId={integration?._id}
                 isDemo={isDemo}
+                provider={provider}
+                formData={form.getValues()}
+                onAutoConfigureSuccess={(updatedIntegration) => {
+                  // Update form with the new integration data
+                  setValue('configurations', updatedIntegration.configurations as Record<string, string>);
+                  setValue('credentials', updatedIntegration.credentials as Record<string, string>);
+                  setValue('name', updatedIntegration.name);
+                  setValue('identifier', updatedIntegration.identifier);
+                  setValue('active', updatedIntegration.active);
+                  setValue('primary', updatedIntegration.primary ?? false);
+                }}
               />
             </AccordionContent>
           </AccordionItem>
@@ -179,7 +190,7 @@ export function IntegrationSettings({
                   <AccordionTrigger>
                     <div className="flex items-center gap-1 text-xs">
                       <RiInputField className="text-feature size-5" />
-                      Integration Credentials
+                      Delivery Provider Credentials
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>

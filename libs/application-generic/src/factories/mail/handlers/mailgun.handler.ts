@@ -1,8 +1,8 @@
 import { MailgunEmailProvider } from '@novu/providers';
 import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
-import { BaseHandler } from './base.handler';
+import { BaseEmailHandler } from './base.handler';
 
-export class MailgunHandler extends BaseHandler {
+export class MailgunHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.Mailgun, ChannelTypeEnum.EMAIL);
   }

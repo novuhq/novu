@@ -69,7 +69,7 @@ export function InboxPreviewContent() {
   };
 
   return (
-    <div className="hide-inbox-footer nv-no-scrollbar mt-1 h-[470px] w-[375px] overflow-y-auto overflow-x-hidden">
+    <div className="hide-inbox-footer nv-no-scrollbar mt-1 h-[470px] w-[370px] overflow-y-auto overflow-x-hidden">
       <Inbox {...configuration}>
         <InboxContent />
       </Inbox>

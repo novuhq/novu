@@ -62,7 +62,7 @@ export function InboxEmbedPage() {
               }
               currentStep={isConnected ? 4 : 3}
               totalSteps={4}
-              showSkipButton={false}
+              showSkipButton={true}
             />
           </div>
           <InboxEmbed />

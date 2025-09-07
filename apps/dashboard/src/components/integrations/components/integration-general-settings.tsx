@@ -1,4 +1,10 @@
-import { ConfigConfigurationGroup, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import {
+  ConfigConfigurationGroup,
+  FeatureFlagsKeysEnum,
+  IIntegration,
+  IProviderConfig,
+  PermissionsEnum,
+} from '@novu/shared';
 import { Control } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
@@ -7,7 +13,7 @@ import { Switch } from '@/components/primitives/switch';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { Protect } from '@/utils/protect';
 import { IntegrationFormData } from '../types';
-import { ConfigurationGroupComponent } from './integration-configurations';
+import { ConfigurationGroup } from './configuration-group';
 
 type GeneralSettingsProps = {
   control: Control<IntegrationFormData>;
@@ -18,6 +24,9 @@ type GeneralSettingsProps = {
   configurations?: ConfigConfigurationGroup[];
   integrationId?: string;
   isDemo?: boolean;
+  provider?: IProviderConfig;
+  formData?: IntegrationFormData;
+  onAutoConfigureSuccess?: (integration: IIntegration) => void;
 };
 
 export function GeneralSettings({
@@ -29,8 +38,11 @@ export function GeneralSettings({
   configurations,
   integrationId,
   isDemo,
+  provider,
+  formData,
+  onAutoConfigureSuccess,
 }: GeneralSettingsProps) {
-  const isInboundWebhooksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOKS_ENABLED);
+  const isInboundWebhooksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOKS_ENABLED, true);
 
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
@@ -126,15 +138,20 @@ export function GeneralSettings({
         )}
       />
 
+      <Separator className="mt-2" />
+
       {!isDemo && isInboundWebhooksEnabled && configurations && configurations.length > 0 && (
         <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
           {configurations.map((group) => (
-            <ConfigurationGroupComponent
+            <ConfigurationGroup
               integrationId={integrationId}
               key={group.groupType}
               group={group}
               control={control}
               isReadOnly={isReadOnly}
+              provider={provider}
+              formData={formData}
+              onAutoConfigureSuccess={onAutoConfigureSuccess}
             />
           ))}
         </Protect>

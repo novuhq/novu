@@ -1,5 +1,8 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
   getJobDigest,
   Instrument,
   InstrumentUsecase,
@@ -10,7 +13,7 @@ import {
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum, NotificationRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { setUser } from '@sentry/node';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
@@ -37,6 +40,7 @@ export class RunJob {
     private processUnsnoozeJob: ProcessUnsnoozeJob,
     private stepRunRepository: StepRunRepository,
     private workflowRunService: WorkflowRunService,
+    private createExecutionDetails: CreateExecutionDetails,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -274,7 +278,35 @@ export class RunJob {
           job: nextJob,
         });
 
-        shouldContinueQueueNextJob = false;
+        if (addJobResult.stepStatus === JobStatusEnum.SKIPPED) {
+          await this.jobRepository.updateOne(
+            {
+              _id: nextJob._id,
+              _environmentId: nextJob._environmentId,
+              _organizationId: nextJob._organizationId,
+            },
+            { $set: { status: JobStatusEnum.SKIPPED } }
+          );
+
+          await this.stepRunRepository.create(nextJob, {
+            status: JobStatusEnum.SKIPPED,
+          });
+
+          await this.createExecutionDetails.execute(
+            CreateExecutionDetailsCommand.create({
+              ...CreateExecutionDetailsCommand.getDetailsFromJob(nextJob),
+              detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
+              source: ExecutionDetailsSourceEnum.INTERNAL,
+              status: ExecutionDetailsStatusEnum.SUCCESS,
+              isTest: false,
+              isRetry: false,
+            })
+          );
+
+          currentJob = nextJob; // if skipped, continue to the next job
+        } else {
+          shouldContinueQueueNextJob = false;
+        }
 
         if (addJobResult.workflowStatus === WorkflowRunStatusEnum.COMPLETED) {
           await this.workflowRunService.updateDeliveryLifecycle({

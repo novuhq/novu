@@ -1,5 +1,5 @@
 import { MessageFilter } from '@novu/application-generic';
-import { ICredentialsDto } from '@novu/shared';
+import { IConfigurations, ICredentialsDto } from '@novu/shared';
 import { IsArray, IsDefined, IsMongoId, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { OrganizationCommand } from '../../../shared/commands/organization.command';
@@ -40,5 +40,5 @@ export class UpdateIntegrationCommand extends OrganizationCommand {
 
   @IsOptional()
   @IsObject()
-  configurations?: Record<string, string>;
+  configurations?: IConfigurations;
 }
