@@ -20,8 +20,7 @@
           "beginsPattern": "Running...",
           "endsPattern": "Started application in NODE_ENV"
         }
-      },
-      "dependsOn": ["SHARED", "APPLICATION GENERIC", "DAL"]
+      }
     },
     {
       "type": "npm",
@@ -77,8 +76,7 @@
           "beginsPattern": "vite",
           "endsPattern": "➜  Local:   http://localhost:4201"
         }
-      },
-      "dependsOn": ["SHARED", "API", "WORKER"]
+      }
     },
     {
       "type": "npm",
@@ -98,8 +96,7 @@
           "beginsPattern": "Compiling...",
           "endsPattern": "webpack compiled successfully"
         }
-      },
-      "dependsOn": ["SHARED", "API", "DESIGN SYSTEM", "NOVUI"]
+      }
     },
     {
       "type": "npm",
@@ -115,8 +112,7 @@
       "isBackground": true,
       "label": "APPLICATION GENERIC",
       "path": "/libs/application-generic",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED", "TESTING", "PROVIDERS"]
+      "problemMatcher": "$tsc-watch"
     },
     {
       "type": "npm",
@@ -124,8 +120,7 @@
       "isBackground": true,
       "label": "DAL",
       "path": "/libs/dal",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED"]
+      "problemMatcher": "$tsc-watch"
     },
     {
       "type": "npm",
@@ -141,8 +136,7 @@
       "isBackground": true,
       "label": "PROVIDERS",
       "path": "/packages/providers",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED"]
+      "problemMatcher": "$tsc-watch"
     },
     {
       "type": "npm",
@@ -150,8 +144,7 @@
       "isBackground": true,
       "label": "TESTING",
       "path": "/libs/testing",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED"]
+      "problemMatcher": "$tsc-watch"
     },
     {
       "type": "npm",
@@ -159,8 +152,7 @@
       "isBackground": true,
       "label": "EE - TRANSLATION",
       "path": "/enterprise/packages/translation",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED", "EE - DAL", "EE - SHARED SERVICES"]
+      "problemMatcher": "$tsc-watch"
     },
     {
       "type": "npm",
@@ -168,8 +160,7 @@
       "isBackground": true,
       "label": "EE - BILLING",
       "path": "/enterprise/packages/billing",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED", "EE - DAL"]
+      "problemMatcher": "$tsc-watch"
     },
     {
       "type": "npm",
@@ -177,8 +168,7 @@
       "isBackground": true,
       "label": "EE - DAL",
       "path": "/enterprise/packages/dal",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED"]
+      "problemMatcher": "$tsc-watch"
     },
     {
       "type": "npm",
@@ -186,8 +176,7 @@
       "isBackground": true,
       "label": "EE - SHARED SERVICES",
       "path": "/enterprise/packages/shared-services",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED"]
+      "problemMatcher": "$tsc-watch"
     },
     {
       "type": "npm",
@@ -208,8 +197,7 @@
       "script": "build",
       "label": "NC CLIENT",
       "path": "/packages/client",
-      "problemMatcher": "$tsc",
-      "dependsOn": ["SHARED"]
+      "problemMatcher": "$tsc"
     }
   ]
 }
