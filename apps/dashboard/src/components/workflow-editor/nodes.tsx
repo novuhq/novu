@@ -308,46 +308,35 @@ const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+      const clickCount = (e as any).detail ?? 1;
 
-      // Clear any existing timeout
       if (clickTimeout) {
         clearTimeout(clickTimeout);
         setClickTimeout(null);
-        return; // This is actually a double-click, so don't navigate
       }
 
-      // Set a timeout for single-click navigation
-      const timeout = setTimeout(() => {
-        navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
-        setClickTimeout(null);
-      }, 300); // 300ms delay to detect double-clicks
+      if (clickCount > 1) {
+        if (isNavigatableChannelNode && data.stepSlug) {
+          navigate(
+            buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+              stepSlug: data.stepSlug,
+            })
+          );
+        } else {
+          navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
+        }
 
-      setClickTimeout(timeout);
-    },
-    [clickTimeout, navigate, data.stepSlug]
-  );
-
-  const handleDoubleClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isNavigatableChannelNode || !data.stepSlug) {
         return;
       }
 
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Clear the single-click timeout
-      if (clickTimeout) {
-        clearTimeout(clickTimeout);
+      const timeout = setTimeout(() => {
+        navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
         setClickTimeout(null);
-      }
+      }, 220);
 
-      // Navigate to edit content (template editor) on double-click
-      navigate(buildRoute(ROUTES.EDIT_STEP_TEMPLATE, { stepSlug: data.stepSlug }));
+      setClickTimeout(timeout);
     },
-    [isNavigatableChannelNode, data.stepSlug, navigate, clickTimeout]
+    [clickTimeout, navigate, data.stepSlug, isNavigatableChannelNode]
   );
 
   const handleKeyDown = useCallback(
@@ -377,7 +366,6 @@ const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data
   return (
     <div
       onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
       className="contents cursor-pointer"
       data-testid={`${type}-node`}
