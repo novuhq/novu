@@ -89,16 +89,6 @@ export function InboxEmbed(): JSX.Element | null {
         const failedWorkflowNames = failures.map((f) => f.workflow.name).join(', ');
         const errorMessage = `Failed to update ${failures.length} workflow${failures.length > 1 ? 's' : ''}: ${failedWorkflowNames}`;
 
-        console.error('Workflow update failures:', {
-          totalWorkflows: results.length,
-          failedCount: failures.length,
-          failures: failures.map((f) => ({
-            workflowName: f.workflow.name,
-            workflowId: f.workflow._id,
-            error: f.error?.message || 'Unknown error',
-          })),
-        });
-
         setWorkflowUpdateError(errorMessage);
 
         track(TelemetryEvent.INBOX_WORKFLOW_UPDATE_FAILED, {
@@ -107,13 +97,9 @@ export function InboxEmbed(): JSX.Element | null {
           errors: failures.map((f) => f.error?.message || 'Unknown error'),
         });
       } else if (results.length > 0) {
-        console.log(
-          `Successfully updated ${results.length} workflow${results.length > 1 ? 's' : ''} for inbox integration`
-        );
       }
     } catch (error) {
       const errorMessage = 'Failed to update workflows for inbox integration';
-      console.error('Workflow update error:', error);
       setWorkflowUpdateError(errorMessage);
 
       track(TelemetryEvent.INBOX_WORKFLOW_UPDATE_FAILED, {
