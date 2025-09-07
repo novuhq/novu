@@ -67,7 +67,6 @@ export const WorkflowStatus = (props: WorkflowStatusProps) => {
 
   // Show popover only for ERROR status and when there are steps with issues
   if (status === WorkflowStatusEnum.ERROR && steps.length > 0) {
-    console.log('steps!!!!! ERROR', steps);
     return <WorkflowIssuesPopover steps={steps}>{statusBadge}</WorkflowIssuesPopover>;
   }
 
