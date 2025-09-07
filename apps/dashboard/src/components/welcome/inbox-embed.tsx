@@ -6,7 +6,7 @@ import { IS_EU, MODE } from '../../config';
 import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useFetchIntegrations } from '../../hooks/use-fetch-integrations';
-import { useInboxIntegratiOkayonWorkflowUpdater } from '../../hooks/use-inbox-integration-workflow-updater';
+import { useInboxIntegrationWorkflowUpdater } from '../../hooks/use-inbox-integration-workflow-updater';
 import { ROUTES } from '../../utils/routes';
 import { InboxConnectedGuide } from './inbox-connected-guide';
 import { InboxFrameworkGuide } from './inbox-framework-guide';
@@ -43,7 +43,7 @@ export function InboxEmbed(): JSX.Element | null {
   const isInAppConnected = foundIntegration?.connected ?? false;
 
   // Hook to update workflows with in-app steps when inbox integration is connected
-  const { triggerWorkflowUpdate, hasWorkflowsWithInAppSteps } = useInboxIntegratiOkayonWorkflowUpdater({
+  const { triggerWorkflowUpdate, hasWorkflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
     enabled: !!selectedEnvironment && !!foundIntegration,
   });
   const currentKey = `${selectedEnvironment?._id}-${foundIntegration?._id}`;

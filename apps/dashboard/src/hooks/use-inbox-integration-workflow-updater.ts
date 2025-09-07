@@ -12,7 +12,7 @@ interface UseInboxIntegrationWorkflowUpdaterOptions {
   onSuccess?: (updatedWorkflows: string[]) => void;
 }
 
-export function useInboxIntegratiOkayonWorkflowUpdater({
+export function useInboxIntegrationWorkflowUpdater({
   enabled = true,
   maxToUpdate = 20,
   onSuccess,
