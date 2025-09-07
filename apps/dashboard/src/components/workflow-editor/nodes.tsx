@@ -332,7 +332,7 @@ const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data
       const timeout = setTimeout(() => {
         navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
         setClickTimeout(null);
-      }, 250);
+      }, 150);
 
       setClickTimeout(timeout);
     },
