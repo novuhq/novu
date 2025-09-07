@@ -3,7 +3,6 @@ import { useCallback, useMemo } from 'react';
 import { getWorkflow, patchWorkflow } from '@/api/workflows';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchWorkflows } from './use-fetch-workflows';
-import { useUpdateWorkflow } from './use-update-workflow';
 
 interface UseInboxIntegrationWorkflowUpdaterOptions {
   maxToUpdate?: number;
@@ -38,8 +37,6 @@ export function useInboxIntegrationWorkflowUpdater({
     offset: 0,
     query: '',
   });
-
-  const { updateWorkflow: updateWorkflowHook } = useUpdateWorkflow();
 
   const workflowsWithInAppSteps = useMemo(() => {
     return (
@@ -141,20 +138,11 @@ export function useInboxIntegrationWorkflowUpdater({
           state.workflowCache.set(slug, workflowData);
         }
 
-        await updateWorkflowHook({
+        await patchWorkflow({
+          environment,
           workflowSlug: slug,
           workflow: {
-            name: workflowData.name,
-            description: workflowData.description,
-            tags: workflowData.tags,
             active: forceActive !== undefined ? forceActive : workflowData.active,
-            validatePayload: workflowData.validatePayload,
-            payloadSchema: workflowData.payloadSchema,
-            isTranslationEnabled: workflowData.isTranslationEnabled,
-            workflowId: workflowData.workflowId,
-            steps: workflowData.steps,
-            preferences: workflowData.preferences,
-            origin: workflowData.origin,
           },
         });
       } catch (error) {
@@ -165,7 +153,7 @@ export function useInboxIntegrationWorkflowUpdater({
         throw error;
       }
     },
-    [updateWorkflowHook]
+    []
   );
 
   const buildResults = useCallback((state: WorkflowProcessingState): WorkflowOperationResult[] => {
