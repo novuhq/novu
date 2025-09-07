@@ -1,6 +1,8 @@
 import { StepTypeEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
+import { useEnvironment } from '@/context/environment/hooks';
+import { QueryKeys } from '@/utils/query-keys';
 import { useFetchWorkflows } from './use-fetch-workflows';
 import { usePatchWorkflow } from './use-patch-workflow';
 
@@ -10,7 +12,7 @@ interface UseInboxIntegrationWorkflowUpdaterOptions {
   onSuccess?: (updatedWorkflows: string[]) => void;
 }
 
-export function useInboxIntegrationWorkflowUpdater({
+export function useInboxIntegratiOkayonWorkflowUpdater({
   enabled = true,
   maxToUpdate = 20,
   onSuccess,
@@ -18,13 +20,15 @@ export function useInboxIntegrationWorkflowUpdater({
   if (maxToUpdate <= 0) {
     throw new Error('maxToUpdate must be a positive integer');
   }
+  const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
   const { data: workflowsData, isLoading: isLoadingWorkflows } = useFetchWorkflows({
     limit: maxToUpdate,
     offset: 0,
     query: '',
   });
 
-  const { patchWorkflow: updateWorkflow, isPending: isPatching } = usePatchWorkflow();
+  const { isPending: isPatching } = usePatchWorkflow();
 
   const workflowsWithInAppSteps = useMemo(() => {
     return (
@@ -34,22 +38,24 @@ export function useInboxIntegrationWorkflowUpdater({
 
   const { mutateAsync: updateWorkflowsWithInAppSteps, isPending: isUpdating } = useMutation({
     mutationFn: async () => {
-      if (!workflowsWithInAppSteps.length) return [];
+      // Always invalidate queries to force refetch with fresh data
+      // This ensures we get the latest workflow state even if no workflows with in-app steps exist yet
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id] });
 
-      const workflowsToUpdate = workflowsWithInAppSteps.slice(0, maxToUpdate);
-      const results = await Promise.allSettled(
-        workflowsToUpdate.map(async (workflow) => {
-          await updateWorkflow({
-            workflowSlug: workflow.slug,
-            workflow: {},
+      // If we have workflows with in-app steps, also invalidate their individual queries
+      if (workflowsWithInAppSteps.length > 0) {
+        const workflowsToUpdate = workflowsWithInAppSteps.slice(0, maxToUpdate);
+
+        for (const workflow of workflowsToUpdate) {
+          queryClient.invalidateQueries({
+            queryKey: [QueryKeys.fetchWorkflow, currentEnvironment?._id, workflow.slug],
           });
-          return workflow.slug;
-        })
-      );
+        }
 
-      return results
-        .filter((result) => result.status === 'fulfilled')
-        .map((result) => (result as PromiseFulfilledResult<string>).value);
+        return workflowsToUpdate.map((w) => w.slug);
+      }
+
+      return [];
     },
     onSuccess: (updatedWorkflowSlugs) => {
       onSuccess?.(updatedWorkflowSlugs);
@@ -57,10 +63,10 @@ export function useInboxIntegrationWorkflowUpdater({
   });
 
   const triggerWorkflowUpdate = useCallback(() => {
-    if (enabled && workflowsWithInAppSteps.length > 0) {
+    if (enabled) {
       updateWorkflowsWithInAppSteps();
     }
-  }, [enabled, workflowsWithInAppSteps.length, updateWorkflowsWithInAppSteps]);
+  }, [enabled, updateWorkflowsWithInAppSteps]);
 
   return {
     workflowsWithInAppSteps,
