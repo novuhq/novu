@@ -1,4 +1,4 @@
-import { ResourceOriginEnum, WorkflowResponseDto } from '@novu/shared';
+import { ResourceOriginEnum, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
 import { useEdgesState, useNodesState } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -181,26 +181,8 @@ export const useCanvasNodesEdges = ({
       newSteps.push(temp);
 
       update({
-        name: currentWorkflow?.name || '',
-        description: currentWorkflow?.description,
-        tags: currentWorkflow?.tags,
-        active: currentWorkflow?.active,
-        validatePayload: currentWorkflow?.validatePayload,
-        isTranslationEnabled: currentWorkflow?.isTranslationEnabled,
-        workflowId: currentWorkflow?.workflowId,
-        steps: newSteps.map((step) => ({
-          _id: step._id,
-          stepId: step.stepId,
-          name: step.name,
-          type: step.type,
-          controlValues: step.controlValues,
-        })),
-        preferences: {
-          user: currentWorkflow?.preferences?.user || null,
-          workflow: currentWorkflow?.preferences?.default || null,
-        },
-        origin: currentWorkflow?.origin || ResourceOriginEnum.NOVU_CLOUD,
-        payloadSchema: currentWorkflow?.payloadSchema,
+        ...(currentWorkflow as UpdateWorkflowDto),
+        steps: newSteps,
       });
     }
 

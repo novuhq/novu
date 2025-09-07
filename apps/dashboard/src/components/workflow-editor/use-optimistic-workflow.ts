@@ -171,17 +171,8 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
 
       onUpdate(
         {
-          name: workflow.name,
-          description: workflow.description,
-          tags: workflow.tags,
-          active: workflow.active,
-          validatePayload: workflow.validatePayload,
-          isTranslationEnabled: workflow.isTranslationEnabled,
-          workflowId: workflow.workflowId,
+          ...workflow,
           steps: updateSteps,
-          preferences: workflow.preferences,
-          origin: workflow.origin,
-          payloadSchema: workflow.payloadSchema,
         },
         {
           onSuccess: (updatedWorkflow) => {
@@ -227,25 +218,8 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
 
       onUpdate(
         {
-          name: workflow.name,
-          description: workflow.description,
-          tags: workflow.tags,
-          active: workflow.active,
-          validatePayload: workflow.validatePayload,
-          isTranslationEnabled: workflow.isTranslationEnabled,
-          workflowId: workflow.workflowId,
-          steps: workflow.steps
-            .filter((s) => s.slug !== stepSlug)
-            .map((step) => ({
-              _id: step._id,
-              stepId: step.stepId,
-              name: step.name,
-              type: step.type,
-              controlValues: step.controlValues,
-            })),
-          preferences: workflow.preferences,
-          origin: workflow.origin,
-          payloadSchema: workflow.payloadSchema,
+          ...workflow,
+          steps: workflow.steps.filter((s) => s.slug !== stepSlug),
         },
         {
           onSuccess: () => {
@@ -283,23 +257,8 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
 
       onUpdate(
         {
-          name: workflow.name,
-          description: workflow.description,
-          tags: workflow.tags,
-          active: workflow.active,
-          validatePayload: workflow.validatePayload,
-          isTranslationEnabled: workflow.isTranslationEnabled,
-          workflowId: workflow.workflowId,
-          steps: newSteps.map((step) => ({
-            _id: step._id,
-            stepId: step.stepId,
-            name: step.name,
-            type: step.type,
-            controlValues: step.controlValues,
-          })),
-          preferences: workflow.preferences,
-          origin: workflow.origin,
-          payloadSchema: workflow.payloadSchema,
+          ...workflow,
+          steps: newSteps,
         },
         {
           onSuccess: (updatedWorkflow) => {
