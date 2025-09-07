@@ -113,7 +113,7 @@ export function clearSubscriberData(workflowId: string, environmentId: string): 
 export function cleanupExpiredPreviewData(): void {
   try {
     const keysToRemove: string[] = [];
-    const prefixes = ['preview-context-', 'preview-payload-', 'preview-subscriber-'];
+    const prefixes = ['preview-context-', 'preview-payload-', 'preview-subscriber-', 'test-workflow-subscriber-'];
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
