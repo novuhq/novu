@@ -4,7 +4,7 @@
   "description": "Notification Management Framework",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
-  "types": "dist/cjs/index.d.ts",
+  "types": "dist/esm/index.d.ts",
   "files": [
     "dist/",
     "!**/*.spec.*",
