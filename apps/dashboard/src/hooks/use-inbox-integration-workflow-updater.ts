@@ -135,6 +135,11 @@ export function useInboxIntegrationWorkflowUpdater({
 
   const reactivateWorkflow = useCallback(
     async (slug: WorkflowSlug, environment: NonNullable<typeof currentEnvironment>, state: WorkflowProcessingState) => {
+      // Skip reactivation for workflows that failed to deactivate to avoid inconsistent states
+      if (state.deactivateErrors.has(slug)) {
+        return;
+      }
+
       try {
         await retryOperation(async () => {
           await patchWorkflow({
@@ -184,7 +189,13 @@ export function useInboxIntegrationWorkflowUpdater({
             },
           })
         );
-      } catch {}
+      } catch (error) {
+        console.error(
+          `Failed to refresh workflow during inbox integration update. Slug: ${slug}, Environment: ${environment.name}`,
+          error
+        );
+        throw error;
+      }
     },
     [retryOperation, updateWorkflowHook]
   );

@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { IS_EU, MODE } from '../../config';
@@ -7,7 +7,10 @@ import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useFetchIntegrations } from '../../hooks/use-fetch-integrations';
 import { useInboxIntegrationWorkflowUpdater } from '../../hooks/use-inbox-integration-workflow-updater';
+import { useTelemetry } from '../../hooks/use-telemetry';
 import { ROUTES } from '../../utils/routes';
+import { TelemetryEvent } from '../../utils/telemetry';
+import { InlineToast } from '../primitives/inline-toast';
 import { InboxConnectedGuide } from './inbox-connected-guide';
 import { InboxFrameworkGuide } from './inbox-framework-guide';
 
@@ -18,6 +21,7 @@ const LAYOUT_CONSTANTS = {
 
 export function InboxEmbed(): JSX.Element | null {
   const [showConfetti, setShowConfetti] = useState(false);
+  const [workflowUpdateError, setWorkflowUpdateError] = useState<string | null>(null);
   const { currentUser } = useAuth();
   const { integrations } = useFetchIntegrations({ refetchInterval: 1000, refetchOnWindowFocus: true });
   const { environments, areEnvironmentsInitialLoading } = useEnvironment();
@@ -44,6 +48,7 @@ export function InboxEmbed(): JSX.Element | null {
     maxToUpdate: 20,
     maxRetries: 3,
   });
+  const track = useTelemetry();
   const currentKey = `${selectedEnvironment?._id}-${foundIntegration?._id}`;
 
   const primaryColor = searchParams.get('primaryColor') || '#DD2450';
@@ -73,6 +78,52 @@ export function InboxEmbed(): JSX.Element | null {
 
   const isOnWelcomeRoute = location.pathname === ROUTES.WELCOME || location.pathname.startsWith(`${ROUTES.WELCOME}/`);
 
+  const handleWorkflowUpdate = useCallback(async () => {
+    try {
+      setWorkflowUpdateError(null);
+      const results = await pauseAndEnableWorkflowsInLoop();
+
+      const failures = results.filter((result) => !result.success);
+
+      if (failures.length > 0) {
+        const failedWorkflowNames = failures.map((f) => f.workflow.name).join(', ');
+        const errorMessage = `Failed to update ${failures.length} workflow${failures.length > 1 ? 's' : ''}: ${failedWorkflowNames}`;
+
+        console.error('Workflow update failures:', {
+          totalWorkflows: results.length,
+          failedCount: failures.length,
+          failures: failures.map((f) => ({
+            workflowName: f.workflow.name,
+            workflowId: f.workflow._id,
+            error: f.error?.message || 'Unknown error',
+          })),
+        });
+
+        setWorkflowUpdateError(errorMessage);
+
+        track(TelemetryEvent.INBOX_WORKFLOW_UPDATE_FAILED, {
+          failedCount: failures.length,
+          totalCount: results.length,
+          errors: failures.map((f) => f.error?.message || 'Unknown error'),
+        });
+      } else if (results.length > 0) {
+        console.log(
+          `Successfully updated ${results.length} workflow${results.length > 1 ? 's' : ''} for inbox integration`
+        );
+      }
+    } catch (error) {
+      const errorMessage = 'Failed to update workflows for inbox integration';
+      console.error('Workflow update error:', error);
+      setWorkflowUpdateError(errorMessage);
+
+      track(TelemetryEvent.INBOX_WORKFLOW_UPDATE_FAILED, {
+        failedCount: 0,
+        totalCount: 0,
+        exception: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }, [pauseAndEnableWorkflowsInLoop, track]);
+
   useEffect(() => {
     if (areEnvironmentsInitialLoading || isOnWelcomeRoute) {
       return;
@@ -90,13 +141,13 @@ export function InboxEmbed(): JSX.Element | null {
       const timer = setTimeout(() => setShowConfetti(false), 10000);
 
       if (workflowsWithInAppSteps.length > 0 && lastUpdateKeyRef.current !== currentKey) {
-        pauseAndEnableWorkflowsInLoop();
+        handleWorkflowUpdate();
         lastUpdateKeyRef.current = currentKey;
       }
 
       return () => clearTimeout(timer);
     }
-  }, [isInAppConnected, currentKey, workflowsWithInAppSteps, pauseAndEnableWorkflowsInLoop]);
+  }, [isInAppConnected, currentKey, workflowsWithInAppSteps, handleWorkflowUpdate]);
 
   if (isOnWelcomeRoute) {
     return null;
@@ -126,6 +177,17 @@ export function InboxEmbed(): JSX.Element | null {
   return (
     <main className={LAYOUT_CONSTANTS.MAIN_PADDING_LEFT}>
       {showConfetti && <ReactConfetti recycle={false} numberOfPieces={1000} />}
+      {workflowUpdateError && (
+        <div className="mb-4">
+          <InlineToast
+            variant="error"
+            title="Workflow Update Error"
+            description={workflowUpdateError}
+            ctaLabel="Dismiss"
+            onCtaClick={() => setWorkflowUpdateError(null)}
+          />
+        </div>
+      )}
       {foundIntegration?.connected ? (
         <InboxConnectedGuide subscriberId={subscriberId} environment={selectedEnvironment} />
       ) : (
