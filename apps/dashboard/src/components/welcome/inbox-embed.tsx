@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { IS_EU, MODE } from '../../config';
@@ -22,13 +22,13 @@ export function InboxEmbed(): JSX.Element | null {
   const { integrations } = useFetchIntegrations({ refetchInterval: 1000, refetchOnWindowFocus: true });
   const { environments, areEnvironmentsInitialLoading } = useEnvironment();
 
+  // Stable refs to prevent effect re-runs on object identity changes
+  const lastUpdateKeyRef = useRef<string>('');
+
   // Hook to update workflows with in-app steps when inbox integration is connected
   const { triggerWorkflowUpdate, hasWorkflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
     onSuccess: (updatedWorkflowSlugs) => {
       console.log('Successfully updated workflows with in-app steps:', updatedWorkflowSlugs);
-    },
-    onError: (error) => {
-      console.error('Failed to update workflows with in-app steps:', error);
     },
   });
   const [searchParams] = useSearchParams();
@@ -45,6 +45,10 @@ export function InboxEmbed(): JSX.Element | null {
     (integration) =>
       integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
   );
+
+  // Compute stable boolean and key to prevent effect re-runs on object identity changes
+  const isInAppConnected = foundIntegration?.connected ?? false;
+  const currentKey = `${selectedEnvironment?._id}-${foundIntegration?._id}`;
 
   const primaryColor = searchParams.get('primaryColor') || '#DD2450';
   const foregroundColor = searchParams.get('foregroundColor') || '#0E121B';
@@ -89,18 +93,20 @@ export function InboxEmbed(): JSX.Element | null {
   }, [subscriberId, selectedEnvironment, navigate, areEnvironmentsInitialLoading, isOnWelcomeRoute]);
 
   useEffect(() => {
-    if (foundIntegration?.connected) {
+    if (isInAppConnected) {
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 10000);
 
       // Trigger workflow update when inbox integration is connected
-      if (hasWorkflowsWithInAppSteps) {
+      // Only trigger if this is a new connection (different environment/integration)
+      if (hasWorkflowsWithInAppSteps && lastUpdateKeyRef.current !== currentKey) {
         triggerWorkflowUpdate();
+        lastUpdateKeyRef.current = currentKey;
       }
 
       return () => clearTimeout(timer);
     }
-  }, [foundIntegration, hasWorkflowsWithInAppSteps, triggerWorkflowUpdate]);
+  }, [isInAppConnected, currentKey, hasWorkflowsWithInAppSteps, triggerWorkflowUpdate]);
 
   // Don't render if we're on the WELCOME route to avoid redirect loops
   if (isOnWelcomeRoute) {
