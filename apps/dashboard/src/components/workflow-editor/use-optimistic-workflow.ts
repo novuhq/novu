@@ -1,4 +1,10 @@
-import { ResourceOriginEnum, StepCreateDto, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
+import {
+  ResourceOriginEnum,
+  StepCreateDto,
+  StepResponseDto,
+  UpdateWorkflowDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -22,7 +28,7 @@ export interface OptimisticStep extends StepResponseDto {
 
 interface UseOptimisticWorkflowProps {
   workflow?: WorkflowResponseDto;
-  onUpdate: (data: WorkflowResponseDto, options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }) => void;
+  onUpdate: (data: UpdateWorkflowDto, options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }) => void;
 }
 
 export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkflowProps) {
@@ -165,8 +171,17 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
 
       onUpdate(
         {
-          ...workflow,
+          name: workflow.name,
+          description: workflow.description,
+          tags: workflow.tags,
+          active: workflow.active,
+          validatePayload: workflow.validatePayload,
+          isTranslationEnabled: workflow.isTranslationEnabled,
+          workflowId: workflow.workflowId,
           steps: updateSteps,
+          preferences: workflow.preferences,
+          origin: workflow.origin,
+          payloadSchema: workflow.payloadSchema,
         },
         {
           onSuccess: (updatedWorkflow) => {
@@ -212,8 +227,25 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
 
       onUpdate(
         {
-          ...workflow,
-          steps: workflow.steps.filter((s) => s.slug !== stepSlug),
+          name: workflow.name,
+          description: workflow.description,
+          tags: workflow.tags,
+          active: workflow.active,
+          validatePayload: workflow.validatePayload,
+          isTranslationEnabled: workflow.isTranslationEnabled,
+          workflowId: workflow.workflowId,
+          steps: workflow.steps
+            .filter((s) => s.slug !== stepSlug)
+            .map((step) => ({
+              _id: step._id,
+              stepId: step.stepId,
+              name: step.name,
+              type: step.type,
+              controlValues: step.controlValues,
+            })),
+          preferences: workflow.preferences,
+          origin: workflow.origin,
+          payloadSchema: workflow.payloadSchema,
         },
         {
           onSuccess: () => {
@@ -251,8 +283,23 @@ export function useOptimisticWorkflow({ workflow, onUpdate }: UseOptimisticWorkf
 
       onUpdate(
         {
-          ...workflow,
-          steps: newSteps,
+          name: workflow.name,
+          description: workflow.description,
+          tags: workflow.tags,
+          active: workflow.active,
+          validatePayload: workflow.validatePayload,
+          isTranslationEnabled: workflow.isTranslationEnabled,
+          workflowId: workflow.workflowId,
+          steps: newSteps.map((step) => ({
+            _id: step._id,
+            stepId: step.stepId,
+            name: step.name,
+            type: step.type,
+            controlValues: step.controlValues,
+          })),
+          preferences: workflow.preferences,
+          origin: workflow.origin,
+          payloadSchema: workflow.payloadSchema,
         },
         {
           onSuccess: (updatedWorkflow) => {

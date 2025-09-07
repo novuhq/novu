@@ -182,6 +182,7 @@ export const useCanvasNodesEdges = ({
 
       update({
         ...currentWorkflow,
+        name: currentWorkflow?.name || '',
         steps: newSteps,
       });
     }
