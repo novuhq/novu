@@ -96,12 +96,18 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       environmentId: currentEnvironment?._id || '',
     });
 
-  // Load persisted subscriber or fallback to current user
-  const persistedSubscriber = loadPersistedSubscriber();
-  const initialSubscriberId = persistedSubscriber?.subscriberId || currentUser?._id || '';
+  // Track if we've initialized the subscriber data
+  const [hasInitializedSubscriber, setHasInitializedSubscriber] = useState(false);
+
+  // Reset initialization flag when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasInitializedSubscriber(false);
+    }
+  }, [isOpen]);
 
   // Subscriber management - single source of truth
-  const subscriberIdToFetch = subscriberData?.subscriberId || initialSubscriberId;
+  const subscriberIdToFetch = subscriberData?.subscriberId || currentUser?._id || '';
   const {
     data: fetchedSubscriberData,
     refetch: refetchSubscriber,
@@ -115,9 +121,48 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     },
   });
 
-  // Initialize subscriber data
+  // Initialize subscriber data from persisted storage when drawer opens
   useEffect(() => {
-    if (fetchedSubscriberData) {
+    if (
+      !hasInitializedSubscriber &&
+      isOpen &&
+      workflow?.workflowId &&
+      currentEnvironment?._id &&
+      currentUser &&
+      !subscriberData?.subscriberId
+    ) {
+      const persistedSubscriber = loadPersistedSubscriber();
+
+      if (persistedSubscriber) {
+        // Try to use the persisted subscriber
+        setSubscriberData(persistedSubscriber);
+      } else {
+        // No persisted subscriber, use current user
+        const fallbackData = {
+          subscriberId: currentUser._id,
+          firstName: currentUser.firstName ?? undefined,
+          lastName: currentUser.lastName ?? undefined,
+          email: currentUser.email ?? undefined,
+        };
+        setSubscriberData(fallbackData);
+      }
+
+      setHasInitializedSubscriber(true);
+    }
+  }, [
+    hasInitializedSubscriber,
+    isOpen,
+    workflow?.workflowId,
+    currentEnvironment?._id,
+    currentUser,
+    subscriberData?.subscriberId,
+    loadPersistedSubscriber,
+  ]);
+
+  // Handle fetched subscriber data and error cases
+  useEffect(() => {
+    if (fetchedSubscriberData && subscriberData?.subscriberId === fetchedSubscriberData.subscriberId) {
+      // Update with fresh data from server
       setSubscriberData({
         subscriberId: fetchedSubscriberData.subscriberId,
         firstName: fetchedSubscriberData.firstName ?? undefined,
@@ -129,32 +174,28 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         timezone: fetchedSubscriberData.timezone ?? undefined,
         data: fetchedSubscriberData.data ?? undefined,
       });
-    } else if (currentUser && !fetchedSubscriberData && !subscriberData?.subscriberId && !isLoadingSubscriber) {
-      // If persisted subscriber doesn't exist (error) or no persisted subscriber, fallback to current user
-      const shouldFallbackToCurrentUser = subscriberFetchError || !persistedSubscriber;
+    } else if (
+      subscriberFetchError &&
+      subscriberData?.subscriberId &&
+      subscriberData.subscriberId !== currentUser?._id &&
+      currentUser
+    ) {
+      // Persisted subscriber doesn't exist, clear it and fallback to current user
+      clearPersistedSubscriber();
 
-      if (shouldFallbackToCurrentUser) {
-        // Clear persisted subscriber if it was found to not exist
-        if (subscriberFetchError && persistedSubscriber) {
-          clearPersistedSubscriber();
-        }
-
-        const fallbackData = {
-          subscriberId: currentUser._id,
-          firstName: currentUser.firstName ?? undefined,
-          lastName: currentUser.lastName ?? undefined,
-          email: currentUser.email ?? undefined,
-        };
-        setSubscriberData(fallbackData);
-      }
+      const fallbackData = {
+        subscriberId: currentUser._id,
+        firstName: currentUser.firstName ?? undefined,
+        lastName: currentUser.lastName ?? undefined,
+        email: currentUser.email ?? undefined,
+      };
+      setSubscriberData(fallbackData);
     }
   }, [
     fetchedSubscriberData,
-    currentUser,
-    subscriberData?.subscriberId,
-    isLoadingSubscriber,
     subscriberFetchError,
-    persistedSubscriber,
+    subscriberData?.subscriberId,
+    currentUser,
     clearPersistedSubscriber,
   ]);
 
