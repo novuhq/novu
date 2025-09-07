@@ -307,8 +307,8 @@ const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data
   const isNavigatableChannelNode = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
 
   const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      const clickCount = (e as any).detail ?? 1;
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const clickCount = e.detail ?? 1;
 
       if (clickTimeout) {
         clearTimeout(clickTimeout);
@@ -332,7 +332,7 @@ const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data
       const timeout = setTimeout(() => {
         navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
         setClickTimeout(null);
-      }, 220);
+      }, 350);
 
       setClickTimeout(timeout);
     },
