@@ -1,30 +1,71 @@
-import { StepTypeEnum, WorkflowListResponseDto, WorkflowResponseDto } from '@novu/shared';
+import { IEnvironment, StepTypeEnum, WorkflowListResponseDto, WorkflowResponseDto } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { getWorkflow, patchWorkflow } from '@/api/workflows';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchWorkflows } from './use-fetch-workflows';
 
-interface UseInboxIntegrationWorkflowUpdaterOptions {
+type UseInboxIntegrationWorkflowUpdaterOptions = {
   maxToUpdate?: number;
   concurrency?: number;
-}
+};
 
 type WorkflowSlug = WorkflowListResponseDto['slug'];
 
-interface WorkflowOperationResult {
+type WorkflowOperationResult = {
   workflow: WorkflowListResponseDto;
   success: boolean;
   error: Error | null;
-}
+};
 
-interface WorkflowProcessingState {
+type WorkflowProcessingState = {
   slugToWorkflow: Map<WorkflowSlug, WorkflowListResponseDto>;
   slugs: WorkflowSlug[];
+  originalActiveStates: Map<WorkflowSlug, boolean>;
   deactivated: Set<WorkflowSlug>;
-  reactivated: Set<WorkflowSlug>;
+  restored: Set<WorkflowSlug>;
   deactivateErrors: Map<WorkflowSlug, Error>;
-  reactivateErrors: Map<WorkflowSlug, Error>;
+  restoreErrors: Map<WorkflowSlug, Error>;
   workflowCache: Map<WorkflowSlug, WorkflowResponseDto>;
+};
+
+function getWorkflowFromCache(state: WorkflowProcessingState, slug: WorkflowSlug): WorkflowResponseDto | undefined {
+  return state.workflowCache.get(slug);
+}
+
+async function fetchAndCacheWorkflow(
+  state: WorkflowProcessingState,
+  slug: WorkflowSlug,
+  environment: IEnvironment
+): Promise<WorkflowResponseDto> {
+  const data = await getWorkflow({ environment, workflowSlug: slug });
+  state.workflowCache.set(slug, data);
+
+  return data;
+}
+
+async function ensureWorkflowData(
+  state: WorkflowProcessingState,
+  slug: WorkflowSlug,
+  environment: IEnvironment
+): Promise<WorkflowResponseDto> {
+  const cached = getWorkflowFromCache(state, slug);
+  if (cached) return cached;
+
+  return fetchAndCacheWorkflow(state, slug, environment);
+}
+
+async function patchActiveState(environment: IEnvironment, slug: WorkflowSlug, active: boolean): Promise<void> {
+  await patchWorkflow({ environment, workflowSlug: slug, workflow: { active } });
+}
+
+function rememberOriginalActiveState(
+  state: WorkflowProcessingState,
+  slug: WorkflowSlug,
+  active: boolean | undefined
+): void {
+  if (!state.originalActiveStates.has(slug)) {
+    state.originalActiveStates.set(slug, Boolean(active));
+  }
 }
 
 export function useInboxIntegrationWorkflowUpdater({
@@ -77,10 +118,11 @@ export function useInboxIntegrationWorkflowUpdater({
     return {
       slugToWorkflow,
       slugs: Array.from(slugToWorkflow.keys()),
+      originalActiveStates: new Map<WorkflowSlug, boolean>(),
       deactivated: new Set<WorkflowSlug>(),
-      reactivated: new Set<WorkflowSlug>(),
+      restored: new Set<WorkflowSlug>(),
       deactivateErrors: new Map<WorkflowSlug, Error>(),
-      reactivateErrors: new Map<WorkflowSlug, Error>(),
+      restoreErrors: new Map<WorkflowSlug, Error>(),
       workflowCache: new Map<WorkflowSlug, WorkflowResponseDto>(),
     };
   }, []);
@@ -88,13 +130,13 @@ export function useInboxIntegrationWorkflowUpdater({
   const deactivateWorkflow = useCallback(
     async (slug: WorkflowSlug, environment: NonNullable<typeof currentEnvironment>, state: WorkflowProcessingState) => {
       try {
-        await patchWorkflow({
-          environment,
-          workflowSlug: slug,
-          workflow: { active: false },
-        });
+        const workflowData = await ensureWorkflowData(state, slug, environment);
+        rememberOriginalActiveState(state, slug, workflowData.active);
 
-        state.deactivated.add(slug);
+        if (workflowData.active) {
+          await patchActiveState(environment, slug, false);
+          state.deactivated.add(slug);
+        }
       } catch (error) {
         state.deactivateErrors.set(slug, error as Error);
       }
@@ -102,23 +144,26 @@ export function useInboxIntegrationWorkflowUpdater({
     []
   );
 
-  const reactivateWorkflow = useCallback(
+  const restoreWorkflowState = useCallback(
     async (slug: WorkflowSlug, environment: NonNullable<typeof currentEnvironment>, state: WorkflowProcessingState) => {
-      // Skip reactivation for workflows that failed to deactivate to avoid inconsistent states
+      // Skip restoration for workflows that failed to deactivate to avoid inconsistent states
       if (state.deactivateErrors.has(slug)) {
         return;
       }
 
-      try {
-        await patchWorkflow({
-          environment,
-          workflowSlug: slug,
-          workflow: { active: true },
-        });
+      const originalActiveState = state.originalActiveStates.get(slug);
+      if (originalActiveState === undefined) {
+        return;
+      }
 
-        state.reactivated.add(slug);
-      } catch (error) {
-        state.reactivateErrors.set(slug, error as Error);
+      // Only restore if the workflow was originally active (meaning we deactivated it)
+      if (originalActiveState) {
+        try {
+          await patchActiveState(environment, slug, true);
+          state.restored.add(slug);
+        } catch (error) {
+          state.restoreErrors.set(slug, error as Error);
+        }
       }
     },
     []
@@ -131,27 +176,9 @@ export function useInboxIntegrationWorkflowUpdater({
       state: WorkflowProcessingState,
       forceActive?: boolean
     ) => {
-      try {
-        let workflowData = state.workflowCache.get(slug);
-        if (!workflowData) {
-          workflowData = await getWorkflow({ environment, workflowSlug: slug });
-          state.workflowCache.set(slug, workflowData);
-        }
-
-        await patchWorkflow({
-          environment,
-          workflowSlug: slug,
-          workflow: {
-            active: forceActive !== undefined ? forceActive : workflowData.active,
-          },
-        });
-      } catch (error) {
-        console.error(
-          `Failed to refresh workflow during inbox integration update. Slug: ${slug}, Environment: ${environment.name}`,
-          error
-        );
-        throw error;
-      }
+      const workflowData = await ensureWorkflowData(state, slug, environment);
+      const nextActive = forceActive !== undefined ? forceActive : Boolean(workflowData.active);
+      await patchActiveState(environment, slug, nextActive);
     },
     []
   );
@@ -163,7 +190,7 @@ export function useInboxIntegrationWorkflowUpdater({
       const workflow = state.slugToWorkflow.get(slug);
       if (!workflow) continue;
 
-      const error = state.deactivateErrors.get(slug) ?? state.reactivateErrors.get(slug) ?? null;
+      const error = state.deactivateErrors.get(slug) ?? state.restoreErrors.get(slug) ?? null;
       results.push({
         workflow,
         success: !error,
@@ -182,20 +209,27 @@ export function useInboxIntegrationWorkflowUpdater({
 
     const state = initializeProcessingState(workflowsWithInAppSteps);
 
+    // Step 1: Deactivate active workflows and store original states
     await runWithConcurrency(state.slugs, async (slug) => {
       await deactivateWorkflow(slug, environment, state);
     });
 
+    // Step 2: Refresh workflows while they are deactivated (only for workflows that were actually deactivated)
     await runWithConcurrency(Array.from(state.deactivated), async (slug) => {
       await refreshWorkflow(slug, environment, state, false);
     });
 
+    // Step 3: Restore workflows to their original active state
     await runWithConcurrency(state.slugs, async (slug) => {
-      await reactivateWorkflow(slug, environment, state);
+      await restoreWorkflowState(slug, environment, state);
     });
 
-    await runWithConcurrency(Array.from(state.reactivated), async (slug) => {
-      await refreshWorkflow(slug, environment, state, true);
+    // Step 4: Refresh workflows while they are in their original state (only for workflows that were restored)
+    await runWithConcurrency(Array.from(state.restored), async (slug) => {
+      const originalActiveState = state.originalActiveStates.get(slug);
+      if (originalActiveState !== undefined) {
+        await refreshWorkflow(slug, environment, state, originalActiveState);
+      }
     });
 
     return buildResults(state);
@@ -205,7 +239,7 @@ export function useInboxIntegrationWorkflowUpdater({
     initializeProcessingState,
     runWithConcurrency,
     deactivateWorkflow,
-    reactivateWorkflow,
+    restoreWorkflowState,
     refreshWorkflow,
     buildResults,
   ]);
