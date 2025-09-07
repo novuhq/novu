@@ -1,7 +1,7 @@
 import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum, StepCreateDto } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ComponentProps, useCallback, useState } from 'react';
+import { ComponentProps, useCallback, useEffect, useState } from 'react';
 import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -301,22 +301,91 @@ const StepNode = (props: StepNodeProps) => {
 };
 
 const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data: NodeData; type: StepTypeEnum }) => {
+  const navigate = useNavigate();
+  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const isNavigatableChannelNode = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Clear any existing timeout
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+        setClickTimeout(null);
+        return; // This is actually a double-click, so don't navigate
+      }
+
+      // Set a timeout for single-click navigation
+      const timeout = setTimeout(() => {
+        navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
+        setClickTimeout(null);
+      }, 300); // 300ms delay to detect double-clicks
+
+      setClickTimeout(timeout);
+    },
+    [clickTimeout, navigate, data.stepSlug]
+  );
+
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isNavigatableChannelNode || !data.stepSlug) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Clear the single-click timeout
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+        setClickTimeout(null);
+      }
+
+      // Navigate to edit content (template editor) on double-click
+      navigate(buildRoute(ROUTES.EDIT_STEP_TEMPLATE, { stepSlug: data.stepSlug }));
+    },
+    [isNavigatableChannelNode, data.stepSlug, navigate, clickTimeout]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
+      }
+    },
+    [navigate, data.stepSlug]
+  );
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+      }
+    };
+  }, [clickTimeout]);
+
   if (data.isTemplateStorePreview) {
     return children;
   }
 
   return (
-    <Link
-      to={buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' })}
-      onClick={(e) => {
-        // Prevent any bubbling that might interfere with the navigation
-        e.stopPropagation();
-      }}
-      className="contents"
+    <div
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
+      onKeyDown={handleKeyDown}
+      className="contents cursor-pointer"
       data-testid={`${type}-node`}
+      role="button"
+      tabIndex={0}
     >
       {children}
-    </Link>
+    </div>
   );
 };
 
