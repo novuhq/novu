@@ -26,10 +26,12 @@ import { useAuth } from '@/context/auth/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTestWorkflowSubscriberPersistence } from '@/hooks/use-test-workflow-subscriber-persistence';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
 import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { useEnvironment } from '../../../context/environment/hooks';
+import { cleanupExpiredPreviewData } from '../steps/utils/preview-context-storage.utils';
 import { useWorkflow } from '../workflow-provider';
 
 type TestWorkflowDrawerProps = {
@@ -65,6 +67,11 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const [subscriberData, setSubscriberData] = useState<Partial<ISubscriberResponseDto> | null>(null);
   const [currentFormData, setCurrentFormData] = useState<{ to: unknown; payload: string } | null>(null);
 
+  // Cleanup expired storage data on component mount
+  useEffect(() => {
+    cleanupExpiredPreviewData();
+  }, []);
+
   const { currentEnvironment } = useEnvironment();
   const { workflow } = useWorkflow();
   const { currentUser } = useAuth();
@@ -82,16 +89,29 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     environmentId: currentEnvironment?._id || '',
   });
 
+  // Test workflow subscriber persistence
+  const { loadPersistedSubscriber, savePersistedSubscriber, clearPersistedSubscriber } =
+    useTestWorkflowSubscriberPersistence({
+      workflowId: workflow?.workflowId || '',
+      environmentId: currentEnvironment?._id || '',
+    });
+
+  // Load persisted subscriber or fallback to current user
+  const persistedSubscriber = loadPersistedSubscriber();
+  const initialSubscriberId = persistedSubscriber?.subscriberId || currentUser?._id || '';
+
   // Subscriber management - single source of truth
-  const subscriberIdToFetch = subscriberData?.subscriberId || currentUser?._id || '';
+  const subscriberIdToFetch = subscriberData?.subscriberId || initialSubscriberId;
   const {
     data: fetchedSubscriberData,
     refetch: refetchSubscriber,
     isLoading: isLoadingSubscriber,
+    error: subscriberFetchError,
   } = useFetchSubscriber({
     subscriberId: subscriberIdToFetch,
     options: {
       enabled: !!subscriberIdToFetch && !!currentEnvironment,
+      retry: false, // Don't retry if subscriber doesn't exist
     },
   });
 
@@ -110,14 +130,33 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         data: fetchedSubscriberData.data ?? undefined,
       });
     } else if (currentUser && !fetchedSubscriberData && !subscriberData?.subscriberId && !isLoadingSubscriber) {
-      setSubscriberData({
-        subscriberId: currentUser._id,
-        firstName: currentUser.firstName ?? undefined,
-        lastName: currentUser.lastName ?? undefined,
-        email: currentUser.email ?? undefined,
-      });
+      // If persisted subscriber doesn't exist (error) or no persisted subscriber, fallback to current user
+      const shouldFallbackToCurrentUser = subscriberFetchError || !persistedSubscriber;
+
+      if (shouldFallbackToCurrentUser) {
+        // Clear persisted subscriber if it was found to not exist
+        if (subscriberFetchError && persistedSubscriber) {
+          clearPersistedSubscriber();
+        }
+
+        const fallbackData = {
+          subscriberId: currentUser._id,
+          firstName: currentUser.firstName ?? undefined,
+          lastName: currentUser.lastName ?? undefined,
+          email: currentUser.email ?? undefined,
+        };
+        setSubscriberData(fallbackData);
+      }
     }
-  }, [fetchedSubscriberData, currentUser, subscriberData?.subscriberId, isLoadingSubscriber]);
+  }, [
+    fetchedSubscriberData,
+    currentUser,
+    subscriberData?.subscriberId,
+    isLoadingSubscriber,
+    subscriberFetchError,
+    persistedSubscriber,
+    clearPersistedSubscriber,
+  ]);
 
   const payload = useMemo(() => {
     if (initialPayload && Object.keys(initialPayload).length > 0) {
@@ -147,9 +186,14 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     }
   }, [watchedPayload, initialPayload, savePersistedPayload]);
 
-  const handleSubscriberSelect = useCallback((subscriber: ISubscriberResponseDto) => {
-    setSubscriberData(subscriber);
-  }, []);
+  const handleSubscriberSelect = useCallback(
+    (subscriber: ISubscriberResponseDto) => {
+      setSubscriberData(subscriber);
+      // Persist the selected subscriber for future use
+      savePersistedSubscriber(subscriber);
+    },
+    [savePersistedSubscriber]
+  );
 
   const handleSubscriberDrawerClose = useCallback(
     (open: boolean) => {
