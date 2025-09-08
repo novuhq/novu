@@ -25,6 +25,7 @@ test('should trigger rocket-chat library correctly', async () => {
         channel: '<your-channel>',
       },
       type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
     },
     content: '<your-chat-message>',
   });
@@ -70,6 +71,7 @@ test('should trigger rocket-chat library correctly with _passthrough', async () 
           channel: '<your-channel>',
         },
         type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
       },
       content: '<your-chat-message>',
     },

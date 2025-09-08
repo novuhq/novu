@@ -26,6 +26,7 @@ test('should trigger grafana-on-call library correctly', async () => {
         url: testWebhookUrl,
       },
       type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
     },
     content: testContent,
   });
@@ -70,6 +71,7 @@ test('should trigger grafana-on-call library correctly with _passthrough', async
           url: testWebhookUrl,
         },
         type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
       },
       content: testContent,
     },

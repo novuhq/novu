@@ -15,6 +15,7 @@ test('should trigger Slack webhook correctly', async () => {
         url: 'webhookUrl',
       },
       type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
     },
     content: 'chat message',
   });
@@ -37,6 +38,7 @@ test('should trigger Slack webhook correctly with _passthrough', async () => {
     {
       channelData: {
         type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
         address: {
           url: 'webhookUrl',
         },
@@ -75,6 +77,7 @@ test('should handle Slack API error correctly', async () => {
       channelData: {
         token: 'xoxb-token-123',
         type: ADDRESS_TYPES.SLACK_CHANNEL,
+        identifier: 'test-slack-channel-identifier',
         address: {
           channelId: 'C1234567890',
         },
@@ -113,6 +116,7 @@ test('should handle Slack webhook error response correctly', async () => {
           url: 'webhookUrl',
         },
         type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
       },
       content: 'chat message',
     })
@@ -139,6 +143,7 @@ test('should handle Slack webhook HTTP error correctly', async () => {
           url: 'webhookUrl',
         },
         type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
       },
       content: 'chat message',
     })
@@ -164,6 +169,7 @@ test('should trigger Slack app correctly with OAuth', async () => {
     channelData: {
       token: 'xoxb-token-123',
       type: ADDRESS_TYPES.SLACK_CHANNEL,
+      identifier: 'test-slack-channel-identifier',
       address: {
         channelId: 'C1234567890',
       },

@@ -19,6 +19,7 @@ test('should trigger getstream correctly', async () => {
         url: 'webhookUrl',
       },
       type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
     },
     content: 'chat message',
   });
@@ -30,6 +31,7 @@ test('should trigger getstream correctly', async () => {
         url: 'webhookUrl',
       },
       type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
     },
     content: 'chat message',
   });
@@ -53,6 +55,7 @@ test('should trigger getstream correctly with _passthrough', async () => {
           url: 'https://www.google.com/',
         },
         type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
       },
       content: 'chat message',
     },

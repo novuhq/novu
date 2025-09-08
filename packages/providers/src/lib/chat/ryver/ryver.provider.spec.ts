@@ -18,6 +18,7 @@ test('Should trigger ryver correctly', async () => {
         url: 'https://google.com',
       },
       type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
     },
     content: 'chat message',
   });
@@ -43,6 +44,7 @@ test('Should trigger ryver correctly with _passthrough', async () => {
           url: 'https://google.com',
         },
         type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
       },
       content: 'chat message',
     },

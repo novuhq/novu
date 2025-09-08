@@ -19,6 +19,7 @@ test('should trigger msTeams webhook correctly', async () => {
         url: testWebhookUrl,
       },
       type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
     },
     content: testContent,
   });
@@ -45,6 +46,7 @@ test('should trigger msTeams webhook correctly with _passthrough', async () => {
           url: testWebhookUrl,
         },
         type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
       },
       content: testContent,
     },

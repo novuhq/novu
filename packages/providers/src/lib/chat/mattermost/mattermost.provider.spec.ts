@@ -24,6 +24,7 @@ test('should trigger mattermost library correctly, default channel', async () =>
         url: testWebhookUrl,
       },
       type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
     },
     content: testContent,
   });
@@ -56,6 +57,7 @@ test('should trigger mattermost library correctly, override channel', async () =
         channel: '@username',
       },
       type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
     },
     content: testContent,
   });
@@ -89,6 +91,7 @@ test('should trigger mattermost library correctly, default channel with _passthr
           url: testWebhookUrl,
         },
         type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
       },
       content: testContent,
     },
