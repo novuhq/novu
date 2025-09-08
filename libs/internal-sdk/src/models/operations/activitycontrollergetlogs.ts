@@ -22,10 +22,6 @@ export type ActivityControllerGetLogsRequest = {
    */
   statusCodes?: Array<number> | undefined;
   /**
-   * Filter by request URL
-   */
-  url?: string | undefined;
-  /**
    * Filter by URL pattern
    */
   urlPattern?: string | undefined;
@@ -52,14 +48,12 @@ export const ActivityControllerGetLogsRequest$inboundSchema: z.ZodType<
   page: z.number().optional(),
   limit: z.number().optional(),
   statusCodes: z.array(z.number()).optional(),
-  url: z.string().optional(),
-  url_pattern: z.string().optional(),
+  urlPattern: z.string().optional(),
   transactionId: z.string().optional(),
   createdGte: z.number().optional(),
   "idempotency-key": z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
-    "url_pattern": "urlPattern",
     "idempotency-key": "idempotencyKey",
   });
 });
@@ -69,8 +63,7 @@ export type ActivityControllerGetLogsRequest$Outbound = {
   page?: number | undefined;
   limit?: number | undefined;
   statusCodes?: Array<number> | undefined;
-  url?: string | undefined;
-  url_pattern?: string | undefined;
+  urlPattern?: string | undefined;
   transactionId?: string | undefined;
   createdGte?: number | undefined;
   "idempotency-key"?: string | undefined;
@@ -85,14 +78,12 @@ export const ActivityControllerGetLogsRequest$outboundSchema: z.ZodType<
   page: z.number().optional(),
   limit: z.number().optional(),
   statusCodes: z.array(z.number()).optional(),
-  url: z.string().optional(),
   urlPattern: z.string().optional(),
   transactionId: z.string().optional(),
   createdGte: z.number().optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
-    urlPattern: "url_pattern",
     idempotencyKey: "idempotency-key",
   });
 });

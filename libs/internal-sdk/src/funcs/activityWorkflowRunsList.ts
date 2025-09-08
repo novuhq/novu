@@ -97,6 +97,7 @@ async function $do(
     "createdLte": payload.createdLte,
     "cursor": payload.cursor,
     "limit": payload.limit,
+    "severity": payload.severity,
     "statuses": payload.statuses,
     "subscriberIds": payload.subscriberIds,
     "topicKey": payload.topicKey,

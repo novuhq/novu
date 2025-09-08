@@ -10,6 +10,7 @@ import { ClosedEnum } from "../../types/enums.js";
  */
 export const IntegrationIssueEnum = {
   MissingIntegration: "MISSING_INTEGRATION",
+  InboxNotConnected: "INBOX_NOT_CONNECTED",
 } as const;
 /**
  * Type of integration issue

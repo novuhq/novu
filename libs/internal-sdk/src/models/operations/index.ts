@@ -16,6 +16,8 @@ export * from "./eventscontrollerbroadcasteventtoall.js";
 export * from "./eventscontrollercancel.js";
 export * from "./eventscontrollertrigger.js";
 export * from "./eventscontrollertriggerbulk.js";
+export * from "./inboundwebhookscontrollerhandlewebhook.js";
+export * from "./integrationscontrollerautoconfigureintegration.js";
 export * from "./integrationscontrollercreateintegration.js";
 export * from "./integrationscontrollergetactiveintegrations.js";
 export * from "./integrationscontrollerlistintegrations.js";

@@ -13,6 +13,12 @@ import {
   DigestMetadataDto$Outbound,
   DigestMetadataDto$outboundSchema,
 } from "./digestmetadatadto.js";
+import {
+  StepExecutionDetailDto,
+  StepExecutionDetailDto$inboundSchema,
+  StepExecutionDetailDto$Outbound,
+  StepExecutionDetailDto$outboundSchema,
+} from "./stepexecutiondetaildto.js";
 
 /**
  * Step status
@@ -32,8 +38,6 @@ export const StepRunDtoStatus = {
  * Step status
  */
 export type StepRunDtoStatus = ClosedEnum<typeof StepRunDtoStatus>;
-
-export type ExecutionDetails = {};
 
 export type StepRunDto = {
   /**
@@ -67,7 +71,7 @@ export type StepRunDto = {
   /**
    * Execution details
    */
-  executionDetails: Array<ExecutionDetails>;
+  executionDetails: Array<StepExecutionDetailDto>;
   /**
    * Optional digest for the job, including metadata and events
    */
@@ -96,54 +100,6 @@ export namespace StepRunDtoStatus$ {
 }
 
 /** @internal */
-export const ExecutionDetails$inboundSchema: z.ZodType<
-  ExecutionDetails,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type ExecutionDetails$Outbound = {};
-
-/** @internal */
-export const ExecutionDetails$outboundSchema: z.ZodType<
-  ExecutionDetails$Outbound,
-  z.ZodTypeDef,
-  ExecutionDetails
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ExecutionDetails$ {
-  /** @deprecated use `ExecutionDetails$inboundSchema` instead. */
-  export const inboundSchema = ExecutionDetails$inboundSchema;
-  /** @deprecated use `ExecutionDetails$outboundSchema` instead. */
-  export const outboundSchema = ExecutionDetails$outboundSchema;
-  /** @deprecated use `ExecutionDetails$Outbound` instead. */
-  export type Outbound = ExecutionDetails$Outbound;
-}
-
-export function executionDetailsToJSON(
-  executionDetails: ExecutionDetails,
-): string {
-  return JSON.stringify(
-    ExecutionDetails$outboundSchema.parse(executionDetails),
-  );
-}
-
-export function executionDetailsFromJSON(
-  jsonString: string,
-): SafeParseResult<ExecutionDetails, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ExecutionDetails$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ExecutionDetails' from JSON`,
-  );
-}
-
-/** @internal */
 export const StepRunDto$inboundSchema: z.ZodType<
   StepRunDto,
   z.ZodTypeDef,
@@ -156,7 +112,7 @@ export const StepRunDto$inboundSchema: z.ZodType<
   status: StepRunDtoStatus$inboundSchema,
   createdAt: z.string().datetime({ offset: true }).transform(v => new Date(v)),
   updatedAt: z.string().datetime({ offset: true }).transform(v => new Date(v)),
-  executionDetails: z.array(z.lazy(() => ExecutionDetails$inboundSchema)),
+  executionDetails: z.array(StepExecutionDetailDto$inboundSchema),
   digest: DigestMetadataDto$inboundSchema.optional(),
 });
 
@@ -169,7 +125,7 @@ export type StepRunDto$Outbound = {
   status: string;
   createdAt: string;
   updatedAt: string;
-  executionDetails: Array<ExecutionDetails$Outbound>;
+  executionDetails: Array<StepExecutionDetailDto$Outbound>;
   digest?: DigestMetadataDto$Outbound | undefined;
 };
 
@@ -186,7 +142,7 @@ export const StepRunDto$outboundSchema: z.ZodType<
   status: StepRunDtoStatus$outboundSchema,
   createdAt: z.date().transform(v => v.toISOString()),
   updatedAt: z.date().transform(v => v.toISOString()),
-  executionDetails: z.array(z.lazy(() => ExecutionDetails$outboundSchema)),
+  executionDetails: z.array(StepExecutionDetailDto$outboundSchema),
   digest: DigestMetadataDto$outboundSchema.optional(),
 });
 

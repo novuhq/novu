@@ -3,6 +3,7 @@
  */
 
 import { cancel } from "../funcs/cancel.js";
+import { inboundWebhooksControllerHandleWebhook } from "../funcs/inboundWebhooksControllerHandleWebhook.js";
 import { trigger } from "../funcs/trigger.js";
 import { triggerBroadcast } from "../funcs/triggerBroadcast.js";
 import { triggerBulk } from "../funcs/triggerBulk.js";
@@ -64,6 +65,21 @@ export class Novu extends ClientSDK {
   private _notifications?: Notifications;
   get notifications(): Notifications {
     return (this._notifications ??= new Notifications(this._options));
+  }
+
+  async inboundWebhooksControllerHandleWebhook(
+    environmentId: string,
+    integrationId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<void> {
+    return unwrapAsync(inboundWebhooksControllerHandleWebhook(
+      this,
+      environmentId,
+      integrationId,
+      idempotencyKey,
+      options,
+    ));
   }
 
   /**

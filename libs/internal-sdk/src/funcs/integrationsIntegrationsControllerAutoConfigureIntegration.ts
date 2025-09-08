@@ -3,7 +3,7 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeFormQuery, encodeSimple } from "../lib/encodings.js";
+import { encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
@@ -26,21 +26,20 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * List all events
+ * Auto-configure an integration for inbound webhooks
  *
  * @remarks
- * List all notification events (triggered events) for the current environment.
- *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**.
- *     Checkout all available filters in the query section.
- *     This API returns event triggers, to list each channel notifications, check messages APIs.
+ * Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support.
+ *     This will automatically generate required webhook signing keys and configure webhook endpoints.
  */
-export function notificationsList(
+export function integrationsIntegrationsControllerAutoConfigureIntegration(
   client: NovuCore,
-  request: operations.NotificationsControllerListNotificationsRequest,
+  integrationId: string,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.NotificationsControllerListNotificationsResponse,
+    operations.IntegrationsControllerAutoConfigureIntegrationResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -55,19 +54,21 @@ export function notificationsList(
 > {
   return new APIPromise($do(
     client,
-    request,
+    integrationId,
+    idempotencyKey,
     options,
   ));
 }
 
 async function $do(
   client: NovuCore,
-  request: operations.NotificationsControllerListNotificationsRequest,
+  integrationId: string,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.NotificationsControllerListNotificationsResponse,
+      operations.IntegrationsControllerAutoConfigureIntegrationResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -82,10 +83,17 @@ async function $do(
     APICall,
   ]
 > {
+  const input:
+    operations.IntegrationsControllerAutoConfigureIntegrationRequest = {
+      integrationId: integrationId,
+      idempotencyKey: idempotencyKey,
+    };
+
   const parsed = safeParse(
-    request,
+    input,
     (value) =>
-      operations.NotificationsControllerListNotificationsRequest$outboundSchema
+      operations
+        .IntegrationsControllerAutoConfigureIntegrationRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
@@ -95,22 +103,16 @@ async function $do(
   const payload = parsed.value;
   const body = null;
 
-  const path = pathToFunc("/v1/notifications")();
+  const pathParams = {
+    integrationId: encodeSimple("integrationId", payload.integrationId, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
 
-  const query = encodeFormQuery({
-    "after": payload.after,
-    "before": payload.before,
-    "channels": payload.channels,
-    "emails": payload.emails,
-    "limit": payload.limit,
-    "page": payload.page,
-    "search": payload.search,
-    "severity": payload.severity,
-    "subscriberIds": payload.subscriberIds,
-    "templates": payload.templates,
-    "topicKey": payload.topicKey,
-    "transactionId": payload.transactionId,
-  });
+  const path = pathToFunc("/v1/integrations/{integrationId}/auto-configure")(
+    pathParams,
+  );
 
   const headers = new Headers(compactMap({
     Accept: "application/json",
@@ -127,7 +129,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "NotificationsController_listNotifications",
+    operationID: "IntegrationsController_autoConfigureIntegration",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -151,11 +153,10 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "GET",
+    method: "POST",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
-    query: query,
     body: body,
     userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
@@ -197,7 +198,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.NotificationsControllerListNotificationsResponse,
+    operations.IntegrationsControllerAutoConfigureIntegrationResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -211,17 +212,18 @@ async function $do(
   >(
     M.json(
       200,
-      operations.NotificationsControllerListNotificationsResponse$inboundSchema,
+      operations
+        .IntegrationsControllerAutoConfigureIntegrationResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
+      [400, 401, 403, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail(429),
+    M.fail([404, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

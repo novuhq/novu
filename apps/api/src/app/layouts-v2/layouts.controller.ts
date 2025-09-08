@@ -49,7 +49,6 @@ import { EMPTY_LAYOUT } from './utils/layout-templates';
 @Controller({ path: `/layouts`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
-@ApiExcludeController()
 @ApiTags('Layouts')
 export class LayoutsController {
   constructor(
