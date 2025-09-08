@@ -1,9 +1,3 @@
-import { Badge } from '@/components/primitives/badge';
-import { SidebarContent } from '@/components/side-navigation/sidebar';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { Protect } from '@/utils/protect';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
 import { ReactNode } from 'react';
 import {
@@ -21,6 +15,12 @@ import {
   RiTranslate2,
   RiUserAddLine,
 } from 'react-icons/ri';
+import { Badge } from '@/components/primitives/badge';
+import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { Protect } from '@/utils/protect';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
@@ -87,7 +87,6 @@ export const SideNavigation = () => {
   const isTrialActive = subscription?.trial.isActive;
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
-  const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
   const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
@@ -148,14 +147,12 @@ export const SideNavigation = () => {
                   <span>Subscribers</span>
                 </NavigationLink>
               </Protect>
-              {isTopicsPageActive && (
-                <Protect permission={PermissionsEnum.TOPIC_READ}>
-                  <NavigationLink to={buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-                    <RiDiscussLine className="size-4" />
-                    <span>Topics</span>
-                  </NavigationLink>
-                </Protect>
-              )}
+              <Protect permission={PermissionsEnum.TOPIC_READ}>
+                <NavigationLink to={buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                  <RiDiscussLine className="size-4" />
+                  <span>Topics</span>
+                </NavigationLink>
+              </Protect>
             </NavigationGroup>
             <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
               <NavigationGroup label="Monitor">
