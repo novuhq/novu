@@ -6,6 +6,7 @@ import {
   IIntegration,
   IProviderConfig,
 } from '@novu/shared';
+import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Control, useWatch } from 'react-hook-form';
 import { RiCheckLine, RiCloseLine } from 'react-icons/ri';
@@ -14,6 +15,7 @@ import { FormLabel } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { LoadingIndicator } from '@/components/primitives/loading-indicator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { fadeIn } from '@/utils/animation';
 import { API_HOSTNAME } from '../../../config';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { useAutoConfigureIntegration } from '../../../hooks/use-auto-configure-integration';
@@ -36,6 +38,49 @@ function configurationToCredential(config: ConfigConfiguration): IConfigCredenti
     required: config.required,
     links: config.links,
   } as IConfigCredential;
+}
+
+function AutoConfigureStatus({ state, message }: { state: 'idle' | 'loading' | 'success' | 'error'; message: string }) {
+  if (state === 'idle') {
+    return null;
+  }
+
+  return (
+    <div className="flex h-4 items-center justify-start rounded-full bg-background -ml-[5px]">
+      {state === 'loading' && (
+        <div className="flex items-center gap-2">
+          <LoadingIndicator size="sm" className="size-2.5" />
+          <span className="text-xs text-neutral-600">Enabling tracking…</span>
+        </div>
+      )}
+      {state === 'success' && (
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger>
+              <RiCheckLine className="size-3 text-green-600" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{message}</p>
+            </TooltipContent>
+          </Tooltip>
+          <span className="text-xs text-green-600">Auto-configured</span>
+        </div>
+      )}
+      {state === 'error' && (
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger>
+              <RiCloseLine className="size-3 text-red-600" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{message}</p>
+            </TooltipContent>
+          </Tooltip>
+          <span className="text-xs text-red-600">Manual setup required</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function ConfigurationGroup({
@@ -147,95 +192,75 @@ export function ConfigurationGroup({
   }
 
   return (
-    <div>
+    <>
       {/* Render the enable toggle if it exists */}
       {enablerConfig && (
-        <CredentialSection
-          key={String(enablerConfig.key)}
-          name="configurations"
-          credential={configurationToCredential(enablerConfig)}
-          control={control}
-          isReadOnly={isReadOnly}
-          isDisabledWithSwitch={!integrationId}
-          disabledSwitchMessage={
-            !integrationId ? 'To enable Email activity tracking, create the integration first' : undefined
-          }
-        />
-      )}
-
-      {/* Render nested configurations only when enabled */}
-      {isEnabled && (
-        <div className="relative mt-3 space-y-2 pl-6">
-          {/* Vertical line indicator */}
-          <div className="absolute left-3 top-0 bottom-0 w-px bg-neutral-alpha-200" />
-
-          {/* Auto-configure status indicator */}
-          {autoConfigureState !== 'idle' && (
-            <div className="absolute left-1 -bottom-2 flex h-4 w-4 items-center justify-center rounded-full bg-background">
-              {autoConfigureState === 'loading' && <LoadingIndicator size="sm" className="size-2.5" />}
-              {autoConfigureState === 'success' && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <RiCheckLine className="size-3 text-green-600" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{autoConfigureMessage}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              {autoConfigureState === 'error' && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <RiCloseLine className="size-3 text-red-600" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{autoConfigureMessage}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-          )}
-
-          <FormLabel htmlFor={'inboundWebhookUrl'} optional={false}>
-            Inbound Webhook URL
-          </FormLabel>
-          <Input
-            className="cursor-default font-mono !text-neutral-500"
-            id={'inboundWebhookUrl'}
-            value={inboundWebhookUrl}
-            type="text"
-            readOnly={true}
-            trailingNode={<CopyButton valueToCopy={inboundWebhookUrl} />}
-          />
-
-          <InlineToast
-            variant={'tip'}
-            className="mt-3"
-            description={
-              <>
-                Copy this URL into your SendGrid webhook settings.
-                <br />
-                Note: Required scopes must be enabled.
-              </>
+        <>
+          <CredentialSection
+            key={String(enablerConfig.key)}
+            name="configurations"
+            credential={configurationToCredential(enablerConfig)}
+            control={control}
+            isReadOnly={isReadOnly}
+            isDisabledWithSwitch={!integrationId}
+            disabledSwitchMessage={
+              !integrationId ? 'To enable Email activity tracking, create the integration first' : undefined
             }
-            ctaLabel="View Guide"
-            onCtaClick={() => {
-              window.open(group?.setupWebhookUrlGuide ?? '', '_blank');
-            }}
           />
 
-          {nonEnablerConfigs.length > 0 &&
-            nonEnablerConfigs.map((config) => (
-              <CredentialSection
-                key={String(config.key)}
-                name="configurations"
-                credential={configurationToCredential(config)}
-                control={control}
-                isReadOnly={isReadOnly}
-              />
-            ))}
-        </div>
+          {/* status indicator */}
+          {isEnabled && (
+            <>
+              <div className="border-l border-neutral-alpha-200 pl-5">
+                <div className="mb-4">
+                  <FormLabel htmlFor={'inboundWebhookUrl'} optional={false}>
+                    Inbound Webhook URL
+                  </FormLabel>
+                  <Input
+                    className="cursor-default font-mono !text-neutral-500"
+                    id={'inboundWebhookUrl'}
+                    value={inboundWebhookUrl}
+                    type="text"
+                    readOnly={true}
+                    trailingNode={<CopyButton valueToCopy={inboundWebhookUrl} />}
+                  />
+
+                  {/* Show instructions only when auto-configure fails */}
+                  <AnimatePresence mode="wait">
+                    {autoConfigureState === 'error' && (
+                      <motion.div key="error-instructions" {...fadeIn}>
+                        <InlineToast
+                          variant={'tip'}
+                          className="mt-3"
+                          title="Manual setup"
+                          description="copy this URL into your SendGrid webhook settings, Note: Required scopes must be enabled."
+                          ctaLabel="View Guide"
+                          onCtaClick={() => {
+                            window.open(group?.setupWebhookUrlGuide ?? '', '_blank');
+                          }}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {nonEnablerConfigs.length > 0 &&
+                  nonEnablerConfigs.map((config) => (
+                    <CredentialSection
+                      key={String(config.key)}
+                      name="configurations"
+                      credential={configurationToCredential(config)}
+                      control={control}
+                      isReadOnly={isReadOnly}
+                    />
+                  ))}
+              </div>
+
+              <AutoConfigureStatus state={autoConfigureState} message={autoConfigureMessage} />
+            </>
+          )}
+        </>
       )}
-    </div>
+    </>
   );
 }

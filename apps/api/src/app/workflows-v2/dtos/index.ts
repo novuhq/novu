@@ -18,6 +18,7 @@ export * from './runtime-issue.dto';
 export * from './step.response.dto';
 export * from './step-content-issue.dto';
 export * from './step-issues.dto';
+export * from './step-list-response.dto';
 export * from './sync-workflow.dto';
 export * from './ui-schema.dto';
 export * from './ui-schema-property.dto';

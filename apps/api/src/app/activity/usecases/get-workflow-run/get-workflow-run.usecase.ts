@@ -201,7 +201,7 @@ export class GetWorkflowRun {
           ({
             ...stepRun,
             executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
-            digest: stepRun.digest ? JSON.parse(stepRun.digest) : digestDataByStepId.get(stepRun.step_run_id),
+            digest: stepRun.digest ? stepRun.digest : digestDataByStepId.get(stepRun.step_run_id) || null,
           }) satisfies IStepRunWithDetails
       );
     } catch (error) {
@@ -249,8 +249,6 @@ export class GetWorkflowRun {
         if (existingTraces) {
           existingTraces.push(trace);
         }
-        // biome-ignore lint/style/noNonNullAssertion: <explanation> because we otherwise the if statement would set it to the map
-        executionDetailsByEntityId.get(trace.entity_id)!.push(trace);
       }
 
       return executionDetailsByEntityId;
@@ -273,6 +271,7 @@ export class GetWorkflowRun {
       status: stepRun.status,
       createdAt: new Date(stepRun.created_at),
       updatedAt: new Date(stepRun.updated_at),
+      digest: stepRun.digest ? JSON.parse(stepRun.digest) : undefined,
       executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || []),
     };
   }

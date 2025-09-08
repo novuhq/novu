@@ -37,6 +37,12 @@ export class StepIssuesDto {
   integration?: Record<string, RuntimeIssue[]>;
 }
 
+export type StepListResponseDto = {
+  slug: Slug;
+  type: StepTypeEnum;
+  issues?: StepIssuesDto;
+};
+
 export type StepCreateAndUpdateKeys = keyof StepCreateDto | keyof StepUpdateDto;
 
 export enum UiSchemaGroupEnum {
