@@ -1,4 +1,4 @@
-import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   DaysEnum,
   DigestTypeEnum,
@@ -196,15 +196,16 @@ export class ActivityNotificationExecutionDetailResponseDto {
   @ApiProperty({ description: 'Whether the execution is a test or not', type: Boolean })
   isTest: boolean;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     enum: [...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))])],
     enumName: 'ProvidersIdEnum',
     description: 'Provider ID of the execution',
     type: String,
   })
   @IsString()
+  @IsOptional()
   @IsEnum(ProvidersIdEnumConst)
-  providerId: ProvidersIdEnum;
+  providerId?: ProvidersIdEnum;
 
   @ApiPropertyOptional({ description: 'Raw data of the execution', type: String })
   raw?: string | null;
@@ -443,13 +444,15 @@ export class ActivityNotificationResponseDto {
   @ApiPropertyOptional({ description: 'Topics of the notification', type: [ActivityTopicDto] })
   topics?: ActivityTopicDto[];
 
-  @ApiHideProperty()
-  /* @ApiPropertyOptional({
+  @ApiPropertyOptional({
     description: 'Severity of the notification',
     enum: [...Object.values(SeverityLevelEnum)],
     enumName: 'SeverityLevelEnum',
-  }) */
+  })
   severity: SeverityLevelEnum;
+
+  @ApiPropertyOptional({ description: 'Criticality of the notification', type: Boolean })
+  critical?: boolean;
 }
 
 // Activities Response DTO

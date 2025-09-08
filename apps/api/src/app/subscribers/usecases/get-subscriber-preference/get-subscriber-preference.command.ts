@@ -1,5 +1,6 @@
 import { EnvironmentWithSubscriber } from '@novu/application-generic';
-import { SeverityLevelEnum } from '@novu/shared';
+import { SubscriberEntity } from '@novu/dal';
+import { SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
 import { IsArray, IsBoolean, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class GetSubscriberPreferenceCommand extends EnvironmentWithSubscriber {
@@ -16,4 +17,11 @@ export class GetSubscriberPreferenceCommand extends EnvironmentWithSubscriber {
   @IsBoolean()
   @IsDefined()
   includeInactiveChannels: boolean;
+
+  @IsEnum(WorkflowCriticalityEnum)
+  @IsOptional()
+  criticality: WorkflowCriticalityEnum;
+
+  @IsOptional()
+  subscriber?: SubscriberEntity;
 }

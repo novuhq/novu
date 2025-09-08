@@ -7,12 +7,7 @@ import {
   InvalidateCacheService,
   PinoLogger,
 } from '@novu/application-generic';
-import {
-  CommunityOrganizationRepository,
-  IntegrationEntity,
-  IntegrationRepository,
-  OrganizationEntity,
-} from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository, OrganizationEntity } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -183,6 +178,10 @@ export class UpdateIntegration {
 
     if (command.credentials) {
       updatePayload.credentials = encryptCredentials(command.credentials);
+    }
+
+    if (command.configurations) {
+      updatePayload.configurations = command.configurations;
     }
 
     if (command.conditions) {

@@ -18,6 +18,7 @@ import {
   NormalizeVariablesCommand,
   StandardQueueService,
   StepRunRepository,
+  StepRunStatus,
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
   WorkflowRunStatusEnum,
@@ -59,6 +60,7 @@ export enum BackoffStrategiesEnum {
 type AddJobResult = {
   workflowStatus: WorkflowRunStatusEnum | null;
   deliveryLifecycleStatus: DeliveryLifecycleStatus | null;
+  stepStatus?: StepRunStatus;
 };
 
 const LOG_CONTEXT = 'AddJob';
@@ -151,6 +153,15 @@ export class AddJob {
 
     const filterVariables = shouldRun.variables;
     const filtered = !shouldRun.passed;
+    const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
+
+    if (filtered || bridgeResponse?.options?.skip) {
+      return {
+        workflowStatus: null,
+        deliveryLifecycleStatus: null,
+        stepStatus: JobStatusEnum.SKIPPED,
+      };
+    }
 
     let digestResult: {
       digestAmount: number;
@@ -159,7 +170,7 @@ export class AddJob {
     } | null = null;
 
     if (job.type === StepTypeEnum.DIGEST) {
-      digestResult = await this.handleDigest(command, filterVariables, job, digestAmount, filtered);
+      digestResult = await this.handleDigest(command, job, digestAmount, bridgeResponse);
 
       if (isShouldHaltJobExecution(digestResult.digestCreationResult)) {
         if (digestResult.digestCreationResult === DigestCreationResultEnum.MERGED) {
@@ -181,7 +192,7 @@ export class AddJob {
     }
 
     if (job.type === StepTypeEnum.DELAY) {
-      delayAmount = await this.handleDelay(command, filterVariables);
+      delayAmount = await this.handleDelay(command, bridgeResponse);
 
       if (delayAmount === undefined) {
         Logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`, LOG_CONTEXT);
@@ -272,9 +283,7 @@ export class AddJob {
     };
   }
 
-  private async handleDelay(command: AddJobCommand, filterVariables: IFilterVariables) {
-    const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
-
+  private async handleDelay(command: AddJobCommand, bridgeResponse: ExecuteOutput | null) {
     let metadata: IWorkflowStepMetadata;
     if (bridgeResponse) {
       // Assign V2 metadata from Bridge response
@@ -422,19 +431,15 @@ export class AddJob {
 
   private async handleDigest(
     command: AddJobCommand,
-    filterVariables: IFilterVariables,
     job: JobEntity,
     digestAmount: number | undefined,
-    filtered: boolean
+    bridgeResponse: ExecuteOutput | null
   ) {
-    const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
-
     let metadata: IWorkflowStepMetadata;
     if (bridgeResponse) {
       metadata = await this.updateMetadata(bridgeResponse, command);
     } else {
-      // @ts-ignore - job.digest is not typed
-      metadata = job.digest;
+      metadata = job.digest || ({} as IWorkflowStepMetadata);
     }
 
     // Update the job digest directly to avoid an extra database call
@@ -467,7 +472,6 @@ export class AddJob {
     const digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
       MergeOrCreateDigestCommand.create({
         job,
-        filtered,
       })
     );
 

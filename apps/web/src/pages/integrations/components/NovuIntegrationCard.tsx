@@ -1,8 +1,7 @@
 import styled from '@emotion/styled';
 import { createStyles, Group, useMantineColorScheme } from '@mantine/core';
-import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
-
 import { colors, shadows, Text, Tooltip } from '@novu/design-system';
+import { ChannelTypeEnum, IConfigCredential } from '@novu/shared';
 import { useIntegrationLimit } from '../../../hooks';
 import type { IIntegratedProvider } from '../types';
 import { CardStatusBar } from './CardStatusBar';
@@ -21,7 +20,7 @@ export function NovuIntegrationCard({
   const logoSrc = provider.logoFileName[`${colorScheme}`];
   const brightCard =
     provider.active ||
-    provider.credentials.some((cred: IConfigCredentials) => {
+    provider.credentials.some((cred: IConfigCredential) => {
       return !cred.value;
     });
 
@@ -86,8 +85,8 @@ function TooltipLabel({
   isLimitReached: boolean;
 }) {
   const label = isLimitReached
-    ? `You have run out of available ${unit} for this month. Configure a different ${channel} provider to send more.` :
-      `The predefined free Novu provider allows sending ${limit} ${unit} per month. Configure a different ${channel} provider to send more.`;
+    ? `You have run out of available ${unit} for this month. Configure a different ${channel} provider to send more.`
+    : `The predefined free Novu provider allows sending ${limit} ${unit} per month. Configure a different ${channel} provider to send more.`;
 
   return (
     <StyledLabelContainer>

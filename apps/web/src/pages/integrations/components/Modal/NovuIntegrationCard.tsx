@@ -1,12 +1,11 @@
-import { IConfigCredentials } from '@novu/shared';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
-
-import { colors, shadows, getGradient } from '@novu/design-system';
-import { CardStatusBar } from '../CardStatusBar';
-import type { IIntegratedProvider } from '../../types';
-import { LimitBar } from '../LimitBar';
+import { colors, getGradient, shadows } from '@novu/design-system';
+import { IConfigCredential } from '@novu/shared';
 import { useIntegrationLimit } from '../../../../hooks';
+import type { IIntegratedProvider } from '../../types';
+import { CardStatusBar } from '../CardStatusBar';
+import { LimitBar } from '../LimitBar';
 
 export function NovuIntegrationCard({
   provider,
@@ -23,7 +22,7 @@ export function NovuIntegrationCard({
   const logoSrc = provider.logoFileName[`${colorScheme}`];
   const brightCard =
     provider.active ||
-    provider.credentials.some((cred: IConfigCredentials) => {
+    provider.credentials.some((cred: IConfigCredential) => {
       return !cred.value;
     });
 

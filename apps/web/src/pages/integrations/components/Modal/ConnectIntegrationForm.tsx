@@ -1,42 +1,41 @@
-import { useEffect, useReducer, useRef } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useClipboard } from '@mantine/hooks';
+import { keyframes } from '@emotion/react';
+import styled from '@emotion/styled';
 import { ActionIcon, Alert, Center, Image, Stack, useMantineColorScheme } from '@mantine/core';
-import { ChannelTypeEnum, ChatProviderIdEnum, CredentialsKeyEnum, ProvidersIdEnum } from '@novu/shared';
+import { useClipboard } from '@mantine/hooks';
+import {
+  Button,
+  Check,
+  Close,
+  Copy,
+  colors,
+  IconOutlineWarning,
+  Input,
+  Switch,
+  shadows,
+  Text,
+} from '@novu/design-system';
 import type {
-  IResponseError,
-  IConfigCredentials,
+  IConfigCredential,
   ICreateIntegrationBodyDto,
   ICredentialsDto,
   IEnvironment,
   IOrganizationEntity,
+  IResponseError,
 } from '@novu/shared';
-import styled from '@emotion/styled';
-import { keyframes } from '@emotion/react';
-import {
-  Button,
-  colors,
-  Input,
-  shadows,
-  Switch,
-  Text,
-  Close,
-  Check,
-  Copy,
-  IconOutlineWarning,
-} from '@novu/design-system';
-
-import type { IIntegratedProvider } from '../../types';
+import { ChannelTypeEnum, ChatProviderIdEnum, CredentialsKeyEnum, ProvidersIdEnum } from '@novu/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useReducer, useRef } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../../api/integration';
-import { IntegrationInput } from '../IntegrationInput';
-import { API_ROOT, CONTEXT_PATH } from '../../../../config';
-import { successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
-import { IntegrationsStoreModalAnalytics } from '../../constants';
 import { When } from '../../../../components/utils/When';
+import { API_ROOT, CONTEXT_PATH } from '../../../../config';
 import { useEnvironment } from '../../../../hooks';
+import { successMessage } from '../../../../utils/notifications';
+import { IntegrationsStoreModalAnalytics } from '../../constants';
+import type { IIntegratedProvider } from '../../types';
+import { IntegrationInput } from '../IntegrationInput';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
@@ -312,7 +311,7 @@ export function ConnectIntegrationForm({
       </Header>
 
       <CenterDiv>
-        {provider?.credentials.map((credential: IConfigCredentials) => (
+        {provider?.credentials.map((credential: IConfigCredential) => (
           <InputWrapper key={`${credential.key}-${provider?.providerId}`}>
             <Controller
               name={credential.key}

@@ -5,6 +5,7 @@ import {
   CreateOrUpdateSubscriberUseCase,
   createHash,
   decryptApiKey,
+  InstrumentUsecase,
   LogDecorator,
   SelectIntegration,
   SelectIntegrationCommand,
@@ -28,6 +29,7 @@ export class InitializeSession {
   ) {}
 
   @LogDecorator()
+  @InstrumentUsecase()
   async execute(command: InitializeSessionCommand): Promise<SessionInitializeResponseDto> {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 

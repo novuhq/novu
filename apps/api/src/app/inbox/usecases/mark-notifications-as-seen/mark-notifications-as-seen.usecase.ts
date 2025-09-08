@@ -5,17 +5,16 @@ import {
   buildMessageCountKey,
   InvalidateCacheService,
   LogRepository,
-  mapEventTypeToTitle,
   MessageInteractionService,
   MessageInteractionTrace,
+  mapEventTypeToTitle,
   messageWebhookMapper,
   PinoLogger,
   SendWebhookMessage,
   StepType,
-  Trace,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-import { MessageEntity, MessageRepository } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository, MessageEntity, MessageRepository } from '@novu/dal';
 import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
@@ -33,7 +32,8 @@ export class MarkNotificationsAsSeen {
     private webSocketsQueueService: WebSocketsQueueService,
     private messageInteractionService: MessageInteractionService,
     private logger: PinoLogger,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private environmentRepository: EnvironmentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -51,6 +51,15 @@ export class MarkNotificationsAsSeen {
       organizationId: command.organizationId,
       subscriberId: command.subscriberId,
     });
+    const environment = await this.environmentRepository.findOne(
+      {
+        _id: command.environmentId,
+      },
+      'webhookAppId identifier'
+    );
+    if (!environment) {
+      throw new Error(`Environment not found for id ${command.environmentId}`);
+    }
 
     if (!subscriber) {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
@@ -66,19 +75,7 @@ export class MarkNotificationsAsSeen {
         seen: true,
       });
 
-      const webhookPromises = updatedMessages.map((message) =>
-        this.sendWebhookMessage.execute({
-          eventType: WebhookEventEnum.MESSAGE_SEEN,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, subscriber.subscriberId),
-          },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        })
-      );
-
-      await Promise.all(webhookPromises);
+      await this.processWebhooksInBatches(updatedMessages, command, subscriber.subscriberId, environment);
 
       await this.logTraces({
         command,
@@ -95,7 +92,7 @@ export class MarkNotificationsAsSeen {
       });
     } else {
       // Use filter-based approach
-      let parsedData;
+      let parsedData: unknown;
       if (data) {
         try {
           parsedData = JSON.parse(data);
@@ -166,6 +163,42 @@ export class MarkNotificationsAsSeen {
     });
   }
 
+  private async processWebhooksInBatches(
+    messages: MessageEntity[],
+    command: MarkNotificationsAsSeenCommand,
+    subscriberId: string,
+    environment: EnvironmentEntity
+  ): Promise<void> {
+    const BATCH_SIZE = 100;
+    const messageChunks = this.chunkArray(messages, BATCH_SIZE);
+
+    for (const messageChunk of messageChunks) {
+      const webhookPromises = messageChunk.map((message) =>
+        this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_SEEN,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, subscriberId),
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          environment,
+        })
+      );
+
+      await Promise.all(webhookPromises);
+    }
+  }
+
+  private chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+
+    return chunks;
+  }
+
   private async logTraces({
     command,
     subscriberId,
@@ -195,7 +228,7 @@ export class MarkNotificationsAsSeen {
         try {
           const parsedData = JSON.parse(command.data);
           fromFilters.data = parsedData;
-        } catch (error) {
+        } catch {
           // If data parsing fails, skip trace logging for this case
           return;
         }

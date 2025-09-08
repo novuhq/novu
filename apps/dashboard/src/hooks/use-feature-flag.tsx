@@ -1,9 +1,9 @@
 import { FeatureFlags, FeatureFlagsKeysEnum, prepareBooleanStringFeatureFlag } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
-import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 
 function isLaunchDarklyEnabled() {
-  return !!LAUNCH_DARKLY_CLIENT_SIDE_ID;
+  return !!LAUNCH_DARKLY_CLIENT_SIDE_ID && !(IS_SELF_HOSTED && IS_ENTERPRISE);
 }
 
 export const useFeatureFlagMap = (defaultValue = false): FeatureFlags => {
@@ -21,6 +21,8 @@ export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false):
 
   if (!isLaunchDarklyEnabled()) {
     const envValue =
+      // Check runtime env first (for self-hosted flexibility)
+      (window as unknown as { _env_?: Record<string, string> })?._env_?.[`VITE_${key}`] ??
       // Check if the feature flag is exported as an environment variable
       import.meta.env[`VITE_${key}`] ??
       // Then check process.env if process exists

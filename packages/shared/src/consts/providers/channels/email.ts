@@ -1,5 +1,6 @@
 import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
+import { sendgridGroupConfigurations } from '../configurations/provider-configuration';
 import {
   brazeEmailConfig,
   emailWebhookConfig,
@@ -76,6 +77,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'SendGrid',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendgridConfig,
+    configurations: sendgridGroupConfigurations,
     docReference: `https://docs.novu.co/integrations/providers/email/sendgrid${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'sendgrid.png', dark: 'sendgrid.png' },
   },

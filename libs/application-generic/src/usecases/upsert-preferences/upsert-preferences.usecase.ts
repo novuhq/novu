@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
-import { PreferencesTypeEnum, WorkflowPreferences, WorkflowPreferencesPartial } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  PreferencesTypeEnum,
+  WorkflowPreferences,
+  WorkflowPreferencesPartial,
+} from '@novu/shared';
 import { Instrument } from '../../instrumentation';
+import { FeatureFlagsService } from '../../services/feature-flags/feature-flags.service';
 import { deepMerge } from '../../utils';
 import { UpsertSubscriberGlobalPreferencesCommand } from './upsert-subscriber-global-preferences.command';
 import { UpsertSubscriberWorkflowPreferencesCommand } from './upsert-subscriber-workflow-preferences.command';
@@ -29,22 +35,35 @@ type UpsertPreferencesCommand = Omit<
 
 @Injectable()
 export class UpsertPreferences {
-  constructor(private preferencesRepository: PreferencesRepository) {}
+  constructor(
+    private preferencesRepository: PreferencesRepository,
+    private featureFlagsService: FeatureFlagsService
+  ) {}
 
   @Instrument()
   public async upsertWorkflowPreferences(command: UpsertWorkflowPreferencesCommand): Promise<WorkflowPreferencesFull> {
-    return this.upsert({
+    const result = await this.upsert({
       templateId: command.templateId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       preferences: command.preferences,
       type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
-    }) as Promise<WorkflowPreferencesFull>;
+      returnPreference: true,
+    });
+
+    return result as WorkflowPreferencesFull;
   }
 
   @Instrument()
   public async upsertSubscriberGlobalPreferences(command: UpsertSubscriberGlobalPreferencesCommand) {
     await this.deleteSubscriberWorkflowChannelPreferences(command);
+
+    const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
+      defaultValue: false,
+      environment: { _id: command.environmentId },
+      organization: { _id: command.organizationId },
+    });
 
     return this.upsert({
       _subscriberId: command._subscriberId,
@@ -52,6 +71,8 @@ export class UpsertPreferences {
       organizationId: command.organizationId,
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+      returnPreference: command.returnPreference,
+      schedule: isSubscribersScheduleEnabled ? command.schedule : undefined,
     });
   }
 
@@ -93,6 +114,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+      returnPreference: command.returnPreference,
     });
   }
 
@@ -100,17 +122,20 @@ export class UpsertPreferences {
   public async upsertUserWorkflowPreferences(
     command: UpsertUserWorkflowPreferencesCommand
   ): Promise<WorkflowPreferencesFull> {
-    return this.upsert({
+    const result = await this.upsert({
       userId: command.userId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.USER_WORKFLOW,
-    }) as Promise<WorkflowPreferencesFull>;
+      returnPreference: true,
+    });
+
+    return result as WorkflowPreferencesFull;
   }
 
-  private async upsert(command: UpsertPreferencesCommand): Promise<PreferencesEntity> {
+  private async upsert(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
     const foundPreference = await this.getPreference(command);
 
     if (foundPreference) {
@@ -129,6 +154,7 @@ export class UpsertPreferences {
       _templateId: command.templateId,
       preferences: command.preferences,
       type: command.type,
+      schedule: command.schedule,
     });
   }
 
@@ -149,12 +175,17 @@ export class UpsertPreferences {
       {
         $set: {
           preferences: mergedPreferences,
+          schedule: command.schedule,
           _userId: command.userId,
         },
       }
     );
 
-    return await this.getPreference(command);
+    if (command.returnPreference) {
+      return await this.getPreference(command);
+    }
+
+    return undefined;
   }
 
   private async deletePreferences(command: UpsertPreferencesCommand, preferencesId: string) {

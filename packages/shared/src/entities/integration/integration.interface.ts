@@ -1,4 +1,5 @@
 import { ChannelTypeEnum, EnvironmentId, IPreviousStepFilterPart, OrganizationId } from '../../types';
+import { IConfigurations } from './configuration.interface';
 import { ICredentials } from './credential.interface';
 
 export interface IIntegration {
@@ -13,6 +14,8 @@ export interface IIntegration {
   channel: ChannelTypeEnum;
 
   credentials: ICredentials;
+
+  configurations: IConfigurations;
 
   active: boolean;
 

@@ -6,6 +6,8 @@ import {
   CreateNotificationJobsCommand,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
+  GetPreferences,
+  GetPreferencesCommand,
   Instrument,
   InstrumentUsecase,
   LogRepository,
@@ -21,6 +23,7 @@ import {
   ISubscribersDefine,
   ProvidersIdEnum,
   ResourceTypeEnum,
+  SeverityLevelEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
@@ -38,7 +41,8 @@ export class SubscriberJobBound {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService,
-    private traceLogRepository: TraceLogRepository
+    private traceLogRepository: TraceLogRepository,
+    private getPreferences: GetPreferences
   ) {}
 
   @InstrumentUsecase()
@@ -138,6 +142,23 @@ export class SubscriberJobBound {
       return;
     }
 
+    const severity = command.overrides.severity ?? template.severity ?? SeverityLevelEnum.NONE;
+
+    let critical = false;
+    if (command.bridge?.workflow) {
+      critical = command.bridge.workflow.preferences?.all?.readOnly ?? false;
+    } else {
+      const preferences = await this.getPreferences.safeExecute(
+        GetPreferencesCommand.create({
+          environmentId,
+          organizationId,
+          subscriberId: subscriberProcessed._id,
+          templateId,
+        })
+      );
+      critical = preferences.preferences.all.readOnly;
+    }
+
     const createNotificationJobsCommand: CreateNotificationJobsCommand = {
       environmentId,
       identifier,
@@ -163,6 +184,8 @@ export class SubscriberJobBound {
       ...(command.bridge?.workflow && {
         preferences: buildWorkflowPreferences(command.bridge?.workflow?.preferences),
       }),
+      severity,
+      critical,
     };
 
     if (actor) {

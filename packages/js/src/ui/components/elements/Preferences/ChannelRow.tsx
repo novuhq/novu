@@ -93,7 +93,11 @@ export const ChannelRow = (props: ChannelRowProps) => {
           >[0],
         })}
       >
-        <Switch state={state()} onChange={(newState) => onChange(newState === 'enabled')} />
+        <Switch
+          state={state()}
+          onChange={(newState) => onChange(newState === 'enabled')}
+          disabled={props.preference?.workflow?.critical}
+        />
       </div>
     </div>
   );

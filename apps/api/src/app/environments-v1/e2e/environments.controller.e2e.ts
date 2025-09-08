@@ -1,5 +1,5 @@
 import { Novu } from '@novu/api';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, EnvironmentEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -36,6 +36,84 @@ describe('Env Controller', async () => {
       });
     });
   });
+
+  describe('Update Env Protection', () => {
+    it('should prevent renaming Development environment', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+      
+      // Find the Development environment
+      const environments = await novuClient.environments.list();
+      const devEnvironment = environments.result?.find(env => env.name === EnvironmentEnum.DEVELOPMENT);
+      expect(devEnvironment).to.be.ok;
+
+      // Try to update the Development environment name - should fail
+      const { error } = await expectSdkExceptionGeneric(() =>
+        novuClient.environments.update({
+          name: 'Custom Development Name'
+        }, devEnvironment!._id!)
+      );
+
+      expect(error).to.be.ok;
+      expect(error?.message).to.include('Cannot update the name of Development or Production environments');
+      expect(error?.statusCode).to.equal(422);
+    });
+
+    it('should prevent renaming Production environment', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+      
+      // Find the Production environment
+      const environments = await novuClient.environments.list();
+      const prodEnvironment = environments.result?.find(env => env.name === EnvironmentEnum.PRODUCTION);
+      expect(prodEnvironment).to.be.ok;
+
+      // Try to update the Production environment name - should fail
+      const { error } = await expectSdkExceptionGeneric(() =>
+        novuClient.environments.update({
+          name: 'Custom Production Name'
+        }, prodEnvironment!._id!)
+      );
+
+      expect(error).to.be.ok;
+      expect(error?.message).to.include('Cannot update the name of Development or Production environments');
+      expect(error?.statusCode).to.equal(422);
+    });
+
+    it('should allow updating other properties of protected environments', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+      
+      // Find the Development environment
+      const environments = await novuClient.environments.list();
+      const devEnvironment = environments.result?.find(env => env.name === EnvironmentEnum.DEVELOPMENT);
+      expect(devEnvironment).to.be.ok;
+
+      // Should be able to update color without changing name
+      const updatedEnv = await novuClient.environments.update({
+        color: '#ff0000'
+      }, devEnvironment!._id!);
+
+      expect(updatedEnv.result).to.be.ok;
+      expect(updatedEnv.result?.name).to.equal(EnvironmentEnum.DEVELOPMENT); // Name should remain unchanged
+    });
+
+    it('should allow renaming custom environments', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+      
+      // Create a custom environment
+      const { environmentRequestDto } = generateRandomEnvRequest();
+      const createdEnv = await novuClient.environments.create(environmentRequestDto);
+      expect(createdEnv.result).to.be.ok;
+
+      // Should be able to update custom environment name
+      const newName = generateRandomName('updated-env');
+      const updatedEnv = await novuClient.environments.update({
+        name: newName
+      }, createdEnv.result!._id!);
+
+      expect(updatedEnv.result).to.be.ok;
+      expect(updatedEnv.result?.name).to.equal(newName);
+    });
+  });
+
   function generateRandomEnvRequest() {
     const name = generateRandomName('env');
     const parentId = session.environment._id;

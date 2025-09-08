@@ -57,8 +57,6 @@ import {
 export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private environmentRepository: EnvironmentRepository,
-    private communityOrganizationRepository: CommunityOrganizationRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
@@ -78,45 +76,7 @@ export class ParseEventRequest {
     const transactionId = command.transactionId || generateTransactionId();
     const requestId = command.requestId;
 
-    await this.createRequestTrace(
-      requestId,
-      command,
-      'request_received',
-      transactionId,
-      'success',
-      'Event request received'
-    );
-
     try {
-      const [environment, organization] = await Promise.all([
-        this.environmentRepository.findOne({ _id: command.environmentId }),
-        this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
-      ]);
-
-      if (!organization) {
-        await this.createRequestTrace(
-          requestId,
-          command,
-          'request_organization_not_found',
-          transactionId,
-          'error',
-          'Organization not found'
-        );
-        throw new BadRequestException('Organization not found');
-      }
-
-      if (!environment) {
-        await this.createRequestTrace(
-          requestId,
-          command,
-          'request_environment_not_found',
-          transactionId,
-          'error',
-          'Environment not found'
-        );
-        throw new BadRequestException('Environment not found');
-      }
-
       const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
 
       if (statelessWorkflowAllowed) {
@@ -139,15 +99,15 @@ export class ParseEventRequest {
           command,
           transactionId,
           discoveredWorkflow,
-          environment,
-          organization,
         });
       }
 
-      const template = await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: command.environmentId,
-        triggerIdentifier: command.identifier,
-      });
+      const template =
+        command.workflow ||
+        (await this.getNotificationTemplateByTriggerIdentifier({
+          environmentId: command.environmentId,
+          triggerIdentifier: command.identifier,
+        }));
 
       if (!template) {
         await this.createRequestTrace(
@@ -262,8 +222,6 @@ export class ParseEventRequest {
         requestId,
         command,
         transactionId,
-        environment,
-        organization,
       });
 
       return result;
@@ -355,23 +313,19 @@ export class ParseEventRequest {
     command,
     transactionId,
     discoveredWorkflow,
-    environment,
-    organization,
   }: {
     requestId: string;
     command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;
     transactionId: string;
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
-    environment?: EnvironmentEntity;
-    organization?: OrganizationEntity;
   }) {
     const commandArgs = {
       ...command,
     };
 
     const isDryRun = await this.featureFlagService.getFlag({
-      environment,
-      organization,
+      environment: { _id: command.environmentId },
+      organization: { _id: command.organizationId },
       user: { _id: command.userId } as UserEntity,
       key: FeatureFlagsKeysEnum.IS_SUBSCRIBER_ID_VALIDATION_DRY_RUN_ENABLED,
       defaultValue: true,
@@ -425,16 +379,6 @@ export class ParseEventRequest {
     this.logger.info(
       { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
       'Event dispatched to [Workflow] Queue'
-    );
-
-    await this.createRequestTrace(
-      requestId,
-      command,
-      'request_queued',
-      transactionId,
-      'success',
-      'Event successfully dispatched to workflow queue',
-      { workflowId: discoveredWorkflow?.workflowId }
     );
 
     return {

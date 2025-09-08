@@ -152,7 +152,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DELAY,
-        detail: DetailEnum.FILTER_STEPS,
+        detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
       });
 
       expect(executionDetails.length).to.equal(1);
@@ -216,7 +216,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DELAY,
-        detail: DetailEnum.FILTER_STEPS,
+        detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
       });
 
       expect(executionDetails.length).to.equal(1);
@@ -288,7 +288,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DIGEST,
-        detail: DetailEnum.FILTER_STEPS,
+        detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
       });
 
       expect(executionDetails.length).to.equal(1);
@@ -410,7 +410,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DIGEST,
-        detail: DetailEnum.FILTER_STEPS,
+        detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
       });
 
       expect(executionDetails.length).to.equal(2);
@@ -483,7 +483,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DIGEST,
-        detail: DetailEnum.FILTER_STEPS,
+        detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
       });
 
       expect(executionDetails.length).to.equal(0);
@@ -553,7 +553,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DIGEST,
-        detail: DetailEnum.FILTER_STEPS,
+        detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
       });
 
       expect(executionDetails.length).to.equal(0);
@@ -623,7 +623,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DIGEST,
-        detail: DetailEnum.FILTER_STEPS,
+        detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
       });
 
       expect(executionDetails.length).to.equal(1);
@@ -696,7 +696,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DELAY,
-        detail: DetailEnum.FILTER_STEPS,
+        detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
       });
 
       expect(executionDetails.length).to.equal(0);

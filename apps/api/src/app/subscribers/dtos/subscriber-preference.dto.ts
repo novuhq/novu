@@ -16,8 +16,8 @@ export class SubscriberPreferenceDto {
   channels: SubscriberPreferenceChannels;
 
   @ApiPropertyOptional({
-    type: SubscriberPreferenceOverrideDto,
+    type: [SubscriberPreferenceOverrideDto],
     description: 'Overrides for subscriber preferences for the different channels regarding this workflow',
   })
-  overrides?: SubscriberPreferenceOverrideDto;
+  overrides?: SubscriberPreferenceOverrideDto[];
 }

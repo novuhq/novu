@@ -319,6 +319,15 @@ describe('extractLiquidTemplateVariables', () => {
       expect(validVariables[0].name).to.equal('payload.title');
       expect(invalidVariables[0].name).to.equal('product.name');
     });
+
+    it('should handle if statements without treating variables as filter names', () => {
+      const template = '{% if payload.isActive %}Hello!{% endif %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.isActive');
+    });
   });
 
   describe('Assign tags', () => {
@@ -340,6 +349,24 @@ describe('extractLiquidTemplateVariables', () => {
       expect(invalidVariables).to.have.lengthOf(1);
       expect(validVariables[0].name).to.equal('payload.foo');
       expect(invalidVariables[0].name).to.equal('user.firstName');
+    });
+
+    it('should handle assign statements with filters without treating filter names as variables', () => {
+      const template = '{% assign uppercaseName = payload.firstName | upcase %}{{uppercaseName}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.firstName');
+    });
+
+    it('should handle assign statements with multiple filters', () => {
+      const template = '{% assign processedName = payload.firstName | upcase | truncate: 10 %}{{processedName}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.firstName');
     });
   });
 

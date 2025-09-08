@@ -1,4 +1,4 @@
-import { SeverityLevelEnum } from '@novu/shared';
+import { Schedule, SeverityLevelEnum } from '@novu/shared';
 
 type SeverityCounts = {
   [SeverityLevelEnum.HIGH]: number;
@@ -21,4 +21,5 @@ export class SubscriberSessionResponseDto {
   readonly maxSnoozeDurationHours: number;
   readonly isDevelopmentMode: boolean;
   readonly applicationIdentifier?: string;
+  readonly schedule?: Schedule;
 }

@@ -6,14 +6,13 @@ import { useNavigate } from 'react-router-dom';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Label } from '@/components/primitives/label';
-import { Separator } from '@/components/primitives/separator';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Protect } from '@/utils/protect';
 import { ROUTES } from '@/utils/routes';
-import { InlineToast } from '../../../components/primitives/inline-toast';
 import { cn } from '../../../utils/ui';
+import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
-import { CredentialsSection } from './integration-credentials';
+import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
 import { isDemoIntegration } from './utils/helpers';
 
@@ -21,6 +20,7 @@ type IntegrationFormData = {
   name: string;
   identifier: string;
   credentials: Record<string, string>;
+  configurations: Record<string, string>;
   active: boolean;
   check: boolean;
   primary: boolean;
@@ -35,6 +35,7 @@ type IntegrationConfigurationProps = {
   isChannelSupportPrimary?: boolean;
   hasOtherProviders?: boolean;
   isReadOnly?: boolean;
+  onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown> }) => void;
 };
 
 function generateSlug(name: string): string {
@@ -46,7 +47,7 @@ function generateSlug(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-export function IntegrationConfiguration({
+export function IntegrationSettings({
   provider,
   integration,
   onSubmit,
@@ -54,11 +55,14 @@ export function IntegrationConfiguration({
   isChannelSupportPrimary,
   hasOtherProviders,
   isReadOnly,
+  onFormStateChange,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
   const { currentEnvironment, environments } = useEnvironment();
 
   const form = useForm<IntegrationFormData>({
+    mode: 'all',
+    reValidateMode: 'onChange',
     defaultValues: integration
       ? {
           name: integration.name,
@@ -66,6 +70,7 @@ export function IntegrationConfiguration({
           active: integration.active,
           primary: integration.primary ?? false,
           credentials: integration.credentials as Record<string, string>,
+          configurations: integration.configurations as Record<string, string>,
           environmentId: integration._environmentId,
         }
       : {
@@ -74,11 +79,22 @@ export function IntegrationConfiguration({
           active: true,
           primary: true,
           credentials: {},
+          configurations: {},
           environmentId: currentEnvironment?._id ?? '',
         },
   });
 
-  const { handleSubmit, control, setValue } = form;
+  const { handleSubmit, control, setValue, formState } = form;
+
+  // Notify parent component of form state changes
+  useEffect(() => {
+    if (onFormStateChange) {
+      onFormStateChange({
+        isValid: formState.isValid,
+        errors: formState.errors,
+      });
+    }
+  }, [formState.isValid, formState.errors, onFormStateChange]);
 
   const name = useWatch({ control, name: 'name' });
   const environmentId = useWatch({ control, name: 'environmentId' });
@@ -118,7 +134,6 @@ export function IntegrationConfiguration({
             />
           </div>
         </div>
-
         <Accordion type="single" collapsible defaultValue="layout" className="p-3">
           <AccordionItem value="layout">
             <AccordionTrigger>
@@ -134,14 +149,26 @@ export function IntegrationConfiguration({
                 isReadOnly={isReadOnly}
                 hidePrimarySelector={!isChannelSupportPrimary}
                 disabledPrimary={!hasOtherProviders && integration?.primary}
+                configurations={provider.configurations}
+                integrationId={integration?._id}
+                isDemo={isDemo}
+                provider={provider}
+                formData={form.getValues()}
+                onAutoConfigureSuccess={(updatedIntegration) => {
+                  // Update form with the new integration data
+                  setValue('configurations', updatedIntegration.configurations as Record<string, string>);
+                  setValue('credentials', updatedIntegration.credentials as Record<string, string>);
+                  setValue('name', updatedIntegration.name);
+                  setValue('identifier', updatedIntegration.identifier);
+                  setValue('active', updatedIntegration.active);
+                  setValue('primary', updatedIntegration.primary ?? false);
+                }}
               />
             </AccordionContent>
           </AccordionItem>
         </Accordion>
 
-        <Separator className="mb-0 mt-0" />
-
-        {isDemo ? (
+        {isDemo && (
           <div className="p-3">
             <InlineToast
               variant={'warning'}
@@ -153,7 +180,9 @@ export function IntegrationConfiguration({
               }`}
             />
           </div>
-        ) : (
+        )}
+
+        {!isDemo && (
           <div className="p-3">
             <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
               <Accordion type="single" collapsible defaultValue="credentials">
@@ -161,11 +190,20 @@ export function IntegrationConfiguration({
                   <AccordionTrigger>
                     <div className="flex items-center gap-1 text-xs">
                       <RiInputField className="text-feature size-5" />
-                      Integration Credentials
+                      Delivery Provider Credentials
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <CredentialsSection provider={provider} control={control} isReadOnly={isReadOnly} />
+                    <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
+                      {provider.credentials.map((credential) => (
+                        <CredentialSection
+                          key={credential.key}
+                          credential={credential}
+                          control={control}
+                          isReadOnly={isReadOnly}
+                        />
+                      ))}
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -179,7 +217,7 @@ export function IntegrationConfiguration({
                 className="mt-3"
                 title="Integrate in less than 4 minutes"
                 ctaLabel="Get started"
-                onCtaClick={() => navigate(ROUTES.INBOX_EMBED + `?environmentId=${integration._environmentId}`)}
+                onCtaClick={() => navigate(`${ROUTES.INBOX_EMBED}?environmentId=${integration._environmentId}`)}
               />
             ) : (
               provider?.docReference && (

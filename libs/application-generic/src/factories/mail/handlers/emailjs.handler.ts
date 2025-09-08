@@ -1,13 +1,13 @@
 import { EmailJsProvider, IEmailJsConfig } from '@novu/providers';
 import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
-import { BaseHandler } from './base.handler';
+import { BaseEmailHandler } from './base.handler';
 
 /**
  * DEPRECATED:
  * This provider has been deprecated and will be removed in future version.
  * See: https://github.com/novuhq/novu/issues/2315
  */
-export class EmailJsHandler extends BaseHandler {
+export class EmailJsHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.EmailJS, ChannelTypeEnum.EMAIL);
   }

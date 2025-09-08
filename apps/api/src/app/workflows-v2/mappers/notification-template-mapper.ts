@@ -11,6 +11,7 @@ import { buildSlug } from '../../shared/helpers/build-slug';
 import { WorkflowWithPreferencesResponseDto } from '../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 import {
   RuntimeIssueDto,
+  StepListResponseDto,
   StepResponseDto,
   WorkflowCreateAndUpdateKeys,
   WorkflowListResponseDto,
@@ -89,11 +90,29 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
     status: template.status || WorkflowStatusEnum.ACTIVE,
     lastTriggeredAt: template.lastTriggeredAt,
     isTranslationEnabled: template.isTranslationEnabled || false,
+    steps: toStepListResponseDtos(template.steps),
   };
 }
 
 export function toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[]): WorkflowListResponseDto[] {
   return templates.map(toMinifiedWorkflowDto);
+}
+
+function toStepListResponseDtos(steps: NotificationStepEntity[]): StepListResponseDto[] {
+  return steps.map(toStepListResponseDto);
+}
+
+function toStepListResponseDto(step: NotificationStepEntity): StepListResponseDto {
+  // biome-ignore lint/style/noNonNullAssertion: always exists
+  const stepName = step.name!;
+  const slug = buildSlug(stepName, ShortIsPrefixEnum.STEP, step._templateId);
+
+  return {
+    slug,
+    // biome-ignore lint/style/noNonNullAssertion: always exists
+    type: step.template?.type!,
+    issues: step.issues,
+  };
 }
 
 function buildStepTypeOverview(step: NotificationStepEntity): StepTypeEnum | undefined {

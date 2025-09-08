@@ -35,7 +35,7 @@ const WorkflowCanvasChild = ({
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
   const { currentEnvironment } = useEnvironment();
-  const { workflow: currentWorkflow } = useWorkflow();
+  const { workflow: currentWorkflow, optimisticWorkflow } = useWorkflow();
   const navigate = useNavigate();
   const { user } = useUser();
   const {
@@ -54,6 +54,7 @@ const WorkflowCanvasChild = ({
   } = useCanvasNodesEdges({
     steps,
     isTemplateStorePreview,
+    workflow: optimisticWorkflow || currentWorkflow,
   });
 
   const positionCanvas = useCallback(
@@ -160,7 +161,7 @@ export const WorkflowCanvas = ({
 }) => {
   const has = useHasPermission();
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
-  const { workflow: currentWorkflow } = useWorkflow();
+  const { workflow: currentWorkflow, optimisticWorkflow } = useWorkflow();
   const navigate = useNavigate();
   const hasPermission = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
   const showReadOnlyOverlay = !hasPermission || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
@@ -182,7 +183,10 @@ export const WorkflowCanvas = ({
   return (
     <ReactFlowProvider>
       <div className="relative h-full w-full">
-        <WorkflowCanvasChild steps={steps || []} isTemplateStorePreview={isTemplateStorePreview} />
+        <WorkflowCanvasChild
+          steps={(optimisticWorkflow || currentWorkflow)?.steps || steps || []}
+          isTemplateStorePreview={isTemplateStorePreview}
+        />
 
         {showReadOnlyOverlay && (
           <>

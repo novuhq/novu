@@ -1,3 +1,33 @@
+## v3.9.3 (2025-09-03)
+
+This was a version bump only for @novu/react to align it with other projects, there were no code changes.
+
+## v3.9.2 (2025-09-03)
+
+### 🚀 Features
+
+- **js,react,api-service:** inbox allow filtering preferences by workflow criticality fixes NV-6577 ([#9011](https://github.com/novuhq/novu/pull/9011))
+
+### 🩹 Fixes
+
+- **js,react:** re-export types for the react-native package; fix partysocket event target polyfill fixes NV-6448 ([#9036](https://github.com/novuhq/novu/pull/9036))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
+## v3.9.1 (2025-08-27)
+
+### 🚀 Features
+
+- **js,react,nextjs:** inbox appearance keys as a callback with the context prop fixes NV-6447 ([#8983](https://github.com/novuhq/novu/pull/8983))
+- **js,react:** inbox render props for avatar, default and custom actions fixes NV-6535 ([#8977](https://github.com/novuhq/novu/pull/8977))
+- **js,react,api-service,ws:** support severity in inbox components and hooks fixes NV-6470 ([#8913](https://github.com/novuhq/novu/pull/8913))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
 ## v3.8.1 (2025-08-13)
 
 ### 🚀 Features
