@@ -77,8 +77,10 @@ const removeEvents: NotificationEvents[] = [
   'notification.unarchive.pending',
   'notification.snooze.pending',
   'notification.unsnooze.pending',
+  'notification.delete.pending',
   'notifications.archive_all.pending',
   'notifications.archive_all_read.pending',
+  'notifications.delete_all.pending',
 ];
 
 export class NotificationsCache {
