@@ -8,7 +8,7 @@ import {
   InstrumentUsecase,
 } from '@novu/application-generic';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, IPreferenceChannels, WorkflowCriticalityEnum } from '@novu/shared';
+import { ChannelTypeEnum, IPreferenceChannels, Schedule, WorkflowCriticalityEnum } from '@novu/shared';
 import { GetSubscriberPreferenceCommand } from '../get-subscriber-preference';
 import { GetSubscriberPreference } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
@@ -22,7 +22,9 @@ export class GetSubscriberGlobalPreference {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetSubscriberGlobalPreferenceCommand) {
+  async execute(
+    command: GetSubscriberGlobalPreferenceCommand
+  ): Promise<{ preference: { enabled: boolean; channels: IPreferenceChannels; schedule?: Schedule } }> {
     const subscriber = command.subscriber ?? (await this.getSubscriber(command));
 
     const activeChannels = await this.getActiveChannels(command);

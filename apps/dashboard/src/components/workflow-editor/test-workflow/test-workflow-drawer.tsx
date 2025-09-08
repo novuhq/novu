@@ -26,10 +26,12 @@ import { useAuth } from '@/context/auth/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTestWorkflowSubscriberPersistence } from '@/hooks/use-test-workflow-subscriber-persistence';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
 import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { useEnvironment } from '../../../context/environment/hooks';
+import { cleanupExpiredPreviewData } from '../steps/utils/preview-context-storage.utils';
 import { useWorkflow } from '../workflow-provider';
 
 type TestWorkflowDrawerProps = {
@@ -65,6 +67,11 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const [subscriberData, setSubscriberData] = useState<Partial<ISubscriberResponseDto> | null>(null);
   const [currentFormData, setCurrentFormData] = useState<{ to: unknown; payload: string } | null>(null);
 
+  // Cleanup expired storage data on component mount
+  useEffect(() => {
+    cleanupExpiredPreviewData();
+  }, []);
+
   const { currentEnvironment } = useEnvironment();
   const { workflow } = useWorkflow();
   const { currentUser } = useAuth();
@@ -82,22 +89,80 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     environmentId: currentEnvironment?._id || '',
   });
 
+  // Test workflow subscriber persistence
+  const { loadPersistedSubscriber, savePersistedSubscriber, clearPersistedSubscriber } =
+    useTestWorkflowSubscriberPersistence({
+      workflowId: workflow?.workflowId || '',
+      environmentId: currentEnvironment?._id || '',
+    });
+
+  // Track if we've initialized the subscriber data
+  const [hasInitializedSubscriber, setHasInitializedSubscriber] = useState(false);
+
+  // Reset initialization flag when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasInitializedSubscriber(false);
+    }
+  }, [isOpen]);
+
   // Subscriber management - single source of truth
   const subscriberIdToFetch = subscriberData?.subscriberId || currentUser?._id || '';
   const {
     data: fetchedSubscriberData,
     refetch: refetchSubscriber,
     isLoading: isLoadingSubscriber,
+    error: subscriberFetchError,
   } = useFetchSubscriber({
     subscriberId: subscriberIdToFetch,
     options: {
       enabled: !!subscriberIdToFetch && !!currentEnvironment,
+      retry: false, // Don't retry if subscriber doesn't exist
     },
   });
 
-  // Initialize subscriber data
+  // Initialize subscriber data from persisted storage when drawer opens
   useEffect(() => {
-    if (fetchedSubscriberData) {
+    if (
+      !hasInitializedSubscriber &&
+      isOpen &&
+      workflow?.workflowId &&
+      currentEnvironment?._id &&
+      currentUser &&
+      !subscriberData?.subscriberId
+    ) {
+      const persistedSubscriber = loadPersistedSubscriber();
+
+      if (persistedSubscriber) {
+        // Try to use the persisted subscriber
+        setSubscriberData(persistedSubscriber);
+      } else {
+        // No persisted subscriber, use current user
+        const fallbackData = {
+          subscriberId: currentUser._id,
+          firstName: currentUser.firstName ?? undefined,
+          lastName: currentUser.lastName ?? undefined,
+          email: currentUser.email ?? undefined,
+        };
+        setSubscriberData(fallbackData);
+      }
+
+      setHasInitializedSubscriber(true);
+    }
+  }, [
+    hasInitializedSubscriber,
+    isOpen,
+    workflow?.workflowId,
+    currentEnvironment?._id,
+    currentUser,
+    subscriberData?.subscriberId,
+    loadPersistedSubscriber,
+  ]);
+
+  // Handle fetched subscriber data and error cases
+  useEffect(() => {
+    if (fetchedSubscriberData && subscriberData?.subscriberId === fetchedSubscriberData.subscriberId) {
+      // Update with fresh data from server
       setSubscriberData({
         subscriberId: fetchedSubscriberData.subscriberId,
         firstName: fetchedSubscriberData.firstName ?? undefined,
@@ -109,15 +174,30 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         timezone: fetchedSubscriberData.timezone ?? undefined,
         data: fetchedSubscriberData.data ?? undefined,
       });
-    } else if (currentUser && !fetchedSubscriberData && !subscriberData?.subscriberId && !isLoadingSubscriber) {
-      setSubscriberData({
+    } else if (
+      subscriberFetchError &&
+      subscriberData?.subscriberId &&
+      subscriberData.subscriberId !== currentUser?._id &&
+      currentUser
+    ) {
+      // Persisted subscriber doesn't exist, clear it and fallback to current user
+      clearPersistedSubscriber();
+
+      const fallbackData = {
         subscriberId: currentUser._id,
         firstName: currentUser.firstName ?? undefined,
         lastName: currentUser.lastName ?? undefined,
         email: currentUser.email ?? undefined,
-      });
+      };
+      setSubscriberData(fallbackData);
     }
-  }, [fetchedSubscriberData, currentUser, subscriberData?.subscriberId, isLoadingSubscriber]);
+  }, [
+    fetchedSubscriberData,
+    subscriberFetchError,
+    subscriberData?.subscriberId,
+    currentUser,
+    clearPersistedSubscriber,
+  ]);
 
   const payload = useMemo(() => {
     if (initialPayload && Object.keys(initialPayload).length > 0) {
@@ -147,9 +227,14 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     }
   }, [watchedPayload, initialPayload, savePersistedPayload]);
 
-  const handleSubscriberSelect = useCallback((subscriber: ISubscriberResponseDto) => {
-    setSubscriberData(subscriber);
-  }, []);
+  const handleSubscriberSelect = useCallback(
+    (subscriber: ISubscriberResponseDto) => {
+      setSubscriberData(subscriber);
+      // Persist the selected subscriber for future use
+      savePersistedSubscriber(subscriber);
+    },
+    [savePersistedSubscriber]
+  );
 
   const handleSubscriberDrawerClose = useCallback(
     (open: boolean) => {

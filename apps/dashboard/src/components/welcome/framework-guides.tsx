@@ -317,21 +317,13 @@ export function FrameworkCliInstructions({ framework }: { framework: Framework }
     <SetupTooltip
       onInviteTeam={() => {
         track(TelemetryEvent.INVITE_TEAM_CLICKED, { origin: 'cli' });
-        if (!environmentSlug) {
-          console.error('Environment slug is missing');
-          return;
-        }
-        navigate(buildRoute(ROUTES.SETTINGS_TEAM, { environmentSlug }));
+        navigate(buildRoute(ROUTES.SETTINGS_TEAM, { environmentSlug: environmentSlug || '' }));
       }}
       onSkip={() => {
         track(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
           skippedFrom: 'framework-guides-cli',
         });
-        if (!environmentSlug) {
-          console.error('Environment slug is missing');
-          return;
-        }
-        navigate(buildRoute(ROUTES.HOME, { environmentSlug }));
+        navigate(buildRoute(ROUTES.HOME, { environmentSlug: environmentSlug || '' }));
       }}
     />
   );

@@ -20,6 +20,7 @@ import {
   SmsNode,
   TriggerNode,
 } from './nodes';
+import { OptimisticStep } from './use-optimistic-workflow';
 
 // y distance = node height + space between nodes
 const Y_DISTANCE = NODE_HEIGHT + 50;
@@ -105,6 +106,7 @@ const mapStepToNode = ({
       error: error?.message,
       controlValues: step.controls.values,
       isTemplateStorePreview,
+      optimisticStep: (step as OptimisticStep)?._optimistic ? (step as OptimisticStep) : undefined,
     },
     type: step.type,
   };

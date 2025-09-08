@@ -38,7 +38,7 @@ export enum DetailEnum {
   STEP_COMPLETED = 'Step completed',
   PROCESSING_STEP_FILTER = 'Processing step filter',
   PROCESSING_STEP_FILTER_ERROR = 'Processing step filter failed',
-  FILTER_STEPS = 'Step was filtered based on steps filters',
+  SKIPPED_STEP_BY_CONDITIONS = 'Step was skipped based on steps conditions',
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEP_FILTERED_BY_SUBSCRIBER_WORKFLOW_PREFERENCES = 'Step filtered by subscriber workflow preferences',
   STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES = 'Step filtered by subscriber global preferences',

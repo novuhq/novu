@@ -411,6 +411,10 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     case 'topic_not_found':
       return 'Topic not found';
 
+    // Step skipped events
+    case 'step_skipped':
+      return 'Step skipped';
+
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
       const _exhaustiveCheck: never = eventType;

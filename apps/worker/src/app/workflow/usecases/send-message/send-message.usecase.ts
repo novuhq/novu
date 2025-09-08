@@ -131,9 +131,8 @@ export class SendMessage {
     const conditionsShouldRun = stepCondition?.passed;
     const preferenceShouldRun = channelPreference.result;
     const isBridgeSkippedShouldRun = !isBridgeSkipped;
-    
-    if (!conditionsShouldRun || !preferenceShouldRun || !isBridgeSkippedShouldRun) {
 
+    if (!conditionsShouldRun || !preferenceShouldRun || !isBridgeSkippedShouldRun) {
       return {
         status: SendMessageStatus.SKIPPED,
         deliveryLifecycleState: {
@@ -248,8 +247,6 @@ export class SendMessage {
     stepCondition: IConditionsFilterResponse;
     channelPreference: { result: boolean; reason?: DetailEnum };
   }> {
- 
-
     const [stepCondition, channelPreference] = await Promise.all([
       this.evaluateStepCondition(command, variables),
       this.evaluateChannelPreference(command),
@@ -275,7 +272,7 @@ export class SendMessage {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.FILTER_STEPS,
+          detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
