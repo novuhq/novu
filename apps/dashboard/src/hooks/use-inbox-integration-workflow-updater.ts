@@ -1,4 +1,4 @@
-import { StepTypeEnum, WorkflowListResponseDto, WorkflowStatusEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, StepTypeEnum, WorkflowListResponseDto, WorkflowStatusEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { getWorkflow, updateWorkflow } from '@/api/workflows';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -6,7 +6,7 @@ import { useFetchWorkflows } from './use-fetch-workflows';
 
 type UseInboxIntegrationWorkflowUpdaterOptions = {
   maxToUpdate?: number;
-}
+};
 
 export function useInboxIntegrationWorkflowUpdater({
   maxToUpdate = 20,
@@ -57,7 +57,7 @@ export function useInboxIntegrationWorkflowUpdater({
   );
 
   const updateActiveWorkflowsWithInAppSteps = useCallback(async (): Promise<void> => {
-    if (!currentEnvironment) return;
+    if (!currentEnvironment || currentEnvironment.type !== EnvironmentTypeEnum.DEV) return;
 
     for (const workflow of activeWorkflowsWithInAppSteps) {
       await processWorkflow(workflow, currentEnvironment);
