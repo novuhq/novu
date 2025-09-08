@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ChannelAddressEntity, ChannelAddressRepository } from '@novu/dal';
 import { ProvidersIdEnum } from '@novu/shared';
+import { mapChannelAddressEntityToDto } from '../../dtos/dto.mapper';
 import { GetChannelAddressResponseDto } from '../../dtos/get-channel-address-response.dto';
 import { GetChannelAddressCommand } from './get-channel-address.command';
 
@@ -21,20 +22,6 @@ export class GetChannelAddress {
       throw new NotFoundException(`Channel address with identifier '${command.identifier}' not found`);
     }
 
-    return this.mapChannelAddressToDto(channelAddress);
-  }
-
-  private mapChannelAddressToDto(channelAddress: ChannelAddressEntity): GetChannelAddressResponseDto {
-    return {
-      identifier: channelAddress.identifier,
-      channel: channelAddress.channel,
-      provider: channelAddress.providerId as ProvidersIdEnum,
-      integrationIdentifier: channelAddress.integrationIdentifier,
-      connectionIdentifier: channelAddress.connectionIdentifier ?? null,
-      type: channelAddress.type,
-      address: channelAddress.address,
-      createdAt: channelAddress.createdAt,
-      updatedAt: channelAddress.updatedAt,
-    };
+    return mapChannelAddressEntityToDto(channelAddress);
   }
 }

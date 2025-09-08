@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { ChannelConnectionEntity, ChannelConnectionRepository } from '@novu/dal';
-import { ProvidersIdEnum } from '@novu/shared';
+import { ChannelConnectionRepository } from '@novu/dal';
+import { mapChannelConnectionEntityToDto } from '../../dtos/dto.mapper';
 import { GetChannelConnectionResponseDto } from '../../dtos/get-channel-connection-response.dto';
 import { GetChannelConnectionCommand } from './get-channel-connection.command';
 
@@ -24,19 +24,6 @@ export class GetChannelConnection {
       );
     }
 
-    return this.mapChannelConnectionToDto(channelConnection);
-  }
-
-  private mapChannelConnectionToDto(channelConnection: ChannelConnectionEntity): GetChannelConnectionResponseDto {
-    return {
-      identifier: channelConnection.identifier,
-      channel: channelConnection.channel,
-      provider: channelConnection.providerId as ProvidersIdEnum,
-      integrationIdentifier: channelConnection.integrationIdentifier,
-      workspace: channelConnection.workspace,
-      auth: channelConnection.auth,
-      createdAt: channelConnection.createdAt,
-      updatedAt: channelConnection.updatedAt,
-    };
+    return mapChannelConnectionEntityToDto(channelConnection);
   }
 }

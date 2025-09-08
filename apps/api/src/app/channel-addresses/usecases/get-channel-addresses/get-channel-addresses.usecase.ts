@@ -4,6 +4,7 @@ import type { EnforceEnvOrOrgIds } from '@novu/dal';
 import { ChannelAddressDBModel, ChannelAddressEntity, ChannelAddressRepository } from '@novu/dal';
 import { ProvidersIdEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
+import { mapChannelAddressEntityToDto } from '../../dtos/dto.mapper';
 import { GetChannelAddressResponseDto } from '../../dtos/get-channel-address-response.dto';
 import { GetChannelAddressesCommand } from './get-channel-addresses.command';
 
@@ -48,20 +49,6 @@ export class GetChannelAddresses {
   }
 
   private mapAndFilterAddresses(channelAddresses: ChannelAddressEntity[]): GetChannelAddressResponseDto[] {
-    return channelAddresses.map((addr) => this.mapChannelAddressToDto(addr));
-  }
-
-  private mapChannelAddressToDto(channelAddress: ChannelAddressEntity): GetChannelAddressResponseDto {
-    return {
-      identifier: channelAddress.identifier,
-      channel: channelAddress.channel,
-      provider: channelAddress.providerId as ProvidersIdEnum,
-      integrationIdentifier: channelAddress.integrationIdentifier,
-      connectionIdentifier: channelAddress.connectionIdentifier ?? null,
-      type: channelAddress.type,
-      address: channelAddress.address,
-      createdAt: channelAddress.createdAt,
-      updatedAt: channelAddress.updatedAt,
-    };
+    return channelAddresses.map((addr) => mapChannelAddressEntityToDto(addr));
   }
 }

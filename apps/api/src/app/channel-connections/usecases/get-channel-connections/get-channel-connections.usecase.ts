@@ -8,6 +8,7 @@ import {
 } from '@novu/dal';
 import { ProvidersIdEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
+import { mapChannelConnectionEntityToDto } from '../../dtos/dto.mapper';
 import { GetChannelConnectionResponseDto } from '../../dtos/get-channel-connection-response.dto';
 import { GetChannelConnectionsCommand } from './get-channel-connections.command';
 
@@ -37,10 +38,6 @@ export class GetChannelConnections {
       query.channel = command.channel;
     }
 
-    if (command.channel) {
-      query.channel = command.channel;
-    }
-
     if (command.provider) {
       query.providerId = command.provider;
     }
@@ -49,19 +46,6 @@ export class GetChannelConnections {
   }
 
   private mapAndFilterConnections(channelConnections: ChannelConnectionEntity[]): GetChannelConnectionResponseDto[] {
-    return channelConnections.map((conn) => this.mapChannelConnectionToDto(conn));
-  }
-
-  private mapChannelConnectionToDto(channelConnection: ChannelConnectionEntity): GetChannelConnectionResponseDto {
-    return {
-      identifier: channelConnection.identifier,
-      channel: channelConnection.channel,
-      provider: channelConnection.providerId as ProvidersIdEnum,
-      integrationIdentifier: channelConnection.integrationIdentifier,
-      workspace: channelConnection.workspace,
-      auth: channelConnection.auth,
-      createdAt: channelConnection.createdAt,
-      updatedAt: channelConnection.updatedAt,
-    };
+    return channelConnections.map((conn) => mapChannelConnectionEntityToDto(conn));
   }
 }

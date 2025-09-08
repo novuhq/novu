@@ -10,6 +10,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { ProvidersIdEnum, parseResourceKey } from '@novu/shared';
+import { mapChannelAddressEntityToDto } from '../../dtos/dto.mapper';
 import { GetChannelAddressResponseDto } from '../../dtos/get-channel-address-response.dto';
 import { CreateChannelAddressCommand } from './create-channel-address.command';
 
@@ -28,12 +29,6 @@ export class CreateChannelAddress {
 
     await this.assertResourceExists(command);
 
-    let connection: ChannelConnectionEntity | null = null;
-
-    if (command.connectionIdentifier) {
-      connection = await this.findChannelConnection(command);
-    }
-
     const identifier = command.identifier || this.generateIdentifier();
 
     // Check if channel address already exists
@@ -49,9 +44,15 @@ export class CreateChannelAddress {
       );
     }
 
+    let connection: ChannelConnectionEntity | null = null;
+
+    if (command.connectionIdentifier) {
+      connection = await this.findChannelConnection(command);
+    }
+
     const channelAddress = await this.createChannelAddress(command, identifier, integration, connection);
 
-    return this.mapChannelAddressEntityToDto(channelAddress, integration, connection);
+    return mapChannelAddressEntityToDto(channelAddress);
   }
 
   private async createChannelAddress(
@@ -74,24 +75,6 @@ export class CreateChannelAddress {
     });
 
     return channelAddress;
-  }
-
-  private mapChannelAddressEntityToDto(
-    channelAddress: ChannelAddressEntity,
-    integration: IntegrationEntity,
-    connection: ChannelConnectionEntity | null
-  ): GetChannelAddressResponseDto {
-    return {
-      identifier: channelAddress.identifier,
-      channel: integration.channel,
-      provider: integration.providerId as ProvidersIdEnum,
-      integrationIdentifier: integration.identifier,
-      connectionIdentifier: connection?.identifier || null,
-      type: channelAddress.type,
-      address: channelAddress.address,
-      createdAt: channelAddress.createdAt,
-      updatedAt: channelAddress.updatedAt,
-    };
   }
 
   private async assertResourceExists(command: CreateChannelAddressCommand) {

@@ -7,7 +7,8 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ProvidersIdEnum, parseResourceKey } from '@novu/shared';
+import { parseResourceKey } from '@novu/shared';
+import { mapChannelConnectionEntityToDto } from '../../dtos/dto.mapper';
 import { GetChannelConnectionResponseDto } from '../../dtos/get-channel-connection-response.dto';
 import { CreateChannelConnectionCommand } from './create-channel-connection.command';
 
@@ -43,7 +44,7 @@ export class CreateChannelConnection {
 
     const channelConnection = await this.createChannelConnection(command, identifier, integration);
 
-    return this.mapChannelConnectionEntityToDto(channelConnection);
+    return mapChannelConnectionEntityToDto(channelConnection);
   }
 
   private async assertSingleConnectionPerResourceAndIntegration(
@@ -80,19 +81,6 @@ export class CreateChannelConnection {
     });
 
     return channelConnection;
-  }
-
-  private mapChannelConnectionEntityToDto(channelConnection: ChannelConnectionEntity): GetChannelConnectionResponseDto {
-    return {
-      identifier: channelConnection.identifier,
-      channel: channelConnection.channel,
-      provider: channelConnection.providerId as ProvidersIdEnum,
-      integrationIdentifier: channelConnection.integrationIdentifier,
-      workspace: channelConnection.workspace,
-      auth: channelConnection.auth,
-      createdAt: channelConnection.createdAt,
-      updatedAt: channelConnection.updatedAt,
-    };
   }
 
   private async assertResourceExists(command: CreateChannelConnectionCommand) {
