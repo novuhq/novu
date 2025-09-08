@@ -1,9 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { getApiPropertyExamples } from '@novu/application-generic';
-import { ADDRESS_TYPES, ChannelAddressByType, ChannelAddressType, ResourceKey } from '@novu/shared';
+import { ADDRESS_TYPES, ChannelAddressByType, ChannelAddressType } from '@novu/shared';
 import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { IsValidChannelAddress } from '../../shared/validators/channel-address.validator';
-import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 
 export class CreateChannelAddressRequestDto {
   @ApiPropertyOptional({
@@ -32,15 +31,6 @@ export class CreateChannelAddressRequestDto {
   @IsOptional()
   @IsString()
   connectionIdentifier?: string;
-
-  @ApiProperty({
-    description: 'Generic resource key "<type>:<id>"',
-    examples: ['tenant:ten_9', 'subscriber:sub_123'],
-  })
-  @IsDefined()
-  @IsString()
-  @IsResourceKey()
-  resource: ResourceKey;
 
   @ApiProperty({
     description: 'Type of channel address',

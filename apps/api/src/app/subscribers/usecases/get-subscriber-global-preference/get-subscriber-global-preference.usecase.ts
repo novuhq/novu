@@ -8,7 +8,8 @@ import {
   InstrumentUsecase,
 } from '@novu/application-generic';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, IPreferenceChannels } from '@novu/shared';
+import { ChannelTypeEnum, IPreferenceChannels, Schedule, WorkflowCriticalityEnum } from '@novu/shared';
+import { GetSubscriberPreferenceCommand } from '../get-subscriber-preference';
 import { GetSubscriberPreference } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
 
@@ -21,12 +22,18 @@ export class GetSubscriberGlobalPreference {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetSubscriberGlobalPreferenceCommand) {
-    const subscriber = await this.getSubscriber(command);
+  async execute(
+    command: GetSubscriberGlobalPreferenceCommand
+  ): Promise<{ preference: { enabled: boolean; channels: IPreferenceChannels; schedule?: Schedule } }> {
+    const subscriber = command.subscriber ?? (await this.getSubscriber(command));
 
     const activeChannels = await this.getActiveChannels(command);
 
-    const subscriberGlobalPreference = await this.getSubscriberGlobalPreference(command, subscriber._id);
+    const subscriberGlobalPreference = await this.getPreferences.getSubscriberGlobalPreference({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberId: subscriber._id,
+    });
 
     const channelsWithDefaults = this.buildDefaultPreferences(subscriberGlobalPreference.channels);
 
@@ -41,44 +48,21 @@ export class GetSubscriberGlobalPreference {
       preference: {
         enabled: subscriberGlobalPreference.enabled,
         channels,
+        schedule: subscriberGlobalPreference.schedule,
       },
-    };
-  }
-
-  @Instrument()
-  private async getSubscriberGlobalPreference(
-    command: GetSubscriberGlobalPreferenceCommand,
-    subscriberId: string
-  ): Promise<{
-    channels: IPreferenceChannels;
-    enabled: boolean;
-  }> {
-    const subscriberGlobalChannels = await this.getPreferences.getPreferenceChannels({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      subscriberId,
-    });
-
-    return {
-      channels: subscriberGlobalChannels ?? {
-        email: true,
-        sms: true,
-        in_app: true,
-        chat: true,
-        push: true,
-      },
-      enabled: true,
     };
   }
 
   @Instrument()
   private async getActiveChannels(command: GetSubscriberGlobalPreferenceCommand): Promise<ChannelTypeEnum[]> {
     const subscriberWorkflowPreferences = await this.getSubscriberPreference.execute(
-      GetSubscriberGlobalPreferenceCommand.create({
+      GetSubscriberPreferenceCommand.create({
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         includeInactiveChannels: command.includeInactiveChannels,
+        criticality: WorkflowCriticalityEnum.NON_CRITICAL,
+        subscriber: command.subscriber,
       })
     );
 

@@ -50,7 +50,8 @@ export const serve = (
         body: () => event.request.json(),
         headers: (key) => event.request.headers.get(key),
         url: () => {
-          const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+          const protocol =
+            process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as any) === 'dev' ? 'http' : 'https';
 
           return new URL(event.request.url, `${protocol}://${event.request.headers.get('host') || ''}`);
         },

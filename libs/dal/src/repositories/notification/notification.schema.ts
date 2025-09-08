@@ -60,6 +60,9 @@ const notificationSchema = new Schema<NotificationDBModel>(
       enum: SeverityLevelEnum,
       default: SeverityLevelEnum.NONE,
     },
+    critical: {
+      type: Schema.Types.Boolean,
+    },
   },
   schemaOptions
 );

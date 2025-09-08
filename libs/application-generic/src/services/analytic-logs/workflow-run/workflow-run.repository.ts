@@ -5,14 +5,19 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { DeliveryLifecycleDetail, DeliveryLifecycleStatus, FeatureFlagsKeysEnum } from '@novu/shared';
+import {
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
+  FeatureFlagsKeysEnum,
+  SeverityLevelEnum,
+} from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
-import {  ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
+import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
 type WorkflowRunInsertData = Omit<WorkflowRun, 'id' | 'expires_at'>;
 type QueryNotificationEntity = Pick<
@@ -30,6 +35,8 @@ type QueryNotificationEntity = Pick<
   | 'topics'
   | '_digestedNotificationId'
   | 'createdAt'
+  | 'severity'
+  | 'critical'
 >;
 
 interface IWorkflowRunOptions {
@@ -200,7 +207,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const notification : QueryNotificationEntity | null = await this.notificationRepository.findOne(
+      const notification: QueryNotificationEntity | null = await this.notificationRepository.findOne(
         {
           _id: workflowRunId,
           _organizationId: context.organizationId,
@@ -220,6 +227,8 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
           topics: 1,
           _digestedNotificationId: 1,
           createdAt: 1,
+          severity: 1,
+          critical: 1,
         }
       );
 
@@ -471,6 +480,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       // Delivery lifecycle
       ...(options.deliveryLifecycleStatus && { delivery_lifecycle_status: options.deliveryLifecycleStatus }),
       ...(options.deliveryLifecycleDetail && { delivery_lifecycle_detail: options.deliveryLifecycleDetail }),
+
+      severity: notification.severity || SeverityLevelEnum.NONE,
+      critical: notification.critical || false,
     };
   }
 

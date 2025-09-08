@@ -45,8 +45,7 @@ export class GetSubscriberPreferences {
     );
 
     return {
-      enabled: preference.enabled,
-      channels: preference.channels,
+      ...preference,
     };
   }
 
@@ -57,6 +56,7 @@ export class GetSubscriberPreferences {
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         includeInactiveChannels: false,
+        criticality: command.criticality,
       })
     );
 

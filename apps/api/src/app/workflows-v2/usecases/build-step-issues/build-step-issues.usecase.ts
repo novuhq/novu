@@ -232,18 +232,32 @@ export class BuildStepIssuesUsecase {
       channel: args.stepType,
     });
 
-    if (validIntegrationForStep) {
+    if (args.stepType === StepTypeEnum.IN_APP) {
+      if (!validIntegrationForStep || !validIntegrationForStep.connected) {
+        issues.integration = {
+          [args.stepType]: [
+            {
+              issueType: IntegrationIssueEnum.MISSING_INTEGRATION,
+              message: validIntegrationForStep
+                ? 'Inbox is not connected. Please connect your Inbox integration.'
+                : 'Missing active integration provider',
+            },
+          ],
+        };
+      }
       return issues;
     }
 
-    issues.integration = {
-      [args.stepType]: [
-        {
-          issueType: IntegrationIssueEnum.MISSING_INTEGRATION,
-          message: `Missing active ${primaryNeeded ? 'primary' : ''} integration provider`,
-        },
-      ],
-    };
+    if (!validIntegrationForStep) {
+      issues.integration = {
+        [args.stepType]: [
+          {
+            issueType: IntegrationIssueEnum.MISSING_INTEGRATION,
+            message: `Missing active${primaryNeeded ? ' primary' : ''} integration provider`,
+          },
+        ],
+      };
+    }
 
     return issues;
   }

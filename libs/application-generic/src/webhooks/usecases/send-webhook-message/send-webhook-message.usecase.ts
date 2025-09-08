@@ -41,13 +41,14 @@ export class SendWebhookMessage {
       return;
     }
 
-    const eventId = `evt_${generateObjectId()}`;
-    const environment = await this.environmentRepository.findOne(
-      {
-        _id: command.environmentId,
-      },
-      'webhookAppId identifier'
-    );
+    const environment =
+      command.environment ||
+      (await this.environmentRepository.findOne(
+        {
+          _id: command.environmentId,
+        },
+        'webhookAppId identifier'
+      ));
 
     if (!environment) {
       throw new Error(`Environment not found for id ${command.environmentId}`);
@@ -56,10 +57,12 @@ export class SendWebhookMessage {
     const appId = environment.webhookAppId;
 
     if (!appId) {
-      this.logger.debug(`Webhook app ID not found for environment ${command.environmentId}, Event ID: ${eventId}`);
+      this.logger.debug(`Webhook app ID not found for environment ${command.environmentId}`);
 
       return;
     }
+
+    const eventId = `evt_${generateObjectId()}`;
 
     const webhookPayload: WrapperDto<any> = {
       id: eventId,

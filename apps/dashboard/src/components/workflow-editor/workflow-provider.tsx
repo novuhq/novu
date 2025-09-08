@@ -1,4 +1,4 @@
-import { PatchWorkflowDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import { PatchWorkflowDto, StepCreateDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
 import { CheckCircleIcon } from 'lucide-react';
 import { createContext, ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
@@ -21,6 +21,7 @@ import { createContextHook } from '@/utils/context';
 import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { showErrorToast, showSavingToast, showSuccessToast } from './toasts';
+import { useOptimisticWorkflow } from './use-optimistic-workflow';
 import { WorkflowSchemaProvider } from './workflow-schema-provider';
 
 export type UpdateWorkflowFn = (
@@ -34,10 +35,23 @@ export type WorkflowContextType = {
   isPending: boolean;
   isUpdatePatchPending: boolean;
   workflow?: WorkflowResponseDto;
+  optimisticWorkflow?: WorkflowResponseDto;
   step?: StepResponseDto;
   update: UpdateWorkflowFn;
   patch: (data: PatchWorkflowDto) => void;
   digestStepBeforeCurrent?: StepResponseDto;
+  optimisticAddStep: (
+    stepType: string,
+    insertIndex: number,
+    createStepFn: () => StepCreateDto,
+    options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }
+  ) => void;
+  optimisticRemoveStep: (stepSlug: string, options?: { onSuccess?: () => void }) => void;
+  optimisticReorderSteps: (
+    newSteps: StepResponseDto[],
+    options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }
+  ) => void;
+  hasPendingOperations: boolean;
 };
 
 export const WorkflowContext = createContext<WorkflowContextType>({} as WorkflowContextType);
@@ -98,29 +112,13 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   }, [workflow, isStepAfterDigest, stepSlug]);
 
   const { enqueue, hasPendingItems } = useInvocationQueue();
-  const blocker = useBlocker(({ nextLocation }) => {
-    const workflowEditorBasePath = buildRoute(ROUTES.EDIT_WORKFLOW, {
-      workflowSlug,
-      environmentSlug: currentEnvironment?.slug ?? '',
-    });
-
-    const isLeavingEditor = !nextLocation.pathname.startsWith(workflowEditorBasePath);
-
-    return isLeavingEditor && isUpdatePatchPending;
-  });
-  const isBlocked = blocker.state === 'blocked';
-  const isAllowedToUnblock = isBlocked && !hasPendingItems;
 
   const { patchWorkflow, isPending: isPatchPending } = usePatchWorkflow({
     onMutate: () => {
-      if (!isBlocked) {
-        showSavingToast(setToastId);
-      }
+      showSavingToast(setToastId);
     },
     onSuccess: async () => {
-      if (!isBlocked) {
-        showSuccessToast(toastId);
-      }
+      showSuccessToast(toastId);
     },
     onError: (error) => {
       showErrorToast(toastId, error);
@@ -129,26 +127,15 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
   const { updateWorkflow, isPending: isUpdatePending } = useUpdateWorkflow({
     onMutate: () => {
-      if (!isBlocked) {
-        showSavingToast(setToastId);
-      }
+      showSavingToast(setToastId);
     },
     onSuccess: async () => {
-      if (!isBlocked) {
-        showSuccessToast(toastId);
-      }
+      showSuccessToast(toastId);
     },
     onError: (error) => {
       showErrorToast(toastId, error);
     },
   });
-
-  const isUpdatePatchPending = isPatchPending || isUpdatePending || hasPendingItems;
-  /**
-   * Prevents the user from accidentally closing the tab or window
-   * while an update is in progress.
-   */
-  useBeforeUnload(isUpdatePatchPending);
 
   const update = useCallback(
     (data: UpdateWorkflowDto, options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }) => {
@@ -162,6 +149,33 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     },
     [enqueue, updateWorkflow, workflow]
   );
+
+  const { optimisticWorkflow, optimisticAddStep, optimisticRemoveStep, optimisticReorderSteps, hasPendingOperations } =
+    useOptimisticWorkflow({
+      workflow,
+      onUpdate: update,
+    });
+
+  const isUpdatePatchPending = isPatchPending || isUpdatePending || hasPendingItems || hasPendingOperations;
+
+  const blocker = useBlocker(({ nextLocation }) => {
+    const workflowEditorBasePath = buildRoute(ROUTES.EDIT_WORKFLOW, {
+      workflowSlug,
+      environmentSlug: currentEnvironment?.slug ?? '',
+    });
+
+    const isLeavingEditor = !nextLocation.pathname.startsWith(workflowEditorBasePath);
+
+    return isLeavingEditor && isUpdatePatchPending;
+  });
+  const isBlocked = blocker.state === 'blocked';
+  const isAllowedToUnblock = isBlocked && !hasPendingItems;
+
+  /**
+   * Prevents the user from accidentally closing the tab or window
+   * while an update is in progress.
+   */
+  useBeforeUnload(isUpdatePatchPending);
 
   const patch = useCallback(
     (data: PatchWorkflowDto) => {
@@ -204,8 +218,34 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   }, [isAllowedToUnblock, blocker]);
 
   const value = useMemo(
-    () => ({ update, patch, isPending, workflow, step: getStep(), digestStepBeforeCurrent, isUpdatePatchPending }),
-    [update, patch, isPending, workflow, getStep, digestStepBeforeCurrent, isUpdatePatchPending]
+    () => ({
+      update,
+      patch,
+      isPending,
+      workflow,
+      optimisticWorkflow,
+      step: getStep(),
+      digestStepBeforeCurrent,
+      isUpdatePatchPending,
+      optimisticAddStep,
+      optimisticRemoveStep,
+      optimisticReorderSteps,
+      hasPendingOperations,
+    }),
+    [
+      update,
+      patch,
+      isPending,
+      workflow,
+      optimisticWorkflow,
+      getStep,
+      digestStepBeforeCurrent,
+      isUpdatePatchPending,
+      optimisticAddStep,
+      optimisticRemoveStep,
+      optimisticReorderSteps,
+      hasPendingOperations,
+    ]
   );
 
   return (

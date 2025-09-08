@@ -1,7 +1,7 @@
 import { getReactVersion } from '../react-version';
 
 export function generateReactComponent(
-  subscriberId: string | null = null, 
+  subscriberId: string | null = null,
   region: string = 'us',
   backendUrl: string | null = null,
   socketUrl: string | null = null
@@ -31,15 +31,15 @@ function isReactVersionModern(version: string): boolean {
     if (major === 17 && minor >= 0) return true;
 
     return false;
-  } catch (error) {
+  } catch (_error) {
     // If anything goes wrong, default to legacy React (not modern)
     return false;
   }
 }
 
 function generateSharedInboxCode(
-  subscriberId: string | null, 
-  region: string = 'us', 
+  subscriberId: string | null,
+  region: string = 'us',
   envAccessor: string,
   backendUrl: string | null = null,
   socketUrl: string | null = null
@@ -119,11 +119,11 @@ export function NovuInbox() {
       // baseTheme: dark,
       variables: {
         // The \`variables\` object allows you to define global styling properties that can be reused throughout the inbox.
-        // Learn more: https://docs.novu.co/platform/inbox/react/styling#variables
+        // Learn more: https://docs.novu.co/platform/inbox/configuration/styling
       },
       elements: {
         // The \`elements\` object allows you to define styles for these components.
-        // Learn more: https://docs.novu.co/platform/inbox/react/styling#elements
+        // Learn more: https://docs.novu.co/platform/inbox/configuration/styling
       },
       icons: {
         // The \`icons\` object allows you to define custom icons for the inbox.
@@ -134,7 +134,7 @@ export function NovuInbox() {
 }
 
 export function generateModernReactComponent(
-  subscriberId: string | null, 
+  subscriberId: string | null,
   region: string = 'us',
   backendUrl: string | null = null,
   socketUrl: string | null = null
@@ -143,7 +143,7 @@ export function generateModernReactComponent(
 }
 
 export function generateLegacyReactComponent(
-  subscriberId: string | null, 
+  subscriberId: string | null,
   region: string = 'us',
   backendUrl: string | null = null,
   socketUrl: string | null = null

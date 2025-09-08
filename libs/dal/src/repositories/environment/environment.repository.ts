@@ -59,7 +59,9 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
   }
 
   async findByApiKey({ hash }: { hash: string }) {
-    return await this.findOne({ 'apiKeys.hash': hash }, undefined, { readPreference: 'secondaryPreferred' });
+    return await this.findOne({ 'apiKeys.hash': hash }, '_id _organizationId apiKeys', {
+      readPreference: 'secondaryPreferred',
+    });
   }
 
   async getApiKeys(environmentId: string): Promise<IApiKey[]> {

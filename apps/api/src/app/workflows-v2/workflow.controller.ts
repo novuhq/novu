@@ -108,6 +108,7 @@ export class WorkflowController {
 
     return this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
+        preserveWorkflowId: true,
         workflowDto: {
           ...createWorkflowDto,
           steps: upsertSteps,

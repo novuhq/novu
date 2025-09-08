@@ -74,3 +74,37 @@ export type WorkflowPreferences = {
 
 /** A partial set of workflow preferences. */
 export type WorkflowPreferencesPartial = DeepPartial<WorkflowPreferences>;
+
+export type SubscriberGlobalPreference = WorkflowPreferencesPartial & {
+  /**
+   * A preference for the schedule.
+   *
+   * If no preference is specified, the schedule will be disabled by default.
+   */
+  schedule?: Schedule;
+};
+
+export type TimeRange = {
+  start: string;
+  end: string;
+};
+
+export type DaySchedule = {
+  isEnabled: boolean;
+  hours?: Array<TimeRange>;
+};
+
+export type WeeklySchedule = {
+  monday?: DaySchedule;
+  tuesday?: DaySchedule;
+  wednesday?: DaySchedule;
+  thursday?: DaySchedule;
+  friday?: DaySchedule;
+  saturday?: DaySchedule;
+  sunday?: DaySchedule;
+};
+
+export type Schedule = {
+  isEnabled: boolean;
+  weeklySchedule?: WeeklySchedule;
+};

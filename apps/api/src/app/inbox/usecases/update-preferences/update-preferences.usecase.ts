@@ -16,6 +16,7 @@ import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import {
   IPreferenceChannels,
   PreferenceLevelEnum,
+  Schedule,
   SeverityLevelEnum,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
@@ -85,6 +86,7 @@ export class UpdatePreferences {
       },
       organizationId: command.organizationId,
       environmentId: command.environmentId,
+      environment: command.environment,
     });
 
     return newPreference;
@@ -104,6 +106,7 @@ export class UpdatePreferences {
       environmentId: command.environmentId,
       _subscriberId: subscriber._id,
       workflowId,
+      schedule: command.schedule,
     });
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.UPDATE_PREFERENCES, '', {
@@ -178,9 +181,8 @@ export class UpdatePreferences {
     );
 
     return {
+      ...preference,
       level: PreferenceLevelEnum.GLOBAL,
-      enabled: preference.enabled,
-      channels: preference.channels,
     };
   }
 
@@ -191,6 +193,7 @@ export class UpdatePreferences {
     _subscriberId: string;
     environmentId: string;
     workflowId?: string;
+    schedule?: Schedule;
   }): Promise<void> {
     const preferences: WorkflowPreferencesPartial = {
       channels: Object.entries(item.channels).reduce(
@@ -210,6 +213,7 @@ export class UpdatePreferences {
           _subscriberId: item._subscriberId,
           templateId: item.workflowId,
           preferences,
+          returnPreference: false,
         })
       );
     } else {
@@ -219,6 +223,8 @@ export class UpdatePreferences {
           environmentId: item.environmentId,
           organizationId: item.organizationId,
           _subscriberId: item._subscriberId,
+          returnPreference: false,
+          schedule: item.schedule,
         })
       );
     }

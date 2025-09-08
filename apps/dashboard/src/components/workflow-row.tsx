@@ -66,8 +66,28 @@ import { ToastIcon } from './primitives/sonner';
 import { showToast } from './primitives/sonner-helpers';
 import { TimeDisplayHoverCard } from './time-display-hover-card';
 
+// Local type definition for step issues until the shared types are updated
+type RuntimeIssue = {
+  message: string;
+  variableName?: string;
+  issueType: string;
+};
+
+type StepIssue = {
+  controls?: Record<string, RuntimeIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
+};
+
+type StepListItem = {
+  slug: string;
+  type: string;
+  issues?: StepIssue;
+};
+
 type WorkflowRowProps = {
-  workflow: WorkflowListResponseDto;
+  workflow: WorkflowListResponseDto & {
+    steps?: StepListItem[];
+  };
 };
 
 const toastOptions: ExternalToast = {
@@ -325,7 +345,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
           </div>
         </WorkflowLinkTableCell>
         <WorkflowLinkTableCell className="min-w-[200px]">
-          <WorkflowStatus status={workflow.status} />
+          <WorkflowStatus status={workflow.status} steps={workflow.steps || []} />
         </WorkflowLinkTableCell>
         <WorkflowLinkTableCell>
           <WorkflowSteps steps={workflow.stepTypeOverviews} />

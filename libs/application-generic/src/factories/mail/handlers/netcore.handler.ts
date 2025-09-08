@@ -1,8 +1,8 @@
 import { NetCoreProvider } from '@novu/providers';
 import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
-import { BaseHandler } from './base.handler';
+import { BaseEmailHandler } from './base.handler';
 
-export class NetCoreHandler extends BaseHandler {
+export class NetCoreHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.NetCore, ChannelTypeEnum.EMAIL);
   }

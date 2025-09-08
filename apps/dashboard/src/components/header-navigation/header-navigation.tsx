@@ -6,6 +6,7 @@ import { InboxButton } from '@/components/inbox-button';
 import { UserProfile } from '@/components/user-profile';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { cn } from '@/utils/ui';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useHasPermission } from '../../hooks/use-has-permission';
 import { Button } from '../primitives/button';
@@ -52,7 +53,7 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
           <PublishButton />
         )}
         {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
-        <CustomerSupportButton />
+        {!(IS_SELF_HOSTED && IS_ENTERPRISE) && <CustomerSupportButton />}
         <div className="flex pr-0.5">
           <InboxButton />
         </div>

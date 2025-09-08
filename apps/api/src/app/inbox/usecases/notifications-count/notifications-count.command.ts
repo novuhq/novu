@@ -1,3 +1,4 @@
+import { SubscriberEntity } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
 import { IsArray, IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
@@ -35,4 +36,7 @@ export class NotificationsCountCommand extends EnvironmentWithSubscriber {
   @IsDefined()
   @IsArray()
   filters: NotificationsFilter[];
+
+  @IsOptional()
+  subscriber?: SubscriberEntity;
 }

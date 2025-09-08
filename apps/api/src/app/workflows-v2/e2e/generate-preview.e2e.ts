@@ -1691,7 +1691,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       tags: [],
       source: WorkflowCreationSourceEnum.Editor,
       name: 'John',
-      workflowId: `john:${randomUUID()}`,
+      workflowId: `john-${randomUUID()}`,
       description: 'This is a test workflow',
       active: true,
       payloadSchema,
@@ -1729,7 +1729,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       tags: [],
       source: WorkflowCreationSourceEnum.Editor,
       name: 'John',
-      workflowId: `john:${randomUUID()}`,
+      workflowId: `john-${randomUUID()}`,
       description: 'This is a test workflow',
       active: true,
       steps: [

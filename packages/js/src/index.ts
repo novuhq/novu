@@ -19,6 +19,7 @@ export {
   Subscriber,
   UnreadCount,
   WebSocketEvent,
+  WorkflowCriticalityEnum,
 } from './types';
 export {
   areSeveritiesEqual,

@@ -12,7 +12,7 @@ interface IUnifonicConfig {
 
 export class UnifonicSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Unifonic;
-  channelType = ChannelTypeEnum.SMS as const;
+  channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.CAMEL_CASE;
 
   constructor(private config: IUnifonicConfig) {

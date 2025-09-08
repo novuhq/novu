@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ChannelConnectionEntity, ChannelConnectionRepository } from '@novu/dal';
-import { ProvidersIdEnum } from '@novu/shared';
+import { mapChannelConnectionEntityToDto } from '../../dtos/dto.mapper';
 import { GetChannelConnectionResponseDto } from '../../dtos/get-channel-connection-response.dto';
 import { UpdateChannelConnectionCommand } from './update-channel-connection.command';
 
@@ -13,7 +13,7 @@ export class UpdateChannelConnection {
   async execute(command: UpdateChannelConnectionCommand): Promise<GetChannelConnectionResponseDto> {
     const updatedChannelConnection = await this.updateChannelConnection(command);
 
-    return this.mapChannelConnectionEntityToDto(updatedChannelConnection);
+    return mapChannelConnectionEntityToDto(updatedChannelConnection);
   }
 
   private async updateChannelConnection(command: UpdateChannelConnectionCommand): Promise<ChannelConnectionEntity> {
@@ -37,18 +37,5 @@ export class UpdateChannelConnection {
     }
 
     return channelConnection;
-  }
-
-  private mapChannelConnectionEntityToDto(channelConnection: ChannelConnectionEntity): GetChannelConnectionResponseDto {
-    return {
-      identifier: channelConnection.identifier,
-      channel: channelConnection.channel,
-      provider: channelConnection.providerId as ProvidersIdEnum,
-      integrationIdentifier: channelConnection.integrationIdentifier,
-      workspace: channelConnection.workspace,
-      auth: channelConnection.auth,
-      createdAt: channelConnection.createdAt,
-      updatedAt: channelConnection.updatedAt,
-    };
   }
 }

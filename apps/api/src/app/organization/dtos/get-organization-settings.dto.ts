@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsValidLocale } from '@novu/application-generic';
+import { OrganizationEntity } from '@novu/dal';
 import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class GetOrganizationSettingsDto {

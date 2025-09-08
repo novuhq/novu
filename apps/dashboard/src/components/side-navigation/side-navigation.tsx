@@ -21,7 +21,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { IS_SELF_HOSTED } from '../../config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
@@ -58,7 +58,6 @@ const BottomSection = ({
   if (IS_SELF_HOSTED) {
     return (
       <div className="relative mt-auto gap-8 pt-4">
-        <ChangelogStack />
         <HomeMenuItem />
       </div>
     );
@@ -88,7 +87,6 @@ export const SideNavigation = () => {
   const isTrialActive = subscription?.trial.isActive;
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
-  const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
   const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
@@ -149,14 +147,12 @@ export const SideNavigation = () => {
                   <span>Subscribers</span>
                 </NavigationLink>
               </Protect>
-              {isTopicsPageActive && (
-                <Protect permission={PermissionsEnum.TOPIC_READ}>
-                  <NavigationLink to={buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-                    <RiDiscussLine className="size-4" />
-                    <span>Topics</span>
-                  </NavigationLink>
-                </Protect>
-              )}
+              <Protect permission={PermissionsEnum.TOPIC_READ}>
+                <NavigationLink to={buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                  <RiDiscussLine className="size-4" />
+                  <span>Topics</span>
+                </NavigationLink>
+              </Protect>
             </NavigationGroup>
             <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
               <NavigationGroup label="Monitor">
@@ -233,7 +229,7 @@ export const SideNavigation = () => {
                 </Protect>
               </NavigationGroup>
             </Protect>
-            {!IS_SELF_HOSTED ? (
+            {!IS_SELF_HOSTED || IS_ENTERPRISE ? (
               <NavigationGroup label="Application">
                 <NavigationLink to={ROUTES.SETTINGS}>
                   <RiSettings4Line className="size-4" />

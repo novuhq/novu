@@ -10,7 +10,7 @@ import {
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
 import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
@@ -36,6 +36,8 @@ const workflowRunSelectColumns = [
   'created_at',
   'updated_at',
   'delivery_lifecycle_status',
+  'severity',
+  'critical',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -199,7 +201,7 @@ export class GetWorkflowRun {
           ({
             ...stepRun,
             executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
-            digest: stepRun.digest ? JSON.parse(stepRun.digest) : digestDataByStepId.get(stepRun.step_run_id),
+            digest: stepRun.digest ? stepRun.digest : digestDataByStepId.get(stepRun.step_run_id) || null,
           }) satisfies IStepRunWithDetails
       );
     } catch (error) {
@@ -247,8 +249,6 @@ export class GetWorkflowRun {
         if (existingTraces) {
           existingTraces.push(trace);
         }
-        // biome-ignore lint/style/noNonNullAssertion: <explanation> because we otherwise the if statement would set it to the map
-        executionDetailsByEntityId.get(trace.entity_id)!.push(trace);
       }
 
       return executionDetailsByEntityId;
@@ -271,6 +271,7 @@ export class GetWorkflowRun {
       status: stepRun.status,
       createdAt: new Date(stepRun.created_at),
       updatedAt: new Date(stepRun.updated_at),
+      digest: stepRun.digest ? JSON.parse(stepRun.digest) : undefined,
       executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || []),
     };
   }
@@ -295,6 +296,8 @@ export class GetWorkflowRun {
       updatedAt: new Date(`${workflowRun.updated_at} UTC`).toISOString(),
       payload: workflowRun.payload ? JSON.parse(workflowRun.payload) : {},
       steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun)),
+      severity: workflowRun.severity,
+      critical: workflowRun.critical,
     };
   }
 }

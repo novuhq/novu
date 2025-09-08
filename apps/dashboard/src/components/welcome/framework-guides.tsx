@@ -1,6 +1,10 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { fadeIn } from '@/utils/animation';
+import { useTelemetry } from '../../hooks/use-telemetry';
+import { buildRoute, ROUTES } from '../../utils/routes';
+import { TelemetryEvent } from '../../utils/telemetry';
 import { CodeBlock, Language } from '../primitives/code-block';
 import { InlineToast } from '../primitives/inline-toast';
 import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
@@ -51,6 +55,27 @@ function StepNumber({ index }: { index: number }) {
   );
 }
 
+function SetupTooltip({ onInviteTeam, onSkip }: { onInviteTeam: () => void; onSkip: () => void }) {
+  return (
+    <InlineToast
+      variant="tip"
+      className="w-fit"
+      description={
+        <div className="flex items-center gap-2">
+          <span>Not ready?</span>
+          <button type="button" className="text-[#525866] text-xs font-medium" onClick={onInviteTeam}>
+            Invite team
+          </button>
+          <span>or</span>
+          <button type="button" className="text-[#525866] text-xs font-medium" onClick={onSkip}>
+            Skip for now
+          </button>
+        </div>
+      }
+    />
+  );
+}
+
 function StepContent({
   title,
   description,
@@ -58,6 +83,7 @@ function StepContent({
   packageManager,
   onPackageManagerChange,
   isInstallStep,
+  extra,
 }: {
   title: string;
   description: string;
@@ -65,6 +91,7 @@ function StepContent({
   packageManager?: PackageManager;
   onPackageManagerChange?: (manager: PackageManager) => void;
   isInstallStep?: boolean;
+  extra?: React.ReactNode;
 }) {
   return (
     <div className="flex w-[344px] max-w-md flex-col gap-3">
@@ -101,6 +128,7 @@ function StepContent({
       </div>
       <p className="text-foreground-400 text-xs">{description}</p>
       {tip && <InlineToast variant="tip" title={tip.title} description={tip.description} />}
+      {extra && <div className="mt-2">{extra}</div>}
     </div>
   );
 }
@@ -119,16 +147,31 @@ function StepCodeBlock({
   packageManager?: PackageManager;
 }) {
   const getCommand = (code: string) => {
-    if (!packageManager || !code.includes('npx novu')) return code;
+    if (!packageManager) return code;
 
-    switch (packageManager) {
-      case 'pnpm':
-        return code.replace('npx novu', 'pnpm dlx novu');
-      case 'yarn':
-        return code.replace('npx novu', 'yarn dlx novu');
-      default:
-        return code;
+    if (code.includes('npx add-inbox@latest')) {
+      switch (packageManager) {
+        case 'pnpm':
+          return code.replace('npx add-inbox@latest', 'pnpm dlx add-inbox@latest');
+        case 'yarn':
+          return code.replace('npx add-inbox@latest', 'yarn dlx add-inbox@latest');
+        default:
+          return code;
+      }
     }
+
+    if (code.includes('npx novu')) {
+      switch (packageManager) {
+        case 'pnpm':
+          return code.replace('npx novu', 'pnpm dlx novu');
+        case 'yarn':
+          return code.replace('npx novu', 'yarn dlx novu');
+        default:
+          return code;
+      }
+    }
+
+    return code;
   };
 
   return (
@@ -145,6 +188,8 @@ function InstallationStepRow({
   packageManager,
   onPackageManagerChange,
   showStepNumber = true,
+  rightExtra,
+  leftExtra,
 }: {
   step: InstallationStep;
   index: number;
@@ -152,8 +197,16 @@ function InstallationStepRow({
   packageManager?: PackageManager;
   onPackageManagerChange?: (manager: PackageManager) => void;
   showStepNumber?: boolean;
+  rightExtra?: React.ReactNode;
+  leftExtra?: React.ReactNode;
 }) {
   const isInstallStep = step.title.toLowerCase().includes('install');
+  let manualTooltipTopClass = 'top-36';
+  if (frameworkName === 'Native') {
+    manualTooltipTopClass = 'top-16';
+  } else if (frameworkName === 'JavaScript') {
+    manualTooltipTopClass = 'top-40';
+  }
 
   return (
     <motion.div
@@ -162,6 +215,9 @@ function InstallationStepRow({
       className="relative mt-8 flex gap-8 first:mt-0"
     >
       {showStepNumber && <StepNumber index={index} />}
+      {showStepNumber && leftExtra && (
+        <div className={`absolute -left-[80px] ${manualTooltipTopClass}`}>{leftExtra}</div>
+      )}
       <StepContent
         title={step.title}
         description={step.description}
@@ -169,34 +225,82 @@ function InstallationStepRow({
         packageManager={packageManager}
         onPackageManagerChange={onPackageManagerChange}
         isInstallStep={isInstallStep}
+        extra={!showStepNumber && leftExtra ? <div className="-ml-20">{leftExtra}</div> : undefined}
       />
-      {step.code && (
-        <StepCodeBlock
-          code={step.code}
-          language={step.codeLanguage}
-          title={step.codeTitle}
-          index={index}
-          packageManager={packageManager}
-        />
+      {step.code ? (
+        <div className="flex w-full max-w-[500px] flex-col gap-2">
+          <StepCodeBlock
+            code={step.code}
+            language={step.codeLanguage}
+            title={step.codeTitle}
+            index={index}
+            packageManager={packageManager}
+          />
+          {rightExtra}
+        </div>
+      ) : (
+        rightExtra
       )}
     </motion.div>
   );
 }
 
+function InstallationStepsList({
+  framework,
+  showStepNumbers,
+  packageManager,
+  onPackageManagerChange,
+  renderTooltip,
+}: {
+  framework: Framework;
+  showStepNumbers: boolean;
+  packageManager?: PackageManager;
+  onPackageManagerChange?: (manager: PackageManager) => void;
+  renderTooltip: () => JSX.Element;
+}) {
+  return (
+    <>
+      {framework.installSteps.map((step, index) => (
+        <InstallationStepRow
+          key={`${framework.name}-step-${index}`}
+          step={step}
+          index={index}
+          frameworkName={framework.name}
+          packageManager={packageManager}
+          onPackageManagerChange={onPackageManagerChange}
+          showStepNumber={showStepNumbers}
+          leftExtra={index === framework.installSteps.length - 1 ? renderTooltip() : undefined}
+        />
+      ))}
+    </>
+  );
+}
+
 export function FrameworkInstructions({ framework }: { framework: Framework }) {
+  const track = useTelemetry();
+  const navigate = useNavigate();
+  const { environmentSlug } = useParams();
+
+  const renderTooltip = () => (
+    <SetupTooltip
+      onInviteTeam={() => {
+        track(TelemetryEvent.INVITE_TEAM_CLICKED, { origin: 'manual' });
+        navigate(buildRoute(ROUTES.SETTINGS_TEAM, { environmentSlug: environmentSlug || '' }));
+      }}
+      onSkip={() => {
+        track(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
+          skippedFrom: 'framework-guides-manual',
+        });
+        navigate(buildRoute(ROUTES.HOME, { environmentSlug: environmentSlug || '' }));
+      }}
+    />
+  );
+
   return (
     <AnimatePresence mode="wait">
       <motion.div key={framework.name} {...fadeIn} className="flex flex-col gap-7 pl-12">
         <div className="relative border-l border-[#eeeef0] p-8 pt-[24px]">
-          {framework.installSteps.map((step, index) => (
-            <InstallationStepRow
-              key={`${framework.name}-step-${index}`}
-              step={step}
-              index={index}
-              frameworkName={framework.name}
-              showStepNumber={true}
-            />
-          ))}
+          <InstallationStepsList framework={framework} showStepNumbers={true} renderTooltip={renderTooltip} />
         </div>
       </motion.div>
     </AnimatePresence>
@@ -205,22 +309,36 @@ export function FrameworkInstructions({ framework }: { framework: Framework }) {
 
 export function FrameworkCliInstructions({ framework }: { framework: Framework }) {
   const [packageManager, setPackageManager] = useState<PackageManager>('npm');
+  const track = useTelemetry();
+  const navigate = useNavigate();
+  const { environmentSlug } = useParams();
+
+  const renderTooltip = () => (
+    <SetupTooltip
+      onInviteTeam={() => {
+        track(TelemetryEvent.INVITE_TEAM_CLICKED, { origin: 'cli' });
+        navigate(buildRoute(ROUTES.SETTINGS_TEAM, { environmentSlug: environmentSlug || '' }));
+      }}
+      onSkip={() => {
+        track(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
+          skippedFrom: 'framework-guides-cli',
+        });
+        navigate(buildRoute(ROUTES.HOME, { environmentSlug: environmentSlug || '' }));
+      }}
+    />
+  );
 
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div key={framework.name} {...fadeIn} className="flex flex-col gap-7 pl-12">
         <div className="relative border-l border-[#eeeef0] p-8 pt-[24px]">
-          {framework.installSteps.map((step, index) => (
-            <InstallationStepRow
-              key={`${framework.name}-step-${index}`}
-              step={step}
-              index={index}
-              frameworkName={framework.name}
-              packageManager={packageManager}
-              onPackageManagerChange={setPackageManager}
-              showStepNumber={false}
-            />
-          ))}
+          <InstallationStepsList
+            framework={framework}
+            showStepNumbers={false}
+            packageManager={packageManager}
+            onPackageManagerChange={setPackageManager}
+            renderTooltip={renderTooltip}
+          />
         </div>
       </motion.div>
     </AnimatePresence>

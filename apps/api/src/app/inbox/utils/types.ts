@@ -4,6 +4,7 @@ import type {
   IPreferenceChannels,
   PreferenceLevelEnum,
   Redirect,
+  Schedule,
   SeverityLevelEnum,
 } from '@novu/shared';
 
@@ -79,4 +80,5 @@ export type InboxPreference = {
     data?: CustomDataType;
     severity: SeverityLevelEnum;
   };
+  schedule?: Schedule;
 };

@@ -65,6 +65,7 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
         },
       },
     },
+    schedule: Schema.Types.Mixed,
   },
   { ...schemaOptions, minimize: false }
 );

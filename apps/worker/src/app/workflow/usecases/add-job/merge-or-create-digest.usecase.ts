@@ -39,9 +39,7 @@ export class MergeOrCreateDigest {
     const { job } = command;
 
     const digestMeta = job.digest as IDigestBaseMetadata;
-    const digestAction = command.filtered
-      ? { digestResult: DigestCreationResultEnum.SKIPPED }
-      : await this.computeDigestLogicBasedOnExistingDigestState(job, digestMeta);
+    const digestAction = await this.computeDigestLogicBasedOnExistingDigestState(job, digestMeta);
 
     switch (digestAction.digestResult) {
       case DigestCreationResultEnum.MERGED: {
@@ -55,7 +53,7 @@ export class MergeOrCreateDigest {
         return await this.processMergedDigest(job, digestAction.activeDigestId, digestAction.activeNotificationId);
       }
       case DigestCreationResultEnum.SKIPPED:
-        return await this.processSkippedDigest(job, command.filtered);
+        return await this.processSkippedDigest(job);
       case DigestCreationResultEnum.CREATED:
         return await this.processCreatedDigest(digestMeta as IDigestBaseMetadata, job);
       default:
@@ -126,7 +124,7 @@ export class MergeOrCreateDigest {
   }
 
   @Instrument()
-  private async processSkippedDigest(job: JobEntity, filtered = false): Promise<DigestCreationResultEnum> {
+  private async processSkippedDigest(job: JobEntity): Promise<DigestCreationResultEnum> {
     await Promise.all([
       this.jobRepository.update(
         {
@@ -139,7 +137,7 @@ export class MergeOrCreateDigest {
           },
         }
       ),
-      this.digestSkippedExecutionDetails(job, filtered),
+      this.digestSkippedExecutionDetails(job),
     ]);
 
     return DigestCreationResultEnum.SKIPPED;
@@ -231,11 +229,11 @@ export class MergeOrCreateDigest {
     );
   }
 
-  private async digestSkippedExecutionDetails(job: JobEntity, filtered: boolean): Promise<void> {
+  private async digestSkippedExecutionDetails(job: JobEntity): Promise<void> {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: filtered ? DetailEnum.FILTER_STEPS : DetailEnum.DIGEST_SKIPPED,
+        detail: DetailEnum.DIGEST_SKIPPED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,

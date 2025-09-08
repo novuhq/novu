@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PreferenceLevelEnum } from '@novu/shared';
+import { PreferenceLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -32,6 +32,7 @@ export class GetPreferencesByLevel {
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
       includeInactiveChannels: command.includeInactiveChannels,
+      criticality: WorkflowCriticalityEnum.NON_CRITICAL,
     });
 
     return await this.getSubscriberPreferenceUsecase.execute(preferenceCommand);

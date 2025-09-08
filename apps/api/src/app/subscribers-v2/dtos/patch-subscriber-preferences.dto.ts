@@ -1,8 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { parseSlugId } from '@novu/application-generic';
 import { IPreferenceChannels } from '@novu/shared';
 import { Transform, Type } from 'class-transformer';
-import { IsOptional } from 'class-validator';
+import { IsOptional, ValidateNested } from 'class-validator';
+import { ScheduleDto } from '../../shared/dtos/schedule';
 
 export class PatchPreferenceChannelsDto implements IPreferenceChannels {
   @ApiProperty({ description: 'Email channel preference' })
@@ -34,4 +35,11 @@ export class PatchSubscriberPreferencesDto {
   @IsOptional()
   @Transform(({ value }) => parseSlugId(value))
   workflowId?: string;
+
+  @ApiHideProperty()
+  /* @ApiPropertyOptional({ description: 'Subscriber schedule', type: ScheduleDto }) */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ScheduleDto)
+  schedule?: ScheduleDto;
 }

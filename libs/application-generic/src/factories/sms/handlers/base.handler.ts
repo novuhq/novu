@@ -1,21 +1,17 @@
-import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
+import { ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { ISmsOptions, ISmsProvider } from '@novu/stateless';
+import { BaseHandler } from '../../shared/interfaces';
 import { ISmsHandler } from '../interfaces';
 
-export abstract class BaseSmsHandler implements ISmsHandler {
+export abstract class BaseSmsHandler extends BaseHandler<ISmsProvider> implements ISmsHandler {
   protected provider: ISmsProvider;
 
-  protected constructor(
-    private providerId: SmsProviderIdEnum,
-    private channelType: string
-  ) {}
-
-  getProvider(): ISmsProvider {
-    return this.provider;
+  protected constructor(providerId: SmsProviderIdEnum, channelType: string) {
+    super(providerId, channelType);
   }
 
-  canHandle(providerId: string, channelType: ChannelTypeEnum) {
-    return providerId === this.providerId && channelType === this.channelType;
+  public getProvider(): ISmsProvider {
+    return this.provider;
   }
 
   async send(options: ISmsOptions) {

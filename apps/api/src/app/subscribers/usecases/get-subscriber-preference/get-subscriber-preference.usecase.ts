@@ -24,6 +24,7 @@ import {
   ISubscriberPreferenceResponse,
   PreferencesTypeEnum,
   StepTypeEnum,
+  WorkflowCriticalityEnum,
 } from '@novu/shared';
 import _ from 'lodash';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
@@ -38,7 +39,9 @@ export class GetSubscriberPreference {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    const subscriber =
+      command.subscriber ??
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
     if (!subscriber) {
       throw new NotFoundException(`Subscriber with id: ${command.subscriberId} not found`);
     }
@@ -122,8 +125,21 @@ export class GetSubscriberPreference {
     );
 
     const nonCriticalWorkflowPreferences = workflowPreferences.filter(
-      (preference): preference is ISubscriberPreferenceResponse =>
-        preference !== undefined && !preference.template.critical
+      (preference): preference is ISubscriberPreferenceResponse => {
+        if (preference === undefined) {
+          return false;
+        }
+
+        if (command.criticality === WorkflowCriticalityEnum.ALL) {
+          return true;
+        }
+
+        if (command.criticality === WorkflowCriticalityEnum.CRITICAL) {
+          return preference.template.critical === true;
+        }
+
+        return preference.template.critical === false;
+      }
     );
 
     return nonCriticalWorkflowPreferences;

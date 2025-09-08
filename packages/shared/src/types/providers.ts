@@ -1,3 +1,5 @@
+import { IConfigurations } from '../entities/integration/configuration.interface';
+
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',
@@ -48,6 +50,8 @@ export enum CredentialsKeyEnum {
   AppSid = 'appSid',
   SenderId = 'senderId',
 }
+
+export type ConfigurationKey = keyof IConfigurations;
 
 export enum EmailProviderIdEnum {
   EmailJS = 'emailjs',
@@ -106,7 +110,9 @@ export enum SmsProviderIdEnum {
   EazySms = 'eazy-sms',
   Mobishastra = 'mobishastra',
   AfroSms = 'afro-message',
+  // cspell:disable-next-line
   Unifonic = 'unifonic',
+  // cspell:disable-next-line
   Smsmode = 'smsmode',
   IMedia = 'imedia',
 }

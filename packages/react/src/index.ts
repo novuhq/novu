@@ -17,7 +17,7 @@ export type {
   UnreadCount,
   WebSocketEvent,
 } from '@novu/js';
-export { PreferenceLevel, SeverityLevelEnum } from '@novu/js';
+export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
   Appearance,
