@@ -37,7 +37,7 @@ export type SubscribersPreferencesListQueryData =
  */
 export function useSubscribersPreferencesList(
   subscriberId: string,
-  criticality: operations.Criticality,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<SubscribersPreferencesListQueryData>,
 ): UseQueryResult<SubscribersPreferencesListQueryData, Error> {
@@ -63,7 +63,7 @@ export function useSubscribersPreferencesList(
  */
 export function useSubscribersPreferencesListSuspense(
   subscriberId: string,
-  criticality: operations.Criticality,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<SubscribersPreferencesListQueryData>,
 ): UseSuspenseQueryResult<SubscribersPreferencesListQueryData, Error> {
@@ -84,7 +84,7 @@ export function prefetchSubscribersPreferencesList(
   queryClient: QueryClient,
   client$: NovuCore,
   subscriberId: string,
-  criticality: operations.Criticality,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
 ): Promise<void> {
   return queryClient.prefetchQuery({
@@ -102,7 +102,7 @@ export function setSubscribersPreferencesListData(
   queryKeyBase: [
     subscriberId: string,
     parameters: {
-      criticality: operations.Criticality;
+      criticality?: operations.Criticality | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -119,7 +119,7 @@ export function invalidateSubscribersPreferencesList(
     [
       subscriberId: string,
       parameters: {
-        criticality: operations.Criticality;
+        criticality?: operations.Criticality | undefined;
         idempotencyKey?: string | undefined;
       },
     ]
@@ -145,7 +145,7 @@ export function invalidateAllSubscribersPreferencesList(
 export function buildSubscribersPreferencesListQuery(
   client$: NovuCore,
   subscriberId: string,
-  criticality: operations.Criticality,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): {
@@ -182,7 +182,7 @@ export function buildSubscribersPreferencesListQuery(
 export function queryKeySubscribersPreferencesList(
   subscriberId: string,
   parameters: {
-    criticality: operations.Criticality;
+    criticality?: operations.Criticality | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {

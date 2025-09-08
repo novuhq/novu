@@ -19,7 +19,7 @@ export type Criticality = ClosedEnum<typeof Criticality>;
 
 export type SubscribersControllerGetSubscriberPreferencesRequest = {
   subscriberId: string;
-  criticality: Criticality;
+  criticality?: Criticality | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -58,7 +58,7 @@ export const SubscribersControllerGetSubscriberPreferencesRequest$inboundSchema:
     unknown
   > = z.object({
     subscriberId: z.string(),
-    criticality: Criticality$inboundSchema,
+    criticality: Criticality$inboundSchema.default("nonCritical"),
     "idempotency-key": z.string().optional(),
   }).transform((v) => {
     return remap$(v, {
@@ -81,7 +81,7 @@ export const SubscribersControllerGetSubscriberPreferencesRequest$outboundSchema
     SubscribersControllerGetSubscriberPreferencesRequest
   > = z.object({
     subscriberId: z.string(),
-    criticality: Criticality$outboundSchema,
+    criticality: Criticality$outboundSchema.default("nonCritical"),
     idempotencyKey: z.string().optional(),
   }).transform((v) => {
     return remap$(v, {

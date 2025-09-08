@@ -35,7 +35,7 @@ import { Result } from "../types/fp.js";
 export function subscribersPreferencesList(
   client: NovuCore,
   subscriberId: string,
-  criticality: operations.Criticality,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -65,7 +65,7 @@ export function subscribersPreferencesList(
 async function $do(
   client: NovuCore,
   subscriberId: string,
-  criticality: operations.Criticality,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
