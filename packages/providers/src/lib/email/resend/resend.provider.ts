@@ -11,6 +11,40 @@ import { Resend } from 'resend';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
+interface ResendErrorResponse {
+  statusCode: number;
+  error: string;
+  name: string;
+}
+
+interface ResendSuccessResponse {
+  data: { id: string };
+  error: null;
+}
+
+interface ResendResponseWithError {
+  data: null;
+  error: ResendErrorResponse;
+}
+
+type ResendResponse = ResendSuccessResponse | ResendResponseWithError;
+
+/**
+ * Validate (type-guard) that an error response matches our ResendErrorResponse interface.
+ * this is needed because of this issue https://github.com/resend/resend-node/issues/538
+ */
+function isResendError(response: ResendResponse | unknown): response is ResendResponseWithError {
+  return (
+    response !== null &&
+    typeof response === 'object' &&
+    'error' in response &&
+    response.error !== null &&
+    typeof response.error === 'object' &&
+    'error' in response.error &&
+    typeof response.error.error === 'string'
+  );
+}
+
 export class ResendEmailProvider extends BaseProvider implements IEmailProvider {
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   id = EmailProviderIdEnum.Resend;
@@ -53,7 +87,9 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
       }).body
     );
 
-    if (response.error) {
+    if (isResendError(response)) {
+      throw new Error(response.error.error);
+    } else if (response.error) {
       throw new Error(response.error.message);
     }
 
@@ -91,5 +127,17 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
         code: CheckIntegrationResponseEnum.FAILED,
       };
     }
+  }
+
+  async autoConfigureInboundWebhook(_configurations: { webhookUrl: string }): Promise<{
+    success: boolean;
+    message?: string;
+    configurations?: unknown;
+  }> {
+    return {
+      success: false,
+      message:
+        'Resend does not currently offer automatic inbound webhook configuration. Please configure your webhook manually.',
+    };
   }
 }

@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
-import { sendgridGroupConfigurations } from '../configurations/provider-configuration';
+import { resendGroupConfigurations, sendgridGroupConfigurations } from '../configurations/provider-configuration';
 import {
   brazeEmailConfig,
   emailWebhookConfig,
@@ -150,6 +150,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Resend',
     channel: ChannelTypeEnum.EMAIL,
     credentials: resendConfig,
+    configurations: resendGroupConfigurations,
     docReference: `https://docs.novu.co/integrations/providers/email/resend${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'resend.svg', dark: 'resend.svg' },
   },

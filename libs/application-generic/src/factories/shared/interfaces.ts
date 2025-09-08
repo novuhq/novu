@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, IConfigurations } from '@novu/shared';
-import { IEmailEventBody, ISMSEventBody } from '@novu/stateless';
+import { ChannelProvider, IEmailEventBody, ISMSEventBody } from '@novu/stateless';
 
 export interface IHandler {
   inboundWebhookEnabled(): boolean;
@@ -17,20 +17,7 @@ export interface IHandler {
   }>;
 }
 
-interface IProviderWithWebhookMethods {
-  getMessageId?: (body: unknown | unknown[]) => string[];
-  parseEventBody?: (body: unknown | unknown[], identifier: string) => IEmailEventBody | ISMSEventBody | undefined;
-  verifySignature?: (body: unknown, headers: Record<string, string>) => { success: boolean; message?: string };
-  autoConfigureInboundWebhook?: (configurations: { webhookUrl: string }) => Promise<{
-    success: boolean;
-    message?: string;
-    configurations?: IConfigurations;
-  }>;
-}
-
-export abstract class BaseHandler<T extends IProviderWithWebhookMethods = IProviderWithWebhookMethods>
-  implements IHandler
-{
+export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> implements IHandler {
   protected provider: T;
   protected providerId: string;
   protected channelType: string;
@@ -65,7 +52,9 @@ export abstract class BaseHandler<T extends IProviderWithWebhookMethods = IProvi
       return undefined;
     }
 
-    return this.provider.parseEventBody(body, identifier);
+    const result = this.provider.parseEventBody(body, identifier);
+
+    return result && typeof result === 'object' ? (result as IEmailEventBody | ISMSEventBody) : undefined;
   }
 
   public verifySignature(body: unknown, headers: Record<string, string>): { success: boolean; message?: string } {
