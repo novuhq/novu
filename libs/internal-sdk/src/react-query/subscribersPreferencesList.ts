@@ -37,6 +37,7 @@ export type SubscribersPreferencesListQueryData =
  */
 export function useSubscribersPreferencesList(
   subscriberId: string,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: QueryHookOptions<SubscribersPreferencesListQueryData>,
 ): UseQueryResult<SubscribersPreferencesListQueryData, Error> {
@@ -45,6 +46,7 @@ export function useSubscribersPreferencesList(
     ...buildSubscribersPreferencesListQuery(
       client,
       subscriberId,
+      criticality,
       idempotencyKey,
       options,
     ),
@@ -61,6 +63,7 @@ export function useSubscribersPreferencesList(
  */
 export function useSubscribersPreferencesListSuspense(
   subscriberId: string,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: SuspenseQueryHookOptions<SubscribersPreferencesListQueryData>,
 ): UseSuspenseQueryResult<SubscribersPreferencesListQueryData, Error> {
@@ -69,6 +72,7 @@ export function useSubscribersPreferencesListSuspense(
     ...buildSubscribersPreferencesListQuery(
       client,
       subscriberId,
+      criticality,
       idempotencyKey,
       options,
     ),
@@ -80,12 +84,14 @@ export function prefetchSubscribersPreferencesList(
   queryClient: QueryClient,
   client$: NovuCore,
   subscriberId: string,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
 ): Promise<void> {
   return queryClient.prefetchQuery({
     ...buildSubscribersPreferencesListQuery(
       client$,
       subscriberId,
+      criticality,
       idempotencyKey,
     ),
   });
@@ -95,7 +101,10 @@ export function setSubscribersPreferencesListData(
   client: QueryClient,
   queryKeyBase: [
     subscriberId: string,
-    parameters: { idempotencyKey?: string | undefined },
+    parameters: {
+      criticality?: operations.Criticality | undefined;
+      idempotencyKey?: string | undefined;
+    },
   ],
   data: SubscribersPreferencesListQueryData,
 ): SubscribersPreferencesListQueryData | undefined {
@@ -107,7 +116,13 @@ export function setSubscribersPreferencesListData(
 export function invalidateSubscribersPreferencesList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [subscriberId: string, parameters: { idempotencyKey?: string | undefined }]
+    [
+      subscriberId: string,
+      parameters: {
+        criticality?: operations.Criticality | undefined;
+        idempotencyKey?: string | undefined;
+      },
+    ]
   >,
   filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
@@ -130,6 +145,7 @@ export function invalidateAllSubscribersPreferencesList(
 export function buildSubscribersPreferencesListQuery(
   client$: NovuCore,
   subscriberId: string,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): {
@@ -140,6 +156,7 @@ export function buildSubscribersPreferencesListQuery(
 } {
   return {
     queryKey: queryKeySubscribersPreferencesList(subscriberId, {
+      criticality,
       idempotencyKey,
     }),
     queryFn: async function subscribersPreferencesListQueryFn(
@@ -154,6 +171,7 @@ export function buildSubscribersPreferencesListQuery(
       return unwrapAsync(subscribersPreferencesList(
         client$,
         subscriberId,
+        criticality,
         idempotencyKey,
         mergedOptions,
       ));
@@ -163,7 +181,10 @@ export function buildSubscribersPreferencesListQuery(
 
 export function queryKeySubscribersPreferencesList(
   subscriberId: string,
-  parameters: { idempotencyKey?: string | undefined },
+  parameters: {
+    criticality?: operations.Criticality | undefined;
+    idempotencyKey?: string | undefined;
+  },
 ): QueryKey {
   return ["@novu/api", "Preferences", "list", subscriberId, parameters];
 }

@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
-import { PreferencesTypeEnum, WorkflowPreferences, WorkflowPreferencesPartial } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  PreferencesTypeEnum,
+  WorkflowPreferences,
+  WorkflowPreferencesPartial,
+} from '@novu/shared';
 import { Instrument } from '../../instrumentation';
+import { FeatureFlagsService } from '../../services/feature-flags/feature-flags.service';
 import { deepMerge } from '../../utils';
 import { UpsertSubscriberGlobalPreferencesCommand } from './upsert-subscriber-global-preferences.command';
 import { UpsertSubscriberWorkflowPreferencesCommand } from './upsert-subscriber-workflow-preferences.command';
@@ -29,7 +35,10 @@ type UpsertPreferencesCommand = Omit<
 
 @Injectable()
 export class UpsertPreferences {
-  constructor(private preferencesRepository: PreferencesRepository) {}
+  constructor(
+    private preferencesRepository: PreferencesRepository,
+    private featureFlagsService: FeatureFlagsService
+  ) {}
 
   @Instrument()
   public async upsertWorkflowPreferences(command: UpsertWorkflowPreferencesCommand): Promise<WorkflowPreferencesFull> {
@@ -49,6 +58,13 @@ export class UpsertPreferences {
   public async upsertSubscriberGlobalPreferences(command: UpsertSubscriberGlobalPreferencesCommand) {
     await this.deleteSubscriberWorkflowChannelPreferences(command);
 
+    const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
+      defaultValue: false,
+      environment: { _id: command.environmentId },
+      organization: { _id: command.organizationId },
+    });
+
     return this.upsert({
       _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
@@ -56,6 +72,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       returnPreference: command.returnPreference,
+      schedule: isSubscribersScheduleEnabled ? command.schedule : undefined,
     });
   }
 
@@ -137,6 +154,7 @@ export class UpsertPreferences {
       _templateId: command.templateId,
       preferences: command.preferences,
       type: command.type,
+      schedule: command.schedule,
     });
   }
 
@@ -157,6 +175,7 @@ export class UpsertPreferences {
       {
         $set: {
           preferences: mergedPreferences,
+          schedule: command.schedule,
           _userId: command.userId,
         },
       }

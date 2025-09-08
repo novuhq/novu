@@ -1,12 +1,15 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { IS_EU, MODE } from '../../config';
 import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useFetchIntegrations } from '../../hooks/use-fetch-integrations';
+import { useInboxIntegrationWorkflowUpdater } from '../../hooks/use-inbox-integration-workflow-updater';
+import { useTelemetry } from '../../hooks/use-telemetry';
 import { ROUTES } from '../../utils/routes';
+import { TelemetryEvent } from '../../utils/telemetry';
 import { InboxConnectedGuide } from './inbox-connected-guide';
 import { InboxFrameworkGuide } from './inbox-framework-guide';
 
@@ -20,6 +23,8 @@ export function InboxEmbed(): JSX.Element | null {
   const { currentUser } = useAuth();
   const { integrations } = useFetchIntegrations({ refetchInterval: 1000, refetchOnWindowFocus: true });
   const { environments, areEnvironmentsInitialLoading } = useEnvironment();
+
+  const lastUpdateKeyRef = useRef<string>('');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,10 +40,17 @@ export function InboxEmbed(): JSX.Element | null {
       integration._environmentId === selectedEnvironment?._id && integration.channel === ChannelTypeEnum.IN_APP
   );
 
+  const isInAppConnected = foundIntegration?.connected ?? false;
+
+  const { updateActiveWorkflowsWithInAppSteps } = useInboxIntegrationWorkflowUpdater({
+    maxToUpdate: 20,
+  });
+  const track = useTelemetry();
+  const currentKey = `${selectedEnvironment?._id}-${foundIntegration?._id}`;
+
   const primaryColor = searchParams.get('primaryColor') || '#DD2450';
   const foregroundColor = searchParams.get('foregroundColor') || '#0E121B';
 
-  // Helper function to safely validate URLs
   const validateUrl = (urlString: string | null, allowedProtocols: string[]): string | undefined => {
     if (!urlString) return undefined;
 
@@ -53,7 +65,6 @@ export function InboxEmbed(): JSX.Element | null {
     }
   };
 
-  // Only show backendUrl and socketUrl if not production and not EU region
   const shouldShowCustomUrls = MODE !== 'production' && !IS_EU;
   const backendUrl = shouldShowCustomUrls
     ? validateUrl(searchParams.get('backendUrl'), ['http:', 'https:'])
@@ -62,11 +73,21 @@ export function InboxEmbed(): JSX.Element | null {
     ? validateUrl(searchParams.get('socketUrl'), ['ws:', 'wss:', 'http:', 'https:'])
     : undefined;
 
-  // Check if we're already on the WELCOME route to prevent redirect loops
   const isOnWelcomeRoute = location.pathname === ROUTES.WELCOME || location.pathname.startsWith(`${ROUTES.WELCOME}/`);
 
+  const handleWorkflowUpdate = useCallback(async () => {
+    try {
+      await updateActiveWorkflowsWithInAppSteps();
+    } catch (error) {
+      track(TelemetryEvent.INBOX_WORKFLOW_UPDATE_FAILED, {
+        failedCount: 0,
+        totalCount: 0,
+        exception: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }, [updateActiveWorkflowsWithInAppSteps, track]);
+
   useEffect(() => {
-    // Wait for environments to load and ensure we're not already on WELCOME route
     if (areEnvironmentsInitialLoading || isOnWelcomeRoute) {
       return;
     }
@@ -78,20 +99,23 @@ export function InboxEmbed(): JSX.Element | null {
   }, [subscriberId, selectedEnvironment, navigate, areEnvironmentsInitialLoading, isOnWelcomeRoute]);
 
   useEffect(() => {
-    if (foundIntegration?.connected) {
+    if (isInAppConnected) {
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 10000);
 
+      if (lastUpdateKeyRef.current !== currentKey) {
+        handleWorkflowUpdate();
+        lastUpdateKeyRef.current = currentKey;
+      }
+
       return () => clearTimeout(timer);
     }
-  }, [foundIntegration]);
+  }, [isInAppConnected, currentKey, handleWorkflowUpdate]);
 
-  // Don't render if we're on the WELCOME route to avoid redirect loops
   if (isOnWelcomeRoute) {
     return null;
   }
 
-  // Don't render while environments are still loading
   if (areEnvironmentsInitialLoading) {
     return null;
   }

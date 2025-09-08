@@ -5,5 +5,5 @@ import { EnvironmentWithSubscriber } from '../../../shared/commands/project.comm
 export class GetSubscriberPreferencesCommand extends EnvironmentWithSubscriber {
   @IsEnum(WorkflowCriticalityEnum)
   @IsOptional()
-  criticality: WorkflowCriticalityEnum = WorkflowCriticalityEnum.NON_CRITICAL;
+  criticality?: WorkflowCriticalityEnum = WorkflowCriticalityEnum.NON_CRITICAL;
 }

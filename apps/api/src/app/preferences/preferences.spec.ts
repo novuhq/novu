@@ -336,6 +336,7 @@ describe('Preferences', () => {
             },
           },
         },
+        schedule: undefined,
         type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
         source: {
           [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
@@ -430,6 +431,7 @@ describe('Preferences', () => {
             },
           },
         },
+        schedule: undefined,
         type: PreferencesTypeEnum.USER_WORKFLOW,
         source: {
           [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
@@ -546,6 +548,7 @@ describe('Preferences', () => {
             },
           },
         },
+        schedule: undefined,
         type: PreferencesTypeEnum.USER_WORKFLOW,
         source: {
           [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
@@ -685,6 +688,7 @@ describe('Preferences', () => {
             },
           },
         },
+        schedule: undefined,
         type: PreferencesTypeEnum.USER_WORKFLOW,
         source: {
           [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {

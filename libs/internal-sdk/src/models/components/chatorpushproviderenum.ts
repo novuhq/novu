@@ -20,6 +20,7 @@ export const ChatOrPushProviderEnum = {
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
   ChatWebhook: "chat-webhook",
+  NovuSlack: "novu-slack",
   Fcm: "fcm",
   Apns: "apns",
   Expo: "expo",

@@ -3,7 +3,7 @@ import { ResourceOriginEnum, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowP
 import { Slug } from '../../types/utils';
 import { RuntimeIssue } from '../../utils/issues';
 import type { JSONSchemaDto } from './json-schema-dto';
-import { StepCreateDto, StepResponseDto, StepUpdateDto } from './step.dto';
+import { StepCreateDto, StepListResponseDto, StepResponseDto, StepUpdateDto } from './step.dto';
 import { WorkflowStatusEnum } from './workflow-status-enum';
 
 export class ControlsSchema {
@@ -40,6 +40,7 @@ export type WorkflowListResponseDto = Pick<
   | 'isTranslationEnabled'
 > & {
   stepTypeOverviews: StepTypeEnum[];
+  steps: StepListResponseDto[];
 };
 
 export type WorkflowCommonsFields = {

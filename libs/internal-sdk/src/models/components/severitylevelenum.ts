@@ -6,7 +6,7 @@ import * as z from "zod";
 import { ClosedEnum } from "../../types/enums.js";
 
 /**
- * Severity level of the workflow
+ * Severity of the workflow
  */
 export const SeverityLevelEnum = {
   High: "high",
@@ -15,7 +15,7 @@ export const SeverityLevelEnum = {
   None: "none",
 } as const;
 /**
- * Severity level of the workflow
+ * Severity of the workflow
  */
 export type SeverityLevelEnum = ClosedEnum<typeof SeverityLevelEnum>;
 

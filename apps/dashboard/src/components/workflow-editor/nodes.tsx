@@ -1,7 +1,7 @@
 import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum, StepCreateDto } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ComponentProps, useCallback, useState } from 'react';
+import { ComponentProps, useCallback, useEffect, useState } from 'react';
 import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -22,6 +22,8 @@ import { AddStepMenu } from './add-step-menu';
 import { NODE_WIDTH, Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
 import { ConditionBadge } from './condition-badge';
 import { useDragContext } from './drag-context';
+import { OptimisticStepWrapper } from './optimistic-step-wrapper';
+import { OptimisticStep } from './use-optimistic-workflow';
 import { WorkflowNodeActionBar } from './workflow-node-action-bar';
 
 export type NodeData = {
@@ -31,10 +33,11 @@ export type NodeData = {
   error?: string;
   name?: string;
   stepSlug?: string;
-  controlValues?: Record<string, any>;
+  controlValues?: Record<string, unknown>;
   workflowSlug?: string;
   environment?: string;
   isTemplateStorePreview?: boolean;
+  optimisticStep?: OptimisticStep;
 };
 
 export type NodeType = FlowNode<NodeData>;
@@ -96,7 +99,7 @@ const StepNode = (props: StepNodeProps) => {
   const { stepSlug } = useParams<{
     stepSlug: string;
   }>();
-  const { workflow: currentWorkflow, update } = useWorkflow();
+  const { workflow: currentWorkflow, optimisticRemoveStep, optimisticAddStep } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
   const [isHovered, setIsHovered] = useState(false);
@@ -140,25 +143,19 @@ const StepNode = (props: StepNodeProps) => {
       return;
     }
 
-    update(
-      {
-        ...currentWorkflow,
-        steps: currentWorkflow.steps.filter((s) => s.slug !== data.stepSlug),
+    optimisticRemoveStep(data.stepSlug, {
+      onSuccess: () => {
+        if (currentEnvironment?.slug && currentWorkflow?.slug) {
+          navigate(
+            buildRoute(ROUTES.EDIT_WORKFLOW, {
+              environmentSlug: currentEnvironment.slug,
+              workflowSlug: currentWorkflow.slug,
+            })
+          );
+        }
       },
-      {
-        onSuccess: () => {
-          if (currentEnvironment?.slug && currentWorkflow?.slug) {
-            navigate(
-              buildRoute(ROUTES.EDIT_WORKFLOW, {
-                environmentSlug: currentEnvironment.slug,
-                workflowSlug: currentWorkflow.slug,
-              })
-            );
-          }
-        },
-      }
-    );
-  }, [data.stepSlug, currentWorkflow, currentEnvironment?.slug, update, navigate]);
+    });
+  }, [data.stepSlug, currentWorkflow, currentEnvironment?.slug, optimisticRemoveStep, navigate]);
 
   const handleCopyStep = useCallback(() => {
     if (!data.stepSlug || !currentWorkflow || !type) {
@@ -180,41 +177,31 @@ const StepNode = (props: StepNodeProps) => {
       controlValues: { ...currentStep.controls.values },
     };
 
-    // Insert the copied step immediately after the current step
-    const newSteps = [...currentWorkflow.steps];
-    newSteps.splice(currentStepIndex + 1, 0, copiedStep as any);
+    optimisticAddStep(currentStep.type, currentStepIndex + 1, () => copiedStep, {
+      onSuccess: (updatedWorkflow) => {
+        // Navigate to the newly created step
+        const newStep = updatedWorkflow.steps[currentStepIndex + 1];
 
-    update(
-      {
-        ...currentWorkflow,
-        steps: newSteps,
-      },
-      {
-        onSuccess: (updatedWorkflow) => {
-          // Navigate to the newly created step
-          const newStep = updatedWorkflow.steps[currentStepIndex + 1];
+        if (newStep && currentEnvironment?.slug) {
+          const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
 
-          if (newStep && currentEnvironment?.slug) {
-            const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
-
-            if (isTemplateConfigurable) {
-              navigate(
-                buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-                  stepSlug: newStep.slug,
-                })
-              );
-            } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(type)) {
-              navigate(
-                buildRoute(ROUTES.EDIT_STEP, {
-                  stepSlug: newStep.slug,
-                })
-              );
-            }
+          if (isTemplateConfigurable) {
+            navigate(
+              buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                stepSlug: newStep.slug,
+              })
+            );
+          } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(type)) {
+            navigate(
+              buildRoute(ROUTES.EDIT_STEP, {
+                stepSlug: newStep.slug,
+              })
+            );
           }
-        },
-      }
-    );
-  }, [data.stepSlug, currentWorkflow, type, currentEnvironment?.slug, update, navigate]);
+        }
+      },
+    });
+  }, [data.stepSlug, currentWorkflow, type, currentEnvironment?.slug, optimisticAddStep, navigate]);
 
   const handleEditContent = useCallback(() => {
     if (!data.stepSlug || !currentEnvironment?.slug || !type) {
@@ -254,27 +241,29 @@ const StepNode = (props: StepNodeProps) => {
         onLayoutAnimationStart={() => removeEdges()}
         onLayoutAnimationComplete={() => forceUpdateNodesAndEdges()}
       >
-        <Node
-          aria-selected={isSelected}
-          className={cn(
-            'group transition-all',
-            {
-              'pointer-events-none opacity-40': isAnyNodeDragging && id === draggedNodeId,
-              'pointer-events-none scale-95 border border-dashed border-bg-soft bg-transparent aria-selected:[background-image:none]':
-                isAnyNodeDragging && id === intersectingNodeId,
-            },
-            className
-          )}
-          nodeId={id}
-          isDraggable={isDraggable}
-          isDragHandleVisible={areActionsVisible}
-          onNodeDragStart={onNodeDragStart}
-          onNodeDragMove={onNodeDragMove}
-          onNodeDragEnd={handleNodeDragEnd}
-          {...rest}
-        >
-          {rest.children}
-        </Node>
+        <OptimisticStepWrapper step={data.optimisticStep}>
+          <Node
+            aria-selected={isSelected}
+            className={cn(
+              'group transition-all',
+              {
+                'pointer-events-none opacity-40': isAnyNodeDragging && id === draggedNodeId,
+                'pointer-events-none scale-95 border border-dashed border-bg-soft bg-transparent aria-selected:[background-image:none]':
+                  isAnyNodeDragging && id === intersectingNodeId,
+              },
+              className
+            )}
+            nodeId={id}
+            isDraggable={isDraggable}
+            isDragHandleVisible={areActionsVisible}
+            onNodeDragStart={onNodeDragStart}
+            onNodeDragMove={onNodeDragMove}
+            onNodeDragEnd={handleNodeDragEnd}
+            {...rest}
+          >
+            {rest.children}
+          </Node>
+        </OptimisticStepWrapper>
         {hasConditions && (
           <ConditionBadge
             conditionsCount={conditionsCount}
@@ -301,22 +290,79 @@ const StepNode = (props: StepNodeProps) => {
 };
 
 const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data: NodeData; type: StepTypeEnum }) => {
+  const navigate = useNavigate();
+  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const isNavigatableChannelNode = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const clickCount = e.detail ?? 1;
+
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+        setClickTimeout(null);
+      }
+
+      if (clickCount > 1) {
+        if (isNavigatableChannelNode && data.stepSlug) {
+          navigate(
+            buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+              stepSlug: data.stepSlug,
+            })
+          );
+        } else {
+          navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
+        }
+
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
+        setClickTimeout(null);
+      }, 150);
+
+      setClickTimeout(timeout);
+    },
+    [clickTimeout, navigate, data.stepSlug, isNavigatableChannelNode]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate(buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' }));
+      }
+    },
+    [navigate, data.stepSlug]
+  );
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+      }
+    };
+  }, [clickTimeout]);
+
   if (data.isTemplateStorePreview) {
     return children;
   }
 
   return (
-    <Link
-      to={buildRoute(ROUTES.EDIT_STEP, { stepSlug: data.stepSlug ?? '' })}
-      onClick={(e) => {
-        // Prevent any bubbling that might interfere with the navigation
-        e.stopPropagation();
-      }}
-      className="contents"
+    <div
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      className="contents cursor-pointer"
       data-testid={`${type}-node`}
+      role="button"
+      tabIndex={0}
     >
       {children}
-    </Link>
+    </div>
   );
 };
 
@@ -553,7 +599,7 @@ export const AddNode = (props: NodeProps<NodeType>) => {
   const { intersectingNodeId } = useDragContext();
   const { id } = props;
   const isIntersecting = intersectingNodeId === id;
-  const { workflow, update } = useWorkflow();
+  const { workflow, optimisticAddStep } = useWorkflow();
   const navigate = useNavigate();
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
@@ -606,14 +652,10 @@ export const AddNode = (props: NodeProps<NodeType>) => {
           visible
           className="-mt-1"
           onMenuItemClick={(stepType) => {
-            update(
-              {
-                ...workflow,
-                steps: [
-                  ...workflow.steps,
-                  createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined, workflow.severity),
-                ],
-              },
+            optimisticAddStep(
+              stepType,
+              workflow.steps.length,
+              () => createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined, workflow.severity),
               {
                 onSuccess: (data) => {
                   if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {

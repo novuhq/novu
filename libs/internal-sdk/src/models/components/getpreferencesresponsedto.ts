@@ -57,7 +57,7 @@ export type Workflow = {
    */
   data?: GetPreferencesResponseDtoData | undefined;
   /**
-   * Severity level of the workflow
+   * Severity of the workflow
    */
   severity: SeverityLevelEnum;
 };

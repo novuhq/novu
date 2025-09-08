@@ -60,6 +60,11 @@ import {
   ResourceOriginEnum$outboundSchema,
 } from "./resourceoriginenum.js";
 import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   SmsStepUpsertDto,
   SmsStepUpsertDto$inboundSchema,
   SmsStepUpsertDto$Outbound,
@@ -130,6 +135,10 @@ export type UpdateWorkflowDto = {
    * Origin of the layout
    */
   origin: ResourceOriginEnum;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
 };
 
 /** @internal */
@@ -310,6 +319,7 @@ export const UpdateWorkflowDto$inboundSchema: z.ZodType<
   ),
   preferences: PreferencesRequestDto$inboundSchema,
   origin: ResourceOriginEnum$inboundSchema,
+  severity: SeverityLevelEnum$inboundSchema.optional(),
 });
 
 /** @internal */
@@ -334,6 +344,7 @@ export type UpdateWorkflowDto$Outbound = {
   >;
   preferences: PreferencesRequestDto$Outbound;
   origin: string;
+  severity?: string | undefined;
 };
 
 /** @internal */
@@ -396,6 +407,7 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
   ),
   preferences: PreferencesRequestDto$outboundSchema,
   origin: ResourceOriginEnum$outboundSchema,
+  severity: SeverityLevelEnum$outboundSchema.optional(),
 });
 
 /**

@@ -39,6 +39,10 @@ import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { SubscriberResponseDto } from '../subscribers/dtos';
+import {
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+} from '../subscribers/usecases/get-subscriber-global-preference';
 import { ListSubscriberSubscriptionsQueryDto } from '../topics-v2/dtos/list-subscriber-subscriptions-query.dto';
 import { ListTopicSubscriptionsResponseDto } from '../topics-v2/dtos/list-topic-subscriptions-response.dto';
 import { ListSubscriberSubscriptionsCommand } from '../topics-v2/usecases/list-subscriber-subscriptions/list-subscriber-subscriptions.command';
@@ -53,6 +57,7 @@ import { ListSubscribersResponseDto } from './dtos/list-subscribers-response.dto
 import { PatchSubscriberRequestDto } from './dtos/patch-subscriber.dto';
 import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferences.dto';
 import { RemoveSubscriberResponseDto } from './dtos/remove-subscriber.dto';
+import { SubscriberGlobalPreferenceDto } from './dtos/subscriber-global-preference.dto';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ResponseTypeEnum } from './usecases/chat-oauth-callback/chat-oauth-callback.response';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
@@ -91,7 +96,8 @@ export class SubscribersController {
     private listSubscriberSubscriptionsUsecase: ListSubscriberSubscriptionsUseCase,
     private chatOauthCallbackUsecase: ChatOauthCallback,
     private generateChatOauthUrlUsecase: GenerateChatOauthUrl,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private getSubscriberGlobalPreference: GetSubscriberGlobalPreference
   ) {}
 
   @Get('')
@@ -278,6 +284,33 @@ export class SubscribersController {
     );
   }
 
+  @Get('/:subscriberId/preferences/global')
+  @ExternalApiAccessible()
+  /* @ApiOperation({
+    summary: 'Retrieve subscriber global preference',
+    description: `Retrieve subscriber global preference. This API returns all five global channels preferences and subscriber schedule.`,
+  })
+  @ApiResponse(SubscriberGlobalPreferenceDto)
+  @SdkGroupName('Subscribers.Preferences')
+  @SdkMethodName('list') */
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
+  @RequireAuthentication()
+  async getGlobalPreference(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<SubscriberGlobalPreferenceDto> {
+    const globalPreference = await this.getSubscriberGlobalPreference.execute(
+      GetSubscriberGlobalPreferenceCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        subscriberId: subscriberId,
+        includeInactiveChannels: false,
+      })
+    );
+
+    return globalPreference.preference;
+  }
+
   @Patch('/:subscriberId/preferences/bulk')
   @ExternalApiAccessible()
   @ApiOperation({
@@ -339,6 +372,7 @@ export class SubscribersController {
         subscriberId,
         workflowIdOrInternalId: body.workflowId,
         channels: body.channels,
+        schedule: body.schedule,
       })
     );
   }
