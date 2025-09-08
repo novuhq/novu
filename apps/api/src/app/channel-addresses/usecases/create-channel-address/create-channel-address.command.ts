@@ -1,3 +1,4 @@
+import { BaseCommand } from '@novu/application-generic';
 import { ADDRESS_TYPES, ChannelAddressByType, ChannelAddressType, ResourceKey } from '@novu/shared';
 import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
@@ -40,9 +41,8 @@ export class CreateChannelAddressCommand<T extends ChannelAddressType = ChannelA
     type: T;
     address: ChannelAddressByType[T];
   }): CreateChannelAddressCommand<T> {
-    const command = new CreateChannelAddressCommand<T>();
-    Object.assign(command, data);
-
-    return command;
+    // Call BaseCommand.create with the correct constructor to ensure full inheritance chain validation
+    // biome-ignore lint/complexity/noThisInStatic: Required to maintain proper this context for validation
+    return BaseCommand.create.call(this, data);
   }
 }
