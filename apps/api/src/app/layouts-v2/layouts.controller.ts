@@ -11,7 +11,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common/decorators';
-import { ApiBody, ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import {
   ExternalApiAccessible,
   ParseSlugEnvironmentIdPipe,
@@ -148,6 +148,7 @@ export class LayoutsController {
     summary: 'Delete a layout',
     description: 'Removes a specific layout by its unique identifier **layoutId**',
   })
+  @ApiParam({ name: 'layoutId', description: 'The unique identifier of the layout', type: String })
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async delete(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
