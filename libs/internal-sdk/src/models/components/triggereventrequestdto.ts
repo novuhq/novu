@@ -14,6 +14,11 @@ import {
   EmailChannelOverrides$outboundSchema,
 } from "./emailchanneloverrides.js";
 import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   StepsOverrides,
   StepsOverrides$inboundSchema,
   StepsOverrides$Outbound,
@@ -94,6 +99,10 @@ export type Overrides = {
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   layoutIdentifier?: string | undefined;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
 };
 
 export type To1 = TopicPayloadDto | SubscriberPayloadDto | string;
@@ -235,6 +244,7 @@ export const Overrides$inboundSchema: z.ZodType<
   sms: z.record(z.any()).optional(),
   chat: z.record(z.any()).optional(),
   layoutIdentifier: z.string().optional(),
+  severity: SeverityLevelEnum$inboundSchema.optional(),
 });
 
 /** @internal */
@@ -247,6 +257,7 @@ export type Overrides$Outbound = {
   sms?: { [k: string]: any } | undefined;
   chat?: { [k: string]: any } | undefined;
   layoutIdentifier?: string | undefined;
+  severity?: string | undefined;
 };
 
 /** @internal */
@@ -263,6 +274,7 @@ export const Overrides$outboundSchema: z.ZodType<
   sms: z.record(z.any()).optional(),
   chat: z.record(z.any()).optional(),
   layoutIdentifier: z.string().optional(),
+  severity: SeverityLevelEnum$outboundSchema.optional(),
 });
 
 /**

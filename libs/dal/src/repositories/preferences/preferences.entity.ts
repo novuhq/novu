@@ -1,4 +1,4 @@
-import type { WorkflowPreferencesPartial } from '@novu/shared';
+import type { Schedule, WorkflowPreferencesPartial } from '@novu/shared';
 import { PreferencesTypeEnum } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types';
 import type { EnvironmentId } from '../environment';
@@ -27,4 +27,6 @@ export class PreferencesEntity {
   type: PreferencesTypeEnum;
 
   preferences: WorkflowPreferencesPartial;
+
+  schedule?: Schedule;
 }

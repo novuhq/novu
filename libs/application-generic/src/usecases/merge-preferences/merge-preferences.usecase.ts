@@ -49,6 +49,7 @@ export class MergePreferences {
 
     return {
       preferences: mergedPreferences.preferences,
+      schedule: mergedPreferences.schedule,
       type: mergedPreferences.type,
       source,
     };

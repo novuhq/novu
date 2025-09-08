@@ -38,6 +38,11 @@ export type CreateIntegrationRequestDtoChannel = ClosedEnum<
   typeof CreateIntegrationRequestDtoChannel
 >;
 
+/**
+ * Configurations for the integration
+ */
+export type Configurations = {};
+
 export type CreateIntegrationRequestDto = {
   /**
    * The name of the integration
@@ -75,6 +80,10 @@ export type CreateIntegrationRequestDto = {
    * Conditions for the integration
    */
   conditions?: Array<StepFilterDto> | undefined;
+  /**
+   * Configurations for the integration
+   */
+  configurations?: Configurations | undefined;
 };
 
 /** @internal */
@@ -100,6 +109,50 @@ export namespace CreateIntegrationRequestDtoChannel$ {
 }
 
 /** @internal */
+export const Configurations$inboundSchema: z.ZodType<
+  Configurations,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type Configurations$Outbound = {};
+
+/** @internal */
+export const Configurations$outboundSchema: z.ZodType<
+  Configurations$Outbound,
+  z.ZodTypeDef,
+  Configurations
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Configurations$ {
+  /** @deprecated use `Configurations$inboundSchema` instead. */
+  export const inboundSchema = Configurations$inboundSchema;
+  /** @deprecated use `Configurations$outboundSchema` instead. */
+  export const outboundSchema = Configurations$outboundSchema;
+  /** @deprecated use `Configurations$Outbound` instead. */
+  export type Outbound = Configurations$Outbound;
+}
+
+export function configurationsToJSON(configurations: Configurations): string {
+  return JSON.stringify(Configurations$outboundSchema.parse(configurations));
+}
+
+export function configurationsFromJSON(
+  jsonString: string,
+): SafeParseResult<Configurations, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Configurations$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Configurations' from JSON`,
+  );
+}
+
+/** @internal */
 export const CreateIntegrationRequestDto$inboundSchema: z.ZodType<
   CreateIntegrationRequestDto,
   z.ZodTypeDef,
@@ -114,6 +167,7 @@ export const CreateIntegrationRequestDto$inboundSchema: z.ZodType<
   active: z.boolean().optional(),
   check: z.boolean().optional(),
   conditions: z.array(StepFilterDto$inboundSchema).optional(),
+  configurations: z.lazy(() => Configurations$inboundSchema).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_environmentId": "environmentId",
@@ -131,6 +185,7 @@ export type CreateIntegrationRequestDto$Outbound = {
   active?: boolean | undefined;
   check?: boolean | undefined;
   conditions?: Array<StepFilterDto$Outbound> | undefined;
+  configurations?: Configurations$Outbound | undefined;
 };
 
 /** @internal */
@@ -148,6 +203,7 @@ export const CreateIntegrationRequestDto$outboundSchema: z.ZodType<
   active: z.boolean().optional(),
   check: z.boolean().optional(),
   conditions: z.array(StepFilterDto$outboundSchema).optional(),
+  configurations: z.lazy(() => Configurations$outboundSchema).optional(),
 }).transform((v) => {
   return remap$(v, {
     environmentId: "_environmentId",

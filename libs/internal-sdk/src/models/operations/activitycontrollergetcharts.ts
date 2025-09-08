@@ -26,12 +26,9 @@ export const ReportType = {
 export type ReportType = ClosedEnum<typeof ReportType>;
 
 export const Statuses = {
-  Success: "success",
+  Processing: "processing",
+  Completed: "completed",
   Error: "error",
-  Pending: "pending",
-  Skipped: "skipped",
-  Canceled: "canceled",
-  Merged: "merged",
 } as const;
 export type Statuses = ClosedEnum<typeof Statuses>;
 

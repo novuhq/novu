@@ -30,6 +30,10 @@ import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
 import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
+import {
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+} from '../subscribers/usecases/get-subscriber-global-preference';
 import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
 import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
 import { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-request.dto';
@@ -87,7 +91,8 @@ export class InboxController {
     private snoozeNotificationUsecase: SnoozeNotification,
     private unsnoozeNotificationUsecase: UnsnoozeNotification,
     private markNotificationsAsSeenUsecase: MarkNotificationsAsSeen,
-    private parseEventRequest: ParseEventRequest
+    private parseEventRequest: ParseEventRequest,
+    private getSubscriberGlobalPreference: GetSubscriberGlobalPreference
   ) {}
 
   @KeylessAccessible()
@@ -164,6 +169,25 @@ export class InboxController {
         criticality: query.criticality,
       })
     );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/preferences/global')
+  async getSchedule(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<InboxPreference> {
+    const globalPreference = await this.getSubscriberGlobalPreference.execute(
+      GetSubscriberGlobalPreferenceCommand.create({
+        organizationId: subscriberSession._organizationId,
+        environmentId: subscriberSession._environmentId,
+        subscriberId: subscriberSession.subscriberId,
+        includeInactiveChannels: false,
+        subscriber: subscriberSession,
+      })
+    );
+
+    return {
+      level: PreferenceLevelEnum.GLOBAL,
+      ...globalPreference.preference,
+    };
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -323,6 +347,7 @@ export class InboxController {
         in_app: body.in_app,
         push: body.push,
         sms: body.sms,
+        schedule: body.schedule,
         includeInactiveChannels: false,
       })
     );

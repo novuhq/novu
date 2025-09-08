@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ISubscriberPreferenceResponse, ShortIsPrefixEnum } from '@novu/shared';
+import { ISubscriberPreferenceResponse, ShortIsPrefixEnum, WorkflowCriticalityEnum } from '@novu/shared';
 import { plainToInstance } from 'class-transformer';
 import { buildSlug } from '../../../shared/helpers/build-slug';
 import {
@@ -45,8 +45,7 @@ export class GetSubscriberPreferences {
     );
 
     return {
-      enabled: preference.enabled,
-      channels: preference.channels,
+      ...preference,
     };
   }
 
@@ -57,7 +56,7 @@ export class GetSubscriberPreferences {
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         includeInactiveChannels: false,
-        criticality: command.criticality,
+        criticality: command.criticality ?? WorkflowCriticalityEnum.NON_CRITICAL,
       })
     );
 

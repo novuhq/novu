@@ -1,3 +1,4 @@
+import { Schedule } from '@novu/shared';
 import { IsBoolean, IsMongoId, IsNotEmpty, IsOptional } from 'class-validator';
 import { UpsertPreferencesPartialBaseCommand } from './upsert-preferences.command';
 
@@ -9,4 +10,7 @@ export class UpsertSubscriberGlobalPreferencesCommand extends UpsertPreferencesP
   @IsOptional()
   @IsBoolean()
   readonly returnPreference?: boolean = true;
+
+  @IsOptional()
+  readonly schedule?: Schedule;
 }
