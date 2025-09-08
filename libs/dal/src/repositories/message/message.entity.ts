@@ -76,10 +76,19 @@ export class MessageEntity {
 
   email?: string;
 
+  /**
+   * @deprecated use channelData instead
+   */
   phone?: string;
 
+  /**
+   * @deprecated use channelData instead
+   */
   chatWebhookUrl?: string;
 
+  /**
+   * @deprecated use channelData instead
+   */
   directWebhookUrl?: string;
 
   providerId: string;
