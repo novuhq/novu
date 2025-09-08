@@ -12,6 +12,7 @@ export * from './logging/index';
 export * from './modules';
 export * from './pipes';
 export * from './resilience';
+export * from './schemas/channel-address';
 export * from './schemas/control';
 export * from './services';
 export * from './services/resource-validator.service';

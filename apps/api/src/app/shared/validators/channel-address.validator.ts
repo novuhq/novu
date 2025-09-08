@@ -1,6 +1,6 @@
+import { validateAddressForTypeFromSchema } from '@novu/application-generic';
 import { ChannelAddressType } from '@novu/shared';
 import { registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
-import { validateAddressForTypeFromSchema } from '../schemas/channel-address.schema';
 
 export function IsValidChannelAddress(validationOptions?: ValidationOptions) {
   return (object: object, propertyName: string) => {

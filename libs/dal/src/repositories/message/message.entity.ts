@@ -14,6 +14,7 @@ import type { OrganizationId } from '../organization';
 import { SubscriberEntity } from '../subscriber';
 
 export type MessageChannelData<T extends ChannelAddressType = ChannelAddressType> = {
+  identifier: string;
   type: T;
   address: ChannelAddressByType[T];
   token?: string;

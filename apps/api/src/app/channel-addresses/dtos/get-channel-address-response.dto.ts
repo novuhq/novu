@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { getApiPropertyExamples } from '@novu/application-generic';
 import {
   ADDRESS_TYPES,
   ChannelAddressByType,
@@ -7,7 +8,6 @@ import {
   ProvidersIdEnum,
   ProvidersIdEnumConst,
 } from '@novu/shared';
-import { getApiPropertyExamples } from '../../shared/schemas/channel-address.schema';
 
 export class GetChannelAddressResponseDto {
   @ApiProperty({

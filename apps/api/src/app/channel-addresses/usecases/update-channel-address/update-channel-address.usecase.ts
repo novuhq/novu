@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, validateAddressForType } from '@novu/application-generic';
 import { ChannelAddressEntity, ChannelAddressRepository } from '@novu/dal';
 import { ProvidersIdEnum } from '@novu/shared';
-import { validateAddressForType } from '../../../shared/schemas/channel-address.schema';
 import { GetChannelAddressResponseDto } from '../../dtos/get-channel-address-response.dto';
 import { UpdateChannelAddressCommand } from './update-channel-address.command';
 

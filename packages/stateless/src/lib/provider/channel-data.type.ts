@@ -20,22 +20,26 @@ export type SlackChannelData = {
   type: typeof ADDRESS_TYPES.SLACK_CHANNEL;
   address: ChannelAddressByType[typeof ADDRESS_TYPES.SLACK_CHANNEL];
   token: string; // OAuth/Bot token required to send
+  identifier: string;
 };
 
 export type SlackUserData = {
   type: typeof ADDRESS_TYPES.SLACK_USER;
   address: ChannelAddressByType[typeof ADDRESS_TYPES.SLACK_USER];
   token: string; // OAuth/Bot token required to send
+  identifier: string;
 };
 
 export type WebhookData = {
   type: typeof ADDRESS_TYPES.WEBHOOK;
   address: ChannelAddressByType[typeof ADDRESS_TYPES.WEBHOOK];
+  identifier: string;
 };
 
 export type PhoneData = {
   type: typeof ADDRESS_TYPES.PHONE;
   address: ChannelAddressByType[typeof ADDRESS_TYPES.PHONE];
+  identifier: string;
 };
 
 export function isChannelDataOfType<T extends ChannelData['type']>(

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { getApiPropertyExamples } from '@novu/application-generic';
 import { ADDRESS_TYPES, ChannelAddressByType, ChannelAddressType, ResourceKey } from '@novu/shared';
 import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
-import { getApiPropertyExamples } from '../../shared/schemas/channel-address.schema';
 import { IsValidChannelAddress } from '../../shared/validators/channel-address.validator';
 import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 

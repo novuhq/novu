@@ -13,8 +13,8 @@ import {
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
+  validateAddressForType,
 } from '@novu/application-generic';
-
 import {
   ChannelAddressEntity,
   ChannelAddressRepository,
@@ -25,7 +25,7 @@ import {
   NotificationStepEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChatOutput, ExecuteOutput } from '@novu/framework/internal';
+import { ChatOutput } from '@novu/framework/internal';
 import {
   ADDRESS_TYPES,
   ChannelTypeEnum,
@@ -387,14 +387,19 @@ export class SendMessageChat extends SendMessageBase {
     );
     if (error) return error;
 
-    const bridgeOverride = this.getBridgeOverride(command.bridgeData?.providers, integration);
+    const combinedOverrides = this.combineOverrides(
+      command.bridgeData,
+      command.overrides,
+      command.step.stepId,
+      integration.providerId
+    );
 
     const chatWebhookUrl =
-      bridgeOverride?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+      combinedOverrides?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
     const phoneNumber = subscriberChannel.credentials?.phoneNumber;
 
     // transform the legacy channel (chatWebhookUrl, phoneNumber, channelSpecification) to new channelData interface
-    const channelData = this.buildLegacyChannelData(subscriberChannel, bridgeOverride, command);
+    const channelData = this.buildLegacyChannelData(subscriberChannel, combinedOverrides, command);
 
     const message = await this.createMessage(
       command,
@@ -418,17 +423,18 @@ export class SendMessageChat extends SendMessageBase {
 
   private buildLegacyChannelData(
     subscriberChannel: IChannelSettings,
-    bridgeOverride: Record<string, unknown> | null,
+    combinedOverrides: Record<string, unknown> | null,
     command: SendMessageChannelCommand
   ): ChannelData | null {
     const chatWebhookUrl =
-      bridgeOverride?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+      combinedOverrides?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
 
     const phoneNumber = subscriberChannel.credentials?.phoneNumber;
     const channelSpecification = subscriberChannel.credentials?.channel;
 
     if (chatWebhookUrl) {
       return {
+        identifier: '-',
         type: ADDRESS_TYPES.WEBHOOK,
         address: {
           url: chatWebhookUrl,
@@ -439,29 +445,13 @@ export class SendMessageChat extends SendMessageBase {
 
     if (phoneNumber) {
       return {
+        identifier: '-',
         type: ADDRESS_TYPES.PHONE,
         address: { phoneNumber },
       };
     }
 
     return null;
-  }
-
-  private getBridgeOverride(
-    providersOverrides: ExecuteOutput['providers'],
-    integration: IntegrationEntity
-  ): Record<string, unknown> | null {
-    if (!providersOverrides) {
-      return null;
-    }
-
-    const providerExists = Object.keys(providersOverrides).includes(integration.providerId);
-
-    if (!providerExists) {
-      return null;
-    }
-
-    return providersOverrides[integration.providerId];
   }
 
   private async getChannelAddressGroups(command: SendMessageChannelCommand): Promise<IntegrationChannelData[]> {
@@ -499,6 +489,7 @@ export class SendMessageChat extends SendMessageBase {
         const hasToken = connection?.auth && 'accessToken' in connection.auth;
 
         return {
+          identifier: addr.identifier,
           type: addr.type,
           address: addr.address,
           ...(hasToken && { token: connection.auth.accessToken || '' }),
@@ -592,25 +583,30 @@ export class SendMessageChat extends SendMessageBase {
     message: MessageEntity,
     command: SendMessageChannelCommand
   ): Promise<SendMessageResult> {
-    try {
-      const chatHandler = this.setupChatHandler(integration);
-      const overrides = this.buildMessageOverrides(command, integration);
+    const chatHandler = this.setupChatHandler(integration);
+    const overrides = this.buildMessageOverrides(command, integration);
 
+    const combinedOverrides = this.combineOverrides(
+      command.bridgeData,
+      command.overrides,
+      command.step.stepId,
+      integration.providerId
+    );
+
+    // Apply channel data overrides if present for this specific address
+    const overriddenChannelData = this.applyAddressSpecificOverrides(channelData, combinedOverrides);
+
+    try {
       const result = await chatHandler.send({
-        channelData,
-        bridgeProviderData: this.combineOverrides(
-          command.bridgeData,
-          command.overrides,
-          command.step.stepId,
-          integration.providerId
-        ),
+        channelData: overriddenChannelData,
+        bridgeProviderData: combinedOverrides,
         customData: overrides,
         content,
       });
 
-      return await this.handleMessageSendSuccess(result, message, command, channelData);
+      return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);
     } catch (error) {
-      return await this.handleMessageSendError(error, message, command, channelData);
+      return await this.handleMessageSendError(error, message, command, overriddenChannelData);
     }
   }
 
@@ -775,6 +771,39 @@ export class SendMessageChat extends SendMessageBase {
     };
   }
 
+  private applyAddressSpecificOverrides<T extends ChannelData>(
+    originalChannelData: T,
+    combinedOverrides: Record<string, unknown>
+  ): T {
+    const { identifier, type } = originalChannelData;
+
+    // Early returns for invalid cases
+    if (!identifier) return originalChannelData;
+
+    const addressOverrides = combinedOverrides[identifier];
+    if (!addressOverrides || typeof addressOverrides !== 'object') {
+      return originalChannelData;
+    }
+
+    const newAddress = (addressOverrides as Record<string, unknown>).address;
+    if (!newAddress || typeof newAddress !== 'object') {
+      return originalChannelData;
+    }
+
+    // Validate the new address against the channel type schema
+    try {
+      validateAddressForType(type, newAddress as Record<string, unknown>);
+
+      return {
+        ...originalChannelData,
+        address: newAddress as T['address'],
+      };
+    } catch (_error) {
+      // ignoring the override since it's invalid
+      return originalChannelData;
+    }
+  }
+
   private async handleMessageSendSuccess(
     result: ISendMessageSuccessResponse,
     message: MessageEntity,
@@ -790,7 +819,7 @@ export class SendMessageChat extends SendMessageBase {
       message._id,
       {
         ...result,
-        ...redactedChannelData,
+        channelData: redactedChannelData,
       }
     );
 
@@ -837,8 +866,8 @@ export class SendMessageChat extends SendMessageBase {
       ExecutionDetailsStatusEnum.FAILED,
       message._id,
       {
+        channelData: redactedChannelData,
         message: this.getErrorMessage(error),
-        ...redactedChannelData,
         ...this.getErrorResponseData(error),
       }
     );

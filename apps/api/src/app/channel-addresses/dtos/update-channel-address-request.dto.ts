@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { getApiPropertyExamples } from '@novu/application-generic';
 import { ChannelAddressByType, ChannelAddressType } from '@novu/shared';
 import { IsDefined } from 'class-validator';
-import { getApiPropertyExamples } from '../../shared/schemas/channel-address.schema';
 import { IsValidChannelAddress } from '../../shared/validators/channel-address.validator';
 
 export class UpdateChannelAddressRequestDto {
