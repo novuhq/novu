@@ -45,8 +45,7 @@ export class GetSubscriberPreferences {
     );
 
     return {
-      enabled: preference.enabled,
-      channels: preference.channels,
+      ...preference,
     };
   }
 

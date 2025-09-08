@@ -2,12 +2,15 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import {
   buildWorkflowPreferences,
+  FeatureFlagsKeysEnum,
   IPreferenceChannels,
   PreferencesTypeEnum,
+  Schedule,
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
-import { InstrumentUsecase } from '../../instrumentation';
+import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { FeatureFlagsService } from '../../services/feature-flags';
 import { MergePreferencesCommand } from '../merge-preferences/merge-preferences.command';
 import { MergePreferences } from '../merge-preferences/merge-preferences.usecase';
 import { GetPreferencesCommand } from './get-preferences.command';
@@ -36,7 +39,10 @@ class PreferencesNotFoundException extends BadRequestException {
 
 @Injectable()
 export class GetPreferences {
-  constructor(private preferencesRepository: PreferencesRepository) {}
+  constructor(
+    private preferencesRepository: PreferencesRepository,
+    private featureFlagsService: FeatureFlagsService
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {
@@ -51,20 +57,43 @@ export class GetPreferences {
     return mergedPreferences;
   }
 
-  /** Get only simple, channel-level enablement flags */
-  public async getPreferenceChannels(command: {
+  @Instrument()
+  public async getSubscriberGlobalPreference(command: {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
-    templateId?: string;
-  }): Promise<IPreferenceChannels | undefined> {
+  }): Promise<{
+    enabled: boolean;
+    channels: IPreferenceChannels;
+    schedule?: Schedule;
+  }> {
     const result = await this.safeExecute(command);
 
     if (!result) {
-      return undefined;
+      return {
+        channels: {
+          email: true,
+          sms: true,
+          in_app: true,
+          chat: true,
+          push: true,
+        },
+        enabled: true,
+      };
     }
 
-    return GetPreferences.mapWorkflowPreferencesToChannelPreferences(result.preferences);
+    const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
+      defaultValue: false,
+      environment: { _id: command.environmentId },
+      organization: { _id: command.organizationId },
+    });
+
+    return {
+      enabled: true,
+      channels: GetPreferences.mapWorkflowPreferencesToChannelPreferences(result.preferences),
+      schedule: isSubscribersScheduleEnabled ? result.schedule : undefined,
+    };
   }
 
   public async safeExecute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {

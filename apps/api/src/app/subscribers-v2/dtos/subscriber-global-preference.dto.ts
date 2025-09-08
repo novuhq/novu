@@ -1,7 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, ValidateNested } from 'class-validator';
 import { SubscriberPreferenceChannels } from '../../shared/dtos/preference-channels';
+import { ScheduleDto } from '../../shared/dtos/schedule';
 
 export class SubscriberGlobalPreferenceDto {
   @ApiProperty({ description: 'Whether notifications are enabled globally' })
@@ -13,4 +14,9 @@ export class SubscriberGlobalPreferenceDto {
   @ValidateNested()
   @Type(() => SubscriberPreferenceChannels)
   channels: SubscriberPreferenceChannels;
+
+  @ApiPropertyOptional({ description: 'Subscriber schedule', type: ScheduleDto })
+  @ValidateNested()
+  @Type(() => ScheduleDto)
+  schedule?: ScheduleDto;
 }
