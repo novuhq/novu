@@ -27,13 +27,11 @@ export function useInboxIntegrationWorkflowUpdater({
 
   const processWorkflow = useCallback(
     async (workflow: WorkflowListResponseDto, environment: NonNullable<typeof currentEnvironment>): Promise<void> => {
-      // Get the full workflow data needed for updateWorkflow
       const fullWorkflowData = await getWorkflow({
         environment,
         workflowSlug: workflow.slug,
       });
 
-      // Step 1: Make workflow inactive
       await updateWorkflow({
         environment,
         workflowSlug: workflow.slug,
@@ -43,7 +41,6 @@ export function useInboxIntegrationWorkflowUpdater({
         },
       });
 
-      // Step 2: Reactivate the workflow
       await updateWorkflow({
         environment,
         workflowSlug: workflow.slug,
