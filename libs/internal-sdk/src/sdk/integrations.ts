@@ -4,6 +4,7 @@
 
 import { integrationsCreate } from "../funcs/integrationsCreate.js";
 import { integrationsDelete } from "../funcs/integrationsDelete.js";
+import { integrationsIntegrationsControllerAutoConfigureIntegration } from "../funcs/integrationsIntegrationsControllerAutoConfigureIntegration.js";
 import { integrationsList } from "../funcs/integrationsList.js";
 import { integrationsListActive } from "../funcs/integrationsListActive.js";
 import { integrationsSetAsPrimary } from "../funcs/integrationsSetAsPrimary.js";
@@ -91,6 +92,30 @@ export class Integrations extends ClientSDK {
       idempotencyKey,
       options,
     ));
+  }
+
+  /**
+   * Auto-configure an integration for inbound webhooks
+   *
+   * @remarks
+   * Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support.
+   *     This will automatically generate required webhook signing keys and configure webhook endpoints.
+   */
+  async integrationsControllerAutoConfigureIntegration(
+    integrationId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.IntegrationsControllerAutoConfigureIntegrationResponse
+  > {
+    return unwrapAsync(
+      integrationsIntegrationsControllerAutoConfigureIntegration(
+        this,
+        integrationId,
+        idempotencyKey,
+        options,
+      ),
+    );
   }
 
   /**

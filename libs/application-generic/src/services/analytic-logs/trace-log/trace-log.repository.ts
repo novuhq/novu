@@ -256,6 +256,28 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Message sending started';
     case 'message_severity_overridden':
       return 'Severity for the message was overridden';
+    case 'message_clicked':
+      return 'Message clicked';
+    case 'message_spam':
+      return 'Message spam';
+    case 'message_bounced':
+      return 'Message bounced';
+    case 'message_dropped':
+      return 'Message dropped';
+    case 'message_deferred':
+      return 'Message deferred';
+    case 'message_unsubscribed':
+      return 'Message unsubscribed';
+    case 'message_delayed':
+      return 'Message delayed';
+    case 'message_complaint':
+      return 'Message complaint';
+    case 'message_delivered':
+      return 'Message delivered';
+    case 'message_rejected':
+      return 'Message rejected';
+    case 'message_blocked':
+      return 'Message blocked';
 
     // Subscriber events
     case 'subscriber_integration_missing':

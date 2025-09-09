@@ -17,6 +17,11 @@ import {
   EmailChannelOverrides$outboundSchema,
 } from "./emailchanneloverrides.js";
 import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   StepsOverrides,
   StepsOverrides$inboundSchema,
   StepsOverrides$Outbound,
@@ -91,6 +96,10 @@ export type TriggerEventToAllRequestDtoOverrides = {
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   layoutIdentifier?: string | undefined;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
   additionalProperties?: { [k: string]: { [k: string]: any } };
 };
 
@@ -222,6 +231,7 @@ export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
     sms: z.record(z.any()).optional(),
     chat: z.record(z.any()).optional(),
     layoutIdentifier: z.string().optional(),
+    severity: SeverityLevelEnum$inboundSchema.optional(),
   }).catchall(z.record(z.any())),
   "additionalProperties",
   true,
@@ -237,6 +247,7 @@ export type TriggerEventToAllRequestDtoOverrides$Outbound = {
   sms?: { [k: string]: any } | undefined;
   chat?: { [k: string]: any } | undefined;
   layoutIdentifier?: string | undefined;
+  severity?: string | undefined;
   [additionalProperties: string]: unknown;
 };
 
@@ -255,6 +266,7 @@ export const TriggerEventToAllRequestDtoOverrides$outboundSchema: z.ZodType<
   sms: z.record(z.any()).optional(),
   chat: z.record(z.any()).optional(),
   layoutIdentifier: z.string().optional(),
+  severity: SeverityLevelEnum$outboundSchema.optional(),
   additionalProperties: z.record(z.record(z.any())),
 }).transform((v) => {
   return {

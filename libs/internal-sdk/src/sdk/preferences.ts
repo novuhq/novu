@@ -20,12 +20,14 @@ export class Preferences extends ClientSDK {
    */
   async list(
     subscriberId: string,
+    criticality?: operations.Criticality | undefined,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.SubscribersControllerGetSubscriberPreferencesResponse> {
     return unwrapAsync(subscribersPreferencesList(
       this,
       subscriberId,
+      criticality,
       idempotencyKey,
       options,
     ));

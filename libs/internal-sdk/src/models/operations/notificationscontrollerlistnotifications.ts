@@ -33,6 +33,10 @@ export type NotificationsControllerListNotificationsRequest = {
    */
   subscriberIds?: Array<string> | undefined;
   /**
+   * Array of severity levels or a single severity level
+   */
+  severity?: Array<string> | undefined;
+  /**
    * Page number for pagination
    */
   page?: number | undefined;
@@ -79,6 +83,7 @@ export const NotificationsControllerListNotificationsRequest$inboundSchema:
     emails: z.array(z.string()).optional(),
     search: z.string().optional(),
     subscriberIds: z.array(z.string()).optional(),
+    severity: z.array(z.string()).optional(),
     page: z.number().default(0),
     limit: z.number().default(10),
     transactionId: z.string().optional(),
@@ -99,6 +104,7 @@ export type NotificationsControllerListNotificationsRequest$Outbound = {
   emails?: Array<string> | undefined;
   search?: string | undefined;
   subscriberIds?: Array<string> | undefined;
+  severity?: Array<string> | undefined;
   page: number;
   limit: number;
   transactionId?: string | undefined;
@@ -120,6 +126,7 @@ export const NotificationsControllerListNotificationsRequest$outboundSchema:
     emails: z.array(z.string()).optional(),
     search: z.string().optional(),
     subscriberIds: z.array(z.string()).optional(),
+    severity: z.array(z.string()).optional(),
     page: z.number().default(0),
     limit: z.number().default(10),
     transactionId: z.string().optional(),

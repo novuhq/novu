@@ -105,6 +105,7 @@ async function $do(
     "limit": payload.limit,
     "page": payload.page,
     "search": payload.search,
+    "severity": payload.severity,
     "subscriberIds": payload.subscriberIds,
     "templates": payload.templates,
     "topicKey": payload.topicKey,

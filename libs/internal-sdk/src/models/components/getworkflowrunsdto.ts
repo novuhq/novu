@@ -18,17 +18,48 @@ import {
  * Workflow run status
  */
 export const Status = {
-  Success: "success",
+  Processing: "processing",
+  Completed: "completed",
   Error: "error",
-  Pending: "pending",
-  Skipped: "skipped",
-  Canceled: "canceled",
-  Merged: "merged",
 } as const;
 /**
  * Workflow run status
  */
 export type Status = ClosedEnum<typeof Status>;
+
+/**
+ * Workflow run delivery lifecycle status
+ */
+export const DeliveryLifecycleStatus = {
+  Pending: "pending",
+  Sent: "sent",
+  Errored: "errored",
+  Skipped: "skipped",
+  Canceled: "canceled",
+  Merged: "merged",
+  Delivered: "delivered",
+  Interacted: "interacted",
+} as const;
+/**
+ * Workflow run delivery lifecycle status
+ */
+export type DeliveryLifecycleStatus = ClosedEnum<
+  typeof DeliveryLifecycleStatus
+>;
+
+/**
+ * Severity
+ */
+export const Severity = {
+  High: "high",
+  Medium: "medium",
+  Low: "low",
+  None: "none",
+} as const;
+/**
+ * Severity
+ */
+export type Severity = ClosedEnum<typeof Severity>;
 
 export type GetWorkflowRunsDto = {
   /**
@@ -64,6 +95,10 @@ export type GetWorkflowRunsDto = {
    */
   status: Status;
   /**
+   * Workflow run delivery lifecycle status
+   */
+  deliveryLifecycleStatus: DeliveryLifecycleStatus;
+  /**
    * Trigger identifier
    */
   triggerIdentifier: string;
@@ -79,6 +114,14 @@ export type GetWorkflowRunsDto = {
    * Update timestamp
    */
   updatedAt: string;
+  /**
+   * Severity
+   */
+  severity: Severity;
+  /**
+   * Critical flag
+   */
+  critical: boolean;
   /**
    * Workflow run steps
    */
@@ -105,6 +148,46 @@ export namespace Status$ {
 }
 
 /** @internal */
+export const DeliveryLifecycleStatus$inboundSchema: z.ZodNativeEnum<
+  typeof DeliveryLifecycleStatus
+> = z.nativeEnum(DeliveryLifecycleStatus);
+
+/** @internal */
+export const DeliveryLifecycleStatus$outboundSchema: z.ZodNativeEnum<
+  typeof DeliveryLifecycleStatus
+> = DeliveryLifecycleStatus$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace DeliveryLifecycleStatus$ {
+  /** @deprecated use `DeliveryLifecycleStatus$inboundSchema` instead. */
+  export const inboundSchema = DeliveryLifecycleStatus$inboundSchema;
+  /** @deprecated use `DeliveryLifecycleStatus$outboundSchema` instead. */
+  export const outboundSchema = DeliveryLifecycleStatus$outboundSchema;
+}
+
+/** @internal */
+export const Severity$inboundSchema: z.ZodNativeEnum<typeof Severity> = z
+  .nativeEnum(Severity);
+
+/** @internal */
+export const Severity$outboundSchema: z.ZodNativeEnum<typeof Severity> =
+  Severity$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Severity$ {
+  /** @deprecated use `Severity$inboundSchema` instead. */
+  export const inboundSchema = Severity$inboundSchema;
+  /** @deprecated use `Severity$outboundSchema` instead. */
+  export const outboundSchema = Severity$outboundSchema;
+}
+
+/** @internal */
 export const GetWorkflowRunsDto$inboundSchema: z.ZodType<
   GetWorkflowRunsDto,
   z.ZodTypeDef,
@@ -118,10 +201,13 @@ export const GetWorkflowRunsDto$inboundSchema: z.ZodType<
   internalSubscriberId: z.string(),
   subscriberId: z.string().optional(),
   status: Status$inboundSchema,
+  deliveryLifecycleStatus: DeliveryLifecycleStatus$inboundSchema,
   triggerIdentifier: z.string(),
   transactionId: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  severity: Severity$inboundSchema,
+  critical: z.boolean(),
   steps: z.array(WorkflowRunStepsDetailsDto$inboundSchema),
 });
 
@@ -135,10 +221,13 @@ export type GetWorkflowRunsDto$Outbound = {
   internalSubscriberId: string;
   subscriberId?: string | undefined;
   status: string;
+  deliveryLifecycleStatus: string;
   triggerIdentifier: string;
   transactionId: string;
   createdAt: string;
   updatedAt: string;
+  severity: string;
+  critical: boolean;
   steps: Array<WorkflowRunStepsDetailsDto$Outbound>;
 };
 
@@ -156,10 +245,13 @@ export const GetWorkflowRunsDto$outboundSchema: z.ZodType<
   internalSubscriberId: z.string(),
   subscriberId: z.string().optional(),
   status: Status$outboundSchema,
+  deliveryLifecycleStatus: DeliveryLifecycleStatus$outboundSchema,
   triggerIdentifier: z.string(),
   transactionId: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  severity: Severity$outboundSchema,
+  critical: z.boolean(),
   steps: z.array(WorkflowRunStepsDetailsDto$outboundSchema),
 });
 
