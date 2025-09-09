@@ -1,5 +1,19 @@
 import { NotificationEvents, NovuEventEmitter } from '../event-emitter';
-import type { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
+import type {
+  ArchivedArgs,
+  CompleteArgs,
+  DeletedArgs,
+  ListNotificationsArgs,
+  ListNotificationsResponse,
+  Notification,
+  ReadArgs,
+  RevertArgs,
+  SeenArgs,
+  SnoozeArgs,
+  UnarchivedArgs,
+  UnreadArgs,
+  UnsnoozeArgs,
+} from '../notifications';
 import type { NotificationFilter } from '../types';
 import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
@@ -83,6 +97,22 @@ const removeEvents: NotificationEvents[] = [
   'notifications.delete_all.pending',
 ];
 
+// Union type for all possible args in notification events
+type NotificationEventArgs =
+  | ReadArgs
+  | UnreadArgs
+  | ArchivedArgs
+  | UnarchivedArgs
+  | DeletedArgs
+  | SeenArgs
+  | SnoozeArgs
+  | UnsnoozeArgs
+  | CompleteArgs
+  | RevertArgs
+  | { tags?: string[]; data?: Record<string, unknown> } // for bulk operations
+  | { notificationIds: string[] } // for seen_all operations
+  | Record<string, never>; // for empty args
+
 export class NotificationsCache {
   #emitter: NovuEventEmitter;
   /**
@@ -144,21 +174,24 @@ export class NotificationsCache {
 
   private handleNotificationEvent =
     ({ remove }: { remove: boolean } = { remove: false }) =>
-    (event: any): void => {
+    (event: { data?: unknown; args?: NotificationEventArgs }): void => {
       const { data, args } = event;
 
       let notifications: Notification[] = [];
 
       if (data !== undefined && data !== null) {
-        if (Array.isArray(data)) {
+        if (
+          Array.isArray(data) &&
+          data.every((item): item is Notification => typeof item === 'object' && 'id' in item)
+        ) {
           notifications = data;
-        } else if (typeof data === 'object' && data.id) {
-          notifications = [data];
+        } else if (typeof data === 'object' && 'id' in data) {
+          notifications = [data as Notification];
         }
       } else if (remove && args) {
-        if ('notification' in args) {
+        if ('notification' in args && args.notification) {
           notifications = [args.notification];
-        } else if ('notificationId' in args) {
+        } else if ('notificationId' in args && args.notificationId) {
           const foundNotifications: Notification[] = [];
           this.#cache.keys().forEach((key) => {
             const cachedResponse = this.#cache.get(key);
