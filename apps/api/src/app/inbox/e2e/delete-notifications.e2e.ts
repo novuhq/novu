@@ -9,16 +9,24 @@ import {
 import { ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { randomBytes } from 'crypto';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
-  let subscriber: SubscriberEntity;
+  let subscriber: SubscriberEntity | null;
   let messages: MessageEntity[];
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   let novuClient: Novu;
+
+  const getSubscriber = (): SubscriberEntity => {
+    if (!subscriber) {
+      throw new Error('Subscriber not initialized');
+    }
+    return subscriber;
+  };
 
   const deleteNotification = async (id: string) => {
     return await session.testAgent
@@ -34,12 +42,14 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
   };
 
   const triggerEvent = async (templateToTrigger: NotificationTemplateEntity, times = 1) => {
+    const currentSubscriber = getSubscriber();
+
     const promises: Array<Promise<unknown>> = [];
     for (let i = 0; i < times; i += 1) {
       promises.push(
         novuClient.trigger({
           workflowId: templateToTrigger.triggers[0].identifier,
-          to: subscriber.subscriberId,
+          to: currentSubscriber.subscriberId,
           payload: {
             subject: 'this is a test',
             message: 'Hello, World!',
@@ -81,11 +91,11 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
       ],
     });
 
-    subscriber = await subscriberRepository.create({
-      subscriberId: session.subscriberId,
-      _environmentId: session.environment._id,
-      _organizationId: session.organization._id,
-    });
+    subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, session.subscriberId);
+
+    if (!subscriber) {
+      throw new Error('Subscriber not found after session initialization');
+    }
 
     novuClient = initNovuClassSdk(session);
 
@@ -94,7 +104,7 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
 
     messages = await messageRepository.find({
       _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
+      _subscriberId: getSubscriber()._id,
       _templateId: template._id,
     });
   });
@@ -128,7 +138,7 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
       // Verify all messages are deleted
       const remainingMessages = await messageRepository.find({
         _environmentId: session.environment._id,
-        _subscriberId: subscriber._id,
+        _subscriberId: getSubscriber()._id,
         _templateId: template._id,
       });
       expect(remainingMessages).to.have.length(0);
@@ -151,7 +161,7 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
       // Verify only tagged messages are deleted
       const remainingMessages = await messageRepository.find({
         _environmentId: session.environment._id,
-        _subscriberId: subscriber._id,
+        _subscriberId: getSubscriber()._id,
         _templateId: template._id,
       });
       expect(remainingMessages).to.have.length(1);
@@ -173,7 +183,7 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
       // Verify only messages with matching data are deleted
       const remainingMessages = await messageRepository.find({
         _environmentId: session.environment._id,
-        _subscriberId: subscriber._id,
+        _subscriberId: getSubscriber()._id,
         _templateId: template._id,
       });
       expect(remainingMessages).to.have.length(2);
@@ -187,12 +197,25 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
     });
 
     it('should not allow deleting notifications from other subscribers', async () => {
+      const uniqueSubscriberId = `other-subscriber-${randomBytes(4).toString('hex')}`;
       const otherSubscriber = await subscriberRepository.create({
-        subscriberId: 'other-subscriber-id',
+        subscriberId: uniqueSubscriberId,
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
       });
-      await triggerEvent(template, 1);
+
+      // Trigger event for the other subscriber
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: uniqueSubscriberId,
+        payload: {
+          subject: 'this is a test',
+          message: 'Hello, World!',
+          isUrgent: true,
+        },
+      });
+
+      await session.waitForJobCompletion(template._id);
 
       const otherMessage = await messageRepository.findOne({
         _environmentId: session.environment._id,
