@@ -13,6 +13,7 @@ type UpdatePreferenceParams = {
   emitter: NovuEventEmitter;
   apiService: InboxService;
   cache: PreferencesCache;
+  scheduleCache: ScheduleCache;
   useCache: boolean;
   args: UpdatePreferenceArgs;
 };
@@ -21,6 +22,7 @@ type BulkUpdatePreferenceParams = {
   emitter: NovuEventEmitter;
   apiService: InboxService;
   cache: PreferencesCache;
+  scheduleCache: ScheduleCache;
   useCache: boolean;
   args: Array<UpdatePreferenceArgs>;
 };
@@ -37,6 +39,7 @@ export const updatePreference = async ({
   emitter,
   apiService,
   cache,
+  scheduleCache,
   useCache,
   args,
 }: UpdatePreferenceParams): Result<Preference> => {
@@ -60,6 +63,7 @@ export const updatePreference = async ({
                 emitterInstance: emitter,
                 inboxServiceInstance: apiService,
                 cache,
+                scheduleCache,
                 useCache,
               }
             )
@@ -70,7 +74,7 @@ export const updatePreference = async ({
     if (workflowId) {
       response = await apiService.updateWorkflowPreferences({ workflowId, channels });
     } else {
-      optimisticUpdateWorkflowPreferences({ emitter, apiService, cache, useCache, args });
+      optimisticUpdateWorkflowPreferences({ emitter, apiService, cache, scheduleCache, useCache, args });
       response = await apiService.updateGlobalPreferences(channels);
     }
 
@@ -78,6 +82,7 @@ export const updatePreference = async ({
       emitterInstance: emitter,
       inboxServiceInstance: apiService,
       cache,
+      scheduleCache,
       useCache,
     });
     emitter.emit('preference.update.resolved', { args, data: preference });
@@ -94,6 +99,7 @@ export const bulkUpdatePreference = async ({
   emitter,
   apiService,
   cache,
+  scheduleCache,
   useCache,
   args,
 }: BulkUpdatePreferenceParams): Result<Preference[]> => {
@@ -118,6 +124,7 @@ export const bulkUpdatePreference = async ({
                 emitterInstance: emitter,
                 inboxServiceInstance: apiService,
                 cache,
+                scheduleCache,
                 useCache,
               }
             )
@@ -145,6 +152,7 @@ export const bulkUpdatePreference = async ({
           emitterInstance: emitter,
           inboxServiceInstance: apiService,
           cache,
+          scheduleCache,
           useCache,
         })
     );
@@ -162,6 +170,7 @@ const optimisticUpdateWorkflowPreferences = ({
   emitter,
   apiService,
   cache,
+  scheduleCache,
   useCache,
   args,
 }: UpdatePreferenceParams): void => {
@@ -184,6 +193,7 @@ const optimisticUpdateWorkflowPreferences = ({
               emitterInstance: emitter,
               inboxServiceInstance: apiService,
               cache,
+              scheduleCache,
               useCache,
             })
           : undefined;

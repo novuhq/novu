@@ -19,3 +19,19 @@ export const IconRendererWrapper = (props: IconRendererWrapperProps) => {
     </Show>
   );
 };
+
+type IconRendererProps = {
+  iconKey: IconKey;
+  class?: string;
+  fallback: (props?: JSX.HTMLAttributes<SVGSVGElement>) => JSX.Element;
+};
+
+export const IconRenderer = (props: IconRendererProps) => {
+  return (
+    <IconRendererWrapper
+      iconKey={props.iconKey}
+      class={props.class}
+      fallback={<props.fallback class={props.class} />}
+    />
+  );
+};

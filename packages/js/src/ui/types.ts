@@ -1,3 +1,4 @@
+import { Schedule } from 'src/preferences';
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
 import {
@@ -126,6 +127,33 @@ export type AppearanceCallback = {
     preferenceGroup?: { name: string; preferences: Preference[] };
   }) => string;
 
+  // Schedule
+  scheduleContainer: (context: { schedule?: Schedule }) => string;
+  scheduleHeader: (context: { schedule?: Schedule }) => string;
+  scheduleLabelContainer: (context: { schedule?: Schedule }) => string;
+  scheduleLabelIcon: (context: { schedule?: Schedule }) => string;
+  scheduleLabel: (context: { schedule?: Schedule }) => string;
+  scheduleActionsContainer: (context: { schedule?: Schedule }) => string;
+  scheduleActionsContainerRight: (context: { schedule?: Schedule }) => string;
+  scheduleBody: (context: { schedule?: Schedule }) => string;
+  scheduleDescription: (context: { schedule?: Schedule }) => string;
+  scheduleTable: (context: { schedule?: Schedule }) => string;
+  scheduleTableHeader: (context: { schedule?: Schedule }) => string;
+  scheduleHeaderColumn: (context: { schedule?: Schedule }) => string;
+  scheduleTableBody: (context: { schedule?: Schedule }) => string;
+  scheduleBodyRow: (context: { schedule?: Schedule }) => string;
+  scheduleBodyColumn: (context: { schedule?: Schedule }) => string;
+  scheduleInfoContainer: (context: { schedule?: Schedule }) => string;
+  scheduleInfoIcon: (context: { schedule?: Schedule }) => string;
+  scheduleInfo: (context: { schedule?: Schedule }) => string;
+
+  // Day Schedule Copy
+  dayScheduleCopyTitle: (context: { schedule?: Schedule }) => string;
+  dayScheduleCopyIcon: (context: { schedule?: Schedule }) => string;
+  dayScheduleCopySelectAll: (context: { schedule?: Schedule }) => string;
+  dayScheduleCopyDay: (context: { schedule?: Schedule }) => string;
+  dayScheduleCopyFooterContainer: (context: { schedule?: Schedule }) => string;
+
   // Preferences Group
   preferencesGroupContainer: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
   preferencesGroupHeader: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
@@ -211,7 +239,9 @@ export type IconKey =
   | 'arrowDown'
   | 'routeFill'
   | 'info'
-  | 'nodeTree';
+  | 'nodeTree'
+  | 'calendarSchedule'
+  | 'copy';
 
 export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
 

@@ -33,6 +33,6 @@ export type InstancePreferenceArgs = {
 export type UpdatePreferenceArgs = BasePreferenceArgs | InstancePreferenceArgs;
 
 export type UpdateScheduleArgs = {
-  isEnabled: boolean;
+  isEnabled?: boolean;
   weeklySchedule?: WeeklySchedule;
 };

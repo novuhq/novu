@@ -732,42 +732,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       expect(body.data.schedule.weeklySchedule).to.not.exist;
     });
 
-    it('should fail validation when isEnabled is false but weeklySchedule is provided', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        },
-        invalidateCache
-      );
-
-      const defaultSchedule = {
-        isEnabled: false,
-        weeklySchedule: {
-          monday: {
-            isEnabled: true,
-            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
-          },
-        },
-      };
-
-      const { body, status } = await initializeSession({
-        applicationIdentifier: session.environment.identifier,
-        subscriberId: `schedule-validation-${randomBytes(4).toString('hex')}`,
-        defaultSchedule,
-      });
-
-      expect(status).to.equal(422);
-      expect(body.message).to.equal('Validation Error');
-      expect(body.errors).to.exist;
-      expect(body.errors.general).to.exist;
-      expect(body.errors.general.messages).to.be.an('array');
-      expect(body.errors.general.messages[0]).to.contain(
-        'weeklySchedule should not be provided when isEnabled is false'
-      );
-    });
-
     it('should create schedule with isEnabled true when weeklySchedule is not provided', async () => {
       await setIntegrationConfig(
         {

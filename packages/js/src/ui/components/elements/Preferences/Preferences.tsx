@@ -10,6 +10,7 @@ import { DefaultPreferences } from './DefaultPreferences';
 import { GroupedPreferences } from './GroupedPreferences';
 import { PreferencesListSkeleton } from './PreferencesListSkeleton';
 import { PreferencesRow } from './PreferencesRow';
+import { ScheduleRow } from './ScheduleRow';
 
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
@@ -118,6 +119,7 @@ export const Preferences = () => {
         preference={allPreferences().globalPreference}
         onChange={() => updatePreference(allPreferences().globalPreference)}
       />
+      <ScheduleRow globalPreference={allPreferences().globalPreference} />
       <Show
         when={groupedPreferences().length > 0}
         fallback={

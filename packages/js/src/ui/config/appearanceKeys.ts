@@ -240,6 +240,44 @@ export const appearanceKeys = [
   'preferencesList__skeletonSwitchThumb',
   'preferencesList__skeletonText',
 
+  // Schedule
+  'scheduleContainer',
+  'scheduleHeader',
+  'scheduleLabelContainer',
+  'scheduleLabelIcon',
+  'scheduleLabel',
+  'scheduleActionsContainer',
+  'scheduleActionsContainerRight',
+  'scheduleBody',
+  'scheduleDescription',
+  'scheduleTable',
+  'scheduleTableHeader',
+  'scheduleHeaderColumn',
+  'scheduleTableBody',
+  'scheduleBodyRow',
+  'scheduleBodyColumn',
+  'scheduleInfoContainer',
+  'scheduleInfoIcon',
+  'scheduleInfo',
+
+  // Day Schedule Copy
+  'dayScheduleCopyTitle',
+  'dayScheduleCopyIcon',
+  'dayScheduleCopySelectAll',
+  'dayScheduleCopyDay',
+  'dayScheduleCopyFooterContainer',
+  'dayScheduleCopy__dropdownTrigger',
+  'dayScheduleCopy__dropdownContent',
+
+  // Time Select
+  'timeSelect__dropdownTrigger',
+  'timeSelect__time',
+  'timeSelect__dropdownContent',
+  'timeSelect__dropdownItem',
+  'timeSelect__dropdownItemLabel',
+  'timeSelect__dropdownItemLabelContainer',
+  'timeSelect__dropdownItemCheck__icon',
+
   // Notification Snooze
   'notificationSnooze__dropdownContent',
   'notificationSnooze__dropdownItem',
