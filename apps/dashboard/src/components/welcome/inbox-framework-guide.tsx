@@ -1,6 +1,6 @@
 import { IEnvironment } from '@novu/shared';
 import { motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { Framework, getFrameworks } from './framework-guides.instructions';
@@ -40,9 +40,10 @@ export function InboxFrameworkGuide({
 }: InboxFrameworkGuideProps) {
   const track = useTelemetry();
 
+  const frameworks = getFrameworks('ai-assist') || [];
+
   const [selectedFrameworkName, setSelectedFrameworkName] = useState<string>(() => {
-    const initial = getFrameworks('ai-assist');
-    return initial.find((f) => f.selected)?.name || initial[0]?.name || '';
+    return frameworks.find((f) => f.selected)?.name ?? frameworks[0]?.name ?? '';
   });
   const [installationMethod, setInstallationMethod] = useState<InstallationMethod>('ai-assist');
 
@@ -51,24 +52,18 @@ export function InboxFrameworkGuide({
     [selectedFrameworkName, installationMethod]
   );
 
-  const frameworks = useMemo(() => getFrameworks(effectiveInstallationMethod), [effectiveInstallationMethod]);
+  const currentFrameworks = useMemo(() => getFrameworks(effectiveInstallationMethod), [effectiveInstallationMethod]);
   const updatedFrameworks = useMemo(() => {
-    if (!currentEnvironment?.identifier || !subscriberId) return frameworks;
-    return frameworks.map((framework) =>
+    if (!currentEnvironment?.identifier || !subscriberId) return currentFrameworks;
+    return currentFrameworks.map((framework) =>
       updateFrameworkCode(framework, currentEnvironment.identifier, subscriberId, primaryColor, foregroundColor)
     );
-  }, [frameworks, currentEnvironment?.identifier, subscriberId, primaryColor, foregroundColor]);
+  }, [currentFrameworks, currentEnvironment?.identifier, subscriberId, primaryColor, foregroundColor]);
 
   const selectedFramework = useMemo(
     () => updatedFrameworks.find((f) => f.name === selectedFrameworkName) || updatedFrameworks[0],
     [updatedFrameworks, selectedFrameworkName]
   );
-
-  useEffect(() => {
-    if (FRAMEWORKS_WITH_MANUAL_ONLY.includes(selectedFrameworkName)) {
-      setInstallationMethod('manual');
-    }
-  }, [selectedFrameworkName]);
 
   const handleFrameworkSelect = useCallback(
     (framework: Framework) => {
@@ -93,6 +88,10 @@ export function InboxFrameworkGuide({
     [selectedFrameworkName]
   );
 
+  if (frameworks.length === 0) {
+    return null;
+  }
+
   return (
     <>
       <HeaderSection />
@@ -100,7 +99,7 @@ export function InboxFrameworkGuide({
       <motion.div variants={CONTAINER_VARIANTS} initial="hidden" animate="show" className="flex flex-col gap-6 px-6">
         <div className="flex flex-col gap-4">
           <FrameworkGrid
-            frameworks={frameworks}
+            frameworks={currentFrameworks}
             selectedFrameworkName={selectedFrameworkName}
             onSelect={handleFrameworkSelect}
           />
