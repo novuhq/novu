@@ -5,12 +5,14 @@ import { NovuEventEmitter } from '../event-emitter';
 import { Result, WorkflowCriticalityEnum } from '../types';
 import { bulkUpdatePreference, updatePreference } from './helpers';
 import { Preference } from './preference';
+import { PreferenceSchedule } from './preference-schedule';
 import type { BasePreferenceArgs, InstancePreferenceArgs, ListPreferencesArgs, UpdatePreferenceArgs } from './types';
 
 export class Preferences extends BaseModule {
   #useCache: boolean;
 
   readonly cache: PreferencesCache;
+  readonly schedule: PreferenceSchedule;
 
   constructor({
     useCache,
@@ -29,6 +31,11 @@ export class Preferences extends BaseModule {
       emitterInstance: this._emitter,
     });
     this.#useCache = useCache;
+    this.schedule = new PreferenceSchedule({
+      useCache,
+      inboxServiceInstance,
+      eventEmitterInstance,
+    });
   }
 
   async list(args: ListPreferencesArgs = {}): Result<Preference[]> {

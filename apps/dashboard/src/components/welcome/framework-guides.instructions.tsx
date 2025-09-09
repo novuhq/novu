@@ -1,6 +1,7 @@
 import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
 import { API_HOSTNAME, IS_EU, WEBSOCKET_HOSTNAME } from '@/config';
 import { Language } from '../primitives/code-block';
+import { getFrameworkPrompt } from './ai-prompts/simple-prompt-getter';
 
 export interface Framework {
   name: string;
@@ -19,6 +20,9 @@ export interface InstallationStep {
     title?: string;
     description: string | React.ReactNode;
   };
+  buttonText?: string;
+  buttonAction?: () => void;
+  copyText?: string;
 }
 
 const isDefaultApi = API_HOSTNAME === 'https://api.novu.co';
@@ -31,6 +35,37 @@ const getWebSocketUrl = (url: string) => {
 };
 
 const websocketUrl = getWebSocketUrl(WEBSOCKET_HOSTNAME);
+
+// Shared helpers to minimize duplication
+const cliFlags = `${isDefaultApi && IS_EU ? ' --region=eu' : ''}${!isDefaultApi ? ` --backendUrl ${API_HOSTNAME}` : ''}${!isDefaultWs ? ` --socketUrl ${WEBSOCKET_HOSTNAME}` : ''}`;
+
+function optionalAttrProps(indent: string): string {
+  return `${!isDefaultApi ? `\n${indent}${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n${indent}${`socketUrl="${websocketUrl}"`}` : ''}`;
+}
+
+function optionalObjectProps(indent: string): string {
+  return `${!isDefaultApi ? `\n${indent}${`backendUrl: '${API_HOSTNAME}',`}` : ''}${!isDefaultWs ? `\n${indent}${`socketUrl: '${websocketUrl}',`}` : ''}`;
+}
+
+function stepsByMethod(
+  installationMethod: 'cli' | 'manual' | 'ai-assist',
+  manualSteps: InstallationStep[],
+  frameworkName?: string,
+  applicationIdentifier?: string,
+  subscriberId?: string
+): InstallationStep[] {
+  if (installationMethod === 'cli') return [commonCLIInstallStep()];
+  if (installationMethod === 'ai-assist') {
+    return [
+      commonAIAssistInstallStep(
+        frameworkName || '',
+        applicationIdentifier || 'YOUR_APPLICATION_IDENTIFIER',
+        subscriberId || 'YOUR_SUBSCRIBER_ID'
+      ),
+    ];
+  }
+  return manualSteps;
+}
 
 export const customizationTip = {
   title: 'Tip:',
@@ -61,31 +96,46 @@ export const commonInstallStep = (packageName: string): InstallationStep => ({
 export const commonCLIInstallStep = (): InstallationStep => ({
   title: 'Run the CLI command in an existing project',
   description: `You'll notice a new folder in your project called inbox. This is where you'll find the inbox component boilerplate code. \n You can customize the <Inbox /> component to match your app theme.`,
-  code: `npx add-inbox@latest --appId YOUR_APPLICATION_IDENTIFIER --subscriberId YOUR_SUBSCRIBER_ID${isDefaultApi && IS_EU ? ' --region=eu' : ''}${!isDefaultApi ? ` --backendUrl ${API_HOSTNAME}` : ''}${!isDefaultWs ? ` --socketUrl ${WEBSOCKET_HOSTNAME}` : ''}`,
+  code: `npx add-inbox@latest --appId YOUR_APPLICATION_IDENTIFIER --subscriberId YOUR_SUBSCRIBER_ID${cliFlags}`,
   codeLanguage: 'shell',
   codeTitle: 'Terminal',
 });
 
-export const getFrameworks = (installationMethod: 'cli' | 'manual'): Framework[] => [
+export const commonAIAssistInstallStep = (
+  frameworkName: string,
+  applicationIdentifier: string,
+  subscriberId: string
+): InstallationStep => ({
+  title: 'Let your AI do the setup',
+  description: `Copy this quick-start guide as a prompt for LLMs inside your IDE to implement Novu in your application.`,
+  buttonText: 'Copy AI prompt',
+  copyText: getFrameworkPrompt(frameworkName, applicationIdentifier, IS_EU ? 'eu' : 'us', subscriberId),
+  codeLanguage: 'shell',
+});
+
+export const getFrameworks = (
+  installationMethod: 'cli' | 'manual' | 'ai-assist',
+  applicationIdentifier?: string,
+  subscriberId?: string
+): Framework[] => [
   {
     name: 'Next.js',
     icon: <RiNextjsFill className="h-8 w-8 text-black" />,
     selected: true,
-    installSteps:
-      installationMethod === 'cli'
-        ? [commonCLIInstallStep()]
-        : [
-            commonInstallStep('@novu/nextjs'),
-            {
-              title: 'Add the inbox code to your Next.js app',
-              description: 'Inbox utilizes the Next.js router to enable navigation within your notifications.',
-              code: `import { Inbox } from '@novu/nextjs';
+    installSteps: stepsByMethod(
+      installationMethod,
+      [
+        commonInstallStep('@novu/nextjs'),
+        {
+          title: 'Add the inbox code to your Next.js app',
+          description: 'Inbox utilizes the Next.js router to enable navigation within your notifications.',
+          code: `import { Inbox } from '@novu/nextjs';
 
 function Novu() {
   return (
     <Inbox
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${websocketUrl}"`}` : ''}
+      subscriberId="YOUR_SUBSCRIBER_ID"${optionalAttrProps('      ')}
       appearance={{
         variables: {
           colorPrimary: "YOUR_PRIMARY_COLOR",
@@ -95,25 +145,28 @@ function Novu() {
     />
   );
 }`,
-              codeLanguage: 'tsx',
-              codeTitle: 'Inbox.tsx',
-              tip: customizationTip,
-            },
-          ],
+          codeLanguage: 'tsx',
+          codeTitle: 'Inbox.tsx',
+          tip: customizationTip,
+        },
+      ],
+      'Next.js',
+      applicationIdentifier,
+      subscriberId
+    ),
   },
   {
     name: 'React',
     icon: <RiReactjsFill className="h-8 w-8 text-[#61DAFB]" />,
-    installSteps:
-      installationMethod === 'cli'
-        ? [commonCLIInstallStep()]
-        : [
-            commonInstallStep('@novu/react'),
-            {
-              title: 'Add the inbox code to your React app',
-              description:
-                'Inbox utilizes the routerPush prop and your preferred router to enable navigation within your notifications.',
-              code: `import { Inbox } from '@novu/react';
+    installSteps: stepsByMethod(
+      installationMethod,
+      [
+        commonInstallStep('@novu/react'),
+        {
+          title: 'Add the inbox code to your React app',
+          description:
+            'Inbox utilizes the routerPush prop and your preferred router to enable navigation within your notifications.',
+          code: `import { Inbox } from '@novu/react';
 import { useNavigate } from 'react-router-dom';
 
 function Novu() {
@@ -122,7 +175,7 @@ function Novu() {
   return (
     <Inbox
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${websocketUrl}"`}` : ''}
+      subscriberId="YOUR_SUBSCRIBER_ID"${optionalAttrProps('      ')}
       routerPush={(path: string) => navigate(path)}
       appearance={{
         variables: {
@@ -133,24 +186,27 @@ function Novu() {
     />
   );
 }`,
-              codeLanguage: 'tsx',
-              codeTitle: 'Inbox.tsx',
-              tip: customizationTip,
-            },
-          ],
+          codeLanguage: 'tsx',
+          codeTitle: 'Inbox.tsx',
+          tip: customizationTip,
+        },
+      ],
+      'React',
+      applicationIdentifier,
+      subscriberId
+    ),
   },
   {
     name: 'Remix',
     icon: <RiRemixRunFill className="h-8 w-8 text-black" />,
-    installSteps:
-      installationMethod === 'cli'
-        ? [commonCLIInstallStep()]
-        : [
-            commonInstallStep('@novu/react'),
-            {
-              title: 'Add the inbox code to your Remix app',
-              description: 'Inbox utilizes the routerPush prop to enable navigation within your notifications.',
-              code: `import { Inbox } from '@novu/react';
+    installSteps: stepsByMethod(
+      installationMethod,
+      [
+        commonInstallStep('@novu/react'),
+        {
+          title: 'Add the inbox code to your Remix app',
+          description: 'Inbox utilizes the routerPush prop to enable navigation within your notifications.',
+          code: `import { Inbox } from '@novu/react';
 import { useNavigate } from '@remix-run/react';
 
 function Novu() {
@@ -159,7 +215,7 @@ function Novu() {
   return (
     <Inbox
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${websocketUrl}"`}` : ''}
+      subscriberId="YOUR_SUBSCRIBER_ID"${optionalAttrProps('      ')}
       routerPush={(path: string) => navigate(path)}
       appearance={{
         variables: {
@@ -170,43 +226,46 @@ function Novu() {
     />
   );
 }`,
-              codeLanguage: 'tsx',
-              codeTitle: 'Inbox.tsx',
-              tip: customizationTip,
-            },
-          ],
+          codeLanguage: 'tsx',
+          codeTitle: 'Inbox.tsx',
+          tip: customizationTip,
+        },
+      ],
+      'Remix',
+      applicationIdentifier,
+      subscriberId
+    ),
   },
   {
     name: 'Native',
     icon: <RiReactjsFill className="h-8 w-8 text-black" />,
-    installSteps:
-      installationMethod === 'cli'
-        ? [commonCLIInstallStep()]
-        : [
-            commonInstallStep('@novu/react-native'),
-            {
-              title: 'Add the inbox code to your React Native app',
-              description: 'Implement the notification center in your React Native application.',
-              code: `import { NovuProvider } from '@novu/react-native';
+    installSteps: stepsByMethod(
+      installationMethod,
+      [
+        commonInstallStep('@novu/react-native'),
+        {
+          title: 'Add the inbox code to your React Native app',
+          description: 'Implement the notification center in your React Native application.',
+          code: `import { NovuProvider } from '@novu/react-native';
 import { YourCustomInbox } from './Inbox';
 
 function Layout() {
   return (
      <NovuProvider
       applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-      subscriberId="YOUR_SUBSCRIBER_ID"${!isDefaultApi ? `\n      ${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n      ${`socketUrl="${websocketUrl}"`}` : ''}
+      subscriberId="YOUR_SUBSCRIBER_ID"${optionalAttrProps('      ')}
     >
       <YourCustomInbox />
     </NovuProvider>
   );
 }`,
-              codeLanguage: 'tsx',
-              codeTitle: 'App.tsx',
-            },
-            {
-              title: 'Build your custom inbox component',
-              description: 'Build your custom inbox component to use within your app.',
-              code: `import {
+          codeLanguage: 'tsx',
+          codeTitle: 'App.tsx',
+        },
+        {
+          title: 'Build your custom inbox component',
+          description: 'Build your custom inbox component to use within your app.',
+          code: `import {
   FlatList,
   View,
   Text,
@@ -268,23 +327,26 @@ export function YourCustomInbox() {
     />
   );
 }`,
-              codeLanguage: 'tsx',
-              codeTitle: 'Inbox.tsx',
-            },
-          ],
+          codeLanguage: 'tsx',
+          codeTitle: 'Inbox.tsx',
+        },
+      ],
+      'Native',
+      applicationIdentifier,
+      subscriberId
+    ),
   },
   {
     name: 'Angular',
     icon: <RiAngularjsFill className="h-8 w-8 text-[#DD0031]" />,
-    installSteps:
-      installationMethod === 'cli'
-        ? [commonCLIInstallStep()]
-        : [
-            commonInstallStep('@novu/js'),
-            {
-              title: 'Add the inbox code to your Angular app',
-              description: 'Currently, angular applications are supported with the Novu UI library.',
-              code: `import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+    installSteps: stepsByMethod(
+      installationMethod,
+      [
+        commonInstallStep('@novu/js'),
+        {
+          title: 'Add the inbox code to your Angular app',
+          description: 'Currently, angular applications are supported with the Novu UI library.',
+          code: `import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NovuUI } from '@novu/js/ui';
 
@@ -303,7 +365,7 @@ export class AppComponent implements AfterViewInit {
     const novu = new NovuUI({
       options: {
         applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
-        subscriber: 'YOUR_SUBSCRIBER_ID',${!isDefaultApi ? `\n        backendUrl: '${API_HOSTNAME}',` : ''}${!isDefaultWs ? `\n        socketUrl: '${websocketUrl}',` : ''}
+        subscriber: 'YOUR_SUBSCRIBER_ID',${optionalObjectProps('        ')}
       },
     });
 
@@ -314,30 +376,33 @@ export class AppComponent implements AfterViewInit {
     });
   }
 }`,
-              codeLanguage: 'typescript',
-              codeTitle: 'app.component.ts',
-              tip: customizationTip,
-            },
-          ],
+          codeLanguage: 'typescript',
+          codeTitle: 'app.component.ts',
+          tip: customizationTip,
+        },
+      ],
+      'Angular',
+      applicationIdentifier,
+      subscriberId
+    ),
   },
   {
     name: 'JavaScript',
     icon: <RiJavascriptFill className="h-8 w-8 text-[#F7DF1E]" />,
-    installSteps:
-      installationMethod === 'cli'
-        ? [commonCLIInstallStep()]
-        : [
-            commonInstallStep('@novu/js'),
-            {
-              title: 'Add the inbox code to your JavaScript app',
-              description:
-                'You can use the Novu UI library to implement the notification center in your vanilla JavaScript application or any other non-supported framework like Vue.',
-              code: `import { NovuUI } from '@novu/js/ui';
+    installSteps: stepsByMethod(
+      installationMethod,
+      [
+        commonInstallStep('@novu/js'),
+        {
+          title: 'Add the inbox code to your JavaScript app',
+          description:
+            'You can use the Novu UI library to implement the notification center in your vanilla JavaScript application or any other non-supported framework like Vue.',
+          code: `import { NovuUI } from '@novu/js/ui';
 
     const novu = new NovuUI({
     options: {
       applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
-      subscriber: 'YOUR_SUBSCRIBER_ID',${!isDefaultApi ? `\n    backendUrl: '${API_HOSTNAME}',` : ''}${!isDefaultWs ? `\n    socketUrl: '${websocketUrl}',` : ''}
+      subscriber: 'YOUR_SUBSCRIBER_ID',${optionalObjectProps('    ')}
     },
   });
 
@@ -346,11 +411,15 @@ novu.mountComponent({
   props: {},
   element: document.getElementById('notification-inbox'),
 });`,
-              codeLanguage: 'typescript',
-              codeTitle: 'app.js',
-              tip: customizationTip,
-            },
-          ],
+          codeLanguage: 'typescript',
+          codeTitle: 'app.js',
+          tip: customizationTip,
+        },
+      ],
+      'JavaScript',
+      applicationIdentifier,
+      subscriberId
+    ),
   },
 ];
 

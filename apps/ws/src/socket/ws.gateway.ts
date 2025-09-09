@@ -148,7 +148,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     }
 
     Logger.log(
-      `Connection request received from ${subscriber._id} external id: ${subscriber.subscriberId}`,
+      `Connection request received from ${subscriber._id} external id: ${subscriber.subscriberId} organization id: ${subscriber.organizationId}`,
       LOG_CONTEXT
     );
 
