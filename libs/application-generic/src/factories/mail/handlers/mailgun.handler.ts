@@ -15,12 +15,14 @@ export class MailgunHandler extends BaseEmailHandler {
       from: string;
       baseUrl?: string;
       senderName: string;
+      webhookSigningKey?: string;
     } = {
       apiKey: credentials.apiKey,
       username: credentials.user,
       domain: credentials.domain,
       baseUrl: credentials.baseUrl,
       senderName: credentials.senderName,
+      webhookSigningKey: credentials.secretKey,
       from: from as string,
     };
 

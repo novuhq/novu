@@ -1,6 +1,10 @@
 import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
-import { resendGroupConfigurations, sendgridGroupConfigurations } from '../configurations/provider-configuration';
+import {
+  mailgunGroupConfigurations,
+  resendGroupConfigurations,
+  sendgridGroupConfigurations,
+} from '../configurations/provider-configuration';
 import {
   brazeEmailConfig,
   emailWebhookConfig,
@@ -37,6 +41,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Mailgun',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailgunConfig,
+    configurations: mailgunGroupConfigurations,
     docReference: `https://docs.novu.co/integrations/providers/email/mailgun${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'mailgun.svg', dark: 'mailgun.svg' },
   },

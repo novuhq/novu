@@ -7,12 +7,23 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
+import axios from 'axios';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
 import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+
+enum WebhooksIds {
+  DELIVERED = 'delivered',
+  OPENED = 'opened',
+  CLICKED = 'clicked',
+  UNSUBSCRIBED = 'unsubscribed',
+  COMPLAINED = 'complained',
+  PERMANENT_FAIL = 'permanent_fail',
+  TEMPORARY_FAIL = 'temporary_fail',
+}
 
 export class MailgunEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Mailgun;
@@ -48,6 +59,7 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
       domain: string;
       from: string;
       senderName: string;
+      webhookSigningKey?: string;
     }
   ) {
     super();
@@ -107,11 +119,100 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
       date: new Date().toISOString(),
     };
   }
-  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(_options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     return {
       success: true,
       message: 'Integrated successfully!',
       code: CheckIntegrationResponseEnum.SUCCESS,
     };
+  }
+
+  async autoConfigureInboundWebhook(configurations: { webhookUrl: string }): Promise<{
+    success: boolean;
+    message?: string;
+    configurations?: {
+      inboundWebhookEnabled: boolean;
+      inboundWebhookSigningKey: string;
+    };
+  }> {
+    try {
+      // Mailgun webhook events to configure
+      const events: WebhooksIds[] = [
+        WebhooksIds.DELIVERED,
+        WebhooksIds.OPENED,
+        WebhooksIds.CLICKED,
+        WebhooksIds.PERMANENT_FAIL,
+      ];
+      const webhookUrl = configurations.webhookUrl;
+
+      // Configure webhooks for each event type
+      for (const event of events) {
+        try {
+          const response = await this.mailgunClient.webhooks.create(this.config.domain, event, webhookUrl);
+          console.error('MAILGUN response', response);
+
+          if (!response) {
+            return {
+              success: false,
+              message: `Failed to configure webhook for event: ${event}`,
+            };
+          }
+        } catch (error) {
+          console.error('MAILGUN ERROR: Failed to configure webhook for event:', error);
+          throw new Error(`Failed to configure webhook for event ${event}, ${error.details}`);
+        }
+      }
+
+      // Step 2: Retrieve HTTP Webhook Signing Key from Mailgun API
+      let webhookSigningKey = null;
+      try {
+        // Use axios to make HTTP request since mailgun client doesn't have a generic request method
+        const baseUrl = this.config.baseUrl || 'https://api.mailgun.net';
+        const authHeader = `Basic ${Buffer.from(`api:${this.config.apiKey}`).toString('base64')}`;
+
+        const response = await axios.get(`${baseUrl}/v5/accounts/http_signing_key`, {
+          headers: {
+            Authorization: authHeader,
+          },
+        });
+
+        console.error('MAILGUN response http_signing_key', response);
+
+        if (response.status === 200 && response.data?.http_signing_key) {
+          webhookSigningKey = response.data.http_signing_key;
+        }
+      } catch (signingKeyError) {
+        // If API call fails, continue without signing key but notify user
+        console.warn('Failed to retrieve webhook signing key from Mailgun API:', signingKeyError);
+      }
+
+      if (!webhookSigningKey) {
+        return {
+          success: true,
+          message:
+            'Mailgun webhooks configured successfully. Please add your HTTP Webhook Signing Key from Mailgun Control Panel (API Security → HTTP webhook signing key) to enable signature verification.',
+          configurations: {
+            inboundWebhookEnabled: true,
+            inboundWebhookSigningKey: '',
+          },
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Mailgun webhooks configured successfully for email events with signature verification enabled',
+        configurations: {
+          inboundWebhookEnabled: true,
+          inboundWebhookSigningKey: webhookSigningKey,
+        },
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      return {
+        success: false,
+        message: `Error configuring Mailgun webhooks: ${errorMessage}`,
+      };
+    }
   }
 }

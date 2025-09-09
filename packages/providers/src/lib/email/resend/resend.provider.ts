@@ -2,7 +2,9 @@ import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,
+  EmailEventStatusEnum,
   ICheckIntegrationResponse,
+  IEmailEventBody,
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
@@ -10,6 +12,27 @@ import {
 import { Resend } from 'resend';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+
+export type EmailSentWebhook = {
+  type:
+    | 'email.sent'
+    | 'email.failed'
+    | 'email.delivered'
+    | 'email.delivery_delayed'
+    | 'email.bounced'
+    | 'email.opened'
+    | 'email.clicked'
+    | 'email.complained'
+    | 'email.scheduled';
+  created_at: string;
+  data: {
+    created_at: string;
+    email_id: string;
+    from: string;
+    subject: string;
+    to: string[];
+  };
+};
 
 interface ResendErrorResponse {
   statusCode: number;
@@ -126,6 +149,43 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
         message: error?.message,
         code: CheckIntegrationResponseEnum.FAILED,
       };
+    }
+  }
+
+  getMessageId(body: EmailSentWebhook): string[] {
+    return [body.data.email_id];
+  }
+
+  parseEventBody(body: EmailSentWebhook): IEmailEventBody | undefined {
+    return {
+      status: this.getStatus(body.type),
+      date: new Date().toISOString(),
+      externalId: body.data.email_id,
+    };
+  }
+
+  private getStatus(event: EmailSentWebhook['type']): EmailEventStatusEnum | undefined {
+    switch (event) {
+      case 'email.sent':
+        return EmailEventStatusEnum.SENT;
+      case 'email.failed':
+        return EmailEventStatusEnum.REJECTED;
+      case 'email.delivered':
+        return EmailEventStatusEnum.DELIVERED;
+      case 'email.delivery_delayed':
+        return EmailEventStatusEnum.DELAYED;
+      case 'email.bounced':
+        return EmailEventStatusEnum.BOUNCED;
+      case 'email.opened':
+        return EmailEventStatusEnum.OPENED;
+      case 'email.clicked':
+        return EmailEventStatusEnum.CLICKED;
+      case 'email.complained':
+        return EmailEventStatusEnum.COMPLAINT;
+      case 'email.scheduled':
+        return undefined;
+      default:
+        return undefined;
     }
   }
 

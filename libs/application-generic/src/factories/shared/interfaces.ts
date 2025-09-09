@@ -60,7 +60,7 @@ export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> i
   public verifySignature(body: unknown, headers: Record<string, string>): { success: boolean; message?: string } {
     if (!this.provider?.verifySignature) {
       // in case verifySignature is not implemented, we return true
-      return { success: true, message: 'Not implemented by provider' };
+      return { success: true, message: 'A support of signature verification is not implemented by provider' };
     }
 
     return this.provider.verifySignature(body, headers);
@@ -72,7 +72,10 @@ export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> i
     configurations?: IConfigurations;
   }> {
     if (!this.provider?.autoConfigureInboundWebhook) {
-      return Promise.resolve({ success: false, message: 'Not implemented by provider' });
+      return Promise.resolve({
+        success: false,
+        message: 'A support of auto-configuration of inbound webhook is not implemented by provider',
+      });
     }
 
     return this.provider.autoConfigureInboundWebhook(configurations);

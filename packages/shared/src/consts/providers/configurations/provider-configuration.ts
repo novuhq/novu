@@ -41,6 +41,28 @@ const resendConfigurations: ConfigConfiguration[] = [
   },
 ];
 
+const mailgunConfigurations: ConfigConfiguration[] = [
+  {
+    key: 'inboundWebhookEnabled',
+    displayName: 'Email Activity Tracking',
+    description: emailActivityTrackingDescription,
+    type: 'switch',
+    required: false,
+    links: [
+      {
+        text: 'set-up guide',
+        url: 'https://docs.novu.co/integrations/providers/email/mailgun#manual-setup',
+      },
+    ],
+  },
+  {
+    key: 'inboundWebhookSigningKey',
+    displayName: 'Inbound Webhook Signing Key',
+    type: 'string',
+    required: false,
+  },
+];
+
 export const sendgridGroupConfigurations: ConfigConfigurationGroup[] = [
   {
     groupType: 'inboundWebhook',
@@ -57,5 +79,14 @@ export const resendGroupConfigurations: ConfigConfigurationGroup[] = [
     configurations: resendConfigurations,
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide: 'https://resend.com/docs/dashboard/webhooks/introduction#what-is-a-webhook%3F',
+  },
+];
+
+export const mailgunGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: mailgunConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide: 'https://documentation.mailgun.com/docs/mailgun/user-manual/events/webhooks',
   },
 ];

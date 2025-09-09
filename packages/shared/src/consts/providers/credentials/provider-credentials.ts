@@ -69,6 +69,13 @@ export const mailgunConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Webhook Signing Key',
+    type: 'string',
+    description: 'HTTP webhook signing key from Mailgun API Security settings (required for webhook verification)',
+    required: false,
+  },
   ...mailConfigBase,
 ];
 
@@ -566,7 +573,7 @@ export const fcmConfig: IConfigCredential[] = [
         if (!value || value.trim() === '') {
           return true; // Let required validation handle empty values
         }
-        
+
         try {
           JSON.parse(value);
 
