@@ -40,7 +40,7 @@ export function InboxFrameworkGuide({
 }: InboxFrameworkGuideProps) {
   const track = useTelemetry();
 
-  const frameworks = getFrameworks('ai-assist') || [];
+  const frameworks = getFrameworks('ai-assist', currentEnvironment?.identifier, subscriberId) || [];
 
   const [selectedFrameworkName, setSelectedFrameworkName] = useState<string>(() => {
     return frameworks.find((f) => f.selected)?.name ?? frameworks[0]?.name ?? '';
@@ -52,7 +52,10 @@ export function InboxFrameworkGuide({
     [selectedFrameworkName, installationMethod]
   );
 
-  const currentFrameworks = useMemo(() => getFrameworks(effectiveInstallationMethod), [effectiveInstallationMethod]);
+  const currentFrameworks = useMemo(
+    () => getFrameworks(effectiveInstallationMethod, currentEnvironment?.identifier, subscriberId),
+    [effectiveInstallationMethod, currentEnvironment?.identifier, subscriberId]
+  );
   const updatedFrameworks = useMemo(() => {
     if (!currentEnvironment?.identifier || !subscriberId) return currentFrameworks;
     return currentFrameworks.map((framework) =>
