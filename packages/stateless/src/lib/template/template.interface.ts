@@ -38,6 +38,10 @@ export interface ITriggerPayload {
   $phone?: string;
   $user_id: string;
   $theme_id?: string;
+  /**
+   * @deprecated use $channelData instead
+   */
+  $webhookUrl?: string;
   $channelData?: ChannelData;
   $attachments?: IAttachmentOptions[];
   [key: string]:
