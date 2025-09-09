@@ -1,5 +1,11 @@
 import { Novu } from '@novu/api';
-import { MessageEntity, MessageRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import {
+  MessageEntity,
+  MessageRepository,
+  NotificationTemplateEntity,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import { ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -8,9 +14,10 @@ import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
-  let subscriber: SubscriberEntity | null;
+  let subscriber: SubscriberEntity;
   let messages: MessageEntity[];
   const messageRepository = new MessageRepository();
+  const subscriberRepository = new SubscriberRepository();
   let novuClient: Novu;
 
   const deleteNotification = async (id: string) => {
@@ -32,9 +39,7 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
       promises.push(
         novuClient.trigger({
           workflowId: templateToTrigger.triggers[0].identifier,
-          to: {
-            subscriberId: subscriber?.subscriberId,
-          },
+          to: subscriber.subscriberId,
           payload: {
             subject: 'this is a test',
             message: 'Hello, World!',
@@ -48,7 +53,7 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
     }
     await Promise.all(promises);
 
-    await session.awaitRunningJobs(templateToTrigger._id);
+    await session.waitForJobCompletion(templateToTrigger._id);
   };
 
   beforeEach(async () => {
@@ -76,7 +81,12 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
       ],
     });
 
-    subscriber = await session.createSubscriber();
+    subscriber = await subscriberRepository.create({
+      subscriberId: session.subscriberId,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
     novuClient = initNovuClassSdk(session);
 
     // Create multiple messages for testing
@@ -126,8 +136,14 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
 
     it('should delete notifications with tag filter', async () => {
       // First, add tags to some messages
-      await messageRepository.update({ _id: messages[0]._id }, { $set: { tags: ['urgent'] } });
-      await messageRepository.update({ _id: messages[1]._id }, { $set: { tags: ['urgent'] } });
+      await messageRepository.update(
+        { _id: messages[0]._id, _environmentId: session.environment._id },
+        { $set: { tags: ['urgent'] } }
+      );
+      await messageRepository.update(
+        { _id: messages[1]._id, _environmentId: session.environment._id },
+        { $set: { tags: ['urgent'] } }
+      );
 
       const response = await deleteAllNotifications({ tags: ['urgent'] });
       expect(response.status).to.equal(204);
@@ -144,7 +160,10 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
 
     it('should delete notifications with data filter', async () => {
       // First, add data to some messages
-      await messageRepository.update({ _id: messages[0]._id }, { $set: { data: { category: 'test' } } });
+      await messageRepository.update(
+        { _id: messages[0]._id, _environmentId: session.environment._id },
+        { $set: { data: { category: 'test' } } }
+      );
 
       const response = await deleteAllNotifications({
         data: JSON.stringify({ category: 'test' }),
@@ -168,7 +187,11 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
     });
 
     it('should not allow deleting notifications from other subscribers', async () => {
-      const otherSubscriber = await session.createSubscriber();
+      const otherSubscriber = await subscriberRepository.create({
+        subscriberId: 'other-subscriber-id',
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
       await triggerEvent(template, 1);
 
       const otherMessage = await messageRepository.findOne({
