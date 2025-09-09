@@ -99,6 +99,7 @@ export function setNotificationsListData(
       emails?: Array<string> | undefined;
       search?: string | undefined;
       subscriberIds?: Array<string> | undefined;
+      severity?: Array<string> | undefined;
       page?: number | undefined;
       limit?: number | undefined;
       transactionId?: string | undefined;
@@ -124,6 +125,7 @@ export function invalidateNotificationsList(
       emails?: Array<string> | undefined;
       search?: string | undefined;
       subscriberIds?: Array<string> | undefined;
+      severity?: Array<string> | undefined;
       page?: number | undefined;
       limit?: number | undefined;
       transactionId?: string | undefined;
@@ -168,6 +170,7 @@ export function buildNotificationsListQuery(
       emails: request.emails,
       search: request.search,
       subscriberIds: request.subscriberIds,
+      severity: request.severity,
       page: request.page,
       limit: request.limit,
       transactionId: request.transactionId,
@@ -201,6 +204,7 @@ export function queryKeyNotificationsList(
     emails?: Array<string> | undefined;
     search?: string | undefined;
     subscriberIds?: Array<string> | undefined;
+    severity?: Array<string> | undefined;
     page?: number | undefined;
     limit?: number | undefined;
     transactionId?: string | undefined;

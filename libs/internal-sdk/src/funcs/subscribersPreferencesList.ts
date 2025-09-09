@@ -3,7 +3,7 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeSimple } from "../lib/encodings.js";
+import { encodeFormQuery, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
@@ -35,6 +35,7 @@ import { Result } from "../types/fp.js";
 export function subscribersPreferencesList(
   client: NovuCore,
   subscriberId: string,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -55,6 +56,7 @@ export function subscribersPreferencesList(
   return new APIPromise($do(
     client,
     subscriberId,
+    criticality,
     idempotencyKey,
     options,
   ));
@@ -63,6 +65,7 @@ export function subscribersPreferencesList(
 async function $do(
   client: NovuCore,
   subscriberId: string,
+  criticality?: operations.Criticality | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
@@ -86,6 +89,7 @@ async function $do(
   const input: operations.SubscribersControllerGetSubscriberPreferencesRequest =
     {
       subscriberId: subscriberId,
+      criticality: criticality,
       idempotencyKey: idempotencyKey,
     };
 
@@ -113,6 +117,10 @@ async function $do(
   const path = pathToFunc("/v2/subscribers/{subscriberId}/preferences")(
     pathParams,
   );
+
+  const query = encodeFormQuery({
+    "criticality": payload.criticality,
+  });
 
   const headers = new Headers(compactMap({
     Accept: "application/json",
@@ -157,6 +165,7 @@ async function $do(
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
+    query: query,
     body: body,
     userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,

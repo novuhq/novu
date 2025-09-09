@@ -1,55 +1,24 @@
 import { IEnvironment } from '@novu/shared';
-import { Loader } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
-import { fadeIn } from '@/utils/animation';
+import { motion } from 'motion/react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
-import { Card, CardContent } from '../primitives/card';
-import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
-import { AiPromptsSection } from './ai-prompts-section';
-import { FrameworkCliInstructions, FrameworkInstructions } from './framework-guides';
 import { Framework, getFrameworks } from './framework-guides.instructions';
+import { FrameworkGrid } from './inbox-framework-guide/framework-grid';
+import { HeaderSection } from './inbox-framework-guide/header-section';
+import { updateFrameworkCode } from './inbox-framework-guide/helpers';
+import { InstructionsPanel } from './inbox-framework-guide/instructions-panel';
+import type { InstallationMethod } from './inbox-framework-guide/types';
 
-const containerVariants = {
+const FRAMEWORKS_WITH_MANUAL_ONLY = ['Remix', 'Native', 'Angular', 'JavaScript'];
+const FRAMEWORKS_WITH_INSTALLATION_TABS = ['Next.js', 'React'];
+
+const CONTAINER_VARIANTS = {
   hidden: {},
   show: {
     transition: {
       staggerChildren: 0.05,
       delayChildren: 0.1,
-    },
-  },
-};
-
-const TABS_TRIGGER_CLASSES =
-  'relative text-xs font-medium text-[#99A0AE] transition-all data-[state=active]:text-[#0E121B] data-[state=active]:bg-white data-[state=active]:shadow-[0px_4px_10px_rgba(14,18,27,0.06),0px_2px_4px_rgba(14,18,27,0.03)] hover:text-[#0E121B] px-1.5 py-0.5 rounded data-[state=active]:rounded-sm h-5 flex items-center justify-center min-w-fit';
-
-const cardVariants = {
-  hidden: {
-    opacity: 0,
-    y: 10,
-  },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.2,
-      ease: 'easeOut',
-    },
-  },
-};
-
-const iconVariants = {
-  initial: {
-    scale: 1,
-  },
-  hover: {
-    scale: 1.1,
-    transition: {
-      scale: {
-        duration: 0.2,
-        ease: 'easeOut',
-      },
     },
   },
 };
@@ -63,31 +32,6 @@ interface InboxFrameworkGuideProps {
   socketUrl?: string;
 }
 
-function updateFrameworkCode(
-  framework: Framework,
-  environmentIdentifier: string,
-  subscriberId: string,
-  primaryColor: string,
-  foregroundColor: string
-): Framework {
-  return {
-    ...framework,
-    installSteps: framework.installSteps.map((step) => {
-      if (!step.code) return step;
-
-      return {
-        ...step,
-        code: step.code
-          .replace(/YOUR_APP_ID/g, () => environmentIdentifier)
-          .replace(/YOUR_APPLICATION_IDENTIFIER/g, () => environmentIdentifier)
-          .replace(/YOUR_SUBSCRIBER_ID/g, () => subscriberId)
-          .replace(/YOUR_PRIMARY_COLOR/g, () => primaryColor)
-          .replace(/YOUR_FOREGROUND_COLOR/g, () => foregroundColor),
-      };
-    }),
-  };
-}
-
 export function InboxFrameworkGuide({
   currentEnvironment,
   subscriberId,
@@ -95,150 +39,82 @@ export function InboxFrameworkGuide({
   foregroundColor,
 }: InboxFrameworkGuideProps) {
   const track = useTelemetry();
-  const [selectedFramework, setSelectedFramework] = useState<Framework>(
-    getFrameworks('cli').find((f) => f.selected) || getFrameworks('cli')[0]
+
+  const frameworks = getFrameworks('ai-assist', currentEnvironment?.identifier, subscriberId) || [];
+
+  const [selectedFrameworkName, setSelectedFrameworkName] = useState<string>(() => {
+    return frameworks.find((f) => f.selected)?.name ?? frameworks[0]?.name ?? '';
+  });
+  const [installationMethod, setInstallationMethod] = useState<InstallationMethod>('ai-assist');
+
+  const effectiveInstallationMethod = useMemo<InstallationMethod>(
+    () => (FRAMEWORKS_WITH_MANUAL_ONLY.includes(selectedFrameworkName) ? 'manual' : installationMethod),
+    [selectedFrameworkName, installationMethod]
   );
-  const [installationMethod, setInstallationMethod] = useState<'cli' | 'manual'>('cli');
 
-  useEffect(() => {
-    if (!currentEnvironment?.identifier || !subscriberId) return;
-
-    const frameworks = getFrameworks(installationMethod);
-    const updatedFrameworks = frameworks.map((framework) =>
+  const currentFrameworks = useMemo(
+    () => getFrameworks(effectiveInstallationMethod, currentEnvironment?.identifier, subscriberId),
+    [effectiveInstallationMethod, currentEnvironment?.identifier, subscriberId]
+  );
+  const updatedFrameworks = useMemo(() => {
+    if (!currentEnvironment?.identifier || !subscriberId) return currentFrameworks;
+    return currentFrameworks.map((framework) =>
       updateFrameworkCode(framework, currentEnvironment.identifier, subscriberId, primaryColor, foregroundColor)
     );
+  }, [currentFrameworks, currentEnvironment?.identifier, subscriberId, primaryColor, foregroundColor]);
 
-    setSelectedFramework(updatedFrameworks.find((f) => f.name === selectedFramework.name) || updatedFrameworks[0]);
-  }, [
-    currentEnvironment?.identifier,
-    subscriberId,
-    selectedFramework.name,
-    primaryColor,
-    foregroundColor,
-    installationMethod,
-  ]);
+  const selectedFramework = useMemo(
+    () => updatedFrameworks.find((f) => f.name === selectedFrameworkName) || updatedFrameworks[0],
+    [updatedFrameworks, selectedFrameworkName]
+  );
 
-  useEffect(() => {
-    if (['Remix', 'Native', 'Angular', 'JavaScript'].includes(selectedFramework.name)) {
-      setInstallationMethod('manual');
-    }
-  }, [selectedFramework.name]);
+  const handleFrameworkSelect = useCallback(
+    (framework: Framework) => {
+      track(TelemetryEvent.INBOX_FRAMEWORK_SELECTED, { framework: framework.name });
+      setSelectedFrameworkName(framework.name);
 
-  function handleFrameworkSelect(framework: Framework) {
-    track(TelemetryEvent.INBOX_FRAMEWORK_SELECTED, {
-      framework: framework.name,
-    });
+      if (FRAMEWORKS_WITH_MANUAL_ONLY.includes(framework.name)) {
+        setInstallationMethod('manual');
+      } else if (FRAMEWORKS_WITH_INSTALLATION_TABS.includes(framework.name)) {
+        setInstallationMethod('ai-assist');
+      }
+    },
+    [track]
+  );
 
-    setSelectedFramework(framework);
+  const handleInstallationMethodChange = useCallback((method: InstallationMethod) => {
+    setInstallationMethod(method);
+  }, []);
+
+  const showInstallationTabs = useMemo(
+    () => FRAMEWORKS_WITH_INSTALLATION_TABS.includes(selectedFrameworkName),
+    [selectedFrameworkName]
+  );
+
+  if (frameworks.length === 0) {
+    return null;
   }
-
-  const frameworks = getFrameworks(installationMethod);
-
-  // Intentionally unused: reserved for future context-aware hints based on the selected step
-  void frameworks;
-
-  const showAiPrompt = selectedFramework.name === 'Next.js' || selectedFramework.name === 'React';
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="flex items-start gap-4 pl-[72px]"
-      >
-        <div className="flex flex-col border-l border-[#eeeef0] p-8">
-          <div className="flex items-center gap-2">
-            <Loader className="h-3.5 w-3.5 text-[#dd2476] [animation:spin_5s_linear_infinite]" />
-            <span className="animate-gradient bg-gradient-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-[length:400%_400%] bg-clip-text text-sm font-medium text-transparent">
-              Watching for Inbox Integration
-            </span>
-          </div>
-          <p className="text-foreground-400 text-xs">Follow the steps below to initialize your Inbox component.</p>
-        </div>
-      </motion.div>
+      <HeaderSection />
 
-      {/* Framework Cards */}
-      <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col gap-6 px-6">
+      <motion.div variants={CONTAINER_VARIANTS} initial="hidden" animate="show" className="flex flex-col gap-6 px-6">
         <div className="flex flex-col gap-4">
-          <div className="flex gap-2">
-            {frameworks.map((framework) => (
-              <motion.div
-                key={framework.name}
-                variants={cardVariants}
-                initial="initial"
-                whileHover="hover"
-                animate={framework.name === selectedFramework.name ? 'hover' : 'initial'}
-                className="relative"
-              >
-                <Card
-                  onClick={() => handleFrameworkSelect(framework)}
-                  className={`flex h-[100px] w-[100px] flex-col items-center justify-center border-none p-6 shadow-none hover:cursor-pointer ${
-                    framework.name === selectedFramework.name ? 'bg-neutral-100' : ''
-                  }`}
-                >
-                  <CardContent className="flex flex-col items-center gap-3 p-0">
-                    <motion.div variants={iconVariants} className="relative text-2xl">
-                      {framework.icon}
-                    </motion.div>
-                    <span className="text-sm text-[#525866]">{framework.name}</span>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          <FrameworkGrid
+            frameworks={currentFrameworks}
+            selectedFrameworkName={selectedFrameworkName}
+            onSelect={handleFrameworkSelect}
+          />
         </div>
 
-        {/* Code block area with subtle installation method selector above */}
         <div className="flex flex-col gap-3">
-          <div className="relative flex h-[520px] flex-col overflow-hidden pl-0">
-            {showAiPrompt && (
-              <div className="pl-0">
-                <div className="flex items-center mb-4">
-                  <AiPromptsSection
-                    frameworkName={selectedFramework.name}
-                    applicationIdentifier={currentEnvironment?.identifier}
-                    subscriberId={subscriberId}
-                  />
-                </div>
-              </div>
-            )}
-            {['Next.js', 'React'].includes(selectedFramework.name) && (
-              <div className="mb-2 flex items-center gap-64 pl-8">
-                <span className="text-base font-medium text-[#222]">Installation method</span>
-                <Tabs
-                  defaultValue="cli"
-                  value={installationMethod}
-                  onValueChange={(value) => setInstallationMethod(value as 'cli' | 'manual')}
-                >
-                  <TabsList className="ml-4 h-7 w-[159px] gap-1 rounded-md bg-[#FBFBFB] p-1 shadow-none">
-                    <TabsTrigger value="cli" className={TABS_TRIGGER_CLASSES}>
-                      CLI Installation
-                    </TabsTrigger>
-                    <TabsTrigger value="manual" className={TABS_TRIGGER_CLASSES}>
-                      Manual
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-            )}
-
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={['Next.js', 'React'].includes(selectedFramework.name) ? installationMethod : 'manual'}
-                  {...fadeIn}
-                  className="w-full"
-                >
-                  {['Next.js', 'React'].includes(selectedFramework.name) && installationMethod === 'cli' ? (
-                    <FrameworkCliInstructions framework={selectedFramework as Framework} />
-                  ) : (
-                    <FrameworkInstructions framework={selectedFramework as Framework} />
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
+          <InstructionsPanel
+            selectedFramework={selectedFramework}
+            installationMethod={effectiveInstallationMethod}
+            showInstallationTabs={showInstallationTabs}
+            onMethodChange={handleInstallationMethodChange}
+          />
         </div>
       </motion.div>
     </>

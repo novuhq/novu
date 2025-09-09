@@ -32,6 +32,11 @@ import {
   ActivityTopicDto$outboundSchema,
 } from "./activitytopicdto.js";
 import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
@@ -122,6 +127,14 @@ export type ActivityNotificationResponseDto = {
    * Topics of the notification
    */
   topics?: Array<ActivityTopicDto> | undefined;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
+  /**
+   * Criticality of the notification
+   */
+  critical?: boolean | undefined;
 };
 
 /** @internal */
@@ -299,6 +312,8 @@ export const ActivityNotificationResponseDto$inboundSchema: z.ZodType<
   controls: z.lazy(() => Controls$inboundSchema).optional(),
   to: z.lazy(() => ActivityNotificationResponseDtoTo$inboundSchema).optional(),
   topics: z.array(ActivityTopicDto$inboundSchema).optional(),
+  severity: SeverityLevelEnum$inboundSchema.optional(),
+  critical: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -330,6 +345,8 @@ export type ActivityNotificationResponseDto$Outbound = {
   controls?: Controls$Outbound | undefined;
   to?: ActivityNotificationResponseDtoTo$Outbound | undefined;
   topics?: Array<ActivityTopicDto$Outbound> | undefined;
+  severity?: string | undefined;
+  critical?: boolean | undefined;
 };
 
 /** @internal */
@@ -358,6 +375,8 @@ export const ActivityNotificationResponseDto$outboundSchema: z.ZodType<
   controls: z.lazy(() => Controls$outboundSchema).optional(),
   to: z.lazy(() => ActivityNotificationResponseDtoTo$outboundSchema).optional(),
   topics: z.array(ActivityTopicDto$outboundSchema).optional(),
+  severity: SeverityLevelEnum$outboundSchema.optional(),
+  critical: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

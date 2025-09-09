@@ -56,6 +56,11 @@ import {
   PushStepUpsertDto$outboundSchema,
 } from "./pushstepupsertdto.js";
 import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   SmsStepUpsertDto,
   SmsStepUpsertDto$inboundSchema,
   SmsStepUpsertDto$Outbound,
@@ -131,6 +136,10 @@ export type CreateWorkflowDto = {
    * Workflow preferences
    */
   preferences?: PreferencesRequestDto | undefined;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
 };
 
 /** @internal */
@@ -312,6 +321,7 @@ export const CreateWorkflowDto$inboundSchema: z.ZodType<
   ),
   __source: WorkflowCreationSourceEnum$inboundSchema.default("editor"),
   preferences: PreferencesRequestDto$inboundSchema.optional(),
+  severity: SeverityLevelEnum$inboundSchema.optional(),
 }).transform((v) => {
   return remap$(v, {
     "__source": "source",
@@ -340,6 +350,7 @@ export type CreateWorkflowDto$Outbound = {
   >;
   __source: string;
   preferences?: PreferencesRequestDto$Outbound | undefined;
+  severity?: string | undefined;
 };
 
 /** @internal */
@@ -402,6 +413,7 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
   ),
   source: WorkflowCreationSourceEnum$outboundSchema.default("editor"),
   preferences: PreferencesRequestDto$outboundSchema.optional(),
+  severity: SeverityLevelEnum$outboundSchema.optional(),
 }).transform((v) => {
   return remap$(v, {
     source: "__source",
