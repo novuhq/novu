@@ -1,5 +1,5 @@
 import { MailgunEmailProvider } from '@novu/providers';
-import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, IConfigurations, ICredentials } from '@novu/shared';
 import { BaseEmailHandler } from './base.handler';
 
 export class MailgunHandler extends BaseEmailHandler {
@@ -7,7 +7,7 @@ export class MailgunHandler extends BaseEmailHandler {
     super(EmailProviderIdEnum.Mailgun, ChannelTypeEnum.EMAIL);
   }
 
-  buildProvider(credentials: ICredentials, from?: string) {
+  buildProvider(credentials: ICredentials & IConfigurations, from?: string) {
     const config: {
       apiKey: string;
       username: string;
@@ -22,7 +22,7 @@ export class MailgunHandler extends BaseEmailHandler {
       domain: credentials.domain,
       baseUrl: credentials.baseUrl,
       senderName: credentials.senderName,
-      webhookSigningKey: credentials.secretKey,
+      webhookSigningKey: credentials.inboundWebhookSigningKey,
       from: from as string,
     };
 

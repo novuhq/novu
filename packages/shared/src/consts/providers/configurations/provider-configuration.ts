@@ -39,6 +39,12 @@ const resendConfigurations: ConfigConfiguration[] = [
       },
     ],
   },
+  {
+    key: 'inboundWebhookSigningKey',
+    displayName: 'Inbound Webhook Signing Key',
+    type: 'string',
+    required: false,
+  },
 ];
 
 const mailgunConfigurations: ConfigConfiguration[] = [

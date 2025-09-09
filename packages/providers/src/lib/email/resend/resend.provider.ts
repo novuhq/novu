@@ -10,6 +10,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { Resend } from 'resend';
+import { Webhook } from 'svix';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -79,6 +80,7 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
       apiKey: string;
       from: string;
       senderName?: string;
+      webhookSigningKey?: string;
     }
   ) {
     super();
@@ -187,6 +189,48 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
       default:
         return undefined;
     }
+  }
+
+  verifySignature(rawBody: any, headers: Record<string, string>): { success: boolean; message?: string } {
+    try {
+      const svixId = this.getHeaderValue(headers, 'svix-id');
+      const svixTimestamp = this.getHeaderValue(headers, 'svix-timestamp');
+      const svixSignature = this.getHeaderValue(headers, 'svix-signature');
+
+      const webhookSigningKey = this.config.webhookSigningKey;
+
+      if (!webhookSigningKey) {
+        return {
+          success: true,
+          message: 'Resend signature verification is not configured',
+        };
+      }
+
+      if (rawBody === undefined) {
+        return { success: false, message: 'Body is undefined' };
+      }
+
+      const webhook = new Webhook(webhookSigningKey);
+      const svixHeaders = {
+        'svix-id': svixId,
+        'svix-timestamp': svixTimestamp,
+        'svix-signature': svixSignature,
+      };
+
+      webhook.verify(rawBody, svixHeaders);
+
+      return { success: true, message: 'Resend signature verification successful' };
+    } catch (error) {
+      return { success: false, message: `Error verifying signature: ${error.message}` };
+    }
+  }
+
+  private getHeaderValue(headers: Record<string, string>, headerName: string): string | undefined {
+    // Case-insensitive header lookup
+    const lowerHeaderName = headerName.toLowerCase();
+    const key = Object.keys(headers).find((k) => k.toLowerCase() === lowerHeaderName);
+
+    return key ? headers[key] : undefined;
   }
 
   async autoConfigureInboundWebhook(_configurations: { webhookUrl: string }): Promise<{
