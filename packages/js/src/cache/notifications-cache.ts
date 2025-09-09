@@ -144,12 +144,38 @@ export class NotificationsCache {
 
   private handleNotificationEvent =
     ({ remove }: { remove: boolean } = { remove: false }) =>
-    ({ data }: { data?: Notification | Notification[] }): void => {
-      if (!data) {
-        return;
+    (event: any): void => {
+      const { data, args } = event;
+
+      let notifications: Notification[] = [];
+
+      if (data !== undefined && data !== null) {
+        if (Array.isArray(data)) {
+          notifications = data;
+        } else if (typeof data === 'object' && data.id) {
+          notifications = [data];
+        }
+      } else if (remove && args) {
+        if ('notification' in args) {
+          notifications = [args.notification];
+        } else if ('notificationId' in args) {
+          const foundNotifications: Notification[] = [];
+          this.#cache.keys().forEach((key) => {
+            const cachedResponse = this.#cache.get(key);
+            if (cachedResponse) {
+              const found = cachedResponse.notifications.find((n) => n.id === args.notificationId);
+              if (found) {
+                foundNotifications.push(found);
+              }
+            }
+          });
+          notifications = foundNotifications;
+        }
       }
 
-      const notifications = Array.isArray(data) ? data : [data];
+      if (notifications.length === 0) {
+        return;
+      }
 
       const uniqueFilterKeys = new Set<string>();
       this.#cache.keys().forEach((key) => {

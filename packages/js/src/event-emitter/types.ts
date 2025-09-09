@@ -76,7 +76,7 @@ type NotificationsReadArchivedAllEvents = BaseEvents<
 type NotificationsDeletedAllEvents = BaseEvents<
   'notifications.delete_all',
   { tags?: string[]; data?: Record<string, unknown> },
-  void
+  Notification[]
 >;
 type PreferencesFetchEvents = BaseEvents<'preferences.list', ListPreferencesArgs, Preference[]>;
 type PreferenceUpdateEvents = BaseEvents<'preference.update', UpdatePreferenceArgs, Preference>;
