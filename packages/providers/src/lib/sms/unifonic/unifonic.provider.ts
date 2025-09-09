@@ -38,9 +38,9 @@ export class UnifonicSmsProvider extends BaseProvider implements ISmsProvider {
       },
     });
 
-    if (response.data?.messageID) {
+    if (response.data?.data.messageID) {
       return {
-        id: response.data.messageID,
+        id: response.data.data.messageID,
         date: new Date().toISOString(),
       };
     }
