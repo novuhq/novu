@@ -191,7 +191,15 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
     }
   }
 
-  verifySignature(rawBody: any, headers: Record<string, string>): { success: boolean; message?: string } {
+  verifySignature({
+    rawBody,
+    headers = {},
+    body: _body,
+  }: {
+    rawBody: any;
+    headers?: Record<string, string>;
+    body?: Record<string, unknown>;
+  }): { success: boolean; message?: string } {
     try {
       const svixId = this.getHeaderValue(headers, 'svix-id');
       const svixTimestamp = this.getHeaderValue(headers, 'svix-timestamp');

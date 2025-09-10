@@ -39,13 +39,16 @@ export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> imple
     return this.provider.getMessageId(body);
   }
 
-  public verifySignature(body: any, headers: Record<string, string>): { success: boolean; message?: string } {
+  public verifySignature({ body, headers, rawBody }: { rawBody: any; body: any; headers: Record<string, string> }): {
+    success: boolean;
+    message?: string;
+  } {
     if (!this.provider.verifySignature) {
       // in case verifySignature is not implemented, we return true
       return { success: true };
     }
 
-    return this.provider.verifySignature(body, headers);
+    return this.provider.verifySignature({ body, headers, rawBody });
   }
 
   public parseEventBody(body: any, identifier: string): IEmailEventBody | undefined {

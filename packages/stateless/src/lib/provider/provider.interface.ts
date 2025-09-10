@@ -4,7 +4,11 @@ import { CheckIntegrationResponseEnum } from './provider.enum';
 export interface IProvider {
   id: string;
   channelType: ChannelTypeEnum;
-  verifySignature?: (body: any, headers: Record<string, string>) => { success: boolean; message?: string };
+  verifySignature?: (params: {
+    rawBody: unknown;
+    headers?: Record<string, string>;
+    body?: Record<string, unknown>;
+  }) => { success: boolean; message?: string };
   autoConfigureInboundWebhook?: (configurations: { webhookUrl: string }) => Promise<{
     success: boolean;
     message?: string;

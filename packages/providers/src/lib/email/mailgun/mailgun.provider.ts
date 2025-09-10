@@ -2,12 +2,15 @@ import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,
+  EmailEventStatusEnum,
   ICheckIntegrationResponse,
+  IEmailEventBody,
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import axios from 'axios';
+import { createHmac } from 'crypto';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
@@ -213,6 +216,121 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
         success: false,
         message: `Error configuring Mailgun webhooks: ${errorMessage}`,
       };
+    }
+  }
+
+  verifySignature({
+    rawBody: _rawBody,
+    headers: _headers,
+    body,
+  }: {
+    rawBody: unknown;
+    headers?: Record<string, string>;
+    body?: Record<string, unknown>;
+  }): {
+    success: boolean;
+    message?: string;
+  } {
+    try {
+      const bodySignature = body.signature as { timestamp: string; token: string; signature: string };
+      const timestamp = bodySignature.timestamp;
+      const token = bodySignature.token;
+      const signature = bodySignature.signature;
+
+      const webhookSigningKey = this.config.webhookSigningKey;
+
+      if (!webhookSigningKey) {
+        return {
+          success: true,
+          message: 'Mailgun signature verification is not configured',
+        };
+      }
+
+      if (!timestamp || !token || !signature) {
+        const missingFields = [!timestamp ? 'timestamp' : '', !token ? 'token' : '', !signature ? 'signature' : '']
+          .filter(Boolean)
+          .join(', ');
+
+        return { success: false, message: `Missing required fields: ${missingFields}` };
+      }
+
+      const data = timestamp + token;
+      const computedSignature = createHmac('sha256', webhookSigningKey).update(data).digest('hex');
+
+      const isValid = computedSignature === signature;
+
+      return {
+        success: isValid,
+        message: isValid ? 'Mailgun signature verification successful' : 'Mailgun signature verification failed',
+      };
+    } catch (error) {
+      return { success: false, message: `Error verifying signature: ${error.message}` };
+    }
+  }
+
+  getMessageId(body: any): string[] {
+    try {
+      const messageId = body['event-data']?.message?.headers?.['message-id'] || body['event-data']?.id;
+
+      if (!messageId) {
+        return [];
+      }
+
+      // Mailgun send requests return message IDs wrapped in < >
+      return [`<${messageId}>`];
+    } catch {
+      return [];
+    }
+  }
+
+  parseEventBody(body: any): IEmailEventBody | undefined {
+    try {
+      const eventData = body['event-data'];
+
+      if (!eventData) {
+        return undefined;
+      }
+
+      const status = this.getStatus(eventData.event);
+
+      if (status === undefined) {
+        return undefined;
+      }
+
+      const messageId = eventData.message?.headers?.['message-id'] || eventData.id;
+
+      return {
+        status,
+        date: new Date(eventData.timestamp * 1000).toISOString(),
+        externalId: messageId,
+        attempts: eventData['delivery-status']?.['attempt-no'] || 1,
+        response: eventData['delivery-status']?.description || eventData.reason || '',
+        row: JSON.stringify(eventData),
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
+  private getStatus(event: string): EmailEventStatusEnum | undefined {
+    switch (event) {
+      case 'delivered':
+        return EmailEventStatusEnum.DELIVERED;
+      case 'opened':
+        return EmailEventStatusEnum.OPENED;
+      case 'clicked':
+        return EmailEventStatusEnum.CLICKED;
+      case 'unsubscribed':
+        return EmailEventStatusEnum.UNSUBSCRIBED;
+      case 'complained':
+        return EmailEventStatusEnum.COMPLAINT;
+      case 'permanent_fail':
+      case 'failed':
+        return EmailEventStatusEnum.BOUNCED;
+      case 'temporary_fail':
+        return EmailEventStatusEnum.DELAYED;
+      default:
+        return undefined;
     }
   }
 }
