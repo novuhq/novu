@@ -3,7 +3,33 @@ import { ChannelData } from '@novu/stateless';
 import { MessageWebhookResponseDto } from '../dtos';
 
 export const messageWebhookMapper = (
-  message: MessageEntity,
+  message: Pick<
+    MessageEntity,
+    | '_id'
+    | '_templateId'
+    | '_environmentId'
+    | '_organizationId'
+    | '_notificationId'
+    | 'actorSubscriber'
+    | 'templateIdentifier'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'archivedAt'
+    | 'archived'
+    | 'transactionId'
+    | 'channel'
+    | 'seen'
+    | 'read'
+    | 'snoozedUntil'
+    | 'deliveredAt'
+    | 'providerId'
+    | 'lastSeenDate'
+    | 'firstSeenDate'
+    | 'lastReadDate'
+    | 'status'
+    | 'errorId'
+    | 'errorText'
+  >,
   subscriberId: string,
   context?: {
     providerResponseId?: string;

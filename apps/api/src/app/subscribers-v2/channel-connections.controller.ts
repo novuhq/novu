@@ -148,7 +148,7 @@ export class ChannelConnectionsController {
     );
   }
 
-  @Patch('/:identifier')
+  @Patch('channel-connections/:identifier')
   @ApiOperation({
     summary: 'Update channel connection',
     description: `Update an existing channel connection by its unique identifier.`,
@@ -175,7 +175,7 @@ export class ChannelConnectionsController {
     );
   }
 
-  @Delete('/:identifier')
+  @Delete('channel-connections/:identifier')
   @HttpCode(204)
   @ApiOperation({
     summary: 'Delete channel connection',

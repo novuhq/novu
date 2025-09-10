@@ -55,6 +55,7 @@ export const RETRYABLE_ERROR_CODES: string[] = [
   'ENOTFOUND', //    DNS lookup failed
   'EHOSTUNREACH', // No route to host
   'ENETUNREACH', //  Network is unreachable
+  'BridgeRequestTimeout',
 ];
 
 const LOG_CONTEXT = 'ExecuteBridgeRequest';
@@ -131,8 +132,9 @@ export class ExecuteBridgeRequest {
     });
 
     const url = bridgeActionUrl.toString();
+    const timeOut = bridgeUrl?.includes(process.env.API_INTERNAL_ORIGIN) ? 30_000 : DEFAULT_TIMEOUT;
     const options: OptionsOfTextResponseBody = {
-      timeout: DEFAULT_TIMEOUT,
+      timeout: timeOut,
       json: command.event,
       retry: {
         limit: retriesLimit,

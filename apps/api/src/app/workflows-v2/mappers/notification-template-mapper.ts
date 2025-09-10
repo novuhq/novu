@@ -104,7 +104,7 @@ function toStepListResponseDtos(steps: NotificationStepEntity[]): StepListRespon
 
 function toStepListResponseDto(step: NotificationStepEntity): StepListResponseDto {
   // biome-ignore lint/style/noNonNullAssertion: always exists
-  const stepName = step.name!;
+  const stepName = step.name! || 'Missing Name';
   const slug = buildSlug(stepName, ShortIsPrefixEnum.STEP, step._templateId);
 
   return {

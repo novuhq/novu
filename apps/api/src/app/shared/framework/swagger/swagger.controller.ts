@@ -72,7 +72,14 @@ function buildBaseOptions() {
       'Environments',
       `Environments allow you to manage different stages of your application development lifecycle. Each environment has its own set of API keys and configurations, enabling you to separate development, staging, and production workflows.`,
       { url: 'https://docs.novu.co/platform/environments' }
-    );
+    )
+    .addTag('Layouts', `Layouts are reusable wrappers for your email notifications.`, {
+      url: 'https://docs.novu.co/platform/workflow/layouts',
+    })
+    .addTag('Translations', `Used to localize your notifications to different languages.`, {
+      url: 'https://docs.novu.co/platform/workflow/translations',
+    });
+
   return options;
 }
 
