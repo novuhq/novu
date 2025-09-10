@@ -152,7 +152,6 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
       for (const event of events) {
         try {
           const response = await this.mailgunClient.webhooks.create(this.config.domain, event, webhookUrl);
-          console.error('MAILGUN response', response);
 
           if (!response) {
             return {
@@ -161,7 +160,6 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
             };
           }
         } catch (error) {
-          console.error('MAILGUN ERROR: Failed to configure webhook for event:', error);
           throw new Error(`Failed to configure webhook for event ${event}, ${error.details}`);
         }
       }
@@ -179,14 +177,11 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
           },
         });
 
-        console.error('MAILGUN response http_signing_key', response);
-
         if (response.status === 200 && response.data?.http_signing_key) {
           webhookSigningKey = response.data.http_signing_key;
         }
-      } catch (signingKeyError) {
+      } catch (_signingKeyError) {
         // If API call fails, continue without signing key but notify user
-        console.warn('Failed to retrieve webhook signing key from Mailgun API:', signingKeyError);
       }
 
       if (!webhookSigningKey) {
