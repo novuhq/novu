@@ -7,25 +7,29 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     description: 'Slack Channel Endpoint',
     properties: { channelId: { type: 'string' as const } },
     required: ['channelId'],
-    validate: (addr: Record<string, unknown>) => typeof addr.channelId === 'string' && Object.keys(addr).length === 1,
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.channelId === 'string' && Object.keys(endpoint).length === 1,
   },
   [ENDPOINT_TYPES.SLACK_USER]: {
     description: 'Slack User Endpoint',
     properties: { userId: { type: 'string' as const } },
     required: ['userId'],
-    validate: (addr: Record<string, unknown>) => typeof addr.userId === 'string' && Object.keys(addr).length === 1,
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
   },
   [ENDPOINT_TYPES.WEBHOOK]: {
     description: 'Webhook Endpoint (with optional channel)',
     properties: { url: { type: 'string' as const }, channel: { type: 'string' as const } },
     required: ['url'],
-    validate: (addr: Record<string, unknown>) => typeof addr.url === 'string' && Object.keys(addr).length === 1,
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.url === 'string' && Object.keys(endpoint).length === 1,
   },
   [ENDPOINT_TYPES.PHONE]: {
     description: 'Phone Endpoint',
     properties: { phoneNumber: { type: 'string' as const } },
     required: ['phoneNumber'],
-    validate: (addr: Record<string, unknown>) => typeof addr.phoneNumber === 'string' && Object.keys(addr).length === 1,
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.phoneNumber === 'string' && Object.keys(endpoint).length === 1,
   },
 } as const;
 
