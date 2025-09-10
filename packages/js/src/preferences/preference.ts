@@ -1,6 +1,6 @@
-import { ScheduleCache } from 'src/cache/schedule-cache';
 import { InboxService } from '../api';
 import { PreferencesCache } from '../cache/preferences-cache';
+import { ScheduleCache } from '../cache/schedule-cache';
 import { NovuEventEmitter } from '../event-emitter';
 import { ChannelPreference, PreferenceLevel, Prettify, Result, Workflow } from '../types';
 import { updatePreference } from './helpers';

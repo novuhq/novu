@@ -1,4 +1,4 @@
-import type { Subscriber, UnreadCount } from '@novu/js';
+import type { DefaultSchedule, Subscriber, UnreadCount } from '@novu/js';
 import type {
   IconKey,
   InboxProps,
@@ -62,6 +62,7 @@ type StandardBaseProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
+  defaultSchedule?: DefaultSchedule;
   routerPush?: RouterPush;
 } & (
   | {

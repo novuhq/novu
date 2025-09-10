@@ -39,20 +39,21 @@ export class Schedule {
   }
 
   async update(args: UpdateScheduleArgs): Result<Schedule> {
+    const hasWeeklySchedule = !!args.weeklySchedule || !!this.weeklySchedule;
+
     return updateSchedule({
       emitter: this.#emitter,
       apiService: this.#apiService,
       cache: this.#cache,
       useCache: this.#useCache,
       args: {
-        isEnabled: this.isEnabled,
-        ...((args.weeklySchedule || this.weeklySchedule) && {
+        isEnabled: args.isEnabled ?? this.isEnabled,
+        ...(hasWeeklySchedule && {
           weeklySchedule: {
             ...this.weeklySchedule,
             ...args.weeklySchedule,
           },
         }),
-        ...args,
       },
     });
   }

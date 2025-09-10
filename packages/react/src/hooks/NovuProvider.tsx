@@ -2,9 +2,9 @@ import { Novu, NovuOptions } from '@novu/js';
 import { buildSubscriber } from '@novu/js/internal';
 import { createContext, ReactNode, useContext, useEffect, useMemo } from 'react';
 
-// @ts-ignore
+// @ts-expect-error
 const version = PACKAGE_VERSION;
-// @ts-ignore
+// @ts-expect-error
 const name = PACKAGE_NAME;
 const baseUserAgent = `${name}@${version}`;
 
@@ -43,7 +43,17 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
   const applicationIdentifier = props.applicationIdentifier || '';
   const subscriberObj = buildSubscriber({ subscriberId: props.subscriberId, subscriber: props.subscriber });
 
-  const { children, subscriberId, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType } = props;
+  const {
+    children,
+    subscriberId,
+    subscriberHash,
+    backendUrl,
+    apiUrl,
+    socketUrl,
+    useCache,
+    userAgentType,
+    defaultSchedule,
+  } = props;
 
   const novu = useMemo(
     () =>
@@ -56,6 +66,7 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
         useCache,
         __userAgent: `${baseUserAgent} ${userAgentType}`,
         subscriber: subscriberObj,
+        defaultSchedule,
       }),
     [applicationIdentifier, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType]
   );

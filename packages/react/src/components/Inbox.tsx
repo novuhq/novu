@@ -112,6 +112,7 @@ export const Inbox = React.memo((props: InboxProps) => {
     backendUrl: props.backendUrl,
     socketUrl: props.socketUrl,
     subscriber,
+    defaultSchedule: props.defaultSchedule,
   } satisfies StandardNovuOptions;
 
   return (
@@ -136,6 +137,7 @@ const InboxChild = withRenderer(
       backendUrl,
       socketUrl,
       subscriber,
+      defaultSchedule,
     } = props;
     const novu = useNovu();
 
@@ -153,6 +155,7 @@ const InboxChild = withRenderer(
           backendUrl,
           socketUrl,
           subscriber: buildSubscriber({ subscriberId, subscriber }),
+          defaultSchedule,
         },
       };
     }, [

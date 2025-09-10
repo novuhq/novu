@@ -45,10 +45,10 @@ export type {
   UseCountsResult,
   UseNotificationsProps,
   UseNotificationsResult,
-  UsePreferencesProps,
   UsePreferencesResult,
+  UseScheduleProps as UsePreferencesProps,
 } from './hooks';
-export { useCounts, useNotifications, useNovu, usePreferences } from './hooks';
+export { useCounts, useNotifications, useNovu, usePreferences, useSchedule } from './hooks';
 
 export type {
   BaseProps,

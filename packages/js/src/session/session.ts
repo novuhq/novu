@@ -64,7 +64,7 @@ export class Session {
       if (options) {
         this.#options = options;
       }
-      const { subscriber, subscriberHash, applicationIdentifier } = this.#options;
+      const { subscriber, subscriberHash, applicationIdentifier, defaultSchedule } = this.#options;
       let currentTimezone;
       if (isBrowser()) {
         currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -89,6 +89,7 @@ export class Session {
           subscriberId: subscriber?.subscriberId ?? '',
           timezone: subscriber?.timezone ?? currentTimezone,
         },
+        defaultSchedule,
       });
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {

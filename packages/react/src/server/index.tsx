@@ -5,6 +5,8 @@ import type {
   UseNotificationsResult,
   UsePreferencesProps,
   UsePreferencesResult,
+  UseScheduleProps,
+  UseScheduleResult,
 } from '../hooks';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
 import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
@@ -63,6 +65,14 @@ export function usePreferences(_: UsePreferencesProps): UsePreferencesResult {
   };
 }
 
+export function useSchedule(_: UseScheduleProps): UseScheduleResult {
+  return {
+    isLoading: false,
+    isFetching: false,
+    refetch: () => Promise.resolve(),
+  };
+}
+
 export type {
   ChannelPreference,
   ChannelType,
@@ -102,8 +112,8 @@ export type {
   UseCountsResult,
   UseNotificationsProps,
   UseNotificationsResult,
-  UsePreferencesProps,
   UsePreferencesResult,
+  UseScheduleProps as UsePreferencesProps,
 } from '../hooks';
 
 export type {
