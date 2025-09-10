@@ -125,13 +125,15 @@ export const Preferences = () => {
         >[0],
       })}
     >
-      {allPreferences().globalPreference && (
-        <PreferencesRow
-          iconKey="cogs"
-          preference={allPreferences().globalPreference}
-          onChange={() => updatePreference(allPreferences().globalPreference)}
-        />
-      )}
+      <Show when={allPreferences().globalPreference}>
+        {(globalPreference) => (
+          <PreferencesRow
+            iconKey="cogs"
+            preference={globalPreference()}
+            onChange={() => updatePreference(globalPreference())}
+          />
+        )}
+      </Show>
       <Show
         when={groupedPreferences().length > 0}
         fallback={
