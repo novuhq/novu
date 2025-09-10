@@ -26,6 +26,9 @@ export class UpdateSubscriberOnlineState {
       { subscriberId: command.subscriberId, _environmentId: command.environmentId },
       {
         $set: updatePayload,
+      },
+      {
+        writeConcern: { w: 1 },
       }
     );
 
