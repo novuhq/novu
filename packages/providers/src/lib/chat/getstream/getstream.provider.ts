@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import {
-  ADDRESS_TYPES,
   ChannelTypeEnum,
+  ENDPOINT_TYPES,
   IChatOptions,
   IChatProvider,
   ISendMessageSuccessResponse,
@@ -30,16 +30,16 @@ export class GetstreamChatProvider extends BaseProvider implements IChatProvider
     data: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    if (!isChannelDataOfType(data.channelData, ADDRESS_TYPES.WEBHOOK)) {
+    if (!isChannelDataOfType(data.channelData, ENDPOINT_TYPES.WEBHOOK)) {
       throw new Error('Invalid channel data for Getstream provider');
     }
 
-    const { address } = data.channelData;
+    const { endpoint } = data.channelData;
 
     const transformedData = this.transform(bridgeProviderData, {
       text: data.content,
     });
-    const response = await this.axiosInstance.post(address.url, {
+    const response = await this.axiosInstance.post(endpoint.url, {
       ...transformedData.body,
       headers: {
         'X-API-KEY': this.config.apiKey,

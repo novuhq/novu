@@ -28,8 +28,8 @@ import {
   WorkflowRunService,
 } from '@novu/application-generic';
 import {
-  ChannelAddressRepository,
   ChannelConnectionRepository,
+  ChannelEndpointRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
   JobRepository,
@@ -94,7 +94,7 @@ const REPOSITORIES = [
   CommunityOrganizationRepository,
   PreferencesRepository,
   CommunityUserRepository,
-  ChannelAddressRepository,
+  ChannelEndpointRepository,
   ChannelConnectionRepository,
 ];
 

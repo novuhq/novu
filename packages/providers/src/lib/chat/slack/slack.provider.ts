@@ -1,8 +1,8 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import {
-  ADDRESS_TYPES,
   ChannelData,
   ChannelTypeEnum,
+  ENDPOINT_TYPES,
   IChatOptions,
   IChatProvider,
   ISendMessageSuccessResponse,
@@ -27,7 +27,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.sendMessageToEndpoint(data, data.channelData, bridgeProviderData);
 
-    if (data.channelData.type === ADDRESS_TYPES.WEBHOOK) {
+    if (data.channelData.type === ENDPOINT_TYPES.WEBHOOK) {
       // Webhooks return plain text "ok" for success
       if (response.data !== 'ok') {
         throw new Error(`Slack Webhook Error`);
@@ -50,11 +50,11 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
     switch (channelData.type) {
-      case ADDRESS_TYPES.SLACK_CHANNEL:
+      case ENDPOINT_TYPES.SLACK_CHANNEL:
         return this.sendAppMessageToChannel(data, channelData, bridgeProviderData);
-      case ADDRESS_TYPES.SLACK_USER:
+      case ENDPOINT_TYPES.SLACK_USER:
         return this.sendAppMessageToUser(data, channelData, bridgeProviderData);
-      case ADDRESS_TYPES.WEBHOOK:
+      case ENDPOINT_TYPES.WEBHOOK:
         return this.sendIncomingWebhookMessage(data, channelData, bridgeProviderData);
       default:
         throw new Error(`Unsupported endpoint format: ${channelData.type}`);
@@ -66,14 +66,14 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
     channelData: SlackChannelData,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
-    const { address, token } = channelData;
+    const { endpoint, token } = channelData;
 
     const response = await this.axiosInstance.post(
       `${this.slackAPI}/chat.postMessage`,
       this.transform(bridgeProviderData, {
         text: data.content,
         blocks: data.blocks,
-        channel: address.channelId,
+        channel: endpoint.channelId,
         ...(data.customData || {}),
       }).body,
       {
@@ -92,14 +92,14 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
     channelData: SlackUserData,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
-    const { address, token } = channelData;
+    const { endpoint, token } = channelData;
 
     const response = await this.axiosInstance.post(
       `${this.slackAPI}/chat.postMessage`,
       this.transform(bridgeProviderData, {
         text: data.content,
         blocks: data.blocks,
-        channel: address.userId,
+        channel: endpoint.userId,
         ...(data.customData || {}),
       }).body,
       {
@@ -118,10 +118,10 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
     channelData: WebhookData,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
-    const { address } = channelData;
+    const { endpoint } = channelData;
 
     const response = await this.axiosInstance.post(
-      address.url,
+      endpoint.url,
       this.transform(bridgeProviderData, {
         text: data.content,
         blocks: data.blocks,

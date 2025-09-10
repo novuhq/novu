@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import {
-  ADDRESS_TYPES,
   ChannelTypeEnum,
+  ENDPOINT_TYPES,
   IChatOptions,
   IChatProvider,
   ISendMessageSuccessResponse,
@@ -29,17 +29,17 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
     options: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    if (!isChannelDataOfType(options.channelData, ADDRESS_TYPES.WEBHOOK)) {
+    if (!isChannelDataOfType(options.channelData, ENDPOINT_TYPES.WEBHOOK)) {
       throw new Error('Invalid channel data for ChatWebhook provider');
     }
 
     const { content, channelData, phoneNumber } = options;
-    const { address } = channelData;
+    const { endpoint } = channelData;
 
     const data = this.transform(bridgeProviderData, {
       content,
-      webhookUrl: address.url,
-      channel: address.channel,
+      webhookUrl: endpoint.url,
+      channel: endpoint.channel,
       phoneNumber,
     });
     const body = this.createBody(data.body);
@@ -51,7 +51,7 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
       delete data.body.hmacSecretKey;
     }
 
-    const response = await axios.create().post((data?.body?.webhookUrl as string) || address.url, body, {
+    const response = await axios.create().post((data?.body?.webhookUrl as string) || endpoint.url, body, {
       headers: {
         'content-type': 'application/json',
         'X-Novu-Signature': hmacValue,

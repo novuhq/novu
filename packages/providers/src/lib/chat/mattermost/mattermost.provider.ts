@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import {
-  ADDRESS_TYPES,
   ChannelTypeEnum,
+  ENDPOINT_TYPES,
   IChatOptions,
   IChatProvider,
   ISendMessageSuccessResponse,
@@ -26,17 +26,17 @@ export class MattermostProvider extends BaseProvider implements IChatProvider {
     data: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    if (!isChannelDataOfType(data.channelData, ADDRESS_TYPES.WEBHOOK)) {
+    if (!isChannelDataOfType(data.channelData, ENDPOINT_TYPES.WEBHOOK)) {
       throw new Error('Invalid channel data for Mattermost provider');
     }
 
     const payload: IMattermostPayload = { text: data.content };
-    const { address } = data.channelData;
+    const { endpoint } = data.channelData;
 
-    if (address.channel) {
-      payload.channel = address.channel;
+    if (endpoint.channel) {
+      payload.channel = endpoint.channel;
     }
-    const response = await this.axiosInstance.post(address.url, this.transform(bridgeProviderData, payload).body);
+    const response = await this.axiosInstance.post(endpoint.url, this.transform(bridgeProviderData, payload).body);
 
     return {
       id: response.headers['x-request-id'],

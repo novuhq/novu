@@ -1,5 +1,5 @@
 import { HandlebarsContentEngine, IContentEngine } from '../content/content.engine';
-import { ADDRESS_TYPES, ChannelData } from '../provider/channel-data.type';
+import { ChannelData, ENDPOINT_TYPES } from '../provider/channel-data.type';
 import { IChatProvider } from '../provider/provider.interface';
 import { IMessage, ITriggerPayload } from '../template/template.interface';
 
@@ -42,8 +42,8 @@ export class ChatHandler {
     // If webhookUrl is provided, transform it to channelData format (legacy support)
     if (data.$webhookUrl) {
       return {
-        type: ADDRESS_TYPES.WEBHOOK,
-        address: {
+        type: ENDPOINT_TYPES.WEBHOOK,
+        endpoint: {
           url: data.$webhookUrl,
           ...(data.$channel_id && { channel: data.$channel_id as string }),
         },
