@@ -22,6 +22,7 @@ describe('UnifonicSmsProvider', () => {
     mockedAxios.post.mockResolvedValue({
       data: {
         messageID: '123456789',
+        date: new Date().toISOString(),
       },
     });
 
