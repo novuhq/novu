@@ -7,20 +7,24 @@ import {
   QueryClient,
   QueryFunctionContext,
   QueryKey,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import { NovuCore } from '../core.js';
-import { activityRequestsList } from '../funcs/activityRequestsList.js';
-import { combineSignals } from '../lib/primitives.js';
-import { RequestOptions } from '../lib/sdks.js';
-import * as components from '../models/components/index.js';
-import * as operations from '../models/operations/index.js';
-import { unwrapAsync } from '../types/fp.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import { NovuCore } from "../core.js";
+import { activityRequestsList } from "../funcs/activityRequestsList.js";
+import { combineSignals } from "../lib/primitives.js";
+import { RequestOptions } from "../lib/sdks.js";
+import * as components from "../models/components/index.js";
+import * as operations from "../models/operations/index.js";
+import { unwrapAsync } from "../types/fp.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 
 export type ActivityRequestsListQueryData = components.GetRequestsResponseDto;
 
@@ -32,11 +36,15 @@ export type ActivityRequestsListQueryData = components.GetRequestsResponseDto;
  */
 export function useActivityRequestsList(
   request: operations.ActivityControllerGetLogsRequest,
-  options?: QueryHookOptions<ActivityRequestsListQueryData>
+  options?: QueryHookOptions<ActivityRequestsListQueryData>,
 ): UseQueryResult<ActivityRequestsListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildActivityRequestsListQuery(client, request, options),
+    ...buildActivityRequestsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -49,11 +57,15 @@ export function useActivityRequestsList(
  */
 export function useActivityRequestsListSuspense(
   request: operations.ActivityControllerGetLogsRequest,
-  options?: SuspenseQueryHookOptions<ActivityRequestsListQueryData>
+  options?: SuspenseQueryHookOptions<ActivityRequestsListQueryData>,
 ): UseSuspenseQueryResult<ActivityRequestsListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildActivityRequestsListQuery(client, request, options),
+    ...buildActivityRequestsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -61,10 +73,13 @@ export function useActivityRequestsListSuspense(
 export function prefetchActivityRequestsList(
   queryClient: QueryClient,
   client$: NovuCore,
-  request: operations.ActivityControllerGetLogsRequest
+  request: operations.ActivityControllerGetLogsRequest,
 ): Promise<void> {
   return queryClient.prefetchQuery({
-    ...buildActivityRequestsListQuery(client$, request),
+    ...buildActivityRequestsListQuery(
+      client$,
+      request,
+    ),
   });
 }
 
@@ -81,7 +96,7 @@ export function setActivityRequestsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: ActivityRequestsListQueryData
+  data: ActivityRequestsListQueryData,
 ): ActivityRequestsListQueryData | undefined {
   const key = queryKeyActivityRequestsList(...queryKeyBase);
 
@@ -91,43 +106,43 @@ export function setActivityRequestsListData(
 export function invalidateActivityRequestsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        page?: number | undefined;
-        limit?: number | undefined;
-        statusCodes?: Array<number> | undefined;
-        urlPattern?: string | undefined;
-        transactionId?: string | undefined;
-        createdGte?: number | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      page?: number | undefined;
+      limit?: number | undefined;
+      statusCodes?: Array<number> | undefined;
+      urlPattern?: string | undefined;
+      transactionId?: string | undefined;
+      createdGte?: number | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Requests', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Requests", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllActivityRequestsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Requests', 'list'],
+    queryKey: ["@novu/api", "Requests", "list"],
   });
 }
 
 export function buildActivityRequestsListQuery(
   client$: NovuCore,
   request: operations.ActivityControllerGetLogsRequest,
-  options?: RequestOptions
+  options?: RequestOptions,
 ): {
   queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<ActivityRequestsListQueryData>;
+  queryFn: (
+    context: QueryFunctionContext,
+  ) => Promise<ActivityRequestsListQueryData>;
 } {
   return {
     queryKey: queryKeyActivityRequestsList({
@@ -139,26 +154,34 @@ export function buildActivityRequestsListQuery(
       createdGte: request.createdGte,
       idempotencyKey: request.idempotencyKey,
     }),
-    queryFn: async function activityRequestsListQueryFn(ctx): Promise<ActivityRequestsListQueryData> {
+    queryFn: async function activityRequestsListQueryFn(
+      ctx,
+    ): Promise<ActivityRequestsListQueryData> {
       const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
       const mergedOptions = {
         ...options,
         fetchOptions: { ...options?.fetchOptions, signal: sig },
       };
 
-      return unwrapAsync(activityRequestsList(client$, request, mergedOptions));
+      return unwrapAsync(activityRequestsList(
+        client$,
+        request,
+        mergedOptions,
+      ));
     },
   };
 }
 
-export function queryKeyActivityRequestsList(parameters: {
-  page?: number | undefined;
-  limit?: number | undefined;
-  statusCodes?: Array<number> | undefined;
-  urlPattern?: string | undefined;
-  transactionId?: string | undefined;
-  createdGte?: number | undefined;
-  idempotencyKey?: string | undefined;
-}): QueryKey {
-  return ['@novu/api', 'Requests', 'list', parameters];
+export function queryKeyActivityRequestsList(
+  parameters: {
+    page?: number | undefined;
+    limit?: number | undefined;
+    statusCodes?: Array<number> | undefined;
+    urlPattern?: string | undefined;
+    transactionId?: string | undefined;
+    createdGte?: number | undefined;
+    idempotencyKey?: string | undefined;
+  },
+): QueryKey {
+  return ["@novu/api", "Requests", "list", parameters];
 }
