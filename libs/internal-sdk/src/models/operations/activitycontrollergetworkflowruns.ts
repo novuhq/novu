@@ -10,11 +10,19 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export const QueryParamStatuses = {
-  Pending: "pending",
-  Success: "success",
+  Processing: "processing",
+  Completed: "completed",
   Error: "error",
 } as const;
 export type QueryParamStatuses = ClosedEnum<typeof QueryParamStatuses>;
+
+export const Severity = {
+  High: "high",
+  Medium: "medium",
+  Low: "low",
+  None: "none",
+} as const;
+export type Severity = ClosedEnum<typeof Severity>;
 
 export type ActivityControllerGetWorkflowRunsRequest = {
   limit?: number | undefined;
@@ -27,6 +35,7 @@ export type ActivityControllerGetWorkflowRunsRequest = {
   topicKey?: string | undefined;
   createdGte?: string | undefined;
   createdLte?: string | undefined;
+  severity?: Array<Severity> | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -55,6 +64,25 @@ export namespace QueryParamStatuses$ {
 }
 
 /** @internal */
+export const Severity$inboundSchema: z.ZodNativeEnum<typeof Severity> = z
+  .nativeEnum(Severity);
+
+/** @internal */
+export const Severity$outboundSchema: z.ZodNativeEnum<typeof Severity> =
+  Severity$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Severity$ {
+  /** @deprecated use `Severity$inboundSchema` instead. */
+  export const inboundSchema = Severity$inboundSchema;
+  /** @deprecated use `Severity$outboundSchema` instead. */
+  export const outboundSchema = Severity$outboundSchema;
+}
+
+/** @internal */
 export const ActivityControllerGetWorkflowRunsRequest$inboundSchema: z.ZodType<
   ActivityControllerGetWorkflowRunsRequest,
   z.ZodTypeDef,
@@ -70,6 +98,7 @@ export const ActivityControllerGetWorkflowRunsRequest$inboundSchema: z.ZodType<
   topicKey: z.string().optional(),
   createdGte: z.string().optional(),
   createdLte: z.string().optional(),
+  severity: z.array(Severity$inboundSchema).optional(),
   "idempotency-key": z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -89,6 +118,7 @@ export type ActivityControllerGetWorkflowRunsRequest$Outbound = {
   topicKey?: string | undefined;
   createdGte?: string | undefined;
   createdLte?: string | undefined;
+  severity?: Array<string> | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -108,6 +138,7 @@ export const ActivityControllerGetWorkflowRunsRequest$outboundSchema: z.ZodType<
   topicKey: z.string().optional(),
   createdGte: z.string().optional(),
   createdLte: z.string().optional(),
+  severity: z.array(Severity$outboundSchema).optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {

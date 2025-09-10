@@ -24,10 +24,12 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { GetSubscriberSchedule } from '../../../subscribers/usecases/get-subscriber-schedule/get-subscriber-schedule.usecase';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import * as encryption from '../../utils/encryption';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
+import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
 import { Session } from './session.usecase';
 
@@ -70,6 +72,8 @@ describe('Session', () => {
   let logger: sinon.SinonStubbedInstance<PinoLogger>;
   let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
   let messageRepository: sinon.SinonStubbedInstance<MessageRepository>;
+  let getSubscriberSchedule: sinon.SinonStubbedInstance<GetSubscriberSchedule>;
+  let updatePreferencesUsecase: sinon.SinonStubbedInstance<UpdatePreferences>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -92,6 +96,8 @@ describe('Session', () => {
     logger = sinon.createStubInstance(PinoLogger);
     featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
     messageRepository = sinon.createStubInstance(MessageRepository);
+    getSubscriberSchedule = sinon.createStubInstance(GetSubscriberSchedule);
+    updatePreferencesUsecase = sinon.createStubInstance(UpdatePreferences);
 
     session = new Session(
       environmentRepository as any,
@@ -113,7 +119,9 @@ describe('Session', () => {
       upsertControlValuesUseCase as any,
       getOrganizationSettingsUsecase as any,
       logger as any,
-      featureFlagsService as any
+      featureFlagsService as any,
+      getSubscriberSchedule as any,
+      updatePreferencesUsecase as any
     );
   });
 

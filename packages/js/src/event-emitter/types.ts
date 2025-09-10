@@ -3,6 +3,7 @@ import type {
   CompleteArgs,
   CountArgs,
   CountResponse,
+  DeletedArgs,
   ListNotificationsArgs,
   ListNotificationsResponse,
   Notification,
@@ -15,7 +16,8 @@ import type {
   UnsnoozeArgs,
 } from '../notifications';
 import { Preference } from '../preferences/preference';
-import { ListPreferencesArgs, UpdatePreferenceArgs } from '../preferences/types';
+import { Schedule } from '../preferences/schedule';
+import { ListPreferencesArgs, UpdatePreferenceArgs, UpdateScheduleArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
 import { Session, WebSocketEvent } from '../types';
 
@@ -47,6 +49,7 @@ type NotificationUnreadEvents = BaseEvents<'notification.unread', UnreadArgs, No
 type NotificationSeenEvents = BaseEvents<'notification.seen', SeenArgs, Notification>;
 type NotificationArchiveEvents = BaseEvents<'notification.archive', ArchivedArgs, Notification>;
 type NotificationUnarchiveEvents = BaseEvents<'notification.unarchive', UnarchivedArgs, Notification>;
+type NotificationDeleteEvents = BaseEvents<'notification.delete', DeletedArgs, void>;
 type NotificationSnoozeEvents = BaseEvents<'notification.snooze', SnoozeArgs, Notification>;
 type NotificationUnsnoozeEvents = BaseEvents<'notification.unsnooze', UnsnoozeArgs, Notification>;
 type NotificationCompleteActionEvents = BaseEvents<'notification.complete_action', CompleteArgs, Notification>;
@@ -71,9 +74,16 @@ type NotificationsReadArchivedAllEvents = BaseEvents<
   { tags?: string[]; data?: Record<string, unknown> },
   Notification[]
 >;
+type NotificationsDeletedAllEvents = BaseEvents<
+  'notifications.delete_all',
+  { tags?: string[]; data?: Record<string, unknown> },
+  Notification[]
+>;
 type PreferencesFetchEvents = BaseEvents<'preferences.list', ListPreferencesArgs, Preference[]>;
 type PreferenceUpdateEvents = BaseEvents<'preference.update', UpdatePreferenceArgs, Preference>;
 type PreferencesBulkUpdateEvents = BaseEvents<'preferences.bulk_update', Array<UpdatePreferenceArgs>, Preference[]>;
+type PreferenceScheduleGetEvents = BaseEvents<'preference.schedule.get', undefined, Schedule>;
+type PreferenceScheduleUpdateEvents = BaseEvents<'preference.schedule.update', UpdateScheduleArgs, Schedule>;
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
 export type NotificationUnseenEvent = `notifications.${WebSocketEvent.UNSEEN}`;
@@ -106,13 +116,17 @@ export type Events = SessionInitializeEvents &
     'preferences.list.updated': { data: Preference[] };
   } & PreferenceUpdateEvents &
   PreferencesBulkUpdateEvents &
-  SocketConnectEvents &
+  PreferenceScheduleGetEvents &
+  PreferenceScheduleUpdateEvents & {
+    'preference.schedule.get.updated': { data: Schedule };
+  } & SocketConnectEvents &
   SocketEvents &
   NotificationReadEvents &
   NotificationUnreadEvents &
   NotificationSeenEvents &
   NotificationArchiveEvents &
   NotificationUnarchiveEvents &
+  NotificationDeleteEvents &
   NotificationSnoozeEvents &
   NotificationUnsnoozeEvents &
   NotificationCompleteActionEvents &
@@ -120,7 +134,8 @@ export type Events = SessionInitializeEvents &
   NotificationsReadAllEvents &
   NotificationsSeenAllEvents &
   NotificationsArchivedAllEvents &
-  NotificationsReadArchivedAllEvents;
+  NotificationsReadArchivedAllEvents &
+  NotificationsDeletedAllEvents;
 
 export type EventNames = keyof Events;
 export type SocketEventNames = keyof SocketEvents;
@@ -129,6 +144,7 @@ export type NotificationEvents = keyof (NotificationReadEvents &
   NotificationSeenEvents &
   NotificationArchiveEvents &
   NotificationUnarchiveEvents &
+  NotificationDeleteEvents &
   NotificationSnoozeEvents &
   NotificationUnsnoozeEvents &
   NotificationCompleteActionEvents &
@@ -136,7 +152,9 @@ export type NotificationEvents = keyof (NotificationReadEvents &
   NotificationsReadAllEvents &
   NotificationsSeenAllEvents &
   NotificationsArchivedAllEvents &
-  NotificationsReadArchivedAllEvents);
+  NotificationsReadArchivedAllEvents &
+  NotificationsDeletedAllEvents);
 export type PreferenceEvents = keyof (PreferenceUpdateEvents & PreferencesBulkUpdateEvents);
+export type PreferenceScheduleEvents = keyof (PreferenceScheduleGetEvents & PreferenceScheduleUpdateEvents);
 
 export type EventHandler<T = unknown> = (event: T) => void;

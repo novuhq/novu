@@ -1,11 +1,24 @@
-import { ChannelTypeEnum, IActor, IMessageCTA, SeverityLevelEnum } from '@novu/shared';
-import { Exclude } from 'class-transformer';
+import {
+  ChannelAddressByType,
+  ChannelAddressType,
+  ChannelTypeEnum,
+  IActor,
+  IMessageCTA,
+  SeverityLevelEnum,
+} from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import { IEmailBlock } from '../message-template';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 import { SubscriberEntity } from '../subscriber';
+
+export type MessageChannelData<T extends ChannelAddressType = ChannelAddressType> = {
+  identifier: string;
+  type: T;
+  address: ChannelAddressByType[T];
+  token?: string;
+};
 
 export class MessageEntity {
   _id: string;
@@ -63,10 +76,19 @@ export class MessageEntity {
 
   email?: string;
 
+  /**
+   * @deprecated use channelData instead
+   */
   phone?: string;
 
+  /**
+   * @deprecated use channelData instead
+   */
   chatWebhookUrl?: string;
 
+  /**
+   * @deprecated use channelData instead
+   */
   directWebhookUrl?: string;
 
   providerId: string;
@@ -108,6 +130,8 @@ export class MessageEntity {
   avatar?: string;
 
   severity?: SeverityLevelEnum;
+
+  channelData?: MessageChannelData[];
 }
 
 export type MessageDBModel = ChangePropsValueType<

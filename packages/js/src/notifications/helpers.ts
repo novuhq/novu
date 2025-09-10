@@ -7,6 +7,7 @@ import { Notification } from './notification';
 import type {
   ArchivedArgs,
   CompleteArgs,
+  DeletedArgs,
   ReadArgs,
   RevertArgs,
   SeenArgs,
@@ -606,5 +607,71 @@ export const archiveAllRead = async ({
     emitter.emit('notifications.archive_all_read.resolved', { args: { tags, data }, error });
 
     return { error: new NovuError('Failed to archive all read notifications', error) };
+  }
+};
+
+export const deleteNotification = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: DeletedArgs;
+}): Result<void> => {
+  const { notificationId } = getNotificationDetails(
+    args,
+    {},
+    {
+      emitter,
+      apiService,
+    }
+  );
+
+  try {
+    emitter.emit('notification.delete.pending', {
+      args,
+    });
+
+    await apiService.delete(notificationId);
+
+    emitter.emit('notification.delete.resolved', { args });
+
+    return {};
+  } catch (error) {
+    emitter.emit('notification.delete.resolved', { args, error });
+
+    return { error: new NovuError('Failed to delete notification', error) };
+  }
+};
+
+export const deleteAll = async ({
+  emitter,
+  inboxService,
+  notificationsCache,
+  tags,
+  data,
+}: {
+  emitter: NovuEventEmitter;
+  inboxService: InboxService;
+  notificationsCache: NotificationsCache;
+  tags?: NotificationFilter['tags'];
+  data?: Record<string, unknown>;
+}): Result<void> => {
+  try {
+    // Get notifications that match the filter for optimistic removal
+    const notifications = notificationsCache.getUniqueNotifications({ tags, data });
+
+    emitter.emit('notifications.delete_all.pending', { args: { tags, data }, data: notifications });
+
+    await inboxService.deleteAll({ tags, data });
+
+    emitter.emit('notifications.delete_all.resolved', { args: { tags, data } });
+
+    return {};
+  } catch (error) {
+    emitter.emit('notifications.delete_all.resolved', { args: { tags, data }, error });
+
+    return { error: new NovuError('Failed to delete all notifications', error) };
   }
 };

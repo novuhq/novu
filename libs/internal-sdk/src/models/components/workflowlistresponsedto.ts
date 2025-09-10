@@ -13,6 +13,12 @@ import {
   ResourceOriginEnum$outboundSchema,
 } from "./resourceoriginenum.js";
 import {
+  StepListResponseDto,
+  StepListResponseDto$inboundSchema,
+  StepListResponseDto$Outbound,
+  StepListResponseDto$outboundSchema,
+} from "./steplistresponsedto.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
@@ -138,6 +144,10 @@ export type WorkflowListResponseDto = {
    * Is translation enabled for the workflow
    */
   isTranslationEnabled?: boolean | undefined;
+  /**
+   * Steps of the workflow
+   */
+  steps: Array<StepListResponseDto>;
 };
 
 /** @internal */
@@ -438,6 +448,7 @@ export const WorkflowListResponseDto$inboundSchema: z.ZodType<
   lastTriggeredAt: z.nullable(z.string()).optional(),
   stepTypeOverviews: z.array(StepTypeEnum$inboundSchema),
   isTranslationEnabled: z.boolean().optional(),
+  steps: z.array(StepListResponseDto$inboundSchema),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -464,6 +475,7 @@ export type WorkflowListResponseDto$Outbound = {
   lastTriggeredAt?: string | null | undefined;
   stepTypeOverviews: Array<string>;
   isTranslationEnabled?: boolean | undefined;
+  steps: Array<StepListResponseDto$Outbound>;
 };
 
 /** @internal */
@@ -491,6 +503,7 @@ export const WorkflowListResponseDto$outboundSchema: z.ZodType<
   lastTriggeredAt: z.nullable(z.string()).optional(),
   stepTypeOverviews: z.array(StepTypeEnum$outboundSchema),
   isTranslationEnabled: z.boolean().optional(),
+  steps: z.array(StepListResponseDto$outboundSchema),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

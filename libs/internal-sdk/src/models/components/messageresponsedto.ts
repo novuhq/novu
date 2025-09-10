@@ -45,7 +45,7 @@ import {
 /**
  * Content of the message, can be an email block or a string
  */
-export type Content = Array<EmailBlock> | string;
+export type MessageResponseDtoContent = Array<EmailBlock> | string;
 
 /**
  * The payload that was used to send the notification trigger
@@ -197,43 +197,52 @@ export type MessageResponseDto = {
 };
 
 /** @internal */
-export const Content$inboundSchema: z.ZodType<Content, z.ZodTypeDef, unknown> =
-  z.union([z.array(EmailBlock$inboundSchema), z.string()]);
-
-/** @internal */
-export type Content$Outbound = Array<EmailBlock$Outbound> | string;
-
-/** @internal */
-export const Content$outboundSchema: z.ZodType<
-  Content$Outbound,
+export const MessageResponseDtoContent$inboundSchema: z.ZodType<
+  MessageResponseDtoContent,
   z.ZodTypeDef,
-  Content
+  unknown
+> = z.union([z.array(EmailBlock$inboundSchema), z.string()]);
+
+/** @internal */
+export type MessageResponseDtoContent$Outbound =
+  | Array<EmailBlock$Outbound>
+  | string;
+
+/** @internal */
+export const MessageResponseDtoContent$outboundSchema: z.ZodType<
+  MessageResponseDtoContent$Outbound,
+  z.ZodTypeDef,
+  MessageResponseDtoContent
 > = z.union([z.array(EmailBlock$outboundSchema), z.string()]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Content$ {
-  /** @deprecated use `Content$inboundSchema` instead. */
-  export const inboundSchema = Content$inboundSchema;
-  /** @deprecated use `Content$outboundSchema` instead. */
-  export const outboundSchema = Content$outboundSchema;
-  /** @deprecated use `Content$Outbound` instead. */
-  export type Outbound = Content$Outbound;
+export namespace MessageResponseDtoContent$ {
+  /** @deprecated use `MessageResponseDtoContent$inboundSchema` instead. */
+  export const inboundSchema = MessageResponseDtoContent$inboundSchema;
+  /** @deprecated use `MessageResponseDtoContent$outboundSchema` instead. */
+  export const outboundSchema = MessageResponseDtoContent$outboundSchema;
+  /** @deprecated use `MessageResponseDtoContent$Outbound` instead. */
+  export type Outbound = MessageResponseDtoContent$Outbound;
 }
 
-export function contentToJSON(content: Content): string {
-  return JSON.stringify(Content$outboundSchema.parse(content));
+export function messageResponseDtoContentToJSON(
+  messageResponseDtoContent: MessageResponseDtoContent,
+): string {
+  return JSON.stringify(
+    MessageResponseDtoContent$outboundSchema.parse(messageResponseDtoContent),
+  );
 }
 
-export function contentFromJSON(
+export function messageResponseDtoContentFromJSON(
   jsonString: string,
-): SafeParseResult<Content, SDKValidationError> {
+): SafeParseResult<MessageResponseDtoContent, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Content$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Content' from JSON`,
+    (x) => MessageResponseDtoContent$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'MessageResponseDtoContent' from JSON`,
   );
 }
 

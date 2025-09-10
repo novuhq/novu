@@ -90,7 +90,6 @@ export function setActivityRequestsListData(
       page?: number | undefined;
       limit?: number | undefined;
       statusCodes?: Array<number> | undefined;
-      url?: string | undefined;
       urlPattern?: string | undefined;
       transactionId?: string | undefined;
       createdGte?: number | undefined;
@@ -111,7 +110,6 @@ export function invalidateActivityRequestsList(
       page?: number | undefined;
       limit?: number | undefined;
       statusCodes?: Array<number> | undefined;
-      url?: string | undefined;
       urlPattern?: string | undefined;
       transactionId?: string | undefined;
       createdGte?: number | undefined;
@@ -151,7 +149,6 @@ export function buildActivityRequestsListQuery(
       page: request.page,
       limit: request.limit,
       statusCodes: request.statusCodes,
-      url: request.url,
       urlPattern: request.urlPattern,
       transactionId: request.transactionId,
       createdGte: request.createdGte,
@@ -180,7 +177,6 @@ export function queryKeyActivityRequestsList(
     page?: number | undefined;
     limit?: number | undefined;
     statusCodes?: Array<number> | undefined;
-    url?: string | undefined;
     urlPattern?: string | undefined;
     transactionId?: string | undefined;
     createdGte?: number | undefined;

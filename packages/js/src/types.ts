@@ -178,12 +178,36 @@ export type PaginatedResponse<T = unknown> = {
   page: number;
 };
 
+export type TimeRange = {
+  start: string;
+  end: string;
+};
+
+export type DaySchedule = {
+  isEnabled: boolean;
+  hours?: Array<TimeRange>;
+};
+
+export type WeeklySchedule = {
+  monday?: DaySchedule;
+  tuesday?: DaySchedule;
+  wednesday?: DaySchedule;
+  thursday?: DaySchedule;
+  friday?: DaySchedule;
+  saturday?: DaySchedule;
+  sunday?: DaySchedule;
+};
+
 export type PreferencesResponse = {
   level: PreferenceLevel;
   enabled: boolean;
   channels: ChannelPreference;
   overrides?: IPreferenceOverride[];
   workflow?: Workflow;
+  schedule?: {
+    isEnabled: boolean;
+    weeklySchedule?: WeeklySchedule;
+  };
 };
 
 export enum PreferenceOverrideSourceEnum {

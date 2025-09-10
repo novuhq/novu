@@ -15,7 +15,7 @@ import {
 
 export type BulkUpdateSubscriberPreferencesDto = {
   /**
-   * Array of workflow preferences to update (maximum 50 items)
+   * Array of workflow preferences to update (maximum 100 items)
    */
   preferences: Array<BulkUpdateSubscriberPreferenceItemDto>;
 };

@@ -51,7 +51,7 @@ export type ActivityNotificationExecutionDetailResponseDto = {
   /**
    * Provider ID of the job
    */
-  providerId: ProvidersIdEnum;
+  providerId?: ProvidersIdEnum | undefined;
   /**
    * Raw data of the execution
    */
@@ -75,7 +75,7 @@ export const ActivityNotificationExecutionDetailResponseDto$inboundSchema:
     detail: z.string(),
     isRetry: z.boolean(),
     isTest: z.boolean(),
-    providerId: ProvidersIdEnum$inboundSchema,
+    providerId: ProvidersIdEnum$inboundSchema.optional(),
     raw: z.nullable(z.string()).optional(),
     source: ExecutionDetailsSourceEnum$inboundSchema,
   }).transform((v) => {
@@ -92,7 +92,7 @@ export type ActivityNotificationExecutionDetailResponseDto$Outbound = {
   detail: string;
   isRetry: boolean;
   isTest: boolean;
-  providerId: string;
+  providerId?: string | undefined;
   raw?: string | null | undefined;
   source: string;
 };
@@ -110,7 +110,7 @@ export const ActivityNotificationExecutionDetailResponseDto$outboundSchema:
     detail: z.string(),
     isRetry: z.boolean(),
     isTest: z.boolean(),
-    providerId: ProvidersIdEnum$outboundSchema,
+    providerId: ProvidersIdEnum$outboundSchema.optional(),
     raw: z.nullable(z.string()).optional(),
     source: ExecutionDetailsSourceEnum$outboundSchema,
   }).transform((v) => {

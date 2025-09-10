@@ -61,6 +61,7 @@ export const ProvidersIdEnum = {
   EazySms: "eazy-sms",
   Mobishastra: "mobishastra",
   AfroMessage: "afro-message",
+  Unifonic: "unifonic",
   Smsmode: "smsmode",
   Imedia: "imedia",
   Fcm: "fcm",
@@ -82,6 +83,7 @@ export const ProvidersIdEnum = {
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
   ChatWebhook: "chat-webhook",
+  NovuSlack: "novu-slack",
 } as const;
 /**
  * Provider ID of the job

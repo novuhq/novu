@@ -1,4 +1,11 @@
-import { ChannelPreference, Preference, PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '../types';
+import {
+  ChannelPreference,
+  Preference,
+  PreferenceLevel,
+  SeverityLevelEnum,
+  WeeklySchedule,
+  WorkflowCriticalityEnum,
+} from '../types';
 
 export type FetchPreferencesArgs = {
   level?: PreferenceLevel;
@@ -24,3 +31,8 @@ export type InstancePreferenceArgs = {
 };
 
 export type UpdatePreferenceArgs = BasePreferenceArgs | InstancePreferenceArgs;
+
+export type UpdateScheduleArgs = {
+  isEnabled: boolean;
+  weeklySchedule?: WeeklySchedule;
+};

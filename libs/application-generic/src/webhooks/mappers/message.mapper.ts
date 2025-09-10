@@ -1,4 +1,5 @@
 import { MessageEntity } from '@novu/dal';
+import { ChannelData } from '@novu/stateless';
 import { MessageWebhookResponseDto } from '../dtos';
 
 export const messageWebhookMapper = (
@@ -33,7 +34,11 @@ export const messageWebhookMapper = (
   context?: {
     providerResponseId?: string;
     deviceToken?: string;
+    /**
+     * @deprecated use channelData instead
+     */
     webhookUrl?: string;
+    channelData?: ChannelData;
   }
 ): MessageWebhookResponseDto => {
   return {
@@ -64,6 +69,7 @@ export const messageWebhookMapper = (
     errorText: message.errorText,
     deviceToken: context?.deviceToken,
     webhookUrl: context?.webhookUrl,
+    channelData: context?.channelData,
     providerResponseId: context?.providerResponseId,
   };
 };

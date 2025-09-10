@@ -1,3 +1,4 @@
+import { ADDRESS_TYPES } from '@novu/stateless';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { RocketChatProvider } from './rocket-chat.provider';
@@ -18,8 +19,14 @@ test('should trigger rocket-chat library correctly', async () => {
   const provider = new RocketChatProvider(mockConfig);
 
   await provider.sendMessage({
-    webhookUrl: '<your-root-url>',
-    channel: '<your-channel>',
+    channelData: {
+      address: {
+        url: '<your-root-url>',
+        channel: '<your-channel>',
+      },
+      type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
     content: '<your-chat-message>',
   });
 
@@ -58,8 +65,14 @@ test('should trigger rocket-chat library correctly with _passthrough', async () 
 
   await provider.sendMessage(
     {
-      webhookUrl: '<your-root-url>',
-      channel: '<your-channel>',
+      channelData: {
+        address: {
+          url: '<your-root-url>',
+          channel: '<your-channel>',
+        },
+        type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
+      },
       content: '<your-chat-message>',
     },
     {

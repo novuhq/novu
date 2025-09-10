@@ -11,10 +11,12 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ADDRESS_TYPES, ChatProviderIdEnum, makeResourceKey, RESOURCE } from '@novu/shared';
 import axios from 'axios';
-import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
-import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { CreateChannelAddressCommand } from '../../../../channel-addresses/usecases/create-channel-address/create-channel-address.command';
+import { CreateChannelAddress } from '../../../../channel-addresses/usecases/create-channel-address/create-channel-address.usecase';
+import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
+import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import {
   GenerateSlackOauthUrl,
   StateData,
@@ -30,8 +32,9 @@ export class SlackOauthCallback {
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
-    private createChannelEndpoint: CreateChannelEndpoint,
-    private getNovuProviderCredentials: GetNovuProviderCredentials
+    private getNovuProviderCredentials: GetNovuProviderCredentials,
+    private createChannelConnection: CreateChannelConnection,
+    private createChannelAddress: CreateChannelAddress
   ) {}
 
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -39,15 +42,35 @@ export class SlackOauthCallback {
     const integration = await this.getIntegration(stateData);
     const credentials = await this.getIntegrationCredentials(integration);
 
-    const token = await this.exchangeCodeForToken(command.providerCode, credentials);
+    const authData = await this.exchangeCodeForAuthData(command.providerCode, credentials);
 
-    await this.createChannelEndpoint.execute(
-      CreateChannelEndpointCommand.create({
+    const channelConnection = await this.createChannelConnection.execute(
+      CreateChannelConnectionCommand.create({
         organizationId: stateData.organizationId,
         environmentId: stateData.environmentId,
         integrationIdentifier: integration.identifier,
-        subscriberId: stateData.subscriberId,
-        endpoint: token,
+        resource: makeResourceKey(RESOURCE.SUBSCRIBER, stateData.subscriberId),
+        auth: {
+          accessToken: authData.access_token,
+        },
+        workspace: {
+          id: authData.team.id,
+          name: authData.team.name,
+        },
+      })
+    );
+
+    await this.createChannelAddress.execute(
+      CreateChannelAddressCommand.create({
+        organizationId: stateData.organizationId,
+        environmentId: stateData.environmentId,
+        integrationIdentifier: integration.identifier,
+        connectionIdentifier: channelConnection.identifier,
+        resource: makeResourceKey(RESOURCE.SUBSCRIBER, stateData.subscriberId),
+        type: ADDRESS_TYPES.SLACK_USER,
+        address: {
+          userId: authData.authed_user.id,
+        },
       })
     );
 
@@ -103,10 +126,7 @@ export class SlackOauthCallback {
     );
   }
 
-  private async exchangeCodeForToken(
-    providerCode: string,
-    integrationCredentials: ICredentialsEntity
-  ): Promise<string> {
+  private async exchangeCodeForAuthData(providerCode: string, integrationCredentials: ICredentialsEntity) {
     const credentials = decryptCredentials(integrationCredentials);
 
     const body = {
@@ -130,11 +150,7 @@ export class SlackOauthCallback {
       throw new BadRequestException(`Slack OAuth error: ${res.data.error}${metaData ? `, metadata: ${metaData}` : ''}`);
     }
 
-    if (!res.data?.access_token) {
-      throw new BadRequestException('Slack did not return an access token');
-    }
-
-    return res.data.access_token;
+    return res.data;
   }
 
   private async decodeSlackState(state: string): Promise<StateData> {

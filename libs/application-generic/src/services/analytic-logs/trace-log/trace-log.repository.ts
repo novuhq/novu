@@ -270,6 +270,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Message unsubscribed';
     case 'message_delayed':
       return 'Message delayed';
+    case 'message_deleted':
+      return 'Message deleted';
     case 'message_complaint':
       return 'Message complaint';
     case 'message_delivered':

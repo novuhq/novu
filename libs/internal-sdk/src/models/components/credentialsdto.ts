@@ -52,6 +52,8 @@ export type CredentialsDto = {
   channelId?: string | undefined;
   phoneNumberIdentification?: string | undefined;
   accessKey?: string | undefined;
+  appSid?: string | undefined;
+  senderId?: string | undefined;
 };
 
 /** @internal */
@@ -146,6 +148,8 @@ export const CredentialsDto$inboundSchema: z.ZodType<
   channelId: z.string().optional(),
   phoneNumberIdentification: z.string().optional(),
   accessKey: z.string().optional(),
+  appSid: z.string().optional(),
+  senderId: z.string().optional(),
 });
 
 /** @internal */
@@ -192,6 +196,8 @@ export type CredentialsDto$Outbound = {
   channelId?: string | undefined;
   phoneNumberIdentification?: string | undefined;
   accessKey?: string | undefined;
+  appSid?: string | undefined;
+  senderId?: string | undefined;
 };
 
 /** @internal */
@@ -242,6 +248,8 @@ export const CredentialsDto$outboundSchema: z.ZodType<
   channelId: z.string().optional(),
   phoneNumberIdentification: z.string().optional(),
   accessKey: z.string().optional(),
+  appSid: z.string().optional(),
+  senderId: z.string().optional(),
 });
 
 /**

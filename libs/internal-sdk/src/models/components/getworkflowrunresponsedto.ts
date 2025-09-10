@@ -18,18 +18,51 @@ import {
  * Workflow run status
  */
 export const GetWorkflowRunResponseDtoStatus = {
-  Success: "success",
+  Processing: "processing",
+  Completed: "completed",
   Error: "error",
-  Pending: "pending",
-  Skipped: "skipped",
-  Canceled: "canceled",
-  Merged: "merged",
 } as const;
 /**
  * Workflow run status
  */
 export type GetWorkflowRunResponseDtoStatus = ClosedEnum<
   typeof GetWorkflowRunResponseDtoStatus
+>;
+
+/**
+ * Workflow run delivery lifecycle status
+ */
+export const GetWorkflowRunResponseDtoDeliveryLifecycleStatus = {
+  Pending: "pending",
+  Sent: "sent",
+  Errored: "errored",
+  Skipped: "skipped",
+  Canceled: "canceled",
+  Merged: "merged",
+  Delivered: "delivered",
+  Interacted: "interacted",
+} as const;
+/**
+ * Workflow run delivery lifecycle status
+ */
+export type GetWorkflowRunResponseDtoDeliveryLifecycleStatus = ClosedEnum<
+  typeof GetWorkflowRunResponseDtoDeliveryLifecycleStatus
+>;
+
+/**
+ * Severity
+ */
+export const GetWorkflowRunResponseDtoSeverity = {
+  High: "high",
+  Medium: "medium",
+  Low: "low",
+  None: "none",
+} as const;
+/**
+ * Severity
+ */
+export type GetWorkflowRunResponseDtoSeverity = ClosedEnum<
+  typeof GetWorkflowRunResponseDtoSeverity
 >;
 
 /**
@@ -71,6 +104,10 @@ export type GetWorkflowRunResponseDto = {
    */
   status: GetWorkflowRunResponseDtoStatus;
   /**
+   * Workflow run delivery lifecycle status
+   */
+  deliveryLifecycleStatus: GetWorkflowRunResponseDtoDeliveryLifecycleStatus;
+  /**
    * Trigger identifier
    */
   triggerIdentifier: string;
@@ -86,6 +123,14 @@ export type GetWorkflowRunResponseDto = {
    * Update timestamp
    */
   updatedAt: string;
+  /**
+   * Severity
+   */
+  severity: GetWorkflowRunResponseDtoSeverity;
+  /**
+   * Critical flag
+   */
+  critical: boolean;
   /**
    * Step runs
    */
@@ -115,6 +160,51 @@ export namespace GetWorkflowRunResponseDtoStatus$ {
   export const inboundSchema = GetWorkflowRunResponseDtoStatus$inboundSchema;
   /** @deprecated use `GetWorkflowRunResponseDtoStatus$outboundSchema` instead. */
   export const outboundSchema = GetWorkflowRunResponseDtoStatus$outboundSchema;
+}
+
+/** @internal */
+export const GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema:
+  z.ZodNativeEnum<typeof GetWorkflowRunResponseDtoDeliveryLifecycleStatus> = z
+    .nativeEnum(GetWorkflowRunResponseDtoDeliveryLifecycleStatus);
+
+/** @internal */
+export const GetWorkflowRunResponseDtoDeliveryLifecycleStatus$outboundSchema:
+  z.ZodNativeEnum<typeof GetWorkflowRunResponseDtoDeliveryLifecycleStatus> =
+    GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace GetWorkflowRunResponseDtoDeliveryLifecycleStatus$ {
+  /** @deprecated use `GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema` instead. */
+  export const inboundSchema =
+    GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema;
+  /** @deprecated use `GetWorkflowRunResponseDtoDeliveryLifecycleStatus$outboundSchema` instead. */
+  export const outboundSchema =
+    GetWorkflowRunResponseDtoDeliveryLifecycleStatus$outboundSchema;
+}
+
+/** @internal */
+export const GetWorkflowRunResponseDtoSeverity$inboundSchema: z.ZodNativeEnum<
+  typeof GetWorkflowRunResponseDtoSeverity
+> = z.nativeEnum(GetWorkflowRunResponseDtoSeverity);
+
+/** @internal */
+export const GetWorkflowRunResponseDtoSeverity$outboundSchema: z.ZodNativeEnum<
+  typeof GetWorkflowRunResponseDtoSeverity
+> = GetWorkflowRunResponseDtoSeverity$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace GetWorkflowRunResponseDtoSeverity$ {
+  /** @deprecated use `GetWorkflowRunResponseDtoSeverity$inboundSchema` instead. */
+  export const inboundSchema = GetWorkflowRunResponseDtoSeverity$inboundSchema;
+  /** @deprecated use `GetWorkflowRunResponseDtoSeverity$outboundSchema` instead. */
+  export const outboundSchema =
+    GetWorkflowRunResponseDtoSeverity$outboundSchema;
 }
 
 /** @internal */
@@ -172,10 +262,14 @@ export const GetWorkflowRunResponseDto$inboundSchema: z.ZodType<
   internalSubscriberId: z.string(),
   subscriberId: z.string().optional(),
   status: GetWorkflowRunResponseDtoStatus$inboundSchema,
+  deliveryLifecycleStatus:
+    GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema,
   triggerIdentifier: z.string(),
   transactionId: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  severity: GetWorkflowRunResponseDtoSeverity$inboundSchema,
+  critical: z.boolean(),
   steps: z.array(StepRunDto$inboundSchema),
   payload: z.lazy(() => Payload$inboundSchema),
 });
@@ -190,10 +284,13 @@ export type GetWorkflowRunResponseDto$Outbound = {
   internalSubscriberId: string;
   subscriberId?: string | undefined;
   status: string;
+  deliveryLifecycleStatus: string;
   triggerIdentifier: string;
   transactionId: string;
   createdAt: string;
   updatedAt: string;
+  severity: string;
+  critical: boolean;
   steps: Array<StepRunDto$Outbound>;
   payload: Payload$Outbound;
 };
@@ -212,10 +309,14 @@ export const GetWorkflowRunResponseDto$outboundSchema: z.ZodType<
   internalSubscriberId: z.string(),
   subscriberId: z.string().optional(),
   status: GetWorkflowRunResponseDtoStatus$outboundSchema,
+  deliveryLifecycleStatus:
+    GetWorkflowRunResponseDtoDeliveryLifecycleStatus$outboundSchema,
   triggerIdentifier: z.string(),
   transactionId: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  severity: GetWorkflowRunResponseDtoSeverity$outboundSchema,
+  critical: z.boolean(),
   steps: z.array(StepRunDto$outboundSchema),
   payload: z.lazy(() => Payload$outboundSchema),
 });

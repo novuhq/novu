@@ -250,7 +250,7 @@ function ChangelogCard({
               <img
                 src={changelog.imageUrl}
                 alt={changelog.title}
-                className="h-full w-full rounded-[6px] object-cover"
+                className="h-full w-full rounded-[6px] object-cover object-top"
                 onError={(e) => {
                   // Hide image if it fails to load
                   e.currentTarget.style.display = 'none';

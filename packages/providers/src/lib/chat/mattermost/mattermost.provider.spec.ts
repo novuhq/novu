@@ -1,3 +1,4 @@
+import { ADDRESS_TYPES } from '@novu/stateless';
 import axios from 'axios';
 import { expect, test, vi } from 'vitest';
 import { MattermostProvider } from './mattermost.provider';
@@ -18,7 +19,13 @@ test('should trigger mattermost library correctly, default channel', async () =>
   const testWebhookUrl = 'https://mattermost.dummy.webhook.com';
   const testContent = 'Dummy content message';
   const result = await provider.sendMessage({
-    webhookUrl: testWebhookUrl,
+    channelData: {
+      address: {
+        url: testWebhookUrl,
+      },
+      type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
     content: testContent,
   });
   expect(fakePostDefaultChannel).toHaveBeenCalled();
@@ -44,9 +51,15 @@ test('should trigger mattermost library correctly, override channel', async () =
   const testWebhookUrl = 'https://mattermost.dummy.webhook.com';
   const testContent = 'Dummy content message';
   const result = await provider.sendMessage({
-    webhookUrl: testWebhookUrl,
+    channelData: {
+      address: {
+        url: testWebhookUrl,
+        channel: '@username',
+      },
+      type: ADDRESS_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
     content: testContent,
-    channel: '@username',
   });
   expect(fakePostUserChannel).toHaveBeenCalled();
   expect(fakePostUserChannel).toHaveBeenCalledWith(testWebhookUrl, {
@@ -73,7 +86,13 @@ test('should trigger mattermost library correctly, default channel with _passthr
   const testContent = 'Dummy content message';
   const result = await provider.sendMessage(
     {
-      webhookUrl: testWebhookUrl,
+      channelData: {
+        address: {
+          url: testWebhookUrl,
+        },
+        type: ADDRESS_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
+      },
       content: testContent,
     },
     {

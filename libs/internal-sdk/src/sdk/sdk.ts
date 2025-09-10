@@ -3,6 +3,7 @@
  */
 
 import { cancel } from "../funcs/cancel.js";
+import { inboundWebhooksControllerHandleWebhook } from "../funcs/inboundWebhooksControllerHandleWebhook.js";
 import { trigger } from "../funcs/trigger.js";
 import { triggerBroadcast } from "../funcs/triggerBroadcast.js";
 import { triggerBulk } from "../funcs/triggerBulk.js";
@@ -18,6 +19,7 @@ import { Messages } from "./messages.js";
 import { Notifications } from "./notifications.js";
 import { Subscribers } from "./subscribers.js";
 import { Topics } from "./topics.js";
+import { Translations } from "./translations.js";
 import { Workflows } from "./workflows.js";
 
 export class Novu extends ClientSDK {
@@ -39,6 +41,11 @@ export class Novu extends ClientSDK {
   private _topics?: Topics;
   get topics(): Topics {
     return (this._topics ??= new Topics(this._options));
+  }
+
+  private _translations?: Translations;
+  get translations(): Translations {
+    return (this._translations ??= new Translations(this._options));
   }
 
   private _workflows?: Workflows;
@@ -64,6 +71,21 @@ export class Novu extends ClientSDK {
   private _notifications?: Notifications;
   get notifications(): Notifications {
     return (this._notifications ??= new Notifications(this._options));
+  }
+
+  async inboundWebhooksControllerHandleWebhook(
+    environmentId: string,
+    integrationId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<void> {
+    return unwrapAsync(inboundWebhooksControllerHandleWebhook(
+      this,
+      environmentId,
+      integrationId,
+      idempotencyKey,
+      options,
+    ));
   }
 
   /**
