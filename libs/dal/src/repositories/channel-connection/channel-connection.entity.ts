@@ -1,9 +1,9 @@
-import { ChannelConnection, ChannelTypeEnum, ProvidersIdEnum, ResourceKey } from '@novu/shared';
+import { ChannelTypeEnum, IChannelConnection, ProvidersIdEnum, ResourceKey } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 
-export class ChannelConnectionEntity implements ChannelConnection {
+export class ChannelConnectionEntity implements IChannelConnection {
   _id: string;
   identifier: string;
 
