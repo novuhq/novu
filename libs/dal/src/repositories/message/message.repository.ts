@@ -967,4 +967,81 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     return this.mapEntities(data);
   }
+
+  async deleteMessagesByIds({
+    environmentId,
+    subscriberId,
+    ids,
+  }: {
+    environmentId: string;
+    subscriberId: string;
+    ids: string[];
+  }): Promise<MessageEntity[]> {
+    const query: MessageQuery & EnforceEnvId = {
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      _id: {
+        $in: ids.map((id) => {
+          return new Types.ObjectId(id);
+        }),
+      },
+    };
+
+    // First, retrieve the messages that will be deleted for webhook events
+    const messagesToDelete = await this.find(query);
+
+    // Then delete them
+    await this.delete(query);
+
+    return messagesToDelete;
+  }
+
+  async deleteMessagesWithFilters({
+    environmentId,
+    subscriberId,
+    filters,
+  }: {
+    environmentId: string;
+    subscriberId: string;
+    filters: {
+      tags?: string[];
+      data?: Record<string, unknown>;
+      read?: boolean;
+      archived?: boolean;
+    };
+  }): Promise<MessageEntity[]> {
+    const flatData = filters.data ? getFlatObject({ data: filters.data }) : {};
+
+    const query: MessageQuery & EnforceEnvId = {
+      ...flatData,
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      ...(filters.tags && filters.tags?.length > 0 && { tags: { $in: filters.tags } }),
+    };
+
+    const isReadFiltered = filters.read !== undefined;
+    const isArchivedFiltered = filters.archived !== undefined;
+
+    if (isArchivedFiltered) {
+      if (!filters.archived) {
+        query.$or = [{ archived: { $exists: false } }, { archived: false }];
+      } else {
+        query.archived = true;
+      }
+    } else if (isReadFiltered) {
+      if (!filters.read) {
+        query.$or = [{ read: { $exists: false } }, { read: false }];
+      } else {
+        query.read = true;
+      }
+    }
+
+    // First, retrieve the messages that will be deleted for webhook events
+    const messagesToDelete = await this.find(query);
+
+    // Then delete them
+    await this.delete(query);
+
+    return messagesToDelete;
+  }
 }

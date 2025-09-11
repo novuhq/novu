@@ -286,16 +286,17 @@ export class SubscribersController {
 
   @Get('/:subscriberId/preferences/global')
   @ExternalApiAccessible()
-  /* @ApiOperation({
+  @ApiOperation({
     summary: 'Retrieve subscriber global preference',
     description: `Retrieve subscriber global preference. This API returns all five global channels preferences and subscriber schedule.`,
   })
   @ApiResponse(SubscriberGlobalPreferenceDto)
   @SdkGroupName('Subscribers.Preferences')
-  @SdkMethodName('list') */
+  @SdkMethodName('getGlobal')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   @RequireAuthentication()
   @SdkMethodName('globalPreference')
+  @ApiExcludeEndpoint()
   async getGlobalPreference(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string

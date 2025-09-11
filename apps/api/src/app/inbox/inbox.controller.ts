@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   HttpCode,
@@ -50,6 +51,10 @@ import { UpdateAllNotificationsRequestDto } from './dtos/update-all-notification
 import { UpdatePreferencesRequestDto } from './dtos/update-preferences-request.dto';
 import { BulkUpdatePreferencesCommand } from './usecases/bulk-update-preferences/bulk-update-preferences.command';
 import { BulkUpdatePreferences } from './usecases/bulk-update-preferences/bulk-update-preferences.usecase';
+import { DeleteAllNotificationsCommand } from './usecases/delete-all-notifications/delete-all-notifications.command';
+import { DeleteAllNotifications } from './usecases/delete-all-notifications/delete-all-notifications.usecase';
+import { DeleteNotificationCommand } from './usecases/delete-notification/delete-notification.command';
+import { DeleteNotification } from './usecases/delete-notification/delete-notification.usecase';
 import { GetInboxPreferencesCommand } from './usecases/get-inbox-preferences/get-inbox-preferences.command';
 import { GetInboxPreferences } from './usecases/get-inbox-preferences/get-inbox-preferences.usecase';
 import { GetNotificationsCommand } from './usecases/get-notifications/get-notifications.command';
@@ -92,7 +97,9 @@ export class InboxController {
     private unsnoozeNotificationUsecase: UnsnoozeNotification,
     private markNotificationsAsSeenUsecase: MarkNotificationsAsSeen,
     private parseEventRequest: ParseEventRequest,
-    private getSubscriberGlobalPreference: GetSubscriberGlobalPreference
+    private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
+    private deleteNotificationUsecase: DeleteNotification,
+    private deleteAllNotificationsUsecase: DeleteAllNotifications
   ) {}
 
   @KeylessAccessible()
@@ -293,6 +300,23 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
+  @Delete('/notifications/:id/delete')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteNotification(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string
+  ): Promise<void> {
+    await this.deleteNotificationUsecase.execute(
+      DeleteNotificationCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/complete')
   async completeAction(
     @SubscriberSession() subscriberSession: SubscriberEntity,
@@ -481,6 +505,26 @@ export class InboxController {
         },
         to: {
           archived: true,
+        },
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/notifications/delete')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAllNotifications(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: UpdateAllNotificationsRequestDto
+  ): Promise<void> {
+    await this.deleteAllNotificationsUsecase.execute(
+      DeleteAllNotificationsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        filters: {
+          tags: body.tags,
+          data: body.data,
         },
       })
     );

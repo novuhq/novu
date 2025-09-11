@@ -1,18 +1,17 @@
 import { ResendEmailProvider } from '@novu/providers';
-import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, IConfigurations, ICredentials } from '@novu/shared';
 import { BaseEmailHandler } from './base.handler';
 
 export class ResendHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.Resend, ChannelTypeEnum.EMAIL);
   }
-  buildProvider(credentials: ICredentials, from?: string) {
-    const config: { apiKey: string; from: string; senderName?: string } = {
+  buildProvider(credentials: ICredentials & IConfigurations, from?: string) {
+    this.provider = new ResendEmailProvider({
       from: from as string,
       apiKey: credentials.apiKey as string,
       senderName: credentials.senderName,
-    };
-
-    this.provider = new ResendEmailProvider(config);
+      webhookSigningKey: credentials.inboundWebhookSigningKey,
+    });
   }
 }

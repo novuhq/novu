@@ -1,10 +1,20 @@
 import { ChannelTypeEnum, IAttachmentOptions } from '../template/template.interface';
+import { ChannelData } from './channel-data.type';
 import { CheckIntegrationResponseEnum } from './provider.enum';
 
 export interface IProvider {
   id: string;
   channelType: ChannelTypeEnum;
-  verifySignature?: (body: any, headers: Record<string, string>) => { success: boolean; message?: string };
+  verifySignature?: (params: {
+    rawBody: unknown;
+    headers?: Record<string, string>;
+    body?: Record<string, unknown>;
+  }) => { success: boolean; message?: string };
+  autoConfigureInboundWebhook?: (configurations: { webhookUrl: string }) => Promise<{
+    success: boolean;
+    message?: string;
+    configurations?: unknown;
+  }>;
 }
 
 export interface IEmailOptions {
@@ -82,9 +92,11 @@ export interface IPushOptions {
 }
 
 export interface IChatOptions {
+  /**
+   * @deprecated use channelData instead
+   */
   phoneNumber?: string;
-  webhookUrl?: string;
-  channel?: string;
+  channelData?: ChannelData;
   content: string;
   blocks?: IBlock[];
   customData?: Record<string, any>;
@@ -179,13 +191,23 @@ export interface ISmsProvider extends IProvider {
 export interface IChatProvider extends IProvider {
   sendMessage(options: IChatOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
   channelType: ChannelTypeEnum.CHAT;
+
+  getMessageId?: (body: any | any[]) => string[];
+
+  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
 }
 
 export interface IPushProvider extends IProvider {
   sendMessage(options: IPushOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.PUSH;
+
+  getMessageId?: (body: any | any[]) => string[];
+
+  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
 }
+
+export type ChannelProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider;
 
 export interface ICheckIntegrationResponse {
   success: boolean;

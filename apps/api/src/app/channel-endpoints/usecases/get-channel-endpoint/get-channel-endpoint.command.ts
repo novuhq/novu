@@ -1,8 +1,8 @@
 import { IsDefined, IsString } from 'class-validator';
-import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class GetChannelEndpointCommand extends EnvironmentWithSubscriber {
-  @IsString()
+export class GetChannelEndpointCommand extends EnvironmentCommand {
   @IsDefined()
+  @IsString()
   identifier: string;
 }

@@ -9,6 +9,8 @@ import {
   archiveAll,
   archiveAllRead,
   completeAction,
+  deleteAll,
+  deleteNotification,
   read,
   readAll,
   revertAction,
@@ -26,6 +28,7 @@ import type {
   CompleteArgs,
   CountArgs,
   CountResponse,
+  DeletedArgs,
   FilterCountArgs,
   FilterCountResponse,
   FiltersCountArgs,
@@ -196,6 +199,18 @@ export class Notifications extends BaseModule {
     );
   }
 
+  async delete(args: BaseArgs): Result<void>;
+  async delete(args: InstanceArgs): Result<void>;
+  async delete(args: DeletedArgs): Result<void> {
+    return this.callWithSession(async () =>
+      deleteNotification({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
   async snooze(args: SnoozeArgs): Result<Notification> {
     return this.callWithSession(async () =>
       snooze({
@@ -344,12 +359,31 @@ export class Notifications extends BaseModule {
     );
   }
 
+  async deleteAll({
+    tags,
+    data,
+  }: {
+    tags?: NotificationFilter['tags'];
+    data?: Record<string, unknown>;
+  } = {}): Result<void> {
+    return this.callWithSession(async () =>
+      deleteAll({
+        emitter: this._emitter,
+        inboxService: this._inboxService,
+        notificationsCache: this.cache,
+        tags,
+        data,
+      })
+    );
+  }
+
   clearCache({ filter }: { filter?: NotificationFilter } = {}): void {
     if (filter) {
-      return this.cache.clear(filter ?? {});
+      this.cache.clear(filter ?? {});
+      return;
     }
 
-    return this.cache.clearAll();
+    this.cache.clearAll();
   }
 
   async triggerHelloWorldEvent(): Promise<any> {

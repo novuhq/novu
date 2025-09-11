@@ -1,13 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelEndpointRouting } from '@novu/shared';
-import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
+import { getApiPropertyExamples } from '@novu/application-generic';
+import { ChannelEndpointByType, ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
+import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsValidChannelEndpoint } from '../../shared/validators/channel-endpoint.validator';
 
 export class CreateChannelEndpointRequestDto {
   @ApiPropertyOptional({
     description:
       'The unique identifier for the channel endpoint. If not provided, one will be generated automatically.',
     type: String,
-    example: 'slack-prod-user123-abc4',
+    example: 'slack-channel-user123-abc4',
   })
   @IsOptional()
   @IsString()
@@ -22,26 +24,29 @@ export class CreateChannelEndpointRequestDto {
   @IsDefined()
   integrationIdentifier: string;
 
-  @ApiProperty({
-    description: 'The endpoint address/destination (e.g., OAuth token, webhook URL, phone number).',
-    type: String,
-    // cspell:disable-next-line
-    example: 'some-sample-secret-token',
-  })
-  @IsString()
-  @IsDefined()
-  endpoint: string;
-
   @ApiPropertyOptional({
-    description: 'Routing configuration for the channel endpoint (e.g., Slack channel/user routing).',
-    type: 'object',
-    example: {
-      type: 'slack',
-      channelId: 'C1234567890',
-      userId: 'U1234567890',
-    },
+    description: 'The identifier of the channel connection to use for this channel endpoint.',
+    type: String,
+    example: 'slack-connection-abc123',
   })
   @IsOptional()
-  @IsObject()
-  routing?: ChannelEndpointRouting;
+  @IsString()
+  connectionIdentifier?: string;
+
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: Object.values(ENDPOINT_TYPES),
+    example: ENDPOINT_TYPES.SLACK_CHANNEL,
+  })
+  @IsDefined()
+  @IsEnum(Object.values(ENDPOINT_TYPES))
+  type: ChannelEndpointType;
+
+  @ApiProperty({
+    description: 'Endpoint data specific to the channel type',
+    oneOf: getApiPropertyExamples(),
+  })
+  @IsDefined()
+  @IsValidChannelEndpoint()
+  endpoint: ChannelEndpointByType[ChannelEndpointType];
 }

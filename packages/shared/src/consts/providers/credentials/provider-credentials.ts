@@ -566,7 +566,7 @@ export const fcmConfig: IConfigCredential[] = [
         if (!value || value.trim() === '') {
           return true; // Let required validation handle empty values
         }
-        
+
         try {
           JSON.parse(value);
 
