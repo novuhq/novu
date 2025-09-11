@@ -29,18 +29,11 @@ import {
   GetContextsResponseDto,
   UpdateContextRequestDto,
 } from './dtos';
-import {
-  CreateContext,
-  CreateContextCommand,
-  DeleteContext,
-  DeleteContextCommand,
-  GetContext,
-  GetContextCommand,
-  GetContexts,
-  GetContextsCommand,
-  UpdateContext,
-  UpdateContextCommand,
-} from './usecases';
+import { CreateContext, CreateContextCommand } from './usecases/create-context';
+import { DeleteContext, DeleteContextCommand } from './usecases/delete-context';
+import { GetContext, GetContextCommand } from './usecases/get-context';
+import { GetContexts, GetContextsCommand } from './usecases/get-contexts';
+import { UpdateContext, UpdateContextCommand } from './usecases/update-context';
 
 @Controller('/contexts')
 @UseInterceptors(ClassSerializerInterceptor)
