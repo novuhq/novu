@@ -1,5 +1,5 @@
 import { GetSubscriberPreferencesDto } from '@novu/api/models/components';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useMemo } from 'react';
 import { RiLoader4Line, RiQuestionLine } from 'react-icons/ri';
@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
 import { WorkflowPreferences } from '@/components/subscribers/preferences/workflow-preferences';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOptimisticChannelPreferences } from '@/hooks/use-optimistic-channel-preferences';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { itemVariants, sectionVariants } from '@/utils/animation';
@@ -35,6 +36,8 @@ export const Preferences = (props: PreferencesProps) => {
       showErrorToast('Failed to update preferences. Please try again.');
     },
   });
+
+  const isSubscribersScheduleEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED);
 
   const { workflows, globalChannelsKeys, hasZeroPreferences } = useMemo(() => {
     const global = subscriberPreferences?.global ?? { channels: {} };
@@ -87,11 +90,13 @@ export const Preferences = (props: PreferencesProps) => {
         </SidebarContent>
       </motion.div>
 
-      <motion.div variants={itemVariants}>
-        <SidebarContent size="md">
-          <SubscribersSchedule globalPreference={subscriberPreferences.global} subscriberId={subscriberId} />
-        </SidebarContent>
-      </motion.div>
+      {isSubscribersScheduleEnabled && (
+        <motion.div variants={itemVariants}>
+          <SidebarContent size="md">
+            <SubscribersSchedule globalPreference={subscriberPreferences.global} subscriberId={subscriberId} />
+          </SidebarContent>
+        </motion.div>
+      )}
 
       <motion.div variants={itemVariants}>
         <div className="flex items-center gap-2 bg-neutral-50 px-4 py-2">

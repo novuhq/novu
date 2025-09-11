@@ -1,6 +1,6 @@
 import { ScheduleDto } from '@novu/api/models/components';
 import { Schedule, WeeklySchedule } from '@novu/shared';
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RiFileCopyLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { Checkbox } from '@/components/primitives/checkbox';
@@ -10,8 +10,6 @@ import { cn } from '@/utils/ui';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip';
 import { weekDays } from './utils';
 
-const NOVU_EVENT_CLOSE_DAY_SCHEDULE_COPY_COMPONENT = 'novu.close-day-schedule-copy-component';
-
 type DayScheduleCopyProps = {
   onScheduleUpdate: (schedule: ScheduleDto) => Promise<void>;
   day: keyof WeeklySchedule;
@@ -20,7 +18,6 @@ type DayScheduleCopyProps = {
 };
 
 export const DayScheduleCopy = ({ day, schedule, disabled, onScheduleUpdate }: DayScheduleCopyProps) => {
-  const id = useId();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedDays, setSelectedDays] = useState<Array<keyof WeeklySchedule>>([day]);
   const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
@@ -32,38 +29,14 @@ export const DayScheduleCopy = ({ day, schedule, disabled, onScheduleUpdate }: D
   }, [day]);
   const onOpenChange = useCallback(
     (isOpen: boolean) => {
-      if (isOpen) {
-        // close other copy times to dropdowns
-        document.dispatchEvent(new CustomEvent(NOVU_EVENT_CLOSE_DAY_SCHEDULE_COPY_COMPONENT, { detail: { id } }));
-      }
-      setTimeout(() => {
-        // set is open after a short delay to ensure nicer animation
-        if (!isOpen) {
-          reset();
-        } else {
-          setIsOpen(isOpen);
-        }
-      }, 50);
-    },
-    [id, reset]
-  );
-
-  useEffect(() => {
-    const listener = (event: CustomEvent<{ id: string }>) => {
-      const data = event.detail;
-      if (data.id !== id) {
+      if (!isOpen) {
         reset();
+      } else {
+        setIsOpen(isOpen);
       }
-    };
-
-    // @ts-expect-error custom event
-    document.addEventListener(NOVU_EVENT_CLOSE_DAY_SCHEDULE_COPY_COMPONENT, listener);
-
-    return () => {
-      // @ts-expect-error custom event
-      document.removeEventListener(NOVU_EVENT_CLOSE_DAY_SCHEDULE_COPY_COMPONENT, listener);
-    };
-  }, [id, reset]);
+    },
+    [reset]
+  );
 
   return (
     <Tooltip>
