@@ -438,6 +438,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     // Step skipped events
     case 'step_skipped':
       return 'Step skipped';
+    case 'step_skipped_outside_of_the_schedule':
+      return "The step was skipped as it fell outside the subscriber's schedule";
 
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases

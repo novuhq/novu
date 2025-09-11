@@ -114,6 +114,7 @@ const mapDetailToEventType = {
 
   // Skipped step events
   [DetailEnum.SKIPPED_STEP_BY_CONDITIONS]: 'step_skipped',
+  [DetailEnum.SKIPPED_STEP_OUTSIDE_OF_THE_SCHEDULE]: 'step_skipped_outside_of_the_schedule',
 } satisfies Record<DetailEnum, EventType>;
 
 @Injectable()
