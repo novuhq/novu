@@ -3,6 +3,7 @@ export * from './billing';
 export * from './builder';
 export * from './channel';
 export * from './channel-endpoint';
+export * from './context';
 export * from './controls';
 export * from './cron';
 export * from './environment';

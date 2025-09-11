@@ -3,6 +3,7 @@ export * from './repositories/base-repository';
 export * from './repositories/change';
 export * from './repositories/channel-connection';
 export * from './repositories/channel-endpoint';
+export * from './repositories/context';
 export * from './repositories/control-values';
 export * from './repositories/environment';
 export * from './repositories/execution-details';
