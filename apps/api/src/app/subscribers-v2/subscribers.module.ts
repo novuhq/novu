@@ -28,16 +28,16 @@ import {
   TopicSubscribersRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
-import { ChannelAddressesModule } from '../channel-addresses/channel-addresses.module';
 import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
+import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { InboxModule } from '../inbox/inbox.module';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
 import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
 import { GetSubscriberGlobalPreference } from '../subscribers/usecases/get-subscriber-global-preference';
 import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference';
 import { TopicsV2Module } from '../topics-v2/topics-v2.module';
-import { ChannelAddressesController } from './channel-addresses.controller';
 import { ChannelConnectionsController } from './channel-connections.controller';
+import { ChannelEndpointsController } from './channel-endpoints.controller';
 import { SubscribersController } from './subscribers.controller';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { SlackOauthCallback } from './usecases/chat-oauth-callback/slack-oauth-callback/slack-oauth-callback.usecase';
@@ -93,9 +93,9 @@ const DAL_MODELS = [
     InboxModule,
     OutboundWebhooksModule.forRoot(),
     ChannelConnectionsModule,
-    ChannelAddressesModule,
+    ChannelEndpointsModule,
   ],
-  controllers: [SubscribersController, ChannelAddressesController, ChannelConnectionsController],
+  controllers: [SubscribersController, ChannelEndpointsController, ChannelConnectionsController],
   providers: [
     ...USE_CASES,
     ...DAL_MODELS,

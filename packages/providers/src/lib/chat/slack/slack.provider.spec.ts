@@ -1,4 +1,4 @@
-import { ADDRESS_TYPES } from '@novu/stateless';
+import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { SlackProvider } from './slack.provider';
@@ -11,10 +11,10 @@ test('should trigger Slack webhook correctly', async () => {
   const provider = new SlackProvider();
   const result = await provider.sendMessage({
     channelData: {
-      address: {
+      endpoint: {
         url: 'webhookUrl',
       },
-      type: ADDRESS_TYPES.WEBHOOK,
+      type: ENDPOINT_TYPES.WEBHOOK,
       identifier: 'test-webhook-identifier',
     },
     content: 'chat message',
@@ -37,9 +37,9 @@ test('should trigger Slack webhook correctly with _passthrough', async () => {
   const result = await provider.sendMessage(
     {
       channelData: {
-        type: ADDRESS_TYPES.WEBHOOK,
+        type: ENDPOINT_TYPES.WEBHOOK,
         identifier: 'test-webhook-identifier',
-        address: {
+        endpoint: {
           url: 'webhookUrl',
         },
       },
@@ -76,9 +76,9 @@ test('should handle Slack API error correctly', async () => {
     provider.sendMessage({
       channelData: {
         token: 'xoxb-token-123',
-        type: ADDRESS_TYPES.SLACK_CHANNEL,
+        type: ENDPOINT_TYPES.SLACK_CHANNEL,
         identifier: 'test-slack-channel-identifier',
-        address: {
+        endpoint: {
           channelId: 'C1234567890',
         },
       },
@@ -112,10 +112,10 @@ test('should handle Slack webhook error response correctly', async () => {
   await expect(
     provider.sendMessage({
       channelData: {
-        address: {
+        endpoint: {
           url: 'webhookUrl',
         },
-        type: ADDRESS_TYPES.WEBHOOK,
+        type: ENDPOINT_TYPES.WEBHOOK,
         identifier: 'test-webhook-identifier',
       },
       content: 'chat message',
@@ -139,10 +139,10 @@ test('should handle Slack webhook HTTP error correctly', async () => {
   await expect(
     provider.sendMessage({
       channelData: {
-        address: {
+        endpoint: {
           url: 'webhookUrl',
         },
-        type: ADDRESS_TYPES.WEBHOOK,
+        type: ENDPOINT_TYPES.WEBHOOK,
         identifier: 'test-webhook-identifier',
       },
       content: 'chat message',
@@ -168,9 +168,9 @@ test('should trigger Slack app correctly with OAuth', async () => {
   await provider.sendMessage({
     channelData: {
       token: 'xoxb-token-123',
-      type: ADDRESS_TYPES.SLACK_CHANNEL,
+      type: ENDPOINT_TYPES.SLACK_CHANNEL,
       identifier: 'test-slack-channel-identifier',
-      address: {
+      endpoint: {
         channelId: 'C1234567890',
       },
     },

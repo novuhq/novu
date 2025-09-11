@@ -11,7 +11,7 @@ export interface ISubscriber {
   locale?: string;
   subscriberId: string;
   /**
-   * @deprecated: use channelAddress instead
+   * @deprecated: use channelEndpoint instead
    */
   channels?: IChannelSettings[];
   topics?: string[];
@@ -34,7 +34,7 @@ interface IChannelBase {
 
 // Database storage (required integration ID)
 /**
- * @deprecated: use ChannelAddress instead
+ * @deprecated: use ChannelEndpoint instead
  */
 export interface IChannelSettings extends IChannelBase {
   _integrationId: string;
@@ -42,14 +42,14 @@ export interface IChannelSettings extends IChannelBase {
 
 // API requests/payloads (optional integration identifier)
 /**
- * @deprecated: use ChannelAddress instead
+ * @deprecated: use ChannelEndpoint instead
  */
 export interface ISubscriberChannel extends IChannelBase {
   integrationIdentifier?: string;
 }
 
 /**
- * @deprecated: use ChannelAddress instead
+ * @deprecated: use ChannelEndpoint instead
  */
 export interface IChannelCredentials {
   phoneNumber?: string;
@@ -72,7 +72,7 @@ export interface ISubscriberPayload {
   locale?: string;
   data?: SubscriberCustomData;
   /**
-   * @deprecated: use channelAddress instead
+   * @deprecated: use channelEndpoint instead
    */
   channels?: ISubscriberChannel[];
 }
