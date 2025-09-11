@@ -179,6 +179,17 @@ export class InboxService {
     });
   }
 
+  delete(notificationId: string): Promise<void> {
+    return this.#httpClient.delete(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/delete`);
+  }
+
+  deleteAll({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/delete`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
   markAsSeen({
     notificationIds,
     tags,

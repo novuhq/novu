@@ -8,9 +8,12 @@ export class GetDecryptedSecretKey {
   constructor(private readonly environmentRepository: EnvironmentRepository) {}
 
   async execute(command: GetDecryptedSecretKeyCommand): Promise<string> {
-    const environment = await this.environmentRepository.findOne({
-      _id: command.environmentId,
-    });
+    const environment = await this.environmentRepository.findOne(
+      {
+        _id: command.environmentId,
+      },
+      '_id apiKeys'
+    );
 
     if (!environment) {
       throw new NotFoundException(`Environment ${command.environmentId} not found`);

@@ -103,6 +103,11 @@ const webhookEventRecord = {
     payloadDto: WebhookMessageDto,
     objectType: WebhookObjectTypeEnum.MESSAGE,
   },
+  [WebhookEventEnum.MESSAGE_DELETED]: {
+    event: WebhookEventEnum.MESSAGE_DELETED,
+    payloadDto: WebhookMessageDto,
+    objectType: WebhookObjectTypeEnum.MESSAGE,
+  },
   [WebhookEventEnum.WORKFLOW_CREATED]: {
     event: WebhookEventEnum.WORKFLOW_CREATED,
     payloadDto: WebhookCreatedWorkflowDto,

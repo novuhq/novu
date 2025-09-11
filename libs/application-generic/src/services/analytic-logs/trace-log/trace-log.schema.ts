@@ -80,6 +80,7 @@ export type EventType =
   | 'message_deferred'
   | 'message_unsubscribed'
   | 'message_delayed'
+  | 'message_deleted'
   | 'message_complaint'
   | 'message_delivered'
   | 'message_rejected'

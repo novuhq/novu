@@ -1,5 +1,13 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelEndpointRouting, ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
+import { ApiProperty } from '@nestjs/swagger';
+import { getApiPropertyExamples } from '@novu/application-generic';
+import {
+  ChannelEndpointByType,
+  ChannelEndpointType,
+  ChannelTypeEnum,
+  ENDPOINT_TYPES,
+  ProvidersIdEnum,
+  ProvidersIdEnumConst,
+} from '@novu/shared';
 
 export class GetChannelEndpointResponseDto {
   @ApiProperty({
@@ -28,17 +36,24 @@ export class GetChannelEndpointResponseDto {
   integrationIdentifier: string | null;
 
   @ApiProperty({
-    description: 'The endpoint address/destination (e.g., email address, phone number, webhook URL).',
+    description: 'The identifier of the channel connection used for this endpoint.',
     type: String,
+    example: 'slack-connection-abc123',
   })
-  endpoint: string;
+  connectionIdentifier: string | null;
 
-  @ApiPropertyOptional({
-    description: 'Routing configuration for the channel endpoint (e.g., Slack channel/user routing).',
-    type: 'object',
-    nullable: true,
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: Object.values(ENDPOINT_TYPES),
+    example: ENDPOINT_TYPES.SLACK_CHANNEL,
   })
-  routing?: ChannelEndpointRouting;
+  type: ChannelEndpointType;
+
+  @ApiProperty({
+    description: 'Endpoint data specific to the channel type',
+    oneOf: getApiPropertyExamples(),
+  })
+  endpoint: ChannelEndpointByType[ChannelEndpointType];
 
   @ApiProperty({
     description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',

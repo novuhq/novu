@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  ChannelEndpointType,
+  ChannelTypeEnum,
+  ENDPOINT_TYPES,
+  ProvidersIdEnum,
+  ProvidersIdEnumConst,
+} from '@novu/shared';
+import { IsEnum, IsOptional } from 'class-validator';
 
 export class GetChannelEndpointsQueryDto {
   @ApiProperty({
@@ -22,11 +28,11 @@ export class GetChannelEndpointsQueryDto {
   provider?: ProvidersIdEnum;
 
   @ApiProperty({
-    description: 'Endpoint address to filter results (e.g., email address, phone number).',
-    type: String,
+    description: 'Endpoint type to filter results.',
+    enum: Object.values(ENDPOINT_TYPES),
     required: false,
   })
+  @IsEnum(Object.values(ENDPOINT_TYPES))
   @IsOptional()
-  @IsString()
-  endpoint?: string;
+  type?: ChannelEndpointType;
 }

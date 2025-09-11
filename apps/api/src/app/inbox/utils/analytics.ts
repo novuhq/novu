@@ -10,4 +10,6 @@ export enum AnalyticsEventsEnum {
   UPDATE_PREFERENCES_BULK = 'Update Preferences Bulk - [Inbox]',
   SNOOZE_NOTIFICATION = 'Snooze Notification - [Inbox]',
   MARK_NOTIFICATIONS_AS_SEEN = 'Mark Notifications As Seen - [Inbox]',
+  DELETE_NOTIFICATION = 'Delete Notification - [Inbox]',
+  DELETE_ALL_NOTIFICATIONS = 'Delete All Notifications - [Inbox]',
 }

@@ -1,11 +1,19 @@
-import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
-import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  ChannelEndpointType,
+  ChannelTypeEnum,
+  ENDPOINT_TYPES,
+  ProvidersIdEnum,
+  ProvidersIdEnumConst,
+  ResourceKey,
+} from '@novu/shared';
+import { IsEnum, IsOptional } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { IsResourceKey } from '../../../shared/validators/resource-key.validator';
 
 export class GetChannelEndpointsCommand extends EnvironmentCommand {
-  @IsString()
-  @IsDefined()
-  subscriberId: string;
+  @IsOptional()
+  @IsResourceKey()
+  resource?: ResourceKey;
 
   @IsEnum(ChannelTypeEnum)
   @IsOptional()
@@ -15,7 +23,7 @@ export class GetChannelEndpointsCommand extends EnvironmentCommand {
   @IsOptional()
   provider?: ProvidersIdEnum;
 
-  @IsString()
+  @IsEnum(Object.values(ENDPOINT_TYPES))
   @IsOptional()
-  endpoint?: string;
+  type?: ChannelEndpointType;
 }

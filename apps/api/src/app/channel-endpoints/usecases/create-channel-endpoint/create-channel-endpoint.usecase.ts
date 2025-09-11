@@ -1,14 +1,16 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, shortId } from '@novu/application-generic';
 import {
+  ChannelConnectionEntity,
+  ChannelConnectionRepository,
   ChannelEndpointEntity,
   ChannelEndpointRepository,
   IntegrationEntity,
   IntegrationRepository,
-  SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { ProvidersIdEnum } from '@novu/shared';
+import { parseResourceKey } from '@novu/shared';
+import { mapChannelEndpointEntityToDto } from '../../dtos/dto.mapper';
 import { GetChannelEndpointResponseDto } from '../../dtos/get-channel-endpoint-response.dto';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
@@ -16,15 +18,18 @@ import { CreateChannelEndpointCommand } from './create-channel-endpoint.command'
 export class CreateChannelEndpoint {
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
+    private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository
   ) {}
 
   @InstrumentUsecase()
   async execute(command: CreateChannelEndpointCommand): Promise<GetChannelEndpointResponseDto> {
-    const { integration, subscriber } = await this.validateEntitiesExists(command);
+    const integration = await this.findIntegration(command);
 
-    const identifier = command.identifier || this.generateIdentifier(integration.identifier, subscriber.subscriberId);
+    await this.assertResourceExists(command);
+
+    const identifier = command.identifier || this.generateIdentifier();
 
     // Check if channel endpoint already exists
     const existingChannelEndpoint = await this.channelEndpointRepository.findOne({
@@ -39,72 +44,88 @@ export class CreateChannelEndpoint {
       );
     }
 
-    const channelEndpoint = await this.createChannelEndpoint(command, identifier, integration, subscriber);
+    let connection: ChannelConnectionEntity | null = null;
 
-    return this.mapChannelEndpointEntityToDto(channelEndpoint, integration);
+    if (command.connectionIdentifier) {
+      connection = await this.findChannelConnection(command);
+    }
+
+    const channelEndpoint = await this.createChannelEndpoint(command, identifier, integration, connection);
+
+    return mapChannelEndpointEntityToDto(channelEndpoint);
   }
 
   private async createChannelEndpoint(
     command: CreateChannelEndpointCommand,
     identifier: string,
     integration: IntegrationEntity,
-    subscriber: SubscriberEntity
+    connection: ChannelConnectionEntity | null
   ): Promise<ChannelEndpointEntity> {
     const channelEndpoint = await this.channelEndpointRepository.create({
       identifier,
-      _integrationId: integration._id,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      subscriberId: subscriber.subscriberId,
+      connectionIdentifier: connection?.identifier,
+      integrationIdentifier: integration.identifier,
+      providerId: integration.providerId,
+      channel: integration.channel,
+      resource: command.resource,
+      type: command.type,
       endpoint: command.endpoint,
-      routing: command.routing,
     });
 
     return channelEndpoint;
   }
 
-  private mapChannelEndpointEntityToDto(
-    channelEndpoint: ChannelEndpointEntity,
-    integration: IntegrationEntity
-  ): GetChannelEndpointResponseDto {
-    return {
-      identifier: channelEndpoint.identifier,
-      channel: integration.channel,
-      provider: integration.providerId as ProvidersIdEnum,
-      integrationIdentifier: integration.identifier,
-      endpoint: channelEndpoint.endpoint,
-      routing: channelEndpoint.routing,
-      createdAt: channelEndpoint.createdAt,
-      updatedAt: channelEndpoint.updatedAt,
-    };
+  private async assertResourceExists(command: CreateChannelEndpointCommand) {
+    const { type, id } = parseResourceKey(command.resource);
+
+    switch (type) {
+      case 'subscriber': {
+        const found = await this.subscriberRepository.findOne({
+          subscriberId: id,
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
+        });
+
+        if (!found) throw new NotFoundException(`Subscriber not found: ${id}`);
+
+        return;
+      }
+      default:
+        throw new NotFoundException(`Resource type not found: ${type}`);
+    }
   }
 
-  private async validateEntitiesExists(command: CreateChannelEndpointCommand) {
-    const [integration, subscriber] = await Promise.all([
-      this.integrationRepository.findOne({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        identifier: command.integrationIdentifier,
-      }),
-      this.subscriberRepository.findOne({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-      }),
-    ]);
+  private async findIntegration(command: CreateChannelEndpointCommand) {
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      identifier: command.integrationIdentifier,
+    });
 
     if (!integration) {
       throw new NotFoundException(`Integration not found: ${command.integrationIdentifier}`);
     }
 
-    if (!subscriber) {
-      throw new NotFoundException(`Subscriber not found: ${command.subscriberId}`);
-    }
-
-    return { integration, subscriber };
+    return integration;
   }
 
-  private generateIdentifier(integrationIdentifier: string, subscriberId: string): string {
-    return `${integrationIdentifier}-${subscriberId}-${shortId(6)}`;
+  private async findChannelConnection(command: CreateChannelEndpointCommand): Promise<ChannelConnectionEntity> {
+    const connection = await this.channelConnectionRepository.findOne({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      identifier: command.connectionIdentifier,
+    });
+
+    if (!connection) {
+      throw new NotFoundException(`Channel connection not found: ${command.connectionIdentifier}`);
+    }
+
+    return connection;
+  }
+
+  private generateIdentifier(): string {
+    return `chendp-${shortId(6)}`;
   }
 }

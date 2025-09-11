@@ -130,10 +130,13 @@ export function ConfigurationGroup({
   const isEnabled = Boolean(watchedValue && watchedValue !== 'false');
 
   // Check if required configurations are missing
-  const hasRequiredConfigurations = nonEnablerConfigs.every((config) => {
-    const configValue = formData?.configurations?.[config.key];
-    return configValue && configValue.trim() !== '';
-  });
+  const hasRequiredConfigurations =
+    nonEnablerConfigs.length === 0
+      ? false
+      : nonEnablerConfigs.every((config) => {
+          const configValue = formData?.configurations?.[config.key];
+          return configValue && configValue.trim() !== '';
+        });
 
   useEffect(() => {
     const handleIntegrationCreationOrUpdate = async () => {
@@ -233,7 +236,7 @@ export function ConfigurationGroup({
                           variant={'tip'}
                           className="mt-3"
                           title="Manual setup"
-                          description="copy this URL into your SendGrid webhook settings, Note: Required scopes must be enabled."
+                          description={`Copy this URL into the ${provider?.displayName} webhook settings. Note: Required scopes must be enabled.`}
                           ctaLabel="View Guide"
                           onCtaClick={() => {
                             window.open(group?.setupWebhookUrlGuide ?? '', '_blank');

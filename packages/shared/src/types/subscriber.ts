@@ -10,7 +10,9 @@ export interface ISubscriber {
   avatar?: string;
   locale?: string;
   subscriberId: string;
-  // @deprecated: use channelEndpoints instead
+  /**
+   * @deprecated: use channelEndpoint instead
+   */
   channels?: IChannelSettings[];
   topics?: string[];
   _organizationId: string;
@@ -31,18 +33,24 @@ interface IChannelBase {
 }
 
 // Database storage (required integration ID)
-// @deprecated: use ChannelEndpoint instead
+/**
+ * @deprecated: use ChannelEndpoint instead
+ */
 export interface IChannelSettings extends IChannelBase {
   _integrationId: string;
 }
 
 // API requests/payloads (optional integration identifier)
-// @deprecated: use ChannelEndpoint instead
+/**
+ * @deprecated: use ChannelEndpoint instead
+ */
 export interface ISubscriberChannel extends IChannelBase {
   integrationIdentifier?: string;
 }
 
-// @deprecated: use ChannelEndpoint instead
+/**
+ * @deprecated: use ChannelEndpoint instead
+ */
 export interface IChannelCredentials {
   phoneNumber?: string;
   webhookUrl?: string;
@@ -63,7 +71,9 @@ export interface ISubscriberPayload {
   avatar?: string;
   locale?: string;
   data?: SubscriberCustomData;
-  // @deprecated: use channelEndpoints instead
+  /**
+   * @deprecated: use channelEndpoint instead
+   */
   channels?: ISubscriberChannel[];
 }
 

@@ -1,3 +1,4 @@
+import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { RyverChatProvider } from './ryver.provider';
@@ -12,7 +13,13 @@ test('Should trigger ryver correctly', async () => {
   const provider = new RyverChatProvider();
 
   await provider.sendMessage({
-    webhookUrl: 'https://google.com',
+    channelData: {
+      endpoint: {
+        url: 'https://google.com',
+      },
+      type: ENDPOINT_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
     content: 'chat message',
   });
 
@@ -32,7 +39,13 @@ test('Should trigger ryver correctly with _passthrough', async () => {
 
   await provider.sendMessage(
     {
-      webhookUrl: 'https://google.com',
+      channelData: {
+        endpoint: {
+          url: 'https://google.com',
+        },
+        type: ENDPOINT_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
+      },
       content: 'chat message',
     },
     {
