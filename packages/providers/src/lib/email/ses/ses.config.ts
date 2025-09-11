@@ -4,4 +4,5 @@ export interface SESConfig {
   senderName: string;
   accessKeyId: string;
   secretAccessKey: string;
+  configurationSetName?: string;
 }

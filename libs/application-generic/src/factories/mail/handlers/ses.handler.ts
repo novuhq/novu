@@ -14,6 +14,7 @@ export class SESHandler extends BaseEmailHandler {
       secretAccessKey: credentials.secretKey as string,
       senderName: credentials.senderName ?? 'no-reply',
       from: from as string,
+      configurationSetName: credentials.configurationSetName,
     };
 
     this.provider = new SESEmailProvider(config);
