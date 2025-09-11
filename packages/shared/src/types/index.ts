@@ -4,6 +4,7 @@ export * from './builder';
 export * from './channel';
 export * from './channel-address';
 export * from './channel-connection';
+export * from './context';
 export * from './controls';
 export * from './cron';
 export * from './environment';
