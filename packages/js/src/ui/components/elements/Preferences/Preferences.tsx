@@ -126,11 +126,13 @@ export const Preferences = () => {
         >[0],
       })}
     >
-      <PreferencesRow
-        iconKey="cogs"
-        preference={allPreferences().globalPreference}
-        onChange={() => updatePreference(allPreferences().globalPreference)}
-      />
+      <Show when={allPreferences().globalPreference}>
+        <PreferencesRow
+          iconKey="cogs"
+          preference={allPreferences().globalPreference!}
+          onChange={() => updatePreference(allPreferences().globalPreference)}
+        />
+      </Show>
       <ScheduleRow globalPreference={allPreferences().globalPreference} />
       <Show
         when={groupedPreferences().length > 0}
