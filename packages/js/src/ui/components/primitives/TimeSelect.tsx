@@ -79,7 +79,9 @@ export const TimeSelect = (props: TimeSelectProps) => {
             className: cn(
               inputVariants({ size: 'xs', variant: 'default' }),
               'nt-min-w-[74px] nt-flex nt-px-2 nt-py-1.5 nt-items-center nt-justify-between nt-w-full nt-text-sm',
-              { 'nt-justify-center nt-text-neutral-200': !time() }
+              {
+                'nt-justify-center nt-text-neutral-alpha-500': props.disabled || !time(),
+              }
             ),
           })}
         >

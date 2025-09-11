@@ -8,6 +8,7 @@ import { Info } from '../../../icons/Info';
 import { AppearanceCallback } from '../../../types';
 import { Collapsible } from '../../primitives/Collapsible';
 import { Switch } from '../../primitives/Switch';
+import { Tooltip } from '../../primitives/Tooltip';
 import { IconRenderer } from '../../shared/IconRendererWrapper';
 import { ScheduleTable } from './ScheduleTable';
 
@@ -53,9 +54,11 @@ const ScheduleRowLabel = (props: { schedule: Accessor<Schedule | undefined>; isO
       <IconRenderer
         iconKey="calendarSchedule"
         class={style({
-          key: 'scheduleLabelIcon',
+          key: 'scheduleLabelScheduleIcon',
           className: 'nt-text-foreground-alpha-600 nt-size-3.5',
-          context: { schedule: props.schedule() } satisfies Parameters<AppearanceCallback['scheduleLabelIcon']>[0],
+          context: { schedule: props.schedule() } satisfies Parameters<
+            AppearanceCallback['scheduleLabelScheduleIcon']
+          >[0],
         })}
         fallback={CalendarSchedule}
       />
@@ -70,6 +73,24 @@ const ScheduleRowLabel = (props: { schedule: Accessor<Schedule | undefined>; isO
       >
         {t('preferences.schedule.title')}
       </span>
+      <Tooltip.Root>
+        <Tooltip.Trigger>
+          <IconRenderer
+            iconKey="info"
+            class={style({
+              key: 'scheduleLabelInfoIcon',
+              className: 'nt-text-foreground-alpha-600 nt-size-4',
+              context: { schedule: props.schedule() } satisfies Parameters<
+                AppearanceCallback['scheduleLabelInfoIcon']
+              >[0],
+            })}
+            fallback={Info}
+          />
+        </Tooltip.Trigger>
+        <Tooltip.Content data-localization="preferences.schedule.headerInfo">
+          <div class="nt-max-w-56">{t('preferences.schedule.headerInfo')}</div>
+        </Tooltip.Content>
+      </Tooltip.Root>
     </div>
   );
 };
@@ -134,7 +155,7 @@ const ScheduleRowBody = (props: { isOpened: Accessor<boolean>; globalPreference:
       <span
         class={style({
           key: 'scheduleDescription',
-          className: 'nt-text-sm nt-text-neutral-600 nt-truncate nt-text-start',
+          className: 'nt-text-sm nt-truncate nt-text-start',
           context: { schedule: schedule() } satisfies Parameters<AppearanceCallback['scheduleDescription']>[0],
         })}
         data-localization="preferences.schedule.description"
@@ -145,7 +166,7 @@ const ScheduleRowBody = (props: { isOpened: Accessor<boolean>; globalPreference:
       <div
         class={style({
           key: 'scheduleInfoContainer',
-          className: 'nt-flex nt-items-start nt-mt-2.5 nt-text-neutral-400 nt-gap-1',
+          className: 'nt-flex nt-items-start nt-mt-2.5 nt-gap-1',
           context: { schedule: schedule() } satisfies Parameters<AppearanceCallback['scheduleInfoContainer']>[0],
         })}
       >

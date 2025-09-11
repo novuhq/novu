@@ -1,6 +1,6 @@
 import { Accessor, createEffect, createMemo, createSignal, createUniqueId, For } from 'solid-js';
-import { WeeklySchedule } from 'src/types';
 import { Schedule } from '../../../../preferences';
+import { WeeklySchedule } from '../../../../types';
 import { useLocalization } from '../../../../ui/context/LocalizationContext';
 import { cn } from '../../../../ui/helpers';
 import { useStyle } from '../../../../ui/helpers/useStyle';

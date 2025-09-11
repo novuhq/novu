@@ -43,7 +43,7 @@ const ScheduleTableHeaderColumn = (props: ScheduleTableHeaderColumnProps) => {
     <div
       class={style({
         key: 'scheduleHeaderColumn',
-        className: cn('nt-text-sm nt-text-neutral-600 nt-truncate nt-text-start', props.class),
+        className: cn('nt-text-sm nt-truncate nt-text-start', props.class),
         context: { schedule: props.schedule } satisfies Parameters<AppearanceCallback['scheduleHeaderColumn']>[0],
       })}
       data-localization={props.dataLocalization}
@@ -104,7 +104,7 @@ const ScheduleBodyColumn = (props: ScheduleTableCellProps) => {
     <div
       class={style({
         key: 'scheduleBodyColumn',
-        className: cn('nt-text-sm nt-text-neutral-600', props.class),
+        className: cn('nt-text-sm', props.class),
         context: { schedule: props.schedule } satisfies Parameters<AppearanceCallback['scheduleBodyColumn']>[0],
       })}
     >
@@ -178,7 +178,9 @@ export const ScheduleTable = (props: ScheduleTableProps) => {
                     disabled={isScheduleDisabled()}
                   />
                   <span
-                    class="nt-group nt-flex nt-items-center nt-gap-1"
+                    class={cn('nt-group nt-flex nt-items-center nt-gap-1', {
+                      'nt-text-neutral-alpha-500': isScheduleDisabled(),
+                    })}
                     data-localization={`preferences.schedule.${day()}`}
                   >
                     {t(`preferences.schedule.${day()}`)}

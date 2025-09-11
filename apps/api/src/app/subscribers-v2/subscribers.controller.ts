@@ -295,6 +295,7 @@ export class SubscribersController {
   @SdkMethodName('list') */
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   @RequireAuthentication()
+  @SdkMethodName('globalPreference')
   async getGlobalPreference(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
