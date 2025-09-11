@@ -113,6 +113,8 @@ export class UpdateAllNotifications {
       throw new Error(`Environment not found for id ${command.environmentId}`);
     }
 
+    if (!environment.webhookAppId) return;
+
     const eventTypes: WebhookEventEnum[] = [];
 
     if (command.to.read !== undefined) {

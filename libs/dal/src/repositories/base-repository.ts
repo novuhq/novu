@@ -323,7 +323,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async update(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     updateBody: UpdateQuery<T_DBModel>,
-    options: QueryOptions<T_DBModel> & { session?: ClientSession | null } = {}
+    options: QueryOptions<T_DBModel> & {
+      session?: ClientSession | null;
+      writeConcern?: { w: number | 'majority' };
+    } = {}
   ): Promise<{
     matched: number;
     modified: number;
