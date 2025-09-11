@@ -206,7 +206,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
 }
 function buildMessageId(body: any) {
   try {
-    if (body.Message.mail.messageId && body.Message.delivery.reportingMTA) {
+    if (body.Message.mail.messageId && body.Message.mail.sourceArn) {
       const messageId = body.Message.mail.messageId;
       // example arn:aws:ses:us-east-1:123456789012:identity/sender@example.com
       const region = body.Message.mail.sourceArn.split(':')[3];
