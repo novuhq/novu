@@ -23,7 +23,7 @@ export class SubscriberEntity implements ISubscriber {
   subscriberId: ExternalSubscriberId;
 
   /**
-   * @deprecated: use channelAddress instead
+   * @deprecated: use channelEndpoint instead
    */
   channels?: IChannelSettings[];
 

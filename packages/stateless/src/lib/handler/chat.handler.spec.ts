@@ -1,4 +1,4 @@
-import { ADDRESS_TYPES } from '../provider/channel-data.type';
+import { ENDPOINT_TYPES } from '../provider/channel-data.type';
 import { IChatProvider } from '../provider/provider.interface';
 import { ChannelTypeEnum } from '../template/template.interface';
 import { ChatHandler } from './chat.handler';
@@ -32,8 +32,8 @@ test('send chat should call the provider method correctly with legacy webhookUrl
   expect(spy).toHaveBeenCalledWith(
     {
       channelData: {
-        type: ADDRESS_TYPES.WEBHOOK,
-        address: {
+        type: ENDPOINT_TYPES.WEBHOOK,
+        endpoint: {
           url: 'https://test.com',
           channel: '+1333322214',
         },
@@ -65,8 +65,8 @@ test('send chat should call the provider method correctly with new channelData f
 
   await chatHandler.send({
     $channelData: {
-      type: ADDRESS_TYPES.WEBHOOK,
-      address: {
+      type: ENDPOINT_TYPES.WEBHOOK,
+      endpoint: {
         url: 'https://test.com',
         channel: '+1333322214',
       },
@@ -80,8 +80,8 @@ test('send chat should call the provider method correctly with new channelData f
   expect(spy).toHaveBeenCalledWith(
     {
       channelData: {
-        type: ADDRESS_TYPES.WEBHOOK,
-        address: {
+        type: ENDPOINT_TYPES.WEBHOOK,
+        endpoint: {
           url: 'https://test.com',
           channel: '+1333322214',
         },
@@ -148,8 +148,8 @@ test('send chat should template method correctly with new channelData format', a
 
   await chatHandler.send({
     $channelData: {
-      type: ADDRESS_TYPES.WEBHOOK,
-      address: {
+      type: ENDPOINT_TYPES.WEBHOOK,
+      endpoint: {
         url: 'https://test.com',
         channel: '+1333322214',
       },
@@ -162,8 +162,8 @@ test('send chat should template method correctly with new channelData format', a
   expect(spyTemplateFunction).toHaveBeenCalled();
   expect(spyTemplateFunction).toHaveBeenCalledWith({
     $channelData: {
-      type: ADDRESS_TYPES.WEBHOOK,
-      address: {
+      type: ENDPOINT_TYPES.WEBHOOK,
+      endpoint: {
         url: 'https://test.com',
         channel: '+1333322214',
       },

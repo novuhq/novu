@@ -1,4 +1,4 @@
-import { ADDRESS_TYPES } from '@novu/stateless';
+import { ENDPOINT_TYPES } from '@novu/stateless';
 import axios from 'axios';
 import { expect, test, vi } from 'vitest';
 import { MattermostProvider } from './mattermost.provider';
@@ -20,10 +20,10 @@ test('should trigger mattermost library correctly, default channel', async () =>
   const testContent = 'Dummy content message';
   const result = await provider.sendMessage({
     channelData: {
-      address: {
+      endpoint: {
         url: testWebhookUrl,
       },
-      type: ADDRESS_TYPES.WEBHOOK,
+      type: ENDPOINT_TYPES.WEBHOOK,
       identifier: 'test-webhook-identifier',
     },
     content: testContent,
@@ -52,11 +52,11 @@ test('should trigger mattermost library correctly, override channel', async () =
   const testContent = 'Dummy content message';
   const result = await provider.sendMessage({
     channelData: {
-      address: {
+      endpoint: {
         url: testWebhookUrl,
         channel: '@username',
       },
-      type: ADDRESS_TYPES.WEBHOOK,
+      type: ENDPOINT_TYPES.WEBHOOK,
       identifier: 'test-webhook-identifier',
     },
     content: testContent,
@@ -87,10 +87,10 @@ test('should trigger mattermost library correctly, default channel with _passthr
   const result = await provider.sendMessage(
     {
       channelData: {
-        address: {
+        endpoint: {
           url: testWebhookUrl,
         },
-        type: ADDRESS_TYPES.WEBHOOK,
+        type: ENDPOINT_TYPES.WEBHOOK,
         identifier: 'test-webhook-identifier',
       },
       content: testContent,

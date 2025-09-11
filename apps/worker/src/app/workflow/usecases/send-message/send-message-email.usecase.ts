@@ -320,7 +320,7 @@ export class SendMessageEmail extends SendMessageBase {
 
     const mailData: IEmailOptions = createMailData(
       {
-        // @ts-ignore
+        // @ts-expect-error
         to: email,
         subject,
         html: (bridgeOutputs as EmailOutput)?.body || html,

@@ -1,4 +1,4 @@
-import { ADDRESS_TYPES } from '@novu/stateless';
+import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { RocketChatProvider } from './rocket-chat.provider';
@@ -20,11 +20,11 @@ test('should trigger rocket-chat library correctly', async () => {
 
   await provider.sendMessage({
     channelData: {
-      address: {
+      endpoint: {
         url: '<your-root-url>',
         channel: '<your-channel>',
       },
-      type: ADDRESS_TYPES.WEBHOOK,
+      type: ENDPOINT_TYPES.WEBHOOK,
       identifier: 'test-webhook-identifier',
     },
     content: '<your-chat-message>',
@@ -66,11 +66,11 @@ test('should trigger rocket-chat library correctly with _passthrough', async () 
   await provider.sendMessage(
     {
       channelData: {
-        address: {
+        endpoint: {
           url: '<your-root-url>',
           channel: '<your-channel>',
         },
-        type: ADDRESS_TYPES.WEBHOOK,
+        type: ENDPOINT_TYPES.WEBHOOK,
         identifier: 'test-webhook-identifier',
       },
       content: '<your-chat-message>',

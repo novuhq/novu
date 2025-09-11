@@ -2,6 +2,7 @@ import { NovuError } from './utils/errors';
 
 export type { FiltersCountResponse, ListNotificationsResponse, Notification } from './notifications';
 export type { Preference } from './preferences/preference';
+export type { Schedule } from './preferences/schedule';
 export type { NovuError } from './utils/errors';
 
 declare global {
@@ -198,6 +199,11 @@ export type WeeklySchedule = {
   sunday?: DaySchedule;
 };
 
+export type DefaultSchedule = {
+  isEnabled?: boolean;
+  weeklySchedule?: WeeklySchedule;
+};
+
 export type PreferencesResponse = {
   level: PreferenceLevel;
   enabled: boolean;
@@ -240,6 +246,7 @@ export type StandardNovuOptions = {
   apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
+  defaultSchedule?: DefaultSchedule;
 } & (
   | {
       // TODO: Backward compatibility support - remove in future versions (see NV-5801)

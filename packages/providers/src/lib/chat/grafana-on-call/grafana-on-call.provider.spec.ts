@@ -1,4 +1,4 @@
-import { ADDRESS_TYPES } from '@novu/stateless';
+import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { GrafanaOnCallChatProvider } from './grafana-on-call.provider';
@@ -22,10 +22,10 @@ test('should trigger grafana-on-call library correctly', async () => {
   const testContent = 'warning!!';
   const res = await provider.sendMessage({
     channelData: {
-      address: {
+      endpoint: {
         url: testWebhookUrl,
       },
-      type: ADDRESS_TYPES.WEBHOOK,
+      type: ENDPOINT_TYPES.WEBHOOK,
       identifier: 'test-webhook-identifier',
     },
     content: testContent,
@@ -67,10 +67,10 @@ test('should trigger grafana-on-call library correctly with _passthrough', async
   const res = await provider.sendMessage(
     {
       channelData: {
-        address: {
+        endpoint: {
           url: testWebhookUrl,
         },
-        type: ADDRESS_TYPES.WEBHOOK,
+        type: ENDPOINT_TYPES.WEBHOOK,
         identifier: 'test-webhook-identifier',
       },
       content: testContent,

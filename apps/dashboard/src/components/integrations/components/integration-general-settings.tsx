@@ -138,23 +138,25 @@ export function GeneralSettings({
         )}
       />
 
-      <Separator className="mt-2" />
-
       {!isDemo && isInboundWebhooksEnabled && configurations && configurations.length > 0 && (
-        <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-          {configurations.map((group) => (
-            <ConfigurationGroup
-              integrationId={integrationId}
-              key={group.groupType}
-              group={group}
-              control={control}
-              isReadOnly={isReadOnly}
-              provider={provider}
-              formData={formData}
-              onAutoConfigureSuccess={onAutoConfigureSuccess}
-            />
-          ))}
-        </Protect>
+        <>
+          <Separator className="mt-2" />
+
+          <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+            {configurations.map((group) => (
+              <ConfigurationGroup
+                integrationId={integrationId}
+                key={group.groupType}
+                group={group}
+                control={control}
+                isReadOnly={isReadOnly}
+                provider={provider}
+                formData={formData}
+                onAutoConfigureSuccess={onAutoConfigureSuccess}
+              />
+            ))}
+          </Protect>
+        </>
       )}
     </div>
   );

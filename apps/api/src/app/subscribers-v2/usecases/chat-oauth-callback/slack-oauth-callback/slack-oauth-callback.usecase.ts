@@ -11,12 +11,12 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ADDRESS_TYPES, ChatProviderIdEnum, makeResourceKey, RESOURCE } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES, makeResourceKey, RESOURCE } from '@novu/shared';
 import axios from 'axios';
-import { CreateChannelAddressCommand } from '../../../../channel-addresses/usecases/create-channel-address/create-channel-address.command';
-import { CreateChannelAddress } from '../../../../channel-addresses/usecases/create-channel-address/create-channel-address.usecase';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
+import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import {
   GenerateSlackOauthUrl,
   StateData,
@@ -34,7 +34,7 @@ export class SlackOauthCallback {
     private environmentRepository: EnvironmentRepository,
     private getNovuProviderCredentials: GetNovuProviderCredentials,
     private createChannelConnection: CreateChannelConnection,
-    private createChannelAddress: CreateChannelAddress
+    private createChannelEndpoint: CreateChannelEndpoint
   ) {}
 
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -60,15 +60,15 @@ export class SlackOauthCallback {
       })
     );
 
-    await this.createChannelAddress.execute(
-      CreateChannelAddressCommand.create({
+    await this.createChannelEndpoint.execute(
+      CreateChannelEndpointCommand.create({
         organizationId: stateData.organizationId,
         environmentId: stateData.environmentId,
         integrationIdentifier: integration.identifier,
         connectionIdentifier: channelConnection.identifier,
         resource: makeResourceKey(RESOURCE.SUBSCRIBER, stateData.subscriberId),
-        type: ADDRESS_TYPES.SLACK_USER,
-        address: {
+        type: ENDPOINT_TYPES.SLACK_USER,
+        endpoint: {
           userId: authData.authed_user.id,
         },
       })

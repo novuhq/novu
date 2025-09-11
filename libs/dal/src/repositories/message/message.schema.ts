@@ -129,11 +129,15 @@ const messageSchema = new Schema<MessageDBModel>(
       type: [
         {
           _id: false,
+          identifier: {
+            type: Schema.Types.String,
+            required: true,
+          },
           type: {
             type: Schema.Types.String,
             required: true,
           },
-          address: {
+          endpoint: {
             type: Schema.Types.Mixed,
             required: true,
           },

@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import {
-  ADDRESS_TYPES,
   ChannelTypeEnum,
+  ENDPOINT_TYPES,
   IChatOptions,
   IChatProvider,
   ISendMessageSuccessResponse,
@@ -33,13 +33,13 @@ export class GrafanaOnCallChatProvider extends BaseProvider implements IChatProv
     options: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    if (!isChannelDataOfType(options.channelData, ADDRESS_TYPES.WEBHOOK)) {
+    if (!isChannelDataOfType(options.channelData, ENDPOINT_TYPES.WEBHOOK)) {
       throw new Error('Invalid channel data for GrafanaOnCall provider');
     }
 
-    const { address } = options.channelData;
+    const { endpoint } = options.channelData;
 
-    const url = new URL(address.url);
+    const url = new URL(endpoint.url);
     const data = this.transform(bridgeProviderData, {
       alert_uid: this.config.alertUid,
       title: this.config.title,

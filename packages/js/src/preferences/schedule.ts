@@ -5,7 +5,7 @@ import { Result, WeeklySchedule } from '../types';
 import { updateSchedule } from './helpers';
 import { UpdateScheduleArgs } from './types';
 
-type ScheduleLike = Pick<Schedule, 'isEnabled' | 'weeklySchedule'>;
+export type ScheduleLike = Partial<Pick<Schedule, 'isEnabled' | 'weeklySchedule'>>;
 
 export class Schedule {
   #emitter: NovuEventEmitter;
@@ -39,12 +39,22 @@ export class Schedule {
   }
 
   async update(args: UpdateScheduleArgs): Result<Schedule> {
+    const hasWeeklySchedule = !!args.weeklySchedule || !!this.weeklySchedule;
+
     return updateSchedule({
       emitter: this.#emitter,
       apiService: this.#apiService,
       cache: this.#cache,
       useCache: this.#useCache,
-      args,
+      args: {
+        isEnabled: args.isEnabled ?? this.isEnabled,
+        ...(hasWeeklySchedule && {
+          weeklySchedule: {
+            ...this.weeklySchedule,
+            ...args.weeklySchedule,
+          },
+        }),
+      },
     });
   }
 }

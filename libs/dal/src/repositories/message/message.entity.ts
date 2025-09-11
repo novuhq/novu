@@ -1,6 +1,6 @@
 import {
-  ChannelAddressByType,
-  ChannelAddressType,
+  ChannelEndpointByType,
+  ChannelEndpointType,
   ChannelTypeEnum,
   IActor,
   IMessageCTA,
@@ -13,10 +13,10 @@ import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 import { SubscriberEntity } from '../subscriber';
 
-export type MessageChannelData<T extends ChannelAddressType = ChannelAddressType> = {
+export type MessageChannelData<T extends ChannelEndpointType = ChannelEndpointType> = {
   identifier: string;
   type: T;
-  address: ChannelAddressByType[T];
+  endpoint: ChannelEndpointByType[T];
   token?: string;
 };
 

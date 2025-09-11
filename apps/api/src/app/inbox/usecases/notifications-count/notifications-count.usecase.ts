@@ -20,6 +20,12 @@ export class NotificationsCount {
         environmentId,
         subscriberId,
         ...command,
+        subscriber: {
+          _id: command?.subscriber?._id,
+          _organizationId: command?.subscriber?._organizationId,
+          _environmentId: command?.subscriber?._environmentId,
+          subscriberId: command?.subscriber?.subscriberId,
+        },
       }),
   })
   async execute(

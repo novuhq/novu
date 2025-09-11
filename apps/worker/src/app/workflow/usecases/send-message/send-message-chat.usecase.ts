@@ -13,12 +13,12 @@ import {
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
-  validateAddressForType,
+  validateEndpointForType,
 } from '@novu/application-generic';
 import {
-  ChannelAddressEntity,
-  ChannelAddressRepository,
   ChannelConnectionRepository,
+  ChannelEndpointEntity,
+  ChannelEndpointRepository,
   IntegrationEntity,
   MessageEntity,
   MessageRepository,
@@ -27,11 +27,11 @@ import {
 } from '@novu/dal';
 import { ChatOutput } from '@novu/framework/internal';
 import {
-  ADDRESS_TYPES,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatus,
+  ENDPOINT_TYPES,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IChannelSettings,
@@ -82,7 +82,7 @@ export class SendMessageChat extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     protected moduleRef: ModuleRef,
     private sendWebhookMessage: SendWebhookMessage,
-    private channelAddressRepository: ChannelAddressRepository,
+    private channelEndpointRepository: ChannelEndpointRepository,
     private channelConnectionRepository: ChannelConnectionRepository
   ) {
     super(
@@ -183,7 +183,7 @@ export class SendMessageChat extends SendMessageBase {
    * Resolves all channels (both new and legacy) into a unified format for processing
    */
   private async resolveAllChannels(command: SendMessageChannelCommand): Promise<UnifiedChannel[]> {
-    const integrationChannelGroups = await this.getChannelAddressGroups(command);
+    const integrationChannelGroups = await this.getChannelEndpointGroups(command);
     const legacyChatChannels = this.getLegacyChatChannels(command);
 
     const unifiedChannels: UnifiedChannel[] = [];
@@ -311,7 +311,7 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   /**
-   * Sends one message to multiple addresses per integration (fanout)
+   * Sends one message to multiple endpoints per integration (fanout)
    */
   private async sendChannelMessage(
     command: SendMessageChannelCommand,
@@ -363,7 +363,7 @@ export class SendMessageChat extends SendMessageBase {
 
   /**
    * @deprecated - this method handles sending to legacy chat channels
-   * sends 1 message per integration (no fanout to multiple addresses)
+   * sends 1 message per integration (no fanout to multiple endpoints)
    */
   private async sendChannelMessageLegacy(
     command: SendMessageChannelCommand,
@@ -435,8 +435,8 @@ export class SendMessageChat extends SendMessageBase {
     if (chatWebhookUrl) {
       return {
         identifier: '-',
-        type: ADDRESS_TYPES.WEBHOOK,
-        address: {
+        type: ENDPOINT_TYPES.WEBHOOK,
+        endpoint: {
           url: chatWebhookUrl,
           ...(channelSpecification && { channel: channelSpecification }),
         },
@@ -446,29 +446,29 @@ export class SendMessageChat extends SendMessageBase {
     if (phoneNumber) {
       return {
         identifier: '-',
-        type: ADDRESS_TYPES.PHONE,
-        address: { phoneNumber },
+        type: ENDPOINT_TYPES.PHONE,
+        endpoint: { phoneNumber },
       };
     }
 
     return null;
   }
 
-  private async getChannelAddressGroups(command: SendMessageChannelCommand): Promise<IntegrationChannelData[]> {
-    const allChatAddresses = await this.channelAddressRepository.find({
+  private async getChannelEndpointGroups(command: SendMessageChannelCommand): Promise<IntegrationChannelData[]> {
+    const allChatEndpoints = await this.channelEndpointRepository.find({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       resource: makeResourceKey(RESOURCE.SUBSCRIBER, command.subscriberId),
       channel: ChannelTypeEnum.CHAT,
     });
 
-    if (allChatAddresses.length === 0) {
+    if (allChatEndpoints.length === 0) {
       return [];
     }
 
     // Fetch all needed connections
     const allConnectionIdentifiers = [
-      ...new Set(allChatAddresses.map((addr) => addr.connectionIdentifier).filter(Boolean)),
+      ...new Set(allChatEndpoints.map((endpoint) => endpoint.connectionIdentifier).filter(Boolean)),
     ];
 
     const allConnections = await this.channelConnectionRepository.find({
@@ -480,39 +480,39 @@ export class SendMessageChat extends SendMessageBase {
     // Build connection map for O(1) lookups
     const connectionMap = new Map(allConnections.map((conn) => [conn.identifier, conn]));
 
-    // Group addresses by integration
-    const integrationGroups = this.groupAddressesByIntegration(allChatAddresses);
+    // Group endpoints by integration
+    const integrationGroups = this.groupEndpointsByIntegration(allChatEndpoints);
 
-    return Object.entries(integrationGroups).map(([integrationIdentifier, addresses]) => {
-      const channelData: ChannelData[] = addresses.map((addr) => {
-        const connection = addr.connectionIdentifier ? connectionMap.get(addr.connectionIdentifier) : undefined;
+    return Object.entries(integrationGroups).map(([integrationIdentifier, endpoints]) => {
+      const channelData: ChannelData[] = endpoints.map((endpoint) => {
+        const connection = endpoint.connectionIdentifier ? connectionMap.get(endpoint.connectionIdentifier) : undefined;
         const hasToken = connection?.auth && 'accessToken' in connection.auth;
 
         return {
-          identifier: addr.identifier,
-          type: addr.type,
-          address: addr.address,
+          identifier: endpoint.identifier,
+          type: endpoint.type,
+          endpoint: endpoint.endpoint,
           ...(hasToken && { token: connection.auth.accessToken || '' }),
         } as ChannelData;
       });
 
       return {
         integrationIdentifier,
-        providerId: addresses[0].providerId,
+        providerId: endpoints[0].providerId,
         channelData,
       };
     });
   }
 
-  private groupAddressesByIntegration(addresses: ChannelAddressEntity[]): Record<string, ChannelAddressEntity[]> {
-    return addresses.reduce(
-      (groups, address) => {
-        const key = address.integrationIdentifier;
+  private groupEndpointsByIntegration(endpoints: ChannelEndpointEntity[]): Record<string, ChannelEndpointEntity[]> {
+    return endpoints.reduce(
+      (groups, endpoint) => {
+        const key = endpoint.integrationIdentifier;
         if (!groups[key]) groups[key] = [];
-        groups[key].push(address);
+        groups[key].push(endpoint);
         return groups;
       },
-      {} as Record<string, ChannelAddressEntity[]>
+      {} as Record<string, ChannelEndpointEntity[]>
     );
   }
 
@@ -593,8 +593,8 @@ export class SendMessageChat extends SendMessageBase {
       integration.providerId
     );
 
-    // Apply channel data overrides if present for this specific address
-    const overriddenChannelData = this.applyAddressSpecificOverrides(channelData, combinedOverrides);
+    // Apply channel data overrides if present for this specific endpoint
+    const overriddenChannelData = this.applyEndpointSpecificOverrides(channelData, combinedOverrides);
 
     try {
       const result = await chatHandler.send({
@@ -771,7 +771,7 @@ export class SendMessageChat extends SendMessageBase {
     };
   }
 
-  private applyAddressSpecificOverrides<T extends ChannelData>(
+  private applyEndpointSpecificOverrides<T extends ChannelData>(
     originalChannelData: T,
     combinedOverrides: Record<string, unknown>
   ): T {
@@ -780,23 +780,23 @@ export class SendMessageChat extends SendMessageBase {
     // Early returns for invalid cases
     if (!identifier) return originalChannelData;
 
-    const addressOverrides = combinedOverrides[identifier];
-    if (!addressOverrides || typeof addressOverrides !== 'object') {
+    const endpointOverrides = combinedOverrides[identifier];
+    if (!endpointOverrides || typeof endpointOverrides !== 'object') {
       return originalChannelData;
     }
 
-    const newAddress = (addressOverrides as Record<string, unknown>).address;
-    if (!newAddress || typeof newAddress !== 'object') {
+    const newEndpoint = (endpointOverrides as Record<string, unknown>).endpoint;
+    if (!newEndpoint || typeof newEndpoint !== 'object') {
       return originalChannelData;
     }
 
-    // Validate the new address against the channel type schema
+    // Validate the new endpoint against the channel type schema
     try {
-      validateAddressForType(type, newAddress as Record<string, unknown>);
+      validateEndpointForType(type, newEndpoint as Record<string, unknown>);
 
       return {
         ...originalChannelData,
-        address: newAddress as T['address'],
+        endpoint: newEndpoint as T['endpoint'],
       };
     } catch (_error) {
       // ignoring the override since it's invalid
@@ -830,7 +830,7 @@ export class SendMessageChat extends SendMessageBase {
         object: messageWebhookMapper(message, command.subscriberId, {
           providerResponseId: result.id,
           // for backwards compatibility
-          webhookUrl: channelData.type === ADDRESS_TYPES.WEBHOOK ? channelData.address.url : undefined,
+          webhookUrl: channelData.type === ENDPOINT_TYPES.WEBHOOK ? channelData.endpoint.url : undefined,
           channelData: redactedChannelData,
         }),
       },

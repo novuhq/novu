@@ -1,4 +1,4 @@
-import { ADDRESS_TYPES } from '@novu/stateless';
+import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect, test, vi } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { GetstreamChatProvider } from './getstream.provider';
@@ -15,10 +15,10 @@ test('should trigger getstream correctly', async () => {
 
   await provider.sendMessage({
     channelData: {
-      address: {
+      endpoint: {
         url: 'webhookUrl',
       },
-      type: ADDRESS_TYPES.WEBHOOK,
+      type: ENDPOINT_TYPES.WEBHOOK,
       identifier: 'test-webhook-identifier',
     },
     content: 'chat message',
@@ -27,10 +27,10 @@ test('should trigger getstream correctly', async () => {
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     channelData: {
-      address: {
+      endpoint: {
         url: 'webhookUrl',
       },
-      type: ADDRESS_TYPES.WEBHOOK,
+      type: ENDPOINT_TYPES.WEBHOOK,
       identifier: 'test-webhook-identifier',
     },
     content: 'chat message',
@@ -51,10 +51,10 @@ test('should trigger getstream correctly with _passthrough', async () => {
   await provider.sendMessage(
     {
       channelData: {
-        address: {
+        endpoint: {
           url: 'https://www.google.com/',
         },
-        type: ADDRESS_TYPES.WEBHOOK,
+        type: ENDPOINT_TYPES.WEBHOOK,
         identifier: 'test-webhook-identifier',
       },
       content: 'chat message',

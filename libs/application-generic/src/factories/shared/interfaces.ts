@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, IConfigurations } from '@novu/shared';
-import { IEmailEventBody, ISMSEventBody } from '@novu/stateless';
+import { ChannelProvider, IEmailEventBody, ISMSEventBody } from '@novu/stateless';
 
 export interface IHandler {
   inboundWebhookEnabled(): boolean;
@@ -8,7 +8,15 @@ export interface IHandler {
 
   parseEventBody: (body: unknown | unknown[], identifier: string) => IEmailEventBody | ISMSEventBody | undefined;
 
-  verifySignature: (body: unknown, headers: Record<string, string>) => { success: boolean; message?: string };
+  verifySignature: ({
+    body,
+    headers,
+    rawBody,
+  }: {
+    body: Record<string, unknown>;
+    headers: Record<string, string>;
+    rawBody: unknown;
+  }) => { success: boolean; message?: string };
 
   autoConfigureInboundWebhook: (configurations: { webhookUrl: string }) => Promise<{
     success: boolean;
@@ -17,20 +25,7 @@ export interface IHandler {
   }>;
 }
 
-interface IProviderWithWebhookMethods {
-  getMessageId?: (body: unknown | unknown[]) => string[];
-  parseEventBody?: (body: unknown | unknown[], identifier: string) => IEmailEventBody | ISMSEventBody | undefined;
-  verifySignature?: (body: unknown, headers: Record<string, string>) => { success: boolean; message?: string };
-  autoConfigureInboundWebhook?: (configurations: { webhookUrl: string }) => Promise<{
-    success: boolean;
-    message?: string;
-    configurations?: IConfigurations;
-  }>;
-}
-
-export abstract class BaseHandler<T extends IProviderWithWebhookMethods = IProviderWithWebhookMethods>
-  implements IHandler
-{
+export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> implements IHandler {
   protected provider: T;
   protected providerId: string;
   protected channelType: string;
@@ -65,16 +60,26 @@ export abstract class BaseHandler<T extends IProviderWithWebhookMethods = IProvi
       return undefined;
     }
 
-    return this.provider.parseEventBody(body, identifier);
+    const result = this.provider.parseEventBody(body, identifier);
+
+    return result && typeof result === 'object' ? (result as IEmailEventBody | ISMSEventBody) : undefined;
   }
 
-  public verifySignature(body: unknown, headers: Record<string, string>): { success: boolean; message?: string } {
+  public verifySignature({
+    rawBody,
+    headers,
+    body,
+  }: {
+    rawBody: unknown;
+    headers?: Record<string, string>;
+    body?: Record<string, unknown>;
+  }): { success: boolean; message?: string } {
     if (!this.provider?.verifySignature) {
       // in case verifySignature is not implemented, we return true
-      return { success: true, message: 'Not implemented by provider' };
+      return { success: true, message: 'A support of signature verification is not implemented by provider' };
     }
 
-    return this.provider.verifySignature(body, headers);
+    return this.provider.verifySignature({ rawBody, headers, body });
   }
 
   public async autoConfigureInboundWebhook(configurations: { webhookUrl: string }): Promise<{
@@ -83,7 +88,10 @@ export abstract class BaseHandler<T extends IProviderWithWebhookMethods = IProvi
     configurations?: IConfigurations;
   }> {
     if (!this.provider?.autoConfigureInboundWebhook) {
-      return Promise.resolve({ success: false, message: 'Not implemented by provider' });
+      return Promise.resolve({
+        success: false,
+        message: 'A support of auto-configuration of inbound webhook is not implemented by provider',
+      });
     }
 
     return this.provider.autoConfigureInboundWebhook(configurations);
