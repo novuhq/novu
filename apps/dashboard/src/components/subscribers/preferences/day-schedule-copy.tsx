@@ -32,7 +32,6 @@ export const DayScheduleCopy = ({ day, schedule, disabled, onScheduleUpdate }: D
   }, [day]);
   const onOpenChange = useCallback(
     (isOpen: boolean) => {
-      console.log('isOpen', isOpen);
       if (isOpen) {
         // close other copy times to dropdowns
         document.dispatchEvent(new CustomEvent(NOVU_EVENT_CLOSE_DAY_SCHEDULE_COPY_COMPONENT, { detail: { id } }));
