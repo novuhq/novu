@@ -163,7 +163,15 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     return [(body as any).id];
   }
 
-  verifySignature(rawBody: any, headers: Record<string, string>): { success: boolean; message?: string } {
+  verifySignature({
+    rawBody,
+    headers = {},
+    body: _body,
+  }: {
+    rawBody: any;
+    headers?: Record<string, string>;
+    body?: Record<string, unknown>;
+  }): { success: boolean; message?: string } {
     try {
       const signature = this.getHeaderValue(headers, 'x-twilio-email-event-webhook-signature');
       const timestamp = this.getHeaderValue(headers, 'x-twilio-email-event-webhook-timestamp');

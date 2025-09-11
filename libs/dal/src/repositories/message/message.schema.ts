@@ -125,6 +125,30 @@ const messageSchema = new Schema<MessageDBModel>(
       enum: SeverityLevelEnum,
       default: SeverityLevelEnum.NONE,
     },
+    channelData: {
+      type: [
+        {
+          _id: false,
+          identifier: {
+            type: Schema.Types.String,
+            required: true,
+          },
+          type: {
+            type: Schema.Types.String,
+            required: true,
+          },
+          endpoint: {
+            type: Schema.Types.Mixed,
+            required: true,
+          },
+          token: {
+            type: Schema.Types.String,
+            required: false,
+          },
+        },
+      ],
+      default: undefined,
+    },
   },
   schemaOptions
 );

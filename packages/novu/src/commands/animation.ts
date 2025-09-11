@@ -17,9 +17,9 @@ const consoleFunctions = {
 };
 
 for (const func in consoleFunctions) {
-  console[func] = () => {
+  console[func] = (...args: any[]) => {
     stopLastAnimation();
-    consoleFunctions[func].apply(console, arguments);
+    consoleFunctions[func].apply(console, args);
   };
 }
 

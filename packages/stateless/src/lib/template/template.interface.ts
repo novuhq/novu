@@ -1,3 +1,5 @@
+import { ChannelData } from '../provider/channel-data.type';
+
 export interface ITemplate {
   id: string;
 
@@ -30,14 +32,22 @@ export enum ChannelTypeEnum {
 
 export interface ITriggerPayload {
   $email?: string;
+  /**
+   * @deprecated
+   */
   $phone?: string;
   $user_id: string;
   $theme_id?: string;
+  /**
+   * @deprecated use $channelData instead
+   */
   $webhookUrl?: string;
+  $channelData?: ChannelData;
   $attachments?: IAttachmentOptions[];
   [key: string]:
     | string
     | string[]
+    | ChannelData
     | boolean
     | number
     | undefined
