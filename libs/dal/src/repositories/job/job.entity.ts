@@ -16,8 +16,6 @@ import type { OrganizationId } from '../organization';
 
 export { JobStatusEnum };
 
-
-
 export type DeliveryLifecycleState = {
   status?: DeliveryLifecycleStatus;
   detail?: DeliveryLifecycleDetail;
@@ -55,6 +53,10 @@ export class JobEntity {
   actorId?: string;
   stepOutput?: Record<string, unknown>;
   preferences?: WorkflowPreferences;
+  /**
+   * used to track the number of times a step has been extended to the next available time in the subscriber schedule
+   */
+  scheduleExtensionsCount?: number;
 }
 
 export type JobDBModel = ChangePropsValueType<

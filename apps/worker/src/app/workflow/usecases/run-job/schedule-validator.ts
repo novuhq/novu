@@ -1,5 +1,6 @@
 import { Schedule, TimeRange } from '@novu/shared';
-import { toZonedTime } from 'date-fns-tz';
+import { addDays, isAfter, isBefore, isEqual, set } from 'date-fns';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 const DAYS_OF_WEEK: Array<keyof NonNullable<Schedule['weeklySchedule']>> = [
   'sunday',
@@ -68,7 +69,7 @@ export function isWithinSchedule(schedule?: Schedule, currentTime: Date = new Da
 /**
  * Gets the day of the week as a string key for the weekly schedule
  */
-function getDayOfWeek(date: Date): keyof NonNullable<Schedule['weeklySchedule']> {
+export function getDayOfWeek(date: Date): keyof NonNullable<Schedule['weeklySchedule']> {
   return DAYS_OF_WEEK[date.getUTCDay()];
 }
 
@@ -130,4 +131,113 @@ function timeToMinutes(timeString: string): number {
   }
 
   return totalMinutes;
+}
+
+function isWithinRange(date: Date, start: Date, end: Date) {
+  return (isAfter(date, start) || isEqual(date, start)) && (isBefore(date, end) || isEqual(date, end));
+}
+
+export function calculateNextAvailableTime(schedule?: Schedule, nowUtc = new Date(), timeZone?: string): Date {
+  if (!schedule || !schedule.isEnabled) return nowUtc;
+
+  // "working time" in chosen zone (or UTC if no tz)
+  const nowWorking = timeZone ? toZonedTime(nowUtc, timeZone) : nowUtc;
+
+  // start from yesterday to handle overnight schedules
+  for (let dayOffset = -1; dayOffset <= 7; dayOffset++) {
+    const candidateDay = addDays(nowWorking, dayOffset);
+    const weekday = getDayOfWeek(candidateDay);
+
+    const daySchedule = schedule.weeklySchedule?.[weekday];
+    if (!daySchedule?.isEnabled || !daySchedule?.hours) {
+      continue;
+    }
+
+    for (const { start, end } of daySchedule.hours) {
+      // get hours and minutes
+      const startTime = parseTimeString(start);
+      const endTime = parseTimeString(end);
+
+      const startZoned = timeZone
+        ? set(candidateDay, {
+            hours: startTime.hours,
+            minutes: startTime.minutes,
+            seconds: 0,
+            milliseconds: 0,
+          })
+        : new Date(
+            Date.UTC(
+              candidateDay.getUTCFullYear(),
+              candidateDay.getUTCMonth(),
+              candidateDay.getUTCDate(),
+              startTime.hours,
+              startTime.minutes,
+              0,
+              0
+            )
+          );
+
+      let endZoned = timeZone
+        ? set(candidateDay, {
+            hours: endTime.hours,
+            minutes: endTime.minutes,
+            seconds: 0,
+            milliseconds: 0,
+          })
+        : new Date(
+            Date.UTC(
+              candidateDay.getUTCFullYear(),
+              candidateDay.getUTCMonth(),
+              candidateDay.getUTCDate(),
+              endTime.hours,
+              endTime.minutes,
+              0,
+              0
+            )
+          );
+
+      // handle overnight ranges (if end is before start, push to next day)
+      if (isBefore(endZoned, startZoned)) {
+        endZoned = addDays(endZoned, 1);
+      }
+
+      // if overnight day, and we are within the slot, return current time
+      if (dayOffset <= 0 && isWithinRange(nowWorking, startZoned, endZoned)) {
+        return nowUtc;
+      }
+
+      // if next day after current day, or start is after current time, return start time
+      if (dayOffset > 0 || isAfter(startZoned, nowWorking)) {
+        return timeZone
+          ? fromZonedTime(startZoned, timeZone)
+          : new Date(
+              Date.UTC(
+                startZoned.getUTCFullYear(),
+                startZoned.getUTCMonth(),
+                startZoned.getUTCDate(),
+                startZoned.getUTCHours(),
+                startZoned.getUTCMinutes(),
+                0,
+                0
+              )
+            );
+      }
+    }
+  }
+
+  return nowUtc;
+}
+
+function parseTimeString(timeStr: string): { hours: number; minutes: number } {
+  const [time, period] = timeStr.split(' ');
+  const [hours, minutes] = time.split(':').map(Number);
+
+  let adjustedHours = hours;
+  if (period === 'PM' && hours !== 12) {
+    adjustedHours += 12;
+  } else if (period === 'AM' && hours === 12) {
+    adjustedHours = 0;
+  }
+
+  return { hours: adjustedHours, minutes };
 }

@@ -70,4 +70,6 @@ export enum DetailEnum {
   DELAY_MISCONFIGURATION = 'Invalid delay configuration',
   DEFER_DURATION_LIMIT_EXCEEDED = 'Defer duration limit exceeded',
   MESSAGE_SEVERITY_OVERRIDDEN = 'Severity for the message was overridden',
+  STEP_EXTENDED_TO_SCHEDULE = 'Step was extended to the next available time in the subscriber schedule',
+  SKIPPED_STEP_MAX_EXTENSIONS_REACHED = 'Step was executed due to maximum number of subscriber schedule extensions reached',
 }

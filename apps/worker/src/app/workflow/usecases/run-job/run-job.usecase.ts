@@ -30,15 +30,17 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import { setUser } from '@sentry/node';
+import { differenceInMilliseconds } from 'date-fns';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
+import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 import { ProcessUnsnoozeJob, ProcessUnsnoozeJobCommand } from '../process-unsnooze-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
 import { SendMessageStatus } from '../send-message/send-message-type.usecase';
 import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
 import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
 import { RunJobCommand } from './run-job.command';
-import { isWithinSchedule } from './schedule-validator';
+import { calculateNextAvailableTime, isWithinSchedule } from './schedule-validator';
 
 const nr = require('newrelic');
 
@@ -60,7 +62,8 @@ export class RunJob {
     private getSubscriberSchedule: GetSubscriberSchedule,
     private logger: PinoLogger,
     private subscriberRepository: SubscriberRepository,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private executeBridgeJob: ExecuteBridgeJob
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -112,9 +115,12 @@ export class RunJob {
     let error: Error | undefined;
 
     try {
-      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
-
-      await this.storageHelperService.getAttachments(job.payload?.attachments);
+      const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
+        defaultValue: false,
+        organization: { _id: job._organizationId },
+        environment: { _id: job._environmentId },
+      });
 
       const notification = await this.notificationRepository.findOne({
         _id: job._notificationId,
@@ -125,33 +131,33 @@ export class RunJob {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
       }
 
-      const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
-        defaultValue: false,
-        organization: { _id: job._organizationId },
-        environment: { _id: job._environmentId },
-      });
+      if (isSubscribersScheduleEnabled && (await this.shouldExtendToSubscriberSchedule(job, notification))) {
+        const isOutsideSubscriberSchedule = await this.isOutsideSubscriberSchedule(job);
+        if (isOutsideSubscriberSchedule) {
+          this.logger.info(
+            {
+              jobId: job._id,
+              subscriberId: job.subscriberId,
+              stepType: job.type,
+            },
+            "The step was extended to the next available time in the subscriber's schedule"
+          );
+
+          const isExtended = await this.extendJobToNextAvailableSchedule(job);
+          if (isExtended) {
+            return;
+          }
+        }
+      }
+
+      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
+
+      await this.storageHelperService.getAttachments(job.payload?.attachments);
 
       if (isSubscribersScheduleEnabled && !this.shouldSkipScheduleCheck(job, notification)) {
-        const schedule = await this.getSubscriberSchedule.execute(
-          GetSubscriberScheduleCommand.create({
-            environmentId: job._environmentId,
-            organizationId: job._organizationId,
-            _subscriberId: job._subscriberId,
-          })
-        );
+        const isOutsideSubscriberSchedule = await this.isOutsideSubscriberSchedule(job);
 
-        const subscriber = await this.subscriberRepository.findOne(
-          {
-            _id: job._subscriberId,
-            _environmentId: job._environmentId,
-            _organizationId: job._organizationId,
-          },
-          'timezone',
-          { readPreference: 'secondaryPreferred' }
-        );
-
-        if (!isWithinSchedule(schedule, new Date(), subscriber?.timezone)) {
+        if (isOutsideSubscriberSchedule) {
           this.logger.info(
             {
               jobId: job._id,
@@ -533,5 +539,147 @@ export class RunJob {
     }
 
     return false;
+  }
+
+  private async isOutsideSubscriberSchedule(job: JobEntity): Promise<boolean> {
+    const schedule = await this.getSubscriberSchedule.execute(
+      GetSubscriberScheduleCommand.create({
+        environmentId: job._environmentId,
+        organizationId: job._organizationId,
+        _subscriberId: job._subscriberId,
+      })
+    );
+
+    const subscriber = await this.subscriberRepository.findOne(
+      {
+        _id: job._subscriberId,
+        _environmentId: job._environmentId,
+        _organizationId: job._organizationId,
+      },
+      'timezone',
+      { readPreference: 'secondaryPreferred' }
+    );
+
+    return !isWithinSchedule(schedule, new Date(), subscriber?.timezone);
+  }
+
+  private async shouldExtendToSubscriberSchedule(job: JobEntity, notification: NotificationEntity): Promise<boolean> {
+    // should only extend to schedule for delay and digest when the workflow is not critical
+    if ((job.type === StepTypeEnum.DELAY || job.type === StepTypeEnum.DIGEST) && !notification.critical) {
+      const bridgeResponse = await this.executeBridgeJob.execute(
+        ExecuteBridgeJobCommand.create({
+          environmentId: job._environmentId,
+          organizationId: job._organizationId,
+          userId: job._userId,
+          identifier: job.identifier,
+          jobId: job._id,
+          job: job,
+          variables: {},
+        })
+      );
+      const extendToSchedule = bridgeResponse?.outputs?.extendToSchedule as boolean | undefined;
+      return extendToSchedule ?? false;
+    }
+
+    return false;
+  }
+
+  private async extendJobToNextAvailableSchedule(job: JobEntity): Promise<boolean> {
+    const MAX_EXTENSIONS = 3; // maximum number of schedule extensions allowed
+    const currentExtensions = job.scheduleExtensionsCount ?? 0;
+
+    if (currentExtensions >= MAX_EXTENSIONS) {
+      this.logger.warn(
+        {
+          jobId: job._id,
+          subscriberId: job.subscriberId,
+          stepType: job.type,
+          extensions: currentExtensions,
+        },
+        'Maximum number of schedule extensions reached, sending the message'
+      );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.SKIPPED_STEP_MAX_EXTENSIONS_REACHED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return false;
+    }
+
+    const schedule = await this.getSubscriberSchedule.execute(
+      GetSubscriberScheduleCommand.create({
+        environmentId: job._environmentId,
+        organizationId: job._organizationId,
+        _subscriberId: job._subscriberId,
+      })
+    );
+
+    const subscriber = await this.subscriberRepository.findOne(
+      {
+        _id: job._subscriberId,
+        _environmentId: job._environmentId,
+        _organizationId: job._organizationId,
+      },
+      'timezone',
+      { readPreference: 'secondaryPreferred' }
+    );
+
+    const nextAvailableTime = calculateNextAvailableTime(schedule, new Date(), subscriber?.timezone);
+    const delayMs = Math.max(0, differenceInMilliseconds(nextAvailableTime, new Date()));
+
+    await this.jobRepository.updateOne(
+      {
+        _id: job._id,
+        _environmentId: job._environmentId,
+      },
+      {
+        $set: {
+          scheduleExtensionsCount: currentExtensions + 1,
+          status: JobStatusEnum.QUEUED,
+        },
+      }
+    );
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.STEP_EXTENDED_TO_SCHEDULE,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          delayMs,
+          nextAvailableTime: nextAvailableTime.toISOString(),
+          scheduleExtensionsCount: currentExtensions + 1,
+          maxExtensions: MAX_EXTENSIONS,
+        }),
+      })
+    );
+
+    // re-queue the job with the new delay
+    await this.addJobUsecase.queueJob(job, delayMs);
+
+    this.logger.info(
+      {
+        jobId: job._id,
+        subscriberId: job.subscriberId,
+        stepType: job.type,
+        delayMs,
+        nextAvailableTime: nextAvailableTime.toISOString(),
+        scheduleExtensionsCount: currentExtensions + 1,
+        maxExtensions: MAX_EXTENSIONS,
+      },
+      'Step was extended to the next available time in the subscriber schedule'
+    );
+
+    return true;
   }
 }

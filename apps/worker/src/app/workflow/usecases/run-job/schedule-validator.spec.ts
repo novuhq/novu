@@ -1,6 +1,6 @@
 import { Schedule } from '@novu/shared';
 import { expect } from 'chai';
-import { isWithinSchedule } from './schedule-validator';
+import { calculateNextAvailableTime, getDayOfWeek, isWithinSchedule } from './schedule-validator';
 
 describe('ScheduleValidator', () => {
   describe('isWithinSchedule', () => {
@@ -226,6 +226,381 @@ describe('ScheduleValidator', () => {
       // Test just after end time
       const mondayAfter = new Date('2024-01-01T13:01:00Z'); // Monday 1:01 PM UTC
       expect(isWithinSchedule(schedule, mondayAfter)).to.be.false;
+    });
+  });
+
+  describe('calculateNextAvailableTime', () => {
+    it('should return current time when no schedule is configured', () => {
+      const currentTime = new Date('2024-01-15T10:00:00.000Z');
+
+      const result = calculateNextAvailableTime(undefined, currentTime);
+
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should return current time when schedule is disabled', () => {
+      const currentTime = new Date('2024-01-15T10:00:00.000Z');
+      const schedule: Schedule = {
+        isEnabled: false,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should return current time when weekly schedule is undefined', () => {
+      const currentTime = new Date('2024-01-15T10:00:00.000Z');
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: undefined,
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should return current time when hours are empty', () => {
+      const currentTime = new Date('2024-01-15T10:00:00.000Z');
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          [getDayOfWeek(currentTime)]: {
+            isEnabled: true,
+            hours: [],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should calculate next available time for Monday schedule - same day', () => {
+      const currentTime = new Date('2024-01-01T08:00:00.000Z'); // Monday 8:00 AM
+      const expectedTime = new Date('2024-01-01T09:00:00.000Z'); // Monday 9:00 AM
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      // Should return 9:00 AM on the same day
+      expect(result.getTime()).to.equal(expectedTime.getTime());
+    });
+
+    it('should calculate next available time for Monday schedule - same day with minutes, seconds and milliseconds', () => {
+      const currentTime = new Date('2024-01-01T08:10:10.100Z'); // Monday 8:10:10.100 AM
+      const expectedTime = new Date('2024-01-01T09:00:00.000Z'); // Monday 9:00 AM
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      // Should return 9:00 AM on the same day
+      expect(result.getTime()).to.equal(expectedTime.getTime());
+    });
+
+    it('should calculate next available time for next day when current time is past schedule', () => {
+      const currentTime = new Date('2024-01-01T18:00:00.000Z'); // Monday 6:00 PM (past 5:00 PM schedule)
+      const expectedTime = new Date('2024-01-02T09:00:00.000Z'); // Tuesday 9:00 AM
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+          tuesday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      expect(result.getTime()).to.equal(expectedTime.getTime());
+    });
+
+    it('should handle overnight schedules correctly - within schedule', () => {
+      const currentTime = new Date('2024-01-01T02:00:00.000Z'); // Monday 2:00 AM
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          sunday: {
+            isEnabled: true,
+            hours: [{ start: '11:00 PM', end: '03:00 AM' }], // Overnight schedule
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      // Should return current time since we're within the overnight schedule
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should handle overnight schedules correctly - before schedule', () => {
+      const currentTime = new Date('2024-01-01T22:00:00.000Z'); // Monday 10:00 PM
+      const expectedTime = new Date('2024-01-07T23:00:00.000Z'); // Sunday 11:00 PM
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          sunday: {
+            isEnabled: true,
+            hours: [{ start: '11:00 PM', end: '03:00 AM' }], // Overnight schedule
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      // Should return the start of the overnight schedule (11:00 PM)
+      expect(result.getTime()).to.equal(expectedTime.getTime());
+    });
+
+    it('should handle overnight schedules correctly - after schedule', () => {
+      const currentTime = new Date('2024-01-01T05:00:00.000Z'); // Monday 5:00 AM (after 3:00 AM end)
+      const expectedTime = new Date('2024-01-01T09:00:00.000Z'); // Monday 9:00 AM
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          sunday: {
+            isEnabled: true,
+            hours: [{ start: '11:00 PM', end: '03:00 AM' }], // Overnight schedule
+          },
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      // Should return 9:00 AM on Monday
+      expect(result.getTime()).to.equal(expectedTime.getTime());
+    });
+
+    it('should handle multiple time ranges in a day', () => {
+      const currentTime = new Date('2024-01-01T14:00:00.000Z'); // Monday 2:00 PM
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [
+              { start: '09:00 AM', end: '12:00 PM' }, // Morning shift
+              { start: '02:00 PM', end: '05:00 PM' }, // Afternoon shift
+            ],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      // Should return 2:00 PM (start of afternoon shift)
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should skip disabled days', () => {
+      const currentTime = new Date('2024-01-01T18:00:00.000Z'); // Monday 6:00 PM UTC
+      const expectedTime = new Date('2024-01-02T09:00:00.000Z'); // Tuesday 9:00 AM
+
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: false,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+          tuesday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      // Should return 9:00 AM on Tuesday (skip disabled Monday)
+      expect(result.getTime()).to.equal(expectedTime.getTime());
+    });
+
+    it('should handle timezone conversion - EST timezone', () => {
+      const currentTime = new Date('2024-01-01T14:00:00.000Z'); // Monday 2:00 PM UTC = 9:00 AM EST
+      const expectedTime = new Date('2024-01-01T15:00:00.000Z'); // Monday 3:00 PM UTC
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '10:00 AM', end: '05:00 PM' }], // EST times
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime, 'America/New_York');
+
+      // Should return 10:00 AM EST = 3:00 PM UTC
+      expect(result.getTime()).to.equal(expectedTime.getTime());
+    });
+
+    it('should handle timezone conversion - PST timezone', () => {
+      const currentTime = new Date('2024-01-01T18:00:00.000Z'); // Monday 6:00 PM UTC = 10:00 AM PST
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }], // PST times
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime, 'America/Los_Angeles');
+
+      // Should return current time since we're within the schedule
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should handle timezone conversion - Europe/London timezone', () => {
+      const currentTime = new Date('2024-01-01T08:00:00.000Z'); // Monday 8:00 AM UTC = 8:00 AM GMT (same in winter)
+      const expectedTime = new Date('2024-01-01T09:00:00.000Z'); // Monday 9:00 AM UTC
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }], // GMT times
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime, 'Europe/London');
+
+      // Should return 9:00 AM GMT = 9:00 AM UTC
+      expect(result.getTime()).to.equal(expectedTime.getTime());
+    });
+
+    it('should handle timezone conversion - Asia/Tokyo timezone', () => {
+      const currentTime = new Date('2024-01-01T00:00:00.000Z'); // Monday 12:00 AM UTC = 9:00 AM JST
+      const expectedTime = new Date('2024-01-01T01:00:00.000Z'); // Monday 1:00 AM UTC
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '10:00 AM', end: '05:00 PM' }], // JST times
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime, 'Asia/Tokyo');
+
+      // Should return 10:00 AM JST = 1:00 AM UTC
+      expect(result.getTime()).to.equal(expectedTime.getTime());
+    });
+
+    it('should handle timezone conversion with overnight schedules', () => {
+      const currentTime = new Date('2024-01-01T16:00:00.000Z'); // Monday 4:00 PM UTC = 11:00 PM JST
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '10:00 PM', end: '02:00 AM' }], // Overnight schedule in JST
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime, 'Asia/Tokyo');
+
+      // Should return current time since we're within the schedule
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should return fallback time when no schedule found in 7 days', () => {
+      const currentTime = new Date('2024-01-01T10:00:00.000Z');
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          // No enabled days
+          monday: { isEnabled: false, hours: [] },
+          tuesday: { isEnabled: false, hours: [] },
+          wednesday: { isEnabled: false, hours: [] },
+          thursday: { isEnabled: false, hours: [] },
+          friday: { isEnabled: false, hours: [] },
+          saturday: { isEnabled: false, hours: [] },
+          sunday: { isEnabled: false, hours: [] },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should handle edge case - exactly at schedule start time', () => {
+      const currentTime = new Date('2024-01-01T09:00:00.000Z'); // Monday exactly 9:00 AM UTC
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      // Should return current time since we're exactly at the start
+      expect(result.getTime()).to.equal(currentTime.getTime());
+    });
+
+    it('should handle edge case - exactly at schedule end time', () => {
+      const currentTime = new Date('2024-01-01T17:00:00.000Z'); // Monday exactly 5:00 PM UTC
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+          tuesday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+        },
+      };
+
+      const result = calculateNextAvailableTime(schedule, currentTime);
+
+      // Should return next day's start time since we're exactly at the end
+      expect(result.getTime()).to.equal(currentTime.getTime());
     });
   });
 });
