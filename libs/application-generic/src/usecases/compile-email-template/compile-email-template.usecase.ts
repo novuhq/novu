@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CommunityOrganizationRepository, IEmailBlock } from '@novu/dal';
+import { merge } from 'es-toolkit/compat';
 import { readFile } from 'fs/promises';
-import { merge } from 'lodash';
 import { VerifyPayloadService } from '../../services';
 import { CompileTemplate, CompileTemplateBase } from '../compile-template';
 import { GetLayoutCommand, GetLayoutUseCase, LayoutDto } from '../get-layout';
