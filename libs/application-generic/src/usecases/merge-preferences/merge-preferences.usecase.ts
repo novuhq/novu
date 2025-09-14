@@ -12,11 +12,7 @@ import { MergePreferencesCommand } from './merge-preferences.command';
  */
 async function mergePreferencesWithYielding(preferencesList: any[]): Promise<any> {
   // Always start with default preferences structure
-  const defaultBase = {
-    preferences: DEFAULT_WORKFLOW_PREFERENCES,
-    schedule: null,
-    type: null,
-  };
+  const defaultBase = {};
 
   if (preferencesList.length === 0) {
     return defaultBase;
