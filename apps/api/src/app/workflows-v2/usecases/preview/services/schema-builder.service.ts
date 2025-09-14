@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JsonSchemaFormatEnum, JsonSchemaTypeEnum, NotificationTemplateEntity } from '@novu/dal';
 
-import _ from 'lodash';
+import { merge } from 'es-toolkit';
 import { JSONSchemaDto } from '../../../../shared/dtos/json-schema.dto';
 import { buildVariablesSchema } from '../../../../shared/utils/create-schema';
 import { PreviewPayloadDto } from '../../../dtos';
@@ -19,7 +19,7 @@ export class SchemaBuilderService {
       return variables;
     }
 
-    return _.merge(variables, { properties: { payload: payloadSchema } });
+    return merge(variables, { properties: { payload: payloadSchema } });
   }
 
   async buildPreviewPayloadSchema(

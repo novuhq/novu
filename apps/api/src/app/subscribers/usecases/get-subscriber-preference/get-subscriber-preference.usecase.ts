@@ -7,8 +7,8 @@ import {
   InstrumentUsecase,
   MergePreferences,
   MergePreferencesCommand,
-  mapTemplateConfiguration,
   overridePreferences,
+  PinoLogger,
   PreferenceSet,
 } from '@novu/application-generic';
 import {
@@ -23,6 +23,7 @@ import {
   IPreferenceChannels,
   ISubscriberPreferenceResponse,
   PreferencesTypeEnum,
+  SeverityLevelEnum,
   StepTypeEnum,
   WorkflowCriticalityEnum,
 } from '@novu/shared';
@@ -34,7 +35,8 @@ export class GetSubscriberPreference {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private preferencesRepository: PreferencesRepository
+    private preferencesRepository: PreferencesRepository,
+    protected logger: PinoLogger
   ) {}
 
   @InstrumentUsecase()
@@ -52,6 +54,8 @@ export class GetSubscriberPreference {
       tags: command.tags,
       severity: command.severity,
     });
+
+    this.logger.info(`Processing preferences for ${workflowList.length} workflows`);
 
     const workflowIds = workflowList.map((wf) => wf._id);
 
@@ -85,6 +89,8 @@ export class GetSubscriberPreference {
       ...workflowUserPreferences,
       ...subscriberWorkflowPreferences,
     ];
+
+    this.logger.info(`Found ${allWorkflowPreferences.length} workflow preferences entries`);
 
     const workflowPreferenceSets = allWorkflowPreferences.reduce<Record<string, PreferenceSet>>((acc, preference) => {
       const workflowId = preference._templateId;
@@ -195,10 +201,15 @@ export class GetSubscriberPreference {
               enabled: true,
               overrides,
             },
-            template: mapTemplateConfiguration({
-              ...workflow,
-              critical: merged.preferences.all.readOnly,
-            }),
+            template: {
+              _id: workflow._id,
+              name: workflow.name,
+              tags: workflow.tags ?? [],
+              critical: merged.preferences.all.readOnly ?? true,
+              severity: workflow.severity ?? SeverityLevelEnum.NONE,
+              updatedAt: workflow.updatedAt,
+              createdAt: workflow.createdAt,
+            },
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           };
         })

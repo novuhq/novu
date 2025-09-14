@@ -1,6 +1,8 @@
+/** biome-ignore-all lint/suspicious/noImplicitAnyLet: In order to merge the preferences */
+/** biome-ignore-all lint/complexity/noStaticOnlyClass: In order to merge the preferences */
+/** biome-ignore-all lint/suspicious/noExplicitAny: In order to merge the preferences */
 import { PreferencesTypeEnum } from '@novu/shared';
-import merge from 'lodash/merge';
-
+import { merge } from 'es-toolkit';
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
 
@@ -37,9 +39,7 @@ export class MergePreferences {
       ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
     ];
 
-    const mergedPreferences = merge({}, ...preferencesList);
-
-    // Build the source object
+    // Build source object
     const source = {
       [PreferencesTypeEnum.WORKFLOW_RESOURCE]: command.workflowResourcePreference?.preferences || null,
       [PreferencesTypeEnum.USER_WORKFLOW]: command.workflowUserPreference?.preferences || null,
@@ -47,10 +47,27 @@ export class MergePreferences {
       [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: command.subscriberWorkflowPreference?.preferences || null,
     };
 
+    // Manual merge for better performance - we only have max 4 items
+    let resultPreferences: any = {};
+    let resultSchedule: any = {};
+    let resultType;
+
+    for (const pref of preferencesList) {
+      if (pref.preferences) {
+        resultPreferences = merge(resultPreferences, pref.preferences);
+      }
+      if (pref.schedule) {
+        resultSchedule = merge(resultSchedule, pref.schedule);
+      }
+      if (pref.type) {
+        resultType = pref.type;
+      }
+    }
+
     return {
-      preferences: mergedPreferences.preferences,
-      schedule: mergedPreferences.schedule,
-      type: mergedPreferences.type,
+      preferences: resultPreferences,
+      schedule: resultSchedule,
+      type: resultType,
       source,
     };
   }

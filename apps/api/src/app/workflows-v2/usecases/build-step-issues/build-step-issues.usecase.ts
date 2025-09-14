@@ -18,9 +18,9 @@ import {
   StepTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { merge } from 'es-toolkit/compat';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import isEmpty from 'lodash/isEmpty';
-import merge from 'lodash/merge';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import {
   QueryIssueTypeEnum,

@@ -42,7 +42,7 @@ import {
 import { addBreadcrumb } from '@sentry/node';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { merge } from 'lodash';
+import { merge } from 'es-toolkit';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
@@ -216,7 +216,7 @@ export class ParseEventRequest {
         })
       );
       // eslint-disable-next-line no-param-reassign
-      command.payload = merge({}, defaultPayload, command.payload);
+      command.payload = merge(defaultPayload, command.payload);
 
       const result = await this.dispatchEventToWorkflowQueue({
         requestId,

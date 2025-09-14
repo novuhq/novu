@@ -290,11 +290,17 @@ export function overridePreferences(
   return result;
 }
 
-export const filteredPreference = (preferences: IPreferenceChannels, filterKeys: string[]): IPreferenceChannels =>
-  Object.entries(preferences).reduce(
-    (obj, [key, value]) => (filterKeys.includes(key) ? { ...obj, [key]: value } : obj),
-    {}
-  );
+export const filteredPreference = (preferences: IPreferenceChannels, filterKeys: string[]): IPreferenceChannels => {
+  const result: IPreferenceChannels = {};
+
+  for (const key of filterKeys) {
+    if (key in preferences) {
+      result[key] = preferences[key];
+    }
+  }
+
+  return result;
+};
 
 export function mapTemplateConfiguration(template: NotificationTemplateEntity): ITemplateConfiguration {
   return {

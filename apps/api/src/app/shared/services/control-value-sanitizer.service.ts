@@ -9,8 +9,8 @@ import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal'
 import { ResourceOriginEnum } from '@novu/shared';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
-import _ from 'lodash';
-import get from 'lodash/get';
+import { cloneDeep, merge } from 'es-toolkit';
+import { get, set } from 'es-toolkit/compat';
 import { previewControlValueDefault } from '../../workflows-v2/usecases/preview/preview.constants';
 import { ControlValueProcessingResult, PreviewTemplateData } from '../../workflows-v2/usecases/preview/preview.types';
 import { replaceAll } from '../../workflows-v2/usecases/preview/utils/variable-helpers';
@@ -77,7 +77,7 @@ export class ControlValueSanitizerService {
       sanitizedControls[controlKey] = processedControlValues;
 
       previewTemplateData = {
-        payloadExample: _.merge(previewTemplateData.payloadExample, variablesObject),
+        payloadExample: merge(previewTemplateData.payloadExample, variablesObject),
         controlValues: {
           ...previewTemplateData.controlValues,
           [controlKey]: isObjectMailyJSONContent(processedControlValues)
@@ -120,7 +120,7 @@ export class ControlValueSanitizerService {
     normalizedControlValues: Record<string, unknown>,
     errors: ErrorObject[]
   ): Record<string, unknown> {
-    const fixedValues = _.cloneDeep(normalizedControlValues);
+    const fixedValues = cloneDeep(normalizedControlValues);
 
     for (const error of errors) {
       if (error.keyword === 'additionalProperties') {
@@ -128,8 +128,8 @@ export class ControlValueSanitizerService {
       }
 
       const path = this.getErrorPath(error);
-      const defaultValue = _.get(previewControlValueDefault, path);
-      _.set(fixedValues, path, defaultValue);
+      const defaultValue = get(previewControlValueDefault, path);
+      set(fixedValues, path, defaultValue);
     }
 
     return fixedValues;
