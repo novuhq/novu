@@ -2,7 +2,7 @@
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: In order to merge the preferences */
 /** biome-ignore-all lint/suspicious/noExplicitAny: In order to merge the preferences */
 import { DEFAULT_WORKFLOW_PREFERENCES, PreferencesTypeEnum, Schedule, WorkflowPreferences } from '@novu/shared';
-import { merge } from 'es-toolkit';
+import { merge } from 'es-toolkit/compat';
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
 
@@ -39,7 +39,9 @@ export class MergePreferences {
       ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
     ];
 
-    // Build source object
+    const mergedPreferences = merge({}, ...preferencesList);
+
+    // Build the source object
     const source = {
       [PreferencesTypeEnum.WORKFLOW_RESOURCE]: command.workflowResourcePreference?.preferences || null,
       [PreferencesTypeEnum.USER_WORKFLOW]: command.workflowUserPreference?.preferences || null,
@@ -47,27 +49,10 @@ export class MergePreferences {
       [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: command.subscriberWorkflowPreference?.preferences || null,
     };
 
-    // Start with default preferences to ensure proper fallbacks
-    let resultPreferences: WorkflowPreferences = DEFAULT_WORKFLOW_PREFERENCES;
-    let resultSchedule: Schedule = {} as Schedule;
-    let resultType;
-
-    for (const pref of preferencesList) {
-      if (pref.preferences) {
-        resultPreferences = merge(resultPreferences, pref.preferences);
-      }
-      if (pref.schedule) {
-        resultSchedule = merge(resultSchedule, pref.schedule);
-      }
-      if (pref.type) {
-        resultType = pref.type;
-      }
-    }
-
     return {
-      preferences: resultPreferences,
-      schedule: Object.keys(resultSchedule).length > 0 ? resultSchedule : undefined,
-      type: resultType,
+      preferences: mergedPreferences.preferences,
+      schedule: mergedPreferences.schedule,
+      type: mergedPreferences.type,
       source,
     };
   }
