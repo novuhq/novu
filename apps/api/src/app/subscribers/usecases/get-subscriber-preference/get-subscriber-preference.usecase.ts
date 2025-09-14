@@ -203,7 +203,7 @@ export class GetSubscriberPreference {
             },
             template: mapTemplateConfiguration({
               ...workflow,
-              critical: merged.preferences.all?.readOnly ?? workflow.critical ?? true,
+              critical: merged.preferences.all.readOnly,
             }),
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           };
