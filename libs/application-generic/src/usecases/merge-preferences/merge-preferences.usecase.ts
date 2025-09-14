@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noImplicitAnyLet: In order to merge the preferences */
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: In order to merge the preferences */
 /** biome-ignore-all lint/suspicious/noExplicitAny: In order to merge the preferences */
-import { PreferencesTypeEnum, Schedule, WorkflowPreferences } from '@novu/shared';
+import { DEFAULT_WORKFLOW_PREFERENCES, PreferencesTypeEnum, Schedule, WorkflowPreferences } from '@novu/shared';
 import { merge } from 'es-toolkit';
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
@@ -47,7 +47,8 @@ export class MergePreferences {
       [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: command.subscriberWorkflowPreference?.preferences || null,
     };
 
-    let resultPreferences: WorkflowPreferences = {} as WorkflowPreferences;
+    // Start with default preferences to ensure proper fallbacks
+    let resultPreferences: WorkflowPreferences = DEFAULT_WORKFLOW_PREFERENCES;
     let resultSchedule: Schedule = {} as Schedule;
     let resultType;
 

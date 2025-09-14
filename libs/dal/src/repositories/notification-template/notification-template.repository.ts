@@ -393,7 +393,7 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     const items = await this.MongooseModel.find(requestQuery)
       .populate('steps.template', { type: 1 })
-      .select('_id name tags severity critical updatedAt createdAt steps.active steps.template')
+      .select('_id name tags severity critical updatedAt createdAt steps.active steps.template triggers')
       .lean()
       .limit(500) // protective limit
       .read('secondaryPreferred');

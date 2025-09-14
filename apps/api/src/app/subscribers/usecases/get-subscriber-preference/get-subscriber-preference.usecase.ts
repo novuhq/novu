@@ -205,10 +205,11 @@ export class GetSubscriberPreference {
               _id: workflow._id,
               name: workflow.name,
               tags: workflow.tags ?? [],
-              critical: merged.preferences.all.readOnly ?? true,
+              critical: merged.preferences.all?.readOnly ?? workflow.critical ?? true,
               severity: workflow.severity ?? SeverityLevelEnum.NONE,
               updatedAt: workflow.updatedAt,
               createdAt: workflow.createdAt,
+              triggers: workflow.triggers,
             },
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           };
