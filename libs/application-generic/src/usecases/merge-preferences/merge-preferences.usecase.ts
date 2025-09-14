@@ -1,10 +1,43 @@
 /** biome-ignore-all lint/suspicious/noImplicitAnyLet: In order to merge the preferences */
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: In order to merge the preferences */
 /** biome-ignore-all lint/suspicious/noExplicitAny: In order to merge the preferences */
-import { DEFAULT_WORKFLOW_PREFERENCES, PreferencesTypeEnum, Schedule, WorkflowPreferences } from '@novu/shared';
+import { PreferencesTypeEnum } from '@novu/shared';
 import { merge } from 'es-toolkit/compat';
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
+
+/**
+ * CPU-efficient merge that yields to the event loop when processing many preferences.
+ * This prevents blocking the main thread during intensive merge operations.
+ */
+async function mergePreferencesWithYielding(preferencesList: any[]): Promise<any> {
+  if (preferencesList.length === 0) {
+    return {};
+  }
+
+  if (preferencesList.length === 1) {
+    return preferencesList[0];
+  }
+
+  // For small lists, merge directly without yielding overhead
+  if (preferencesList.length <= 4) {
+    return merge({}, ...preferencesList);
+  }
+
+  // For larger lists, batch merge operations to yield to CPU
+  const batchSize = 2;
+  let result = {};
+
+  for (let i = 0; i < preferencesList.length; i += batchSize) {
+    const batch = preferencesList.slice(i, i + batchSize);
+    const batchResult = merge({}, ...batch);
+    result = merge(result, batchResult);
+
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+
+  return result;
+}
 
 /**
  * Merge preferences for a subscriber.
@@ -22,14 +55,7 @@ import { MergePreferencesCommand } from './merge-preferences.command';
  * If the subscriber has no preferences, the workflow preferences are returned.
  */
 export class MergePreferences {
-  public static execute(command: MergePreferencesCommand): GetPreferencesResponseDto {
-    const workflowPreferences = [command.workflowResourcePreference, command.workflowUserPreference].filter(
-      (preference) => preference !== undefined
-    );
-
-    const subscriberPreferences = [command.subscriberGlobalPreference, command.subscriberWorkflowPreference].filter(
-      (preference) => preference !== undefined
-    );
+  public static async execute(command: MergePreferencesCommand): Promise<GetPreferencesResponseDto> {
 
     const isWorkflowPreferenceReadonly = workflowPreferences.some((preference) => preference.preferences.all?.readOnly);
 
@@ -39,7 +65,7 @@ export class MergePreferences {
       ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
     ];
 
-    const mergedPreferences = merge({}, ...preferencesList);
+    const mergedPreferences = await mergePreferencesWithYielding(preferencesList);
 
     // Build the source object
     const source = {

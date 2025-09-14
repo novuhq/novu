@@ -225,7 +225,7 @@ const testCases: TestCase[] = [
 describe('MergePreferences', () => {
   describe('merging readOnly and subscriberOverrides', () => {
     testCases.forEach(({ types, expectedType, readOnly, comment = '' }) => {
-      it(`should merge preferences for types: ${types.join(', ')} with readOnly: ${readOnly}${comment ? ` (${comment})` : ''}`, () => {
+      it(`should merge preferences for types: ${types.join(', ')} with readOnly: ${readOnly}${comment ? ` (${comment})` : ''}`, async () => {
         const preferenceSet = types.reduce((acc, type, index) => {
           const preference = {
             _id: `${index + 1}`,
@@ -265,7 +265,7 @@ describe('MergePreferences', () => {
 
         const command = MergePreferencesCommand.create(preferenceSet);
 
-        const result = MergePreferences.execute(command);
+        const result = await MergePreferences.execute(command);
 
         const hasSubscriberGlobalPreference = !!preferenceSet.subscriberGlobalPreference;
         const hasSubscriberWorkflowPreference = !!preferenceSet.subscriberWorkflowPreference;

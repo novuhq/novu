@@ -48,7 +48,7 @@ export class GetPreferences {
   async execute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {
     const items = await this.getPreferencesFromDb(command);
 
-    const mergedPreferences = MergePreferences.execute(MergePreferencesCommand.create(items));
+    const mergedPreferences = await MergePreferences.execute(MergePreferencesCommand.create(items));
 
     if (!mergedPreferences.preferences) {
       throw new PreferencesNotFoundException(command);
