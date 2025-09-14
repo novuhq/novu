@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { createMockObjectFromSchema, ResourceOriginEnum, UserSessionData } from '@novu/shared';
-import { isPlainObject, keys, merge, mergeWith, pick } from 'es-toolkit/compat';
+import { isPlainObject, pick } from 'es-toolkit';
+import { keys, merge, mergeWith } from 'es-toolkit/compat';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
 import { mergeCommonObjectKeys } from '../../../util/utils';
