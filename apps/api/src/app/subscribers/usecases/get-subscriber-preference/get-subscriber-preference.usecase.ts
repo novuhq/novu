@@ -171,14 +171,14 @@ export class GetSubscriberPreference {
       });
 
       const chunkResults = chunk
-        .map((workflow) => {
+        .map(async (workflow) => {
           const preferences = workflowPreferenceSets[workflow._id];
 
           if (!preferences) {
             return null;
           }
 
-          const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
+          const merged = await this.mergePreferences(preferences, subscriberGlobalPreference);
 
           const includedChannels = this.getChannels(workflow, includeInactiveChannels);
 
@@ -229,7 +229,7 @@ export class GetSubscriberPreference {
   }
 
   @Instrument()
-  private mergePreferences(preferences: PreferenceSet, subscriberGlobalPreference: PreferencesEntity | null) {
+  private async mergePreferences(preferences: PreferenceSet, subscriberGlobalPreference: PreferencesEntity | null) {
     const mergeCommand = MergePreferencesCommand.create({
       workflowResourcePreference: preferences.workflowResourcePreference,
       workflowUserPreference: preferences.workflowUserPreference,
