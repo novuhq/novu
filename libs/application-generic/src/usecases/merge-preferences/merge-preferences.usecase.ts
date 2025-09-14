@@ -1,5 +1,6 @@
-import { PreferencesTypeEnum } from '@novu/shared';
-import { merge } from 'es-toolkit/compat';
+/** biome-ignore-all lint/complexity/noStaticOnlyClass: needed */
+import { DEFAULT_WORKFLOW_PREFERENCES, PreferencesTypeEnum } from '@novu/shared';
+import { toMerged } from 'es-toolkit';
 
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
@@ -37,7 +38,11 @@ export class MergePreferences {
       ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
     ];
 
-    const mergedPreferences = merge({}, ...preferencesList);
+    const mergedPreferences = preferencesList.reduce((acc, preference) => toMerged(acc, preference), {
+      preferences: DEFAULT_WORKFLOW_PREFERENCES,
+      schedule: undefined,
+      type: undefined,
+    });
 
     // Build the source object
     const source = {
