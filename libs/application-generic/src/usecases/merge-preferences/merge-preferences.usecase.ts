@@ -66,7 +66,7 @@ export class MergePreferences {
 
     return {
       preferences: resultPreferences,
-      schedule: resultSchedule,
+      schedule: Object.keys(resultSchedule).length > 0 ? resultSchedule : undefined,
       type: resultType,
       source,
     };
