@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noImplicitAnyLet: In order to merge the preferences */
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: In order to merge the preferences */
 /** biome-ignore-all lint/suspicious/noExplicitAny: In order to merge the preferences */
-import { PreferencesTypeEnum } from '@novu/shared';
+import { PreferencesTypeEnum, DEFAULT_WORKFLOW_PREFERENCES } from '@novu/shared';
 import { merge } from 'es-toolkit/compat';
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
@@ -11,22 +11,29 @@ import { MergePreferencesCommand } from './merge-preferences.command';
  * This prevents blocking the main thread during intensive merge operations.
  */
 async function mergePreferencesWithYielding(preferencesList: any[]): Promise<any> {
+  // Always start with default preferences structure
+  const defaultBase = {
+    preferences: DEFAULT_WORKFLOW_PREFERENCES,
+    schedule: null,
+    type: null,
+  };
+
   if (preferencesList.length === 0) {
-    return {};
+    return defaultBase;
   }
 
   if (preferencesList.length === 1) {
-    return preferencesList[0];
+    return merge(defaultBase, preferencesList[0]);
   }
 
   // For small lists, merge directly without yielding overhead
   if (preferencesList.length <= 4) {
-    return merge({}, ...preferencesList);
+    return merge(defaultBase, ...preferencesList);
   }
 
   // For larger lists, batch merge operations to yield to CPU
   const batchSize = 2;
-  let result = {};
+  let result = defaultBase;
 
   for (let i = 0; i < preferencesList.length; i += batchSize) {
     const batch = preferencesList.slice(i, i + batchSize);

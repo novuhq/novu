@@ -170,47 +170,48 @@ export class GetSubscriberPreference {
         setImmediate(() => resolve());
       });
 
-      const chunkResults = chunk
-        .map(async (workflow) => {
-          const preferences = workflowPreferenceSets[workflow._id];
+      const chunkPromises = chunk.map(async (workflow) => {
+        const preferences = workflowPreferenceSets[workflow._id];
 
-          if (!preferences) {
-            return null;
-          }
+        if (!preferences) {
+          return null;
+        }
 
-          const merged = await this.mergePreferences(preferences, subscriberGlobalPreference);
+        const merged = await this.mergePreferences(preferences, subscriberGlobalPreference);
 
-          const includedChannels = this.getChannels(workflow, includeInactiveChannels);
+        const includedChannels = this.getChannels(workflow, includeInactiveChannels);
 
-          const initialChannels = filteredPreference(
-            {
-              email: true,
-              sms: true,
-              in_app: true,
-              chat: true,
-              push: true,
-            },
-            includedChannels
-          );
+        const initialChannels = filteredPreference(
+          {
+            email: true,
+            sms: true,
+            in_app: true,
+            chat: true,
+            push: true,
+          },
+          includedChannels
+        );
 
-          const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
+        const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
 
-          return {
-            preference: {
-              channels,
-              enabled: true,
-              overrides,
-            },
-            template: mapTemplateConfiguration({
-              ...workflow,
-              critical: merged.preferences.all.readOnly,
-            }),
-            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-          };
-        })
-        .filter(Boolean);
+        return {
+          preference: {
+            channels,
+            enabled: true,
+            overrides,
+          },
+          template: mapTemplateConfiguration({
+            ...workflow,
+            critical: merged.preferences.all.readOnly,
+          }),
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        };
+      });
 
-      results.push(...chunkResults);
+      const chunkResults = await Promise.all(chunkPromises);
+      const filteredResults = chunkResults.filter(Boolean);
+
+      results.push(...filteredResults);
     }
 
     return results;
