@@ -9,7 +9,7 @@ export interface IProvider {
     rawBody: unknown;
     headers?: Record<string, string>;
     body?: Record<string, unknown>;
-  }) => { success: boolean; message?: string };
+  }) => Promise<{ success: boolean; message?: string }>;
   autoConfigureInboundWebhook?: (configurations: { webhookUrl: string }) => Promise<{
     success: boolean;
     message?: string;
