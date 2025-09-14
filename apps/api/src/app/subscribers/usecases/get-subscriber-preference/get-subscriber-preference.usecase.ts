@@ -26,7 +26,7 @@ import {
   StepTypeEnum,
   WorkflowCriticalityEnum,
 } from '@novu/shared';
-import _ from 'lodash';
+import { chunk } from 'es-toolkit';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 
 @Injectable()
@@ -139,11 +139,10 @@ export class GetSubscriberPreference {
     subscriberGlobalPreference: PreferencesEntity | null,
     includeInactiveChannels: boolean
   ): Promise<(ISubscriberPreferenceResponse | undefined)[]> {
-    // Process workflows in chunks to avoid blocking the event loop
-    const chunkSize = 50;
+    const chunkSize = 30;
     const results: (ISubscriberPreferenceResponse | undefined)[] = [];
 
-    const chunks = _.chunk(workflowList, chunkSize);
+    const chunks = chunk(workflowList, chunkSize);
 
     for (const chunk of chunks) {
       // Use setImmediate to yield to the event loop between chunks
