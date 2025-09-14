@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noImplicitAnyLet: In order to merge the preferences */
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: In order to merge the preferences */
 /** biome-ignore-all lint/suspicious/noExplicitAny: In order to merge the preferences */
-import { PreferencesTypeEnum, DEFAULT_WORKFLOW_PREFERENCES } from '@novu/shared';
+import { DEFAULT_WORKFLOW_PREFERENCES, PreferencesTypeEnum } from '@novu/shared';
 import { merge } from 'es-toolkit/compat';
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
