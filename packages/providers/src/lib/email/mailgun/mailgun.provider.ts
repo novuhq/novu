@@ -214,7 +214,7 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
     }
   }
 
-  verifySignature({
+  async verifySignature({
     rawBody: _rawBody,
     headers: _headers,
     body,
@@ -222,10 +222,10 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
     rawBody: unknown;
     headers?: Record<string, string>;
     body?: Record<string, unknown>;
-  }): {
+  }): Promise<{
     success: boolean;
     message?: string;
-  } {
+  }> {
     try {
       const bodySignature = body.signature as { timestamp: string; token: string; signature: string };
       const timestamp = bodySignature.timestamp;

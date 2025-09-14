@@ -191,7 +191,7 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
     }
   }
 
-  verifySignature({
+  async verifySignature({
     rawBody,
     headers = {},
     body: _body,
@@ -199,7 +199,7 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
     rawBody: any;
     headers?: Record<string, string>;
     body?: Record<string, unknown>;
-  }): { success: boolean; message?: string } {
+  }): Promise<{ success: boolean; message?: string }> {
     try {
       const svixId = this.getHeaderValue(headers, 'svix-id');
       const svixTimestamp = this.getHeaderValue(headers, 'svix-timestamp');
