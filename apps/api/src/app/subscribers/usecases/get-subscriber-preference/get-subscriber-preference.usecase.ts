@@ -23,7 +23,6 @@ import {
   IPreferenceChannels,
   ISubscriberPreferenceResponse,
   PreferencesTypeEnum,
-  StepTypeEnum,
   WorkflowCriticalityEnum,
 } from '@novu/shared';
 import { chunk } from 'es-toolkit';
@@ -188,7 +187,7 @@ export class GetSubscriberPreference {
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           };
         })
-        .filter(Boolean);
+        .filter((item): item is ISubscriberPreferenceResponse => item !== null);
 
       results.push(...chunkResults);
     }
@@ -225,20 +224,15 @@ export class GetSubscriberPreference {
       return Object.values(ChannelTypeEnum);
     }
 
-    const activeSteps = workflow.steps.filter((step) => step.active === true);
+    const channelSet = new Set<ChannelTypeEnum>();
 
-    const channels = activeSteps
-      .map((item) => item.template?.type as StepTypeEnum)
-      .reduce<StepTypeEnum[]>((list, channel) => {
-        if (list.includes(channel)) {
-          return list;
-        }
-        list.push(channel);
+    for (const step of workflow.steps) {
+      if (step.active && step.template?.type) {
+        channelSet.add(step.template.type as unknown as ChannelTypeEnum);
+      }
+    }
 
-        return list;
-      }, []);
-
-    return channels as unknown as ChannelTypeEnum[];
+    return Array.from(channelSet);
   }
 
   @Instrument()
