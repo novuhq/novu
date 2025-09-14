@@ -106,7 +106,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
 
   private jsonParseBody(body: unknown) {
     // Extract actual webhook data from SNS notification wrapper if present
-    let extractedMessage = body;
+    let extractedMessage = null;
 
     // Check if this is an SNS notification containing webhook data
     if (this.isSnsNotificationWithMessage(body)) {
@@ -118,13 +118,17 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       }
     }
 
-    return { ...(body as Record<string, unknown>), Message: extractedMessage };
+    return { ...(body as Record<string, unknown>), ...(extractedMessage && { Message: extractedMessage }) };
   }
 
   parseEventBody(body: unknown | unknown[], _identifier: string): IEmailEventBody | undefined {
+    if (!body) {
+      return undefined;
+    }
+
     const parsedBody = this.jsonParseBody(body);
 
-    if (!parsedBody) {
+    if (!parsedBody || !parsedBody.Message) {
       return undefined;
     }
 
@@ -142,7 +146,9 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       status,
       date: new Date(mailData.timestamp as string).toISOString(),
       externalId: mailData.messageId as string,
-      row: JSON.stringify(parsedBody),
+      row: JSON.stringify(body),
+      attempts: undefined,
+      response: undefined,
     };
   }
 
@@ -426,6 +432,11 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
 }
 
 function buildMessageId(body: Record<string, unknown>) {
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation> x
+  if (!(body?.Message as any)?.mail?.messageId) {
+    return undefined;
+  }
+
   const message = body.Message as Record<string, unknown>;
   const mailData = message.mail as Record<string, unknown>;
 

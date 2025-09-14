@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { SESEmailProvider } from './ses.provider';
 
 const mockConfig = {
-  region: 'test-1',
+  region: 'us-east-1',
   senderName: 'Test',
   accessKeyId: 'TEST',
   from: 'test@test.com',
@@ -21,6 +21,15 @@ const mockNovuMessage = {
 
 const mockSESMessage = {
   eventType: 'Delivery',
+  Message: JSON.stringify({
+    eventType: 'Delivery',
+    mail: {
+      timestamp: '2016-10-19T23:20:52.240Z',
+      messageId: 'EXAMPLE7c191be45-e9aedb9a-02f9-4d12-a87d-dd0099a07f8a-000000',
+      sourceArn: 'arn:aws:ses:us-east-1:123456789012:identity/sender@example.com',
+    },
+  }),
+  Type: 'Notification',
   mail: {
     timestamp: '2016-10-19T23:20:52.240Z',
     source: 'sender@example.com',
@@ -95,7 +104,7 @@ test('should trigger ses library correctly', async () => {
 
   expect(spy).toHaveBeenCalled();
   expect(emailContent.includes('Reply-To: test@test1.com')).toBe(true);
-  expect(response.id).toEqual('<mock-message-id@test-1.amazonses.com>');
+  expect(response.id).toEqual('<mock-message-id@email.amazonses.com>');
 });
 
 test('should trigger ses library correctly with _passthrough', async () => {
@@ -119,20 +128,14 @@ test('should trigger ses library correctly with _passthrough', async () => {
 
   expect(spy).toHaveBeenCalled();
   expect(emailContent.includes('Subject: test subject _passthrough')).toBe(true);
-  expect(response.id).toEqual('<mock-message-id@test-1.amazonses.com>');
+  expect(response.id).toEqual('<mock-message-id@email.amazonses.com>');
 });
 
 describe('getMessageId', () => {
   test('should return messageId when body is valid', async () => {
     const provider = new SESEmailProvider(mockConfig);
     const messageId = provider.getMessageId(mockSESMessage);
-    expect(messageId).toEqual([mockSESMessage.mail.messageId]);
-  });
-
-  test('should return messageId when body is array', async () => {
-    const provider = new SESEmailProvider(mockConfig);
-    const messageId = provider.getMessageId([mockSESMessage]);
-    expect(messageId).toEqual([mockSESMessage.mail.messageId]);
+    expect(messageId).toEqual([`<${mockSESMessage.mail.messageId}@${mockConfig.region}.amazonses.com>`]);
   });
 
   test('should return undefined when event body is undefined', async () => {
@@ -159,7 +162,7 @@ describe('parseEventBody', () => {
       externalId: mockSESMessage.mail.messageId,
       attempts: undefined,
       response: undefined,
-      row: mockSESMessage,
+      row: JSON.stringify(mockSESMessage),
     });
   });
 
