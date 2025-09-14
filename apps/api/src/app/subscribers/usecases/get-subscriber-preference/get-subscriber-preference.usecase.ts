@@ -7,6 +7,7 @@ import {
   InstrumentUsecase,
   MergePreferences,
   MergePreferencesCommand,
+  mapTemplateConfiguration,
   overridePreferences,
   PinoLogger,
   PreferenceSet,
@@ -23,7 +24,6 @@ import {
   IPreferenceChannels,
   ISubscriberPreferenceResponse,
   PreferencesTypeEnum,
-  SeverityLevelEnum,
   StepTypeEnum,
   WorkflowCriticalityEnum,
 } from '@novu/shared';
@@ -201,16 +201,10 @@ export class GetSubscriberPreference {
               enabled: true,
               overrides,
             },
-            template: {
-              _id: workflow._id,
-              name: workflow.name,
-              tags: workflow.tags ?? [],
+            template: mapTemplateConfiguration({
+              ...workflow,
               critical: merged.preferences.all?.readOnly ?? workflow.critical ?? true,
-              severity: workflow.severity ?? SeverityLevelEnum.NONE,
-              updatedAt: workflow.updatedAt,
-              createdAt: workflow.createdAt,
-              triggers: workflow.triggers,
-            },
+            }),
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           };
         })
