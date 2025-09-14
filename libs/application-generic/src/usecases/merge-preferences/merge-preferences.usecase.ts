@@ -33,7 +33,10 @@ async function mergePreferencesWithYielding(preferencesList: any[]): Promise<any
     const batchResult = merge({}, ...batch);
     result = merge(result, batchResult);
 
-    await new Promise((resolve) => setImmediate(resolve));
+    // Yield to event loop every few batches to prevent CPU blocking
+    if (i > 0 && i % (batchSize * 2) === 0) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
   }
 
   return result;
@@ -56,14 +59,29 @@ async function mergePreferencesWithYielding(preferencesList: any[]): Promise<any
  */
 export class MergePreferences {
   public static async execute(command: MergePreferencesCommand): Promise<GetPreferencesResponseDto> {
+    // Early exit optimization: collect non-undefined preferences efficiently
+    const workflowPreferences: any[] = [];
+    if (command.workflowResourcePreference) {
+      workflowPreferences.push(command.workflowResourcePreference);
+    }
+    if (command.workflowUserPreference) {
+      workflowPreferences.push(command.workflowUserPreference);
+    }
 
+    // Early exit: check for readonly flag to avoid processing subscriber preferences
     const isWorkflowPreferenceReadonly = workflowPreferences.some((preference) => preference.preferences.all?.readOnly);
 
-    const preferencesList = [
-      ...workflowPreferences,
-      // If the workflow preference is readOnly, we disregard the subscriber preferences
-      ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
-    ];
+    const preferencesList = [...workflowPreferences];
+
+    // Only process subscriber preferences if workflow is not readonly
+    if (!isWorkflowPreferenceReadonly) {
+      if (command.subscriberGlobalPreference) {
+        preferencesList.push(command.subscriberGlobalPreference);
+      }
+      if (command.subscriberWorkflowPreference) {
+        preferencesList.push(command.subscriberWorkflowPreference);
+      }
+    }
 
     const mergedPreferences = await mergePreferencesWithYielding(preferencesList);
 
