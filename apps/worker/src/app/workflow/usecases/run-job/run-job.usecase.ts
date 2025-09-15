@@ -27,10 +27,12 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   FeatureFlagsKeysEnum,
+  Schedule,
   StepTypeEnum,
 } from '@novu/shared';
 import { setUser } from '@sentry/node';
 import { differenceInMilliseconds } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
@@ -112,6 +114,7 @@ export class RunJob {
     });
 
     let shouldQueueNextJob = true;
+    let isJobExtendedToSubscriberSchedule = false;
     let error: Error | undefined;
 
     try {
@@ -131,9 +134,28 @@ export class RunJob {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
       }
 
-      if (isSubscribersScheduleEnabled && (await this.shouldExtendToSubscriberSchedule(job, notification))) {
-        const isOutsideSubscriberSchedule = await this.isOutsideSubscriberSchedule(job);
-        if (isOutsideSubscriberSchedule) {
+      if (isSubscribersScheduleEnabled) {
+        const schedule = await this.getSubscriberSchedule.execute(
+          GetSubscriberScheduleCommand.create({
+            environmentId: job._environmentId,
+            organizationId: job._organizationId,
+            _subscriberId: job._subscriberId,
+          })
+        );
+
+        const subscriber = await this.subscriberRepository.findOne(
+          {
+            _id: job._subscriberId,
+            _environmentId: job._environmentId,
+            _organizationId: job._organizationId,
+          },
+          'timezone',
+          { readPreference: 'secondaryPreferred' }
+        );
+        const timezone = subscriber?.timezone;
+        const isOutsideSubscriberSchedule = !isWithinSchedule(schedule, new Date(), timezone);
+
+        if (isOutsideSubscriberSchedule && (await this.shouldExtendToSubscriberSchedule(job, notification))) {
           this.logger.info(
             {
               jobId: job._id,
@@ -143,21 +165,14 @@ export class RunJob {
             "The step was extended to the next available time in the subscriber's schedule"
           );
 
-          const isExtended = await this.extendJobToNextAvailableSchedule(job);
-          if (isExtended) {
+          isJobExtendedToSubscriberSchedule = await this.extendJobToNextAvailableSchedule(job, schedule, timezone);
+          if (isJobExtendedToSubscriberSchedule) {
+            shouldQueueNextJob = false;
             return;
           }
         }
-      }
 
-      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
-
-      await this.storageHelperService.getAttachments(job.payload?.attachments);
-
-      if (isSubscribersScheduleEnabled && !this.shouldSkipScheduleCheck(job, notification)) {
-        const isOutsideSubscriberSchedule = await this.isOutsideSubscriberSchedule(job);
-
-        if (isOutsideSubscriberSchedule) {
+        if (isOutsideSubscriberSchedule && !this.shouldSkipScheduleCheck(job, notification)) {
           this.logger.info(
             {
               jobId: job._id,
@@ -181,12 +196,20 @@ export class RunJob {
               status: ExecutionDetailsStatusEnum.SUCCESS,
               isTest: false,
               isRetry: false,
+              raw: JSON.stringify({
+                schedule,
+                timezone,
+              }),
             })
           );
 
           return;
         }
       }
+
+      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
+
+      await this.storageHelperService.getAttachments(job.payload?.attachments);
 
       if (this.isUnsnoozeJob(job)) {
         await this.processUnsnoozeJob.execute(
@@ -295,9 +318,9 @@ export class RunJob {
       }
       throw caughtError;
     } finally {
-      if (shouldQueueNextJob) {
+      if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
         await this.tryQueueNextJobs(job);
-      } else {
+      } else if (!isJobExtendedToSubscriberSchedule) {
         // Update workflow run status based on step runs when halting on step failure
         await this.workflowRunService.updateDeliveryLifecycle({
           notificationId: job._notificationId,
@@ -541,28 +564,6 @@ export class RunJob {
     return false;
   }
 
-  private async isOutsideSubscriberSchedule(job: JobEntity): Promise<boolean> {
-    const schedule = await this.getSubscriberSchedule.execute(
-      GetSubscriberScheduleCommand.create({
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        _subscriberId: job._subscriberId,
-      })
-    );
-
-    const subscriber = await this.subscriberRepository.findOne(
-      {
-        _id: job._subscriberId,
-        _environmentId: job._environmentId,
-        _organizationId: job._organizationId,
-      },
-      'timezone',
-      { readPreference: 'secondaryPreferred' }
-    );
-
-    return !isWithinSchedule(schedule, new Date(), subscriber?.timezone);
-  }
-
   private async shouldExtendToSubscriberSchedule(job: JobEntity, notification: NotificationEntity): Promise<boolean> {
     // should only extend to schedule for delay and digest when the workflow is not critical
     if ((job.type === StepTypeEnum.DELAY || job.type === StepTypeEnum.DIGEST) && !notification.critical) {
@@ -584,7 +585,11 @@ export class RunJob {
     return false;
   }
 
-  private async extendJobToNextAvailableSchedule(job: JobEntity): Promise<boolean> {
+  private async extendJobToNextAvailableSchedule(
+    job: JobEntity,
+    schedule?: Schedule,
+    timezone?: string
+  ): Promise<boolean> {
     const MAX_EXTENSIONS = 3; // maximum number of schedule extensions allowed
     const currentExtensions = job.scheduleExtensionsCount ?? 0;
 
@@ -613,26 +618,12 @@ export class RunJob {
       return false;
     }
 
-    const schedule = await this.getSubscriberSchedule.execute(
-      GetSubscriberScheduleCommand.create({
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        _subscriberId: job._subscriberId,
-      })
-    );
-
-    const subscriber = await this.subscriberRepository.findOne(
-      {
-        _id: job._subscriberId,
-        _environmentId: job._environmentId,
-        _organizationId: job._organizationId,
-      },
-      'timezone',
-      { readPreference: 'secondaryPreferred' }
-    );
-
-    const nextAvailableTime = calculateNextAvailableTime(schedule, new Date(), subscriber?.timezone);
+    const nextAvailableTime = calculateNextAvailableTime(schedule, new Date(), timezone);
     const delayMs = Math.max(0, differenceInMilliseconds(nextAvailableTime, new Date()));
+
+    if (delayMs === 0) {
+      return false;
+    }
 
     await this.jobRepository.updateOne(
       {
@@ -642,10 +633,14 @@ export class RunJob {
       {
         $set: {
           scheduleExtensionsCount: currentExtensions + 1,
-          status: JobStatusEnum.QUEUED,
+          status: JobStatusEnum.DELAYED,
         },
       }
     );
+
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.DELAYED,
+    });
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -657,9 +652,13 @@ export class RunJob {
         isRetry: false,
         raw: JSON.stringify({
           delayMs,
-          nextAvailableTime: nextAvailableTime.toISOString(),
+          nextAvailableTime: timezone
+            ? formatInTimeZone(nextAvailableTime, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
+            : nextAvailableTime.toISOString(),
+          timezone,
+          schedule,
           scheduleExtensionsCount: currentExtensions + 1,
-          maxExtensions: MAX_EXTENSIONS,
+          maxScheduleExtensions: MAX_EXTENSIONS,
         }),
       })
     );

@@ -1,6 +1,6 @@
 import { Schedule, TimeRange } from '@novu/shared';
 import { addDays, isAfter, isBefore, isEqual, set } from 'date-fns';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 
 const DAYS_OF_WEEK: Array<keyof NonNullable<Schedule['weeklySchedule']>> = [
   'sunday',
@@ -19,10 +19,10 @@ export function isWithinSchedule(schedule?: Schedule, currentTime: Date = new Da
   }
 
   // Convert current time to subscriber's timezone if provided
-  const subscriberTime = timezone ? toZonedTime(currentTime, timezone) : currentTime;
+  const subscriberTime = timezone ? utcToZonedTime(currentTime, timezone) : currentTime;
 
   const currentDay = getDayOfWeek(subscriberTime);
-  const currentTimeString = formatTime(subscriberTime);
+  const currentTimeString = formatTime(subscriberTime, !!timezone);
 
   // Check both the current day and the previous day for overnight schedules
   const daysToCheck = [currentDay];
@@ -87,9 +87,9 @@ function getPreviousDay(
 /**
  * Formats a Date object to the time format used in schedules (e.g., "09:00 AM")
  */
-function formatTime(date: Date): string {
-  const hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes();
+function formatTime(date: Date, hasTimezone = false): string {
+  const hours = hasTimezone ? date.getHours() : date.getUTCHours();
+  const minutes = hasTimezone ? date.getMinutes() : date.getUTCMinutes();
 
   const period = hours < 12 ? 'AM' : 'PM';
   const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
@@ -141,7 +141,7 @@ export function calculateNextAvailableTime(schedule?: Schedule, nowUtc = new Dat
   if (!schedule || !schedule.isEnabled) return nowUtc;
 
   // "working time" in chosen zone (or UTC if no tz)
-  const nowWorking = timeZone ? toZonedTime(nowUtc, timeZone) : nowUtc;
+  const nowWorking = timeZone ? utcToZonedTime(nowUtc, timeZone) : nowUtc;
 
   // start from yesterday to handle overnight schedules
   for (let dayOffset = -1; dayOffset <= 7; dayOffset++) {
@@ -209,7 +209,7 @@ export function calculateNextAvailableTime(schedule?: Schedule, nowUtc = new Dat
       // if next day after current day, or start is after current time, return start time
       if (dayOffset > 0 || isAfter(startZoned, nowWorking)) {
         return timeZone
-          ? fromZonedTime(startZoned, timeZone)
+          ? zonedTimeToUtc(startZoned, timeZone)
           : new Date(
               Date.UTC(
                 startZoned.getUTCFullYear(),

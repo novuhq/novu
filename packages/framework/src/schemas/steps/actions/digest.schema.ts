@@ -23,6 +23,7 @@ export const digestRegularOutputSchema = {
       required: ['amount', 'unit'],
       additionalProperties: false,
     },
+    extendToSchedule: { type: 'boolean' },
   },
   required: ['amount', 'unit'],
   additionalProperties: false,
@@ -35,6 +36,7 @@ export const digestTimedOutputSchema = {
     digestKey: {
       type: 'string',
     },
+    extendToSchedule: { type: 'boolean' },
   },
   required: ['cron'],
   additionalProperties: false,

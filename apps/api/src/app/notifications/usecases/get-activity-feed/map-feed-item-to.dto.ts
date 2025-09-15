@@ -266,6 +266,7 @@ function mapJobToDto(item: JobFeedItem): ActivityNotificationJobResponseDto {
     providerId: item.providerId as ProvidersIdEnum,
     status: item.status,
     updatedAt: item.updatedAt,
+    scheduleExtensionsCount: item.scheduleExtensionsCount,
   };
 }
 

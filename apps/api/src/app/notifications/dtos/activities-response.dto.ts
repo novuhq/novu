@@ -275,6 +275,12 @@ export class ActivityNotificationJobResponseDto {
 
   @ApiPropertyOptional({ description: 'Updated time of the notification', type: String })
   updatedAt?: string;
+
+  @ApiPropertyOptional({
+    description: 'The number of times the digest/delay job has been extended to align with the subscribers schedule',
+    type: Number,
+  })
+  scheduleExtensionsCount?: number;
 }
 
 // Activity Notification Subscriber Response DTO

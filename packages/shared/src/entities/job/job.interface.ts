@@ -31,4 +31,5 @@ export interface IJob {
   };
   type?: StepTypeEnum;
   _actorId?: string;
+  scheduleExtensionsCount?: number;
 }
