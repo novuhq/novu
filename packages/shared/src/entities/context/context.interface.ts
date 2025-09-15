@@ -1,4 +1,4 @@
-import { ContextData, ContextKey, ContextTypeEnum } from '../../types/context';
+import { ContextData, ContextId, ContextTypeEnum } from '../../types/context';
 import { EnvironmentId } from '../../types/environment';
 import { OrganizationId } from '../../types/organization';
 
@@ -7,9 +7,8 @@ export interface IContext {
   _organizationId: OrganizationId;
   _environmentId: EnvironmentId;
 
-  id: string;
+  identifier: ContextId;
   type: ContextTypeEnum;
-  key: ContextKey;
   data: ContextData;
 
   createdAt: string;

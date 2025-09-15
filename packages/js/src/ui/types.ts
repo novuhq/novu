@@ -266,6 +266,7 @@ export type BaseNovuProviderProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
+  preferenceSort?: PreferenceSort;
   routerPush?: RouterPush;
   novu?: Novu;
 };
@@ -285,6 +286,8 @@ export enum NotificationStatus {
 export type PreferencesFilter = Pick<NotificationFilter, 'tags' | 'severity'> & {
   criticality?: WorkflowCriticalityEnum;
 };
+
+export type PreferenceSort = (a: Preference, b: Preference) => number;
 
 type PreferenceFilterFunction = (args: { preferences: Preference[] }) => Preference[];
 

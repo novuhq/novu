@@ -130,6 +130,7 @@ const InboxChild = withRenderer(
       tabs,
       preferencesFilter,
       preferenceGroups,
+      preferenceSort,
       routerPush,
       applicationIdentifier = '', // for keyless we provide an empty string, the api will generate a identifier
       subscriberId,
@@ -148,6 +149,7 @@ const InboxChild = withRenderer(
         tabs,
         preferencesFilter,
         preferenceGroups,
+        preferenceSort,
         routerPush,
         options: {
           applicationIdentifier,
@@ -164,6 +166,7 @@ const InboxChild = withRenderer(
       tabs,
       preferencesFilter,
       preferenceGroups,
+      preferenceSort,
       applicationIdentifier,
       subscriberId,
       subscriberHash,

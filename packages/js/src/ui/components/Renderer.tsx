@@ -14,7 +14,15 @@ import {
   NovuProvider,
 } from '../context';
 import { NOVU_DEFAULT_CSS_ID } from '../helpers/utils';
-import type { Appearance, Localization, PreferenceGroups, PreferencesFilter, RouterPush, Tab } from '../types';
+import type {
+  Appearance,
+  Localization,
+  PreferenceGroups,
+  PreferenceSort,
+  PreferencesFilter,
+  RouterPush,
+  Tab,
+} from '../types';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
 
@@ -69,6 +77,7 @@ type RendererProps = {
   tabs: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
+  preferenceSort?: PreferenceSort;
   routerPush?: RouterPush;
   novu?: Novu;
   container?: Node | null | undefined;
@@ -107,6 +116,7 @@ export const Renderer = (props: RendererProps) => {
               tabs={props.tabs}
               preferencesFilter={props.preferencesFilter}
               preferenceGroups={props.preferenceGroups}
+              preferenceSort={props.preferenceSort}
               routerPush={props.routerPush}
             >
               <CountProvider>
