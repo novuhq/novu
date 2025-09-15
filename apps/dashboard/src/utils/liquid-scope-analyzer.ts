@@ -8,7 +8,7 @@ type Scope = {
 // Regex patterns for LiquidJS syntax
 const LIQUID_PATTERNS = {
   // Variable assignment
-  assign: /{%\s*assign\s+(\w+)\s*=[^%]+%}/g,
+  assign: /{%-?\s*assign\s+(\w+)\s*=[^%]+-?%}/g,
 
   // Loop constructs
   for: /{%\s*for\s+(\w+)\s+in\s+[^%]+%}/g,

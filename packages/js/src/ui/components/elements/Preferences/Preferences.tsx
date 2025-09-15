@@ -16,7 +16,7 @@ import { ScheduleRow } from './ScheduleRow';
 export const Preferences = () => {
   const novu = useNovu();
   const style = useStyle();
-  const { preferencesFilter, preferenceGroups } = useInboxContext();
+  const { preferencesFilter, preferenceGroups, preferenceSort } = useInboxContext();
 
   const { preferences, loading } = usePreferences({
     tags: preferencesFilter()?.tags,
@@ -25,8 +25,12 @@ export const Preferences = () => {
   });
 
   const allPreferences = createMemo(() => {
-    const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL)!;
-    const workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
+    const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
+    let workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
+
+    if (workflowPreferences && preferenceSort()) {
+      workflowPreferences = [...workflowPreferences].sort(preferenceSort());
+    }
 
     return { globalPreference, workflowPreferences };
   });
@@ -36,7 +40,9 @@ export const Preferences = () => {
     setDynamicLocalization((prev) => ({
       ...prev,
       ...allPreferences().workflowPreferences?.reduce<Record<string, string>>((acc, preference) => {
-        acc[preference.workflow!.identifier] = preference.workflow!.name;
+        if (preference.workflow?.identifier && preference.workflow?.name) {
+          acc[preference.workflow.identifier] = preference.workflow.name;
+        }
 
         return acc;
       }, {}),
@@ -79,19 +85,25 @@ export const Preferences = () => {
         }
 
         if (typeof filter === 'object') {
+          let filteredPreferences = workflowPreferences.filter((preference) => {
+            const workflowId = preference.workflow?.id || preference.workflow?.identifier;
+
+            return (
+              filter.workflowIds?.includes(workflowId ?? '') ||
+              filter.tags?.some((tag) => preference.workflow?.tags?.includes(tag)) ||
+              (Array.isArray(filter.severity) &&
+                filter.severity.some((severity) => preference.workflow?.severity === severity)) ||
+              (!Array.isArray(filter.severity) && filter.severity === preference.workflow?.severity)
+            );
+          });
+
+          if (preferenceSort()) {
+            filteredPreferences = [...filteredPreferences].sort(preferenceSort());
+          }
+
           return {
             name: group.name,
-            preferences: workflowPreferences.filter((preference) => {
-              const workflowId = preference.workflow?.id || preference.workflow?.identifier;
-
-              return (
-                filter.workflowIds?.includes(workflowId ?? '') ||
-                filter.tags?.some((tag) => preference.workflow?.tags?.includes(tag)) ||
-                (Array.isArray(filter.severity) &&
-                  filter.severity.some((severity) => preference.workflow?.severity === severity)) ||
-                (!Array.isArray(filter.severity) && filter.severity === preference.workflow?.severity)
-              );
-            }),
+            preferences: filteredPreferences,
           };
         }
 
@@ -114,11 +126,13 @@ export const Preferences = () => {
         >[0],
       })}
     >
-      <PreferencesRow
-        iconKey="cogs"
-        preference={allPreferences().globalPreference}
-        onChange={() => updatePreference(allPreferences().globalPreference)}
-      />
+      <Show when={allPreferences().globalPreference}>
+        <PreferencesRow
+          iconKey="cogs"
+          preference={allPreferences().globalPreference!}
+          onChange={() => updatePreference(allPreferences().globalPreference)}
+        />
+      </Show>
       <ScheduleRow globalPreference={allPreferences().globalPreference} />
       <Show
         when={groupedPreferences().length > 0}

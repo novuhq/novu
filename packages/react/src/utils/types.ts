@@ -8,6 +8,7 @@ import type {
   NotificationActionClickHandler,
   NotificationClickHandler,
   PreferenceGroups,
+  PreferenceSort,
   PreferencesFilter,
   RouterPush,
   Tab,
@@ -62,6 +63,7 @@ type StandardBaseProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
+  preferenceSort?: PreferenceSort;
   defaultSchedule?: DefaultSchedule;
   routerPush?: RouterPush;
 } & (
