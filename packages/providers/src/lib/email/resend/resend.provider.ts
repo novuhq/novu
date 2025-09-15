@@ -184,8 +184,6 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
         return EmailEventStatusEnum.CLICKED;
       case 'email.complained':
         return EmailEventStatusEnum.COMPLAINT;
-      case 'email.scheduled':
-        return undefined;
       default:
         return undefined;
     }

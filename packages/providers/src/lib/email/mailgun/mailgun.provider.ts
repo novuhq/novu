@@ -321,9 +321,7 @@ export class MailgunEmailProvider extends BaseProvider implements IEmailProvider
         return EmailEventStatusEnum.COMPLAINT;
       case 'permanent_fail':
       case 'failed':
-        return EmailEventStatusEnum.BOUNCED;
-      case 'temporary_fail':
-        return EmailEventStatusEnum.DELAYED;
+        return EmailEventStatusEnum.REJECTED;
       default:
         return undefined;
     }
