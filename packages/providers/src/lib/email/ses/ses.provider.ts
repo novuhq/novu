@@ -350,21 +350,39 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         return false;
       }
 
-      // Must be from AWS SNS certificate domains
-      const validDomains = [
+      // Must be from AWS SNS certificate domains - exact matches only to prevent subdomain injection
+      const validExactDomains = [
         'sns.amazonaws.com',
         's3.amazonaws.com', // SNS certificates are also served from S3
       ];
 
-      return validDomains.some(
-        (domain) =>
-          parsedUrl.hostname === domain ||
-          parsedUrl.hostname.endsWith(`.${domain}`) ||
-          (parsedUrl.hostname.startsWith(`sns.`) && parsedUrl.hostname.endsWith(`amazonaws.com`)) // example: https://sns.us-east-1.amazonaws.com/...
-      );
+      return validExactDomains.includes(parsedUrl.hostname) || this.isValidSnsRegionalEndpoint(parsedUrl.hostname);
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Validates SNS regional endpoints to prevent subdomain injection attacks
+   * Uses comprehensive regex pattern that supports all current and future AWS regions
+   * while maintaining security by validating the complete hostname structure
+   */
+  private isValidSnsRegionalEndpoint(hostname: string): boolean {
+    // AWS region patterns:
+    const validSnsHostnamePattern =
+      /^sns\.((?:[a-z]{2}(?:-gov)?-(?:central|north|south|east|west|northeast|northwest|southeast|southwest)-[1-9])|(?:cn-(?:north|northwest)-1))\.amazonaws\.com$/;
+
+    const match = hostname.match(validSnsHostnamePattern);
+    if (!match) {
+      return false;
+    }
+
+    const region = match[1];
+
+    // Reconstruct expected hostname from validated components and compare exactly
+    // This prevents bypass attacks by ensuring exact match
+    const expectedHostname = `sns.${region}.amazonaws.com`;
+    return hostname === expectedHostname;
   }
 
   /**

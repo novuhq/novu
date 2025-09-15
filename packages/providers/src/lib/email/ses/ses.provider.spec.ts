@@ -178,3 +178,167 @@ describe('parseEventBody', () => {
     expect(messageId).toBeUndefined();
   });
 });
+
+describe('Certificate URL Security Validation', () => {
+  const createMockSnsMessage = (signingCertUrl: string) => ({
+    Type: 'Notification',
+    MessageId: 'test-message-id',
+    TopicArn: 'arn:aws:sns:us-east-1:123456789012:test-topic',
+    Timestamp: new Date().toISOString(),
+    SignatureVersion: '1',
+    Signature: 'mock-signature',
+    SigningCertURL: signingCertUrl,
+    Message: 'mock-message',
+  });
+
+  test('should accept valid AWS SNS certificate URLs', async () => {
+    // Mock fetch to prevent actual HTTP requests
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      text: async () => 'mock-certificate',
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const provider = new SESEmailProvider(mockConfig);
+    const validUrls = [
+      'https://sns.amazonaws.com/SimpleNotificationService.pem',
+      'https://sns.us-east-1.amazonaws.com/cert.pem',
+      'https://sns.eu-west-1.amazonaws.com/cert.pem',
+      'https://sns.ap-southeast-2.amazonaws.com/cert.pem',
+      'https://sns.us-gov-west-1.amazonaws.com/cert.pem',
+      'https://s3.amazonaws.com/sns-certificates/cert.pem',
+    ];
+
+    for (const url of validUrls) {
+      const result = await provider.verifySignature({
+        rawBody: null,
+        body: createMockSnsMessage(url),
+        headers: { 'x-amz-sns-message-type': 'Notification' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).not.toContain('Invalid AWS certificate URL');
+    }
+
+    vi.unstubAllGlobals();
+  });
+
+  test('should reject malicious certificate URLs with subdomain injection', async () => {
+    const provider = new SESEmailProvider(mockConfig);
+    const maliciousUrls = [
+      'https://sns.evil.amazonaws.com/cert.pem', // Subdomain injection
+      'https://sns.malicious-site.amazonaws.com/cert.pem', // Subdomain injection
+      'https://sns.attacker.amazonaws.com/cert.pem', // Subdomain injection
+      'https://sns.amazonaws.com.evil.com/cert.pem', // Domain spoofing
+      'https://evil.sns.amazonaws.com/cert.pem', // Prefix injection
+      'https://amazonaws.com.evil.com/cert.pem', // Domain spoofing
+    ];
+
+    for (const url of maliciousUrls) {
+      const result = await provider.verifySignature({
+        rawBody: null,
+        body: createMockSnsMessage(url),
+        headers: { 'x-amz-sns-message-type': 'Notification' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Invalid AWS certificate URL');
+    }
+  });
+
+  test('should reject non-HTTPS certificate URLs', async () => {
+    const provider = new SESEmailProvider(mockConfig);
+    const insecureUrls = [
+      'http://sns.amazonaws.com/cert.pem',
+      'ftp://sns.amazonaws.com/cert.pem',
+      'sns.amazonaws.com/cert.pem',
+    ];
+
+    for (const url of insecureUrls) {
+      const result = await provider.verifySignature({
+        rawBody: null,
+        body: createMockSnsMessage(url),
+        headers: { 'x-amz-sns-message-type': 'Notification' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Invalid AWS certificate URL');
+    }
+  });
+
+  test('should reject certificate URLs from non-AWS domains', async () => {
+    const provider = new SESEmailProvider(mockConfig);
+    const nonAwsUrls = [
+      'https://evil.com/sns.amazonaws.com/cert.pem',
+      'https://example.com/cert.pem',
+      'https://sns.fake-aws.com/cert.pem',
+      'https://amazonaws.evil.com/cert.pem',
+    ];
+
+    for (const url of nonAwsUrls) {
+      const result = await provider.verifySignature({
+        rawBody: null,
+        body: createMockSnsMessage(url),
+        headers: { 'x-amz-sns-message-type': 'Notification' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Invalid AWS certificate URL');
+    }
+  });
+
+  test('should validate regional SNS endpoints correctly', async () => {
+    // Mock fetch to prevent actual HTTP requests
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      text: async () => 'mock-certificate',
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const provider = new SESEmailProvider(mockConfig);
+    const regionalUrls = [
+      'https://sns.us-east-1.amazonaws.com/cert.pem',
+      'https://sns.us-west-2.amazonaws.com/cert.pem',
+      'https://sns.eu-central-1.amazonaws.com/cert.pem',
+      'https://sns.ap-northeast-1.amazonaws.com/cert.pem',
+      'https://sns.ca-central-1.amazonaws.com/cert.pem',
+      'https://sns.us-gov-east-1.amazonaws.com/cert.pem',
+    ];
+
+    for (const url of regionalUrls) {
+      const result = await provider.verifySignature({
+        rawBody: null,
+        body: createMockSnsMessage(url),
+        headers: { 'x-amz-sns-message-type': 'Notification' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).not.toContain('Invalid AWS certificate URL');
+    }
+
+    vi.unstubAllGlobals();
+  });
+
+  test('should reject invalid regional patterns', async () => {
+    const provider = new SESEmailProvider(mockConfig);
+    const invalidRegionalUrls = [
+      'https://sns.invalid-region.amazonaws.com/cert.pem',
+      'https://sns.us-east-99.amazonaws.com/cert.pem',
+      'https://sns.evil-central-1.amazonaws.com/cert.pem',
+      'https://sns..amazonaws.com/cert.pem',
+      'https://sns.us-.amazonaws.com/cert.pem',
+      'https://sns.-east-1.amazonaws.com/cert.pem',
+    ];
+
+    for (const url of invalidRegionalUrls) {
+      const result = await provider.verifySignature({
+        rawBody: null,
+        body: createMockSnsMessage(url),
+        headers: { 'x-amz-sns-message-type': 'Notification' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Invalid AWS certificate URL');
+    }
+  });
+});
