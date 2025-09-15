@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/correctness/useUniqueElementIds: working corectly */
+/** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import { ChangeEventHandler, KeyboardEventHandler, useRef } from 'react';
 import { cn } from '@/utils/ui';
 
