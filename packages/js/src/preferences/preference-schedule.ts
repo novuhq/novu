@@ -13,10 +13,12 @@ export class PreferenceSchedule extends BaseModule {
   readonly cache: ScheduleCache;
 
   constructor({
+    cache,
     useCache,
     inboxServiceInstance,
     eventEmitterInstance,
   }: {
+    cache: ScheduleCache;
     useCache: boolean;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
@@ -25,9 +27,7 @@ export class PreferenceSchedule extends BaseModule {
       eventEmitterInstance,
       inboxServiceInstance,
     });
-    this.cache = new ScheduleCache({
-      emitterInstance: this._emitter,
-    });
+    this.cache = cache;
     this.#useCache = useCache;
   }
 

@@ -4,6 +4,7 @@ import {
   mailgunGroupConfigurations,
   resendGroupConfigurations,
   sendgridGroupConfigurations,
+  sesGroupConfigurations,
 } from '../configurations/provider-configuration';
 import {
   brazeEmailConfig,
@@ -99,6 +100,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'SES',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sesConfig,
+    configurations: sesGroupConfigurations,
     docReference: `https://docs.novu.co/integrations/providers/email/amazon-ses${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'ses.svg', dark: 'ses.svg' },
   },

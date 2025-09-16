@@ -194,32 +194,6 @@ describe('Update global preferences - /inbox/preferences (PATCH) #novu-v2', () =
       expect(response.body.data.schedule.weeklySchedule.monday.hours[1].end).to.equal('05:00 PM');
     });
 
-    it('should fail validation when isEnabled is false but weeklySchedule is provided', async () => {
-      const schedule = {
-        isEnabled: false,
-        weeklySchedule: {
-          monday: {
-            isEnabled: true,
-            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
-          },
-        },
-      };
-
-      const response = await session.testAgent
-        .patch('/v1/inbox/preferences')
-        .send({
-          schedule,
-        })
-        .set('Authorization', `Bearer ${session.subscriberToken}`);
-
-      expect(response.status).to.equal(422);
-      expect(response.body.message).to.equal('Validation Error');
-      expect(response.body.errors.general.messages).to.be.an('array');
-      expect(response.body.errors.general.messages[0]).to.contain(
-        'weeklySchedule should not be provided when isEnabled is false'
-      );
-    });
-
     it('should fail validation when isEnabled is true but weeklySchedule is empty', async () => {
       const schedule = {
         isEnabled: true,

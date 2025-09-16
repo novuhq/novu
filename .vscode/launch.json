@@ -25,13 +25,18 @@
       "stopOnEntry": false
     },
     {
-      "name": "worker",
-      "request": "launch",
-      "runtimeArgs": ["run-script", "start"],
-      "runtimeExecutable": "npm",
+      "name": "Worker",
       "cwd": "${workspaceFolder}/apps/worker",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
+      "type": "node",
+      "request": "launch",
+      "args": ["${workspaceFolder}/apps/worker/src/main.ts"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "sourceMaps": true,
+      "protocol": "inspector",
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "smartStep": true,
+      "stopOnEntry": false
     },
     {
       "name": "DASHBOARD",

@@ -84,6 +84,7 @@
     "deep-object-diff": "^1.1.9",
     "dotenv": "^16.5.0",
     "envalid": "^8.0.0",
+    "es-toolkit": "^1.39.10",
     "handlebars": "^4.7.7",
     "helmet": "^6.0.1",
     "i18next": "^23.7.6",
@@ -150,9 +151,9 @@
     "typescript": "5.6.2"
   },
   "optionalDependencies": {
+    "@novu/ee-api": "workspace:*",
     "@novu/ee-auth": "workspace:*",
     "@novu/ee-billing": "workspace:*",
-    "@novu/ee-api": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@novu/ee-translation": "workspace:*"
   },

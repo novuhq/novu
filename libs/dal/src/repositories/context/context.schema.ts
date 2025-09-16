@@ -15,38 +15,32 @@ const contextSchema = new Schema<ContextDBModel>(
       ref: 'Environment',
       index: true,
     },
-    id: Schema.Types.String,
+    identifier: {
+      type: Schema.Types.String,
+      required: true,
+      unique: true,
+    },
     type: {
       type: Schema.Types.String,
       enum: ContextTypeEnum,
+      required: true,
     },
-    key: Schema.Types.String,
     data: Schema.Types.Mixed,
   },
   schemaOptions
 );
 
-contextSchema.index({
-  _environmentId: 1,
-  _organizationId: 1,
-  key: 1,
-});
-
 contextSchema.index(
   {
     _environmentId: 1,
-    key: 1,
+    _organizationId: 1,
+    type: 1,
+    identifier: 1,
   },
   {
     unique: true,
   }
 );
-
-contextSchema.index({
-  _environmentId: 1,
-  _organizationId: 1,
-  type: 1,
-});
 
 export const Context =
   (mongoose.models.Context as mongoose.Model<ContextDBModel>) ||

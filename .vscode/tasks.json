@@ -198,6 +198,20 @@
       "label": "NC CLIENT",
       "path": "/packages/client",
       "problemMatcher": "$tsc"
+    },
+    {
+      "type": "npm",
+      "script": "build:watch",
+      "label": "Novu Javascript",
+      "path": "/packages/js",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "type": "npm",
+      "script": "build:watch",
+      "label": "Novu React",
+      "path": "/packages/react",
+      "problemMatcher": "$tsc"
     }
   ]
 }

@@ -438,6 +438,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     // Step skipped events
     case 'step_skipped':
       return 'Step skipped';
+    case 'step_skipped_outside_of_the_schedule':
+      return "The step was skipped as it fell outside the subscriber's schedule";
+    case 'step_extended_to_schedule':
+      return 'Step was extended to the next available time in the subscriber schedule';
+    case 'step_skipped_max_extensions_reached':
+      return 'Step was executed due to maximum number of subscriber schedule extensions reached';
 
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases

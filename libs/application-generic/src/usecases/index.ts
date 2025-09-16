@@ -19,6 +19,7 @@ export * from './get-layout';
 export * from './get-novu-layout';
 export * from './get-novu-provider-credentials';
 export * from './get-preferences';
+export * from './get-subscriber-schedule';
 export * from './get-subscriber-template-preference';
 export * from './get-tenant';
 export * from './get-topic-subscribers';

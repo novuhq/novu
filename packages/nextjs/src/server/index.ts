@@ -13,5 +13,6 @@ export {
   useNotifications,
   useNovu,
   usePreferences,
+  useSchedule,
   WorkflowCriticalityEnum,
 } from '@novu/react/server';

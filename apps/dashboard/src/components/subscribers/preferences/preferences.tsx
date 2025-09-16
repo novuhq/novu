@@ -1,18 +1,20 @@
-import { GetSubscriberPreferencesDto, PatchPreferenceChannelsDto } from '@novu/api/models/components';
-import { ChannelTypeEnum } from '@novu/shared';
+import { GetSubscriberPreferencesDto } from '@novu/api/models/components';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useMemo } from 'react';
-import { RiQuestionLine } from 'react-icons/ri';
-import { showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { RiLoader4Line, RiQuestionLine } from 'react-icons/ri';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
 import { WorkflowPreferences } from '@/components/subscribers/preferences/workflow-preferences';
-import { usePatchSubscriberPreferences } from '@/hooks/use-patch-subscriber-preferences';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useOptimisticChannelPreferences } from '@/hooks/use-optimistic-channel-preferences';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { itemVariants, sectionVariants } from '@/utils/animation';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { PreferencesBlank } from './preferences-blank';
+import { SubscribersSchedule } from './subscribers-schedule';
 
 type PreferencesProps = {
   subscriberPreferences: GetSubscriberPreferencesDto;
@@ -24,12 +26,18 @@ export const Preferences = (props: PreferencesProps) => {
   const { subscriberPreferences, subscriberId, readOnly = false } = props;
   const track = useTelemetry();
 
-  const { patchSubscriberPreferences } = usePatchSubscriberPreferences({
+  const { updateChannelPreferences, isPending } = useOptimisticChannelPreferences({
+    subscriberId,
     onSuccess: () => {
       showSuccessToast('Subscriber preferences updated successfully');
       track(TelemetryEvent.SUBSCRIBER_PREFERENCES_UPDATED);
     },
+    onError: () => {
+      showErrorToast('Failed to update preferences. Please try again.');
+    },
   });
+
+  const isSubscribersScheduleEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED);
 
   const { workflows, globalChannelsKeys, hasZeroPreferences } = useMemo(() => {
     const global = subscriberPreferences?.global ?? { channels: {} };
@@ -40,13 +48,6 @@ export const Preferences = (props: PreferencesProps) => {
 
     return { global, workflows, globalChannelsKeys, hasZeroPreferences };
   }, [subscriberPreferences]);
-
-  const handleChannelToggle = async (channels: PatchPreferenceChannelsDto, workflowId?: string) => {
-    await patchSubscriberPreferences({
-      subscriberId,
-      preferences: { channels, workflowId },
-    });
-  };
 
   if (hasZeroPreferences) {
     return <PreferencesBlank />;
@@ -73,6 +74,7 @@ export const Preferences = (props: PreferencesProps) => {
               </p>
             </TooltipContent>
           </Tooltip>
+          {isPending && <RiLoader4Line className="size-3 animate-spin text-neutral-400" />}
         </div>
 
         <SidebarContent size="md">
@@ -82,11 +84,19 @@ export const Preferences = (props: PreferencesProps) => {
               channel={channel}
               readOnly={readOnly}
               enabled={enabled}
-              onChange={(checked: boolean) => handleChannelToggle({ [channel]: checked })}
+              onChange={(checked: boolean) => updateChannelPreferences({ [channel]: checked })}
             />
           ))}
         </SidebarContent>
       </motion.div>
+
+      {isSubscribersScheduleEnabled && (
+        <motion.div variants={itemVariants}>
+          <SidebarContent size="md">
+            <SubscribersSchedule globalPreference={subscriberPreferences.global} subscriberId={subscriberId} />
+          </SidebarContent>
+        </motion.div>
+      )}
 
       <motion.div variants={itemVariants}>
         <div className="flex items-center gap-2 bg-neutral-50 px-4 py-2">
@@ -102,6 +112,7 @@ export const Preferences = (props: PreferencesProps) => {
               </p>
             </TooltipContent>
           </Tooltip>
+          {isPending && <RiLoader4Line className="size-3 animate-spin text-neutral-400" />}
         </div>
 
         <SidebarContent size="md">
@@ -109,7 +120,7 @@ export const Preferences = (props: PreferencesProps) => {
             <WorkflowPreferences
               key={wf.workflow.slug}
               workflowPreferences={wf}
-              onToggle={handleChannelToggle}
+              onToggle={updateChannelPreferences}
               readOnly={readOnly}
             />
           ))}

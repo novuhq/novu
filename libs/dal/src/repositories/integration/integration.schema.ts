@@ -68,6 +68,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     configurations: {
       inboundWebhookEnabled: Schema.Types.Boolean,
       inboundWebhookSigningKey: Schema.Types.String,
+      configurationSetName: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,

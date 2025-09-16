@@ -24,6 +24,7 @@ export {
   NovuProviderProps,
   PreferenceGroups,
   PreferencesFilter,
+  PreferencesSort,
   RouterPush,
   SubjectRenderer,
   Tab,

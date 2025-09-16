@@ -729,6 +729,7 @@
     "Unvalidated",
     "upsert",
     "upserted",
+    "unstub",
     "upstash",
     "Upstash",
     "usecase",
@@ -762,7 +763,8 @@
     "Brandname",
     "telco",
     "unifonic",
-    "smsmode"
+    "smsmode",
+    "kobalte"
   ],
   "flagWords": [],
   "patterns": [

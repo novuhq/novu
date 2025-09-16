@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.6.6",
+  "version": "2.7.0",
   "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
   "main": "src/index.js",
   "publishConfig": {
@@ -73,6 +73,7 @@
     "commander": "^9.0.0",
     "configstore": "^5.0.0",
     "dotenv": "^16.4.5",
+    "form-data": "^4.0.0",
     "get-port": "^5.1.1",
     "gradient-string": "^2.0.0",
     "inquirer": "^8.2.0",

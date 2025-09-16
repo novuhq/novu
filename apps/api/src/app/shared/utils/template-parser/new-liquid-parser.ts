@@ -538,8 +538,8 @@ function processTagToken({
       });
     }
   } else if (template instanceof AssignTag) {
-    // Extract assigned variable from token content: {% assign myVar = value %}
-    const assignMatch = output.match(/^\s*{%\s*assign\s+(\w+)\s*=\s*(.+?)\s*%}/);
+    // Extract assigned variable from token content: {% assign myVar = value %} or {%- assign myVar = value -%}
+    const assignMatch = output.match(/^\s*{%-?\s*assign\s+(\w+)\s*=\s*(.+?)\s*-?%}/);
     if (assignMatch) {
       const [, assignedVariable, valueExpression] = assignMatch;
 

@@ -12,6 +12,7 @@ export const delayOutputSchema = {
       type: 'string',
       enum: ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months'],
     },
+    extendToSchedule: { type: 'boolean' },
   },
   required: ['amount', 'unit'],
   additionalProperties: false,

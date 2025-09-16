@@ -2,7 +2,6 @@ export * from './auth';
 export * from './billing';
 export * from './builder';
 export * from './channel';
-export * from './channel-connection';
 export * from './channel-endpoint';
 export * from './context';
 export * from './controls';

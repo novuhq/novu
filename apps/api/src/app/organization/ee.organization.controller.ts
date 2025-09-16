@@ -1,6 +1,6 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Patch, Put, UseInterceptors } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '@novu/application-generic';
+import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
 import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
@@ -95,6 +95,7 @@ export class EEOrganizationController {
   }
 
   @Get('/settings')
+  @ExternalApiAccessible()
   @ApiResponse(GetOrganizationSettingsDto)
   @ApiOperation({
     summary: 'Get organization settings',
