@@ -11,7 +11,7 @@ import {
 import { NotificationFilter, Redirect } from '../../types';
 import { DEFAULT_REFERRER, DEFAULT_TARGET, getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
-import { NotificationStatus, PreferenceGroups, PreferenceSort, PreferencesFilter, RouterPush, Tab } from '../types';
+import { NotificationStatus, PreferenceGroups, PreferencesFilter, PreferencesSort, RouterPush, Tab } from '../types';
 
 type InboxContextType = {
   setStatus: (status: NotificationStatus) => void;
@@ -22,7 +22,7 @@ type InboxContextType = {
   tabs: Accessor<Array<Tab>>;
   preferencesFilter: Accessor<PreferencesFilter | undefined>;
   preferenceGroups: Accessor<PreferenceGroups | undefined>;
-  preferenceSort: Accessor<PreferenceSort | undefined>;
+  preferencesSort: Accessor<PreferencesSort | undefined>;
   activeTab: Accessor<string>;
   setActiveTab: (tab: string) => void;
   isOpened: Accessor<boolean>;
@@ -51,7 +51,7 @@ type InboxProviderProps = ParentProps<{
   tabs: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
-  preferenceSort?: PreferenceSort;
+  preferencesSort?: PreferencesSort;
   routerPush?: RouterPush;
   applicationIdentifier?: string;
 }>;
@@ -78,7 +78,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
   const [isKeyless, setIsKeyless] = createSignal(false);
   const [applicationIdentifier, setApplicationIdentifier] = createSignal<string | null>(null);
   const [preferenceGroups, setPreferenceGroups] = createSignal<PreferenceGroups | undefined>(props.preferenceGroups);
-  const [preferenceSort, setPreferenceSort] = createSignal<PreferenceSort | undefined>(props.preferenceSort);
+  const [preferencesSort, setPreferencesSort] = createSignal<PreferencesSort | undefined>(props.preferencesSort);
 
   const setNewStatus = (newStatus: NotificationStatus) => {
     setStatus(newStatus);
@@ -168,7 +168,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
         hideBranding,
         preferencesFilter,
         preferenceGroups,
-        preferenceSort,
+        preferencesSort,
         isDevelopmentMode,
         maxSnoozeDurationHours,
         isSnoozeEnabled,
