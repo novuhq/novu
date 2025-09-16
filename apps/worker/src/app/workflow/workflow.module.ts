@@ -17,6 +17,7 @@ import {
   GetTopicSubscribersUseCase,
   NormalizeVariables,
   ProcessTenant,
+  ResolveContext,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -32,6 +33,7 @@ import {
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
+  ContextRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -96,6 +98,7 @@ const REPOSITORIES = [
   CommunityUserRepository,
   ChannelEndpointRepository,
   ChannelConnectionRepository,
+  ContextRepository,
 ];
 
 const webhookProvider: Provider = {
@@ -184,6 +187,7 @@ const USE_CASES = [
   ExecuteBridgeJob,
   GetPreferences,
   WorkflowRunService,
+  ResolveContext,
 ];
 
 const PROVIDERS: Provider[] = [];

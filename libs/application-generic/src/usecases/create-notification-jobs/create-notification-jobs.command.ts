@@ -2,6 +2,7 @@
 import { NotificationTemplateEntity, SubscriberEntity, TopicEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ContextId,
   ISubscribersDefine,
   ITenantDefine,
   ProvidersIdEnum,
@@ -49,6 +50,9 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   tenant?: ITenantDefine;
+
+  @IsOptional()
+  contextId?: ContextId;
 
   bridgeUrl?: string;
 

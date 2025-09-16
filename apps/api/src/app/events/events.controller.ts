@@ -102,6 +102,7 @@ export class EventsController {
         to: body.to,
         actor: body.actor,
         tenant: body.tenant,
+        context: body.context,
         transactionId: body.transactionId,
         addressingType: AddressingTypeEnum.MULTICAST,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,

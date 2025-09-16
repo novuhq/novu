@@ -1,4 +1,5 @@
 import {
+  ContextId,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatus,
   ITenantDefine,
@@ -15,8 +16,6 @@ import { NotificationStepEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 
 export { JobStatusEnum };
-
-
 
 export type DeliveryLifecycleState = {
   status?: DeliveryLifecycleStatus;
@@ -55,6 +54,7 @@ export class JobEntity {
   actorId?: string;
   stepOutput?: Record<string, unknown>;
   preferences?: WorkflowPreferences;
+  contextId?: ContextId;
 }
 
 export type JobDBModel = ChangePropsValueType<

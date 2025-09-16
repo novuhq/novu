@@ -1,5 +1,11 @@
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { IsValidContextPayload } from '@novu/application-generic';
 import {
+  CONTEXT_IDENTIFIER_REGEX,
+  ContextData,
+  ContextObject,
+  ContextPayload,
+  ContextTypeEnum,
   ProvidersIdEnum,
   SeverityLevelEnum,
   TriggerRecipientSubscriber,
@@ -8,7 +14,19 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import {
+  IsDefined,
+  IsEnum,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
+import { IsContextDataSizeValid } from '../../contexts/validators/data-size.validator';
 import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
@@ -324,6 +342,42 @@ export class TriggerEventRequestDto {
 
   @ApiHideProperty()
   controls?: WorkflowToStepControlValuesDto;
+
+  @ApiHideProperty()
+  @ApiPropertyOptional({
+    description: 'Context information for the trigger event',
+    oneOf: [
+      {
+        type: 'string',
+        description: 'Context identifier as string',
+        example: 'tenant-123',
+      },
+      {
+        type: 'object',
+        description: 'Context object with type as key and identifier as value',
+        example: { tenant: 'tenant-123' },
+        properties: {
+          tenant: { type: 'string', example: 'tenant-123' },
+        },
+      },
+      {
+        type: 'object',
+        description: 'Context object with identifier, optional type and data',
+        properties: {
+          identifier: { type: 'string', example: 'tenant-123' },
+          type: { type: 'string', example: 'tenant', enum: [...Object.values(ContextTypeEnum)] },
+          data: {
+            type: 'object',
+            example: { tenantName: 'Acme Corp', region: 'us-east-1', settings: { theme: 'dark' } },
+          },
+        },
+        required: ['identifier'],
+      },
+    ],
+  })
+  @IsOptional()
+  @IsValidContextPayload()
+  context?: ContextPayload;
 }
 
 export class BulkTriggerEventDto {

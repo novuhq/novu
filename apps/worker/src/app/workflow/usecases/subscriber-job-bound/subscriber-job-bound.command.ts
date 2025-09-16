@@ -2,6 +2,7 @@ import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { SubscriberEntity, TopicEntity } from '@novu/dal';
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
+  ContextId,
   ISubscribersDefine,
   ITenantDefine,
   StatelessControls,
@@ -37,6 +38,9 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   actor?: SubscriberEntity;
+
+  @IsOptional()
+  contextId?: ContextId;
 
   @IsDefined()
   @IsMongoId()
