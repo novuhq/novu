@@ -144,29 +144,6 @@ export class SendMessage {
       };
     }
 
-    if (stepType !== StepTypeEnum.DELAY) {
-      let detail = DetailEnum.START_SENDING;
-
-      if (stepType === StepTypeEnum.TRIGGER) {
-        detail = DetailEnum.STEP_COMPLETED;
-      }
-
-      if (stepType === StepTypeEnum.DIGEST) {
-        detail = DetailEnum.START_DIGESTING;
-      }
-
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-    }
-
     const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
       defaultValue: false,
