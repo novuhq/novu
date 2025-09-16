@@ -1,20 +1,14 @@
-import { IWorkflowSuggestion } from '../templates/types';
-import { WorkflowMode } from '../types';
+import { IWorkflowSuggestion } from '../types';
 import { WorkflowCard } from '../workflow-card';
 
 type WorkflowResultsProps = {
-  mode: WorkflowMode;
   suggestions: IWorkflowSuggestion[];
   onClick: (template: IWorkflowSuggestion) => void;
 };
 
-export function WorkflowResults({ mode, suggestions, onClick }: WorkflowResultsProps) {
+export function WorkflowResults({ suggestions, onClick }: WorkflowResultsProps) {
   return (
-    <div
-      className={`grid ${
-        mode === WorkflowMode.FROM_PROMPT ? 'mx-auto w-full max-w-xl grid-cols-1' : 'grid-cols-3'
-      } gap-4`}
-    >
+    <div className="grid grid-cols-3 gap-4">
       {suggestions.map((template) => {
         return (
           <WorkflowCard

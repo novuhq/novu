@@ -57,6 +57,14 @@ export default defineConfig(({ mode }) => {
       headers: {
         'Document-Policy': 'js-profiling',
       },
+      proxy: {
+        '/templates-proxy/': {
+          target: 'https://templates-eta-self.vercel.app/',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (p) => p.replace(/^\/templates-proxy\//, '/'),
+        },
+      },
     },
     optimizeDeps: {
       include: ['@novu/api'],

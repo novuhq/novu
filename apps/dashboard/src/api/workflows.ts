@@ -64,11 +64,15 @@ export const getWorkflows = async ({
   }
 
   if (tags && tags.length > 0) {
-    tags.forEach((tag) => params.append('tags[]', tag));
+    for (const tag of tags) {
+      params.append('tags[]', tag);
+    }
   }
 
   if (status && status.length > 0) {
-    status.forEach((s) => params.append('status[]', s));
+    for (const s of status) {
+      params.append('status[]', s);
+    }
   }
 
   const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?${params.toString()}`, { environment });
@@ -101,12 +105,18 @@ export async function triggerWorkflow({
   payload: unknown;
   to: unknown;
 }) {
+  const basePayload: Record<string, unknown> =
+    payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+  const existingSource = (basePayload as { __source?: unknown }).__source;
+  const payloadWithSource: Record<string, unknown> =
+    typeof existingSource === 'string' ? basePayload : { ...basePayload, __source: 'dashboard' };
+
   return post<{ data: { transactionId?: string } }>(`/events/trigger`, {
     environment,
     body: {
       name,
       to,
-      payload: { ...(payload ?? {}), __source: (payload as any)?.__source ?? 'dashboard' },
+      payload: payloadWithSource,
     },
   });
 }

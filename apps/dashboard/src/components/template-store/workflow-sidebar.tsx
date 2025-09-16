@@ -5,13 +5,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { buildRoute, ROUTES } from '../../utils/routes';
-import { Badge } from '../primitives/badge';
-import { WorkflowMode } from './types';
 
 interface WorkflowSidebarProps {
   selectedCategory: string;
   onCategorySelect: (category: string) => void;
-  mode: WorkflowMode;
 }
 
 interface SidebarButtonProps {
@@ -21,7 +18,6 @@ interface SidebarButtonProps {
   isActive?: boolean;
   bgColor?: string;
   hasExternalLink?: boolean;
-  beta?: boolean;
 }
 
 const buttonVariants = {
@@ -41,7 +37,6 @@ function SidebarButton({
   onClick,
   isActive,
   bgColor = 'bg-blue-50',
-  beta,
   hasExternalLink,
 }: SidebarButtonProps) {
   const content = (
@@ -49,7 +44,7 @@ function SidebarButton({
       <motion.div variants={iconVariants} className={`rounded-lg p-[5px] ${bgColor}`}>
         {icon}
       </motion.div>
-      <span className="text-label-sm text-strong-950">{label}</span>
+      <span className="text-label-sm text-strong">{label}</span>
       {hasExternalLink && (
         <motion.div whileHover={{ x: 2 }} transition={{ type: 'spring', stiffness: 300 }} className="ml-auto">
           <ExternalLink className="text-foreground-600 h-3 w-3" />
@@ -70,14 +65,7 @@ function SidebarButton({
         isActive ? '!border-[#EEEFF1] bg-white' : ''
       }`}
     >
-      <div className="flex w-full items-center gap-2">
-        {content}{' '}
-        {beta && (
-          <Badge color="gray" size="sm">
-            BETA
-          </Badge>
-        )}
-      </div>
+      <div className="flex w-full items-center gap-2">{content}</div>
     </motion.button>
   );
 }
@@ -85,31 +73,49 @@ function SidebarButton({
 const useCases = [
   {
     id: 'popular',
-    icon: <LayoutGrid className="h-3 w-3 text-gray-700" />,
+    icon: <LayoutGrid className="h-3 w-3 text-blue-700" />,
     label: 'Popular',
     bgColor: 'bg-blue-50',
   },
   {
-    id: 'billing',
-    icon: <Calendar className="h-3 w-3 text-gray-700" />,
-    label: 'Billing',
-    bgColor: 'bg-blue-50',
-  },
-  {
     id: 'authentication',
-    icon: <KeyRound className="h-3 w-3 text-gray-700" />,
-    label: 'Authentication',
+    icon: <KeyRound className="h-3 w-3 text-green-700" />,
+    label: 'Auth',
     bgColor: 'bg-green-50',
   },
   {
-    id: 'operational',
-    icon: <Users className="h-3 w-3 text-gray-700" />,
-    label: 'Operational',
+    id: 'billing',
+    icon: <FileText className="h-3 w-3 text-orange-700" />,
+    label: 'Billing',
+    bgColor: 'bg-orange-50',
+  },
+  {
+    id: 'subscription',
+    icon: <Calendar className="h-3 w-3 text-purple-700" />,
+    label: 'Subscriptions',
     bgColor: 'bg-purple-50',
+  },
+  {
+    id: 'usage',
+    icon: <FileCode2 className="h-3 w-3 text-sky-700" />,
+    label: 'Usage',
+    bgColor: 'bg-sky-50',
+  },
+  {
+    id: 'engagement',
+    icon: <Users className="h-3 w-3 text-pink-700" />,
+    label: 'Engagement',
+    bgColor: 'bg-pink-50',
+  },
+  {
+    id: 'operational',
+    icon: <LayoutGrid className="h-3 w-3 text-blue-700" />,
+    label: 'Operational',
+    bgColor: 'bg-blue-50',
   },
 ] as const;
 
-export function WorkflowSidebar({ selectedCategory, onCategorySelect, mode }: WorkflowSidebarProps) {
+export function WorkflowSidebar({ selectedCategory, onCategorySelect }: WorkflowSidebarProps) {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
   const track = useTelemetry();
@@ -161,7 +167,7 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect, mode }: Wo
               icon={item.icon}
               label={item.label}
               onClick={() => onCategorySelect(item.id)}
-              isActive={mode === WorkflowMode.TEMPLATES && selectedCategory === item.id}
+              isActive={selectedCategory === item.id}
               bgColor={item.bgColor}
             />
           ))}
@@ -181,7 +187,7 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect, mode }: Wo
             <motion.div variants={iconVariants} className="rounded-lg bg-gray-50 p-1.5">
               <FileCode2 className="h-3 w-3 text-gray-700" />
             </motion.div>
-            <span className="text-label-sm text-strong-950">Documentation</span>
+            <span className="text-label-sm text-strong">Documentation</span>
           </div>
 
           <p className="text-paragraph-xs text-neutral-400">Find out more about how to best setup workflows</p>

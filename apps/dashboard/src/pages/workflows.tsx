@@ -1,5 +1,5 @@
 import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   RiArrowDownSLine,
@@ -23,8 +23,9 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { getTemplates, WorkflowTemplate } from '@/components/template-store/templates';
+import { selectPopularByIdStrict } from '@/components/template-store/featured';
 import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
@@ -36,6 +37,80 @@ import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+
+// Represents the minimal data needed to render a Quick start card
+type QuickTemplate = {
+  workflowId: string;
+  name: string;
+  description: string;
+  steps: StepTypeEnum[];
+};
+
+// Extract a list of items from various possible API envelope shapes
+function extractApiItems(body: unknown): unknown[] {
+  if (Array.isArray(body)) return body as unknown[];
+  const rec = body as { data?: unknown } & { data?: { data?: unknown[] } } & { data?: unknown[] };
+  // Prefer exact shapes used by the modal mapping for consistency
+  const maybeData = (rec as { data?: unknown }).data as unknown;
+  if (Array.isArray((maybeData as { data?: unknown[] })?.data)) {
+    return (maybeData as { data: unknown }).data as unknown[];
+  }
+  if (Array.isArray(maybeData as unknown[])) {
+    return maybeData as unknown[];
+  }
+  return [];
+}
+
+// Normalize raw API workflows into QuickTemplate models
+function mapApiWorkflowsToQuickTemplates(items: unknown[]): QuickTemplate[] {
+  const typeMap: Record<string, StepTypeEnum> = {
+    trigger: StepTypeEnum.TRIGGER,
+    email: StepTypeEnum.EMAIL,
+    sms: StepTypeEnum.SMS,
+    in_app: StepTypeEnum.IN_APP,
+    inapp: StepTypeEnum.IN_APP,
+    push: StepTypeEnum.PUSH,
+    chat: StepTypeEnum.CHAT,
+    delay: StepTypeEnum.DELAY,
+    digest: StepTypeEnum.DIGEST,
+    custom: StepTypeEnum.CUSTOM,
+  };
+
+  function normalizeStepTypeFromUnknown(input: unknown): StepTypeEnum {
+    if (typeof input === 'string') {
+      const key = input.toLowerCase();
+      if (typeMap[key]) return typeMap[key];
+      const upper = key.toUpperCase() as keyof typeof StepTypeEnum;
+      if (StepTypeEnum[upper]) return StepTypeEnum[upper as keyof typeof StepTypeEnum];
+    }
+
+    return StepTypeEnum.IN_APP;
+  }
+
+  type ApiWorkflowListItem = {
+    workflowId?: string;
+    slug?: string;
+    id?: string;
+    _id?: string;
+    steps?: Array<{ type?: unknown }>;
+    name?: string;
+    description?: string;
+  };
+
+  return (Array.isArray(items) ? items : []).map((rawItem) => {
+    const rawWorkflow = rawItem as ApiWorkflowListItem;
+    const workflowId = rawWorkflow.workflowId || rawWorkflow.slug || rawWorkflow.id || rawWorkflow._id || '';
+    const rawSteps = Array.isArray(rawWorkflow.steps) ? (rawWorkflow.steps as Array<{ type?: unknown }>) : [];
+    const steps = rawSteps.map((rawStep) => normalizeStepTypeFromUnknown(rawStep?.type as unknown));
+
+    return {
+      workflowId: String(workflowId || 'workflow'),
+      name: rawWorkflow.name || 'Untitled',
+      description: rawWorkflow.description || '',
+      steps,
+    };
+  });
+}
 
 interface WorkflowFilters {
   query: string;
@@ -60,33 +135,40 @@ export const WorkflowsPage = () => {
     },
   });
 
-  useEffect(() => {
-    if (!searchParams.has('query') && form.getValues('query')) {
-      form.setValue('query', '');
-    }
-  }, []);
+  const updateSearchParam = useCallback(
+    (value: string) => {
+      if (value) {
+        searchParams.set('query', value);
+      } else {
+        searchParams.delete('query');
+      }
 
-  const updateSearchParam = (value: string) => {
-    if (value) {
-      searchParams.set('query', value);
-    } else {
-      searchParams.delete('query');
-    }
+      setSearchParams(searchParams);
+    },
+    [searchParams, setSearchParams]
+  );
 
-    setSearchParams(searchParams);
-  };
+  const updateTagsParam = useCallback(
+    (tags: string[]) => {
+      searchParams.delete('tags');
+      for (const tag of tags) {
+        searchParams.append('tags', tag);
+      }
+      setSearchParams(searchParams);
+    },
+    [searchParams, setSearchParams]
+  );
 
-  const updateTagsParam = (tags: string[]) => {
-    searchParams.delete('tags');
-    tags.forEach((tag) => searchParams.append('tags', tag));
-    setSearchParams(searchParams);
-  };
-
-  const updateStatusParam = (status: string[]) => {
-    searchParams.delete('status');
-    status.forEach((s) => searchParams.append('status', s));
-    setSearchParams(searchParams);
-  };
+  const updateStatusParam = useCallback(
+    (status: string[]) => {
+      searchParams.delete('status');
+      for (const s of status) {
+        searchParams.append('status', s);
+      }
+      setSearchParams(searchParams);
+    },
+    [searchParams, setSearchParams]
+  );
 
   const debouncedSearch = useDebounce((value: string) => updateSearchParam(value), 500);
 
@@ -117,12 +199,51 @@ export const WorkflowsPage = () => {
       subscription.unsubscribe();
       debouncedSearch.cancel();
     };
-  }, [form, debouncedSearch]);
-  const templates = getTemplates();
-  const popularTemplates = templates.filter((template) => template.isPopular).slice(0, 4);
+  }, [form, debouncedSearch, updateTagsParam, updateStatusParam]);
 
-  const offset = parseInt(searchParams.get('offset') || '0');
-  const limit = parseInt(searchParams.get('limit') || '12');
+  const [quickStartSuggestions, setQuickStartSuggestions] = useState<QuickTemplate[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const load = async () => {
+      try {
+        const res = await fetch('/templates-proxy/api/workflows?refresh=1', {
+          headers: { Accept: 'application/json' },
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          setQuickStartSuggestions([]);
+          return;
+        }
+
+        const body = await res.json();
+        if (!body) {
+          setQuickStartSuggestions([]);
+          return;
+        }
+
+        // Normalize dynamic feed into QuickTemplate[] for Quick start
+        const items = extractApiItems(body);
+        setQuickStartSuggestions(mapApiWorkflowsToQuickTemplates(items));
+      } catch {
+        setQuickStartSuggestions([]);
+      }
+    };
+
+    load();
+
+    return () => controller.abort();
+  }, []);
+
+  const quickStartTemplates = useMemo(() => {
+    const popular = selectPopularByIdStrict(quickStartSuggestions, (template) => template.workflowId, 4);
+    return popular.length ? popular : quickStartSuggestions.slice(0, 4);
+  }, [quickStartSuggestions]);
+
+  const offset = parseInt(searchParams.get('offset') || '0', 10);
+  const limit = parseInt(searchParams.get('limit') || '12', 10);
 
   const {
     data: workflowsData,
@@ -142,10 +263,9 @@ export const WorkflowsPage = () => {
   const { currentEnvironment } = useEnvironment();
   const { tags } = useTags();
 
+  const queryParam = searchParams.get('query') || '';
   const hasActiveFilters =
-    (searchParams.get('query') ? searchParams.get('query')!.trim() !== '' : false) ||
-    searchParams.getAll('tags').length > 0 ||
-    searchParams.getAll('status').length > 0;
+    queryParam.trim() !== '' || searchParams.getAll('tags').length > 0 || searchParams.getAll('status').length > 0;
 
   const isProdEnv = currentEnvironment?.name === 'Production';
 
@@ -156,14 +276,14 @@ export const WorkflowsPage = () => {
     track(TelemetryEvent.WORKFLOWS_PAGE_VISIT);
   }, [track]);
 
-  const handleTemplateClick = (template: WorkflowTemplate) => {
+  const handleTemplateClick = (template: QuickTemplate) => {
     track(TelemetryEvent.TEMPLATE_WORKFLOW_CLICK);
 
     navigate(
-      buildRoute(ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW, {
+      `${buildRoute(ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW, {
         environmentSlug: environmentSlug || '',
-        templateId: template.id,
-      }) + '?source=template-store-card-row'
+        templateId: template.workflowId,
+      })}?source=template-store-card-row`
     );
   };
 
@@ -225,9 +345,9 @@ export const WorkflowsPage = () => {
                   variant="gray"
                   onClick={() =>
                     navigate(
-                      buildRoute(ROUTES.TEMPLATE_STORE, {
+                      `${buildRoute(ROUTES.TEMPLATE_STORE, {
                         environmentSlug: environmentSlug || '',
-                      }) + '?source=start-with'
+                      })}?source=start-with`
                     )
                   }
                   trailingIcon={RiArrowRightSLine}
@@ -237,25 +357,40 @@ export const WorkflowsPage = () => {
               </div>
               <ScrollArea className="w-full">
                 <div className="bg-bg-weak rounded-12 flex gap-4 p-3">
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => {
-                      track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
-
-                      navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
-                    }}
-                  >
-                    <WorkflowCard name="Start from scratch" description="Create a workflow from scratch" steps={[]} />
-                  </div>
-                  {popularTemplates.map((template) => (
-                    <WorkflowCard
-                      key={template.id}
-                      name={template.name}
-                      description={template.description}
-                      steps={template.workflowDefinition.steps.map((step) => step.type as StepTypeEnum)}
-                      onClick={() => handleTemplateClick(template)}
-                    />
-                  ))}
+                  {isPending && (
+                    <>
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                    </>
+                  )}
+                  {!isPending && (
+                    <>
+                      <div className="w-[250px] flex-shrink-0">
+                        <WorkflowCard
+                          name="Start from scratch"
+                          description="Create a workflow from scratch"
+                          steps={[]}
+                          onClick={() => {
+                            track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
+                            navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
+                          }}
+                        />
+                      </div>
+                      {quickStartTemplates.map((template) => (
+                        <div key={template.workflowId} className="w-[250px] flex-shrink-0">
+                          <WorkflowCard
+                            name={template.name}
+                            description={template.description}
+                            steps={template.steps}
+                            onClick={() => handleTemplateClick(template)}
+                          />
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
                 <ScrollBar orientation="horizontal" />
               </ScrollArea>
@@ -293,9 +428,9 @@ const CreateWorkflowButton = () => {
 
   const navigateToTemplateStore = () => {
     navigate(
-      buildRoute(ROUTES.TEMPLATE_STORE, {
+      `${buildRoute(ROUTES.TEMPLATE_STORE, {
         environmentSlug: environmentSlug || '',
-      }) + '?source=create-workflow-dropdown'
+      })}?source=create-workflow-dropdown`
     );
   };
 
@@ -361,10 +496,10 @@ const CreateWorkflowButton = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
             <DropdownMenuItem className="cursor-pointer" asChild>
-              <div className="w-full" onClick={handleCreateWorkflow}>
+              <button type="button" className="w-full text-left" onClick={handleCreateWorkflow}>
                 <RiFileAddLine />
                 From Blank
-              </div>
+              </button>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onSelect={navigateToTemplateStore}>
               <RiFileMarkedLine />
@@ -379,9 +514,7 @@ const CreateWorkflowButton = () => {
 
 export const TemplateModal = () => {
   const navigate = useNavigate();
-  const { templateId, environmentSlug } = useParams();
-  const templates = getTemplates();
-  const selectedTemplate = templateId ? templates.find((template) => template.id === templateId) : undefined;
+  const { environmentSlug } = useParams();
 
   const handleCloseTemplateModal = () => {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: environmentSlug || '' }));
@@ -395,7 +528,6 @@ export const TemplateModal = () => {
           handleCloseTemplateModal();
         }
       }}
-      selectedTemplate={selectedTemplate}
     />
   );
 };
