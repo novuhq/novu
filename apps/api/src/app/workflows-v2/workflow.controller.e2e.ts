@@ -848,7 +848,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{inAppSubjectText}}' } },
         ];
         const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
-          steps,
+          steps: steps as UpdateWorkflowDtoSteps[],
           payloadSchema: {
             type: 'object',
             properties: {
@@ -859,7 +859,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
             required: [],
             additionalProperties: false,
           },
-        } as CreateWorkflowDto);
+        });
         const res = await createWorkflow(apiClient, createWorkflowDto);
         const stepData = await getStepData(res.id, res.steps[0].id);
         const { variables } = stepData;
@@ -880,7 +880,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{payload.inAppSubjectText}}' } },
         ];
         const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
-          steps,
+          steps: steps as UpdateWorkflowDtoSteps[],
           payloadSchema: {
             type: 'object',
             properties: {
@@ -889,7 +889,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
             required: [],
             additionalProperties: false,
           },
-        } as CreateWorkflowDto);
+        });
         const res = await createWorkflow(apiClient, createWorkflowDto);
         const novuRestResult = await apiClient.workflows.steps.retrieve(res.id, res.steps[1].id);
         const { variables } = novuRestResult.result;
