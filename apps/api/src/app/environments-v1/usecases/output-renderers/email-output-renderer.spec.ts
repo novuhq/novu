@@ -31,7 +31,7 @@ describe('EmailOutputRendererUsecase', () => {
   beforeEach(async () => {
     moduleRef = sinon.createStubInstance(ModuleRef);
     featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
-    featureFlagsServiceMock.getFlag.resolves(false);
+    featureFlagsServiceMock.getFlag.withArgs(sinon.match.has('key', 'IS_TRANSLATION_ENABLED')).resolves(false);
     getOrganizationSettingsMock = sinon.createStubInstance(GetOrganizationSettings);
     getOrganizationSettingsMock.execute.resolves({
       removeNovuBranding: false,
@@ -1063,11 +1063,6 @@ describe('EmailOutputRendererUsecase', () => {
   });
 
   describe('enhanceContentVariable functionality', () => {
-    beforeEach(() => {
-      // Disable layouts feature flag for these tests to focus on step content only
-      featureFlagsServiceMock.getFlag.resolves(false);
-    });
-
     it('should process content variable with shouldDangerouslySetInnerHTML behavior', async () => {
       const mockMailyContent = {
         type: 'doc',
@@ -1159,9 +1154,6 @@ describe('EmailOutputRendererUsecase', () => {
     let mockLayoutDto: any;
 
     beforeEach(() => {
-      // Enable layouts feature flag for these tests
-      featureFlagsServiceMock.getFlag.resolves(true);
-
       mockControlValuesEntity = {
         controls: {
           email: {
@@ -1471,10 +1463,6 @@ describe('EmailOutputRendererUsecase', () => {
     });
 
     describe('when layouts feature flag is enabled', () => {
-      beforeEach(() => {
-        featureFlagsServiceMock.getFlag.resolves(true);
-      });
-
       it('should render with specified layout when layoutId is provided', async () => {
         const renderCommand: EmailOutputRendererCommand = {
           environmentId: 'fake_env_id',
@@ -1875,9 +1863,6 @@ describe('EmailOutputRendererUsecase', () => {
     let mockLayoutDto: any;
 
     beforeEach(() => {
-      // Enable layouts feature flag for override tests
-      featureFlagsServiceMock.getFlag.resolves(true);
-
       mockControlValuesEntity = {
         controls: {
           email: {
@@ -2411,11 +2396,6 @@ describe('EmailOutputRendererUsecase', () => {
   describe('Novu branding functionality', () => {
     const simpleHtmlBody = '<p>Test email content</p>';
 
-    beforeEach(() => {
-      // Ensure layouts feature flag is disabled for branding tests
-      featureFlagsServiceMock.getFlag.resolves(false);
-    });
-
     it('should add Novu branding when removeNovuBranding is false', async () => {
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: false,
@@ -2497,8 +2477,6 @@ describe('EmailOutputRendererUsecase', () => {
 
   describe('Gmail clipping prevention', () => {
     beforeEach(() => {
-      // Ensure layouts feature flag is disabled for these tests
-      featureFlagsServiceMock.getFlag.resolves(false);
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: false,
         defaultLocale: 'en_US',
