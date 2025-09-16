@@ -1,3 +1,0 @@
-# Pnpm configuration
-# Wait 24 hours (1440 minutes) before allowing packages to be installed
-minimumReleaseAge=1440
