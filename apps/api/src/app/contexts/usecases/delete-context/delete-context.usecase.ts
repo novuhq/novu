@@ -14,7 +14,9 @@ export class DeleteContext {
     });
 
     if (!existingContext) {
-      throw new NotFoundException(`Context with identifier '${command.identifier}' not found`);
+      throw new NotFoundException(
+        `Context with identifier '${command.identifier}' not found in environment ${command.environmentId}`
+      );
     }
 
     await this.contextRepository.delete({

@@ -27,6 +27,7 @@ import {
   GetContextResponseDto,
   GetContextsRequestDto,
   GetContextsResponseDto,
+  mapContextEntityToDto,
   UpdateContextRequestDto,
 } from './dtos';
 import { CreateContext, CreateContextCommand } from './usecases/create-context';
@@ -78,15 +79,17 @@ export class ContextsController {
   ): Promise<GetContextResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return this.createContextUsecase.execute(
+    const entity = await this.createContextUsecase.execute(
       CreateContextCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         type: body.type,
         identifier: body.identifier,
-        data: body.data,
+        data: body.data || {},
       })
     );
+
+    return mapContextEntityToDto(entity);
   }
 
   @Get('')
@@ -102,7 +105,7 @@ export class ContextsController {
   ): Promise<GetContextsResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return this.getContextsUsecase.execute(
+    const result = await this.getContextsUsecase.execute(
       GetContextsCommand.create({
         user,
         limit: query.limit || 10,
@@ -115,6 +118,12 @@ export class ContextsController {
         identifier: query.identifier,
       })
     );
+
+    return {
+      data: result.data.map(mapContextEntityToDto),
+      next: result.next,
+      previous: result.previous,
+    };
   }
 
   @Get('/:identifier')
@@ -130,13 +139,15 @@ export class ContextsController {
   ): Promise<GetContextResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return this.getContextUsecase.execute(
+    const entity = await this.getContextUsecase.execute(
       GetContextCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         identifier,
       })
     );
+
+    return mapContextEntityToDto(entity);
   }
 
   @Patch('/:identifier')
@@ -153,7 +164,7 @@ export class ContextsController {
   ): Promise<GetContextResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return this.updateContextUsecase.execute(
+    const entity = await this.updateContextUsecase.execute(
       UpdateContextCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
@@ -161,6 +172,8 @@ export class ContextsController {
         data: body.data,
       })
     );
+
+    return mapContextEntityToDto(entity);
   }
 
   @Delete('/:identifier')

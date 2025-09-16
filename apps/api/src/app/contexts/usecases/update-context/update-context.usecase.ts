@@ -1,13 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ContextEntity, ContextRepository } from '@novu/dal';
-import { mapContextEntityToDto } from '../../dtos';
 import { UpdateContextCommand } from './update-context.command';
 
 @Injectable()
 export class UpdateContext {
   constructor(private contextRepository: ContextRepository) {}
 
-  async execute(command: UpdateContextCommand) {
+  async execute(command: UpdateContextCommand): Promise<ContextEntity> {
     const existingContext = await this.contextRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -15,7 +14,9 @@ export class UpdateContext {
     });
 
     if (!existingContext) {
-      throw new NotFoundException(`Context with identifier '${command.identifier}' not found`);
+      throw new NotFoundException(
+        `Context with identifier '${command.identifier}' not found in environment ${command.environmentId}`
+      );
     }
 
     const updateData: Partial<Pick<ContextEntity, 'data'>> = {};
@@ -39,6 +40,6 @@ export class UpdateContext {
     );
 
     // biome-ignore lint/style/noNonNullAssertion: updatedContext is always found
-    return mapContextEntityToDto(updatedContext!);
+    return updatedContext!;
   }
 }

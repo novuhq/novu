@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ContextEntity, ContextRepository, EnforceEnvOrOrgIds } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
-import { mapContextEntityToDto } from '../../dtos';
 import { GetContextsCommand } from './get-contexts.command';
 
 @Injectable()
@@ -72,7 +71,7 @@ export class GetContexts {
     });
 
     return {
-      data: pagination.data.map(mapContextEntityToDto),
+      data: pagination.data,
       next: pagination.next,
       previous: pagination.previous,
     };

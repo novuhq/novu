@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CONTEXT_IDENTIFIER_REGEX, ContextData, ContextTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsString, Length, Matches, ValidateNested } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, Length, Matches, ValidateNested } from 'class-validator';
 import { CONTEXT_DATA_MAX_SIZE_BYTES, IsContextDataSizeValid } from '../validators/data-size.validator';
 
 export class CreateContextRequestDto {
@@ -26,9 +26,11 @@ export class CreateContextRequestDto {
   @ApiProperty({
     description: `Context data object containing metadata. Maximum size is ${Math.round(CONTEXT_DATA_MAX_SIZE_BYTES / 1024)}KB.`,
     example: { tenantName: 'Acme Corp', region: 'us-east-1', settings: { theme: 'dark' } },
+    required: false,
   })
   @ValidateNested()
   @Type(() => Object)
   @IsContextDataSizeValid()
-  data: ContextData;
+  @IsOptional()
+  data?: ContextData;
 }
