@@ -425,7 +425,9 @@ export class TriggerEvent {
         });
       }
 
-      throw new BadRequestException('Failed to resolve context');
+      throw new BadRequestException(
+        `Failed to resolve context: ${error?.message ?? error} | Context: ${JSON.stringify(command.context)}`
+      );
     }
   }
 }
