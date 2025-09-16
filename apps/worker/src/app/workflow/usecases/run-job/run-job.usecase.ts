@@ -153,7 +153,9 @@ export class RunJob {
           { readPreference: 'secondaryPreferred' }
         );
         const timezone = subscriber?.timezone;
-        const isOutsideSubscriberSchedule = !isWithinSchedule(schedule, new Date(), timezone);
+        const isOutsideSubscriberSchedule = schedule?.isEnabled
+          ? !isWithinSchedule(schedule, new Date(), timezone)
+          : false;
 
         if (isOutsideSubscriberSchedule && (await this.shouldExtendToSubscriberSchedule(job, notification))) {
           this.logger.info(

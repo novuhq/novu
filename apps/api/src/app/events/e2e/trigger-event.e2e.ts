@@ -4297,6 +4297,86 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
 
       expect(scheduleSkipDetails).to.have.length(0);
     });
+
+    it('should deliver digest messages when subscriber schedule is disabled', async () => {
+      // Create a subscriber with a schedule
+      const scheduledSubscriber = await subscriberService.createSubscriber({
+        subscriberId: 'scheduled-subscriber-digest-within',
+        timezone: 'America/New_York',
+      });
+
+      await session.testAgent
+        .patch(`/v2/subscribers/${scheduledSubscriber.subscriberId}/preferences`)
+        .send({
+          schedule: {
+            isEnabled: false,
+          },
+        })
+        .set('Authorization', `ApiKey ${session.apiKey}`);
+
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test Email Workflow',
+        workflowId: 'test-email-workflow',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            name: 'DigestStep',
+            type: StepTypeEnum.DIGEST,
+            controlValues: {
+              amount: 5,
+              unit: 'seconds',
+            },
+          },
+          {
+            name: 'Email Test Step',
+            type: StepTypeEnum.EMAIL,
+            controlValues: {
+              subject: 'Test Email Subject',
+              body: 'Test Email Body',
+              disableOutputSanitization: false,
+            },
+          },
+        ],
+      };
+
+      const workflowResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      const workflow: WorkflowResponseDto = workflowResponse.body.data;
+
+      // Trigger the event
+      const response = await novuClient.trigger({
+        workflowId: workflowBody.workflowId,
+        to: [scheduledSubscriber.subscriberId],
+        payload: {
+          firstName: 'Test User',
+        },
+      });
+
+      expect(response.result).to.be.ok;
+
+      // Wait for job processing (digest jobs need more time)
+      await session.waitForJobCompletion(workflow._id);
+
+      // Check that the digest job was completed successfully
+      const jobs = await jobRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: scheduledSubscriber._id,
+        _templateId: workflow._id,
+      });
+
+      expect(jobs).to.have.length(3);
+      expect(jobs.find((job) => job.type === StepTypeEnum.TRIGGER)?.status).to.equal(JobStatusEnum.COMPLETED);
+      expect(jobs.find((job) => job.type === StepTypeEnum.DIGEST)?.status).to.equal(JobStatusEnum.COMPLETED);
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: scheduledSubscriber._id,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      expect(message).to.be.ok;
+      expect(message?.subject).to.equal('Test Email Subject');
+      expect(message?.content).to.contain('Test Email Body');
+    });
   });
 });
 
