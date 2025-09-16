@@ -62,6 +62,7 @@ export default defineConfig(({ mode }) => {
       include: ['@novu/api'],
     },
     build: {
+      chunkSizeWarningLimit: 12000,
       commonjsOptions: {
         include: [/@novu\/api/, /node_modules/],
       },
