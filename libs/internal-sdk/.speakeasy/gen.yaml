@@ -16,6 +16,7 @@ generation:
   auth:
     oAuth2ClientCredentialsEnabled: false
     oAuth2PasswordEnabled: false
+    hoistGlobalSecurity: true
   sdkHooksConfigAccess: true
   tests:
     generateTests: true
@@ -56,6 +57,7 @@ typescript:
   outputModelSuffix: output
   packageName: '@novu/api'
   responseFormat: flat
+  sseFlatResponse: false
   templateVersion: v2
   usageSDKInitImports: []
   useIndexModules: true

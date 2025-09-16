@@ -79,7 +79,7 @@ const dalService = {
   useFactory: async () => {
     const service = new DalService();
 
-    await service.connect(process.env.MONGO_URL);
+    await service.connect(process.env.MONGO_URL!);
 
     return service;
   },

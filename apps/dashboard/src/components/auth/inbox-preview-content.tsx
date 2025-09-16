@@ -63,6 +63,7 @@ export function InboxPreviewContent() {
         notificationListEmptyNotice: {
           marginTop: '-32px',
         },
+        scheduleContainer: 'hidden',
       },
     },
     tabs: defaultTabs,

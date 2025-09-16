@@ -55,6 +55,10 @@ export class JobEntity {
   stepOutput?: Record<string, unknown>;
   preferences?: WorkflowPreferences;
   contextId?: ContextId;
+  /**
+   * used to track the number of times a step has been extended to the next available time in the subscriber schedule
+   */
+  scheduleExtensionsCount?: number;
 }
 
 export type JobDBModel = ChangePropsValueType<

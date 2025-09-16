@@ -90,6 +90,7 @@ export const ScheduledDigest = ({
               onNumbersChange={(value) => {
                 handleValueChange({ dayOfMonth: value });
               }}
+              isDisabled={isDisabled}
             />
           </div>
         )}
@@ -101,6 +102,7 @@ export const ScheduledDigest = ({
               onDaysChange={(value) => {
                 handleValueChange({ dayOfWeek: value });
               }}
+              isDisabled={isDisabled}
             />
           </div>
         )}
@@ -115,6 +117,7 @@ export const ScheduledDigest = ({
                 handleValueChange({ hour: value });
               }}
               zeroBased
+              isDisabled={isDisabled}
             />
           </div>
         )}
@@ -129,6 +132,7 @@ export const ScheduledDigest = ({
                 handleValueChange({ minute: value });
               }}
               zeroBased
+              isDisabled={isDisabled}
             />
           </div>
         )}

@@ -16,6 +16,7 @@ export const inputVariants = cva(
       size: {
         default: 'nt-h-9',
         sm: 'nt-h-8 nt-text-sm',
+        xs: 'nt-h-7 nt-text-xs',
       },
     },
     defaultVariants: {

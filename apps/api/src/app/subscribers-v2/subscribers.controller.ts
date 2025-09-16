@@ -292,9 +292,9 @@ export class SubscribersController {
   })
   @ApiResponse(SubscriberGlobalPreferenceDto)
   @SdkGroupName('Subscribers.Preferences')
-  @SdkMethodName('getGlobal')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
   @RequireAuthentication()
+  @SdkMethodName('globalPreference')
   @ApiExcludeEndpoint()
   async getGlobalPreference(
     @UserSession() user: UserSessionData,

@@ -58,6 +58,7 @@ const stepRunSelectColumns = [
   'status',
   'created_at',
   'updated_at',
+  'schedule_extensions_count',
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
@@ -442,6 +443,7 @@ function mapStepRunToJob(
     updatedAt: new Date(stepRun.updated_at).toISOString(),
     digest: undefined, // Step runs don't have digest info
     executionDetails,
+    scheduleExtensionsCount: stepRun.schedule_extensions_count,
   };
 
   return jobDto;

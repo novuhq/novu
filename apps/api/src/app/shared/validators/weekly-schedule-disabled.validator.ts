@@ -13,13 +13,6 @@ export function WeeklyScheduleValidation(validationOptions?: ValidationOptions) 
         validate(value: unknown, args: ValidationArguments) {
           const obj = args.object as { isEnabled?: boolean };
 
-          // If isEnabled is false and weeklySchedule exists, validation fails
-          if (obj.isEnabled === false && value !== undefined && value !== null) {
-            return false;
-          }
-          if (obj.isEnabled === true && (value === undefined || value === null)) {
-            return false;
-          }
           if (obj.isEnabled === true && value && Object.keys(value).length === 0) {
             return false;
           }
@@ -32,14 +25,6 @@ export function WeeklyScheduleValidation(validationOptions?: ValidationOptions) 
         defaultMessage(args: ValidationArguments) {
           const obj = args.object as { isEnabled?: boolean };
           const value = args.value;
-
-          if (obj.isEnabled === false && value !== undefined && value !== null) {
-            return 'weeklySchedule should not be provided when isEnabled is false';
-          }
-
-          if (obj.isEnabled === true && (value === undefined || value === null)) {
-            return 'weeklySchedule is required when isEnabled is true';
-          }
 
           if (obj.isEnabled === true && value && Object.keys(value).length === 0) {
             return 'weeklySchedule must contain at least one day configuration when isEnabled is true';

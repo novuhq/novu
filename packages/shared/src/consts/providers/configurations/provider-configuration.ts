@@ -69,6 +69,28 @@ const mailgunConfigurations: ConfigConfiguration[] = [
   },
 ];
 
+const sesConfigurations: ConfigConfiguration[] = [
+  {
+    key: 'inboundWebhookEnabled',
+    displayName: 'Email Activity Tracking',
+    description: emailActivityTrackingDescription,
+    type: 'switch',
+    required: false,
+    links: [
+      {
+        text: 'set-up guide',
+        url: 'https://docs.novu.co/integrations/providers/email/amazon-ses#manual-setup',
+      },
+    ],
+  },
+  {
+    key: 'configurationSetName',
+    displayName: 'Configuration Set Name',
+    type: 'string',
+    required: false,
+  },
+];
+
 export const sendgridGroupConfigurations: ConfigConfigurationGroup[] = [
   {
     groupType: 'inboundWebhook',
@@ -94,5 +116,15 @@ export const mailgunGroupConfigurations: ConfigConfigurationGroup[] = [
     configurations: mailgunConfigurations,
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide: 'https://documentation.mailgun.com/docs/mailgun/user-manual/events/webhooks',
+  },
+];
+
+export const sesGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: sesConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide:
+      'https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook#add-an-event-webhook',
   },
 ];

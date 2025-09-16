@@ -124,6 +124,7 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
       cron: controlValues.cron,
       digestKey: controlValues.digestKey,
       skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
     };
 
     return filterNullishValues(mappedValues);
@@ -144,6 +145,7 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
             unit: (controlValues.lookBackWindow as LookBackWindowType).unit,
           }
         : undefined,
+      extendToSchedule: controlValues.extendToSchedule,
     };
 
     return filterNullishValues(mappedValues);
@@ -165,6 +167,7 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
           unit: (anyControlValues.lookBackWindow as LookBackWindowType).unit,
         }
       : undefined,
+    extendToSchedule: anyControlValues.extendToSchedule,
   });
 }
 
@@ -175,6 +178,7 @@ function sanitizeDelay(controlValues: DelayControlType) {
     type: controlValues.type,
     unit: controlValues.unit,
     skip: controlValues.skip,
+    extendToSchedule: controlValues.extendToSchedule,
   };
 
   return filterNullishValues(mappedValues);

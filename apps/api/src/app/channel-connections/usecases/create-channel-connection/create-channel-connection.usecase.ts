@@ -8,8 +8,6 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { parseResourceKey } from '@novu/shared';
-import { mapChannelConnectionEntityToDto } from '../../dtos/dto.mapper';
-import { GetChannelConnectionResponseDto } from '../../dtos/get-channel-connection-response.dto';
 import { CreateChannelConnectionCommand } from './create-channel-connection.command';
 
 @Injectable()
@@ -21,7 +19,7 @@ export class CreateChannelConnection {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: CreateChannelConnectionCommand): Promise<GetChannelConnectionResponseDto> {
+  async execute(command: CreateChannelConnectionCommand): Promise<ChannelConnectionEntity> {
     const integration = await this.findIntegration(command);
 
     await this.assertSingleConnectionPerResourceAndIntegration(command, integration);
@@ -44,7 +42,7 @@ export class CreateChannelConnection {
 
     const channelConnection = await this.createChannelConnection(command, identifier, integration);
 
-    return mapChannelConnectionEntityToDto(channelConnection);
+    return channelConnection;
   }
 
   private async assertSingleConnectionPerResourceAndIntegration(

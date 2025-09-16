@@ -1,4 +1,4 @@
-import { autoUpdate, flip, OffsetOptions, offset, Placement, shift, ShiftOptions } from '@floating-ui/dom';
+import { autoUpdate, flip, OffsetOptions, offset, Placement, shift } from '@floating-ui/dom';
 import { useFloating } from 'solid-floating-ui';
 import { Accessor, createContext, createMemo, createSignal, JSX, Setter, useContext } from 'solid-js';
 
@@ -7,7 +7,7 @@ type PopoverRootProps = {
   children?: JSX.Element;
   fallbackPlacements?: Placement[];
   placement?: Placement;
-  onOpenChange?: Setter<boolean>;
+  onOpenChange?: (isOpen: boolean) => void;
   offset?: OffsetOptions;
 };
 
@@ -26,7 +26,6 @@ const PopoverContext = createContext<PopoverContextValue | undefined>(undefined)
 
 export function PopoverRoot(props: PopoverRootProps) {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = createSignal(props.open ?? false);
-  const onOpenChange = () => props.onOpenChange ?? setUncontrolledIsOpen;
   const open = () => props.open ?? uncontrolledIsOpen();
   const [reference, setReference] = createSignal<HTMLElement | null>(null);
   const [floating, setFloating] = createSignal<HTMLElement | null>(null);
@@ -36,14 +35,14 @@ export function PopoverRoot(props: PopoverRootProps) {
     placement: props.placement,
     whileElementsMounted: autoUpdate,
     middleware: [
-      offset(10), 
-      flip({ fallbackPlacements: props.fallbackPlacements }), 
+      offset(10),
+      flip({ fallbackPlacements: props.fallbackPlacements }),
       // Configure shift to prevent layout overflow and UI shifts
       shift({
         padding: 8,
         crossAxis: false, // Prevent horizontal shifting that causes layout gaps
-        mainAxis: true    // Allow vertical shifting only
-      })
+        mainAxis: true, // Allow vertical shifting only
+      }),
     ],
   });
   const floatingStyles = createMemo(() => ({
@@ -53,11 +52,21 @@ export function PopoverRoot(props: PopoverRootProps) {
   }));
 
   const onClose = () => {
-    onOpenChange()(false);
+    if (props.onOpenChange) {
+      props.onOpenChange(false);
+      return;
+    }
+
+    setUncontrolledIsOpen(false);
   };
 
   const onToggle = () => {
-    onOpenChange()((prev) => !prev);
+    if (props.onOpenChange) {
+      props.onOpenChange(!props.open);
+      return;
+    }
+
+    setUncontrolledIsOpen((prev) => !prev);
   };
 
   return (

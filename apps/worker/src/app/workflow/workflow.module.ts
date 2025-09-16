@@ -13,6 +13,7 @@ import {
   GetNovuLayout,
   GetNovuProviderCredentials,
   GetPreferences,
+  GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
   NormalizeVariables,
@@ -188,6 +189,7 @@ const USE_CASES = [
   GetPreferences,
   WorkflowRunService,
   ResolveContext,
+  GetSubscriberSchedule,
 ];
 
 const PROVIDERS: Provider[] = [];
