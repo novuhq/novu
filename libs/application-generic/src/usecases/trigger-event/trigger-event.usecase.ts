@@ -424,9 +424,8 @@ export class TriggerEvent {
           context: command.context,
         });
       }
-
       throw new BadRequestException(
-        `Failed to resolve context: ${error?.message ?? error} | Context: ${JSON.stringify(command.context)}`
+        `Failed to resolve context: ${error instanceof Error ? error.message : String(error)} | Context: ${JSON.stringify(command.context)}`
       );
     }
   }
