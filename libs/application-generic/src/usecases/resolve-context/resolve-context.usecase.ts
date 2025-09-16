@@ -145,7 +145,9 @@ export class ResolveContext {
 
     const updatedContext = await this.contextRepository.findOneAndUpdate(baseQuery, { $set: { data } }, { new: true });
 
-    // biome-ignore lint/style/noNonNullAssertion: updatedContext is always found
-    return updatedContext!;
+    if (!updatedContext) {
+      throw new NotFoundException('Updated context not found after update operation.');
+    }
+    return updatedContext;
   }
 }
