@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
@@ -105,12 +105,6 @@ export abstract class BaseTranslationRendererUsecase {
     try {
       const translate = this.getTranslationModule();
 
-      if (!translate) {
-        this.logger.debug('Translation module not available, skipping translation');
-
-        return content;
-      }
-
       const contentString = typeof content === 'string' ? content : JSON.stringify(content);
       const liquidEngine = createLiquidEngine();
 
@@ -127,9 +121,9 @@ export abstract class BaseTranslationRendererUsecase {
 
       return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);
     } catch (error) {
-      this.logger.error('Translation processing failed, falling back to original content', error);
+      this.logger.error('Translation processing failed', error);
 
-      return content;
+      throw new InternalServerErrorException('Translation processing failed');
     }
   }
 
@@ -137,9 +131,9 @@ export abstract class BaseTranslationRendererUsecase {
     try {
       return this.moduleRef.get(require('@novu/ee-translation')?.Translate, { strict: false });
     } catch (error) {
-      this.logger.debug('Translation module not found', error);
+      this.logger.error('Translation module not found', error);
 
-      return null;
+      throw new InternalServerErrorException('Unable to load Translation module (Translate usecase)');
     }
   }
 }
