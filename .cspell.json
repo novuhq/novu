@@ -729,6 +729,7 @@
     "Unvalidated",
     "upsert",
     "upserted",
+    "unstub",
     "upstash",
     "Upstash",
     "usecase",
