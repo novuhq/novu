@@ -46,7 +46,7 @@ RUN wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | apt-key add -
 
 # Install pnpm and TypeScript globally
 RUN npm --no-update-notifier --no-fund --global install \
-    pnpm@10.11.0 \
+    pnpm@10.16.1 \
     typescript@5.6.2 \
     && npm cache clean --force
 
