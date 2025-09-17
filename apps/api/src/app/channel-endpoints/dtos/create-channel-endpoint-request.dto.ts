@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { getApiPropertyExamples } from '@novu/application-generic';
 import { ChannelEndpointByType, ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
 import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
-import { IsValidChannelEndpoint } from '../../shared/validators/channel-endpoint.validator';
+import { IsValidChannelEndpoint } from '../validators/channel-endpoint.validator';
 
 export class CreateChannelEndpointRequestDto {
   @ApiPropertyOptional({

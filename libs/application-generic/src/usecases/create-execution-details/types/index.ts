@@ -30,7 +30,6 @@ export enum DetailEnum {
   MESSAGE_SNOOZED = 'Message snoozed',
   MESSAGE_UNSNOOZED = 'Message unsnoozed',
   MESSAGE_UNSNOOZE_FAILED = 'Message unsnooze failed',
-  SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED = 'Successful Bridge response received',
   FAILED_BRIDGE_EXECUTION = 'Bridge execution failed',
   SKIPPED_BRIDGE_EXECUTION = 'Bridge execution skipped',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
@@ -46,7 +45,6 @@ export enum DetailEnum {
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
   MESSAGE_SENT = 'Message sent',
   PROVIDER_ERROR = 'Unexpected provider error',
-  START_SENDING = 'Start sending message',
   START_DIGESTING = 'Start digesting',
   STEP_COMPLETED = 'Step completed',
   PROCESSING_STEP_FILTER = 'Processing step filter',
@@ -72,4 +70,8 @@ export enum DetailEnum {
   MESSAGE_SEVERITY_OVERRIDDEN = 'Severity for the message was overridden',
   STEP_EXTENDED_TO_SCHEDULE = 'Step was extended to the next available time in the subscriber schedule',
   SKIPPED_STEP_MAX_EXTENSIONS_REACHED = 'Step was executed due to maximum number of subscriber schedule extensions reached',
+}
+
+export function createProviderSelectedMessage(providerId: string): string {
+  return `${providerId} provider was selected`;
 }

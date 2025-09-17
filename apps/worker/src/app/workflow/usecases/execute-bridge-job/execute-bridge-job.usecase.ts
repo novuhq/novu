@@ -135,18 +135,6 @@ export class ExecuteBridgeJob {
       },
     });
 
-    const executionDetailsCommand: CreateExecutionDetailsCommand = {
-      ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-      detail: DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED,
-      source: ExecutionDetailsSourceEnum.INTERNAL,
-      status: ExecutionDetailsStatusEnum.PENDING,
-      isTest: false,
-      isRetry: false,
-      raw: JSON.stringify(bridgeResponse.metadata),
-    };
-
-    await this.createExecutionDetails.execute(executionDetailsCommand);
-
     return bridgeResponse;
   }
 
