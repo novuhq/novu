@@ -16,13 +16,12 @@ export class ResolveContext {
 
   @InstrumentUsecase()
   public async execute(command: ResolveContextCommand): Promise<ContextEntity[]> {
-    const contexts: ContextEntity[] = [];
-
-    // Process each context type-value pair
-    for (const [contextType, contextValue] of Object.entries(command.context)) {
-      const context = await this.resolveContextTypeAndValue(command, contextType as ContextType, contextValue);
-      contexts.push(context);
-    }
+    // Process all context type-value pairs in parallel to avoid N+1 queries
+    const contexts = await Promise.all(
+      Object.entries(command.context).map(([contextType, contextValue]) =>
+        this.resolveContextTypeAndValue(command, contextType, contextValue)
+      )
+    );
 
     return contexts;
   }
