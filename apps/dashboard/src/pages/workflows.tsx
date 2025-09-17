@@ -1,5 +1,5 @@
-import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum, WorkflowStatusEnum } from '@novu/shared';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   RiArrowDownSLine,
@@ -35,68 +35,9 @@ import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { extractApiItems } from '@/utils/api-response-normalizer';
+import { QuickTemplate, useTemplateStore } from '@/hooks/use-template-store';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-
-// Represents the minimal data needed to render a Quick start card
-type QuickTemplate = {
-  workflowId: string;
-  name: string;
-  description: string;
-  steps: StepTypeEnum[];
-};
-
-// Normalize raw API workflows into QuickTemplate models
-function mapApiWorkflowsToQuickTemplates(items: unknown[]): QuickTemplate[] {
-  const typeMap: Record<string, StepTypeEnum> = {
-    trigger: StepTypeEnum.TRIGGER,
-    email: StepTypeEnum.EMAIL,
-    sms: StepTypeEnum.SMS,
-    in_app: StepTypeEnum.IN_APP,
-    inapp: StepTypeEnum.IN_APP,
-    push: StepTypeEnum.PUSH,
-    chat: StepTypeEnum.CHAT,
-    delay: StepTypeEnum.DELAY,
-    digest: StepTypeEnum.DIGEST,
-    custom: StepTypeEnum.CUSTOM,
-  };
-
-  function normalizeStepTypeFromUnknown(input: unknown): StepTypeEnum {
-    if (typeof input === 'string') {
-      const key = input.toLowerCase();
-      if (typeMap[key]) return typeMap[key];
-      const upper = key.toUpperCase();
-      if (StepTypeEnum[upper as keyof typeof StepTypeEnum]) return StepTypeEnum[upper as keyof typeof StepTypeEnum];
-    }
-
-    return StepTypeEnum.IN_APP;
-  }
-
-  type ApiWorkflowListItem = {
-    workflowId?: string;
-    slug?: string;
-    id?: string;
-    _id?: string;
-    steps?: Array<{ type?: unknown }>;
-    name?: string;
-    description?: string;
-  };
-
-  return (Array.isArray(items) ? items : []).map((rawItem) => {
-    const rawWorkflow = rawItem as ApiWorkflowListItem;
-    const workflowId = rawWorkflow.workflowId || rawWorkflow.slug || rawWorkflow.id || rawWorkflow._id || '';
-    const rawSteps = Array.isArray(rawWorkflow.steps) ? (rawWorkflow.steps as Array<{ type?: unknown }>) : [];
-    const steps = rawSteps.map((rawStep) => normalizeStepTypeFromUnknown(rawStep?.type as unknown));
-
-    return {
-      workflowId: String(workflowId || 'workflow'),
-      name: rawWorkflow.name || 'Untitled',
-      description: rawWorkflow.description || '',
-      steps,
-    };
-  });
-}
 
 interface WorkflowFilters {
   query: string;
@@ -195,54 +136,12 @@ export const WorkflowsPage = () => {
     };
   }, [form, debouncedSearch, updateTagsParam, updateStatusParam]);
 
-  const [quickStartSuggestions, setQuickStartSuggestions] = useState<QuickTemplate[]>([]);
-  const [isLoadingQuickStart, setIsLoadingQuickStart] = useState<boolean>(true);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    let cancelled = false;
-    setIsLoadingQuickStart(true);
-
-    const load = async () => {
-      try {
-        const res = await fetch('/templates-proxy/api/workflows?refresh=1', {
-          headers: { Accept: 'application/json' },
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          setQuickStartSuggestions([]);
-          return;
-        }
-
-        const body = await res.json();
-        if (!body) {
-          setQuickStartSuggestions([]);
-          return;
-        }
-
-        // Normalize dynamic feed into QuickTemplate[] for Quick start
-        const items = extractApiItems(body);
-        setQuickStartSuggestions(mapApiWorkflowsToQuickTemplates(items));
-      } catch {
-        setQuickStartSuggestions([]);
-      } finally {
-        if (!cancelled) setIsLoadingQuickStart(false);
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, []);
+  const { quickTemplates, isLoading: isLoadingQuickStart } = useTemplateStore();
 
   const quickStartTemplates = useMemo(() => {
-    const popular = selectPopularByIdStrict(quickStartSuggestions, (template) => template.workflowId, 4);
-    return popular.length ? popular : quickStartSuggestions.slice(0, 4);
-  }, [quickStartSuggestions]);
+    const popular = selectPopularByIdStrict(quickTemplates, (template) => template.workflowId, 4);
+    return popular.length ? popular : quickTemplates.slice(0, 4);
+  }, [quickTemplates]);
 
   const offset = parseInt(searchParams.get('offset') || '0', 10);
   const limit = parseInt(searchParams.get('limit') || '12', 10);

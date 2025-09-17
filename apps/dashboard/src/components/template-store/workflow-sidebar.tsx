@@ -147,7 +147,10 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect }: Workflow
       hasExternalLink: true,
       bgColor: 'bg-blue-50',
       onClick: () => {
-        window.open('https://docs.novu.co/framework/overview', '_blank');
+        const newWindow = window.open('https://docs.novu.co/framework/overview', '_blank', 'noopener,noreferrer');
+        if (newWindow) {
+          newWindow.opener = null;
+        }
       },
     },
   ];
@@ -192,7 +195,16 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect }: Workflow
           whileHover="hover"
           whileTap="tap"
           className="border-stroke-soft flex flex-col items-start rounded-xl border bg-white p-3 hover:cursor-pointer"
-          onClick={() => window.open('https://docs.novu.co/platform/workflow/overview', '_blank')}
+          onClick={() => {
+            const newWindow = window.open(
+              'https://docs.novu.co/platform/workflow/overview',
+              '_blank',
+              'noopener,noreferrer'
+            );
+            if (newWindow) {
+              newWindow.opener = null;
+            }
+          }}
         >
           <div className="mb-1 flex items-center gap-1.5">
             <motion.div variants={iconVariants} className="rounded-lg bg-gray-50 p-1.5">

@@ -64,7 +64,7 @@ export const createDefaultLayout = (_organizationName: string) => ({
                 {
                   type: 'image',
                   attrs: {
-                    src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/logo.png',
+                    src: 'organization.branding.logo',
                     alt: null,
                     title: null,
                     width: '48',
@@ -73,11 +73,11 @@ export const createDefaultLayout = (_organizationName: string) => ({
                     externalLink: null,
                     isExternalLinkVariable: false,
                     borderRadius: 0,
-                    isSrcVariable: false,
+                    isSrcVariable: true,
                     aspectRatio: null,
                     lockAspectRatio: true,
                     showIfKey: null,
-                    aliasFor: null,
+                    aliasFor: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/logo.png',
                   },
                 },
               ],
