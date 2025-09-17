@@ -37,7 +37,7 @@ type QueryNotificationEntity = Pick<
   | 'createdAt'
   | 'severity'
   | 'critical'
-  | 'contextId'
+  | 'contextKeys'
 >;
 
 interface IWorkflowRunOptions {
@@ -230,7 +230,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
           createdAt: 1,
           severity: 1,
           critical: 1,
-          contextId: 1,
+          contextKeys: 1,
         }
       );
 
@@ -485,7 +485,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       severity: notification.severity || SeverityLevelEnum.NONE,
       critical: notification.critical || false,
-      context_id: notification.contextId || null,
+      context_keys: notification.contextKeys || [],
     };
   }
 

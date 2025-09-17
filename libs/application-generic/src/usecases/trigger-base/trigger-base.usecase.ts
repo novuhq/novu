@@ -8,7 +8,7 @@ import {
   UserEntity,
 } from '@novu/dal';
 import {
-  ContextId,
+  ContextKey,
   FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITenantDefine,
@@ -39,7 +39,7 @@ export type BaseTriggerCommand = {
   overrides: TriggerOverrides;
   template: NotificationTemplateEntity;
   actor?: SubscriberEntity | undefined;
-  contextId?: ContextId;
+  contextKeys?: ContextKey[];
   tenant: ITenantDefine | null;
   environmentName: string;
   requestCategory?: TriggerRequestCategoryEnum;

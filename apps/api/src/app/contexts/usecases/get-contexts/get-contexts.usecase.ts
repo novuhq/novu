@@ -18,9 +18,9 @@ export class GetContexts {
       filter.type = command.type;
     }
 
-    // Identifier pattern filtering (partial match with regex)
-    if (command.identifier) {
-      filter.identifier = { $regex: command.identifier, $options: 'i' };
+    // ID pattern filtering (partial match with regex)
+    if (command.id) {
+      filter.id = { $regex: command.id, $options: 'i' };
     }
 
     // Handle cursor-based pagination

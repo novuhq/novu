@@ -91,7 +91,7 @@ export class CreateNotificationJobs {
       tags: command.template.tags,
       severity: command.severity,
       critical: command.critical,
-      ...(command.contextId && { contextId: command.contextId }),
+      ...(command.contextKeys && { contextKeys: command.contextKeys }),
     });
 
     await this.createWorkflowRun(notification, command);
@@ -140,7 +140,7 @@ export class CreateNotificationJobs {
       providerId,
       ...this.overloadActorData(command),
       preferences: command.preferences,
-      ...(command.contextId && { contextId: command.contextId }),
+      ...(command.contextKeys && { contextKeys: command.contextKeys }),
     };
   }
 
@@ -239,7 +239,7 @@ export class CreateNotificationJobs {
         _actorId: command.actor?._id,
         actorId: command.actor?.subscriberId,
       }),
-      ...(command.contextId && { contextId: command.contextId }),
+      ...(command.contextKeys && { contextKeys: command.contextKeys }),
     };
   }
 

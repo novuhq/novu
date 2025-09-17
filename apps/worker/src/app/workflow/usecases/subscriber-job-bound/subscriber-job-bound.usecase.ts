@@ -51,7 +51,7 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      contextId: command.contextId,
+      contextKeys: command.contextKeys,
     });
 
     const {
@@ -67,7 +67,7 @@ export class SubscriberJobBound {
       requestCategory,
       environmentName,
       topics,
-      contextId,
+      contextKeys,
     } = command;
 
     const template = command.bridge?.workflow
@@ -188,7 +188,7 @@ export class SubscriberJobBound {
       }),
       severity,
       critical,
-      ...(contextId && { contextId }),
+      ...(contextKeys && { contextKeys }),
     };
 
     if (actor) {

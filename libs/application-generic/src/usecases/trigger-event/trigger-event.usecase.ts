@@ -9,7 +9,7 @@ import {
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
-  ContextId,
+  ContextKey,
   FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITenantDefine,
@@ -74,7 +74,7 @@ export class TriggerEvent {
         transactionId: mappedCommand.transactionId,
         environmentId: mappedCommand.environmentId,
         organizationId: mappedCommand.organizationId,
-        contextId: mappedCommand.contextId,
+        contextKeys: mappedCommand.contextKeys,
       });
 
       Logger.debug(mappedCommand.actor);
@@ -233,7 +233,7 @@ export class TriggerEvent {
       ...command,
       tenant: this.mapTenant(command.tenant),
       actor: this.mapActor(command.actor),
-      ...(isContextEnabled && command.context && { contextId: await this.resolveContextId(command) }),
+      ...(isContextEnabled && command.context && { contextKeys: await this.resolveContextKeys(command) }),
     };
   }
 
@@ -375,13 +375,13 @@ export class TriggerEvent {
     return subscriber;
   }
 
-  private async resolveContextId(command: TriggerEventCommand): Promise<ContextId | undefined> {
+  private async resolveContextKeys(command: TriggerEventCommand): Promise<ContextKey[] | undefined> {
     if (!command.context) {
       return undefined;
     }
 
     try {
-      const context = await this.resolveContext.execute(
+      const contexts = await this.resolveContext.execute(
         ResolveContextCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
@@ -391,16 +391,16 @@ export class TriggerEvent {
       );
 
       this.createWorkflowTrace(command, 'workflow_context_resolution_completed', 'success', 'Context resolved', {
-        context: {
-          identifier: context.identifier,
+        context: contexts.map((context) => ({
+          id: context.id,
           type: context.type,
           data: context.data,
           createdAt: context.createdAt,
           updatedAt: context.updatedAt,
-        },
+        })),
       });
 
-      return context.identifier;
+      return contexts.map((context) => context.key);
     } catch (error) {
       this.logger.error(
         {

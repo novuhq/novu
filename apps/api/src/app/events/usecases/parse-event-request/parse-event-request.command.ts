@@ -61,7 +61,7 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   workflow?: NotificationTemplateEntity;
 
   @IsOptional()
-  @IsValidContextPayload()
+  @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
 }
 
