@@ -5,7 +5,6 @@
 import { subscribersCreate } from '../funcs/subscribersCreate.js';
 import { subscribersCreateBulk } from '../funcs/subscribersCreateBulk.js';
 import { subscribersDelete } from '../funcs/subscribersDelete.js';
-import { subscribersGlobalPreference } from '../funcs/subscribersGlobalPreference.js';
 import { subscribersPatch } from '../funcs/subscribersPatch.js';
 import { subscribersRetrieve } from '../funcs/subscribersRetrieve.js';
 import { subscribersSearch } from '../funcs/subscribersSearch.js';
@@ -125,14 +124,6 @@ export class Subscribers extends ClientSDK {
     options?: RequestOptions
   ): Promise<operations.SubscribersControllerRemoveSubscriberResponse> {
     return unwrapAsync(subscribersDelete(this, subscriberId, idempotencyKey, options));
-  }
-
-  async globalPreference(
-    subscriberId: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions
-  ): Promise<operations.SubscribersControllerGetGlobalPreferenceResponse> {
-    return unwrapAsync(subscribersGlobalPreference(this, subscriberId, idempotencyKey, options));
   }
 
   /**

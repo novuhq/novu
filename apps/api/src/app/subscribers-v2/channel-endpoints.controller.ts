@@ -24,6 +24,7 @@ import {
 } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { CreateChannelEndpointRequestDto } from '../channel-endpoints/dtos/create-channel-endpoint-request.dto';
+import { mapChannelEndpointEntityToDto } from '../channel-endpoints/dtos/dto.mapper';
 import { GetChannelEndpointResponseDto } from '../channel-endpoints/dtos/get-channel-endpoint-response.dto';
 import { GetChannelEndpointsQueryDto } from '../channel-endpoints/dtos/get-channel-endpoints-query.dto';
 import { UpdateChannelEndpointRequestDto } from '../channel-endpoints/dtos/update-channel-endpoint-request.dto';
@@ -84,7 +85,7 @@ export class ChannelEndpointsController {
   ): Promise<GetChannelEndpointResponseDto[]> {
     await this.checkFeatureEnabled(user);
 
-    return await this.getChannelEndpointsUsecase.execute(
+    const channelEndpoints = await this.getChannelEndpointsUsecase.execute(
       GetChannelEndpointsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -94,6 +95,8 @@ export class ChannelEndpointsController {
         type: query.type,
       })
     );
+
+    return channelEndpoints.map((endpoint) => mapChannelEndpointEntityToDto(endpoint));
   }
 
   @Get('/channel-endpoints/:identifier')
@@ -111,13 +114,15 @@ export class ChannelEndpointsController {
   ): Promise<GetChannelEndpointResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return await this.getChannelEndpointUsecase.execute(
+    const channelEndpoint = await this.getChannelEndpointUsecase.execute(
       GetChannelEndpointCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier,
       })
     );
+
+    return mapChannelEndpointEntityToDto(channelEndpoint);
   }
 
   @Post('/:subscriberId/channel-endpoints')
@@ -135,7 +140,7 @@ export class ChannelEndpointsController {
   ): Promise<GetChannelEndpointResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return await this.createChannelEndpointUsecase.execute(
+    const channelEndpoint = await this.createChannelEndpointUsecase.execute(
       CreateChannelEndpointCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -147,6 +152,8 @@ export class ChannelEndpointsController {
         endpoint: body.endpoint,
       })
     );
+
+    return mapChannelEndpointEntityToDto(channelEndpoint);
   }
 
   @Patch('/channel-endpoints/:identifier')
@@ -165,7 +172,7 @@ export class ChannelEndpointsController {
   ): Promise<GetChannelEndpointResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return await this.updateChannelEndpointUsecase.execute(
+    const channelEndpoint = await this.updateChannelEndpointUsecase.execute(
       UpdateChannelEndpointCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -173,6 +180,8 @@ export class ChannelEndpointsController {
         endpoint: body.endpoint,
       })
     );
+
+    return mapChannelEndpointEntityToDto(channelEndpoint);
   }
 
   @Delete('/channel-endpoints/:identifier')

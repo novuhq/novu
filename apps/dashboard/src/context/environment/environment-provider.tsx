@@ -4,12 +4,18 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/context/auth/hooks';
 import { EnvironmentContext } from '@/context/environment/environment-context';
 import { useFetchEnvironments } from '@/context/environment/hooks';
+import { loadFromStorage, saveToStorage } from '@/utils/local-storage';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 const PRODUCTION_ENVIRONMENT = 'Production';
 const DEVELOPMENT_ENVIRONMENT = 'Development';
+const LAST_SELECTED_ENVIRONMENT_STORAGE_KEY = 'novu-last-selected-environment';
 
-function selectEnvironment(environments: IEnvironment[], selectedEnvironmentSlug?: string | null) {
+function selectEnvironment(
+  environments: IEnvironment[],
+  selectedEnvironmentSlug?: string | null,
+  organizationId?: string
+) {
   let environment: IEnvironment | undefined;
 
   // Find the environment based on the current user's last environment
@@ -17,7 +23,18 @@ function selectEnvironment(environments: IEnvironment[], selectedEnvironmentSlug
     environment = environments.find((env) => env.slug === selectedEnvironmentSlug);
   }
 
-  // Or pick the development environment
+  // If no environment slug in URL, try to load the last selected environment from storage
+  if (!environment && organizationId) {
+    const lastSelectedSlug = loadFromStorage<string>(
+      `${LAST_SELECTED_ENVIRONMENT_STORAGE_KEY}-${organizationId}`,
+      'environmentSlug'
+    );
+    if (lastSelectedSlug) {
+      environment = environments.find((env) => env.slug === lastSelectedSlug);
+    }
+  }
+
+  // Or pick the development environment as fallback
   if (!environment) {
     environment = environments.find((env) => env.name === DEVELOPMENT_ENVIRONMENT);
   }
@@ -38,10 +55,19 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
 
   const switchEnvironmentInternal = useCallback(
     (allEnvironments: IEnvironment[], environmentSlug?: string | null) => {
-      const selectedEnvironment = selectEnvironment(allEnvironments, environmentSlug);
+      const selectedEnvironment = selectEnvironment(allEnvironments, environmentSlug, currentOrganization?._id);
       setCurrentEnvironment(selectedEnvironment);
       const newEnvironmentSlug = selectedEnvironment.slug;
       const isNewEnvironmentDifferent = paramsEnvironmentSlug !== selectedEnvironment.slug;
+
+      // Save the selected environment to localStorage for persistence
+      if (currentOrganization?._id && newEnvironmentSlug) {
+        saveToStorage(
+          `${LAST_SELECTED_ENVIRONMENT_STORAGE_KEY}-${currentOrganization._id}`,
+          newEnvironmentSlug,
+          'environmentSlug'
+        );
+      }
 
       if (pathname === ROUTES.ROOT || pathname === ROUTES.ENV || pathname === `${ROUTES.ENV}/`) {
         // TODO: check if this ROUTES is correct
@@ -51,7 +77,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
         navigate(newPath);
       }
     },
-    [navigate, pathname, paramsEnvironmentSlug]
+    [navigate, pathname, paramsEnvironmentSlug, currentOrganization?._id]
   );
 
   const { environments, areEnvironmentsInitialLoading } = useFetchEnvironments({

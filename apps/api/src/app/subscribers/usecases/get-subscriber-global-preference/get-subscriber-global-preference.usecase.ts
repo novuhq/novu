@@ -7,10 +7,13 @@ import {
   Instrument,
   InstrumentUsecase,
 } from '@novu/application-generic';
-import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, IPreferenceChannels, Schedule, WorkflowCriticalityEnum } from '@novu/shared';
-import { GetSubscriberPreferenceCommand } from '../get-subscriber-preference';
-import { GetSubscriberPreference } from '../get-subscriber-preference/get-subscriber-preference.usecase';
+import {
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
+import { ChannelTypeEnum, IPreferenceChannels, Schedule } from '@novu/shared';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
 
 @Injectable()
@@ -18,7 +21,7 @@ export class GetSubscriberGlobalPreference {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private getPreferences: GetPreferences,
-    private getSubscriberPreference: GetSubscriberPreference
+    private notificationTemplateRepository: NotificationTemplateRepository
   ) {}
 
   @InstrumentUsecase()
@@ -55,25 +58,37 @@ export class GetSubscriberGlobalPreference {
 
   @Instrument()
   private async getActiveChannels(command: GetSubscriberGlobalPreferenceCommand): Promise<ChannelTypeEnum[]> {
-    const subscriberWorkflowPreferences = await this.getSubscriberPreference.execute(
-      GetSubscriberPreferenceCommand.create({
-        environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-        organizationId: command.organizationId,
-        includeInactiveChannels: command.includeInactiveChannels,
-        criticality: WorkflowCriticalityEnum.NON_CRITICAL,
-        subscriber: command.subscriber,
-      })
-    );
-
-    const activeChannels = new Set<ChannelTypeEnum>();
-    subscriberWorkflowPreferences.forEach((subscriberWorkflowPreference) => {
-      Object.keys(subscriberWorkflowPreference.preference.channels).forEach((channel) => {
-        activeChannels.add(channel as ChannelTypeEnum);
-      });
+    const workflowList = await this.notificationTemplateRepository.filterActive({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
     });
 
+    const activeChannels = new Set<ChannelTypeEnum>();
+
+    for (const workflow of workflowList) {
+      const workflowChannels = this.getChannels(workflow, command.includeInactiveChannels);
+      for (const channel of workflowChannels) {
+        activeChannels.add(channel);
+      }
+    }
+
     return Array.from(activeChannels);
+  }
+
+  private getChannels(workflow: NotificationTemplateEntity, includeInactiveChannels: boolean): ChannelTypeEnum[] {
+    if (includeInactiveChannels) {
+      return Object.values(ChannelTypeEnum);
+    }
+
+    const channelSet = new Set<ChannelTypeEnum>();
+
+    for (const step of workflow.steps) {
+      if (step.active && step.template?.type) {
+        channelSet.add(step.template.type as unknown as ChannelTypeEnum);
+      }
+    }
+
+    return Array.from(channelSet);
   }
 
   @CachedResponse({

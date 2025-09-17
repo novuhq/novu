@@ -1,12 +1,13 @@
+import { EnvironmentTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { X } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-
 import { Code2 } from '@/components/icons/code-2';
 import { Button } from '@/components/primitives/button';
 import { FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useParseVariables } from '../../../../hooks/use-parse-variables';
 import { VariableSelect } from '../../../conditions-editor/variable-select';
 
@@ -18,7 +19,7 @@ function parseLiquidVariables(value: string | undefined): string {
 const FORM_CONTROL_NAME = 'controlValues.digestKey';
 
 export const DigestKey = () => {
-  const { step } = useWorkflow();
+  const { step, workflow } = useWorkflow();
   const { variables } = useParseVariables(step?.variables);
   const payloadVariables = useMemo(
     () => variables.filter((variable) => variable.name.startsWith('payload.')),
@@ -27,6 +28,9 @@ export const DigestKey = () => {
   const form = useFormContext();
   const { control, setValue } = form;
   const { saveForm } = useSaveForm();
+  const { currentEnvironment } = useEnvironment();
+  const isReadOnly =
+    workflow?.origin === ResourceOriginEnum.EXTERNAL || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   return (
     <FormField
@@ -64,6 +68,7 @@ export const DigestKey = () => {
                     Refine the digest aggregation key further by specifying a payload variable
                   </p>
                 }
+                disabled={isReadOnly}
               />
               <div className="transition-all duration-200 ease-in-out">
                 {field.value && (
@@ -76,6 +81,7 @@ export const DigestKey = () => {
                       setValue(FORM_CONTROL_NAME, '', { shouldDirty: true });
                       saveForm();
                     }}
+                    disabled={isReadOnly}
                   >
                     <X className="size-3" />
                   </Button>

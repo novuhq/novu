@@ -24,6 +24,7 @@ import {
 } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { CreateChannelConnectionRequestDto } from '../channel-connections/dtos/create-channel-connection-request.dto';
+import { mapChannelConnectionEntityToDto } from '../channel-connections/dtos/dto.mapper';
 import { GetChannelConnectionResponseDto } from '../channel-connections/dtos/get-channel-connection-response.dto';
 import { GetChannelConnectionsQueryDto } from '../channel-connections/dtos/get-channel-connections-query.dto';
 import { UpdateChannelConnectionRequestDto } from '../channel-connections/dtos/update-channel-connection-request.dto';
@@ -84,7 +85,7 @@ export class ChannelConnectionsController {
   ): Promise<GetChannelConnectionResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return await this.getChannelConnectionUsecase.execute(
+    const channelConnection = await this.getChannelConnectionUsecase.execute(
       GetChannelConnectionCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -92,6 +93,8 @@ export class ChannelConnectionsController {
         integrationIdentifier,
       })
     );
+
+    return mapChannelConnectionEntityToDto(channelConnection);
   }
 
   @Get('/:subscriberId/channel-connections')
@@ -109,7 +112,7 @@ export class ChannelConnectionsController {
   ): Promise<GetChannelConnectionResponseDto[]> {
     await this.checkFeatureEnabled(user);
 
-    return await this.getChannelConnectionsUsecase.execute(
+    const channelConnections = await this.getChannelConnectionsUsecase.execute(
       GetChannelConnectionsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -118,6 +121,8 @@ export class ChannelConnectionsController {
         provider: query.provider,
       })
     );
+
+    return channelConnections.map((connection) => mapChannelConnectionEntityToDto(connection));
   }
 
   @Post('/:subscriberId/channel-connections')
@@ -135,7 +140,7 @@ export class ChannelConnectionsController {
   ): Promise<GetChannelConnectionResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return await this.createChannelConnectionUsecase.execute(
+    const channelConnection = await this.createChannelConnectionUsecase.execute(
       CreateChannelConnectionCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -146,6 +151,8 @@ export class ChannelConnectionsController {
         auth: body.auth,
       })
     );
+
+    return mapChannelConnectionEntityToDto(channelConnection);
   }
 
   @Patch('channel-connections/:identifier')
@@ -164,7 +171,7 @@ export class ChannelConnectionsController {
   ): Promise<GetChannelConnectionResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return await this.updateChannelConnectionUsecase.execute(
+    const channelConnection = await this.updateChannelConnectionUsecase.execute(
       UpdateChannelConnectionCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -173,6 +180,8 @@ export class ChannelConnectionsController {
         auth: body.auth,
       })
     );
+
+    return mapChannelConnectionEntityToDto(channelConnection);
   }
 
   @Delete('channel-connections/:identifier')

@@ -39,7 +39,6 @@ export * from './notificationscontrollergetnotification.js';
 export * from './notificationscontrollerlistnotifications.js';
 export * from './subscriberscontrollerbulkupdatesubscriberpreferences.js';
 export * from './subscriberscontrollercreatesubscriber.js';
-export * from './subscriberscontrollergetglobalpreference.js';
 export * from './subscriberscontrollergetsubscriber.js';
 export * from './subscriberscontrollergetsubscriberpreferences.js';
 export * from './subscriberscontrollerlistsubscribertopics.js';

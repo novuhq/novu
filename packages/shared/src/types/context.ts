@@ -3,6 +3,8 @@ export enum ContextTypeEnum {
   APP = 'app',
 }
 
-export type ContextKey<T extends ContextTypeEnum = ContextTypeEnum> = `${T}:${string}`;
+export type ContextId = string;
 
 export type ContextData = Record<string, unknown>;
+
+export const CONTEXT_IDENTIFIER_REGEX = /^[a-zA-Z0-9_-]+$/;

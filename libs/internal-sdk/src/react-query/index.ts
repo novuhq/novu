@@ -43,7 +43,6 @@ export * from './subscribersCredentialsAppend.js';
 export * from './subscribersCredentialsDelete.js';
 export * from './subscribersCredentialsUpdate.js';
 export * from './subscribersDelete.js';
-export * from './subscribersGlobalPreference.js';
 export * from './subscribersMessagesMarkAll.js';
 export * from './subscribersMessagesMarkAllAs.js';
 export * from './subscribersMessagesUpdateAsSeen.js';

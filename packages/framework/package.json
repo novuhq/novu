@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.6.7",
+  "version": "2.7.0",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",

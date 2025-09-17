@@ -8,8 +8,8 @@ import type {
   NotificationActionClickHandler,
   NotificationClickHandler,
   PreferenceGroups,
-  PreferenceSort,
   PreferencesFilter,
+  PreferencesSort,
   RouterPush,
   Tab,
 } from '@novu/js/ui';
@@ -63,7 +63,7 @@ type StandardBaseProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
-  preferenceSort?: PreferenceSort;
+  preferencesSort?: PreferencesSort;
   defaultSchedule?: DefaultSchedule;
   routerPush?: RouterPush;
 } & (

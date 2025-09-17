@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
@@ -105,12 +105,6 @@ export abstract class BaseTranslationRendererUsecase {
     try {
       const translate = this.getTranslationModule();
 
-      if (!translate) {
-        this.logger.debug('Translation module not available, skipping translation');
-
-        return content;
-      }
-
       const contentString = typeof content === 'string' ? content : JSON.stringify(content);
       const liquidEngine = createLiquidEngine();
 
@@ -127,19 +121,36 @@ export abstract class BaseTranslationRendererUsecase {
 
       return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);
     } catch (error) {
-      this.logger.error('Translation processing failed, falling back to original content', error);
+      this.logger.error('Translation processing failed', {
+        error: error?.message || error,
+        workflowId,
+        organizationId,
+        environmentId,
+        locale,
+        stack: error?.stack,
+      });
 
-      return content;
+      throw new InternalServerErrorException(
+        `Translation processing failed for workflow ${workflowId}: ${error?.message || String(error)}`
+      );
     }
   }
 
   private getTranslationModule() {
     try {
-      return this.moduleRef.get(require('@novu/ee-translation')?.Translate, { strict: false });
-    } catch (error) {
-      this.logger.debug('Translation module not found', error);
+      const translationModule = require('@novu/ee-translation')?.Translate;
+      if (!translationModule) {
+        throw new Error('Translation module (@novu/ee-translation) not found or Translate class not exported');
+      }
 
-      return null;
+      return this.moduleRef.get(translationModule, { strict: false });
+    } catch (error) {
+      this.logger.error('Translation module loading failed', {
+        error: error?.message || error,
+        stack: error?.stack,
+      });
+
+      throw new InternalServerErrorException(`Unable to load Translation module: ${error?.message || String(error)}`);
     }
   }
 }

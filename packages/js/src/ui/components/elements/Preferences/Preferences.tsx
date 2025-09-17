@@ -16,7 +16,7 @@ import { ScheduleRow } from './ScheduleRow';
 export const Preferences = () => {
   const novu = useNovu();
   const style = useStyle();
-  const { preferencesFilter, preferenceGroups, preferenceSort } = useInboxContext();
+  const { preferencesFilter, preferenceGroups, preferencesSort } = useInboxContext();
 
   const { preferences, loading } = usePreferences({
     tags: preferencesFilter()?.tags,
@@ -28,8 +28,8 @@ export const Preferences = () => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
     let workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
 
-    if (workflowPreferences && preferenceSort()) {
-      workflowPreferences = [...workflowPreferences].sort(preferenceSort());
+    if (workflowPreferences && preferencesSort()) {
+      workflowPreferences = [...workflowPreferences].sort(preferencesSort());
     }
 
     return { globalPreference, workflowPreferences };
@@ -97,8 +97,8 @@ export const Preferences = () => {
             );
           });
 
-          if (preferenceSort()) {
-            filteredPreferences = [...filteredPreferences].sort(preferenceSort());
+          if (preferencesSort()) {
+            filteredPreferences = [...filteredPreferences].sort(preferencesSort());
           }
 
           return {

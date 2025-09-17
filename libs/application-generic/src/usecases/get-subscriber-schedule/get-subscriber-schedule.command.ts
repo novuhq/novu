@@ -1,5 +1,5 @@
-import { EnvironmentCommand } from '@novu/application-generic';
 import { IsDefined, IsString } from 'class-validator';
+import { EnvironmentCommand } from '../../commands';
 
 export class GetSubscriberScheduleCommand extends EnvironmentCommand {
   // database _id

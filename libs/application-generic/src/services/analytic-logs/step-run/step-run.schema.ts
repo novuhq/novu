@@ -3,6 +3,7 @@ import {
   CHLowCardinality,
   CHNullable,
   CHString,
+  CHUInt8,
   ClickhouseSchema,
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
@@ -49,6 +50,9 @@ const schemaDefinition = {
 
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
+
+  // Schedule extensions count
+  schedule_extensions_count: { type: CHUInt8(0) },
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = ['organization_id', 'step_run_id'];
