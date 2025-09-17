@@ -46,7 +46,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   @IsString()
   workflowId: string;
 
-  @ApiProperty({ description: 'Slug of the workflow' })
+  @ApiProperty({ description: 'Slug of the workflow', type: 'string' })
   @IsString()
   slug: Slug;
 
