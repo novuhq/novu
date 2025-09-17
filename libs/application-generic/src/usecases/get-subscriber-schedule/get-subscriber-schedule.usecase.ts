@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
 import { PreferencesRepository } from '@novu/dal';
 import { PreferencesTypeEnum, Schedule } from '@novu/shared';
+import { InstrumentUsecase } from '../../instrumentation';
 import { GetSubscriberScheduleCommand } from './get-subscriber-schedule.command';
 
 @Injectable()

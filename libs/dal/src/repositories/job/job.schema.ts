@@ -141,6 +141,9 @@ const jobSchema = new Schema<JobDBModel>(
     },
     stepOutput: Schema.Types.Mixed,
     preferences: Schema.Types.Mixed,
+    scheduleExtensionsCount: {
+      type: Schema.Types.Number,
+    },
   },
   schemaOptions
 );

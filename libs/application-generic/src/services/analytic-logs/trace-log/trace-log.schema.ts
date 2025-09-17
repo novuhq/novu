@@ -158,7 +158,10 @@ export type EventType =
   | 'workflow_actor_processing_failed'
   | 'workflow_actor_processing_completed'
   | 'workflow_execution_failed'
-  | 'step_skipped';
+  | 'step_skipped'
+  | 'step_skipped_outside_of_the_schedule'
+  | 'step_extended_to_schedule'
+  | 'step_skipped_max_extensions_reached';
 
 export type EntityType = 'request' | 'step_run';
 

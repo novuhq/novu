@@ -16,7 +16,7 @@ export interface IHandler {
     body: Record<string, unknown>;
     headers: Record<string, string>;
     rawBody: unknown;
-  }) => { success: boolean; message?: string };
+  }) => Promise<{ success: boolean; message?: string }>;
 
   autoConfigureInboundWebhook: (configurations: { webhookUrl: string }) => Promise<{
     success: boolean;
@@ -65,7 +65,7 @@ export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> i
     return result && typeof result === 'object' ? (result as IEmailEventBody | ISMSEventBody) : undefined;
   }
 
-  public verifySignature({
+  public async verifySignature({
     rawBody,
     headers,
     body,
@@ -73,7 +73,7 @@ export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> i
     rawBody: unknown;
     headers?: Record<string, string>;
     body?: Record<string, unknown>;
-  }): { success: boolean; message?: string } {
+  }): Promise<{ success: boolean; message?: string }> {
     if (!this.provider?.verifySignature) {
       // in case verifySignature is not implemented, we return true
       return { success: true, message: 'A support of signature verification is not implemented by provider' };

@@ -427,6 +427,9 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
       // Correlation
       transaction_id: job.transactionId,
+
+      // Schedule extensions count
+      schedule_extensions_count: job?.scheduleExtensionsCount || 0,
     };
   }
 }

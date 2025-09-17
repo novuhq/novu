@@ -368,6 +368,33 @@ describe('extractLiquidTemplateVariables', () => {
       expect(invalidVariables).to.have.lengthOf(0);
       expect(validVariables[0].name).to.equal('payload.firstName');
     });
+
+    it('should handle assign statements with whitespace control - both sides', () => {
+      const template = '{%- assign first_name = payload.first_name -%} Hello {{first_name}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.first_name');
+    });
+
+    it('should handle assign statements with whitespace control - left side only', () => {
+      const template = '{%- assign first_name = payload.first_name %} Hello {{first_name}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.first_name');
+    });
+
+    it('should handle assign statements with whitespace control - right side only', () => {
+      const template = '{% assign first_name = payload.first_name -%} Hello {{first_name}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.first_name');
+    });
   });
 
   describe('Capture tags', () => {

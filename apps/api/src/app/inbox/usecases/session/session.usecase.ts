@@ -11,6 +11,8 @@ import {
   CreateOrUpdateSubscriberUseCase,
   encryptApiKey,
   FeatureFlagsService,
+  GetSubscriberSchedule,
+  GetSubscriberScheduleCommand,
   generateTimestampHex,
   LogDecorator,
   PinoLogger,
@@ -59,10 +61,6 @@ import { GetOrganizationSettingsCommand } from '../../../organization/usecases/g
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
-import {
-  GetSubscriberSchedule,
-  GetSubscriberScheduleCommand,
-} from '../../../subscribers/usecases/get-subscriber-schedule';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';

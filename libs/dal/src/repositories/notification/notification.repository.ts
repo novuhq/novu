@@ -186,7 +186,8 @@ export class NotificationRepository extends BaseRepository<
             $nin: [StepTypeEnum.TRIGGER],
           },
         },
-        select: 'createdAt digest payload overrides to tenant actorId providerId step status type updatedAt _parentId',
+        select:
+          'createdAt digest payload overrides to tenant actorId providerId step status type updatedAt _parentId scheduleExtensionsCount',
         populate: [
           {
             path: 'executionDetails',
@@ -234,7 +235,8 @@ export class NotificationRepository extends BaseRepository<
             $nin: [StepTypeEnum.TRIGGER],
           },
         },
-        select: 'createdAt digest payload overrides to tenant actorId providerId step status type updatedAt _parentId',
+        select:
+          'createdAt digest payload overrides to tenant actorId providerId step status type updatedAt _parentId scheduleExtensionsCount',
         populate: [
           {
             path: 'step',

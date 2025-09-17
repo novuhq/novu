@@ -8,6 +8,7 @@ const lookBackWindowZodSchema = z
   .object({
     amount: z.number().min(1),
     unit: z.nativeEnum(TimeUnitEnum),
+    extendToSchedule: z.boolean().optional(),
   })
   .strict();
 
@@ -18,6 +19,7 @@ const digestRegularControlZodSchema = z
     unit: z.nativeEnum(TimeUnitEnum),
     digestKey: z.string().optional(),
     lookBackWindow: lookBackWindowZodSchema.optional(),
+    extendToSchedule: z.boolean().optional(),
   })
   .strict();
 const digestTimedControlZodSchema = z
@@ -25,6 +27,7 @@ const digestTimedControlZodSchema = z
     skip: skipZodSchema,
     cron: z.string().min(1),
     digestKey: z.string().optional(),
+    extendToSchedule: z.boolean().optional(),
   })
   .strict();
 
@@ -72,6 +75,10 @@ export const digestUiSchema: UiSchema = {
     cron: {
       component: UiComponentEnum.DIGEST_CRON,
       placeholder: '',
+    },
+    extendToSchedule: {
+      component: UiComponentEnum.EXTEND_TO_SCHEDULE,
+      placeholder: false,
     },
     skip: skipStepUiSchema.properties.skip,
   },
