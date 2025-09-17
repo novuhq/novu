@@ -215,7 +215,8 @@ export function useTemplateStore() {
 
     const load = async () => {
       try {
-        const res = await fetch('https://templates-eta-self.vercel.app/api/workflows?refresh=1', {
+        const templatesApiUrl = import.meta.env.VITE_TEMPLATES_API_URL || 'https://templates-eta-self.vercel.app';
+        const res = await fetch(`${templatesApiUrl}/api/workflows?refresh=1`, {
           headers: { Accept: 'application/json' },
           signal: controller.signal,
         });

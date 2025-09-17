@@ -10,7 +10,9 @@ export function selectPopularByIdStrict<T>(items: T[], getId: (item: T) => strin
     return [];
   }
 
-  if (typeof max !== 'number' || !Number.isFinite(max) || max < 0) {
+  if (typeof max !== 'number' || !Number.isFinite(max)) {
+    max = 0;
+  } else {
     max = Math.max(0, Math.floor(max));
   }
 
