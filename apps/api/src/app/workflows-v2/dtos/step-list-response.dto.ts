@@ -5,7 +5,7 @@ import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { StepIssuesDto } from './step-issues.dto';
 
 export class StepListResponseDto {
-  @ApiProperty({ description: 'Slug of the step' })
+  @ApiProperty({ description: 'Slug of the step', type: 'string' })
   @IsString()
   slug: Slug;
 
