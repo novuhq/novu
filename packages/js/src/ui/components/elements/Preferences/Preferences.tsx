@@ -120,7 +120,7 @@ export const Preferences = () => {
       class={style({
         key: 'preferencesContainer',
         className:
-          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
+          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-2 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
         context: { preferences: preferences(), groups: groupedPreferences() } satisfies Parameters<
           AppearanceCallback['preferencesContainer']
         >[0],
@@ -133,7 +133,9 @@ export const Preferences = () => {
           onChange={() => updatePreference(allPreferences().globalPreference)}
         />
       </Show>
-      <ScheduleRow globalPreference={allPreferences().globalPreference} />
+      <Show when={allPreferences().globalPreference}>
+        <ScheduleRow globalPreference={allPreferences().globalPreference} />
+      </Show>
       <Show
         when={groupedPreferences().length > 0}
         fallback={
