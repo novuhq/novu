@@ -10,15 +10,13 @@ export class GetContext {
     const context = await this.contextRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      identifier: command.identifier,
-      ...(command.type && { type: command.type }),
+      id: command.id,
+      type: command.type,
     });
 
     if (!context) {
-      const typeMessage = command.type ? `and type '${command.type}'` : '';
-
       throw new NotFoundException(
-        `Context with identifier '${command.identifier}'${typeMessage} not found in environment ${command.environmentId}`
+        `Context with id '${command.id}' and type '${command.type}' not found in environment ${command.environmentId}`
       );
     }
 

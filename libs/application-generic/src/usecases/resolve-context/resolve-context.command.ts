@@ -6,6 +6,6 @@ import { IsValidContextPayload } from '../../decorators';
 
 export class ResolveContextCommand extends EnvironmentWithUserCommand {
   @IsDefined()
-  @IsValidContextPayload()
+  @IsValidContextPayload({ maxCount: 5 })
   context: ContextPayload;
 }

@@ -41,8 +41,8 @@ export function mapSubscribersToJobs(
     if (command.tenant) {
       job.data.tenant = command.tenant;
     }
-    if (command.contextId) {
-      job.data.contextId = command.contextId;
+    if (command.contextKeys) {
+      job.data.contextKeys = command.contextKeys;
     }
 
     return job;

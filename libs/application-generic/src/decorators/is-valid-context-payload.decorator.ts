@@ -1,7 +1,11 @@
-import { ContextPayload, isFullObjectContext, isStringContext, isTypeKeyContext } from '@novu/shared';
+import { isValidContextPayload } from '@novu/shared';
 import { registerDecorator, ValidationOptions } from 'class-validator';
 
-export function IsValidContextPayload(validationOptions?: ValidationOptions) {
+export interface ContextPayloadValidationOptions extends ValidationOptions {
+  maxCount?: number;
+}
+
+export function IsValidContextPayload(validationOptions?: ContextPayloadValidationOptions) {
   return (object: object, propertyName: string) => {
     registerDecorator({
       name: 'isValidContextPayload',
@@ -10,22 +14,34 @@ export function IsValidContextPayload(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: unknown) {
-          return validateContextPayload(value);
+          return validateContextPayload(value, validationOptions?.maxCount);
         },
         defaultMessage() {
-          return 'Context must be a valid identifier string, context type object, or full context object';
+          const maxCount = validationOptions?.maxCount;
+          if (maxCount) {
+            return `Invalid context payload type or exceeds maximum of ${maxCount} contexts`;
+          }
+          return 'Invalid context payload type';
         },
       },
     });
   };
 }
 
-export function validateContextPayload(value: unknown): boolean {
+export function validateContextPayload(value: unknown, maxCount?: number): boolean {
   if (value === undefined || value === null) {
     return true; // Optional field
   }
 
-  const contextPayload = value as ContextPayload;
+  if (!isValidContextPayload(value)) {
+    return false;
+  }
 
-  return isStringContext(contextPayload) || isTypeKeyContext(contextPayload) || isFullObjectContext(contextPayload);
+  // Check maximum count if specified
+  if (maxCount && typeof value === 'object' && value !== null) {
+    const contextObj = value as Record<string, unknown>;
+    return Object.keys(contextObj).length <= maxCount;
+  }
+
+  return true;
 }

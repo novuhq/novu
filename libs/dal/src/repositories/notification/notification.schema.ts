@@ -63,8 +63,8 @@ const notificationSchema = new Schema<NotificationDBModel>(
     critical: {
       type: Schema.Types.Boolean,
     },
-    contextId: {
-      type: Schema.Types.String,
+    contextKeys: {
+      type: Schema.Types.Array,
     },
   },
   schemaOptions

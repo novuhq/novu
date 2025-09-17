@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ContextData, ContextTypeEnum } from '@novu/shared';
+import { ContextData, ContextType } from '@novu/shared';
 
 export class GetContextResponseDto {
-  @ApiProperty({ enum: ContextTypeEnum })
-  type: ContextTypeEnum;
+  @ApiProperty()
+  type: ContextType;
 
   @ApiProperty()
-  identifier: string;
+  id: string;
 
   @ApiProperty()
   data: ContextData;

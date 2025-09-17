@@ -6,60 +6,79 @@ export type Context = {
   _organizationId: OrganizationId;
   _environmentId: EnvironmentId;
 
-  identifier: ContextId;
-  type: ContextTypeEnum;
+  id: ContextId;
+  type: ContextType;
   data: ContextData;
+
+  key: ContextKey;
 
   createdAt: string;
   updatedAt: string;
 };
 
-export enum ContextTypeEnum {
-  TENANT = 'tenant',
-  APP = 'app',
-}
+export type ContextType = string;
 
 export type ContextId = string;
+
+export type ContextKey = `${ContextType}:${ContextId}`;
+
+export const createContextKey = (type: ContextType, id: ContextId): ContextKey => `${type}:${id}`;
 
 export type ContextData = Record<string, unknown>;
 
 export const CONTEXT_IDENTIFIER_REGEX = /^[a-zA-Z0-9_-]+$/;
 
-export type ContextTypeKey = Partial<Record<ContextTypeEnum, string>>;
+// Context value can be either a simple string id or a rich object
+export type ContextValue =
+  | string
+  | {
+      id: string;
+      data?: ContextData;
+    };
 
-export type ContextObject = {
-  identifier: ContextId;
-  type?: ContextTypeEnum;
-  data?: ContextData;
-};
+// Context payload is a record of context types to their values
+// Examples:
+// { tenant: "org-acme" } - single key with string value
+// { tenant: "org-acme", app: "jira" } - multi key with string values
+// { tenant: { id: "org-acme", data: { name: "Acme Corp" } } } - single key with rich object
+// { tenant: { id: "org-acme", data: {} }, app: "jira" } - mixed values
+export type ContextPayload = Partial<Record<ContextType, ContextValue>>;
 
-export type ContextPayload = ContextId | ContextTypeKey | ContextObject;
-
-function isValidIdentifier(value: string): boolean {
-  return value.length >= 1 && value.length <= 100 && CONTEXT_IDENTIFIER_REGEX.test(value);
+function isValidId(value: unknown): boolean {
+  return typeof value === 'string' && value.length >= 1 && value.length <= 100 && CONTEXT_IDENTIFIER_REGEX.test(value);
 }
 
-export function isStringContext(context: ContextPayload): context is ContextId {
-  return typeof context === 'string' && isValidIdentifier(context);
+// Validation functions for context payload
+function isValidContextValue(value: unknown): value is ContextValue {
+  if (typeof value === 'string') {
+    return isValidId(value);
+  }
+
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    const obj = value as Record<string, unknown>;
+    return (
+      'id' in obj &&
+      typeof obj.id === 'string' &&
+      isValidId(obj.id) &&
+      (obj.data === undefined || (typeof obj.data === 'object' && obj.data !== null))
+    );
+  }
+
+  return false;
 }
 
-export function isTypeKeyContext(context: ContextPayload): context is ContextTypeKey {
-  return (
-    typeof context === 'object' &&
-    context !== null &&
-    !('identifier' in context) &&
-    Object.keys(context).length === 1 &&
-    Object.values(ContextTypeEnum).includes(Object.keys(context)[0] as ContextTypeEnum) &&
-    isValidIdentifier(Object.values(context)[0] as string)
-  );
-}
+export function isValidContextPayload(context: unknown): context is ContextPayload {
+  if (typeof context !== 'object' || context === null || Array.isArray(context)) {
+    return false;
+  }
 
-export function isFullObjectContext(context: ContextPayload): context is ContextObject {
-  return (
-    typeof context === 'object' &&
-    context !== null &&
-    'identifier' in context &&
-    typeof context.identifier === 'string' &&
-    isValidIdentifier(context.identifier)
-  );
+  const contextObj = context as Record<string, unknown>;
+
+  // Must have at least one key
+  if (Object.keys(contextObj).length === 0) {
+    return false;
+  }
+
+  // All values must be valid context values
+  return Object.values(contextObj).every((value) => isValidContextValue(value));
 }

@@ -57,7 +57,7 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   controls?: StatelessControls;
 
   @IsOptional()
-  @IsValidContextPayload()
+  @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
 }
 
