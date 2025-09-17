@@ -1,9 +1,8 @@
-import { type CreateWorkflowDto, WorkflowCreationSourceEnum } from '@novu/shared';
+import { type CreateWorkflowDto, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { NovuApiError } from '@/api/api.client';
+import { getLayouts } from '@/api/layouts';
 import { createWorkflow } from '@/api/workflows';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
@@ -19,7 +18,6 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
-  const lastSubmittedWorkflowIdRef = useRef<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async (workflow: CreateWorkflowDto) => {
@@ -34,7 +32,6 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
         queryKey: [QueryKeys.fetchTags, currentEnvironment?._id],
       });
 
-      // Invalidate diff environment queries when workflows are created
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
@@ -49,37 +46,62 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
 
       onSuccess?.();
     },
-
     onError: (error) => {
-      const isLayoutMissing =
-        error instanceof NovuApiError &&
-        (error.message?.toLowerCase().includes('layout not found') || error.status === 404);
-
-      if (isLayoutMissing && lastSubmittedWorkflowIdRef.current) {
-        navigate(
-          buildRoute(ROUTES.EDIT_WORKFLOW, {
-            environmentSlug: currentEnvironment?.slug ?? '',
-            workflowSlug: lastSubmittedWorkflowIdRef.current,
-          })
-        );
-        return;
-      }
-
       showErrorToast(undefined, error);
     },
   });
 
-  const submit = (values: z.infer<typeof workflowSchema>, template?: CreateWorkflowDto) => {
-    lastSubmittedWorkflowIdRef.current = values.workflowId;
+  async function getDefaultLayoutId(): Promise<string | undefined> {
+    if (!currentEnvironment) return undefined;
+
+    const list = await getLayouts({
+      environment: currentEnvironment,
+      limit: 200,
+      offset: 0,
+      query: '',
+      orderBy: 'createdAt',
+      orderDirection: 'DESC',
+    });
+
+    return list.layouts.find((l) => l.isDefault)?.layoutId;
+  }
+
+  async function applyDefaultLayoutToTemplate(template: CreateWorkflowDto): Promise<CreateWorkflowDto> {
+    const hasEmailSteps = template.steps?.some((step) => step.type === StepTypeEnum.EMAIL);
+    if (!hasEmailSteps) return template;
+
+    const defaultLayoutId = await getDefaultLayoutId();
+    if (!defaultLayoutId) return template;
+
+    const steps = template.steps.map((step) => {
+      if (step.type !== StepTypeEnum.EMAIL) return step;
+
+      const currentValues = (step.controlValues ?? {}) as Record<string, unknown>;
+      if (typeof currentValues.layoutId === 'string' || currentValues.layoutId === null) {
+        return step;
+      }
+
+      return {
+        ...step,
+        controlValues: { ...currentValues, layoutId: defaultLayoutId },
+      };
+    });
+
+    return { ...template, steps };
+  }
+
+  const submit = async (values: z.infer<typeof workflowSchema>, template?: CreateWorkflowDto) => {
+    const processedTemplate = template ? await applyDefaultLayoutToTemplate(template) : undefined;
+
     return mutation.mutateAsync({
       name: values.name,
-      steps: template?.steps ?? [],
-      __source: template?.__source ?? WorkflowCreationSourceEnum.DASHBOARD,
+      steps: processedTemplate?.steps ?? [],
+      __source: processedTemplate?.__source ?? WorkflowCreationSourceEnum.DASHBOARD,
       workflowId: values.workflowId,
       description: values.description || undefined,
       tags: values.tags || [],
       isTranslationEnabled: values.isTranslationEnabled || false,
-      payloadSchema: template?.payloadSchema,
+      payloadSchema: processedTemplate?.payloadSchema,
     });
   };
 
