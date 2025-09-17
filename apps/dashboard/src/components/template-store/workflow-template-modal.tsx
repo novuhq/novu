@@ -74,7 +74,8 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
   const [suggestions, setSuggestions] = useState<IWorkflowSuggestion[]>([]);
   const filteredSuggestions = useMemo(() => {
     if (selectedCategory === 'popular') {
-      return selectPopularByIdStrict(suggestions, (s) => s.workflowDefinition.workflowId, 12);
+      const popular = selectPopularByIdStrict(suggestions, (s) => s.workflowDefinition.workflowId, 12);
+      return popular.length ? popular : suggestions.slice(0, 12);
     }
 
     const categoryToTags: Record<string, string[]> = {
