@@ -3,6 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  createProviderSelectedMessage,
   DetailEnum,
   GetNovuProviderCredentials,
   SelectIntegration,
@@ -25,6 +26,7 @@ import {
   ExecutionDetailsStatusEnum,
   ITenantDefine,
   ProvidersIdEnum,
+  providers,
   SmsProviderIdEnum,
   TriggerOverrides,
 } from '@novu/shared';
@@ -129,10 +131,12 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
+    const providerDisplayName = providers.find((el) => el.id === integration?.providerId)?.displayName || 'Unknown';
+
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
+        detail: createProviderSelectedMessage(providerDisplayName) as DetailEnum,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
