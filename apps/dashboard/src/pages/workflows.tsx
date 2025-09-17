@@ -35,6 +35,7 @@ import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { extractApiItems } from '@/utils/api-response-normalizer';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -45,21 +46,6 @@ type QuickTemplate = {
   description: string;
   steps: StepTypeEnum[];
 };
-
-// Extract a list of items from various possible API envelope shapes
-function extractApiItems(body: unknown): unknown[] {
-  if (Array.isArray(body)) return body as unknown[];
-  const rec = body as { data?: unknown } & { data?: { data?: unknown[] } } & { data?: unknown[] };
-  // Prefer exact shapes used by the modal mapping for consistency
-  const maybeData = (rec as { data?: unknown }).data as unknown;
-  if (Array.isArray((maybeData as { data?: unknown[] })?.data)) {
-    return (maybeData as { data: unknown }).data as unknown[];
-  }
-  if (Array.isArray(maybeData as unknown[])) {
-    return maybeData as unknown[];
-  }
-  return [];
-}
 
 // Normalize raw API workflows into QuickTemplate models
 function mapApiWorkflowsToQuickTemplates(items: unknown[]): QuickTemplate[] {
@@ -80,8 +66,8 @@ function mapApiWorkflowsToQuickTemplates(items: unknown[]): QuickTemplate[] {
     if (typeof input === 'string') {
       const key = input.toLowerCase();
       if (typeMap[key]) return typeMap[key];
-      const upper = key.toUpperCase() as keyof typeof StepTypeEnum;
-      if (StepTypeEnum[upper]) return StepTypeEnum[upper as keyof typeof StepTypeEnum];
+      const upper = key.toUpperCase();
+      if (StepTypeEnum[upper as keyof typeof StepTypeEnum]) return StepTypeEnum[upper as keyof typeof StepTypeEnum];
     }
 
     return StepTypeEnum.IN_APP;
@@ -137,37 +123,45 @@ export const WorkflowsPage = () => {
 
   const updateSearchParam = useCallback(
     (value: string) => {
-      if (value) {
-        searchParams.set('query', value);
-      } else {
-        searchParams.delete('query');
-      }
-
-      setSearchParams(searchParams);
+      setSearchParams((prev) => {
+        const sp = new URLSearchParams(prev);
+        if (value) {
+          sp.set('query', value);
+        } else {
+          sp.delete('query');
+        }
+        return sp;
+      });
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   );
 
   const updateTagsParam = useCallback(
     (tags: string[]) => {
-      searchParams.delete('tags');
-      for (const tag of tags) {
-        searchParams.append('tags', tag);
-      }
-      setSearchParams(searchParams);
+      setSearchParams((prev) => {
+        const sp = new URLSearchParams(prev);
+        sp.delete('tags');
+        for (const tag of tags) {
+          sp.append('tags', tag);
+        }
+        return sp;
+      });
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   );
 
   const updateStatusParam = useCallback(
     (status: string[]) => {
-      searchParams.delete('status');
-      for (const s of status) {
-        searchParams.append('status', s);
-      }
-      setSearchParams(searchParams);
+      setSearchParams((prev) => {
+        const sp = new URLSearchParams(prev);
+        sp.delete('status');
+        for (const s of status) {
+          sp.append('status', s);
+        }
+        return sp;
+      });
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   );
 
   const debouncedSearch = useDebounce((value: string) => updateSearchParam(value), 500);
@@ -202,9 +196,12 @@ export const WorkflowsPage = () => {
   }, [form, debouncedSearch, updateTagsParam, updateStatusParam]);
 
   const [quickStartSuggestions, setQuickStartSuggestions] = useState<QuickTemplate[]>([]);
+  const [isLoadingQuickStart, setIsLoadingQuickStart] = useState<boolean>(true);
 
   useEffect(() => {
     const controller = new AbortController();
+    let cancelled = false;
+    setIsLoadingQuickStart(true);
 
     const load = async () => {
       try {
@@ -229,12 +226,17 @@ export const WorkflowsPage = () => {
         setQuickStartSuggestions(mapApiWorkflowsToQuickTemplates(items));
       } catch {
         setQuickStartSuggestions([]);
+      } finally {
+        if (!cancelled) setIsLoadingQuickStart(false);
       }
     };
 
     load();
 
-    return () => controller.abort();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, []);
 
   const quickStartTemplates = useMemo(() => {
@@ -357,7 +359,7 @@ export const WorkflowsPage = () => {
               </div>
               <ScrollArea className="w-full">
                 <div className="bg-bg-weak rounded-12 flex gap-4 p-3">
-                  {isPending && (
+                  {isLoadingQuickStart && (
                     <>
                       <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
                       <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
@@ -366,7 +368,7 @@ export const WorkflowsPage = () => {
                       <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
                     </>
                   )}
-                  {!isPending && (
+                  {!isLoadingQuickStart && (
                     <>
                       <div className="w-[250px] flex-shrink-0">
                         <WorkflowCard

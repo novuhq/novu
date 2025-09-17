@@ -106,10 +106,16 @@ export async function triggerWorkflow({
   to: unknown;
 }) {
   const basePayload: Record<string, unknown> =
-    payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
-  const existingSource = (basePayload as { __source?: unknown }).__source;
-  const payloadWithSource: Record<string, unknown> =
-    typeof existingSource === 'string' ? basePayload : { ...basePayload, __source: 'dashboard' };
+    payload !== null && typeof payload === 'object' && !Array.isArray(payload)
+      ? (payload as Record<string, unknown>)
+      : {};
+  const existingSource =
+    typeof (basePayload as { __source?: unknown }).__source === 'string'
+      ? (basePayload as { __source: string }).__source
+      : undefined;
+  const payloadWithSource: Record<string, unknown> = existingSource
+    ? basePayload
+    : { ...basePayload, __source: 'dashboard' };
 
   return post<{ data: { transactionId?: string } }>(`/events/trigger`, {
     environment,

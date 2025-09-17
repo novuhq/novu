@@ -1,6 +1,19 @@
-export const POPULAR_TEMPLATE_IDS: string[] = ['welcome', 'upcoming-renewal'];
+const POPULAR_TEMPLATE_IDS: string[] = ['welcome', 'upcoming-renewal'];
 
 export function selectPopularByIdStrict<T>(items: T[], getId: (item: T) => string | undefined, max: number): T[] {
+  // Runtime parameter validation
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  if (typeof getId !== 'function') {
+    return [];
+  }
+
+  if (typeof max !== 'number' || !Number.isFinite(max) || max < 0) {
+    max = Math.max(0, Math.floor(max));
+  }
+
   const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
   const wantedNormalized = POPULAR_TEMPLATE_IDS.map((id) => normalize(id)).filter(Boolean);
 
@@ -12,7 +25,7 @@ export function selectPopularByIdStrict<T>(items: T[], getId: (item: T) => strin
       const currentId = getId(item);
       if (!currentId) return false;
       const normalized = normalize(currentId);
-      return normalized === wanted || normalized.includes(wanted);
+      return normalized === wanted;
     });
 
     if (!match) continue;

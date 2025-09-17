@@ -65,7 +65,7 @@ function SidebarButton({
         isActive ? '!border-[#EEEFF1] bg-white' : ''
       }`}
     >
-      <div className="flex w-full items-center gap-2">{content}</div>
+      {content}
     </motion.button>
   );
 }
@@ -125,28 +125,39 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect }: Workflow
     navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
   };
 
-  const createOptions = [
+  const createOptions: Array<{
+    key: string;
+    icon: ReactNode;
+    label: string;
+    bgColor: string;
+    onClick: () => void;
+    hasExternalLink?: boolean;
+  }> = [
     {
+      key: 'blank',
       icon: <FileText className="h-3 w-3 text-gray-700" />,
       label: 'Blank workflow',
       bgColor: 'bg-green-50',
       onClick: handleCreateWorkflow,
     },
     {
+      key: 'code-based',
       icon: <Code2 className="h-3 w-3 text-gray-700" />,
       label: 'Code-based workflow',
       hasExternalLink: true,
       bgColor: 'bg-blue-50',
-      onClick: () => window.open('https://docs.novu.co/framework/overview', '_blank'),
+      onClick: () => {
+        window.open('https://docs.novu.co/framework/overview', '_blank');
+      },
     },
   ];
 
   return (
     <div className="flex h-full w-[240px] flex-col gap-4 border-r p-2">
       <div className="flex flex-col gap-1">
-        {createOptions.map((item, index) => (
+        {createOptions.map((item) => (
           <SidebarButton
-            key={index}
+            key={item.key}
             icon={item.icon}
             label={item.label}
             onClick={item.onClick}

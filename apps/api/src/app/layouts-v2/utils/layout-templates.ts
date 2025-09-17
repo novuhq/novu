@@ -203,7 +203,7 @@ export const createDefaultLayout = (_organizationName: string) => ({
                         {
                           type: 'link',
                           attrs: {
-                            href: 'support@novu.co',
+                            href: 'mailto:support@novu.co',
                             target: '_blank',
                             rel: 'noopener noreferrer nofollow',
                             class: null,
