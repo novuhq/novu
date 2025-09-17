@@ -65,6 +65,7 @@ const notificationSchema = new Schema<NotificationDBModel>(
     },
     contextKeys: {
       type: Schema.Types.Array,
+      default: undefined,
     },
   },
   schemaOptions
