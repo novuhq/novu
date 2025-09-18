@@ -1,4 +1,5 @@
 import {
+  CHArray,
   CHDateTime64,
   CHLowCardinality,
   CHNullable,
@@ -29,6 +30,7 @@ const schemaDefinition = {
   subscriber_id: { type: CHString() },
   external_subscriber_id: { type: CHNullable(CHString()) },
   message_id: { type: CHNullable(CHString()) }, // Links to MessageEntity
+  context_keys: { type: CHArray(CHString()) }, // Array of context keys (type:identifier)
 
   // Step metadata
   step_type: { type: CHLowCardinality(CHString()) }, // email, sms, in_app, push, etc.

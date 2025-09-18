@@ -127,8 +127,8 @@ export function WebhooksPage() {
     return <Navigate to={ROUTES.WORKFLOWS} replace />;
   }
 
-  if (window.location.pathname === ROUTES.WEBHOOKS) {
-    return <Navigate to={activeTabDefinition.routePath} replace />;
+  if (window.location.pathname === ROUTES.WEBHOOKS && environmentSlug) {
+    return <Navigate to={buildRoute(activeTabDefinition.routePath, { environmentSlug })} replace />;
   }
 
   if (!IS_SELF_HOSTED && !isTierEligibleForWebhooks && !isLoadingEligibility) {

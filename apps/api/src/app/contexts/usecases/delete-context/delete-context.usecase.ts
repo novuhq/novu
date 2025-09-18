@@ -10,17 +10,21 @@ export class DeleteContext {
     const existingContext = await this.contextRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      identifier: command.identifier,
+      id: command.id,
+      type: command.type,
     });
 
     if (!existingContext) {
-      throw new NotFoundException(`Context with identifier '${command.identifier}' not found`);
+      throw new NotFoundException(
+        `Context with id '${command.id}' and type '${command.type}' not found in environment ${command.environmentId}`
+      );
     }
 
     await this.contextRepository.delete({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      identifier: command.identifier,
+      id: command.id,
+      type: command.type,
     });
   }
 }

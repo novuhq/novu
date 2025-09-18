@@ -71,6 +71,16 @@ export class ExternalServicesRoute {
       environment: { _id: command._environmentId },
     });
 
+    const severityCountsPromise = isNotificationSeverityEnabled
+      ? this.messageRepository.getCountBySeverity(
+          command._environmentId,
+          command.userId,
+          ChannelTypeEnum.IN_APP,
+          { read: false, snoozed: false },
+          { limit: 99 }
+        )
+      : Promise.resolve([]);
+
     const [unreadCount, severityCounts] = await Promise.all([
       this.messageRepository.getCount(
         command._environmentId,
@@ -81,15 +91,7 @@ export class ExternalServicesRoute {
         undefined,
         'primary'
       ),
-      isNotificationSeverityEnabled
-        ? await this.messageRepository.getCountBySeverity(
-            command._environmentId,
-            command.userId,
-            ChannelTypeEnum.IN_APP,
-            { read: false, snoozed: false },
-            { limit: 99 }
-          )
-        : [],
+      severityCountsPromise,
     ]);
 
     const paginationIndication: IUnreadCountPaginationIndication =

@@ -28,6 +28,7 @@ export * from './message-template';
 export * from './normalize-variables';
 export * from './process-tenant';
 export * from './promote-type-change.command';
+export * from './resolve-context';
 export * from './select-integration';
 export * from './select-variant';
 export * from './subscribers';

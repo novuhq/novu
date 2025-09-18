@@ -31,7 +31,7 @@ type ScheduleTableHeaderColumnProps = {
 };
 
 const ScheduleTableHeaderColumn = (props: ScheduleTableHeaderColumnProps) => {
-  return <div className={cn('text-sm truncate text-start', props.className)}>{props.children}</div>;
+  return <div className={cn('text-xs truncate text-start', props.className)}>{props.children}</div>;
 };
 
 type ScheduleTableBodyProps = {
@@ -55,7 +55,7 @@ type ScheduleTableCellProps = {
   className?: string;
 };
 const ScheduleBodyColumn = (props: ScheduleTableCellProps) => {
-  return <div className={cn('text-sm', props.className)}>{props.children}</div>;
+  return <div className={cn('text-xs', props.className)}>{props.children}</div>;
 };
 
 type ScheduleTableProps = {
@@ -72,12 +72,14 @@ export const ScheduleTable = (props: ScheduleTableProps) => {
     <div className="flex flex-col gap-1">
       <ScheduleTableHeader>
         <ScheduleTableHeaderColumn className="flex-1">Days</ScheduleTableHeaderColumn>
-        <ScheduleTableHeaderColumn className="min-w-[120px]">From</ScheduleTableHeaderColumn>
-        <ScheduleTableHeaderColumn className="min-w-[120px]">To</ScheduleTableHeaderColumn>
+        <ScheduleTableHeaderColumn className="min-w-[100px]">From</ScheduleTableHeaderColumn>
+        <ScheduleTableHeaderColumn className="min-w-[100px]">To</ScheduleTableHeaderColumn>
       </ScheduleTableHeader>
       <ScheduleTableBody>
         {weekDays.map((day) => {
           const isDayDisabled = !schedule?.weeklySchedule?.[day]?.isEnabled;
+          const startHour = schedule?.weeklySchedule?.[day]?.hours?.[0]?.start;
+          const endHour = schedule?.weeklySchedule?.[day]?.hours?.[0]?.end;
 
           return (
             <ScheduleTableRow key={day}>
@@ -122,7 +124,7 @@ export const ScheduleTable = (props: ScheduleTableProps) => {
               <ScheduleBodyColumn>
                 <Select
                   disabled={isScheduleDisabled || isDayDisabled}
-                  value={schedule?.weeklySchedule?.[day]?.hours?.[0]?.start}
+                  value={startHour}
                   onValueChange={async (value) => {
                     try {
                       const updatedWeeklySchedule = {
@@ -133,7 +135,7 @@ export const ScheduleTable = (props: ScheduleTableProps) => {
                           hours: [
                             {
                               start: value,
-                              end: schedule?.weeklySchedule?.[day]?.hours?.[0]?.end || '05:00 PM',
+                              end: endHour || '05:00 PM',
                             },
                           ],
                         },
@@ -149,13 +151,19 @@ export const ScheduleTable = (props: ScheduleTableProps) => {
                   }}
                 >
                   <SelectTrigger
-                    className={`shadow-regular-shadow-x-small h-[32px min-w-[120px] w-full border border-[#E1E4EA]`}
+                    size="2xs"
+                    className={`shadow-regular-shadow-x-small min-w-[100px] w-full border border-[#E1E4EA]`}
                   >
-                    <SelectValue placeholder="-" className="min-w-[120px]" />
+                    <SelectValue placeholder="-" className="min-w-[100px]" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="min-w-[100px]">
+                    {startHour && !hours.includes(startHour) && (
+                      <SelectItem key={startHour} value={startHour} className="text-label-xs">
+                        {startHour}
+                      </SelectItem>
+                    )}
                     {hours.map((value) => (
-                      <SelectItem key={value} value={value}>
+                      <SelectItem key={value} value={value} className="text-label-xs">
                         {value}
                       </SelectItem>
                     ))}
@@ -165,7 +173,7 @@ export const ScheduleTable = (props: ScheduleTableProps) => {
               <ScheduleBodyColumn>
                 <Select
                   disabled={isScheduleDisabled || isDayDisabled}
-                  value={schedule?.weeklySchedule?.[day]?.hours?.[0]?.end}
+                  value={endHour}
                   onValueChange={async (value) => {
                     try {
                       const updatedWeeklySchedule = {
@@ -192,13 +200,19 @@ export const ScheduleTable = (props: ScheduleTableProps) => {
                   }}
                 >
                   <SelectTrigger
-                    className={`shadow-regular-shadow-x-small h-[32px] min-w-[120px] w-full border border-[#E1E4EA]`}
+                    size="2xs"
+                    className={`shadow-regular-shadow-x-small min-w-[100px] w-full border border-[#E1E4EA]`}
                   >
                     <SelectValue placeholder="-" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="min-w-[100px]">
+                    {endHour && !hours.includes(endHour) && (
+                      <SelectItem key={endHour} value={endHour} className="text-label-xs">
+                        {endHour}
+                      </SelectItem>
+                    )}
                     {hours.map((value) => (
-                      <SelectItem key={value} value={value}>
+                      <SelectItem key={value} value={value} className="text-label-xs">
                         {value}
                       </SelectItem>
                     ))}

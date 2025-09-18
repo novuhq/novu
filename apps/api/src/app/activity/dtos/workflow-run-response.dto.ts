@@ -92,6 +92,12 @@ export class StepRunDto {
     type: DigestMetadataDto,
   })
   digest?: DigestMetadataDto;
+
+  @ApiPropertyOptional({
+    description: 'The number of times the digest/delay job has been extended to align with the subscribers schedule',
+    type: Number,
+  })
+  scheduleExtensionsCount?: number;
 }
 
 export class GetWorkflowRunResponseDto extends GetWorkflowRunResponseBaseDto {

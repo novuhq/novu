@@ -1,5 +1,5 @@
-import { ComponentProps, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { StepCreateDto } from '@novu/shared';
+import { useEffect, useMemo, useState } from 'react';
 import { RiArrowLeftSLine } from 'react-icons/ri';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -13,49 +13,82 @@ import {
 } from '@/components/primitives/breadcrumb';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTrigger } from '@/components/primitives/dialog';
-import { Form, FormRoot } from '@/components/primitives/form/form';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/primitives/dialog';
+import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { WorkflowResults } from '@/components/template-store/components/workflow-results';
-import { getTemplates } from '@/components/template-store/templates';
-import { IWorkflowSuggestion } from '@/components/template-store/templates/types';
-import { WorkflowMode } from '@/components/template-store/types';
+import { IWorkflowSuggestion } from '@/components/template-store/types';
 import { WorkflowSidebar } from '@/components/template-store/workflow-sidebar';
 import TruncatedText from '@/components/truncated-text';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
 import { workflowSchema } from '@/components/workflow-editor/schema';
+import { showErrorToast } from '@/components/workflow-editor/toasts';
 import { WorkflowCanvas } from '@/components/workflow-editor/workflow-canvas';
 import { useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { useTemplateStore } from '@/hooks/use-template-store';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { Step } from '@/utils/types';
+import { selectPopularByIdStrict } from './featured';
 
-const WORKFLOW_TEMPLATES = getTemplates();
+/**
+ * Maps template steps to Step interface, ensuring all required properties are present
+ * and properly typed without using unsafe type assertions.
+ */
+function mapTemplateStepsToSteps(templateSteps: StepCreateDto[]): Step[] {
+  return templateSteps.map((step, index) => {
+    // Create a proper Step object with all required properties
+    const mappedStep: Step = {
+      name: step.name || `Step ${index + 1}`,
+      type: step.type,
+      _id: `temp-${index}`, // Temporary ID for template preview
+      stepId: step.name || `step-${index}`,
+      slug: `template-step-${index}_st_temp` as const, // Temporary slug for template preview
+      controls: {
+        values: step.controlValues ?? {},
+      },
+      issues: undefined, // No issues for template steps
+    };
 
-export type WorkflowTemplateModalProps = ComponentProps<typeof DialogTrigger> & {
+    return mappedStep;
+  });
+}
+
+export type WorkflowTemplateModalProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  source?: string;
   selectedTemplate?: IWorkflowSuggestion;
 };
 
 export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
-  const form = useForm();
   const track = useTelemetry();
   const navigate = useNavigate();
-  const { environmentSlug } = useParams();
+  const { environmentSlug, templateId } = useParams();
   const [searchParams] = useSearchParams();
   const { submit: createFromTemplate, isLoading: isCreating } = useCreateWorkflow();
   const [selectedCategory, setSelectedCategory] = useState<string>('popular');
-  const [suggestions, setSuggestions] = useState<IWorkflowSuggestion[]>([]);
-  const [mode, setMode] = useState<WorkflowMode>(WorkflowMode.TEMPLATES);
   const [internalSelectedTemplate, setInternalSelectedTemplate] = useState<IWorkflowSuggestion | null>(null);
 
   const selectedTemplate = props.selectedTemplate ?? internalSelectedTemplate;
+  const { suggestions } = useTemplateStore();
+  const filteredSuggestions = useMemo(() => {
+    if (selectedCategory === 'popular') {
+      const popular = selectPopularByIdStrict(suggestions, (s) => s.workflowDefinition.workflowId, 12);
+      return popular.length ? popular : suggestions.slice(0, 12);
+    }
 
-  const filteredTemplates = WORKFLOW_TEMPLATES.filter((template) =>
-    selectedCategory === 'popular' ? template.isPopular : template.category === selectedCategory
-  );
-  const templates = suggestions.length > 0 ? suggestions : filteredTemplates;
+    const categoryToTags: Record<string, string[]> = {
+      billing: ['billing'],
+      authentication: ['authentication', 'security'],
+      operational: ['operational', 'usage', 'engagement', 'subscription'],
+    };
+    const tags = categoryToTags[selectedCategory] || [selectedCategory];
+    return suggestions.filter((s) => {
+      const workflowTags = s?.workflowDefinition?.tags || [];
+      return tags.some((t) => workflowTags.includes(t));
+    });
+  }, [selectedCategory, suggestions]);
 
   useEffect(() => {
     if (props.open) {
@@ -71,15 +104,53 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
     }
   }, [props.selectedTemplate]);
 
-  const handleCreateWorkflow = async (values: z.infer<typeof workflowSchema>) => {
+  useEffect(() => {
+    if (!templateId || selectedTemplate) return;
+    const match = suggestions.find((s) => s.workflowDefinition.workflowId === templateId);
+    if (match) setInternalSelectedTemplate(match);
+  }, [templateId, suggestions, selectedTemplate]);
+
+  const handleCreateWorkflow = (values: z.infer<typeof workflowSchema>) => {
     if (!selectedTemplate) return;
 
-    await createFromTemplate(values, selectedTemplate.workflowDefinition);
-    track(TelemetryEvent.CREATE_WORKFLOW_FROM_TEMPLATE, {
-      templateId: selectedTemplate.id,
-      templateName: selectedTemplate.name,
-      category: selectedCategory,
-    });
+    createFromTemplate(values, selectedTemplate.workflowDefinition)
+      .then(() => {
+        // Track successful workflow creation from template
+        track(TelemetryEvent.CREATE_WORKFLOW_FROM_TEMPLATE, {
+          templateId: selectedTemplate.id,
+          templateName: selectedTemplate.name,
+          category: selectedCategory,
+        });
+      })
+      .catch((error: unknown) => {
+        // Robust error parsing with proper type guards
+        const message =
+          typeof error === 'object' && error !== null && 'message' in error
+            ? String((error as { message?: unknown }).message || '').toLowerCase()
+            : '';
+        const status =
+          typeof error === 'object' && error !== null && 'status' in error
+            ? Number((error as { status?: unknown }).status)
+            : undefined;
+
+        const isLayoutMissing = message.includes('layout not found') || status === 404;
+
+        if (isLayoutMissing) {
+          // Handle layout missing case - navigate to workflow editor
+          // This is considered a success case where the workflow was created but layout is missing
+          navigate(
+            buildRoute(ROUTES.EDIT_WORKFLOW, {
+              environmentSlug: environmentSlug || '',
+              workflowSlug: values.workflowId,
+            })
+          );
+          return;
+        }
+
+        // Handle all other errors - show user-facing error notification
+        console.error('Failed to create workflow from template:', error);
+        showErrorToast(undefined, error);
+      });
   };
 
   const getHeaderText = () => {
@@ -87,19 +158,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
       return selectedTemplate.name;
     }
 
-    if (mode === WorkflowMode.GENERATE) {
-      return 'AI Suggested workflows';
-    }
-
-    if (mode === WorkflowMode.FROM_PROMPT) {
-      return 'Scaffold your workflow';
-    }
-
-    if (mode === WorkflowMode.TEMPLATES) {
-      return `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} workflows`;
-    }
-
-    return '';
+    return `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} workflows`;
   };
 
   const handleTemplateClick = (template: IWorkflowSuggestion) => {
@@ -109,13 +168,10 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
   const handleBackClick = () => {
     navigate(buildRoute(ROUTES.TEMPLATE_STORE, { environmentSlug: environmentSlug || '' }));
     setInternalSelectedTemplate(null);
-    setMode(WorkflowMode.TEMPLATES);
   };
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
-    setSuggestions([]);
-    setMode(WorkflowMode.TEMPLATES);
     track(TelemetryEvent.TEMPLATE_CATEGORY_SELECTED, {
       category,
     });
@@ -123,10 +179,9 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogTrigger asChild {...props} />
-
-      <DialogContent className="w-full max-w-[1240px] gap-0 p-0" id="workflow-templates-modal">
+      <DialogContent className="w-full max-w-[1240px] gap-0 p-0">
         <DialogHeader className="border-stroke-soft flex flex-row items-center gap-1 border-b p-3">
+          <DialogTitle className="sr-only">Workflow Templates</DialogTitle>
           {selectedTemplate ? (
             <CompactButton size="md" variant="ghost" onClick={handleBackClick} icon={RiArrowLeftSLine}></CompactButton>
           ) : null}
@@ -153,38 +208,40 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
         </DialogHeader>
         <div className={`flex ${selectedTemplate ? 'min-h-[600px]' : 'min-h-[640px]'}`}>
           {!selectedTemplate && (
-            <WorkflowSidebar selectedCategory={selectedCategory} onCategorySelect={handleCategorySelect} mode={mode} />
+            <WorkflowSidebar selectedCategory={selectedCategory} onCategorySelect={handleCategorySelect} />
           )}
 
           <div className="w-full flex-1 overflow-auto">
             {!selectedTemplate ? (
               <div className="p-3">
-                <Form {...form}>
-                  <FormRoot>
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <h2 className="text-label-md text-strong">{getHeaderText()}</h2>
-                    </div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <h2 className="text-label-md text-strong">{getHeaderText()}</h2>
+                </div>
 
-                    <WorkflowResults mode={mode} suggestions={templates} onClick={handleTemplateClick} />
-                  </FormRoot>
-                </Form>
+                <ScrollArea className="h-[520px]">
+                  <div className="pr-2">
+                    {!suggestions.length ? (
+                      <div className="grid grid-cols-3 gap-4">
+                        <Skeleton className="h-[140px] w-full" />
+                        <Skeleton className="h-[140px] w-full" />
+                        <Skeleton className="h-[140px] w-full" />
+                        <Skeleton className="h-[140px] w-full" />
+                        <Skeleton className="h-[140px] w-full" />
+                        <Skeleton className="h-[140px] w-full" />
+                      </div>
+                    ) : (
+                      <WorkflowResults suggestions={filteredSuggestions} onClick={handleTemplateClick} />
+                    )}
+                  </div>
+                  <ScrollBar orientation="vertical" />
+                </ScrollArea>
               </div>
             ) : (
               <div className="flex h-full w-full gap-4">
                 <div className="flex-1">
                   <WorkflowCanvas
                     isTemplateStorePreview
-                    steps={
-                      selectedTemplate.workflowDefinition.steps.map((step) => ({
-                        _id: null,
-                        slug: null,
-                        stepId: step.name,
-                        controls: {
-                          values: step.controlValues ?? {},
-                        },
-                        ...step,
-                      })) as any
-                    }
+                    steps={mapTemplateStepsToSteps(selectedTemplate.workflowDefinition.steps)}
                   />
                 </div>
                 <div className="border-stroke-soft w-full max-w-[300px] border-l p-3">

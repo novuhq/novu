@@ -58,6 +58,7 @@ const stepRunSelectColumns = [
   'created_at',
   'updated_at',
   'digest',
+  'schedule_extensions_count',
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
@@ -273,6 +274,7 @@ export class GetWorkflowRun {
       updatedAt: new Date(stepRun.updated_at),
       digest: stepRun.digest ? JSON.parse(stepRun.digest) : undefined,
       executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || []),
+      scheduleExtensionsCount: stepRun.schedule_extensions_count,
     };
   }
 
