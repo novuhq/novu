@@ -106,14 +106,6 @@ export class RedisThrottleService {
       params.throttleKey && params.throttleValue !== undefined ? `:${params.throttleKey}:${params.throttleValue}` : '';
     const finalKey = `${baseKey}${throttleKeyPart}:set`;
 
-    console.log('=== REDIS KEY GENERATION ===', {
-      baseKey,
-      throttleKey: params.throttleKey,
-      throttleValue: params.throttleValue,
-      throttleKeyPart,
-      finalKey,
-    });
-
     return finalKey;
   }
 
@@ -194,14 +186,6 @@ export class RedisThrottleService {
 
     const ttlSec = this.computeTtlSeconds(params.windowMs);
 
-    console.log('=== REDIS RESERVATION ===', {
-      setKey,
-      limit: params.limit,
-      ttlSec,
-      jobId: params.jobId,
-      windowMs: params.windowMs,
-    });
-
     try {
       const [granted, count, ttlSecRemaining] = await this.executeReserveScript(
         setKey,
@@ -217,15 +201,6 @@ export class RedisThrottleService {
         windowStartMs: params.nowMs, // For sliding windows, window starts when first request arrives
       };
 
-      console.log('=== REDIS SCRIPT RESULT ===', {
-        setKey,
-        granted,
-        count,
-        ttlSecRemaining,
-        limit: params.limit,
-        result,
-      });
-
       Logger.debug(
         {
           ...params,
@@ -238,12 +213,6 @@ export class RedisThrottleService {
 
       return result;
     } catch (error) {
-      console.log('=== REDIS ERROR ===', {
-        error: error,
-        setKey,
-        params,
-      });
-
       Logger.error(
         {
           error,

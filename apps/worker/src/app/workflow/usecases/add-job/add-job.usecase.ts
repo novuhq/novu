@@ -544,14 +544,6 @@ export class AddJob {
     const throttleConfig = bridgeResponse?.outputs || {};
     const { type = 'fixed', threshold = 1, throttleKey } = throttleConfig;
 
-    console.log('=== THROTTLE DEBUG START ===', {
-      jobId: job._id,
-      throttleConfig,
-      type,
-      threshold,
-      throttleKey,
-    });
-
     let windowMs: number;
 
     if (type === 'fixed') {
@@ -592,29 +584,7 @@ export class AddJob {
 
     const throttleValue = throttleKey ? getNestedValue(job.payload, throttleKey as string) : 'default';
 
-    console.log('=== THROTTLE KEY GENERATION ===', {
-      jobId: job._id,
-      throttleKey,
-      throttleValue,
-      payload: job.payload,
-    });
-
-    // For throttling, each job needs a unique identifier for the Redis set,
-    // but they share the same Redis key based on subscriber and step for throttling together
     const throttleJobId = `${job._id}:${Date.now()}`;
-
-    console.log('=== THROTTLE RESERVATION REQUEST ===', {
-      jobId: job._id,
-      environmentId: command.environmentId,
-      subscriberId: job._subscriberId,
-      workflowId: job._templateId,
-      stepId: job.step.stepId,
-      throttleJobId,
-      windowMs,
-      limit: threshold,
-      throttleKey: throttleKey || 'default',
-      throttleValue,
-    });
 
     const reservationResult = await this.redisThrottleService.reserveThrottleSlot({
       environmentId: command.environmentId,
@@ -627,17 +597,6 @@ export class AddJob {
       nowMs,
       throttleKey: (throttleKey as string) || 'default',
       throttleValue: throttleValue,
-    });
-
-    console.log('=== THROTTLE RESERVATION RESULT ===', {
-      jobId: job._id,
-      reservationResult,
-      threshold,
-      windowMs,
-      type,
-      granted: reservationResult.granted,
-      count: reservationResult.count,
-      shouldSkip: !reservationResult.granted,
     });
 
     Logger.debug(
@@ -653,13 +612,6 @@ export class AddJob {
     );
 
     if (!reservationResult.granted) {
-      console.log('=== THROTTLE BLOCKED ===', {
-        jobId: job._id,
-        count: reservationResult.count,
-        threshold,
-        message: 'Job will be skipped due to throttling',
-      });
-
       return {
         shouldSkip: true,
         executionCount: reservationResult.count,
@@ -667,13 +619,6 @@ export class AddJob {
         throttledUntil: new Date(reservationResult.windowStartMs + windowMs).toISOString(),
       };
     }
-
-    console.log('=== THROTTLE ALLOWED ===', {
-      jobId: job._id,
-      count: reservationResult.count,
-      threshold,
-      message: 'Job will proceed',
-    });
 
     // Slot reserved successfully, proceed with execution
     return {
