@@ -362,7 +362,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
           controlValues: {
             type: 'dynamic',
             dynamicKey: 'payload.releaseTime',
-            threshold: 2,
+            threshold: 1,
           },
         },
         {
