@@ -376,7 +376,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     };
 
     const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    const { workflow } = response.body.data;
+    const workflow: WorkflowResponseDto = response.body.data;
 
     // Trigger first event with dynamic timestamp
     await triggerEvent(workflow.workflowId, {
@@ -439,7 +439,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     };
 
     const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    const { workflow } = response.body.data;
+    const workflow: WorkflowResponseDto = response.body.data;
 
     // Trigger first event with duration object
     await triggerEvent(workflow.workflowId, {
