@@ -1,6 +1,7 @@
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
   AddressingTypeEnum,
+  ContextPayload,
   StatelessControls,
   TriggerOverrides,
   TriggerRecipientSubscriber,
@@ -33,6 +34,7 @@ export type IWorkflowDataDto = {
   transactionId: string;
   actor?: TriggerRecipientSubscriber | null;
   tenant?: TriggerTenantContext | null;
+  context?: ContextPayload;
   requestCategory?: TriggerRequestCategoryEnum;
   bridgeUrl?: string;
   bridgeWorkflow?: DiscoverWorkflowOutput;

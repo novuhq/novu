@@ -1,4 +1,5 @@
 export * from './external-api.decorator';
+export * from './is-valid-context-payload.decorator';
 export * from './is-valid-locale.decorator';
 export * from './permissions.decorator';
 export * from './product-feature.decorator';

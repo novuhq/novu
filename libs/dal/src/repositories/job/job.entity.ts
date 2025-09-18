@@ -1,4 +1,5 @@
 import {
+  ContextKey,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatus,
   ITenantDefine,
@@ -53,6 +54,7 @@ export class JobEntity {
   actorId?: string;
   stepOutput?: Record<string, unknown>;
   preferences?: WorkflowPreferences;
+  contextKeys?: ContextKey[];
   /**
    * used to track the number of times a step has been extended to the next available time in the subscriber schedule
    */

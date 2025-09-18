@@ -7,10 +7,15 @@ const DETAILED_ERROR_MESSAGES = [
   'Insufficient permissions',
 ] as const;
 
-function getErrorMessage(error?: any): string {
-  if (!error?.message) return 'Failed to save';
+function getErrorMessage(error?: unknown): string {
+  if (!error || typeof error !== 'object' || error === null || !('message' in error)) {
+    return 'Failed to save';
+  }
 
-  return DETAILED_ERROR_MESSAGES.some((message) => error.message.includes(message)) ? error.message : 'Failed to save';
+  const message = (error as { message?: unknown }).message;
+  const messageText = typeof message === 'string' ? message : '';
+
+  return DETAILED_ERROR_MESSAGES.some((detailed) => messageText.includes(detailed)) ? messageText : 'Failed to save';
 }
 
 export const showSavingToast = (setToastId: (toastId: string | number) => void) => {
@@ -32,7 +37,7 @@ export const showSavingToast = (setToastId: (toastId: string | number) => void) 
   );
 };
 
-export const showSuccessToast = (toastId: string | number) => {
+export const showSuccessToast = (toastId?: string | number) => {
   showToast({
     children: () => (
       <>
@@ -50,7 +55,7 @@ export const showSuccessToast = (toastId: string | number) => {
   });
 };
 
-export const showErrorToast = (toastId: string | number, error?: any) => {
+export const showErrorToast = (toastId?: string | number, error?: unknown) => {
   const message = getErrorMessage(error);
 
   showToast({

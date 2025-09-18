@@ -1,7 +1,7 @@
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
-
 import {
   AddressingTypeEnum,
+  ContextPayload,
   StatelessControls,
   TriggerOverrides,
   TriggerRecipientSubscriber,
@@ -10,8 +10,8 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 import { IsDefined, IsEnum, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
-
 import { EnvironmentWithUserCommand } from '../../commands';
+import { IsValidContextPayload } from '../../decorators';
 
 export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -55,6 +55,10 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   bridgeWorkflow?: DiscoverWorkflowOutput;
 
   controls?: StatelessControls;
+
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 }
 
 export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {
