@@ -3,6 +3,17 @@ import { SeverityLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@no
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 import {
+  ChatControlDto,
+  CustomControlDto,
+  DelayControlDto,
+  DigestControlDto,
+  EmailControlDto,
+  InAppControlDto,
+  PushControlDto,
+  SmsControlDto,
+  ThrottleControlDto,
+} from './controls';
+import {
   BaseStepConfigDto,
   ChatStepUpsertDto,
   CustomStepUpsertDto,
@@ -26,7 +37,16 @@ import { WorkflowCommonsFields } from './workflow-commons.dto';
   DelayStepUpsertDto,
   DigestStepUpsertDto,
   ThrottleStepUpsertDto,
-  CustomStepUpsertDto
+  CustomStepUpsertDto,
+  InAppControlDto,
+  EmailControlDto,
+  SmsControlDto,
+  PushControlDto,
+  ChatControlDto,
+  DelayControlDto,
+  DigestControlDto,
+  ThrottleControlDto,
+  CustomControlDto
 )
 export class CreateWorkflowDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Unique identifier for the workflow' })
