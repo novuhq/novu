@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
 import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
@@ -17,7 +17,7 @@ import { CreateOrganizationCommand } from './create-organization.command';
 
 @Injectable()
 export class CreateOrganization {
-  private readonly logger = new PinoLogger(CreateOrganization.name);
+  private readonly logger = new Logger(CreateOrganization.name);
 
   constructor(
     private readonly organizationRepository: OrganizationRepository,
