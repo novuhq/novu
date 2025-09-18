@@ -18,7 +18,8 @@ import {
   GetTopicSubscribersUseCase,
   NormalizeVariables,
   ProcessTenant,
-  ResolveContext,
+  ResolveContextFromKeys,
+  ResolveContextFromPayload,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -188,7 +189,8 @@ const USE_CASES = [
   ExecuteBridgeJob,
   GetPreferences,
   WorkflowRunService,
-  ResolveContext,
+  ResolveContextFromKeys,
+  ResolveContextFromPayload,
   GetSubscriberSchedule,
 ];
 

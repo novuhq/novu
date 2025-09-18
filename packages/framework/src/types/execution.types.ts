@@ -1,4 +1,5 @@
 import { PostActionEnum } from '../constants';
+import type { ContextResolved } from './context.types';
 import { WithPassthrough } from './provider.types';
 import type { Subscriber } from './subscriber.types';
 
@@ -10,6 +11,7 @@ export type Event = {
   state: State[];
   action: Exclude<PostActionEnum, PostActionEnum.TRIGGER>;
   subscriber: Subscriber;
+  context: ContextResolved;
 };
 
 export type State = {

@@ -1,4 +1,5 @@
 import { WorkflowChannelEnum } from '../constants';
+import { ContextResolved } from './context.types';
 import type { Schema } from './schema.types';
 import type { Step } from './step.types';
 import type { Subscriber } from './subscriber.types';
@@ -28,6 +29,8 @@ export type ExecuteInput<T_Payload extends Record<string, unknown>, T_Controls e
   environment: Record<string, unknown>;
   /** The controls for the event. Provided via the Dashboard. */
   controls: T_Controls;
+  /** The resolved context for the event. */
+  context: ContextResolved;
 };
 
 /**

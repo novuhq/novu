@@ -1,4 +1,5 @@
 import { SubscriberEntity, TenantEntity } from '@novu/dal';
+import type { ContextResolved } from '@novu/framework/internal';
 import { ICondition, IMessageFilter, ITriggerPayload } from '@novu/shared';
 
 export interface IFilterVariables {
@@ -7,6 +8,7 @@ export interface IFilterVariables {
   actor?: SubscriberEntity;
   webhook?: Record<string, unknown>;
   tenant?: TenantEntity;
+  context?: ContextResolved;
   step?: {
     digest: boolean;
     events: any[] | undefined;

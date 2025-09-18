@@ -3,10 +3,10 @@ import { ContextEntity, ContextRepository } from '@novu/dal';
 import { ContextData, ContextType, ContextValue } from '@novu/shared';
 import { InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
-import { ResolveContextCommand } from './resolve-context.command';
+import { ResolveContextFromPayloadCommand } from './resolve-context-from-payload.command';
 
 @Injectable()
-export class ResolveContext {
+export class ResolveContextFromPayload {
   constructor(
     private logger: PinoLogger,
     private contextRepository: ContextRepository
@@ -15,8 +15,7 @@ export class ResolveContext {
   }
 
   @InstrumentUsecase()
-  public async execute(command: ResolveContextCommand): Promise<ContextEntity[]> {
-    // Process all context type-value pairs in parallel to avoid N+1 queries
+  public async execute(command: ResolveContextFromPayloadCommand): Promise<ContextEntity[]> {
     const contexts = await Promise.all(
       Object.entries(command.context).map(([contextType, contextValue]) =>
         this.resolveContextTypeAndValue(command, contextType, contextValue)
@@ -27,7 +26,7 @@ export class ResolveContext {
   }
 
   private async resolveContextTypeAndValue(
-    command: ResolveContextCommand,
+    command: ResolveContextFromPayloadCommand,
     contextType: ContextType,
     contextValue: ContextValue
   ): Promise<ContextEntity> {
@@ -39,7 +38,7 @@ export class ResolveContext {
   }
 
   private async handleStringValue(
-    command: ResolveContextCommand,
+    command: ResolveContextFromPayloadCommand,
     contextType: ContextType,
     id: string
   ): Promise<ContextEntity> {
@@ -47,7 +46,7 @@ export class ResolveContext {
   }
 
   private async handleObjectValue(
-    command: ResolveContextCommand,
+    command: ResolveContextFromPayloadCommand,
     contextType: ContextType,
     contextValue: { id: string; data?: ContextData }
   ): Promise<ContextEntity> {
