@@ -1,14 +1,10 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
-import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
+
 import { CreateEnvironmentCommand } from '../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../environments-v1/usecases/create-environment/create-environment.usecase';
-import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
-import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
-import { UpsertLayout, UpsertLayoutCommand } from '../../../layouts-v2/usecases/upsert-layout';
-import { EMPTY_LAYOUT } from '../../../layouts-v2/utils/layout-templates';
 import { GetOrganizationCommand } from '../get-organization/get-organization.command';
 import { GetOrganization } from '../get-organization/get-organization.usecase';
 import { AddMemberCommand } from '../membership/add-member/add-member.command';
@@ -17,16 +13,12 @@ import { CreateOrganizationCommand } from './create-organization.command';
 
 @Injectable()
 export class CreateOrganization {
-  private readonly logger = new Logger(CreateOrganization.name);
-
   constructor(
     private readonly organizationRepository: OrganizationRepository,
     private readonly addMemberUsecase: AddMember,
     private readonly getOrganizationUsecase: GetOrganization,
     private readonly userRepository: UserRepository,
     private readonly createEnvironmentUsecase: CreateEnvironment,
-    private readonly createNovuIntegrations: CreateNovuIntegrations,
-    private readonly upsertLayoutUsecase: UpsertLayout,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -68,18 +60,7 @@ export class CreateOrganization {
       })
     );
 
-    await this.createNovuIntegrations.execute(
-      CreateNovuIntegrationsCommand.create({
-        environmentId: devEnv._id,
-        organizationId: devEnv._organizationId,
-        userId: user._id,
-        name: devEnv.name,
-      })
-    );
-
-    await this.createDefaultLayout(devEnv, user._id);
-
-    const prodEnv = await this.createEnvironmentUsecase.execute(
+    await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
         userId: user._id,
         name: EnvironmentEnum.PRODUCTION,
@@ -88,8 +69,6 @@ export class CreateOrganization {
         system: true,
       })
     );
-
-    await this.createDefaultLayout(prodEnv, user._id);
 
     this.analyticsService.upsertGroup(createdOrganization._id, createdOrganization, user);
 
@@ -107,33 +86,6 @@ export class CreateOrganization {
     );
 
     return organizationAfterChanges as OrganizationEntity;
-  }
-
-  private async createDefaultLayout(environment: EnvironmentResponseDto, userId: string): Promise<void> {
-    try {
-      await this.upsertLayoutUsecase.execute(
-        UpsertLayoutCommand.create({
-          environmentId: environment._id,
-          organizationId: environment._organizationId,
-          userId,
-          layoutDto: {
-            name: 'Default layout',
-            controlValues: {
-              email: {
-                body: JSON.stringify(EMPTY_LAYOUT),
-                editorType: 'block',
-              },
-            },
-          },
-        })
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to create default layout for environment ${environment._id}: ${error.message}`,
-        error.stack
-      );
-      throw error;
-    }
   }
 
   private async updateJobTitle(user, jobTitle: JobTitleEnum) {
