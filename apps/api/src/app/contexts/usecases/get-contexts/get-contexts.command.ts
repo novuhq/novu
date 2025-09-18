@@ -1,13 +1,13 @@
 import { CursorBasedPaginatedCommand } from '@novu/application-generic';
-import { ContextTypeEnum, IContext } from '@novu/shared';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Context, ContextType } from '@novu/shared';
+import { IsOptional, IsString } from 'class-validator';
 
-export class GetContextsCommand extends CursorBasedPaginatedCommand<IContext, 'createdAt' | 'updatedAt'> {
-  @IsEnum(ContextTypeEnum)
+export class GetContextsCommand extends CursorBasedPaginatedCommand<Context, 'createdAt' | 'updatedAt'> {
+  @IsString()
   @IsOptional()
-  type?: ContextTypeEnum;
+  type?: ContextType;
 
   @IsString()
   @IsOptional()
-  identifier?: string;
+  id?: string;
 }

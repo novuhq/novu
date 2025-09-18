@@ -4,6 +4,7 @@ import { BulkSmsProvider } from './bulk-sms.provider';
 
 const mockConfig = {
   apiToken: 'test-key',
+  from: '45482346',
 };
 
 const mockBulkSMSMessage = {
@@ -27,7 +28,7 @@ test('should trigger bulk-sms library correctly', async () => {
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith(
     'https://api.bulksms.com/v1/messages',
-    '{"to":"2348055372961","body":"sms content","from":"45483533"}',
+    '{"to":"2348055372961","body":"sms content","from":{"type":"INTERNATIONAL","address":"45483533"},"userSuppliedId":"BLKTM.NOVU.01.00.00"}',
     {
       headers: {
         Authorization: 'Basic dGVzdC1rZXk=',
@@ -58,7 +59,7 @@ test('should trigger bulk-sms library correctly with _passthrough', async () => 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith(
     'https://api.bulksms.com/v1/messages',
-    '{"to":"3348055372961","body":"sms content","from":"45483533"}',
+    '{"to":"3348055372961","body":"sms content","from":{"type":"INTERNATIONAL","address":"45483533"},"userSuppliedId":"BLKTM.NOVU.01.00.00"}',
     {
       headers: {
         Authorization: 'Basic dGVzdC1rZXk=',

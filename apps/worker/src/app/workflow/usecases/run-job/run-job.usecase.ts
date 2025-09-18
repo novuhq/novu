@@ -640,13 +640,22 @@ export class RunJob {
       }
     );
 
-    await this.stepRunRepository.create(job, {
+    const updatedJob = await this.jobRepository.findOne({
+      _id: job._id,
+      _environmentId: job._environmentId,
+    });
+
+    if (!updatedJob) {
+      throw new PlatformException(`Job with id ${job._id} not found`);
+    }
+
+    await this.stepRunRepository.create(updatedJob, {
       status: JobStatusEnum.DELAYED,
     });
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(updatedJob),
         detail: DetailEnum.STEP_EXTENDED_TO_SCHEDULE,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -666,13 +675,13 @@ export class RunJob {
     );
 
     // re-queue the job with the new delay
-    await this.addJobUsecase.queueJob(job, delayMs);
+    await this.addJobUsecase.queueJob(updatedJob, delayMs);
 
     this.logger.info(
       {
-        jobId: job._id,
-        subscriberId: job.subscriberId,
-        stepType: job.type,
+        jobId: updatedJob._id,
+        subscriberId: updatedJob.subscriberId,
+        stepType: updatedJob.type,
         delayMs,
         nextAvailableTime: nextAvailableTime.toISOString(),
         scheduleExtensionsCount: currentExtensions + 1,

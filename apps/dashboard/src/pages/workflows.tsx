@@ -1,5 +1,5 @@
-import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
-import { useEffect } from 'react';
+import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum, WorkflowStatusEnum } from '@novu/shared';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   RiArrowDownSLine,
@@ -23,8 +23,9 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { getTemplates, WorkflowTemplate } from '@/components/template-store/templates';
+import { selectPopularByIdStrict } from '@/components/template-store/featured';
 import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
@@ -34,6 +35,7 @@ import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { QuickTemplate, useTemplateStore } from '@/hooks/use-template-store';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -60,33 +62,48 @@ export const WorkflowsPage = () => {
     },
   });
 
-  useEffect(() => {
-    if (!searchParams.has('query') && form.getValues('query')) {
-      form.setValue('query', '');
-    }
-  }, []);
+  const updateSearchParam = useCallback(
+    (value: string) => {
+      setSearchParams((prev) => {
+        const sp = new URLSearchParams(prev);
+        if (value) {
+          sp.set('query', value);
+        } else {
+          sp.delete('query');
+        }
+        return sp;
+      });
+    },
+    [setSearchParams]
+  );
 
-  const updateSearchParam = (value: string) => {
-    if (value) {
-      searchParams.set('query', value);
-    } else {
-      searchParams.delete('query');
-    }
+  const updateTagsParam = useCallback(
+    (tags: string[]) => {
+      setSearchParams((prev) => {
+        const sp = new URLSearchParams(prev);
+        sp.delete('tags');
+        for (const tag of tags) {
+          sp.append('tags', tag);
+        }
+        return sp;
+      });
+    },
+    [setSearchParams]
+  );
 
-    setSearchParams(searchParams);
-  };
-
-  const updateTagsParam = (tags: string[]) => {
-    searchParams.delete('tags');
-    tags.forEach((tag) => searchParams.append('tags', tag));
-    setSearchParams(searchParams);
-  };
-
-  const updateStatusParam = (status: string[]) => {
-    searchParams.delete('status');
-    status.forEach((s) => searchParams.append('status', s));
-    setSearchParams(searchParams);
-  };
+  const updateStatusParam = useCallback(
+    (status: string[]) => {
+      setSearchParams((prev) => {
+        const sp = new URLSearchParams(prev);
+        sp.delete('status');
+        for (const s of status) {
+          sp.append('status', s);
+        }
+        return sp;
+      });
+    },
+    [setSearchParams]
+  );
 
   const debouncedSearch = useDebounce((value: string) => updateSearchParam(value), 500);
 
@@ -117,12 +134,17 @@ export const WorkflowsPage = () => {
       subscription.unsubscribe();
       debouncedSearch.cancel();
     };
-  }, [form, debouncedSearch]);
-  const templates = getTemplates();
-  const popularTemplates = templates.filter((template) => template.isPopular).slice(0, 4);
+  }, [form, debouncedSearch, updateTagsParam, updateStatusParam]);
 
-  const offset = parseInt(searchParams.get('offset') || '0');
-  const limit = parseInt(searchParams.get('limit') || '12');
+  const { quickTemplates, isLoading: isLoadingQuickStart } = useTemplateStore();
+
+  const quickStartTemplates = useMemo(() => {
+    const popular = selectPopularByIdStrict(quickTemplates, (template) => template.workflowId, 4);
+    return popular.length ? popular : quickTemplates.slice(0, 4);
+  }, [quickTemplates]);
+
+  const offset = parseInt(searchParams.get('offset') || '0', 10);
+  const limit = parseInt(searchParams.get('limit') || '12', 10);
 
   const {
     data: workflowsData,
@@ -142,10 +164,9 @@ export const WorkflowsPage = () => {
   const { currentEnvironment } = useEnvironment();
   const { tags } = useTags();
 
+  const queryParam = searchParams.get('query') || '';
   const hasActiveFilters =
-    (searchParams.get('query') ? searchParams.get('query')!.trim() !== '' : false) ||
-    searchParams.getAll('tags').length > 0 ||
-    searchParams.getAll('status').length > 0;
+    queryParam.trim() !== '' || searchParams.getAll('tags').length > 0 || searchParams.getAll('status').length > 0;
 
   const isProdEnv = currentEnvironment?.name === 'Production';
 
@@ -156,14 +177,14 @@ export const WorkflowsPage = () => {
     track(TelemetryEvent.WORKFLOWS_PAGE_VISIT);
   }, [track]);
 
-  const handleTemplateClick = (template: WorkflowTemplate) => {
+  const handleTemplateClick = (template: QuickTemplate) => {
     track(TelemetryEvent.TEMPLATE_WORKFLOW_CLICK);
 
     navigate(
-      buildRoute(ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW, {
+      `${buildRoute(ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW, {
         environmentSlug: environmentSlug || '',
-        templateId: template.id,
-      }) + '?source=template-store-card-row'
+        templateId: template.workflowId,
+      })}?source=template-store-card-row`
     );
   };
 
@@ -225,9 +246,9 @@ export const WorkflowsPage = () => {
                   variant="gray"
                   onClick={() =>
                     navigate(
-                      buildRoute(ROUTES.TEMPLATE_STORE, {
+                      `${buildRoute(ROUTES.TEMPLATE_STORE, {
                         environmentSlug: environmentSlug || '',
-                      }) + '?source=start-with'
+                      })}?source=start-with`
                     )
                   }
                   trailingIcon={RiArrowRightSLine}
@@ -237,25 +258,40 @@ export const WorkflowsPage = () => {
               </div>
               <ScrollArea className="w-full">
                 <div className="bg-bg-weak rounded-12 flex gap-4 p-3">
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => {
-                      track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
-
-                      navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
-                    }}
-                  >
-                    <WorkflowCard name="Start from scratch" description="Create a workflow from scratch" steps={[]} />
-                  </div>
-                  {popularTemplates.map((template) => (
-                    <WorkflowCard
-                      key={template.id}
-                      name={template.name}
-                      description={template.description}
-                      steps={template.workflowDefinition.steps.map((step) => step.type as StepTypeEnum)}
-                      onClick={() => handleTemplateClick(template)}
-                    />
-                  ))}
+                  {isLoadingQuickStart && (
+                    <>
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                    </>
+                  )}
+                  {!isLoadingQuickStart && (
+                    <>
+                      <div className="w-[250px] flex-shrink-0">
+                        <WorkflowCard
+                          name="Start from scratch"
+                          description="Create a workflow from scratch"
+                          steps={[]}
+                          onClick={() => {
+                            track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
+                            navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
+                          }}
+                        />
+                      </div>
+                      {quickStartTemplates.map((template) => (
+                        <div key={template.workflowId} className="w-[250px] flex-shrink-0">
+                          <WorkflowCard
+                            name={template.name}
+                            description={template.description}
+                            steps={template.steps}
+                            onClick={() => handleTemplateClick(template)}
+                          />
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
                 <ScrollBar orientation="horizontal" />
               </ScrollArea>
@@ -293,9 +329,9 @@ const CreateWorkflowButton = () => {
 
   const navigateToTemplateStore = () => {
     navigate(
-      buildRoute(ROUTES.TEMPLATE_STORE, {
+      `${buildRoute(ROUTES.TEMPLATE_STORE, {
         environmentSlug: environmentSlug || '',
-      }) + '?source=create-workflow-dropdown'
+      })}?source=create-workflow-dropdown`
     );
   };
 
@@ -361,10 +397,10 @@ const CreateWorkflowButton = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
             <DropdownMenuItem className="cursor-pointer" asChild>
-              <div className="w-full" onClick={handleCreateWorkflow}>
+              <button type="button" className="w-full text-left" onClick={handleCreateWorkflow}>
                 <RiFileAddLine />
                 From Blank
-              </div>
+              </button>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onSelect={navigateToTemplateStore}>
               <RiFileMarkedLine />
@@ -379,9 +415,7 @@ const CreateWorkflowButton = () => {
 
 export const TemplateModal = () => {
   const navigate = useNavigate();
-  const { templateId, environmentSlug } = useParams();
-  const templates = getTemplates();
-  const selectedTemplate = templateId ? templates.find((template) => template.id === templateId) : undefined;
+  const { environmentSlug } = useParams();
 
   const handleCloseTemplateModal = () => {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: environmentSlug || '' }));
@@ -395,7 +429,6 @@ export const TemplateModal = () => {
           handleCloseTemplateModal();
         }
       }}
-      selectedTemplate={selectedTemplate}
     />
   );
 };

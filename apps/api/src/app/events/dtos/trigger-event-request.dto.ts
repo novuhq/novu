@@ -1,5 +1,7 @@
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { IsValidContextPayload } from '@novu/application-generic';
 import {
+  ContextPayload,
   ProvidersIdEnum,
   SeverityLevelEnum,
   TriggerRecipientSubscriber,
@@ -324,6 +326,38 @@ export class TriggerEventRequestDto {
 
   @ApiHideProperty()
   controls?: WorkflowToStepControlValuesDto;
+
+  // @ApiPropertyOptional({
+  //   description:
+  //     'Context information for the trigger event. Each key represents a context type, and each value can be either a simple string id or a rich object with id and optional data.',
+  //   type: 'object',
+  //   additionalProperties: {
+  //     oneOf: [
+  //       {
+  //         type: 'string',
+  //         description: 'Simple context id',
+  //         example: 'org-acme',
+  //       },
+  //       {
+  //         type: 'object',
+  //         description: 'Rich context object with id and optional data',
+  //         properties: {
+  //           id: { type: 'string', example: 'org-acme' },
+  //           data: {
+  //             type: 'object',
+  //             description: 'Optional additional context data',
+  //             example: { name: 'Acme Corp', region: 'us-east-1' },
+  //           },
+  //         },
+  //         required: ['id'],
+  //       },
+  //     ],
+  //   },
+  // })
+  @ApiHideProperty()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 }
 
 export class BulkTriggerEventDto {

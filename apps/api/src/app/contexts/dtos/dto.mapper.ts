@@ -6,7 +6,7 @@ export function mapContextEntityToDto(context: ContextEntity): GetContextRespons
     createdAt: context.createdAt,
     updatedAt: context.updatedAt,
     type: context.type,
-    identifier: context.identifier,
+    id: context.id,
     data: context.data,
   };
 }

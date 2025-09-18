@@ -91,11 +91,18 @@ export const Preferences = (props: PreferencesProps) => {
       </motion.div>
 
       {isSubscribersScheduleEnabled && (
-        <motion.div variants={itemVariants}>
-          <SidebarContent size="md">
-            <SubscribersSchedule globalPreference={subscriberPreferences.global} subscriberId={subscriberId} />
-          </SidebarContent>
-        </motion.div>
+        <>
+          <motion.div variants={itemVariants}>
+            <SidebarContent size="md" className="pb-0">
+              <div className="w-full border-t border-neutral-100" />
+            </SidebarContent>
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <SidebarContent size="md">
+              <SubscribersSchedule globalPreference={subscriberPreferences.global} subscriberId={subscriberId} />
+            </SidebarContent>
+          </motion.div>
+        </>
       )}
 
       <motion.div variants={itemVariants}>
