@@ -7,7 +7,7 @@ import { CreateEnvironment } from '../../../../environments-v1/usecases/create-e
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { UpsertLayout, UpsertLayoutCommand } from '../../../../layouts-v2/usecases/upsert-layout';
-import { createDefaultLayout } from '../../../../layouts-v2/utils/layout-templates';
+import { EMPTY_LAYOUT } from '../../../../layouts-v2/utils/layout-templates';
 import { GetOrganizationCommand } from '../../get-organization/get-organization.command';
 import { GetOrganization } from '../../get-organization/get-organization.usecase';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
@@ -82,7 +82,7 @@ export class SyncExternalOrganization {
           name: 'Default layout',
           controlValues: {
             email: {
-              body: JSON.stringify(createDefaultLayout(organization.name)),
+              body: JSON.stringify(EMPTY_LAYOUT),
               editorType: 'block',
             },
           },
@@ -118,7 +118,7 @@ export class SyncExternalOrganization {
           name: 'Default layout',
           controlValues: {
             email: {
-              body: JSON.stringify(createDefaultLayout(organization.name)),
+              body: JSON.stringify(EMPTY_LAYOUT),
               editorType: 'block',
             },
           },
