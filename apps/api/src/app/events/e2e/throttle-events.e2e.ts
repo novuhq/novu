@@ -106,9 +106,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
 
     expect(messages?.length).to.equal(2);
 
-    // Check that payload variables are properly interpolated
-    expect(messages[0].content).to.include('First event');
-    expect(messages[1].content).to.include('Second event');
+    // Check that payload variables are properly interpolated (order-independent)
+    const messageContents = messages.map((msg) => msg.content);
+    expect(messageContents.some((content) => content.includes('First event'))).to.be.true;
+    expect(messageContents.some((content) => content.includes('Second event'))).to.be.true;
   });
 
   it('should throttle when threshold is exceeded', async () => {
