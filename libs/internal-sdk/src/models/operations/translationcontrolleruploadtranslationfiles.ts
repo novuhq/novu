@@ -15,7 +15,7 @@ export type TranslationControllerUploadTranslationFilesRequest = {
    */
   idempotencyKey?: string | undefined;
   /**
-   * Translation upload details
+   * Translation files upload body details
    */
   uploadTranslationsRequestDto: components.UploadTranslationsRequestDto;
 };

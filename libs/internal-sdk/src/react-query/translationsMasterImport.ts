@@ -29,7 +29,7 @@ export type TranslationsMasterImportMutationData =
  * Import master translations JSON
  *
  * @remarks
- * Import translations from master JSON format for a specific locale
+ * Import translations for multiple workflows from master JSON format for a specific locale
  */
 export function useTranslationsMasterImportMutation(
   options?: MutationHookOptions<

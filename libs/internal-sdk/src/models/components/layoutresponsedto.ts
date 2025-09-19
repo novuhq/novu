@@ -25,11 +25,6 @@ import {
 } from "./resourcetypeenum.js";
 
 /**
- * User last name
- */
-export type LastName = {};
-
-/**
  * User who last updated the layout
  */
 export type UpdatedBy = {
@@ -44,7 +39,7 @@ export type UpdatedBy = {
   /**
    * User last name
    */
-  lastName?: LastName | null | undefined;
+  lastName?: string | null | undefined;
   /**
    * User external ID
    */
@@ -103,50 +98,6 @@ export type LayoutResponseDto = {
 };
 
 /** @internal */
-export const LastName$inboundSchema: z.ZodType<
-  LastName,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type LastName$Outbound = {};
-
-/** @internal */
-export const LastName$outboundSchema: z.ZodType<
-  LastName$Outbound,
-  z.ZodTypeDef,
-  LastName
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LastName$ {
-  /** @deprecated use `LastName$inboundSchema` instead. */
-  export const inboundSchema = LastName$inboundSchema;
-  /** @deprecated use `LastName$outboundSchema` instead. */
-  export const outboundSchema = LastName$outboundSchema;
-  /** @deprecated use `LastName$Outbound` instead. */
-  export type Outbound = LastName$Outbound;
-}
-
-export function lastNameToJSON(lastName: LastName): string {
-  return JSON.stringify(LastName$outboundSchema.parse(lastName));
-}
-
-export function lastNameFromJSON(
-  jsonString: string,
-): SafeParseResult<LastName, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => LastName$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'LastName' from JSON`,
-  );
-}
-
-/** @internal */
 export const UpdatedBy$inboundSchema: z.ZodType<
   UpdatedBy,
   z.ZodTypeDef,
@@ -154,7 +105,7 @@ export const UpdatedBy$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string(),
   firstName: z.nullable(z.string()).optional(),
-  lastName: z.nullable(z.lazy(() => LastName$inboundSchema)).optional(),
+  lastName: z.nullable(z.string()).optional(),
   externalId: z.nullable(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -166,7 +117,7 @@ export const UpdatedBy$inboundSchema: z.ZodType<
 export type UpdatedBy$Outbound = {
   _id: string;
   firstName?: string | null | undefined;
-  lastName?: LastName$Outbound | null | undefined;
+  lastName?: string | null | undefined;
   externalId?: string | null | undefined;
 };
 
@@ -178,7 +129,7 @@ export const UpdatedBy$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string(),
   firstName: z.nullable(z.string()).optional(),
-  lastName: z.nullable(z.lazy(() => LastName$outboundSchema)).optional(),
+  lastName: z.nullable(z.string()).optional(),
   externalId: z.nullable(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {

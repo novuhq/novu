@@ -25,10 +25,10 @@ export class Translations extends ClientSDK {
   }
 
   /**
-   * Create or update translation
+   * Create a translation
    *
    * @remarks
-   * Create or update a translation for a specific workflow and locale
+   * Create a translation for a specific workflow and locale, if the translation already exists, it will be updated
    */
   async create(
     createTranslationRequestDto: components.CreateTranslationRequestDto,
@@ -44,10 +44,10 @@ export class Translations extends ClientSDK {
   }
 
   /**
-   * Get single translation
+   * Retrieve a translation
    *
    * @remarks
-   * Get a specific translation by resource type, resource ID and locale
+   * Retrieve a specific translation by resource type, resource ID and locale
    */
   async retrieve(
     request: operations.TranslationControllerGetSingleTranslationRequest,
@@ -61,7 +61,7 @@ export class Translations extends ClientSDK {
   }
 
   /**
-   * Delete translation
+   * Delete a translation
    *
    * @remarks
    * Delete a specific translation by resource type, resource ID and locale
@@ -81,7 +81,7 @@ export class Translations extends ClientSDK {
    * Upload translation files
    *
    * @remarks
-   * Upload one or more JSON translation files for a specific workflow. The file name must be the locale, e.g. en_US.json
+   * Upload one or more JSON translation files for a specific workflow. Files name must match the locale, e.g. en_US.json
    */
   async upload(
     uploadTranslationsRequestDto: components.UploadTranslationsRequestDto,

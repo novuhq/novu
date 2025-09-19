@@ -11,7 +11,7 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Groups extends ClientSDK {
   /**
-   * Delete translation group
+   * Delete a translation group
    *
    * @remarks
    * Delete an entire translation group and all its translations
@@ -32,10 +32,10 @@ export class Groups extends ClientSDK {
   }
 
   /**
-   * Get translation group
+   * Retrieve a translation group
    *
    * @remarks
-   * Retrieves a single translation group by resourceId and resourceType
+   * Retrieves a single translation group by resource type (workflow) and resource ID (workflowId)
    */
   async retrieve(
     resourceType:

@@ -26,7 +26,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete translation
+ * Delete a translation
  *
  * @remarks
  * Delete a specific translation by resource type, resource ID and locale
