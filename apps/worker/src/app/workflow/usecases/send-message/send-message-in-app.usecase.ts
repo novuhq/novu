@@ -236,12 +236,12 @@ export class SendMessageInApp extends SendMessageBase {
         _feedId: step.template._feedId,
         channel: ChannelTypeEnum.IN_APP,
         _jobId: command.jobId,
+        ...(command.contextKeys && { contextKeys: command.contextKeys }),
         ...(actor &&
           actor.type !== ActorTypeEnum.NONE && {
             actor,
             _actorId: command.job?._actorId,
           }),
-        contextKeys: command.contextKeys,
         ...additionalFields,
       });
     }
