@@ -94,10 +94,12 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       customVar: 'Second event',
     });
 
-    await session.waitForJobCompletion();
+    await session.waitForJobCompletion(workflow.id);
 
     const throttleJobs = await jobRepository.find({
       _environmentId: session.environment._id,
+      _templateId: workflow.id,
+      type: StepTypeEnum.Throttle,
     });
 
     expect(throttleJobs?.length).to.equal(2);
