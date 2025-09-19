@@ -209,7 +209,7 @@ export class SendMessageInApp extends SendMessageBase {
     const bridgeOutputs = command.bridgeData?.outputs as InAppOutput;
     const inAppMessage = inAppMessageFromBridgeOutputs(bridgeOutputs);
 
-    const channelData: Partial<
+    const additionalFields: Partial<
       Pick<MessageEntity, 'content' | 'subject' | 'avatar' | 'payload' | 'cta' | 'tags' | 'data' | 'severity'>
     > = {
       content: (this.storeContent() ? inAppMessage.content || content : null) as string,
@@ -241,7 +241,8 @@ export class SendMessageInApp extends SendMessageBase {
             actor,
             _actorId: command.job?._actorId,
           }),
-        ...channelData,
+        contextKeys: command.contextKeys,
+        ...additionalFields,
       });
     }
 
@@ -253,7 +254,7 @@ export class SendMessageInApp extends SendMessageBase {
             seen: false,
             createdAt: new Date(),
             updatedAt: new Date(),
-            ...channelData,
+            ...additionalFields,
           },
         },
         {

@@ -27,6 +27,7 @@ export type MessageWebhookResponseDto = Pick<
   | 'status'
   | 'errorId'
   | 'errorText'
+  | 'contextKeys'
 > & {
   providerResponseId?: string;
   deviceToken?: string;
