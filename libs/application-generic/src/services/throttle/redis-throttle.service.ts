@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
-import { InMemoryProviderService } from '../in-memory-provider';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { IThrottleReservationParams, IThrottleReservationResult } from './throttle.types';
 
 const LOG_CONTEXT = 'RedisThrottleService';
@@ -85,12 +85,12 @@ export class RedisThrottleService {
     return {removed, count, ttl}
   `;
 
-  constructor(private inMemoryProviderService: InMemoryProviderService) {
+  constructor(private workflowInMemoryProviderService: WorkflowInMemoryProviderService) {
     this.ttlBufferMs = Number(process.env.THROTTLE_REDIS_TTL_BUFFER_MS) || 30000;
   }
 
   private get redisClient(): Redis | undefined {
-    return this.inMemoryProviderService.inMemoryProviderClient as Redis;
+    return this.workflowInMemoryProviderService.getClient() as Redis;
   }
 
   private buildSetKey(params: {
