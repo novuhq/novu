@@ -7,10 +7,6 @@ import { PageMeta } from '@/components/page-meta';
 import { useFetchLayout } from '@/hooks/use-fetch-layout';
 import { LayoutEditorSkeleton } from '../components/layouts/layout-editor-skeleton';
 
-export const EditLayoutPageInternal = () => {
-  return <LayoutEditor />;
-};
-
 export const EditLayoutPage = () => {
   const { layoutSlug = '' } = useParams<{
     layoutSlug?: string;
@@ -33,7 +29,7 @@ export const EditLayoutPage = () => {
       <PageMeta title={`Edit ${layout?.name} Layout`} />
       <FullPageLayout headerStartItems={<LayoutBreadcrumbs />}>
         <LayoutEditorProvider layout={layout} layoutSlug={layoutSlug} isPending={isPending}>
-          <EditLayoutPageInternal />
+          <LayoutEditor />
         </LayoutEditorProvider>
       </FullPageLayout>
     </>
