@@ -74,12 +74,8 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
         },
       ],
     };
-    let workflow: any;
-    try {
-      workflow = (await novuClient.workflows.create(workflowBody)).result;
-    } catch (error) {
-      console.error(error);
-    }
+
+    const { result: workflow } = await novuClient.workflows.create(workflowBody);
 
     // Trigger 2 events (below threshold of 3)
     await triggerEvent(workflow.workflowId, {
@@ -95,6 +91,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const throttleJobs = await jobRepository.find({
       _environmentId: session.environment._id,
       _templateId: workflow.id,
+      identifier: workflow.id,
       type: StepTypeEnum.Throttle,
     });
 
