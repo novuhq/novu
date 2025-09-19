@@ -1,7 +1,7 @@
+import { LayoutResponseDto } from '@novu/shared';
 import React from 'react';
 import { RiArrowLeftSLine, RiLayout5Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Badge } from '../primitives/badge';
@@ -15,15 +15,13 @@ import {
 } from '../primitives/breadcrumb';
 import { CompactButton } from '../primitives/button-compact';
 import TruncatedText from '../truncated-text';
-import { useLayoutEditor } from './layout-editor-provider';
 
 type BreadcrumbData = {
   label: string;
   href?: string;
 };
 
-export const LayoutBreadcrumbs = () => {
-  const { layout } = useLayoutEditor();
+export const LayoutBreadcrumbs = ({ layout }: { layout?: LayoutResponseDto }) => {
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
 
