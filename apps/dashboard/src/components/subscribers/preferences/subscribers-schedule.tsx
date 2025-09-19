@@ -74,8 +74,8 @@ export const SubscribersSchedule = (props: SubscribersScheduleProps) => {
               </span>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
-              Set subscriber schedule. External notification channels are paused outside this time, except In-app and
-              critical ones.
+              Set subscriber schedule. Notifications to external channels will pause outside the schedule. In-app and
+              critical notifications are always delivered.
             </TooltipContent>
           </Tooltip>
           {isPending && <RiLoader4Line className="size-3 animate-spin text-neutral-400" />}

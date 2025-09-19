@@ -25,7 +25,7 @@ import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../se
 import { AnalyticsService } from '../../services/analytics.service';
 import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
-import { ResolveContext, ResolveContextCommand } from '../resolve-context';
+import { ResolveContextFromPayload, ResolveContextFromPayloadCommand } from '../resolve-context';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
@@ -48,7 +48,7 @@ export class TriggerEvent {
     private triggerMulticast: TriggerMulticast,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
-    private resolveContext: ResolveContext,
+    private resolveContextFromPayload: ResolveContextFromPayload,
     private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
@@ -381,8 +381,8 @@ export class TriggerEvent {
     }
 
     try {
-      const contexts = await this.resolveContext.execute(
-        ResolveContextCommand.create({
+      const contexts = await this.resolveContextFromPayload.execute(
+        ResolveContextFromPayloadCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,

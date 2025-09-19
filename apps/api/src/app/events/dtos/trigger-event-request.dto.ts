@@ -346,6 +346,7 @@ export class TriggerEventRequestDto {
   //           data: {
   //             type: 'object',
   //             description: 'Optional additional context data',
+  //             additionalProperties: true,
   //             example: { name: 'Acme Corp', region: 'us-east-1' },
   //           },
   //         },

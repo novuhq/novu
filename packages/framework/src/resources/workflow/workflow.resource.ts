@@ -68,6 +68,7 @@ export function workflow<
       ...(event.transactionId && { transactionId: event.transactionId }),
       ...(event.overrides && { overrides: event.overrides }),
       ...(event.actor && { actor: event.actor }),
+      ...(event.context && { context: event.context }),
       ...(bridgeUrl && { bridgeUrl }),
     };
 
@@ -109,6 +110,7 @@ export function workflow<
       subscriber: {},
       environment: {},
       controls: {} as T_Controls,
+      context: {},
       step: {
         push: await discoverChannelStepFactory(
           newWorkflow,

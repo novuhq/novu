@@ -19,6 +19,8 @@ import {
   NormalizeVariables,
   NormalizeVariablesCommand,
   PlatformException,
+  ResolveContextFromKeys,
+  ResolveContextFromKeysCommand,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -27,7 +29,7 @@ import {
   TenantEntity,
   TenantRepository,
 } from '@novu/dal';
-import { ExecuteOutput } from '@novu/framework/internal';
+import { ContextResolved, ExecuteOutput } from '@novu/framework/internal';
 import {
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatus,
@@ -76,6 +78,7 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
+    private resolveContextFromKeys: ResolveContextFromKeys,
     private executeBridgeJob: ExecuteBridgeJob,
     private featureFlagsService: FeatureFlagsService
   ) {}
@@ -418,7 +421,7 @@ export class SendMessage {
 
   @Instrument()
   private async buildCompileContext(command: SendMessageCommand): Promise<SendMessageChannelCommand['compileContext']> {
-    const [subscriber, actor, tenant] = await Promise.all([
+    const [subscriber, actor, tenant, context] = await Promise.all([
       this.getSubscriberBySubscriberId({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
@@ -429,6 +432,7 @@ export class SendMessage {
           _environmentId: command.environmentId,
         }),
       this.handleTenantExecution(command.job),
+      this.resolveContext(command),
     ]);
 
     if (!subscriber) throw new PlatformException('Subscriber not found');
@@ -443,7 +447,30 @@ export class SendMessage {
       },
       ...(tenant && { tenant }),
       ...(actor && { actor }),
+      ...(context && { context }),
     };
+  }
+
+  @Instrument()
+  private async resolveContext(command: SendMessageCommand): Promise<ContextResolved> {
+    const { contextKeys, environmentId, organizationId } = command;
+
+    const contexts = await this.resolveContextFromKeys.execute(
+      ResolveContextFromKeysCommand.create({
+        environmentId,
+        organizationId,
+        userId: command.userId,
+        contextKeys: contextKeys || [],
+      })
+    );
+
+    return contexts.reduce((acc, context) => {
+      acc[context.type] = {
+        id: context.id,
+        data: context.data,
+      };
+      return acc;
+    }, {} as ContextResolved);
   }
 
   private async getWorkflow({ _id, environmentId }: { _id: string; environmentId: string }) {

@@ -31,7 +31,7 @@ export const defaultLocalization = {
   'preferences.schedule.title': 'Schedule',
   'preferences.schedule.description': 'Allow notifications between:',
   'preferences.schedule.headerInfo':
-    'Set your schedule. External notification channels are paused outside this time, except In-app and critical ones.',
+    'Set your schedule. Notifications to external channels will pause outside the schedule. In-app and critical notifications are always delivered.',
   'preferences.schedule.info': 'Critical and In-app notifications still reach you outside your schedule.',
   'preferences.schedule.days': 'Days',
   'preferences.schedule.from': 'From',

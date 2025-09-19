@@ -149,6 +149,10 @@ const messageSchema = new Schema<MessageDBModel>(
       ],
       default: undefined,
     },
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
   },
   schemaOptions
 );

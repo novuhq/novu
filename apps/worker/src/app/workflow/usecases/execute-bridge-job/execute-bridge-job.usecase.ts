@@ -99,7 +99,7 @@ export class ExecuteBridgeJob {
       throw new Error(`Bridge URL is not set for environment id: ${environment._id}`);
     }
 
-    const { subscriber, payload: originalPayload } = command.variables || {};
+    const { subscriber, payload: originalPayload, context } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
 
     const state = await this.generateState(command);
@@ -113,6 +113,7 @@ export class ExecuteBridgeJob {
       controls: variablesStores ?? {},
       state,
       subscriber: subscriber ?? {},
+      context: context ?? {},
     };
 
     const workflowId = isStateful

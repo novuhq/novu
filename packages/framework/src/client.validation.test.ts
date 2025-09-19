@@ -70,6 +70,7 @@ describe('validation', () => {
         stepId: 'test-email',
         state: [],
         subscriber: {},
+        context: {},
       });
     } catch (error) {
       expect(error).to.be.instanceOf(ExecutionStateControlsInvalidError);
