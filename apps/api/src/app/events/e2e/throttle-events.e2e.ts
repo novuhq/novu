@@ -5,7 +5,13 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { JobRepository, JobStatusEnum, MessageRepository, SubscriberEntity } from '@novu/dal';
+import {
+  JobRepository,
+  JobStatusEnum,
+  MessageRepository,
+  NotificationTemplateRepository,
+  SubscriberEntity,
+} from '@novu/dal';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -17,6 +23,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
   const messageRepository = new MessageRepository();
+  const templateRepository = new NotificationTemplateRepository();
   let novuClient: Novu;
 
   beforeEach(async () => {
@@ -53,6 +60,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Not Met Workflow',
       workflowId: 'test-throttle-not-met-workflow',
+      active: true,
       source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
@@ -86,13 +94,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       customVar: 'Second event',
     });
 
-    await session.waitForJobCompletion(workflow.id);
+    await session.waitForJobCompletion();
 
     const throttleJobs = await jobRepository.find({
       _environmentId: session.environment._id,
-      _templateId: workflow.id,
-      identifier: workflow.id,
-      type: StepTypeEnum.Throttle,
     });
 
     expect(throttleJobs?.length).to.equal(2);
@@ -120,6 +125,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Exceeded Workflow',
       workflowId: 'test-throttle-exceeded-workflow',
+      active: true,
       source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
@@ -196,6 +202,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Concurrent Workflow',
       workflowId: 'test-throttle-concurrent-workflow',
+      active: true,
       source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
@@ -276,6 +283,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Key Workflow',
       workflowId: 'test-throttle-key-workflow',
+      active: true,
       source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
@@ -354,6 +362,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       name: 'Test Dynamic Throttle ISO Workflow',
       workflowId: 'test-dynamic-throttle-iso-workflow',
       source: WorkflowCreationSourceEnum.Dashboard,
+      active: true,
       steps: [
         {
           type: StepTypeEnum.Throttle,
@@ -416,6 +425,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       name: 'Test Dynamic Throttle Duration Workflow',
       workflowId: 'test-dynamic-throttle-duration-workflow',
       source: WorkflowCreationSourceEnum.Dashboard,
+      active: true,
       steps: [
         {
           type: StepTypeEnum.Throttle,
@@ -477,6 +487,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Minutes Workflow',
       workflowId: 'test-throttle-minutes-workflow',
+      active: true,
       source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
@@ -547,6 +558,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Child Jobs Workflow',
       workflowId: 'test-throttle-child-jobs-workflow',
+      active: true,
       source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
