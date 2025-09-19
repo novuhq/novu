@@ -72,6 +72,12 @@ import {
   SmsStepResponseDto$outboundSchema,
 } from "./smsstepresponsedto.js";
 import {
+  ThrottleStepResponseDto,
+  ThrottleStepResponseDto$inboundSchema,
+  ThrottleStepResponseDto$Outbound,
+  ThrottleStepResponseDto$outboundSchema,
+} from "./throttlestepresponsedto.js";
+import {
   WorkflowPreferencesResponseDto,
   WorkflowPreferencesResponseDto$inboundSchema,
   WorkflowPreferencesResponseDto$Outbound,
@@ -135,7 +141,8 @@ export type WorkflowResponseDtoSteps =
   | (ChatStepResponseDto & { type: "chat" })
   | (DelayStepResponseDto & { type: "delay" })
   | (DigestStepResponseDto & { type: "digest" })
-  | (CustomStepResponseDto & { type: "custom" });
+  | (CustomStepResponseDto & { type: "custom" })
+  | (ThrottleStepResponseDto & { type: "throttle" });
 
 export type WorkflowResponseDto = {
   /**
@@ -210,6 +217,7 @@ export type WorkflowResponseDto = {
     | (DelayStepResponseDto & { type: "delay" })
     | (DigestStepResponseDto & { type: "digest" })
     | (CustomStepResponseDto & { type: "custom" })
+    | (ThrottleStepResponseDto & { type: "throttle" })
   >;
   /**
    * Origin of the layout
@@ -419,6 +427,11 @@ export const WorkflowResponseDtoSteps$inboundSchema: z.ZodType<
       type: v.type,
     })),
   ),
+  ThrottleStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("throttle") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
 ]);
 
 /** @internal */
@@ -430,7 +443,8 @@ export type WorkflowResponseDtoSteps$Outbound =
   | (ChatStepResponseDto$Outbound & { type: "chat" })
   | (DelayStepResponseDto$Outbound & { type: "delay" })
   | (DigestStepResponseDto$Outbound & { type: "digest" })
-  | (CustomStepResponseDto$Outbound & { type: "custom" });
+  | (CustomStepResponseDto$Outbound & { type: "custom" })
+  | (ThrottleStepResponseDto$Outbound & { type: "throttle" });
 
 /** @internal */
 export const WorkflowResponseDtoSteps$outboundSchema: z.ZodType<
@@ -465,6 +479,11 @@ export const WorkflowResponseDtoSteps$outboundSchema: z.ZodType<
   ),
   CustomStepResponseDto$outboundSchema.and(
     z.object({ type: z.literal("custom") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+  ThrottleStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("throttle") }).transform((v) => ({
       type: v.type,
     })),
   ),
@@ -567,6 +586,11 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
           type: v.type,
         })),
       ),
+      ThrottleStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("throttle") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
     ]),
   ),
   origin: ResourceOriginEnum$inboundSchema,
@@ -608,6 +632,7 @@ export type WorkflowResponseDto$Outbound = {
     | (DelayStepResponseDto$Outbound & { type: "delay" })
     | (DigestStepResponseDto$Outbound & { type: "digest" })
     | (CustomStepResponseDto$Outbound & { type: "custom" })
+    | (ThrottleStepResponseDto$Outbound & { type: "throttle" })
   >;
   origin: string;
   preferences: WorkflowPreferencesResponseDto$Outbound;
@@ -681,6 +706,11 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
       ),
       CustomStepResponseDto$outboundSchema.and(
         z.object({ type: z.literal("custom") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      ThrottleStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("throttle") }).transform((v) => ({
           type: v.type,
         })),
       ),

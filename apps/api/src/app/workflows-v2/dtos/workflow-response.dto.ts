@@ -21,6 +21,7 @@ import { EmailStepResponseDto } from './step-responses/email-step.response.dto';
 import { InAppStepResponseDto } from './step-responses/in-app-step.response.dto';
 import { PushStepResponseDto } from './step-responses/push-step.response.dto';
 import { SmsStepResponseDto } from './step-responses/sms-step.response.dto';
+import { ThrottleStepResponseDto } from './step-responses/throttle-step.response.dto';
 import { UserResponseDto } from './user-response.dto';
 import { WorkflowCommonsFields } from './workflow-commons.dto';
 
@@ -33,6 +34,7 @@ import { WorkflowCommonsFields } from './workflow-commons.dto';
   ChatStepResponseDto,
   DelayStepResponseDto,
   DigestStepResponseDto,
+  ThrottleStepResponseDto,
   CustomStepResponseDto,
   InAppStepResponseDto,
   UserResponseDto
@@ -100,6 +102,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
         { $ref: getSchemaPath(DelayStepResponseDto) },
         { $ref: getSchemaPath(DigestStepResponseDto) },
         { $ref: getSchemaPath(CustomStepResponseDto) },
+        { $ref: getSchemaPath(ThrottleStepResponseDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -112,6 +115,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
           [StepTypeEnum.DELAY]: getSchemaPath(DelayStepResponseDto),
           [StepTypeEnum.DIGEST]: getSchemaPath(DigestStepResponseDto),
           [StepTypeEnum.CUSTOM]: getSchemaPath(CustomStepResponseDto),
+          [StepTypeEnum.THROTTLE]: getSchemaPath(ThrottleStepResponseDto),
         },
       },
     },
@@ -129,6 +133,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
         { name: StepTypeEnum.DELAY, value: DelayStepResponseDto },
         { name: StepTypeEnum.DIGEST, value: DigestStepResponseDto },
         { name: StepTypeEnum.CUSTOM, value: CustomStepResponseDto },
+        { name: StepTypeEnum.THROTTLE, value: ThrottleStepResponseDto },
       ],
     },
     keepDiscriminatorProperty: true,

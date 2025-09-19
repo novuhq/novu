@@ -1,6 +1,11 @@
 import { Novu } from '@novu/api';
+import {
+  CreateWorkflowDto,
+  StepTypeEnum,
+  WorkflowCreationSourceEnum,
+  WorkflowResponseDto,
+} from '@novu/api/models/components';
 import { JobRepository, JobStatusEnum, MessageRepository, SubscriberEntity } from '@novu/dal';
-import { CreateWorkflowDto, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -48,10 +53,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Not Met Workflow',
       workflowId: 'test-throttle-not-met-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
-          type: StepTypeEnum.THROTTLE,
+          type: StepTypeEnum.Throttle,
           name: 'Throttle Step',
           controlValues: {
             type: 'fixed',
@@ -61,7 +66,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
           },
         },
         {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.InApp,
           name: 'In-App Message',
           controlValues: {
             body: 'Hello world {{payload.customVar}}',
@@ -69,10 +74,12 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
         },
       ],
     };
-
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    expect(response.status).to.equal(201);
-    const workflow: WorkflowResponseDto = response.body.data;
+    let workflow: any;
+    try {
+      workflow = (await novuClient.workflows.create(workflowBody)).result;
+    } catch (error) {
+      console.error(error);
+    }
 
     // Trigger 2 events (below threshold of 3)
     await triggerEvent(workflow.workflowId, {
@@ -83,12 +90,12 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       customVar: 'Second event',
     });
 
-    await session.waitForJobCompletion(workflow._id);
+    await session.waitForJobCompletion(workflow.id);
 
     const throttleJobs = await jobRepository.find({
       _environmentId: session.environment._id,
-      _templateId: workflow._id,
-      type: StepTypeEnum.THROTTLE,
+      _templateId: workflow.id,
+      type: StepTypeEnum.Throttle,
     });
 
     expect(throttleJobs?.length).to.equal(2);
@@ -101,13 +108,13 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
+      channel: StepTypeEnum.InApp,
     });
 
     expect(messages?.length).to.equal(2);
 
     // Check that payload variables are properly interpolated (order-independent)
-    const messageContents = messages.map((msg) => msg.content);
+    const messageContents = messages.map((msg) => JSON.stringify(msg.content));
     expect(messageContents.some((content) => content.includes('First event'))).to.be.true;
     expect(messageContents.some((content) => content.includes('Second event'))).to.be.true;
   });
@@ -116,10 +123,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Exceeded Workflow',
       workflowId: 'test-throttle-exceeded-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
-          type: StepTypeEnum.THROTTLE,
+          type: StepTypeEnum.Throttle,
           name: 'Throttle Step',
           controlValues: {
             type: 'fixed',
@@ -129,7 +136,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
           },
         },
         {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.InApp,
           name: 'In-App Message',
           controlValues: {
             body: 'Hello world {{payload.customVar}}',
@@ -138,9 +145,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       ],
     };
 
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    expect(response.status).to.equal(201);
-    const workflow: WorkflowResponseDto = response.body.data;
+    const { result: workflow } = await novuClient.workflows.create(workflowBody);
 
     // Trigger 3 events (exceeds threshold of 2)
     await triggerEvent(workflow.workflowId, {
@@ -155,12 +160,12 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       customVar: 'Third event - should be throttled',
     });
 
-    await session.waitForJobCompletion(workflow._id);
+    await session.waitForJobCompletion(workflow.id);
 
     const throttleJobs = await jobRepository.find({
       _environmentId: session.environment._id,
-      _templateId: workflow._id,
-      type: StepTypeEnum.THROTTLE,
+      _templateId: workflow.id,
+      type: StepTypeEnum.Throttle,
     });
 
     expect(throttleJobs?.length).to.equal(3);
@@ -184,7 +189,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
+      channel: StepTypeEnum.InApp,
     });
 
     expect(messages?.length).to.equal(2);
@@ -194,10 +199,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Concurrent Workflow',
       workflowId: 'test-throttle-concurrent-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
-          type: StepTypeEnum.THROTTLE,
+          type: StepTypeEnum.Throttle,
           name: 'Throttle Step',
           controlValues: {
             type: 'fixed',
@@ -207,7 +212,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
           },
         },
         {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.InApp,
           name: 'In-App Message',
           controlValues: {
             body: 'Throttled message {{payload.customVar}}',
@@ -216,9 +221,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       ],
     };
 
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    expect(response.status).to.equal(201);
-    const workflow: WorkflowResponseDto = response.body.data;
+    const { result: workflow } = await novuClient.workflows.create(workflowBody);
 
     // Trigger 20 concurrent events
     const promises: Promise<void>[] = [];
@@ -240,8 +243,8 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       jobRepository,
       query: {
         _environmentId: session.environment._id,
-        _templateId: workflow._id,
-        type: StepTypeEnum.THROTTLE,
+        _templateId: workflow.id,
+        type: 'throttle' as any,
       },
       findMultiple: true,
     });
@@ -266,7 +269,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
+      channel: StepTypeEnum.InApp,
     });
 
     expect(messages?.length).to.equal(1);
@@ -276,10 +279,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Key Workflow',
       workflowId: 'test-throttle-key-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
-          type: StepTypeEnum.THROTTLE,
+          type: StepTypeEnum.Throttle,
           name: 'Throttle Step',
           controlValues: {
             type: 'fixed',
@@ -290,7 +293,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
           },
         },
         {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.InApp,
           name: 'In-App Message',
           controlValues: {
             body: 'Hello user {{payload.userId}}',
@@ -299,9 +302,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       ],
     };
 
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    expect(response.status).to.equal(201);
-    const workflow: WorkflowResponseDto = response.body.data;
+    const { result: workflow } = await novuClient.workflows.create(workflowBody);
 
     // Trigger events with different throttle keys
     await triggerEvent(workflow.workflowId, {
@@ -316,12 +317,12 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       userId: 'user1', // Should be throttled
     });
 
-    await session.waitForJobCompletion(workflow._id);
+    await session.waitForJobCompletion(workflow.id);
 
     const throttleJobs = await jobRepository.find({
       _environmentId: session.environment._id,
-      _templateId: workflow._id,
-      type: StepTypeEnum.THROTTLE,
+      _templateId: workflow.id,
+      type: StepTypeEnum.Throttle,
     });
 
     expect(throttleJobs?.length).to.equal(3);
@@ -337,7 +338,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
+      channel: StepTypeEnum.InApp,
     });
 
     expect(messages?.length).to.equal(2);
@@ -355,10 +356,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Dynamic Throttle ISO Workflow',
       workflowId: 'test-dynamic-throttle-iso-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
-          type: StepTypeEnum.THROTTLE,
+          type: StepTypeEnum.Throttle,
           name: 'Throttle Step',
           controlValues: {
             type: 'dynamic',
@@ -367,7 +368,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
           },
         },
         {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.InApp,
           name: 'In-App Message',
           controlValues: {
             body: 'Dynamic throttled by timestamp {{payload.customVar}}',
@@ -376,8 +377,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       ],
     };
 
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    const workflow: WorkflowResponseDto = response.body.data;
+    const { result: workflow } = await novuClient.workflows.create(workflowBody);
 
     // Trigger first event with dynamic timestamp
     await triggerEvent(workflow.workflowId, {
@@ -391,12 +391,12 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       releaseTime: futureTime,
     });
 
-    await session.waitForJobCompletion(workflow._id);
+    await session.waitForJobCompletion(workflow.id);
 
     const throttleJobs = await jobRepository.find({
       _environmentId: session.environment._id,
-      _templateId: workflow._id,
-      type: StepTypeEnum.THROTTLE,
+      _templateId: workflow.id,
+      type: StepTypeEnum.Throttle,
     });
 
     const completedThrottleJobs = throttleJobs.filter((job) => job.status === JobStatusEnum.COMPLETED);
@@ -408,7 +408,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
+      channel: StepTypeEnum.InApp,
     });
 
     expect(messages?.length).to.equal(1);
@@ -418,10 +418,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Dynamic Throttle Duration Workflow',
       workflowId: 'test-dynamic-throttle-duration-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
-          type: StepTypeEnum.THROTTLE,
+          type: StepTypeEnum.Throttle,
           name: 'Throttle Step',
           controlValues: {
             type: 'dynamic',
@@ -430,7 +430,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
           },
         },
         {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.InApp,
           name: 'In-App Message',
           controlValues: {
             body: 'Dynamic throttled by duration {{payload.customVar}}',
@@ -439,8 +439,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       ],
     };
 
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    const workflow: WorkflowResponseDto = response.body.data;
+    const { result: workflow } = await novuClient.workflows.create(workflowBody);
 
     // Trigger first event with duration object
     await triggerEvent(workflow.workflowId, {
@@ -454,12 +453,12 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       throttleWindow: { amount: 1, unit: 'minutes' },
     });
 
-    await session.waitForJobCompletion(workflow._id);
+    await session.waitForJobCompletion(workflow.id);
 
     const throttleJobs = await jobRepository.find({
       _environmentId: session.environment._id,
-      _templateId: workflow._id,
-      type: StepTypeEnum.THROTTLE,
+      _templateId: workflow.id,
+      type: StepTypeEnum.Throttle,
     });
 
     const completedThrottleJobs = throttleJobs.filter((job) => job.status === JobStatusEnum.COMPLETED);
@@ -471,7 +470,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
+      channel: StepTypeEnum.InApp,
     });
 
     expect(messages?.length).to.equal(1);
@@ -481,10 +480,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Minutes Workflow',
       workflowId: 'test-throttle-minutes-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
-          type: StepTypeEnum.THROTTLE,
+          type: StepTypeEnum.Throttle,
           name: 'Throttle Step',
           controlValues: {
             type: 'fixed',
@@ -494,7 +493,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
           },
         },
         {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.InApp,
           name: 'In-App Message',
           controlValues: {
             body: 'Throttled by minutes {{payload.customVar}}',
@@ -503,9 +502,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       ],
     };
 
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    expect(response.status).to.equal(201);
-    const workflow: WorkflowResponseDto = response.body.data;
+    const { result: workflow } = await novuClient.workflows.create(workflowBody);
 
     // Trigger 3 events quickly (should exceed threshold of 2 within 1 minute)
     await triggerEvent(workflow.workflowId, {
@@ -520,12 +517,12 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       customVar: 'Third event - should be throttled',
     });
 
-    await session.waitForJobCompletion(workflow._id);
+    await session.waitForJobCompletion(workflow.id);
 
     const throttleJobs = await jobRepository.find({
       _environmentId: session.environment._id,
-      _templateId: workflow._id,
-      type: StepTypeEnum.THROTTLE,
+      _templateId: workflow.id,
+      type: StepTypeEnum.Throttle,
     });
 
     expect(throttleJobs?.length).to.equal(3);
@@ -543,7 +540,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
+      channel: StepTypeEnum.InApp,
     });
 
     expect(messages?.length).to.equal(2);
@@ -553,10 +550,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const workflowBody: CreateWorkflowDto = {
       name: 'Test Throttle Child Jobs Workflow',
       workflowId: 'test-throttle-child-jobs-workflow',
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      source: WorkflowCreationSourceEnum.Dashboard,
       steps: [
         {
-          type: StepTypeEnum.THROTTLE,
+          type: StepTypeEnum.Throttle,
           name: 'Throttle Step',
           controlValues: {
             type: 'fixed',
@@ -566,14 +563,14 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
           },
         },
         {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.InApp,
           name: 'In-App Message',
           controlValues: {
             body: 'First message {{payload.customVar}}',
           },
         },
         {
-          type: StepTypeEnum.EMAIL,
+          type: StepTypeEnum.Email,
           name: 'Email Message',
           controlValues: {
             subject: 'Follow-up email',
@@ -583,9 +580,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       ],
     };
 
-    const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
-    expect(response.status).to.equal(201);
-    const workflow: WorkflowResponseDto = response.body.data;
+    const { result: workflow } = await novuClient.workflows.create(workflowBody);
 
     // Trigger 2 events (second should be throttled)
     await triggerEvent(workflow.workflowId, {
@@ -596,12 +591,12 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       customVar: 'Second event - should be throttled',
     });
 
-    await session.waitForJobCompletion(workflow._id);
+    await session.waitForJobCompletion(workflow.id);
 
     // Check all jobs
     const allJobs = await jobRepository.find({
       _environmentId: session.environment._id,
-      _templateId: workflow._id,
+      _templateId: workflow.id,
     });
 
     // V2 workflows create additional jobs (trigger jobs)
@@ -620,7 +615,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     expect(skippedJobs?.length).to.equal(3);
 
     // Verify throttle jobs behavior
-    const throttleJobs = allJobs.filter((job) => job.type === StepTypeEnum.THROTTLE);
+    const throttleJobs = allJobs.filter((job) => job.type === StepTypeEnum.Throttle);
     expect(throttleJobs?.length).to.equal(2);
 
     // First throttle should be completed, second should be skipped (threshold=1)
@@ -633,7 +628,7 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const inAppMessages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
+      channel: StepTypeEnum.InApp,
     });
 
     expect(inAppMessages?.length).to.equal(1);

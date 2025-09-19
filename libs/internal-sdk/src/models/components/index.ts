@@ -215,6 +215,8 @@ export * from "./syncworkflowdto.js";
 export * from "./tenantpayloaddto.js";
 export * from "./textalignenum.js";
 export * from "./throttlecontroldto.js";
+export * from "./throttlecontrolsmetadataresponsedto.js";
+export * from "./throttlestepresponsedto.js";
 export * from "./throttlestepupsertdto.js";
 export * from "./timedconfig.js";
 export * from "./timerangedto.js";
