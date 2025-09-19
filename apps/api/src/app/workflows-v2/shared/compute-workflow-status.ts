@@ -6,7 +6,7 @@ export function computeWorkflowStatus(workflowActive: boolean, steps: Notificati
     return WorkflowStatusEnum.INACTIVE;
   }
 
-  const hasIssues = steps.filter((step) => hasControlIssues(step.issues)).length > 0;
+  const hasIssues = steps.some((step) => hasControlIssues(step.issues));
   if (!hasIssues) {
     return WorkflowStatusEnum.ACTIVE;
   }
