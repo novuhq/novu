@@ -5,26 +5,22 @@ import jwt from 'jsonwebtoken';
 export { UserSession };
 
 export const SubscriberSession = createParamDecorator((data, ctx) => {
-  let req;
-  if (ctx.getType() === 'graphql') {
-    req = ctx.getArgs()[2].req;
-  } else {
-    req = ctx.switchToHttp().getRequest();
+  const req =
+    ctx.getType() === 'graphql' ? ctx.getArgs()[2].req : ctx.switchToHttp().getRequest();
+
+  if (req.user) {
+    return req.user;
   }
 
-  if (req.user) return req.user;
-
-  if (req.headers) {
-    if (req.headers.authorization) {
-      const tokenParts = req.headers.authorization.split(' ');
-      if (tokenParts[0] !== 'Bearer') throw new UnauthorizedException('bad_token');
-      if (!tokenParts[1]) throw new UnauthorizedException('bad_token');
-
-      const user = jwt.decode(tokenParts[1]);
-
-      return user;
-    }
+  const authorization = req.headers?.authorization;
+  if (!authorization) {
+    return null;
   }
 
-  return null;
+  const tokenParts = authorization.split(' ');
+  if (tokenParts[0] !== 'Bearer' || !tokenParts[1]) {
+    throw new UnauthorizedException('bad_token');
+  }
+
+  return jwt.decode(tokenParts[1]);
 });
