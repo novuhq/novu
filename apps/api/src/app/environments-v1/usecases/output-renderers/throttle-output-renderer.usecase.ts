@@ -1,27 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
+import { ThrottleRenderOutput } from '@novu/shared';
 import { RenderCommand } from './render-command';
 
 @Injectable()
 export class ThrottleOutputRendererUsecase {
   @InstrumentUsecase()
-  execute(renderCommand: RenderCommand): {
-    type: 'fixed' | 'dynamic';
-    amount?: number;
-    unit?: 'minutes' | 'hours' | 'days';
-    dynamicKey?: string;
-    threshold?: number;
-    throttleKey?: string;
-  } {
+  execute(renderCommand: RenderCommand): ThrottleRenderOutput {
     const { skip: _skip, ...outputControls } = renderCommand.controlValues ?? {};
 
     return {
-      type: (outputControls.type as 'fixed' | 'dynamic') || 'fixed',
-      amount: outputControls.amount as number | undefined,
-      unit: outputControls.unit as 'minutes' | 'hours' | 'days' | undefined,
-      dynamicKey: outputControls.dynamicKey as string | undefined,
-      threshold: outputControls.threshold as number | undefined,
-      throttleKey: outputControls.throttleKey as string | undefined,
-    };
+      type: outputControls.type,
+      amount: outputControls.amount,
+      unit: outputControls.unit,
+      dynamicKey: outputControls.dynamicKey,
+      threshold: outputControls.threshold,
+      throttleKey: outputControls.throttleKey,
+    } as ThrottleRenderOutput;
   }
 }
