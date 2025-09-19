@@ -40,15 +40,20 @@ export type LayoutContextType = {
 
 export const LayoutEditorContext = createContext<LayoutContextType>({} as LayoutContextType);
 
-export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }) => {
+export const LayoutEditorProvider = ({
+  children,
+  layout,
+  layoutSlug,
+  isPending,
+}: {
+  children: React.ReactNode;
+  layout: LayoutResponseDto;
+  layoutSlug: string;
+  isPending: boolean;
+}) => {
   const [previewContextValue, setPreviewContextValue] = useState('{}');
   const previewContextValueRef = useDataRef(previewContextValue);
-  const { layoutSlug = '' } = useParams<{
-    layoutSlug?: string;
-  }>();
   const location = useLocation();
-
-  const { layout, isPending } = useFetchLayout({ layoutSlug });
 
   const defaultValues = useMemo(() => (layout ? getLayoutControlsDefaultValues(layout) : {}), [layout]);
   const values = useMemo(() => (layout?.controls.values.email ?? {}) as Record<string, unknown>, [layout]);
