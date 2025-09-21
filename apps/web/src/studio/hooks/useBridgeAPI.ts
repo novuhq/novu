@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
-import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import type { DiscoverWorkflowOutput, Event, HealthCheck } from '@novu/framework/internal';
+import { UseQueryResult, useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
+import { api as cloudApi } from '../../api';
 import { buildBridgeHTTPClient, type TriggerParams } from '../../bridgeApi/bridgeApi.client';
 import { useStudioState } from '../StudioStateProvider';
-import { api as cloudApi } from '../../api';
 
 export function useBridgeAPI() {
   const { bridgeURL } = useStudioState();
@@ -89,7 +89,7 @@ export const useWorkflowPreview = (
     payload = {},
     state = [],
     subscriber = {},
-  }: Omit<Event, 'action' | 'subscriber' | 'payload' | 'state' | 'controls'> &
+  }: Omit<Event, 'action' | 'subscriber' | 'payload' | 'state' | 'controls' | 'context'> &
     Partial<Pick<Event, 'subscriber' | 'payload' | 'state' | 'controls'>>,
   options?: any
 ) => {
