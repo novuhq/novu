@@ -75,7 +75,7 @@ export class ExpoPushProvider extends BaseProvider implements IPushProvider {
 
   parseEventBody(body: unknown | unknown[], identifier: string): IPushEventBody | undefined {
     return {
-      status: PushEventStatusEnum.SEEN,
+      status: PushEventStatusEnum.OPENED,
       date: new Date().toISOString(),
     };
   }
