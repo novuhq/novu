@@ -33,7 +33,7 @@ const contextSchema = new Schema<ContextDBModel>(
       default: {},
     },
   },
-  schemaOptions
+  { ...schemaOptions, minimize: false }
 );
 
 contextSchema.index(
