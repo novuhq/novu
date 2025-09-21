@@ -133,6 +133,11 @@ export enum EmailEventStatusEnum {
   COMPLAINT = 'complaint',
 }
 
+export enum PushEventStatusEnum {
+  SEEN = 'seen',
+  FAILED = 'failed',
+}
+
 export enum SmsEventStatusEnum {
   CREATED = 'created',
   DELIVERED = 'delivered',
@@ -146,7 +151,7 @@ export enum SmsEventStatusEnum {
 }
 
 export interface IEventBody {
-  status: EmailEventStatusEnum | SmsEventStatusEnum;
+  status: EmailEventStatusEnum | SmsEventStatusEnum | PushEventStatusEnum;
   date: string;
   externalId?: string;
   attempts?: number;
@@ -161,6 +166,10 @@ export interface IEmailEventBody extends IEventBody {
 
 export interface ISMSEventBody extends IEventBody {
   status: SmsEventStatusEnum;
+}
+
+export interface IPushEventBody extends IEventBody {
+  status: PushEventStatusEnum;
 }
 
 export interface IEmailProvider extends IProvider {

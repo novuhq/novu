@@ -1,5 +1,12 @@
 import { PushProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import {
+  ChannelTypeEnum,
+  IPushEventBody,
+  IPushOptions,
+  IPushProvider,
+  ISendMessageSuccessResponse,
+  PushEventStatusEnum,
+} from '@novu/stateless';
 import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -56,5 +63,20 @@ export class ExpoPushProvider extends BaseProvider implements IPushProvider {
     }
 
     throw new Error('Unexpected Expo status');
+  }
+
+  getMessageId(body: any): string[] {
+    if (body?.properties?.content?.data?.nvMessageId) {
+      return [body?.properties?.content?.data?.nvMessageId];
+    }
+
+    return [];
+  }
+
+  parseEventBody(body: unknown | unknown[], identifier: string): IPushEventBody | undefined {
+    return {
+      status: PushEventStatusEnum.SEEN,
+      date: new Date().toISOString(),
+    };
   }
 }

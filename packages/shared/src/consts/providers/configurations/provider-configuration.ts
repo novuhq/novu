@@ -91,6 +91,16 @@ const sesConfigurations: ConfigConfiguration[] = [
   },
 ];
 
+export const expoConfigurations: ConfigConfiguration[] = [
+  {
+    key: 'inboundWebhookEnabled',
+    displayName: 'Email Activity Tracking',
+    description: emailActivityTrackingDescription,
+    type: 'switch',
+    required: false,
+  },
+];
+
 export const sendgridGroupConfigurations: ConfigConfigurationGroup[] = [
   {
     groupType: 'inboundWebhook',
@@ -126,5 +136,14 @@ export const sesGroupConfigurations: ConfigConfigurationGroup[] = [
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide:
       'https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook#add-an-event-webhook',
+  },
+];
+
+export const expoGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: expoConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide: 'https://docs.expo.dev/push-notifications/sending-notifications/',
   },
 ];
