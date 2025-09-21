@@ -22,12 +22,9 @@ export class ListContexts {
       filter.id = command.id;
     }
 
-    // Search across both type and id fields
+    // Search across the composite key field (format: "type:id")
     if (command.search) {
-      filter.$or = [
-        { type: { $regex: command.search, $options: 'i' } },
-        { id: { $regex: command.search, $options: 'i' } },
-      ];
+      filter.key = { $regex: command.search, $options: 'i' };
     }
 
     // Handle cursor-based pagination
