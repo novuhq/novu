@@ -15,7 +15,7 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository, MessageEntity, MessageRepository } from '@novu/dal';
-import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { DeliveryLifecycleStatus, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { DeleteManyNotificationsCommand } from './delete-many-notifications.command';
@@ -177,7 +177,7 @@ export class DeleteManyNotifications {
 
     if (allTraceData.length > 0) {
       try {
-        await this.messageInteractionService.trace(allTraceData);
+        await this.messageInteractionService.trace(allTraceData, DeliveryLifecycleStatus.INTERACTED);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);
       }
@@ -213,7 +213,7 @@ function createTraceLog({
     entity_type: 'step_run',
     entity_id: message._jobId,
     step_run_type: message.channel as StepType,
-    workflow_run_identifier: message.templateIdentifier,
+    workflow_run_identifier: '',
     _notificationId: message._notificationId,
   };
 }
