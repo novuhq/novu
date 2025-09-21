@@ -42,7 +42,6 @@ const mapDetailToEventType = {
   [DetailEnum.MESSAGE_UNSNOOZE_FAILED]: 'message_unsnooze_failed',
   [DetailEnum.MESSAGE_CONTENT_NOT_GENERATED]: 'message_content_failed',
   [DetailEnum.MESSAGE_CONTENT_SYNTAX_ERROR]: 'message_content_failed',
-  [DetailEnum.START_SENDING]: 'message_sending_started',
   [DetailEnum.MESSAGE_SEVERITY_OVERRIDDEN]: 'message_severity_overridden',
 
   // Subscriber events
@@ -71,7 +70,6 @@ const mapDetailToEventType = {
   [DetailEnum.STEP_COMPLETED]: 'step_completed',
 
   // Bridge events
-  [DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED]: 'bridge_response_received',
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',
   [DetailEnum.SKIPPED_BRIDGE_EXECUTION]: 'bridge_execution_skipped',
 
@@ -158,6 +156,9 @@ export class CreateExecutionDetails {
   }
 
   private async createTraceLogEntry(command: CreateExecutionDetailsCommand, createdAt: string): Promise<void> {
+    // Handle dynamic provider selection messages
+    const eventType = this.getEventType(command.detail);
+
     const traceData = {
       created_at: LogRepository.formatDateTime64(new Date(createdAt)),
       organization_id: command.organizationId,
@@ -165,7 +166,7 @@ export class CreateExecutionDetails {
       user_id: null,
       subscriber_id: command._subscriberId || null,
       external_subscriber_id: command.subscriberId || null,
-      event_type: mapDetailToEventType[command.detail],
+      event_type: eventType,
       title: command.detail,
       message: null,
       raw_data: command.raw || null,
@@ -177,6 +178,16 @@ export class CreateExecutionDetails {
     };
 
     await this.traceLogRepository.createStepRun([traceData]);
+  }
+
+  private getEventType(detail: string): EventType {
+    // Check if it's a provider selection message
+    if (detail.includes('provider was selected')) {
+      return 'integration_selected';
+    }
+
+    // Use the standard mapping for enum values
+    return mapDetailToEventType[detail as DetailEnum];
   }
 
   private mapExecutionStatusToTraceStatus(status: ExecutionDetailsStatusEnum): TraceStatus {

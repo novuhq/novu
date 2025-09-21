@@ -409,6 +409,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       subscriber_id: job._subscriberId,
       external_subscriber_id: job.subscriberId,
       message_id: options?.message?._id || null,
+      context_keys: job.contextKeys || [],
 
       // Step metadata
       step_type: stepType,

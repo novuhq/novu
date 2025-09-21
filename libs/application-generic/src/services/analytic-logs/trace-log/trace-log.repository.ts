@@ -426,6 +426,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Workflow execution failed';
     case 'workflow_actor_processing_failed':
       return 'Workflow actor processing failed';
+    case 'workflow_context_resolution_completed':
+      return 'Workflow context resolution completed';
+    case 'workflow_context_resolution_failed':
+      return 'Workflow context resolution failed';
+    case 'workflow_context_not_found':
+      return 'Workflow context not found';
 
     // Request fan-out events
     case 'request_subscriber_processing_completed':

@@ -98,7 +98,7 @@ export class ExecuteBridgeJob {
       throw new Error(`Bridge URL is not set for environment id: ${environment._id}`);
     }
 
-    const { subscriber, payload: originalPayload } = command.variables || {};
+    const { subscriber, payload: originalPayload, context } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
 
     const state = await this.generateState(command);
@@ -112,6 +112,7 @@ export class ExecuteBridgeJob {
       controls: variablesStores ?? {},
       state,
       subscriber: subscriber ?? {},
+      context: context ?? {},
     };
 
     const workflowId = isStateful
@@ -134,18 +135,6 @@ export class ExecuteBridgeJob {
         jobId: command.job._id,
       },
     });
-
-    const executionDetailsCommand: CreateExecutionDetailsCommand = {
-      ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-      detail: DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED,
-      source: ExecutionDetailsSourceEnum.INTERNAL,
-      status: ExecutionDetailsStatusEnum.PENDING,
-      isTest: false,
-      isRetry: false,
-      raw: JSON.stringify(bridgeResponse.metadata),
-    };
-
-    await this.createExecutionDetails.execute(executionDetailsCommand);
 
     return bridgeResponse;
   }

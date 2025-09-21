@@ -374,6 +374,7 @@ describe('Novu Client', () => {
         },
         state: [],
         controls: {},
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -466,6 +467,7 @@ describe('Novu Client', () => {
           },
         ],
         controls: {},
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -496,6 +498,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -536,6 +539,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -564,6 +568,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         controls: {},
+        context: {},
       };
 
       await client.addWorkflows([newWorkflow]);
@@ -600,6 +605,7 @@ describe('Novu Client', () => {
           },
         ],
         controls: {},
+        context: {},
       };
 
       const delayExecutionResult = await client.executeWorkflow(delayEvent);
@@ -674,6 +680,7 @@ describe('Novu Client', () => {
         },
         state: [],
         controls: {},
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -744,6 +751,7 @@ describe('Novu Client', () => {
           body: '{{payload.comments}}',
           subject: '{{payload.subject}}',
         },
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(event);
@@ -810,6 +818,7 @@ describe('Novu Client', () => {
           body: '{{payload.comments | json}}',
           subject: '{{payload.subject}}',
         },
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(event);
@@ -873,6 +882,7 @@ describe('Novu Client', () => {
           body: '{{payload.comment}}',
           subject: '{{payload.subject}}',
         },
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(event);
@@ -936,6 +946,7 @@ describe('Novu Client', () => {
           body: '{{payload.comment | json}}',
           subject: '{{payload.subject}}',
         },
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(event);
@@ -999,6 +1010,7 @@ describe('Novu Client', () => {
           body: '{{payload.comment | json: 2}}',
           subject: '{{payload.subject}}',
         },
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(event);
@@ -1046,6 +1058,7 @@ describe('Novu Client', () => {
           body: 'Hi {{payload.does_not_exist}}',
           subject: 'Test subject',
         },
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(event);
@@ -1092,6 +1105,7 @@ describe('Novu Client', () => {
           body: 'body {{controls.subject}}',
           subject: 'subject',
         },
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -1141,6 +1155,7 @@ describe('Novu Client', () => {
           body: 'body',
           subject: 'subject {{controls.subject}}',
         },
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -1203,6 +1218,7 @@ describe('Novu Client', () => {
           subject:
             'Hello subject {{payload.name}}! {{t.nested.single}} {{t.nested-with-dash.single}} {{t.nested_with_underscore.single}} {{t.123.single}} {{t.你好.single}}', // with nesting
         },
+        context: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(event);
@@ -1212,6 +1228,76 @@ describe('Novu Client', () => {
         body: 'Hello body John! {{t.single}} {{t.with-dash}} {{t.with_underscore}} {{t.123}} {{t.你好}}',
         subject:
           'Hello subject John! {{t.nested.single}} {{t.nested-with-dash.single}} {{t.nested_with_underscore.single}} {{t.123.single}} {{t.你好.single}}',
+      });
+    });
+
+    it('should compile context variables correctly', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        payload: { name: 'John' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        controls: {
+          body: 'Hello {{payload.name}} from {{context.app.id}}!',
+          subject: 'Context test: {{context.tenant.id}} - {{context.app.id}}',
+        },
+        context: {
+          tenant: {
+            id: 'test-tenant',
+            data: {
+              name: 'Test Tenant',
+            },
+          },
+          app: {
+            id: 'test-app',
+            data: {},
+          },
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      expect(emailExecutionResult.outputs).toEqual({
+        body: 'Hello John from test-app!',
+        subject: 'Context test: test-tenant - test-app',
       });
     });
 
@@ -1271,6 +1357,7 @@ describe('Novu Client', () => {
         controls: {
           foo: 'foo',
         },
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -1324,6 +1411,7 @@ describe('Novu Client', () => {
         controls: {
           foo: 'foo',
         },
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -1376,6 +1464,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -1418,6 +1507,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       await client.executeWorkflow(event);
@@ -1446,6 +1536,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       await client.executeWorkflow(event);
@@ -1475,6 +1566,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       await client.executeWorkflow(event);
@@ -1521,6 +1613,7 @@ describe('Novu Client', () => {
         ],
         payload: {},
         controls: {},
+        context: {},
       };
 
       await client.executeWorkflow(event);
@@ -1555,6 +1648,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -1579,6 +1673,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -1638,6 +1733,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -1677,6 +1773,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -1765,6 +1862,7 @@ describe('Novu Client', () => {
         ],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -1794,6 +1892,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(WorkflowNotFoundError);
@@ -1829,6 +1928,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionStateCorruptError);
@@ -1870,6 +1970,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(
@@ -1907,6 +2008,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(
@@ -1934,6 +2036,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -1968,6 +2071,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -2005,6 +2109,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -2044,6 +2149,7 @@ describe('Novu Client', () => {
         state: [],
         payload: {},
         controls: {},
+        context: {},
       };
 
       const executionResult = await client.executeWorkflow(event);

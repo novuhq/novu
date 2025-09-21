@@ -15,7 +15,7 @@ import {
   SmsFactory,
 } from '@novu/application-generic';
 
-import {  IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { SmsOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
@@ -174,6 +174,7 @@ export class SendMessageSms extends SendMessageBase {
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
+      ...(command.contextKeys && { contextKeys: command.contextKeys }),
     });
 
     await this.createExecutionDetails.execute(
