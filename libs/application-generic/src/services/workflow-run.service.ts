@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum, MessageEntity, MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, DeliveryLifecycleDetail, DeliveryLifecycleStatus } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatus } from '@novu/shared';
 import { PinoLogger } from '../logging';
 import { WorkflowRunRepository, WorkflowRunStatusEnum } from './analytic-logs';
 
@@ -15,7 +15,7 @@ interface WorkflowStatusUpdateParams {
 }
 
 type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id'>;
-type MessageResult = Pick<MessageEntity, 'seen' | 'read' | 'snoozedUntil' | 'archived' | 'channel'>;
+type MessageResult = Pick<MessageEntity, 'seen' | 'read' | 'snoozedUntil' | 'archived' | 'channel' | 'deliveredAt'>;
 
 type ProjectionFromPick<T> = {
   [K in keyof T]: 1;
@@ -34,6 +34,7 @@ const messageResultProjection: ProjectionFromPick<MessageResult> = {
   snoozedUntil: 1,
   archived: 1,
   channel: 1,
+  deliveredAt: 1,
 };
 
 @Injectable()
@@ -184,7 +185,7 @@ export class WorkflowRunService {
    *
    * Priority Order (highest → lowest):
    * 1. INTERACTED - If any message has seen/read/snoozedUntil/archived as true
-   * 2. DELIVERED - If any in-app message exists and no interaction found
+   * 2. DELIVERED - If any message has been delivered (has deliveredAt) and no interaction found
    * 3. SENT - If any step has COMPLETED status, workflow delivery is considered SENT
    * 4. SKIPPED - If any step has SKIPPED status OR statusReason starting with "skipped"
    *    - Detail Priority: SUBSCRIBER_PREFERENCE > USER_STEP_CONDITION > other details
@@ -213,12 +214,13 @@ export class WorkflowRunService {
     const hasInteractedMessage = messages.some(
       (message) => message.seen || message.read || message.snoozedUntil || message.archived
     );
+
     if (hasInteractedMessage) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.INTERACTED };
     }
 
-    // Priority 2: DELIVERED - If any in-app message exists and no interaction found
-    const hasInAppMessage = messages.some((message) => message.channel === ChannelTypeEnum.IN_APP);
+    // Priority 2: DELIVERED - If any message has been delivered (has deliveredAt) and no interaction found
+    const hasInAppMessage = messages.some((message) => !!message.deliveredAt);
     if (hasInAppMessage) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.DELIVERED };
     }
