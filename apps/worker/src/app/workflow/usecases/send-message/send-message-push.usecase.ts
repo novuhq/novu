@@ -492,7 +492,7 @@ export class SendMessagePush extends SendMessageBase {
         target: [deviceToken],
         title: (bridgeOutputs as PushOutput)?.subject || title,
         content: (bridgeOutputs as PushOutput)?.body || content,
-        payload: { ...command.payload, nvMessageId: message._id },
+        payload: { ...command.payload, __nvMessageId: message._id },
         overrides,
         subscriber,
         step,
