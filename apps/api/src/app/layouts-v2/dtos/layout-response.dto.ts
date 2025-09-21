@@ -25,7 +25,7 @@ export class LayoutResponseDto {
   @IsString()
   layoutId: string;
 
-  @ApiProperty({ description: 'Slug of the layout' })
+  @ApiProperty({ description: 'Slug of the layout', type: 'string' })
   @IsString()
   slug: Slug;
 

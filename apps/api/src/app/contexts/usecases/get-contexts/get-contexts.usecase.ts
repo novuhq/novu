@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ContextEntity, ContextRepository, EnforceEnvOrOrgIds } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
-import { mapContextEntityToDto } from '../../dtos';
 import { GetContextsCommand } from './get-contexts.command';
 
 @Injectable()
@@ -19,9 +18,9 @@ export class GetContexts {
       filter.type = command.type;
     }
 
-    // Identifier pattern filtering (partial match with regex)
-    if (command.identifier) {
-      filter.identifier = { $regex: command.identifier, $options: 'i' };
+    // ID pattern filtering (partial match with regex)
+    if (command.id) {
+      filter.id = { $regex: command.id, $options: 'i' };
     }
 
     // Handle cursor-based pagination
@@ -72,7 +71,7 @@ export class GetContexts {
     });
 
     return {
-      data: pagination.data.map(mapContextEntityToDto),
+      data: pagination.data,
       next: pagination.next,
       previous: pagination.previous,
     };

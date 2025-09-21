@@ -30,6 +30,7 @@ export interface StepRunDto {
   updatedAt: Date;
   executionDetails: any[];
   digest?: any;
+  scheduleExtensionsCount?: number;
 }
 
 export interface GetWorkflowRunsDto {
@@ -148,6 +149,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
       transactionId: workflowRun.transactionId,
       createdAt: workflowRun.createdAt,
       updatedAt: workflowRun.updatedAt,
+      scheduleExtensionsCount: step.scheduleExtensionsCount,
     })),
   };
 }

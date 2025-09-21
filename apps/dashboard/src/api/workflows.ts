@@ -64,11 +64,15 @@ export const getWorkflows = async ({
   }
 
   if (tags && tags.length > 0) {
-    tags.forEach((tag) => params.append('tags[]', tag));
+    for (const tag of tags) {
+      params.append('tags[]', tag);
+    }
   }
 
   if (status && status.length > 0) {
-    status.forEach((s) => params.append('status[]', s));
+    for (const s of status) {
+      params.append('status[]', s);
+    }
   }
 
   const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?${params.toString()}`, { environment });
