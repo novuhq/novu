@@ -24,7 +24,7 @@ export type TranslationsDeleteMutationVariables = {
 export type TranslationsDeleteMutationData = void;
 
 /**
- * Delete translation
+ * Delete a translation
  *
  * @remarks
  * Delete a specific translation by resource type, resource ID and locale

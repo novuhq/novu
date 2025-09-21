@@ -29,10 +29,10 @@ export type TranslationsMasterRetrieveQueryData =
   components.GetMasterJsonResponseDto;
 
 /**
- * Get master translations JSON
+ * Retrieve master translations JSON
  *
  * @remarks
- * Get all translations for a locale in master JSON format organized by namespace and resource
+ * Retrieve all translations for a locale in master JSON format organized by resourceId (workflowId)
  */
 export function useTranslationsMasterRetrieve(
   locale?: string | undefined,
@@ -52,10 +52,10 @@ export function useTranslationsMasterRetrieve(
 }
 
 /**
- * Get master translations JSON
+ * Retrieve master translations JSON
  *
  * @remarks
- * Get all translations for a locale in master JSON format organized by namespace and resource
+ * Retrieve all translations for a locale in master JSON format organized by resourceId (workflowId)
  */
 export function useTranslationsMasterRetrieveSuspense(
   locale?: string | undefined,

@@ -178,7 +178,7 @@ export class MergeOrCreateDigest {
 
   private isBackOffDigestType(job: JobEntity, digestMeta?: IDigestBaseMetadata): digestMeta is IDigestRegularMetadata {
     return !!(
-      job.digest?.type === DigestTypeEnum.BACKOFF ||
+      (job.digest && 'type' in job.digest && job.digest.type === DigestTypeEnum.BACKOFF) ||
       (job.digest as IDigestRegularMetadata)?.backoff ||
       (digestMeta && 'backoff' in digestMeta && digestMeta?.backoff)
     );

@@ -17,6 +17,7 @@ export const StepTypeEnum = {
   Digest: "digest",
   Trigger: "trigger",
   Delay: "delay",
+  Throttle: "throttle",
   Custom: "custom",
 } as const;
 /**

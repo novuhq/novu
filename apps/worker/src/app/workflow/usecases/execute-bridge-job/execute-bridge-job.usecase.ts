@@ -27,6 +27,7 @@ import {
   InAppResult,
   PostActionEnum,
   State,
+  ThrottleResult,
 } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
@@ -292,9 +293,24 @@ export class ExecuteBridgeJob {
           } satisfies InAppResult;
         }
       }
-      default: {
-        return {};
+      case 'throttle': {
+        const stepOutput = job.stepOutput as ThrottleResult | undefined;
+
+        if (!stepOutput) {
+          return {
+            throttled: false,
+          } satisfies ThrottleResult;
+        }
+
+        return {
+          throttled: stepOutput.throttled,
+          executionCount: stepOutput.executionCount,
+          threshold: stepOutput.threshold,
+          windowStart: stepOutput.windowStart,
+        } satisfies ThrottleResult;
       }
+      default:
+        return {};
     }
   }
 

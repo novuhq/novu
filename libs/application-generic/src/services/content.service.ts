@@ -91,7 +91,13 @@ export class ContentService {
         variables.push(...filteredVariables);
       }
 
-      if (message.metadata?.type === DelayTypeEnum.SCHEDULED && message.metadata.delayPath) {
+      if (
+        message.metadata &&
+        'type' in message.metadata &&
+        message.metadata.type === DelayTypeEnum.SCHEDULED &&
+        'delayPath' in message.metadata &&
+        message.metadata.delayPath
+      ) {
         variables.push({
           name: message.metadata.delayPath,
           type: TemplateVariableTypeEnum.STRING,

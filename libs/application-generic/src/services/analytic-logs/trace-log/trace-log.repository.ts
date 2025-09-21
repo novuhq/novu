@@ -226,6 +226,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step filter failed';
     case 'step_completed':
       return 'Step completed';
+    case 'step_throttled':
+      return 'Step throttled';
 
     // Message events
     case 'message_created':
@@ -292,6 +294,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Subscriber missing email address';
     case 'subscriber_missing_phone_number':
       return 'Subscriber missing phone number';
+
+    // Throttle events
+    case 'throttle_limit_exceeded':
+      return 'Throttle limit exceeded';
+    case 'throttle_window_in_past':
+      return 'Throttle window in past';
 
     // Provider events
     case 'provider_error':

@@ -164,7 +164,8 @@ export const WorkflowCanvas = ({
   const { workflow: currentWorkflow, optimisticWorkflow } = useWorkflow();
   const navigate = useNavigate();
   const hasPermission = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
-  const showReadOnlyOverlay = !hasPermission || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+  const showReadOnlyOverlay =
+    currentEnvironment && currentWorkflow && (!hasPermission || currentEnvironment?.type !== EnvironmentTypeEnum.DEV);
 
   const handleSwitchToDevelopment = () => {
     const developmentEnvironment = oppositeEnvironment?.name === 'Development' ? oppositeEnvironment : null;

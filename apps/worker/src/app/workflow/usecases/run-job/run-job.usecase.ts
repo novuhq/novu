@@ -509,7 +509,7 @@ export class RunJob {
   ): Promise<{ canceled: boolean; activeDigestFollower: JobEntity | null }> {
     let activeDigestFollower: JobEntity | null = null;
 
-    if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
+    if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY && job.type !== StepTypeEnum.THROTTLE) {
       return { canceled: false, activeDigestFollower };
     }
 

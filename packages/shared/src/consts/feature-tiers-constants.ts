@@ -31,6 +31,7 @@ export enum FeatureNameEnum {
   PLATFORM_ACTIVITY_FEED_RETENTION = 'platformActivityFeedRetention',
   PLATFORM_MAX_DIGEST_WINDOW_TIME = 'platformMaxDigestWindowTime',
   PLATFORM_MAX_DELAY_DURATION = 'platformMaxDelayDuration',
+  PLATFORM_MAX_THROTTLE_WINDOW_TIME = 'platformMaxThrottleWindowTime',
   PLATFORM_MAX_SNOOZE_DURATION = 'platformMaxSnoozeDuration',
   PLATFORM_STEP_CONTROLS_BOOLEAN = 'platformStepControlsBoolean',
   PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN = 'platformBlockBasedEmailEditorBoolean',
@@ -317,6 +318,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.PRO]: { label: '7 days max delay duration', value: 7, timeSuffix: 'd' },
     [ApiServiceLevelEnum.BUSINESS]: { label: '90 days max delay duration', value: 90, timeSuffix: 'd' },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom delay duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+  },
+  [FeatureNameEnum.PLATFORM_MAX_THROTTLE_WINDOW_TIME]: {
+    [ApiServiceLevelEnum.FREE]: { label: '1 hour max throttle window', value: 1, timeSuffix: 'h' },
+    [ApiServiceLevelEnum.PRO]: { label: '24 hours max throttle window', value: 24, timeSuffix: 'h' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '7 days max throttle window', value: 7, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom throttle window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION]: {

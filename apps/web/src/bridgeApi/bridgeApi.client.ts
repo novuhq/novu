@@ -1,6 +1,5 @@
-import axios from 'axios';
-
 import type { DiscoverWorkflowOutput, Event, ExecuteOutput, HealthCheck } from '@novu/framework/internal';
+import axios from 'axios';
 
 export type TriggerParams = {
   workflowId: string;
@@ -77,7 +76,7 @@ export function buildBridgeHTTPClient(baseURL: string) {
       payload,
       state,
       subscriber,
-    }: Omit<Event, 'action'>): Promise<ExecuteOutput> {
+    }: Omit<Event, 'action' | 'context'>): Promise<ExecuteOutput> {
       return post(`${baseURL}?action=preview&workflowId=${workflowId}&stepId=${stepId}`, {
         controls: controls || {},
         payload: payload || {},

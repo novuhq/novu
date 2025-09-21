@@ -76,6 +76,10 @@ export type StepRunDto = {
    * Optional digest for the job, including metadata and events
    */
   digest?: DigestMetadataDto | undefined;
+  /**
+   * The number of times the digest/delay job has been extended to align with the subscribers schedule
+   */
+  scheduleExtensionsCount?: number | undefined;
 };
 
 /** @internal */
@@ -114,6 +118,7 @@ export const StepRunDto$inboundSchema: z.ZodType<
   updatedAt: z.string().datetime({ offset: true }).transform(v => new Date(v)),
   executionDetails: z.array(StepExecutionDetailDto$inboundSchema),
   digest: DigestMetadataDto$inboundSchema.optional(),
+  scheduleExtensionsCount: z.number().optional(),
 });
 
 /** @internal */
@@ -127,6 +132,7 @@ export type StepRunDto$Outbound = {
   updatedAt: string;
   executionDetails: Array<StepExecutionDetailDto$Outbound>;
   digest?: DigestMetadataDto$Outbound | undefined;
+  scheduleExtensionsCount?: number | undefined;
 };
 
 /** @internal */
@@ -144,6 +150,7 @@ export const StepRunDto$outboundSchema: z.ZodType<
   updatedAt: z.date().transform(v => v.toISOString()),
   executionDetails: z.array(StepExecutionDetailDto$outboundSchema),
   digest: DigestMetadataDto$outboundSchema.optional(),
+  scheduleExtensionsCount: z.number().optional(),
 });
 
 /**

@@ -28,7 +28,7 @@ export type TranslationsMasterUploadMutationData =
  * Upload master translations JSON file
  *
  * @remarks
- * Upload a master JSON file containing translations. Locale is automatically detected from filename (e.g., en_US.json)
+ * Upload a master JSON file containing translations for multiple workflows. Locale is automatically detected from filename (e.g., en_US.json)
  */
 export function useTranslationsMasterUploadMutation(
   options?: MutationHookOptions<

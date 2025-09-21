@@ -67,6 +67,12 @@ import {
   SmsStepUpsertDto$outboundSchema,
 } from "./smsstepupsertdto.js";
 import {
+  ThrottleStepUpsertDto,
+  ThrottleStepUpsertDto$inboundSchema,
+  ThrottleStepUpsertDto$Outbound,
+  ThrottleStepUpsertDto$outboundSchema,
+} from "./throttlestepupsertdto.js";
+import {
   WorkflowCreationSourceEnum,
   WorkflowCreationSourceEnum$inboundSchema,
   WorkflowCreationSourceEnum$outboundSchema,
@@ -80,6 +86,7 @@ export type Steps =
   | (ChatStepUpsertDto & { type: "chat" })
   | (DelayStepUpsertDto & { type: "delay" })
   | (DigestStepUpsertDto & { type: "digest" })
+  | (ThrottleStepUpsertDto & { type: "throttle" })
   | (CustomStepUpsertDto & { type: "custom" });
 
 export type CreateWorkflowDto = {
@@ -126,6 +133,7 @@ export type CreateWorkflowDto = {
     | (ChatStepUpsertDto & { type: "chat" })
     | (DelayStepUpsertDto & { type: "delay" })
     | (DigestStepUpsertDto & { type: "digest" })
+    | (ThrottleStepUpsertDto & { type: "throttle" })
     | (CustomStepUpsertDto & { type: "custom" })
   >;
   /**
@@ -178,6 +186,11 @@ export const Steps$inboundSchema: z.ZodType<Steps, z.ZodTypeDef, unknown> = z
         type: v.type,
       })),
     ),
+    ThrottleStepUpsertDto$inboundSchema.and(
+      z.object({ type: z.literal("throttle") }).transform((v) => ({
+        type: v.type,
+      })),
+    ),
     CustomStepUpsertDto$inboundSchema.and(
       z.object({ type: z.literal("custom") }).transform((v) => ({
         type: v.type,
@@ -194,6 +207,7 @@ export type Steps$Outbound =
   | (ChatStepUpsertDto$Outbound & { type: "chat" })
   | (DelayStepUpsertDto$Outbound & { type: "delay" })
   | (DigestStepUpsertDto$Outbound & { type: "digest" })
+  | (ThrottleStepUpsertDto$Outbound & { type: "throttle" })
   | (CustomStepUpsertDto$Outbound & { type: "custom" });
 
 /** @internal */
@@ -224,6 +238,11 @@ export const Steps$outboundSchema: z.ZodType<
   ),
   DigestStepUpsertDto$outboundSchema.and(
     z.object({ type: z.literal("digest") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+  ThrottleStepUpsertDto$outboundSchema.and(
+    z.object({ type: z.literal("throttle") }).transform((v) => ({
       type: v.type,
     })),
   ),
@@ -312,6 +331,11 @@ export const CreateWorkflowDto$inboundSchema: z.ZodType<
           type: v.type,
         })),
       ),
+      ThrottleStepUpsertDto$inboundSchema.and(
+        z.object({ type: z.literal("throttle") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
       CustomStepUpsertDto$inboundSchema.and(
         z.object({ type: z.literal("custom") }).transform((v) => ({
           type: v.type,
@@ -346,6 +370,7 @@ export type CreateWorkflowDto$Outbound = {
     | (ChatStepUpsertDto$Outbound & { type: "chat" })
     | (DelayStepUpsertDto$Outbound & { type: "delay" })
     | (DigestStepUpsertDto$Outbound & { type: "digest" })
+    | (ThrottleStepUpsertDto$Outbound & { type: "throttle" })
     | (CustomStepUpsertDto$Outbound & { type: "custom" })
   >;
   __source: string;
@@ -401,6 +426,11 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
       ),
       DigestStepUpsertDto$outboundSchema.and(
         z.object({ type: z.literal("digest") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
+      ThrottleStepUpsertDto$outboundSchema.and(
+        z.object({ type: z.literal("throttle") }).transform((v) => ({
           type: v.type,
         })),
       ),

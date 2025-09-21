@@ -1,5 +1,5 @@
+import { Bell, Bolt, Chat, DigestGradient, IconSpeed, Mail, Mobile, Sms, TimerGradient } from '@novu/design-system';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Bell, Bolt, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '@novu/design-system';
 
 export enum TemplateAnalyticsEnum {
   CREATE_TEMPLATE_CLICK = 'Create Template Click - [Templates]',
@@ -56,6 +56,7 @@ export const stepNames: Record<StepTypeEnum, string> = {
   digest: 'Digest',
   delay: 'Delay',
   trigger: 'Trigger',
+  throttle: 'Throttle',
   custom: 'Custom',
 };
 
@@ -67,8 +68,9 @@ export const stepIcon: Record<StepTypeEnum | ChannelTypeEnum, (...args: any[]) =
   push: Mobile,
   digest: DigestGradient,
   delay: TimerGradient,
-  custom: Bolt,
   trigger: () => <></>,
+  throttle: IconSpeed,
+  custom: Bolt,
 };
 
 export enum StartFromScratchTourAnalyticsEnum {

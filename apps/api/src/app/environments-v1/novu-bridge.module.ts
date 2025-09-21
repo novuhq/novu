@@ -36,6 +36,7 @@ import {
 } from './usecases/output-renderers';
 import { DelayOutputRendererUsecase } from './usecases/output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from './usecases/output-renderers/digest-output-renderer.usecase';
+import { ThrottleOutputRendererUsecase } from './usecases/output-renderers/throttle-output-renderer.usecase';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -71,6 +72,7 @@ export const featureFlagsService = {
     PushOutputRendererUsecase,
     DelayOutputRendererUsecase,
     DigestOutputRendererUsecase,
+    ThrottleOutputRendererUsecase,
     AnalyticsService,
     GetLayoutUseCaseV1,
     LayoutVariablesSchemaUseCase,
