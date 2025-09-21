@@ -16,8 +16,10 @@ import {
   GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
+  InMemoryProviderService,
   NormalizeVariables,
   ProcessTenant,
+  RedisThrottleService,
   ResolveContextFromKeys,
   ResolveContextFromPayload,
   SelectIntegration,
@@ -60,6 +62,7 @@ import {
   SendMessageSms,
   SetJobAsCompleted,
   SetJobAsFailed,
+  Throttle,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
 } from './usecases';
@@ -172,6 +175,7 @@ const USE_CASES = [
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
+  Throttle,
   ExecuteStepCustom,
   StoreSubscriberJobs,
   SetJobAsCompleted,
@@ -194,7 +198,7 @@ const USE_CASES = [
   GetSubscriberSchedule,
 ];
 
-const PROVIDERS: Provider[] = [];
+const PROVIDERS: Provider[] = [RedisThrottleService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {
@@ -214,11 +218,20 @@ const memoryQueueService = {
   },
 };
 
+const inMemoryProviderService = {
+  provide: InMemoryProviderService,
+  useFactory: (workflowInMemoryProviderService: WorkflowInMemoryProviderService) => {
+    return workflowInMemoryProviderService.inMemoryProviderService;
+  },
+  inject: [WorkflowInMemoryProviderService],
+};
+
 @Module({
   imports: [SharedModule, ...enterpriseImports()],
   controllers: [],
   providers: [
     memoryQueueService,
+    inMemoryProviderService,
     ...ACTIVE_WORKERS,
     ...PROVIDERS,
     ...USE_CASES,

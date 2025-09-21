@@ -1,6 +1,12 @@
 import { ActionStepEnum, ChannelStepEnum } from '../../constants';
 import { WorkflowPayloadInvalidError } from '../../errors';
-import { channelStepSchemas, delayActionSchemas, digestActionSchemas, emptySchema } from '../../schemas';
+import {
+  channelStepSchemas,
+  delayActionSchemas,
+  digestActionSchemas,
+  emptySchema,
+  throttleActionSchemas,
+} from '../../schemas';
 import {
   type CancelEventTriggerResponse,
   type DiscoverWorkflowOutput,
@@ -147,6 +153,12 @@ export function workflow<
           ActionStepEnum.DELAY,
           delayActionSchemas.output,
           delayActionSchemas.result
+        ),
+        throttle: await discoverActionStepFactory(
+          newWorkflow,
+          ActionStepEnum.THROTTLE,
+          throttleActionSchemas.output,
+          throttleActionSchemas.result
         ),
         custom: await discoverCustomStepFactory(newWorkflow, ActionStepEnum.CUSTOM),
       } as never,

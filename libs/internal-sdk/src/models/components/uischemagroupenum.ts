@@ -13,6 +13,7 @@ export const UiSchemaGroupEnum = {
   Email: "EMAIL",
   Digest: "DIGEST",
   Delay: "DELAY",
+  Throttle: "THROTTLE",
   Sms: "SMS",
   Chat: "CHAT",
   Push: "PUSH",

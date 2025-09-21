@@ -140,6 +140,13 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
       }
 
       return '';
+
+    case StepTypeEnum.THROTTLE:
+      if (job.status === JobStatusEnum.COMPLETED) {
+        return 'Throttle step completed';
+      }
+
+      return '';
     case StepTypeEnum.DIGEST:
       if (job.status === JobStatusEnum.COMPLETED) {
         return `Digested ${job.digest?.events?.length ?? 0} events for ${(job.digest as IDigestRegularMetadata)?.amount ?? 0} ${

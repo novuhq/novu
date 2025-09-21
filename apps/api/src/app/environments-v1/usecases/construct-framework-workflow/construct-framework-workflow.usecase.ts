@@ -23,6 +23,7 @@ import {
 } from '../output-renderers';
 import { DelayOutputRendererUsecase } from '../output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from '../output-renderers/digest-output-renderer.usecase';
+import { ThrottleOutputRendererUsecase } from '../output-renderers/throttle-output-renderer.usecase';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
@@ -39,7 +40,8 @@ export class ConstructFrameworkWorkflow {
     private chatOutputRendererUseCase: ChatOutputRendererUsecase,
     private pushOutputRendererUseCase: PushOutputRendererUsecase,
     private delayOutputRendererUseCase: DelayOutputRendererUsecase,
-    private digestOutputRendererUseCase: DigestOutputRendererUsecase
+    private digestOutputRendererUseCase: DigestOutputRendererUsecase,
+    private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase
   ) {}
 
   @InstrumentUsecase()
@@ -265,6 +267,14 @@ export class ConstructFrameworkWorkflow {
           stepId,
           async (controlValues) => {
             return this.delayOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
+          },
+          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+        );
+      case StepTypeEnum.THROTTLE:
+        return step.throttle(
+          stepId,
+          async (controlValues) => {
+            return this.throttleOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
           },
           this.constructActionStepOptions(staticStep, fullPayloadForRender)
         );

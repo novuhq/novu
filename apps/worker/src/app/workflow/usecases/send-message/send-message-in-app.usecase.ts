@@ -224,6 +224,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
+        deliveredAt: [new Date()],
         _notificationId: command.notificationId,
         _organizationId: command.organizationId,
         _environmentId: command.environmentId,

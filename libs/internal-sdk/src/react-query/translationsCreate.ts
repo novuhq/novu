@@ -25,10 +25,10 @@ export type TranslationsCreateMutationVariables = {
 export type TranslationsCreateMutationData = components.TranslationResponseDto;
 
 /**
- * Create or update translation
+ * Create a translation
  *
  * @remarks
- * Create or update a translation for a specific workflow and locale
+ * Create a translation for a specific workflow and locale, if the translation already exists, it will be updated
  */
 export function useTranslationsCreateMutation(
   options?: MutationHookOptions<

@@ -185,11 +185,11 @@ function convertStepToResponse(step: NotificationStepEntity): ActivityNotificati
 }
 
 function isDigestRegularMetadata(item: IWorkflowStepMetadata): item is IDigestRegularMetadata {
-  return item.type === DigestTypeEnum.REGULAR || item.type === DigestTypeEnum.BACKOFF;
+  return 'type' in item && (item.type === DigestTypeEnum.REGULAR || item.type === DigestTypeEnum.BACKOFF);
 }
 
 function isDigestTimedMetadata(item: IWorkflowStepMetadata): item is IDigestTimedMetadata {
-  return item.type === DigestTypeEnum.TIMED;
+  return 'type' in item && item.type === DigestTypeEnum.TIMED;
 }
 
 export function mapDigest(

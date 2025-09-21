@@ -26,10 +26,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get translation group
+ * Retrieve a translation group
  *
  * @remarks
- * Retrieves a single translation group by resourceId and resourceType
+ * Retrieves a single translation group by resource type (workflow) and resource ID (workflowId)
  */
 export function translationsGroupsRetrieve(
   client: NovuCore,

@@ -27,7 +27,7 @@ export const EditLayoutPage = () => {
   return (
     <>
       <PageMeta title={`Edit ${layout?.name} Layout`} />
-      <FullPageLayout headerStartItems={<LayoutBreadcrumbs />}>
+      <FullPageLayout headerStartItems={<LayoutBreadcrumbs layout={layout} />}>
         <LayoutEditorProvider layout={layout} layoutSlug={layoutSlug} isPending={isPending}>
           <LayoutEditor />
         </LayoutEditorProvider>

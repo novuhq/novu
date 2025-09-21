@@ -11,10 +11,10 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Master extends ClientSDK {
   /**
-   * Get master translations JSON
+   * Retrieve master translations JSON
    *
    * @remarks
-   * Get all translations for a locale in master JSON format organized by namespace and resource
+   * Retrieve all translations for a locale in master JSON format organized by resourceId (workflowId)
    */
   async retrieve(
     locale?: string | undefined,
@@ -33,7 +33,7 @@ export class Master extends ClientSDK {
    * Import master translations JSON
    *
    * @remarks
-   * Import translations from master JSON format for a specific locale
+   * Import translations for multiple workflows from master JSON format for a specific locale
    */
   async import(
     importMasterJsonRequestDto: components.ImportMasterJsonRequestDto,
@@ -52,7 +52,7 @@ export class Master extends ClientSDK {
    * Upload master translations JSON file
    *
    * @remarks
-   * Upload a master JSON file containing translations. Locale is automatically detected from filename (e.g., en_US.json)
+   * Upload a master JSON file containing translations for multiple workflows. Locale is automatically detected from filename (e.g., en_US.json)
    */
   async upload(
     idempotencyKey?: string | undefined,

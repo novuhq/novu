@@ -10,6 +10,10 @@ import {
   DEFAULT_CONTROL_DIGEST_CRON,
   DEFAULT_CONTROL_DIGEST_DIGEST_KEY,
   DEFAULT_CONTROL_DIGEST_UNIT,
+  DEFAULT_CONTROL_THROTTLE_THRESHOLD,
+  DEFAULT_CONTROL_THROTTLE_TYPE,
+  DEFAULT_CONTROL_THROTTLE_UNIT,
+  DEFAULT_CONTROL_THROTTLE_WINDOW,
   STEP_TYPE_LABELS,
 } from '@/utils/constants';
 
@@ -134,6 +138,13 @@ export const createStep = (
     controlValue.amount = DEFAULT_CONTROL_DELAY_AMOUNT;
     controlValue.unit = DEFAULT_CONTROL_DELAY_UNIT;
     controlValue.type = DEFAULT_CONTROL_DELAY_TYPE;
+  }
+
+  if (type === StepTypeEnum.THROTTLE) {
+    controlValue.type = DEFAULT_CONTROL_THROTTLE_TYPE;
+    controlValue.amount = DEFAULT_CONTROL_THROTTLE_WINDOW;
+    controlValue.unit = DEFAULT_CONTROL_THROTTLE_UNIT;
+    controlValue.threshold = DEFAULT_CONTROL_THROTTLE_THRESHOLD;
   }
 
   if (type === StepTypeEnum.EMAIL && defaultLayoutId) {

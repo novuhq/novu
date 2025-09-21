@@ -46,7 +46,12 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     return stored;
   }
 
-  public async updateStatus(environmentId: string, jobId: string, status: JobStatusEnum, deliveryLifecycleState?: DeliveryLifecycleState): Promise<IUpdateResult> {
+  public async updateStatus(
+    environmentId: string,
+    jobId: string,
+    status: JobStatusEnum,
+    deliveryLifecycleState?: DeliveryLifecycleState
+  ): Promise<IUpdateResult> {
     return this.MongooseModel.updateOne(
       {
         _environmentId: environmentId,

@@ -22,7 +22,7 @@ export const isMainDigest = (type: StepTypeEnum | undefined, status: JobStatusEn
 };
 
 export function isActionStepType(type: StepTypeEnum) {
-  const channels = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST];
+  const channels = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE];
 
   return channels.find((channel) => channel === type);
 }

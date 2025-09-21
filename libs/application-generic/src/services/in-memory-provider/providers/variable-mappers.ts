@@ -5,12 +5,9 @@
  * this mapper function to be able to overcome that limitation in Azure
  * temporarily while we find a better solution
  */
-export const convertStringValues = (value: string): string | null | undefined => {
-  if (value === 'undefined') {
+export const convertStringValues = (value: string | undefined): string | undefined => {
+  if (!value || value === 'undefined' || value === 'null') {
     return undefined;
-  }
-  if (value === 'null') {
-    return null;
   }
 
   return value;

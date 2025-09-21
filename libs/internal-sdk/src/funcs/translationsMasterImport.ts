@@ -29,7 +29,7 @@ import { Result } from "../types/fp.js";
  * Import master translations JSON
  *
  * @remarks
- * Import translations from master JSON format for a specific locale
+ * Import translations for multiple workflows from master JSON format for a specific locale
  */
 export function translationsMasterImport(
   client: NovuCore,

@@ -26,10 +26,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get single translation
+ * Retrieve a translation
  *
  * @remarks
- * Get a specific translation by resource type, resource ID and locale
+ * Retrieve a specific translation by resource type, resource ID and locale
  */
 export function translationsRetrieve(
   client: NovuCore,

@@ -30,10 +30,10 @@ export type TranslationsGroupsRetrieveQueryData =
   components.TranslationGroupDto;
 
 /**
- * Get translation group
+ * Retrieve a translation group
  *
  * @remarks
- * Retrieves a single translation group by resourceId and resourceType
+ * Retrieves a single translation group by resource type (workflow) and resource ID (workflowId)
  */
 export function useTranslationsGroupsRetrieve(
   resourceType:
@@ -56,10 +56,10 @@ export function useTranslationsGroupsRetrieve(
 }
 
 /**
- * Get translation group
+ * Retrieve a translation group
  *
  * @remarks
- * Retrieves a single translation group by resourceId and resourceType
+ * Retrieves a single translation group by resource type (workflow) and resource ID (workflowId)
  */
 export function useTranslationsGroupsRetrieveSuspense(
   resourceType:

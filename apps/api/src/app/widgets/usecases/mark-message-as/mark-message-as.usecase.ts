@@ -8,9 +8,9 @@ import {
   EventType,
   InvalidateCacheService,
   LogRepository,
-  mapEventTypeToTitle,
   MessageInteractionService,
   MessageInteractionTrace,
+  mapEventTypeToTitle,
   messageWebhookMapper,
   PinoLogger,
   SendWebhookMessage,
@@ -19,7 +19,7 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { DeliveryLifecycleStatus, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 
@@ -74,11 +74,13 @@ export class MarkMessageAs {
     if (command.mark.seen != null) {
       await this.updateServices(command, subscriber, updatedMessages, MarkEnum.SEEN);
 
-      allTraceData.push(...this.prepareTrace(
-        updatedMessages,
-        command.mark.seen ? 'message_seen' : 'message_unseen',
-        command.subscriberId
-      ));
+      allTraceData.push(
+        ...this.prepareTrace(
+          updatedMessages,
+          command.mark.seen ? 'message_seen' : 'message_unseen',
+          command.subscriberId
+        )
+      );
 
       if (command.mark.seen === true) {
         await this.sendWebhookForMessages(
@@ -94,11 +96,13 @@ export class MarkMessageAs {
     if (command.mark.read !== undefined || command.mark.read !== null) {
       await this.updateServices(command, subscriber, updatedMessages, MarkEnum.READ);
 
-      allTraceData.push(...this.prepareTrace(
-        updatedMessages,
-        command.mark.read ? 'message_read' : 'message_unread',
-        command.subscriberId
-      ));
+      allTraceData.push(
+        ...this.prepareTrace(
+          updatedMessages,
+          command.mark.read ? 'message_read' : 'message_unread',
+          command.subscriberId
+        )
+      );
 
       await this.sendWebhookForMessages(
         updatedMessages,
@@ -111,7 +115,7 @@ export class MarkMessageAs {
 
     if (allTraceData.length > 0) {
       try {
-        await this.messageInteractionService.trace(allTraceData);
+        await this.messageInteractionService.trace(allTraceData, DeliveryLifecycleStatus.INTERACTED);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} traces`);
       }
@@ -120,11 +124,7 @@ export class MarkMessageAs {
     return updatedMessages;
   }
 
-  private prepareTrace(
-    messages: MessageEntity[],
-    eventType: EventType,
-    userId: string
-  ): MessageInteractionTrace[] {
+  private prepareTrace(messages: MessageEntity[], eventType: EventType, userId: string): MessageInteractionTrace[] {
     const traceDataArray: MessageInteractionTrace[] = [];
 
     for (const message of messages) {
@@ -144,7 +144,7 @@ export class MarkMessageAs {
           entity_id: message._jobId,
           external_subscriber_id: message._subscriberId,
           step_run_type: message.channel as StepType,
-          workflow_run_identifier: message.templateIdentifier,
+          workflow_run_identifier: '',
           _notificationId: message._notificationId,
         });
       }
