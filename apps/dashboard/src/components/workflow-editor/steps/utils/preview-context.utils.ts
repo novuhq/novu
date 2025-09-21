@@ -9,12 +9,14 @@ export function parseJsonValue(value: string): ParsedData {
       payload: parsed.payload || {},
       subscriber: parsed.subscriber || {},
       steps: parsed.steps || {},
+      context: parsed.context || null,
     };
   } catch {
     return {
       payload: {},
       subscriber: {},
       steps: {},
+      context: null,
     };
   }
 }

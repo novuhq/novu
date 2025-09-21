@@ -4,7 +4,7 @@ import { IsOptional, IsString } from 'class-validator';
 import { CursorPaginationQueryDto } from '../../subscribers-v2/dtos/cursor-pagination-query.dto';
 import { GetContextResponseDto } from './get-context-response.dto';
 
-export class GetContextsRequestDto extends CursorPaginationQueryDto<GetContextResponseDto, 'createdAt' | 'updatedAt'> {
+export class ListContextsQueryDto extends CursorPaginationQueryDto<GetContextResponseDto, 'createdAt' | 'updatedAt'> {
   @ApiPropertyOptional({
     description: 'Filter contexts by type',
     example: 'tenant',
@@ -14,10 +14,18 @@ export class GetContextsRequestDto extends CursorPaginationQueryDto<GetContextRe
   type?: ContextType;
 
   @ApiPropertyOptional({
-    description: 'Filter contexts by id pattern (supports partial matching)',
-    example: 'tenant-prod',
+    description: 'Filter contexts by id',
+    example: 'tenant-prod-123',
   })
   @IsString()
   @IsOptional()
   id?: string;
+
+  @ApiPropertyOptional({
+    description: 'Search contexts by type or id (supports partial matching across both fields)',
+    example: 'tenant',
+  })
+  @IsString()
+  @IsOptional()
+  search?: string;
 }

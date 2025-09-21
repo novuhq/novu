@@ -1,3 +1,4 @@
+import { ContextPayload } from '@novu/shared';
 import { clearFromStorage, loadFromStorage, saveToStorage } from '@/utils/local-storage';
 import { ParsedData, PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
 
@@ -22,6 +23,10 @@ export function getSubscriberStorageKey(workflowId: string, environmentId: strin
   return `preview-subscriber-${workflowId}-${environmentId}`;
 }
 
+export function getContextStorageKey(workflowId: string, environmentId: string): string {
+  return `preview-context-data-${workflowId}-${environmentId}`;
+}
+
 export function savePreviewContextData(
   workflowId: string,
   stepId: string,
@@ -42,6 +47,11 @@ export function saveSubscriberData(workflowId: string, environmentId: string, su
   saveToStorage(storageKey, subscriber, 'subscriber');
 }
 
+export function saveContextData(workflowId: string, environmentId: string, context: ContextPayload): void {
+  const storageKey = getContextStorageKey(workflowId, environmentId);
+  saveToStorage(storageKey, context, 'context');
+}
+
 export function loadPayloadData(workflowId: string, environmentId: string): PayloadData | null {
   const storageKey = getPayloadStorageKey(workflowId, environmentId);
   return loadFromStorage<PayloadData>(storageKey, 'payload');
@@ -50,6 +60,11 @@ export function loadPayloadData(workflowId: string, environmentId: string): Payl
 export function loadSubscriberData(workflowId: string, environmentId: string): PreviewSubscriberData | null {
   const storageKey = getSubscriberStorageKey(workflowId, environmentId);
   return loadFromStorage<PreviewSubscriberData>(storageKey, 'subscriber');
+}
+
+export function loadContextData(workflowId: string, environmentId: string): ContextPayload | null {
+  const storageKey = getContextStorageKey(workflowId, environmentId);
+  return loadFromStorage<ContextPayload>(storageKey, 'context');
 }
 
 export function loadPreviewContextData(workflowId: string, stepId: string, environmentId: string): ParsedData | null {
@@ -62,6 +77,7 @@ export function mergePreviewContextData(persistedData: ParsedData, serverDefault
     payload: mergeObjectData(persistedData.payload, serverDefaults.payload),
     subscriber: mergeObjectData(persistedData.subscriber, serverDefaults.subscriber),
     steps: mergeObjectData(persistedData.steps, serverDefaults.steps),
+    context: mergeObjectData(persistedData.context, serverDefaults.context),
   };
 }
 
@@ -110,10 +126,21 @@ export function clearSubscriberData(workflowId: string, environmentId: string): 
   clearFromStorage(storageKey, 'subscriber data');
 }
 
+export function clearContextData(workflowId: string, environmentId: string): void {
+  const storageKey = getContextStorageKey(workflowId, environmentId);
+  clearFromStorage(storageKey, 'context data');
+}
+
 export function cleanupExpiredPreviewData(): void {
   try {
     const keysToRemove: string[] = [];
-    const prefixes = ['preview-context-', 'preview-payload-', 'preview-subscriber-', 'test-workflow-subscriber-'];
+    const prefixes = [
+      'preview-context-',
+      'preview-context-data-',
+      'preview-payload-',
+      'preview-subscriber-',
+      'test-workflow-subscriber-',
+    ];
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -136,7 +163,9 @@ export function cleanupExpiredPreviewData(): void {
       }
     }
 
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
+    for (const key of keysToRemove) {
+      localStorage.removeItem(key);
+    }
   } catch (error) {
     console.warn('Failed to cleanup expired preview data:', error);
   }

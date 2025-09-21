@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DirectionEnum } from '@novu/shared';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
 
 export class CursorPaginationQueryDto<T, K extends keyof T> {
@@ -27,6 +27,7 @@ export class CursorPaginationQueryDto<T, K extends keyof T> {
     type: Number,
   })
   @IsOptional()
+  @Type(() => Number)
   limit?: number;
 
   @ApiPropertyOptional({
