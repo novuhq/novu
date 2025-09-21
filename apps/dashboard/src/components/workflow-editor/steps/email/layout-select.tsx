@@ -30,6 +30,10 @@ export const LayoutSelect = () => {
       }));
   }, [data]);
 
+  const defaultLayoutId = useMemo(() => {
+    return data?.layouts?.find((layout) => layout.isDefault)?.layoutId;
+  }, [data]);
+
   return (
     <FormField
       control={control}
@@ -41,7 +45,7 @@ export const LayoutSelect = () => {
               <Tooltip>
                 <TooltipTrigger disabled={layoutsSortedByDefault?.length === 0}>
                   <Select
-                    value={field.value ?? 'no_layout'}
+                    value={field.value ?? defaultLayoutId ?? 'no_layout'}
                     onValueChange={(value) => {
                       const newValue = value === 'no_layout' ? null : value;
                       field.onChange(newValue);

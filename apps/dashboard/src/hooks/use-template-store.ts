@@ -53,7 +53,7 @@ function normalizeControlValuesForType(type: StepTypeEnum, values: Record<string
       nextValues.body = body;
     }
 
-    if ('layoutId' in nextValues) delete (nextValues as { layoutId?: unknown }).layoutId;
+    // Preserve layoutId but clean up other layout-related fields that might interfere with content extraction
     if ('layout' in nextValues) delete (nextValues as { layout?: unknown }).layout;
     if ('selectedLayoutId' in nextValues) delete (nextValues as { selectedLayoutId?: unknown }).selectedLayoutId;
 
