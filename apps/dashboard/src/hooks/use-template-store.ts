@@ -53,10 +53,6 @@ function normalizeControlValuesForType(type: StepTypeEnum, values: Record<string
       nextValues.body = body;
     }
 
-    if ('layoutId' in nextValues) delete (nextValues as { layoutId?: unknown }).layoutId;
-    if ('layout' in nextValues) delete (nextValues as { layout?: unknown }).layout;
-    if ('selectedLayoutId' in nextValues) delete (nextValues as { selectedLayoutId?: unknown }).selectedLayoutId;
-
     if (!('subject' in nextValues)) {
       const subject = coalesceText('title', 'subjectText');
       if (typeof subject === 'string') nextValues.subject = subject;
