@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TimeUnitEnum } from '@novu/shared';
-import { IsEnum, IsNumber, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 // Throttle-specific time units (excluding seconds for performance reasons)
@@ -65,6 +65,7 @@ export class ThrottleControlDto extends SkipControlDto {
   })
   @IsNumber()
   @Min(1)
+  @Max(100)
   @IsOptional()
   threshold?: number;
 
