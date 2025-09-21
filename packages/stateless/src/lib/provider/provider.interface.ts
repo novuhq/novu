@@ -134,7 +134,10 @@ export enum EmailEventStatusEnum {
 }
 
 export enum PushEventStatusEnum {
-  SEEN = 'seen',
+  DELIVERED = 'delivered',
+  OPENED = 'opened',
+  DISMISSED = 'dismissed',
+  CLICKED = 'clicked',
   FAILED = 'failed',
 }
 
