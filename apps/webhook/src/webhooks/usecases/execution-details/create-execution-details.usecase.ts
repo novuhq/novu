@@ -1,4 +1,4 @@
-import { Injectable, Logger, Module } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ExecutionDetailsEntity, ExecutionDetailsRepository, MessageEntity } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 
@@ -47,7 +47,7 @@ export class CreateExecutionDetails {
       _notificationTemplateId: _templateId,
       providerId,
       transactionId,
-      status: this.mapStatus(status, channel),
+      status: this.mapStatus(status as EmailEventStatusEnum | SmsEventStatusEnum, channel),
       detail: `${response} - (${status})`,
       source: ExecutionDetailsSourceEnum.WEBHOOK,
       raw: JSON.stringify(row),
