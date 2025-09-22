@@ -128,11 +128,6 @@ export const InboxButton = () => {
         'preferences.title': `Preferences${localizationTestSuffix}`,
         'notifications.emptyNotice': `${isTestPage ? 'This is a test inbox. Send a notification to preview it in real-time.' : 'No notifications'}`,
       }}
-      appearance={{
-        elements: {
-          scheduleContainer: 'hidden',
-        },
-      }}
     >
       <InboxInner />
     </Inbox>
