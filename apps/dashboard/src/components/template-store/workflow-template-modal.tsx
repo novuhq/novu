@@ -38,17 +38,16 @@ import { selectPopularByIdStrict } from './featured';
  */
 function mapTemplateStepsToSteps(templateSteps: StepCreateDto[]): Step[] {
   return templateSteps.map((step, index) => {
-    // Create a proper Step object with all required properties
     const mappedStep: Step = {
       name: step.name || `Step ${index + 1}`,
       type: step.type,
-      _id: `temp-${index}`, // Temporary ID for template preview
+      _id: `temp-${index}`,
       stepId: step.name || `step-${index}`,
-      slug: `template-step-${index}_st_temp` as const, // Temporary slug for template preview
+      slug: `template-step-${index}_st_temp` as const,
       controls: {
         values: step.controlValues ?? {},
       },
-      issues: undefined, // No issues for template steps
+      issues: undefined,
     };
 
     return mappedStep;
@@ -72,6 +71,10 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
 
   const selectedTemplate = props.selectedTemplate ?? internalSelectedTemplate;
   const { suggestions } = useTemplateStore();
+  const previewSteps = useMemo(() => {
+    if (!selectedTemplate) return [] as Step[];
+    return mapTemplateStepsToSteps(selectedTemplate.workflowDefinition.steps);
+  }, [selectedTemplate]);
   const filteredSuggestions = useMemo(() => {
     if (selectedCategory === 'popular') {
       const popular = selectPopularByIdStrict(suggestions, (s) => s.workflowDefinition.workflowId, 12);
@@ -239,10 +242,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
             ) : (
               <div className="flex h-full w-full gap-4">
                 <div className="flex-1">
-                  <WorkflowCanvas
-                    isTemplateStorePreview
-                    steps={mapTemplateStepsToSteps(selectedTemplate.workflowDefinition.steps)}
-                  />
+                  <WorkflowCanvas isTemplateStorePreview steps={previewSteps} />
                 </div>
                 <div className="border-stroke-soft w-full max-w-[300px] border-l p-3">
                   <CreateWorkflowForm onSubmit={handleCreateWorkflow} template={selectedTemplate.workflowDefinition} />

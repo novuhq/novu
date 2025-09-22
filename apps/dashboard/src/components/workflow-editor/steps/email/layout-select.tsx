@@ -16,9 +16,8 @@ export const LayoutSelect = () => {
   const { saveForm } = useSaveForm();
 
   const layoutsSortedByDefault = useMemo(() => {
-    if (!data?.layouts) return [];
-
-    return data.layouts
+    const layouts = data?.layouts ?? [];
+    return [...layouts]
       .sort((a, b) => {
         if (a.isDefault) return -1;
         if (b.isDefault) return 1;
@@ -28,11 +27,9 @@ export const LayoutSelect = () => {
         label: layout.isDefault ? `${layout.name} (Default)` : layout.name,
         value: layout.layoutId,
       }));
-  }, [data]);
+  }, [data?.layouts]);
 
-  const defaultLayoutId = useMemo(() => {
-    return data?.layouts?.find((layout) => layout.isDefault)?.layoutId;
-  }, [data]);
+  // Intentionally not auto-selecting default layout here
 
   return (
     <FormField
@@ -45,7 +42,7 @@ export const LayoutSelect = () => {
               <Tooltip>
                 <TooltipTrigger disabled={layoutsSortedByDefault?.length === 0}>
                   <Select
-                    value={field.value ?? defaultLayoutId ?? 'no_layout'}
+                    value={field.value ?? 'no_layout'}
                     onValueChange={(value) => {
                       const newValue = value === 'no_layout' ? null : value;
                       field.onChange(newValue);
