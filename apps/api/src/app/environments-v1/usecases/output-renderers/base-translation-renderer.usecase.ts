@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { NotificationTemplateEntity } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
 import { FullPayloadForRender } from './render-command';
 
@@ -19,6 +20,7 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    dbWorkflow,
   }: {
     controls: Record<string, unknown>;
     variables: FullPayloadForRender;
@@ -26,6 +28,7 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    dbWorkflow?: NotificationTemplateEntity;
   }): Promise<Record<string, unknown>> {
     if (process.env.NOVU_ENTERPRISE !== 'true') {
       return controls;
@@ -38,6 +41,7 @@ export abstract class BaseTranslationRendererUsecase {
       organizationId,
       workflowId,
       locale,
+      dbWorkflow,
     }) as Promise<Record<string, unknown>>;
   }
 
@@ -77,6 +81,7 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    dbWorkflow,
   }: {
     content: string | Record<string, unknown>;
     variables: FullPayloadForRender;
@@ -84,6 +89,7 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    dbWorkflow?: NotificationTemplateEntity;
   }): Promise<string | Record<string, unknown>> {
     if (!workflowId) {
       this.logger.error('Workflow ID is required for translation module', {
@@ -111,6 +117,7 @@ export abstract class BaseTranslationRendererUsecase {
         content: contentString,
         payload: variables,
         liquidEngine,
+        dbWorkflow,
       });
 
       return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);
