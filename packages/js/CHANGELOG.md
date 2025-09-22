@@ -1,3 +1,13 @@
+## v3.10.1 (2025-09-22)
+
+### 🩹 Fixes
+
+- **js, react:** fix created at date issue ([8af3afee3d](https://github.com/novuhq/novu/commit/8af3afee3d))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+
 ## v3.10.0 (2025-09-22)
 
 ### 🚀 Features
