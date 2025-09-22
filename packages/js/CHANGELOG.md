@@ -1,3 +1,23 @@
+## v3.10.0 (2025-09-22)
+
+### 🚀 Features
+
+- **react, js:** Add preferenceSort support to preferences UI fixes NV-6608 ([#9109](https://github.com/novuhq/novu/pull/9109))
+- **dashboard:** allow updating subscribers schedule fixes NV-6617 ([#9118](https://github.com/novuhq/novu/pull/9118))
+- **react,js:** default schedule and useSchedule hook fixes NV-6616 ([#9110](https://github.com/novuhq/novu/pull/9110))
+- **js:** inbox subscribers schedule fixes NV-6616 ([#9103](https://github.com/novuhq/novu/pull/9103))
+- **js, api-service, react:** add permanent delete option for notifications fixes NV-6613 ([#9095](https://github.com/novuhq/novu/pull/9095))
+- **js:** schedule sub module fixes NV-6615 ([#9080](https://github.com/novuhq/novu/pull/9080))
+
+### 🩹 Fixes
+
+- **api-service,dashboard,worker:** subscriber schedule bug bashing fixes fixes NV-6691 ([#9167](https://github.com/novuhq/novu/pull/9167))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Paweł Tymczuk @LetItRock
+
 ## v3.9.3 (2025-09-03)
 
 ### 🩹 Fixes
