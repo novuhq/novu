@@ -11,8 +11,8 @@ import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class Outlook365Provider extends BaseProvider implements IEmailProvider {
-  id = EmailProviderIdEnum.Outlook365;
+export class CustomOutlook365Provider extends BaseProvider implements IEmailProvider {
+  id = EmailProviderIdEnum.CustomOutlook365;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private transports: Transporter;
@@ -44,17 +44,13 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
     options: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    try {
-      const mailData = this.createMailData(options);
-      const info = await this.transports.sendMail(this.transform(bridgeProviderData, mailData).body);
+    const mailData = this.createMailData(options);
+    const info = await this.transports.sendMail(this.transform(bridgeProviderData, mailData).body);
 
-      return {
-        id: info?.messageId,
-        date: new Date().toISOString(),
-      };
-    } catch (err) {
-      throw new Error(`Outlook365 send failed: ${err.message}`);
-    }
+    return {
+      id: info?.messageId,
+      date: new Date().toISOString(),
+    };
   }
 
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
@@ -86,6 +82,9 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
       subject: options.subject,
       html: options.html,
       text: options.text,
+      // Added CC and BCC support in custom provider
+      cc: options.cc,
+      bcc: options.bcc,
       attachments: options.attachments?.map((attachment) => ({
         filename: attachment.name,
         content: attachment.file,

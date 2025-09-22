@@ -16,6 +16,7 @@ import {
   mandrillConfig,
   netCoreConfig,
   nodemailerConfig,
+  customOutlook365Config,
   outlook365Config,
   plunkConfig,
   postmarkConfig,
@@ -125,6 +126,14 @@ export const emailProviders: IProviderConfig[] = [
     credentials: mailerSendConfig,
     docReference: `https://docs.novu.co/integrations/providers/email/mailersend${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'mailersend.svg', dark: 'mailersend.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.CustomOutlook365,
+    displayName: 'Custom Microsoft Outlook365',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: customOutlook365Config,
+    docReference: `https://docs.novu.co/integrations/providers/email/outlook365${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'outlook365.png', dark: 'outlook365.png' },
   },
   {
     id: EmailProviderIdEnum.Outlook365,

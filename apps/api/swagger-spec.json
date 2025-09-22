@@ -30207,6 +30207,7 @@
           "mailtrap",
           "clickatell",
           "outlook365",
+          "custom-outlook365",
           "novu-email",
           "sparkpost",
           "email-webhook",

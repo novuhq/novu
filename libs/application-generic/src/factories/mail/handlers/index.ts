@@ -11,6 +11,7 @@ export * from './netcore.handler';
 export * from './nodemailer.handler';
 export * from './novu.handler';
 export * from './outlook365.handler';
+export * from './custom-outlook365.handler';
 export * from './plunk.handler';
 export * from './postmark.handler';
 export * from './resend.handler';

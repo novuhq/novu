@@ -21,3 +21,4 @@ export * from './ses/ses.config';
 export * from './ses/ses.provider';
 export * from './sparkpost/sparkpost.error';
 export * from './sparkpost/sparkpost.provider';
+export * from './custom-outlook365/custom-outlook365.provider';

@@ -28,6 +28,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
     EmailProviderIdEnum.EmailJS,
     EmailProviderIdEnum.SES,
     EmailProviderIdEnum.MailerSend,
+    EmailProviderIdEnum.CustomOutlook365,
     EmailProviderIdEnum.Outlook365,
     EmailProviderIdEnum.Resend,
     EmailProviderIdEnum.Infobip,

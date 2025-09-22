@@ -28,6 +28,7 @@ export function useIntegrationList(searchQuery: string = '') {
         EmailProviderIdEnum.Mailjet,
         EmailProviderIdEnum.Mandrill,
         EmailProviderIdEnum.SES,
+        EmailProviderIdEnum.CustomOutlook365,
         EmailProviderIdEnum.Outlook365,
         EmailProviderIdEnum.CustomSMTP,
       ],

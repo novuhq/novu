@@ -71,6 +71,7 @@ export enum EmailProviderIdEnum {
   Mailtrap = 'mailtrap',
   Clickatell = 'clickatell',
   Outlook365 = 'outlook365',
+  CustomOutlook365 = 'custom-outlook365',
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',

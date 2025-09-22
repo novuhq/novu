@@ -21,6 +21,7 @@ export const emailProviderSchemas = {
   mandrill: genericProviderSchemas,
   netcore: genericProviderSchemas,
   'novu-email': novuEmailProviderSchemas,
+  'custom-outlook365': genericProviderSchemas,
   outlook365: genericProviderSchemas,
   plunk: genericProviderSchemas,
   postmark: genericProviderSchemas,
