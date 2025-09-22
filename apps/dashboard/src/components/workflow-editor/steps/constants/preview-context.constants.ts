@@ -35,4 +35,4 @@ export const ACCORDION_STYLES = {
   jsonViewer: 'border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid',
 } as const;
 
-export const DEFAULT_ACCORDION_VALUES = ['payload', 'subscriber', 'step-results'];
+export const DEFAULT_ACCORDION_VALUES = ['payload', 'subscriber', 'context', 'step-results'];

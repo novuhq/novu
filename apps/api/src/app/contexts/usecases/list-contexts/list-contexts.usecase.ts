@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { ContextEntity, ContextRepository, EnforceEnvOrOrgIds } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
-import { GetContextsCommand } from './get-contexts.command';
+import { ListContextsCommand } from './list-contexts.command';
 
 @Injectable()
-export class GetContexts {
+export class ListContexts {
   constructor(private contextRepository: ContextRepository) {}
 
-  async execute(command: GetContextsCommand) {
+  async execute(command: ListContextsCommand) {
     const filter: FilterQuery<ContextEntity> & EnforceEnvOrOrgIds = {
       _environmentId: command.user.environmentId,
       _organizationId: command.user.organizationId,
@@ -18,9 +18,13 @@ export class GetContexts {
       filter.type = command.type;
     }
 
-    // ID pattern filtering (partial match with regex)
     if (command.id) {
-      filter.id = { $regex: command.id, $options: 'i' };
+      filter.id = command.id;
+    }
+
+    // Search across the composite key field (format: "type:id")
+    if (command.search) {
+      filter.key = { $regex: command.search, $options: 'i' };
     }
 
     // Handle cursor-based pagination
