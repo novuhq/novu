@@ -30,6 +30,8 @@ export const LayoutSelect = () => {
       }));
   }, [data]);
 
+  // Intentionally not auto-selecting default layout here
+
   return (
     <FormField
       control={control}

@@ -10,7 +10,12 @@ import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@nov
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { buildSubscriberSchema, buildVariablesSchema, buildWorkflowSchema } from '../../../shared/utils/create-schema';
+import {
+  buildContextSchema,
+  buildSubscriberSchema,
+  buildVariablesSchema,
+  buildWorkflowSchema,
+} from '../../../shared/utils/create-schema';
 import { computeResultSchema } from '../../shared';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
@@ -71,6 +76,14 @@ export class BuildVariableSchemaUsecase {
       defaultValue: false,
     });
 
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+      defaultValue: false,
+    });
+
     return {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {
@@ -81,6 +94,7 @@ export class BuildVariableSchemaUsecase {
           payloadSchema: workflow?.payloadSchema,
         }),
         payload: await this.resolvePayloadSchema(workflow, payload),
+        ...(isContextEnabled ? { context: buildContextSchema() } : {}),
       },
       additionalProperties: false,
     } as const satisfies JSONSchemaDto;

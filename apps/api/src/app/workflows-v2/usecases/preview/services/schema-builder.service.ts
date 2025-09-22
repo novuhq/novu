@@ -43,6 +43,21 @@ export class SchemaBuilderService {
       };
     }
 
+    if (previewPayloadExample.context) {
+      schema.properties!.context = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        description: 'Context data for the workflow execution',
+        additionalProperties: {
+          type: JsonSchemaTypeEnum.OBJECT,
+          properties: {
+            id: { type: JsonSchemaTypeEnum.STRING },
+            data: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
+          },
+          additionalProperties: false,
+        },
+      };
+    }
+
     schema.properties!.subscriber = {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {

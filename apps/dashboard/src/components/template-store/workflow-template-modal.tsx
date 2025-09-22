@@ -66,7 +66,13 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
   const [internalSelectedTemplate, setInternalSelectedTemplate] = useState<IWorkflowSuggestion | null>(null);
 
   const selectedTemplate = props.selectedTemplate ?? internalSelectedTemplate;
+
   const { suggestions, isLoading } = useTemplateStore();
+  const previewSteps = useMemo(() => {
+    if (!selectedTemplate) return [] as Step[];
+    return mapTemplateStepsToSteps(selectedTemplate.workflowDefinition.steps);
+  }, [selectedTemplate]);
+
   const filteredSuggestions = useMemo(() => {
     if (selectedCategory === 'popular') {
       const popularWorkflows = suggestions.filter((suggestion) => suggestion.tags.includes('popular'));
@@ -262,10 +268,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
             ) : (
               <div className="flex h-full w-full gap-4">
                 <div className="flex-1">
-                  <WorkflowCanvas
-                    isTemplateStorePreview
-                    steps={mapTemplateStepsToSteps(selectedTemplate.workflowDefinition.steps)}
-                  />
+                  <WorkflowCanvas isTemplateStorePreview steps={previewSteps} />
                 </div>
                 <div className="border-stroke-soft w-full max-w-[300px] border-l p-3">
                   <CreateWorkflowForm onSubmit={handleCreateWorkflow} template={selectedTemplate.workflowDefinition} />
