@@ -1,6 +1,6 @@
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { ModuleRef } from '@nestjs/core';
-import { CreateExecutionDetails, DetailEnum, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { CreateExecutionDetails, DetailEnum, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
@@ -18,7 +18,6 @@ import { EmailOutputRendererCommand, EmailOutputRendererUsecase } from './email-
 import { FullPayloadForRender } from './render-command';
 
 describe('EmailOutputRendererUsecase', () => {
-  let featureFlagsServiceMock: sinon.SinonStubbedInstance<FeatureFlagsService>;
   let moduleRef: sinon.SinonStubbedInstance<ModuleRef>;
   let getOrganizationSettingsMock: sinon.SinonStubbedInstance<GetOrganizationSettings>;
   let pinoLoggerMock: sinon.SinonStubbedInstance<PinoLogger>;
@@ -30,8 +29,6 @@ describe('EmailOutputRendererUsecase', () => {
 
   beforeEach(async () => {
     moduleRef = sinon.createStubInstance(ModuleRef);
-    featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
-    featureFlagsServiceMock.getFlag.withArgs(sinon.match.has('key', 'IS_TRANSLATION_ENABLED')).resolves(false);
     getOrganizationSettingsMock = sinon.createStubInstance(GetOrganizationSettings);
     getOrganizationSettingsMock.execute.resolves({
       removeNovuBranding: false,
@@ -47,7 +44,6 @@ describe('EmailOutputRendererUsecase', () => {
       getOrganizationSettingsMock as any,
       moduleRef as any,
       pinoLoggerMock as any,
-      featureFlagsServiceMock as any,
       controlValuesRepositoryMock as any,
       getLayoutUseCase as any,
       jobRepositoryMock as any,
