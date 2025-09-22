@@ -1,6 +1,6 @@
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { ModuleRef } from '@nestjs/core';
-import { CreateExecutionDetails, DetailEnum, PinoLogger } from '@novu/application-generic';
+import { CreateExecutionDetails, DetailEnum, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
@@ -17,6 +17,38 @@ import { GetOrganizationSettings } from '../../../organization/usecases/get-orga
 import { EmailOutputRendererCommand, EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
 
+/**
+ * Sets up mocks for the enterprise translation module
+ * Returns the translation stub for further customization if needed
+ */
+function setupTranslationMocks(moduleRef: sinon.SinonStubbedInstance<ModuleRef>): sinon.SinonStub {
+  const eeTranslation = require('@novu/ee-translation');
+  if (!eeTranslation) {
+    throw new Error('ee-translation does not exist');
+  }
+
+  const { Translate } = eeTranslation;
+
+  // Create translation service stub that returns original content (no translation applied)
+  const translateStub = sinon.stub(Translate.prototype, 'execute').callsFake(async (command: any) => {
+    return command.content || '';
+  });
+
+  const mockLogger = {
+    setContext: sinon.stub(),
+  };
+
+  // Mock moduleRef.get to return the Translate class when requested
+  (moduleRef as any).get = sinon.stub().callsFake((token) => {
+    if (token === Translate) {
+      return new Translate({} as any, {} as any, mockLogger as any, {} as any);
+    }
+    return null;
+  });
+
+  return translateStub;
+}
+
 describe('EmailOutputRendererUsecase', () => {
   let moduleRef: sinon.SinonStubbedInstance<ModuleRef>;
   let getOrganizationSettingsMock: sinon.SinonStubbedInstance<GetOrganizationSettings>;
@@ -26,9 +58,12 @@ describe('EmailOutputRendererUsecase', () => {
   let jobRepositoryMock: sinon.SinonStubbedInstance<JobRepository>;
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
   let emailOutputRendererUsecase: EmailOutputRendererUsecase;
+  let translateStub: sinon.SinonStub;
 
   beforeEach(async () => {
     moduleRef = sinon.createStubInstance(ModuleRef);
+    translateStub = setupTranslationMocks(moduleRef);
+
     getOrganizationSettingsMock = sinon.createStubInstance(GetOrganizationSettings);
     getOrganizationSettingsMock.execute.resolves({
       removeNovuBranding: false,
@@ -52,6 +87,7 @@ describe('EmailOutputRendererUsecase', () => {
   });
 
   afterEach(() => {
+    translateStub.restore();
     sinon.restore();
   });
 
