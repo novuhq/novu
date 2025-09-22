@@ -16,8 +16,9 @@ export const LayoutSelect = () => {
   const { saveForm } = useSaveForm();
 
   const layoutsSortedByDefault = useMemo(() => {
-    const layouts = data?.layouts ?? [];
-    return [...layouts]
+    if (!data?.layouts) return [];
+
+    return data.layouts
       .sort((a, b) => {
         if (a.isDefault) return -1;
         if (b.isDefault) return 1;
@@ -27,7 +28,7 @@ export const LayoutSelect = () => {
         label: layout.isDefault ? `${layout.name} (Default)` : layout.name,
         value: layout.layoutId,
       }));
-  }, [data?.layouts]);
+  }, [data]);
 
   // Intentionally not auto-selecting default layout here
 

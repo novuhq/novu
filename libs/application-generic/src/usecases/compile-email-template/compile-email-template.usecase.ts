@@ -46,19 +46,6 @@ export class CompileEmailTemplate extends CompileTemplateBase {
       layoutContent = layout.content;
     } else if (isEditorMode && !command.layoutId) {
       layoutContent = await this.getNovuLayoutUsecase.execute({});
-    } else if (!command.layoutId) {
-      try {
-        layout = await this.getLayoutUsecase.execute(
-          GetLayoutCommand.create({
-            layoutIdOrInternalId: undefined,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-          })
-        );
-        layoutContent = layout.content;
-      } catch {
-        layoutContent = await this.getNovuLayoutUsecase.execute({});
-      }
     }
 
     const layoutVariables = layout?.variables || [];
