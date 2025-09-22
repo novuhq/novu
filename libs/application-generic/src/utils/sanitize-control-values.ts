@@ -1,9 +1,11 @@
-import { StepTypeEnum, TimeUnitEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { isEmpty } from 'lodash';
 import { PinoLogger } from '../logging';
 import {
   ChatControlType,
   DelayControlType,
+  DelayRegularControlType,
+  DelayTimedControlType,
   DigestControlSchemaType,
   DigestRegularControlType,
   DigestTimedControlType,
@@ -172,16 +174,29 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
 }
 
 function sanitizeDelay(controlValues: DelayControlType) {
-  const mappedValues: DelayControlType = {
-    // Cast to trigger Ajv validation errors - possible undefined
-    ...(parseAmount(controlValues.amount) as { amount?: number }),
-    type: controlValues.type,
-    unit: controlValues.unit,
-    skip: controlValues.skip,
-    extendToSchedule: controlValues.extendToSchedule,
-  };
+  if (isTimedDelayControl(controlValues)) {
+    const mappedValues: DelayTimedControlType = {
+      cron: controlValues.cron,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
 
-  return filterNullishValues(mappedValues);
+    return filterNullishValues(mappedValues);
+  }
+
+  if (isRegularDelayControl(controlValues)) {
+    const mappedValues: DelayRegularControlType = {
+      // Cast to trigger Ajv validation errors - possible undefined
+      ...(parseAmount(controlValues.amount) as { amount?: number }),
+      unit: controlValues.unit,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
+  return filterNullishValues(controlValues);
 }
 
 function sanitizeLayout(controlValues: LayoutControlType) {
@@ -295,4 +310,12 @@ function isTimedDigestControl(controlValues: unknown): controlValues is DigestTi
 
 function isRegularDigestControl(controlValues: unknown): controlValues is DigestRegularControlType {
   return !isTimedDigestControl(controlValues);
+}
+
+function isTimedDelayControl(controlValues: unknown): controlValues is DelayTimedControlType {
+  return !isEmpty((controlValues as DelayTimedControlType)?.cron);
+}
+
+function isRegularDelayControl(controlValues: unknown): controlValues is DelayRegularControlType {
+  return !isTimedDelayControl(controlValues);
 }

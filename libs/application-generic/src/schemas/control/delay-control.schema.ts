@@ -4,19 +4,30 @@ import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
 
-export const delayControlZodSchema = z
+export const delayRegularControlZodSchema = z
   .object({
     skip: skipZodSchema,
-    type: z.enum(['regular']),
     amount: z.number().min(1),
     unit: z.nativeEnum(TimeUnitEnum),
     extendToSchedule: z.boolean().optional(),
   })
   .strict();
 
+const delayTimedControlZodSchema = z
+  .object({
+    skip: skipZodSchema,
+    cron: z.string().min(1),
+    extendToSchedule: z.boolean().optional(),
+  })
+  .strict();
+
+export type DelayRegularControlType = z.infer<typeof delayRegularControlZodSchema>;
+export type DelayTimedControlType = z.infer<typeof delayTimedControlZodSchema>;
 export type DelayControlType = z.infer<typeof delayControlZodSchema>;
 
+export const delayControlZodSchema = z.union([delayRegularControlZodSchema, delayTimedControlZodSchema]);
 export const delayControlSchema = zodToJsonSchema(delayControlZodSchema, defaultOptions) as JSONSchemaEntity;
+
 export const delayUiSchema: UiSchema = {
   group: UiSchemaGroupEnum.DELAY,
   properties: {
@@ -29,9 +40,9 @@ export const delayUiSchema: UiSchema = {
       component: UiComponentEnum.DELAY_UNIT,
       placeholder: DigestUnitEnum.SECONDS,
     },
-    type: {
-      component: UiComponentEnum.DELAY_TYPE,
-      placeholder: 'regular',
+    cron: {
+      component: UiComponentEnum.DELAY_CRON,
+      placeholder: '',
     },
     extendToSchedule: {
       component: UiComponentEnum.EXTEND_TO_SCHEDULE,

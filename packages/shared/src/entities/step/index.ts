@@ -107,6 +107,7 @@ export interface ITimedConfig {
   ordinalValue?: OrdinalValueEnum;
   monthlyType?: MonthlyTypeEnum;
   cronExpression?: CronExpressionEnum | string;
+  untilDate?: string;
 }
 
 export interface IDigestTimedMetadata extends IDigestBaseMetadata {

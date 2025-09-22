@@ -30,7 +30,7 @@ export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
 
 export const DEFAULT_CONTROL_DELAY_AMOUNT = 30;
 export const DEFAULT_CONTROL_DELAY_UNIT = TimeUnitEnum.SECONDS;
-export const DEFAULT_CONTROL_DELAY_TYPE = 'regular';
+export const DEFAULT_CONTROL_DELAY_CRON = '';
 
 export const DEFAULT_CONTROL_DIGEST_AMOUNT = 30;
 export const DEFAULT_CONTROL_DIGEST_UNIT = TimeUnitEnum.SECONDS;

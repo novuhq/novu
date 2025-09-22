@@ -76,6 +76,11 @@ export class DigestTimedConfigDto {
   @IsOptional()
   @IsString()
   cronExpression?: string;
+
+  @ApiPropertyOptional({ description: 'Until date for scheduling' })
+  @IsOptional()
+  @IsString()
+  untilDate?: string;
 }
 
 export class DigestMetadataDto {

@@ -7,7 +7,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 const amountKey = 'amount';
 const unitKey = 'unit';
-const typeKey = 'type';
+const cronKey = 'cron';
 const extendToScheduleKey = 'extendToSchedule';
 
 export const DelayControlValues = () => {
@@ -21,16 +21,20 @@ export const DelayControlValues = () => {
 
   const {
     [amountKey]: amount,
-    [typeKey]: type,
     [unitKey]: unit,
+    [cronKey]: cron,
     [extendToScheduleKey]: extendToSchedule,
   } = uiSchema.properties ?? {};
 
   return (
     <>
-      {amount && type && unit && (
+      {((amount && unit) || cron) && (
         <>
-          <SidebarContent>{getComponentByType({ component: amount.component })}</SidebarContent>
+          <SidebarContent size="lg">
+            {getComponentByType({
+              component: amount.component || unit.component || cron.component,
+            })}
+          </SidebarContent>
           {isSubscribersScheduleEnabled && (
             <>
               <Separator />

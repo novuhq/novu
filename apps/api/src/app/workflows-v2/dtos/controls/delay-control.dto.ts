@@ -1,30 +1,31 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { DelayTypeEnum, TimeUnitEnum } from '@novu/shared';
-import { IsEnum, IsNumber, Min, ValidateIf } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { TimeUnitEnum } from '@novu/shared';
+import { IsEnum, IsNumber, IsOptional, IsString, Min, MinLength } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 export class DelayControlDto extends SkipControlDto {
-  @ApiProperty({
-    description: "Type of the delay. Currently only 'regular' is supported by the schema.",
-    enum: [DelayTypeEnum.REGULAR],
-    default: DelayTypeEnum.REGULAR,
-  })
-  @IsEnum({ REGULAR: DelayTypeEnum.REGULAR })
-  type: DelayTypeEnum.REGULAR;
-
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Amount of time to delay.',
     type: Number,
     minimum: 1,
   })
   @IsNumber()
   @Min(1)
-  amount: number;
+  amount?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Unit of time for the delay amount.',
     enum: TimeUnitEnum,
   })
   @IsEnum(TimeUnitEnum)
-  unit: TimeUnitEnum;
+  unit?: TimeUnitEnum;
+
+  @ApiPropertyOptional({
+    description: 'Cron expression for the delay. Min length 1.',
+    type: String,
+  })
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  cron?: string;
 }

@@ -114,6 +114,9 @@ const jobSchema = new Schema<JobDBModel>(
         cronExpression: {
           type: Schema.Types.String,
         },
+        untilDate: {
+          type: Schema.Types.String,
+        },
         atTime: {
           type: Schema.Types.String,
         },

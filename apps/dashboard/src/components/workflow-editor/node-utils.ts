@@ -48,7 +48,9 @@ const mapStepToNodeContent = (step: Step, workflowOrigin: ResourceOriginEnum): s
   const delayMessage =
     workflowOrigin === ResourceOriginEnum.EXTERNAL
       ? 'Delay duration defined in code'
-      : `Delay for ${controlValues.amount} ${controlValues.unit}`;
+      : controlValues.cron
+        ? `Delay until the scheduled time`
+        : `Delay for ${controlValues.amount} ${controlValues.unit}`;
 
   switch (step.type) {
     case StepTypeEnum.TRIGGER:
