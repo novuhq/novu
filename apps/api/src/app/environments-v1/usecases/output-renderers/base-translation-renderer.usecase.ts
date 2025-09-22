@@ -27,6 +27,10 @@ export abstract class BaseTranslationRendererUsecase {
     workflowId?: string;
     locale?: string;
   }): Promise<Record<string, unknown>> {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
+      return controls;
+    }
+
     return this.executeTranslation({
       content: controls,
       variables,
@@ -52,6 +56,10 @@ export abstract class BaseTranslationRendererUsecase {
     workflowId?: string;
     locale?: string;
   }): Promise<string> {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
+      return content;
+    }
+
     return this.executeTranslation({
       content,
       variables,
