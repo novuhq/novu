@@ -424,23 +424,17 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     workflowId?: string;
     locale?: string;
   }): Promise<MailyJSONContent> {
-    try {
-      const contentString = JSON.stringify(mailyContent);
-      const translatedContent = await this.processStringTranslations({
-        content: contentString,
-        variables,
-        environmentId,
-        organizationId,
-        workflowId,
-        locale,
-      });
+    const contentString = JSON.stringify(mailyContent);
+    const translatedContent = await this.processStringTranslations({
+      content: contentString,
+      variables,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+    });
 
-      return JSON.parse(translatedContent);
-    } catch (error) {
-      this.logger.error('Maily translation processing failed, falling back to original content', error);
-
-      return mailyContent;
-    }
+    return JSON.parse(translatedContent);
   }
 
   private async processTextTranslations({
