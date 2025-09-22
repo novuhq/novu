@@ -86,11 +86,7 @@ function getInputTypeFromSchema(schemaProperty: JSONSchemaDefinition | JSONSchem
 
 export function parseStepVariables(
   schema: JSONSchemaDefinition | JSONSchema7,
-  {
-    digestStepId,
-    isPayloadSchemaEnabled,
-    isContextVariablesEnabled,
-  }: { digestStepId?: string; isPayloadSchemaEnabled?: boolean; isContextVariablesEnabled?: boolean }
+  { digestStepId, isPayloadSchemaEnabled }: { digestStepId?: string; isPayloadSchemaEnabled?: boolean }
 ): EnhancedParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
@@ -167,19 +163,6 @@ export function parseStepVariables(
   }
 
   extractProperties(schema);
-
-  // Helper function to check if a variable is a context variable
-  function isContextVariable(variableName: string): boolean {
-    return variableName === 'context' || variableName.startsWith('context.');
-  }
-
-  // Filter out context variables if the feature flag is disabled
-  function filterContextVariables<T extends { name: string }>(variables: T[]): T[] {
-    if (isContextVariablesEnabled) {
-      return variables;
-    }
-    return variables.filter((variable) => !isContextVariable(variable.name));
-  }
 
   function parseVariablePath(path: string): string[] | null {
     const parts = path
@@ -291,17 +274,8 @@ export function parseStepVariables(
     enhancedVariables.unshift(...digestVariables);
   }
 
-  // Apply context variable filtering to all variable collections
-  const filteredPrimitives = filterContextVariables(result.primitives);
-  const filteredArrays = filterContextVariables(result.arrays);
-  const filteredNamespaces = filterContextVariables(result.namespaces);
-  const filteredEnhancedVariables = filterContextVariables(enhancedVariables);
-
   return {
     ...result,
-    primitives: filteredPrimitives,
-    arrays: filteredArrays,
-    namespaces: filteredNamespaces,
 
     variables: digestStepId
       ? [
@@ -317,13 +291,13 @@ export function parseStepVariables(
               displayLabel,
             };
           }),
-          ...filteredPrimitives,
-          ...filteredArrays,
-          ...filteredNamespaces,
+          ...result.primitives,
+          ...result.arrays,
+          ...result.namespaces,
         ]
-      : [...filteredPrimitives, ...filteredArrays, ...filteredNamespaces],
+      : [...result.primitives, ...result.arrays, ...result.namespaces],
 
     isAllowedVariable,
-    enhancedVariables: filteredEnhancedVariables,
+    enhancedVariables,
   };
 }
