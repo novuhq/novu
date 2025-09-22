@@ -219,6 +219,13 @@ function isPropertyAllowed(schema: JSONSchemaDto | undefined, propertyPath: stri
       return true;
     }
 
+    // Check if additionalProperties is a schema object (for complex schemas)
+    if (typeof additionalProperties === 'object' && additionalProperties !== null) {
+      // Set the current schema to the additionalProperties schema and continue validation
+      currentSchema = additionalProperties as JSONSchemaDto;
+      continue;
+    }
+
     return false;
   }
 

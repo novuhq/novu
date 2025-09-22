@@ -86,7 +86,11 @@ function getInputTypeFromSchema(schemaProperty: JSONSchemaDefinition | JSONSchem
 
 export function parseStepVariables(
   schema: JSONSchemaDefinition | JSONSchema7,
-  { digestStepId, isPayloadSchemaEnabled }: { digestStepId?: string; isPayloadSchemaEnabled?: boolean }
+  {
+    digestStepId,
+    isPayloadSchemaEnabled,
+    isContextVariablesEnabled,
+  }: { digestStepId?: string; isPayloadSchemaEnabled?: boolean; isContextVariablesEnabled?: boolean }
 ): EnhancedParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
@@ -164,6 +168,19 @@ export function parseStepVariables(
 
   extractProperties(schema);
 
+  // Helper function to check if a variable is a context variable
+  function isContextVariable(variableName: string): boolean {
+    return variableName === 'context' || variableName.startsWith('context.');
+  }
+
+  // Filter out context variables if the feature flag is disabled
+  function filterContextVariables<T extends { name: string }>(variables: T[]): T[] {
+    if (isContextVariablesEnabled) {
+      return variables;
+    }
+    return variables.filter((variable) => !isContextVariable(variable.name));
+  }
+
   function parseVariablePath(path: string): string[] | null {
     const parts = path
       .split(/\.|\[(\d+)\]/)
@@ -206,6 +223,7 @@ export function parseStepVariables(
 
     let currentObj: JSONSchemaDefinition | JSONSchema7 = schema;
 
+    // TODO: replace with AJV
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
 
@@ -225,11 +243,27 @@ export function parseStepVariables(
       if (typeof currentObj === 'boolean' || !('type' in currentObj)) return false;
 
       if (currentObj.type === 'object') {
-        if (!currentObj.properties || !(part in currentObj.properties)) {
+        // First check if the property exists in the defined properties
+        if (currentObj.properties && part in currentObj.properties) {
+          currentObj = currentObj.properties[part];
+        }
+        // If not found in properties, check if additionalProperties allows it
+        else if (currentObj.additionalProperties) {
+          if (typeof currentObj.additionalProperties === 'object') {
+            // additionalProperties is a schema object
+            currentObj = currentObj.additionalProperties;
+          } else if (currentObj.additionalProperties === true) {
+            // additionalProperties: true means any property is allowed
+            // Since we don't know the schema of the property, we allow the rest of the path
+            return true;
+          } else {
+            return false;
+          }
+        }
+        // If neither properties nor additionalProperties allow it, it's invalid
+        else {
           return false;
         }
-
-        currentObj = currentObj.properties[part];
       } else {
         return false;
       }
@@ -257,8 +291,17 @@ export function parseStepVariables(
     enhancedVariables.unshift(...digestVariables);
   }
 
+  // Apply context variable filtering to all variable collections
+  const filteredPrimitives = filterContextVariables(result.primitives);
+  const filteredArrays = filterContextVariables(result.arrays);
+  const filteredNamespaces = filterContextVariables(result.namespaces);
+  const filteredEnhancedVariables = filterContextVariables(enhancedVariables);
+
   return {
     ...result,
+    primitives: filteredPrimitives,
+    arrays: filteredArrays,
+    namespaces: filteredNamespaces,
 
     variables: digestStepId
       ? [
@@ -274,13 +317,13 @@ export function parseStepVariables(
               displayLabel,
             };
           }),
-          ...result.primitives,
-          ...result.arrays,
-          ...result.namespaces,
+          ...filteredPrimitives,
+          ...filteredArrays,
+          ...filteredNamespaces,
         ]
-      : [...result.primitives, ...result.arrays, ...result.namespaces],
+      : [...filteredPrimitives, ...filteredArrays, ...filteredNamespaces],
 
     isAllowedVariable,
-    enhancedVariables,
+    enhancedVariables: filteredEnhancedVariables,
   };
 }
