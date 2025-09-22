@@ -122,7 +122,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       environmentId,
       organizationId,
       workflowId,
-      locale
+      locale,
+      renderCommand.organization
     );
 
     // Step 2: Process body content (with translations applied before rendering)
@@ -372,6 +373,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         organizationId,
         workflowId,
         locale,
+        organization,
       });
       const parsedMaily = await this.parseMailyContentByLiquid(translatedMaily, escapedPayloadForJson);
 
@@ -385,6 +387,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         organizationId,
         workflowId,
         locale,
+        organization,
       });
 
       return processedHtml;
@@ -397,7 +400,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     environmentId: string,
     organizationId: string,
     workflowId?: string,
-    locale?: string
+    locale?: string,
+    organization?: any
   ): Promise<string> {
     return this.processStringTranslations({
       content: subject,
@@ -406,6 +410,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organizationId,
       workflowId,
       locale,
+      organization,
     });
   }
 
@@ -416,6 +421,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    organization,
   }: {
     mailyContent: MailyJSONContent;
     variables: FullPayloadForRender;
@@ -423,6 +429,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<MailyJSONContent> {
     const contentString = JSON.stringify(mailyContent);
     const translatedContent = await this.processStringTranslations({
@@ -432,6 +439,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organizationId,
       workflowId,
       locale,
+      organization,
     });
 
     return JSON.parse(translatedContent);
@@ -444,6 +452,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    organization,
   }: {
     text: string;
     variables: FullPayloadForRender;
@@ -451,6 +460,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<string> {
     try {
       const translatedText = await this.processStringTranslations({
@@ -460,6 +470,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         organizationId,
         workflowId,
         locale,
+        organization,
       });
 
       return await this.liquidEngine.parseAndRender(translatedText, variables);

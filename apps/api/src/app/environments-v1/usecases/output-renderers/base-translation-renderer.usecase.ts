@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { NotificationTemplateEntity, OrganizationEntity } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
 import { FullPayloadForRender } from './render-command';
 
@@ -21,6 +21,7 @@ export abstract class BaseTranslationRendererUsecase {
     workflowId,
     locale,
     dbWorkflow,
+    organization,
   }: {
     controls: Record<string, unknown>;
     variables: FullPayloadForRender;
@@ -29,6 +30,7 @@ export abstract class BaseTranslationRendererUsecase {
     workflowId?: string;
     locale?: string;
     dbWorkflow?: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
   }): Promise<Record<string, unknown>> {
     if (process.env.NOVU_ENTERPRISE !== 'true') {
       return controls;
@@ -42,6 +44,7 @@ export abstract class BaseTranslationRendererUsecase {
       workflowId,
       locale,
       dbWorkflow,
+      organization,
     }) as Promise<Record<string, unknown>>;
   }
 
@@ -52,6 +55,7 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    organization,
   }: {
     content: string;
     variables: FullPayloadForRender;
@@ -59,6 +63,7 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<string> {
     if (process.env.NOVU_ENTERPRISE !== 'true') {
       return content;
@@ -71,6 +76,7 @@ export abstract class BaseTranslationRendererUsecase {
       organizationId,
       workflowId,
       locale,
+      organization,
     }) as Promise<string>;
   }
 
@@ -82,6 +88,7 @@ export abstract class BaseTranslationRendererUsecase {
     workflowId,
     locale,
     dbWorkflow,
+    organization,
   }: {
     content: string | Record<string, unknown>;
     variables: FullPayloadForRender;
@@ -90,6 +97,7 @@ export abstract class BaseTranslationRendererUsecase {
     workflowId?: string;
     locale?: string;
     dbWorkflow?: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
   }): Promise<string | Record<string, unknown>> {
     if (!workflowId) {
       this.logger.error('Workflow ID is required for translation module', {
@@ -118,6 +126,7 @@ export abstract class BaseTranslationRendererUsecase {
         payload: variables,
         liquidEngine,
         dbWorkflow,
+        organization,
       });
 
       return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);

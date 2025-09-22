@@ -33,6 +33,7 @@ export class SmsOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organizationId: _organizationId,
       workflowId,
       locale: renderCommand.locale,
+      organization: renderCommand.organization,
     });
 
     return translatedControls as any;

@@ -1,10 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { emailControlSchema, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
+  CommunityOrganizationRepository,
   EnvironmentRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
@@ -34,6 +36,7 @@ export class ConstructFrameworkWorkflow {
     private logger: PinoLogger,
     private workflowsRepository: NotificationTemplateRepository,
     private environmentRepository: EnvironmentRepository,
+    private communityOrganizationRepository: CommunityOrganizationRepository,
     private inAppOutputRendererUseCase: InAppOutputRendererUsecase,
     private emailOutputRendererUseCase: EmailOutputRendererUsecase,
     private smsOutputRendererUseCase: SmsOutputRendererUsecase,
@@ -57,8 +60,11 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
+    const organization = (await this.communityOrganizationRepository.findById(dbWorkflow._organizationId)) || undefined;
+
     return this.constructFrameworkWorkflow({
       dbWorkflow,
+      organization,
       skipLayoutRendering: command.skipLayoutRendering,
       jobId: command.jobId,
     });
@@ -98,10 +104,12 @@ export class ConstructFrameworkWorkflow {
   @Instrument()
   private constructFrameworkWorkflow({
     dbWorkflow,
+    organization,
     skipLayoutRendering,
     jobId,
   }: {
     dbWorkflow: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
     skipLayoutRendering?: boolean;
     jobId?: string;
   }): Workflow {
@@ -120,6 +128,7 @@ export class ConstructFrameworkWorkflow {
             staticStep,
             fullPayloadForRender,
             dbWorkflow,
+            organization,
             locale: subscriber.locale ?? undefined,
             skipLayoutRendering,
             jobId,
@@ -151,6 +160,7 @@ export class ConstructFrameworkWorkflow {
     staticStep,
     fullPayloadForRender,
     dbWorkflow,
+    organization,
     locale,
     skipLayoutRendering,
     jobId,
@@ -159,6 +169,7 @@ export class ConstructFrameworkWorkflow {
     staticStep: NotificationStepEntity;
     fullPayloadForRender: FullPayloadForRender;
     dbWorkflow: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
     locale?: string;
     skipLayoutRendering?: boolean;
     jobId?: string;
@@ -191,6 +202,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -207,6 +219,7 @@ export class ConstructFrameworkWorkflow {
               environmentId: dbWorkflow._environmentId,
               organizationId: dbWorkflow._organizationId,
               workflowId: dbWorkflow._id,
+              organization,
               locale,
               skipLayoutRendering,
               jobId,
@@ -223,6 +236,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -236,6 +250,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -249,6 +264,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },

@@ -33,6 +33,7 @@ export class InAppOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organizationId: _organizationId,
       workflowId,
       locale: renderCommand.locale,
+      organization: renderCommand.organization,
     });
 
     if (disableOutputSanitization) {
