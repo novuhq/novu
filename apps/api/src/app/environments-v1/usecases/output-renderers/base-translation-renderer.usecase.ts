@@ -28,12 +28,6 @@ export abstract class BaseTranslationRendererUsecase {
     workflowId?: string;
     locale?: string;
   }): Promise<Record<string, unknown>> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
-
-    if (!isTranslationEnabled) {
-      return controls;
-    }
-
     return this.executeTranslation({
       content: controls,
       variables,
@@ -59,12 +53,6 @@ export abstract class BaseTranslationRendererUsecase {
     workflowId?: string;
     locale?: string;
   }): Promise<string> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
-
-    if (!isTranslationEnabled) {
-      return content;
-    }
-
     return this.executeTranslation({
       content,
       variables,
@@ -73,14 +61,6 @@ export abstract class BaseTranslationRendererUsecase {
       workflowId,
       locale,
     }) as Promise<string>;
-  }
-
-  private async isTranslationFeatureEnabled(organizationId: string): Promise<boolean> {
-    return await this.featureFlagsService.getFlag({
-      organization: { _id: organizationId },
-      key: FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED,
-      defaultValue: false,
-    });
   }
 
   private async executeTranslation({
@@ -99,7 +79,14 @@ export abstract class BaseTranslationRendererUsecase {
     locale?: string;
   }): Promise<string | Record<string, unknown>> {
     if (!workflowId) {
-      return content;
+      this.logger.error('Workflow ID is required for translation module', {
+        workflowId,
+        organizationId,
+        environmentId,
+        locale,
+      });
+
+      throw new Error('Workflow ID is required for translation module');
     }
 
     try {
