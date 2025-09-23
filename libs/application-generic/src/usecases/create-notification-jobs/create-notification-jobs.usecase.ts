@@ -263,7 +263,7 @@ export class CreateNotificationJobs {
     // TODO: Review this for workflows with more than one digest as this will return the first element found
     const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
 
-    if (digestStep?.metadata?.type) {
+    if (digestStep?.metadata && 'type' in digestStep.metadata) {
       return await this.digestFilterSteps.execute(
         DigestFilterStepsCommand.create({
           _subscriberId: command.subscriber._id,

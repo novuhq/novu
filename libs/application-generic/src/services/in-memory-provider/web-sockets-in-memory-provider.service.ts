@@ -56,7 +56,7 @@ export class WebSocketsInMemoryProviderService {
   }
 
   public getClientStatus(): string {
-    return this.getClient().status;
+    return this.getClient()?.status || 'disconnected';
   }
 
   public getTtl(): number {

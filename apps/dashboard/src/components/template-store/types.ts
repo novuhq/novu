@@ -4,6 +4,14 @@ export type IWorkflowSuggestion = {
   id: string;
   name: string;
   description: string;
-  category: 'events' | 'authentication' | 'social' | 'operational' | 'billing' | 'security';
+  tags: string[];
   workflowDefinition: CreateWorkflowDto;
+};
+
+export type TemplateCategory = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  bgColor: string;
+  tag: string;
 };

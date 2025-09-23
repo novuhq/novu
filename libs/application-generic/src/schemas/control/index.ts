@@ -6,3 +6,4 @@ export * from './in-app-control.schema';
 export * from './layout-control.schema';
 export * from './push-control.schema';
 export * from './sms-control.schema';
+export * from './throttle-control.schema';

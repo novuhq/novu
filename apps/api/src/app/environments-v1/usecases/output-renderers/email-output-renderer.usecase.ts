@@ -6,20 +6,18 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   EmailControlType,
-  FeatureFlagsService,
   InstrumentUsecase,
   LayoutControlType,
   PinoLogger,
   sanitizeHTML,
 } from '@novu/application-generic';
-import { ControlValuesEntity, ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
+import { ControlValuesEntity, ControlValuesRepository, JobEntity, JobRepository, OrganizationEntity } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
   EmailRenderOutput,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
   LAYOUT_CONTENT_VARIABLE,
 } from '@novu/shared';
 import { Liquid } from 'liquidjs';
@@ -72,13 +70,12 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     private getOrganizationSettings: GetOrganizationSettings,
     protected moduleRef: ModuleRef,
     protected logger: PinoLogger,
-    protected featureFlagsService: FeatureFlagsService,
     private controlValuesRepository: ControlValuesRepository,
     private getLayoutUseCase: GetLayoutUseCase,
     private jobRepository: JobRepository,
     private createExecutionDetails: CreateExecutionDetails
   ) {
-    super(moduleRef, logger, featureFlagsService);
+    super(moduleRef, logger);
     this.liquidEngine = createLiquidEngine();
   }
 
@@ -113,6 +110,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       skipLayoutRendering,
       jobId,
       stepId,
+      organization,
     } = renderCommand;
 
     // Step 1: Apply translations to subject (already liquid-interpolated)
@@ -122,7 +120,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       environmentId,
       organizationId,
       workflowId,
-      locale
+      locale,
+      organization
     );
 
     // Step 2: Process body content (with translations applied before rendering)
@@ -137,6 +136,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       skipLayoutRendering,
       jobId,
       stepId,
+      organization,
     });
 
     // Step 3: Add Novu branding
@@ -206,6 +206,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     skipLayoutRendering,
     jobId,
     stepId,
+    organization,
   }: {
     body: string;
     layoutId?: string | null;
@@ -217,6 +218,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     skipLayoutRendering?: boolean;
     jobId?: string;
     stepId: string;
+    organization?: OrganizationEntity;
   }): Promise<string> {
     let job: JobEntity | null = null;
     let overrideLayoutId: string | null | undefined;
@@ -300,6 +302,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       workflowId,
       locale,
       noHtmlWrappingTags: !!layoutControlsEntity,
+      organization,
     });
 
     const cleanedStepBodyHtml = stepBodyHtml
@@ -352,6 +355,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     workflowId,
     locale,
     noHtmlWrappingTags,
+    organization,
   }: {
     body: string;
     payload: FullPayloadForRender;
@@ -360,6 +364,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     workflowId?: string;
     locale?: string;
     noHtmlWrappingTags?: boolean;
+    organization?: OrganizationEntity;
   }): Promise<string> {
     if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
       const escapedPayloadForJson = this.deepEscapePayloadStrings(payload);
@@ -372,6 +377,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         organizationId,
         workflowId,
         locale,
+        organization,
       });
       const parsedMaily = await this.parseMailyContentByLiquid(translatedMaily, escapedPayloadForJson);
 
@@ -385,6 +391,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         organizationId,
         workflowId,
         locale,
+        organization,
       });
 
       return processedHtml;
@@ -397,7 +404,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     environmentId: string,
     organizationId: string,
     workflowId?: string,
-    locale?: string
+    locale?: string,
+    organization?: OrganizationEntity
   ): Promise<string> {
     return this.processStringTranslations({
       content: subject,
@@ -406,6 +414,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organizationId,
       workflowId,
       locale,
+      organization,
     });
   }
 
@@ -416,6 +425,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    organization,
   }: {
     mailyContent: MailyJSONContent;
     variables: FullPayloadForRender;
@@ -423,24 +433,20 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<MailyJSONContent> {
-    try {
-      const contentString = JSON.stringify(mailyContent);
-      const translatedContent = await this.processStringTranslations({
-        content: contentString,
-        variables,
-        environmentId,
-        organizationId,
-        workflowId,
-        locale,
-      });
+    const contentString = JSON.stringify(mailyContent);
+    const translatedContent = await this.processStringTranslations({
+      content: contentString,
+      variables,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+      organization,
+    });
 
-      return JSON.parse(translatedContent);
-    } catch (error) {
-      this.logger.error('Maily translation processing failed, falling back to original content', error);
-
-      return mailyContent;
-    }
+    return JSON.parse(translatedContent);
   }
 
   private async processTextTranslations({
@@ -450,6 +456,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    organization,
   }: {
     text: string;
     variables: FullPayloadForRender;
@@ -457,23 +464,19 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<string> {
-    try {
-      const translatedText = await this.processStringTranslations({
-        content: text,
-        variables,
-        environmentId,
-        organizationId,
-        workflowId,
-        locale,
-      });
+    const translatedText = await this.processStringTranslations({
+      content: text,
+      variables,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+      organization,
+    });
 
-      return await this.liquidEngine.parseAndRender(translatedText, variables);
-    } catch (error) {
-      this.logger.error('Text translation processing failed, falling back to liquid processing', error);
-
-      return await this.liquidEngine.parseAndRender(text, variables);
-    }
+    return await this.liquidEngine.parseAndRender(translatedText, variables);
   }
 
   private async parseMailyContentByLiquid(

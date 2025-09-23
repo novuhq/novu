@@ -49,6 +49,7 @@ import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-co
 import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
+import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
@@ -58,6 +59,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
   [StepTypeEnum.DELAY]: DelayControlValues,
   [StepTypeEnum.DIGEST]: DigestControlValues,
+  [StepTypeEnum.THROTTLE]: ThrottleControlValues,
   [StepTypeEnum.IN_APP]: () => null,
   [StepTypeEnum.EMAIL]: () => null,
   [StepTypeEnum.SMS]: () => null,
@@ -77,6 +79,7 @@ const STEP_TYPE_TO_PREVIEW: Record<StepTypeEnum, ((props: HTMLAttributes<HTMLDiv
   [StepTypeEnum.TRIGGER]: null,
   [StepTypeEnum.DIGEST]: null,
   [StepTypeEnum.DELAY]: null,
+  [StepTypeEnum.THROTTLE]: null,
 };
 
 type ConfigureStepFormProps = {
@@ -98,6 +101,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.EMAIL,
     StepTypeEnum.DIGEST,
     StepTypeEnum.DELAY,
+    StepTypeEnum.THROTTLE,
   ];
 
   const isSupportedStep = supportedStepTypes.includes(step.type);

@@ -18,6 +18,9 @@ on:
         required: true
         type: boolean
         default: false
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
         
 jobs:
   manual_post_release:

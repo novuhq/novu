@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
+  castUnitToDigestUnitEnum,
   DigestUnitEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
@@ -31,7 +32,7 @@ export class TierRestrictionsValidateUsecase {
   async execute(command: TierRestrictionsValidateCommand): Promise<TierRestrictionsValidateResponse> {
     const { stepType } = command;
 
-    if (!isDigestOrDelay(stepType)) {
+    if (!isDigestDelayOrThrottle(stepType)) {
       return [];
     }
 
@@ -41,8 +42,12 @@ export class TierRestrictionsValidateUsecase {
       throw new Error(`Organization not found: ${command.organizationId}`);
     }
 
-    if (isCronExpression(command.cron)) {
-      const maxDelayMs = await this.getMaxDelayInMs(command, organization, stepType);
+    if (stepType !== StepTypeEnum.THROTTLE && isCronExpression(command.cron)) {
+      const maxDelayMs = await this.getMaxDelayInMs(
+        command,
+        organization,
+        stepType as StepTypeEnum.DELAY | StepTypeEnum.DIGEST
+      );
 
       if (this.isCronDeltaDeferDurationExceededTier(command.cron, maxDelayMs)) {
         return [
@@ -59,17 +64,36 @@ export class TierRestrictionsValidateUsecase {
       return [];
     }
 
-    if (isRegularDeferAction(command)) {
+    if (stepType !== StepTypeEnum.THROTTLE && isRegularDeferAction(command)) {
       const deferDurationMs = calculateDeferDuration(command);
 
       if (deferDurationMs < MIN_VALIDATION_LIMITS.DEFER_DURATION_MS) {
         return [];
       }
 
-      const maxDelayMs = await this.getMaxDelayInMs(command, organization, stepType);
+      const maxDelayMs = await this.getMaxDelayInMs(
+        command,
+        organization,
+        stepType as StepTypeEnum.DELAY | StepTypeEnum.DIGEST
+      );
 
       const amountIssue = buildIssue(deferDurationMs, maxDelayMs, ErrorEnum.TIER_LIMIT_EXCEEDED, 'amount');
       const unitIssue = buildIssue(deferDurationMs, maxDelayMs, ErrorEnum.TIER_LIMIT_EXCEEDED, 'unit');
+
+      return [amountIssue, unitIssue].filter(Boolean);
+    }
+
+    if (stepType === StepTypeEnum.THROTTLE && isRegularThrottleAction(command)) {
+      const throttleDurationMs = calculateThrottleDuration(command);
+
+      if (throttleDurationMs < MIN_VALIDATION_LIMITS.DEFER_DURATION_MS) {
+        return [];
+      }
+
+      const maxThrottleMs = await this.getMaxThrottleInMs(command, organization);
+
+      const amountIssue = buildIssue(throttleDurationMs, maxThrottleMs, ErrorEnum.TIER_LIMIT_EXCEEDED, 'amount');
+      const unitIssue = buildIssue(throttleDurationMs, maxThrottleMs, ErrorEnum.TIER_LIMIT_EXCEEDED, 'unit');
 
       return [amountIssue, unitIssue].filter(Boolean);
     }
@@ -99,6 +123,29 @@ export class TierRestrictionsValidateUsecase {
       stepType === StepTypeEnum.DELAY
         ? FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION
         : FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME,
+      organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      true
+    );
+
+    return Math.min(systemLimit, tierLimit);
+  }
+
+  private async getMaxThrottleInMs(command: TierRestrictionsValidateCommand, organization: OrganizationEntity) {
+    const systemLimit = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.MAX_DEFER_DURATION_IN_MS_NUMBER,
+      defaultValue: SYSTEM_LIMITS.DEFER_DURATION_MS,
+      environment: { _id: command.environmentId },
+      organization,
+    });
+
+    // If the system limit is not the default, we need to use it as the absolute limit for special cases instead of the tier limit
+    const isSpecialLimit = systemLimit !== SYSTEM_LIMITS.DEFER_DURATION_MS;
+    if (isSpecialLimit) {
+      return systemLimit;
+    }
+
+    const tierLimit = getFeatureForTierAsNumber(
+      FeatureNameEnum.PLATFORM_MAX_THROTTLE_WINDOW_TIME,
       organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
       true
     );
@@ -209,6 +256,25 @@ function msToDays(ms: number): number {
   return Math.floor(ms / (1000 * 60 * 60 * 24));
 }
 
-function isDigestOrDelay(stepType: StepTypeEnum): stepType is StepTypeEnum.DIGEST | StepTypeEnum.DELAY {
-  return [StepTypeEnum.DIGEST, StepTypeEnum.DELAY].includes(stepType);
+function isDigestDelayOrThrottle(
+  stepType: StepTypeEnum
+): stepType is StepTypeEnum.DIGEST | StepTypeEnum.DELAY | StepTypeEnum.THROTTLE {
+  return [StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.THROTTLE].includes(stepType);
+}
+
+function isRegularThrottleAction(command: TierRestrictionsValidateCommand) {
+  return command.amount && command.unit && !isCronExpression(command.cron);
+}
+
+function calculateThrottleDuration(command: TierRestrictionsValidateCommand): number | null {
+  if (!command.amount || !command.unit) {
+    return null;
+  }
+
+  const digestUnit = castUnitToDigestUnitEnum(command.unit);
+  if (!digestUnit) {
+    return null;
+  }
+
+  return calculateMilliseconds(command.amount, digestUnit);
 }

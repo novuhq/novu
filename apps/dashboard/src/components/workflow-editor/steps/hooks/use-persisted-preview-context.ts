@@ -1,14 +1,18 @@
+import { ContextPayload } from '@novu/shared';
 import { useCallback, useEffect, useRef } from 'react';
 import { ParsedData, PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
 import {
   cleanupExpiredPreviewData,
+  clearContextData,
   clearPayloadData,
   clearPreviewContextData,
   clearSubscriberData,
+  loadContextData,
   loadPayloadData,
   loadPreviewContextData,
   loadSubscriberData,
   mergePreviewContextData,
+  saveContextData,
   savePayloadData,
   savePreviewContextData,
   saveSubscriberData,
@@ -93,6 +97,24 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     clearSubscriberData(workflowId, environmentId);
   };
 
+  const loadPersistedContext = (): ContextPayload | null => {
+    if (!workflowId || !environmentId) return null;
+
+    return loadContextData(workflowId, environmentId);
+  };
+
+  const savePersistedContext = (context: ContextPayload) => {
+    if (!workflowId || !environmentId) return;
+
+    saveContextData(workflowId, environmentId, context);
+  };
+
+  const clearPersistedContext = () => {
+    if (!workflowId || !environmentId) return;
+
+    clearContextData(workflowId, environmentId);
+  };
+
   const mergeWithDefaults = (persistedData: ParsedData, serverDefaults: ParsedData): ParsedData => {
     return mergePreviewContextData(persistedData, serverDefaults);
   };
@@ -116,6 +138,9 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     loadPersistedSubscriber,
     savePersistedSubscriber,
     clearPersistedSubscriber,
+    loadPersistedContext,
+    savePersistedContext,
+    clearPersistedContext,
     mergeWithDefaults,
   };
 }

@@ -1,15 +1,22 @@
-import { ISubscriberResponseDto } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ISubscriberResponseDto } from '@novu/shared';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { type ContextResponseDto } from '@/api/contexts';
 import { Accordion } from '@/components/primitives/accordion';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { StepTypeEnum } from '@/utils/enums';
 import { usePreviewContext } from '../../../hooks/use-preview-context';
 import { PayloadSchemaDrawer } from '../payload-schema-drawer';
-import { PreviewPayloadSection, PreviewStepResultsSection, PreviewSubscriberSection } from './components';
+import {
+  PreviewContextSection,
+  PreviewPayloadSection,
+  PreviewStepResultsSection,
+  PreviewSubscriberSection,
+} from './components';
 import { DEFAULT_ACCORDION_VALUES } from './constants/preview-context.constants';
 import { usePersistedPreviewContext } from './hooks/use-persisted-preview-context';
 import { usePreviewDataInitialization } from './hooks/use-preview-data-initialization';
@@ -90,6 +97,7 @@ export function PreviewContextPanel({
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const { isPayloadSchemaDrawerOpen, highlightedVariableKey, openSchemaDrawer, closeSchemaDrawer } =
     useCreateVariable();
 
@@ -109,6 +117,9 @@ export function PreviewContextPanel({
     loadPersistedSubscriber,
     savePersistedSubscriber,
     clearPersistedSubscriber,
+    loadPersistedContext,
+    savePersistedContext,
+    clearPersistedContext,
   } = usePersistedPreviewContext({
     workflowId: workflow?.workflowId || '',
     stepId: currentStepId || '',
@@ -127,16 +138,21 @@ export function PreviewContextPanel({
       subscriber: null,
       payload: null,
       steps: null,
+      context: null,
     },
     parseJsonValue,
     onDataPersist: (data: ParsedData) => {
-      // Persist both payload and subscriber data
+      // Persist payload, subscriber and context data
       if (data.payload !== undefined) {
         savePersistedPayload(data.payload);
       }
 
       if (data.subscriber !== undefined) {
         savePersistedSubscriber(data.subscriber);
+      }
+
+      if (data.context !== undefined) {
+        savePersistedContext(data.context);
       }
     },
   });
@@ -152,6 +168,7 @@ export function PreviewContextPanel({
     isPayloadSchemaEnabled,
     loadPersistedPayload,
     loadPersistedSubscriber,
+    loadPersistedContext,
   });
 
   // Initialize default subscriber data if none exists (after data initialization)
@@ -187,6 +204,22 @@ export function PreviewContextPanel({
     [updateJsonSection, selectedLocale, onLocaleChange]
   );
 
+  const handleContextSelection = useCallback(
+    (context: ContextResponseDto) => {
+      // Add the selected context to the ContextPayload by its type
+      const currentContext = localParsedData.context || {};
+      const updatedContext = {
+        ...currentContext,
+        [context.type]: {
+          id: context.id,
+          data: context.data || {},
+        },
+      };
+      updateJsonSection('context', updatedContext);
+    },
+    [updateJsonSection, localParsedData.context]
+  );
+
   const handleClearPersistedPayload = () => {
     clearPersistedPayload();
 
@@ -200,6 +233,11 @@ export function PreviewContextPanel({
   const handleClearPersistedSubscriber = () => {
     clearPersistedSubscriber();
     updateJsonSection('subscriber', createDefaultSubscriberData());
+  };
+
+  const handleClearPersistedContext = () => {
+    clearPersistedContext();
+    updateJsonSection('context', null);
   };
 
   const canClearPersisted = !!(workflow?.workflowId && currentStepId && currentEnvironment?._id);
@@ -225,6 +263,17 @@ export function PreviewContextPanel({
           onSubscriberSelect={handleSubscriberSelection}
           onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
         />
+
+        {isContextEnabled && (
+          <PreviewContextSection
+            error={errors.context}
+            context={localParsedData.context}
+            workflow={workflow}
+            onUpdate={updateJsonSection}
+            onContextSelect={handleContextSelection}
+            onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
+          />
+        )}
 
         <PreviewStepResultsSection
           errors={errors}

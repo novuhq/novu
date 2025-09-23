@@ -30,7 +30,7 @@ export class ComputeJobWaitDurationService {
       throw new BadRequestException(`Step metadata not found`);
     }
 
-    const digestType = stepMetadata.type;
+    const digestType = 'type' in stepMetadata ? stepMetadata.type : null;
 
     if (digestType === DelayTypeEnum.SCHEDULED) {
       const { delayPath } = stepMetadata as IDelayScheduledMetadata;
@@ -47,7 +47,13 @@ export class ComputeJobWaitDurationService {
       }
 
       return delay;
-    } else if (isRegularDigest(digestType)) {
+    } else if (
+      digestType &&
+      (digestType === DigestTypeEnum.REGULAR ||
+        digestType === DigestTypeEnum.BACKOFF ||
+        digestType === DelayTypeEnum.REGULAR) &&
+      isRegularDigest(digestType)
+    ) {
       if (this.isValidDelayOverride(overrides)) {
         return this.toMilliseconds(overrides.delay.amount as number, overrides.delay.unit as DigestUnitEnum);
       }

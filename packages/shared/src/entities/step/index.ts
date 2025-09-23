@@ -124,8 +124,21 @@ export interface IDelayScheduledMetadata {
   delayPath: string;
 }
 
+export interface IThrottleMetadata {
+  type?: 'fixed' | 'dynamic';
+  // Fixed throttle fields
+  amount?: number;
+  unit?: DigestUnitEnum;
+  // Dynamic throttle fields
+  dynamicKey?: string;
+  // Common fields
+  threshold?: number;
+  throttleKey?: string;
+}
+
 export type IWorkflowStepMetadata =
   | IDigestRegularMetadata
   | IDigestTimedMetadata
   | IDelayRegularMetadata
-  | IDelayScheduledMetadata;
+  | IDelayScheduledMetadata
+  | IThrottleMetadata;

@@ -8,6 +8,7 @@ export type QuickTemplate = {
   name: string;
   description: string;
   steps: StepTypeEnum[];
+  tags: string[];
 };
 
 const typeMap: Record<string, StepTypeEnum> = {
@@ -104,6 +105,7 @@ function mapApiWorkflowsToQuickTemplates(items: unknown[]): QuickTemplate[] {
     steps?: Array<{ type?: unknown }>;
     name?: string;
     description?: string;
+    tags?: string[];
   };
 
   return (Array.isArray(items) ? items : []).map((rawItem) => {
@@ -111,12 +113,14 @@ function mapApiWorkflowsToQuickTemplates(items: unknown[]): QuickTemplate[] {
     const workflowId = rawWorkflow.workflowId || rawWorkflow.slug || rawWorkflow.id || rawWorkflow._id || '';
     const rawSteps = Array.isArray(rawWorkflow.steps) ? (rawWorkflow.steps as Array<{ type?: unknown }>) : [];
     const steps = rawSteps.map((rawStep) => normalizeStepType(rawStep?.type as unknown));
+    const tags = Array.isArray(rawWorkflow.tags) ? rawWorkflow.tags : [];
 
     return {
       workflowId: String(workflowId || 'workflow'),
       name: rawWorkflow.name || 'Untitled',
       description: rawWorkflow.description || '',
       steps,
+      tags,
     };
   });
 }
@@ -146,12 +150,12 @@ function mapApiWorkflowsToSuggestions(items: unknown[]): IWorkflowSuggestion[] {
     const rawSteps = Array.isArray(rawWorkflow.steps) ? rawWorkflow.steps : [];
 
     const steps: StepCreateDto[] = rawSteps.map((rawStep, index) => {
-      const raw = rawStep as unknown as {
+      const rawStepData = rawStep as unknown as {
         controlValues?: Record<string, unknown>;
         controls?: { values?: Record<string, unknown> };
       };
       const type = normalizeStepType(rawStep?.type);
-      const baseValues = raw?.controlValues ?? raw?.controls?.values ?? {};
+      const baseValues = rawStepData?.controlValues ?? rawStepData?.controls?.values ?? {};
       const controlValues = normalizeControlValuesForType(type, baseValues);
 
       return {
@@ -161,16 +165,7 @@ function mapApiWorkflowsToSuggestions(items: unknown[]): IWorkflowSuggestion[] {
       };
     });
 
-    const categoryOrder: IWorkflowSuggestion['category'][] = [
-      'authentication',
-      'billing',
-      'operational',
-      'security',
-      'social',
-      'events',
-    ];
-    const tagCategory =
-      categoryOrder.find((category) => (rawWorkflow.tags || []).includes(category)) || 'authentication';
+    const workflowTags = Array.isArray(rawWorkflow.tags) ? rawWorkflow.tags : [];
 
     const rawPayloadSchema =
       (rawWorkflow as { payloadSchema?: unknown }).payloadSchema ??
@@ -188,19 +183,25 @@ function mapApiWorkflowsToSuggestions(items: unknown[]): IWorkflowSuggestion[] {
       id: String(rawWorkflow.id ?? workflowId ?? Math.random()),
       name: rawWorkflow.name || 'Untitled',
       description: rawWorkflow.description || '',
-      category: tagCategory,
+      tags: workflowTags,
       workflowDefinition: {
         name: rawWorkflow.name || 'Untitled',
         description: rawWorkflow.description || '',
         workflowId: String(workflowId || 'workflow'),
         steps,
-        tags: Array.isArray(rawWorkflow.tags) ? rawWorkflow.tags : [],
+        tags: workflowTags,
         active: typeof rawWorkflow.active === 'boolean' ? rawWorkflow.active : rawWorkflow.status === 'ACTIVE',
         __source: WorkflowCreationSourceEnum.TEMPLATE_STORE,
         payloadSchema,
       },
     };
   });
+}
+
+// Helper function to extract unique tags from all suggestions
+function extractUniqueTags(suggestions: IWorkflowSuggestion[]): string[] {
+  const allTags = suggestions.flatMap((suggestion) => suggestion.tags);
+  return Array.from(new Set(allTags)).sort();
 }
 
 export function useTemplateStore() {
@@ -216,20 +217,21 @@ export function useTemplateStore() {
     const load = async () => {
       try {
         const templatesApiUrl = import.meta.env.VITE_TEMPLATES_API_URL || 'https://templates-novuhq.vercel.app';
-        const res = await fetch(`${templatesApiUrl}/api/workflows?refresh=1`, {
-          headers: { Accept: 'application/json' },
+        const requestUrl = `${templatesApiUrl}/api/workflows?refresh=1`;
+        const response = await fetch(requestUrl, {
+          cache: 'no-store',
           signal: controller.signal,
         });
 
         if (!isMounted) return;
 
-        if (!res.ok) {
+        if (!response.ok) {
           setSuggestions([]);
           setQuickTemplates([]);
           return;
         }
 
-        const body = await res.json();
+        const body = await response.json();
         if (!isMounted) return;
 
         if (!body) {
@@ -241,12 +243,17 @@ export function useTemplateStore() {
         const items = extractApiItems(body);
 
         if (isMounted) {
-          setSuggestions(mapApiWorkflowsToSuggestions(items));
-          setQuickTemplates(mapApiWorkflowsToQuickTemplates(items));
+          const suggestions = mapApiWorkflowsToSuggestions(items);
+          const quickTemplates = mapApiWorkflowsToQuickTemplates(items);
+
+          setSuggestions(suggestions);
+          setQuickTemplates(quickTemplates);
         }
       } catch (error) {
-        // Only handle non-abort errors and only if component is still mounted
-        if (isMounted && error instanceof Error && error.name !== 'AbortError') {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        if (isMounted) {
           setSuggestions([]);
           setQuickTemplates([]);
         }
@@ -263,9 +270,12 @@ export function useTemplateStore() {
     };
   }, []);
 
+  const availableTags = extractUniqueTags(suggestions);
+
   return {
     suggestions,
     quickTemplates,
     isLoading,
+    availableTags,
   };
 }

@@ -448,6 +448,7 @@ export class Client {
           environment: {},
           controls: {},
           subscriber: event.subscriber,
+          context: event.context,
           step: {
             email: this.executeStepFactory(validatedEvent, setResult, hasResult),
             sms: this.executeStepFactory(validatedEvent, setResult, hasResult),
@@ -457,6 +458,7 @@ export class Client {
             push: this.executeStepFactory(validatedEvent, setResult, hasResult),
             chat: this.executeStepFactory(validatedEvent, setResult, hasResult),
             custom: this.executeStepFactory(validatedEvent, setResult, hasResult),
+            throttle: this.executeStepFactory(validatedEvent, setResult, hasResult),
           },
         }),
       ]);
@@ -691,6 +693,7 @@ export class Client {
         },
         payload: event.payload,
         subscriber: event.subscriber,
+        context: event.context,
         steps: buildSteps(event.state),
         t: {}, // Empty object so t.* properties are undefined and trigger default filters
       };

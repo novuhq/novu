@@ -105,7 +105,7 @@ export const WorkflowsPage = () => {
     [setSearchParams]
   );
 
-  const debouncedSearch = useDebounce((value: string) => updateSearchParam(value), 500);
+  const debouncedSearch = useDebounce((searchQuery: string) => updateSearchParam(searchQuery), 500);
 
   const clearFilters = () => {
     form.reset({ query: '', tags: [], status: [] });
@@ -139,8 +139,16 @@ export const WorkflowsPage = () => {
   const { quickTemplates, isLoading: isLoadingQuickStart } = useTemplateStore();
 
   const quickStartTemplates = useMemo(() => {
-    const popular = selectPopularByIdStrict(quickTemplates, (template) => template.workflowId, 4);
-    return popular.length ? popular : quickTemplates.slice(0, 4);
+    const popularByTag = quickTemplates
+      .filter((template) => Array.isArray(template.tags) && template.tags.includes('popular'))
+      .slice(0, 4);
+
+    if (popularByTag.length > 0) {
+      return popularByTag;
+    }
+
+    const popularByLegacy = selectPopularByIdStrict(quickTemplates, (template) => template.workflowId, 4);
+    return popularByLegacy.length ? popularByLegacy : quickTemplates.slice(0, 4);
   }, [quickTemplates]);
 
   const offset = parseInt(searchParams.get('offset') || '0', 10);

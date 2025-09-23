@@ -6,8 +6,24 @@ import { useEnvironment } from '../context/environment/hooks';
 export const useTriggerWorkflow = (environmentHint?: IEnvironment) => {
   const { currentEnvironment } = useEnvironment();
   const { mutateAsync, isPending, error, data } = useMutation({
-    mutationFn: async ({ name, to, payload }: { name: string; to: unknown; payload: unknown }) =>
-      triggerWorkflow({ environment: environmentHint ?? currentEnvironment!, name, to, payload }),
+    mutationFn: async ({
+      name,
+      to,
+      payload,
+      context,
+    }: {
+      name: string;
+      to: unknown;
+      payload: unknown;
+      context?: unknown;
+    }) =>
+      triggerWorkflow({
+        environment: environmentHint ?? currentEnvironment ?? ({} as IEnvironment),
+        name,
+        to,
+        payload,
+        context,
+      }),
   });
 
   return {

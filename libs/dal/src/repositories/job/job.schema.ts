@@ -31,7 +31,7 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.Mixed,
     },
     contextKeys: {
-      type: Schema.Types.Array,
+      type: [Schema.Types.String],
       default: undefined,
     },
     step: {

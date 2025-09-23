@@ -6,6 +6,7 @@ export enum SendMessageStatus {
   SUCCESS = 'success',
   FAILED = 'failed',
   SKIPPED = 'skipped',
+  THROTTLED = 'throttled',
 }
 
 export type SendMessageResultPassed = {
@@ -28,7 +29,17 @@ export type SendMessageResultFailed = {
   job?: JobEntity;
 };
 
-export type SendMessageResult = SendMessageResultPassed | SendMessageResultSkipped | SendMessageResultFailed;
+export type SendMessageResultThrottled = {
+  status: SendMessageStatus.THROTTLED;
+  extraData?: string;
+  job?: JobEntity;
+};
+
+export type SendMessageResult =
+  | SendMessageResultPassed
+  | SendMessageResultSkipped
+  | SendMessageResultFailed
+  | SendMessageResultThrottled;
 
 export abstract class SendMessageType {
   protected constructor(

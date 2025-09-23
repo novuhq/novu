@@ -1,4 +1,4 @@
-import { ContextData, ContextId, ContextType, createContextKey } from '@novu/shared';
+import { ContextData, ContextId, ContextKey, ContextType, createContextKey } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepository } from '../base-repository';
@@ -53,5 +53,19 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
 
       return this.create(newContext);
     }
+  }
+
+  async findByKeys(environmentId: string, organizationId: string, contextKeys: ContextKey[]): Promise<ContextEntity[]> {
+    if (contextKeys.length === 0) {
+      return [];
+    }
+
+    const query = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      key: { $in: contextKeys },
+    };
+
+    return this.find(query);
   }
 }

@@ -1,4 +1,5 @@
 import {
+  CHArray,
   CHDateTime64,
   CHLowCardinality,
   CHNullable,
@@ -21,7 +22,6 @@ const schemaDefinition = {
   user_id: { type: CHNullable(CHString()) },
   external_subscriber_id: { type: CHNullable(CHString()) },
   subscriber_id: { type: CHNullable(CHString()) },
-  // TODO: add context_id
 
   // Trace metadata
   event_type: { type: CHLowCardinality(CHString()) }, // e.g., "message:seen", "step_run:start", "step_run:end"
@@ -112,6 +112,9 @@ export type EventType =
   | 'delay_completed'
   | 'delay_misconfigured'
   | 'delay_limit_exceeded'
+  | 'step_throttled'
+  | 'throttle_limit_exceeded'
+  | 'throttle_window_in_past'
   | 'bridge_response_received'
   | 'bridge_execution_failed'
   | 'bridge_execution_skipped'

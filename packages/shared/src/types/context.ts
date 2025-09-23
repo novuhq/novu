@@ -32,7 +32,7 @@ export const CONTEXT_IDENTIFIER_REGEX = /^[a-zA-Z0-9_-]+$/;
 export type ContextValue =
   | string
   | {
-      id: string;
+      id: ContextId;
       data?: ContextData;
     };
 

@@ -1,5 +1,11 @@
-import { ChatProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, IChatOptions, IChatProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  IChatOptions,
+  IChatProvider,
+  ISendMessageSuccessResponse,
+  isChannelDataOfType,
+} from '@novu/stateless';
 import Axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -33,7 +39,13 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
     options: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const payload = this.transform(bridgeProviderData, this.defineMessagePayload(options)).body;
+    if (!isChannelDataOfType(options.channelData, ENDPOINT_TYPES.PHONE)) {
+      throw new Error('Invalid channel data for WhatsappBusiness provider');
+    }
+
+    const { phoneNumber } = options.channelData.endpoint;
+
+    const payload = this.transform(bridgeProviderData, this.defineMessagePayload(options, phoneNumber)).body;
 
     const { data } = await this.axiosClient.post<ISendMessageRes>(
       `${this.baseUrl + this.config.phoneNumberIdentification}/messages`,
@@ -46,13 +58,13 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
     };
   }
 
-  private defineMessagePayload(options: IChatOptions) {
+  private defineMessagePayload(options: IChatOptions, phoneNumber: string) {
     const type = this.defineMessageType(options);
 
     const basePayload = {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
-      to: options.phoneNumber,
+      to: phoneNumber,
       type,
     };
 

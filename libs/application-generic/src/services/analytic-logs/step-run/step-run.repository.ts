@@ -53,6 +53,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         return 'chat';
       case StepTypeEnum.DIGEST:
         return 'digest';
+      case StepTypeEnum.THROTTLE:
+        return 'throttle';
       case StepTypeEnum.TRIGGER:
         return 'trigger';
       case StepTypeEnum.DELAY:

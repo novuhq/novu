@@ -38,6 +38,7 @@ export class NormalizeVariables {
 
     filterVariables.step = command.variables?.step ?? undefined;
     filterVariables.actor = command.variables?.actor ?? undefined;
+    filterVariables.context = command.variables?.context ?? undefined;
 
     return filterVariables;
   }

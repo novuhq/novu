@@ -136,6 +136,7 @@ export class BuildStepIssuesUsecase {
         unit: controlValues?.unit as string | undefined,
         cron: controlValues?.cron as string | undefined,
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         stepType,
       })
     );

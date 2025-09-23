@@ -107,9 +107,10 @@ export const getRedisCluster = (enableAutoPipelining?: boolean): Cluster | undef
 export const validateRedisClusterProviderConfig = (): boolean => {
   const config = getRedisClusterProviderConfig();
 
-  const validPorts = config.ports.length > 0 && config.ports.every((port: number) => Number.isInteger(port));
+  const validPorts =
+    config.ports && config.ports.length > 0 && config.ports.every((port: number) => Number.isInteger(port));
 
-  return !!config.host && validPorts;
+  return !!config.host && !!validPorts;
 };
 
 export const isClientReady = (status: string): boolean => status === CLIENT_READY;
