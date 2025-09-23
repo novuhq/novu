@@ -6,6 +6,7 @@ import { EmailEditor } from '@/components/workflow-editor/steps/email/email-edit
 import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-editor';
 import { PushEditor } from '@/components/workflow-editor/steps/push/push-editor';
 import { SmsEditor } from '@/components/workflow-editor/steps/sms/sms-editor';
+import { ThrottleEditor } from '@/components/workflow-editor/steps/throttle/throttle-editor';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 
 function NoEditorAvailable({ message }: { message: string }) {
@@ -47,6 +48,9 @@ export function StepEditorFactory() {
 
     case StepTypeEnum.CHAT:
       return <ChatEditor uiSchema={uiSchema} />;
+
+    case StepTypeEnum.THROTTLE:
+      return <ThrottleEditor />;
 
     default:
       return <NoEditorAvailable message={`Editor not implemented for ${STEP_TYPE_LABELS[step.type]} steps`} />;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { dashboardSanitizeControlValues, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { ContentIssueEnum, LAYOUT_CONTENT_VARIABLE, LayoutIssuesDto, ResourceOriginEnum } from '@novu/shared';
-import merge from 'lodash/merge';
+import { merge } from 'es-toolkit/compat';
 import { hasMailyVariable, isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import {
   ControlIssues,

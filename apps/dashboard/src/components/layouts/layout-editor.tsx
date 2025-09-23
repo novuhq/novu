@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import { ContentIssueEnum, EmailControlsDto, EnvironmentTypeEnum, RuntimeIssue } from '@novu/shared';
 import { useState } from 'react';
 import { RiArrowRightSLine, RiCodeBlock, RiEdit2Line, RiEyeLine, RiLockLine, RiSettings4Line } from 'react-icons/ri';

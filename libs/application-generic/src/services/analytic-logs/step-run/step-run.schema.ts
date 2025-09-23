@@ -1,8 +1,10 @@
 import {
+  CHArray,
   CHDateTime64,
   CHLowCardinality,
   CHNullable,
   CHString,
+  CHUInt8,
   ClickhouseSchema,
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
@@ -28,6 +30,7 @@ const schemaDefinition = {
   subscriber_id: { type: CHString() },
   external_subscriber_id: { type: CHNullable(CHString()) },
   message_id: { type: CHNullable(CHString()) }, // Links to MessageEntity
+  context_keys: { type: CHArray(CHString()) }, // Array of context keys (type:identifier)
 
   // Step metadata
   step_type: { type: CHLowCardinality(CHString()) }, // email, sms, in_app, push, etc.
@@ -49,6 +52,9 @@ const schemaDefinition = {
 
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
+
+  // Schedule extensions count
+  schedule_extensions_count: { type: CHUInt8(0) },
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = ['organization_id', 'step_run_id'];

@@ -10,6 +10,7 @@ export const delayControlZodSchema = z
     type: z.enum(['regular']),
     amount: z.number().min(1),
     unit: z.nativeEnum(TimeUnitEnum),
+    extendToSchedule: z.boolean().optional(),
   })
   .strict();
 
@@ -31,6 +32,10 @@ export const delayUiSchema: UiSchema = {
     type: {
       component: UiComponentEnum.DELAY_TYPE,
       placeholder: 'regular',
+    },
+    extendToSchedule: {
+      component: UiComponentEnum.EXTEND_TO_SCHEDULE,
+      placeholder: false,
     },
   },
 };

@@ -13,10 +13,15 @@ import {
   GetNovuLayout,
   GetNovuProviderCredentials,
   GetPreferences,
+  GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
+  InMemoryProviderService,
   NormalizeVariables,
   ProcessTenant,
+  RedisThrottleService,
+  ResolveContextFromKeys,
+  ResolveContextFromPayload,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -32,6 +37,7 @@ import {
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
+  ContextRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -56,6 +62,7 @@ import {
   SendMessageSms,
   SetJobAsCompleted,
   SetJobAsFailed,
+  Throttle,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
 } from './usecases';
@@ -96,6 +103,7 @@ const REPOSITORIES = [
   CommunityUserRepository,
   ChannelEndpointRepository,
   ChannelConnectionRepository,
+  ContextRepository,
 ];
 
 const webhookProvider: Provider = {
@@ -167,6 +175,7 @@ const USE_CASES = [
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
+  Throttle,
   ExecuteStepCustom,
   StoreSubscriberJobs,
   SetJobAsCompleted,
@@ -184,9 +193,12 @@ const USE_CASES = [
   ExecuteBridgeJob,
   GetPreferences,
   WorkflowRunService,
+  ResolveContextFromKeys,
+  ResolveContextFromPayload,
+  GetSubscriberSchedule,
 ];
 
-const PROVIDERS: Provider[] = [];
+const PROVIDERS: Provider[] = [RedisThrottleService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {
@@ -206,11 +218,20 @@ const memoryQueueService = {
   },
 };
 
+const inMemoryProviderService = {
+  provide: InMemoryProviderService,
+  useFactory: (workflowInMemoryProviderService: WorkflowInMemoryProviderService) => {
+    return workflowInMemoryProviderService.inMemoryProviderService;
+  },
+  inject: [WorkflowInMemoryProviderService],
+};
+
 @Module({
   imports: [SharedModule, ...enterpriseImports()],
   controllers: [],
   providers: [
     memoryQueueService,
+    inMemoryProviderService,
     ...ACTIVE_WORKERS,
     ...PROVIDERS,
     ...USE_CASES,

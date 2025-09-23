@@ -275,6 +275,12 @@ export class ActivityNotificationJobResponseDto {
 
   @ApiPropertyOptional({ description: 'Updated time of the notification', type: String })
   updatedAt?: string;
+
+  @ApiPropertyOptional({
+    description: 'The number of times the digest/delay job has been extended to align with the subscribers schedule',
+    type: Number,
+  })
+  scheduleExtensionsCount?: number;
 }
 
 // Activity Notification Subscriber Response DTO
@@ -419,9 +425,11 @@ export class ActivityNotificationResponseDto {
 
   @ApiPropertyOptional({
     description: 'Payload of the notification',
-    type: Object, // Adjust type as necessary
+    type: 'object',
+    required: false,
+    additionalProperties: true,
   })
-  payload?: any; // Added to align with NotificationEntity
+  payload?: Record<string, unknown>; // Added to align with NotificationEntity
 
   @ApiPropertyOptional({
     description: 'Tags associated with the notification',
@@ -431,15 +439,19 @@ export class ActivityNotificationResponseDto {
 
   @ApiPropertyOptional({
     description: 'Controls associated with the notification',
-    type: Object, // Adjust type as necessary
+    type: 'object',
+    required: false,
+    additionalProperties: true,
   })
-  controls?: any; // Added to align with NotificationEntity
+  controls?: Record<string, unknown>; // Added to align with NotificationEntity
 
   @ApiPropertyOptional({
     description: 'To field for subscriber definition',
-    type: Object, // Adjust type as necessary
+    type: 'object',
+    required: false,
+    additionalProperties: true,
   })
-  to?: any; // Added to align with NotificationEntity
+  to?: Record<string, unknown>; // Added to align with NotificationEntity
 
   @ApiPropertyOptional({ description: 'Topics of the notification', type: [ActivityTopicDto] })
   topics?: ActivityTopicDto[];

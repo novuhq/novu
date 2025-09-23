@@ -15,13 +15,5 @@ export const range = (start: number, end: number) => {
 };
 
 export const dedup = (array: number[]) => {
-  const result: number[] = [];
-
-  array.forEach((i) => {
-    if (result.indexOf(i) < 0) {
-      result.push(i);
-    }
-  });
-
-  return result;
+  return Array.from(new Set<number>(array));
 };

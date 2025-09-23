@@ -13,9 +13,6 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
   let workflowId3: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -155,11 +152,6 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
     for (const translation of translations) {
       await session.testAgent.post('/v2/translations').send(translation).expect(200);
     }
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should get paginated list of translation groups without query', async () => {

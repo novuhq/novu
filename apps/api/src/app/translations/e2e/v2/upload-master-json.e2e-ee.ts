@@ -11,9 +11,6 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
   let workflowId: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -41,11 +38,6 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
       ],
     });
     workflowId = workflow.workflowId;
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should upload master JSON file successfully', async () => {

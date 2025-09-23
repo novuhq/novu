@@ -29,10 +29,10 @@ import {
 export type TranslationsRetrieveQueryData = components.TranslationResponseDto;
 
 /**
- * Get single translation
+ * Retrieve a translation
  *
  * @remarks
- * Get a specific translation by resource type, resource ID and locale
+ * Retrieve a specific translation by resource type, resource ID and locale
  */
 export function useTranslationsRetrieve(
   request: operations.TranslationControllerGetSingleTranslationRequest,
@@ -50,10 +50,10 @@ export function useTranslationsRetrieve(
 }
 
 /**
- * Get single translation
+ * Retrieve a translation
  *
  * @remarks
- * Get a specific translation by resource type, resource ID and locale
+ * Retrieve a specific translation by resource type, resource ID and locale
  */
 export function useTranslationsRetrieveSuspense(
   request: operations.TranslationControllerGetSingleTranslationRequest,

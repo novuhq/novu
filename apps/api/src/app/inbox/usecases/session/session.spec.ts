@@ -3,6 +3,7 @@ import {
   AnalyticsService,
   CreateOrUpdateSubscriberUseCase,
   FeatureFlagsService,
+  GetSubscriberSchedule,
   PinoLogger,
   SelectIntegration,
   UpsertControlValuesUseCase,
@@ -24,7 +25,6 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { GetSubscriberSchedule } from '../../../subscribers/usecases/get-subscriber-schedule/get-subscriber-schedule.usecase';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import * as encryption from '../../utils/encryption';

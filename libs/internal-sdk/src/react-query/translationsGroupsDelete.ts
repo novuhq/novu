@@ -26,7 +26,7 @@ export type TranslationsGroupsDeleteMutationVariables = {
 export type TranslationsGroupsDeleteMutationData = void;
 
 /**
- * Delete translation group
+ * Delete a translation group
  *
  * @remarks
  * Delete an entire translation group and all its translations

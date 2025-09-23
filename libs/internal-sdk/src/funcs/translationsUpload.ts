@@ -29,7 +29,7 @@ import { Result } from "../types/fp.js";
  * Upload translation files
  *
  * @remarks
- * Upload one or more JSON translation files for a specific workflow. The file name must be the locale, e.g. en_US.json
+ * Upload one or more JSON translation files for a specific workflow. Files name must match the locale, e.g. en_US.json
  */
 export function translationsUpload(
   client: NovuCore,

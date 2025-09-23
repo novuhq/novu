@@ -28,6 +28,7 @@ export * from './sanitize/sanitizer-v0.service';
 export * from './socket-worker';
 export * from './storage';
 export { SupportService } from './support.service';
+export * from './throttle';
 export { VerifyPayloadService } from './verify-payload.service';
 export * from './workers';
 export * from './workflow-run.service';

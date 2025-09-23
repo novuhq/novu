@@ -1,9 +1,8 @@
-import { Container, Grid } from '@mantine/core';
-import { format, parseISO } from 'date-fns';
 import styled from '@emotion/styled';
-import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
-
-import { colors, Text, CheckCircle, ErrorIcon } from '@novu/design-system';
+import { Container, Grid } from '@mantine/core';
+import { CheckCircle, colors, ErrorIcon, Text } from '@novu/design-system';
+import { DelayTypeEnum, JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import { format, parseISO } from 'date-fns';
 import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';
 import { getLogoByType } from './helpers';
 
@@ -103,7 +102,12 @@ const generateDetailByStepAndStatus = (status, job) => {
   if (job.type === StepTypeEnum.DELAY) {
     const { digest, step: stepMetadata, payload } = job;
 
-    if (stepMetadata?.metadata?.type === DelayTypeEnum.SCHEDULED) {
+    if (
+      stepMetadata?.metadata &&
+      'type' in stepMetadata.metadata &&
+      stepMetadata.metadata.type === DelayTypeEnum.SCHEDULED &&
+      'delayPath' in stepMetadata.metadata
+    ) {
       return `Delaying execution until ${payload[stepMetadata.metadata.delayPath]}`;
     }
 

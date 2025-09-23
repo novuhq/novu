@@ -16,7 +16,7 @@ import { ScheduleRow } from './ScheduleRow';
 export const Preferences = () => {
   const novu = useNovu();
   const style = useStyle();
-  const { preferencesFilter, preferenceGroups, preferenceSort } = useInboxContext();
+  const { preferencesFilter, preferenceGroups, preferencesSort } = useInboxContext();
 
   const { preferences, loading } = usePreferences({
     tags: preferencesFilter()?.tags,
@@ -28,8 +28,8 @@ export const Preferences = () => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
     let workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
 
-    if (workflowPreferences && preferenceSort()) {
-      workflowPreferences = [...workflowPreferences].sort(preferenceSort());
+    if (workflowPreferences && preferencesSort()) {
+      workflowPreferences = [...workflowPreferences].sort(preferencesSort());
     }
 
     return { globalPreference, workflowPreferences };
@@ -97,8 +97,8 @@ export const Preferences = () => {
             );
           });
 
-          if (preferenceSort()) {
-            filteredPreferences = [...filteredPreferences].sort(preferenceSort());
+          if (preferencesSort()) {
+            filteredPreferences = [...filteredPreferences].sort(preferencesSort());
           }
 
           return {
@@ -120,7 +120,7 @@ export const Preferences = () => {
       class={style({
         key: 'preferencesContainer',
         className:
-          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
+          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-2 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
         context: { preferences: preferences(), groups: groupedPreferences() } satisfies Parameters<
           AppearanceCallback['preferencesContainer']
         >[0],
@@ -133,7 +133,9 @@ export const Preferences = () => {
           onChange={() => updatePreference(allPreferences().globalPreference)}
         />
       </Show>
-      <ScheduleRow globalPreference={allPreferences().globalPreference} />
+      <Show when={allPreferences().globalPreference}>
+        <ScheduleRow globalPreference={allPreferences().globalPreference} />
+      </Show>
       <Show
         when={groupedPreferences().length > 0}
         fallback={

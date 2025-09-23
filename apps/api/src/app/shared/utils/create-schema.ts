@@ -110,3 +110,30 @@ export const buildWorkflowSchema = () => {
     required: ['workflowId', 'name'],
   };
 };
+
+export const buildContextSchema = () => {
+  return {
+    type: JsonSchemaTypeEnum.OBJECT,
+    description: 'Context data passed at trigger time following ContextPayload structure',
+    properties: {},
+    required: [],
+    additionalProperties: {
+      type: JsonSchemaTypeEnum.OBJECT,
+      description: 'Context value - can be accessed as string or object',
+      properties: {
+        id: {
+          type: JsonSchemaTypeEnum.STRING,
+          description: 'Context identifier',
+        },
+        data: {
+          type: JsonSchemaTypeEnum.OBJECT,
+          description: 'Additional context data',
+          properties: {},
+          additionalProperties: true,
+        },
+      },
+      required: [],
+      additionalProperties: false,
+    },
+  };
+};

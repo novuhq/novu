@@ -1,4 +1,5 @@
 import type { ISubscriberPayload, ITriggerPayload, TriggerEventStatusEnum, TriggerRecipientsPayload } from '../shared';
+import { ContextPayload } from './context.types';
 import { ConditionalPartial, PickRequiredKeys } from './util.types';
 
 type EventPayload = ITriggerPayload;
@@ -31,6 +32,10 @@ export type EventTriggerParams<T_Payload = EventPayload> = {
    * Actor to trigger the workflow from
    */
   actor?: Actor;
+  /**
+   * Context to trigger the workflow with
+   */
+  context?: ContextPayload;
   /**
    * Bridge url to trigger the workflow to
    */

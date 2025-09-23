@@ -39,6 +39,7 @@ export class PreviewStep {
       payload: command.payload || {},
       state: command.state || [],
       subscriber: command.subscriber || {},
+      context: command.context || {},
       stepId: command.stepId,
       workflowId: command.workflowId,
       action: PostActionEnum.PREVIEW,

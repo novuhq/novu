@@ -1,4 +1,5 @@
 import {
+  CHArray,
   CHDateTime64,
   CHLowCardinality,
   CHNullable,
@@ -111,6 +112,9 @@ export type EventType =
   | 'delay_completed'
   | 'delay_misconfigured'
   | 'delay_limit_exceeded'
+  | 'step_throttled'
+  | 'throttle_limit_exceeded'
+  | 'throttle_window_in_past'
   | 'bridge_response_received'
   | 'bridge_execution_failed'
   | 'bridge_execution_skipped'
@@ -157,8 +161,14 @@ export type EventType =
   | 'workflow_actor_processing_started'
   | 'workflow_actor_processing_failed'
   | 'workflow_actor_processing_completed'
+  | 'workflow_context_resolution_failed'
+  | 'workflow_context_resolution_completed'
+  | 'workflow_context_not_found'
   | 'workflow_execution_failed'
-  | 'step_skipped';
+  | 'step_skipped'
+  | 'step_skipped_outside_of_the_schedule'
+  | 'step_extended_to_schedule'
+  | 'step_skipped_max_extensions_reached';
 
 export type EntityType = 'request' | 'step_run';
 

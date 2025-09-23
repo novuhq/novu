@@ -1,4 +1,4 @@
-import { TimeUnitEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, ResourceOriginEnum, TimeUnitEnum } from '@novu/shared';
 import { Tabs } from '@radix-ui/react-tabs';
 import { useState } from 'react';
 import { FieldValues, useFormContext } from 'react-hook-form';
@@ -12,6 +12,8 @@ import { RegularDigest } from '@/components/workflow-editor/steps/digest/regular
 import { ScheduledDigest } from '@/components/workflow-editor/steps/digest/scheduled-digest';
 import { EVERY_MINUTE_CRON } from '@/components/workflow-editor/steps/digest/utils';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useWorkflow } from '../../workflow-provider';
 
 const REGULAR_DIGEST_TYPE = 'regular';
 const SCHEDULED_DIGEST_TYPE = 'scheduled';
@@ -20,6 +22,7 @@ const POPOVER_DURATION_MS = 600;
 type PreservedFormValuesByType = { [key: string]: FieldValues | undefined };
 
 export const DigestWindow = () => {
+  const { workflow } = useWorkflow();
   const { control, getFieldState, setValue, setError, getValues, trigger } = useFormContext();
   const formValues = getValues();
   const { cron } = formValues.controlValues;
@@ -35,6 +38,9 @@ export const DigestWindow = () => {
   const cronField = getFieldState(`${CRON_KEY}`);
   const regularDigestError = amountField.error || unitField.error;
   const scheduledDigestError = cronField.error;
+  const { currentEnvironment } = useEnvironment();
+  const isReadOnly =
+    workflow?.origin === ResourceOriginEnum.EXTERNAL || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   const handleDigestTypeChange = async (value: string) => {
     // get the latest form values
@@ -83,7 +89,7 @@ export const DigestWindow = () => {
               <Tooltip delayDuration={POPOVER_DURATION_MS}>
                 <TooltipTrigger className="ml-1" asChild>
                   <span className="flex-1">
-                    <TabsTrigger value={REGULAR_DIGEST_TYPE} className="w-full text-xs">
+                    <TabsTrigger value={REGULAR_DIGEST_TYPE} className="w-full text-xs" disabled={isReadOnly}>
                       Regular
                     </TabsTrigger>
                   </span>
@@ -98,7 +104,7 @@ export const DigestWindow = () => {
               <Tooltip delayDuration={POPOVER_DURATION_MS}>
                 <TooltipTrigger className="ml-1" asChild>
                   <span className="flex-1">
-                    <TabsTrigger value={SCHEDULED_DIGEST_TYPE} className="w-full text-xs">
+                    <TabsTrigger value={SCHEDULED_DIGEST_TYPE} className="w-full text-xs" disabled={isReadOnly}>
                       Scheduled
                     </TabsTrigger>
                   </span>
@@ -115,7 +121,7 @@ export const DigestWindow = () => {
           <Separator className="before:bg-neutral-100" />
           <div className="bg-background rounded-b-lg p-2">
             <TabsContent value={REGULAR_DIGEST_TYPE}>
-              <RegularDigest />
+              <RegularDigest isReadOnly={isReadOnly} />
             </TabsContent>
             <TabsContent value={SCHEDULED_DIGEST_TYPE}>
               <FormField
@@ -131,6 +137,7 @@ export const DigestWindow = () => {
                     onError={() => {
                       setError(CRON_KEY, { message: 'Failed to parse cron' });
                     }}
+                    isDisabled={isReadOnly}
                   />
                 )}
               />

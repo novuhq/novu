@@ -206,6 +206,7 @@ export function parseStepVariables(
 
     let currentObj: JSONSchemaDefinition | JSONSchema7 = schema;
 
+    // TODO: replace with AJV
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
 
@@ -225,11 +226,27 @@ export function parseStepVariables(
       if (typeof currentObj === 'boolean' || !('type' in currentObj)) return false;
 
       if (currentObj.type === 'object') {
-        if (!currentObj.properties || !(part in currentObj.properties)) {
+        // First check if the property exists in the defined properties
+        if (currentObj.properties && part in currentObj.properties) {
+          currentObj = currentObj.properties[part];
+        }
+        // If not found in properties, check if additionalProperties allows it
+        else if (currentObj.additionalProperties) {
+          if (typeof currentObj.additionalProperties === 'object') {
+            // additionalProperties is a schema object
+            currentObj = currentObj.additionalProperties;
+          } else if (currentObj.additionalProperties === true) {
+            // additionalProperties: true means any property is allowed
+            // Since we don't know the schema of the property, we allow the rest of the path
+            return true;
+          } else {
+            return false;
+          }
+        }
+        // If neither properties nor additionalProperties allow it, it's invalid
+        else {
           return false;
         }
-
-        currentObj = currentObj.properties[part];
       } else {
         return false;
       }

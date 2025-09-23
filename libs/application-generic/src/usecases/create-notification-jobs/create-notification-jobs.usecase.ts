@@ -91,6 +91,7 @@ export class CreateNotificationJobs {
       tags: command.template.tags,
       severity: command.severity,
       critical: command.critical,
+      ...(command.contextKeys && { contextKeys: command.contextKeys }),
     });
 
     await this.createWorkflowRun(notification, command);
@@ -139,6 +140,7 @@ export class CreateNotificationJobs {
       providerId,
       ...this.overloadActorData(command),
       preferences: command.preferences,
+      ...(command.contextKeys && { contextKeys: command.contextKeys }),
     };
   }
 
@@ -237,6 +239,7 @@ export class CreateNotificationJobs {
         _actorId: command.actor?._id,
         actorId: command.actor?.subscriberId,
       }),
+      ...(command.contextKeys && { contextKeys: command.contextKeys }),
     };
   }
 
@@ -260,7 +263,7 @@ export class CreateNotificationJobs {
     // TODO: Review this for workflows with more than one digest as this will return the first element found
     const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
 
-    if (digestStep?.metadata?.type) {
+    if (digestStep?.metadata && 'type' in digestStep.metadata) {
       return await this.digestFilterSteps.execute(
         DigestFilterStepsCommand.create({
           _subscriberId: command.subscriber._id,

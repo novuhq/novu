@@ -140,17 +140,26 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
       }
 
       return '';
+
+    case StepTypeEnum.THROTTLE:
+      if (job.status === JobStatusEnum.COMPLETED) {
+        return 'Throttle step completed';
+      }
+
+      return '';
     case StepTypeEnum.DIGEST:
       if (job.status === JobStatusEnum.COMPLETED) {
         return `Digested ${job.digest?.events?.length ?? 0} events for ${(job.digest as IDigestRegularMetadata)?.amount ?? 0} ${
           (job.digest as IDigestRegularMetadata)?.unit ?? ''
-        }`;
+        }${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
       }
 
       if (job.status === JobStatusEnum.DELAYED) {
-        return `Collecting Digest events for ${(job.digest as IDigestRegularMetadata)?.amount ?? 0} ${
-          (job.digest as IDigestRegularMetadata)?.unit ?? ''
-        }`;
+        return job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0
+          ? 'Extended to subscriber schedule'
+          : `Collecting Digest events for ${(job.digest as IDigestRegularMetadata)?.amount ?? 0} ${
+              (job.digest as IDigestRegularMetadata)?.unit ?? ''
+            }`;
       }
 
       return '';
@@ -159,7 +168,7 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
 
       if (job.status === JobStatusEnum.COMPLETED) {
         if (unit && amount) {
-          return `Delayed for ${amount} ${unit}`;
+          return `Delayed for ${amount} ${unit}${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
         }
 
         return 'Delay completed';
@@ -169,7 +178,10 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
         let msg = 'Waiting';
 
         if (unit && amount) {
-          msg = `Waiting for ${amount} ${unit}`;
+          msg =
+            job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0
+              ? 'Extended to subscriber schedule'
+              : `Waiting for ${amount} ${unit}`;
         }
 
         return msg;

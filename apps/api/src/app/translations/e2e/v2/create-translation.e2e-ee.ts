@@ -11,9 +11,6 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
   let workflowId: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -39,11 +36,6 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
       ],
     });
     workflowId = workflow.workflowId;
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should create new translation successfully', async () => {

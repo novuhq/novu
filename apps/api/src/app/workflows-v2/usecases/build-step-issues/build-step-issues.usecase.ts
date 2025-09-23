@@ -18,9 +18,8 @@ import {
   StepTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { isEmpty, merge } from 'es-toolkit/compat';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
-import isEmpty from 'lodash/isEmpty';
-import merge from 'lodash/merge';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import {
   QueryIssueTypeEnum,
@@ -137,6 +136,7 @@ export class BuildStepIssuesUsecase {
         unit: controlValues?.unit as string | undefined,
         cron: controlValues?.cron as string | undefined,
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         stepType,
       })
     );

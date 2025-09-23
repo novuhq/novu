@@ -53,6 +53,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         return 'chat';
       case StepTypeEnum.DIGEST:
         return 'digest';
+      case StepTypeEnum.THROTTLE:
+        return 'throttle';
       case StepTypeEnum.TRIGGER:
         return 'trigger';
       case StepTypeEnum.DELAY:
@@ -409,6 +411,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       subscriber_id: job._subscriberId,
       external_subscriber_id: job.subscriberId,
       message_id: options?.message?._id || null,
+      context_keys: job.contextKeys || [],
 
       // Step metadata
       step_type: stepType,
@@ -427,6 +430,9 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
       // Correlation
       transaction_id: job.transactionId,
+
+      // Schedule extensions count
+      schedule_extensions_count: job?.scheduleExtensionsCount || 0,
     };
   }
 }

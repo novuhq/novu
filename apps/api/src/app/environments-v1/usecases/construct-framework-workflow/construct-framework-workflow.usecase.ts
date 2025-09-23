@@ -1,10 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { emailControlSchema, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
+  CommunityOrganizationRepository,
   EnvironmentRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
@@ -23,6 +25,7 @@ import {
 } from '../output-renderers';
 import { DelayOutputRendererUsecase } from '../output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from '../output-renderers/digest-output-renderer.usecase';
+import { ThrottleOutputRendererUsecase } from '../output-renderers/throttle-output-renderer.usecase';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
@@ -33,13 +36,15 @@ export class ConstructFrameworkWorkflow {
     private logger: PinoLogger,
     private workflowsRepository: NotificationTemplateRepository,
     private environmentRepository: EnvironmentRepository,
+    private communityOrganizationRepository: CommunityOrganizationRepository,
     private inAppOutputRendererUseCase: InAppOutputRendererUsecase,
     private emailOutputRendererUseCase: EmailOutputRendererUsecase,
     private smsOutputRendererUseCase: SmsOutputRendererUsecase,
     private chatOutputRendererUseCase: ChatOutputRendererUsecase,
     private pushOutputRendererUseCase: PushOutputRendererUsecase,
     private delayOutputRendererUseCase: DelayOutputRendererUsecase,
-    private digestOutputRendererUseCase: DigestOutputRendererUsecase
+    private digestOutputRendererUseCase: DigestOutputRendererUsecase,
+    private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase
   ) {}
 
   @InstrumentUsecase()
@@ -55,8 +60,11 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
+    const organization = (await this.communityOrganizationRepository.findById(dbWorkflow._organizationId)) || undefined;
+
     return this.constructFrameworkWorkflow({
       dbWorkflow,
+      organization,
       skipLayoutRendering: command.skipLayoutRendering,
       jobId: command.jobId,
     });
@@ -96,10 +104,12 @@ export class ConstructFrameworkWorkflow {
   @Instrument()
   private constructFrameworkWorkflow({
     dbWorkflow,
+    organization,
     skipLayoutRendering,
     jobId,
   }: {
     dbWorkflow: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
     skipLayoutRendering?: boolean;
     jobId?: string;
   }): Workflow {
@@ -118,6 +128,7 @@ export class ConstructFrameworkWorkflow {
             staticStep,
             fullPayloadForRender,
             dbWorkflow,
+            organization,
             locale: subscriber.locale ?? undefined,
             skipLayoutRendering,
             jobId,
@@ -149,6 +160,7 @@ export class ConstructFrameworkWorkflow {
     staticStep,
     fullPayloadForRender,
     dbWorkflow,
+    organization,
     locale,
     skipLayoutRendering,
     jobId,
@@ -157,6 +169,7 @@ export class ConstructFrameworkWorkflow {
     staticStep: NotificationStepEntity;
     fullPayloadForRender: FullPayloadForRender;
     dbWorkflow: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
     locale?: string;
     skipLayoutRendering?: boolean;
     jobId?: string;
@@ -189,6 +202,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -205,6 +219,7 @@ export class ConstructFrameworkWorkflow {
               environmentId: dbWorkflow._environmentId,
               organizationId: dbWorkflow._organizationId,
               workflowId: dbWorkflow._id,
+              organization,
               locale,
               skipLayoutRendering,
               jobId,
@@ -221,6 +236,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -234,6 +250,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -247,6 +264,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -265,6 +283,14 @@ export class ConstructFrameworkWorkflow {
           stepId,
           async (controlValues) => {
             return this.delayOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
+          },
+          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+        );
+      case StepTypeEnum.THROTTLE:
+        return step.throttle(
+          stepId,
+          async (controlValues) => {
+            return this.throttleOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
           },
           this.constructActionStepOptions(staticStep, fullPayloadForRender)
         );

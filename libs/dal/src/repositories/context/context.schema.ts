@@ -1,4 +1,3 @@
-import { ContextTypeEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { ContextDBModel } from './context.entity';
@@ -15,38 +14,50 @@ const contextSchema = new Schema<ContextDBModel>(
       ref: 'Environment',
       index: true,
     },
-    id: Schema.Types.String,
+    id: {
+      type: Schema.Types.String,
+      required: true,
+    },
     type: {
       type: Schema.Types.String,
-      enum: ContextTypeEnum,
+      required: true,
     },
-    key: Schema.Types.String,
-    data: Schema.Types.Mixed,
+    key: {
+      type: Schema.Types.String,
+      required: true,
+      unique: true,
+    },
+    data: {
+      type: Schema.Types.Mixed,
+      required: false,
+      default: {},
+    },
   },
-  schemaOptions
+  { ...schemaOptions, minimize: false }
 );
-
-contextSchema.index({
-  _environmentId: 1,
-  _organizationId: 1,
-  key: 1,
-});
 
 contextSchema.index(
   {
     _environmentId: 1,
-    key: 1,
+    _organizationId: 1,
+    type: 1,
+    id: 1,
   },
   {
     unique: true,
   }
 );
 
-contextSchema.index({
-  _environmentId: 1,
-  _organizationId: 1,
-  type: 1,
-});
+contextSchema.index(
+  {
+    _environmentId: 1,
+    _organizationId: 1,
+    key: 1,
+  },
+  {
+    unique: true,
+  }
+);
 
 export const Context =
   (mongoose.models.Context as mongoose.Model<ContextDBModel>) ||

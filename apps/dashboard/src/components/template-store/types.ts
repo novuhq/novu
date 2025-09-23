@@ -1,5 +1,9 @@
-export enum WorkflowMode {
-  TEMPLATES = 'templates',
-  GENERATE = 'generate',
-  FROM_PROMPT = 'from_prompt',
-}
+import { CreateWorkflowDto } from '@novu/shared';
+
+export type IWorkflowSuggestion = {
+  id: string;
+  name: string;
+  description: string;
+  category: 'events' | 'authentication' | 'social' | 'operational' | 'billing' | 'security';
+  workflowDefinition: CreateWorkflowDto;
+};

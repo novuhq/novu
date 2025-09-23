@@ -212,6 +212,7 @@ export class SendMessageEmail extends SendMessageBase {
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
+      ...(command.contextKeys && { contextKeys: command.contextKeys }),
     });
 
     let replyToAddress: string | undefined;

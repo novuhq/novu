@@ -26,7 +26,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete translation group
+ * Delete a translation group
  *
  * @remarks
  * Delete an entire translation group and all its translations

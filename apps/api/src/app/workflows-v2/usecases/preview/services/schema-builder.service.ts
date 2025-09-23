@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { JsonSchemaFormatEnum, JsonSchemaTypeEnum, NotificationTemplateEntity } from '@novu/dal';
+import { JsonSchemaFormatEnum, JsonSchemaTypeEnum } from '@novu/dal';
 
-import _ from 'lodash';
+import { merge } from 'es-toolkit/compat';
 import { JSONSchemaDto } from '../../../../shared/dtos/json-schema.dto';
 import { buildVariablesSchema } from '../../../../shared/utils/create-schema';
 import { PreviewPayloadDto } from '../../../dtos';
@@ -19,7 +19,7 @@ export class SchemaBuilderService {
       return variables;
     }
 
-    return _.merge(variables, { properties: { payload: payloadSchema } });
+    return merge(variables, { properties: { payload: payloadSchema } });
   }
 
   async buildPreviewPayloadSchema(
@@ -40,6 +40,21 @@ export class SchemaBuilderService {
       schema.properties!.payload = workflowPayloadSchema || {
         type: JsonSchemaTypeEnum.OBJECT,
         additionalProperties: true,
+      };
+    }
+
+    if (previewPayloadExample.context) {
+      schema.properties!.context = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        description: 'Context data for the workflow execution',
+        additionalProperties: {
+          type: JsonSchemaTypeEnum.OBJECT,
+          properties: {
+            id: { type: JsonSchemaTypeEnum.STRING },
+            data: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
+          },
+          additionalProperties: false,
+        },
       };
     }
 

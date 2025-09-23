@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Create translation group - /translations/groups (POST) #novu-v1', async () => {
+describe('[V1 Translations] Create translation group - /translations/groups (POST) #novu-v2', async () => {
   let session: UserSession;
 
   beforeEach(async () => {

@@ -6,7 +6,9 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  FeatureFlagsService,
   getDigestType,
+  getNestedValue,
   IFilterVariables,
   InstrumentUsecase,
   isLookBackDigestOutput,
@@ -16,6 +18,7 @@ import {
   LogDecorator,
   NormalizeVariables,
   NormalizeVariablesCommand,
+  RedisThrottleService,
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
@@ -83,7 +86,8 @@ export class AddJob {
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
     private executeBridgeJob: ExecuteBridgeJob,
     private stepRunRepository: StepRunRepository,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private redisThrottleService: RedisThrottleService
   ) {}
 
   @InstrumentUsecase()
@@ -103,11 +107,6 @@ export class AddJob {
     }
 
     Logger.log(`Scheduling New Job ${job._id} of type: ${job.type}`, LOG_CONTEXT);
-
-    const result = isJobDeferredType(job.type)
-      ? await this.executeDeferredJob(command)
-      : await this.executeNoneDeferredJob(command);
-
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -118,6 +117,10 @@ export class AddJob {
         isRetry: false,
       })
     );
+
+    const result = isJobDeferredType(job.type)
+      ? await this.executeDeferredJob(command)
+      : await this.executeNoneDeferredJob(command);
 
     return result;
   }
@@ -189,6 +192,52 @@ export class AddJob {
       }
 
       digestAmount = digestResult.digestAmount;
+    }
+
+    if (job.type === StepTypeEnum.THROTTLE) {
+      try {
+        const throttleResult = await this.handleThrottle(command, job, bridgeResponse);
+
+        if (throttleResult.shouldSkip) {
+          await this.handleThrottleSkip(
+            command,
+            job,
+            throttleResult as { shouldSkip: boolean; executionCount: number; threshold: number; throttledUntil: string }
+          );
+
+          return {
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatus.SKIPPED,
+          };
+        }
+      } catch (error) {
+        Logger.error(`Throttle validation failed for job ${job._id}: ${error.message}`, LOG_CONTEXT);
+
+        // Update job status to failed
+        await this.jobRepository.updateOne(
+          { _id: job._id, _environmentId: command.environmentId },
+          {
+            $set: {
+              status: JobStatusEnum.FAILED,
+              error: {
+                message: error.message,
+                name: error.name,
+                stack: error.stack,
+              },
+            },
+          }
+        );
+
+        // Create step run record
+        await this.stepRunRepository.create(job, {
+          status: JobStatusEnum.FAILED,
+        });
+
+        return {
+          workflowStatus: WorkflowRunStatusEnum.ERROR,
+          deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
+        };
+      }
     }
 
     if (job.type === StepTypeEnum.DELAY) {
@@ -486,6 +535,168 @@ export class AddJob {
     return { digestAmount, digestCreationResult, cronExpression: bridgeResponse?.outputs?.cron as string | undefined };
   }
 
+  private async handleThrottle(
+    command: AddJobCommand,
+    job: JobEntity,
+    bridgeResponse: ExecuteOutput | null
+  ): Promise<{ shouldSkip: boolean; executionCount?: number; threshold?: number; throttledUntil?: string }> {
+    // Get throttle configuration from bridge response or job step
+    const throttleConfig = bridgeResponse?.outputs || {};
+    const { type = 'fixed', threshold = 1, throttleKey } = throttleConfig;
+
+    let windowMs: number;
+
+    if (type === 'fixed') {
+      const { amount, unit } = throttleConfig;
+      if (!amount || !unit) {
+        Logger.warn(`Fixed throttle configuration missing amount or unit for job ${job._id}`, LOG_CONTEXT);
+        return { shouldSkip: false };
+      }
+      windowMs = this.convertToMilliseconds(amount as number, unit as string);
+    } else if (type === 'dynamic') {
+      const { dynamicKey } = throttleConfig;
+      if (!dynamicKey) {
+        Logger.warn(`Dynamic throttle configuration missing dynamicKey for job ${job._id}`, LOG_CONTEXT);
+        return { shouldSkip: false };
+      }
+
+      // Parse dynamic window value
+      const dynamicValue = this.parseDynamicThrottleValue(job, dynamicKey as string);
+      if (!dynamicValue) {
+        Logger.warn(`Could not parse dynamic throttle value for job ${job._id}, key: ${dynamicKey}`, LOG_CONTEXT);
+        return { shouldSkip: false };
+      }
+
+      windowMs = dynamicValue.windowMs;
+    } else {
+      Logger.warn(`Unknown throttle type '${type}' for job ${job._id}`, LOG_CONTEXT);
+      return { shouldSkip: false };
+    }
+
+    const nowMs = Date.now();
+
+    // Validate throttle window duration
+    await this.validateThrottleWindow(command, job, windowMs, type);
+
+    if (!job.step.stepId) {
+      throw new Error('Step ID is required for throttle reservation');
+    }
+
+    const throttleValue = throttleKey ? getNestedValue(job.payload, throttleKey as string) : 'default';
+
+    const throttleJobId = `${job._id}:${Date.now()}`;
+
+    const reservationResult = await this.redisThrottleService.reserveThrottleSlot({
+      environmentId: command.environmentId,
+      subscriberId: job._subscriberId,
+      workflowId: job._templateId,
+      stepId: job.step.stepId,
+      jobId: throttleJobId,
+      windowMs,
+      limit: threshold as number,
+      nowMs,
+      throttleKey: (throttleKey as string) || 'default',
+      throttleValue: throttleValue,
+    });
+
+    Logger.debug(
+      {
+        jobId: job._id,
+        reservationResult,
+        threshold,
+        windowMs,
+        type,
+      },
+      'Redis throttle reservation result',
+      LOG_CONTEXT
+    );
+
+    if (!reservationResult.granted) {
+      return {
+        shouldSkip: true,
+        executionCount: reservationResult.count,
+        threshold: threshold as number,
+        throttledUntil: new Date(reservationResult.windowStartMs + windowMs).toISOString(),
+      };
+    }
+
+    // Slot reserved successfully, proceed with execution
+    return {
+      shouldSkip: false,
+      executionCount: reservationResult.count,
+      threshold: threshold as number,
+      throttledUntil: new Date(reservationResult.windowStartMs + windowMs).toISOString(),
+    };
+  }
+
+  private parseDynamicThrottleValue(
+    job: JobEntity,
+    dynamicKey: string
+  ): { windowMs: number; identifier: string } | null {
+    const keyPath = dynamicKey?.replace('payload.', '');
+    const value = getNestedValue(job.payload, keyPath);
+
+    if (!value) {
+      Logger.debug(`Dynamic throttle key '${dynamicKey}' not found in payload data`, LOG_CONTEXT);
+      return null;
+    }
+
+    // Handle ISO-8601 timestamp
+    if (typeof value === 'string' && this.isISO8601(value)) {
+      const targetTime = new Date(value).getTime();
+      const now = Date.now();
+
+      return {
+        windowMs: targetTime - now,
+        identifier: value, // Use the timestamp as identifier
+      };
+    }
+
+    // Handle relative duration object
+    if (typeof value === 'object' && value !== null && 'unit' in value && 'amount' in value) {
+      const durationObj = value as { unit: string; amount: number };
+      const windowMs = this.convertToMilliseconds(durationObj.amount, durationObj.unit);
+
+      return {
+        windowMs,
+        identifier: `${durationObj.amount}:${durationObj.unit}`,
+      };
+    }
+
+    Logger.warn(`Dynamic throttle value '${JSON.stringify(value)}' is not a valid format`, LOG_CONTEXT);
+    return null;
+  }
+
+  private isISO8601(value: string): boolean {
+    // Basic ISO-8601 validation - allow flexible milliseconds (1-3 digits)
+    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?$/;
+    if (!iso8601Regex.test(value)) {
+      return false;
+    }
+
+    // Check if it's a valid date
+    const date = new Date(value);
+    return !Number.isNaN(date.getTime());
+  }
+
+  private convertToMilliseconds(amount: number, unit: string): number {
+    const unitMap: Record<string, number> = {
+      minutes: 60 * 1000,
+      hours: 60 * 60 * 1000,
+      days: 24 * 60 * 60 * 1000,
+    };
+
+    if (!unitMap[unit]) {
+      Logger.warn(
+        `Invalid throttle unit '${unit}', falling back to minutes. Supported units: minutes, hours, days`,
+        LOG_CONTEXT
+      );
+      return amount * unitMap.minutes;
+    }
+
+    return amount * unitMap[unit];
+  }
+
   private mapBridgeTimedDigestAmount(bridgeResponse: ExecuteOutput | null, timezone?: string): number | null {
     let bridgeAmount: number | null = null;
     const outputs = bridgeResponse?.outputs as DigestOutput;
@@ -525,6 +736,56 @@ export class AddJob {
     });
   }
 
+  private async handleThrottleSkip(
+    command: AddJobCommand,
+    job: JobEntity,
+    throttleResult: { shouldSkip: boolean; executionCount: number; threshold: number; throttledUntil: string }
+  ) {
+    Logger.log(
+      `Job ${job._id} throttled: ${throttleResult.executionCount} executions exceed threshold ${throttleResult.threshold as number}`,
+      LOG_CONTEXT
+    );
+
+    await this.jobRepository.updateOne(
+      { _id: job._id, _environmentId: command.environmentId },
+      {
+        $set: {
+          status: JobStatusEnum.SKIPPED,
+          stepOutput: {
+            throttled: true,
+            executionCount: throttleResult.executionCount,
+            threshold: throttleResult.threshold as number,
+            throttledUntil: throttleResult.throttledUntil,
+          },
+        },
+      }
+    );
+
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.SKIPPED,
+    });
+
+    const childJobsUpdated = await this.jobRepository.updateAllChildJobStatus(job, JobStatusEnum.SKIPPED, job._id);
+
+    if (childJobsUpdated.length > 0) {
+      await this.stepRunRepository.createMany(childJobsUpdated, {
+        status: JobStatusEnum.SKIPPED,
+      });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.THROTTLE_LIMIT_EXCEEDED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ ...throttleResult }),
+        })
+      );
+    }
+  }
+
   private getExecutionDelayAmount(
     filtered: boolean,
     digestAmount: number | undefined,
@@ -534,7 +795,6 @@ export class AddJob {
   }
 
   public async queueJob(job: JobEntity, delay: number) {
-    Logger.verbose(`Adding Job ${job._id} to Queue`, LOG_CONTEXT);
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
     const options: JobsOptions = {
       delay,
@@ -593,12 +853,70 @@ export class AddJob {
       });
     });
   }
+
+  private async validateThrottleWindow(
+    command: AddJobCommand,
+    job: JobEntity,
+    windowMs: number,
+    throttleType: string
+  ): Promise<void> {
+    // For dynamic throttles, validate that the window is in the future
+    if (throttleType === 'dynamic' && windowMs <= 0) {
+      Logger.error(
+        `Dynamic throttle window must be in the future. windowMs: ${windowMs}, jobId: ${job._id}`,
+        LOG_CONTEXT
+      );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.THROTTLE_WINDOW_IN_PAST,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      throw new Error(`Dynamic throttle window must be in the future. windowMs: ${windowMs}`);
+    }
+
+    // Validate against tier restrictions
+    const tierValidationErrors = await this.tierRestrictionsValidateUsecase.execute(
+      TierRestrictionsValidateCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        stepType: StepTypeEnum.THROTTLE,
+        amount: Math.floor(windowMs / 1000 / 60), // Convert to minutes for validation
+        unit: 'minutes',
+      })
+    );
+
+    if (tierValidationErrors && tierValidationErrors.length > 0) {
+      const errorMessage = tierValidationErrors[0].message;
+      Logger.error(`Throttle window exceeds tier limits: ${errorMessage}, jobId: ${job._id}`, LOG_CONTEXT);
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.DEFER_DURATION_LIMIT_EXCEEDED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ errorMessage }),
+        })
+      );
+
+      throw new Error(`Throttle window exceeds tier limits: ${errorMessage}`);
+    }
+  }
 }
 
 function isJobDeferredType(jobType: StepTypeEnum | undefined) {
   if (!jobType) return false;
 
-  return [StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(jobType);
+  return [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE].includes(jobType);
 }
 
 function isShouldHaltJobExecution(digestCreationResult: DigestCreationResultEnum) {

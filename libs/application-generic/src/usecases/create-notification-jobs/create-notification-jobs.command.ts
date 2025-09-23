@@ -2,6 +2,7 @@
 import { NotificationTemplateEntity, SubscriberEntity, TopicEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ContextKey,
   ISubscribersDefine,
   ITenantDefine,
   ProvidersIdEnum,
@@ -10,7 +11,7 @@ import {
   TriggerOverrides,
   WorkflowPreferences,
 } from '@novu/shared';
-import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 
@@ -49,6 +50,11 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   tenant?: ITenantDefine;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: ContextKey[];
 
   bridgeUrl?: string;
 

@@ -246,6 +246,8 @@ function publishSdkSpecificDocumentAndReturnDocument(
 ) {
   overloadNamingGuidelines(document);
   overloadGlobalSdkRetrySettings(document);
+  document['x-speakeasy-timeout'] = 5000;
+
   let sdkDocument: OpenAPIObject = overloadDocumentForSdkGeneration(document, internalSdkGeneration);
   sdkDocument = sortOpenAPIDocument(sdkDocument);
   SwaggerModule.setup('openapi.sdk', app, sdkDocument, {

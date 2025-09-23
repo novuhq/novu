@@ -62,6 +62,18 @@ export class DelayRenderOutput extends RenderOutput {
   amount: number;
   unit: TimeUnitEnum;
 }
+
+export type ThrottleRenderOutput = RenderOutput & {
+  type: 'fixed' | 'dynamic';
+  // Fixed throttle fields
+  amount?: number;
+  unit?: 'minutes' | 'hours' | 'days';
+  // Dynamic throttle fields
+  dynamicKey?: string;
+  // Common fields
+  threshold?: number;
+  throttleKey?: string;
+};
 export enum TimeUnitEnum {
   SECONDS = 'seconds',
   MINUTES = 'minutes',
@@ -138,10 +150,14 @@ export class GeneratePreviewResponseDto {
       }
     | {
         type: ActionTypeEnum.DELAY;
-        preview: DigestRenderOutput;
+        preview: DelayRenderOutput;
       }
     | {
         type: ActionTypeEnum.DIGEST;
         preview: DigestRenderOutput;
+      }
+    | {
+        type: ActionTypeEnum.THROTTLE;
+        preview: ThrottleRenderOutput;
       };
 }

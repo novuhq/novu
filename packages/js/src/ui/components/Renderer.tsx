@@ -18,8 +18,8 @@ import type {
   Appearance,
   Localization,
   PreferenceGroups,
-  PreferenceSort,
   PreferencesFilter,
+  PreferencesSort,
   RouterPush,
   Tab,
 } from '../types';
@@ -77,7 +77,7 @@ type RendererProps = {
   tabs: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
-  preferenceSort?: PreferenceSort;
+  preferencesSort?: PreferencesSort;
   routerPush?: RouterPush;
   novu?: Novu;
   container?: Node | null | undefined;
@@ -116,7 +116,7 @@ export const Renderer = (props: RendererProps) => {
               tabs={props.tabs}
               preferencesFilter={props.preferencesFilter}
               preferenceGroups={props.preferenceGroups}
-              preferenceSort={props.preferenceSort}
+              preferencesSort={props.preferencesSort}
               routerPush={props.routerPush}
             >
               <CountProvider>

@@ -1,4 +1,5 @@
 import {
+  ContextKey,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatus,
   ITenantDefine,
@@ -15,8 +16,6 @@ import { NotificationStepEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 
 export { JobStatusEnum };
-
-
 
 export type DeliveryLifecycleState = {
   status?: DeliveryLifecycleStatus;
@@ -55,6 +54,11 @@ export class JobEntity {
   actorId?: string;
   stepOutput?: Record<string, unknown>;
   preferences?: WorkflowPreferences;
+  contextKeys?: ContextKey[];
+  /**
+   * used to track the number of times a step has been extended to the next available time in the subscriber schedule
+   */
+  scheduleExtensionsCount?: number;
 }
 
 export type JobDBModel = ChangePropsValueType<

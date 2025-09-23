@@ -30,6 +30,10 @@ const jobSchema = new Schema<JobDBModel>(
     tenant: {
       type: Schema.Types.Mixed,
     },
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
     step: {
       type: Schema.Types.Mixed,
     },
@@ -141,6 +145,9 @@ const jobSchema = new Schema<JobDBModel>(
     },
     stepOutput: Schema.Types.Mixed,
     preferences: Schema.Types.Mixed,
+    scheduleExtensionsCount: {
+      type: Schema.Types.Number,
+    },
   },
   schemaOptions
 );

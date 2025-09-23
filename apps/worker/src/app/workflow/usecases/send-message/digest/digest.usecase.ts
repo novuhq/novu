@@ -123,7 +123,7 @@ export class Digest extends SendMessageType {
     });
 
     if (
-      currentJob?.digest?.type === DigestTypeEnum.BACKOFF ||
+      (currentJob?.digest && 'type' in currentJob.digest && currentJob.digest.type === DigestTypeEnum.BACKOFF) ||
       (currentJob?.digest as IDigestRegularMetadata)?.backoff
     ) {
       return this.getDigestEventsBackoff.execute(digestEventsCommand);

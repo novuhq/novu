@@ -18,6 +18,9 @@ on:
         required: true
         type: boolean
         default: false
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
         
 jobs:
   manual_post_release:
@@ -39,7 +42,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.11.0
+          version: 10.16.1
           run_install: false
 
       - name: Setup Node Version
