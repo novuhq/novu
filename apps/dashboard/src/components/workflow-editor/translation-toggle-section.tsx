@@ -1,4 +1,3 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InfoIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
@@ -10,7 +9,6 @@ import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/compon
 import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
 import { TranslationSwitch } from '@/components/translations/translation-switch';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -36,13 +34,8 @@ export function TranslationToggleSection<T extends FieldValues>({
 }: TranslationToggleSectionProps<T>) {
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
-
-  if (!isTranslationEnabled) {
-    return null;
-  }
 
   const translationsUrl = buildRoute(ROUTES.TRANSLATIONS, {
     environmentSlug: currentEnvironment?.slug ?? '',
