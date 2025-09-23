@@ -1,3 +1,7 @@
+## v3.10.1 (2025-09-22)
+
+This was a version bump only for @novu/react-native to align it with other projects, there were no code changes.
+
 ## v3.10.0 (2025-09-22)
 
 This was a version bump only for @novu/react-native to align it with other projects, there were no code changes.

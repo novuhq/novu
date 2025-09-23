@@ -99,14 +99,14 @@ export abstract class BaseTranslationRendererUsecase {
     organization?: OrganizationEntity;
   }): Promise<string | Record<string, unknown>> {
     if (!workflowId) {
-      this.logger.error('Workflow ID is required for translation module', {
+      this.logger.warn('Workflow ID is required for translation module', {
         workflowId,
         organizationId,
         environmentId,
         locale,
       });
 
-      throw new Error('Workflow ID is required for translation module');
+      return content;
     }
 
     try {

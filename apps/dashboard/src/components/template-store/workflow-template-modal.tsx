@@ -1,4 +1,5 @@
 import { StepCreateDto } from '@novu/shared';
+import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import { RiArrowLeftSLine } from 'react-icons/ri';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -30,12 +31,7 @@ import { useTemplateStore } from '@/hooks/use-template-store';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { Step } from '@/utils/types';
-import { selectPopularByIdStrict } from './featured';
 
-/**
- * Maps template steps to Step interface, ensuring all required properties are present
- * and properly typed without using unsafe type assertions.
- */
 function mapTemplateStepsToSteps(templateSteps: StepCreateDto[]): Step[] {
   return templateSteps.map((step, index) => {
     const mappedStep: Step = {
@@ -70,27 +66,20 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
   const [internalSelectedTemplate, setInternalSelectedTemplate] = useState<IWorkflowSuggestion | null>(null);
 
   const selectedTemplate = props.selectedTemplate ?? internalSelectedTemplate;
-  const { suggestions } = useTemplateStore();
+
+  const { suggestions, isLoading } = useTemplateStore();
   const previewSteps = useMemo(() => {
     if (!selectedTemplate) return [] as Step[];
     return mapTemplateStepsToSteps(selectedTemplate.workflowDefinition.steps);
   }, [selectedTemplate]);
+
   const filteredSuggestions = useMemo(() => {
     if (selectedCategory === 'popular') {
-      const popular = selectPopularByIdStrict(suggestions, (s) => s.workflowDefinition.workflowId, 12);
-      return popular.length ? popular : suggestions.slice(0, 12);
+      const popularWorkflows = suggestions.filter((suggestion) => suggestion.tags.includes('popular'));
+      return popularWorkflows.length > 0 ? popularWorkflows : suggestions.slice(0, 12);
     }
 
-    const categoryToTags: Record<string, string[]> = {
-      billing: ['billing'],
-      authentication: ['authentication', 'security'],
-      operational: ['operational', 'usage', 'engagement', 'subscription'],
-    };
-    const tags = categoryToTags[selectedCategory] || [selectedCategory];
-    return suggestions.filter((s) => {
-      const workflowTags = s?.workflowDefinition?.tags || [];
-      return tags.some((t) => workflowTags.includes(t));
-    });
+    return suggestions.filter((suggestion) => suggestion.tags.includes(selectedCategory));
   }, [selectedCategory, suggestions]);
 
   useEffect(() => {
@@ -118,7 +107,6 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
 
     createFromTemplate(values, selectedTemplate.workflowDefinition)
       .then(() => {
-        // Track successful workflow creation from template
         track(TelemetryEvent.CREATE_WORKFLOW_FROM_TEMPLATE, {
           templateId: selectedTemplate.id,
           templateName: selectedTemplate.name,
@@ -126,7 +114,6 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
         });
       })
       .catch((error: unknown) => {
-        // Robust error parsing with proper type guards
         const message =
           typeof error === 'object' && error !== null && 'message' in error
             ? String((error as { message?: unknown }).message || '').toLowerCase()
@@ -139,8 +126,6 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
         const isLayoutMissing = message.includes('layout not found') || status === 404;
 
         if (isLayoutMissing) {
-          // Handle layout missing case - navigate to workflow editor
-          // This is considered a success case where the workflow was created but layout is missing
           navigate(
             buildRoute(ROUTES.EDIT_WORKFLOW, {
               environmentSlug: environmentSlug || '',
@@ -149,9 +134,6 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
           );
           return;
         }
-
-        // Handle all other errors - show user-facing error notification
-        console.error('Failed to create workflow from template:', error);
         showErrorToast(undefined, error);
       });
   };
@@ -211,7 +193,51 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
         </DialogHeader>
         <div className={`flex ${selectedTemplate ? 'min-h-[600px]' : 'min-h-[640px]'}`}>
           {!selectedTemplate && (
-            <WorkflowSidebar selectedCategory={selectedCategory} onCategorySelect={handleCategorySelect} />
+            <AnimatePresence initial={false} mode="wait">
+              {isLoading ? (
+                <motion.div
+                  key="sidebar-skeleton"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className="flex h-full w-[240px] flex-col gap-4 border-r p-2"
+                >
+                  <div className="flex flex-col gap-1">
+                    <Skeleton className="h-9 w-full" />
+                    <Skeleton className="h-9 w-full" />
+                  </div>
+
+                  <section className="p-2">
+                    <div className="mb-2">
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                    </div>
+                  </section>
+
+                  <div className="mt-auto p-3">
+                    <Skeleton className="h-[72px] w-full" />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="sidebar-content"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                >
+                  <WorkflowSidebar selectedCategory={selectedCategory} onCategorySelect={handleCategorySelect} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           )}
 
           <div className="w-full flex-1 overflow-auto">
