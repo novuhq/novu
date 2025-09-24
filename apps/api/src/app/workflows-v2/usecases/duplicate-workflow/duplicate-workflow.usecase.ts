@@ -74,6 +74,7 @@ export class DuplicateWorkflowUseCase {
       name: step.name ?? '',
       type: step.type,
       controlValues: step.controls.values ?? null,
+      // Don't pass stepId to ensure new unique step IDs are generated during duplication
     }));
   }
 

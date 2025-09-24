@@ -787,6 +787,51 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(res.error!.message).to.contain('Workflow');
       expect(res.error!.ctx?.workflowId).to.contain('123');
     });
+
+    it('should create unique step IDs when duplicating workflow with multiple steps of same type', async () => {
+      // Create a workflow with multiple email steps
+      const createWorkflowDto = buildWorkflow({
+        name: 'Test Multiple Email Steps',
+        steps: [
+          buildEmailStep({ name: 'First Email Step' }),
+          buildEmailStep({ name: 'Second Email Step' }),
+          buildInAppStep({ name: 'In-App Step' }),
+        ],
+      } as CreateWorkflowDto);
+      
+      const originalWorkflow = await createWorkflow(apiClient, createWorkflowDto);
+      
+      // Verify original workflow has unique step IDs
+      const originalStepIds = originalWorkflow.steps.map(step => step.stepId);
+      const uniqueOriginalStepIds = [...new Set(originalStepIds)];
+      expect(originalStepIds.length).to.equal(uniqueOriginalStepIds.length, 'Original workflow steps should have unique IDs');
+      
+      // Duplicate the workflow
+      const duplicatedWorkflow = (
+        await apiClient.workflows.duplicate(
+          {
+            name: 'Duplicated Multiple Email Steps',
+          },
+          originalWorkflow.id
+        )
+      ).result;
+
+      // Verify duplicated workflow has unique step IDs
+      const duplicatedStepIds = duplicatedWorkflow!.steps.map(step => step.stepId);
+      const uniqueDuplicatedStepIds = [...new Set(duplicatedStepIds)];
+      expect(duplicatedStepIds.length).to.equal(uniqueDuplicatedStepIds.length, 'Duplicated workflow steps should have unique IDs');
+      
+      // Verify step IDs are different from original workflow
+      duplicatedWorkflow!.steps.forEach((step, index) => {
+        expect(step.stepId).to.not.equal(originalWorkflow.steps[index].stepId, `Step ${index} should have different ID after duplication`);
+      });
+      
+      // Verify we have the expected number of steps
+      expect(duplicatedWorkflow!.steps.length).to.equal(3);
+      expect(duplicatedWorkflow!.steps[0].type).to.equal('email');
+      expect(duplicatedWorkflow!.steps[1].type).to.equal('email');
+      expect(duplicatedWorkflow!.steps[2].type).to.equal('in_app');
+    });
   });
 
   describe('Get step data', () => {
