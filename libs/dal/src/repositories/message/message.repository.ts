@@ -6,7 +6,7 @@ import {
   MessagesStatusEnum,
   SeverityLevelEnum,
 } from '@novu/shared';
-import { FilterQuery, Types } from 'mongoose';
+import { FilterQuery, ProjectionType, Types } from 'mongoose';
 
 import { DalException } from '../../shared';
 import { EnforceEnvId } from '../../types/enforce';
@@ -907,6 +907,28 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       });
 
     return this.mapEntity(res);
+  }
+
+  async findWithSubscriber(
+    query: MessageQuery & EnforceEnvId,
+    select: ProjectionType<MessageEntity> = ''
+  ): Promise<MessageEntity[]> {
+    const res = await this.MongooseModel.find(query, select).populate('subscriber', 'subscriberId').lean().exec();
+
+    const mappedEntities = this.mapEntities(res);
+
+    // Flatten subscriber data - move subscriber.subscriberId to root level
+    return mappedEntities.map((entity) => {
+      if (entity.subscriber?.subscriberId) {
+        return {
+          ...entity,
+          subscriberId: entity.subscriber.subscriberId,
+          subscriber: undefined, // Remove the nested subscriber object
+        };
+      }
+
+      return entity;
+    });
   }
 
   async findMessagesByTransactionId(
