@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, shortId } from '@novu/application-generic';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { PreferencesTypeEnum, ResourceOriginEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { DuplicateWorkflowDto, StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
@@ -70,11 +70,15 @@ export class DuplicateWorkflowUseCase {
   }
 
   private mapStepsToDuplicate(steps: StepResponseDto[]): UpsertStepDataCommand[] {
+    // Generate a unique suffix for this duplication to ensure step IDs are different from original
+    const duplicationSuffix = shortId();
+
     return steps.map((step) => ({
       name: step.name ?? '',
       type: step.type,
       controlValues: step.controls.values ?? null,
-      // Don't pass stepId to ensure new unique step IDs are generated during duplication
+      // Set a stepId that includes the original plus a unique suffix to ensure uniqueness
+      stepId: `${step.stepId}-dup-${duplicationSuffix}`,
     }));
   }
 
