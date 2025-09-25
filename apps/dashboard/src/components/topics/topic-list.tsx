@@ -1,12 +1,19 @@
 // Use pagination primitives from the dashboard project
 
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
-import { HTMLAttributes, useCallback } from 'react';
+import { HTMLAttributes } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
-import { useSearchParams } from 'react-router-dom';
-import { CursorPagination } from '@/components/cursor-pagination';
 import { PermissionButton } from '@/components/primitives/permission-button';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/primitives/table';
+import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { useFetchTopics } from '@/hooks/use-fetch-topics';
 import { cn } from '@/utils/ui';
 import { ListNoResults } from '../list-no-results';
@@ -77,7 +84,7 @@ export const CreateTopicButton = () => {
 
 // Table component similar to SubscriberListTable
 const TopicListTable = (props: TopicListTableProps) => {
-  const { children, orderBy, orderDirection, toggleSort, ...rest } = props;
+  const { children, orderBy, orderDirection, toggleSort, paginationProps, ...rest } = props;
   return (
     <Table {...rest}>
       <TableHeader>
@@ -102,6 +109,30 @@ const TopicListTable = (props: TopicListTableProps) => {
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
+      {paginationProps && (
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={5} className="p-0">
+              <TablePaginationFooter
+                currentPage={1} // Cursor pagination doesn't have traditional pages
+                pageSize={paginationProps.limit}
+                totalItems={paginationProps.currentItemsCount} // Show current page items count
+                onFirstPage={paginationProps.onFirst}
+                onPreviousPage={paginationProps.onPrevious}
+                onNextPage={paginationProps.onNext}
+                onLastPage={() => {}} // Disabled for cursor pagination
+                onPageSizeChange={paginationProps.onPageSizeChange}
+                isFirstPage={!paginationProps.hasPrevious}
+                isLastPage={!paginationProps.hasNext}
+                itemName="topics"
+                className="cursor-pagination" // Add class to identify cursor pagination
+                count={paginationProps.count}
+                hasMore={paginationProps.hasMore}
+              />
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      )}
     </Table>
   );
 };
@@ -116,19 +147,38 @@ type TopicListTableProps = HTMLAttributes<HTMLTableElement> & {
   toggleSort: ReturnType<typeof useTopicsUrlState>['toggleSort'];
   orderBy?: TopicsSortableColumn;
   orderDirection?: DirectionEnum;
+  showPagination?: boolean;
+  paginationProps?: {
+    hasNext: boolean;
+    hasPrevious: boolean;
+    onNext: () => void;
+    onPrevious: () => void;
+    onFirst: () => void;
+    limit: number;
+    currentItemsCount: number;
+    count?: number;
+    hasMore?: boolean;
+    onPageSizeChange: (newSize: number) => void;
+  };
 };
 
 export const TopicList = (props: TopicListProps) => {
-  const { className, ...rest } = props;
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { ...rest } = props;
 
   // Use the hook as the primary source for URL state - orderBy/orderDirection are likely within filterValues
-  const { filterValues, handleFiltersChange, toggleSort, resetFilters } = useTopicsUrlState({});
+  const {
+    filterValues,
+    handleFiltersChange,
+    toggleSort,
+    resetFilters,
+    handleNext,
+    handlePrevious,
+    handleFirst,
+    handlePageSizeChange,
+  } = useTopicsUrlState({});
 
-  // Pagination state remains derived directly from URL for fetching
-  const after = searchParams.get('after') || undefined;
-  const before = searchParams.get('before') || undefined;
-  const limit = 10; // Keep limit definition
+  // Get limit from filterValues, fallback to 10
+  const limit = filterValues.limit || 10;
 
   // Consolidate fetch parameters
   const fetchParams: TopicsFilter = {
@@ -137,47 +187,18 @@ export const TopicList = (props: TopicListProps) => {
     name: filterValues.name,
     orderBy: filterValues.orderBy,
     orderDirection: filterValues.orderDirection,
-    // Pagination params from URL
-    after: after,
-    before: before,
+    // Pagination params from hook
+    after: filterValues.after,
+    before: filterValues.before,
     limit: limit,
   };
 
   // Determine if filters are active based on hook values
-  const areFiltersApplied = !!(filterValues.key || filterValues.name || before || after);
+  const areFiltersApplied = !!(filterValues.key || filterValues.name || filterValues.before || filterValues.after);
 
   const { data, isLoading, isFetching } = useFetchTopics(fetchParams, {
     meta: { errorMessage: 'Issue fetching topics' },
   });
-
-  // Simplified Pagination Handlers
-  const handleNext = useCallback(() => {
-    if (data?.next) {
-      setSearchParams((prev) => {
-        prev.delete('before');
-        prev.set('after', data.next as string);
-        return prev;
-      });
-    }
-  }, [data?.next, setSearchParams]);
-
-  const handlePrevious = useCallback(() => {
-    if (data?.previous) {
-      setSearchParams((prev) => {
-        prev.delete('after');
-        prev.set('before', data.previous as string);
-        return prev;
-      });
-    }
-  }, [data?.previous, setSearchParams]);
-
-  const handleFirst = useCallback(() => {
-    setSearchParams((prev) => {
-      prev.delete('before');
-      prev.delete('after');
-      return prev;
-    });
-  }, [setSearchParams]);
 
   // Define wrapper props once
   const wrapperProps = {
@@ -196,6 +217,21 @@ export const TopicList = (props: TopicListProps) => {
     orderBy: filterValues.orderBy, // Use state from hook via filterValues
     orderDirection: filterValues.orderDirection, // Use state from hook via filterValues
     toggleSort,
+    showPagination: !!(data?.next || data?.previous),
+    paginationProps: data
+      ? {
+          hasNext: !!data.next,
+          hasPrevious: !!data.previous,
+          onNext: handleNext,
+          onPrevious: handlePrevious,
+          onFirst: handleFirst,
+          limit,
+          currentItemsCount: data.data.length,
+          count: data.count,
+          hasMore: data.hasMore,
+          onPageSizeChange: handlePageSizeChange,
+        }
+      : undefined,
   };
 
   if (isLoading) {
@@ -237,16 +273,6 @@ export const TopicList = (props: TopicListProps) => {
           <TopicRow key={topic._id} topic={topic} />
         ))}
       </TopicListTable>
-
-      {!!(data.next || data.previous) && (
-        <CursorPagination
-          hasNext={!!data.next}
-          hasPrevious={!!data.previous}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onFirst={handleFirst}
-        />
-      )}
     </TopicListWrapper>
   );
 };

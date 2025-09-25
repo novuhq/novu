@@ -23,6 +23,7 @@ export interface TopicsUrlState {
   handleNext: () => void;
   handlePrevious: () => void;
   handleFirst: () => void;
+  handlePageSizeChange: (newSize: number) => void;
 }
 
 const DEFAULT_LIMIT = 10;
@@ -156,6 +157,20 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
     });
   }, [setSearchParams]);
 
+  const handlePageSizeChange = useCallback(
+    (newSize: number) => {
+      setSearchParams((prev) => {
+        prev.set('limit', newSize.toString());
+        // Reset pagination when page size changes
+        prev.delete('before');
+        prev.delete('after');
+
+        return prev;
+      });
+    },
+    [setSearchParams]
+  );
+
   return {
     filterValues: {
       ...defaultFilterValues,
@@ -168,5 +183,6 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
     handleNext,
     handlePrevious,
     handleFirst,
+    handlePageSizeChange,
   };
 };
