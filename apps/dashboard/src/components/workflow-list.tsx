@@ -1,7 +1,6 @@
 import { DirectionEnum, ListWorkflowResponse } from '@novu/shared';
 import { RiMore2Fill } from 'react-icons/ri';
 import { createSearchParams, useLocation, useSearchParams } from 'react-router-dom';
-import { DefaultPagination } from '@/components/default-pagination';
 import { Skeleton } from '@/components/primitives/skeleton';
 import {
   Table,
@@ -13,6 +12,7 @@ import {
   TableHeadSortDirection,
   TableRow,
 } from '@/components/primitives/table';
+import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { WorkflowListEmpty } from '@/components/workflow-list-empty';
 import { WorkflowRow } from '@/components/workflow-row';
 import { ServerErrorPage } from '@/pages/server-error-page';
@@ -28,6 +28,7 @@ interface WorkflowListProps {
   orderDirection?: TableHeadSortDirection;
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
+  onPageSizeChange?: (pageSize: number) => void;
 }
 
 interface WorkflowListSkeletonProps {
@@ -76,18 +77,38 @@ export function WorkflowList({
   orderDirection,
   hasActiveFilters,
   onClearFilters,
+  onPageSizeChange,
 }: WorkflowListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
 
-  const hrefFromOffset = (offset: number) => {
-    return `${location.pathname}?${createSearchParams({
-      ...searchParams,
-      offset: offset.toString(),
-    })}`;
+  const offset = parseInt(searchParams.get('offset') || '0');
+  const currentPage = Math.floor(offset / limit) + 1;
+  const totalPages = Math.ceil((data?.totalCount || 0) / limit);
+
+  const navigateToPage = (newPage: number) => {
+    const newOffset = (newPage - 1) * limit;
+    const newParams = createSearchParams({
+      ...Object.fromEntries(searchParams),
+      offset: newOffset.toString(),
+    });
+    window.location.href = `${location.pathname}?${newParams}`;
   };
 
-  const offset = parseInt(searchParams.get('offset') || '0');
+  const handleFirstPage = () => navigateToPage(1);
+  const handlePreviousPage = () => navigateToPage(Math.max(1, currentPage - 1));
+  const handleNextPage = () => navigateToPage(Math.min(totalPages, currentPage + 1));
+  const handleLastPage = () => navigateToPage(totalPages);
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    const newParams = createSearchParams({
+      ...Object.fromEntries(searchParams),
+      limit: newPageSize.toString(),
+      offset: '0', // Reset to first page when changing page size
+    });
+    window.location.href = `${location.pathname}?${newParams}`;
+    onPageSizeChange?.(newPageSize);
+  };
 
   const toggleSort = (column: SortableColumn) => {
     const newDirection =
@@ -106,9 +127,6 @@ export function WorkflowList({
   if (!isLoading && data?.totalCount === 0) {
     return <WorkflowListEmpty emptySearchResults={hasActiveFilters} onClearFilters={onClearFilters} />;
   }
-
-  const currentPage = Math.floor(offset / limit) + 1;
-  const totalPages = Math.ceil((data?.totalCount || 0) / limit);
 
   return (
     <div className="flex h-full flex-col">
@@ -157,28 +175,21 @@ export function WorkflowList({
         {data && limit < data.totalCount && (
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={5}>
-                <div className="flex items-center justify-between">
-                  {data ? (
-                    <span className="text-foreground-600 block text-sm font-normal">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                  ) : (
-                    <Skeleton className="h-5 w-[20ch]" />
-                  )}
-                  {data ? (
-                    <DefaultPagination
-                      hrefFromOffset={hrefFromOffset}
-                      totalCount={data.totalCount}
-                      limit={limit}
-                      offset={offset}
-                    />
-                  ) : (
-                    <Skeleton className="h-5 w-32" />
-                  )}
-                </div>
+              <TableCell colSpan={7} className="p-0">
+                <TablePaginationFooter
+                  currentPage={currentPage}
+                  pageSize={limit}
+                  totalItems={data.totalCount}
+                  onFirstPage={handleFirstPage}
+                  onPreviousPage={handlePreviousPage}
+                  onNextPage={handleNextPage}
+                  onLastPage={handleLastPage}
+                  onPageSizeChange={handlePageSizeChange}
+                  isFirstPage={currentPage === 1}
+                  isLastPage={currentPage >= totalPages}
+                  itemName="workflows"
+                />
               </TableCell>
-              <TableCell colSpan={2} />
             </TableRow>
           </TableFooter>
         )}

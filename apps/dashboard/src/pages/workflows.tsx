@@ -315,6 +315,14 @@ export const WorkflowsPage = () => {
             isLoading={isPending}
             isError={isError}
             limit={limit}
+            onPageSizeChange={(newPageSize) => {
+              setSearchParams((prev) => {
+                const sp = new URLSearchParams(prev);
+                sp.set('limit', newPageSize.toString());
+                sp.delete('offset'); // Reset to first page when changing page size
+                return sp;
+              });
+            }}
           />
         </div>
         <Outlet />
