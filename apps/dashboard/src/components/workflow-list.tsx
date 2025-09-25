@@ -1,6 +1,6 @@
 import { DirectionEnum, ListWorkflowResponse } from '@novu/shared';
 import { RiMore2Fill } from 'react-icons/ri';
-import { createSearchParams, useLocation, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Skeleton } from '@/components/primitives/skeleton';
 import {
   Table,
@@ -80,7 +80,6 @@ export function WorkflowList({
   onPageSizeChange,
 }: WorkflowListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
 
   const offset = parseInt(searchParams.get('offset') || '0');
   const currentPage = Math.floor(offset / limit) + 1;
@@ -88,11 +87,11 @@ export function WorkflowList({
 
   const navigateToPage = (newPage: number) => {
     const newOffset = (newPage - 1) * limit;
-    const newParams = createSearchParams({
-      ...Object.fromEntries(searchParams),
-      offset: newOffset.toString(),
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('offset', newOffset.toString());
+      return newParams;
     });
-    window.location.href = `${location.pathname}?${newParams}`;
   };
 
   const handleFirstPage = () => navigateToPage(1);
@@ -101,12 +100,12 @@ export function WorkflowList({
   const handleLastPage = () => navigateToPage(totalPages);
 
   const handlePageSizeChange = (newPageSize: number) => {
-    const newParams = createSearchParams({
-      ...Object.fromEntries(searchParams),
-      limit: newPageSize.toString(),
-      offset: '0', // Reset to first page when changing page size
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('limit', newPageSize.toString());
+      newParams.set('offset', '0'); // Reset to first page when changing page size
+      return newParams;
     });
-    window.location.href = `${location.pathname}?${newParams}`;
     onPageSizeChange?.(newPageSize);
   };
 
