@@ -1,9 +1,17 @@
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
 import { RiUserSharedLine } from 'react-icons/ri';
-import { CursorPagination } from '@/components/cursor-pagination';
 import { PermissionButton } from '@/components/primitives/permission-button';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/primitives/table';
+import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import {
   SubscribersFilter,
@@ -58,10 +66,20 @@ type SubscriberListTableProps = HTMLAttributes<HTMLTableElement> & {
   toggleSort: ReturnType<typeof useSubscribersUrlState>['toggleSort'];
   orderBy?: SubscribersSortableColumn;
   orderDirection?: DirectionEnum;
+  showPagination?: boolean;
+  paginationProps?: {
+    hasNext: boolean;
+    hasPrevious: boolean;
+    onNext: () => void;
+    onPrevious: () => void;
+    onFirst: () => void;
+    limit: number;
+    currentItemsCount: number;
+  };
 };
 
 const SubscriberListTable = (props: SubscriberListTableProps) => {
-  const { children, orderBy, orderDirection, toggleSort, ...rest } = props;
+  const { children, orderBy, orderDirection, toggleSort, showPagination, paginationProps, ...rest } = props;
   return (
     <Table {...rest}>
       <TableHeader>
@@ -87,6 +105,31 @@ const SubscriberListTable = (props: SubscriberListTableProps) => {
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
+      {showPagination && paginationProps && (
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={6} className="p-0">
+              <TablePaginationFooter
+                currentPage={1} // Cursor pagination doesn't have traditional pages
+                pageSize={paginationProps.limit}
+                totalItems={paginationProps.currentItemsCount} // Show current page items count
+                onFirstPage={paginationProps.onFirst}
+                onPreviousPage={paginationProps.onPrevious}
+                onNextPage={paginationProps.onNext}
+                onLastPage={() => {}} // Disabled for cursor pagination
+                onPageSizeChange={(newSize) => {
+                  // TODO: Implement page size change for subscribers
+                  console.log('Page size change not yet implemented for subscribers:', newSize);
+                }}
+                isFirstPage={!paginationProps.hasPrevious}
+                isLastPage={!paginationProps.hasNext}
+                itemName="subscribers"
+                className="cursor-pagination" // Add class to identify cursor pagination
+              />
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      )}
     </Table>
   );
 };
@@ -94,7 +137,7 @@ const SubscriberListTable = (props: SubscriberListTableProps) => {
 type SubscriberListProps = HTMLAttributes<HTMLDivElement>;
 
 export const SubscriberList = (props: SubscriberListProps) => {
-  const { className, ...rest } = props;
+  const { ...rest } = props;
   const [nextPageAfter, setNextPageAfter] = useState<string | undefined>(undefined);
   const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
   const { filterValues, handleFiltersChange, toggleSort, resetFilters, handleNext, handlePrevious, handleFirst } =
@@ -191,6 +234,16 @@ export const SubscriberList = (props: SubscriberListProps) => {
         orderBy={filterValues.orderBy}
         orderDirection={filterValues.orderDirection}
         toggleSort={toggleSort}
+        showPagination={!!(data.next || data.previous)}
+        paginationProps={{
+          hasNext: !!data.next,
+          hasPrevious: !!data.previous,
+          onNext: handleNext,
+          onPrevious: handlePrevious,
+          onFirst: handleFirst,
+          limit,
+          currentItemsCount: data.data.length,
+        }}
       >
         {data.data.map((subscriber) => (
           <SubscriberRow
@@ -201,16 +254,6 @@ export const SubscriberList = (props: SubscriberListProps) => {
           />
         ))}
       </SubscriberListTable>
-
-      {!!(data.next || data.previous) && (
-        <CursorPagination
-          hasNext={!!data.next}
-          hasPrevious={!!data.previous}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onFirst={handleFirst}
-        />
-      )}
     </SubscriberListWrapper>
   );
 };

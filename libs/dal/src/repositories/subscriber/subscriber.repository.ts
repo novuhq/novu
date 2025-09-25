@@ -174,7 +174,13 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     subscriberId?: string;
     name?: string;
     includeCursor?: boolean;
-  }): Promise<{ subscribers: SubscriberEntity[]; next: string | null; previous: string | null }> {
+  }): Promise<{
+    subscribers: SubscriberEntity[];
+    next: string | null;
+    previous: string | null;
+    count: number;
+    hasMore: boolean;
+  }> {
     if (query.before && query.after) {
       throw new DalException('Cannot specify both "before" and "after" cursors at the same time.');
     }
@@ -192,6 +198,8 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
           subscribers: [],
           next: null,
           previous: null,
+          count: 0,
+          hasMore: false,
         };
       }
     }
@@ -256,6 +264,8 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       subscribers: pagination.data,
       next: pagination.next,
       previous: pagination.previous,
+      count: pagination.count,
+      hasMore: pagination.hasMore,
     };
   }
 }

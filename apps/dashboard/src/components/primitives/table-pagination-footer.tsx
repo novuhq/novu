@@ -96,35 +96,51 @@ export function TablePaginationFooter({
   pageSizeOptions = [12, 25, 50, 100],
   itemName = 'items',
 }: TablePaginationFooterProps) {
-  const startItem = Math.min((currentPage - 1) * pageSize + 1, totalItems);
-  const endItem = Math.min(currentPage * pageSize, totalItems);
+  // Check if this is cursor-based pagination (no meaningful currentPage or totalItems)
+  const isCursorPagination = className?.includes('cursor-pagination');
+
+  const startItem = isCursorPagination ? 1 : Math.min((currentPage - 1) * pageSize + 1, totalItems);
+  const endItem = isCursorPagination ? totalItems : Math.min(currentPage * pageSize, totalItems);
 
   return (
     <div className={cn('flex w-full items-center bg-bg-white px-3 py-2', className)}>
       <div className="flex items-center gap-1 px-2 flex-1">
-        <span className="text-label-xs text-text-sub">{startItem}</span>
-        <span className="text-label-xs text-text-soft">–</span>
-        <span className="text-label-xs text-text-sub">{endItem}</span>
-        <span className="text-label-xs text-text-soft">of</span>
-        <span className="text-label-xs text-text-sub">{totalItems}</span>
-        <span className="text-label-xs text-text-soft">{itemName}</span>
+        {isCursorPagination ? (
+          <>
+            <span className="text-label-xs text-text-sub">{totalItems}</span>
+            <span className="text-label-xs text-text-soft">{itemName} on this page</span>
+          </>
+        ) : (
+          <>
+            <span className="text-label-xs text-text-sub">{startItem}</span>
+            <span className="text-label-xs text-text-soft">–</span>
+            <span className="text-label-xs text-text-sub">{endItem}</span>
+            <span className="text-label-xs text-text-soft">of</span>
+            <span className="text-label-xs text-text-sub">{totalItems}</span>
+            <span className="text-label-xs text-text-soft">{itemName}</span>
+          </>
+        )}
       </div>
 
       {/* Center: Pagination buttons */}
       <div className="flex items-center justify-center flex-1">
         <PaginationGroup>
-          <PaginationNavButton disabled={isFirstPage} onClick={onFirstPage} aria-label="Go to first page">
-            <RiArrowLeftDoubleLine className="size-5" />
-          </PaginationNavButton>
+          {!isCursorPagination && (
+            <PaginationNavButton disabled={isFirstPage} onClick={onFirstPage} aria-label="Go to first page">
+              <RiArrowLeftDoubleLine className="size-5" />
+            </PaginationNavButton>
+          )}
           <PaginationNavButton disabled={isFirstPage} onClick={onPreviousPage} aria-label="Go to previous page">
             <RiArrowLeftSLine className="size-5" />
           </PaginationNavButton>
           <PaginationNavButton disabled={isLastPage} onClick={onNextPage} aria-label="Go to next page">
             <RiArrowRightSLine className="size-5" />
           </PaginationNavButton>
-          <PaginationNavButton disabled={isLastPage} onClick={onLastPage} aria-label="Go to last page">
-            <RiArrowRightDoubleLine className="size-5" />
-          </PaginationNavButton>
+          {!isCursorPagination && (
+            <PaginationNavButton disabled={isLastPage} onClick={onLastPage} aria-label="Go to last page">
+              <RiArrowRightDoubleLine className="size-5" />
+            </PaginationNavButton>
+          )}
         </PaginationGroup>
       </div>
 
