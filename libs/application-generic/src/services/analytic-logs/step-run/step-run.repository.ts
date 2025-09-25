@@ -114,9 +114,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       const firstJob = jobs[0];
       const isEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
-        organization: { _id: firstJob._organizationId },
-        environment: { _id: firstJob._environmentId },
-        user: { _id: firstJob._userId },
+        organization: { _id: String(firstJob._organizationId) },
+        environment: { _id: String(firstJob._environmentId) },
         defaultValue: false,
       });
 

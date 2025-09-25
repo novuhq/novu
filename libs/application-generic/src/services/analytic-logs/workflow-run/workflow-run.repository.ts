@@ -85,9 +85,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     try {
       const isEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED,
-        organization: { _id: notification._organizationId },
-        environment: { _id: notification._environmentId },
-        user: { _id: options.userId },
+        organization: { _id: String(notification._organizationId) },
+        environment: { _id: String(notification._environmentId) },
+        user: { _id: String(options.userId) },
         defaultValue: false,
       });
 
