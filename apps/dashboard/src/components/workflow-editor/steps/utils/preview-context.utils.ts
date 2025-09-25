@@ -31,7 +31,7 @@ export function createSubscriberData(subscriber: ISubscriberResponseDto): Previe
     avatar: subscriber.avatar || '',
     locale: subscriber.locale || DEFAULT_LOCALE,
     timezone: subscriber.timezone || '',
-    data: {},
+    data: subscriber.data || {},
   };
 }
 

@@ -1,4 +1,4 @@
-import { ActionTypeEnum, ChannelTypeEnum } from '../../types';
+import { ActionTypeEnum, ChannelTypeEnum, ContextPayload } from '../../types';
 import { SubscriberDto } from '../subscriber';
 import { JSONSchemaDto } from './json-schema-dto';
 
@@ -121,6 +121,7 @@ export class InAppRenderOutput extends RenderOutput {
 export class PreviewPayload {
   subscriber?: Partial<SubscriberDto>;
   payload?: Record<string, unknown>;
+  context?: ContextPayload;
   steps?: Record<string, unknown>; // step.stepId.unknown
 }
 
