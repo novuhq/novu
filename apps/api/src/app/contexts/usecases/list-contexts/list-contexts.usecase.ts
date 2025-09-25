@@ -10,8 +10,8 @@ export class ListContexts {
 
   async execute(command: ListContextsCommand) {
     const filter: FilterQuery<ContextEntity> & EnforceEnvOrOrgIds = {
-      _environmentId: command.user.environmentId,
-      _organizationId: command.user.organizationId,
+      _environmentId: String(command.user.environmentId),
+      _organizationId: String(command.user.organizationId),
     };
 
     if (command.type) {

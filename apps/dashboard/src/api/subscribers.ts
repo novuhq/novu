@@ -14,6 +14,8 @@ export type ListSubscribersResponse = {
   data: Array<ISubscriberResponseDto>;
   next: string | null;
   previous: string | null;
+  count: number;
+  hasMore: boolean;
 };
 
 export const getSubscribers = async ({

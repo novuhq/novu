@@ -75,6 +75,9 @@ type SubscriberListTableProps = HTMLAttributes<HTMLTableElement> & {
     onFirst: () => void;
     limit: number;
     currentItemsCount: number;
+    count?: number;
+    hasMore?: boolean;
+    onPageSizeChange: (newSize: number) => void;
   };
 };
 
@@ -117,14 +120,13 @@ const SubscriberListTable = (props: SubscriberListTableProps) => {
                 onPreviousPage={paginationProps.onPrevious}
                 onNextPage={paginationProps.onNext}
                 onLastPage={() => {}} // Disabled for cursor pagination
-                onPageSizeChange={(newSize) => {
-                  // TODO: Implement page size change for subscribers
-                  console.log('Page size change not yet implemented for subscribers:', newSize);
-                }}
+                onPageSizeChange={paginationProps.onPageSizeChange}
                 isFirstPage={!paginationProps.hasPrevious}
                 isLastPage={!paginationProps.hasNext}
                 itemName="subscribers"
                 className="cursor-pagination" // Add class to identify cursor pagination
+                count={paginationProps.count}
+                hasMore={paginationProps.hasMore}
               />
             </TableCell>
           </TableRow>
@@ -140,15 +142,23 @@ export const SubscriberList = (props: SubscriberListProps) => {
   const { ...rest } = props;
   const [nextPageAfter, setNextPageAfter] = useState<string | undefined>(undefined);
   const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
-  const { filterValues, handleFiltersChange, toggleSort, resetFilters, handleNext, handlePrevious, handleFirst } =
-    useSubscribersUrlState({
-      after: nextPageAfter,
-      before: previousPageBefore,
-    });
+  const {
+    filterValues,
+    handleFiltersChange,
+    toggleSort,
+    resetFilters,
+    handleNext,
+    handlePrevious,
+    handleFirst,
+    handlePageSizeChange,
+  } = useSubscribersUrlState({
+    after: nextPageAfter,
+    before: previousPageBefore,
+  });
   const areFiltersApplied = (Object.keys(filterValues) as (keyof SubscribersFilter)[]).some(
     (key) => ['email', 'phone', 'name', 'subscriberId', 'before', 'after'].includes(key) && filterValues[key] !== ''
   );
-  const limit = 10;
+  const limit = filterValues.limit || 10;
 
   const { data, isPending, isFetching } = useFetchSubscribers(filterValues, {
     meta: { errorMessage: 'Issue fetching subscribers' },
@@ -243,6 +253,9 @@ export const SubscriberList = (props: SubscriberListProps) => {
           onFirst: handleFirst,
           limit,
           currentItemsCount: data.data.length,
+          count: data.count,
+          hasMore: data.hasMore,
+          onPageSizeChange: handlePageSizeChange,
         }}
       >
         {data.data.map((subscriber) => (

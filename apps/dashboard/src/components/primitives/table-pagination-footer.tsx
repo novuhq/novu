@@ -3,6 +3,7 @@
  *
  * @example
  * ```tsx
+ * // Regular pagination
  * const [currentPage, setCurrentPage] = useState(1);
  * const [pageSize, setPageSize] = useState(12);
  * const totalItems = 213;
@@ -22,6 +23,23 @@
  *   isFirstPage={currentPage === 1}
  *   isLastPage={currentPage >= Math.ceil(totalItems / pageSize)}
  *   itemName="workflows"
+ * />
+ *
+ * // Cursor-based pagination with count
+ * <TablePaginationFooter
+ *   currentPage={1}
+ *   pageSize={10}
+ *   totalItems={10} // items on current page
+ *   onFirstPage={() => {}}
+ *   onPreviousPage={handlePrevious}
+ *   onNextPage={handleNext}
+ *   onLastPage={() => {}}
+ *   onPageSizeChange={handlePageSizeChange}
+ *   isFirstPage={!hasPrevious}
+ *   isLastPage={!hasNext}
+ *   itemName="subscribers"
+ *   count={12500} // total count from API
+ *   hasMore={false} // or true if over 50,000
  * />
  * ```
  */
@@ -79,6 +97,8 @@ type TablePaginationFooterProps = {
   className?: string;
   pageSizeOptions?: number[];
   itemName?: string;
+  hasMore?: boolean;
+  count?: number;
 };
 
 export function TablePaginationFooter({
@@ -95,9 +115,11 @@ export function TablePaginationFooter({
   className,
   pageSizeOptions = [12, 25, 50, 100],
   itemName = 'items',
+  hasMore,
+  count,
 }: TablePaginationFooterProps) {
   // Check if this is cursor-based pagination (no meaningful currentPage or totalItems)
-  const isCursorPagination = className?.includes('cursor-pagination');
+  const isCursorPagination = className?.includes('cursor-pagination') || count !== undefined;
 
   const startItem = isCursorPagination ? 1 : Math.min((currentPage - 1) * pageSize + 1, totalItems);
   const endItem = isCursorPagination ? totalItems : Math.min(currentPage * pageSize, totalItems);
@@ -107,16 +129,23 @@ export function TablePaginationFooter({
       <div className="flex items-center gap-1 px-2 flex-1">
         {isCursorPagination ? (
           <>
+            <span className="text-label-xs text-text-soft">Showing</span>
             <span className="text-label-xs text-text-sub">{totalItems}</span>
-            <span className="text-label-xs text-text-soft">{itemName} on this page</span>
+            <span className="text-label-xs text-text-soft">{itemName} of</span>
+            {hasMore ? (
+              <span className="text-label-xs text-text-sub">Over 50,000</span>
+            ) : (
+              <span className="text-label-xs text-text-sub">{count?.toLocaleString()}</span>
+            )}
+            <span className="text-label-xs text-text-soft">total</span>
           </>
         ) : (
           <>
-            <span className="text-label-xs text-text-sub">{startItem}</span>
-            <span className="text-label-xs text-text-soft">–</span>
-            <span className="text-label-xs text-text-sub">{endItem}</span>
+            <span className="text-label-xs text-text-sub">
+              {startItem}-{endItem}
+            </span>
             <span className="text-label-xs text-text-soft">of</span>
-            <span className="text-label-xs text-text-sub">{totalItems}</span>
+            <span className="text-label-xs text-text-sub">{totalItems.toLocaleString()}</span>
             <span className="text-label-xs text-text-soft">{itemName}</span>
           </>
         )}

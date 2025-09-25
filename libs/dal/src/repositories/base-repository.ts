@@ -44,9 +44,14 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return new Types.ObjectId(value);
   }
 
-  async count(query: FilterQuery<T_DBModel> & T_Enforcement, limit?: number): Promise<number> {
+  async count(
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    limit?: number,
+    readPreference?: 'secondaryPreferred' | 'primary'
+  ): Promise<number> {
     return this.MongooseModel.countDocuments(query, {
       limit,
+      readPreference: readPreference || 'primary',
     });
   }
 
@@ -54,19 +59,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     query: FilterQuery<T_DBModel> & T_Enforcement,
     maxLimit: number = 50001
   ): Promise<{ count: number; hasMore: boolean }> {
-    const pipeline = [
-      { $match: query },
-      { $limit: maxLimit },
-      {
-        $group: {
-          _id: null,
-          count: { $sum: 1 },
-        },
-      },
-    ];
-
-    const result = await this.aggregate(pipeline);
-    const count = result.length > 0 ? result[0].count : 0;
+    const result = await this.count(query, maxLimit, 'secondaryPreferred');
+    const count = result;
     const hasMore = count === maxLimit;
 
     return {
