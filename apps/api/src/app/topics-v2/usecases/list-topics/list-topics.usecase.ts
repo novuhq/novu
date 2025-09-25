@@ -29,6 +29,8 @@ export class ListTopicsUseCase {
       data: pagination.topics.map((topic) => mapTopicEntityToDto(topic)),
       next: pagination.next,
       previous: pagination.previous,
+      count: pagination.count,
+      hasMore: pagination.hasMore,
     };
   }
 }

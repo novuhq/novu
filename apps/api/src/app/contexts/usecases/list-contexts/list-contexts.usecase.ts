@@ -78,6 +78,8 @@ export class ListContexts {
       data: pagination.data,
       next: pagination.next,
       previous: pagination.previous,
+      count: pagination.count,
+      hasMore: pagination.hasMore,
     };
   }
 }

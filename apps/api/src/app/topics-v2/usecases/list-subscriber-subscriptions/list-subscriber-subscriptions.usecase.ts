@@ -50,6 +50,8 @@ export class ListSubscriberSubscriptionsUseCase {
       data: subscriptionsWithDetails,
       next: subscriptionsPagination.next,
       previous: subscriptionsPagination.previous,
+      count: subscriptionsPagination.count,
+      hasMore: subscriptionsPagination.hasMore,
     };
   }
 
