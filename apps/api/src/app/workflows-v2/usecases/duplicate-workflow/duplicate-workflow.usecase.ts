@@ -70,15 +70,12 @@ export class DuplicateWorkflowUseCase {
   }
 
   private mapStepsToDuplicate(steps: StepResponseDto[]): UpsertStepDataCommand[] {
-    // Generate a unique suffix for this duplication to ensure step IDs are different from original
-    const duplicationSuffix = shortId();
-
     return steps.map((step) => ({
       name: step.name ?? '',
       type: step.type,
       controlValues: step.controls.values ?? null,
-      // Set a stepId that includes the original plus a unique suffix to ensure uniqueness
-      stepId: `${step.stepId}-dup-${duplicationSuffix}`,
+      stepId: step.stepId,
+      slug: step.slug,
     }));
   }
 
