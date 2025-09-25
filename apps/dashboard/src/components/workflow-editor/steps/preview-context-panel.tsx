@@ -264,6 +264,14 @@ export function PreviewContextPanel({
           onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
         />
 
+        <PreviewStepResultsSection
+          errors={errors}
+          localParsedData={localParsedData}
+          workflow={workflow}
+          onUpdate={updateJsonSection}
+          currentStepId={currentStepId}
+        />
+
         {isContextEnabled && (
           <PreviewContextSection
             error={errors.context}
@@ -274,14 +282,6 @@ export function PreviewContextPanel({
             onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
           />
         )}
-
-        <PreviewStepResultsSection
-          errors={errors}
-          localParsedData={localParsedData}
-          workflow={workflow}
-          onUpdate={updateJsonSection}
-          currentStepId={currentStepId}
-        />
       </Accordion>
       <PayloadSchemaDrawer
         isOpen={isPayloadSchemaDrawerOpen}

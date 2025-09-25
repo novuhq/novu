@@ -3,6 +3,7 @@ import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
 import { VariableFrom } from '@/components/maily/types';
 import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
+import { isValidContextVariable } from '@/utils/context-variable-utils';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import {
   isInsideRepeatBlock,
@@ -10,6 +11,37 @@ import {
   resolveRepeatBlockAlias,
   updateRepeatBlockChildAliases,
 } from './repeat-block-aliases';
+
+function addContextVariableSuggestions(queryWithoutSuffix: string, variables: LiquidVariable[]) {
+  if (!queryWithoutSuffix.startsWith('context.')) return;
+
+  const parts = queryWithoutSuffix.split('.');
+  const existingNames = new Set(variables.map((v) => v.name));
+
+  const createSuggestion = (name: string, boost = 100) => ({
+    name,
+    type: 'variable' as const,
+    isNewSuggestion: true,
+    displayLabel: `Create ${name}`,
+    boost,
+  });
+
+  const addIfNotExists = (name: string, boost?: number) => {
+    if (!existingNames.has(name)) {
+      variables.unshift(createSuggestion(name, boost));
+    }
+  };
+
+  // "context.tenant" → suggest "context.tenant.id" and "context.tenant.data"
+  if (parts.length === 2 && parts[1]?.trim()) {
+    addIfNotExists(`${queryWithoutSuffix}.id`);
+    addIfNotExists(`${queryWithoutSuffix}.data`);
+  }
+  // "context.tenant.id" → suggest if valid and doesn't exist
+  else if (parts.length >= 3 && isValidContextVariable(queryWithoutSuffix)) {
+    addIfNotExists(queryWithoutSuffix);
+  }
+}
 
 export type CalculateVariablesProps = {
   query: string;
@@ -206,6 +238,9 @@ export const calculateVariables = ({
     namespaces,
     addDigestVariables,
   });
+
+  // Add context variable suggestions
+  addContextVariableSuggestions(queryWithoutSuffix, variables);
 
   // Add new variable creation support for payload variables when schema is enabled
   const PAYLOAD_NAMESPACE = 'payload';
