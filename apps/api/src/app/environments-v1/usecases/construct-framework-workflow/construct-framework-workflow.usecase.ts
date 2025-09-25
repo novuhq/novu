@@ -78,13 +78,13 @@ export class ConstructFrameworkWorkflow {
       throw new InternalServerErrorException(`Environment ${command.environmentId} not found`);
     }
 
-    return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber }) => {
+    return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber, context }) => {
       await step.email(
         LAYOUT_PREVIEW_EMAIL_STEP,
         async (controlValues) => {
           return this.emailOutputRendererUseCase.execute({
             controlValues,
-            fullPayloadForRender: { payload, subscriber, steps: {} },
+            fullPayloadForRender: { payload, subscriber, context, steps: {} },
             environmentId: environment._id,
             organizationId: environment._organizationId,
             locale: subscriber.locale ?? undefined,
@@ -115,11 +115,12 @@ export class ConstructFrameworkWorkflow {
   }): Workflow {
     return workflow(
       dbWorkflow.triggers[0].identifier,
-      async ({ step, payload, subscriber }) => {
+      async ({ step, payload, subscriber, context }) => {
         const fullPayloadForRender: FullPayloadForRender = {
           workflow: dbWorkflow as unknown as Record<string, unknown>,
           payload,
           subscriber,
+          context,
           steps: {},
         };
         for (const staticStep of dbWorkflow.steps) {
