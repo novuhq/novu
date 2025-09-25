@@ -13,6 +13,7 @@ import {
   RiTranslate2,
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -24,6 +25,7 @@ export function useNavigationCommands(context: CommandExecutionContext): Command
   const hasWorkflowPermission = hasPermission({ permission: PermissionsEnum.WORKFLOW_READ });
   const hasSubscriberPermission = hasPermission({ permission: PermissionsEnum.SUBSCRIBER_READ });
   const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
+  const isEnterprise = !IS_SELF_HOSTED || IS_ENTERPRISE;
 
   const createNavigationCommand = useCallback(
     (id: string, label: string, route: string, icon: React.ReactNode, permission?: () => boolean) => ({
@@ -107,9 +109,17 @@ export function useNavigationCommands(context: CommandExecutionContext): Command
     );
   }
 
-  commands.push(
-    createNavigationCommand('nav-translations', 'Translations', ROUTES.TRANSLATIONS, <RiTranslate2 />)
-  );
+  if (isEnterprise) {
+    commands.push(
+      createNavigationCommand(
+        'nav-translations',
+        'Translations',
+        ROUTES.TRANSLATIONS,
+        <RiTranslate2 />,
+        () => isEnterprise
+      )
+    );
+  }
 
   return commands;
 }
