@@ -6,13 +6,11 @@ import { UpsertContextCommand } from './upsert-context.command';
 export class UpsertContext {
   constructor(private contextRepository: ContextRepository) {}
 
-  async execute(command: UpsertContextCommand): Promise<ContextEntity> {
-    return this.contextRepository.upsertContext(
+  async execute(command: UpsertContextCommand): Promise<ContextEntity[]> {
+    return this.contextRepository.upsertContextsFromPayload(
       command.environmentId,
       command.organizationId,
-      command.type,
-      command.id,
-      command.data
+      command.context
     );
   }
 }

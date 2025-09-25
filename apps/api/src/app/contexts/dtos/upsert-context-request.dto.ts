@@ -1,41 +1,31 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CONTEXT_IDENTIFIER_REGEX, ContextData, ContextType } from '@novu/shared';
-import { Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, Length, Matches, ValidateNested } from 'class-validator';
-import { CONTEXT_DATA_MAX_SIZE_BYTES, IsContextDataSizeValid } from '../validators/context-data-size.validator';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
+import { IsDefined } from 'class-validator';
 
 export class UpsertContextRequestDto {
   @ApiProperty({
-    description: 'The type of the context.',
-    example: 'tenant',
+    description: [
+      'Context payload containing one or more contexts to upsert.',
+      'Each context type maps to either a string ID or an object with ID and data (optional).',
+      '',
+      'For existing contexts:',
+      '• Providing data will update/replace the existing data',
+      '• Providing only an ID will leave existing data unchanged',
+      '',
+      'For new contexts:',
+      '• Will be created with the provided data (or empty data by default)',
+    ].join('\n'),
+    example: {
+      tenant: {
+        id: 'org-acme',
+        data: { tenantName: 'Acme Corp', region: 'us-east-1', settings: { theme: 'dark' } },
+      },
+      app: 'jira',
+    },
     required: true,
   })
-  @IsNotEmpty()
-  @IsString()
-  type: ContextType;
-
-  @ApiProperty({
-    description:
-      'The unique id for the context. The id must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), or underscores (_). IDs must be unique within type and environment.',
-    example: 'org-acme',
-    required: true,
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 100, { message: 'ID must be between 1 and 100 characters long' })
-  @Matches(CONTEXT_IDENTIFIER_REGEX, {
-    message: 'ID must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), or underscores (_)',
-  })
-  id: string;
-
-  @ApiProperty({
-    description: `Context data object containing metadata. Maximum size is ${Math.round(CONTEXT_DATA_MAX_SIZE_BYTES / 1024)}KB.`,
-    example: { tenantName: 'Acme Corp', region: 'us-east-1', settings: { theme: 'dark' } },
-    required: false,
-  })
-  @ValidateNested()
-  @Type(() => Object)
-  @IsContextDataSizeValid()
-  @IsOptional()
-  data?: ContextData;
+  @IsDefined()
+  @IsValidContextPayload({ maxCount: 10 })
+  context: ContextPayload;
 }

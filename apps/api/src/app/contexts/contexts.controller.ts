@@ -65,7 +65,7 @@ export class ContextsController {
   @Post('')
   @ApiResponse(GetContextResponseDto, 201)
   @ApiOperation({
-    summary: 'Upsert context',
+    summary: 'Upsert contexts',
     description:
       'Create a new context with the specified type, key, and data, or update an existing context data if it already exists',
   })
@@ -73,20 +73,18 @@ export class ContextsController {
   async createContext(
     @UserSession() user: UserSessionData,
     @Body() body: UpsertContextRequestDto
-  ): Promise<GetContextResponseDto> {
+  ): Promise<GetContextResponseDto[]> {
     await this.checkFeatureEnabled(user);
 
-    const entity = await this.upsertContextUsecase.execute(
+    const entities = await this.upsertContextUsecase.execute(
       UpsertContextCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        type: body.type,
-        id: body.id,
-        data: body.data || {},
+        context: body.context,
       })
     );
 
-    return mapContextEntityToDto(entity);
+    return entities.map(mapContextEntityToDto);
   }
 
   @Get('')
