@@ -24,7 +24,6 @@ export function useNavigationCommands(context: CommandExecutionContext): Command
   const hasWorkflowPermission = hasPermission({ permission: PermissionsEnum.WORKFLOW_READ });
   const hasSubscriberPermission = hasPermission({ permission: PermissionsEnum.SUBSCRIBER_READ });
   const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
-  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
 
   const createNavigationCommand = useCallback(
     (id: string, label: string, route: string, icon: React.ReactNode, permission?: () => boolean) => ({
@@ -108,17 +107,9 @@ export function useNavigationCommands(context: CommandExecutionContext): Command
     );
   }
 
-  if (isTranslationEnabled) {
-    commands.push(
-      createNavigationCommand(
-        'nav-translations',
-        'Translations',
-        ROUTES.TRANSLATIONS,
-        <RiTranslate2 />,
-        () => isTranslationEnabled
-      )
-    );
-  }
+  commands.push(
+    createNavigationCommand('nav-translations', 'Translations', ROUTES.TRANSLATIONS, <RiTranslate2 />)
+  );
 
   return commands;
 }
