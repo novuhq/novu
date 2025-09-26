@@ -12,6 +12,7 @@ import { SubscriberSectionProps } from './workflow-editor/steps/types/preview-co
 export function PreviewSubscriberSection({
   error,
   subscriber,
+  schema,
   onUpdate,
   onSubscriberSelect,
   onClearPersisted,
@@ -75,6 +76,7 @@ export function PreviewSubscriberSection({
           <EditableJsonViewer
             value={subscriber}
             onChange={(updatedData) => onUpdate('subscriber', updatedData)}
+            schema={schema}
             className={ACCORDION_STYLES.jsonViewer}
           />
           {error && <p className="text-destructive text-xs">{error}</p>}

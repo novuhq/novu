@@ -14,6 +14,7 @@ import { ContextSectionProps } from './workflow-editor/steps/types/preview-conte
 export function PreviewContextSection({
   error,
   context,
+  schema,
   onUpdate,
   onContextSelect,
   onClearPersisted,
@@ -125,6 +126,7 @@ export function PreviewContextSection({
             value={displayValue}
             onChange={handleContextChange}
             className={ACCORDION_STYLES.jsonViewer}
+            schema={schema}
           />
           {error && <p className="text-destructive text-xs">{error}</p>}
         </div>

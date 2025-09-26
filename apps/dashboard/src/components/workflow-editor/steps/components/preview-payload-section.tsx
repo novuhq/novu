@@ -12,6 +12,7 @@ export function PreviewPayloadSection({
   errors,
   localParsedData,
   workflow,
+  schema,
   onUpdate,
   onClearPersisted,
   hasDigestStep,
@@ -64,7 +65,7 @@ export function PreviewPayloadSection({
           <EditableJsonViewer
             value={localParsedData.payload}
             onChange={(updatedData) => onUpdate('payload', updatedData)}
-            schema={workflow?.payloadSchema}
+            schema={schema}
             className={ACCORDION_STYLES.jsonViewer}
           />
           {errors.payload && <p className="text-destructive text-xs">{errors.payload}</p>}
