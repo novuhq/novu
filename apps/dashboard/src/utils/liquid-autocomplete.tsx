@@ -250,7 +250,8 @@ export const completions =
     scopedVariables: LiquidVariable[],
     variables: LiquidVariable[],
     onCreateNewVariable?: (variableName: string) => Promise<void>,
-    isPayloadSchemaEnabled?: boolean
+    isPayloadSchemaEnabled?: boolean,
+    isContextEnabled?: boolean
   ) =>
   (context: CompletionContext): CompletionResult | null => {
     const { state, pos } = context;
@@ -283,7 +284,8 @@ export const completions =
       scopedVariables,
       variables,
       onCreateNewVariable,
-      isPayloadSchemaEnabled
+      isPayloadSchemaEnabled,
+      isContextEnabled
     );
 
     // If we have matches or we're in a valid context, show them
@@ -352,7 +354,8 @@ function getMatchingVariables(
   scopedVariables: LiquidVariable[],
   variables: LiquidVariable[],
   onCreateNewVariable?: (variableName: string) => Promise<void>,
-  isPayloadSchemaEnabled?: boolean
+  isPayloadSchemaEnabled?: boolean,
+  isContextEnabled?: boolean
 ): LiquidVariable[] {
   const allVariables = [...scopedVariables, ...variables];
   if (!searchText) return allVariables;
@@ -379,9 +382,12 @@ function getMatchingVariables(
   }, []);
 
   // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, context.tenant.data, steps.digest-step.events[0].payload.foo
+  const baseNamespaces = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ...stepPayloadNamespaces];
+  const namespaces = isContextEnabled ? [...baseNamespaces, CONTEXT_NAMESPACE] : baseNamespaces;
+
   const jitVariables = createJitVariables({
     searchText,
-    namespaces: [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, CONTEXT_NAMESPACE, ...stepPayloadNamespaces],
+    namespaces,
     isPayloadSchemaEnabled,
     onCreateNewVariable,
   });
@@ -485,7 +491,8 @@ export function createAutocompleteSource(
   onVariableSelect?: (completion: CompletionOption) => void,
   onCreateNewVariable?: (variableName: string) => Promise<void>,
   isPayloadSchemaEnabled?: boolean,
-  isTranslationEnabled?: boolean
+  isTranslationEnabled?: boolean,
+  isContextEnabled?: boolean
 ): CompletionSource {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
@@ -498,7 +505,13 @@ export function createAutocompleteSource(
       displayLabel: variable,
       type: 'local',
     }));
-    const options = completions(scopedLiquidVariables, variables, onCreateNewVariable, isPayloadSchemaEnabled)(context);
+    const options = completions(
+      scopedLiquidVariables,
+      variables,
+      onCreateNewVariable,
+      isPayloadSchemaEnabled,
+      isContextEnabled
+    )(context);
     if (!options) return null;
 
     // Add translation namespace variable if translation feature is enabled
