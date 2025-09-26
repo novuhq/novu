@@ -75,11 +75,11 @@ function handleNamespacedInput(
 ): LiquidVariable[] {
   // Special handling for context variables
   if (namespace === CONTEXT_NAMESPACE) {
-    return handleContextNamespacedInput(searchText, isPayloadSchemaEnabled, onCreateNewVariable);
+    return handleContextNamespacedInput(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace);
   }
 
   // Standard handling for other namespaces (payload, subscriber.data, etc.)
-  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable)];
+  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
 }
 
 /**
@@ -88,7 +88,8 @@ function handleNamespacedInput(
 function handleContextNamespacedInput(
   searchText: string,
   isPayloadSchemaEnabled?: boolean,
-  onCreateNewVariable?: (variableName: string) => Promise<void>
+  onCreateNewVariable?: (variableName: string) => Promise<void>,
+  namespace?: string
 ): LiquidVariable[] {
   const parts = searchText.split('.');
 
@@ -97,8 +98,8 @@ function handleContextNamespacedInput(
     const contextType = parts[1];
     if (contextType && contextType.trim() !== '') {
       return [
-        createJitVariable(`${searchText}.id`, isPayloadSchemaEnabled, onCreateNewVariable),
-        createJitVariable(`${searchText}.data`, isPayloadSchemaEnabled, onCreateNewVariable),
+        createJitVariable(`${searchText}.id`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
+        createJitVariable(`${searchText}.data`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
       ];
     }
     return [];
@@ -109,7 +110,7 @@ function handleContextNamespacedInput(
     return [];
   }
 
-  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable)];
+  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
 }
 
 /**
@@ -126,22 +127,20 @@ function handleNonNamespacedInput(
   // Special handling for context namespace - suggest both .id and .data
   if (namespace === CONTEXT_NAMESPACE && trimmedSearch && !trimmedSearch.includes('.')) {
     return [
-      createJitVariable(`${namespace}.${trimmedSearch}.id`, isPayloadSchemaEnabled, onCreateNewVariable),
-      createJitVariable(`${namespace}.${trimmedSearch}.data`, isPayloadSchemaEnabled, onCreateNewVariable),
+      createJitVariable(`${namespace}.${trimmedSearch}.id`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
+      createJitVariable(`${namespace}.${trimmedSearch}.data`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
     ];
   }
 
   // Standard handling for other namespaces
   const suggestedVariableName = `${namespace}.${trimmedSearch}`;
-  const isPayloadVariable = namespace === PAYLOAD_NAMESPACE;
 
   // For context variables, validate before suggesting
   if (namespace === CONTEXT_NAMESPACE && !isValidContextVariable(suggestedVariableName)) {
     return [];
   }
 
-  const shouldShowInfoPanel = isPayloadVariable; // Only payload variables get info panels
-  return [createJitVariable(suggestedVariableName, isPayloadSchemaEnabled, onCreateNewVariable, shouldShowInfoPanel)];
+  return [createJitVariable(suggestedVariableName, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
 }
 
 /**
@@ -151,16 +150,19 @@ function createJitVariable(
   variableName: string,
   isPayloadSchemaEnabled?: boolean,
   onCreateNewVariable?: (variableName: string) => Promise<void>,
-  showInfoPanel?: boolean
+  namespace?: string
 ): LiquidVariable {
+  const isPayloadVariable = namespace === PAYLOAD_NAMESPACE;
+
   const baseVariable: LiquidVariable = {
     name: variableName,
     type: 'variable',
-    isNewSuggestion: true,
+    // show "create: " prefix only for payload variables cause they're actually getting added to schema
+    isNewSuggestion: isPayloadVariable,
   };
 
   // Add creation info panel if needed
-  if (showInfoPanel && isPayloadSchemaEnabled && onCreateNewVariable) {
+  if (isPayloadVariable && isPayloadSchemaEnabled && onCreateNewVariable) {
     baseVariable.info = () => {
       const dom = createInfoPanel({
         component: (

@@ -26,7 +26,7 @@ function addContextVariableSuggestions(
     name,
     type: 'variable' as const,
     isNewSuggestion: true,
-    displayLabel: `Create ${name}`,
+    displayLabel: name,
     boost,
   });
 
