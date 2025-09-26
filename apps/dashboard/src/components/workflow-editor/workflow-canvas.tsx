@@ -140,7 +140,7 @@ const WorkflowCanvasChild = ({
         >
           <Background
             variant={BackgroundVariant.Dots}
-            gap={20}
+            gap={24}
             size={1}
             bgColor="hsl(var(--bg-weak))"
             color="hsl(var(--bg-muted))"
