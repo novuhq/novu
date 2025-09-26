@@ -78,8 +78,8 @@ export class ListContexts {
       data: pagination.data,
       next: pagination.next,
       previous: pagination.previous,
-      totalCount: pagination.count,
-      totalCountCapped: pagination.hasMore,
+      totalCount: pagination.totalCount,
+      totalCountCapped: pagination.totalCountCapped,
     };
   }
 }

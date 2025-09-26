@@ -31,8 +31,8 @@ export class ListSubscribersUseCase {
       data: pagination.subscribers.map((subscriber) => mapSubscriberEntityToDto(subscriber)),
       next: pagination.next,
       previous: pagination.previous,
-      totalCount: pagination.count,
-      totalCountCapped: pagination.hasMore,
+      totalCount: pagination.totalCount,
+      totalCountCapped: pagination.totalCountCapped,
     };
   }
 }
