@@ -157,8 +157,7 @@ function createJitVariable(
   const baseVariable: LiquidVariable = {
     name: variableName,
     type: 'variable',
-    // show "create: " prefix only for payload variables cause they're actually getting added to schema
-    isNewSuggestion: isPayloadVariable,
+    isNewSuggestion: true,
   };
 
   // Add creation info panel if needed
