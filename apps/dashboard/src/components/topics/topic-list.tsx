@@ -126,8 +126,8 @@ const TopicListTable = (props: TopicListTableProps) => {
                 isLastPage={!paginationProps.hasNext}
                 itemName="topics"
                 className="cursor-pagination" // Add class to identify cursor pagination
-                count={paginationProps.count}
-                hasMore={paginationProps.hasMore}
+                totalCount={paginationProps.totalCount}
+                totalCountCapped={paginationProps.totalCountCapped}
               />
             </TableCell>
           </TableRow>
@@ -227,8 +227,8 @@ export const TopicList = (props: TopicListProps) => {
           onFirst: handleFirst,
           limit,
           currentItemsCount: data.data.length,
-          count: data.count,
-          hasMore: data.hasMore,
+          totalCount: data.totalCount,
+          totalCountCapped: data.totalCountCapped,
           onPageSizeChange: handlePageSizeChange,
         }
       : undefined,

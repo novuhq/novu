@@ -34,13 +34,13 @@ export function withCursorPagination<TBase extends Constructor>(Base: TBase, opt
       description: 'The total count of items (up to 50,000)',
       type: Number,
     })
-    count: number;
+    totalCount: number;
 
     @ApiProperty({
       description: 'Whether there are more than 50,000 results available',
       type: Boolean,
     })
-    hasMore: boolean;
+    totalCountCapped: boolean;
   }
 
   return mixin(ResponseDTO); // This is important otherwise you will get always the same instance

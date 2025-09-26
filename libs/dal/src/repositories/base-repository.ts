@@ -458,8 +458,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     data: T_MappedEntity[];
     next: string | null;
     previous: string | null;
-    count: number;
-    hasMore: boolean;
+    totalCount: number;
+    totalCountCapped: boolean;
   }> {
     if (before && after) {
       throw new DalException('Cannot specify both "before" and "after" cursors at the same time.');
@@ -552,8 +552,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
         data: [],
         next: null,
         previous: null,
-        count: totalCount,
-        hasMore: hasMore,
+        totalCount: totalCount,
+        totalCountCapped: hasMore,
       };
     }
 
@@ -625,8 +625,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
       data: this.mapEntities(pageResults),
       next: nextCursor,
       previous: prevCursor,
-      count: totalCount,
-      hasMore: hasMore,
+      totalCount: totalCount,
+      totalCountCapped: hasMore,
     };
   }
 

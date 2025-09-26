@@ -6,8 +6,8 @@ export type ListTopicsResponse = {
   data: Array<Topic>;
   next: string | null;
   previous: string | null;
-  count: number;
-  hasMore: boolean;
+  totalCount: number;
+  totalCountCapped: boolean;
 };
 
 export type DeleteTopicSubscriptionsResponseDto = {
@@ -166,8 +166,8 @@ export type ListTopicSubscriptionsResponse = {
   data: TopicSubscription[];
   next: string | null;
   previous: string | null;
-  count: number;
-  hasMore: boolean;
+  totalCount: number;
+  totalCountCapped: boolean;
 };
 
 export const getTopicSubscriptions = async ({

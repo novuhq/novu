@@ -25,7 +25,7 @@
  *   itemName="workflows"
  * />
  *
- * // Cursor-based pagination with count
+ * // Cursor-based pagination with totalCount
  * <TablePaginationFooter
  *   currentPage={1}
  *   pageSize={10}
@@ -38,8 +38,8 @@
  *   isFirstPage={!hasPrevious}
  *   isLastPage={!hasNext}
  *   itemName="subscribers"
- *   count={12500} // total count from API
- *   hasMore={false} // or true if over 50,000
+ *   totalCount={12500} // total count from API
+ *   totalCountCapped={false} // or true if over 50,000
  * />
  * ```
  */
@@ -97,8 +97,8 @@ type TablePaginationFooterProps = {
   className?: string;
   pageSizeOptions?: number[];
   itemName?: string;
-  hasMore?: boolean;
-  count?: number;
+  totalCountCapped?: boolean;
+  totalCount?: number;
 };
 
 export function TablePaginationFooter({
@@ -115,11 +115,11 @@ export function TablePaginationFooter({
   className,
   pageSizeOptions = [12, 25, 50, 100],
   itemName = 'items',
-  hasMore,
-  count,
+  totalCountCapped,
+  totalCount,
 }: TablePaginationFooterProps) {
   // Check if this is cursor-based pagination (no meaningful currentPage or totalItems)
-  const isCursorPagination = className?.includes('cursor-pagination') || count !== undefined;
+  const isCursorPagination = className?.includes('cursor-pagination') || totalCount !== undefined;
 
   const startItem = isCursorPagination ? 1 : Math.min((currentPage - 1) * pageSize + 1, totalItems);
   const endItem = isCursorPagination ? totalItems : Math.min(currentPage * pageSize, totalItems);
@@ -132,10 +132,10 @@ export function TablePaginationFooter({
             <span className="text-label-xs text-text-soft">Showing</span>
             <span className="text-label-xs text-text-sub">{totalItems}</span>
             <span className="text-label-xs text-text-soft">{itemName} of</span>
-            {hasMore ? (
+            {totalCountCapped ? (
               <span className="text-label-xs text-text-sub">Over 50,000</span>
             ) : (
-              <span className="text-label-xs text-text-sub">{count?.toLocaleString()}</span>
+              <span className="text-label-xs text-text-sub">{totalCount?.toLocaleString()}</span>
             )}
             <span className="text-label-xs text-text-soft">total</span>
           </>

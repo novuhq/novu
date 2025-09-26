@@ -108,7 +108,7 @@ const SubscriberListTable = (props: SubscriberListTableProps) => {
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
-      {showPagination && paginationProps && (
+      {paginationProps && (
         <TableFooter>
           <TableRow>
             <TableCell colSpan={6} className="p-0">
@@ -125,8 +125,8 @@ const SubscriberListTable = (props: SubscriberListTableProps) => {
                 isLastPage={!paginationProps.hasNext}
                 itemName="subscribers"
                 className="cursor-pagination" // Add class to identify cursor pagination
-                count={paginationProps.count}
-                hasMore={paginationProps.hasMore}
+                totalCount={paginationProps.totalCount}
+                totalCountCapped={paginationProps.totalCountCapped}
               />
             </TableCell>
           </TableRow>
@@ -253,8 +253,8 @@ export const SubscriberList = (props: SubscriberListProps) => {
           onFirst: handleFirst,
           limit,
           currentItemsCount: data.data.length,
-          count: data.count,
-          hasMore: data.hasMore,
+          totalCount: data.totalCount,
+          totalCountCapped: data.totalCountCapped,
           onPageSizeChange: handlePageSizeChange,
         }}
       >
