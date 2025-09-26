@@ -1,7 +1,7 @@
 import { type ISubscriberResponseDto, type WorkflowResponseDto } from '@novu/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RiInformationLine, RiPencilLine, RiSearchLine } from 'react-icons/ri';
+import { RiInformation2Line, RiPencilLine, RiSearchLine } from 'react-icons/ri';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Button } from '@/components/primitives/button';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
@@ -120,7 +120,7 @@ export function TestWorkflowContent({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-foreground-400 inline-block hover:cursor-help">
-                          <RiInformationLine className="size-3" />
+                          <RiInformation2Line className="size-3" />
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
@@ -166,7 +166,7 @@ export function TestWorkflowContent({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-foreground-400 inline-block hover:cursor-help">
-                          <RiInformationLine className="size-3" />
+                          <RiInformation2Line className="size-3" />
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">

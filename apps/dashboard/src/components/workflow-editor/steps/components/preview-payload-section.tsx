@@ -1,5 +1,5 @@
 import { ResourceOriginEnum } from '@novu/shared';
-import { RiInformationLine, RiRefreshLine, RiSettings3Line } from 'react-icons/ri';
+import { RiInformation2Line, RiRefreshLine, RiSettings3Line } from 'react-icons/ri';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { Button } from '../../../primitives/button';
@@ -27,7 +27,7 @@ export function PreviewPayloadSection({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="text-foreground-400 inline-block hover:cursor-help">
-                    <RiInformationLine className="size-3" />
+                    <RiInformation2Line className="size-3" />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
@@ -71,7 +71,7 @@ export function PreviewPayloadSection({
         </div>
         {onManageSchema && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
           <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-            <RiInformationLine className="h-3 w-3 flex-shrink-0" />
+            <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
             <span>
               Manage required fields and validations with{' '}
               <b
