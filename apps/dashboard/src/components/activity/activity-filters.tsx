@@ -77,7 +77,7 @@ export function ActivityFilters({
   }, [organization, subscription]);
 
   return (
-    <div className={cn('flex items-center gap-2 pl-2 py-2', className)}>
+    <div className={cn('flex items-center gap-2 pb-2.5', className)}>
       {!hide.includes('dateRange') && (
         <FacetedFormFilter
           size="small"
