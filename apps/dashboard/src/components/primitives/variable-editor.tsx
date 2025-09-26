@@ -113,8 +113,8 @@ export function VariableEditor({
 
   const onVariableSelect = useCallback(
     (completion: CompletionOption) => {
-      if (completion.isNewVariable && completion.label.startsWith('payload.')) {
-        onCreateNewVariable(completion.label.replace('payload.', ''));
+      if (completion.isNewVariable) {
+        onCreateNewVariable(completion.label);
       }
 
       if (completion.type === 'digest') {

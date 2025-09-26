@@ -140,15 +140,8 @@ function handleNonNamespacedInput(
     return [];
   }
 
-  const shouldShowCreation = isPayloadVariable; // Only payload variables get info panels
-  return [
-    createJitVariable(
-      suggestedVariableName,
-      isPayloadSchemaEnabled,
-      onCreateNewVariable,
-      shouldShowCreation ? trimmedSearch : undefined
-    ),
-  ];
+  const shouldShowInfoPanel = isPayloadVariable; // Only payload variables get info panels
+  return [createJitVariable(suggestedVariableName, isPayloadSchemaEnabled, onCreateNewVariable, shouldShowInfoPanel)];
 }
 
 /**
@@ -158,7 +151,7 @@ function createJitVariable(
   variableName: string,
   isPayloadSchemaEnabled?: boolean,
   onCreateNewVariable?: (variableName: string) => Promise<void>,
-  createVariableKey?: string
+  showInfoPanel?: boolean
 ): LiquidVariable {
   const baseVariable: LiquidVariable = {
     name: variableName,
@@ -167,13 +160,13 @@ function createJitVariable(
   };
 
   // Add creation info panel if needed
-  if (createVariableKey && isPayloadSchemaEnabled && onCreateNewVariable) {
+  if (showInfoPanel && isPayloadSchemaEnabled && onCreateNewVariable) {
     baseVariable.info = () => {
       const dom = createInfoPanel({
         component: (
           <NewVariablePreview
             onCreateClick={() => {
-              onCreateNewVariable(createVariableKey);
+              onCreateNewVariable(variableName);
             }}
           />
         ),
