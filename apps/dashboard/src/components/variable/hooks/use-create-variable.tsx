@@ -1,11 +1,11 @@
 import merge from 'lodash.merge';
-import { useCallback, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { RiListView } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
-import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
+import { StepEditorContext } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { usePersistedPreviewContext } from '@/components/workflow-editor/steps/hooks/use-persisted-preview-context';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -83,8 +83,7 @@ function createPayloadVariableSuccessToast(onManageSchemaClick: () => void) {
  * Hook that is triggered when a new liquid variable is being created in control-input, email-body or preview-context-panel
  */
 export const useCreateVariable = () => {
-  const { workflow } = useWorkflow();
-  const { editorValue, setEditorValue, step } = useStepEditor();
+  const { workflow, step } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
 
   const {
@@ -93,14 +92,29 @@ export const useCreateVariable = () => {
     isPayloadSchemaEnabled,
   } = useWorkflowSchema();
 
-  const { savePersistedSubscriber, savePersistedContext } = usePersistedPreviewContext({
-    workflowId: workflow?.workflowId || '',
-    stepId: step.stepId || '',
-    environmentId: currentEnvironment?._id || '',
-  });
-
   const [isPayloadSchemaDrawerOpen, setIsPayloadSchemaDrawerOpen] = useState(false);
   const [highlightedVariableKey, setHighlightedVariableKey] = useState<string | null>(null);
+
+  /**
+   * Dynamic variables handling:
+   * - payload.*: persisted in workflow.payloadSchema (edited via the schema editor = useWorkflowSchema)
+   * - subscriber.data.* and context.*: not persisted; derived from the preview payload
+   *
+   * In StepEditorContext we update editorValue and persist the preview so the preview API returns
+   * a dynamic schema (previewData.schema) including these keys; the UI reads it via useDynamicPreviewSchema
+   * and merges it with payloadSchema in useParseVariables to generate the list of variables available in the editor
+   *
+   * TODO: we should think about how to simplify the entire variable + schema (preview + peristed) logic
+   */
+  const stepEditor = useContext(StepEditorContext);
+  const editorValue = stepEditor?.editorValue;
+  const setEditorValue = stepEditor?.setEditorValue;
+
+  const { savePersistedSubscriber, savePersistedContext } = usePersistedPreviewContext({
+    workflowId: workflow?.workflowId || '',
+    stepId: step?.stepId || '',
+    environmentId: currentEnvironment?._id || '',
+  });
 
   const handlePayloadVariable = useCallback(
     async (variableInfo: VariableInfo) => {
@@ -119,6 +133,8 @@ export const useCreateVariable = () => {
 
   const handleSubscriberVariable = useCallback(
     (variableInfo: VariableInfo) => {
+      if (!editorValue || !setEditorValue) return;
+
       const currentPreviewData = parseJsonValue(editorValue);
       const currentSubscriber = currentPreviewData.subscriber || {};
       const currentSubscriberData = currentSubscriber.data || {};
@@ -139,6 +155,8 @@ export const useCreateVariable = () => {
 
   const handleContextVariable = useCallback(
     (variableInfo: VariableInfo) => {
+      if (!editorValue || !setEditorValue) return;
+
       const currentPreviewData = parseJsonValue(editorValue);
       const currentContext = currentPreviewData.context || {};
 
