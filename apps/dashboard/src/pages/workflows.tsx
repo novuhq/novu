@@ -305,7 +305,9 @@ export const WorkflowsPage = () => {
               </ScrollArea>
             </div>
           )}
-          {shouldShowStartWithTemplatesSection && <div className="text-label-xs text-text-soft">Your Workflows</div>}
+          {shouldShowStartWithTemplatesSection && (
+            <div className="text-label-xs text-text-soft my-2">Your Workflows</div>
+          )}
           <WorkflowList
             hasActiveFilters={!!hasActiveFilters}
             onClearFilters={clearFilters}
