@@ -92,7 +92,7 @@ export const TestWorkflowActivityDrawer = forwardRef<HTMLDivElement, TestWorkflo
                       <ActivityLogs activity={activity} onActivitySelect={setParentActivityId} />
                     </React.Fragment>
                   )}
-                  {!workflow?.lastTriggeredAt && (
+                  {workflow?.lastTriggeredAt && !isPending && !error && (
                     <div className="border-t border-neutral-100 p-3">
                       <div className="border-stroke-soft bg-bg-weak rounded-8 flex items-center justify-between gap-3 border p-3 py-2">
                         <div className="flex items-center gap-3">
