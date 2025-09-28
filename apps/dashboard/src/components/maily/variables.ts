@@ -254,13 +254,10 @@ export const calculateVariables = ({
   if (
     isPayloadSchemaEnabled &&
     queryWithoutSuffix.trim() &&
-    (queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') ||
-      queryWithoutSuffix.startsWith('current.' + PAYLOAD_NAMESPACE + '.')) &&
+    queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') &&
     queryWithoutSuffix !== PAYLOAD_NAMESPACE
   ) {
-    const variableKey = queryWithoutSuffix
-      .replace('current.' + PAYLOAD_NAMESPACE + '.', '')
-      .replace(PAYLOAD_NAMESPACE + '.', '');
+    const variableKey = queryWithoutSuffix.replace(PAYLOAD_NAMESPACE + '.', '');
 
     // Check if this variable doesn't already exist
     const existingVariable = variables.find((v) => v.name === queryWithoutSuffix);
