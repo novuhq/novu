@@ -157,10 +157,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               },
               data: {
                 type: 'object',
+                properties: {},
+                required: [],
                 additionalProperties: true,
               },
             },
-            additionalProperties: true,
+            additionalProperties: false,
           },
           steps: {
             type: 'object',
@@ -377,13 +379,15 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             type: 'object',
           },
           subscriber: {
-            additionalProperties: true,
+            additionalProperties: false,
             properties: {
               avatar: {
                 type: 'string',
               },
               data: {
                 additionalProperties: true,
+                properties: {},
+                required: [],
                 type: 'object',
               },
               email: {
