@@ -1,11 +1,13 @@
 import { CredentialsKeyEnum, IConfigCredential } from '@novu/shared';
 import { Control, ControllerFieldState, ControllerRenderProps } from 'react-hook-form';
+import { CopyButton } from '@/components/primitives/copy-button';
 import { Input } from '@/components/primitives/input';
 import { SecretInput } from '@/components/primitives/secret-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Switch } from '@/components/primitives/switch';
 import { Textarea } from '@/components/primitives/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useEnvironment } from '../../../context/environment/hooks';
 import {
   FormControl,
   FormField,
@@ -13,6 +15,7 @@ import {
   FormMessage,
   FormLabel as PrimitiveFormLabel,
 } from '../../primitives/form/form';
+import { InlineToast } from '../../primitives/inline-toast';
 import { IntegrationFormData } from '../types';
 import { DescriptionWithLinks } from './description-with-links';
 
@@ -198,6 +201,70 @@ function TextInputControl({
   );
 }
 
+function PushResources({ credential, integrationId }: { credential: IConfigCredential; integrationId?: string }) {
+  const { currentEnvironment } = useEnvironment();
+  const environmentId = currentEnvironment?._id || '';
+
+  const resources = [
+    {
+      key: 'environmentId',
+      label: 'Environment ID',
+      value: environmentId,
+    },
+    {
+      key: 'integrationId',
+      label: 'Integration ID',
+      value: integrationId || '',
+    },
+  ];
+
+  return (
+    <FormItem className="mb-2" key={credential.key}>
+      <div className="space-y-3">
+        {resources.map((resource) => {
+          const inputId = `${credential.key}_${resource.key}`;
+          return (
+            <div key={resource.key} className="grid grid-cols-[150px,1fr] items-center gap-3">
+              <label
+                htmlFor={inputId}
+                className="text-foreground-600 font-medium inline-flex items-center gap-1 text-xs whitespace-nowrap"
+              >
+                {resource.label}
+              </label>
+              <div className="flex items-center gap-2">
+                <Input
+                  className="cursor-default font-mono !text-neutral-500"
+                  id={inputId}
+                  value={resource.value}
+                  type="text"
+                  readOnly={true}
+                  trailingNode={<CopyButton valueToCopy={resource.value} />}
+                />
+              </div>
+            </div>
+          );
+        })}
+
+        <InlineToast
+          variant={'tip'}
+          className="mt-3"
+          title="Enable Push Channel"
+          description="Have your existing app send push events to Novu, read the docs for the full setup."
+          ctaLabel="View Guide"
+          onCtaClick={() => {
+            window.open('https://docs.novu.co/platform/concepts/integrations/push', '_blank');
+          }}
+        />
+      </div>
+      <FormMessage>
+        {credential.description && (
+          <DescriptionWithLinks description={credential.description} links={credential.links} />
+        )}
+      </FormMessage>
+    </FormItem>
+  );
+}
+
 function InputControl({
   credential,
   field,
@@ -205,6 +272,7 @@ function InputControl({
   isReadOnly,
   isDisabledWithSwitch,
   disabledSwitchMessage,
+  integrationId,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
@@ -212,7 +280,12 @@ function InputControl({
   isReadOnly?: boolean;
   isDisabledWithSwitch?: boolean;
   disabledSwitchMessage?: string;
+  integrationId?: string;
 }) {
+  if (credential.type === 'pushResources') {
+    return <PushResources credential={credential} integrationId={integrationId} />;
+  }
+
   if (credential.type === 'switch') {
     return (
       <SwitchInput
@@ -247,6 +320,7 @@ export function CredentialSection({
   isDisabledWithSwitch,
   disabledSwitchMessage,
   name = 'credentials',
+  integrationId,
 }: {
   credential: IConfigCredential;
   control: Control<IntegrationFormData>;
@@ -254,10 +328,11 @@ export function CredentialSection({
   isDisabledWithSwitch?: boolean;
   disabledSwitchMessage?: string;
   name?: 'credentials' | 'configurations';
+  integrationId?: string;
 }) {
   return (
     <FormField
-      key={credential.key}
+      key={`${credential.key}-${integrationId || 'no-id'}`}
       control={control}
       name={`${name}.${credential.key}`}
       rules={{
@@ -279,6 +354,7 @@ export function CredentialSection({
             isReadOnly={isReadOnly}
             isDisabledWithSwitch={isDisabledWithSwitch}
             disabledSwitchMessage={disabledSwitchMessage}
+            integrationId={integrationId}
           />
 
           <FormMessage>

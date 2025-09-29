@@ -137,10 +137,9 @@ export function ConfigurationGroup({
         return;
       }
 
-      if (integrationId && !hasRequiredConfigurations && formData) {
+      if (provider.channel !== ChannelTypeEnum.PUSH && integrationId && !hasRequiredConfigurations && formData) {
         try {
-          const res = await setAutoConfigureState('loading');
-          console.log('Auto-configure state:', res);
+          setAutoConfigureState('loading');
           const response = await autoConfigureIntegration({
             integrationId,
           });
@@ -185,7 +184,7 @@ export function ConfigurationGroup({
       {enablerConfig && (
         <>
           <CredentialSection
-            key={String(enablerConfig.key)}
+            key={`${String(enablerConfig.key)}-${integrationId || 'no-id'}`}
             name="configurations"
             credential={configurationToCredential(enablerConfig)}
             control={control}
@@ -194,6 +193,7 @@ export function ConfigurationGroup({
             disabledSwitchMessage={
               !integrationId ? 'To enable Email activity tracking, create the integration first' : undefined
             }
+            integrationId={integrationId}
           />
 
           {/* status indicator */}
@@ -212,11 +212,12 @@ export function ConfigurationGroup({
                 {nonEnablerConfigs.length > 0 &&
                   nonEnablerConfigs.map((config) => (
                     <CredentialSection
-                      key={String(config.key)}
+                      key={`${String(config.key)}-${integrationId || 'no-id'}`}
                       name="configurations"
                       credential={configurationToCredential(config)}
                       control={control}
                       isReadOnly={isReadOnly}
+                      integrationId={integrationId}
                     />
                   ))}
               </div>
