@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getTranslationGroup } from '@/api/translations';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
 
@@ -18,12 +18,10 @@ export const useFetchTranslationGroup = ({
   return useQuery({
     queryKey: [QueryKeys.fetchTranslationGroup, resourceId, resourceType, currentEnvironment?._id],
     queryFn: async () => {
-      if (!currentEnvironment) {
-        throw new Error('Environment is required');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'Environment is required');
 
       return getTranslationGroup({
-        environment: currentEnvironment,
+        environment,
         resourceId,
         resourceType,
       });

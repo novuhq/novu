@@ -1,7 +1,7 @@
 import { ContextId, ContextType, DirectionEnum } from '@novu/shared';
 import { keepPreviousData, UseQueryOptions, useQuery } from '@tanstack/react-query';
 import { getContexts, type ListContextsResponse } from '@/api/contexts';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
 interface UseFetchContextsParams {
@@ -39,12 +39,10 @@ export function useFetchContexts(
       { limit, after, before, orderDirection, orderBy, includeCursor, type, id, search },
     ],
     queryFn: () => {
-      if (!currentEnvironment) {
-        throw new Error('No environment available');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'No environment available');
 
       return getContexts({
-        environment: currentEnvironment,
+        environment,
         limit,
         after,
         before,

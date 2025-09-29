@@ -2,7 +2,7 @@ import { GetSubscriberPreferencesDto, ScheduleDto } from '@novu/api/models/compo
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchSubscriberPreferences } from '@/api/subscribers';
 import { useAuth } from '@/context/auth/hooks';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 
@@ -28,10 +28,9 @@ export const useOptimisticScheduleUpdate = ({ subscriberId, onSuccess, onError }
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (args: PatchSubscriberPreferencesParameters) => {
-      if (!currentEnvironment) {
-        throw new Error('Environment is not available');
-      }
-      return patchSubscriberPreferences({ environment: currentEnvironment, ...args });
+      const environment = requireEnvironment(currentEnvironment, 'Environment is not available');
+
+      return patchSubscriberPreferences({ environment, ...args });
     },
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey });

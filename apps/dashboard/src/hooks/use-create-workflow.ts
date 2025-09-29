@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { getLayouts } from '@/api/layouts';
 import { createWorkflow } from '@/api/workflows';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { workflowSchema } from '../components/workflow-editor/schema';
@@ -21,10 +21,9 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
 
   const mutation = useMutation({
     mutationFn: async (workflow: CreateWorkflowDto) => {
-      if (!currentEnvironment) {
-        throw new Error('No current environment selected');
-      }
-      return createWorkflow({ environment: currentEnvironment, workflow });
+      const environment = requireEnvironment(currentEnvironment, 'No current environment selected');
+
+      return createWorkflow({ environment, workflow });
     },
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id] });
