@@ -44,10 +44,10 @@ export class SchemaBuilderService {
       };
     }
 
-    // Build dynamic context schema based on actual context structure
-    if (previewPayloadExample.context) {
-      schema.properties!.context = this.buildContextSchema(previewPayloadExample.context);
-    }
+    // Always include context schema
+    schema.properties!.context = previewPayloadExample.context 
+      ? this.buildContextSchema(previewPayloadExample.context)
+      : this.getDefaultContextSchema();
 
     // Build dynamic subscriber schema based on actual subscriber data
     schema.properties!.subscriber = this.buildSubscriberSchema(previewPayloadExample.subscriber);
@@ -134,6 +134,15 @@ export class SchemaBuilderService {
         },
         additionalProperties: true,
       },
+    };
+  }
+
+  private getDefaultContextSchema(): JSONSchemaDto {
+    return {
+      type: JsonSchemaTypeEnum.OBJECT,
+      description: 'Context data for the workflow execution',
+      properties: {},
+      additionalProperties: true,
     };
   }
 }
