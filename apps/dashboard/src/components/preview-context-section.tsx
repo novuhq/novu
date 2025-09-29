@@ -1,9 +1,8 @@
 import { RiInformation2Line, RiRefreshLine } from 'react-icons/ri';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { cn } from '@/utils/ui';
 import { ContextSearchEditor } from './context-search-editor';
-import { buttonVariants } from './primitives/button';
+import { Button } from './primitives/button';
 import { ACCORDION_STYLES } from './workflow-editor/steps/constants/preview-context.constants';
 import { ContextSectionProps } from './workflow-editor/steps/types/preview-context.types';
 
@@ -30,22 +29,21 @@ export function PreviewContextSection({ error, context, schema, onUpdate, onClea
           </div>
           {onClearPersisted && (
             <div className="mr-2">
-              <button
-                type="button"
+              <Button
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
                   onClearPersisted();
                 }}
-                className={cn(
-                  buttonVariants({ variant: 'secondary', mode: 'ghost', size: '2xs' }),
-                  'text-foreground-600 flex items-center gap-1'
-                )}
-                aria-label="Reset context"
+                type="button"
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="text-foreground-600 gap-1"
               >
                 <RiRefreshLine className="h-3 w-3" />
-                <span className="text-xs leading-none">Reset defaults</span>
-              </button>
+                Reset defaults
+              </Button>
             </div>
           )}
         </div>
