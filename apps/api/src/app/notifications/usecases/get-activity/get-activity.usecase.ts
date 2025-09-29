@@ -20,6 +20,7 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import {
+  ContextKey,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   FeatureFlagsKeysEnum,
@@ -46,6 +47,7 @@ const workflowRunSelectColumns = [
   'subscriber_to',
   'payload',
   'topics',
+  'context_keys',
   'created_at',
   'updated_at',
 ] as const;
@@ -337,6 +339,7 @@ export class GetActivity {
         jobs: [],
         to: mostRecentWorkflowRun.subscriber_to ? JSON.parse(mostRecentWorkflowRun.subscriber_to) : {},
         payload: mostRecentWorkflowRun.payload ? JSON.parse(mostRecentWorkflowRun.payload) : {},
+        contextKeys: mostRecentWorkflowRun.context_keys ? (mostRecentWorkflowRun.context_keys as ContextKey[]) : [],
         createdAt: new Date(mostRecentWorkflowRun.created_at).toISOString(),
         updatedAt: new Date(mostRecentWorkflowRun.updated_at).toISOString(),
         channels: mostRecentWorkflowRun.channels ? JSON.parse(mostRecentWorkflowRun.channels) : [],

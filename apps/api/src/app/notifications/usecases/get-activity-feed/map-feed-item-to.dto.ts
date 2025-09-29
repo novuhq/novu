@@ -84,6 +84,7 @@ export function mapFeedItemToDto(entity: NotificationFeedItemEntity): ActivityNo
     template: entity.template ? buildTemplate(entity.template) : undefined,
     severity: entity.severity ?? SeverityLevelEnum.NONE,
     critical: entity.critical,
+    contextKeys: entity.contextKeys,
   };
 }
 
