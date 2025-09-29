@@ -37,7 +37,16 @@ export interface IProviderConfig {
   betaVersion?: boolean;
 }
 
-type CredentialsType = 'string' | 'dropdown' | 'switch' | 'textarea' | 'text' | 'number' | 'inboundWebhook' | 'boolean';
+type CredentialsType =
+  | 'string'
+  | 'dropdown'
+  | 'switch'
+  | 'textarea'
+  | 'text'
+  | 'number'
+  | 'inboundWebhook'
+  | 'boolean'
+  | 'pushResources';
 
 export interface IConfigCredential {
   key: CredentialsKeyEnum;
