@@ -1,3 +1,10 @@
+import { CopyButton } from '@/components/primitives/copy-button';
+import { FormLabel } from '@/components/primitives/form/form';
+import { Input } from '@/components/primitives/input';
+import { LoadingIndicator } from '@/components/primitives/loading-indicator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { fadeIn } from '@/utils/animation';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import {
   ConfigConfiguration,
   ConfigConfigurationGroup,
@@ -10,13 +17,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Control, useWatch } from 'react-hook-form';
 import { RiCheckLine, RiCloseLine } from 'react-icons/ri';
-import { CopyButton } from '@/components/primitives/copy-button';
-import { FormLabel } from '@/components/primitives/form/form';
-import { Input } from '@/components/primitives/input';
-import { LoadingIndicator } from '@/components/primitives/loading-indicator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { fadeIn } from '@/utils/animation';
-import { API_HOSTNAME } from '../../../config';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { useAutoConfigureIntegration } from '../../../hooks/use-auto-configure-integration';
 import { InlineToast } from '../../primitives/inline-toast';
@@ -24,7 +24,7 @@ import { IntegrationFormData } from '../types';
 import { CredentialSection } from './credential-section';
 
 function generateInboundWebhookUrl(environmentId: string, integrationId?: string): string {
-  const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
+  const baseUrl = apiHostnameManager.getHostname();
   return `${baseUrl}/v2/inbound-webhooks/delivery-providers/${environmentId}/${integrationId}`;
 }
 
