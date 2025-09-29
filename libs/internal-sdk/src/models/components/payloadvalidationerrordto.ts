@@ -15,10 +15,10 @@ export type Value4 = {};
  * The actual value that failed validation
  */
 export type PayloadValidationErrorDtoValue =
-  | Value4
   | string
   | number
   | boolean
+  | Value4
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 export type PayloadValidationErrorDto = {
@@ -34,10 +34,10 @@ export type PayloadValidationErrorDto = {
    * The actual value that failed validation
    */
   value?:
-    | Value4
     | string
     | number
     | boolean
+    | Value4
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -135,10 +135,10 @@ export const PayloadValidationErrorDtoValue$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.union([
-  z.lazy(() => Value4$inboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
+  z.lazy(() => Value4$inboundSchema),
   z.array(
     z.nullable(
       z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -148,10 +148,10 @@ export const PayloadValidationErrorDtoValue$inboundSchema: z.ZodType<
 
 /** @internal */
 export type PayloadValidationErrorDtoValue$Outbound =
-  | Value4$Outbound
   | string
   | number
   | boolean
+  | Value4$Outbound
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 /** @internal */
@@ -160,10 +160,10 @@ export const PayloadValidationErrorDtoValue$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   PayloadValidationErrorDtoValue
 > = z.union([
-  z.lazy(() => Value4$outboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
+  z.lazy(() => Value4$outboundSchema),
   z.array(
     z.nullable(
       z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -214,10 +214,10 @@ export const PayloadValidationErrorDto$inboundSchema: z.ZodType<
   message: z.string(),
   value: z.nullable(
     z.union([
-      z.lazy(() => Value4$inboundSchema),
       z.string(),
       z.number(),
       z.boolean(),
+      z.lazy(() => Value4$inboundSchema),
       z.array(
         z.nullable(
           z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -233,10 +233,10 @@ export type PayloadValidationErrorDto$Outbound = {
   field: string;
   message: string;
   value?:
-    | Value4$Outbound
     | string
     | number
     | boolean
+    | Value4$Outbound
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -253,10 +253,10 @@ export const PayloadValidationErrorDto$outboundSchema: z.ZodType<
   message: z.string(),
   value: z.nullable(
     z.union([
-      z.lazy(() => Value4$outboundSchema),
       z.string(),
       z.number(),
       z.boolean(),
+      z.lazy(() => Value4$outboundSchema),
       z.array(
         z.nullable(
           z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),

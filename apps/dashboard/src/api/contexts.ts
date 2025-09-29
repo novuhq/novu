@@ -13,6 +13,8 @@ export type ListContextsResponse = {
   data: Array<ContextResponseDto>;
   next: string | null;
   previous: string | null;
+  totalCount: number;
+  totalCountCapped: boolean;
 };
 
 export const getContexts = async ({

@@ -61,6 +61,5 @@ export type ContextSectionProps = Omit<AccordionSectionProps, 'errors' | 'localP
   context: ContextPayload;
   schema?: JSONSchema7;
   onUpdate: (section: 'context', data: ContextPayload) => void;
-  onContextSelect: (context: ContextResponseDto) => void;
   onClearPersisted?: () => void;
 };

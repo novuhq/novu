@@ -119,6 +119,8 @@ export class ContextsController {
       data: result.data.map(mapContextEntityToDto),
       next: result.next,
       previous: result.previous,
+      totalCount: result.totalCount!,
+      totalCountCapped: result.totalCountCapped!,
     };
   }
 

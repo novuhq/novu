@@ -1,7 +1,7 @@
 import { FeatureFlagsKeysEnum, ISubscriberResponseDto } from '@novu/shared';
 import { JSONSchema7 } from 'json-schema';
+
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { type ContextResponseDto } from '@/api/contexts';
 import { Accordion } from '@/components/primitives/accordion';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -217,22 +217,6 @@ export function PreviewContextPanel({
     [updateJsonSection, selectedLocale, onLocaleChange]
   );
 
-  const handleContextSelection = useCallback(
-    (context: ContextResponseDto) => {
-      // Add the selected context to the ContextPayload by its type
-      const currentContext = localParsedData.context || {};
-      const updatedContext = {
-        ...currentContext,
-        [context.type]: {
-          id: context.id,
-          data: context.data || {},
-        },
-      };
-      updateJsonSection('context', updatedContext);
-    },
-    [updateJsonSection, localParsedData.context]
-  );
-
   const handleClearPersistedPayload = () => {
     clearPersistedPayload();
 
@@ -292,7 +276,6 @@ export function PreviewContextPanel({
             context={localParsedData.context}
             schema={schemas.context}
             onUpdate={updateJsonSection}
-            onContextSelect={handleContextSelection}
             onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
           />
         )}
