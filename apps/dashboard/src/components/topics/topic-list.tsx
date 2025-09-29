@@ -1,7 +1,7 @@
 // Use pagination primitives from the dashboard project
 
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
-import { HTMLAttributes, useEffect, useState } from 'react';
+import { HTMLAttributes, useEffect } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import {
@@ -158,8 +158,6 @@ type TopicListTableProps = HTMLAttributes<HTMLTableElement> & {
 
 export const TopicList = (props: TopicListProps) => {
   const { ...rest } = props;
-  const [nextPageAfter, setNextPageAfter] = useState<string | undefined>(undefined);
-  const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
 
   // Use the hook as the primary source for URL state - orderBy/orderDirection are likely within filterValues
   const {
@@ -170,10 +168,7 @@ export const TopicList = (props: TopicListProps) => {
     handleNext,
     handlePrevious,
     handlePageSizeChange,
-  } = useTopicsUrlState({
-    after: nextPageAfter,
-    before: previousPageBefore,
-  });
+  } = useTopicsUrlState();
 
   // Get limit from filterValues, fallback to 10
   const limit = filterValues.limit || 10;
@@ -198,15 +193,15 @@ export const TopicList = (props: TopicListProps) => {
     meta: { errorMessage: 'Issue fetching topics' },
   });
 
+  // Update the URL state hook with the latest cursor values from the API response
   useEffect(() => {
-    if (data?.next) {
-      setNextPageAfter(data.next);
+    if (data?.next || data?.previous) {
+      handleFiltersChange({
+        ...(data.next && { nextCursor: data.next }),
+        ...(data.previous && { previousCursor: data.previous }),
+      });
     }
-
-    if (data?.previous) {
-      setPreviousPageBefore(data.previous);
-    }
-  }, [data]);
+  }, [data, handleFiltersChange]);
 
   // Define wrapper props once
   const wrapperProps = {
