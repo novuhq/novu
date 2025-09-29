@@ -1,35 +1,3 @@
-/**
- * TablePaginationFooter - A cursor-based pagination footer component for tables
- *
- * @example
- * ```tsx
- * // Cursor-based pagination
- * <TablePaginationFooter
- *   pageSize={10}
- *   currentPageItemsCount={10} // items on current page
- *   onPreviousPage={handlePrevious}
- *   onNextPage={handleNext}
- *   onPageSizeChange={handlePageSizeChange}
- *   hasPreviousPage={hasPrevious}
- *   hasNextPage={hasNext}
- *   itemName="subscribers"
- * />
- *
- * // With total count
- * <TablePaginationFooter
- *   pageSize={10}
- *   currentPageItemsCount={10}
- *   onPreviousPage={handlePrevious}
- *   onNextPage={handleNext}
- *   onPageSizeChange={handlePageSizeChange}
- *   hasPreviousPage={hasPrevious}
- *   hasNextPage={hasNext}
- *   itemName="subscribers"
- *   totalCount={12500} // optional total count from API
- *   totalCountCapped={false} // or true if over 50,000
- * />
- * ```
- */
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
