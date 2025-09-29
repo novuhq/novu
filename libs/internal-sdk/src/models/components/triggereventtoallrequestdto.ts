@@ -117,7 +117,7 @@ export type TriggerEventToAllRequestDtoActor = SubscriberPayloadDto | string;
  * @remarks
  *     If a new tenant object is provided, we will create a new tenant.
  */
-export type TriggerEventToAllRequestDtoTenant = TenantPayloadDto | string;
+export type TriggerEventToAllRequestDtoTenant = string | TenantPayloadDto;
 
 export type TriggerEventToAllRequestDto = {
   /**
@@ -153,7 +153,7 @@ export type TriggerEventToAllRequestDto = {
    * @remarks
    *     If a new tenant object is provided, we will create a new tenant.
    */
-  tenant?: TenantPayloadDto | string | undefined;
+  tenant?: string | TenantPayloadDto | undefined;
 };
 
 /** @internal */
@@ -370,19 +370,19 @@ export const TriggerEventToAllRequestDtoTenant$inboundSchema: z.ZodType<
   TriggerEventToAllRequestDtoTenant,
   z.ZodTypeDef,
   unknown
-> = z.union([TenantPayloadDto$inboundSchema, z.string()]);
+> = z.union([z.string(), TenantPayloadDto$inboundSchema]);
 
 /** @internal */
 export type TriggerEventToAllRequestDtoTenant$Outbound =
-  | TenantPayloadDto$Outbound
-  | string;
+  | string
+  | TenantPayloadDto$Outbound;
 
 /** @internal */
 export const TriggerEventToAllRequestDtoTenant$outboundSchema: z.ZodType<
   TriggerEventToAllRequestDtoTenant$Outbound,
   z.ZodTypeDef,
   TriggerEventToAllRequestDtoTenant
-> = z.union([TenantPayloadDto$outboundSchema, z.string()]);
+> = z.union([z.string(), TenantPayloadDto$outboundSchema]);
 
 /**
  * @internal
@@ -430,7 +430,7 @@ export const TriggerEventToAllRequestDto$inboundSchema: z.ZodType<
     .optional(),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$inboundSchema, z.string()]).optional(),
-  tenant: z.union([TenantPayloadDto$inboundSchema, z.string()]).optional(),
+  tenant: z.union([z.string(), TenantPayloadDto$inboundSchema]).optional(),
 });
 
 /** @internal */
@@ -440,7 +440,7 @@ export type TriggerEventToAllRequestDto$Outbound = {
   overrides?: TriggerEventToAllRequestDtoOverrides$Outbound | undefined;
   transactionId?: string | undefined;
   actor?: SubscriberPayloadDto$Outbound | string | undefined;
-  tenant?: TenantPayloadDto$Outbound | string | undefined;
+  tenant?: string | TenantPayloadDto$Outbound | undefined;
 };
 
 /** @internal */
@@ -455,7 +455,7 @@ export const TriggerEventToAllRequestDto$outboundSchema: z.ZodType<
     .optional(),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$outboundSchema, z.string()]).optional(),
-  tenant: z.union([TenantPayloadDto$outboundSchema, z.string()]).optional(),
+  tenant: z.union([z.string(), TenantPayloadDto$outboundSchema]).optional(),
 });
 
 /**

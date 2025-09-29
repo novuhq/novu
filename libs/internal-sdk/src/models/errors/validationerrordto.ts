@@ -17,10 +17,10 @@ export type Message4 = {};
  * Value that failed validation
  */
 export type ValidationErrorDtoMessage =
-  | Message4
   | string
   | number
   | boolean
+  | Message4
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 export type ValidationErrorDtoData = {
@@ -40,10 +40,10 @@ export type ValidationErrorDtoData = {
    * Value that failed validation
    */
   message?:
-    | Message4
     | string
     | number
     | boolean
+    | Message4
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -207,10 +207,10 @@ export const ValidationErrorDtoMessage$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.union([
-  z.lazy(() => Message4$inboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
+  z.lazy(() => Message4$inboundSchema),
   z.array(
     z.nullable(
       z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -220,10 +220,10 @@ export const ValidationErrorDtoMessage$inboundSchema: z.ZodType<
 
 /** @internal */
 export type ValidationErrorDtoMessage$Outbound =
-  | Message4$Outbound
   | string
   | number
   | boolean
+  | Message4$Outbound
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 /** @internal */
@@ -232,10 +232,10 @@ export const ValidationErrorDtoMessage$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ValidationErrorDtoMessage
 > = z.union([
-  z.lazy(() => Message4$outboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
+  z.lazy(() => Message4$outboundSchema),
   z.array(
     z.nullable(
       z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -285,10 +285,10 @@ export const ValidationErrorDto$inboundSchema: z.ZodType<
   path: z.string(),
   message: z.nullable(
     z.union([
-      z.lazy(() => Message4$inboundSchema),
       z.string(),
       z.number(),
       z.boolean(),
+      z.lazy(() => Message4$inboundSchema),
       z.array(
         z.nullable(
           z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -317,10 +317,10 @@ export type ValidationErrorDto$Outbound = {
   timestamp: string;
   path: string;
   message?:
-    | Message4$Outbound
     | string
     | number
     | boolean
+    | Message4$Outbound
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -342,10 +342,10 @@ export const ValidationErrorDto$outboundSchema: z.ZodType<
     path: z.string(),
     message: z.nullable(
       z.union([
-        z.lazy(() => Message4$outboundSchema),
         z.string(),
         z.number(),
         z.boolean(),
+        z.lazy(() => Message4$outboundSchema),
         z.array(
           z.nullable(
             z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),

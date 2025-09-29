@@ -150,6 +150,7 @@ export type Two = {
  * Preview result
  */
 export type GeneratePreviewResponseDtoResult =
+  | { [k: string]: any }
   | Two
   | Three
   | Result4
@@ -157,8 +158,7 @@ export type GeneratePreviewResponseDtoResult =
   | Six
   | Seven
   | Eight
-  | Nine
-  | { [k: string]: any };
+  | Nine;
 
 export type GeneratePreviewResponseDto = {
   /**
@@ -172,9 +172,16 @@ export type GeneratePreviewResponseDto = {
   /**
    * Preview result
    */
-  result: Two | Three | Result4 | Result5 | Six | Seven | Eight | Nine | {
-    [k: string]: any;
-  };
+  result:
+    | { [k: string]: any }
+    | Two
+    | Three
+    | Result4
+    | Result5
+    | Six
+    | Seven
+    | Eight
+    | Nine;
 };
 
 /** @internal */
@@ -766,6 +773,7 @@ export const GeneratePreviewResponseDtoResult$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.union([
+  z.record(z.any()),
   z.lazy(() => Two$inboundSchema),
   z.lazy(() => Three$inboundSchema),
   z.lazy(() => Result4$inboundSchema),
@@ -774,11 +782,11 @@ export const GeneratePreviewResponseDtoResult$inboundSchema: z.ZodType<
   z.lazy(() => Seven$inboundSchema),
   z.lazy(() => Eight$inboundSchema),
   z.lazy(() => Nine$inboundSchema),
-  z.record(z.any()),
 ]);
 
 /** @internal */
 export type GeneratePreviewResponseDtoResult$Outbound =
+  | { [k: string]: any }
   | Two$Outbound
   | Three$Outbound
   | Result4$Outbound
@@ -786,8 +794,7 @@ export type GeneratePreviewResponseDtoResult$Outbound =
   | Six$Outbound
   | Seven$Outbound
   | Eight$Outbound
-  | Nine$Outbound
-  | { [k: string]: any };
+  | Nine$Outbound;
 
 /** @internal */
 export const GeneratePreviewResponseDtoResult$outboundSchema: z.ZodType<
@@ -795,6 +802,7 @@ export const GeneratePreviewResponseDtoResult$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   GeneratePreviewResponseDtoResult
 > = z.union([
+  z.record(z.any()),
   z.lazy(() => Two$outboundSchema),
   z.lazy(() => Three$outboundSchema),
   z.lazy(() => Result4$outboundSchema),
@@ -803,7 +811,6 @@ export const GeneratePreviewResponseDtoResult$outboundSchema: z.ZodType<
   z.lazy(() => Seven$outboundSchema),
   z.lazy(() => Eight$outboundSchema),
   z.lazy(() => Nine$outboundSchema),
-  z.record(z.any()),
 ]);
 
 /**
@@ -848,6 +855,7 @@ export const GeneratePreviewResponseDto$inboundSchema: z.ZodType<
   previewPayloadExample: PreviewPayloadDto$inboundSchema,
   schema: z.nullable(z.record(z.any())).optional(),
   result: z.union([
+    z.record(z.any()),
     z.lazy(() => Two$inboundSchema),
     z.lazy(() => Three$inboundSchema),
     z.lazy(() => Result4$inboundSchema),
@@ -856,7 +864,6 @@ export const GeneratePreviewResponseDto$inboundSchema: z.ZodType<
     z.lazy(() => Seven$inboundSchema),
     z.lazy(() => Eight$inboundSchema),
     z.lazy(() => Nine$inboundSchema),
-    z.record(z.any()),
   ]),
 });
 
@@ -865,6 +872,7 @@ export type GeneratePreviewResponseDto$Outbound = {
   previewPayloadExample: PreviewPayloadDto$Outbound;
   schema?: { [k: string]: any } | null | undefined;
   result:
+    | { [k: string]: any }
     | Two$Outbound
     | Three$Outbound
     | Result4$Outbound
@@ -872,8 +880,7 @@ export type GeneratePreviewResponseDto$Outbound = {
     | Six$Outbound
     | Seven$Outbound
     | Eight$Outbound
-    | Nine$Outbound
-    | { [k: string]: any };
+    | Nine$Outbound;
 };
 
 /** @internal */
@@ -885,6 +892,7 @@ export const GeneratePreviewResponseDto$outboundSchema: z.ZodType<
   previewPayloadExample: PreviewPayloadDto$outboundSchema,
   schema: z.nullable(z.record(z.any())).optional(),
   result: z.union([
+    z.record(z.any()),
     z.lazy(() => Two$outboundSchema),
     z.lazy(() => Three$outboundSchema),
     z.lazy(() => Result4$outboundSchema),
@@ -893,7 +901,6 @@ export const GeneratePreviewResponseDto$outboundSchema: z.ZodType<
     z.lazy(() => Seven$outboundSchema),
     z.lazy(() => Eight$outboundSchema),
     z.lazy(() => Nine$outboundSchema),
-    z.record(z.any()),
   ]),
 });
 
