@@ -43,6 +43,10 @@ export function GeneralSettings({
   onAutoConfigureSuccess,
 }: GeneralSettingsProps) {
   const isInboundWebhooksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOKS_ENABLED, true);
+  const isInboundWebhooksConfigurationEnabled = useFeatureFlag(
+    FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED,
+    false
+  );
 
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
@@ -138,26 +142,30 @@ export function GeneralSettings({
         )}
       />
 
-      {!isDemo && isInboundWebhooksEnabled && configurations && configurations.length > 0 && (
-        <>
-          <Separator className="mt-2" />
+      {!isDemo &&
+        isInboundWebhooksEnabled &&
+        isInboundWebhooksConfigurationEnabled &&
+        configurations &&
+        configurations.length > 0 && (
+          <>
+            <Separator className="mt-2" />
 
-          <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-            {configurations.map((group) => (
-              <ConfigurationGroup
-                integrationId={integrationId}
-                key={group.groupType}
-                group={group}
-                control={control}
-                isReadOnly={isReadOnly}
-                provider={provider}
-                formData={formData}
-                onAutoConfigureSuccess={onAutoConfigureSuccess}
-              />
-            ))}
-          </Protect>
-        </>
-      )}
+            <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+              {configurations.map((group) => (
+                <ConfigurationGroup
+                  integrationId={integrationId}
+                  key={group.groupType}
+                  group={group}
+                  control={control}
+                  isReadOnly={isReadOnly}
+                  provider={provider}
+                  formData={formData}
+                  onAutoConfigureSuccess={onAutoConfigureSuccess}
+                />
+              ))}
+            </Protect>
+          </>
+        )}
     </div>
   );
 }
