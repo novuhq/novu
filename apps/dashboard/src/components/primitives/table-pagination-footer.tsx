@@ -55,7 +55,6 @@ type TablePaginationFooterProps = {
 
 export function TablePaginationFooter({
   pageSize,
-  currentPageItemsCount,
   onPreviousPage,
   onNextPage,
   onPageSizeChange,
@@ -63,25 +62,20 @@ export function TablePaginationFooter({
   hasNextPage,
   className,
   pageSizeOptions = [10, 20, 50],
-  itemName = 'items',
   totalCountCapped,
   totalCount,
 }: TablePaginationFooterProps) {
   return (
     <div className={cn('flex w-full items-center bg-bg-white px-3 py-2', className)}>
-      <div className="flex items-center gap-1 px-2 flex-1">
-        <span className="text-label-xs text-text-soft">Showing</span>
-        <span className="text-label-xs text-text-sub">{currentPageItemsCount}</span>
-        <span className="text-label-xs text-text-soft">{itemName}</span>
+      <div className="flex items-center gap-1 px-2 pl-0 flex-1">
         {totalCount !== undefined && (
           <>
-            <span className="text-label-xs text-text-soft">of</span>
             {totalCountCapped ? (
               <span className="text-label-xs text-text-sub">Over 50,000</span>
             ) : (
               <span className="text-label-xs text-text-sub">{totalCount?.toLocaleString()}</span>
             )}
-            <span className="text-label-xs text-text-soft">total</span>
+            <span className="text-label-xs text-text-soft">results</span>
           </>
         )}
       </div>

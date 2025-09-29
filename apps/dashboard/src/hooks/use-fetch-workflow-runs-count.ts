@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ActivityFilters, getWorkflowRunsCount } from '@/api/activity';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
 interface UseWorkflowRunsCountOptions {
@@ -21,12 +21,10 @@ export function useFetchWorkflowRunsCount({
   return useQuery({
     queryKey: [QueryKeys.fetchWorkflowRunsCount, currentEnvironment?._id, filters],
     queryFn: async ({ signal }) => {
-      if (!currentEnvironment) {
-        throw new Error('No environment available');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'No environment available');
 
       return getWorkflowRunsCount({
-        environment: currentEnvironment,
+        environment,
         filters,
         signal,
       });
