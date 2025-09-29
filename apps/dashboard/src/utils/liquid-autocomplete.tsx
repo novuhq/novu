@@ -75,11 +75,11 @@ function handleNamespacedInput(
 ): LiquidVariable[] {
   // Special handling for context variables
   if (namespace === CONTEXT_NAMESPACE) {
-    return handleContextNamespacedInput(searchText, isPayloadSchemaEnabled, onCreateNewVariable);
+    return handleContextNamespacedInput(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace);
   }
 
   // Standard handling for other namespaces (payload, subscriber.data, etc.)
-  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable)];
+  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
 }
 
 /**
@@ -88,7 +88,8 @@ function handleNamespacedInput(
 function handleContextNamespacedInput(
   searchText: string,
   isPayloadSchemaEnabled?: boolean,
-  onCreateNewVariable?: (variableName: string) => Promise<void>
+  onCreateNewVariable?: (variableName: string) => Promise<void>,
+  namespace?: string
 ): LiquidVariable[] {
   const parts = searchText.split('.');
 
@@ -97,8 +98,8 @@ function handleContextNamespacedInput(
     const contextType = parts[1];
     if (contextType && contextType.trim() !== '') {
       return [
-        createJitVariable(`${searchText}.id`, isPayloadSchemaEnabled, onCreateNewVariable),
-        createJitVariable(`${searchText}.data`, isPayloadSchemaEnabled, onCreateNewVariable),
+        createJitVariable(`${searchText}.id`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
+        createJitVariable(`${searchText}.data`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
       ];
     }
     return [];
@@ -109,7 +110,7 @@ function handleContextNamespacedInput(
     return [];
   }
 
-  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable)];
+  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
 }
 
 /**
@@ -126,29 +127,20 @@ function handleNonNamespacedInput(
   // Special handling for context namespace - suggest both .id and .data
   if (namespace === CONTEXT_NAMESPACE && trimmedSearch && !trimmedSearch.includes('.')) {
     return [
-      createJitVariable(`${namespace}.${trimmedSearch}.id`, isPayloadSchemaEnabled, onCreateNewVariable),
-      createJitVariable(`${namespace}.${trimmedSearch}.data`, isPayloadSchemaEnabled, onCreateNewVariable),
+      createJitVariable(`${namespace}.${trimmedSearch}.id`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
+      createJitVariable(`${namespace}.${trimmedSearch}.data`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
     ];
   }
 
   // Standard handling for other namespaces
   const suggestedVariableName = `${namespace}.${trimmedSearch}`;
-  const isPayloadVariable = namespace === PAYLOAD_NAMESPACE;
 
   // For context variables, validate before suggesting
   if (namespace === CONTEXT_NAMESPACE && !isValidContextVariable(suggestedVariableName)) {
     return [];
   }
 
-  const shouldShowCreation = isPayloadVariable; // Only payload variables get info panels
-  return [
-    createJitVariable(
-      suggestedVariableName,
-      isPayloadSchemaEnabled,
-      onCreateNewVariable,
-      shouldShowCreation ? trimmedSearch : undefined
-    ),
-  ];
+  return [createJitVariable(suggestedVariableName, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
 }
 
 /**
@@ -158,8 +150,10 @@ function createJitVariable(
   variableName: string,
   isPayloadSchemaEnabled?: boolean,
   onCreateNewVariable?: (variableName: string) => Promise<void>,
-  createVariableKey?: string
+  namespace?: string
 ): LiquidVariable {
+  const isPayloadVariable = namespace === PAYLOAD_NAMESPACE;
+
   const baseVariable: LiquidVariable = {
     name: variableName,
     type: 'variable',
@@ -167,13 +161,13 @@ function createJitVariable(
   };
 
   // Add creation info panel if needed
-  if (createVariableKey && isPayloadSchemaEnabled && onCreateNewVariable) {
+  if (isPayloadVariable && isPayloadSchemaEnabled && onCreateNewVariable) {
     baseVariable.info = () => {
       const dom = createInfoPanel({
         component: (
           <NewVariablePreview
             onCreateClick={() => {
-              onCreateNewVariable(createVariableKey);
+              onCreateNewVariable(variableName);
             }}
           />
         ),
@@ -257,7 +251,8 @@ export const completions =
     scopedVariables: LiquidVariable[],
     variables: LiquidVariable[],
     onCreateNewVariable?: (variableName: string) => Promise<void>,
-    isPayloadSchemaEnabled?: boolean
+    isPayloadSchemaEnabled?: boolean,
+    isContextEnabled?: boolean
   ) =>
   (context: CompletionContext): CompletionResult | null => {
     const { state, pos } = context;
@@ -290,7 +285,8 @@ export const completions =
       scopedVariables,
       variables,
       onCreateNewVariable,
-      isPayloadSchemaEnabled
+      isPayloadSchemaEnabled,
+      isContextEnabled
     );
 
     // If we have matches or we're in a valid context, show them
@@ -359,7 +355,8 @@ function getMatchingVariables(
   scopedVariables: LiquidVariable[],
   variables: LiquidVariable[],
   onCreateNewVariable?: (variableName: string) => Promise<void>,
-  isPayloadSchemaEnabled?: boolean
+  isPayloadSchemaEnabled?: boolean,
+  isContextEnabled?: boolean
 ): LiquidVariable[] {
   const allVariables = [...scopedVariables, ...variables];
   if (!searchText) return allVariables;
@@ -386,9 +383,12 @@ function getMatchingVariables(
   }, []);
 
   // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, context.tenant.data, steps.digest-step.events[0].payload.foo
+  const baseNamespaces = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ...stepPayloadNamespaces];
+  const namespaces = isContextEnabled ? [...baseNamespaces, CONTEXT_NAMESPACE] : baseNamespaces;
+
   const jitVariables = createJitVariables({
     searchText,
-    namespaces: [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, CONTEXT_NAMESPACE, ...stepPayloadNamespaces],
+    namespaces,
     isPayloadSchemaEnabled,
     onCreateNewVariable,
   });
@@ -492,7 +492,8 @@ export function createAutocompleteSource(
   onVariableSelect?: (completion: CompletionOption) => void,
   onCreateNewVariable?: (variableName: string) => Promise<void>,
   isPayloadSchemaEnabled?: boolean,
-  isTranslationEnabled?: boolean
+  isTranslationEnabled?: boolean,
+  isContextEnabled?: boolean
 ): CompletionSource {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
@@ -505,7 +506,13 @@ export function createAutocompleteSource(
       displayLabel: variable,
       type: 'local',
     }));
-    const options = completions(scopedLiquidVariables, variables, onCreateNewVariable, isPayloadSchemaEnabled)(context);
+    const options = completions(
+      scopedLiquidVariables,
+      variables,
+      onCreateNewVariable,
+      isPayloadSchemaEnabled,
+      isContextEnabled
+    )(context);
     if (!options) return null;
 
     // Add translation namespace variable if translation feature is enabled

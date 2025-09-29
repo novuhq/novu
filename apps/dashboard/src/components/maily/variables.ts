@@ -12,8 +12,12 @@ import {
   updateRepeatBlockChildAliases,
 } from './repeat-block-aliases';
 
-function addContextVariableSuggestions(queryWithoutSuffix: string, variables: LiquidVariable[]) {
-  if (!queryWithoutSuffix.startsWith('context.')) return;
+function addContextVariableSuggestions(
+  queryWithoutSuffix: string,
+  variables: LiquidVariable[],
+  isContextEnabled?: boolean
+) {
+  if (!isContextEnabled || !queryWithoutSuffix.startsWith('context.')) return;
 
   const parts = queryWithoutSuffix.split('.');
   const existingNames = new Set(variables.map((v) => v.name));
@@ -22,7 +26,7 @@ function addContextVariableSuggestions(queryWithoutSuffix: string, variables: Li
     name,
     type: 'variable' as const,
     isNewSuggestion: true,
-    displayLabel: `Create ${name}`,
+    displayLabel: name,
     boost,
   });
 
@@ -54,6 +58,7 @@ export type CalculateVariablesProps = {
   addDigestVariables?: boolean;
   isPayloadSchemaEnabled?: boolean;
   isTranslationEnabled?: boolean;
+  isContextEnabled?: boolean;
 };
 
 const insertNodeToEditor = ({
@@ -226,6 +231,7 @@ export const calculateVariables = ({
   addDigestVariables = false,
   isPayloadSchemaEnabled = false,
   isTranslationEnabled = false,
+  isContextEnabled = false,
 }: CalculateVariablesProps): Array<LiquidVariable> | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
 
@@ -240,7 +246,7 @@ export const calculateVariables = ({
   });
 
   // Add context variable suggestions
-  addContextVariableSuggestions(queryWithoutSuffix, variables);
+  addContextVariableSuggestions(queryWithoutSuffix, variables, isContextEnabled);
 
   // Add new variable creation support for payload variables when schema is enabled
   const PAYLOAD_NAMESPACE = 'payload';
@@ -248,13 +254,10 @@ export const calculateVariables = ({
   if (
     isPayloadSchemaEnabled &&
     queryWithoutSuffix.trim() &&
-    (queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') ||
-      queryWithoutSuffix.startsWith('current.' + PAYLOAD_NAMESPACE + '.')) &&
+    queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') &&
     queryWithoutSuffix !== PAYLOAD_NAMESPACE
   ) {
-    const variableKey = queryWithoutSuffix
-      .replace('current.' + PAYLOAD_NAMESPACE + '.', '')
-      .replace(PAYLOAD_NAMESPACE + '.', '');
+    const variableKey = queryWithoutSuffix.replace(PAYLOAD_NAMESPACE + '.', '');
 
     // Check if this variable doesn't already exist
     const existingVariable = variables.find((v) => v.name === queryWithoutSuffix);
