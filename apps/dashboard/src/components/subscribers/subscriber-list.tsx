@@ -66,16 +66,13 @@ type SubscriberListTableProps = HTMLAttributes<HTMLTableElement> & {
   toggleSort: ReturnType<typeof useSubscribersUrlState>['toggleSort'];
   orderBy?: SubscribersSortableColumn;
   orderDirection?: DirectionEnum;
-  showPagination?: boolean;
   paginationProps?: {
     hasNext: boolean;
     hasPrevious: boolean;
     onNext: () => void;
     onPrevious: () => void;
-    onFirst: () => void;
     limit: number;
     currentItemsCount: number;
-    count?: number;
     totalCount?: number;
     totalCountCapped?: boolean;
     onPageSizeChange: (newSize: number) => void;
@@ -83,7 +80,7 @@ type SubscriberListTableProps = HTMLAttributes<HTMLTableElement> & {
 };
 
 const SubscriberListTable = (props: SubscriberListTableProps) => {
-  const { children, orderBy, orderDirection, toggleSort, showPagination, paginationProps, ...rest } = props;
+  const { children, orderBy, orderDirection, toggleSort, paginationProps, ...rest } = props;
   return (
     <Table {...rest}>
       <TableHeader>
@@ -114,18 +111,14 @@ const SubscriberListTable = (props: SubscriberListTableProps) => {
           <TableRow>
             <TableCell colSpan={6} className="p-0">
               <TablePaginationFooter
-                currentPage={1} // Cursor pagination doesn't have traditional pages
                 pageSize={paginationProps.limit}
-                totalItems={paginationProps.currentItemsCount} // Show current page items count
-                onFirstPage={paginationProps.onFirst}
+                currentPageItemsCount={paginationProps.currentItemsCount}
                 onPreviousPage={paginationProps.onPrevious}
                 onNextPage={paginationProps.onNext}
-                onLastPage={() => {}} // Disabled for cursor pagination
                 onPageSizeChange={paginationProps.onPageSizeChange}
-                isFirstPage={!paginationProps.hasPrevious}
-                isLastPage={!paginationProps.hasNext}
+                hasPreviousPage={paginationProps.hasPrevious}
+                hasNextPage={paginationProps.hasNext}
                 itemName="subscribers"
-                className="cursor-pagination" // Add class to identify cursor pagination
                 totalCount={paginationProps.totalCount}
                 totalCountCapped={paginationProps.totalCountCapped}
               />
@@ -150,7 +143,6 @@ export const SubscriberList = (props: SubscriberListProps) => {
     resetFilters,
     handleNext,
     handlePrevious,
-    handleFirst,
     handlePageSizeChange,
   } = useSubscribersUrlState({
     after: nextPageAfter,
@@ -245,13 +237,11 @@ export const SubscriberList = (props: SubscriberListProps) => {
         orderBy={filterValues.orderBy}
         orderDirection={filterValues.orderDirection}
         toggleSort={toggleSort}
-        showPagination={!!(data.next || data.previous)}
         paginationProps={{
           hasNext: !!data.next,
           hasPrevious: !!data.previous,
           onNext: handleNext,
           onPrevious: handlePrevious,
-          onFirst: handleFirst,
           limit,
           currentItemsCount: data.data.length,
           totalCount: data.totalCount,

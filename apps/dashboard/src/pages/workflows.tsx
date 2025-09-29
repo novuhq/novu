@@ -152,7 +152,7 @@ export const WorkflowsPage = () => {
   }, [quickTemplates]);
 
   const offset = parseInt(searchParams.get('offset') || '0', 10);
-  const limit = parseInt(searchParams.get('limit') || '12', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
 
   const {
     data: workflowsData,

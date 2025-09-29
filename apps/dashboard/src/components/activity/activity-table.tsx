@@ -114,15 +114,9 @@ export function ActivityTable({
     }
   }
 
-  function handleFirst() {
-    handleCursorNavigation(null, 'first');
-  }
-
   function handlePageSizeChange(newPageSize: number) {
     setPageSize(newPageSize);
   }
-
-  function handleLastPage() {}
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -172,19 +166,16 @@ export function ActivityTable({
               <TableRow>
                 <TableCell colSpan={7} className="p-0">
                   <TablePaginationFooter
-                    currentPage={1}
                     pageSize={pageSize}
-                    totalItems={activities.length}
-                    onFirstPage={isWorkflowRunMigrationEnabled ? handleFirst : () => handlePageChange(0)}
+                    currentPageItemsCount={activities.length}
                     onPreviousPage={
                       isWorkflowRunMigrationEnabled ? handlePrevious : () => handlePageChange(Math.max(0, page - 1))
                     }
                     onNextPage={isWorkflowRunMigrationEnabled ? handleNext : () => handlePageChange(page + 1)}
-                    onLastPage={handleLastPage}
                     onPageSizeChange={handlePageSizeChange}
-                    isFirstPage={isWorkflowRunMigrationEnabled ? !previous : page === 0}
-                    isLastPage={!hasMore}
-                    className="cursor-pagination border-t-0 bg-transparent"
+                    hasPreviousPage={isWorkflowRunMigrationEnabled ? !!previous : page > 0}
+                    hasNextPage={hasMore}
+                    className="border-t-0 bg-transparent"
                     itemName="workflow runs"
                     pageSizeOptions={[10, 20, 50]}
                   />

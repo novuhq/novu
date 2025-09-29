@@ -3,48 +3,35 @@
  *
  * @example
  * ```tsx
- * // Regular pagination
- * const [currentPage, setCurrentPage] = useState(1);
- * const [pageSize, setPageSize] = useState(12);
- * const totalItems = 213;
- *
+ * // Cursor-based pagination
  * <TablePaginationFooter
- *   currentPage={currentPage}
- *   pageSize={pageSize}
- *   totalItems={totalItems}
- *   onFirstPage={() => setCurrentPage(1)}
- *   onPreviousPage={() => setCurrentPage(prev => Math.max(1, prev - 1))}
- *   onNextPage={() => setCurrentPage(prev => prev + 1)}
- *   onLastPage={() => setCurrentPage(Math.ceil(totalItems / pageSize))}
- *   onPageSizeChange={(newSize) => {
- *     setPageSize(newSize);
- *     setCurrentPage(1); // Reset to first page when page size changes
- *   }}
- *   isFirstPage={currentPage === 1}
- *   isLastPage={currentPage >= Math.ceil(totalItems / pageSize)}
- *   itemName="workflows"
- * />
- *
- * // Cursor-based pagination with totalCount
- * <TablePaginationFooter
- *   currentPage={1}
  *   pageSize={10}
- *   totalItems={10} // items on current page
- *   onFirstPage={() => {}}
+ *   currentPageItemsCount={10} // items on current page
  *   onPreviousPage={handlePrevious}
  *   onNextPage={handleNext}
- *   onLastPage={() => {}}
  *   onPageSizeChange={handlePageSizeChange}
- *   isFirstPage={!hasPrevious}
- *   isLastPage={!hasNext}
+ *   hasPreviousPage={hasPrevious}
+ *   hasNextPage={hasNext}
  *   itemName="subscribers"
- *   totalCount={12500} // total count from API
+ * />
+ *
+ * // With total count
+ * <TablePaginationFooter
+ *   pageSize={10}
+ *   currentPageItemsCount={10}
+ *   onPreviousPage={handlePrevious}
+ *   onNextPage={handleNext}
+ *   onPageSizeChange={handlePageSizeChange}
+ *   hasPreviousPage={hasPrevious}
+ *   hasNextPage={hasNext}
+ *   itemName="subscribers"
+ *   totalCount={12500} // optional total count from API
  *   totalCountCapped={false} // or true if over 50,000
  * />
  * ```
  */
 import { ChevronDownIcon } from '@radix-ui/react-icons';
-import { RiArrowLeftDoubleLine, RiArrowLeftSLine, RiArrowRightDoubleLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { cn } from '@/utils/ui';
@@ -84,16 +71,13 @@ function PaginationNavButton({ children, disabled, onClick, 'aria-label': ariaLa
 }
 
 type TablePaginationFooterProps = {
-  currentPage: number;
   pageSize: number;
-  totalItems: number;
-  onFirstPage: () => void;
+  currentPageItemsCount: number;
   onPreviousPage: () => void;
   onNextPage: () => void;
-  onLastPage: () => void;
   onPageSizeChange: (pageSize: number) => void;
-  isFirstPage: boolean;
-  isLastPage: boolean;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
   className?: string;
   pageSizeOptions?: number[];
   itemName?: string;
@@ -102,56 +86,34 @@ type TablePaginationFooterProps = {
 };
 
 export function TablePaginationFooter({
-  currentPage,
   pageSize,
-  totalItems,
-  onFirstPage,
+  currentPageItemsCount,
   onPreviousPage,
   onNextPage,
-  onLastPage,
   onPageSizeChange,
-  isFirstPage,
-  isLastPage,
+  hasPreviousPage,
+  hasNextPage,
   className,
   pageSizeOptions = [10, 20, 50],
   itemName = 'items',
   totalCountCapped,
   totalCount,
 }: TablePaginationFooterProps) {
-  // Check if this is cursor-based pagination (no meaningful currentPage or totalItems)
-  const isCursorPagination = className?.includes('cursor-pagination') || totalCount !== undefined;
-
-  const startItem = isCursorPagination ? 1 : Math.min((currentPage - 1) * pageSize + 1, totalItems);
-  const endItem = isCursorPagination ? totalItems : Math.min(currentPage * pageSize, totalItems);
-
   return (
     <div className={cn('flex w-full items-center bg-bg-white px-3 py-2', className)}>
       <div className="flex items-center gap-1 px-2 flex-1">
-        {isCursorPagination ? (
+        <span className="text-label-xs text-text-soft">Showing</span>
+        <span className="text-label-xs text-text-sub">{currentPageItemsCount}</span>
+        <span className="text-label-xs text-text-soft">{itemName}</span>
+        {totalCount !== undefined && (
           <>
-            <span className="text-label-xs text-text-soft">Showing</span>
-            <span className="text-label-xs text-text-sub">{totalItems}</span>
-            <span className="text-label-xs text-text-soft">{itemName}</span>
-            {totalCount !== undefined && (
-              <>
-                <span className="text-label-xs text-text-soft">of</span>
-                {totalCountCapped ? (
-                  <span className="text-label-xs text-text-sub">Over 50,000</span>
-                ) : (
-                  <span className="text-label-xs text-text-sub">{totalCount?.toLocaleString()}</span>
-                )}
-                <span className="text-label-xs text-text-soft">total</span>
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <span className="text-label-xs text-text-sub">
-              {startItem}-{endItem}
-            </span>
             <span className="text-label-xs text-text-soft">of</span>
-            <span className="text-label-xs text-text-sub">{totalItems.toLocaleString()}</span>
-            <span className="text-label-xs text-text-soft">{itemName}</span>
+            {totalCountCapped ? (
+              <span className="text-label-xs text-text-sub">Over 50,000</span>
+            ) : (
+              <span className="text-label-xs text-text-sub">{totalCount?.toLocaleString()}</span>
+            )}
+            <span className="text-label-xs text-text-soft">total</span>
           </>
         )}
       </div>
@@ -159,22 +121,12 @@ export function TablePaginationFooter({
       {/* Center: Pagination buttons */}
       <div className="flex items-center justify-center flex-1">
         <PaginationGroup>
-          {!isCursorPagination && (
-            <PaginationNavButton disabled={isFirstPage} onClick={onFirstPage} aria-label="Go to first page">
-              <RiArrowLeftDoubleLine className="size-5" />
-            </PaginationNavButton>
-          )}
-          <PaginationNavButton disabled={isFirstPage} onClick={onPreviousPage} aria-label="Go to previous page">
+          <PaginationNavButton disabled={!hasPreviousPage} onClick={onPreviousPage} aria-label="Go to previous page">
             <RiArrowLeftSLine className="size-5" />
           </PaginationNavButton>
-          <PaginationNavButton disabled={isLastPage} onClick={onNextPage} aria-label="Go to next page">
+          <PaginationNavButton disabled={!hasNextPage} onClick={onNextPage} aria-label="Go to next page">
             <RiArrowRightSLine className="size-5" />
           </PaginationNavButton>
-          {!isCursorPagination && (
-            <PaginationNavButton disabled={isLastPage} onClick={onLastPage} aria-label="Go to last page">
-              <RiArrowRightDoubleLine className="size-5" />
-            </PaginationNavButton>
-          )}
         </PaginationGroup>
       </div>
 

@@ -94,10 +94,8 @@ export function WorkflowList({
     });
   };
 
-  const handleFirstPage = () => navigateToPage(1);
   const handlePreviousPage = () => navigateToPage(Math.max(1, currentPage - 1));
   const handleNextPage = () => navigateToPage(Math.min(totalPages, currentPage + 1));
-  const handleLastPage = () => navigateToPage(totalPages);
 
   const handlePageSizeChange = (newPageSize: number) => {
     setSearchParams((prev) => {
@@ -176,17 +174,15 @@ export function WorkflowList({
             <TableRow>
               <TableCell colSpan={7} className="p-0">
                 <TablePaginationFooter
-                  currentPage={currentPage}
                   pageSize={limit}
-                  totalItems={data.totalCount}
-                  onFirstPage={handleFirstPage}
+                  currentPageItemsCount={data.workflows.length}
                   onPreviousPage={handlePreviousPage}
                   onNextPage={handleNextPage}
-                  onLastPage={handleLastPage}
                   onPageSizeChange={handlePageSizeChange}
-                  isFirstPage={currentPage === 1}
-                  isLastPage={currentPage >= totalPages}
+                  hasPreviousPage={currentPage > 1}
+                  hasNextPage={currentPage < totalPages}
                   itemName="workflows"
+                  totalCount={data.totalCount}
                 />
               </TableCell>
             </TableRow>

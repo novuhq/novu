@@ -1,7 +1,7 @@
 // Use pagination primitives from the dashboard project
 
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
-import { HTMLAttributes } from 'react';
+import { HTMLAttributes, useEffect, useState } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import {
@@ -114,18 +114,14 @@ const TopicListTable = (props: TopicListTableProps) => {
           <TableRow>
             <TableCell colSpan={5} className="p-0">
               <TablePaginationFooter
-                currentPage={1} // Cursor pagination doesn't have traditional pages
                 pageSize={paginationProps.limit}
-                totalItems={paginationProps.currentItemsCount} // Show current page items count
-                onFirstPage={paginationProps.onFirst}
+                currentPageItemsCount={paginationProps.currentItemsCount}
                 onPreviousPage={paginationProps.onPrevious}
                 onNextPage={paginationProps.onNext}
-                onLastPage={() => {}} // Disabled for cursor pagination
                 onPageSizeChange={paginationProps.onPageSizeChange}
-                isFirstPage={!paginationProps.hasPrevious}
-                isLastPage={!paginationProps.hasNext}
+                hasPreviousPage={paginationProps.hasPrevious}
+                hasNextPage={paginationProps.hasNext}
                 itemName="topics"
-                className="cursor-pagination" // Add class to identify cursor pagination
                 totalCount={paginationProps.totalCount}
                 totalCountCapped={paginationProps.totalCountCapped}
               />
@@ -147,23 +143,23 @@ type TopicListTableProps = HTMLAttributes<HTMLTableElement> & {
   toggleSort: ReturnType<typeof useTopicsUrlState>['toggleSort'];
   orderBy?: TopicsSortableColumn;
   orderDirection?: DirectionEnum;
-  showPagination?: boolean;
   paginationProps?: {
     hasNext: boolean;
     hasPrevious: boolean;
     onNext: () => void;
     onPrevious: () => void;
-    onFirst: () => void;
     limit: number;
     currentItemsCount: number;
-    count?: number;
-    hasMore?: boolean;
+    totalCount?: number;
+    totalCountCapped?: boolean;
     onPageSizeChange: (newSize: number) => void;
   };
 };
 
 export const TopicList = (props: TopicListProps) => {
   const { ...rest } = props;
+  const [nextPageAfter, setNextPageAfter] = useState<string | undefined>(undefined);
+  const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
 
   // Use the hook as the primary source for URL state - orderBy/orderDirection are likely within filterValues
   const {
@@ -173,9 +169,11 @@ export const TopicList = (props: TopicListProps) => {
     resetFilters,
     handleNext,
     handlePrevious,
-    handleFirst,
     handlePageSizeChange,
-  } = useTopicsUrlState({});
+  } = useTopicsUrlState({
+    after: nextPageAfter,
+    before: previousPageBefore,
+  });
 
   // Get limit from filterValues, fallback to 10
   const limit = filterValues.limit || 10;
@@ -200,6 +198,16 @@ export const TopicList = (props: TopicListProps) => {
     meta: { errorMessage: 'Issue fetching topics' },
   });
 
+  useEffect(() => {
+    if (data?.next) {
+      setNextPageAfter(data.next);
+    }
+
+    if (data?.previous) {
+      setPreviousPageBefore(data.previous);
+    }
+  }, [data]);
+
   // Define wrapper props once
   const wrapperProps = {
     filterValues,
@@ -217,14 +225,12 @@ export const TopicList = (props: TopicListProps) => {
     orderBy: filterValues.orderBy, // Use state from hook via filterValues
     orderDirection: filterValues.orderDirection, // Use state from hook via filterValues
     toggleSort,
-    showPagination: !!(data?.next || data?.previous),
     paginationProps: data
       ? {
           hasNext: !!data.next,
           hasPrevious: !!data.previous,
           onNext: handleNext,
           onPrevious: handlePrevious,
-          onFirst: handleFirst,
           limit,
           currentItemsCount: data.data.length,
           totalCount: data.totalCount,
