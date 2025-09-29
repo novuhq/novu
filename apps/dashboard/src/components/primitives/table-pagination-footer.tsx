@@ -113,7 +113,7 @@ export function TablePaginationFooter({
   isFirstPage,
   isLastPage,
   className,
-  pageSizeOptions = [12, 25, 50, 100],
+  pageSizeOptions = [10, 20, 50],
   itemName = 'items',
   totalCountCapped,
   totalCount,
@@ -131,13 +131,18 @@ export function TablePaginationFooter({
           <>
             <span className="text-label-xs text-text-soft">Showing</span>
             <span className="text-label-xs text-text-sub">{totalItems}</span>
-            <span className="text-label-xs text-text-soft">{itemName} of</span>
-            {totalCountCapped ? (
-              <span className="text-label-xs text-text-sub">Over 50,000</span>
-            ) : (
-              <span className="text-label-xs text-text-sub">{totalCount?.toLocaleString()}</span>
+            <span className="text-label-xs text-text-soft">{itemName}</span>
+            {totalCount !== undefined && (
+              <>
+                <span className="text-label-xs text-text-soft">of</span>
+                {totalCountCapped ? (
+                  <span className="text-label-xs text-text-sub">Over 50,000</span>
+                ) : (
+                  <span className="text-label-xs text-text-sub">{totalCount?.toLocaleString()}</span>
+                )}
+                <span className="text-label-xs text-text-soft">total</span>
+              </>
             )}
-            <span className="text-label-xs text-text-soft">total</span>
           </>
         ) : (
           <>

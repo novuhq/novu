@@ -72,7 +72,7 @@ export function WorkflowList({
   data,
   isLoading,
   isError,
-  limit = 12,
+  limit = 10,
   orderBy,
   orderDirection,
   hasActiveFilters,
@@ -171,7 +171,7 @@ export function WorkflowList({
             </>
           )}
         </TableBody>
-        {data && limit < data.totalCount && (
+        {data && (
           <TableFooter>
             <TableRow>
               <TableCell colSpan={7} className="p-0">

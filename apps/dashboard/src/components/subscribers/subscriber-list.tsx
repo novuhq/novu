@@ -76,7 +76,8 @@ type SubscriberListTableProps = HTMLAttributes<HTMLTableElement> & {
     limit: number;
     currentItemsCount: number;
     count?: number;
-    hasMore?: boolean;
+    totalCount?: number;
+    totalCountCapped?: boolean;
     onPageSizeChange: (newSize: number) => void;
   };
 };

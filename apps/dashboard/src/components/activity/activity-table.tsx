@@ -1,18 +1,25 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ActivityFilters } from '@/api/activity';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/primitives/table';
+import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { parsePageParam } from '@/utils/parse-page-param';
 import { useFetchActivities } from '../../hooks/use-fetch-activities';
 import { ActivityEmptyState } from './activity-empty-state';
 import { ActivityTableRow } from './components/activity-table-row';
-import { ArrowPagination } from './components/arrow-pagination';
-import { CursorPagination } from './components/cursor-pagination';
 
 export interface ActivityTableProps {
   selectedActivityId: string | null;
@@ -37,6 +44,9 @@ export function ActivityTable({
   const navigate = useNavigate();
   const isWorkflowRunMigrationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_PAGE_MIGRATION_ENABLED);
 
+  // Page size state
+  const [pageSize, setPageSize] = useState(10);
+
   // Get pagination parameters from URL
   const page = parsePageParam(searchParams.get('page'));
   const cursor = searchParams.get('cursor');
@@ -46,6 +56,7 @@ export function ActivityTable({
       filters,
       page: isWorkflowRunMigrationEnabled ? undefined : page,
       cursor: isWorkflowRunMigrationEnabled ? cursor : undefined,
+      limit: pageSize,
     },
     {
       refetchOnWindowFocus: false,
@@ -107,6 +118,12 @@ export function ActivityTable({
     handleCursorNavigation(null, 'first');
   }
 
+  function handlePageSizeChange(newPageSize: number) {
+    setPageSize(newPageSize);
+  }
+
+  function handleLastPage() {}
+
   return (
     <AnimatePresence mode="wait" initial={false}>
       {!isLoading && activities.length === 0 ? (
@@ -151,26 +168,30 @@ export function ActivityTable({
                 />
               ))}
             </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={7} className="p-0">
+                  <TablePaginationFooter
+                    currentPage={1}
+                    pageSize={pageSize}
+                    totalItems={activities.length}
+                    onFirstPage={isWorkflowRunMigrationEnabled ? handleFirst : () => handlePageChange(0)}
+                    onPreviousPage={
+                      isWorkflowRunMigrationEnabled ? handlePrevious : () => handlePageChange(Math.max(0, page - 1))
+                    }
+                    onNextPage={isWorkflowRunMigrationEnabled ? handleNext : () => handlePageChange(page + 1)}
+                    onLastPage={handleLastPage}
+                    onPageSizeChange={handlePageSizeChange}
+                    isFirstPage={isWorkflowRunMigrationEnabled ? !previous : page === 0}
+                    isLastPage={!hasMore}
+                    className="cursor-pagination border-t-0 bg-transparent"
+                    itemName="workflow runs"
+                    pageSizeOptions={[10, 20, 50]}
+                  />
+                </TableCell>
+              </TableRow>
+            </TableFooter>
           </Table>
-
-          {isWorkflowRunMigrationEnabled ? (
-            <CursorPagination
-              hasMore={hasMore}
-              hasPrevious={!!previous}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              onFirst={handleFirst}
-              className="border-t-0 bg-transparent"
-              isLoading={isLoading}
-            />
-          ) : (
-            <ArrowPagination
-              page={page}
-              hasMore={hasMore}
-              onPageChange={handlePageChange}
-              className="border-t-0 bg-transparent"
-            />
-          )}
         </motion.div>
       )}
     </AnimatePresence>
