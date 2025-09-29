@@ -110,8 +110,10 @@ export class PayloadMergerService {
 
     mergedPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
 
-    // Preserve user-provided context data
-    mergedPayload.context = userPayloadExample?.context || {};
+    // Preserve user-provided context data only if it exists
+    if (userPayloadExample?.context !== undefined) {
+      mergedPayload.context = userPayloadExample.context;
+    }
 
     if (workflow && stepIdOrInternalId) {
       /*
@@ -179,8 +181,10 @@ export class PayloadMergerService {
 
     finalPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
 
-    // Preserve user-provided context data
-    finalPayload.context = userPayloadExample?.context;
+    // Preserve user-provided context data only if it exists
+    if (userPayloadExample?.context !== undefined) {
+      finalPayload.context = userPayloadExample.context;
+    }
 
     if (workflow && stepIdOrInternalId) {
       /*
