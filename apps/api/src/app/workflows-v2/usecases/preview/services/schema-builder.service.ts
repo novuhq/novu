@@ -45,7 +45,9 @@ export class SchemaBuilderService {
     }
 
     // Build dynamic context schema based on actual context structure
-    schema.properties!.context = this.buildContextSchema(previewPayloadExample.context);
+    if (previewPayloadExample.context) {
+      schema.properties!.context = this.buildContextSchema(previewPayloadExample.context);
+    }
 
     // Build dynamic subscriber schema based on actual subscriber data
     schema.properties!.subscriber = this.buildSubscriberSchema(previewPayloadExample.subscriber);
