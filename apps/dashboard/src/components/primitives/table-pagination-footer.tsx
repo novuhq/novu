@@ -27,7 +27,7 @@ function PaginationNavButton({ children, disabled, onClick, 'aria-label': ariaLa
     <Button
       variant="secondary"
       mode="ghost"
-      size="xs"
+      size="2xs"
       disabled={disabled}
       onClick={onClick}
       aria-label={ariaLabel}
