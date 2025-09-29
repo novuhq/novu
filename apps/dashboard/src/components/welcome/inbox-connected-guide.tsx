@@ -219,7 +219,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
                     variant="primary"
                     mode="gradient"
                   >
-                    <RiCheckboxCircleFill className="mr-2 h-4 w-4" />
+                    <RiCheckboxCircleFill className="mr-1 h-4 w-4" />
                     Complete Onboarding
                   </Button>
                 </div>

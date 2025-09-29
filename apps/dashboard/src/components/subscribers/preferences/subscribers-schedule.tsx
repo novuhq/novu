@@ -6,7 +6,7 @@ import {
   RiCalendarScheduleLine,
   RiContractUpDownLine,
   RiExpandUpDownLine,
-  RiInformationLine,
+  RiInformation2Line,
   RiLoader4Line,
 } from 'react-icons/ri';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
@@ -70,7 +70,7 @@ export const SubscribersSchedule = (props: SubscribersScheduleProps) => {
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-foreground-400 inline-block hover:cursor-help">
-                <RiInformationLine className="size-3" />
+                <RiInformation2Line className="size-3" />
               </span>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
@@ -135,7 +135,7 @@ export const SubscribersSchedule = (props: SubscribersScheduleProps) => {
             }}
           />
           <div className="flex items-center gap-1 text-text-soft pt-2">
-            <RiInformationLine className="size-3" />
+            <RiInformation2Line className="size-3" />
             <span className="text-xs">Critical and In-app notifications still reach you outside your schedule.</span>
           </div>
         </CardContent>

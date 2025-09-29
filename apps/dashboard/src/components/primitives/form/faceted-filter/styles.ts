@@ -18,7 +18,7 @@ export const STYLES = {
     },
   },
   input: {
-    base: 'border-neutral-200 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-0 focus:ring-offset-0',
+    base: 'border-neutral-200 placeholder:text-neutral-400 focus:border-stroke-soft focus:ring-stroke-soft/50 focus:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
     text: 'text-neutral-600',
   },
   clearButton: 'justify-center px-0 text-xs text-foreground-500 hover:bg-neutral-50 hover:text-foreground-800',

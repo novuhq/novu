@@ -1,8 +1,7 @@
-import { InfoIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { Control, FieldValues, Path } from 'react-hook-form';
-import { RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiInformation2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { FormField } from '@/components/primitives/form/form';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
@@ -69,7 +68,7 @@ export function TranslationToggleSection<T extends FieldValues>({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <InfoIcon className="text-text-soft h-4 w-4 cursor-help" />
+                <RiInformation2Line className="size-4 text-text-soft cursor-help" />
               </TooltipTrigger>
               <TooltipPortal>
                 <TooltipContent side="left" hideWhenDetached>
@@ -114,7 +113,7 @@ export function TranslationToggleSection<T extends FieldValues>({
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <InfoIcon className="text-text-soft h-4 w-4 cursor-help" />
+                  <RiInformation2Line className="size-4 text-text-soft cursor-help" />
                 </TooltipTrigger>
                 <TooltipPortal>
                   <TooltipContent side="left" hideWhenDetached>

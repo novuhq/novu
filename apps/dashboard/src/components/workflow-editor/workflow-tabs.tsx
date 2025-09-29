@@ -323,7 +323,7 @@ export const WorkflowTabs = () => {
                         variant="secondary"
                         size="xs"
                         mode="gradient"
-                        className="rounded-l-none rounded-r-lg border-none text-white"
+                        className="rounded-l-none px-1.5 rounded-r-lg border-none text-white"
                         leadingIcon={RiArrowDownSLine}
                       />
                     </DropdownMenuTrigger>
