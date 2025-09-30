@@ -40,7 +40,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
     userMemberships: { infinite: true },
   });
 
-  // Initialize region based on URL instead of localStorage
   const [selectedRegion, setSelectedRegion] = useState<Region>(() => {
     const urlBasedRegion = detectRegionFromURL();
     return urlBasedRegion;

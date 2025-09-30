@@ -79,7 +79,6 @@ export function isInOnboardingFlow(): boolean {
 
 /**
  * Detects the current region based on the dashboard URL
- * This replaces the localStorage-based approach with a more reliable URL-based detection
  */
 export function detectRegionFromURL(): Region {
   const currentOrigin = window.location.origin;
