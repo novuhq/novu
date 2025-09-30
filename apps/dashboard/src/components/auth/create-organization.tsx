@@ -160,12 +160,6 @@ export default function OrganizationCreate() {
         organizationName: organization.name,
         region: selectedRegion,
       });
-
-      // Set the region metadata for the newly created organization
-      const regionMetadata = selectedRegion === 'singapore' ? 'ap-southeast-1' : 'us-east-1';
-
-      // Note: Organization metadata with region should be set via backend API or Clerk webhook
-      // For now, we track this information in telemetry
     }
   }, [organization, track, selectedRegion]);
 
