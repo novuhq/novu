@@ -43,7 +43,7 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
       title: 'Test title',
     },
     device_id: '531E306C-A900-4164-AACF-91948F9B4CCE',
-    expoPushToken: 'ExponentPushToken[Dy4RNHK8GkSD8NDlqMzM9w]',
+    expoPushToken: 'ExponentPushToken[Dy4R0HK8GkSD8NDlqMzM9w]',
     notificationId: 'A0E2DB50-21D8-4F99-93C9-2BC0A4D32228',
     platform: 'ios',
     timestamp: '2025-09-21T20:02:35.103Z',
