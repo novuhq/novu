@@ -150,36 +150,30 @@ export function RegionProvider({ children }: RegionProviderProps) {
         orgName: currentOrganization.name,
       });
 
-      // If the URL indicates we should be in a different region than the organization,
-      // it means we need to find and switch to an organization in the URL's region
+      // If the URL region doesn't match the organization region,
+      // redirect to the correct dashboard URL for the organization's region
       if (urlRegion !== detectedRegion) {
-        console.log(`URL region (${urlRegion}) doesn't match organization region (${detectedRegion})`);
+        console.log(
+          `URL region (${urlRegion}) doesn't match organization region (${detectedRegion}) for org "${currentOrganization.name}"`
+        );
+        console.log(`Redirecting to ${detectedRegion} dashboard URL for current organization`);
 
-        const targetOrgMembership = findOrganizationForRegionCallback(urlRegion);
+        // Redirect to the correct dashboard URL for the organization's region
+        const correctDashboardUrl = getDashboardUrlForRegion(detectedRegion);
+        const currentPath = window.location.pathname + window.location.search + window.location.hash;
+        const newUrl = `${correctDashboardUrl}${currentPath}`;
 
-        if (targetOrgMembership && clerk) {
-          console.log(
-            `Switching to organization "${targetOrgMembership.organization.name}" for URL region: ${urlRegion}`
-          );
+        console.log('Redirecting to correct region dashboard:', newUrl);
 
-          clerk
-            .setActive({
-              organization: targetOrgMembership.organization,
-            })
-            .then(() => {
-              // Update selected region to match URL
-              setSelectedRegion(urlRegion);
-            })
-            .catch((error) => {
-              console.error('Failed to auto-switch organization for URL region:', error);
-            });
-        } else if (targetOrgMembership === undefined) {
-          console.log(`No organization found for URL region: ${urlRegion}, staying with current organization`);
-          // Update the selected region to match the current organization since we can't switch
+        if (correctDashboardUrl !== window.location.origin) {
+          // Different dashboard URL - redirect
+          window.location.href = newUrl;
+        } else {
+          // Same dashboard URL but wrong region state - just update the region
           setSelectedRegion(detectedRegion);
         }
       } else if (selectedRegion !== detectedRegion) {
-        // URL and organization match, but our selected region is wrong - update it
+        // URL and organization match, but our selected region state is wrong - update it
         console.log(`Updating selected region from ${selectedRegion} to ${detectedRegion} to match organization`);
         setSelectedRegion(detectedRegion);
       }
