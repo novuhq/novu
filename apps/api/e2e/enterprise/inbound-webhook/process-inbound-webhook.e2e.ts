@@ -111,7 +111,7 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
       {
         providerId: PushProviderIdEnum.EXPO,
         credentials: {
-          deviceTokens: ['ExponentPushToken[Dy4RNHK8GkSD8NDlqMzM9w]'],
+          deviceTokens: ['ExponentPushToken[Dy4RN4K8GkSD8NDlqMzM9w]'],
         },
       },
       session.subscriberId
