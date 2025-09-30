@@ -1,15 +1,14 @@
 import * as LabelPrimitive from '@radix-ui/react-label';
 import { Slot } from '@radix-ui/react-slot';
+import { AnimatePresence, motion } from 'motion/react';
 import * as React from 'react';
 import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider, useFormContext } from 'react-hook-form';
-
+import { IconType } from 'react-icons';
+import { RiErrorWarningFill, RiInformation2Line, RiQuestionLine } from 'react-icons/ri';
 import { Input } from '@/components/primitives/input';
 import { Label, LabelAsterisk, LabelSub } from '@/components/primitives/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
-import { AnimatePresence, motion } from 'motion/react';
-import { IconType } from 'react-icons';
-import { RiErrorWarningFill, RiInformationLine, RiQuestionLine } from 'react-icons/ri';
 import { Hint, HintIcon } from '../hint';
 import { FormFieldContext, FormItemContext, useFormField } from './form-context';
 
@@ -61,35 +60,50 @@ const FormLabel = React.forwardRef<
     required?: boolean;
     hint?: string;
     tooltip?: React.ReactNode;
+    tooltipContentClassName?: string;
+    tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
   }
->(({ className, optional, required, tooltip, hint, children, ...props }, ref) => {
-  const { formItemId } = useFormField();
+>(
+  (
+    { className, optional, required, tooltip, hint, children, tooltipContentClassName, tooltipSide = 'top', ...props },
+    ref
+  ) => {
+    const { formItemId } = useFormField();
 
-  return (
-    <Label ref={ref} className={cn('text-foreground-950 flex items-center', className)} htmlFor={formItemId} {...props}>
-      {children}
+    return (
+      <Label
+        ref={ref}
+        className={cn('text-foreground-950 flex items-center', className)}
+        htmlFor={formItemId}
+        {...props}
+      >
+        {children}
 
-      {required && <LabelAsterisk />}
-      {hint && <LabelSub>{hint}</LabelSub>}
+        {required && <LabelAsterisk />}
+        {hint && <LabelSub>{hint}</LabelSub>}
 
-      {optional && <LabelSub>(optional)</LabelSub>}
-      {tooltip && (
-        <Tooltip>
-          <TooltipTrigger
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <RiQuestionLine className="text-foreground-400 inline size-3" />
-          </TooltipTrigger>
-          <TooltipContent className="max-w-56 whitespace-pre-wrap">{tooltip}</TooltipContent>
-        </Tooltip>
-      )}
-    </Label>
-  );
-});
+        {optional && <LabelSub>(optional)</LabelSub>}
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger
+              type="button"
+              className="inline-flex items-center justify-center"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <RiQuestionLine className="text-foreground-400 inline size-4" />
+            </TooltipTrigger>
+            <TooltipContent className={cn('max-w-56 whitespace-pre-wrap', tooltipContentClassName)} side={tooltipSide}>
+              {tooltip}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </Label>
+    );
+  }
+);
 FormLabel.displayName = 'FormLabel';
 
 const FormControl = React.forwardRef<React.ElementRef<typeof Slot>, React.ComponentPropsWithoutRef<typeof Slot>>(
@@ -141,7 +155,7 @@ const FormMessage = React.forwardRef<
 >(({ children, suppressError, ...rest }, ref) => {
   const { error, formMessageId } = useFormField();
   const content = !suppressError && error ? String(error.message) : children;
-  const icon = error ? RiErrorWarningFill : RiInformationLine;
+  const icon = error ? RiErrorWarningFill : RiInformation2Line;
 
   return (
     <FormMessagePure ref={ref} id={formMessageId} hasError={!!error} icon={icon} {...rest}>

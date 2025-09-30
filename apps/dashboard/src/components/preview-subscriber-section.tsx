@@ -1,17 +1,17 @@
+import { useState } from 'react';
+import { RiInformation2Line, RiRefreshLine } from 'react-icons/ri';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { RiInformationLine, RiRefreshLine } from 'react-icons/ri';
-import { useState } from 'react';
-import { EditableJsonViewer } from './workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
 import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
-import { SubscriberSectionProps } from './workflow-editor/steps/types/preview-context.types';
+import { Button } from './primitives/button';
 import { ACCORDION_STYLES } from './workflow-editor/steps/constants/preview-context.constants';
-import { buttonVariants } from './primitives/button';
-import { cn } from '@/utils/ui';
+import { EditableJsonViewer } from './workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
+import { SubscriberSectionProps } from './workflow-editor/steps/types/preview-context.types';
 
 export function PreviewSubscriberSection({
   error,
   subscriber,
+  schema,
   onUpdate,
   onSubscriberSelect,
   onClearPersisted,
@@ -28,7 +28,7 @@ export function PreviewSubscriberSection({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="text-foreground-400 inline-block hover:cursor-help">
-                    <RiInformationLine className="size-3" />
+                    <RiInformation2Line className="size-3" />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
@@ -39,23 +39,22 @@ export function PreviewSubscriberSection({
           </div>
           {onClearPersisted && (
             <div className="mr-2">
-              <div
+              <Button
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
 
                   onClearPersisted();
                 }}
-                className={cn(
-                  buttonVariants({ variant: 'secondary', mode: 'ghost', size: '2xs' }),
-                  'text-foreground-600 flex items-center gap-1'
-                )}
-                aria-label="Reset defaults"
-                role="button"
+                type="button"
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="text-foreground-600 gap-1"
               >
                 <RiRefreshLine className="h-3 w-3" />
-                <span className="text-xs leading-none">Reset defaults</span>
-              </div>
+                Reset defaults
+              </Button>
             </div>
           )}
         </div>
@@ -75,12 +74,13 @@ export function PreviewSubscriberSection({
           <EditableJsonViewer
             value={subscriber}
             onChange={(updatedData) => onUpdate('subscriber', updatedData)}
+            schema={schema}
             className={ACCORDION_STYLES.jsonViewer}
           />
           {error && <p className="text-destructive text-xs">{error}</p>}
         </div>
         <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-          <RiInformationLine className="h-3 w-3 flex-shrink-0" />
+          <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
           <span>Changes here only affect the preview and won't be saved to the subscriber.</span>
         </div>
       </AccordionContent>

@@ -1,13 +1,13 @@
+import { Novu } from '@novu/api';
+import { JobRepository, JobStatusEnum, MessageRepository, SubscriberEntity } from '@novu/dal';
+import { DelayTypeEnum, DigestTypeEnum, DigestUnitEnum, JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { addSeconds } from 'date-fns';
-import { Novu } from '@novu/api';
-import { MessageRepository, SubscriberEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-
-import { UserSession, SubscribersService } from '@novu/testing';
-import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum, JobTopicNameEnum } from '@novu/shared';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
 
-describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #novu-v2', function () {
+describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #novu-v2', () => {
   let session: UserSession;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
@@ -23,7 +23,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should delay execution for the provided interval', async function () {
+  it('should delay execution for the provided interval', async () => {
     const template = await session.createTemplate({
       steps: [
         {
@@ -57,10 +57,14 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     await session.waitForWorkflowQueueCompletion();
     await session.waitForSubscriberQueueCompletion();
 
-    const delayedJob = await jobRepository.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DELAY,
+    const delayedJob = await pollForJobStatusChange({
+      jobRepository,
+      query: {
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DELAY,
+      },
+      timeout: 5000,
     });
 
     expect(delayedJob!.status).to.equal(JobStatusEnum.DELAYED);
@@ -85,7 +89,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     expect(messagesAfter.length).to.equal(2);
   });
 
-  it('should delay execution until the provided datetime', async function () {
+  it('should delay execution until the provided datetime', async () => {
     const template = await session.createTemplate({
       steps: [
         {
@@ -124,7 +128,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     expect(delayedJobs.length).to.eql(1);
   });
 
-  it('should not include delayed event in digested sent message', async function () {
+  it('should not include delayed event in digested sent message', async () => {
     const template = await session.createTemplate({
       steps: [
         {
@@ -180,7 +184,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     expect(messages[0].content).to.include('Digested Events 2');
   });
 
-  it('should send a single message for same exact scheduled delay', async function () {
+  it('should send a single message for same exact scheduled delay', async () => {
     const template = await session.createTemplate({
       steps: [
         {
@@ -240,7 +244,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
   });
 
   // TODO: Restore the test when the internal SDK is updated
-  it.skip('should fail for missing or invalid path for scheduled delay', async function () {
+  it.skip('should fail for missing or invalid path for scheduled delay', async () => {
     const template = await session.createTemplate({
       steps: [
         {

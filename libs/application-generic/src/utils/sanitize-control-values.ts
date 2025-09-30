@@ -1,20 +1,20 @@
 import { StepTypeEnum, TimeUnitEnum } from '@novu/shared';
 import { isEmpty } from 'lodash';
-import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
+import { PinoLogger } from '../logging';
 import {
-  EmailControlType,
-  SmsControlType,
-  InAppRedirectType,
-  PushControlType,
-  DigestTimedControlType,
+  ChatControlType,
+  DelayControlType,
   DigestControlSchemaType,
   DigestRegularControlType,
-  LookBackWindowType,
-  DelayControlType,
-  ChatControlType,
+  DigestTimedControlType,
+  EmailControlType,
+  InAppRedirectType,
   LayoutControlType,
+  LookBackWindowType,
+  PushControlType,
+  SmsControlType,
 } from '../schemas/control';
-import { PinoLogger } from '../logging';
+import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
 
 // Cast input T_Type to trigger Ajv validation errors - possible undefined
 function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefined as unknown as T_Type): T_Type {
@@ -124,6 +124,7 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
       cron: controlValues.cron,
       digestKey: controlValues.digestKey,
       skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
     };
 
     return filterNullishValues(mappedValues);
@@ -144,6 +145,7 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
             unit: (controlValues.lookBackWindow as LookBackWindowType).unit,
           }
         : undefined,
+      extendToSchedule: controlValues.extendToSchedule,
     };
 
     return filterNullishValues(mappedValues);
@@ -165,6 +167,7 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
           unit: (anyControlValues.lookBackWindow as LookBackWindowType).unit,
         }
       : undefined,
+    extendToSchedule: anyControlValues.extendToSchedule,
   });
 }
 
@@ -175,6 +178,7 @@ function sanitizeDelay(controlValues: DelayControlType) {
     type: controlValues.type,
     unit: controlValues.unit,
     skip: controlValues.skip,
+    extendToSchedule: controlValues.extendToSchedule,
   };
 
   return filterNullishValues(mappedValues);

@@ -1,15 +1,10 @@
 import { ICredentialsDto } from '@novu/shared';
-import {
-  decryptCredentials,
-  decryptSecret,
-  encryptCredentials,
-  encryptSecret,
-} from './encrypt-provider';
+import { decryptCredentials, decryptSecret, encryptCredentials, encryptSecret } from './encrypt-provider';
 
-describe('Encrypt provider secrets', function () {
+describe('Encrypt provider secrets', () => {
   const novuSubMask = 'nvsk.';
 
-  it('should encrypt provider secret', async function () {
+  it('should encrypt provider secret', async () => {
     const password = '1234';
     const encrypted = encryptSecret(password);
 
@@ -18,7 +13,7 @@ describe('Encrypt provider secrets', function () {
     expect(encrypted.length).toEqual(70);
   });
 
-  it('should decrypt provider secret', async function () {
+  it('should decrypt provider secret', async () => {
     const password = '123';
     const encrypted = encryptSecret(password);
     const decrypted = decryptSecret(encrypted);
@@ -27,10 +22,10 @@ describe('Encrypt provider secrets', function () {
   });
 });
 
-describe('Encrypt provider credentials', function () {
+describe('Encrypt provider credentials', () => {
   const novuSubMask = 'nvsk.';
 
-  it('should encrypt provider credentials', async function () {
+  it('should encrypt provider credentials', async () => {
     const credentials: ICredentialsDto = {
       apiKey: 'api_123',
       user: 'Jock Wick',
@@ -48,7 +43,7 @@ describe('Encrypt provider credentials', function () {
     expect(encrypted.domain).toEqual(credentials.domain);
   });
 
-  it('should decrypt provider credentials', async function () {
+  it('should decrypt provider credentials', async () => {
     const credentials: ICredentialsDto = {
       apiKey: 'api_123',
       user: 'Jock Wick',

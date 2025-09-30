@@ -1,17 +1,17 @@
+import { useUser } from '@clerk/clerk-react';
+import { motion } from 'motion/react';
+import { RiCloseFill, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { useUser } from '@clerk/clerk-react';
-import { motion } from 'motion/react';
-import { RiCloseFill, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
 import { useOnboardingSteps } from '../../hooks/use-onboarding-steps';
 import { Badge, BadgeIcon } from '../primitives/badge';
 import { CompactButton } from '../primitives/button-compact';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { NavigationLink } from './navigation-link';
 
-export function GettingStartedMenuItem() {
+export function HomeMenuItem() {
   const { totalSteps, completedSteps, steps } = useOnboardingSteps();
 
   const { currentEnvironment } = useEnvironment();
@@ -44,32 +44,38 @@ export function GettingStartedMenuItem() {
 
   return (
     <motion.div className="contents" whileHover="hover" initial="initial">
-      <NavigationLink to={buildRoute(ROUTES.WELCOME, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+      <NavigationLink
+        to={buildRoute(ROUTES.WELCOME, {
+          environmentSlug: currentEnvironment?.slug ?? '',
+        })}
+      >
         <RiQuestionLine className="size-4" />
         <span>Getting started</span>
 
-        <Badge color="red" size="md" variant="lighter">
-          <motion.div
-            variants={{
-              initial: { scale: 1, rotate: 0, opacity: 1 },
-              hover: {
-                scale: [1, 1.1, 1],
-                rotate: [0, 4, -4, 0],
-                opacity: [0, 1, 1],
-                transition: {
-                  duration: 1.4,
-                  repeat: 0,
-                  ease: 'easeInOut',
+        {!allStepsCompleted && (
+          <Badge className="ml-auto" color="red" size="md" variant="lighter">
+            <motion.div
+              variants={{
+                initial: { scale: 1, rotate: 0, opacity: 1 },
+                hover: {
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 4, -4, 0],
+                  opacity: [0, 1, 1],
+                  transition: {
+                    duration: 1.4,
+                    repeat: 0,
+                    ease: 'easeInOut',
+                  },
                 },
-              },
-            }}
-          >
-            <BadgeIcon as={RiSparkling2Fill} />
-          </motion.div>
-          <span className="text-xs">
-            {completedSteps}/{totalSteps}
-          </span>
-        </Badge>
+              }}
+            >
+              <BadgeIcon as={RiSparkling2Fill} />
+            </motion.div>
+            <span className="text-xs">
+              {completedSteps}/{totalSteps}
+            </span>
+          </Badge>
+        )}
 
         {allStepsCompleted && (
           <motion.div

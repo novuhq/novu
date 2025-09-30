@@ -5,7 +5,7 @@ ENV NX_DAEMON=false
 WORKDIR /usr/src/app
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@10.11.0 --loglevel notice
+RUN npm install -g pnpm@10.16.1 --loglevel notice
 
 COPY .npmrc .
 COPY package.json .
@@ -23,7 +23,6 @@ COPY pnpm-lock.yaml .
 RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
   pnpm install --frozen-lockfile --unsafe-perm
 
-COPY [".prettierrc",".prettierignore", "./"]
 RUN CI='' pnpm build:dashboard --skip-nx-cache
 
 FROM node:20-alpine
@@ -41,4 +40,4 @@ RUN chmod +x /app/docker-entrypoint.sh
 ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
 # Expose the port the app runs on
 EXPOSE 4000
-CMD [ "http-server", "dist", "-p", "4000", "--proxy", "http://localhost:4000?" ]
+CMD [ "http-server", "dist", "-p", "4000", "-d", "false", "--proxy", "http://localhost:4000?" ]

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   MessageTemplateRepository,
   NotificationTemplateEntity,
@@ -16,14 +16,13 @@ import {
   ITemplateConfiguration,
   PreferenceOverrideSourceEnum,
   PreferencesTypeEnum,
+  SeverityLevelEnum,
   StepTypeEnum,
 } from '@novu/shared';
-
-import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
-
-import { GetPreferences } from '../get-preferences';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { buildSubscriberKey, CachedResponse } from '../../services';
+import { GetPreferences } from '../get-preferences';
+import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -43,7 +42,7 @@ export class GetSubscriberTemplatePreference {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
-    const subscriber = await this.getSubscriber(command);
+    const subscriber = command.subscriber ?? (await this.getSubscriber(command));
 
     const initialChannels = await this.getChannels(command);
 
@@ -166,12 +165,15 @@ export class GetSubscriberTemplatePreference {
     if (stepMissingTemplate) {
       const messageIds = activeSteps.map((step) => step._templateId);
 
-      const messageTemplates = await this.messageTemplateRepository.find({
-        _environmentId: command.environmentId,
-        _id: {
-          $in: messageIds,
+      const messageTemplates = await this.messageTemplateRepository.find(
+        {
+          _environmentId: command.environmentId,
+          _id: {
+            $in: messageIds,
+          },
         },
-      });
+        '_id type'
+      );
 
       return [
         ...new Set(messageTemplates.map((messageTemplate) => messageTemplate.type) as unknown as ChannelTypeEnum[]),
@@ -228,7 +230,6 @@ function updateOverrideReasons(
   const notFoundFlag = -1;
   const existsInOverrideReasons = index !== notFoundFlag;
   if (existsInOverrideReasons) {
-    // eslint-disable-next-line no-param-reassign
     overrideReasons[index] = currentOverride;
   } else {
     overrideReasons.push(currentOverride);
@@ -305,5 +306,6 @@ export function mapTemplateConfiguration(template: NotificationTemplateEntity): 
     ...(template.data ? { data: template.data } : {}),
     updatedAt: template.updatedAt,
     createdAt: template.createdAt,
+    severity: template.severity ?? SeverityLevelEnum.NONE,
   };
 }

@@ -1,33 +1,34 @@
+import { Variable } from '@maily-to/core/extensions';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { Editor, NodeViewProps } from '@tiptap/core';
+import { EditorView } from '@uiw/react-codemirror';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { Variable } from '@maily-to/core/extensions';
-
-import { FormField } from '@/components/primitives/form/form';
-import { Maily } from '../../../maily/maily';
+import { EditorOverlays } from '@/components/editor-overlays';
 import { HtmlEditor } from '@/components/html-editor';
-import { isMailyJson } from '../../../maily/maily-utils';
-import { useParseVariables } from '@/hooks/use-parse-variables';
-import { useWorkflow } from '../../workflow-provider';
-import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
-import { useWorkflowSchema } from '../../workflow-schema-provider';
-import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
-import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { createEditorBlocks } from '../../../maily/maily-config';
+import { VariableFrom } from '@/components/maily/types';
 import {
   MailyVariablesListView,
   VariableSuggestionsPopoverRef,
 } from '@/components/maily/views/maily-variables-list-view';
 import { BubbleMenuVariablePill, NodeVariablePill } from '@/components/maily/views/variable-view';
-import { Editor, NodeViewProps } from '@tiptap/core';
-import { VariableFrom } from '@/components/maily/types';
-import { EnhancedParsedVariables, IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { FormField } from '@/components/primitives/form/form';
 import { CompletionRange } from '@/components/primitives/variable-editor';
-import { EditorView } from '@uiw/react-codemirror';
+import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
-import { EditorOverlays } from '@/components/editor-overlays';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
+import { useParseVariables } from '@/hooks/use-parse-variables';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { EnhancedParsedVariables, IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { Maily } from '../../../maily/maily';
+import { createEditorBlocks, DEFAULT_BLOCK_CONFIG } from '../../../maily/maily-config';
+import { isMailyJson } from '../../../maily/maily-utils';
+import { useWorkflow } from '../../workflow-provider';
+import { useWorkflowSchema } from '../../workflow-schema-provider';
 
 const MailyVariablesListViewForWorkflows = React.forwardRef<
   VariableSuggestionsPopoverRef,
@@ -134,6 +135,7 @@ export const EmailBody = () => {
   const editorType = useWatch({ name: 'editorType', control });
   const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const { saveForm } = useSaveForm();
   const track = useTelemetry();
 
@@ -145,7 +147,21 @@ export const EmailBody = () => {
   );
 
   const blocks = useMemo(() => {
-    return createEditorBlocks({ track, digestStepBeforeCurrent });
+    return createEditorBlocks({
+      track,
+      digestStepBeforeCurrent,
+      blockConfig: {
+        ...DEFAULT_BLOCK_CONFIG,
+        highlights: {
+          ...DEFAULT_BLOCK_CONFIG.highlights,
+          blocks: [
+            { type: 'cards', enabled: true, order: 0 },
+            { type: 'htmlCodeBlock', enabled: true, order: 1 },
+            { type: 'digest', enabled: true, order: 2 },
+          ],
+        },
+      },
+    });
   }, [digestStepBeforeCurrent, track]);
 
   const {
@@ -209,7 +225,8 @@ export const EmailBody = () => {
       .join(',');
 
     // Include translation state to force re-mount when translation extension becomes ready
-    const translationState = `translation-${shouldEnableTranslations ? 'enabled' : 'disabled'}-${isTranslationKeysLoading ? 'loading' : 'loaded'}-${translationKeys.length}`;
+    // Note: Removed isTranslationKeysLoading to prevent re-mount during loading state changes
+    const translationState = `translation-${shouldEnableTranslations ? 'enabled' : 'disabled'}-${translationKeys.length}`;
 
     return `vars-${variableNames.length}-${variableNames.slice(0, 100)}-${translationState}`;
   }, [
@@ -217,7 +234,6 @@ export const EmailBody = () => {
     parsedVariables.arrays,
     parsedVariables.namespaces,
     shouldEnableTranslations,
-    isTranslationKeysLoading,
     translationKeys.length,
   ]);
 
@@ -266,12 +282,15 @@ export const EmailBody = () => {
               saveForm={saveForm}
               completionSources={translationCompletionSource}
               isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+              isTranslationEnabled={shouldEnableTranslations && !isTranslationKeysLoading}
+              isContextEnabled={isContextEnabled}
               getSchemaPropertyByKey={getSchemaPropertyByKey}
               extensions={extensions}
               digestStepName={digestStepBeforeCurrent?.stepId}
               skipContainerClick={isTranslationPopoverOpen}
               onManageSchemaClick={openSchemaDrawer}
               onCreateNewVariable={handleCreateNewVariable}
+              className="max-h-[calc(100%-124px)]"
             >
               <EditorOverlays
                 isTranslationPopoverOpen={isTranslationPopoverOpen}
@@ -305,6 +324,7 @@ export const EmailBody = () => {
             blocks={blocks}
             isPayloadSchemaEnabled={isPayloadSchemaEnabled}
             isTranslationEnabled={shouldEnableTranslations && !isTranslationKeysLoading}
+            isContextEnabled={isContextEnabled}
             translationKeys={translationKeys}
             addDigestVariables={!!digestStepBeforeCurrent?.stepId}
             onCreateNewTranslationKey={handleCreateNewTranslationKey}

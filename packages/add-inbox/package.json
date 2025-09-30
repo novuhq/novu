@@ -1,6 +1,6 @@
 {
   "name": "add-inbox",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Add inbox notifications to your application with one command",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "prebuild": "rimraf dist",
     "build": "tsc",
     "start": "ts-node src/cli/index.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build > /dev/null 2>&1"
   },
   "keywords": [
     "novu",

@@ -1,26 +1,26 @@
 import {
-  Injectable,
-  NotFoundException,
   BadRequestException,
+  Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { createHash } from 'crypto';
-import { differenceInHours } from 'date-fns';
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   encryptApiKey,
+  FeatureFlagsService,
+  GetSubscriberSchedule,
+  GetSubscriberScheduleCommand,
+  generateTimestampHex,
   LogDecorator,
   PinoLogger,
   SelectIntegration,
   SelectIntegrationCommand,
   shortId,
-  UpsertControlValuesUseCase,
   UpsertControlValuesCommand,
-  FeatureFlagsService,
-  generateTimestampHex,
+  UpsertControlValuesUseCase,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -28,42 +28,52 @@ import {
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationRepository,
-  NotificationTemplateRepository,
+  MessageRepository,
   MessageTemplateRepository,
+  NotificationTemplateRepository,
   PreferencesRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  ControlValuesLevelEnum,
+  CustomDataType,
+  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
-  CustomDataType,
-  ResourceTypeEnum,
-  ResourceOriginEnum,
-  StepTypeEnum,
+  PreferenceLevelEnum,
   PreferencesTypeEnum,
-  FeatureFlagsKeysEnum,
-  ControlValuesLevelEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  Schedule,
+  StepTypeEnum,
 } from '@novu/shared';
+import { createHash } from 'crypto';
+import { differenceInHours } from 'date-fns';
 import { AuthService } from '../../../auth/services/auth.service';
-import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
+import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
+import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
+import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
+import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { ScheduleDto } from '../../../shared/dtos/schedule';
+import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
+import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
+import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
+import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
-import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
-import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
-import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
-import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
-import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
-import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
+const MAX_NOTIFICATIONS_COUNT = 99;
 
 @Injectable()
 export class Session {
@@ -84,11 +94,14 @@ export class Session {
     private communityUserRepository: CommunityUserRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
+    private messageRepository: MessageRepository,
     private preferencesRepository: PreferencesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private getOrganizationSettingsUsecase: GetOrganizationSettings,
     private logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private getSubscriberSchedule: GetSubscriberSchedule,
+    private updatePreferencesUsecase: UpdatePreferences
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -160,19 +173,59 @@ export class Session {
         environmentId: environment._id,
         subscriberId: subscriber.subscriberId,
         filters: [{ read: false, snoozed: false }],
+        subscriber: subscriberEntity,
       })
     );
     const [{ count: totalUnreadCount }] = data;
 
+    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
+      defaultValue: false,
+      organization: { _id: environment._organizationId },
+    });
+
+    // get severity-based unread counts
+    const severityCounts = isNotificationSeverityEnabled
+      ? await this.messageRepository.getCountBySeverity(
+          environment._id,
+          subscriberEntity._id,
+          ChannelTypeEnum.IN_APP,
+          { read: false, snoozed: false },
+          { limit: MAX_NOTIFICATIONS_COUNT }
+        )
+      : [];
+
+    const unreadCount: SubscriberSessionResponseDto['unreadCount'] = {
+      total: totalUnreadCount,
+      severity: {
+        high: 0,
+        medium: 0,
+        low: 0,
+        none: 0,
+      },
+    };
+
+    for (const { severity, count } of severityCounts) {
+      if (severity in unreadCount.severity) {
+        unreadCount.severity[severity] = count;
+      }
+    }
+
     const token = await this.authService.getSubscriberWidgetToken(subscriberEntity);
+    const organization = await this.organizationRepository.findById(environment._organizationId);
+
+    if (!organization) {
+      throw new NotFoundException('Organization not found');
+    }
 
     const { removeNovuBranding } = await this.getOrganizationSettingsUsecase.execute(
       GetOrganizationSettingsCommand.create({
         organizationId: environment._organizationId,
+        organization,
       })
     );
 
-    const maxSnoozeDurationHours = await this.getMaxSnoozeDurationHours(environment);
+    const maxSnoozeDurationHours = await this.getMaxSnoozeDurationHours(organization?.apiServiceLevel);
 
     /**
      * We want to prevent the playground inbox demo from marking the integration as connected
@@ -199,14 +252,69 @@ export class Session {
       );
     }
 
+    const schedule = await this.createDefaultSchedule({
+      environment,
+      defaultSchedule: command.requestData.defaultSchedule,
+      subscriber: subscriberEntity,
+    });
+
     return {
       applicationIdentifier: environment.identifier,
       token,
       totalUnreadCount,
+      unreadCount,
       removeNovuBranding,
       maxSnoozeDurationHours,
       isDevelopmentMode: environment.name.toLowerCase() !== 'production',
+      schedule,
     };
+  }
+
+  private async createDefaultSchedule({
+    environment,
+    defaultSchedule,
+    subscriber,
+  }: {
+    environment: EnvironmentEntity;
+    defaultSchedule?: ScheduleDto;
+    subscriber: SubscriberEntity;
+  }): Promise<Schedule | undefined> {
+    const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environment._id },
+      organization: { _id: environment._organizationId },
+    });
+
+    if (!isSubscribersScheduleEnabled) {
+      return undefined;
+    }
+
+    const schedule = await this.getSubscriberSchedule.execute(
+      GetSubscriberScheduleCommand.create({
+        organizationId: environment._organizationId,
+        environmentId: environment._id,
+        _subscriberId: subscriber._id,
+      })
+    );
+
+    if (schedule || !defaultSchedule) {
+      return schedule;
+    }
+
+    const updatedGlobalPreference = await this.updatePreferencesUsecase.execute(
+      UpdatePreferencesCommand.create({
+        organizationId: environment._organizationId,
+        environmentId: environment._id,
+        subscriber,
+        subscriberId: subscriber.subscriberId,
+        level: PreferenceLevelEnum.GLOBAL,
+        includeInactiveChannels: false,
+        schedule: defaultSchedule,
+      })
+    );
+
+    return updatedGlobalPreference.schedule;
   }
 
   private validateRequestData(requestData: SubscriberSessionRequestDto): void {
@@ -275,18 +383,14 @@ export class Session {
     return applicationIdentifier;
   }
 
-  private async getMaxSnoozeDurationHours(environment: EnvironmentEntity) {
+  private async getMaxSnoozeDurationHours(apiServiceLevel: ApiServiceLevelEnum) {
     if (process.env.NOVU_ENTERPRISE !== 'true') {
       return 0;
     }
 
-    const organization = await this.organizationRepository.findOne({
-      _id: environment._organizationId,
-    });
-
     const tierLimitMs = getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION,
-      organization?.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      apiServiceLevel || ApiServiceLevelEnum.FREE,
       true
     );
 

@@ -1,8 +1,10 @@
+import { LayoutResponseDto } from '@novu/shared';
 import React from 'react';
+import { RiArrowLeftSLine, RiLayout5Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { RiArrowLeftSLine } from 'react-icons/ri';
-
 import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { Badge } from '../primitives/badge';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,19 +13,15 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../primitives/breadcrumb';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { CompactButton } from '../primitives/button-compact';
-import { LayoutIcon } from '../icons/layout';
 import TruncatedText from '../truncated-text';
-import { useLayoutEditor } from './layout-editor-provider';
 
 type BreadcrumbData = {
   label: string;
   href?: string;
 };
 
-export const LayoutBreadcrumbs = () => {
-  const { layout } = useLayoutEditor();
+export const LayoutBreadcrumbs = ({ layout }: { layout?: LayoutResponseDto }) => {
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
 
@@ -67,10 +65,15 @@ export const LayoutBreadcrumbs = () => {
                   {isLastItem ? (
                     <BreadcrumbPage className="flex items-center gap-1">
                       <div className="flex items-center gap-1">
-                        <LayoutIcon className="size-3.5" />
+                        <RiLayout5Line className="size-4" />
                         <div className="flex max-w-[32ch]">
                           <TruncatedText>{label}</TruncatedText>
                         </div>
+                        {layout?.isDefault && (
+                          <Badge variant="lighter" className="text-xs" size="md">
+                            DEFAULT
+                          </Badge>
+                        )}
                       </div>
                     </BreadcrumbPage>
                   ) : (

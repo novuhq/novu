@@ -44,6 +44,7 @@ export const ActivityNotificationJobResponseDtoType = {
   Digest: "digest",
   Trigger: "trigger",
   Delay: "delay",
+  Throttle: "throttle",
   Custom: "custom",
 } as const;
 /**
@@ -99,6 +100,10 @@ export type ActivityNotificationJobResponseDto = {
    * Updated time of the notification
    */
   updatedAt?: string | undefined;
+  /**
+   * The number of times the digest/delay job has been extended to align with the subscribers schedule
+   */
+  scheduleExtensionsCount?: number | undefined;
 };
 
 /** @internal */
@@ -204,6 +209,7 @@ export const ActivityNotificationJobResponseDto$inboundSchema: z.ZodType<
   providerId: ProvidersIdEnum$inboundSchema,
   status: z.string(),
   updatedAt: z.string().optional(),
+  scheduleExtensionsCount: z.number().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -224,6 +230,7 @@ export type ActivityNotificationJobResponseDto$Outbound = {
   providerId: string;
   status: string;
   updatedAt?: string | undefined;
+  scheduleExtensionsCount?: number | undefined;
 };
 
 /** @internal */
@@ -246,6 +253,7 @@ export const ActivityNotificationJobResponseDto$outboundSchema: z.ZodType<
   providerId: ProvidersIdEnum$outboundSchema,
   status: z.string(),
   updatedAt: z.string().optional(),
+  scheduleExtensionsCount: z.number().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

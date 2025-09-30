@@ -1,11 +1,11 @@
 import {
   RiAddLine,
-  RiEdit2Line,
-  RiDeleteBin2Line,
-  RiFileCopyLine,
+  RiArrowDownSLine,
   RiCheckLine,
   RiCloseLine,
-  RiArrowDownSLine,
+  RiDeleteBin2Line,
+  RiEdit2Line,
+  RiFileCopyLine,
 } from 'react-icons/ri';
 
 export const JSON_EDITOR_ICONS = {

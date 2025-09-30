@@ -1,17 +1,16 @@
 import { memo, useCallback, useMemo } from 'react';
-import { Path, useFieldArray, useWatch, type Control } from 'react-hook-form';
+import { type Control, Path, useFieldArray, useWatch } from 'react-hook-form';
 import { RiAddLine } from 'react-icons/ri';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
-
-import { getMarginClassPx } from '../utils/ui-helpers';
-import type { PropertyListItem, SchemaEditorFormValues } from '../utils/validation-schema';
+import { MAX_NESTING_DEPTH } from '../constants';
+import { SchemaPropertyRow } from '../schema-property-row';
 import type { VariableUsageInfo } from '../utils/check-variable-usage';
 import { newProperty } from '../utils/json-helpers';
-import { SchemaPropertyRow } from '../schema-property-row';
-import { MAX_NESTING_DEPTH } from '../constants';
+import { getMarginClassPx } from '../utils/ui-helpers';
+import type { PropertyListItem, SchemaEditorFormValues } from '../utils/validation-schema';
 
 interface NestedPropertyProps {
   nestedField: any;
@@ -22,6 +21,7 @@ interface NestedPropertyProps {
   currentFullPath: string;
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
   depth: number;
+  readOnly?: boolean;
 }
 
 const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
@@ -33,6 +33,7 @@ const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
   currentFullPath,
   onCheckVariableUsage,
   depth,
+  readOnly = false,
 }) {
   const nestedItem = useWatch({
     control,
@@ -55,6 +56,7 @@ const NestedProperty = memo<NestedPropertyProps>(function NestedProperty({
       variableUsageInfo={nestedVariableUsageInfo}
       onCheckVariableUsage={onCheckVariableUsage}
       depth={depth + 1}
+      readOnly={readOnly}
     />
   );
 });
@@ -66,6 +68,7 @@ interface ObjectSectionProps {
   currentFullPath: string;
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
   depth: number;
+  readOnly?: boolean;
 }
 
 export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
@@ -75,6 +78,7 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
   currentFullPath,
   onCheckVariableUsage,
   depth,
+  readOnly = false,
 }) {
   const { fields, append, remove } = useFieldArray({
     control,
@@ -110,6 +114,7 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
           currentFullPath={currentFullPath}
           onCheckVariableUsage={onCheckVariableUsage}
           depth={depth}
+          readOnly={readOnly}
         />
       ))}
       {isAtMaxDepth && (
@@ -124,7 +129,7 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
           mode="lighter"
           onClick={handleAddNestedProperty}
           leadingIcon={RiAddLine}
-          disabled={isAtMaxDepth}
+          disabled={isAtMaxDepth || readOnly}
         >
           Add Nested Property
         </Button>

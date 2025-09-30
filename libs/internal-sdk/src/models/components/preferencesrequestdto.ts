@@ -48,7 +48,7 @@ export type PreferencesRequestDtoAll = WorkflowPreferenceDto;
 /**
  * Workflow-specific preferences
  */
-export type Workflow = {
+export type PreferencesRequestDtoWorkflow = {
   /**
    * A preference for the workflow. The values specified here will be used if no preference is specified for a channel.
    */
@@ -67,7 +67,7 @@ export type PreferencesRequestDto = {
   /**
    * Workflow-specific preferences
    */
-  workflow?: Workflow | null | undefined;
+  workflow?: PreferencesRequestDtoWorkflow | null | undefined;
 };
 
 /** @internal */
@@ -255,8 +255,8 @@ export function preferencesRequestDtoAllFromJSON(
 }
 
 /** @internal */
-export const Workflow$inboundSchema: z.ZodType<
-  Workflow,
+export const PreferencesRequestDtoWorkflow$inboundSchema: z.ZodType<
+  PreferencesRequestDtoWorkflow,
   z.ZodTypeDef,
   unknown
 > = z.object({
@@ -265,16 +265,16 @@ export const Workflow$inboundSchema: z.ZodType<
 });
 
 /** @internal */
-export type Workflow$Outbound = {
+export type PreferencesRequestDtoWorkflow$Outbound = {
   all: WorkflowPreferenceDto$Outbound;
   channels: { [k: string]: ChannelPreferenceDto$Outbound };
 };
 
 /** @internal */
-export const Workflow$outboundSchema: z.ZodType<
-  Workflow$Outbound,
+export const PreferencesRequestDtoWorkflow$outboundSchema: z.ZodType<
+  PreferencesRequestDtoWorkflow$Outbound,
   z.ZodTypeDef,
-  Workflow
+  PreferencesRequestDtoWorkflow
 > = z.object({
   all: WorkflowPreferenceDto$outboundSchema,
   channels: z.record(ChannelPreferenceDto$outboundSchema),
@@ -284,26 +284,32 @@ export const Workflow$outboundSchema: z.ZodType<
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Workflow$ {
-  /** @deprecated use `Workflow$inboundSchema` instead. */
-  export const inboundSchema = Workflow$inboundSchema;
-  /** @deprecated use `Workflow$outboundSchema` instead. */
-  export const outboundSchema = Workflow$outboundSchema;
-  /** @deprecated use `Workflow$Outbound` instead. */
-  export type Outbound = Workflow$Outbound;
+export namespace PreferencesRequestDtoWorkflow$ {
+  /** @deprecated use `PreferencesRequestDtoWorkflow$inboundSchema` instead. */
+  export const inboundSchema = PreferencesRequestDtoWorkflow$inboundSchema;
+  /** @deprecated use `PreferencesRequestDtoWorkflow$outboundSchema` instead. */
+  export const outboundSchema = PreferencesRequestDtoWorkflow$outboundSchema;
+  /** @deprecated use `PreferencesRequestDtoWorkflow$Outbound` instead. */
+  export type Outbound = PreferencesRequestDtoWorkflow$Outbound;
 }
 
-export function workflowToJSON(workflow: Workflow): string {
-  return JSON.stringify(Workflow$outboundSchema.parse(workflow));
+export function preferencesRequestDtoWorkflowToJSON(
+  preferencesRequestDtoWorkflow: PreferencesRequestDtoWorkflow,
+): string {
+  return JSON.stringify(
+    PreferencesRequestDtoWorkflow$outboundSchema.parse(
+      preferencesRequestDtoWorkflow,
+    ),
+  );
 }
 
-export function workflowFromJSON(
+export function preferencesRequestDtoWorkflowFromJSON(
   jsonString: string,
-): SafeParseResult<Workflow, SDKValidationError> {
+): SafeParseResult<PreferencesRequestDtoWorkflow, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Workflow$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Workflow' from JSON`,
+    (x) => PreferencesRequestDtoWorkflow$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PreferencesRequestDtoWorkflow' from JSON`,
   );
 }
 
@@ -315,13 +321,15 @@ export const PreferencesRequestDto$inboundSchema: z.ZodType<
 > = z.object({
   user: z.nullable(z.lazy(() => UserWorkflowPreferencesDto$inboundSchema))
     .optional(),
-  workflow: z.nullable(z.lazy(() => Workflow$inboundSchema)).optional(),
+  workflow: z.nullable(
+    z.lazy(() => PreferencesRequestDtoWorkflow$inboundSchema),
+  ).optional(),
 });
 
 /** @internal */
 export type PreferencesRequestDto$Outbound = {
   user?: UserWorkflowPreferencesDto$Outbound | null | undefined;
-  workflow?: Workflow$Outbound | null | undefined;
+  workflow?: PreferencesRequestDtoWorkflow$Outbound | null | undefined;
 };
 
 /** @internal */
@@ -332,7 +340,9 @@ export const PreferencesRequestDto$outboundSchema: z.ZodType<
 > = z.object({
   user: z.nullable(z.lazy(() => UserWorkflowPreferencesDto$outboundSchema))
     .optional(),
-  workflow: z.nullable(z.lazy(() => Workflow$outboundSchema)).optional(),
+  workflow: z.nullable(
+    z.lazy(() => PreferencesRequestDtoWorkflow$outboundSchema),
+  ).optional(),
 });
 
 /**

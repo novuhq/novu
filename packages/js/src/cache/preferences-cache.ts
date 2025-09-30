@@ -1,9 +1,10 @@
-import { InMemoryCache } from './in-memory-cache';
-import type { Cache } from './types';
-import { NovuEventEmitter, PreferenceEvents } from '../event-emitter';
-import { PreferenceLevel } from '../types';
+import { NovuEventEmitter, PreferenceEvents, PreferenceScheduleEvents } from '../event-emitter';
+import { Schedule } from '../preferences';
 import { Preference } from '../preferences/preference';
 import { ListPreferencesArgs } from '../preferences/types';
+import { PreferenceLevel } from '../types';
+import { InMemoryCache } from './in-memory-cache';
+import type { Cache } from './types';
 
 // these events should update the preferences in the cache
 const updateEvents: PreferenceEvents[] = [
@@ -13,8 +14,13 @@ const updateEvents: PreferenceEvents[] = [
   'preferences.bulk_update.resolved',
 ];
 
-const excludeEmpty = ({ tags }: ListPreferencesArgs) =>
-  Object.entries({ tags }).reduce((acc, [key, value]) => {
+const scheduleUpdateEvents: PreferenceScheduleEvents[] = [
+  'preference.schedule.update.pending',
+  'preference.schedule.update.resolved',
+];
+
+const excludeEmpty = ({ tags, severity }: ListPreferencesArgs) =>
+  Object.entries({ tags, severity }).reduce((acc, [key, value]) => {
     if (value === null || value === undefined || (Array.isArray(value) && value.length === 0)) {
       return acc;
     }
@@ -24,8 +30,8 @@ const excludeEmpty = ({ tags }: ListPreferencesArgs) =>
     return acc;
   }, {});
 
-const getCacheKey = ({ tags }: ListPreferencesArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags }));
+const getCacheKey = ({ tags, severity }: ListPreferencesArgs): string => {
+  return JSON.stringify(excludeEmpty({ tags, severity }));
 };
 
 export class PreferencesCache {
@@ -34,9 +40,12 @@ export class PreferencesCache {
 
   constructor({ emitterInstance }: { emitterInstance: NovuEventEmitter }) {
     this.#emitter = emitterInstance;
-    updateEvents.forEach((event) => {
+    for (const event of updateEvents) {
       this.#emitter.on(event, this.handlePreferenceEvent);
-    });
+    }
+    for (const event of scheduleUpdateEvents) {
+      this.#emitter.on(event, this.handleScheduleEvent);
+    }
     this.#cache = new InMemoryCache();
   }
 
@@ -60,6 +69,50 @@ export class PreferencesCache {
     this.#cache.set(key, updatedPreferences);
 
     return true;
+  };
+
+  private updatePreferenceSchedule = (key: string, data: Schedule): boolean => {
+    const preferences = this.#cache.get(key);
+    if (!preferences) {
+      return false;
+    }
+
+    const index = preferences.findIndex((el) => el.level === PreferenceLevel.GLOBAL);
+    if (index === -1) {
+      return false;
+    }
+
+    const updatedPreferences = [...preferences];
+    updatedPreferences[index].schedule = data;
+
+    this.#cache.set(key, updatedPreferences);
+
+    return true;
+  };
+
+  private handleScheduleEvent = ({ data }: { data?: Schedule }): void => {
+    if (!data) {
+      return;
+    }
+
+    const cacheKeys = this.#cache.keys();
+    const uniqueFilterKeys = new Set<string>();
+    for (const key of cacheKeys) {
+      const hasUpdatedPreference = this.updatePreferenceSchedule(key, data);
+
+      const updatedPreference = this.#cache.get(key);
+      if (!hasUpdatedPreference || !updatedPreference) {
+        continue;
+      }
+
+      uniqueFilterKeys.add(key);
+    }
+
+    for (const key of uniqueFilterKeys) {
+      this.#emitter.emit('preferences.list.updated', {
+        data: this.#cache.get(key) ?? [],
+      });
+    }
   };
 
   private handlePreferenceEvent = ({ data }: { data?: Preference | Preference[] }): void => {

@@ -1,11 +1,11 @@
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEnvironment } from '@/context/environment/hooks';
+import { getTranslation, saveTranslation } from '@/api/translations';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { saveTranslation, getTranslation } from '@/api/translations';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
-import { DEFAULT_LOCALE } from '@novu/shared';
-import { showSuccessToast, showErrorToast } from '@/components/primitives/sonner-helpers';
 
 type CreateTranslationKeyParams = {
   workflowId: string;
@@ -20,9 +20,7 @@ export const useCreateTranslationKey = () => {
 
   return useMutation({
     mutationFn: async ({ workflowId, translationKey, defaultValue = '' }: CreateTranslationKeyParams) => {
-      if (!currentEnvironment) {
-        throw new Error('Environment is required');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'Environment is required');
 
       const defaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
 
@@ -31,7 +29,7 @@ export const useCreateTranslationKey = () => {
 
       try {
         const existingTranslation = await getTranslation({
-          environment: currentEnvironment,
+          environment,
           resourceId: workflowId,
           resourceType: LocalizationResourceEnum.WORKFLOW,
           locale: defaultLocale,
@@ -66,7 +64,7 @@ export const useCreateTranslationKey = () => {
 
       // Save the updated translation
       return await saveTranslation({
-        environment: currentEnvironment,
+        environment,
         resourceId: workflowId,
         resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: defaultLocale,
@@ -92,9 +90,15 @@ export const useCreateTranslationKey = () => {
         ],
       });
 
-      // Invalidate the translations list
+      // Invalidate the translation group
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchTranslationGroup],
+        exact: false,
+      });
+
+      // Invalidate diff environment queries when translation keys are created
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       showSuccessToast(`Translation key "${variables.translationKey}" created successfully`);

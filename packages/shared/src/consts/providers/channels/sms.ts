@@ -15,6 +15,7 @@ import {
   fortySixElksConfig,
   genericSmsConfig,
   gupshupConfig,
+  iMediaConfig,
   infobipSMSConfig,
   iSendSmsConfig,
   kannelConfig,
@@ -28,10 +29,12 @@ import {
   simpleTextingConfig,
   sms77Config,
   smsCentralConfig,
+  smsmodeProviderConfig,
   snsConfig,
   telnyxConfig,
   termiiConfig,
   twilioConfig,
+  unifonicConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 
@@ -217,7 +220,7 @@ export const smsProviders: IProviderConfig[] = [
   },
   {
     id: SmsProviderIdEnum.GenericSms,
-    displayName: `Generic SMS`,
+    displayName: `SMS Webhook`,
     channel: ChannelTypeEnum.SMS,
     credentials: genericSmsConfig,
     docReference: `https://docs.novu.co/channels/sms/generic-sms${UTM_CAMPAIGN_QUERY_PARAM}`,
@@ -295,5 +298,29 @@ export const smsProviders: IProviderConfig[] = [
     credentials: afroSmsConfig,
     docReference: 'https://afromessage.com/developers',
     logoFileName: { light: 'afro-sms.png', dark: 'afro-sms.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Unifonic,
+    displayName: 'Unifonic',
+    channel: ChannelTypeEnum.SMS,
+    credentials: unifonicConfig,
+    docReference: 'https://docs.unifonic.com/articles/#!products-documentation/getting-started-with-unifonic',
+    logoFileName: { light: 'unifonic.svg', dark: 'unifonic.svg' },
+  },
+    {
+    id: SmsProviderIdEnum.Smsmode,
+    displayName: 'smsmode',
+    channel: ChannelTypeEnum.SMS,
+    credentials: smsmodeProviderConfig,
+    docReference: 'https://dev.smsmode.com/sms/v1/#tag/Message/operation/send-message',
+    logoFileName: { light: 'smsmode.svg', dark: 'smsmode.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.IMedia,
+    displayName: 'iMedia',
+    channel: ChannelTypeEnum.SMS,
+    credentials: iMediaConfig,
+    docReference: '',
+    logoFileName: { light: 'imedia.png', dark: 'imedia.png' },
   },
 ];

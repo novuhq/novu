@@ -1,29 +1,29 @@
 import { IntegrationEntity } from '@novu/dal';
 import {
-  SendgridHandler,
-  MailgunHandler,
+  BrazeEmailHandler,
   EmailJsHandler,
+  EmailWebhookHandler,
+  InfobipEmailHandler,
+  MailerSendHandler,
+  MailgunHandler,
   MailjetHandler,
   MailtrapHandler,
   MandrillHandler,
-  NodemailerHandler,
-  PostmarkHandler,
-  SendinblueHandler,
-  SESHandler,
   NetCoreHandler,
-  InfobipEmailHandler,
-  MailerSendHandler,
-  Outlook365Handler,
-  ResendHandler,
-  SparkPostHandler,
-  EmailWebhookHandler,
+  NodemailerHandler,
   NovuEmailHandler,
+  Outlook365Handler,
   PlunkHandler,
-  BrazeEmailHandler,
+  PostmarkHandler,
+  ResendHandler,
+  SESHandler,
+  SendgridHandler,
+  SendinblueHandler,
+  SparkPostHandler,
 } from './handlers';
-import { IMailHandler } from './interfaces/send.handler.interface';
+import { IMailFactory, IMailHandler } from './interfaces';
 
-export class MailFactory {
+export class MailFactory implements IMailFactory {
   handlers: IMailHandler[] = [
     new SendgridHandler(),
     new MailgunHandler(),
@@ -48,20 +48,15 @@ export class MailFactory {
   ];
 
   getHandler(
-    integration: Pick<
-      IntegrationEntity,
-      'credentials' | 'channel' | 'providerId'
-    >,
-    from?: string,
+    integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>,
+    from?: string
   ): IMailHandler {
     const handler =
-      this.handlers.find((handlerItem) =>
-        handlerItem.canHandle(integration.providerId, integration.channel),
-      ) ?? null;
+      this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
 
     if (!handler) throw new Error('Handler for provider was not found');
 
-    handler.buildProvider(integration.credentials, from);
+    handler.buildProvider({ ...integration.credentials, ...integration.configurations }, from);
 
     return handler;
   }

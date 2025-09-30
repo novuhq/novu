@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Get Signed Url - /storage/upload-url (GET) #novu-v0', function () {
+describe('Get Signed Url - /storage/upload-url (GET) #novu-v0', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -9,7 +9,7 @@ describe('Get Signed Url - /storage/upload-url (GET) #novu-v0', function () {
     await session.initialize();
   });
 
-  it('should return an S3 signed URL', async function () {
+  it('should return an S3 signed URL', async () => {
     const {
       body: { data },
     } = await session.testAgent.get('/v1/storage/upload-url?extension=jpg');

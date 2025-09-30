@@ -1,6 +1,5 @@
+import { EncryptedSecret, EnvironmentTypeEnum, IApiRateLimitMaximum } from '@novu/shared';
 import { Types } from 'mongoose';
-
-import { EncryptedSecret, IApiRateLimitMaximum } from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { OrganizationId } from '../organization';
@@ -45,6 +44,8 @@ export class EnvironmentEntity {
   _parentId: string;
 
   color?: string;
+
+  type: EnvironmentTypeEnum;
 
   echo: {
     url: string;

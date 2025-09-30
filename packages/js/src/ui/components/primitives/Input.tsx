@@ -16,6 +16,7 @@ export const inputVariants = cva(
       size: {
         default: 'nt-h-9',
         sm: 'nt-h-8 nt-text-sm',
+        xs: 'nt-h-7 nt-text-xs',
       },
     },
     defaultVariants: {
@@ -36,10 +37,10 @@ export const Input = (props: InputProps) => {
     <input
       data-variant={props.variant}
       data-size={props.size}
-      class={style(
-        local.appearanceKey || 'input',
-        cn(inputVariants({ variant: props.variant, size: props.size }), local.class)
-      )}
+      class={style({
+        key: local.appearanceKey || 'input',
+        className: cn(inputVariants({ variant: props.variant, size: props.size }), local.class),
+      })}
       {...rest}
     />
   );

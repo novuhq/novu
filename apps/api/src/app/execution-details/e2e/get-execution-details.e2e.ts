@@ -1,12 +1,12 @@
 import { ExecutionDetailsRepository, SubscriberEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
-import { UserSession, SubscribersService } from '@novu/testing';
+import { SubscribersService, UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 
 const axiosInstance = axios.create();
 
-describe('Execution details - Get execution details by notification id - /v1/execution-details/notification/:notificationId (GET) #novu-v2', function () {
+describe('Execution details - Get execution details by notification id - /v1/execution-details/notification/:notificationId (GET) #novu-v2', () => {
   let session: UserSession;
   const executionDetailsRepository: ExecutionDetailsRepository = new ExecutionDetailsRepository();
   let subscriber: SubscriberEntity;
@@ -19,7 +19,7 @@ describe('Execution details - Get execution details by notification id - /v1/exe
     subscriber = await subscriberService.createSubscriber();
   });
 
-  it('should get execution details', async function () {
+  it('should get execution details', async () => {
     const notificationId = ExecutionDetailsRepository.createObjectId();
     const detail = await executionDetailsRepository.create({
       _jobId: ExecutionDetailsRepository.createObjectId(),

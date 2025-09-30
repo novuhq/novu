@@ -1,3 +1,5 @@
+import { ChannelData } from '../provider/channel-data.type';
+
 export interface ITemplate {
   id: string;
 
@@ -16,9 +18,7 @@ export interface IMessage {
   channel: ChannelTypeEnum;
   template: string | ((payload: ITriggerPayload) => Promise<string> | string);
   // used to provide a text version in emails
-  textTemplate?:
-    | string
-    | ((payload: ITriggerPayload) => Promise<string> | string);
+  textTemplate?: string | ((payload: ITriggerPayload) => Promise<string> | string);
   active?: boolean | ((payload: ITriggerPayload) => Promise<boolean> | boolean);
   validator?: IMessageValidator;
 }
@@ -32,14 +32,22 @@ export enum ChannelTypeEnum {
 
 export interface ITriggerPayload {
   $email?: string;
+  /**
+   * @deprecated
+   */
   $phone?: string;
   $user_id: string;
   $theme_id?: string;
+  /**
+   * @deprecated use $channelData instead
+   */
   $webhookUrl?: string;
+  $channelData?: ChannelData;
   $attachments?: IAttachmentOptions[];
   [key: string]:
     | string
     | string[]
+    | ChannelData
     | boolean
     | number
     | undefined

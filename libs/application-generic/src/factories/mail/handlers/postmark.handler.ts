@@ -1,12 +1,8 @@
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  ICredentials,
-} from '@novu/shared';
 import { PostmarkEmailProvider } from '@novu/providers';
-import { BaseHandler } from './base.handler';
+import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
+import { BaseEmailHandler } from './base.handler';
 
-export class PostmarkHandler extends BaseHandler {
+export class PostmarkHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.Postmark, ChannelTypeEnum.EMAIL);
   }

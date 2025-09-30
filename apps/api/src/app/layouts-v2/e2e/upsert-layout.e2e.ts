@@ -1,13 +1,14 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
 import { LayoutsControllerCreateResponse } from '@novu/api/models/operations';
 import { layoutControlSchema, layoutUiSchema } from '@novu/application-generic';
 import { LayoutRepository } from '@novu/dal';
-
-import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { CreateLayoutDto, UpdateLayoutDto } from '../dtos';
 import { LayoutCreationSourceEnum } from '../types';
+import { EMPTY_LAYOUT } from '../utils/layout-templates';
 
 describe('Upsert Layout #novu-v2', () => {
   let session: UserSession;
@@ -22,6 +23,44 @@ describe('Upsert Layout #novu-v2', () => {
   });
 
   describe('Create Layout - POST /v2/layouts', () => {
+    it('should not allow to create more than 1 layout for a free tier organization', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
+      const layoutData: CreateLayoutDto = {
+        layoutId: `test-layout-creation`,
+        name: 'Test Layout Creation',
+        __source: LayoutCreationSourceEnum.DASHBOARD,
+      };
+
+      await novuClient.layouts.create(layoutData);
+
+      const res = await expectSdkExceptionGeneric(() => novuClient.layouts.create(layoutData));
+      expect(res.error?.statusCode).eq(400);
+    });
+
+    it('should allow to create 2 and more layouts for a pro+ tier organization', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
+      const layoutData1: CreateLayoutDto = {
+        layoutId: `test-layout-creation1`,
+        name: 'Test Layout Creation1',
+        __source: LayoutCreationSourceEnum.DASHBOARD,
+      };
+      const layoutData2: CreateLayoutDto = {
+        layoutId: `test-layout-creation2`,
+        name: 'Test Layout Creation2',
+        __source: LayoutCreationSourceEnum.DASHBOARD,
+      };
+      const layoutData3: CreateLayoutDto = {
+        layoutId: `test-layout-creation3`,
+        name: 'Test Layout Creation3',
+        __source: LayoutCreationSourceEnum.DASHBOARD,
+      };
+
+      await novuClient.layouts.create(layoutData1);
+      await novuClient.layouts.create(layoutData2);
+      const res = await novuClient.layouts.create(layoutData3);
+      expect(res.result).to.exist;
+    });
+
     it('should create a new layout successfully', async () => {
       const layoutData: CreateLayoutDto = {
         layoutId: `test-layout-creation`,
@@ -38,7 +77,12 @@ describe('Upsert Layout #novu-v2', () => {
       expect(createdLayout.id).to.be.a('string');
       expect(createdLayout.createdAt).to.be.a('string');
       expect(createdLayout.updatedAt).to.be.a('string');
-      expect(createdLayout.controls.values).to.deep.equal({});
+      expect(createdLayout.controls.values).to.deep.equal({
+        email: {
+          body: JSON.stringify(EMPTY_LAYOUT),
+          editorType: 'block',
+        },
+      });
       expect(createdLayout.controls.uiSchema).to.deep.equal(layoutUiSchema);
       expect(createdLayout.controls.dataSchema).to.deep.equal(layoutControlSchema);
       expect(createdLayout.variables).to.exist;
@@ -46,6 +90,8 @@ describe('Upsert Layout #novu-v2', () => {
     });
 
     it('should create first layout as default and not set the second layout', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
+
       await layoutRepository.delete({
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
@@ -174,7 +220,9 @@ describe('Upsert Layout #novu-v2', () => {
         expect.fail('Should have thrown validation error');
       } catch (error: any) {
         expect(error.statusCode).to.equal(400);
-        expect(error.message).to.contain('The layout body should contain the "content" variable');
+        expect(error.ctx.controls['email.body'][0].message).to.contain(
+          'The layout body should contain the "content" variable'
+        );
       }
     });
 
@@ -202,7 +250,9 @@ describe('Upsert Layout #novu-v2', () => {
         expect.fail('Should have thrown validation error');
       } catch (error: any) {
         expect(error.statusCode).to.equal(400);
-        expect(error.message).to.contain('The layout body should contain the "content" variable');
+        expect(error.ctx.controls['email.body'][0].message).to.contain(
+          'The layout body should contain the "content" variable'
+        );
       }
     });
 
@@ -274,11 +324,10 @@ describe('Upsert Layout #novu-v2', () => {
     it('should delete control values when set to null', async () => {
       const updateData: UpdateLayoutDto = {
         name: 'Layout with deleted controls',
-        controlValues: {},
+        controlValues: null,
       };
 
       const { result: updatedLayout } = await novuClient.layouts.update(updateData, existingLayout.layoutId);
-
       expect(updatedLayout.name).to.equal(updateData.name);
       expect(updatedLayout.controls.values).to.deep.equal({});
     });

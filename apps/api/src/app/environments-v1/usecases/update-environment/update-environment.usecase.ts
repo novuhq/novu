@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
-import { PROTECTED_ENVIRONMENTS } from '@novu/shared';
+import { EnvironmentEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
 import { UpdateEnvironmentCommand } from './update-environment.command';
 
 @Injectable()
@@ -15,6 +15,11 @@ export class UpdateEnvironment {
 
     if (!environment) {
       throw new UnauthorizedException('Environment not found');
+    }
+
+    // Prevent renaming Development or Production environments
+    if (command.name && command.name !== '' && PROTECTED_ENVIRONMENTS.includes(environment.name as EnvironmentEnum)) {
+      throw new UnprocessableEntityException('Cannot update the name of Development or Production environments');
     }
 
     const updatePayload: Partial<EnvironmentEntity> = {};

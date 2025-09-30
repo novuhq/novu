@@ -1,5 +1,8 @@
 export * from './constants';
 export * from './create-notification-template.interface';
+export * from './ee/clerk-client.mock';
+export * from './ee/clerk-mock-data';
+export * from './ee/ee.repository.factory';
 export * from './environment.service';
 export * from './integration.service';
 export * from './jobs.service';
@@ -13,6 +16,3 @@ export * from './user.service';
 export * from './user.session';
 export * from './utils';
 export * from './workflow-override.service';
-export * from './ee/ee.repository.factory';
-export * from './ee/clerk-client.mock';
-export * from './ee/clerk-mock-data';

@@ -1,6 +1,6 @@
+import crypto from 'node:crypto';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import crypto from 'node:crypto';
 
 @Injectable()
 export class PlainCardsGuard implements CanActivate {

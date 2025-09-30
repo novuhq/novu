@@ -1,5 +1,5 @@
-import { type Page } from '@playwright/test';
 import os from 'node:os';
+import { type Page } from '@playwright/test';
 
 const isMac = os.platform() === 'darwin';
 const modifier = isMac ? 'Meta' : 'Control';

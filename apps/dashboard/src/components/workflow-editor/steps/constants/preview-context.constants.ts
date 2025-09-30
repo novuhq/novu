@@ -1,24 +1,27 @@
 import { StepTypeEnum } from '@novu/shared';
 import { IconType } from 'react-icons';
 import {
-  RiMailLine,
-  RiSmartphoneLine,
-  RiNotificationLine,
+  RiBracesFill,
   RiChat1Line,
   RiCodeLine,
-  RiTimeLine,
-  RiBracesFill,
+  RiMailLine,
+  RiNotificationLine,
   RiPlayCircleLine,
+  RiSmartphoneLine,
+  RiSpeedFill,
+  RiTimeLine,
 } from 'react-icons/ri';
+import { InboxBell } from '../../../icons';
 
 export const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.EMAIL]: RiMailLine,
   [StepTypeEnum.SMS]: RiSmartphoneLine,
   [StepTypeEnum.PUSH]: RiNotificationLine,
-  [StepTypeEnum.IN_APP]: RiNotificationLine,
+  [StepTypeEnum.IN_APP]: InboxBell,
   [StepTypeEnum.CHAT]: RiChat1Line,
   [StepTypeEnum.DIGEST]: RiTimeLine,
   [StepTypeEnum.DELAY]: RiTimeLine,
+  [StepTypeEnum.THROTTLE]: RiSpeedFill,
   [StepTypeEnum.CUSTOM]: RiBracesFill,
   [StepTypeEnum.TRIGGER]: RiPlayCircleLine,
 } as const;
@@ -32,4 +35,4 @@ export const ACCORDION_STYLES = {
   jsonViewer: 'border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid',
 } as const;
 
-export const DEFAULT_ACCORDION_VALUES = ['payload', 'subscriber', 'step-results'];
+export const DEFAULT_ACCORDION_VALUES = ['payload', 'subscriber', 'step-results', 'context'];

@@ -1,13 +1,15 @@
+import type { InboxProps } from '../components/Inbox';
+import { ShadowRootDetector } from '../components/ShadowRootDetector';
 import type {
   UseNotificationsProps,
   UseNotificationsResult,
   UsePreferencesProps,
   UsePreferencesResult,
+  UseScheduleProps,
+  UseScheduleResult,
 } from '../hooks';
-import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
-import type { InboxProps } from '../components/Inbox';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
-import { ShadowRootDetector } from '../components/ShadowRootDetector';
+import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
 
 /**
  * Exporting all components from the components folder
@@ -47,6 +49,7 @@ export function useNotifications(_: UseNotificationsProps): UseNotificationsResu
     isFetching: false,
     hasMore: false,
     readAll: () => Promise.resolve({ data: undefined, error: undefined }),
+    seenAll: () => Promise.resolve({ data: undefined, error: undefined }),
     archiveAll: () => Promise.resolve({ data: undefined, error: undefined }),
     archiveAllRead: () => Promise.resolve({ data: undefined, error: undefined }),
     refetch: () => Promise.resolve(),
@@ -62,59 +65,67 @@ export function usePreferences(_: UsePreferencesProps): UsePreferencesResult {
   };
 }
 
+export function useSchedule(_: UseScheduleProps): UseScheduleResult {
+  return {
+    isLoading: false,
+    isFetching: false,
+    refetch: () => Promise.resolve(),
+  };
+}
+
 export type {
-  FiltersCountResponse,
-  ListNotificationsResponse,
-  NovuError,
-  Preference,
   ChannelPreference,
-  Notification,
   ChannelType,
+  FiltersCountResponse,
   InboxNotification,
+  ListNotificationsResponse,
+  Notification,
   NotificationFilter,
   NotificationStatus,
+  NovuError,
   NovuOptions,
-  PreferenceLevel,
+  Preference,
 } from '@novu/js';
+export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
   Appearance,
   AppearanceKey,
-  Elements,
   ElementStyles,
+  Elements,
   Localization,
   LocalizationKey,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
-  PreferencesFilter,
   PreferenceGroups,
+  PreferencesFilter,
   RouterPush,
   Tab,
   Variables,
 } from '@novu/js/ui';
 
-export type { InboxProps, BellProps, InboxContentProps, NotificationProps, NovuProviderProps } from '../components';
+export type { BellProps, InboxContentProps, InboxProps, NotificationProps, NovuProviderProps } from '../components';
 
 export type {
   UseCountsProps,
   UseCountsResult,
   UseNotificationsProps,
   UseNotificationsResult,
-  UsePreferencesProps,
   UsePreferencesResult,
+  UseScheduleProps as UsePreferencesProps,
 } from '../hooks';
 
 export type {
-  NotificationsRenderer,
-  SubjectRenderer,
-  BodyRenderer,
-  BellRenderer,
-  DefaultInboxProps,
   BaseProps,
-  NotificationRendererProps,
-  SubjectBodyRendererProps,
-  NoRendererProps,
+  BellRenderer,
+  BodyRenderer,
+  DefaultInboxProps,
   DefaultProps,
+  NoRendererProps,
+  NotificationRendererProps,
+  NotificationsRenderer,
+  SubjectBodyRendererProps,
+  SubjectRenderer,
   WithChildrenProps,
 } from '../utils/types';

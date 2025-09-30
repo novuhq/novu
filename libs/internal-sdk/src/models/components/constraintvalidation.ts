@@ -7,7 +7,7 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-export type Value5 = string | number | boolean | { [k: string]: any };
+export type Five = string | number | boolean | { [k: string]: any };
 
 export type Four = {};
 
@@ -15,10 +15,10 @@ export type Four = {};
  * Value that failed validation
  */
 export type Value =
-  | Four
   | string
   | number
   | boolean
+  | Four
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 export type ConstraintValidation = {
@@ -30,53 +30,50 @@ export type ConstraintValidation = {
    * Value that failed validation
    */
   value?:
-    | Four
     | string
     | number
     | boolean
+    | Four
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
 };
 
 /** @internal */
-export const Value5$inboundSchema: z.ZodType<Value5, z.ZodTypeDef, unknown> = z
+export const Five$inboundSchema: z.ZodType<Five, z.ZodTypeDef, unknown> = z
   .union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /** @internal */
-export type Value5$Outbound = string | number | boolean | { [k: string]: any };
+export type Five$Outbound = string | number | boolean | { [k: string]: any };
 
 /** @internal */
-export const Value5$outboundSchema: z.ZodType<
-  Value5$Outbound,
-  z.ZodTypeDef,
-  Value5
-> = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
+export const Five$outboundSchema: z.ZodType<Five$Outbound, z.ZodTypeDef, Five> =
+  z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Value5$ {
-  /** @deprecated use `Value5$inboundSchema` instead. */
-  export const inboundSchema = Value5$inboundSchema;
-  /** @deprecated use `Value5$outboundSchema` instead. */
-  export const outboundSchema = Value5$outboundSchema;
-  /** @deprecated use `Value5$Outbound` instead. */
-  export type Outbound = Value5$Outbound;
+export namespace Five$ {
+  /** @deprecated use `Five$inboundSchema` instead. */
+  export const inboundSchema = Five$inboundSchema;
+  /** @deprecated use `Five$outboundSchema` instead. */
+  export const outboundSchema = Five$outboundSchema;
+  /** @deprecated use `Five$Outbound` instead. */
+  export type Outbound = Five$Outbound;
 }
 
-export function value5ToJSON(value5: Value5): string {
-  return JSON.stringify(Value5$outboundSchema.parse(value5));
+export function fiveToJSON(five: Five): string {
+  return JSON.stringify(Five$outboundSchema.parse(five));
 }
 
-export function value5FromJSON(
+export function fiveFromJSON(
   jsonString: string,
-): SafeParseResult<Value5, SDKValidationError> {
+): SafeParseResult<Five, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Value5$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Value5' from JSON`,
+    (x) => Five$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Five' from JSON`,
   );
 }
 
@@ -121,10 +118,10 @@ export function fourFromJSON(
 /** @internal */
 export const Value$inboundSchema: z.ZodType<Value, z.ZodTypeDef, unknown> = z
   .union([
-    z.lazy(() => Four$inboundSchema),
     z.string(),
     z.number(),
     z.boolean(),
+    z.lazy(() => Four$inboundSchema),
     z.array(
       z.nullable(
         z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -134,10 +131,10 @@ export const Value$inboundSchema: z.ZodType<Value, z.ZodTypeDef, unknown> = z
 
 /** @internal */
 export type Value$Outbound =
-  | Four$Outbound
   | string
   | number
   | boolean
+  | Four$Outbound
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 /** @internal */
@@ -146,10 +143,10 @@ export const Value$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   Value
 > = z.union([
-  z.lazy(() => Four$outboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
+  z.lazy(() => Four$outboundSchema),
   z.array(
     z.nullable(
       z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -193,10 +190,10 @@ export const ConstraintValidation$inboundSchema: z.ZodType<
   messages: z.array(z.string()),
   value: z.nullable(
     z.union([
-      z.lazy(() => Four$inboundSchema),
       z.string(),
       z.number(),
       z.boolean(),
+      z.lazy(() => Four$inboundSchema),
       z.array(
         z.nullable(
           z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -210,10 +207,10 @@ export const ConstraintValidation$inboundSchema: z.ZodType<
 export type ConstraintValidation$Outbound = {
   messages: Array<string>;
   value?:
-    | Four$Outbound
     | string
     | number
     | boolean
+    | Four$Outbound
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -228,10 +225,10 @@ export const ConstraintValidation$outboundSchema: z.ZodType<
   messages: z.array(z.string()),
   value: z.nullable(
     z.union([
-      z.lazy(() => Four$outboundSchema),
       z.string(),
       z.number(),
       z.boolean(),
+      z.lazy(() => Four$outboundSchema),
       z.array(
         z.nullable(
           z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),

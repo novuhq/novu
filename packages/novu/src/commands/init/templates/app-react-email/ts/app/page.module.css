@@ -20,7 +20,9 @@
   border: 1px solid #e2e8f0;
   border-radius: 1rem;
   padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .header {
@@ -93,7 +95,6 @@
   flex-direction: column;
   gap: 1rem;
   margin-top: 1rem;
-  
 }
 
 .step {
@@ -124,7 +125,6 @@
   font-weight: 400;
   margin-bottom: 0.25rem;
   color: #1e293b;
-  
 }
 
 .stepDescription {
@@ -210,7 +210,7 @@
 
 .footer {
   border-top: 1px solid #e2e8f0;
-  background: #eef2f5;  
+  background: #eef2f5;
   padding: 4rem 2rem 2rem;
   margin-top: auto;
 }
@@ -328,11 +328,11 @@
     grid-template-columns: 1fr 1fr;
     gap: 2.5rem;
   }
-  
+
   .footerLogo {
     grid-column: 1 / -1;
   }
-  
+
   .footerBottom {
     flex-direction: column;
     gap: 1rem;
@@ -345,7 +345,7 @@
     grid-template-columns: 1fr;
     gap: 2rem;
   }
-  
+
   .footer {
     padding: 3rem 1.5rem 1.5rem;
   }
@@ -391,7 +391,7 @@
   border: 1px solid #e0e7ff;
   border-radius: 0.75rem;
   margin-top: 1rem;
-  padding: 1rem 1.40rem;
+  padding: 1rem 1.4rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -401,7 +401,7 @@
 }
 
 .connectionText {
-  color: #4B5563;
+  color: #4b5563;
   font-size: 0.95rem;
   display: flex;
   flex-wrap: wrap;

@@ -1,4 +1,4 @@
-import Handlebars from 'handlebars';
+import { BadRequestException } from '@nestjs/common';
 import {
   DelayTypeEnum,
   FilterParts,
@@ -14,7 +14,7 @@ import {
   TriggerContextTypeEnum,
   TriggerReservedVariables,
 } from '@novu/shared';
-import { BadRequestException } from '@nestjs/common';
+import Handlebars from 'handlebars';
 import { NotificationStep } from '../value-objects';
 
 export class ContentService {
@@ -91,7 +91,13 @@ export class ContentService {
         variables.push(...filteredVariables);
       }
 
-      if (message.metadata?.type === DelayTypeEnum.SCHEDULED && message.metadata.delayPath) {
+      if (
+        message.metadata &&
+        'type' in message.metadata &&
+        message.metadata.type === DelayTypeEnum.SCHEDULED &&
+        'delayPath' in message.metadata &&
+        message.metadata.delayPath
+      ) {
         variables.push({
           name: message.metadata.delayPath,
           type: TemplateVariableTypeEnum.STRING,
@@ -203,7 +209,7 @@ export class ContentService {
   ): { [key: string]: any } {
     const newMessageVariables: { [key: string]: any } = { ...messageVariables };
 
-    Object.keys(subscriberPayload).forEach(function (key) {
+    Object.keys(subscriberPayload).forEach((key) => {
       const newKey = subscriberString === '' ? key : `${subscriberString}.${key}`;
       newMessageVariables[newKey] = subscriberPayload[key];
     });

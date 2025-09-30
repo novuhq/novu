@@ -1,17 +1,18 @@
+import { ResourceOriginEnum } from '@novu/shared';
+import { RiInformation2Line, RiRefreshLine, RiSettings3Line } from 'react-icons/ri';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { RiInformationLine, RiRefreshLine, RiSettings3Line } from 'react-icons/ri';
-import { EditableJsonViewer } from '../shared/editable-json-viewer/editable-json-viewer';
-import { PayloadSectionProps } from '../types/preview-context.types';
-import { ACCORDION_STYLES } from '../constants/preview-context.constants';
 import { Button } from '../../../primitives/button';
 import { Hint, HintIcon } from '../../../primitives/hint';
-import { ResourceOriginEnum } from '@novu/shared';
+import { ACCORDION_STYLES } from '../constants/preview-context.constants';
+import { EditableJsonViewer } from '../shared/editable-json-viewer/editable-json-viewer';
+import { PayloadSectionProps } from '../types/preview-context.types';
 
 export function PreviewPayloadSection({
   errors,
   localParsedData,
   workflow,
+  schema,
   onUpdate,
   onClearPersisted,
   hasDigestStep,
@@ -27,7 +28,7 @@ export function PreviewPayloadSection({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="text-foreground-400 inline-block hover:cursor-help">
-                    <RiInformationLine className="size-3" />
+                    <RiInformation2Line className="size-3" />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
@@ -64,14 +65,14 @@ export function PreviewPayloadSection({
           <EditableJsonViewer
             value={localParsedData.payload}
             onChange={(updatedData) => onUpdate('payload', updatedData)}
-            schema={workflow?.payloadSchema}
+            schema={schema}
             className={ACCORDION_STYLES.jsonViewer}
           />
           {errors.payload && <p className="text-destructive text-xs">{errors.payload}</p>}
         </div>
         {onManageSchema && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
           <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-            <RiInformationLine className="h-3 w-3 flex-shrink-0" />
+            <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
             <span>
               Manage required fields and validations with{' '}
               <b

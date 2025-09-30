@@ -1,12 +1,11 @@
-/* eslint-disable global-require */
 import { DynamicModule, Module } from '@nestjs/common';
-import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
+import { Type } from '@nestjs/common/interfaces/type.interface';
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { USE_CASES } from './usecases';
-import { ContentTemplatesController } from './content-templates.controller';
-import { SharedModule } from '../shared/shared.module';
 import { LayoutsV1Module } from '../layouts-v1/layouts-v1.module';
+import { SharedModule } from '../shared/shared.module';
+import { ContentTemplatesController } from './content-templates.controller';
+import { USE_CASES } from './usecases';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];

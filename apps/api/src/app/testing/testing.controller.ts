@@ -1,11 +1,9 @@
 import { Controller, Get, NotFoundException } from '@nestjs/common';
-import { ProductFeatureKeyEnum, ResourceEnum } from '@novu/shared';
-
 import { ApiExcludeController } from '@nestjs/swagger';
-import { ResourceCategory } from '@novu/application-generic';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ProductFeature } from '../shared/decorators/product-feature.decorator';
+import { ProductFeature, ResourceCategory } from '@novu/application-generic';
+import { ProductFeatureKeyEnum, ResourceEnum } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/testing')
 @RequireAuthentication()

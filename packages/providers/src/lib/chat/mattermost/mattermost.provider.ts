@@ -1,6 +1,13 @@
-import axios from 'axios';
-import { ChannelTypeEnum, ISendMessageSuccessResponse, IChatOptions, IChatProvider } from '@novu/stateless';
 import { ChatProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ENDPOINT_TYPES,
+  IChatOptions,
+  IChatProvider,
+  ISendMessageSuccessResponse,
+  isChannelDataOfType,
+} from '@novu/stateless';
+import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -19,12 +26,17 @@ export class MattermostProvider extends BaseProvider implements IChatProvider {
     data: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const payload: IMattermostPayload = { text: data.content };
-
-    if (data.channel) {
-      payload.channel = data.channel;
+    if (!isChannelDataOfType(data.channelData, ENDPOINT_TYPES.WEBHOOK)) {
+      throw new Error('Invalid channel data for Mattermost provider');
     }
-    const response = await this.axiosInstance.post(data.webhookUrl, this.transform(bridgeProviderData, payload).body);
+
+    const payload: IMattermostPayload = { text: data.content };
+    const { endpoint } = data.channelData;
+
+    if (endpoint.channel) {
+      payload.channel = endpoint.channel;
+    }
+    const response = await this.axiosInstance.post(endpoint.url, this.transform(bridgeProviderData, payload).body);
 
     return {
       id: response.headers['x-request-id'],

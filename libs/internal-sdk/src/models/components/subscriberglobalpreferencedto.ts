@@ -7,6 +7,12 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  ScheduleDto,
+  ScheduleDto$inboundSchema,
+  ScheduleDto$Outbound,
+  ScheduleDto$outboundSchema,
+} from "./scheduledto.js";
+import {
   SubscriberPreferenceChannels,
   SubscriberPreferenceChannels$inboundSchema,
   SubscriberPreferenceChannels$Outbound,
@@ -22,6 +28,10 @@ export type SubscriberGlobalPreferenceDto = {
    * Channel-specific preference settings
    */
   channels: SubscriberPreferenceChannels;
+  /**
+   * Subscriber schedule
+   */
+  schedule?: ScheduleDto | undefined;
 };
 
 /** @internal */
@@ -32,12 +42,14 @@ export const SubscriberGlobalPreferenceDto$inboundSchema: z.ZodType<
 > = z.object({
   enabled: z.boolean(),
   channels: SubscriberPreferenceChannels$inboundSchema,
+  schedule: ScheduleDto$inboundSchema.optional(),
 });
 
 /** @internal */
 export type SubscriberGlobalPreferenceDto$Outbound = {
   enabled: boolean;
   channels: SubscriberPreferenceChannels$Outbound;
+  schedule?: ScheduleDto$Outbound | undefined;
 };
 
 /** @internal */
@@ -48,6 +60,7 @@ export const SubscriberGlobalPreferenceDto$outboundSchema: z.ZodType<
 > = z.object({
   enabled: z.boolean(),
   channels: SubscriberPreferenceChannels$outboundSchema,
+  schedule: ScheduleDto$outboundSchema.optional(),
 });
 
 /**

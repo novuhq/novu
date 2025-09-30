@@ -1,12 +1,25 @@
-import { Exclude } from 'class-transformer';
-import { ChannelTypeEnum, IActor, IMessageCTA } from '@novu/shared';
-
+import {
+  ChannelEndpointByType,
+  ChannelEndpointType,
+  ChannelTypeEnum,
+  ContextKey,
+  IActor,
+  IMessageCTA,
+  SeverityLevelEnum,
+} from '@novu/shared';
+import type { ChangePropsValueType } from '../../types/helpers';
+import type { EnvironmentId } from '../environment';
 import { IEmailBlock } from '../message-template';
-import { SubscriberEntity } from '../subscriber';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
-import type { EnvironmentId } from '../environment';
-import type { ChangePropsValueType } from '../../types/helpers';
+import { SubscriberEntity } from '../subscriber';
+
+export type MessageChannelData<T extends ChannelEndpointType = ChannelEndpointType> = {
+  identifier: string;
+  type: T;
+  endpoint: ChannelEndpointByType[T];
+  token?: string;
+};
 
 export class MessageEntity {
   _id: string;
@@ -64,10 +77,19 @@ export class MessageEntity {
 
   email?: string;
 
+  /**
+   * @deprecated use channelData instead
+   */
   phone?: string;
 
+  /**
+   * @deprecated use channelData instead
+   */
   chatWebhookUrl?: string;
 
+  /**
+   * @deprecated use channelData instead
+   */
   directWebhookUrl?: string;
 
   providerId: string;
@@ -77,6 +99,8 @@ export class MessageEntity {
   title?: string;
 
   lastSeenDate: string;
+
+  firstSeenDate: string;
 
   lastReadDate: string;
 
@@ -89,9 +113,6 @@ export class MessageEntity {
   errorId: string;
 
   errorText: string;
-
-  @Exclude()
-  providerResponse: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   payload: Record<string, unknown>;
 
@@ -108,6 +129,12 @@ export class MessageEntity {
   tags?: string[];
 
   avatar?: string;
+
+  severity?: SeverityLevelEnum;
+
+  channelData?: MessageChannelData[];
+
+  contextKeys?: ContextKey[];
 }
 
 export type MessageDBModel = ChangePropsValueType<

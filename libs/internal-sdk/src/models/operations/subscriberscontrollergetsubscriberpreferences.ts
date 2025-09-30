@@ -5,12 +5,21 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
+export const Criticality = {
+  Critical: "critical",
+  NonCritical: "nonCritical",
+  All: "all",
+} as const;
+export type Criticality = ClosedEnum<typeof Criticality>;
+
 export type SubscribersControllerGetSubscriberPreferencesRequest = {
   subscriberId: string;
+  criticality?: Criticality | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -23,6 +32,25 @@ export type SubscribersControllerGetSubscriberPreferencesResponse = {
 };
 
 /** @internal */
+export const Criticality$inboundSchema: z.ZodNativeEnum<typeof Criticality> = z
+  .nativeEnum(Criticality);
+
+/** @internal */
+export const Criticality$outboundSchema: z.ZodNativeEnum<typeof Criticality> =
+  Criticality$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Criticality$ {
+  /** @deprecated use `Criticality$inboundSchema` instead. */
+  export const inboundSchema = Criticality$inboundSchema;
+  /** @deprecated use `Criticality$outboundSchema` instead. */
+  export const outboundSchema = Criticality$outboundSchema;
+}
+
+/** @internal */
 export const SubscribersControllerGetSubscriberPreferencesRequest$inboundSchema:
   z.ZodType<
     SubscribersControllerGetSubscriberPreferencesRequest,
@@ -30,6 +58,7 @@ export const SubscribersControllerGetSubscriberPreferencesRequest$inboundSchema:
     unknown
   > = z.object({
     subscriberId: z.string(),
+    criticality: Criticality$inboundSchema.default("nonCritical"),
     "idempotency-key": z.string().optional(),
   }).transform((v) => {
     return remap$(v, {
@@ -40,6 +69,7 @@ export const SubscribersControllerGetSubscriberPreferencesRequest$inboundSchema:
 /** @internal */
 export type SubscribersControllerGetSubscriberPreferencesRequest$Outbound = {
   subscriberId: string;
+  criticality: string;
   "idempotency-key"?: string | undefined;
 };
 
@@ -51,6 +81,7 @@ export const SubscribersControllerGetSubscriberPreferencesRequest$outboundSchema
     SubscribersControllerGetSubscriberPreferencesRequest
   > = z.object({
     subscriberId: z.string(),
+    criticality: Criticality$outboundSchema.default("nonCritical"),
     idempotencyKey: z.string().optional(),
   }).transform((v) => {
     return remap$(v, {

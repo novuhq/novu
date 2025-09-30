@@ -24,14 +24,14 @@ export const getBridgeUrl = async (): Promise<string> => {
 
   // Local environments
   try {
-    if (process.env.NODE_ENV === 'development') {
+    // biome-ignore lint/suspicious/noExplicitAny: Needed for some edge cases
+    if (process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as any) === 'dev') {
       const response = await fetch('http://localhost:2022/.well-known/novu');
       const data = await response.json();
 
       return `${data.tunnelOrigin}${data.route}`;
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error(error);
   }
 

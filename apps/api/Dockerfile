@@ -3,7 +3,7 @@ RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
 # Install global dependencies
-RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.11.0&& \
+RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.16.1&& \
     pnpm --version
 
 # Set non-root user
@@ -69,4 +69,4 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
 WORKDIR /usr/src/app/apps/api
-ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/api -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js -i max" ]
+ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/api -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV -h=$IS_SELF_HOSTED && pm2-runtime start dist/main.js -i max" ]

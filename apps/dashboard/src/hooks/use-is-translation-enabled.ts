@@ -1,13 +1,11 @@
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsBoolean, ApiServiceLevelEnum } from '@novu/shared';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 
 export const useIsTranslationEnabled = () => {
   const { workflow } = useWorkflow();
   const { subscription } = useFetchSubscription();
-  const isFeatureFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
 
   const isWorkflowToggleEnabled = workflow?.isTranslationEnabled ?? false;
 
@@ -15,9 +13,10 @@ export const useIsTranslationEnabled = () => {
     getFeatureForTierAsBoolean(
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) && !IS_SELF_HOSTED;
+    ) &&
+    (!IS_SELF_HOSTED || IS_ENTERPRISE);
 
-  const isTranslationEnabled = isFeatureFlagEnabled && isWorkflowToggleEnabled && canUseTranslationFeature;
+  const isTranslationEnabled = isWorkflowToggleEnabled && canUseTranslationFeature;
 
   return isTranslationEnabled;
 };

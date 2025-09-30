@@ -1,16 +1,15 @@
-/* eslint-disable global-require */
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-
-import { ModuleRef } from '@nestjs/core';
 import { CreateEnvironmentCommand } from '../../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments-v1/usecases/create-environment/create-environment.usecase';
-import { GetOrganizationCommand } from '../../get-organization/get-organization.command';
-import { GetOrganization } from '../../get-organization/get-organization.usecase';
-
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { UpsertLayout, UpsertLayoutCommand } from '../../../../layouts-v2/usecases/upsert-layout';
+import { createDefaultLayout } from '../../../../layouts-v2/utils/layout-templates';
+import { GetOrganizationCommand } from '../../get-organization/get-organization.command';
+import { GetOrganization } from '../../get-organization/get-organization.usecase';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 
 // TODO: eventually move to @novu/ee-auth
@@ -31,6 +30,7 @@ export class SyncExternalOrganization {
     private readonly userRepository: UserRepository,
     private readonly createEnvironmentUsecase: CreateEnvironment,
     private readonly createNovuIntegrations: CreateNovuIntegrations,
+    private readonly upsertLayoutUsecase: UpsertLayout,
     private analyticsService: AnalyticsService,
     private moduleRef: ModuleRef,
     private logger: PinoLogger
@@ -41,9 +41,18 @@ export class SyncExternalOrganization {
   async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationEntity> {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new BadRequestException('User not found');
+    if (!user._id) {
+      this.logger.error({ err: 'User not found' }, 'User not found when syncing external organization');
+
+      throw new BadRequestException('User not found');
+    }
+
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
 
     const organization = await this.organizationRepository.create({
       externalId: command.externalId,
+      apiServiceLevel: isSelfHosted && isEnterprise ? 'unlimited' : undefined,
     });
 
     const devEnv = await this.createEnvironmentUsecase.execute(
@@ -64,6 +73,23 @@ export class SyncExternalOrganization {
       })
     );
 
+    await this.upsertLayoutUsecase.execute(
+      UpsertLayoutCommand.create({
+        environmentId: devEnv._id,
+        organizationId: devEnv._organizationId,
+        userId: user._id,
+        layoutDto: {
+          name: 'Default layout',
+          controlValues: {
+            email: {
+              body: JSON.stringify(createDefaultLayout(organization.name)),
+              editorType: 'block',
+            },
+          },
+        },
+      })
+    );
+
     const prodEnv = await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
         userId: user._id,
@@ -80,6 +106,23 @@ export class SyncExternalOrganization {
         organizationId: prodEnv._organizationId,
         userId: user._id,
         name: prodEnv.name,
+      })
+    );
+
+    await this.upsertLayoutUsecase.execute(
+      UpsertLayoutCommand.create({
+        environmentId: prodEnv._id,
+        organizationId: prodEnv._organizationId,
+        userId: user._id,
+        layoutDto: {
+          name: 'Default layout',
+          controlValues: {
+            email: {
+              body: JSON.stringify(createDefaultLayout(organization.name)),
+              editorType: 'block',
+            },
+          },
+        },
       })
     );
 

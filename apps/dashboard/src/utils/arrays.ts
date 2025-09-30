@@ -1,7 +1,5 @@
 export const sort = (array: number[]) => {
-  array.sort(function (a, b) {
-    return a - b;
-  });
+  array.sort((a, b) => a - b);
 
   return array;
 };
@@ -17,13 +15,5 @@ export const range = (start: number, end: number) => {
 };
 
 export const dedup = (array: number[]) => {
-  const result: number[] = [];
-
-  array.forEach(function (i) {
-    if (result.indexOf(i) < 0) {
-      result.push(i);
-    }
-  });
-
-  return result;
+  return Array.from(new Set<number>(array));
 };

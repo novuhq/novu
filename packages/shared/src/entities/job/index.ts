@@ -1,2 +1,2 @@
-export * from './status.enum';
 export * from './job.interface';
+export * from './status.enum';

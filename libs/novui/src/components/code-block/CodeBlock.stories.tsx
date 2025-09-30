@@ -1,5 +1,5 @@
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
 import { CodeBlock } from './CodeBlock';
 
 export default {

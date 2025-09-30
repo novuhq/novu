@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { areNovuEmailCredentialsSet, FeatureFlagsService } from '@novu/application-generic';
+import { areNovuEmailCredentialsSet, areNovuSlackCredentialsSet, FeatureFlagsService } from '@novu/application-generic';
 import { EnvironmentEntity, IntegrationRepository, OrganizationEntity, UserEntity } from '@novu/dal';
 
 import {
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   EnvironmentEnum,
   FeatureFlagsKeysEnum,
@@ -93,13 +94,57 @@ export class CreateNovuIntegrations {
     }
   }
 
+  private async createSlackIntegration(command: CreateNovuIntegrationsCommand) {
+    const isSlackTeamsEnabled = await this.featureFlagService.getFlag({
+      user: { _id: command.userId } as UserEntity,
+      environment: { _id: command.environmentId } as EnvironmentEntity,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
+      defaultValue: false,
+    });
+
+    if (!areNovuSlackCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT || !isSlackTeamsEnabled) {
+      return;
+    }
+
+    const slackIntegrationCount = await this.integrationRepository.count({
+      providerId: ChatProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.CHAT,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    if (slackIntegrationCount === 0) {
+      await this.createIntegration.execute(
+        CreateIntegrationCommand.create({
+          name: 'Novu Slack',
+          providerId: ChatProviderIdEnum.Novu,
+          channel: ChannelTypeEnum.CHAT,
+          active: true,
+          check: false,
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
+      );
+    }
+  }
+
   async execute(command: CreateNovuIntegrationsCommand): Promise<void> {
+    const integrationPromises: Array<Promise<void>> = [];
+
     if (!command.channels || command.channels.includes(ChannelTypeEnum.EMAIL)) {
-      await this.createEmailIntegration(command);
+      integrationPromises.push(this.createEmailIntegration(command));
     }
 
     if (!command.channels || command.channels.includes(ChannelTypeEnum.IN_APP)) {
-      await this.createInAppIntegration(command);
+      integrationPromises.push(this.createInAppIntegration(command));
     }
+
+    if (!command.channels || command.channels.includes(ChannelTypeEnum.CHAT)) {
+      integrationPromises.push(this.createSlackIntegration(command));
+    }
+
+    await Promise.all(integrationPromises);
   }
 }

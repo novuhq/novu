@@ -32,25 +32,15 @@ import {
   ActivityTopicDto$outboundSchema,
 } from "./activitytopicdto.js";
 import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
-
-/**
- * Payload of the notification
- */
-export type ActivityNotificationResponseDtoPayload = {};
-
-/**
- * Controls associated with the notification
- */
-export type Controls = {};
-
-/**
- * To field for subscriber definition
- */
-export type ActivityNotificationResponseDtoTo = {};
 
 export type ActivityNotificationResponseDto = {
   /**
@@ -105,7 +95,7 @@ export type ActivityNotificationResponseDto = {
   /**
    * Payload of the notification
    */
-  payload?: ActivityNotificationResponseDtoPayload | undefined;
+  payload?: { [k: string]: any } | undefined;
   /**
    * Tags associated with the notification
    */
@@ -113,165 +103,24 @@ export type ActivityNotificationResponseDto = {
   /**
    * Controls associated with the notification
    */
-  controls?: Controls | undefined;
+  controls?: { [k: string]: any } | undefined;
   /**
    * To field for subscriber definition
    */
-  to?: ActivityNotificationResponseDtoTo | undefined;
+  to?: { [k: string]: any } | undefined;
   /**
    * Topics of the notification
    */
   topics?: Array<ActivityTopicDto> | undefined;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
+  /**
+   * Criticality of the notification
+   */
+  critical?: boolean | undefined;
 };
-
-/** @internal */
-export const ActivityNotificationResponseDtoPayload$inboundSchema: z.ZodType<
-  ActivityNotificationResponseDtoPayload,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type ActivityNotificationResponseDtoPayload$Outbound = {};
-
-/** @internal */
-export const ActivityNotificationResponseDtoPayload$outboundSchema: z.ZodType<
-  ActivityNotificationResponseDtoPayload$Outbound,
-  z.ZodTypeDef,
-  ActivityNotificationResponseDtoPayload
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityNotificationResponseDtoPayload$ {
-  /** @deprecated use `ActivityNotificationResponseDtoPayload$inboundSchema` instead. */
-  export const inboundSchema =
-    ActivityNotificationResponseDtoPayload$inboundSchema;
-  /** @deprecated use `ActivityNotificationResponseDtoPayload$outboundSchema` instead. */
-  export const outboundSchema =
-    ActivityNotificationResponseDtoPayload$outboundSchema;
-  /** @deprecated use `ActivityNotificationResponseDtoPayload$Outbound` instead. */
-  export type Outbound = ActivityNotificationResponseDtoPayload$Outbound;
-}
-
-export function activityNotificationResponseDtoPayloadToJSON(
-  activityNotificationResponseDtoPayload:
-    ActivityNotificationResponseDtoPayload,
-): string {
-  return JSON.stringify(
-    ActivityNotificationResponseDtoPayload$outboundSchema.parse(
-      activityNotificationResponseDtoPayload,
-    ),
-  );
-}
-
-export function activityNotificationResponseDtoPayloadFromJSON(
-  jsonString: string,
-): SafeParseResult<ActivityNotificationResponseDtoPayload, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      ActivityNotificationResponseDtoPayload$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ActivityNotificationResponseDtoPayload' from JSON`,
-  );
-}
-
-/** @internal */
-export const Controls$inboundSchema: z.ZodType<
-  Controls,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type Controls$Outbound = {};
-
-/** @internal */
-export const Controls$outboundSchema: z.ZodType<
-  Controls$Outbound,
-  z.ZodTypeDef,
-  Controls
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Controls$ {
-  /** @deprecated use `Controls$inboundSchema` instead. */
-  export const inboundSchema = Controls$inboundSchema;
-  /** @deprecated use `Controls$outboundSchema` instead. */
-  export const outboundSchema = Controls$outboundSchema;
-  /** @deprecated use `Controls$Outbound` instead. */
-  export type Outbound = Controls$Outbound;
-}
-
-export function controlsToJSON(controls: Controls): string {
-  return JSON.stringify(Controls$outboundSchema.parse(controls));
-}
-
-export function controlsFromJSON(
-  jsonString: string,
-): SafeParseResult<Controls, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Controls$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Controls' from JSON`,
-  );
-}
-
-/** @internal */
-export const ActivityNotificationResponseDtoTo$inboundSchema: z.ZodType<
-  ActivityNotificationResponseDtoTo,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type ActivityNotificationResponseDtoTo$Outbound = {};
-
-/** @internal */
-export const ActivityNotificationResponseDtoTo$outboundSchema: z.ZodType<
-  ActivityNotificationResponseDtoTo$Outbound,
-  z.ZodTypeDef,
-  ActivityNotificationResponseDtoTo
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityNotificationResponseDtoTo$ {
-  /** @deprecated use `ActivityNotificationResponseDtoTo$inboundSchema` instead. */
-  export const inboundSchema = ActivityNotificationResponseDtoTo$inboundSchema;
-  /** @deprecated use `ActivityNotificationResponseDtoTo$outboundSchema` instead. */
-  export const outboundSchema =
-    ActivityNotificationResponseDtoTo$outboundSchema;
-  /** @deprecated use `ActivityNotificationResponseDtoTo$Outbound` instead. */
-  export type Outbound = ActivityNotificationResponseDtoTo$Outbound;
-}
-
-export function activityNotificationResponseDtoToToJSON(
-  activityNotificationResponseDtoTo: ActivityNotificationResponseDtoTo,
-): string {
-  return JSON.stringify(
-    ActivityNotificationResponseDtoTo$outboundSchema.parse(
-      activityNotificationResponseDtoTo,
-    ),
-  );
-}
-
-export function activityNotificationResponseDtoToFromJSON(
-  jsonString: string,
-): SafeParseResult<ActivityNotificationResponseDtoTo, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ActivityNotificationResponseDtoTo$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ActivityNotificationResponseDtoTo' from JSON`,
-  );
-}
 
 /** @internal */
 export const ActivityNotificationResponseDto$inboundSchema: z.ZodType<
@@ -293,12 +142,13 @@ export const ActivityNotificationResponseDto$inboundSchema: z.ZodType<
     .optional(),
   template: ActivityNotificationTemplateResponseDto$inboundSchema.optional(),
   jobs: z.array(ActivityNotificationJobResponseDto$inboundSchema).optional(),
-  payload: z.lazy(() => ActivityNotificationResponseDtoPayload$inboundSchema)
-    .optional(),
+  payload: z.record(z.any()).optional(),
   tags: z.array(z.string()).optional(),
-  controls: z.lazy(() => Controls$inboundSchema).optional(),
-  to: z.lazy(() => ActivityNotificationResponseDtoTo$inboundSchema).optional(),
+  controls: z.record(z.any()).optional(),
+  to: z.record(z.any()).optional(),
   topics: z.array(ActivityTopicDto$inboundSchema).optional(),
+  severity: SeverityLevelEnum$inboundSchema.optional(),
+  critical: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -325,11 +175,13 @@ export type ActivityNotificationResponseDto$Outbound = {
   subscriber?: ActivityNotificationSubscriberResponseDto$Outbound | undefined;
   template?: ActivityNotificationTemplateResponseDto$Outbound | undefined;
   jobs?: Array<ActivityNotificationJobResponseDto$Outbound> | undefined;
-  payload?: ActivityNotificationResponseDtoPayload$Outbound | undefined;
+  payload?: { [k: string]: any } | undefined;
   tags?: Array<string> | undefined;
-  controls?: Controls$Outbound | undefined;
-  to?: ActivityNotificationResponseDtoTo$Outbound | undefined;
+  controls?: { [k: string]: any } | undefined;
+  to?: { [k: string]: any } | undefined;
   topics?: Array<ActivityTopicDto$Outbound> | undefined;
+  severity?: string | undefined;
+  critical?: boolean | undefined;
 };
 
 /** @internal */
@@ -352,12 +204,13 @@ export const ActivityNotificationResponseDto$outboundSchema: z.ZodType<
     .optional(),
   template: ActivityNotificationTemplateResponseDto$outboundSchema.optional(),
   jobs: z.array(ActivityNotificationJobResponseDto$outboundSchema).optional(),
-  payload: z.lazy(() => ActivityNotificationResponseDtoPayload$outboundSchema)
-    .optional(),
+  payload: z.record(z.any()).optional(),
   tags: z.array(z.string()).optional(),
-  controls: z.lazy(() => Controls$outboundSchema).optional(),
-  to: z.lazy(() => ActivityNotificationResponseDtoTo$outboundSchema).optional(),
+  controls: z.record(z.any()).optional(),
+  to: z.record(z.any()).optional(),
   topics: z.array(ActivityTopicDto$outboundSchema).optional(),
+  severity: SeverityLevelEnum$outboundSchema.optional(),
+  critical: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

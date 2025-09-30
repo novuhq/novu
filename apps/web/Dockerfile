@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@10.11.0 --loglevel notice
+RUN npm install -g pnpm@10.16.1 --loglevel notice
 
 COPY .npmrc .
 COPY package.json .
@@ -27,8 +27,6 @@ RUN --mount=type=cache,id=pnpm-store-web,target=/root/.pnpm-store\
 
 RUN pnpm add @babel/core -w
 
-COPY [".prettierrc",".prettierignore", "./"]
-
 RUN CI='' pnpm build:web --skip-nx-cache
 # end build stage
 
@@ -36,7 +34,7 @@ RUN CI='' pnpm build:web --skip-nx-cache
 FROM node:20-alpine
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@10.11.0 http-server --loglevel notice
+RUN npm install -g pnpm@10.16.1 http-server --loglevel notice
 
 USER 1000
 WORKDIR /app

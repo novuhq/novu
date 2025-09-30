@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Delete a Translation - /translations/group/:id/locale/:locale (Delete) #novu-v1', async () => {
+describe('[V1 Translations] Delete a Translation - /translations/group/:id/locale/:locale (Delete) #novu-v2', async () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -13,7 +13,7 @@ describe('Delete a Translation - /translations/group/:id/locale/:locale (Delete)
     });
   });
 
-  it('should delete the translation file', async function () {
+  it('should delete the translation file', async () => {
     const createTranslationGroup = {
       name: 'test',
       identifier: 'test',

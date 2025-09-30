@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Event, ExecuteOutput, HttpQueryKeysEnum, PostActionEnum } from '@novu/framework/internal';
 import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand, InstrumentUsecase } from '@novu/application-generic';
+import { Event, ExecuteOutput, HttpQueryKeysEnum, PostActionEnum } from '@novu/framework/internal';
 
 import { PreviewStepCommand } from './preview-step.command';
 
@@ -26,6 +26,7 @@ export class PreviewStep {
       searchParams: {
         [HttpQueryKeysEnum.WORKFLOW_ID]: command.workflowId,
         [HttpQueryKeysEnum.STEP_ID]: command.stepId,
+        skipLayoutRendering: command.skipLayoutRendering ? 'true' : 'false',
       },
       workflowOrigin: command.workflowOrigin,
       retriesLimit: 1,
@@ -38,6 +39,7 @@ export class PreviewStep {
       payload: command.payload || {},
       state: command.state || [],
       subscriber: command.subscriber || {},
+      context: command.context || {},
       stepId: command.stepId,
       workflowId: command.workflowId,
       action: PostActionEnum.PREVIEW,

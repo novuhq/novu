@@ -1,33 +1,35 @@
-import { HTMLAttributes } from 'react';
-
-import { cn } from '@/utils/ui';
+import { TranslationGroup, TranslationsFilter } from '@/api/translations';
 import { DefaultPagination } from '@/components/default-pagination';
 import {
   Table,
   TableBody,
+  TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
-  TableFooter,
-  TableCell,
 } from '@/components/primitives/table';
-import { TranslationGroup } from '@/api/translations';
-import { DEFAULT_TRANSLATIONS_LIMIT } from './constants';
-
-import { TranslationsFilter, TranslationsUrlState } from './hooks/use-translations-url-state';
-import { useTranslationListLogic } from './hooks/use-translation-list-logic';
-import { useTranslationDrawerState } from './hooks/use-translation-drawer-state';
-import { useDeleteTranslationModal } from './hooks/use-delete-translation-modal';
-import { TranslationListBlank } from './translation-list-blank';
+import { IS_SELF_HOSTED } from '@/config';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
+import { ApiServiceLevelEnum, DEFAULT_LOCALE, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { HTMLAttributes } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ListNoResults } from '../list-no-results';
+import { DEFAULT_TRANSLATIONS_LIMIT } from './constants';
+import { DeleteTranslationGroupDialog } from './delete-translation-modal';
+import { useDeleteTranslationModal } from './hooks/use-delete-translation-modal';
+import { useTranslationListLogic } from './hooks/use-translation-list-logic';
+import { TranslationsUrlState } from './hooks/use-translations-url-state';
+import { TranslationListUpgradeCta } from './translation-list-upgrade-cta';
+import { TranslationOnboardingPage } from './translation-onboarding-page';
 import { TranslationRow, TranslationRowSkeleton } from './translation-row';
 import { TranslationsFilters } from './translations-filters';
-import { TranslationDrawer } from './translation-drawer/translation-drawer';
-import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { TranslationListUpgradeCta } from './translation-list-upgrade-cta';
-import { IS_SELF_HOSTED } from '@/config';
-import { DeleteTranslationGroupDialog } from './delete-translation-modal';
+
+import { IS_ENTERPRISE } from '@/config';
 
 type TranslationListHeaderProps = HTMLAttributes<HTMLDivElement> &
   Pick<TranslationsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -43,7 +45,7 @@ function TranslationListHeader({
   ...props
 }: TranslationListHeaderProps) {
   return (
-    <div className={cn('flex items-center justify-between py-2.5', className)} {...props}>
+    <div className={cn('flex items-center justify-between py-2', className)} {...props}>
       <TranslationsFilters
         onFiltersChange={handleFiltersChange}
         filterValues={filterValues}
@@ -72,7 +74,8 @@ function TranslationTable({ children, data, ...props }: TranslationTableProps) {
       <TableHeader>
         <TableRow>
           <TableHead>Resource</TableHead>
-          <TableHead>Locales</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Languages</TableHead>
           <TableHead>Created at</TableHead>
           <TableHead>Updated at</TableHead>
           <TableHead />
@@ -82,7 +85,7 @@ function TranslationTable({ children, data, ...props }: TranslationTableProps) {
       {data && data.limit < data.total && (
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={3}>
+            <TableCell colSpan={4}>
               <div className="flex items-center justify-between">
                 <span className="text-foreground-600 block text-sm font-normal">
                   Page {currentPage} of {totalPages}
@@ -166,7 +169,7 @@ function TranslationListContainer({
   ...props
 }: TranslationListContainerProps) {
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...props}>
+    <div className={cn('flex h-full flex-col', className)} {...props}>
       <TranslationListHeader
         filterValues={filterValues}
         handleFiltersChange={handleFiltersChange}
@@ -181,22 +184,40 @@ function TranslationListContainer({
 type TranslationListProps = HTMLAttributes<HTMLDivElement>;
 
 export function TranslationList(props: TranslationListProps) {
-  const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =
-    useTranslationListLogic();
-
-  const { selectedTranslationGroup, isDrawerOpen, handleTranslationClick, handleDrawerClose } =
-    useTranslationDrawerState(data?.data);
-
-  const { deleteModalTranslation, isDeletePending, handleDeleteClick, handleDeleteConfirm, handleDeleteCancel } =
-    useDeleteTranslationModal();
-
+  const navigate = useNavigate();
+  const { currentEnvironment } = useEnvironment();
+  const { data: organizationSettings } = useFetchOrganizationSettings();
   const { subscription } = useFetchSubscription();
 
   const canUseTranslationFeature =
     getFeatureForTierAsBoolean(
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) && !IS_SELF_HOSTED;
+    ) &&
+    (!IS_SELF_HOSTED || IS_ENTERPRISE);
+
+  // Only make API call if user has proper tier
+  const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =
+    useTranslationListLogic({ enabled: canUseTranslationFeature });
+
+  const handleTranslationClick = (translation: TranslationGroup) => {
+    if (currentEnvironment?.slug) {
+      const orgDefaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
+      const selectedLocale = translation.locales.includes(orgDefaultLocale) ? orgDefaultLocale : translation.locales[0];
+
+      navigate(
+        buildRoute(ROUTES.TRANSLATIONS_EDIT, {
+          environmentSlug: currentEnvironment.slug,
+          resourceType: translation.resourceType,
+          resourceId: translation.resourceId,
+          locale: selectedLocale,
+        })
+      );
+    }
+  };
+
+  const { deleteModalTranslation, isDeletePending, handleDeleteClick, handleDeleteConfirm, handleDeleteCancel } =
+    useDeleteTranslationModal();
 
   const limit = data?.limit || DEFAULT_TRANSLATIONS_LIMIT;
 
@@ -221,7 +242,7 @@ export function TranslationList(props: TranslationListProps) {
   }
 
   if (!areFiltersApplied && !data?.data.length) {
-    return <TranslationListBlank />;
+    return <TranslationOnboardingPage />;
   }
 
   if (!data?.data.length) {
@@ -233,11 +254,13 @@ export function TranslationList(props: TranslationListProps) {
         isFetching={isFetching}
         {...props}
       >
-        <ListNoResults
-          title="No translations found"
-          description="We couldn't find any translations that match your search criteria. Try adjusting your filters."
-          onClearFilters={resetFilters}
-        />
+        <div className="flex h-full w-full flex-col items-center justify-center">
+          <ListNoResults
+            title="No translations found"
+            description="We couldn't find any translations that match your search criteria. Try adjusting your filters."
+            onClearFilters={resetFilters}
+          />
+        </div>
       </TranslationListContainer>
     );
   }
@@ -258,12 +281,6 @@ export function TranslationList(props: TranslationListProps) {
             onDeleteClick={handleDeleteClick}
           />
         </TranslationTable>
-
-        <TranslationDrawer
-          isOpen={isDrawerOpen}
-          onOpenChange={handleDrawerClose}
-          translationGroup={selectedTranslationGroup}
-        />
       </TranslationListContainer>
 
       {deleteModalTranslation && (

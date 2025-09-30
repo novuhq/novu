@@ -1,9 +1,8 @@
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
-
-import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
 import { PreferencesDBModel, PreferencesEntity } from './preferences.entity';
 import { Preferences } from './preferences.schema';
 

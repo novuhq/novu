@@ -14,20 +14,39 @@ import {
 import { ApiBody, ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   ExternalApiAccessible,
-  UserSession,
-  RequirePermissions,
   ParseSlugEnvironmentIdPipe,
   ParseSlugIdPipe,
+  RequirePermissions,
+  UserSession,
 } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
   DirectionEnum,
-  UserSessionData,
-  ResourceOriginEnum,
   PermissionsEnum,
+  ResourceOriginEnum,
+  UserSessionData,
 } from '@novu/shared';
-import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { DeleteWorkflowCommand } from '../workflows-v1/usecases/delete-workflow/delete-workflow.command';
+import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
+import {
+  CreateWorkflowDto,
+  DuplicateWorkflowDto,
+  GeneratePreviewRequestDto,
+  GeneratePreviewResponseDto,
+  GetListQueryParamsDto,
+  ListWorkflowResponse,
+  PatchWorkflowDto,
+  StepResponseDto,
+  StepUpsertDto,
+  SyncWorkflowDto,
+  UpdateWorkflowDto,
+  WorkflowResponseDto,
+  WorkflowTestDataResponseDto,
+} from './dtos';
 import {
   BuildStepDataCommand,
   BuildStepDataUsecase,
@@ -42,31 +61,12 @@ import {
   PreviewUsecase,
   SyncToEnvironmentCommand,
   SyncToEnvironmentUseCase,
+  UpsertStepDataCommand,
   UpsertWorkflowCommand,
   UpsertWorkflowUseCase,
   WorkflowTestDataCommand,
-  UpsertStepDataCommand,
 } from './usecases';
 import { PatchWorkflowCommand, PatchWorkflowUsecase } from './usecases/patch-workflow';
-import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import {
-  CreateWorkflowDto,
-  DuplicateWorkflowDto,
-  GeneratePreviewRequestDto,
-  GeneratePreviewResponseDto,
-  GetListQueryParamsDto,
-  ListWorkflowResponse,
-  PatchWorkflowDto,
-  StepResponseDto,
-  SyncWorkflowDto,
-  UpdateWorkflowDto,
-  WorkflowResponseDto,
-  WorkflowTestDataResponseDto,
-  StepUpsertDto,
-} from './dtos';
-import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
-import { DeleteWorkflowCommand } from '../workflows-v1/usecases/delete-workflow/delete-workflow.command';
-import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -101,13 +101,11 @@ export class WorkflowController {
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
   ): Promise<WorkflowResponseDto> {
-    const upsertSteps: UpsertStepDataCommand[] = createWorkflowDto.steps.map((step: StepUpsertDto) => ({
-      ...step,
-      controlValues: (step.controlValues as Record<string, unknown> | null | undefined) ?? null,
-    }));
+    const upsertSteps = this.normalizeSteps(createWorkflowDto.steps);
 
     return this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
+        preserveWorkflowId: true,
         workflowDto: {
           ...createWorkflowDto,
           steps: upsertSteps,
@@ -156,10 +154,7 @@ export class WorkflowController {
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
-    const upsertSteps: UpsertStepDataCommand[] = updateWorkflowDto.steps.map((step: StepUpsertDto) => ({
-      ...step,
-      controlValues: (step.controlValues as Record<string, unknown> | null | undefined) ?? null,
-    }));
+    const upsertSteps = this.normalizeSteps(updateWorkflowDto.steps);
 
     return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
@@ -171,6 +166,13 @@ export class WorkflowController {
         workflowIdOrInternalId,
       })
     );
+  }
+
+  private normalizeSteps(steps: StepUpsertDto[]): UpsertStepDataCommand[] {
+    return steps.map((step: StepUpsertDto) => ({
+      ...step,
+      controlValues: (step.controlValues as Record<string, unknown> | null | undefined) ?? null,
+    }));
   }
 
   @Get(':workflowId')

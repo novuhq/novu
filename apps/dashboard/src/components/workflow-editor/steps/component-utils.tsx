@@ -1,9 +1,8 @@
-import { UiComponentEnum } from '@novu/shared';
-
+import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
+import { EmailEditorSelect } from '@/components/email-editor-select';
 import { DelayAmount } from '@/components/workflow-editor/steps/delay/delay-amount';
 import { DigestKey } from '@/components/workflow-editor/steps/digest/digest-key';
 import { DigestWindow } from '@/components/workflow-editor/steps/digest/digest-window';
-import { EmailEditorSelect } from '@/components/email-editor-select';
 import { EmailBody } from '@/components/workflow-editor/steps/email/email-body';
 import { EmailSubject } from '@/components/workflow-editor/steps/email/email-subject';
 import { InAppAction } from '@/components/workflow-editor/steps/in-app/in-app-action';
@@ -11,18 +10,31 @@ import { InAppAvatar } from '@/components/workflow-editor/steps/in-app/in-app-av
 import { InAppBody } from '@/components/workflow-editor/steps/in-app/in-app-body';
 import { InAppRedirect } from '@/components/workflow-editor/steps/in-app/in-app-redirect';
 import { InAppSubject } from '@/components/workflow-editor/steps/in-app/in-app-subject';
+import { ThrottleKey } from '@/components/workflow-editor/steps/throttle/throttle-key';
+import { ThrottleThreshold } from '@/components/workflow-editor/steps/throttle/throttle-threshold';
+import { ThrottleWindow } from '@/components/workflow-editor/steps/throttle/throttle-window';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useWorkflow } from '../workflow-provider';
 import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
 import { DataObject } from './base/data-object';
-import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
-import { useWorkflow } from '../workflow-provider';
+import { LayoutSelect } from './email/layout-select';
 import { useSaveForm } from './save-form-context';
+import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
+import { ExtendToSchedule } from './shared/extend-to-schedule';
 
 const EmailEditorSelectInternal = () => {
   const { isUpdatePatchPending } = useWorkflow();
   const { saveForm } = useSaveForm();
+  const { currentEnvironment } = useEnvironment();
 
-  return <EmailEditorSelect isLoading={isUpdatePatchPending} saveForm={saveForm} />;
+  return (
+    <EmailEditorSelect
+      isLoading={isUpdatePatchPending}
+      saveForm={saveForm}
+      disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
+    />
+  );
 };
 
 export const getComponentByType = ({ component }: { component?: UiComponentEnum }) => {
@@ -80,6 +92,18 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
     case UiComponentEnum.DIGEST_CRON:
       return <DigestWindow />;
 
+    case UiComponentEnum.THROTTLE_TYPE:
+    case UiComponentEnum.THROTTLE_WINDOW:
+    case UiComponentEnum.THROTTLE_UNIT:
+    case UiComponentEnum.THROTTLE_DYNAMIC_KEY:
+      return <ThrottleWindow />;
+
+    case UiComponentEnum.THROTTLE_THRESHOLD:
+      return <ThrottleThreshold />;
+
+    case UiComponentEnum.THROTTLE_KEY:
+      return <ThrottleKey />;
+
     case UiComponentEnum.PUSH_BODY: {
       return <BaseBody />;
     }
@@ -94,6 +118,14 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.CHAT_BODY: {
       return <BaseBody />;
+    }
+
+    case UiComponentEnum.LAYOUT_SELECT: {
+      return <LayoutSelect />;
+    }
+
+    case UiComponentEnum.EXTEND_TO_SCHEDULE: {
+      return <ExtendToSchedule />;
     }
 
     default: {

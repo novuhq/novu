@@ -1,10 +1,18 @@
-import { getFilters } from '@/components/variable/constants';
-import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
-import { LiquidVariable } from '@/utils/parseStepVariables';
-import { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
+import {
+  Completion,
+  CompletionContext,
+  CompletionResult,
+  CompletionSource,
+  startCompletion,
+} from '@codemirror/autocomplete';
+import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 import { EditorView } from '@uiw/react-codemirror';
-import { createRoot } from 'react-dom/client';
 import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
+import { getFilters } from '@/components/variable/constants';
+import { LiquidVariable } from '@/utils/parseStepVariables';
+import { isValidContextVariable } from './context-variable-utils';
 import { getVariablesAtPositionWithLoopProperties } from './liquid-scope-analyzer';
 
 export interface CompletionOption {
@@ -18,7 +26,161 @@ export interface CompletionOption {
 // Novu JIT namespaces
 const PAYLOAD_NAMESPACE = 'payload';
 const SUBSCRIBER_DATA_NAMESPACE = 'subscriber.data';
+const CONTEXT_NAMESPACE = 'context';
 const STEP_PAYLOAD_REGEX = /^steps\.[a-zA-Z0-9_-]+\.events/;
+
+/**
+ * Creates JIT (Just-In-Time) variable suggestions based on search text and namespaces
+ */
+function createJitVariables({
+  searchText,
+  namespaces,
+  isPayloadSchemaEnabled,
+  onCreateNewVariable,
+}: {
+  searchText: string;
+  namespaces: string[];
+  isPayloadSchemaEnabled?: boolean;
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
+}): LiquidVariable[] {
+  // Skip if user is typing steps.* to avoid conflicts
+  if (searchText.startsWith('steps.')) {
+    return [];
+  }
+
+  const variables: LiquidVariable[] = [];
+
+  for (const namespace of namespaces) {
+    // Case 1: User typed "namespace.something" (e.g., "context.tenant", "payload.user")
+    if (searchText.startsWith(namespace + '.') && searchText !== namespace) {
+      variables.push(...handleNamespacedInput(searchText, namespace, isPayloadSchemaEnabled, onCreateNewVariable));
+    }
+    // Case 2: User typed something without namespace (e.g., "tenant", "user")
+    else if (!searchText.startsWith(namespace)) {
+      variables.push(...handleNonNamespacedInput(searchText, namespace, isPayloadSchemaEnabled, onCreateNewVariable));
+    }
+  }
+
+  return variables;
+}
+
+/**
+ * Handles input that starts with a namespace (e.g., "context.tenant", "payload.user")
+ */
+function handleNamespacedInput(
+  searchText: string,
+  namespace: string,
+  isPayloadSchemaEnabled?: boolean,
+  onCreateNewVariable?: (variableName: string) => Promise<void>
+): LiquidVariable[] {
+  // Special handling for context variables
+  if (namespace === CONTEXT_NAMESPACE) {
+    return handleContextNamespacedInput(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace);
+  }
+
+  // Standard handling for other namespaces (payload, subscriber.data, etc.)
+  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
+}
+
+/**
+ * Handles context-specific namespaced input (e.g., "context.tenant")
+ */
+function handleContextNamespacedInput(
+  searchText: string,
+  isPayloadSchemaEnabled?: boolean,
+  onCreateNewVariable?: (variableName: string) => Promise<void>,
+  namespace?: string
+): LiquidVariable[] {
+  const parts = searchText.split('.');
+
+  // Incomplete context variable like "context.tenant" - suggest both .id and .data
+  if (parts.length === 2) {
+    const contextType = parts[1];
+    if (contextType && contextType.trim() !== '') {
+      return [
+        createJitVariable(`${searchText}.id`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
+        createJitVariable(`${searchText}.data`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
+      ];
+    }
+    return [];
+  }
+
+  // Complete context variable - validate before suggesting
+  if (!isValidContextVariable(searchText)) {
+    return [];
+  }
+
+  return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
+}
+
+/**
+ * Handles input without namespace (e.g., "tenant", "user")
+ */
+function handleNonNamespacedInput(
+  searchText: string,
+  namespace: string,
+  isPayloadSchemaEnabled?: boolean,
+  onCreateNewVariable?: (variableName: string) => Promise<void>
+): LiquidVariable[] {
+  const trimmedSearch = searchText.trim();
+
+  // Special handling for context namespace - suggest both .id and .data
+  if (namespace === CONTEXT_NAMESPACE && trimmedSearch && !trimmedSearch.includes('.')) {
+    return [
+      createJitVariable(`${namespace}.${trimmedSearch}.id`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
+      createJitVariable(`${namespace}.${trimmedSearch}.data`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
+    ];
+  }
+
+  // Standard handling for other namespaces
+  const suggestedVariableName = `${namespace}.${trimmedSearch}`;
+
+  // For context variables, validate before suggesting
+  if (namespace === CONTEXT_NAMESPACE && !isValidContextVariable(suggestedVariableName)) {
+    return [];
+  }
+
+  return [createJitVariable(suggestedVariableName, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
+}
+
+/**
+ * Creates a single JIT variable with optional creation info panel
+ */
+function createJitVariable(
+  variableName: string,
+  isPayloadSchemaEnabled?: boolean,
+  onCreateNewVariable?: (variableName: string) => Promise<void>,
+  namespace?: string
+): LiquidVariable {
+  const isPayloadVariable = namespace === PAYLOAD_NAMESPACE;
+
+  const baseVariable: LiquidVariable = {
+    name: variableName,
+    type: 'variable',
+    isNewSuggestion: true,
+  };
+
+  // Add creation info panel if needed
+  if (isPayloadVariable && isPayloadSchemaEnabled && onCreateNewVariable) {
+    baseVariable.info = () => {
+      const dom = createInfoPanel({
+        component: (
+          <NewVariablePreview
+            onCreateClick={() => {
+              onCreateNewVariable(variableName);
+            }}
+          />
+        ),
+      });
+      return {
+        dom,
+        destroy: () => dom.remove(),
+      };
+    };
+  }
+
+  return baseVariable;
+}
 
 /**
  * Create a DOM element to render the info panel in Codemirror.
@@ -89,7 +251,8 @@ export const completions =
     scopedVariables: LiquidVariable[],
     variables: LiquidVariable[],
     onCreateNewVariable?: (variableName: string) => Promise<void>,
-    isPayloadSchemaEnabled?: boolean
+    isPayloadSchemaEnabled?: boolean,
+    isContextEnabled?: boolean
   ) =>
   (context: CompletionContext): CompletionResult | null => {
     const { state, pos } = context;
@@ -122,7 +285,8 @@ export const completions =
       scopedVariables,
       variables,
       onCreateNewVariable,
-      isPayloadSchemaEnabled
+      isPayloadSchemaEnabled,
+      isContextEnabled
     );
 
     // If we have matches or we're in a valid context, show them
@@ -191,7 +355,8 @@ function getMatchingVariables(
   scopedVariables: LiquidVariable[],
   variables: LiquidVariable[],
   onCreateNewVariable?: (variableName: string) => Promise<void>,
-  isPayloadSchemaEnabled?: boolean
+  isPayloadSchemaEnabled?: boolean,
+  isContextEnabled?: boolean
 ): LiquidVariable[] {
   const allVariables = [...scopedVariables, ...variables];
   if (!searchText) return allVariables;
@@ -217,80 +382,16 @@ function getMatchingVariables(
     return acc;
   }, []);
 
-  // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, steps.digest-step.events[0].payload.foo
-  const jitVariables = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ...stepPayloadNamespaces].reduce<
-    LiquidVariable[]
-  >((acc, namespace) => {
-    // If the user is typing steps.*, don't suggest any variables like payload.steps.digest-step.events
-    if (searchText.startsWith('steps.')) {
-      return acc;
-    }
+  // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, context.tenant.data, steps.digest-step.events[0].payload.foo
+  const baseNamespaces = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ...stepPayloadNamespaces];
+  const namespaces = isContextEnabled ? [...baseNamespaces, CONTEXT_NAMESPACE] : baseNamespaces;
 
-    if (searchText.startsWith(namespace + '.') && searchText !== namespace) {
-      // Ensure that if the user types payload.foo the first suggestion is payload.foo
-      acc.push({
-        name: searchText,
-        type: 'variable',
-        isNewSuggestion: true,
-        info: () => {
-          if (!isPayloadSchemaEnabled) {
-            return null;
-          }
-
-          const dom = createInfoPanel({
-            component: (
-              <NewVariablePreview
-                onCreateClick={() => {
-                  onCreateNewVariable?.(searchText.replace(namespace + '.', ''));
-                }}
-              />
-            ),
-          });
-          return {
-            dom,
-            destroy: () => {
-              dom.remove();
-            },
-          };
-        },
-      });
-    } else if (!searchText.startsWith(namespace)) {
-      const suggestedVariableName = `${namespace}.${searchText.trim()}`;
-      const isPayloadVariable = namespace === PAYLOAD_NAMESPACE;
-
-      // For payload variables, treat them as new suggestions with creation capability
-      acc.push({
-        name: suggestedVariableName,
-        type: 'variable',
-        isNewSuggestion: isPayloadVariable,
-        ...(isPayloadVariable && {
-          info: () => {
-            if (!isPayloadSchemaEnabled) {
-              return null;
-            }
-
-            const dom = createInfoPanel({
-              component: (
-                <NewVariablePreview
-                  onCreateClick={() => {
-                    onCreateNewVariable?.(searchText.trim());
-                  }}
-                />
-              ),
-            });
-            return {
-              dom,
-              destroy: () => {
-                dom.remove();
-              },
-            };
-          },
-        }),
-      });
-    }
-
-    return acc;
-  }, []);
+  const jitVariables = createJitVariables({
+    searchText,
+    namespaces,
+    isPayloadSchemaEnabled,
+    onCreateNewVariable,
+  });
 
   const prefix = searchText.split('.')[0];
   const localVariable = scopedVariables.find((v) => v.name === prefix);
@@ -319,11 +420,80 @@ function getMatchingVariables(
   return existingMatchingVariables;
 }
 
+function createTranslationNamespaceCompletion(): Completion {
+  return {
+    label: TRANSLATION_NAMESPACE_SEPARATOR,
+    displayLabel: 't.',
+    type: 'translation',
+  };
+}
+
+function applyTranslationNamespaceCompletion(
+  view: EditorView,
+  completion: Completion,
+  from: number,
+  to: number,
+  onVariableSelect?: (completion: CompletionOption) => void
+): boolean {
+  const content = view.state.doc.toString();
+  const beforeCursor = content.slice(0, from);
+  const afterCursor = content.slice(to);
+
+  const needsOpening = !beforeCursor.endsWith('{{');
+  const selectedValue = completion.label;
+
+  // Remove auto-inserted closing braces if present
+  const finalTo = afterCursor.startsWith('}}') ? to + 2 : to;
+  const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}`;
+
+  onVariableSelect?.(completion as CompletionOption);
+
+  view.dispatch({
+    changes: { from, to: finalTo, insert: wrappedValue },
+    selection: { anchor: from + wrappedValue.length },
+  });
+
+  // Trigger translation autocomplete
+  setTimeout(() => startCompletion(view), 0);
+
+  return true;
+}
+
+function applyRegularCompletion(
+  view: EditorView,
+  completion: Completion,
+  from: number,
+  to: number,
+  onVariableSelect?: (completion: CompletionOption) => void
+): boolean {
+  const selectedValue = completion.label;
+  const content = view.state.doc.toString();
+  const beforeCursor = content.slice(0, from);
+  const afterCursor = content.slice(to);
+
+  const needsOpening = !beforeCursor.endsWith('{{');
+  const needsClosing = !afterCursor.startsWith('}}');
+
+  const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
+  const finalCursorPos = from + wrappedValue.length;
+
+  onVariableSelect?.(completion as CompletionOption);
+
+  view.dispatch({
+    changes: { from, to, insert: wrappedValue },
+    selection: { anchor: finalCursorPos },
+  });
+
+  return true;
+}
+
 export function createAutocompleteSource(
   variables: LiquidVariable[],
   onVariableSelect?: (completion: CompletionOption) => void,
   onCreateNewVariable?: (variableName: string) => Promise<void>,
-  isPayloadSchemaEnabled?: boolean
+  isPayloadSchemaEnabled?: boolean,
+  isTranslationEnabled?: boolean,
+  isContextEnabled?: boolean
 ): CompletionSource {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
@@ -336,8 +506,19 @@ export function createAutocompleteSource(
       displayLabel: variable,
       type: 'local',
     }));
-    const options = completions(scopedLiquidVariables, variables, onCreateNewVariable, isPayloadSchemaEnabled)(context);
+    const options = completions(
+      scopedLiquidVariables,
+      variables,
+      onCreateNewVariable,
+      isPayloadSchemaEnabled,
+      isContextEnabled
+    )(context);
     if (!options) return null;
+
+    // Add translation namespace variable if translation feature is enabled
+    if (isTranslationEnabled) {
+      options.options = [createTranslationNamespaceCompletion(), ...options.options] as Completion[];
+    }
 
     const { from, to } = options;
 
@@ -349,30 +530,11 @@ export function createAutocompleteSource(
           ({
             ...option,
             apply: (view: EditorView, completion: CompletionOption, from: number, to: number) => {
-              const selectedValue = completion.label;
+              if (completion.type === 'translation') {
+                return applyTranslationNamespaceCompletion(view, completion, from, to, onVariableSelect);
+              }
 
-              const content = view.state.doc.toString();
-              const beforeCursor = content.slice(0, from);
-              const afterCursor = content.slice(to);
-
-              // Ensure proper {{ }} wrapping
-              const needsOpening = !beforeCursor.endsWith('{{');
-              const needsClosing = !afterCursor.startsWith('}}');
-
-              const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
-
-              // Calculate the final cursor position
-              // Add 2 if we need to account for closing brackets
-              const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);
-
-              onVariableSelect?.(completion);
-
-              view.dispatch({
-                changes: { from, to, insert: wrappedValue },
-                selection: { anchor: finalCursorPos },
-              });
-
-              return true;
+              return applyRegularCompletion(view, completion, from, to, onVariableSelect);
             },
           }) as Completion
       ),

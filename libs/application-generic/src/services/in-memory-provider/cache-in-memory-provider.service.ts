@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { InMemoryProviderService } from './in-memory-provider.service';
-import { InMemoryProviderEnum, InMemoryProviderClient, ScanStream } from './types';
+import { InMemoryProviderClient, InMemoryProviderEnum, ScanStream } from './types';
 import { isClusterModeEnabled } from './utils';
 
 const LOG_CONTEXT = 'CacheInMemoryProviderService';
@@ -20,15 +20,19 @@ export class CacheInMemoryProviderService {
 
   /**
    * Rules for the provider selection:
-   * - For our self hosted users we assume all of them have a single node Redis
-   * instance.
-   * - For Novu we will use Elasticache. We fallback to a Redis Cluster configuration
+   * - For self hosted non-enterprise users we use a single node Redis instance.
+   * - For self hosted enterprise users we use Redis Master-Slave architecture.
+   * - For Novu cloud we use Elasticache. We fallback to a Redis Cluster configuration
    * if Elasticache not configured properly. That's happening in the provider
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED) {
+    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
       return InMemoryProviderEnum.REDIS;
+    }
+
+    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'true') {
+      return InMemoryProviderEnum.REDIS_MASTER_SLAVE;
     }
 
     return InMemoryProviderEnum.ELASTICACHE;
@@ -58,7 +62,7 @@ export class CacheInMemoryProviderService {
   }
 
   public getClientStatus(): string {
-    return this.getClient().status;
+    return this.getClient()?.status || 'disconnected';
   }
 
   public getTtl(): number {

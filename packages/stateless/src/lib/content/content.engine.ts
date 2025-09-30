@@ -1,16 +1,10 @@
 import Handlebars from 'handlebars';
-import {
-  IAttachmentOptions,
-  ITriggerPayload,
-} from '../template/template.interface';
+import { ChannelData } from '../provider/channel-data.type';
+import { IAttachmentOptions } from '../template/template.interface';
 
-Handlebars.registerHelper(
-  'equals',
-  function helper(this: typeof Handlebars, arg1, arg2, options) {
-    // eslint-disable-next-line eqeqeq
-    return arg1 == arg2 ? options.fn(this) : options.inverse(this);
-  },
-);
+Handlebars.registerHelper('equals', function helper(this: typeof Handlebars, arg1, arg2, options) {
+  return arg1 == arg2 ? options.fn(this) : options.inverse(this);
+});
 
 type ContentEnginePayload = {
   [key: string]:
@@ -24,7 +18,8 @@ type ContentEnginePayload = {
     | undefined
     | IAttachmentOptions
     | IAttachmentOptions[]
-    | Record<string, unknown>;
+    | Record<string, unknown>
+    | ChannelData;
 };
 
 export interface IContentEngine {
@@ -50,10 +45,8 @@ function getHandlebarsVariables(input: string): string[] {
   return ast.body
     .filter(({ type }: hbs.AST.Statement) => type === 'MustacheStatement')
     .map((statement: hbs.AST.Statement) => {
-      const moustacheStatement: hbs.AST.MustacheStatement =
-        statement as hbs.AST.MustacheStatement;
-      const paramsExpressionList =
-        moustacheStatement.params as hbs.AST.PathExpression[];
+      const moustacheStatement: hbs.AST.MustacheStatement = statement as hbs.AST.MustacheStatement;
+      const paramsExpressionList = moustacheStatement.params as hbs.AST.PathExpression[];
       const pathExpression = moustacheStatement.path as hbs.AST.PathExpression;
 
       return paramsExpressionList[0]?.original || pathExpression.original;

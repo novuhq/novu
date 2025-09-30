@@ -1,14 +1,34 @@
 import { Injectable } from '@nestjs/common';
-
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  dashboardSanitizeControlValues,
+  ExecuteBridgeRequest,
+  ExecuteBridgeRequestCommand,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   ControlValuesRepository,
-  NotificationTemplateEntity,
   EnvironmentRepository,
-  JobRepository,
-  NotificationTemplateRepository,
-  MessageRepository,
   JobEntity,
+  JobRepository,
+  MessageRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
 } from '@novu/dal';
+import {
+  DelayResult,
+  DigestResult,
+  Event,
+  ExecuteOutput,
+  InAppResult,
+  PostActionEnum,
+  State,
+  ThrottleResult,
+} from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
@@ -18,27 +38,6 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
 } from '@novu/shared';
-import {
-  DigestResult,
-  Event,
-  State,
-  PostActionEnum,
-  ExecuteOutput,
-  DelayResult,
-  InAppResult,
-} from '@novu/framework/internal';
-
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  dashboardSanitizeControlValues,
-  DetailEnum,
-  ExecuteBridgeRequest,
-  ExecuteBridgeRequestCommand,
-  Instrument,
-  InstrumentUsecase,
-  PinoLogger,
-} from '@novu/application-generic';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
 
 @Injectable()
@@ -100,7 +99,7 @@ export class ExecuteBridgeJob {
       throw new Error(`Bridge URL is not set for environment id: ${environment._id}`);
     }
 
-    const { subscriber, payload: originalPayload } = command.variables || {};
+    const { subscriber, payload: originalPayload, context } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
 
     const state = await this.generateState(command);
@@ -114,6 +113,7 @@ export class ExecuteBridgeJob {
       controls: variablesStores ?? {},
       state,
       subscriber: subscriber ?? {},
+      context: context ?? {},
     };
 
     const workflowId = isStateful
@@ -133,20 +133,9 @@ export class ExecuteBridgeJob {
       searchParams: {
         workflowId,
         stepId,
+        jobId: command.job._id,
       },
     });
-
-    const executionDetailsCommand: CreateExecutionDetailsCommand = {
-      ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-      detail: DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED,
-      source: ExecutionDetailsSourceEnum.INTERNAL,
-      status: ExecutionDetailsStatusEnum.PENDING,
-      isTest: false,
-      isRetry: false,
-      raw: JSON.stringify(bridgeResponse.metadata),
-    };
-
-    await this.createExecutionDetails.execute(executionDetailsCommand);
 
     return bridgeResponse;
   }
@@ -170,7 +159,6 @@ export class ExecuteBridgeJob {
 
   private normalizePayload(originalPayload: ITriggerPayload = {}) {
     // Remove internal params
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { __source, ...payload } = originalPayload;
 
     return payload;
@@ -305,9 +293,24 @@ export class ExecuteBridgeJob {
           } satisfies InAppResult;
         }
       }
-      default: {
-        return {};
+      case 'throttle': {
+        const stepOutput = job.stepOutput as ThrottleResult | undefined;
+
+        if (!stepOutput) {
+          return {
+            throttled: false,
+          } satisfies ThrottleResult;
+        }
+
+        return {
+          throttled: stepOutput.throttled,
+          executionCount: stepOutput.executionCount,
+          threshold: stepOutput.threshold,
+          windowStart: stepOutput.windowStart,
+        } satisfies ThrottleResult;
       }
+      default:
+        return {};
     }
   }
 

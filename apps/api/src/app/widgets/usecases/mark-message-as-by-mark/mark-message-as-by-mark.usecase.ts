@@ -1,7 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-
-import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { MessagesStatusEnum } from '@novu/shared';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
@@ -9,11 +6,21 @@ import {
   buildSubscriberKey,
   CachedResponse,
   InvalidateCacheService,
+  messageWebhookMapper,
+  SendWebhookMessage,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-import { MarkMessageAsByMarkCommand } from './mark-message-as-by-mark.command';
+import {
+  EnvironmentRepository,
+  MessageEntity,
+  MessageRepository,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
+import { MessagesStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 import { mapMarkMessageToWebSocketEvent } from '../../../shared/helpers';
 import { MessageResponseDto } from '../../dtos/message-response.dto';
+import { MarkMessageAsByMarkCommand } from './mark-message-as-by-mark.command';
 
 @Injectable()
 export class MarkMessageAsByMark {
@@ -22,7 +29,9 @@ export class MarkMessageAsByMark {
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private sendWebhookMessage: SendWebhookMessage,
+    private environmentRepository: EnvironmentRepository
   ) {}
 
   async execute(command: MarkMessageAsByMarkCommand): Promise<MessageResponseDto[]> {
@@ -33,6 +42,15 @@ export class MarkMessageAsByMark {
 
     if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 
+    const environment = await this.environmentRepository.findOne(
+      {
+        _id: command.environmentId,
+      },
+      'webhookAppId identifier'
+    );
+    if (!environment) {
+      throw new Error(`Environment not found for id ${command.environmentId}`);
+    }
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
         subscriberId: command.subscriberId,
@@ -47,23 +65,40 @@ export class MarkMessageAsByMark {
       }),
     });
 
-    await this.messageRepository.changeMessagesStatus({
+    const updatedMessages = await this.messageRepository.changeMessagesStatus({
       environmentId: command.environmentId,
       subscriberId: subscriber._id,
       messageIds: command.messageIds,
       markAs: command.markAs,
     });
 
-    const messages: MessageEntity[] = await this.messageRepository.find({
-      _environmentId: command.environmentId,
-      _id: {
-        $in: command.messageIds,
-      },
-    });
+    await this.updateServices(command, subscriber, updatedMessages, command.markAs);
 
-    await this.updateServices(command, subscriber, messages, command.markAs);
+    if (command.markAs !== MessagesStatusEnum.UNSEEN) {
+      let eventType = WebhookEventEnum.MESSAGE_SEEN;
+      if (command.markAs === MessagesStatusEnum.READ) {
+        eventType = WebhookEventEnum.MESSAGE_READ;
+      } else if (command.markAs === MessagesStatusEnum.UNREAD) {
+        eventType = WebhookEventEnum.MESSAGE_UNREAD;
+      }
 
-    return messages.map(mapMessageEntityToResponseDto);
+      const webhookPromises = updatedMessages.map((message) =>
+        this.sendWebhookMessage.execute({
+          eventType: eventType,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId),
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          environment,
+        })
+      );
+
+      await Promise.all(webhookPromises);
+    }
+
+    return updatedMessages.map(mapMessageEntityToResponseDto);
   }
 
   private async updateServices(command: MarkMessageAsByMarkCommand, subscriber, messages, markAs: MessagesStatusEnum) {

@@ -1,4 +1,7 @@
 import {
+  ContextKey,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
   ITenantDefine,
   IWorkflowStepMetadata,
   JobStatusEnum,
@@ -7,18 +10,21 @@ import {
   WorkflowPreferences,
 } from '@novu/shared';
 import { Types } from 'mongoose';
-
-import { NotificationStepEntity } from '../notification-template';
-import type { EnvironmentId } from '../environment';
-import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types';
+import type { EnvironmentId } from '../environment';
+import { NotificationStepEntity } from '../notification-template';
+import type { OrganizationId } from '../organization';
 
 export { JobStatusEnum };
+
+export type DeliveryLifecycleState = {
+  status?: DeliveryLifecycleStatus;
+  detail?: DeliveryLifecycleDetail;
+};
 
 export class JobEntity {
   _id: string;
   identifier: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
   overrides: TriggerOverrides;
   step: NotificationStepEntity;
@@ -35,7 +41,7 @@ export class JobEntity {
   delay?: number;
   _parentId?: string;
   status: JobStatusEnum;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deliveryLifecycleState?: DeliveryLifecycleState;
   error?: any;
   createdAt: string;
   updatedAt: string;
@@ -48,6 +54,11 @@ export class JobEntity {
   actorId?: string;
   stepOutput?: Record<string, unknown>;
   preferences?: WorkflowPreferences;
+  contextKeys?: ContextKey[];
+  /**
+   * used to track the number of times a step has been extended to the next available time in the subscriber schedule
+   */
+  scheduleExtensionsCount?: number;
 }
 
 export type JobDBModel = ChangePropsValueType<

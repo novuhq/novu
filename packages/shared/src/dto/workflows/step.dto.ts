@@ -1,6 +1,6 @@
+import { ResourceOriginEnum, Slug, StepTypeEnum } from '../../types';
+import { RuntimeIssue } from '../../utils/issues';
 import type { JSONSchemaDto } from './json-schema-dto';
-import { Slug, StepTypeEnum, ResourceOriginEnum } from '../../types';
-import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from './step-content-issue.enum';
 
 export type StepResponseDto = {
   controls: Controls;
@@ -32,34 +32,25 @@ export type StepDto = {
   type: StepTypeEnum;
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface Issue<T> {
-  issueType: T;
-  variableName?: string;
-  message: string;
+export class StepIssuesDto {
+  controls?: Record<string, RuntimeIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
 }
 
-export class StepIssuesDto {
-  controls?: Record<string, StepContentIssue[]>;
-  integration?: Record<string, StepIntegrationIssue[]>;
-}
+export type StepListResponseDto = {
+  slug: Slug;
+  type: StepTypeEnum;
+  issues?: StepIssuesDto;
+};
 
 export type StepCreateAndUpdateKeys = keyof StepCreateDto | keyof StepUpdateDto;
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface StepContentIssue extends Issue<StepContentIssueEnum> {}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface StepIntegrationIssue extends Issue<StepIntegrationIssueEnum> {}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface StepIssue extends Issue<StepIssueEnum> {}
 
 export enum UiSchemaGroupEnum {
   IN_APP = 'IN_APP',
   EMAIL = 'EMAIL',
   DIGEST = 'DIGEST',
   DELAY = 'DELAY',
+  THROTTLE = 'THROTTLE',
   SMS = 'SMS',
   CHAT = 'CHAT',
   PUSH = 'PUSH',
@@ -89,6 +80,13 @@ export enum UiComponentEnum {
   DELAY_TYPE = 'DELAY_TYPE',
   DELAY_AMOUNT = 'DELAY_AMOUNT',
   DELAY_UNIT = 'DELAY_UNIT',
+  THROTTLE_TYPE = 'THROTTLE_TYPE',
+  THROTTLE_WINDOW = 'THROTTLE_WINDOW',
+  THROTTLE_UNIT = 'THROTTLE_UNIT',
+  THROTTLE_DYNAMIC_KEY = 'THROTTLE_DYNAMIC_KEY',
+  THROTTLE_THRESHOLD = 'THROTTLE_THRESHOLD',
+  THROTTLE_KEY = 'THROTTLE_KEY',
+  EXTEND_TO_SCHEDULE = 'EXTEND_TO_SCHEDULE',
   SMS_BODY = 'SMS_BODY',
   CHAT_BODY = 'CHAT_BODY',
   PUSH_BODY = 'PUSH_BODY',

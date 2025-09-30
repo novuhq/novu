@@ -1,4 +1,13 @@
-import { forwardRef, Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  Instrument,
+  InstrumentUsecase,
+  RetryOnError,
+  StepRunRepository,
+} from '@novu/application-generic';
 import { IDelayOrDigestJobResult, JobEntity, JobRepository, NotificationRepository } from '@novu/dal';
 import {
   DigestCreationResultEnum,
@@ -10,14 +19,6 @@ import {
   IDigestTimedMetadata,
   JobStatusEnum,
 } from '@novu/shared';
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-  Instrument,
-  InstrumentUsecase,
-  RetryOnError,
-} from '@novu/application-generic';
 import { isBefore } from 'date-fns';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 
@@ -29,7 +30,8 @@ export class MergeOrCreateDigest {
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => CreateExecutionDetails))
     private createExecutionDetails: CreateExecutionDetails,
-    private notificationRepository: NotificationRepository
+    private notificationRepository: NotificationRepository,
+    private stepRunRepository: StepRunRepository
   ) {}
 
   @InstrumentUsecase()
@@ -37,9 +39,7 @@ export class MergeOrCreateDigest {
     const { job } = command;
 
     const digestMeta = job.digest as IDigestBaseMetadata;
-    const digestAction = command.filtered
-      ? { digestResult: DigestCreationResultEnum.SKIPPED }
-      : await this.computeDigestLogicBasedOnExistingDigestState(job, digestMeta);
+    const digestAction = await this.computeDigestLogicBasedOnExistingDigestState(job, digestMeta);
 
     switch (digestAction.digestResult) {
       case DigestCreationResultEnum.MERGED: {
@@ -53,7 +53,7 @@ export class MergeOrCreateDigest {
         return await this.processMergedDigest(job, digestAction.activeDigestId, digestAction.activeNotificationId);
       }
       case DigestCreationResultEnum.SKIPPED:
-        return await this.processSkippedDigest(job, command.filtered);
+        return await this.processSkippedDigest(job);
       case DigestCreationResultEnum.CREATED:
         return await this.processCreatedDigest(digestMeta as IDigestBaseMetadata, job);
       default:
@@ -84,6 +84,12 @@ export class MergeOrCreateDigest {
     activeDigestId: string,
     activeNotificationId: string
   ): Promise<DigestCreationResultEnum> {
+    const childJobsUpdated = await this.jobRepository.updateAllChildJobStatus(
+      job,
+      JobStatusEnum.MERGED,
+      activeDigestId
+    );
+
     await Promise.all([
       this.jobRepository.update(
         {
@@ -97,7 +103,6 @@ export class MergeOrCreateDigest {
           },
         }
       ),
-      this.jobRepository.updateAllChildJobStatus(job, JobStatusEnum.MERGED, activeDigestId),
       this.digestMergedExecutionDetails(job),
       this.notificationRepository.update(
         {
@@ -110,13 +115,16 @@ export class MergeOrCreateDigest {
           },
         }
       ),
+      this.stepRunRepository.createMany([job, ...childJobsUpdated], {
+        status: JobStatusEnum.MERGED,
+      }),
     ]);
 
     return DigestCreationResultEnum.MERGED;
   }
 
   @Instrument()
-  private async processSkippedDigest(job: JobEntity, filtered = false): Promise<DigestCreationResultEnum> {
+  private async processSkippedDigest(job: JobEntity): Promise<DigestCreationResultEnum> {
     await Promise.all([
       this.jobRepository.update(
         {
@@ -129,7 +137,7 @@ export class MergeOrCreateDigest {
           },
         }
       ),
-      this.digestSkippedExecutionDetails(job, filtered),
+      this.digestSkippedExecutionDetails(job),
     ]);
 
     return DigestCreationResultEnum.SKIPPED;
@@ -170,7 +178,7 @@ export class MergeOrCreateDigest {
 
   private isBackOffDigestType(job: JobEntity, digestMeta?: IDigestBaseMetadata): digestMeta is IDigestRegularMetadata {
     return !!(
-      job.digest?.type === DigestTypeEnum.BACKOFF ||
+      (job.digest && 'type' in job.digest && job.digest.type === DigestTypeEnum.BACKOFF) ||
       (job.digest as IDigestRegularMetadata)?.backoff ||
       (digestMeta && 'backoff' in digestMeta && digestMeta?.backoff)
     );
@@ -221,11 +229,11 @@ export class MergeOrCreateDigest {
     );
   }
 
-  private async digestSkippedExecutionDetails(job: JobEntity, filtered: boolean): Promise<void> {
+  private async digestSkippedExecutionDetails(job: JobEntity): Promise<void> {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: filtered ? DetailEnum.FILTER_STEPS : DetailEnum.DIGEST_SKIPPED,
+        detail: DetailEnum.DIGEST_SKIPPED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,

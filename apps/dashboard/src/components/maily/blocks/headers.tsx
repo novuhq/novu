@@ -1,10 +1,10 @@
+import { BlockItem } from '@maily-to/core/blocks';
 import { EmailHeader } from '@/components/icons/email-header';
 import { EmailHeaderCenteredLogoWithBorder } from '@/components/icons/email-header-centered-logo-with-border';
 import { EmailHeaderLogoWithCoverImage } from '@/components/icons/email-header-logo-with-cover-image';
 import { EmailHeaderLogoWithText } from '@/components/icons/email-header-logo-with-text';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { BlockItem } from '@maily-to/core/blocks';
 
 export const createHeaderCenteredLogoWithBorder: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
   props
@@ -179,6 +179,8 @@ export const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof 
               type: 'image',
               attrs: {
                 src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp',
+                width: '100%',
+                height: 'auto',
                 alt: null,
                 title: null,
                 alignment: 'center',
@@ -186,6 +188,7 @@ export const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof 
                 isExternalLinkVariable: false,
                 isSrcVariable: false,
                 showIfKey: null,
+                lockAspectRatio: false,
               },
             },
             {

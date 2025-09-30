@@ -148,52 +148,29 @@ export function CodeBlock({
 
     const lines = code.split('\n');
 
-    secretMask.forEach(({ line, maskStart, maskEnd }) => {
-      if (line > lines.length) return;
+    for (const mask of secretMask) {
+      const { line, maskStart, maskEnd } = mask;
+      if (line > lines.length) continue;
 
       const lineIndex = line - 1;
       const lineContent = lines[lineIndex];
 
       if (maskStart !== undefined && maskEnd !== undefined) {
-        // Mask only part of the line
         lines[lineIndex] =
           lineContent.substring(0, maskStart) + '•'.repeat(maskEnd - maskStart) + lineContent.substring(maskEnd);
       } else {
-        // Mask the entire line
         lines[lineIndex] = '•'.repeat(lineContent.length);
       }
-    });
+    }
 
     return lines.join('\n');
   };
-
-  const ActionButtons = () => (
-    <>
-      {hasSecrets && (
-        <button
-          type="button"
-          onClick={() => setShowSecrets(!showSecrets)}
-          className={cn(
-            'rounded-md p-2 transition-all duration-200 active:scale-95',
-            theme === 'light'
-              ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-              : 'text-foreground-400 hover:text-foreground-50 hover:bg-[#32424a]'
-          )}
-          title={showSecrets ? 'Hide secrets' : 'Reveal secrets'}
-        >
-          {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      )}
-      {actionButtons ?? <CopyToClipboard content={code} theme={theme} title="Copy code" />}
-    </>
-  );
 
   return (
     <div
       className={cn(
         'w-full overflow-hidden rounded-xl border',
         theme === 'light' ? 'border-neutral-200 bg-white' : 'border-neutral-700 bg-neutral-800',
-        !title && 'rounded-b-none',
         className
       )}
     >
@@ -201,7 +178,22 @@ export function CodeBlock({
         <div className={cn('flex items-center justify-between border-b border-neutral-100 px-2 py-1')}>
           <span className={cn('text-xs', theme === 'light' ? 'text-gray-600' : 'text-foreground-400')}>{title}</span>
           <div className="ml-auto flex items-center gap-1">
-            <ActionButtons />
+            {hasSecrets && (
+              <button
+                type="button"
+                onClick={() => setShowSecrets(!showSecrets)}
+                className={cn(
+                  'rounded-md p-2 transition-all duration-200 active:scale-95',
+                  theme === 'light'
+                    ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    : 'text-foreground-400 hover:text-foreground-50 hover:bg-[#32424a]'
+                )}
+                title={showSecrets ? 'Hide secrets' : 'Reveal secrets'}
+              >
+                {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            )}
+            {actionButtons ?? <CopyToClipboard content={code} theme={theme} title="Copy code" />}
           </div>
         </div>
       ) : (
@@ -213,7 +205,22 @@ export function CodeBlock({
               'backdrop-blur-sm'
             )}
           >
-            <ActionButtons />
+            {hasSecrets && (
+              <button
+                type="button"
+                onClick={() => setShowSecrets(!showSecrets)}
+                className={cn(
+                  'rounded-md p-2 transition-all duration-200 active:scale-95',
+                  theme === 'light'
+                    ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    : 'text-foreground-400 hover:text-foreground-50 hover:bg-[#32424a]'
+                )}
+                title={showSecrets ? 'Hide secrets' : 'Reveal secrets'}
+              >
+                {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            )}
+            {actionButtons ?? <CopyToClipboard content={code} theme={theme} title="Copy code" />}
           </div>
         </div>
       )}

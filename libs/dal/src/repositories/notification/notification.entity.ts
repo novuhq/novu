@@ -1,4 +1,4 @@
-import { ISubscribersDefine, StatelessControls, StepTypeEnum } from '@novu/shared';
+import { ContextKey, ISubscribersDefine, SeverityLevelEnum, StatelessControls, StepTypeEnum } from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
@@ -33,16 +33,17 @@ export class NotificationEntity {
    * This is a field that is used to define the subscriber that will receive the notification.
    * This field simplifies metric retrieval by associating external subscriber data, such as subscriberId.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   to?: ISubscribersDefine | any;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any;
 
   createdAt?: string;
   updatedAt?: string;
   tags?: string[];
   controls?: StatelessControls;
+  severity?: SeverityLevelEnum;
+  critical?: boolean;
+  contextKeys?: ContextKey[];
 }
 
 export type NotificationDBModel = ChangePropsValueType<

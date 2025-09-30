@@ -192,12 +192,22 @@ export const texts = {
       fontWeight: '500',
     },
   ],
-  'code-sm': [
+  'code-xs': [
     '0.75rem',
     {
       lineHeight: '1rem',
-      letterSpacing: '-0.015em',
+      letterSpacing: '-0.0125em',
       fontWeight: '500',
+      fontFamily: 'var(--font-code)',
+    },
+  ],
+  'code-2xs': [
+    '0.625rem',
+    {
+      lineHeight: '0.9375rem',
+      letterSpacing: '-0.0125em',
+      fontWeight: '400',
+      fontFamily: 'var(--font-code)',
     },
   ],
 };
@@ -206,6 +216,7 @@ export const shadows = {
   xs: '0px 1px 2px 0px rgba(10, 13, 20, 0.03)',
   sm: '0px 1px 2px 0px #1018280F,0px 1px 3px 0px #1018281A',
   md: '0px 16px 32px -12px rgba(14, 18, 27, 0.10)',
+  'box-xs': '0 0 0 1px rgba(25, 28, 33, 0.04), 0 1px 2px 0 rgba(25, 28, 33, 0.06)',
   DEFAULT: '0px 16px 32px -12px #0E121B1A',
   'button-primary-focus': ['0 0 0 2px theme(colors.bg[white])', '0 0 0 4px hsl(var(--primary-alpha-10))'],
   'button-important-focus': ['0 0 0 2px theme(colors.bg[white])', '0 0 0 4px hsl(var(--neutral-alpha-16))'],
@@ -462,10 +473,18 @@ export default {
         weak: 'hsl(var(--bg-weak))',
         white: 'hsl(var(--bg-white))',
       },
+      icon: {
+        strong: 'hsl(var(--icon-strong))',
+        sub: 'hsl(var(--icon-sub))',
+        soft: 'hsl(var(--icon-soft))',
+        disabled: 'hsl(var(--icon-disabled))',
+        white: 'hsl(var(--icon-white))',
+      },
       stroke: {
         strong: 'hsl(var(--stroke-strong))',
         sub: 'hsl(var(--stroke-sub))',
         soft: 'hsl(var(--stroke-soft))',
+        weak: 'hsl(var(--stroke-weak))',
         white: 'hsl(var(--stroke-white))',
       },
       text: {
@@ -681,7 +700,7 @@ export default {
   },
   plugins: [
     animate,
-    function ({ addUtilities }: { addUtilities: (utilities: Record<string, any>) => void }) {
+    ({ addUtilities }: { addUtilities: (utilities: Record<string, any>) => void }) => {
       addUtilities({
         '.overflow-initial': { overflow: 'initial' },
         '.overflow-inherit': { overflow: 'inherit' },

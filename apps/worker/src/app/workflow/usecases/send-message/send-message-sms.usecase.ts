@@ -1,27 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
-
-import { MessageRepository, SubscriberRepository, MessageEntity, IntegrationEntity } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
-  InstrumentUsecase,
-  DetailEnum,
-  SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
-  SmsFactory,
-  GetNovuProviderCredentials,
-  SelectVariant,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  InstrumentUsecase,
+  messageWebhookMapper,
+  SelectIntegration,
+  SelectVariant,
+  SendWebhookMessage,
+  SmsFactory,
 } from '@novu/application-generic';
-import { SmsOutput } from '@novu/framework/internal';
 
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageBase } from './send-message.base';
+import { IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { SmsOutput } from '@novu/framework/internal';
+import {
+  ChannelTypeEnum,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+} from '@novu/shared';
+import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageBase } from './send-message.base';
+import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -35,7 +44,8 @@ export class SendMessageSms extends SendMessageBase {
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -49,7 +59,7 @@ export class SendMessageSms extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
 
     const integration = await this.getIntegration({
@@ -104,8 +114,8 @@ export class SendMessageSms extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return {
-        status: 'failed',
-        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -131,8 +141,8 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
@@ -163,6 +173,8 @@ export class SendMessageSms extends SendMessageBase {
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
       tags: command.tags,
+      severity: command.severity,
+      ...(command.contextKeys && { contextKeys: command.contextKeys }),
     });
 
     await this.createExecutionDetails.execute(
@@ -189,7 +201,7 @@ export class SendMessageSms extends SendMessageBase {
     phone,
     integration,
     message: MessageEntity,
-    command: SendMessageCommand
+    command: SendMessageChannelCommand
   ): Promise<SendMessageResult> {
     if (!phone) {
       await this.messageRepository.updateMessageStatus(
@@ -205,7 +217,7 @@ export class SendMessageSms extends SendMessageBase {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+          detail: DetailEnum.SUBSCRIBER_MISSING_PHONE_NUMBER,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -214,8 +226,11 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_PHONE,
+        },
       };
     }
     if (!integration) {
@@ -240,8 +255,8 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
     if (!integration?.credentials?.from) {
@@ -266,14 +281,14 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
       };
     }
 
     return {
-      status: 'failed',
-      reason: DetailEnum.PROVIDER_ERROR,
+      status: SendMessageStatus.FAILED,
+      errorMessage: DetailEnum.PROVIDER_ERROR,
     };
   }
 
@@ -282,7 +297,7 @@ export class SendMessageSms extends SendMessageBase {
     integration: IntegrationEntity,
     content: string,
     message: MessageEntity,
-    command: SendMessageCommand,
+    command: SendMessageChannelCommand,
     overrides: Record<string, any> = {}
   ): Promise<SendMessageResult> {
     try {
@@ -323,8 +338,8 @@ export class SendMessageSms extends SendMessageBase {
 
       if (!result?.id) {
         return {
-          status: 'failed',
-          reason: DetailEnum.PROVIDER_ERROR,
+          status: SendMessageStatus.FAILED,
+          errorMessage: DetailEnum.PROVIDER_ERROR,
         };
       }
 
@@ -337,8 +352,20 @@ export class SendMessageSms extends SendMessageBase {
         }
       );
 
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId, {
+            providerResponseId: result.id,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+
       return {
-        status: 'success',
+        status: SendMessageStatus.SUCCESS,
       };
     } catch (e) {
       await this.sendErrorStatus(
@@ -349,6 +376,19 @@ export class SendMessageSms extends SendMessageBase {
         command,
         e
       );
+
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_FAILED,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId),
+          error: {
+            message: e.message || e.name || 'Error while sending sms with provider',
+          },
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -364,8 +404,8 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.PROVIDER_ERROR,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.PROVIDER_ERROR,
       };
     }
   }

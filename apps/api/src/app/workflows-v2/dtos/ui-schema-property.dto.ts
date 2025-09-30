@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsEnum, IsOptional, ValidateNested } from 'class-validator';
 import { UiComponentEnum } from '@novu/shared';
+import { IsEnum, IsOptional, ValidateNested } from 'class-validator';
 
 export class UiSchemaProperty {
   @ApiPropertyOptional({

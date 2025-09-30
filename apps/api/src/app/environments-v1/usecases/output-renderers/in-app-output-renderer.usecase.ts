@@ -1,10 +1,10 @@
-import { InAppRenderOutput } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { InstrumentUsecase, sanitizeHtmlInObject, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, sanitizeHtmlInObject } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { RenderCommand } from './render-command';
+import { InAppRenderOutput } from '@novu/shared';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+import { RenderCommand } from './render-command';
 
 export class InAppOutputRendererCommand extends RenderCommand {
   dbWorkflow: NotificationTemplateEntity;
@@ -15,10 +15,9 @@ export class InAppOutputRendererCommand extends RenderCommand {
 export class InAppOutputRendererUsecase extends BaseTranslationRendererUsecase {
   constructor(
     protected moduleRef: ModuleRef,
-    protected logger: PinoLogger,
-    protected featureFlagsService: FeatureFlagsService
+    protected logger: PinoLogger
   ) {
-    super(moduleRef, logger, featureFlagsService);
+    super(moduleRef, logger);
   }
 
   @InstrumentUsecase()
@@ -33,6 +32,8 @@ export class InAppOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organizationId: _organizationId,
       workflowId,
       locale: renderCommand.locale,
+      dbWorkflow: renderCommand.dbWorkflow,
+      organization: renderCommand.organization,
     });
 
     if (disableOutputSanitization) {

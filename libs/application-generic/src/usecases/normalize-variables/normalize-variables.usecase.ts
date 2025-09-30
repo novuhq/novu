@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository, TenantEntity, TenantRepository } from '@novu/dal';
 import { FilterPartTypeEnum, IMessageFilter } from '@novu/shared';
-import { IFilterVariables } from '../../utils';
 import { buildSubscriberKey, CachedResponse } from '../../services';
+import { IFilterVariables } from '../../utils';
 import { ConditionsFilterCommand } from '../conditions-filter';
 
 /**
@@ -38,6 +38,7 @@ export class NormalizeVariables {
 
     filterVariables.step = command.variables?.step ?? undefined;
     filterVariables.actor = command.variables?.actor ?? undefined;
+    filterVariables.context = command.variables?.context ?? undefined;
 
     return filterVariables;
   }

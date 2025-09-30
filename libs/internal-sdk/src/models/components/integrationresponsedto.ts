@@ -9,6 +9,12 @@ import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  ConfigurationsDto,
+  ConfigurationsDto$inboundSchema,
+  ConfigurationsDto$Outbound,
+  ConfigurationsDto$outboundSchema,
+} from "./configurationsdto.js";
+import {
   CredentialsDto,
   CredentialsDto$inboundSchema,
   CredentialsDto$Outbound,
@@ -70,6 +76,10 @@ export type IntegrationResponseDto = {
    */
   credentials: CredentialsDto;
   /**
+   * The configurations required for enabling the additional configurations of the integration.
+   */
+  configurations?: ConfigurationsDto | undefined;
+  /**
    * Indicates whether the integration is currently active. An active integration will process events and messages.
    */
   active: boolean;
@@ -128,6 +138,7 @@ export const IntegrationResponseDto$inboundSchema: z.ZodType<
   providerId: z.string(),
   channel: Channel$inboundSchema,
   credentials: CredentialsDto$inboundSchema,
+  configurations: ConfigurationsDto$inboundSchema.optional(),
   active: z.boolean(),
   deleted: z.boolean(),
   deletedAt: z.string().optional(),
@@ -152,6 +163,7 @@ export type IntegrationResponseDto$Outbound = {
   providerId: string;
   channel: string;
   credentials: CredentialsDto$Outbound;
+  configurations?: ConfigurationsDto$Outbound | undefined;
   active: boolean;
   deleted: boolean;
   deletedAt?: string | undefined;
@@ -174,6 +186,7 @@ export const IntegrationResponseDto$outboundSchema: z.ZodType<
   providerId: z.string(),
   channel: Channel$outboundSchema,
   credentials: CredentialsDto$outboundSchema,
+  configurations: ConfigurationsDto$outboundSchema.optional(),
   active: z.boolean(),
   deleted: z.boolean(),
   deletedAt: z.string().optional(),

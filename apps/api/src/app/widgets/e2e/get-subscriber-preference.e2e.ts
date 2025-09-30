@@ -1,11 +1,11 @@
 import { NotificationTemplateEntity } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/stateless';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@novu/stateless';
 import { updateSubscriberPreference } from './update-subscriber-preference.e2e';
 
-describe('GET /widget/preferences #novu-v0', function () {
+describe('GET /widget/preferences #novu-v0', () => {
   let template: NotificationTemplateEntity;
   let session: UserSession;
 
@@ -18,7 +18,7 @@ describe('GET /widget/preferences #novu-v0', function () {
     });
   });
 
-  it('should fetch a default user preference', async function () {
+  it('should fetch a default user preference', async () => {
     const response = await getSubscriberPreference(session.subscriberToken);
 
     const data = response.data.data[0];
@@ -34,7 +34,7 @@ describe('GET /widget/preferences #novu-v0', function () {
     expect(data.preference.overrides.find((sources) => sources.channel === 'email').source).to.equal('subscriber');
   });
 
-  it('should fetch according to template preferences defaults ', async function () {
+  it('should fetch according to template preferences defaults ', async () => {
     const templateDefaultSettings = await session.createTemplate({
       preferenceSettingsOverride: { email: true, chat: true, push: true, sms: true, in_app: false },
       noFeedId: true,
@@ -50,7 +50,7 @@ describe('GET /widget/preferences #novu-v0', function () {
   });
 
   // `enabled` flag is not used anymore. The presence of a preference object means that the subscriber has enabled notifications.
-  it.skip('should fetch according to merged subscriber and template preferences ', async function () {
+  it.skip('should fetch according to merged subscriber and template preferences ', async () => {
     const templateDefaultSettings = await session.createTemplate({
       preferenceSettingsOverride: { email: true, chat: true, push: true, sms: true, in_app: false },
       noFeedId: true,
@@ -76,7 +76,7 @@ describe('GET /widget/preferences #novu-v0', function () {
     expect(data.preference.overrides.find((sources) => sources.channel === 'in_app').source).to.equal('template');
   });
 
-  it('should filter not active channels and sources', async function () {
+  it('should filter not active channels and sources', async () => {
     const response = await getSubscriberPreference(session.subscriberToken);
 
     const data = response.data.data[0];

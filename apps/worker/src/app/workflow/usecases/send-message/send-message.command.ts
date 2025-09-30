@@ -1,8 +1,7 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
-import { NotificationStepEntity, JobEntity } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import { ExecuteOutput } from '@novu/framework/internal';
-import { WorkflowPreferences, TriggerOverrides } from '@novu/shared';
+import type { JobEntity, NotificationStepEntity } from '@novu/dal';
+import type { ContextKey, SeverityLevelEnum, TriggerOverrides, WorkflowPreferences } from '@novu/shared';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -10,10 +9,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   identifier: string;
 
   @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-
-  @IsOptional()
-  compileContext?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: any;
 
   @IsDefined()
   overrides: TriggerOverrides;
@@ -46,12 +42,15 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   job: JobEntity;
 
-  @IsOptional()
-  bridgeData?: ExecuteOutput | null;
-
   @IsDefined()
   tags: string[];
 
   @IsOptional()
+  severity?: SeverityLevelEnum;
+
+  @IsOptional()
   statelessPreferences?: WorkflowPreferences;
+
+  @IsOptional()
+  contextKeys?: ContextKey[];
 }

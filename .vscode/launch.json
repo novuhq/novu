@@ -25,20 +25,25 @@
       "stopOnEntry": false
     },
     {
-      "name": "worker",
+      "name": "Worker",
+      "cwd": "${workspaceFolder}/apps/worker",
+      "type": "node",
+      "request": "launch",
+      "args": ["${workspaceFolder}/apps/worker/src/main.ts"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "sourceMaps": true,
+      "protocol": "inspector",
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "smartStep": true,
+      "stopOnEntry": false
+    },
+    {
+      "name": "DASHBOARD",
       "request": "launch",
       "runtimeArgs": ["run-script", "start"],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/worker",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
-    },
-    {
-      "name": "WEB",
-      "request": "launch",
-      "runtimeArgs": ["run-script", "start:dev"],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/web",
+      "cwd": "${workspaceFolder}/apps/dashboard",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
     },
@@ -106,11 +111,11 @@
       "type": "node"
     },
     {
-      "name": "STORYBOOK",
+      "name": "APPLICATION GENERIC",
       "request": "launch",
-      "runtimeArgs": ["run-script", "storybook"],
+      "runtimeArgs": ["run-script", "start:dev"],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/web",
+      "cwd": "${workspaceFolder}/libs/application-generic",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
     }
@@ -118,7 +123,7 @@
   "compounds": [
     {
       "name": "-- RUN ENV - Local",
-      "configurations": ["API", "DAL", "SHARED", "TESTING LIB", "WEB", "worker", "WS"]
+      "configurations": ["API", "DAL", "SHARED", "DASHBOARD", "worker", "APPLICATION GENERIC"]
     },
     {
       "name": "-- RUN ENV - Test",
@@ -128,7 +133,7 @@
         "SHARED",
         "TESTING LIB",
         "WS - TEST ENV",
-        "WEB",
+        "DASHBOARD",
         "WIDGET - test",
         "worker"
       ]

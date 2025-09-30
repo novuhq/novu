@@ -1,12 +1,13 @@
-import { StepTypeEnum, ResourceOriginEnum } from '@novu/shared';
-import { STEP_TYPE_LABELS } from '@/utils/constants';
+import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { ChatEditor } from '@/components/workflow-editor/steps/chat/chat-editor';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
+import { CustomStepControls } from '@/components/workflow-editor/steps/controls/custom-step-controls';
 import { EmailEditor } from '@/components/workflow-editor/steps/email/email-editor';
 import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-editor';
-import { SmsEditor } from '@/components/workflow-editor/steps/sms/sms-editor';
 import { PushEditor } from '@/components/workflow-editor/steps/push/push-editor';
-import { ChatEditor } from '@/components/workflow-editor/steps/chat/chat-editor';
-import { CustomStepControls } from '@/components/workflow-editor/steps/controls/custom-step-controls';
-import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
+import { SmsEditor } from '@/components/workflow-editor/steps/sms/sms-editor';
+import { ThrottleEditor } from '@/components/workflow-editor/steps/throttle/throttle-editor';
+import { STEP_TYPE_LABELS } from '@/utils/constants';
 
 function NoEditorAvailable({ message }: { message: string }) {
   return <div className="flex h-full items-center justify-center text-sm text-neutral-500">{message}</div>;
@@ -47,6 +48,9 @@ export function StepEditorFactory() {
 
     case StepTypeEnum.CHAT:
       return <ChatEditor uiSchema={uiSchema} />;
+
+    case StepTypeEnum.THROTTLE:
+      return <ThrottleEditor />;
 
     default:
       return <NoEditorAvailable message={`Editor not implemented for ${STEP_TYPE_LABELS[step.type]} steps`} />;

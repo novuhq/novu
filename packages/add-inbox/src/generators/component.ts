@@ -1,16 +1,18 @@
+import { IFramework } from '../config/framework';
 import { FRAMEWORKS, FrameworkType } from '../constants';
 import fileUtils from '../utils/file';
 import logger from '../utils/logger';
 import { generateNextJsComponent } from './frameworks/nextjs';
-import { generateModernReactComponent, generateLegacyReactComponent } from './frameworks/react';
+import { generateLegacyReactComponent, generateModernReactComponent } from './frameworks/react';
 import { isModernReact } from './react-version';
-import { IFramework } from '../config/framework';
 
 export async function createComponentStructure(
   framework: IFramework,
   overwriteComponents: boolean,
   subscriberId: string | null | undefined,
-  region: 'us' | 'eu' = 'us'
+  region: 'us' | 'eu' = 'us',
+  backendUrl: string | null = null,
+  socketUrl: string | null = null
 ): Promise<void> {
   logger.gray('• Creating component structure...');
 
@@ -38,11 +40,11 @@ export async function createComponentStructure(
   // Generate component code based on framework
   let componentCode: string;
   if (framework.framework === FRAMEWORKS.NEXTJS) {
-    componentCode = generateNextJsComponent(subscriberId || null, region as 'us' | 'eu');
+    componentCode = generateNextJsComponent(subscriberId || null, region as 'us' | 'eu', backendUrl, socketUrl);
   } else if (isModernReact()) {
-    componentCode = generateModernReactComponent(subscriberId || null, region);
+    componentCode = generateModernReactComponent(subscriberId || null, region, backendUrl, socketUrl);
   } else {
-    componentCode = generateLegacyReactComponent(subscriberId || null, region);
+    componentCode = generateLegacyReactComponent(subscriberId || null, region, backendUrl, socketUrl);
   }
 
   // Write component file

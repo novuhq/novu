@@ -56,11 +56,22 @@ import {
   PushStepUpsertDto$outboundSchema,
 } from "./pushstepupsertdto.js";
 import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   SmsStepUpsertDto,
   SmsStepUpsertDto$inboundSchema,
   SmsStepUpsertDto$Outbound,
   SmsStepUpsertDto$outboundSchema,
 } from "./smsstepupsertdto.js";
+import {
+  ThrottleStepUpsertDto,
+  ThrottleStepUpsertDto$inboundSchema,
+  ThrottleStepUpsertDto$Outbound,
+  ThrottleStepUpsertDto$outboundSchema,
+} from "./throttlestepupsertdto.js";
 import {
   WorkflowCreationSourceEnum,
   WorkflowCreationSourceEnum$inboundSchema,
@@ -75,6 +86,7 @@ export type Steps =
   | (ChatStepUpsertDto & { type: "chat" })
   | (DelayStepUpsertDto & { type: "delay" })
   | (DigestStepUpsertDto & { type: "digest" })
+  | (ThrottleStepUpsertDto & { type: "throttle" })
   | (CustomStepUpsertDto & { type: "custom" });
 
 export type CreateWorkflowDto = {
@@ -101,7 +113,7 @@ export type CreateWorkflowDto = {
   /**
    * The payload JSON Schema for the workflow
    */
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   /**
    * Enable or disable translations for this workflow
    */
@@ -121,6 +133,7 @@ export type CreateWorkflowDto = {
     | (ChatStepUpsertDto & { type: "chat" })
     | (DelayStepUpsertDto & { type: "delay" })
     | (DigestStepUpsertDto & { type: "digest" })
+    | (ThrottleStepUpsertDto & { type: "throttle" })
     | (CustomStepUpsertDto & { type: "custom" })
   >;
   /**
@@ -131,6 +144,10 @@ export type CreateWorkflowDto = {
    * Workflow preferences
    */
   preferences?: PreferencesRequestDto | undefined;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
 };
 
 /** @internal */
@@ -169,6 +186,11 @@ export const Steps$inboundSchema: z.ZodType<Steps, z.ZodTypeDef, unknown> = z
         type: v.type,
       })),
     ),
+    ThrottleStepUpsertDto$inboundSchema.and(
+      z.object({ type: z.literal("throttle") }).transform((v) => ({
+        type: v.type,
+      })),
+    ),
     CustomStepUpsertDto$inboundSchema.and(
       z.object({ type: z.literal("custom") }).transform((v) => ({
         type: v.type,
@@ -185,6 +207,7 @@ export type Steps$Outbound =
   | (ChatStepUpsertDto$Outbound & { type: "chat" })
   | (DelayStepUpsertDto$Outbound & { type: "delay" })
   | (DigestStepUpsertDto$Outbound & { type: "digest" })
+  | (ThrottleStepUpsertDto$Outbound & { type: "throttle" })
   | (CustomStepUpsertDto$Outbound & { type: "custom" });
 
 /** @internal */
@@ -215,6 +238,11 @@ export const Steps$outboundSchema: z.ZodType<
   ),
   DigestStepUpsertDto$outboundSchema.and(
     z.object({ type: z.literal("digest") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+  ThrottleStepUpsertDto$outboundSchema.and(
+    z.object({ type: z.literal("throttle") }).transform((v) => ({
       type: v.type,
     })),
   ),
@@ -263,7 +291,7 @@ export const CreateWorkflowDto$inboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
   validatePayload: z.boolean().optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   isTranslationEnabled: z.boolean().default(false),
   workflowId: z.string(),
   steps: z.array(
@@ -303,6 +331,11 @@ export const CreateWorkflowDto$inboundSchema: z.ZodType<
           type: v.type,
         })),
       ),
+      ThrottleStepUpsertDto$inboundSchema.and(
+        z.object({ type: z.literal("throttle") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
       CustomStepUpsertDto$inboundSchema.and(
         z.object({ type: z.literal("custom") }).transform((v) => ({
           type: v.type,
@@ -312,6 +345,7 @@ export const CreateWorkflowDto$inboundSchema: z.ZodType<
   ),
   __source: WorkflowCreationSourceEnum$inboundSchema.default("editor"),
   preferences: PreferencesRequestDto$inboundSchema.optional(),
+  severity: SeverityLevelEnum$inboundSchema.optional(),
 }).transform((v) => {
   return remap$(v, {
     "__source": "source",
@@ -325,7 +359,7 @@ export type CreateWorkflowDto$Outbound = {
   tags?: Array<string> | undefined;
   active: boolean;
   validatePayload?: boolean | undefined;
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   isTranslationEnabled: boolean;
   workflowId: string;
   steps: Array<
@@ -336,10 +370,12 @@ export type CreateWorkflowDto$Outbound = {
     | (ChatStepUpsertDto$Outbound & { type: "chat" })
     | (DelayStepUpsertDto$Outbound & { type: "delay" })
     | (DigestStepUpsertDto$Outbound & { type: "digest" })
+    | (ThrottleStepUpsertDto$Outbound & { type: "throttle" })
     | (CustomStepUpsertDto$Outbound & { type: "custom" })
   >;
   __source: string;
   preferences?: PreferencesRequestDto$Outbound | undefined;
+  severity?: string | undefined;
 };
 
 /** @internal */
@@ -353,7 +389,7 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
   validatePayload: z.boolean().optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   isTranslationEnabled: z.boolean().default(false),
   workflowId: z.string(),
   steps: z.array(
@@ -393,6 +429,11 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
           type: v.type,
         })),
       ),
+      ThrottleStepUpsertDto$outboundSchema.and(
+        z.object({ type: z.literal("throttle") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
       CustomStepUpsertDto$outboundSchema.and(
         z.object({ type: z.literal("custom") }).transform((v) => ({
           type: v.type,
@@ -402,6 +443,7 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
   ),
   source: WorkflowCreationSourceEnum$outboundSchema.default("editor"),
   preferences: PreferencesRequestDto$outboundSchema.optional(),
+  severity: SeverityLevelEnum$outboundSchema.optional(),
 }).transform((v) => {
   return remap$(v, {
     source: "__source",

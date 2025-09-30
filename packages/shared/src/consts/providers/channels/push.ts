@@ -1,3 +1,6 @@
+import { ChannelTypeEnum, PushProviderIdEnum } from '../../../types';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
+import { expoGroupConfigurations } from '../configurations/provider-configuration';
 import {
   apnsConfig,
   appIOConfig,
@@ -9,8 +12,6 @@ import {
   pushWebhookConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
-import { ChannelTypeEnum, PushProviderIdEnum } from '../../../types';
-import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const pushProviders: IProviderConfig[] = [
   {
@@ -42,6 +43,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'Expo Push',
     channel: ChannelTypeEnum.PUSH,
     credentials: expoConfig,
+    configurations: expoGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/push/expo-push${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'expo.svg', dark: 'expo.svg' },
   },

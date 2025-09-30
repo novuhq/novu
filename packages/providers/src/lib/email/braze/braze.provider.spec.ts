@@ -18,15 +18,14 @@ test('should trigger sendMessage method correctly', async () => {
   const provider = new BrazeEmailProvider(mockConfig);
 
   const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return {} as any;
   });
 
   await provider.sendMessage(mockEmailOptions);
 
-  expect(spy).toBeCalled();
+  expect(spy).toHaveBeenCalled();
 
-  expect(spy).toBeCalledWith({
+  expect(spy).toHaveBeenCalledWith({
     from: mockEmailOptions.from,
     to: mockEmailOptions.to,
     html: mockEmailOptions.html,

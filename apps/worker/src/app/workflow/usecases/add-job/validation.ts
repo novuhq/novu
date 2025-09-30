@@ -1,18 +1,19 @@
+import { BadRequestException } from '@nestjs/common';
+import { isRegularDigest } from '@novu/application-generic';
+import { JobEntity } from '@novu/dal';
 import {
+  DaysEnum,
   DigestTypeEnum,
   DigestUnitEnum,
+  IDigestBaseMetadata,
   IDigestRegularMetadata,
-  StepTypeEnum,
-  DaysEnum,
-  MonthlyTypeEnum,
+  IDigestTimedMetadata,
   ITimedConfig,
+  MonthlyTypeEnum,
   OrdinalEnum,
   OrdinalValueEnum,
-  IDigestBaseMetadata,
+  StepTypeEnum,
 } from '@novu/shared';
-import { JobEntity } from '@novu/dal';
-import { isRegularDigest } from '@novu/application-generic';
-import { BadRequestException } from '@nestjs/common';
 
 const validateAmountAndUnit = (digest: IDigestBaseMetadata) => {
   if (!digest?.amount) {
@@ -84,37 +85,48 @@ export const validateDigest = (job: JobEntity): void => {
     throw new BadRequestException('Job is not a digest type');
   }
 
-  if (isRegularDigest(job.digest.type)) {
-    validateAmountAndUnit(job.digest as IDigestRegularMetadata);
+  // Type guard to check if digest has type property (digest metadata)
+  if (!('type' in job.digest)) {
+    throw new BadRequestException('Invalid digest metadata: missing type');
   }
 
-  if (job.digest.type === DigestTypeEnum.TIMED) {
-    if (job.digest.timed?.cronExpression) {
+  const digestWithType = job.digest as IDigestRegularMetadata | IDigestTimedMetadata;
+
+  if (
+    digestWithType.type &&
+    (digestWithType.type === DigestTypeEnum.REGULAR || digestWithType.type === DigestTypeEnum.BACKOFF) &&
+    isRegularDigest(digestWithType.type)
+  ) {
+    validateAmountAndUnit(digestWithType as IDigestRegularMetadata);
+  }
+
+  if (digestWithType.type === DigestTypeEnum.TIMED) {
+    const timedDigest = digestWithType as IDigestTimedMetadata;
+    if (timedDigest.timed?.cronExpression) {
       return;
     }
 
-    validateAmountAndUnit(job.digest);
+    validateAmountAndUnit(timedDigest);
 
-    // eslint-disable-next-line default-case
-    switch (job.digest.unit) {
+    switch (timedDigest.unit) {
       case DigestUnitEnum.DAYS:
       case DigestUnitEnum.WEEKS:
       case DigestUnitEnum.MONTHS: {
-        if (!job.digest.timed) {
+        if (!timedDigest.timed) {
           throw new BadRequestException('Digest timed config is missing');
         }
-        validateAtTime(job.digest.timed.atTime);
+        validateAtTime(timedDigest.timed.atTime);
 
-        if (job.digest.unit === DigestUnitEnum.WEEKS) {
-          validateWeekDays(job.digest.timed.weekDays);
+        if (timedDigest.unit === DigestUnitEnum.WEEKS) {
+          validateWeekDays(timedDigest.timed.weekDays);
         }
 
-        if (job.digest.unit === DigestUnitEnum.MONTHS && job.digest.timed.monthlyType === MonthlyTypeEnum.EACH) {
-          validateMonthDays(job.digest.timed.monthDays);
+        if (timedDigest.unit === DigestUnitEnum.MONTHS && timedDigest.timed.monthlyType === MonthlyTypeEnum.EACH) {
+          validateMonthDays(timedDigest.timed.monthDays);
         }
 
-        if (job.digest.unit === DigestUnitEnum.MONTHS && job.digest.timed.monthlyType === MonthlyTypeEnum.ON) {
-          validateOrdinal(job.digest.timed);
+        if (timedDigest.unit === DigestUnitEnum.MONTHS && timedDigest.timed.monthlyType === MonthlyTypeEnum.ON) {
+          validateOrdinal(timedDigest.timed);
         }
       }
     }

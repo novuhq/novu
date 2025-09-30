@@ -1,12 +1,12 @@
 import { OrganizationProfile } from '@clerk/clerk-react';
 import { Appearance } from '@clerk/types';
-import { InfoIcon } from 'lucide-react';
 import { PermissionsEnum } from '@novu/shared';
+import { RiInformation2Line } from 'react-icons/ri';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
-import { NovuBrandingSwitch } from './novu-branding-switch';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipPortal } from '@/components/primitives/tooltip';
 import { Protect } from '@/utils/protect';
+import { NovuBrandingSwitch } from './novu-branding-switch';
 
 export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Appearance }) {
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
@@ -30,13 +30,13 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: App
 
           <div className="flex flex-col gap-7">
             {/* Remove branding setting */}
-            <div className="flex flex-col border-t border-neutral-100 pt-4">
+            <div className="flex flex-col border-t border-neutral-100 pt-4 pl-1">
               <div className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-label-xs text-text-strong">Remove Novu branding</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-label-sm text-text-strong">Remove Novu branding</span>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <InfoIcon className="text-text-soft h-4 w-4 cursor-help" />
+                      <RiInformation2Line className="size-4 text-text-soft cursor-help" />
                     </TooltipTrigger>
                     <TooltipPortal>
                       <TooltipContent
@@ -66,7 +66,7 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: App
                   isReadOnly={isLoadingSettings || isUpdating}
                 />
               </div>
-              <p className="text-label-xs text-text-soft mb-1">
+              <p className="text-paragraph-sm text-text-soft mb-1">
                 When enabled, removes Novu branding from your notifications.
               </p>
             </div>

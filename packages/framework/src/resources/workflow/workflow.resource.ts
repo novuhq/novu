@@ -1,16 +1,23 @@
 import { ActionStepEnum, ChannelStepEnum } from '../../constants';
 import { WorkflowPayloadInvalidError } from '../../errors';
-import { channelStepSchemas, delayActionSchemas, digestActionSchemas, emptySchema } from '../../schemas';
-import type {
-  CancelEventTriggerResponse,
-  DiscoverWorkflowOutput,
-  Execute,
-  FromSchema,
-  Schema,
-  EventTriggerResponse,
-  Workflow,
-  WorkflowOptions,
-  FromSchemaUnvalidated,
+import {
+  channelStepSchemas,
+  delayActionSchemas,
+  digestActionSchemas,
+  emptySchema,
+  throttleActionSchemas,
+} from '../../schemas';
+import {
+  type CancelEventTriggerResponse,
+  type DiscoverWorkflowOutput,
+  type EventTriggerResponse,
+  type Execute,
+  type FromSchema,
+  type FromSchemaUnvalidated,
+  type Schema,
+  SeverityLevelEnum,
+  type Workflow,
+  type WorkflowOptions,
 } from '../../types';
 import { getBridgeUrl, initApiClient, resolveApiUrl, resolveSecretKey } from '../../utils';
 import { transformSchema, validateData } from '../../validators';
@@ -61,6 +68,7 @@ export function workflow<
       ...(event.transactionId && { transactionId: event.transactionId }),
       ...(event.overrides && { overrides: event.overrides }),
       ...(event.actor && { actor: event.actor }),
+      ...(event.context && { context: event.context }),
       ...(bridgeUrl && { bridgeUrl }),
     };
 
@@ -79,6 +87,7 @@ export function workflow<
   const discover = async (): Promise<DiscoverWorkflowOutput> => {
     const newWorkflow: DiscoverWorkflowOutput = {
       workflowId,
+      severity: options.severity ?? SeverityLevelEnum.NONE,
       steps: [],
       code: execute.toString(),
       payload: {
@@ -101,6 +110,7 @@ export function workflow<
       subscriber: {},
       environment: {},
       controls: {} as T_Controls,
+      context: {},
       step: {
         push: await discoverChannelStepFactory(
           newWorkflow,
@@ -143,6 +153,12 @@ export function workflow<
           ActionStepEnum.DELAY,
           delayActionSchemas.output,
           delayActionSchemas.result
+        ),
+        throttle: await discoverActionStepFactory(
+          newWorkflow,
+          ActionStepEnum.THROTTLE,
+          throttleActionSchemas.output,
+          throttleActionSchemas.result
         ),
         custom: await discoverCustomStepFactory(newWorkflow, ActionStepEnum.CUSTOM),
       } as never,

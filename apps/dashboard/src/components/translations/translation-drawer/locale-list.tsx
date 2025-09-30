@@ -1,38 +1,77 @@
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { useMemo } from 'react';
-import { RiArrowRightSLine } from 'react-icons/ri';
-import { Button } from '@/components/primitives/button';
-import { StatusBadge } from '@/components/primitives/status-badge';
-import { Badge } from '@/components/primitives/badge';
+import { RiAlertFill, RiArrowRightSLine } from 'react-icons/ri';
 import { FlagCircle } from '@/components/flag-circle';
+import { Badge } from '@/components/primitives/badge';
+import { Button } from '@/components/primitives/button';
+import { Skeleton } from '@/components/primitives/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { cn } from '@/utils/ui';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
-import { getLocaleDisplayName, formatTranslationDate, formatTranslationTime } from '../utils';
+import { TranslationStatus } from '../translation-status';
+import { formatTranslationDate, formatTranslationTime, getLocaleDisplayName } from '../utils';
 
-type TranslationStatusProps = {
+export function LocaleListSkeleton() {
+  return (
+    <div className="w-[400px] border-r border-neutral-200">
+      {/* Status section skeleton */}
+      <div className="flex flex-col items-start gap-3 self-stretch border-b border-neutral-100 p-4">
+        <div className="flex w-full items-center justify-between">
+          <Skeleton className="h-4 w-12" /> {/* "Status" */}
+          <Skeleton className="h-5 w-20" /> {/* Status badge */}
+        </div>
+        <div className="flex w-full items-center justify-between">
+          <Skeleton className="h-4 w-24" /> {/* "Last updated at" */}
+          <Skeleton className="h-3 w-32" /> {/* Timestamp */}
+        </div>
+      </div>
+
+      {/* Locale buttons skeleton */}
+      <div className="p-4">
+        <div className="space-y-2">
+          {/* Render 3-4 skeleton locale buttons */}
+          {[...Array(4)].map((_, index) => (
+            <div
+              key={index}
+              className="flex h-10 w-full items-center justify-start gap-3 rounded-lg border border-neutral-100 px-3 py-2"
+            >
+              <Skeleton className="h-6 w-6 rounded-full" /> {/* Flag */}
+              <div className="flex min-w-0 flex-1 items-center gap-1">
+                <Skeleton className="h-4 w-10" /> {/* Locale code */}
+                <Skeleton className="h-3 w-24" /> {/* Display name */}
+              </div>
+              <div className="flex items-center gap-2">
+                {index === 0 && <Skeleton className="h-5 w-16" />} {/* DEFAULT badge for first item */}
+                <Skeleton className="h-4 w-4" /> {/* Arrow icon */}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type TranslationStatusSectionProps = {
   updatedAt: string;
+  outdatedLocales?: string[];
 };
 
-function TranslationStatus({ updatedAt }: TranslationStatusProps) {
+function TranslationStatusSection({ updatedAt, outdatedLocales }: TranslationStatusSectionProps) {
   return (
     <div className="flex flex-col items-start gap-3 self-stretch border-b border-neutral-100 p-4">
       <div className="flex w-full items-center justify-between">
         <span className="text-sm text-neutral-600">Status</span>
-        <StatusBadge variant="light" status="completed" className="text-xs">
-          <div
-            className={cn(
-              'relative size-1.5 animate-[pulse-shadow_1s_ease-in-out_infinite] rounded-full',
-              'bg-success [--pulse-color:var(--success)]'
-            )}
-          />
-          Up-to-date
-        </StatusBadge>
+        <TranslationStatus outdatedLocales={outdatedLocales} className="text-xs" />
       </div>
       <div className="flex w-full items-center justify-between">
         <span className="text-sm text-neutral-600">Last updated at</span>
-        <span className="font-code text-xs text-neutral-400">
+        <TimeDisplayHoverCard date={updatedAt} className="font-code text-xs text-neutral-400">
           {formatTranslationDate(updatedAt, DATE_FORMAT_OPTIONS)}{' '}
           {formatTranslationTime(updatedAt, TIME_FORMAT_OPTIONS)} UTC
-        </span>
+        </TimeDisplayHoverCard>
       </div>
     </div>
   );
@@ -42,10 +81,11 @@ type LocaleButtonProps = {
   locale: string;
   isSelected: boolean;
   isDefault?: boolean;
+  isOutdated?: boolean;
   onClick: () => void;
 };
 
-function LocaleButton({ locale, isSelected, isDefault, onClick }: LocaleButtonProps) {
+function LocaleButton({ locale, isSelected, isDefault, isOutdated, onClick }: LocaleButtonProps) {
   const displayName = getLocaleDisplayName(locale);
 
   return (
@@ -64,11 +104,31 @@ function LocaleButton({ locale, isSelected, isDefault, onClick }: LocaleButtonPr
         <span className="text-sm font-medium text-neutral-900">{locale}</span>
         <span className="truncate text-xs text-neutral-500">({displayName})</span>
       </div>
-      {isDefault && (
-        <Badge variant="lighter" color="orange" size="md">
-          DEFAULT
-        </Badge>
-      )}
+      <div className="flex items-center gap-2">
+        {isOutdated && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="inline-flex cursor-help items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <RiAlertFill className="text-warning-base size-4" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <span className="text-xs">
+                Some keys in this target language don't match the default language. Add missing keys or remove extra
+                ones to sync translations.
+              </span>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {isDefault && (
+          <Badge variant="lighter" color="green" size="md">
+            DEFAULT
+          </Badge>
+        )}
+      </div>
     </Button>
   );
 }
@@ -78,9 +138,9 @@ type LocaleListProps = {
   selectedLocale: string | null;
   onLocaleSelect: (locale: string) => void;
   updatedAt: string;
-  defaultLocale?: string;
   hasUnsavedChanges?: boolean;
   onUnsavedChangesCheck?: (action: () => void) => void;
+  outdatedLocales?: string[];
 };
 
 export function LocaleList({
@@ -88,10 +148,13 @@ export function LocaleList({
   selectedLocale,
   onLocaleSelect,
   updatedAt,
-  defaultLocale,
   hasUnsavedChanges = false,
   onUnsavedChangesCheck,
+  outdatedLocales,
 }: LocaleListProps) {
+  const { data: organizationSettings } = useFetchOrganizationSettings();
+  const actualDefaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
+
   const handleLocaleClick = (locale: string) => {
     if (hasUnsavedChanges && onUnsavedChangesCheck) {
       onUnsavedChangesCheck(() => onLocaleSelect(locale));
@@ -102,18 +165,19 @@ export function LocaleList({
 
   // Sort locales to put default locale first
   const sortedLocales = useMemo(() => {
-    if (!defaultLocale) return locales;
+    if (!locales || !Array.isArray(locales)) return [];
+    if (!actualDefaultLocale) return locales;
 
-    const defaultIndex = locales.indexOf(defaultLocale);
+    const defaultIndex = locales.indexOf(actualDefaultLocale);
     if (defaultIndex === -1) return locales;
 
     // Move default locale to the front
-    return [defaultLocale, ...locales.filter((locale) => locale !== defaultLocale)];
-  }, [locales, defaultLocale]);
+    return [actualDefaultLocale, ...locales.filter((locale) => locale !== actualDefaultLocale)];
+  }, [locales, actualDefaultLocale]);
 
   return (
     <div className="w-[400px] border-r border-neutral-200">
-      <TranslationStatus updatedAt={updatedAt} />
+      <TranslationStatusSection updatedAt={updatedAt} outdatedLocales={outdatedLocales} />
 
       <div className="p-4">
         {!locales.length ? (
@@ -125,7 +189,8 @@ export function LocaleList({
                 key={locale}
                 locale={locale}
                 isSelected={selectedLocale === locale}
-                isDefault={locale === defaultLocale}
+                isDefault={locale === actualDefaultLocale}
+                isOutdated={outdatedLocales?.includes(locale)}
                 onClick={() => handleLocaleClick(locale)}
               />
             ))}

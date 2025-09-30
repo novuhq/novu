@@ -1,18 +1,20 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
+  messageWebhookMapper,
+  SendWebhookMessage,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-import { MessageRepository } from '@novu/dal';
-import { WebSocketEventEnum } from '@novu/shared';
+import { EnvironmentEntity, EnvironmentRepository, MessageEntity, MessageRepository } from '@novu/dal';
+import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
-import { UpdateAllNotificationsCommand } from './update-all-notifications.command';
 import { validateDataStructure } from '../../utils/validate-data';
+import { UpdateAllNotificationsCommand } from './update-all-notifications.command';
 
 @Injectable()
 export class UpdateAllNotifications {
@@ -21,7 +23,9 @@ export class UpdateAllNotifications {
     private getSubscriber: GetSubscriber,
     private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository,
-    private webSocketsQueueService: WebSocketsQueueService
+    private webSocketsQueueService: WebSocketsQueueService,
+    private sendWebhookMessage: SendWebhookMessage,
+    private environmentRepository: EnvironmentRepository
   ) {}
 
   async execute(command: UpdateAllNotificationsCommand): Promise<void> {
@@ -35,7 +39,7 @@ export class UpdateAllNotifications {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
-    let parsedData;
+    let parsedData: unknown;
     if (command.from.data) {
       try {
         parsedData = JSON.parse(command.from.data);
@@ -57,12 +61,14 @@ export class UpdateAllNotifications {
       fromField.data = parsedData;
     }
 
-    await this.messageRepository.updateMessagesFromToStatus({
+    const updatedMessages = await this.messageRepository.updateMessagesFromToStatus({
       environmentId: command.environmentId,
       subscriberId: subscriber._id,
       from: fromField,
       to: command.to,
     });
+
+    await this.sendWebhookEvents(command, updatedMessages);
 
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
@@ -94,5 +100,82 @@ export class UpdateAllNotifications {
       },
       groupId: subscriber._organizationId,
     });
+  }
+
+  private async sendWebhookEvents(command: UpdateAllNotificationsCommand, updatedMessages: MessageEntity[]) {
+    const environment = await this.environmentRepository.findOne(
+      {
+        _id: command.environmentId,
+      },
+      'webhookAppId identifier'
+    );
+    if (!environment) {
+      throw new Error(`Environment not found for id ${command.environmentId}`);
+    }
+
+    if (!environment.webhookAppId) return;
+
+    const eventTypes: WebhookEventEnum[] = [];
+
+    if (command.to.read !== undefined) {
+      const eventType = command.to.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD;
+      eventTypes.push(eventType);
+    }
+
+    if (command.to.archived !== undefined) {
+      const eventType = command.to.archived ? WebhookEventEnum.MESSAGE_ARCHIVED : WebhookEventEnum.MESSAGE_UNARCHIVED;
+      eventTypes.push(eventType);
+    }
+
+    await this.processWebhooksInBatches(eventTypes, updatedMessages, command, environment);
+  }
+
+  private async processWebhooksInBatches(
+    eventTypes: WebhookEventEnum[],
+    messages: MessageEntity[],
+    command: UpdateAllNotificationsCommand,
+    environment: EnvironmentEntity
+  ): Promise<void> {
+    const BATCH_SIZE = 100;
+    const messageChunks = this.chunkArray(messages, BATCH_SIZE);
+
+    for (const messageChunk of messageChunks) {
+      const webhookPromises: Promise<{ eventId: string } | undefined>[] = [];
+
+      for (const eventType of eventTypes) {
+        webhookPromises.push(...this.createWebhookPromises(eventType, messageChunk, command, environment));
+      }
+
+      await Promise.all(webhookPromises);
+    }
+  }
+
+  private chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+
+    return chunks;
+  }
+
+  private createWebhookPromises(
+    eventType: WebhookEventEnum,
+    messages: MessageEntity[],
+    command: UpdateAllNotificationsCommand,
+    environment: EnvironmentEntity
+  ): Promise<{ eventId: string } | undefined>[] {
+    return messages.map((message) =>
+      this.sendWebhookMessage.execute({
+        eventType,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        environment,
+      })
+    );
   }
 }

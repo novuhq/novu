@@ -16,10 +16,10 @@ export type Four = {};
  * Value that failed validation
  */
 export type Message =
-  | Four
   | string
   | number
   | boolean
+  | Four
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 export type ErrorDtoData = {
@@ -39,10 +39,10 @@ export type ErrorDtoData = {
    * Value that failed validation
    */
   message?:
-    | Four
     | string
     | number
     | boolean
+    | Four
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -180,10 +180,10 @@ export function fourFromJSON(
 /** @internal */
 export const Message$inboundSchema: z.ZodType<Message, z.ZodTypeDef, unknown> =
   z.union([
-    z.lazy(() => Four$inboundSchema),
     z.string(),
     z.number(),
     z.boolean(),
+    z.lazy(() => Four$inboundSchema),
     z.array(
       z.nullable(
         z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -193,10 +193,10 @@ export const Message$inboundSchema: z.ZodType<Message, z.ZodTypeDef, unknown> =
 
 /** @internal */
 export type Message$Outbound =
-  | Four$Outbound
   | string
   | number
   | boolean
+  | Four$Outbound
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 /** @internal */
@@ -205,10 +205,10 @@ export const Message$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   Message
 > = z.union([
-  z.lazy(() => Four$outboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
+  z.lazy(() => Four$outboundSchema),
   z.array(
     z.nullable(
       z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -254,10 +254,10 @@ export const ErrorDto$inboundSchema: z.ZodType<
   path: z.string(),
   message: z.nullable(
     z.union([
-      z.lazy(() => Four$inboundSchema),
       z.string(),
       z.number(),
       z.boolean(),
+      z.lazy(() => Four$inboundSchema),
       z.array(
         z.nullable(
           z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -285,10 +285,10 @@ export type ErrorDto$Outbound = {
   timestamp: string;
   path: string;
   message?:
-    | Four$Outbound
     | string
     | number
     | boolean
+    | Four$Outbound
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -309,10 +309,10 @@ export const ErrorDto$outboundSchema: z.ZodType<
     path: z.string(),
     message: z.nullable(
       z.union([
-        z.lazy(() => Four$outboundSchema),
         z.string(),
         z.number(),
         z.boolean(),
+        z.lazy(() => Four$outboundSchema),
         z.array(
           z.nullable(
             z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),

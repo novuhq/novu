@@ -1,65 +1,66 @@
 import '@maily-to/core/style.css';
+import { PermissionsEnum } from '@novu/shared';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import './index.css';
-import { Navigate } from 'react-router-dom';
-import { PermissionsEnum } from '@novu/shared';
 
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
 import { ConfigureStep } from '@/components/workflow-editor/steps/configure-step';
-import { ConfigureStepTemplate } from '@/components/workflow-editor/steps/configure-step-template';
+
 import {
   ActivityFeed,
+  AnalyticsPage,
   ApiKeysPage,
-  CreateWorkflowPage,
   CreateLayoutPage,
-  LayoutsPage,
-  TranslationsPage,
+  CreateWorkflowPage,
   ErrorPage,
   IntegrationsListPage,
+  LayoutsPage,
   OrganizationListPage,
-  QuestionnairePage,
   SettingsPage,
   SignInPage,
   SignUpPage,
   TemplateModal,
-  UsecaseSelectPage,
+  TranslationsPage,
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
+import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 import { SubscribersPage } from '@/pages/subscribers';
+import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
+import { ContextsPage } from './pages/contexts';
 import { CreateSubscriberPage } from './pages/create-subscriber';
 import { CreateTopicPage } from './pages/create-topic';
+import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
+import { EditLayoutPage } from './pages/edit-layout';
 import { EditSubscriberPage } from './pages/edit-subscriber-page';
 import { EditTopicPage } from './pages/edit-topic';
+import { EditTranslationPage } from './pages/edit-translation';
 import { EditWorkflowPage } from './pages/edit-workflow';
 import { EnvironmentsPage } from './pages/environments';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
-import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
+import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, RootRoute } from './routes';
 import { OnboardingParentRoute } from './routes/onboarding';
+import { ProtectedRoute } from './routes/protected-route';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
-import { IS_SELF_HOSTED } from './config';
-import { ProtectedRoute } from './routes/protected-route';
-import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
-import { TranslationSettingsPage } from '@/pages/translation-settings-page';
-import { EditLayoutPage } from './pages/edit-layout';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -88,20 +89,8 @@ const router = createBrowserRouter([
       },
       {
         path: '/onboarding',
-        element: (
-          <ProtectedRoute permission={PermissionsEnum.ORG_METADATA_WRITE}>
-            <OnboardingParentRoute />
-          </ProtectedRoute>
-        ),
+        element: <OnboardingParentRoute />,
         children: [
-          {
-            path: ROUTES.SIGNUP_QUESTIONNAIRE,
-            element: <QuestionnairePage />,
-          },
-          {
-            path: ROUTES.USECASE_SELECT,
-            element: <UsecaseSelectPage />,
-          },
           {
             path: ROUTES.INBOX_USECASE,
             element: <InboxUsecasePage />,
@@ -122,6 +111,10 @@ const router = createBrowserRouter([
         children: [
           /* Direct routes matching environment-specific paths (e.g., /topics -> /env/:envId/topics) 
              will be automatically redirected by the CatchAllRoute component */
+          {
+            index: true,
+            element: <CatchAllRoute />,
+          },
           {
             path: ROUTES.ENV,
             children: [
@@ -232,9 +225,17 @@ const router = createBrowserRouter([
                 ],
               },
               {
+                path: ROUTES.CONTEXTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                    <ContextsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
                 path: ROUTES.LAYOUTS,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.LAYOUT_READ}>
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
                     <LayoutsPage />
                   </ProtectedRoute>
                 ),
@@ -242,8 +243,16 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.LAYOUTS_CREATE,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.LAYOUT_WRITE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
                         <CreateLayoutPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.LAYOUTS_DUPLICATE,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
+                        <DuplicateLayoutPage />
                       </ProtectedRoute>
                     ),
                   },
@@ -252,18 +261,34 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.LAYOUTS_EDIT,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.LAYOUT_READ}>
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
                     <EditLayoutPage />
                   </ProtectedRoute>
                 ),
               },
               {
                 path: ROUTES.TRANSLATIONS,
-                element: <TranslationsPage />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                    <TranslationsPage />
+                  </ProtectedRoute>
+                ),
                 children: [
                   {
                     path: ROUTES.TRANSLATION_SETTINGS,
-                    element: <TranslationSettingsPage />,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <TranslationSettingsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.TRANSLATIONS_EDIT,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <EditTranslationPage />
+                      </ProtectedRoute>
+                    ),
                   },
                 ],
               },
@@ -288,7 +313,7 @@ const router = createBrowserRouter([
                 ),
               },
               {
-                path: ROUTES.ACTIVITY_RUNS,
+                path: ROUTES.ACTIVITY_WORKFLOW_RUNS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />
@@ -296,10 +321,18 @@ const router = createBrowserRouter([
                 ),
               },
               {
-                path: ROUTES.ACTIVITY_LOGS,
+                path: ROUTES.ACTIVITY_REQUESTS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.ANALYTICS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <AnalyticsPage />
                   </ProtectedRoute>
                 ),
               },
@@ -319,13 +352,10 @@ const router = createBrowserRouter([
                     element: <ConfigureStep />,
                     path: ROUTES.EDIT_STEP,
                   },
-                  {
-                    element: <ConfigureStepTemplate />,
-                    path: ROUTES.EDIT_STEP_TEMPLATE,
-                  },
+
                   {
                     element: <EditStepTemplateV2Page />,
-                    path: ROUTES.EDIT_STEP_TEMPLATE_V2,
+                    path: ROUTES.EDIT_STEP_TEMPLATE,
                   },
                   {
                     element: <EditStepConditions />,
@@ -483,19 +513,19 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.SETTINGS,
-            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_ACCOUNT,
-            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_ORGANIZATION,
-            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_TEAM,
-            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_BILLING,

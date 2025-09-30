@@ -1,8 +1,8 @@
+import { Novu } from '@novu/api';
+import { LocalizationResourceEnum } from '@novu/dal';
+import { ApiServiceLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Novu } from '@novu/api';
-import { StepTypeEnum, WorkflowCreationSourceEnum, ApiServiceLevelEnum } from '@novu/shared';
-import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Delete translation - /v2/translations/:resourceType/:resourceId/:locale (DELETE) #novu-v2', async () => {
@@ -11,9 +11,6 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
   let workflowId: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -39,11 +36,6 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
       ],
     });
     workflowId = workflow.workflowId;
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should delete existing translation successfully', async () => {
@@ -178,7 +170,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
 
   it('should work with complex locale codes', async () => {
     const translationContent = {
-      'test.key': 'Chinese Traditional content',
+      'test.key': 'Chinese Simplified content',
     };
 
     // Create translation with complex locale
@@ -187,19 +179,19 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
       .send({
         resourceId: workflowId,
         resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'zh_Hans_CN',
+        locale: 'zh_CN',
         content: translationContent,
       })
       .expect(200);
 
     // Delete the translation
     await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_Hans_CN`)
+      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_CN`)
       .expect(204);
 
     // Verify translation no longer exists
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_Hans_CN`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_CN`)
       .expect(404);
   });
 });

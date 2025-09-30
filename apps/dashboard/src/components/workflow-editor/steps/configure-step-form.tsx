@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   IEnvironment,
+  ResourceOriginEnum,
   StepResponseDto,
   StepTypeEnum,
   StepUpdateDto,
-  ResourceOriginEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
@@ -34,7 +35,6 @@ import { Separator } from '@/components/primitives/separator';
 import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/side-navigation/sidebar';
 import TruncatedText from '@/components/truncated-text';
 import { stepSchema } from '@/components/workflow-editor/schema';
-import { getControlsDefaultValues } from '@/utils/default-values';
 import { flattenIssues, getFirstErrorMessage, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { ConfigureChatStepPreview } from '@/components/workflow-editor/steps/chat/configure-chat-step-preview';
 import {
@@ -50,16 +50,18 @@ import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-co
 import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
-
+import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { getControlsDefaultValues } from '@/utils/default-values';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
   [StepTypeEnum.DELAY]: DelayControlValues,
   [StepTypeEnum.DIGEST]: DigestControlValues,
+  [StepTypeEnum.THROTTLE]: ThrottleControlValues,
   [StepTypeEnum.IN_APP]: () => null,
   [StepTypeEnum.EMAIL]: () => null,
   [StepTypeEnum.SMS]: () => null,
@@ -79,6 +81,7 @@ const STEP_TYPE_TO_PREVIEW: Record<StepTypeEnum, ((props: HTMLAttributes<HTMLDiv
   [StepTypeEnum.TRIGGER]: null,
   [StepTypeEnum.DIGEST]: null,
   [StepTypeEnum.DELAY]: null,
+  [StepTypeEnum.THROTTLE]: null,
 };
 
 type ConfigureStepFormProps = {
@@ -92,7 +95,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const supportedStepTypes = [
     StepTypeEnum.IN_APP,
     StepTypeEnum.SMS,
@@ -101,10 +103,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.EMAIL,
     StepTypeEnum.DIGEST,
     StepTypeEnum.DELAY,
+    StepTypeEnum.THROTTLE,
   ];
 
   const isSupportedStep = supportedStepTypes.includes(step.type);
-  const isReadOnly = !isSupportedStep || workflow.origin === ResourceOriginEnum.EXTERNAL;
+  const isReadOnly =
+    !isSupportedStep || workflow.origin === ResourceOriginEnum.EXTERNAL || environment.type !== EnvironmentTypeEnum.DEV;
 
   const isTemplateConfigurableStep = isSupportedStep && TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type);
   const isInlineConfigurableStep = isSupportedStep && INLINE_CONFIGURABLE_STEP_TYPES.includes(step.type);
@@ -307,11 +311,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           {(isTemplateConfigurableStep || isInlineConfigurableStepWithCustomControls) && (
             <>
               <SidebarContent>
-                <Link
-                  to={isV2TemplateEditorEnabled ? './editor' : './edit'}
-                  relative="path"
-                  state={{ stepType: step.type }}
-                >
+                <Link to="./editor" relative="path" state={{ stepType: step.type }}>
                   <Button
                     variant="secondary"
                     mode="outline"
@@ -323,7 +323,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                   </Button>
                 </Link>
 
-                <SkipConditionsButton origin={workflow.origin} step={step} />
+                {environment.type === EnvironmentTypeEnum.DEV && (
+                  <SkipConditionsButton origin={workflow.origin} step={step} />
+                )}
               </SidebarContent>
               <Separator />
 
@@ -352,7 +354,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          {isInlineConfigurableStep && (
+          {isInlineConfigurableStep && environment.type === EnvironmentTypeEnum.DEV && (
             <>
               <SidebarContent>
                 <SkipConditionsButton origin={workflow.origin} step={step} />

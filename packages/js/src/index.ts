@@ -3,6 +3,8 @@ export { Novu } from './novu';
 export {
   ChannelPreference,
   ChannelType,
+  DaySchedule,
+  DefaultSchedule,
   FiltersCountResponse,
   InboxNotification,
   ListNotificationsResponse,
@@ -11,11 +13,23 @@ export {
   NotificationStatus,
   NovuError,
   NovuOptions,
-  StandardNovuOptions,
   Preference,
   PreferenceLevel,
   PreferencesResponse,
+  Schedule,
+  SeverityLevelEnum,
+  StandardNovuOptions,
   Subscriber,
+  TimeRange,
+  UnreadCount,
   WebSocketEvent,
+  WeeklySchedule,
+  WorkflowCriticalityEnum,
 } from './types';
-export { areTagsEqual, isSameFilter } from './utils/notification-utils';
+export {
+  areSeveritiesEqual,
+  areTagsEqual,
+  checkNotificationDataFilter,
+  checkNotificationMatchesFilter,
+  isSameFilter,
+} from './utils/notification-utils';

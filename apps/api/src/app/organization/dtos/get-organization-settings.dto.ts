@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean } from 'class-validator';
 import { IsValidLocale } from '@novu/application-generic';
+import { OrganizationEntity } from '@novu/dal';
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class GetOrganizationSettingsDto {
   @ApiProperty({
@@ -12,8 +13,17 @@ export class GetOrganizationSettingsDto {
 
   @ApiProperty({
     description: 'Default locale',
-    example: 'en-US',
+    example: 'en_US',
   })
   @IsValidLocale()
   defaultLocale: string;
+
+  @ApiProperty({
+    description: 'Target locales',
+    example: ['en_US', 'es_ES'],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  targetLocales?: string[];
 }

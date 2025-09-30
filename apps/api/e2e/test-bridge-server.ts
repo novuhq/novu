@@ -1,6 +1,6 @@
-import http from 'http';
+import http from 'node:http';
+import { Client, serve } from '@novu/framework/express';
 import express from 'express';
-import { serve, Client } from '@novu/framework/express';
 
 export class TestBridgeServer {
   private server: express.Express;

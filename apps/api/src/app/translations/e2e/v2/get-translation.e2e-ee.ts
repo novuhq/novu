@@ -1,8 +1,8 @@
+import { Novu } from '@novu/api';
+import { LocalizationResourceEnum } from '@novu/dal';
+import { ApiServiceLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Novu } from '@novu/api';
-import { StepTypeEnum, WorkflowCreationSourceEnum, ApiServiceLevelEnum } from '@novu/shared';
-import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Get single translation - /v2/translations/:resourceType/:resourceId/:locale (GET) #novu-v2', async () => {
@@ -11,9 +11,6 @@ describe('Get single translation - /v2/translations/:resourceType/:resourceId/:l
   let workflowId: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -39,11 +36,6 @@ describe('Get single translation - /v2/translations/:resourceType/:resourceId/:l
       ],
     });
     workflowId = workflow.workflowId;
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should get existing translation', async () => {

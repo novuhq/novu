@@ -1,5 +1,5 @@
-import { IsDefined, IsEnum, IsMongoId } from 'class-validator';
 import { ResourceTypeEnum } from '@novu/shared';
+import { IsDefined, IsEnum, IsMongoId } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 /**

@@ -1,5 +1,5 @@
-import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { cva } from 'class-variance-authority';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { cn } from '@/utils/ui';
 
 const linkVariants = cva(

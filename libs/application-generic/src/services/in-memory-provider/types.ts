@@ -1,11 +1,4 @@
-import {
-  ChainableCommander,
-  Cluster,
-  ClusterOptions,
-  Redis,
-  RedisOptions,
-  ScanStream,
-} from 'ioredis';
+import { ChainableCommander, Cluster, ClusterOptions, Redis, RedisOptions, ScanStream } from 'ioredis';
 
 export { Cluster, ClusterOptions, Redis, RedisOptions, ScanStream };
 
@@ -17,6 +10,7 @@ export enum InMemoryProviderEnum {
   MEMORY_DB = 'MemoryDB',
   REDIS = 'Redis',
   REDIS_CLUSTER = 'RedisCluster',
+  REDIS_MASTER_SLAVE = 'RedisMasterSlave',
 }
 
 export type Pipeline = ChainableCommander;

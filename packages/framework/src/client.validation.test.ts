@@ -1,8 +1,8 @@
-import { expect, it, describe, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { Client } from './client';
-import { workflow } from './resources/workflow';
-import { ExecutionStateControlsInvalidError } from './errors';
 import { PostActionEnum } from './constants';
+import { ExecutionStateControlsInvalidError } from './errors';
+import { workflow } from './resources/workflow';
 
 describe('validation', () => {
   let client: Client;
@@ -70,6 +70,7 @@ describe('validation', () => {
         stepId: 'test-email',
         state: [],
         subscriber: {},
+        context: {},
       });
     } catch (error) {
       expect(error).to.be.instanceOf(ExecutionStateControlsInvalidError);

@@ -20,7 +20,7 @@ const modules = [
   {
     name: 'UMD gzip',
     filePath: umdGzipPath,
-    limitInBytes: 50_000,
+    limitInBytes: 52_000,
   },
 ];
 

@@ -1,19 +1,19 @@
+import { useOrganization } from '@clerk/clerk-react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { AnimatePresence } from 'motion/react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ActivityFilters } from '@/components/activity/activity-filters';
 import { defaultActivityFilters } from '@/components/activity/constants';
 import { ActivityDetailsDrawer } from '@/components/subscribers/subscriber-activity-drawer';
 import { SubscriberActivityList } from '@/components/subscribers/subscriber-activity-list';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ActivityFiltersData } from '@/types/activity';
 import { getMaxAvailableActivityFeedDateRange } from '@/utils/activityFilters';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useOrganization } from '@clerk/clerk-react';
-import { AnimatePresence } from 'motion/react';
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 
 const getInitialFilters = (topicKey: string, dateRange: string): ActivityFiltersData => ({
   channels: [],
@@ -22,6 +22,7 @@ const getInitialFilters = (topicKey: string, dateRange: string): ActivityFilters
   transactionId: '',
   workflows: [],
   topicKey,
+  severity: [],
 });
 
 export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
@@ -89,6 +90,10 @@ export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
       params.set('subscriberId', filters.subscriberId);
     }
 
+    if (filters.severity.length > 0) {
+      params.set('severity', filters.severity.join(','));
+    }
+
     return params;
   }, [topicKey, filters]);
 
@@ -119,7 +124,7 @@ export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
             To view more detailed activity, View{' '}
             <Link
               className="underline"
-              to={`${buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_RUNS : ROUTES.ACTIVITY_FEED, {
+              to={`${buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_WORKFLOW_RUNS : ROUTES.ACTIVITY_FEED, {
                 environmentSlug: currentEnvironment?.slug ?? '',
               })}?${searchParams.toString()}`}
             >

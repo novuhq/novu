@@ -22,3 +22,9 @@ export const DEFAULT_WORKFLOW_PREFERENCES: WorkflowPreferences = {
     chat: CHANNEL_PREFERENCE_DEFAULT,
   },
 };
+
+export enum WorkflowCriticalityEnum {
+  CRITICAL = 'critical',
+  NON_CRITICAL = 'nonCritical',
+  ALL = 'all',
+}

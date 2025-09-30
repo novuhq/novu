@@ -1,0 +1,19 @@
+{
+  "name": "@novu/js",
+  "sourceRoot": "packages/js/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint packages/js"
+      }
+    },
+    "nx-release-publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd packages/js && pnpm publish --access public --no-git-checks --tag ${NX_RELEASE_TAG:-latest}"
+      }
+    }
+  }
+}

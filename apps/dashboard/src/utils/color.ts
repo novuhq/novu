@@ -22,4 +22,5 @@ export const STEP_TYPE_TO_COLOR: Record<StepTypeEnum, StepColorEnum> = {
   [StepTypeEnum.CUSTOM]: StepColorEnum.ALERT,
   [StepTypeEnum.DIGEST]: StepColorEnum.HIGHLIGHTED,
   [StepTypeEnum.DELAY]: StepColorEnum.WARNING,
+  [StepTypeEnum.THROTTLE]: StepColorEnum.DESTRUCTIVE,
 };

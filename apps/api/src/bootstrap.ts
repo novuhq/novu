@@ -1,22 +1,24 @@
 import './instrument';
 
-import helmet from 'helmet';
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import bodyParser from 'body-parser';
-
 import {
-  // eslint-disable-next-line no-restricted-imports
-  Logger,
   BullMqService,
   getErrorInterceptor,
+  // biome-ignore lint/style/noRestrictedImports: <explanation> x
+  Logger,
   PinoLogger,
   RequestLogRepository,
-  FeatureFlagsService,
 } from '@novu/application-generic';
-import { AppModule } from './app.module';
+
+import bodyParser from 'body-parser';
+import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
+
+import { RequestIdMiddleware } from './app/shared/middleware/request-id.middleware';
+
+import { AppModule } from './app.module';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AllExceptionsFilter } from './exception-filter';
 
@@ -49,10 +51,10 @@ export async function bootstrap(
   let nestOptions: Record<string, boolean> = {};
 
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-    rawBodyBuffer = (req, res, buffer, encoding): void => {
-      if (buffer && buffer.length) {
+    rawBodyBuffer = (_req, _res, buffer, _encoding): void => {
+      if (buffer?.length) {
         // eslint-disable-next-line no-param-reassign
-        req.rawBody = Buffer.from(buffer);
+        (_req as any).rawBody = Buffer.from(buffer);
       }
     };
     nestOptions = {
@@ -87,6 +89,10 @@ export async function bootstrap(
 
   app.use(passport.initialize());
 
+  // Apply transaction ID middleware early in the request lifecycle
+  const transactionIdMiddleware = new RequestIdMiddleware();
+  app.use((req, res, next) => transactionIdMiddleware.use(req, res, next));
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -99,6 +105,12 @@ export async function bootstrap(
 
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '26mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '26mb', extended: true }));
+
+  // Add text/plain parser specifically for inbound webhooks (SNS confirmations)
+  app.use(
+    '/v2/inbound-webhooks/delivery-providers/:environmentId/:integrationId',
+    bodyParser.text({ verify: rawBodyBuffer })
+  );
 
   app.use(bodyParser.json({ verify: rawBodyBuffer }));
   app.use(bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer }));

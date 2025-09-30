@@ -1,3 +1,71 @@
+## v3.10.1 (2025-09-22)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
+## v3.10.0 (2025-09-22)
+
+### 🚀 Features
+
+- **react,js:** default schedule and useSchedule hook fixes NV-6616 ([#9110](https://github.com/novuhq/novu/pull/9110))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
+## v3.9.3 (2025-09-03)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
+## v3.9.2 (2025-09-03)
+
+### 🚀 Features
+
+- **js,react,api-service:** inbox allow filtering preferences by workflow criticality fixes NV-6577 ([#9011](https://github.com/novuhq/novu/pull/9011))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
+## v3.9.1 (2025-08-27)
+
+### 🚀 Features
+
+- **js,react,nextjs:** inbox appearance keys as a callback with the context prop fixes NV-6447 ([#8983](https://github.com/novuhq/novu/pull/8983))
+- **js,react,api-service,ws:** support severity in inbox components and hooks fixes NV-6470 ([#8913](https://github.com/novuhq/novu/pull/8913))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
+## v3.8.1 (2025-08-13)
+
+### 🩹 Fixes
+
+- **root:** nx release publish issue for syntax error fixes NV-6506 ([#8922](https://github.com/novuhq/novu/pull/8922))
+
+### ❤️ Thank You
+
+- Himanshu Garg @merrcury
+
+## v3.7.0 (2025-07-22)
+
+### 🚀 Features
+
+- **worker,js,react:** subscriber timezone aware delivery fixes NV-6239 ([#8674](https://github.com/novuhq/novu/pull/8674))
+- **root:** create keyless environment ([#8276](https://github.com/novuhq/novu/pull/8276))
+
+### 🩹 Fixes
+
+- **root:** bring back eslint and web app build ([#8505](https://github.com/novuhq/novu/pull/8505))
+- version bump react packages ([62ff7ee154](https://github.com/novuhq/novu/commit/62ff7ee154))
+- novu react rc 4 release ([b737df7335](https://github.com/novuhq/novu/commit/b737df7335))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+
 ## v3.4.0 (2025-05-16)
 
 ### 🧱 Updated Dependencies

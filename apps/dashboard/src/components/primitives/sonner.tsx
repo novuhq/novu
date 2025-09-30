@@ -1,4 +1,3 @@
-import { cn } from '@/utils/ui';
 import { cva, VariantProps } from 'class-variance-authority';
 import { useTheme } from 'next-themes';
 import React from 'react';
@@ -12,6 +11,7 @@ import {
   RiProgress1Line,
 } from 'react-icons/ri';
 import { Toaster as Sonner } from 'sonner';
+import { cn } from '@/utils/ui';
 import { CompactButton } from './button-compact';
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;

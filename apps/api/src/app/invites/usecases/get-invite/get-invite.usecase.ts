@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException, Scope, BadRequestException } from '@nestjs/common';
-import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/dal';
+import { BadRequestException, Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
 import { MemberStatusEnum, normalizeEmail } from '@novu/shared';
 
 import { GetInviteCommand } from './get-invite.command';

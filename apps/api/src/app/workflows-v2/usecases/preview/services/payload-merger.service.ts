@@ -1,18 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import _ from 'lodash';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { createMockObjectFromSchema, FeatureFlagsKeysEnum, ResourceOriginEnum, UserSessionData } from '@novu/shared';
-import { FeatureFlagsService } from '@novu/application-generic';
+import { createMockObjectFromSchema, ResourceOriginEnum, UserSessionData } from '@novu/shared';
+import { isPlainObject, pick } from 'es-toolkit';
+import { keys, merge, mergeWith } from 'es-toolkit/compat';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
 import { mergeCommonObjectKeys } from '../../../util/utils';
-import { MockDataGeneratorService } from './mock-data-generator.service';
 import { BuildStepDataUsecase } from '../../build-step-data';
+import { MockDataGeneratorService } from './mock-data-generator.service';
 
 @Injectable()
 export class PayloadMergerService {
   constructor(
-    private readonly featureFlagService: FeatureFlagsService,
     private readonly mockDataGenerator: MockDataGeneratorService,
     private readonly buildStepDataUsecase: BuildStepDataUsecase
   ) {}
@@ -34,23 +33,8 @@ export class PayloadMergerService {
     stepIdOrInternalId?: string;
     user: UserSessionData;
   }): Promise<Record<string, unknown>> {
-    const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-      environment: { _id: user.environmentId },
-    });
-
-    const isV2TemplateEditorEnabled = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-      environment: { _id: user.environmentId },
-    });
-
     const shouldUsePayloadSchema =
-      workflow?.origin === ResourceOriginEnum.EXTERNAL ||
-      (isPayloadSchemaEnabled && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD);
+      workflow?.origin === ResourceOriginEnum.EXTERNAL || workflow?.origin === ResourceOriginEnum.NOVU_CLOUD;
 
     if (shouldUsePayloadSchema && workflow?.payloadSchema) {
       return this.mergeWithPayloadSchema({
@@ -59,8 +43,6 @@ export class PayloadMergerService {
         userPayloadExample,
         stepIdOrInternalId,
         user,
-        isPayloadSchemaEnabled,
-        isV2TemplateEditorEnabled,
       });
     }
 
@@ -79,81 +61,59 @@ export class PayloadMergerService {
     userPayloadExample,
     stepIdOrInternalId,
     user,
-    isPayloadSchemaEnabled,
-    isV2TemplateEditorEnabled,
   }: {
     workflow: NotificationTemplateEntity;
     payloadExample: Record<string, unknown>;
     userPayloadExample: PreviewPayloadDto | undefined;
     stepIdOrInternalId?: string;
     user: UserSessionData;
-    isPayloadSchemaEnabled: boolean;
-    isV2TemplateEditorEnabled: boolean;
   }): Promise<Record<string, unknown>> {
     let schemaBasedPayloadExample: Record<string, unknown>;
 
-    if (isPayloadSchemaEnabled) {
-      try {
-        const schema = {
-          type: 'object' as const,
-          properties: { payload: workflow.payloadSchema },
-          additionalProperties: false,
-        };
+    try {
+      const schema = {
+        type: 'object' as const,
+        properties: { payload: workflow.payloadSchema },
+        additionalProperties: false,
+      };
 
-        const mockData = JsonSchemaMock.generate(schema) as Record<string, unknown>;
-        schemaBasedPayloadExample = mockData;
-      } catch (error) {
-        schemaBasedPayloadExample = createMockObjectFromSchema({
-          type: 'object',
-          properties: { payload: workflow.payloadSchema },
-        });
-      }
-    } else {
+      const mockData = JsonSchemaMock.generate(schema) as Record<string, unknown>;
+      schemaBasedPayloadExample = mockData;
+    } catch (error) {
       schemaBasedPayloadExample = createMockObjectFromSchema({
         type: 'object',
         properties: { payload: workflow.payloadSchema },
       });
     }
 
-    let mergedPayload = isV2TemplateEditorEnabled
-      ? _.merge({}, schemaBasedPayloadExample)
-      : _.merge({}, payloadExample, schemaBasedPayloadExample);
+    let mergedPayload = merge({}, schemaBasedPayloadExample);
 
-    if (isV2TemplateEditorEnabled) {
-      if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
-        // Filter userPayloadExample to only include keys that exist in schemaBasedPayloadExample
-        const filteredUserPayload = this.filterPayloadBySchema(
-          userPayloadExample as Record<string, unknown>,
-          schemaBasedPayloadExample
-        );
-
-        mergedPayload = _.mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
-          if (Array.isArray(srcValue)) {
-            return srcValue;
-          }
-
-          return undefined;
-        });
-      }
-    } else if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
-      mergedPayload = _.mergeWith(
-        mergedPayload,
+    if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
+      // Filter userPayloadExample to only include keys that exist in schemaBasedPayloadExample
+      const filteredUserPayload = this.filterPayloadBySchema(
         userPayloadExample as Record<string, unknown>,
-        (objValue, srcValue) => {
-          if (Array.isArray(srcValue)) {
-            return srcValue;
-          }
-
-          return undefined;
-        }
+        schemaBasedPayloadExample
       );
+
+      mergedPayload = mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
+        if (Array.isArray(srcValue)) {
+          return srcValue;
+        }
+
+        return undefined;
+      });
     }
 
     const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
     // Preserve user-provided subscriber data even if it was filtered out earlier
     const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
-    mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
+    mergedPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
+
+    // Preserve user-provided context data only if it exists
+    if (userPayloadExample?.context !== undefined) {
+      mergedPayload.context = userPayloadExample.context;
+    }
 
     if (workflow && stepIdOrInternalId) {
       /*
@@ -172,7 +132,7 @@ export class PayloadMergerService {
        * Merge with priority: user steps > payloadExample steps > generated mock steps
        * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
        */
-      mergedPayload.steps = _.mergeWith(
+      mergedPayload.steps = mergeWith(
         {},
         generatedStepsObject,
         stepsFromPayloadExample,
@@ -219,7 +179,12 @@ export class PayloadMergerService {
     // Preserve user-provided subscriber data even if it was filtered out earlier
     const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
-    finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
+    finalPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
+
+    // Preserve user-provided context data only if it exists
+    if (userPayloadExample?.context !== undefined) {
+      finalPayload.context = userPayloadExample.context;
+    }
 
     if (workflow && stepIdOrInternalId) {
       /*
@@ -238,7 +203,7 @@ export class PayloadMergerService {
        * Merge with priority: user steps > payloadExample steps > generated mock steps
        * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
        */
-      finalPayload.steps = _.mergeWith(
+      finalPayload.steps = mergeWith(
         {},
         generatedStepsObject,
         stepsFromPayloadExample,
@@ -336,11 +301,11 @@ export class PayloadMergerService {
     schemaPayload: Record<string, unknown>
   ): Record<string, unknown> {
     // Use lodash pick to only include keys that exist in the schema
-    const filtered = _.pick(userPayload, _.keys(schemaPayload));
+    const filtered = pick(userPayload, keys(schemaPayload));
 
     // Recursively filter nested objects and arrays
     for (const [key, value] of Object.entries(filtered)) {
-      if (_.isPlainObject(value) && _.isPlainObject(schemaPayload[key])) {
+      if (isPlainObject(value) && isPlainObject(schemaPayload[key])) {
         filtered[key] = this.filterPayloadBySchema(
           value as Record<string, unknown>,
           schemaPayload[key] as Record<string, unknown>
@@ -348,11 +313,11 @@ export class PayloadMergerService {
       } else if (Array.isArray(value) && Array.isArray(schemaPayload[key])) {
         // Handle arrays by filtering each element
         filtered[key] = value.map((item) => {
-          if (_.isPlainObject(item) && schemaPayload[key] && Array.isArray(schemaPayload[key])) {
+          if (isPlainObject(item) && schemaPayload[key] && Array.isArray(schemaPayload[key])) {
             const schemaArray = schemaPayload[key] as unknown[];
             // Use the first element of the schema array as the template for filtering
             const schemaTemplate =
-              schemaArray.length > 0 && _.isPlainObject(schemaArray[0])
+              schemaArray.length > 0 && isPlainObject(schemaArray[0])
                 ? (schemaArray[0] as Record<string, unknown>)
                 : {};
 

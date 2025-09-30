@@ -1,12 +1,6 @@
 import sinon from 'sinon';
-import {
-  CacheService,
-  CachingConfig,
-  ICacheService,
-  splitKey,
-} from './cache.service';
-
 import { CacheInMemoryProviderService } from '../in-memory-provider';
+import { CacheService, CachingConfig, ICacheService, splitKey } from './cache.service';
 import { MockCacheService } from './cache-service.mock';
 
 /**
@@ -52,8 +46,7 @@ describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
   });
 
   it('should be able to add a compound key in the instance', async () => {
-    const compoundKey =
-      '{entity:notification_template:e=64b34d4908c2e563cccc20aa:i=64b34d4908c2e563cccc2b2f}';
+    const compoundKey = '{entity:notification_template:e=64b34d4908c2e563cccc20aa:i=64b34d4908c2e563cccc2b2f}';
     const result = await cacheService.set(compoundKey, 'whatever');
     expect(result).toBe('OK');
     const value = await cacheService.get(compoundKey);
@@ -61,8 +54,7 @@ describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
   });
 
   it('should be able to delete a compound key in the instance', async () => {
-    const compoundKey =
-      '{entity:notification_template:e=64b34d4908c2e563cccc20aa:i=64b34d4908c2e563cccc2b2f}';
+    const compoundKey = '{entity:notification_template:e=64b34d4908c2e563cccc20aa:i=64b34d4908c2e563cccc2b2f}';
     const result = await cacheService.del(compoundKey);
     expect(result).toBe(1);
     const value = await cacheService.get(compoundKey);
@@ -104,10 +96,7 @@ describe('Cache Service - Cluster Mode', () => {
   it('should be able to add a key / value in the Redis Cluster if key not exist', async () => {
     const result = await cacheService.setIfNotExist('key1-not-exist', 'value1');
     expect(result).toBeDefined();
-    const result1 = await cacheService.setIfNotExist(
-      'key1-not-exist',
-      'value1',
-    );
+    const result1 = await cacheService.setIfNotExist('key1-not-exist', 'value1');
     expect(result1).toBeFalsy();
   });
 
@@ -119,8 +108,7 @@ describe('Cache Service - Cluster Mode', () => {
   });
 
   it('should be able to add a compound key in the Redis Cluster', async () => {
-    const compoundKey =
-      '{entity:notification_template:e=64b34d4908c2e563cccc19dd:i=64b34d4908c2e563cccc1a1f}';
+    const compoundKey = '{entity:notification_template:e=64b34d4908c2e563cccc19dd:i=64b34d4908c2e563cccc1a1f}';
     const result = await cacheService.set(compoundKey, 'whatever');
     expect(result).toBe('OK');
     const value = await cacheService.get(compoundKey);
@@ -128,8 +116,7 @@ describe('Cache Service - Cluster Mode', () => {
   });
 
   it('should be able to delete a compound key in the Redis Cluster', async () => {
-    const compoundKey =
-      '{entity:notification_template:e=64b34d4908c2e563cccc19dd:i=64b34d4908c2e563cccc1a1f}';
+    const compoundKey = '{entity:notification_template:e=64b34d4908c2e563cccc19dd:i=64b34d4908c2e563cccc1a1f}';
     const result = await cacheService.del(compoundKey);
     expect(result).toBe(1);
     const value = await cacheService.get(compoundKey);
@@ -137,19 +124,19 @@ describe('Cache Service - Cluster Mode', () => {
   });
 });
 
-describe('cache-service', function () {
+describe('cache-service', () => {
   let cacheService: ICacheService;
 
-  beforeEach(function () {
+  beforeEach(() => {
     cacheService = MockCacheService.createClient();
   });
 
-  afterEach(function (done) {
+  afterEach((done) => {
     cacheService.delByPattern('*');
     done();
   });
 
-  it('should store data in cache', async function () {
+  it('should store data in cache', async () => {
     const key = '123:456';
     const dataString = JSON.stringify({ array: [1, 2, 3] });
     cacheService.set(key, dataString);
@@ -158,7 +145,7 @@ describe('cache-service', function () {
     expect(dataString).toEqual(res);
   });
 
-  it('should delete by pattern', async function () {
+  it('should delete by pattern', async () => {
     cacheService.set('feed:123:456', 'random data');
     cacheService.set('feed:123:457', 'random data');
     cacheService.set('feed:query:123:457', 'random data');
@@ -174,7 +161,7 @@ describe('cache-service', function () {
     expect(res3).toEqual(undefined);
   });
 
-  it('should invoke the SADD method correctly', async function () {
+  it('should invoke the SADD method correctly', async () => {
     const key = '123:456';
     const data = [1, 2, 3];
     const res = await cacheService.sadd(key, ...data);
@@ -184,7 +171,7 @@ describe('cache-service', function () {
     expect(res2).toEqual(0);
   });
 
-  it('should invoke the EVAL function correctly', async function () {
+  it('should invoke the EVAL function correctly', async () => {
     const dataString = JSON.stringify({ array: [1, 2, 3] });
     const evalMock = sinon.mock().resolves(dataString);
     cacheService = MockCacheService.createClient({ eval: evalMock });
@@ -204,20 +191,14 @@ describe('cache-service', function () {
       const key =
         'query:integration:e=642578cea9684e9ebea5b04c:#query#={\\"channelType\\":\\"email\\",\\"findOne\\":true}';
       const result = splitKey(key);
-      expect(result.credentials).toEqual(
-        'query:integration:e=642578cea9684e9ebea5b04c',
-      );
-      expect(result.query).toEqual(
-        '{\\"channelType\\":\\"email\\",\\"findOne\\":true}',
-      );
+      expect(result.credentials).toEqual('query:integration:e=642578cea9684e9ebea5b04c');
+      expect(result.query).toEqual('{\\"channelType\\":\\"email\\",\\"findOne\\":true}');
     });
 
     it('should handle keys without a query part', () => {
       const key = 'query:integration:e=642578cea9684e9ebea5b04c:#query#=';
       const result = splitKey(key);
-      expect(result.credentials).toEqual(
-        'query:integration:e=642578cea9684e9ebea5b04c',
-      );
+      expect(result.credentials).toEqual('query:integration:e=642578cea9684e9ebea5b04c');
       expect(result.query).toEqual('');
     });
 
@@ -225,9 +206,7 @@ describe('cache-service', function () {
       const key = ':#query#={\\"channelType\\":\\"email\\",\\"findOne\\":true}';
       const result = splitKey(key);
       expect(result.credentials).toEqual('');
-      expect(result.query).toEqual(
-        '{\\"channelType\\":\\"email\\",\\"findOne\\":true}',
-      );
+      expect(result.query).toEqual('{\\"channelType\\":\\"email\\",\\"findOne\\":true}');
     });
   });
 });

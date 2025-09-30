@@ -6,10 +6,9 @@ import {
   DoubleArrowRightIcon,
 } from '@radix-ui/react-icons';
 import * as React from 'react';
-
+import { Link, LinkProps } from 'react-router-dom';
 import { ButtonProps, buttonVariants } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
-import { Link, LinkProps } from 'react-router-dom';
 
 const Pagination = ({ className, ...props }: React.ComponentProps<'nav'>) => (
   <nav

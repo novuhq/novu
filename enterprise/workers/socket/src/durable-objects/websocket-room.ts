@@ -1,290 +1,279 @@
 import { DurableObject } from 'cloudflare:workers';
-import type { IEnv, IConnectionMetadata } from '../types';
+import type { IConnectionMetadata, IEnv } from '../types';
 
 /**
  * WebSocket Room Durable Object with Hibernation Support
  * Manages WebSocket connections for subscribers with JWT authentication
  */
 export class WebSocketRoom extends DurableObject<IEnv> {
-	private connectionTokens = new Map<WebSocket, string>();
+  private static readonly MAX_CONNECTIONS = 100;
 
-	/**
-	 * Handle incoming HTTP requests (WebSocket upgrades)
-	 */
-	async fetch(request: Request): Promise<Response> {
-		if (request.headers.get('Upgrade') !== 'websocket') {
-			return new Response('Expected WebSocket upgrade', { status: 426 });
-		}
+  /**
+   * Constructor - called when DO is instantiated or wakes from hibernation
+   * No need to store JWT tokens in memory as they're persisted with serializeAttachment
+   */
+  constructor(ctx: DurableObjectState, env: IEnv) {
+    super(ctx, env);
 
-		const userId = request.headers.get('X-User-Id');
-		const environmentId = request.headers.get('X-Environment-Id');
-		const jwtToken = request.headers.get('X-JWT-Token');
+    this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
+  }
 
-		if (!userId || !environmentId) {
-			return new Response('Missing required user information', { status: 400 });
-		}
+  /**
+   * Handle incoming HTTP requests (WebSocket upgrades)
+   */
+  async fetch(request: Request): Promise<Response> {
+    if (request.headers.get('Upgrade') !== 'websocket') {
+      return new Response('Expected WebSocket upgrade', { status: 426 });
+    }
 
-		if (!jwtToken) {
-			return new Response('Missing JWT token', { status: 400 });
-		}
+    // Check connection limit before accepting new connections
+    const currentConnections = this.ctx.getWebSockets().length;
+    if (currentConnections >= WebSocketRoom.MAX_CONNECTIONS) {
+      return new Response('WebSocket room at capacity', {
+        status: 503,
+        headers: {
+          'Retry-After': '60',
+        },
+      });
+    }
 
-		const [client, server] = Object.values(new WebSocketPair());
+    const userId = request.headers.get('X-User-Id');
+    const environmentId = request.headers.get('X-Environment-Id');
+    const jwtToken = request.headers.get('X-JWT-Token');
 
-		/*
-		 * Use hibernation-compatible WebSocket acceptance
-		 * Store JWT token separately to avoid tag size limitations
-		 */
-		const tags = [`user:${userId}`, `env:${environmentId}`];
+    if (!userId || !environmentId) {
+      return new Response('Missing required user information', { status: 400 });
+    }
 
-		this.ctx.acceptWebSocket(server, tags);
+    if (!jwtToken) {
+      return new Response('Missing JWT token', { status: 400 });
+    }
 
-		// Store JWT token for this connection
-		this.connectionTokens.set(server, jwtToken);
+    const [client, server] = Object.values(new WebSocketPair());
 
-		server.send(
-			JSON.stringify({
-				event: 'connected',
-				data: {
-					userId,
-					connectedAt: Date.now(),
-				},
-			})
-		);
+    /*
+     * Use hibernation-compatible WebSocket acceptance
+     * Store JWT token separately to avoid tag size limitations
+     */
+    const tags = [`user:${userId}`, `env:${environmentId}`];
 
-		console.log(`WebSocket connected for subscriber: ${userId} in room ${environmentId}`);
+    this.ctx.acceptWebSocket(server, tags);
 
-		// Notify API that subscriber is online using JWT authentication
-		await this.notifySubscriberOnlineState(userId, environmentId, true, undefined, jwtToken);
+    // Persist JWT token with the WebSocket connection to survive hibernation
+    // The attachment is limited to 2KB, but a JWT token is typically < 1KB
+    server.serializeAttachment({
+      jwtToken,
+      connectedAt: Date.now(),
+    });
 
-		return new Response(null, {
-			status: 101,
-			webSocket: client,
-		});
-	}
+    // Use waitUntil to allow hibernation without waiting for API call
+    this.ctx.waitUntil(
+      this.notifySubscriberOnlineState(userId, environmentId, true, undefined, jwtToken).catch((error) =>
+        console.error('Failed to notify subscriber online state:', error)
+      )
+    );
 
-	/**
-	 * Handle WebSocket messages (called automatically by Cloudflare runtime)
-	 */
-	async webSocketMessage(ws: WebSocket): Promise<void> {
-		const metadata = this.getConnectionMetadata(ws);
+    return new Response(null, {
+      status: 101,
+      webSocket: client,
+    });
+  }
 
-		if (!metadata) {
-			ws.close(1008, 'Connection metadata not found');
-		}
-	}
+  /**
+   * Handle WebSocket messages (called automatically by Cloudflare runtime)
+   */
+  async webSocketMessage(ws: WebSocket): Promise<void> {
+    const metadata = this.getConnectionMetadata(ws);
 
-	/**
-	 * Handle WebSocket connection close (called automatically by Cloudflare runtime)
-	 */
-	async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
-		ws.close(code, reason);
+    if (!metadata) {
+      ws.close(1008, 'Connection metadata not found');
+    }
+  }
 
-		const metadata = this.getConnectionMetadata(ws);
+  /**
+   * Handle WebSocket connection close (called automatically by Cloudflare runtime)
+   */
+  async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
+    ws.close(code, reason);
 
-		if (metadata) {
-			console.log(`WebSocket connection closed for subscriber: ${metadata.userId}`);
-			await this.handleSubscriberDisconnection(metadata);
-		}
+    const metadata = this.getConnectionMetadata(ws);
 
-		// Clean up stored JWT token
-		this.connectionTokens.delete(ws);
-	}
+    if (metadata) {
+      this.handleSubscriberDisconnection(metadata);
+    }
 
-	/**
-	 * Handle WebSocket errors (called automatically by Cloudflare runtime)
-	 */
-	async webSocketError(ws: WebSocket, error: unknown): Promise<void> {
-		console.error('WebSocket error:', error);
-		const metadata = this.getConnectionMetadata(ws);
+    // No need to delete from connectionTokens - using serializeAttachment instead
+  }
 
-		if (metadata) {
-			console.log(`WebSocket error for subscriber: ${metadata.userId}`);
-		}
+  /**
+   * Handle WebSocket errors (called automatically by Cloudflare runtime)
+   */
+  async webSocketError(ws: WebSocket, error: unknown): Promise<void> {
+    console.error('WebSocket error:', error);
+    const metadata = this.getConnectionMetadata(ws);
 
-		// Clean up stored JWT token
-		this.connectionTokens.delete(ws);
-	}
+    if (metadata) {
+      console.log(`WebSocket error for subscriber: ${metadata.userId}`);
+    }
 
-	/**
-	 * Send message to a specific user
-	 */
-	async sendToUser(userId: string, event: string, data: any): Promise<void> {
-		const userConnections = this.ctx.getWebSockets(`user:${userId}`);
+    // No need to delete from connectionTokens - using serializeAttachment instead
+  }
 
-		if (userConnections.length === 0) {
-			console.log(`No active connections found for user: ${userId}`);
+  /**
+   * Send message to a specific user
+   */
+  async sendToUser(userId: string, event: string, data: unknown): Promise<void> {
+    const userConnections = this.ctx.getWebSockets(`user:${userId}`);
 
-			return;
-		}
+    if (userConnections.length === 0) {
+      return;
+    }
 
-		const message = JSON.stringify({
-			event,
-			data,
-			timestamp: Date.now(),
-		});
+    // Pre-serialize the message once to avoid repeated JSON.stringify calls
+    const message = JSON.stringify({
+      event,
+      data,
+      timestamp: Date.now(),
+    });
 
-		console.log(`Sending event ${event} to user ${userId} (${userConnections.length} connections)`);
+    // Send to all user connections in parallel using Promise.allSettled
+    // This prevents one failed connection from blocking others
+    const sendPromises = userConnections.map(async (ws) => {
+      try {
+        ws.send(message);
+      } catch (error) {
+        console.error(`Failed to send message to user ${userId}:`, error);
+        // Connection will be cleaned up automatically by Cloudflare
+        throw error; // Re-throw to be caught by Promise.allSettled
+      }
+    });
 
-		for (const ws of userConnections) {
-			try {
-				ws.send(message);
-			} catch (error) {
-				console.error(`Failed to send message to connection:`, error);
-				// No manual cleanup needed - Cloudflare handles this automatically
-			}
-		}
-	}
+    // Wait for all sends to complete, but don't fail if some connections error
+    await Promise.allSettled(sendPromises);
+  }
 
-	/**
-	 * Broadcast message to all connections in the room
-	 */
-	async broadcast(event: string, data: any, excludeUserId?: string): Promise<void> {
-		const message = JSON.stringify({
-			event,
-			data,
-			timestamp: Date.now(),
-		});
+  /**
+   * Get active connection count for a user
+   */
+  getActiveConnectionsForUser(userId: string): number {
+    return this.ctx.getWebSockets(`user:${userId}`).length;
+  }
 
-		const allConnections = this.ctx.getWebSockets();
+  /**
+   * Get total active connections in this room
+   */
+  getTotalActiveConnections(): number {
+    return this.ctx.getWebSockets().length;
+  }
 
-		for (const ws of allConnections) {
-			if (excludeUserId) {
-				const metadata = this.getConnectionMetadata(ws);
-				if (metadata && metadata.userId === excludeUserId) {
-					continue;
-				}
-			}
+  /**
+   * Get connection capacity information
+   */
+  getConnectionCapacity(): { current: number; max: number; available: number } {
+    const current = this.getTotalActiveConnections();
+    const max = WebSocketRoom.MAX_CONNECTIONS;
+    const available = max - current;
 
-			try {
-				ws.send(message);
-			} catch (error) {
-				console.error(`Failed to broadcast to connection:`, error);
-				// No manual cleanup needed - Cloudflare handles this automatically
-			}
-		}
-	}
+    return { current, max, available };
+  }
 
-	/**
-	 * Get active connection count for a user
-	 */
-	getActiveConnectionsForUser(userId: string): number {
-		return this.ctx.getWebSockets(`user:${userId}`).length;
-	}
+  /**
+   * Notify the API about subscriber online state changes
+   */
+  private async notifySubscriberOnlineState(
+    subscriberId: string,
+    environmentId: string,
+    isOnline: boolean,
+    organizationId?: string,
+    jwtToken?: string
+  ): Promise<void> {
+    const apiUrl = this.env.API_URL;
 
-	/**
-	 * Get all connected users
-	 */
-	getConnectedUsers(): string[] {
-		const allConnections = this.ctx.getWebSockets();
-		const users = new Set<string>();
+    if (!apiUrl) {
+      console.warn('API_URL not configured, skipping online state notification');
 
-		for (const ws of allConnections) {
-			const metadata = this.getConnectionMetadata(ws);
+      return;
+    }
 
-			if (metadata) {
-				users.add(metadata.userId);
-			}
-		}
+    if (!jwtToken) {
+      console.warn('JWT token not available, skipping online state notification');
 
-		return Array.from(users);
-	}
+      return;
+    }
 
-	/**
-	 * Notify the API about subscriber online state changes
-	 */
-	private async notifySubscriberOnlineState(
-		subscriberId: string,
-		environmentId: string,
-		isOnline: boolean,
-		organizationId?: string,
-		jwtToken?: string
-	): Promise<void> {
-		const apiUrl = this.env.API_URL;
+    try {
+      const response = await fetch(`${apiUrl}/v1/internal/subscriber-online-state`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwtToken}`,
+        },
+        body: JSON.stringify({
+          subscriberId,
+          environmentId,
+          isOnline,
+          organizationId,
+          timestamp: Date.now(),
+        }),
+      });
 
-		if (!apiUrl) {
-			console.warn('API_URL not configured, skipping online state notification');
+      if (!response.ok) {
+        console.error(`Failed to notify API about subscriber online state: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error(`Error notifying API about subscriber online state:`, error);
+    }
+  }
 
-			return;
-		}
+  private getConnectionMetadata(ws: WebSocket): IConnectionMetadata | null {
+    const tags = this.ctx.getTags(ws);
 
-		if (!jwtToken) {
-			console.warn('JWT token not available, skipping online state notification');
+    // Retrieve persisted attachment data that survived hibernation
+    const attachment = ws.deserializeAttachment();
 
-			return;
-		}
+    if (!attachment || typeof attachment !== 'object' || !('jwtToken' in attachment)) {
+      return null;
+    }
 
-		try {
-			const response = await fetch(`${apiUrl}/v1/internal/subscriber-online-state`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${jwtToken}`,
-				},
-				body: JSON.stringify({
-					subscriberId,
-					environmentId,
-					isOnline,
-					organizationId,
-					timestamp: Date.now(),
-				}),
-			});
+    let userId: string | undefined;
+    let environmentId: string | undefined;
 
-			if (!response.ok) {
-				console.error(`Failed to notify API about subscriber online state: ${response.status} ${response.statusText}`);
-			} else {
-				console.log(`Successfully notified API: subscriber ${subscriberId} is ${isOnline ? 'online' : 'offline'}`);
-			}
-		} catch (error) {
-			console.error(`Error notifying API about subscriber online state:`, error);
-		}
-	}
+    for (const tag of tags) {
+      if (tag.startsWith('user:')) {
+        userId = tag.substring(5);
+      } else if (tag.startsWith('env:')) {
+        environmentId = tag.substring(4);
+      }
+    }
 
-	private getConnectionMetadata(ws: WebSocket): IConnectionMetadata | null {
-		const tags = this.ctx.getTags(ws);
-		const jwtToken = this.connectionTokens.get(ws);
+    if (!userId || !environmentId) {
+      return null;
+    }
 
-		let userId: string | undefined;
-		let environmentId: string | undefined;
+    return {
+      userId,
+      environmentId,
+      connectedAt: attachment.connectedAt || Date.now(),
+      jwtToken: attachment.jwtToken,
+    };
+  }
 
-		for (const tag of tags) {
-			if (tag.startsWith('user:')) {
-				userId = tag.substring(5);
-			} else if (tag.startsWith('env:')) {
-				environmentId = tag.substring(4);
-			}
-		}
+  private handleSubscriberDisconnection(metadata: IConnectionMetadata): void {
+    const activeConnections = this.getActiveConnectionsForUser(metadata.userId);
 
-		if (!userId || !environmentId || !jwtToken) {
-			return null;
-		}
+    const remainingConnections = activeConnections - 1;
 
-		return {
-			userId,
-			environmentId,
-			connectedAt: Date.now(),
-			jwtToken,
-		};
-	}
-
-	private async handleSubscriberDisconnection(metadata: IConnectionMetadata): Promise<void> {
-		const activeConnections = this.getActiveConnectionsForUser(metadata.userId);
-
-		const remainingConnections = activeConnections - 1;
-
-		console.log(
-			`Disconnect request received from ${metadata.userId}. Active connections: ${activeConnections}, remaining: ${remainingConnections}`
-		);
-
-		if (remainingConnections <= 0) {
-			console.log(`Subscriber ${metadata.userId} is now offline`);
-			// Notify API that subscriber is offline using JWT authentication
-			await this.notifySubscriberOnlineState(
-				metadata.userId,
-				metadata.environmentId,
-				false,
-				undefined,
-				metadata.jwtToken
-			);
-		}
-	}
+    if (remainingConnections <= 0) {
+      // Use waitUntil to allow hibernation without waiting for API call
+      this.ctx.waitUntil(
+        this.notifySubscriberOnlineState(
+          metadata.userId,
+          metadata.environmentId,
+          false,
+          undefined,
+          metadata.jwtToken
+        ).catch((error) => console.error('Failed to notify subscriber offline state:', error))
+      );
+    }
+  }
 }

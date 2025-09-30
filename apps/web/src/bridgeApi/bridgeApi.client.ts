@@ -1,6 +1,5 @@
-import axios from 'axios';
-
 import type { DiscoverWorkflowOutput, Event, ExecuteOutput, HealthCheck } from '@novu/framework/internal';
+import axios from 'axios';
 
 export type TriggerParams = {
   workflowId: string;
@@ -23,7 +22,6 @@ export function buildBridgeHTTPClient(baseURL: string) {
   });
 
   const get = async (url, params = {}) => {
-    // eslint-disable-next-line no-useless-catch
     try {
       const response = await httpClient.get(url, { params });
 
@@ -36,7 +34,6 @@ export function buildBridgeHTTPClient(baseURL: string) {
 
   // POST method
   const post = async (url, data = {}) => {
-    // eslint-disable-next-line no-useless-catch
     try {
       const response = await httpClient.post(url, data);
 
@@ -79,7 +76,7 @@ export function buildBridgeHTTPClient(baseURL: string) {
       payload,
       state,
       subscriber,
-    }: Omit<Event, 'action'>): Promise<ExecuteOutput> {
+    }: Omit<Event, 'action' | 'context'>): Promise<ExecuteOutput> {
       return post(`${baseURL}?action=preview&workflowId=${workflowId}&stepId=${stepId}`, {
         controls: controls || {},
         payload: payload || {},
@@ -92,9 +89,7 @@ export function buildBridgeHTTPClient(baseURL: string) {
      * TODO: Use framework shared types
      */
     async trigger({ workflowId, bridgeUrl, to, payload, controls }: TriggerParams): Promise<any> {
-      // eslint-disable-next-line no-param-reassign
       payload = payload || {};
-      // eslint-disable-next-line no-param-reassign
       payload.__source = 'studio-test-workflow';
 
       return post(`${baseURL}?action=trigger&workflowId=${workflowId}`, {

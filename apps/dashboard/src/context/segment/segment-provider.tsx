@@ -1,5 +1,5 @@
-import { SegmentService } from '@/utils/segment';
 import React from 'react';
+import { SegmentService } from '@/utils/segment';
 
 type Props = {
   children: React.ReactNode;

@@ -1,7 +1,7 @@
-import { UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
-import { StepTypeEnum, WorkflowCreationSourceEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { LocalizationResourceEnum } from '@novu/dal';
+import { ApiServiceLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Delete translation group - /v2/translations/:resourceType/:resourceId (DELETE) #novu-v2', async () => {
@@ -10,9 +10,6 @@ describe('Delete translation group - /v2/translations/:resourceType/:resourceId 
   let workflowId: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -38,11 +35,6 @@ describe('Delete translation group - /v2/translations/:resourceType/:resourceId 
       ],
     });
     workflowId = workflow.workflowId;
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should delete entire translation group with all translations successfully', async () => {

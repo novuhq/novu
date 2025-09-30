@@ -1,7 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 import { Grid } from '../../../styled-system/jsx';
-import { IconSettings, IconOutlineInfo } from '../../icons';
+import { IconOutlineInfo, IconSettings } from '../../icons';
 import { Title } from '../title';
 import { Button } from './Button';
 

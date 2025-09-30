@@ -1,3 +1,4 @@
+import { Novu } from '@novu/api';
 import {
   CreateWorkflowDto,
   DirectionEnum,
@@ -8,10 +9,9 @@ import {
 } from '@novu/api/models/components';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Novu } from '@novu/api';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('List Workflows - /workflows (GET) #novu-v2', function () {
+describe('List Workflows - /workflows (GET) #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
 
@@ -47,11 +47,11 @@ describe('List Workflows - /workflows (GET) #novu-v2', function () {
     });
 
     it('should correctly search workflows by name', async () => {
-      const searchTerm = 'SEARCHABLE_WORKFLOW';
+      const searchTerm = 'SEARCHABLE-WORKFLOW';
 
       // Create workflows with different names
-      await createWorkflow(`${searchTerm}_1`);
-      await createWorkflow(`${searchTerm}_2`);
+      await createWorkflow(`${searchTerm}-1`);
+      await createWorkflow(`${searchTerm}-2`);
       await createWorkflow('Different Workflow');
 
       const { result } = await novuClient.workflows.list({ query: searchTerm });

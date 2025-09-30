@@ -1,7 +1,15 @@
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  IProviderConfig,
+  NOVU_PROVIDERS,
+  ProvidersIdEnum,
+  PushProviderIdEnum,
+  providers,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 import { useMemo } from 'react';
-import { ChannelTypeEnum, ChatProviderIdEnum, IProviderConfig, PushProviderIdEnum } from '@novu/shared';
-import { providers, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
-import { ProvidersIdEnum } from '@novu/shared';
 
 export function useIntegrationList(searchQuery: string = '') {
   const filteredIntegrations = useMemo(() => {
@@ -9,9 +17,7 @@ export function useIntegrationList(searchQuery: string = '') {
 
     const filtered = providers.filter(
       (provider: IProviderConfig) =>
-        provider.displayName.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        provider.id !== EmailProviderIdEnum.Novu &&
-        provider.id !== SmsProviderIdEnum.Novu
+        provider.displayName.toLowerCase().includes(searchQuery.toLowerCase()) && !NOVU_PROVIDERS.includes(provider.id)
     );
 
     const popularityOrder: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {

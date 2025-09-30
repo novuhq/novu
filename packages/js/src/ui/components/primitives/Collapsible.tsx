@@ -1,4 +1,4 @@
-import { type Component, JSX, createEffect, createSignal, onCleanup } from 'solid-js';
+import { type Component, createEffect, createSignal, JSX, onCleanup } from 'solid-js';
 import { useStyle } from '../../helpers';
 
 type CollapsibleProps = JSX.IntrinsicElements['div'] & {
@@ -49,7 +49,10 @@ export const Collapsible: Component<CollapsibleProps> = (props) => {
 
   return (
     <div
-      class={style('collapsible', props.class)}
+      class={style({
+        key: 'collapsible',
+        className: props.class,
+      })}
       style={{
         overflow: 'hidden',
         opacity: props.open ? 1 : 0,

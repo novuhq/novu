@@ -3,10 +3,10 @@ import type {
   Awaitable,
   CustomStep,
   DiscoverWorkflowOutput,
-  StepType,
-  StepOutput,
-  StepOptions,
   Schema,
+  StepOptions,
+  StepOutput,
+  StepType,
 } from '../../types';
 import { transformSchema } from '../../validators';
 import { discoverStep } from './discover-step';
@@ -19,19 +19,24 @@ export async function discoverCustomStepFactory(
     const controlSchema = options?.controlSchema || emptySchema;
     const outputSchema = options?.outputSchema || emptySchema;
 
+    const [transformedControlSchema, transformedOutputSchema] = await Promise.all([
+      transformSchema(controlSchema),
+      transformSchema(outputSchema),
+    ]);
+
     await discoverStep(targetWorkflow, stepId, {
       stepId,
       type,
       controls: {
-        schema: await transformSchema(controlSchema),
+        schema: transformedControlSchema,
         unknownSchema: controlSchema,
       },
       outputs: {
-        schema: await transformSchema(outputSchema),
+        schema: transformedOutputSchema,
         unknownSchema: outputSchema,
       },
       results: {
-        schema: await transformSchema(outputSchema),
+        schema: transformedOutputSchema,
         unknownSchema: outputSchema,
       },
       resolve: resolve as (controls: Record<string, unknown>) => Awaitable<Record<string, unknown>>,
@@ -49,7 +54,6 @@ export async function discoverCustomStepFactory(
         },
       },
       // TODO: fix typing for `resolve` to use generic typings
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as Awaited<StepOutput<any>>;
   };
 }

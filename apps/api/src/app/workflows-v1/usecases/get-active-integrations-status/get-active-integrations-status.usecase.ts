@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import {
+  CalculateLimitNovuIntegration,
+  CalculateLimitNovuIntegrationCommand,
+  NotificationStep,
+} from '@novu/application-generic';
+import {
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   SmsProviderIdEnum,
   StepTypeEnum,
   WorkflowChannelsIntegrationStatus,
 } from '@novu/shared';
-import {
-  CalculateLimitNovuIntegration,
-  CalculateLimitNovuIntegrationCommand,
-  NotificationStep,
-} from '@novu/application-generic';
+import { IntegrationResponseDto } from '../../../integrations/dtos/integration-response.dto';
 import { GetActiveIntegrationsCommand } from '../../../integrations/usecases/get-active-integration/get-active-integration.command';
 import { GetActiveIntegrations } from '../../../integrations/usecases/get-active-integration/get-active-integration.usecase';
-import { GetActiveIntegrationsStatusCommand } from './get-active-integrations-status.command';
-
-import { IntegrationResponseDto } from '../../../integrations/dtos/integration-response.dto';
 import { WorkflowResponse } from '../../dtos/workflow-response.dto';
+import { GetActiveIntegrationsStatusCommand } from './get-active-integrations-status.command';
 
 /**
  * @deprecated use usecases in /workflows directory
@@ -71,13 +71,11 @@ export class GetActiveIntegrationsStatus {
     for (const integration of activeIntegrations) {
       const channelType = integration.channel;
 
-      // eslint-disable-next-line no-param-reassign
       stateByChannelType[channelType].hasActiveIntegrations = integration.active;
       const isEmailChannel = channelType === ChannelTypeEnum.EMAIL;
       const isSmsChannel = channelType === ChannelTypeEnum.SMS;
 
       if ((isEmailChannel || isSmsChannel) && !stateByChannelType[channelType].hasPrimaryIntegrations) {
-        // eslint-disable-next-line no-param-reassign
         stateByChannelType[channelType].hasPrimaryIntegrations = integration.primary;
       }
     }
@@ -92,7 +90,6 @@ export class GetActiveIntegrationsStatus {
     if (Array.isArray(workflows)) {
       return workflows.map((workflow) => {
         const { hasActive, hasPrimary } = this.handleSteps(workflow.steps, activeChannelsStatus);
-        // eslint-disable-next-line no-param-reassign
         workflow.workflowIntegrationStatus = {
           hasActiveIntegrations: hasActive,
           channels: activeChannelsStatus,
@@ -152,7 +149,9 @@ export class GetActiveIntegrationsStatus {
   ) {
     const primaryNovuProviders = activeIntegrations.filter(
       (integration) =>
-        (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) &&
+        (integration.providerId === EmailProviderIdEnum.Novu ||
+          integration.providerId === SmsProviderIdEnum.Novu ||
+          integration.providerId === ChatProviderIdEnum.Novu) &&
         integration.primary
     );
 
@@ -171,7 +170,6 @@ export class GetActiveIntegrationsStatus {
       } else {
         hasLimitReached = limit.limit === limit.count;
       }
-      // eslint-disable-next-line no-param-reassign
       stateByChannelType[channelType].hasActiveIntegrations = !hasLimitReached;
     }
 

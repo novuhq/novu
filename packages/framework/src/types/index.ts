@@ -1,5 +1,6 @@
 export * from './code.types';
 export * from './config.types';
+export * from './context.types';
 export * from './discover.types';
 export * from './event.types';
 export * from './execution.types';

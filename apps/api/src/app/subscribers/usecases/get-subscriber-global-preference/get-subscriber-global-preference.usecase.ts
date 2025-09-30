@@ -1,7 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-
-import { ChannelTypeEnum, IPreferenceChannels } from '@novu/shared';
 import {
   buildSubscriberKey,
   CachedResponse,
@@ -10,24 +7,36 @@ import {
   Instrument,
   InstrumentUsecase,
 } from '@novu/application-generic';
+import {
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
+import { ChannelTypeEnum, IPreferenceChannels, Schedule } from '@novu/shared';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
-import { GetSubscriberPreference } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 
 @Injectable()
 export class GetSubscriberGlobalPreference {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private getPreferences: GetPreferences,
-    private getSubscriberPreference: GetSubscriberPreference
+    private notificationTemplateRepository: NotificationTemplateRepository
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetSubscriberGlobalPreferenceCommand) {
-    const subscriber = await this.getSubscriber(command);
+  async execute(
+    command: GetSubscriberGlobalPreferenceCommand
+  ): Promise<{ preference: { enabled: boolean; channels: IPreferenceChannels; schedule?: Schedule } }> {
+    const subscriber = command.subscriber ?? (await this.getSubscriber(command));
 
     const activeChannels = await this.getActiveChannels(command);
 
-    const subscriberGlobalPreference = await this.getSubscriberGlobalPreference(command, subscriber._id);
+    const subscriberGlobalPreference = await this.getPreferences.getSubscriberGlobalPreference({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberId: subscriber._id,
+    });
 
     const channelsWithDefaults = this.buildDefaultPreferences(subscriberGlobalPreference.channels);
 
@@ -42,55 +51,44 @@ export class GetSubscriberGlobalPreference {
       preference: {
         enabled: subscriberGlobalPreference.enabled,
         channels,
+        schedule: subscriberGlobalPreference.schedule,
       },
-    };
-  }
-
-  @Instrument()
-  private async getSubscriberGlobalPreference(
-    command: GetSubscriberGlobalPreferenceCommand,
-    subscriberId: string
-  ): Promise<{
-    channels: IPreferenceChannels;
-    enabled: boolean;
-  }> {
-    const subscriberGlobalChannels = await this.getPreferences.getPreferenceChannels({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      subscriberId,
-    });
-
-    return {
-      channels: subscriberGlobalChannels ?? {
-        email: true,
-        sms: true,
-        in_app: true,
-        chat: true,
-        push: true,
-      },
-      enabled: true,
     };
   }
 
   @Instrument()
   private async getActiveChannels(command: GetSubscriberGlobalPreferenceCommand): Promise<ChannelTypeEnum[]> {
-    const subscriberWorkflowPreferences = await this.getSubscriberPreference.execute(
-      GetSubscriberGlobalPreferenceCommand.create({
-        environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-        organizationId: command.organizationId,
-        includeInactiveChannels: command.includeInactiveChannels,
-      })
-    );
-
-    const activeChannels = new Set<ChannelTypeEnum>();
-    subscriberWorkflowPreferences.forEach((subscriberWorkflowPreference) => {
-      Object.keys(subscriberWorkflowPreference.preference.channels).forEach((channel) => {
-        activeChannels.add(channel as ChannelTypeEnum);
-      });
+    const workflowList = await this.notificationTemplateRepository.filterActive({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
     });
 
+    const activeChannels = new Set<ChannelTypeEnum>();
+
+    for (const workflow of workflowList) {
+      const workflowChannels = this.getChannels(workflow, command.includeInactiveChannels);
+      for (const channel of workflowChannels) {
+        activeChannels.add(channel);
+      }
+    }
+
     return Array.from(activeChannels);
+  }
+
+  private getChannels(workflow: NotificationTemplateEntity, includeInactiveChannels: boolean): ChannelTypeEnum[] {
+    if (includeInactiveChannels) {
+      return Object.values(ChannelTypeEnum);
+    }
+
+    const channelSet = new Set<ChannelTypeEnum>();
+
+    for (const step of workflow.steps) {
+      if (step.active && step.template?.type) {
+        channelSet.add(step.template.type as unknown as ChannelTypeEnum);
+      }
+    }
+
+    return Array.from(channelSet);
   }
 
   @CachedResponse({

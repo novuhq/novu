@@ -1,12 +1,12 @@
-import { StepIssues, WorkflowStatusEnum } from '@novu/shared';
 import { NotificationStep } from '@novu/application-generic';
+import { StepIssues, WorkflowStatusEnum } from '@novu/shared';
 
 export function computeWorkflowStatus(workflowActive: boolean, steps: NotificationStep[]) {
   if (!workflowActive) {
     return WorkflowStatusEnum.INACTIVE;
   }
 
-  const hasIssues = steps.filter((step) => hasControlIssues(step.issues)).length > 0;
+  const hasIssues = steps.some((step) => hasControlIssues(step.issues));
   if (!hasIssues) {
     return WorkflowStatusEnum.ACTIVE;
   }

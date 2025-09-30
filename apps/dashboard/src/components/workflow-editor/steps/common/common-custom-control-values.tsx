@@ -1,6 +1,6 @@
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { RiCloseLine, RiEdit2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { CompactButton } from '../../../primitives/button-compact';
 import { CustomStepControls } from '../controls/custom-step-controls';
 

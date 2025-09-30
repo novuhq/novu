@@ -61,11 +61,22 @@ import {
   RuntimeIssueDto$outboundSchema,
 } from "./runtimeissuedto.js";
 import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   SmsStepResponseDto,
   SmsStepResponseDto$inboundSchema,
   SmsStepResponseDto$Outbound,
   SmsStepResponseDto$outboundSchema,
 } from "./smsstepresponsedto.js";
+import {
+  ThrottleStepResponseDto,
+  ThrottleStepResponseDto$inboundSchema,
+  ThrottleStepResponseDto$Outbound,
+  ThrottleStepResponseDto$outboundSchema,
+} from "./throttlestepresponsedto.js";
 import {
   WorkflowPreferencesResponseDto,
   WorkflowPreferencesResponseDto$inboundSchema,
@@ -78,6 +89,50 @@ import {
   WorkflowStatusEnum$outboundSchema,
 } from "./workflowstatusenum.js";
 
+/**
+ * User who last updated the workflow
+ */
+export type WorkflowResponseDtoUpdatedBy = {
+  /**
+   * User ID
+   */
+  id: string;
+  /**
+   * User first name
+   */
+  firstName?: string | null | undefined;
+  /**
+   * User last name
+   */
+  lastName?: string | null | undefined;
+  /**
+   * User external ID
+   */
+  externalId?: string | null | undefined;
+};
+
+/**
+ * User who last published the workflow
+ */
+export type LastPublishedBy = {
+  /**
+   * User ID
+   */
+  id: string;
+  /**
+   * User first name
+   */
+  firstName?: string | null | undefined;
+  /**
+   * User last name
+   */
+  lastName?: string | null | undefined;
+  /**
+   * User external ID
+   */
+  externalId?: string | null | undefined;
+};
+
 export type WorkflowResponseDtoSteps =
   | (InAppStepResponseDto & { type: "in_app" })
   | (EmailStepResponseDto & { type: "email" })
@@ -86,7 +141,8 @@ export type WorkflowResponseDtoSteps =
   | (ChatStepResponseDto & { type: "chat" })
   | (DelayStepResponseDto & { type: "delay" })
   | (DigestStepResponseDto & { type: "digest" })
-  | (CustomStepResponseDto & { type: "custom" });
+  | (CustomStepResponseDto & { type: "custom" })
+  | (ThrottleStepResponseDto & { type: "throttle" });
 
 export type WorkflowResponseDto = {
   /**
@@ -112,7 +168,7 @@ export type WorkflowResponseDto = {
   /**
    * The payload JSON Schema for the workflow
    */
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   /**
    * Enable or disable translations for this workflow
    */
@@ -138,6 +194,18 @@ export type WorkflowResponseDto = {
    */
   createdAt: string;
   /**
+   * User who last updated the workflow
+   */
+  updatedBy?: WorkflowResponseDtoUpdatedBy | null | undefined;
+  /**
+   * Timestamp of the last workflow publication
+   */
+  lastPublishedAt?: string | null | undefined;
+  /**
+   * User who last published the workflow
+   */
+  lastPublishedBy?: LastPublishedBy | null | undefined;
+  /**
    * Steps of the workflow
    */
   steps: Array<
@@ -149,9 +217,10 @@ export type WorkflowResponseDto = {
     | (DelayStepResponseDto & { type: "delay" })
     | (DigestStepResponseDto & { type: "digest" })
     | (CustomStepResponseDto & { type: "custom" })
+    | (ThrottleStepResponseDto & { type: "throttle" })
   >;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
   origin: ResourceOriginEnum;
   /**
@@ -174,7 +243,153 @@ export type WorkflowResponseDto = {
    * Generated payload example based on the payload schema
    */
   payloadExample?: { [k: string]: any } | null | undefined;
+  /**
+   * Severity of the workflow
+   */
+  severity: SeverityLevelEnum;
 };
+
+/** @internal */
+export const WorkflowResponseDtoUpdatedBy$inboundSchema: z.ZodType<
+  WorkflowResponseDtoUpdatedBy,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  _id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    "_id": "id",
+  });
+});
+
+/** @internal */
+export type WorkflowResponseDtoUpdatedBy$Outbound = {
+  _id: string;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
+  externalId?: string | null | undefined;
+};
+
+/** @internal */
+export const WorkflowResponseDtoUpdatedBy$outboundSchema: z.ZodType<
+  WorkflowResponseDtoUpdatedBy$Outbound,
+  z.ZodTypeDef,
+  WorkflowResponseDtoUpdatedBy
+> = z.object({
+  id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    id: "_id",
+  });
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace WorkflowResponseDtoUpdatedBy$ {
+  /** @deprecated use `WorkflowResponseDtoUpdatedBy$inboundSchema` instead. */
+  export const inboundSchema = WorkflowResponseDtoUpdatedBy$inboundSchema;
+  /** @deprecated use `WorkflowResponseDtoUpdatedBy$outboundSchema` instead. */
+  export const outboundSchema = WorkflowResponseDtoUpdatedBy$outboundSchema;
+  /** @deprecated use `WorkflowResponseDtoUpdatedBy$Outbound` instead. */
+  export type Outbound = WorkflowResponseDtoUpdatedBy$Outbound;
+}
+
+export function workflowResponseDtoUpdatedByToJSON(
+  workflowResponseDtoUpdatedBy: WorkflowResponseDtoUpdatedBy,
+): string {
+  return JSON.stringify(
+    WorkflowResponseDtoUpdatedBy$outboundSchema.parse(
+      workflowResponseDtoUpdatedBy,
+    ),
+  );
+}
+
+export function workflowResponseDtoUpdatedByFromJSON(
+  jsonString: string,
+): SafeParseResult<WorkflowResponseDtoUpdatedBy, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => WorkflowResponseDtoUpdatedBy$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'WorkflowResponseDtoUpdatedBy' from JSON`,
+  );
+}
+
+/** @internal */
+export const LastPublishedBy$inboundSchema: z.ZodType<
+  LastPublishedBy,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  _id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    "_id": "id",
+  });
+});
+
+/** @internal */
+export type LastPublishedBy$Outbound = {
+  _id: string;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
+  externalId?: string | null | undefined;
+};
+
+/** @internal */
+export const LastPublishedBy$outboundSchema: z.ZodType<
+  LastPublishedBy$Outbound,
+  z.ZodTypeDef,
+  LastPublishedBy
+> = z.object({
+  id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    id: "_id",
+  });
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace LastPublishedBy$ {
+  /** @deprecated use `LastPublishedBy$inboundSchema` instead. */
+  export const inboundSchema = LastPublishedBy$inboundSchema;
+  /** @deprecated use `LastPublishedBy$outboundSchema` instead. */
+  export const outboundSchema = LastPublishedBy$outboundSchema;
+  /** @deprecated use `LastPublishedBy$Outbound` instead. */
+  export type Outbound = LastPublishedBy$Outbound;
+}
+
+export function lastPublishedByToJSON(
+  lastPublishedBy: LastPublishedBy,
+): string {
+  return JSON.stringify(LastPublishedBy$outboundSchema.parse(lastPublishedBy));
+}
+
+export function lastPublishedByFromJSON(
+  jsonString: string,
+): SafeParseResult<LastPublishedBy, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => LastPublishedBy$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'LastPublishedBy' from JSON`,
+  );
+}
 
 /** @internal */
 export const WorkflowResponseDtoSteps$inboundSchema: z.ZodType<
@@ -212,6 +427,11 @@ export const WorkflowResponseDtoSteps$inboundSchema: z.ZodType<
       type: v.type,
     })),
   ),
+  ThrottleStepResponseDto$inboundSchema.and(
+    z.object({ type: z.literal("throttle") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
 ]);
 
 /** @internal */
@@ -223,7 +443,8 @@ export type WorkflowResponseDtoSteps$Outbound =
   | (ChatStepResponseDto$Outbound & { type: "chat" })
   | (DelayStepResponseDto$Outbound & { type: "delay" })
   | (DigestStepResponseDto$Outbound & { type: "digest" })
-  | (CustomStepResponseDto$Outbound & { type: "custom" });
+  | (CustomStepResponseDto$Outbound & { type: "custom" })
+  | (ThrottleStepResponseDto$Outbound & { type: "throttle" });
 
 /** @internal */
 export const WorkflowResponseDtoSteps$outboundSchema: z.ZodType<
@@ -258,6 +479,11 @@ export const WorkflowResponseDtoSteps$outboundSchema: z.ZodType<
   ),
   CustomStepResponseDto$outboundSchema.and(
     z.object({ type: z.literal("custom") }).transform((v) => ({
+      type: v.type,
+    })),
+  ),
+  ThrottleStepResponseDto$outboundSchema.and(
+    z.object({ type: z.literal("throttle") }).transform((v) => ({
       type: v.type,
     })),
   ),
@@ -305,13 +531,19 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
   validatePayload: z.boolean().optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   isTranslationEnabled: z.boolean().default(false),
   _id: z.string(),
   workflowId: z.string(),
   slug: z.string(),
   updatedAt: z.string(),
   createdAt: z.string(),
+  updatedBy: z.nullable(
+    z.lazy(() => WorkflowResponseDtoUpdatedBy$inboundSchema),
+  ).optional(),
+  lastPublishedAt: z.nullable(z.string()).optional(),
+  lastPublishedBy: z.nullable(z.lazy(() => LastPublishedBy$inboundSchema))
+    .optional(),
   steps: z.array(
     z.union([
       InAppStepResponseDto$inboundSchema.and(
@@ -354,6 +586,11 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
           type: v.type,
         })),
       ),
+      ThrottleStepResponseDto$inboundSchema.and(
+        z.object({ type: z.literal("throttle") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
     ]),
   ),
   origin: ResourceOriginEnum$inboundSchema,
@@ -362,6 +599,7 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
   issues: z.record(RuntimeIssueDto$inboundSchema).optional(),
   lastTriggeredAt: z.nullable(z.string()).optional(),
   payloadExample: z.nullable(z.record(z.any())).optional(),
+  severity: SeverityLevelEnum$inboundSchema,
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -375,13 +613,16 @@ export type WorkflowResponseDto$Outbound = {
   tags?: Array<string> | undefined;
   active: boolean;
   validatePayload?: boolean | undefined;
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   isTranslationEnabled: boolean;
   _id: string;
   workflowId: string;
   slug: string;
   updatedAt: string;
   createdAt: string;
+  updatedBy?: WorkflowResponseDtoUpdatedBy$Outbound | null | undefined;
+  lastPublishedAt?: string | null | undefined;
+  lastPublishedBy?: LastPublishedBy$Outbound | null | undefined;
   steps: Array<
     | (InAppStepResponseDto$Outbound & { type: "in_app" })
     | (EmailStepResponseDto$Outbound & { type: "email" })
@@ -391,6 +632,7 @@ export type WorkflowResponseDto$Outbound = {
     | (DelayStepResponseDto$Outbound & { type: "delay" })
     | (DigestStepResponseDto$Outbound & { type: "digest" })
     | (CustomStepResponseDto$Outbound & { type: "custom" })
+    | (ThrottleStepResponseDto$Outbound & { type: "throttle" })
   >;
   origin: string;
   preferences: WorkflowPreferencesResponseDto$Outbound;
@@ -398,6 +640,7 @@ export type WorkflowResponseDto$Outbound = {
   issues?: { [k: string]: RuntimeIssueDto$Outbound } | undefined;
   lastTriggeredAt?: string | null | undefined;
   payloadExample?: { [k: string]: any } | null | undefined;
+  severity: string;
 };
 
 /** @internal */
@@ -411,13 +654,19 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
   validatePayload: z.boolean().optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   isTranslationEnabled: z.boolean().default(false),
   id: z.string(),
   workflowId: z.string(),
   slug: z.string(),
   updatedAt: z.string(),
   createdAt: z.string(),
+  updatedBy: z.nullable(
+    z.lazy(() => WorkflowResponseDtoUpdatedBy$outboundSchema),
+  ).optional(),
+  lastPublishedAt: z.nullable(z.string()).optional(),
+  lastPublishedBy: z.nullable(z.lazy(() => LastPublishedBy$outboundSchema))
+    .optional(),
   steps: z.array(
     z.union([
       InAppStepResponseDto$outboundSchema.and(
@@ -460,6 +709,11 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
           type: v.type,
         })),
       ),
+      ThrottleStepResponseDto$outboundSchema.and(
+        z.object({ type: z.literal("throttle") }).transform((v) => ({
+          type: v.type,
+        })),
+      ),
     ]),
   ),
   origin: ResourceOriginEnum$outboundSchema,
@@ -468,6 +722,7 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
   issues: z.record(RuntimeIssueDto$outboundSchema).optional(),
   lastTriggeredAt: z.nullable(z.string()).optional(),
   payloadExample: z.nullable(z.record(z.any())).optional(),
+  severity: SeverityLevelEnum$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

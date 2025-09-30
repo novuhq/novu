@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import { cn } from '@/utils/ui';
 import { LoadingIndicator } from '@/components/primitives/loading-indicator';
+import { cn } from '@/utils/ui';
 
 type PanelHeaderProps = {
   icon?: React.ComponentType<{ className?: string }>;
@@ -13,7 +13,7 @@ type PanelHeaderProps = {
 export function PanelHeader({ icon: Icon, title, children, className, isLoading }: PanelHeaderProps) {
   return (
     <div className={cn('border-b border-neutral-200 p-3', className)}>
-      <div className="flex items-center justify-between">
+      <div className="flex h-full items-center justify-between">
         <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
           {Icon && <Icon className="size-3.5" />}
           {title}

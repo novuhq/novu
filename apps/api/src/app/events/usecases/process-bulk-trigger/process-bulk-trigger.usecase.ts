@@ -1,22 +1,42 @@
 import { Injectable } from '@nestjs/common';
+import { NotificationTemplateRepository } from '@novu/dal';
 import { AddressingTypeEnum, TriggerEventStatusEnum, TriggerRequestCategoryEnum } from '@novu/shared';
-
-import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
-
 import { TriggerEventResponseDto } from '../../dtos';
-import { ParseEventRequest } from '../parse-event-request/parse-event-request.usecase';
 import { ParseEventRequestMulticastCommand } from '../parse-event-request/parse-event-request.command';
+import { ParseEventRequest } from '../parse-event-request/parse-event-request.usecase';
+import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
 
 @Injectable()
 export class ProcessBulkTrigger {
-  constructor(private parseEventRequest: ParseEventRequest) {}
+  constructor(
+    private parseEventRequest: ParseEventRequest,
+    private notificationTemplateRepository: NotificationTemplateRepository
+  ) {}
 
   async execute(command: ProcessBulkTriggerCommand) {
-    const results: TriggerEventResponseDto[] = [];
-    for (const event of command.events) {
-      let result: TriggerEventResponseDto;
+    // Extract unique workflow identifiers from all events
+    const uniqueWorkflowIdentifiers = [...new Set(command.events.map((event) => event.name))];
+
+    // Fetch all unique workflows in a single batch operation
+    const workflows = await this.notificationTemplateRepository.findByTriggerIdentifierBulk(
+      command.environmentId,
+      uniqueWorkflowIdentifiers
+    );
+
+    // Create a map for quick lookup
+    const workflowMap = new Map();
+    for (const workflow of workflows) {
+      const triggerIdentifier = workflow.triggers[0]?.identifier;
+      if (triggerIdentifier) {
+        workflowMap.set(triggerIdentifier, workflow);
+      }
+    }
+
+    const eventPromises = command.events.map(async (event) => {
       try {
-        result = (await this.parseEventRequest.execute(
+        const workflow = workflowMap.get(event.name);
+
+        const result = (await this.parseEventRequest.execute(
           ParseEventRequestMulticastCommand.create({
             userId: command.userId,
             environmentId: command.environmentId,
@@ -31,8 +51,12 @@ export class ProcessBulkTrigger {
             addressingType: AddressingTypeEnum.MULTICAST,
             requestCategory: TriggerRequestCategoryEnum.BULK,
             bridgeUrl: event.bridgeUrl,
+            requestId: command.requestId,
+            workflow,
           })
         )) as unknown as TriggerEventResponseDto;
+
+        return result;
       } catch (e) {
         let error: string[];
         if (e.response?.message) {
@@ -41,15 +65,15 @@ export class ProcessBulkTrigger {
           error = [e.message];
         }
 
-        result = {
+        return {
           acknowledged: true,
           status: TriggerEventStatusEnum.ERROR,
           error,
-        };
+        } as TriggerEventResponseDto;
       }
+    });
 
-      results.push(result);
-    }
+    const results = await Promise.all(eventPromises);
 
     return results;
   }

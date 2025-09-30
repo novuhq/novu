@@ -1,15 +1,16 @@
-import { IsEnum, IsOptional, IsString, IsObject } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { StepTypeEnum } from '@novu/shared';
+import { IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import {
-  InAppControlDto,
-  EmailControlDto,
-  SmsControlDto,
-  PushControlDto,
   ChatControlDto,
+  CustomControlDto,
   DelayControlDto,
   DigestControlDto,
-  CustomControlDto,
+  EmailControlDto,
+  InAppControlDto,
+  PushControlDto,
+  SmsControlDto,
+  ThrottleControlDto,
 } from './controls';
 
 // Base DTO for common properties
@@ -163,6 +164,25 @@ export class DigestStepUpsertDto extends BaseStepConfigDto {
   controlValues?: DigestControlDto | Record<string, unknown> | null;
 }
 
+export class ThrottleStepUpsertDto extends BaseStepConfigDto {
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.THROTTLE,
+    description: 'Type of the step',
+  })
+  @IsEnum(StepTypeEnum)
+  readonly type: StepTypeEnum = 'throttle' as StepTypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Control values for the Throttle step.',
+    oneOf: [{ $ref: getSchemaPath(ThrottleControlDto) }, { type: 'object', additionalProperties: true }],
+  })
+  @IsOptional()
+  @IsObject()
+  controlValues?: ThrottleControlDto | Record<string, unknown> | null;
+}
+
 export class CustomStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({
     enum: StepTypeEnum,
@@ -194,4 +214,5 @@ export type StepUpsertDto =
   | ChatStepUpsertDto
   | DelayStepUpsertDto
   | DigestStepUpsertDto
+  | ThrottleStepUpsertDto
   | CustomStepUpsertDto;

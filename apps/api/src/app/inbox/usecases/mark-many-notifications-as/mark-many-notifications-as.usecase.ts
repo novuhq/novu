@@ -1,18 +1,21 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   buildFeedKey,
   buildMessageCountKey,
-  InvalidateCacheService,
-  WebSocketsQueueService,
-  TraceLogRepository,
-  PinoLogger,
-  mapEventTypeToTitle,
-  LogRepository,
-  Trace,
   EventType,
+  InvalidateCacheService,
+  LogRepository,
+  MessageInteractionService,
+  MessageInteractionTrace,
+  mapEventTypeToTitle,
+  messageWebhookMapper,
+  PinoLogger,
+  SendWebhookMessage,
+  StepType,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
-import { MessageEntity, MessageRepository } from '@novu/dal';
-import { WebSocketEventEnum } from '@novu/shared';
+import { EnvironmentEntity, EnvironmentRepository, MessageEntity, MessageRepository } from '@novu/dal';
+import { DeliveryLifecycleStatus, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { MarkManyNotificationsAsCommand } from './mark-many-notifications-as.command';
@@ -24,8 +27,10 @@ export class MarkManyNotificationsAs {
     private webSocketsQueueService: WebSocketsQueueService,
     private getSubscriber: GetSubscriber,
     private messageRepository: MessageRepository,
-    private traceLogRepository: TraceLogRepository,
-    private logger: PinoLogger
+    private messageInteractionService: MessageInteractionService,
+    private logger: PinoLogger,
+    private sendWebhookMessage: SendWebhookMessage,
+    private environmentRepository: EnvironmentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -40,7 +45,7 @@ export class MarkManyNotificationsAs {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
-    await this.messageRepository.updateMessagesStatusByIds({
+    const updatedMessages = await this.messageRepository.updateMessagesStatusByIds({
       environmentId: command.environmentId,
       subscriberId: subscriber._id,
       ids: command.ids,
@@ -53,6 +58,7 @@ export class MarkManyNotificationsAs {
       command,
       subscriberId: subscriber.subscriberId,
       _subscriberId: subscriber._id,
+      messages: updatedMessages,
     });
 
     await this.invalidateCacheService.invalidateQuery({
@@ -69,6 +75,36 @@ export class MarkManyNotificationsAs {
       }),
     });
 
+    const environment = await this.environmentRepository.findOne(
+      {
+        _id: command.environmentId,
+      },
+      'webhookAppId identifier'
+    );
+    if (!environment) {
+      throw new Error(`Environment not found for id ${command.environmentId}`);
+    }
+
+    const eventTypes: WebhookEventEnum[] = [];
+
+    if (command.read !== undefined) {
+      const eventType = command.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD;
+      eventTypes.push(eventType);
+    }
+
+    if (command.archived !== undefined) {
+      const eventType = command.archived ? WebhookEventEnum.MESSAGE_ARCHIVED : WebhookEventEnum.MESSAGE_UNARCHIVED;
+      eventTypes.push(eventType);
+    }
+
+    if (command.snoozedUntil !== undefined) {
+      // do not change to !== null, as null is a indication of unsnooze
+      const eventType = command.snoozedUntil ? WebhookEventEnum.MESSAGE_SNOOZED : WebhookEventEnum.MESSAGE_UNSNOOZED;
+      eventTypes.push(eventType);
+    }
+
+    await this.processWebhooksInBatches(eventTypes, updatedMessages, command, environment);
+
     this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
@@ -80,26 +116,71 @@ export class MarkManyNotificationsAs {
     });
   }
 
+  private async processWebhooksInBatches(
+    eventTypes: WebhookEventEnum[],
+    messages: MessageEntity[],
+    command: MarkManyNotificationsAsCommand,
+    environment: EnvironmentEntity
+  ): Promise<void> {
+    const BATCH_SIZE = 100;
+    const messageChunks = this.chunkArray(messages, BATCH_SIZE);
+
+    for (const messageChunk of messageChunks) {
+      const webhookPromises: Promise<{ eventId: string } | undefined>[] = [];
+
+      for (const eventType of eventTypes) {
+        webhookPromises.push(...this.sendWebhookEvents(messageChunk, eventType, command, environment));
+      }
+
+      await Promise.all(webhookPromises);
+    }
+  }
+
+  private chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+
+    return chunks;
+  }
+
+  private sendWebhookEvents(
+    updatedMessages: MessageEntity[],
+    eventType: WebhookEventEnum,
+    command: MarkManyNotificationsAsCommand,
+    environment: EnvironmentEntity
+  ): Promise<{ eventId: string } | undefined>[] {
+    return updatedMessages.map((message) =>
+      this.sendWebhookMessage.execute({
+        eventType: eventType,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        environment: environment,
+      })
+    );
+  }
+
   private async logTraces({
     command,
     subscriberId,
     _subscriberId,
+    messages,
   }: {
     command: MarkManyNotificationsAsCommand;
     subscriberId: string;
     _subscriberId: string;
+    messages?: MessageEntity[];
   }): Promise<void> {
-    const messages = await this.messageRepository.find({
-      _environmentId: command.environmentId,
-      _subscriberId,
-      _id: { $in: command.ids },
-    });
-
     if (!messages || !Array.isArray(messages)) {
       return;
     }
 
-    const allTraceData: Omit<Trace, 'id' | 'expires_at'>[] = [];
+    const allTraceData: MessageInteractionTrace[] = [];
 
     for (const message of messages) {
       if (!message._jobId) continue;
@@ -143,7 +224,7 @@ export class MarkManyNotificationsAs {
 
     if (allTraceData.length > 0) {
       try {
-        await this.traceLogRepository.createMany(allTraceData);
+        await this.messageInteractionService.trace(allTraceData, DeliveryLifecycleStatus.INTERACTED);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);
       }
@@ -163,7 +244,7 @@ function createTraceLog({
   eventType: EventType;
   subscriberId: string;
   _subscriberId: string;
-}): Omit<Trace, 'id' | 'expires_at'> {
+}): MessageInteractionTrace {
   return {
     created_at: LogRepository.formatDateTime64(new Date()),
     organization_id: message._organizationId,
@@ -178,5 +259,8 @@ function createTraceLog({
     status: 'success',
     entity_type: 'step_run',
     entity_id: message._jobId,
+    step_run_type: message.channel as StepType,
+    workflow_run_identifier: '',
+    _notificationId: message._notificationId,
   };
 }

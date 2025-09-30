@@ -1,5 +1,5 @@
+import { ENDPOINT_TYPES } from '@novu/shared';
 import { expect, test, vi } from 'vitest';
-
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { DiscordProvider } from './discord.provider';
 
@@ -8,18 +8,29 @@ test('should trigger Discord provider correctly', async () => {
   const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
     return {
       dateCreated: new Date(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   });
 
   await provider.sendMessage({
-    webhookUrl: 'webhookUrl',
+    channelData: {
+      endpoint: {
+        url: 'webhookUrl',
+      },
+      type: ENDPOINT_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
     content: 'chat message',
   });
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    webhookUrl: 'webhookUrl',
+    channelData: {
+      endpoint: {
+        url: 'webhookUrl',
+      },
+      type: ENDPOINT_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
     content: 'chat message',
   });
 });
@@ -35,7 +46,13 @@ test('should trigger Discord provider correctly with _passthrough', async () => 
 
   await provider.sendMessage(
     {
-      webhookUrl: 'https://www.google.com/',
+      channelData: {
+        endpoint: {
+          url: 'https://www.google.com/',
+        },
+        type: ENDPOINT_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
+      },
       content: 'chat message',
     },
     {

@@ -60,6 +60,11 @@ import {
   ResourceOriginEnum$outboundSchema,
 } from "./resourceoriginenum.js";
 import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   SmsStepUpsertDto,
   SmsStepUpsertDto$inboundSchema,
   SmsStepUpsertDto$Outbound,
@@ -100,7 +105,7 @@ export type UpdateWorkflowDto = {
   /**
    * The payload JSON Schema for the workflow
    */
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   /**
    * Enable or disable translations for this workflow
    */
@@ -127,9 +132,13 @@ export type UpdateWorkflowDto = {
    */
   preferences: PreferencesRequestDto;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
   origin: ResourceOriginEnum;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
 };
 
 /** @internal */
@@ -261,7 +270,7 @@ export const UpdateWorkflowDto$inboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
   validatePayload: z.boolean().optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   isTranslationEnabled: z.boolean().default(false),
   workflowId: z.string().optional(),
   steps: z.array(
@@ -310,6 +319,7 @@ export const UpdateWorkflowDto$inboundSchema: z.ZodType<
   ),
   preferences: PreferencesRequestDto$inboundSchema,
   origin: ResourceOriginEnum$inboundSchema,
+  severity: SeverityLevelEnum$inboundSchema.optional(),
 });
 
 /** @internal */
@@ -319,7 +329,7 @@ export type UpdateWorkflowDto$Outbound = {
   tags?: Array<string> | undefined;
   active: boolean;
   validatePayload?: boolean | undefined;
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   isTranslationEnabled: boolean;
   workflowId?: string | undefined;
   steps: Array<
@@ -334,6 +344,7 @@ export type UpdateWorkflowDto$Outbound = {
   >;
   preferences: PreferencesRequestDto$Outbound;
   origin: string;
+  severity?: string | undefined;
 };
 
 /** @internal */
@@ -347,7 +358,7 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
   validatePayload: z.boolean().optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   isTranslationEnabled: z.boolean().default(false),
   workflowId: z.string().optional(),
   steps: z.array(
@@ -396,6 +407,7 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
   ),
   preferences: PreferencesRequestDto$outboundSchema,
   origin: ResourceOriginEnum$outboundSchema,
+  severity: SeverityLevelEnum$outboundSchema.optional(),
 });
 
 /**

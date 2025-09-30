@@ -1,3 +1,4 @@
+import { IconType } from 'react-icons/lib';
 import {
   RiCellphoneFill,
   RiChatThreadFill,
@@ -5,12 +6,12 @@ import {
   RiFlashlightFill,
   RiHourglassFill,
   RiShadowLine,
+  RiSpeedUpFill,
 } from 'react-icons/ri';
+import { StepTypeEnum } from '@/utils/enums';
 import { Mail3Fill } from './mail-3-fill';
 import { Notification5Fill } from './notification-5-fill';
 import { Sms } from './sms';
-import { IconType } from 'react-icons/lib';
-import { StepTypeEnum } from '@/utils/enums';
 
 export const STEP_TYPE_TO_ICON: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.CHAT]: RiChatThreadFill,
@@ -21,5 +22,6 @@ export const STEP_TYPE_TO_ICON: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.IN_APP]: Notification5Fill,
   [StepTypeEnum.PUSH]: RiCellphoneFill,
   [StepTypeEnum.SMS]: Sms,
+  [StepTypeEnum.THROTTLE]: RiSpeedUpFill,
   [StepTypeEnum.TRIGGER]: RiFlashlightFill,
 };

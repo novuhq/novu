@@ -8,6 +8,17 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  EmailChannelOverrides,
+  EmailChannelOverrides$inboundSchema,
+  EmailChannelOverrides$Outbound,
+  EmailChannelOverrides$outboundSchema,
+} from "./emailchanneloverrides.js";
+import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   StepsOverrides,
   StepsOverrides$inboundSchema,
   StepsOverrides$Outbound,
@@ -33,13 +44,27 @@ import {
 } from "./topicpayloaddto.js";
 
 /**
+ * Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.
+ */
+export type Channels = {
+  /**
+   * Email channel specific overrides
+   */
+  email?: EmailChannelOverrides | undefined;
+};
+
+/**
  * This could be used to override provider specific configurations
  */
 export type Overrides = {
   /**
-   * This could be used to override provider specific configurations
+   * This could be used to override provider specific configurations or layout at the step level
    */
   steps?: { [k: string]: StepsOverrides } | undefined;
+  /**
+   * Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.
+   */
+  channels?: Channels | undefined;
   /**
    * Overrides the provider configuration for the entire workflow and all steps
    */
@@ -74,6 +99,10 @@ export type Overrides = {
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   layoutIdentifier?: string | undefined;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
 };
 
 export type To1 = TopicPayloadDto | SubscriberPayloadDto | string;
@@ -101,7 +130,7 @@ export type Actor = SubscriberPayloadDto | string;
  * @remarks
  *     Existing tenants will be updated with the provided details.
  */
-export type Tenant = TenantPayloadDto | string;
+export type Tenant = string | TenantPayloadDto;
 
 export type TriggerEventRequestDto = {
   /**
@@ -129,7 +158,10 @@ export type TriggerEventRequestDto = {
     | Array<TopicPayloadDto | SubscriberPayloadDto | string>
     | string;
   /**
-   * A unique identifier for this transaction, we will generate a UUID if not provided.
+   * A unique identifier for deduplication. If the same **transactionId** is sent again,
+   *
+   * @remarks
+   *       the trigger is ignored. Useful to prevent duplicate notifications. The retention period depends on your billing tier.
    */
   transactionId?: string | undefined;
   /**
@@ -145,8 +177,58 @@ export type TriggerEventRequestDto = {
    * @remarks
    *     Existing tenants will be updated with the provided details.
    */
-  tenant?: TenantPayloadDto | string | undefined;
+  tenant?: string | TenantPayloadDto | undefined;
 };
+
+/** @internal */
+export const Channels$inboundSchema: z.ZodType<
+  Channels,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  email: EmailChannelOverrides$inboundSchema.optional(),
+});
+
+/** @internal */
+export type Channels$Outbound = {
+  email?: EmailChannelOverrides$Outbound | undefined;
+};
+
+/** @internal */
+export const Channels$outboundSchema: z.ZodType<
+  Channels$Outbound,
+  z.ZodTypeDef,
+  Channels
+> = z.object({
+  email: EmailChannelOverrides$outboundSchema.optional(),
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Channels$ {
+  /** @deprecated use `Channels$inboundSchema` instead. */
+  export const inboundSchema = Channels$inboundSchema;
+  /** @deprecated use `Channels$outboundSchema` instead. */
+  export const outboundSchema = Channels$outboundSchema;
+  /** @deprecated use `Channels$Outbound` instead. */
+  export type Outbound = Channels$Outbound;
+}
+
+export function channelsToJSON(channels: Channels): string {
+  return JSON.stringify(Channels$outboundSchema.parse(channels));
+}
+
+export function channelsFromJSON(
+  jsonString: string,
+): SafeParseResult<Channels, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Channels$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Channels' from JSON`,
+  );
+}
 
 /** @internal */
 export const Overrides$inboundSchema: z.ZodType<
@@ -155,23 +237,27 @@ export const Overrides$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   steps: z.record(StepsOverrides$inboundSchema).optional(),
+  channels: z.lazy(() => Channels$inboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
   email: z.record(z.any()).optional(),
   push: z.record(z.any()).optional(),
   sms: z.record(z.any()).optional(),
   chat: z.record(z.any()).optional(),
   layoutIdentifier: z.string().optional(),
+  severity: SeverityLevelEnum$inboundSchema.optional(),
 });
 
 /** @internal */
 export type Overrides$Outbound = {
   steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
+  channels?: Channels$Outbound | undefined;
   providers?: { [k: string]: { [k: string]: any } } | undefined;
   email?: { [k: string]: any } | undefined;
   push?: { [k: string]: any } | undefined;
   sms?: { [k: string]: any } | undefined;
   chat?: { [k: string]: any } | undefined;
   layoutIdentifier?: string | undefined;
+  severity?: string | undefined;
 };
 
 /** @internal */
@@ -181,12 +267,14 @@ export const Overrides$outboundSchema: z.ZodType<
   Overrides
 > = z.object({
   steps: z.record(StepsOverrides$outboundSchema).optional(),
+  channels: z.lazy(() => Channels$outboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
   email: z.record(z.any()).optional(),
   push: z.record(z.any()).optional(),
   sms: z.record(z.any()).optional(),
   chat: z.record(z.any()).optional(),
   layoutIdentifier: z.string().optional(),
+  severity: SeverityLevelEnum$outboundSchema.optional(),
 });
 
 /**
@@ -372,17 +460,17 @@ export function actorFromJSON(
 
 /** @internal */
 export const Tenant$inboundSchema: z.ZodType<Tenant, z.ZodTypeDef, unknown> = z
-  .union([TenantPayloadDto$inboundSchema, z.string()]);
+  .union([z.string(), TenantPayloadDto$inboundSchema]);
 
 /** @internal */
-export type Tenant$Outbound = TenantPayloadDto$Outbound | string;
+export type Tenant$Outbound = string | TenantPayloadDto$Outbound;
 
 /** @internal */
 export const Tenant$outboundSchema: z.ZodType<
   Tenant$Outbound,
   z.ZodTypeDef,
   Tenant
-> = z.union([TenantPayloadDto$outboundSchema, z.string()]);
+> = z.union([z.string(), TenantPayloadDto$outboundSchema]);
 
 /**
  * @internal
@@ -434,7 +522,7 @@ export const TriggerEventRequestDto$inboundSchema: z.ZodType<
   ]),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$inboundSchema, z.string()]).optional(),
-  tenant: z.union([TenantPayloadDto$inboundSchema, z.string()]).optional(),
+  tenant: z.union([z.string(), TenantPayloadDto$inboundSchema]).optional(),
 }).transform((v) => {
   return remap$(v, {
     "name": "workflowId",
@@ -453,7 +541,7 @@ export type TriggerEventRequestDto$Outbound = {
     | string;
   transactionId?: string | undefined;
   actor?: SubscriberPayloadDto$Outbound | string | undefined;
-  tenant?: TenantPayloadDto$Outbound | string | undefined;
+  tenant?: string | TenantPayloadDto$Outbound | undefined;
 };
 
 /** @internal */
@@ -479,7 +567,7 @@ export const TriggerEventRequestDto$outboundSchema: z.ZodType<
   ]),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$outboundSchema, z.string()]).optional(),
-  tenant: z.union([TenantPayloadDto$outboundSchema, z.string()]).optional(),
+  tenant: z.union([z.string(), TenantPayloadDto$outboundSchema]).optional(),
 }).transform((v) => {
   return remap$(v, {
     workflowId: "name",

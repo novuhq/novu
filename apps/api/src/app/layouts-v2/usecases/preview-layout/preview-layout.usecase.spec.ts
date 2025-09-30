@@ -1,22 +1,21 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+import { LayoutControlType } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
-  ResourceOriginEnum,
   LAYOUT_PREVIEW_EMAIL_STEP,
   LAYOUT_PREVIEW_WORKFLOW_ID,
+  ResourceOriginEnum,
 } from '@novu/shared';
-import { EmailControlType, LayoutControlType } from '@novu/application-generic';
-
-import { PreviewLayoutUsecase } from './preview-layout.usecase';
-import { PreviewLayoutCommand } from './preview-layout.command';
-import { GetLayoutUseCase } from '../get-layout';
-import { CreateVariablesObject, CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object';
-import { SchemaBuilderService } from '../../../workflows-v2/usecases/preview/services/schema-builder.service';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { PreviewStep } from '../../../bridge/usecases/preview-step';
 import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
-import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
+import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object';
 import { PayloadMergerService } from '../../../workflows-v2/usecases/preview/services/payload-merger.service';
+import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
+import { GetLayoutUseCase } from '../get-layout';
+import { PreviewLayoutCommand } from './preview-layout.command';
+import { PreviewLayoutUsecase } from './preview-layout.usecase';
+import { enhanceBodyForPreview } from './preview-utils';
 
 describe('PreviewLayoutUsecase', () => {
   let getLayoutUseCaseMock: sinon.SinonStubbedInstance<GetLayoutUseCase>;
@@ -234,10 +233,9 @@ describe('PreviewLayoutUsecase', () => {
 
       expect(controlValueSanitizerMock.processControlValues.calledOnce).to.be.true;
       const processCall = controlValueSanitizerMock.processControlValues.firstCall.args;
-      expect(processCall[0]).to.be.true;
-      expect(processCall[1]).to.deep.equal(mockSanitizedControls);
-      expect(processCall[2]).to.deep.equal(mockLayout.variables);
-      expect(processCall[3]).to.deep.equal(mockVariablesObject);
+      expect(processCall[0]).to.deep.equal(mockSanitizedControls);
+      expect(processCall[1]).to.deep.equal(mockLayout.variables);
+      expect(processCall[2]).to.deep.equal(mockVariablesObject);
 
       // Verify payloadMerger call
       expect(payloadMergerMock.mergePayloadExample.calledOnce).to.be.true;
@@ -256,9 +254,11 @@ describe('PreviewLayoutUsecase', () => {
       expect(previewCall.subscriber).to.deep.equal(mockCleanedPayloadExample.subscriber);
       expect(previewCall.controls).to.deep.equal({
         subject: 'email-layout-preview',
-        body: mockPreviewTemplateData.controlValues.email?.body,
+        body: enhanceBodyForPreview(
+          mockPreviewTemplateData.controlValues.email?.editorType ?? 'block',
+          mockPreviewTemplateData.controlValues.email?.body ?? ''
+        ),
         editorType: mockPreviewTemplateData.controlValues.email?.editorType,
-        layoutId: null,
       });
       expect(previewCall.environmentId).to.equal(mockUser.environmentId);
       expect(previewCall.organizationId).to.equal(mockUser.organizationId);
@@ -325,9 +325,10 @@ describe('PreviewLayoutUsecase', () => {
 
       await previewLayoutUsecase.execute(command);
 
+      expect(previewStepUsecaseMock.execute.calledOnce).to.be.true;
       const previewCall = previewStepUsecaseMock.execute.firstCall.args[0];
-      expect(previewCall.controls.body).to.be.undefined;
-      expect(previewCall.controls.editorType).to.be.undefined;
+      expect(previewCall.controls.body).to.eq('{}');
+      expect(previewCall.controls.editorType).to.eq('block');
     });
 
     it('should handle missing payload in cleaned payload example', async () => {

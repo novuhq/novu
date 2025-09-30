@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
+import { useCallback, useRef, useState } from 'react';
 
 type CallbackFunction = () => Promise<unknown>;
 

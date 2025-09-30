@@ -13,9 +13,11 @@ import {
   pushUiSchema,
   smsControlSchema,
   smsUiSchema,
+  throttleControlSchema,
+  throttleUiSchema,
 } from '@novu/application-generic';
-import { ActionStepEnum, ChannelStepEnum } from '@novu/framework/internal';
 import { ControlSchemas, JSONSchemaEntity } from '@novu/dal';
+import { ActionStepEnum, ChannelStepEnum } from '@novu/framework/internal';
 
 export const PERMISSIVE_EMPTY_SCHEMA = {
   type: 'object',
@@ -52,6 +54,10 @@ export const stepTypeToControlSchema: Record<ChannelStepEnum | ActionStepEnum, C
   [ActionStepEnum.DIGEST]: {
     schema: digestControlSchema,
     uiSchema: digestUiSchema,
+  },
+  [ActionStepEnum.THROTTLE]: {
+    schema: throttleControlSchema,
+    uiSchema: throttleUiSchema,
   },
   [ActionStepEnum.CUSTOM]: {
     schema: PERMISSIVE_EMPTY_SCHEMA,

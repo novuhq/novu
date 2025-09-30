@@ -1,16 +1,9 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { IntegrationEntity, IntegrationRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { IChannelSettings } from '@novu/shared';
 import { isEqual } from 'lodash';
-import {
-  IChannelSettings,
-  SubscriberRepository,
-  IntegrationRepository,
-  SubscriberEntity,
-  IntegrationEntity,
-} from '@novu/dal';
-
-import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
-import { BadRequestException } from '@nestjs/common';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../../services';
+import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 
 @Injectable()
 export class UpdateSubscriberChannel {
@@ -88,9 +81,7 @@ export class UpdateSubscriberChannel {
     command: UpdateSubscriberChannelCommand,
     foundSubscriber
   ) {
-    // eslint-disable-next-line no-param-reassign
     updatePayload._integrationId = foundIntegration._id;
-    // eslint-disable-next-line no-param-reassign
     updatePayload.providerId = command.providerId;
 
     await this.invalidateCache.invalidateByKey({

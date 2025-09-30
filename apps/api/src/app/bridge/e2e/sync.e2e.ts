@@ -1,14 +1,14 @@
+import {
+  ControlValuesRepository,
+  EnvironmentRepository,
+  MessageTemplateRepository,
+  NotificationTemplateRepository,
+} from '@novu/dal';
+import { SeverityLevelEnum, workflow } from '@novu/framework';
+import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import getPort from 'get-port';
-import {
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  MessageTemplateRepository,
-  ControlValuesRepository,
-} from '@novu/dal';
-import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-import { workflow } from '@novu/framework';
 import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
 describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
@@ -80,6 +80,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
         );
       },
       {
+        severity: SeverityLevelEnum.HIGH,
         payloadSchema: {
           type: 'object',
           properties: {
@@ -112,6 +113,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     expect(workflowData.rawData.workflowId).to.equal(workflowId);
     expect(workflowData.triggers[0].identifier).to.equal(workflowId);
 
+    expect(workflowData.severity).to.equal(SeverityLevelEnum.HIGH);
     expect(workflowData.steps.length).to.equal(1);
     expect(workflowData.steps[0].stepId).to.equal('send-email');
     expect(workflowData.steps[0].uuid).to.equal('send-email');

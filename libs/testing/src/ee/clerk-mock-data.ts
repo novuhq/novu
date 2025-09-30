@@ -1,5 +1,5 @@
+import type { Organization, OrganizationMembership, User } from '@clerk/backend';
 import { JobTitleEnum } from '@novu/shared';
-import type { User, Organization, OrganizationMembership } from '@clerk/backend';
 
 export const CLERK_USER_1 = {
   id: 'clerk_user_1',

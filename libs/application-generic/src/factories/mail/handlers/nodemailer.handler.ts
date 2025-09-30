@@ -1,12 +1,8 @@
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  ICredentials,
-} from '@novu/shared';
 import { NodemailerProvider } from '@novu/providers';
-import { BaseHandler } from './base.handler';
+import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
+import { BaseEmailHandler } from './base.handler';
 
-export class NodemailerHandler extends BaseHandler {
+export class NodemailerHandler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.CustomSMTP, ChannelTypeEnum.EMAIL);
   }

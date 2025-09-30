@@ -1,6 +1,7 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
+import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { PatchPreferenceChannelsDto } from '../../dtos/patch-subscriber-preferences.dto';
 
 export class UpdateSubscriberPreferencesCommand extends EnvironmentWithSubscriber {
@@ -8,7 +9,11 @@ export class UpdateSubscriberPreferencesCommand extends EnvironmentWithSubscribe
   @IsString()
   readonly workflowIdOrInternalId?: string;
 
-  @IsDefined()
+  @IsOptional()
   @Type(() => PatchPreferenceChannelsDto)
-  readonly channels: PatchPreferenceChannelsDto;
+  readonly channels?: PatchPreferenceChannelsDto;
+
+  @IsOptional()
+  @Type(() => ScheduleDto)
+  readonly schedule?: ScheduleDto;
 }

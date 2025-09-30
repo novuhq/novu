@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ISubscriberPreferenceResponse, ShortIsPrefixEnum } from '@novu/shared';
+import { ISubscriberPreferenceResponse, ShortIsPrefixEnum, WorkflowCriticalityEnum } from '@novu/shared';
 import { plainToInstance } from 'class-transformer';
-import { GetSubscriberPreferencesCommand } from './get-subscriber-preferences.command';
 import { buildSlug } from '../../../shared/helpers/build-slug';
 import {
   GetSubscriberGlobalPreference,
@@ -11,9 +10,10 @@ import {
   GetSubscriberPreference,
   GetSubscriberPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-preference';
-import { SubscriberGlobalPreferenceDto } from '../../dtos/subscriber-global-preference.dto';
 import { GetSubscriberPreferencesDto } from '../../dtos/get-subscriber-preferences.dto';
+import { SubscriberGlobalPreferenceDto } from '../../dtos/subscriber-global-preference.dto';
 import { SubscriberWorkflowPreferenceDto } from '../../dtos/subscriber-workflow-preference.dto';
+import { GetSubscriberPreferencesCommand } from './get-subscriber-preferences.command';
 
 @Injectable()
 export class GetSubscriberPreferences {
@@ -45,8 +45,7 @@ export class GetSubscriberPreferences {
     );
 
     return {
-      enabled: preference.enabled,
-      channels: preference.channels,
+      ...preference,
     };
   }
 
@@ -57,6 +56,7 @@ export class GetSubscriberPreferences {
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         includeInactiveChannels: false,
+        criticality: command.criticality ?? WorkflowCriticalityEnum.NON_CRITICAL,
       })
     );
 

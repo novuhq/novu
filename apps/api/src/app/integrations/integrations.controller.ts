@@ -10,15 +10,7 @@ import {
   Put,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  ChannelTypeEnum,
-  UserSessionData,
-  PermissionsEnum,
-  FeatureFlagsKeysEnum,
-  getFeatureForTierAsBoolean,
-  FeatureNameEnum,
-  ApiServiceLevelEnum,
-} from '@novu/shared';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
@@ -26,38 +18,50 @@ import {
   OtelSpan,
   RequirePermissions,
 } from '@novu/application-generic';
-import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { UserSession } from '../shared/framework/user.decorator';
-import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
-import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
-import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
-import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
-import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';
-import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
-import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
-import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
-import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
-import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
-import { GetActiveIntegrations } from './usecases/get-active-integration/get-active-integration.usecase';
-import { IntegrationResponseDto } from './dtos/integration-response.dto';
+import {
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
-import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
-import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in-app-activated.command';
-import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
 import {
   ApiCommonResponses,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
-import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
-import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/set-integration-as-primary.usecase';
-import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
+import { AutoConfigureIntegrationRequestDto } from './dtos/auto-configure-integration-request.dto';
+import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integration-response.dto';
+import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
+import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
+import { IntegrationResponseDto } from './dtos/integration-response.dto';
+import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
+import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
+import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
+import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
+import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
+import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
+import { GetActiveIntegrations } from './usecases/get-active-integration/get-active-integration.usecase';
+import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in-app-activated.command';
+import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
+import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';
+import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
+import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
+import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
+import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
+import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
+import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
+import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/set-integration-as-primary.usecase';
+import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
+import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 
 @ApiCommonResponses()
 @Controller('/integrations')
@@ -72,6 +76,7 @@ export class IntegrationsController {
     private getWebhookSupportStatusUsecase: GetWebhookSupportStatus,
     private createIntegrationUsecase: CreateIntegration,
     private updateIntegrationUsecase: UpdateIntegration,
+    private autoConfigureIntegrationUsecase: AutoConfigureIntegration,
     private setIntegrationAsPrimaryUsecase: SetIntegrationAsPrimary,
     private removeIntegrationUsecase: RemoveIntegration,
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
@@ -183,6 +188,7 @@ export class IntegrationsController {
           active: body.active ?? false,
           check: body.check ?? false,
           conditions: body.conditions,
+          configurations: body.configurations,
         })
       );
     } catch (e) {
@@ -225,6 +231,7 @@ export class IntegrationsController {
           active: body.active,
           check: body.check ?? false,
           conditions: body.conditions,
+          configurations: body.configurations,
         })
       );
     } catch (e) {
@@ -234,6 +241,33 @@ export class IntegrationsController {
 
       throw e;
     }
+  }
+
+  @Post('/:integrationId/auto-configure')
+  @ApiResponse(AutoConfigureIntegrationResponseDto, 200)
+  @ApiNotFoundResponse({
+    description: 'The integration with the integrationId provided does not exist in the database.',
+  })
+  @ApiOperation({
+    summary: 'Auto-configure an integration for inbound webhooks',
+    description: `Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support. 
+    This will automatically generate required webhook signing keys and configure webhook endpoints.`,
+  })
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async autoConfigureIntegration(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string
+  ): Promise<AutoConfigureIntegrationResponseDto> {
+    const result = await this.autoConfigureIntegrationUsecase.execute(
+      AutoConfigureIntegrationCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        integrationId,
+      })
+    );
+
+    return result;
   }
 
   @Post('/:integrationId/set-primary')

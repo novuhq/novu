@@ -29,11 +29,11 @@ export type SubscribersCredentialsAppendMutationData =
   operations.SubscribersV1ControllerModifySubscriberChannelResponse;
 
 /**
- * Upsert provider credentials
+ * Update provider credentials
  *
  * @remarks
  * Update credentials for a provider such as **slack** and **FCM**.
- *       **providerId** is required field. This API replaces the existing deviceTokens with the provided ones.
+ *       **providerId** is required field. This API creates the **deviceTokens** or replaces the existing ones.
  */
 export function useSubscribersCredentialsAppendMutation(
   options?: MutationHookOptions<

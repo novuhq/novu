@@ -1,5 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityFilters } from '@/components/activity/activity-filters';
@@ -10,10 +11,13 @@ import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
 import { ActivityTable } from '@/components/activity/activity-table';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { defaultActivityFilters } from '@/components/activity/constants';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
+import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
+import { UpdatedAgo } from '@/components/updated-ago';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useActivityUrlState } from '@/hooks/use-activity-url-state';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 import { ActivityFiltersData } from '@/types/activity';
+import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '../../utils/ui';
 import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
 
@@ -34,6 +38,16 @@ export function ActivityFeedContent({
 }: ActivityFeedContentProps) {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
   const { activity, isPending, error } = usePullActivity(activityItemId);
+
+  const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
+
+  // Track last updated time for the activities list
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  useEffect(() => {
+    setLastUpdated(new Date());
+  }, [filters]);
 
   // Merge initial filters with current filters
   const mergedFilterValues = useMemo(
@@ -94,7 +108,8 @@ export function ActivityFeedContent({
       mergedFilterValues.channels.length > 0 ||
       mergedFilterValues.workflows.length > (baseFilters.workflows?.length || 0) ||
       mergedFilterValues.transactionId !== (baseFilters.transactionId || '') ||
-      mergedFilterValues.subscriberId !== (baseFilters.subscriberId || '')
+      mergedFilterValues.subscriberId !== (baseFilters.subscriberId || '') ||
+      mergedFilterValues.severity.length > 0
     );
   }, [mergedFilterValues, initialFilters]);
 
@@ -112,15 +127,24 @@ export function ActivityFeedContent({
     [mergedFilterValues, handleFiltersChange, handleActivitySelect]
   );
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id] });
+    setLastUpdated(new Date());
+  };
+
   return (
     <div className={cn('p-2.5', className)}>
-      <ActivityFilters
-        filters={mergedFilterValues}
-        onFiltersChange={handleFiltersChange}
-        onReset={handleClearFilters}
-        showReset={hasChanges}
-        hide={hideFilters}
-      />
+      <div className="flex items-center justify-between pb-2.5">
+        <ActivityFilters
+          filters={mergedFilterValues}
+          onFiltersChange={handleFiltersChange}
+          onReset={handleClearFilters}
+          showReset={hasChanges}
+          hide={hideFilters}
+          className="pb-0"
+        />
+        <UpdatedAgo lastUpdated={lastUpdated} onRefresh={handleRefresh} />
+      </div>
       <div className={`relative flex ${contentHeight}`}>
         <ResizablePanelGroup direction="horizontal" className="gap-2">
           <ResizablePanel defaultSize={50} minSize={35}>

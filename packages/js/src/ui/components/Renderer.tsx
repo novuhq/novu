@@ -2,9 +2,9 @@
 import css from 'directcss:../index.directcss';
 import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
-import { NovuUI } from '..';
 import { Novu } from '../../novu';
 import type { NovuOptions } from '../../types';
+import { NovuUI } from '..';
 import {
   AppearanceProvider,
   CountProvider,
@@ -13,10 +13,18 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Appearance, Localization, PreferenceGroups, PreferencesFilter, RouterPush, Tab } from '../types';
+import { NOVU_DEFAULT_CSS_ID } from '../helpers/utils';
+import type {
+  Appearance,
+  Localization,
+  PreferenceGroups,
+  PreferencesFilter,
+  PreferencesSort,
+  RouterPush,
+  Tab,
+} from '../types';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
-import { NOVU_DEFAULT_CSS_ID } from '../helpers/utils';
 
 export const novuComponents = {
   Inbox,
@@ -24,9 +32,10 @@ export const novuComponents = {
   Bell,
   Notifications: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => {
     if (props.renderNotification) {
-      const { renderBody, renderSubject, ...propsWithoutBodyAndSubject } = props;
+      const { renderBody, renderSubject, renderAvatar, renderDefaultActions, renderCustomActions, ...otherProps } =
+        props;
 
-      return <InboxContent {...propsWithoutBodyAndSubject} hideNav={true} initialPage={InboxPage.Notifications} />;
+      return <InboxContent {...otherProps} hideNav={true} initialPage={InboxPage.Notifications} />;
     }
 
     const { renderNotification, ...propsWithoutRenderNotification } = props;
@@ -35,9 +44,10 @@ export const novuComponents = {
   },
   Preferences: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => {
     if (props.renderNotification) {
-      const { renderBody, renderSubject, ...propsWithoutBodyAndSubject } = props;
+      const { renderBody, renderSubject, renderAvatar, renderDefaultActions, renderCustomActions, ...otherProps } =
+        props;
 
-      return <InboxContent {...propsWithoutBodyAndSubject} hideNav={true} initialPage={InboxPage.Preferences} />;
+      return <InboxContent {...otherProps} hideNav={true} initialPage={InboxPage.Preferences} />;
     }
 
     const { renderNotification, ...propsWithoutRenderNotification } = props;
@@ -67,6 +77,7 @@ type RendererProps = {
   tabs: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
+  preferencesSort?: PreferencesSort;
   routerPush?: RouterPush;
   novu?: Novu;
   container?: Node | null | undefined;
@@ -105,6 +116,7 @@ export const Renderer = (props: RendererProps) => {
               tabs={props.tabs}
               preferencesFilter={props.preferencesFilter}
               preferenceGroups={props.preferenceGroups}
+              preferencesSort={props.preferencesSort}
               routerPush={props.routerPush}
             >
               <CountProvider>
@@ -123,7 +135,6 @@ export const Renderer = (props: RendererProps) => {
                       if (!['Notifications', 'Preferences', 'InboxContent'].includes(novuComponent().name)) return;
 
                       if (node instanceof HTMLElement) {
-                        // eslint-disable-next-line no-param-reassign
                         node.style.height = '100%';
                       }
                       if (portalDivElement) {

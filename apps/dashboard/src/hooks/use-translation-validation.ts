@@ -38,7 +38,7 @@ export const useTranslationValidation = ({
     }
 
     if (!availableKeys || availableKeys.length === 0) {
-      return { hasError: true, errorMessage: 'Translation key not found in default locale.', isValidKey: false };
+      return { hasError: true, errorMessage: 'Translation key not found in default language.', isValidKey: false };
     }
 
     const existingKeys = availableKeys.map((key) => key.name);
@@ -46,7 +46,7 @@ export const useTranslationValidation = ({
 
     return {
       hasError: !isValidKey,
-      errorMessage: isValidKey ? '' : 'Translation key not found in default locale.',
+      errorMessage: isValidKey ? '' : 'Translation key not found in default language.',
       isValidKey,
     };
   }, [translationKey, availableKeys, isLoading, allowEmpty]);
@@ -70,7 +70,7 @@ export const validateTranslationKey = (
 
   // If no translation keys are provided, show error
   if (!availableKeys || availableKeys.length === 0) {
-    return { hasError: true, errorMessage: 'Translation key not found in default locale.', isValidKey: false };
+    return { hasError: true, errorMessage: 'Translation key not found in default language.', isValidKey: false };
   }
 
   const existingKeys = availableKeys.map((key) => key.name);
@@ -78,7 +78,7 @@ export const validateTranslationKey = (
 
   return {
     hasError: !isValidKey,
-    errorMessage: isValidKey ? '' : 'Translation key not found in default locale.',
+    errorMessage: isValidKey ? '' : 'Translation key not found in default language.',
     isValidKey,
   };
 };

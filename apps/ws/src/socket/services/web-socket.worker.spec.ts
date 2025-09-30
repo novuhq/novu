@@ -1,19 +1,16 @@
 import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-import { setTimeout } from 'timers/promises';
-
 import {
   IWebSocketDataDto,
+  SocketWorkerService,
   WebSocketsQueueService,
   WorkflowInMemoryProviderService,
-  SocketWorkerService,
 } from '@novu/application-generic';
 import { WebSocketEventEnum } from '@novu/shared';
-
-import { WebSocketWorker } from './web-socket.worker';
-
+import { expect } from 'chai';
+import { setTimeout } from 'timers/promises';
 import { SocketModule } from '../socket.module';
 import { ExternalServicesRoute } from '../usecases/external-services-route';
+import { WebSocketWorker } from './web-socket.worker';
 
 let webSocketsQueueService: WebSocketsQueueService;
 let webSocketWorker: WebSocketWorker;

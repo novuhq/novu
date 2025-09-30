@@ -62,6 +62,13 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       channelId: Schema.Types.String,
       phoneNumberIdentification: Schema.Types.String,
       accessKey: Schema.Types.String,
+      appSid: Schema.Types.String,
+      senderId: Schema.Types.String,
+    },
+    configurations: {
+      inboundWebhookEnabled: Schema.Types.Boolean,
+      inboundWebhookSigningKey: Schema.Types.String,
+      configurationSetName: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,

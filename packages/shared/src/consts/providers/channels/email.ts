@@ -1,4 +1,15 @@
+import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
+  mailgunGroupConfigurations,
+  resendGroupConfigurations,
+  sendgridGroupConfigurations,
+  sesGroupConfigurations,
+} from '../configurations/provider-configuration';
+import {
+  brazeEmailConfig,
+  emailWebhookConfig,
+  infobipEmailConfig,
   mailerSendConfig,
   mailgunConfig,
   mailjetConfig,
@@ -6,21 +17,16 @@ import {
   mandrillConfig,
   netCoreConfig,
   nodemailerConfig,
+  outlook365Config,
+  plunkConfig,
   postmarkConfig,
+  resendConfig,
   sendgridConfig,
   sendinblueConfig,
   sesConfig,
-  outlook365Config,
-  infobipEmailConfig,
-  resendConfig,
-  plunkConfig,
   sparkpostConfig,
-  emailWebhookConfig,
-  brazeEmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
-import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const emailProviders: IProviderConfig[] = [
   {
@@ -36,6 +42,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Mailgun',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailgunConfig,
+    configurations: mailgunGroupConfigurations,
     docReference: `https://docs.novu.co/integrations/providers/email/mailgun${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'mailgun.svg', dark: 'mailgun.svg' },
   },
@@ -76,6 +83,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'SendGrid',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendgridConfig,
+    configurations: sendgridGroupConfigurations,
     docReference: `https://docs.novu.co/integrations/providers/email/sendgrid${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'sendgrid.png', dark: 'sendgrid.png' },
   },
@@ -92,6 +100,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'SES',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sesConfig,
+    configurations: sesGroupConfigurations,
     docReference: `https://docs.novu.co/integrations/providers/email/amazon-ses${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'ses.svg', dark: 'ses.svg' },
   },
@@ -148,6 +157,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Resend',
     channel: ChannelTypeEnum.EMAIL,
     credentials: resendConfig,
+    configurations: resendGroupConfigurations,
     docReference: `https://docs.novu.co/integrations/providers/email/resend${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'resend.svg', dark: 'resend.svg' },
   },

@@ -15,9 +15,8 @@
     "build:main": "tsc -p tsconfig.json",
     "build:copy-template": "cpx \"src/**/*.handlebars\" build/main",
     "fix": "run-s fix:*",
-    "fix:prettier": "prettier \"src/**/*.ts\" --write",
-    "lint:fix": "eslint src --fix",
-    "lint": "eslint src",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",
     "reset-hard": "git clean -dfx && git reset --hard && pnpm install"
@@ -45,7 +44,7 @@
     "@google-cloud/storage": "^6.2.3",
     "@hokify/agenda": "^6.3.0",
     "@launchdarkly/node-server-sdk": "^9.7.3",
-    "@maily-to/render": "github:novuhq/maily.to#release/v0.1.3-novu.5-render&path:/packages/render",
+    "@maily-to/render": "github:novuhq/maily.to#release/v0.1.3-novu.8-render&path:/packages/render",
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/providers": "workspace:*",
@@ -78,6 +77,8 @@
     "clickhouse-schema": "^2.0.1",
     "cron-parser": "^4.9.0",
     "date-fns": "^2.29.2",
+    "date-fns-tz": "^3.2.0",
+    "es-toolkit": "^1.39.10",
     "got": "^11.8.6",
     "handlebars": "^4.7.7",
     "i18next": "^23.7.6",
@@ -102,7 +103,7 @@
   },
   "optionalDependencies": {
     "@novu/ee-shared-services": "workspace:*",
-    "@taskforcesh/bullmq-pro": "5.1.14"
+    "@taskforcesh/bullmq-pro": "6.11.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -118,7 +119,6 @@
     "jest": "^27.1.0",
     "npm-run-all": "^4.1.5",
     "nyc": "^15.1.0",
-    "prettier": "~2.8.0",
     "rimraf": "^3.0.2",
     "sinon": "^9.2.4",
     "ts-jest": "^27.0.5",

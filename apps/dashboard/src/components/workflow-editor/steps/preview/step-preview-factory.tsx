@@ -1,13 +1,13 @@
+import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { memo } from 'react';
-import { StepTypeEnum } from '@novu/shared';
+import { InlineToast } from '@/components/primitives/inline-toast';
+import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
+import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-preview';
+import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
+import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
-import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-preview';
-import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
-import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
-import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
-import { InlineToast } from '@/components/primitives/inline-toast';
-import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 
 const NoPreviewAvailable = memo(({ stepType }: { stepType: StepTypeEnum }) => {
   return (
@@ -17,15 +17,6 @@ const NoPreviewAvailable = memo(({ stepType }: { stepType: StepTypeEnum }) => {
   );
 });
 
-const UnavailablePreview = memo(() => {
-  return (
-    <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-      Preview not available for this step configuration
-    </div>
-  );
-});
-
-// Memoize mobile preview wrappers to prevent unnecessary re-renders
 const MobilePreviewWrapper = memo(({ children, description }: { children: React.ReactNode; description: string }) => {
   return (
     <div className="flex flex-col items-center justify-center">
@@ -48,7 +39,13 @@ export function StepPreviewFactory() {
 
   switch (step.type) {
     case StepTypeEnum.EMAIL:
-      return <EmailCorePreview {...commonProps} controlValues={controlValues} />;
+      return (
+        <EmailCorePreview
+          {...commonProps}
+          isCustomHtmlEditor={controlValues?.editorType === 'html'}
+          resourceOrigin={step.origin ?? ResourceOriginEnum.NOVU_CLOUD}
+        />
+      );
 
     case StepTypeEnum.IN_APP:
       return <InboxPreview {...commonProps} />;

@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsObject, IsOptional, ValidateNested } from 'class-validator';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
+import { IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { SubscriberResponseDtoOptional } from '../../subscribers/dtos';
 
 export class PreviewPayloadDto {
@@ -30,4 +32,13 @@ export class PreviewPayloadDto {
   @IsOptional()
   @IsObject()
   steps?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'Context data for the preview',
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsValidContextPayload()
+  context?: ContextPayload;
 }

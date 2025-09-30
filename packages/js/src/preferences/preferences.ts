@@ -1,16 +1,20 @@
 import { InboxService } from '../api';
-import { NovuEventEmitter } from '../event-emitter';
 import { BaseModule } from '../base-module';
-import { Preference } from './preference';
-import type { BasePreferenceArgs, InstancePreferenceArgs, ListPreferencesArgs, UpdatePreferenceArgs } from './types';
-import { Result } from '../types';
 import { PreferencesCache } from '../cache/preferences-cache';
+import { ScheduleCache } from '../cache/schedule-cache';
+import { NovuEventEmitter } from '../event-emitter';
+import { Result, WorkflowCriticalityEnum } from '../types';
 import { bulkUpdatePreference, updatePreference } from './helpers';
+import { Preference } from './preference';
+import { PreferenceSchedule } from './preference-schedule';
+import type { BasePreferenceArgs, InstancePreferenceArgs, ListPreferencesArgs, UpdatePreferenceArgs } from './types';
 
 export class Preferences extends BaseModule {
   #useCache: boolean;
 
   readonly cache: PreferencesCache;
+  readonly scheduleCache: ScheduleCache;
+  readonly schedule: PreferenceSchedule;
 
   constructor({
     useCache,
@@ -28,7 +32,16 @@ export class Preferences extends BaseModule {
     this.cache = new PreferencesCache({
       emitterInstance: this._emitter,
     });
+    this.scheduleCache = new ScheduleCache({
+      emitterInstance: this._emitter,
+    });
     this.#useCache = useCache;
+    this.schedule = new PreferenceSchedule({
+      cache: this.scheduleCache,
+      useCache,
+      inboxServiceInstance,
+      eventEmitterInstance,
+    });
   }
 
   async list(args: ListPreferencesArgs = {}): Result<Preference[]> {
@@ -38,13 +51,18 @@ export class Preferences extends BaseModule {
         this._emitter.emit('preferences.list.pending', { args, data });
 
         if (!data) {
-          const response = await this._inboxService.fetchPreferences(args.tags);
+          const response = await this._inboxService.fetchPreferences({
+            tags: args.tags,
+            severity: args.severity,
+            criticality: args.criticality ?? WorkflowCriticalityEnum.NON_CRITICAL,
+          });
           data = response.map(
             (el) =>
               new Preference(el, {
                 emitterInstance: this._emitter,
                 inboxServiceInstance: this._inboxService,
                 cache: this.cache,
+                scheduleCache: this.scheduleCache,
                 useCache: this.#useCache,
               })
           );
@@ -73,6 +91,7 @@ export class Preferences extends BaseModule {
         emitter: this._emitter,
         apiService: this._inboxService,
         cache: this.cache,
+        scheduleCache: this.scheduleCache,
         useCache: this.#useCache,
         args,
       })
@@ -87,6 +106,7 @@ export class Preferences extends BaseModule {
         emitter: this._emitter,
         apiService: this._inboxService,
         cache: this.cache,
+        scheduleCache: this.scheduleCache,
         useCache: this.#useCache,
         args,
       })

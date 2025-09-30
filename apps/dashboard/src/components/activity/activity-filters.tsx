@@ -1,22 +1,23 @@
+import { useOrganization } from '@clerk/clerk-react';
+import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
+import { CalendarIcon } from 'lucide-react';
+import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Badge } from '@/components/primitives/badge';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ActivityFiltersData } from '@/types/activity';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { ROUTES } from '@/utils/routes';
+import { capitalize } from '@/utils/string';
 import { cn } from '@/utils/ui';
-import { useOrganization } from '@clerk/clerk-react';
-import { ChannelTypeEnum } from '@novu/shared';
-import { CalendarIcon } from 'lucide-react';
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { IS_SELF_HOSTED } from '../../config';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { CHANNEL_OPTIONS } from './constants';
-import { IS_SELF_HOSTED } from '../../config';
 
-type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId' | 'topicKey';
+type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId' | 'topicKey' | 'severity';
 
 export type ActivityFilters = {
   filters: ActivityFiltersData;
@@ -113,6 +114,7 @@ export function ActivityFilters({
           size="small"
           type="multi"
           title="Channels"
+          hideSearch
           options={CHANNEL_OPTIONS}
           selected={filters.channels}
           onSelect={(values) => onFiltersChange({ ...filters, channels: values as ChannelTypeEnum[] })}
@@ -149,6 +151,21 @@ export function ActivityFilters({
           value={filters.topicKey}
           onChange={(value) => onFiltersChange({ ...filters, topicKey: value })}
           placeholder="Search by full Topic Key"
+        />
+      )}
+
+      {!hide.includes('severity') && (
+        <FacetedFormFilter
+          size="small"
+          type="multi"
+          title="Severity"
+          hideSearch
+          options={Object.values(SeverityLevelEnum).map((severity) => ({
+            label: capitalize(severity),
+            value: severity,
+          }))}
+          selected={filters.severity}
+          onSelect={(values) => onFiltersChange({ ...filters, severity: values as SeverityLevelEnum[] })}
         />
       )}
 

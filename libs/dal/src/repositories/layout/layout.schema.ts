@@ -1,7 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
-
-import { LayoutDBModel } from './layout.entity';
 import { schemaOptions } from '../schema-default.options';
+import { LayoutDBModel } from './layout.entity';
 
 const mongooseDelete = require('mongoose-delete');
 
@@ -23,6 +22,10 @@ const layoutSchema = new Schema<LayoutDBModel>(
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Layout',
+    },
+    _updatedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
     },
     name: Schema.Types.String,
     identifier: Schema.Types.String,
@@ -61,6 +64,14 @@ const layoutSchema = new Schema<LayoutDBModel>(
 );
 
 layoutSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+
+layoutSchema.virtual('updatedBy', {
+  ref: 'User',
+  localField: '_updatedBy',
+  foreignField: '_id',
+  justOne: true,
+  select: '_id firstName lastName externalId',
+});
 
 layoutSchema.index({
   _environmentId: 1,

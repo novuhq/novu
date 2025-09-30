@@ -1,6 +1,8 @@
-import merge from 'lodash/merge';
-import { PreferencesTypeEnum } from '@novu/shared';
+/** biome-ignore-all lint/complexity/noStaticOnlyClass: needed */
 
+import { PreferencesEntity } from '@novu/dal';
+import { DEFAULT_WORKFLOW_PREFERENCES, PreferencesTypeEnum, WorkflowPreferences } from '@novu/shared';
+import { toMerged } from 'es-toolkit';
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
 
@@ -20,22 +22,16 @@ import { MergePreferencesCommand } from './merge-preferences.command';
  * If the subscriber has no preferences, the workflow preferences are returned.
  */
 export class MergePreferences {
-  public static execute(
-    command: MergePreferencesCommand,
-  ): GetPreferencesResponseDto {
-    const workflowPreferences = [
-      command.workflowResourcePreference,
-      command.workflowUserPreference,
-    ].filter((preference) => preference !== undefined);
-
-    const subscriberPreferences = [
-      command.subscriberGlobalPreference,
-      command.subscriberWorkflowPreference,
-    ].filter((preference) => preference !== undefined);
-
-    const isWorkflowPreferenceReadonly = workflowPreferences.some(
-      (preference) => preference.preferences.all?.readOnly,
+  public static execute(command: MergePreferencesCommand): GetPreferencesResponseDto {
+    const workflowPreferences = [command.workflowResourcePreference, command.workflowUserPreference].filter(
+      (preference) => preference !== undefined
     );
+
+    const subscriberPreferences = [command.subscriberGlobalPreference, command.subscriberWorkflowPreference].filter(
+      (preference) => preference !== undefined
+    );
+
+    const isWorkflowPreferenceReadonly = workflowPreferences.some((preference) => preference.preferences.all?.readOnly);
 
     const preferencesList = [
       ...workflowPreferences,
@@ -43,22 +39,22 @@ export class MergePreferences {
       ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
     ];
 
-    const mergedPreferences = merge({}, ...preferencesList);
+    const mergedPreferences = preferencesList.reduce(
+      (acc, preference) => toMerged(acc, preference),
+      {}
+    ) as PreferencesEntity & { preferences: WorkflowPreferences };
 
     // Build the source object
     const source = {
-      [PreferencesTypeEnum.WORKFLOW_RESOURCE]:
-        command.workflowResourcePreference?.preferences || null,
-      [PreferencesTypeEnum.USER_WORKFLOW]:
-        command.workflowUserPreference?.preferences || null,
-      [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]:
-        command.subscriberGlobalPreference?.preferences || null,
-      [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]:
-        command.subscriberWorkflowPreference?.preferences || null,
+      [PreferencesTypeEnum.WORKFLOW_RESOURCE]: command.workflowResourcePreference?.preferences || null,
+      [PreferencesTypeEnum.USER_WORKFLOW]: command.workflowUserPreference?.preferences || null,
+      [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: command.subscriberGlobalPreference?.preferences || null,
+      [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: command.subscriberWorkflowPreference?.preferences || null,
     };
 
     return {
       preferences: mergedPreferences.preferences,
+      schedule: mergedPreferences.schedule,
       type: mergedPreferences.type,
       source,
     };

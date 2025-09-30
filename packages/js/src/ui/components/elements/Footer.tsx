@@ -1,13 +1,12 @@
-/* eslint-disable local-rules/no-class-without-style */
 import { Show } from 'solid-js';
 import { useInboxContext, useNovu } from 'src/ui/context';
 import { isBrowser } from 'src/utils/is-browser';
-import { Novu } from '../../icons';
+import { DEFAULT_API_VERSION } from '../../../api/http-client';
 import { cn } from '../../helpers';
+import { Novu } from '../../icons';
 import { ArrowUpRight } from '../../icons/ArrowUpRight';
 import { CopyToClipboard } from '../primitives/CopyToClipboard';
 import { Tooltip } from '../primitives/Tooltip';
-import { DEFAULT_API_VERSION } from '../../../api/http-client';
 
 const stripes = `before:nt-content-[""] before:nt-absolute before:nt-inset-0 before:-nt-right-[calc(0+var(--stripes-size))] before:[mask-image:linear-gradient(transparent_0%,black)] before:nt-bg-dev-stripes-gradient before:nt-bg-[length:var(--stripes-size)_var(--stripes-size)] before:nt-animate-stripes before:hover:[animation-play-state:running]`;
 const commonAfter = 'after:nt-content-[""] after:nt-absolute after:nt-inset-0 after:-nt-top-12';
@@ -128,7 +127,6 @@ function getCurrentDomain() {
 function getCurlCommand() {
   const identifier = window.localStorage.getItem('novu_keyless_application_identifier');
   if (!identifier) {
-    // eslint-disable-next-line no-console
     console.error('Novu application identifier not found for cURL command.');
 
     return '';

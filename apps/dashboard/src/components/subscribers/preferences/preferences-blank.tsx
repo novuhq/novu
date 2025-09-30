@@ -1,10 +1,10 @@
+import { PermissionsEnum } from '@novu/shared';
+import { RiBookMarkedLine } from 'react-icons/ri';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteFill } from '@/components/icons';
 import { PreferencesBlankIllustration } from '@/components/icons/preferences-blank-illustration';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { PermissionsEnum } from '@novu/shared';
-import { RiBookMarkedLine } from 'react-icons/ri';
-import { Link, useNavigate, useParams } from 'react-router-dom';
 
 export function PreferencesBlank() {
   const navigate = useNavigate();

@@ -1,10 +1,10 @@
-import { ChatRenderOutput } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { InstrumentUsecase, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { RenderCommand } from './render-command';
+import { ChatRenderOutput } from '@novu/shared';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+import { RenderCommand } from './render-command';
 
 export class ChatOutputRendererCommand extends RenderCommand {
   dbWorkflow: NotificationTemplateEntity;
@@ -15,10 +15,9 @@ export class ChatOutputRendererCommand extends RenderCommand {
 export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
   constructor(
     protected moduleRef: ModuleRef,
-    protected featureFlagsService: FeatureFlagsService,
     protected logger: PinoLogger
   ) {
-    super(moduleRef, logger, featureFlagsService);
+    super(moduleRef, logger);
   }
 
   @InstrumentUsecase()
@@ -33,6 +32,8 @@ export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organizationId: _organizationId,
       workflowId,
       locale: renderCommand.locale,
+      dbWorkflow: renderCommand.dbWorkflow,
+      organization: renderCommand.organization,
     });
 
     return translatedControls as any;

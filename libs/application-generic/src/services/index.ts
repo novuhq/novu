@@ -1,15 +1,6 @@
-export * from './in-memory-provider';
-export * from './feature-flags';
-export * from './cache';
-export * from './queues';
-export * from './workers';
-export { INovuWorker, ReadinessService } from './readiness';
+export * from './analytic-logs';
 export { AnalyticsService } from './analytics.service';
-export { SupportService } from './support.service';
-export { VerifyPayloadService } from './verify-payload.service';
-export * from './calculate-delay';
-export * from './storage';
-export * from './metrics';
+export * from './auth';
 export {
   BullMqConnectionOptions,
   BullMqService,
@@ -22,10 +13,22 @@ export {
   Worker,
   WorkerOptions,
 } from './bull-mq';
-export * from './auth';
-export * from './cron';
+export * from './cache';
+export * from './calculate-delay';
 export * from './content.service';
+export * from './cron';
+export * from './feature-flags';
+export * from './in-memory-provider';
+export { MessageInteractionService, MessageInteractionResult, MessageInteractionTrace } from './message-interaction.service';
+export * from './metrics';
+export * from './queues';
+export { INovuWorker, ReadinessService } from './readiness';
 export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
-export * from './analytic-logs';
 export * from './socket-worker';
+export * from './storage';
+export { SupportService } from './support.service';
+export * from './throttle';
+export { VerifyPayloadService } from './verify-payload.service';
+export * from './workers';
+export * from './workflow-run.service';

@@ -1,11 +1,12 @@
+import { forwardRef } from '@nestjs/common';
 import { DalService } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
 import {
   AnalyticsService,
   CacheInMemoryProviderService,
   CacheService,
-  FeatureFlagsService,
   ClickHouseService,
+  FeatureFlagsService,
 } from '../services';
 
 export const featureFlagsService = {
@@ -60,11 +61,10 @@ export const analyticsService = {
 
 export const clickHouseService = {
   provide: ClickHouseService,
-  useFactory: async (logger: PinoLogger) => {
-    const service = new ClickHouseService(logger);
+  useFactory: async () => {
+    const service = new ClickHouseService();
     await service.init();
 
     return service;
   },
-  inject: [PinoLogger],
 };

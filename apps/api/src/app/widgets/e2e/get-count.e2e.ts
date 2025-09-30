@@ -1,8 +1,4 @@
-import axios from 'axios';
-import { expect } from 'chai';
-import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { Novu } from '@novu/api';
 import {
   buildFeedKey,
   buildMessageCountKey,
@@ -10,10 +6,14 @@ import {
   CacheService,
   InvalidateCacheService,
 } from '@novu/application-generic';
-import { Novu } from '@novu/api';
+import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import axios from 'axios';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Count - GET /widget/notifications/count #novu-v0', function () {
+describe('Count - GET /widget/notifications/count #novu-v0', () => {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -61,7 +61,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     subscriberProfile = profile;
   });
 
-  it('should return unseen count', async function () {
+  it('should return unseen count', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -77,7 +77,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     expect(seenCount).to.equal(3);
   });
 
-  it('should return unseen count after on message was seen', async function () {
+  it('should return unseen count after on message was seen', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -107,7 +107,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     expect(seenCount).to.equal(2);
   });
 
-  it('should return unseen count after on message was read', async function () {
+  it('should return unseen count after on message was read', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -140,7 +140,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     expect(unReadCount).to.equal(2);
   });
 
-  it('should return unseen count by limit', async function () {
+  it('should return unseen count by limit', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -179,7 +179,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     }
   });
 
-  it('should return unseen count by default limit 100', async function () {
+  it('should return unseen count by default limit 100', async () => {
     for (let i = 0; i < 102; i += 1) {
       await messageRepository.create({
         _notificationId: MessageRepository.createObjectId(),
@@ -203,7 +203,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     expect(unseenCount).to.equal(100);
   });
 
-  it('should return default on string non numeric(NaN) value', async function () {
+  it('should return default on string non numeric(NaN) value', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
@@ -213,7 +213,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     expect(unseenCount).to.equal(2);
   });
 
-  it('should return parse numeric string to number', async function () {
+  it('should return parse numeric string to number', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
@@ -248,7 +248,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     }
   });
 
-  it('should return unseen count with a seen filter', async function () {
+  it('should return unseen count with a seen filter', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -277,7 +277,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     expect(unseenFeed.data.count).to.equal(2);
   });
 
-  it('should return unread count with a read filter', async function () {
+  it('should return unread count with a read filter', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -311,7 +311,7 @@ describe('Count - GET /widget/notifications/count #novu-v0', function () {
     expect(unreadFeed.data.count).to.equal(2);
   });
 
-  it('should return unseen count after mark as request', async function () {
+  it('should return unseen count after mark as request', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });

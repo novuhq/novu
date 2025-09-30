@@ -1,13 +1,11 @@
-import { addProjectConfiguration, formatFiles, generateFiles, Tree } from '@nx/devkit';
 import fs from 'node:fs';
 import path from 'node:path';
-// eslint-disable-next-line import/extensions
+import { addProjectConfiguration, formatFiles, generateFiles, Tree } from '@nx/devkit';
 import { IProviderGeneratorSchema } from './schema';
 
 const PROVIDERS_BASE_FOLDER = path.join('..', '..', 'packages', 'providers', 'src', 'lib');
 
 export async function providerGenerator(tree: Tree, options: IProviderGeneratorSchema) {
-  // eslint-disable-next-line no-param-reassign
   options = enrichOptionsWithMultipleCases(options);
   const providerNameInKebabCase = options.name;
   const providerInnerFolder = path.join(PROVIDERS_BASE_FOLDER, options.type.toLowerCase(), providerNameInKebabCase);

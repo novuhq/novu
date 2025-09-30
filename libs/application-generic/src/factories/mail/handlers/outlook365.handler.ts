@@ -1,12 +1,8 @@
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  ICredentials,
-} from '@novu/shared';
 import { Outlook365Provider } from '@novu/providers';
-import { BaseHandler } from './base.handler';
+import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
+import { BaseEmailHandler } from './base.handler';
 
-export class Outlook365Handler extends BaseHandler {
+export class Outlook365Handler extends BaseEmailHandler {
   constructor() {
     super(EmailProviderIdEnum.Outlook365, ChannelTypeEnum.EMAIL);
   }

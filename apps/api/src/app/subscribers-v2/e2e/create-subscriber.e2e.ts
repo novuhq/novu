@@ -1,6 +1,6 @@
-import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { randomBytes } from 'crypto';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
@@ -26,7 +26,7 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
       data: { test1: 'test value1', test2: 'test value2' },
     };
 
-    const { result: subscriber } = await novuClient.subscribers.create(payload, payload.subscriberId);
+    const { result: subscriber } = await novuClient.subscribers.create(payload);
 
     expect(subscriber.subscriberId).to.equal(payload.subscriberId);
     expect(subscriber.firstName).to.equal(payload.firstName);
@@ -83,7 +83,7 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
       subscriberId,
     };
 
-    const { result: subscriber } = await novuClient.subscribers.create(payload, payload.subscriberId);
+    const { result: subscriber } = await novuClient.subscribers.create(payload);
 
     expect(subscriber.subscriberId).to.equal(payload.subscriberId);
 

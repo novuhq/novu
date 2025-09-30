@@ -1,6 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { Ratelimit } from '@upstash/ratelimit';
 import { CacheService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { Ratelimit } from '@upstash/ratelimit';
 import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 import {
   EvaluateTokenBucketRateLimitResponseDto,
@@ -142,7 +142,7 @@ export class EvaluateTokenBucketRateLimit {
     const intervalDurationMs = interval * 1e3;
     const fillInterval = intervalDurationMs / refillRate;
 
-    return async function (ctx, identifier) {
+    return async (ctx, identifier) => {
       // Cost needs to be included in local cache identifier to ensure lower cost requests are not blocked
       const localCacheIdentifier = `${identifier}:${cost}`;
 

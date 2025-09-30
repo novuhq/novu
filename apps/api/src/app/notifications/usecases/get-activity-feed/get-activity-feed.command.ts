@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import { IsArray, IsEnum, IsMongoId, IsNumber, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -33,12 +33,18 @@ export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   subscriberIds?: string[];
 
   @IsOptional()
-  @IsString()
-  transactionId?: string;
+  @IsArray()
+  @IsString({ each: true })
+  transactionId?: string[];
 
   @IsOptional()
   @IsString()
   topicKey?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(SeverityLevelEnum, { each: true })
+  severity?: SeverityLevelEnum[] | null;
 
   @IsOptional()
   @IsString()

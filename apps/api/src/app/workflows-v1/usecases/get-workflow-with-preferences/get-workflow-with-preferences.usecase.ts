@@ -1,18 +1,15 @@
 import { Injectable } from '@nestjs/common';
-
-import { NotificationTemplateEntity } from '@novu/dal';
-import { buildWorkflowPreferencesFromPreferenceChannels, DEFAULT_WORKFLOW_PREFERENCES } from '@novu/shared';
 import {
   GetPreferences,
   GetPreferencesCommand,
+  GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
-  GetWorkflowByIdsUseCase,
-  GetWorkflowByIdsCommand,
 } from '@novu/application-generic';
-
-import { GetWorkflowWithPreferencesCommand } from './get-workflow-with-preferences.command';
+import { NotificationTemplateEntity } from '@novu/dal';
+import { buildWorkflowPreferencesFromPreferenceChannels, DEFAULT_WORKFLOW_PREFERENCES } from '@novu/shared';
 import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
+import { GetWorkflowWithPreferencesCommand } from './get-workflow-with-preferences.command';
 
 @Injectable()
 export class GetWorkflowWithPreferencesUseCase {
@@ -23,13 +20,13 @@ export class GetWorkflowWithPreferencesUseCase {
 
   @InstrumentUsecase()
   async execute(command: GetWorkflowWithPreferencesCommand): Promise<WorkflowWithPreferencesResponseDto> {
-    const workflowEntity = await this.getWorkflowByIdsUseCase.execute(
-      GetWorkflowByIdsCommand.create({
-        workflowIdOrInternalId: command.workflowIdOrInternalId,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      })
-    );
+    const workflowEntity = await this.getWorkflowByIdsUseCase.execute({
+      workflowIdOrInternalId: command.workflowIdOrInternalId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      userId: command.userId,
+      session: command.session,
+    });
 
     const workflowPreferences = await this.getWorkflowPreferences(command, workflowEntity);
 

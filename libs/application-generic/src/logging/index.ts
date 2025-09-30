@@ -1,7 +1,6 @@
-/* eslint-disable no-console */
 import { NestInterceptor, RequestMethod } from '@nestjs/common';
 import { getLoggerToken, Logger, LoggerErrorInterceptor, LoggerModule, Params, PinoLogger } from 'nestjs-pino';
-import { storage, Store } from 'nestjs-pino/storage';
+import { Store, storage } from 'nestjs-pino/storage';
 import { sensitiveFields } from './masking';
 
 export * from './LogDecorator';
@@ -75,7 +74,10 @@ export function createNestLoggingModuleOptions(settings: {
   }
 
   return {
-    exclude: [{ path: '*/health-check', method: RequestMethod.GET }],
+    exclude: [
+      { path: '*/health-check', method: RequestMethod.GET },
+      { path: '/v1/internal/subscriber-online-state', method: RequestMethod.POST }
+    ],
     assignResponse: true,
     pinoHttp: {
       useOnlyCustomLevels: true,

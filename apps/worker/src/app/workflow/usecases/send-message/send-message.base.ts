@@ -1,6 +1,16 @@
-/* eslint-disable global-require */
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  createProviderSelectedMessage,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  SelectIntegration,
+  SelectIntegrationCommand,
+  SelectVariant,
+  SelectVariantCommand,
+} from '@novu/application-generic';
 import {
   IntegrationEntity,
   JobEntity,
@@ -10,30 +20,22 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   ITenantDefine,
   ProvidersIdEnum,
+  providers,
   SmsProviderIdEnum,
+  TriggerOverrides,
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
 import { merge } from 'lodash';
-
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-  GetNovuProviderCredentials,
-  SelectIntegration,
-  SelectIntegrationCommand,
-  SelectVariant,
-  SelectVariantCommand,
-} from '@novu/application-generic';
 import { PlatformException } from '../../../shared/utils';
-import { SendMessageResult, SendMessageType } from './send-message-type.usecase';
-import { SendMessageCommand } from './send-message.command';
+import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -51,13 +53,13 @@ export abstract class SendMessageBase extends SendMessageType {
 
   protected combineOverrides(
     bridgeData: Record<string, any> | null | undefined,
-    overrides: Record<string, any> | undefined,
+    overrides: TriggerOverrides | undefined,
     stepId: string | undefined,
     integrationId: string
   ): Record<string, unknown> {
     const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
     const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
-    const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers[integrationId] || {} : {};
+    const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
 
     return merge({}, bridgeProviderData, workflowGlobalProviderOverrides, triggerOverrides);
   }
@@ -81,7 +83,11 @@ export abstract class SendMessageBase extends SendMessageType {
       return;
     }
 
-    if (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) {
+    if (
+      integration.providerId === EmailProviderIdEnum.Novu ||
+      integration.providerId === SmsProviderIdEnum.Novu ||
+      integration.providerId === ChatProviderIdEnum.Novu
+    ) {
       integration.credentials = await this.getNovuProviderCredentials.execute({
         channelType: integration.channel,
         providerId: integration.providerId,
@@ -119,16 +125,18 @@ export abstract class SendMessageBase extends SendMessageType {
     );
 
     return {
-      status: 'failed',
-      reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      status: SendMessageStatus.FAILED,
+      errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
     };
   }
 
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
+    const providerDisplayName = providers.find((el) => el.id === integration?.providerId)?.displayName || 'Unknown';
+
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
+        detail: createProviderSelectedMessage(providerDisplayName) as DetailEnum,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
@@ -144,7 +152,7 @@ export abstract class SendMessageBase extends SendMessageType {
     );
   }
 
-  protected async processVariants(command: SendMessageCommand): Promise<MessageTemplateEntity> {
+  protected async processVariants(command: SendMessageChannelCommand): Promise<MessageTemplateEntity> {
     const { messageTemplate, conditions } = await this.selectVariant.execute(
       SelectVariantCommand.create({
         organizationId: command.organizationId,

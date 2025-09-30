@@ -1,6 +1,6 @@
-import { expect, test, vi } from 'vitest';
 import { CheckIntegrationResponseEnum, ICheckIntegrationResponse } from '@novu/stateless';
 import nodemailer from 'nodemailer';
+import { expect, test, vi } from 'vitest';
 import { Outlook365Provider } from './outlook365.provider';
 
 const sendMailMock = vi.fn().mockReturnValue(() => {
@@ -33,8 +33,8 @@ test('should trigger outlook365 library correctly', async () => {
   const response = await provider.sendMessage(mockNovuMessage);
 
   expect(response).not.toBeNull();
-  expect(sendMailMock).toBeCalled();
-  expect(sendMailMock).toBeCalledWith({
+  expect(sendMailMock).toHaveBeenCalled();
+  expect(sendMailMock).toHaveBeenCalledWith({
     attachments: undefined,
     from: {
       address: 'test@test.com',
@@ -59,8 +59,8 @@ test('should trigger outlook365 library correctly with _passthrough', async () =
   });
 
   expect(response).not.toBeNull();
-  expect(sendMailMock).toBeCalled();
-  expect(sendMailMock).toBeCalledWith({
+  expect(sendMailMock).toHaveBeenCalled();
+  expect(sendMailMock).toHaveBeenCalledWith({
     attachments: undefined,
     from: {
       address: 'test@test.com',

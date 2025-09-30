@@ -1,4 +1,6 @@
-import { DefaultPagination } from '@/components/default-pagination';
+import { DirectionEnum, ListWorkflowResponse } from '@novu/shared';
+import { RiMore2Fill } from 'react-icons/ri';
+import { useSearchParams } from 'react-router-dom';
 import { Skeleton } from '@/components/primitives/skeleton';
 import {
   Table,
@@ -10,11 +12,9 @@ import {
   TableHeadSortDirection,
   TableRow,
 } from '@/components/primitives/table';
+import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { WorkflowListEmpty } from '@/components/workflow-list-empty';
 import { WorkflowRow } from '@/components/workflow-row';
-import { DirectionEnum, ListWorkflowResponse } from '@novu/shared';
-import { RiMore2Fill } from 'react-icons/ri';
-import { createSearchParams, useLocation, useSearchParams } from 'react-router-dom';
 import { ServerErrorPage } from '@/pages/server-error-page';
 
 export type SortableColumn = 'name' | 'updatedAt' | 'lastTriggeredAt';
@@ -28,6 +28,7 @@ interface WorkflowListProps {
   orderDirection?: TableHeadSortDirection;
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
+  onPageSizeChange?: (pageSize: number) => void;
 }
 
 interface WorkflowListSkeletonProps {
@@ -71,23 +72,40 @@ export function WorkflowList({
   data,
   isLoading,
   isError,
-  limit = 12,
+  limit = 10,
   orderBy,
   orderDirection,
   hasActiveFilters,
   onClearFilters,
+  onPageSizeChange,
 }: WorkflowListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
-
-  const hrefFromOffset = (offset: number) => {
-    return `${location.pathname}?${createSearchParams({
-      ...searchParams,
-      offset: offset.toString(),
-    })}`;
-  };
 
   const offset = parseInt(searchParams.get('offset') || '0');
+  const currentPage = Math.floor(offset / limit) + 1;
+  const totalPages = Math.ceil((data?.totalCount || 0) / limit);
+
+  const navigateToPage = (newPage: number) => {
+    const newOffset = (newPage - 1) * limit;
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('offset', newOffset.toString());
+      return newParams;
+    });
+  };
+
+  const handlePreviousPage = () => navigateToPage(Math.max(1, currentPage - 1));
+  const handleNextPage = () => navigateToPage(Math.min(totalPages, currentPage + 1));
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('limit', newPageSize.toString());
+      newParams.set('offset', '0'); // Reset to first page when changing page size
+      return newParams;
+    });
+    onPageSizeChange?.(newPageSize);
+  };
 
   const toggleSort = (column: SortableColumn) => {
     const newDirection =
@@ -106,9 +124,6 @@ export function WorkflowList({
   if (!isLoading && data?.totalCount === 0) {
     return <WorkflowListEmpty emptySearchResults={hasActiveFilters} onClearFilters={onClearFilters} />;
   }
-
-  const currentPage = Math.floor(offset / limit) + 1;
-  const totalPages = Math.ceil((data?.totalCount || 0) / limit);
 
   return (
     <div className="flex h-full flex-col">
@@ -147,34 +162,29 @@ export function WorkflowList({
           {isLoading ? (
             <WorkflowListSkeleton limit={limit} />
           ) : (
-            <>{data?.workflows.map((workflow) => <WorkflowRow key={workflow._id} workflow={workflow} />)}</>
+            <>
+              {data?.workflows.map((workflow) => (
+                <WorkflowRow key={workflow._id} workflow={workflow} />
+              ))}
+            </>
           )}
         </TableBody>
-        {data && limit < data.totalCount && (
+        {data && (
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={5}>
-                <div className="flex items-center justify-between">
-                  {data ? (
-                    <span className="text-foreground-600 block text-sm font-normal">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                  ) : (
-                    <Skeleton className="h-5 w-[20ch]" />
-                  )}
-                  {data ? (
-                    <DefaultPagination
-                      hrefFromOffset={hrefFromOffset}
-                      totalCount={data.totalCount}
-                      limit={limit}
-                      offset={offset}
-                    />
-                  ) : (
-                    <Skeleton className="h-5 w-32" />
-                  )}
-                </div>
+              <TableCell colSpan={7} className="p-0">
+                <TablePaginationFooter
+                  pageSize={limit}
+                  currentPageItemsCount={data.workflows.length}
+                  onPreviousPage={handlePreviousPage}
+                  onNextPage={handleNextPage}
+                  onPageSizeChange={handlePageSizeChange}
+                  hasPreviousPage={currentPage > 1}
+                  hasNextPage={currentPage < totalPages}
+                  itemName="workflows"
+                  totalCount={data.totalCount}
+                />
               </TableCell>
-              <TableCell colSpan={2} />
             </TableRow>
           </TableFooter>
         )}

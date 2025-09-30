@@ -1,18 +1,17 @@
-import { ForwardRefExoticComponent, HTMLAttributes, useCallback, useMemo } from 'react';
 import { Editor as MailyEditor } from '@maily-to/core';
-import type { Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
-import { Editor as TiptapEditorReact } from '@tiptap/react';
 import { BlockGroupItem } from '@maily-to/core/blocks';
 import { Variable } from '@maily-to/core/extensions';
-
+import type { Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
+import { Editor as TiptapEditorReact } from '@tiptap/react';
+import { ForwardRefExoticComponent, HTMLAttributes, useCallback, useMemo, useRef } from 'react';
+import { useRemoveGrammarly } from '@/hooks/use-remove-grammarly';
+import { TranslationKey } from '@/types/translations';
+import { EnhancedParsedVariables, IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
 import { createExtensions, DEFAULT_EDITOR_CONFIG, MAILY_EMAIL_WIDTH } from './maily-config';
-import { calculateVariables } from './variables';
 import { RepeatMenuDescription } from './repeat-menu-description';
-import { useRemoveGrammarly } from '@/hooks/use-remove-grammarly';
-import { EnhancedParsedVariables, IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { TranslationKey } from '@/types/translations';
 import { VariableFrom } from './types';
+import { calculateVariables } from './variables';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableNodeView as defaultCreateVariableNodeView } from './views/variable-view';
 
@@ -28,6 +27,7 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
   onCreateNewTranslationKey?: (translationKey: string) => Promise<void>;
   isPayloadSchemaEnabled?: boolean;
   isTranslationEnabled?: boolean;
+  isContextEnabled?: boolean;
   translationKeys?: TranslationKey[];
   variableSuggestionsPopover?: ForwardRefExoticComponent<{
     items: Variable[];
@@ -65,6 +65,7 @@ export const Maily = ({
   blocks,
   isPayloadSchemaEnabled,
   isTranslationEnabled,
+  isContextEnabled = false,
   addDigestVariables,
   onCreateNewVariable = () => Promise.resolve(),
   onCreateNewTranslationKey = () => Promise.resolve(),
@@ -101,9 +102,20 @@ export const Maily = ({
         isAllowedVariable: variables?.isAllowedVariable ?? (() => false),
         addDigestVariables,
         isPayloadSchemaEnabled,
+        isTranslationEnabled,
+        isContextEnabled,
       });
     },
-    [primitives, arrays, namespaces, variables?.isAllowedVariable, addDigestVariables, isPayloadSchemaEnabled]
+    [
+      primitives,
+      arrays,
+      namespaces,
+      variables?.isAllowedVariable,
+      addDigestVariables,
+      isPayloadSchemaEnabled,
+      isTranslationEnabled,
+      isContextEnabled,
+    ]
   );
 
   const extensions = useMemo(

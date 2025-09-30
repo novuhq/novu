@@ -1,11 +1,10 @@
 import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-import { v4 as uuid } from 'uuid';
-
-import { SubscribersService, UserSession } from '@novu/testing';
 import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { AddressingTypeEnum, TriggerRecipients, TriggerRequestCategoryEnum } from '@novu/shared';
 
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { v4 as uuid } from 'uuid';
 import { SharedModule } from '../../../shared/shared.module';
 import { EventsModule } from '../../events.module';
 import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
@@ -20,7 +19,6 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [SharedModule, EventsModule],
-      providers: [],
     }).compile();
 
     session = new UserSession();
@@ -255,5 +253,6 @@ const buildCommand = (
     overrides: {},
     addressingType: AddressingTypeEnum.MULTICAST,
     requestCategory: TriggerRequestCategoryEnum.SINGLE,
+    requestId: uuid(),
   });
 };

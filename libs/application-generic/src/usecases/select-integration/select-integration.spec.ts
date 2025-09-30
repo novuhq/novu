@@ -1,21 +1,20 @@
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import {
   EnvironmentRepository,
   ExecutionDetailsRepository,
   IntegrationEntity,
   IntegrationRepository,
   JobRepository,
+  MessageRepository,
   SubscriberRepository,
   TenantRepository,
-  MessageRepository,
 } from '@novu/dal';
-
-import { SelectIntegration } from './select-integration.usecase';
-import { SelectIntegrationCommand } from './select-integration.command';
-import { ConditionsFilter } from '../conditions-filter';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { FeatureFlagsService, TraceLogRepository } from '../../services';
 import { CompileTemplate } from '../compile-template';
+import { ConditionsFilter } from '../conditions-filter';
 import { CreateExecutionDetails } from '../create-execution-details';
-import { TraceLogRepository } from '../../services';
+import { SelectIntegrationCommand } from './select-integration.command';
+import { SelectIntegration } from './select-integration.usecase';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -85,27 +84,25 @@ jest.mock('../get-decrypted-integrations', () => ({
   })),
 }));
 
-describe('select integration', function () {
+describe('select integration', () => {
   let useCase: SelectIntegration;
   const integrationRepository: IntegrationRepository = new IntegrationRepository();
-  const executionDetailsRepository: ExecutionDetailsRepository = new ExecutionDetailsRepository();
 
   const conditionsFilter = new ConditionsFilter(
     new SubscriberRepository(),
     new MessageRepository(),
-    executionDetailsRepository,
     new JobRepository(),
     new EnvironmentRepository(),
-    new CreateExecutionDetails(new ExecutionDetailsRepository(), TraceLogRepository as any),
+    new CreateExecutionDetails(new ExecutionDetailsRepository(), TraceLogRepository as any, new FeatureFlagsService()),
     new CompileTemplate()
   );
-  beforeEach(async function () {
-    // @ts-ignore
+  beforeEach(async () => {
+    // @ts-expect-error
     useCase = new SelectIntegration(integrationRepository, conditionsFilter, new TenantRepository());
     jest.clearAllMocks();
   });
 
-  it('should select the integration', async function () {
+  it('should select the integration', async () => {
     const integration = await useCase.execute(
       SelectIntegrationCommand.create({
         channelType: ChannelTypeEnum.EMAIL,
@@ -120,7 +117,7 @@ describe('select integration', function () {
     expect(integration?.identifier).toEqual(testIntegration.identifier);
   });
 
-  it('should return the novu integration', async function () {
+  it('should return the novu integration', async () => {
     findOneMock.mockImplementationOnce(() => null);
 
     const integration = await useCase.execute(

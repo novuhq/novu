@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { OrganizationDBModel, PartnerTypeEnum } from './organization.entity';
@@ -37,6 +37,7 @@ const organizationSchema = new Schema<OrganizationDBModel>(
       select: false,
     },
     defaultLocale: Schema.Types.String,
+    targetLocales: [Schema.Types.String],
     domain: Schema.Types.String,
     language: [Schema.Types.String],
     removeNovuBranding: Schema.Types.Boolean,

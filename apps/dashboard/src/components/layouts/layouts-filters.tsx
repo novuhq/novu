@@ -1,11 +1,10 @@
 import { HTMLAttributes, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiLoader4Line } from 'react-icons/ri';
-
+import { defaultLayoutsFilter, LayoutsFilter } from '@/components/layouts/hooks/use-layouts-url-state';
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
-import { defaultLayoutsFilter, LayoutsFilter } from '@/components/layouts/hooks/use-layouts-url-state';
 import { cn } from '@/utils/ui';
 
 export type LayoutsFiltersProps = HTMLAttributes<HTMLFormElement> & {

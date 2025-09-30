@@ -1,9 +1,8 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DirectionEnum } from '@novu/shared';
-
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { getLayouts } from '@/api/layouts';
 import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironment } from '../context/environment/hooks';
-import { getLayouts } from '@/api/layouts';
 
 interface UseLayoutsParams {
   limit?: number;
@@ -11,14 +10,16 @@ interface UseLayoutsParams {
   query?: string;
   orderBy?: string;
   orderDirection?: DirectionEnum;
+  refetchOnWindowFocus?: boolean;
 }
 
 export const useFetchLayouts = ({
-  limit = 12,
+  limit = 10,
   offset = 0,
   query = '',
   orderBy = '',
   orderDirection = DirectionEnum.DESC,
+  refetchOnWindowFocus = true,
 }: UseLayoutsParams = {}) => {
   const { currentEnvironment } = useEnvironment();
 
@@ -27,7 +28,7 @@ export const useFetchLayouts = ({
     queryFn: () => getLayouts({ environment: currentEnvironment!, limit, offset, query, orderBy, orderDirection }),
     placeholderData: keepPreviousData,
     enabled: !!currentEnvironment?._id,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus,
   });
 
   const currentPage = Math.floor(offset / limit) + 1;

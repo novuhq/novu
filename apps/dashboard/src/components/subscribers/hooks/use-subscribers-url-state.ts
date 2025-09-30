@@ -1,9 +1,9 @@
 import { DirectionEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useDebounce } from '../../../hooks/use-debounce';
-import { useQueryClient } from '@tanstack/react-query';
 import { QueryKeys } from '@/utils/query-keys';
+import { useDebounce } from '../../../hooks/use-debounce';
 
 export type SubscribersSortableColumn = '_id' | 'updatedAt';
 export interface SubscribersFilter {
@@ -39,6 +39,7 @@ export interface SubscribersUrlState {
   handlePrevious: () => void;
   handleFirst: () => void;
   handleNavigationAfterDelete: (afterCursor: string) => void;
+  handlePageSizeChange: (newSize: number) => void;
 }
 
 type UseSubscribersUrlStateProps = {
@@ -79,6 +80,7 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
         'name',
         'orderBy',
         'orderDirection',
+        'limit',
       ];
 
       const isResetPaginationFilterChanged = resetPaginationFilterKeys.some((key) => data[key] !== filterValues[key]);
@@ -229,6 +231,16 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     navigate(`${location.pathname}?${newParams}`, { replace: true });
   };
 
+  const handlePageSizeChange = useCallback(
+    (newSize: number) => {
+      updateSearchParams({
+        ...filterValues,
+        limit: newSize,
+      });
+    },
+    [updateSearchParams, filterValues]
+  );
+
   return {
     filterValues,
     handleFiltersChange: debouncedUpdateParams,
@@ -238,5 +250,6 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     handlePrevious,
     handleFirst,
     handleNavigationAfterDelete,
+    handlePageSizeChange,
   };
 }

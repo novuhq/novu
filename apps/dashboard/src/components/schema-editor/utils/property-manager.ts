@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { JSONSchema7, JSONSchema7TypeName } from '../json-schema';
-import type { PropertyListItem } from './validation-schema';
 import { newProperty } from './json-helpers';
+import type { PropertyListItem } from './validation-schema';
 
 export interface PropertyPath {
   segments: string[];

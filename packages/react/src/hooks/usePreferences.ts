@@ -1,9 +1,13 @@
-import { NovuError, Preference } from '@novu/js';
+import { NovuError, Preference, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 import { useEffect, useState } from 'react';
 import { useNovu } from './NovuProvider';
 
 export type UsePreferencesProps = {
-  filter?: { tags?: string[] };
+  filter?: {
+    tags?: string[];
+    severity?: SeverityLevelEnum | SeverityLevelEnum[];
+    criticality?: WorkflowCriticalityEnum;
+  };
   onSuccess?: (data: Preference[]) => void;
   onError?: (error: NovuError) => void;
 };

@@ -1,37 +1,40 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { addBreadcrumb } from '@sentry/node';
+import { Injectable, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-
-import { MessageRepository, NotificationStepEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
 import {
+  buildFeedKey,
+  buildMessageCountKey,
+  CompileInAppTemplate,
+  CompileInAppTemplateCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  InstrumentUsecase,
+  InvalidateCacheService,
+  messageWebhookMapper,
+  SelectIntegration,
+  SelectVariant,
+  SendWebhookMessage,
+  WebSocketsQueueService,
+} from '@novu/application-generic';
+
+import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { InAppOutput } from '@novu/framework/internal';
+import {
+  ActorTypeEnum,
   ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  ActorTypeEnum,
-  WebSocketEventEnum,
   inAppMessageFromBridgeOutputs,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+  WebSocketEventEnum,
 } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  InvalidateCacheService,
-  DetailEnum,
-  SelectIntegration,
-  buildFeedKey,
-  buildMessageCountKey,
-  GetNovuProviderCredentials,
-  SelectVariant,
-  CompileInAppTemplate,
-  CompileInAppTemplateCommand,
-  WebSocketsQueueService,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-} from '@novu/application-generic';
-import { InAppOutput } from '@novu/framework/internal';
-
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageBase } from './send-message.base';
+import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageBase } from './send-message.base';
+import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -47,7 +50,8 @@ export class SendMessageInApp extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    protected compileInAppTemplate: CompileInAppTemplate
+    protected compileInAppTemplate: CompileInAppTemplate,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -61,7 +65,7 @@ export class SendMessageInApp extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     if (!command.step.template) throw new PlatformException('Template not found');
 
     addBreadcrumb({
@@ -91,8 +95,8 @@ export class SendMessageInApp extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
@@ -143,8 +147,8 @@ export class SendMessageInApp extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return {
-        status: 'failed',
-        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -205,8 +209,8 @@ export class SendMessageInApp extends SendMessageBase {
     const bridgeOutputs = command.bridgeData?.outputs as InAppOutput;
     const inAppMessage = inAppMessageFromBridgeOutputs(bridgeOutputs);
 
-    const channelData: Partial<
-      Pick<MessageEntity, 'content' | 'subject' | 'avatar' | 'payload' | 'cta' | 'tags' | 'data'>
+    const additionalFields: Partial<
+      Pick<MessageEntity, 'content' | 'subject' | 'avatar' | 'payload' | 'cta' | 'tags' | 'data' | 'severity'>
     > = {
       content: (this.storeContent() ? inAppMessage.content || content : null) as string,
       cta: bridgeOutputs ? inAppMessage.cta : step.template.cta,
@@ -215,10 +219,12 @@ export class SendMessageInApp extends SendMessageBase {
       payload: messagePayload,
       data: inAppMessage.data,
       tags: command.tags,
+      severity: command.severity,
     };
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
+        deliveredAt: [new Date()],
         _notificationId: command.notificationId,
         _organizationId: command.organizationId,
         _environmentId: command.environmentId,
@@ -231,12 +237,13 @@ export class SendMessageInApp extends SendMessageBase {
         _feedId: step.template._feedId,
         channel: ChannelTypeEnum.IN_APP,
         _jobId: command.jobId,
+        ...(command.contextKeys && { contextKeys: command.contextKeys }),
         ...(actor &&
           actor.type !== ActorTypeEnum.NONE && {
             actor,
             _actorId: command.job?._actorId,
           }),
-        ...channelData,
+        ...additionalFields,
       });
     }
 
@@ -248,7 +255,7 @@ export class SendMessageInApp extends SendMessageBase {
             seen: false,
             createdAt: new Date(),
             updatedAt: new Date(),
-            ...channelData,
+            ...additionalFields,
           },
         },
         {
@@ -303,8 +310,32 @@ export class SendMessageInApp extends SendMessageBase {
       })
     );
 
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.MESSAGE_SENT,
+      objectType: WebhookObjectTypeEnum.MESSAGE,
+      payload: {
+        object: messageWebhookMapper(message, command.subscriberId, {
+          providerResponseId: message._id,
+        }),
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
+
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.MESSAGE_DELIVERED,
+      objectType: WebhookObjectTypeEnum.MESSAGE,
+      payload: {
+        object: messageWebhookMapper(message, command.subscriberId, {
+          providerResponseId: message._id,
+        }),
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
+
     return {
-      status: 'success',
+      status: SendMessageStatus.SUCCESS,
     };
   }
 }

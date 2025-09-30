@@ -1,3 +1,4 @@
+import { JobEntity } from '@novu/dal';
 import {
   DelayTypeEnum,
   DigestTypeEnum,
@@ -6,7 +7,6 @@ import {
   JobStatusEnum,
   StepTypeEnum,
 } from '@novu/shared';
-import { JobEntity } from '@novu/dal';
 import { getNestedValue } from './object';
 
 export const isRegularDigest = (type: DigestTypeEnum | DelayTypeEnum) => {
@@ -17,27 +17,18 @@ export const isRegularDelay = (type: DelayTypeEnum) => {
   return type === DelayTypeEnum.REGULAR;
 };
 
-export const isMainDigest = (
-  type: StepTypeEnum | undefined,
-  status: JobStatusEnum,
-) => {
+export const isMainDigest = (type: StepTypeEnum | undefined, status: JobStatusEnum) => {
   return type === StepTypeEnum.DIGEST && status === JobStatusEnum.DELAYED;
 };
 
 export function isActionStepType(type: StepTypeEnum) {
-  const channels = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST];
+  const channels = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE];
 
   return channels.find((channel) => channel === type);
 }
 
 export function isChannelStepType(type: StepTypeEnum) {
-  const channels = [
-    StepTypeEnum.IN_APP,
-    StepTypeEnum.EMAIL,
-    StepTypeEnum.SMS,
-    StepTypeEnum.PUSH,
-    StepTypeEnum.CHAT,
-  ];
+  const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
   return channels.find((channel) => channel === type);
 }

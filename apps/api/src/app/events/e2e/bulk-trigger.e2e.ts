@@ -1,19 +1,19 @@
-import { expect } from 'chai';
-import { MessageRepository, NotificationRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import { SubscribersService, UserSession } from '@novu/testing';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
+import { NovuCore } from '@novu/api/core';
 import { triggerBulk } from '@novu/api/funcs/triggerBulk';
 import { TriggerEventRequestDto } from '@novu/api/models/components';
+import { MessageRepository, NotificationRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { z } from 'zod';
-import { NovuCore } from '@novu/api/core';
 import {
   expectSdkValidationExceptionGeneric,
   initNovuClassSdk,
   initNovuFunctionSdk,
 } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', function () {
+describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let secondTemplate: NotificationTemplateEntity;
@@ -44,7 +44,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
     novuCore = initNovuFunctionSdk(session);
   });
 
-  it('should return the response array in correct order', async function () {
+  it('should return the response array in correct order', async () => {
     const bulkTriggerResponse = await triggerBulk(novuCore, {
       events: [
         {
@@ -99,7 +99,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
     expect(thirdEvent.transactionId).to.equal('3333');
   });
 
-  it('should generate message and notification based on a bulk event', async function () {
+  it('should generate message and notification based on a bulk event', async () => {
     await novuClient.triggerBulk({
       events: [
         {
@@ -199,7 +199,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
     expect(secondSubscriberNotification._templateId).to.equal(secondTemplate._id);
   });
 
-  it('should throw an error when sending more than 100 events', async function () {
+  it('should throw an error when sending more than 100 events', async () => {
     const event: TriggerEventRequestDto = {
       transactionId: '2222',
       workflowId: template.triggers[0].identifier,
@@ -220,7 +220,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', functi
     expect(errorDto?.errors.events.messages[0]).to.equal('events must contain no more than 100 elements');
   });
 
-  it('should handle bulk if one of the events returns errors', async function () {
+  it('should handle bulk if one of the events returns errors', async () => {
     const bulkTriggerResponse = await triggerBulk(novuCore, {
       events: [
         {

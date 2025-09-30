@@ -1,7 +1,7 @@
-import { PLAIN_SUPPORT_CHAT_APP_ID } from '@/config';
-import { useAuth } from '@/context/auth/hooks';
 import * as Sentry from '@sentry/react';
 import { useEffect } from 'react';
+import { PLAIN_SUPPORT_CHAT_APP_ID } from '@/config';
+import { useAuth } from '@/context/auth/hooks';
 
 // Add type declaration for Plain chat widget
 declare global {
@@ -40,7 +40,7 @@ export const usePlainChat = () => {
               text: 'Roadmap',
               url: 'https://roadmap.novu.co/roadmap?utm_campaign=in_app_live_chat',
             },
-            { icon: 'link', text: 'Changelog', url: 'https://roadmap.novu.co/changelog?utm_campaign=in_app_live_chat' },
+            { icon: 'link', text: 'Changelog', url: 'https://go.novu.co/changelog?utm_campaign=in_app_live_chat' },
             {
               icon: 'email',
               text: 'Contact Sales',

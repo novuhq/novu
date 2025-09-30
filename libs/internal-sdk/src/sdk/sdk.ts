@@ -3,7 +3,7 @@
  */
 
 import { cancel } from "../funcs/cancel.js";
-import { retrieve } from "../funcs/retrieve.js";
+import { inboundWebhooksControllerHandleWebhook } from "../funcs/inboundWebhooksControllerHandleWebhook.js";
 import { trigger } from "../funcs/trigger.js";
 import { triggerBroadcast } from "../funcs/triggerBroadcast.js";
 import { triggerBulk } from "../funcs/triggerBulk.js";
@@ -11,6 +11,7 @@ import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
+import { Activity } from "./activity.js";
 import { Environments } from "./environments.js";
 import { Integrations } from "./integrations.js";
 import { Layouts } from "./layouts.js";
@@ -18,9 +19,15 @@ import { Messages } from "./messages.js";
 import { Notifications } from "./notifications.js";
 import { Subscribers } from "./subscribers.js";
 import { Topics } from "./topics.js";
+import { Translations } from "./translations.js";
 import { Workflows } from "./workflows.js";
 
 export class Novu extends ClientSDK {
+  private _environments?: Environments;
+  get environments(): Environments {
+    return (this._environments ??= new Environments(this._options));
+  }
+
   private _layouts?: Layouts;
   get layouts(): Layouts {
     return (this._layouts ??= new Layouts(this._options));
@@ -36,14 +43,19 @@ export class Novu extends ClientSDK {
     return (this._topics ??= new Topics(this._options));
   }
 
+  private _translations?: Translations;
+  get translations(): Translations {
+    return (this._translations ??= new Translations(this._options));
+  }
+
   private _workflows?: Workflows;
   get workflows(): Workflows {
     return (this._workflows ??= new Workflows(this._options));
   }
 
-  private _environments?: Environments;
-  get environments(): Environments {
-    return (this._environments ??= new Environments(this._options));
+  private _activity?: Activity;
+  get activity(): Activity {
+    return (this._activity ??= new Activity(this._options));
   }
 
   private _integrations?: Integrations;
@@ -61,14 +73,28 @@ export class Novu extends ClientSDK {
     return (this._notifications ??= new Notifications(this._options));
   }
 
+  async inboundWebhooksControllerHandleWebhook(
+    environmentId: string,
+    integrationId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<void> {
+    return unwrapAsync(inboundWebhooksControllerHandleWebhook(
+      this,
+      environmentId,
+      integrationId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
   /**
    * Trigger event
    *
    * @remarks
    *
-   *     Trigger event is the main (and only) way to send notifications to subscribers.
-   *     The trigger identifier is used to match the particular workflow associated with it.
-   *     Additional information can be passed according the body interface below.
+   *     Trigger event is the main (and only) way to send notifications to subscribers. The trigger identifier is used to match the particular workflow associated with it. Additional information can be passed according the body interface below.
+   *     To prevent duplicate triggers, you can optionally pass a **transactionId** in the request body. If the same **transactionId** is used again, the trigger will be ignored. The retention period depends on your billing tier.
    */
   async trigger(
     triggerEventRequestDto: components.TriggerEventRequestDto,
@@ -141,23 +167,6 @@ export class Novu extends ClientSDK {
       this,
       bulkTriggerEventDto,
       idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Retrieve workflow step
-   *
-   * @remarks
-   * Retrieves data for a specific step in a workflow
-   */
-  async retrieve(
-    request: operations.LogsControllerGetLogsRequest,
-    options?: RequestOptions,
-  ): Promise<operations.LogsControllerGetLogsResponseBody> {
-    return unwrapAsync(retrieve(
-      this,
-      request,
       options,
     ));
   }

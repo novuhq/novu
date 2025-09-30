@@ -1,7 +1,7 @@
 import { ApiExtraModels, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 import { JsonSchemaFormatEnum, JsonSchemaTypeEnum } from '@novu/dal';
+import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 @ApiExtraModels()
 export class JSONSchemaDto {

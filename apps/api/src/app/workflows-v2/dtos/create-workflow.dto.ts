@@ -1,17 +1,29 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { SeverityLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { IsArray, IsEnum, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
+import {
+  ChatControlDto,
+  CustomControlDto,
+  DelayControlDto,
+  DigestControlDto,
+  EmailControlDto,
+  InAppControlDto,
+  PushControlDto,
+  SmsControlDto,
+  ThrottleControlDto,
+} from './controls';
 import {
   BaseStepConfigDto,
-  InAppStepUpsertDto,
-  EmailStepUpsertDto,
-  SmsStepUpsertDto,
-  PushStepUpsertDto,
   ChatStepUpsertDto,
+  CustomStepUpsertDto,
   DelayStepUpsertDto,
   DigestStepUpsertDto,
-  CustomStepUpsertDto,
+  EmailStepUpsertDto,
+  InAppStepUpsertDto,
+  PushStepUpsertDto,
+  SmsStepUpsertDto,
+  ThrottleStepUpsertDto,
 } from './create-step.dto';
 import { PreferencesRequestDto } from './preferences.request.dto';
 import { WorkflowCommonsFields } from './workflow-commons.dto';
@@ -24,11 +36,24 @@ import { WorkflowCommonsFields } from './workflow-commons.dto';
   ChatStepUpsertDto,
   DelayStepUpsertDto,
   DigestStepUpsertDto,
-  CustomStepUpsertDto
+  ThrottleStepUpsertDto,
+  CustomStepUpsertDto,
+  InAppControlDto,
+  EmailControlDto,
+  SmsControlDto,
+  PushControlDto,
+  ChatControlDto,
+  DelayControlDto,
+  DigestControlDto,
+  ThrottleControlDto,
+  CustomControlDto
 )
 export class CreateWorkflowDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Unique identifier for the workflow' })
   @IsString()
+  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+    message: 'must be a valid slug format (lowercase letters, numbers, and hyphens only)',
+  })
   workflowId: string;
 
   @ApiProperty({
@@ -43,6 +68,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
         { $ref: getSchemaPath(ChatStepUpsertDto) },
         { $ref: getSchemaPath(DelayStepUpsertDto) },
         { $ref: getSchemaPath(DigestStepUpsertDto) },
+        { $ref: getSchemaPath(ThrottleStepUpsertDto) },
         { $ref: getSchemaPath(CustomStepUpsertDto) },
       ],
       discriminator: {
@@ -55,6 +81,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
           [StepTypeEnum.CHAT]: getSchemaPath(ChatStepUpsertDto),
           [StepTypeEnum.DELAY]: getSchemaPath(DelayStepUpsertDto),
           [StepTypeEnum.DIGEST]: getSchemaPath(DigestStepUpsertDto),
+          [StepTypeEnum.THROTTLE]: getSchemaPath(ThrottleStepUpsertDto),
           [StepTypeEnum.CUSTOM]: getSchemaPath(CustomStepUpsertDto),
         },
       },
@@ -73,6 +100,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
         { name: StepTypeEnum.CHAT, value: ChatStepUpsertDto },
         { name: StepTypeEnum.DELAY, value: DelayStepUpsertDto },
         { name: StepTypeEnum.DIGEST, value: DigestStepUpsertDto },
+        { name: StepTypeEnum.THROTTLE, value: ThrottleStepUpsertDto },
         { name: StepTypeEnum.CUSTOM, value: CustomStepUpsertDto },
       ],
     },
@@ -86,6 +114,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
     | ChatStepUpsertDto
     | DelayStepUpsertDto
     | DigestStepUpsertDto
+    | ThrottleStepUpsertDto
     | CustomStepUpsertDto
   )[];
 
@@ -108,4 +137,14 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
   @IsOptional()
   @Type(() => PreferencesRequestDto)
   preferences?: PreferencesRequestDto;
+
+  @ApiPropertyOptional({
+    description: 'Severity of the workflow',
+    required: false,
+    enum: [...Object.values(SeverityLevelEnum)],
+    enumName: 'SeverityLevelEnum',
+  })
+  @IsOptional()
+  @IsEnum(SeverityLevelEnum)
+  severity?: SeverityLevelEnum;
 }

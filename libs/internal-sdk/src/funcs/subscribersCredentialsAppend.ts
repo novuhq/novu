@@ -27,11 +27,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Upsert provider credentials
+ * Update provider credentials
  *
  * @remarks
  * Update credentials for a provider such as **slack** and **FCM**.
- *       **providerId** is required field. This API replaces the existing deviceTokens with the provided ones.
+ *       **providerId** is required field. This API creates the **deviceTokens** or replaces the existing ones.
  */
 export function subscribersCredentialsAppend(
   client: NovuCore,
@@ -169,7 +169,7 @@ async function $do(
     headers: headers,
     body: body,
     userAgent: client._options.userAgent,
-    timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
+    timeoutMs: options?.timeoutMs || client._options.timeoutMs || 5000,
   }, options);
   if (!requestRes.ok) {
     return [requestRes, { status: "invalid" }];

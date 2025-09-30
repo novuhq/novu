@@ -1,7 +1,7 @@
-import { ROUTES } from '@/utils/routes';
 import { useOrganization, useUser } from '@clerk/clerk-react';
 import type { UserResource } from '@clerk/types';
 import { ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { ROUTES } from '@/utils/routes';
 import { AuthContext } from './auth-context';
 import { toOrganizationEntity, toUserEntity } from './mappers';
 import type { AuthContextValue } from './types';

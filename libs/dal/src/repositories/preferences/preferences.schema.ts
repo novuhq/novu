@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
 import { ChannelTypeEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { PreferencesDBModel } from './preferences.entity';
 
@@ -65,6 +65,7 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
         },
       },
     },
+    schedule: Schema.Types.Mixed,
   },
   { ...schemaOptions, minimize: false }
 );

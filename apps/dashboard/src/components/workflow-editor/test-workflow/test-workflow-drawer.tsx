@@ -1,36 +1,44 @@
-import { forwardRef, useMemo, useState, useCallback, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type WorkflowTestDataResponseDto, type ISubscriberResponseDto, PermissionsEnum } from '@novu/shared';
-
+import {
+  ContextPayload,
+  type ISubscriberResponseDto,
+  PermissionsEnum,
+  type WorkflowTestDataResponseDto,
+} from '@novu/shared';
+import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiArrowDownSLine, RiFileCopyLine } from 'react-icons/ri';
+import * as z from 'zod';
 import { Button } from '@/components/primitives/button';
 import { ButtonGroupItem, ButtonGroupRoot } from '@/components/primitives/button-group';
-import { Form, FormRoot } from '@/components/primitives/form/form';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
-import { VisuallyHidden } from '@/components/primitives/visually-hidden';
-import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
-import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
-import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
-import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
-import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
-import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
-import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
-import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
-import { useHasPermission } from '@/hooks/use-has-permission';
-import { useAuth } from '@/context/auth/hooks';
-import { useWorkflow } from '../workflow-provider';
-import { RiPlayCircleLine, RiArrowDownSLine, RiFileCopyLine } from 'react-icons/ri';
-import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
-import { useEnvironment } from '../../../context/environment/hooks';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { API_HOSTNAME } from '@/config';
-import * as z from 'zod';
+import { Form, FormRoot } from '@/components/primitives/form/form';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
+import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
+import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
+import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
+import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
+import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
+
+import { useAuth } from '@/context/auth/hooks';
+import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTestWorkflowContextPersistence } from '@/hooks/use-test-workflow-context-persistence';
+import { useTestWorkflowSubscriberPersistence } from '@/hooks/use-test-workflow-subscriber-persistence';
+import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
+import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
+import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
+import { useEnvironment } from '../../../context/environment/hooks';
+import { cleanupExpiredPreviewData } from '../steps/utils/preview-context-storage.utils';
+import { useWorkflow } from '../workflow-provider';
 
 type TestWorkflowDrawerProps = {
   isOpen: boolean;
@@ -45,7 +53,7 @@ const buildPayloadOnlyFormSchema = () => {
     payload: z.string().transform((str, ctx) => {
       try {
         return JSON.parse(str);
-      } catch (e) {
+      } catch {
         ctx.addIssue({ code: 'custom', message: 'Payload must be valid JSON' });
         return z.NEVER;
       }
@@ -54,30 +62,11 @@ const buildPayloadOnlyFormSchema = () => {
 };
 
 type TestWorkflowFormType = {
-  payload: any; // This will be the parsed JSON payload
+  payload: string; // JSON string that gets parsed
 };
 
-const generateCurlCommand = (data: { workflowId: string; to: unknown; payload: string; apiKey: string }) => {
-  const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-
-  let parsedPayload = {};
-
-  try {
-    parsedPayload = typeof data.payload === 'string' ? JSON.parse(data.payload) : data.payload;
-  } catch {
-    parsedPayload = {};
-  }
-
-  const body = {
-    name: data.workflowId,
-    to: data.to,
-    payload: { ...parsedPayload, __source: 'dashboard' },
-  };
-
-  return `curl -X POST "${baseUrl}/v1/events/trigger" \\
-  -H "Authorization: ApiKey ${data.apiKey}" \\
-  -H "Content-Type: application/json" \\
-  -d '${JSON.stringify(body, null, 2)}'`;
+const getContextSpread = (contextData: Partial<ContextPayload> | null) => {
+  return contextData && Object.keys(contextData).length > 0 ? { context: contextData } : {};
 };
 
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
@@ -86,7 +75,13 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
   const [subscriberData, setSubscriberData] = useState<Partial<ISubscriberResponseDto> | null>(null);
+  const [contextData, setContextData] = useState<Partial<ContextPayload> | null>(null);
   const [currentFormData, setCurrentFormData] = useState<{ to: unknown; payload: string } | null>(null);
+
+  // Cleanup expired storage data on component mount
+  useEffect(() => {
+    cleanupExpiredPreviewData();
+  }, []);
 
   const { currentEnvironment } = useEnvironment();
   const { workflow } = useWorkflow();
@@ -105,22 +100,92 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     environmentId: currentEnvironment?._id || '',
   });
 
+  // Test workflow subscriber persistence
+  const { loadPersistedSubscriber, savePersistedSubscriber, clearPersistedSubscriber } =
+    useTestWorkflowSubscriberPersistence({
+      workflowId: workflow?.workflowId || '',
+      environmentId: currentEnvironment?._id || '',
+    });
+
+  // Test workflow context persistence
+  const { loadPersistedContext, savePersistedContext } = useTestWorkflowContextPersistence({
+    workflowId: workflow?.workflowId || '',
+    environmentId: currentEnvironment?._id || '',
+  });
+
+  // Track if we've initialized the subscriber data
+  const [hasInitializedData, setHasInitializedData] = useState(false);
+
+  // Reset initialization flag when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasInitializedData(false);
+    }
+  }, [isOpen]);
+
   // Subscriber management - single source of truth
   const subscriberIdToFetch = subscriberData?.subscriberId || currentUser?._id || '';
   const {
     data: fetchedSubscriberData,
     refetch: refetchSubscriber,
     isLoading: isLoadingSubscriber,
+    error: subscriberFetchError,
   } = useFetchSubscriber({
     subscriberId: subscriberIdToFetch,
     options: {
       enabled: !!subscriberIdToFetch && !!currentEnvironment,
+      retry: false, // Don't retry if subscriber doesn't exist
     },
   });
 
-  // Initialize subscriber data
+  // Initialize subscriber data from persisted storage when drawer opens
   useEffect(() => {
-    if (fetchedSubscriberData) {
+    if (
+      !hasInitializedData &&
+      isOpen &&
+      workflow?.workflowId &&
+      currentEnvironment?._id &&
+      currentUser &&
+      !subscriberData?.subscriberId
+    ) {
+      const persistedSubscriber = loadPersistedSubscriber();
+      const persistedContext = loadPersistedContext();
+
+      if (persistedSubscriber) {
+        // Try to use the persisted subscriber
+        setSubscriberData(persistedSubscriber);
+      } else {
+        // No persisted subscriber, use current user
+        const fallbackData = {
+          subscriberId: currentUser._id,
+          firstName: currentUser.firstName ?? undefined,
+          lastName: currentUser.lastName ?? undefined,
+          email: currentUser.email ?? undefined,
+        };
+        setSubscriberData(fallbackData);
+      }
+
+      if (persistedContext) {
+        setContextData(persistedContext);
+      }
+
+      setHasInitializedData(true);
+    }
+  }, [
+    hasInitializedData,
+    isOpen,
+    workflow?.workflowId,
+    currentEnvironment?._id,
+    currentUser,
+    subscriberData?.subscriberId,
+    loadPersistedSubscriber,
+    loadPersistedContext,
+  ]);
+
+  // Handle fetched subscriber data and error cases
+  useEffect(() => {
+    if (fetchedSubscriberData && subscriberData?.subscriberId === fetchedSubscriberData.subscriberId) {
+      // Update with fresh data from server
       setSubscriberData({
         subscriberId: fetchedSubscriberData.subscriberId,
         firstName: fetchedSubscriberData.firstName ?? undefined,
@@ -129,16 +194,33 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         phone: fetchedSubscriberData.phone ?? undefined,
         avatar: fetchedSubscriberData.avatar ?? undefined,
         locale: fetchedSubscriberData.locale ?? undefined,
+        timezone: fetchedSubscriberData.timezone ?? undefined,
+        data: fetchedSubscriberData.data ?? undefined,
       });
-    } else if (currentUser && !fetchedSubscriberData && !subscriberData?.subscriberId && !isLoadingSubscriber) {
-      setSubscriberData({
+    } else if (
+      subscriberFetchError &&
+      subscriberData?.subscriberId &&
+      subscriberData.subscriberId !== currentUser?._id &&
+      currentUser
+    ) {
+      // Persisted subscriber doesn't exist, clear it and fallback to current user
+      clearPersistedSubscriber();
+
+      const fallbackData = {
         subscriberId: currentUser._id,
         firstName: currentUser.firstName ?? undefined,
         lastName: currentUser.lastName ?? undefined,
         email: currentUser.email ?? undefined,
-      });
+      };
+      setSubscriberData(fallbackData);
     }
-  }, [fetchedSubscriberData, currentUser, subscriberData?.subscriberId, isLoadingSubscriber]);
+  }, [
+    fetchedSubscriberData,
+    subscriberFetchError,
+    subscriberData?.subscriberId,
+    currentUser,
+    clearPersistedSubscriber,
+  ]);
 
   const payload = useMemo(() => {
     if (initialPayload && Object.keys(initialPayload).length > 0) {
@@ -168,9 +250,22 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     }
   }, [watchedPayload, initialPayload, savePersistedPayload]);
 
-  const handleSubscriberSelect = useCallback((subscriber: ISubscriberResponseDto) => {
-    setSubscriberData(subscriber);
-  }, []);
+  const handleSubscriberSelect = useCallback(
+    (subscriber: ISubscriberResponseDto) => {
+      setSubscriberData(subscriber);
+      // Persist the selected subscriber for future use
+      savePersistedSubscriber(subscriber);
+    },
+    [savePersistedSubscriber]
+  );
+
+  const handleContextSelect = useCallback(
+    (context: ContextPayload) => {
+      setContextData(context);
+      savePersistedContext(context);
+    },
+    [savePersistedContext]
+  );
 
   const handleSubscriberDrawerClose = useCallback(
     (open: boolean) => {
@@ -196,6 +291,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         name: workflow?.workflowId ?? '',
         to: subscriberData,
         payload: data.payload,
+        ...getContextSpread(contextData),
       });
 
       if (!newTransactionId) {
@@ -239,10 +335,11 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
     try {
       const formData = form.getValues();
-      const curlCommand = generateCurlCommand({
+      const curlCommand = generateTriggerCurlCommand({
         workflowId: workflow.workflowId,
         to: subscriberData,
         payload: formData.payload,
+        ...getContextSpread(contextData),
         apiKey: apiKey,
       });
 
@@ -262,7 +359,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     } catch {
       showErrorToast('Failed to copy cURL command', 'Copy Error');
     }
-  }, [workflow?.workflowId, subscriberData, apiKey, form]);
+  }, [workflow?.workflowId, subscriberData, apiKey, form, contextData]);
 
   const handleOpenInPostman = useCallback(async () => {
     if (!workflow?.workflowId || !subscriberData) {
@@ -273,55 +370,13 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     try {
       const formData = form.getValues();
 
-      let parsedPayload = {};
-
-      try {
-        parsedPayload = typeof formData.payload === 'string' ? JSON.parse(formData.payload) : formData.payload;
-      } catch {
-        parsedPayload = {};
-      }
-
-      const body = {
-        name: workflow.workflowId,
+      const postmanCollection = generatePostmanCollection({
+        workflowId: workflow.workflowId,
         to: subscriberData,
-        payload: { ...parsedPayload, __source: 'dashboard' },
-      };
-
-      const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-      const postmanCollection = {
-        info: {
-          name: `Novu - Trigger ${workflow.workflowId}`,
-          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
-        },
-        item: [
-          {
-            name: `Trigger ${workflow.workflowId}`,
-            request: {
-              method: 'POST',
-              header: [
-                {
-                  key: 'Authorization',
-                  value: `ApiKey ${apiKey}`,
-                },
-                {
-                  key: 'Content-Type',
-                  value: 'application/json',
-                },
-              ],
-              body: {
-                mode: 'raw',
-                raw: JSON.stringify(body, null, 2),
-                options: {
-                  raw: {
-                    language: 'json',
-                  },
-                },
-              },
-              url: `${baseUrl}/v1/events/trigger`,
-            },
-          },
-        ],
-      };
+        payload: formData.payload,
+        ...getContextSpread(contextData),
+        apiKey,
+      });
 
       await navigator.clipboard.writeText(JSON.stringify(postmanCollection, null, 2));
       showToast({
@@ -343,7 +398,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     } catch {
       showErrorToast('Failed to copy Postman collection', 'Postman Error');
     }
-  }, [workflow?.workflowId, subscriberData, apiKey, form]);
+  }, [workflow?.workflowId, subscriberData, apiKey, form, contextData]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -358,9 +413,11 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
             <TestWorkflowContent
               workflow={workflow}
               subscriberData={subscriberData}
+              contextData={contextData}
               isLoadingSubscriber={isLoadingSubscriber}
               onOpenSubscriberDrawer={() => setIsSubscriberDrawerOpen(true)}
               onSubscriberSelect={handleSubscriberSelect}
+              onContextSelect={handleContextSelect}
             />
 
             <div className="border-t border-neutral-200 bg-white">
@@ -389,7 +446,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
                           leadingIcon={RiArrowDownSLine}
                         ></Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" withPortal={false}>
                         <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
                           <RiFileCopyLine />
                           Copy cURL

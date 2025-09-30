@@ -14,6 +14,8 @@ export type ListSubscribersResponse = {
   data: Array<ISubscriberResponseDto>;
   next: string | null;
   previous: string | null;
+  totalCount: number;
+  totalCountCapped: boolean;
 };
 
 export const getSubscribers = async ({
@@ -143,7 +145,10 @@ export const createSubscriber = async ({
   environment: IEnvironment;
   subscriber: Partial<CreateSubscriberRequestDto>;
 }) => {
-  const { data } = await postV2<{ data: SubscriberResponseDto }>(`/subscribers`, {
+  const queryParams = new URLSearchParams();
+  queryParams.append('failIfExists', 'true');
+
+  const { data } = await postV2<{ data: SubscriberResponseDto }>(`/subscribers?${queryParams}`, {
     environment,
     body: subscriber,
   });

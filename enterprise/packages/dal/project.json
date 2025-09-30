@@ -14,6 +14,12 @@
         "!{projectRoot}/jest.config.[jt]s"
       ],
       "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint enterprise/packages/dal"
+      }
     }
   }
 }

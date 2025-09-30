@@ -1,17 +1,16 @@
-import { Logger } from '@nestjs/common';
-import { differenceInMilliseconds } from 'date-fns';
+import { BadRequestException, Logger } from '@nestjs/common';
 import {
-  DigestUnitEnum,
   DelayTypeEnum,
+  DigestTypeEnum,
+  DigestUnitEnum,
+  IDelayRegularMetadata,
+  IDelayScheduledMetadata,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
   IWorkflowStepMetadata,
-  DigestTypeEnum,
-  IDelayScheduledMetadata,
-  IDelayRegularMetadata,
 } from '@novu/shared';
+import { differenceInMilliseconds } from 'date-fns';
 
-import { BadRequestException } from '@nestjs/common';
 import { isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 
@@ -20,16 +19,18 @@ export class ComputeJobWaitDurationService {
     stepMetadata,
     payload,
     overrides,
+    timezone,
   }: {
     stepMetadata?: IWorkflowStepMetadata;
     payload: any;
     overrides: any;
+    timezone?: string;
   }): number {
     if (!stepMetadata) {
       throw new BadRequestException(`Step metadata not found`);
     }
 
-    const digestType = stepMetadata.type;
+    const digestType = 'type' in stepMetadata ? stepMetadata.type : null;
 
     if (digestType === DelayTypeEnum.SCHEDULED) {
       const { delayPath } = stepMetadata as IDelayScheduledMetadata;
@@ -46,7 +47,13 @@ export class ComputeJobWaitDurationService {
       }
 
       return delay;
-    } else if (isRegularDigest(digestType)) {
+    } else if (
+      digestType &&
+      (digestType === DigestTypeEnum.REGULAR ||
+        digestType === DigestTypeEnum.BACKOFF ||
+        digestType === DelayTypeEnum.REGULAR) &&
+      isRegularDigest(digestType)
+    ) {
       if (this.isValidDelayOverride(overrides)) {
         return this.toMilliseconds(overrides.delay.amount as number, overrides.delay.unit as DigestUnitEnum);
       }
@@ -63,6 +70,7 @@ export class ComputeJobWaitDurationService {
         timeConfig: {
           ...timedDigestMeta.timed,
         },
+        timezone,
       });
     } else if ((stepMetadata as IDelayRegularMetadata)?.unit && (stepMetadata as IDelayRegularMetadata)?.amount) {
       if (this.isValidDelayOverride(overrides)) {

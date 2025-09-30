@@ -1,9 +1,9 @@
 import React from 'react';
-import { Mounter } from './Mounter';
-import { BellRenderer } from '../utils/types';
-import { withRenderer } from './Renderer';
 import { useNovuUI } from '../context/NovuUIContext';
 import { useRenderer } from '../context/RendererContext';
+import { BellRenderer } from '../utils/types';
+import { Mounter } from './Mounter';
+import { withRenderer } from './Renderer';
 
 export type BellProps = {
   renderBell?: BellRenderer;
@@ -19,10 +19,14 @@ const _Bell = React.memo((props: BellProps) => {
       return novuUI.mountComponent({
         name: 'Bell',
         element,
-        props: renderBell ? { renderBell: (el, unreadCount) => mountElement(el, renderBell(unreadCount)) } : undefined,
+        props: renderBell
+          ? {
+              renderBell: (el, unreadCount) => mountElement(el, renderBell(unreadCount)),
+            }
+          : undefined,
       });
     },
-    [renderBell]
+    [renderBell, mountElement, novuUI]
   );
 
   return <Mounter mount={mount} />;

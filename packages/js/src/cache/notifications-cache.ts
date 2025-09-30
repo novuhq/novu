@@ -1,12 +1,37 @@
 import { NotificationEvents, NovuEventEmitter } from '../event-emitter';
-import type { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
+import type {
+  ArchivedArgs,
+  CompleteArgs,
+  DeletedArgs,
+  ListNotificationsArgs,
+  ListNotificationsResponse,
+  Notification,
+  ReadArgs,
+  RevertArgs,
+  SeenArgs,
+  SnoozeArgs,
+  UnarchivedArgs,
+  UnreadArgs,
+  UnsnoozeArgs,
+} from '../notifications';
 import type { NotificationFilter } from '../types';
 import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
-const excludeEmpty = ({ tags, data, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs) =>
-  Object.entries({ tags, data, read, archived, snoozed, limit, offset, after })
+const excludeEmpty = ({
+  tags,
+  data,
+  read,
+  archived,
+  snoozed,
+  seen,
+  severity,
+  limit,
+  offset,
+  after,
+}: ListNotificationsArgs) =>
+  Object.entries({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after })
     .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
     .reduce((acc, [key, value]) => {
       // @ts-expect-error
@@ -15,8 +40,19 @@ const excludeEmpty = ({ tags, data, read, archived, snoozed, limit, offset, afte
       return acc;
     }, {});
 
-const getCacheKey = ({ tags, data, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, limit, offset, after }));
+const getCacheKey = ({
+  tags,
+  data,
+  read,
+  archived,
+  snoozed,
+  seen,
+  severity,
+  limit,
+  offset,
+  after,
+}: ListNotificationsArgs): string => {
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after }));
 };
 
 const getFilterKey = ({
@@ -25,8 +61,10 @@ const getFilterKey = ({
   read,
   archived,
   snoozed,
-}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed'>): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed }));
+  seen,
+  severity,
+}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed' | 'seen' | 'severity'>): string => {
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity }));
 };
 
 const getFilter = (key: string): NotificationFilter => {
@@ -53,9 +91,27 @@ const removeEvents: NotificationEvents[] = [
   'notification.unarchive.pending',
   'notification.snooze.pending',
   'notification.unsnooze.pending',
+  'notification.delete.pending',
   'notifications.archive_all.pending',
   'notifications.archive_all_read.pending',
+  'notifications.delete_all.pending',
 ];
+
+// Union type for all possible args in notification events
+type NotificationEventArgs =
+  | ReadArgs
+  | UnreadArgs
+  | ArchivedArgs
+  | UnarchivedArgs
+  | DeletedArgs
+  | SeenArgs
+  | SnoozeArgs
+  | UnsnoozeArgs
+  | CompleteArgs
+  | RevertArgs
+  | { tags?: string[]; data?: Record<string, unknown> } // for bulk operations
+  | { notificationIds: string[] } // for seen_all operations
+  | Record<string, never>; // for empty args
 
 export class NotificationsCache {
   #emitter: NovuEventEmitter;
@@ -118,12 +174,41 @@ export class NotificationsCache {
 
   private handleNotificationEvent =
     ({ remove }: { remove: boolean } = { remove: false }) =>
-    ({ data }: { data?: Notification | Notification[] }): void => {
-      if (!data) {
-        return;
+    (event: { data?: unknown; args?: NotificationEventArgs }): void => {
+      const { data, args } = event;
+
+      let notifications: Notification[] = [];
+
+      if (data !== undefined && data !== null) {
+        if (
+          Array.isArray(data) &&
+          data.every((item): item is Notification => typeof item === 'object' && 'id' in item)
+        ) {
+          notifications = data;
+        } else if (typeof data === 'object' && 'id' in data) {
+          notifications = [data as Notification];
+        }
+      } else if (remove && args) {
+        if ('notification' in args && args.notification) {
+          notifications = [args.notification];
+        } else if ('notificationId' in args && args.notificationId) {
+          const foundNotifications: Notification[] = [];
+          this.#cache.keys().forEach((key) => {
+            const cachedResponse = this.#cache.get(key);
+            if (cachedResponse) {
+              const found = cachedResponse.notifications.find((n) => n.id === args.notificationId);
+              if (found) {
+                foundNotifications.push(found);
+              }
+            }
+          });
+          notifications = foundNotifications;
+        }
       }
 
-      const notifications = Array.isArray(data) ? data : [data];
+      if (notifications.length === 0) {
+        return;
+      }
 
       const uniqueFilterKeys = new Set<string>();
       this.#cache.keys().forEach((key) => {
@@ -199,6 +284,8 @@ export class NotificationsCache {
         read: args.read,
         snoozed: args.snoozed,
         archived: args.archived,
+        seen: args.seen,
+        severity: args.severity,
       });
     }
   }
@@ -226,7 +313,9 @@ export class NotificationsCache {
 
         value.notifications
           .filter((el) => typeof read === 'undefined' || read === el.isRead)
-          .forEach((notification) => uniqueNotifications.set(notification.id, notification));
+          .forEach((notification) => {
+            uniqueNotifications.set(notification.id, notification);
+          });
       }
     });
 

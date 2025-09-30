@@ -1,23 +1,18 @@
-import { MutableRefObject, useCallback, useMemo, useRef } from 'react';
 import { Completion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
-import { EditorView, Extension } from '@uiw/react-codemirror';
-import { liquid, liquidCompletionSource } from '@codemirror/lang-liquid';
 import { html, htmlCompletionSource } from '@codemirror/lang-html';
+import { liquid, liquidCompletionSource } from '@codemirror/lang-liquid';
 import { tags as t } from '@lezer/highlight';
-import { format } from 'prettier/standalone';
-import * as parserHtml from 'prettier/plugins/html';
-import * as parserLiquid from '@shopify/prettier-plugin-liquid/standalone';
-import { RiCodeSSlashFill } from 'react-icons/ri';
+import { EditorView, Extension } from '@uiw/react-codemirror';
 import { JSONSchema7 } from 'json-schema';
-
-import { CompletionRange, VariableEditor } from '@/components/primitives/variable-editor';
-import { cn } from '@/utils/ui';
-import { CompletionOption } from '@/utils/liquid-autocomplete';
-import { Tooltip } from '@/components/primitives/tooltip';
-import { TooltipContent } from '@/components/primitives/tooltip';
-import { TooltipTrigger } from '@/components/primitives/tooltip';
+import { MutableRefObject, useCallback, useMemo, useRef } from 'react';
+import { RiCodeSSlashFill } from 'react-icons/ri';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { CompletionRange, VariableEditor } from '@/components/primitives/variable-editor';
+import { formatHtml } from '@/utils/formatter';
+import { CompletionOption } from '@/utils/liquid-autocomplete';
 import { LiquidVariable } from '@/utils/parseStepVariables';
+import { cn } from '@/utils/ui';
 
 type HtmlEditorProps = {
   viewRef: MutableRefObject<EditorView | null>;
@@ -31,6 +26,9 @@ type HtmlEditorProps = {
   extensions?: Extension[];
   children?: React.ReactNode;
   isPayloadSchemaEnabled?: boolean;
+  isTranslationEnabled?: boolean;
+  isContextEnabled?: boolean;
+  className?: string;
   digestStepName?: string;
   getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
   onCreateNewVariable?: (variableName: string) => Promise<void>;
@@ -39,7 +37,7 @@ type HtmlEditorProps = {
 };
 
 const gutterElementClassName =
-  '[&_.cm-gutterElement]:flex [&_.cm-gutterElement]:items-center [&_.cm-gutterElement]:justify-end [&_.cm-gutterElement]:text-text-soft [&_.cm-gutterElement]:font-code [&_.cm-gutterElement]:text-code-sm [&_.cm-gutterElement>span]:h-full';
+  '[&_.cm-gutterElement]:flex [&_.cm-gutterElement]:items-center [&_.cm-gutterElement]:justify-end [&_.cm-gutterElement]:text-text-soft [&_.cm-gutterElement]:font-code [&_.cm-gutterElement]:text-code-xs [&_.cm-gutterElement>span]:h-full';
 
 /**
  * The HtmlEditor component is a wrapper around the VariableEditor and adds the formatting, html and liquid syntax highlighting.
@@ -57,8 +55,11 @@ export function HtmlEditor({
   onChange,
   saveForm,
   isPayloadSchemaEnabled = false,
+  isTranslationEnabled = false,
+  isContextEnabled = false,
   digestStepName,
   skipContainerClick = false,
+  className,
   getSchemaPropertyByKey = () => undefined,
   onCreateNewVariable = () => Promise.resolve(),
   onManageSchemaClick = () => {},
@@ -150,15 +151,7 @@ export function HtmlEditor({
       e.preventDefault();
 
       try {
-        const formattedValue = await format(value, {
-          parser: 'liquid-html',
-          printWidth: 120,
-          tabWidth: 2,
-          useTabs: false,
-          htmlWhitespaceSensitivity: 'css',
-          plugins: [parserHtml, parserLiquid],
-        });
-
+        const formattedValue = await formatHtml(value);
         onChange(formattedValue);
         saveForm?.();
       } catch (error) {
@@ -184,7 +177,7 @@ export function HtmlEditor({
   }, []);
 
   return (
-    <div className="relative h-full flex-1 border-t border-neutral-200">
+    <div className={cn('relative h-full flex-1 border-t border-neutral-200', className)}>
       <Tooltip>
         <TooltipTrigger
           ref={formatButtonRef}
@@ -221,6 +214,8 @@ export function HtmlEditor({
         tagStyles={tagStyles}
         completionSources={allCompletionSources}
         isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+        isTranslationEnabled={isTranslationEnabled}
+        isContextEnabled={isContextEnabled}
         getSchemaPropertyByKey={getSchemaPropertyByKey}
         extensions={allExtensions}
         digestStepName={digestStepName}

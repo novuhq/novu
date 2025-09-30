@@ -1,6 +1,6 @@
 import { autoUpdate, flip, offset, Placement, shift } from '@floating-ui/dom';
 import { useFloating } from 'solid-floating-ui';
-import { Accessor, createContext, createSignal, JSX, Setter, useContext, createMemo, createEffect } from 'solid-js';
+import { Accessor, createContext, createEffect, createMemo, createSignal, JSX, Setter, useContext } from 'solid-js';
 import { useAppearance } from '../../../context';
 
 type TooltipRootProps = {
@@ -43,7 +43,12 @@ export function TooltipRoot(props: TooltipRootProps) {
       flip({
         fallbackPlacements: props.fallbackPlacements || ['bottom'],
       }),
-      shift(),
+      // Configure shift to prevent layout overflow and UI shifts
+      shift({
+        padding: 8,
+        crossAxis: false, // Prevent horizontal shifting that causes layout gaps
+        mainAxis: true    // Allow vertical shifting only
+      }),
     ],
   });
 

@@ -1,29 +1,35 @@
 import { Injectable } from '@nestjs/common';
+import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import {
   ControlValuesRepository,
   JsonSchemaTypeEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { Instrument } from '@novu/application-generic';
-import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
-
-import { computeResultSchema } from '../../shared';
-import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
-import { parsePayloadSchema } from '../../shared/parse-payload-schema';
+import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
+import {
+  buildContextSchema,
+  buildSubscriberSchema,
+  buildVariablesSchema,
+  buildWorkflowSchema,
+} from '../../../shared/utils/create-schema';
+import { computeResultSchema } from '../../shared';
+import { parsePayloadSchema } from '../../shared/parse-payload-schema';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
-import { buildSubscriberSchema, buildVariablesSchema } from '../../../shared/utils/create-schema';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
+import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
 
 @Injectable()
 export class BuildVariableSchemaUsecase {
   constructor(
     private readonly createVariablesObject: CreateVariablesObject,
-    private readonly controlValuesRepository: ControlValuesRepository
+    private readonly controlValuesRepository: ControlValuesRepository,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
     const { workflow, stepInternalId, optimisticSteps } = command;
 
@@ -44,9 +50,8 @@ export class BuildVariableSchemaUsecase {
       );
 
       workflowControlValues = controls
-        .map((item) => item.controls)
-        .flat()
-        .flatMap((obj) => Object.values(obj));
+        .flatMap((item) => item.controls)
+        .flatMap((obj) => Object.values(obj as Record<string, unknown>));
     }
 
     const optimisticControlValues = Object.values(command.optimisticControlValues || {});
@@ -63,15 +68,33 @@ export class BuildVariableSchemaUsecase {
 
     const previousSteps = effectiveSteps?.slice(0, this.findStepIndex(effectiveSteps, stepInternalId));
 
+    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+      defaultValue: false,
+    });
+
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+      defaultValue: false,
+    });
+
     return {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {
+        ...(isNotificationSeverityEnabled ? { workflow: buildWorkflowSchema() } : {}),
         subscriber: buildSubscriberSchema(subscriber),
         steps: buildPreviousStepsSchema({
           previousSteps,
           payloadSchema: workflow?.payloadSchema,
         }),
         payload: await this.resolvePayloadSchema(workflow, payload),
+        ...(isContextEnabled ? { context: buildContextSchema() } : {}),
       },
       additionalProperties: false,
     } as const satisfies JSONSchemaDto;

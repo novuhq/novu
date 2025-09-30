@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEnvironment } from '@/context/environment/hooks';
 import { deleteTranslation } from '@/api/translations';
+import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 
@@ -12,15 +12,33 @@ export const useDeleteTranslation = () => {
 
   return useMutation({
     mutationFn: (args: DeleteTranslationParameters) => deleteTranslation({ environment: currentEnvironment!, ...args }),
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchTranslationGroups],
         exact: false,
       });
 
       await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
-        exact: false,
+        queryKey: [
+          QueryKeys.fetchTranslation,
+          variables.resourceId,
+          variables.resourceType,
+          variables.locale,
+          currentEnvironment?._id,
+        ],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: [
+          QueryKeys.fetchTranslationGroup,
+          variables.resourceId,
+          variables.resourceType,
+          currentEnvironment?._id,
+        ],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
       });
     },
   });

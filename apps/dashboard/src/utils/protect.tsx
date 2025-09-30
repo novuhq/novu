@@ -1,8 +1,7 @@
-/* eslint-disable no-restricted-imports */
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { Protect as ClerkProtect, type ProtectProps } from '@clerk/clerk-react';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 
 export const Protect = (props: ProtectProps) => {
   const { subscription } = useFetchSubscription();

@@ -1,21 +1,19 @@
 import { forwardRef, useState } from 'react';
-import { useFormContext, Controller, type Path } from 'react-hook-form';
-
+import { Controller, type Path, useFormContext } from 'react-hook-form';
+import { RiDeleteBin2Line } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
-import { Input } from '@/components/primitives/input';
-import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
-import { PopoverContent, Popover, PopoverTrigger } from '@/components/primitives/popover';
+import { Input, InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Switch } from '@/components/primitives/switch';
-import { RiDeleteBin2Line } from 'react-icons/ri';
-import { Separator } from '../primitives/separator';
-import { Code2 } from '../icons/code-2';
-import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
-import type { SchemaEditorFormValues } from './utils/validation-schema';
-import { useSchemaPropertyType } from './hooks/use-schema-property-type';
-import type { VariableUsageInfo } from './utils/check-variable-usage';
 import { cn } from '@/utils/ui';
+import { Code2 } from '../icons/code-2';
+import { Separator } from '../primitives/separator';
+import { useSchemaPropertyType } from './hooks/use-schema-property-type';
+import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
+import type { VariableUsageInfo } from './utils/check-variable-usage';
+import type { SchemaEditorFormValues } from './utils/validation-schema';
 
 interface SchemaPropertySettingsPopoverProps {
   definitionPath: string;

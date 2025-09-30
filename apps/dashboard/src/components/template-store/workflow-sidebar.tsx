@@ -1,17 +1,31 @@
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
-import { Calendar, Code2, ExternalLink, FileCode2, FileText, KeyRound, LayoutGrid, Users } from 'lucide-react';
+import {
+  Bell,
+  Calendar,
+  Code2,
+  CreditCard,
+  ExternalLink,
+  FileCode2,
+  FileText,
+  KeyRound,
+  LayoutGrid,
+  MessageSquare,
+  Settings,
+  Shield,
+  Star,
+  Users,
+} from 'lucide-react';
 import { motion } from 'motion/react';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { useTemplateStore } from '@/hooks/use-template-store';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { buildRoute, ROUTES } from '../../utils/routes';
-import { Badge } from '../primitives/badge';
-import { WorkflowMode } from './types';
+import { TemplateCategory } from './types';
 
 interface WorkflowSidebarProps {
   selectedCategory: string;
   onCategorySelect: (category: string) => void;
-  mode: WorkflowMode;
 }
 
 interface SidebarButtonProps {
@@ -21,7 +35,6 @@ interface SidebarButtonProps {
   isActive?: boolean;
   bgColor?: string;
   hasExternalLink?: boolean;
-  beta?: boolean;
 }
 
 const buttonVariants = {
@@ -41,7 +54,6 @@ function SidebarButton({
   onClick,
   isActive,
   bgColor = 'bg-blue-50',
-  beta,
   hasExternalLink,
 }: SidebarButtonProps) {
   const content = (
@@ -49,7 +61,7 @@ function SidebarButton({
       <motion.div variants={iconVariants} className={`rounded-lg p-[5px] ${bgColor}`}>
         {icon}
       </motion.div>
-      <span className="text-label-sm text-strong-950">{label}</span>
+      <span className="text-label-sm text-strong">{label}</span>
       {hasExternalLink && (
         <motion.div whileHover={{ x: 2 }} transition={{ type: 'spring', stiffness: 300 }} className="ml-auto">
           <ExternalLink className="text-foreground-600 h-3 w-3" />
@@ -70,77 +82,163 @@ function SidebarButton({
         isActive ? '!border-[#EEEFF1] bg-white' : ''
       }`}
     >
-      <div className="flex w-full items-center gap-2">
-        {content}{' '}
-        {beta && (
-          <Badge color="gray" size="sm">
-            BETA
-          </Badge>
-        )}
-      </div>
+      {content}
     </motion.button>
   );
 }
 
-const useCases = [
-  {
-    id: 'popular',
-    icon: <LayoutGrid className="h-3 w-3 text-gray-700" />,
-    label: 'Popular',
-    bgColor: 'bg-blue-50',
-  },
-  {
-    id: 'billing',
-    icon: <Calendar className="h-3 w-3 text-gray-700" />,
-    label: 'Billing',
-    bgColor: 'bg-blue-50',
-  },
-  {
-    id: 'authentication',
-    icon: <KeyRound className="h-3 w-3 text-gray-700" />,
-    label: 'Authentication',
-    bgColor: 'bg-green-50',
-  },
-  {
-    id: 'operational',
-    icon: <Users className="h-3 w-3 text-gray-700" />,
-    label: 'Operational',
-    bgColor: 'bg-purple-50',
-  },
-] as const;
+// Function to map tags to category configurations
+function getTagCategoryConfig(tag: string): TemplateCategory {
+  const tagConfigs: Record<string, TemplateCategory> = {
+    popular: {
+      id: 'popular',
+      label: 'Popular',
+      icon: <Star className="h-3 w-3 text-yellow-700" />,
+      bgColor: 'bg-yellow-50',
+      tag: 'popular',
+    },
+    authentication: {
+      id: 'authentication',
+      label: 'Authentication',
+      icon: <KeyRound className="h-3 w-3 text-green-700" />,
+      bgColor: 'bg-green-50',
+      tag: 'authentication',
+    },
+    auth: {
+      id: 'auth',
+      label: 'Auth',
+      icon: <KeyRound className="h-3 w-3 text-green-700" />,
+      bgColor: 'bg-green-50',
+      tag: 'auth',
+    },
+    security: {
+      id: 'security',
+      label: 'Security',
+      icon: <Shield className="h-3 w-3 text-red-700" />,
+      bgColor: 'bg-red-50',
+      tag: 'security',
+    },
+    billing: {
+      id: 'billing',
+      label: 'Billing',
+      icon: <CreditCard className="h-3 w-3 text-orange-700" />,
+      bgColor: 'bg-orange-50',
+      tag: 'billing',
+    },
+    subscription: {
+      id: 'subscription',
+      label: 'Subscriptions',
+      icon: <Calendar className="h-3 w-3 text-purple-700" />,
+      bgColor: 'bg-purple-50',
+      tag: 'subscription',
+    },
+    usage: {
+      id: 'usage',
+      label: 'Usage',
+      icon: <FileCode2 className="h-3 w-3 text-sky-700" />,
+      bgColor: 'bg-sky-50',
+      tag: 'usage',
+    },
+    engagement: {
+      id: 'engagement',
+      label: 'Engagement',
+      icon: <Users className="h-3 w-3 text-pink-700" />,
+      bgColor: 'bg-pink-50',
+      tag: 'engagement',
+    },
+    operational: {
+      id: 'operational',
+      label: 'Operational',
+      icon: <Settings className="h-3 w-3 text-blue-700" />,
+      bgColor: 'bg-blue-50',
+      tag: 'operational',
+    },
+    social: {
+      id: 'social',
+      label: 'Social',
+      icon: <MessageSquare className="h-3 w-3 text-indigo-700" />,
+      bgColor: 'bg-indigo-50',
+      tag: 'social',
+    },
+    events: {
+      id: 'events',
+      label: 'Events',
+      icon: <Bell className="h-3 w-3 text-emerald-700" />,
+      bgColor: 'bg-emerald-50',
+      tag: 'events',
+    },
+  };
 
-export function WorkflowSidebar({ selectedCategory, onCategorySelect, mode }: WorkflowSidebarProps) {
+  // Default configuration for unknown tags
+  return (
+    tagConfigs[tag] || {
+      id: tag,
+      label: tag.charAt(0).toUpperCase() + tag.slice(1),
+      icon: <LayoutGrid className="h-3 w-3 text-gray-700" />,
+      bgColor: 'bg-gray-50',
+      tag: tag,
+    }
+  );
+}
+
+export function WorkflowSidebar({ selectedCategory, onCategorySelect }: WorkflowSidebarProps) {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
   const track = useTelemetry();
+  const { availableTags } = useTemplateStore();
+
+  // Generate dynamic categories from available tags
+  const dynamicCategories = useMemo(() => {
+    const categories = availableTags.map(getTagCategoryConfig);
+
+    // Always include popular category first if it exists
+    const popularCategory = categories.find((cat) => cat.tag === 'popular');
+    const otherCategories = categories.filter((cat) => cat.tag !== 'popular');
+
+    return popularCategory ? [popularCategory, ...otherCategories] : otherCategories;
+  }, [availableTags]);
 
   const handleCreateWorkflow = () => {
     track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
     navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
   };
 
-  const createOptions = [
+  const createOptions: Array<{
+    key: string;
+    icon: ReactNode;
+    label: string;
+    bgColor: string;
+    onClick: () => void;
+    hasExternalLink?: boolean;
+  }> = [
     {
+      key: 'blank',
       icon: <FileText className="h-3 w-3 text-gray-700" />,
       label: 'Blank workflow',
       bgColor: 'bg-green-50',
       onClick: handleCreateWorkflow,
     },
     {
+      key: 'code-based',
       icon: <Code2 className="h-3 w-3 text-gray-700" />,
       label: 'Code-based workflow',
       hasExternalLink: true,
       bgColor: 'bg-blue-50',
-      onClick: () => window.open('https://docs.novu.co/framework/overview', '_blank'),
+      onClick: () => {
+        const newWindow = window.open('https://docs.novu.co/framework/overview', '_blank', 'noopener,noreferrer');
+        if (newWindow) {
+          newWindow.opener = null;
+        }
+      },
     },
   ];
 
   return (
     <div className="flex h-full w-[240px] flex-col gap-4 border-r p-2">
       <div className="flex flex-col gap-1">
-        {createOptions.map((item, index) => (
+        {createOptions.map((item) => (
           <SidebarButton
-            key={index}
+            key={item.key}
             icon={item.icon}
             label={item.label}
             onClick={item.onClick}
@@ -155,14 +253,14 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect, mode }: Wo
         </div>
 
         <div className="flex flex-col gap-2">
-          {useCases.map((item) => (
+          {dynamicCategories.map((category) => (
             <SidebarButton
-              key={item.id}
-              icon={item.icon}
-              label={item.label}
-              onClick={() => onCategorySelect(item.id)}
-              isActive={mode === WorkflowMode.TEMPLATES && selectedCategory === item.id}
-              bgColor={item.bgColor}
+              key={category.id}
+              icon={category.icon}
+              label={category.label}
+              onClick={() => onCategorySelect(category.tag)}
+              isActive={selectedCategory === category.tag}
+              bgColor={category.bgColor}
             />
           ))}
         </div>
@@ -175,13 +273,22 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect, mode }: Wo
           whileHover="hover"
           whileTap="tap"
           className="border-stroke-soft flex flex-col items-start rounded-xl border bg-white p-3 hover:cursor-pointer"
-          onClick={() => window.open('https://docs.novu.co/platform/workflow/overview', '_blank')}
+          onClick={() => {
+            const newWindow = window.open(
+              'https://docs.novu.co/platform/workflow/overview',
+              '_blank',
+              'noopener,noreferrer'
+            );
+            if (newWindow) {
+              newWindow.opener = null;
+            }
+          }}
         >
           <div className="mb-1 flex items-center gap-1.5">
             <motion.div variants={iconVariants} className="rounded-lg bg-gray-50 p-1.5">
               <FileCode2 className="h-3 w-3 text-gray-700" />
             </motion.div>
-            <span className="text-label-sm text-strong-950">Documentation</span>
+            <span className="text-label-sm text-strong">Documentation</span>
           </div>
 
           <p className="text-paragraph-xs text-neutral-400">Find out more about how to best setup workflows</p>

@@ -1,12 +1,20 @@
-import {
-  ChannelTypeEnum,
-  IAttachmentOptions,
-} from '../template/template.interface';
+import { ChannelTypeEnum, IAttachmentOptions } from '../template/template.interface';
+import { ChannelData } from './channel-data.type';
 import { CheckIntegrationResponseEnum } from './provider.enum';
 
 export interface IProvider {
   id: string;
   channelType: ChannelTypeEnum;
+  verifySignature?: (params: {
+    rawBody: unknown;
+    headers?: Record<string, string>;
+    body?: Record<string, unknown>;
+  }) => Promise<{ success: boolean; message?: string }>;
+  autoConfigureInboundWebhook?: (configurations: { webhookUrl: string }) => Promise<{
+    success: boolean;
+    message?: string;
+    configurations?: unknown;
+  }>;
 }
 
 export interface IEmailOptions {
@@ -84,9 +92,11 @@ export interface IPushOptions {
 }
 
 export interface IChatOptions {
+  /**
+   * @deprecated use channelData instead
+   */
   phoneNumber?: string;
-  webhookUrl?: string;
-  channel?: string;
+  channelData?: ChannelData;
   content: string;
   blocks?: IBlock[];
   customData?: Record<string, any>;
@@ -123,6 +133,14 @@ export enum EmailEventStatusEnum {
   COMPLAINT = 'complaint',
 }
 
+export enum PushEventStatusEnum {
+  DELIVERED = 'delivered',
+  OPENED = 'opened',
+  DISMISSED = 'dismissed',
+  CLICKED = 'clicked',
+  FAILED = 'failed',
+}
+
 export enum SmsEventStatusEnum {
   CREATED = 'created',
   DELIVERED = 'delivered',
@@ -136,7 +154,7 @@ export enum SmsEventStatusEnum {
 }
 
 export interface IEventBody {
-  status: EmailEventStatusEnum | SmsEventStatusEnum;
+  status: EmailEventStatusEnum | SmsEventStatusEnum | PushEventStatusEnum;
   date: string;
   externalId?: string;
   attempts?: number;
@@ -153,58 +171,55 @@ export interface ISMSEventBody extends IEventBody {
   status: SmsEventStatusEnum;
 }
 
+export interface IPushEventBody extends IEventBody {
+  status: PushEventStatusEnum;
+}
+
 export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
   sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown>,
+    bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (
-    body: any | any[],
-    identifier: string,
-  ) => IEmailEventBody | undefined;
+  parseEventBody?: (body: any | any[], identifier: string) => IEmailEventBody | undefined;
 
-  checkIntegration?: (
-    options: IEmailOptions,
-  ) => Promise<ICheckIntegrationResponse>;
+  checkIntegration?: (options: IEmailOptions) => Promise<ICheckIntegrationResponse>;
 }
 
 export interface ISmsProvider extends IProvider {
-  sendMessage(
-    options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown>,
-  ): Promise<ISendMessageSuccessResponse>;
+  sendMessage(options: ISmsOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.SMS;
 
   getMessageId?: (body: any) => string[];
 
-  parseEventBody?: (
-    body: any | any[],
-    identifier: string,
-  ) => ISMSEventBody | undefined;
+  parseEventBody?: (body: any | any[], identifier: string) => ISMSEventBody | undefined;
 }
 
 export interface IChatProvider extends IProvider {
-  sendMessage(
-    options: IChatOptions,
-    bridgeProviderData: Record<string, unknown>,
-  ): Promise<ISendMessageSuccessResponse>;
+  sendMessage(options: IChatOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
   channelType: ChannelTypeEnum.CHAT;
+
+  getMessageId?: (body: any | any[]) => string[];
+
+  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
 }
 
 export interface IPushProvider extends IProvider {
-  sendMessage(
-    options: IPushOptions,
-    bridgeProviderData: Record<string, unknown>,
-  ): Promise<ISendMessageSuccessResponse>;
+  sendMessage(options: IPushOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.PUSH;
+
+  getMessageId?: (body: any | any[]) => string[];
+
+  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
 }
+
+export type ChannelProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider;
 
 export interface ICheckIntegrationResponse {
   success: boolean;

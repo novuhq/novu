@@ -23,12 +23,28 @@ import {
   ResourceTypeEnum$inboundSchema,
   ResourceTypeEnum$outboundSchema,
 } from "./resourcetypeenum.js";
-import {
-  RuntimeIssueDto,
-  RuntimeIssueDto$inboundSchema,
-  RuntimeIssueDto$Outbound,
-  RuntimeIssueDto$outboundSchema,
-} from "./runtimeissuedto.js";
+
+/**
+ * User who last updated the layout
+ */
+export type UpdatedBy = {
+  /**
+   * User ID
+   */
+  id: string;
+  /**
+   * User first name
+   */
+  firstName?: string | null | undefined;
+  /**
+   * User last name
+   */
+  lastName?: string | null | undefined;
+  /**
+   * User external ID
+   */
+  externalId?: string | null | undefined;
+};
 
 export type LayoutResponseDto = {
   /**
@@ -39,6 +55,10 @@ export type LayoutResponseDto = {
    * Unique identifier for the layout
    */
   layoutId: string;
+  /**
+   * Slug of the layout
+   */
+  slug: string;
   /**
    * Name of the layout
    */
@@ -52,21 +72,21 @@ export type LayoutResponseDto = {
    */
   updatedAt: string;
   /**
+   * User who last updated the layout
+   */
+  updatedBy?: UpdatedBy | null | undefined;
+  /**
    * Creation timestamp
    */
   createdAt: string;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
   origin: ResourceOriginEnum;
   /**
    * Type of the layout
    */
   type: ResourceTypeEnum;
-  /**
-   * Runtime issues for layout creation and update
-   */
-  issues?: { [k: string]: RuntimeIssueDto } | undefined;
   /**
    * The variables JSON Schema for the layout
    */
@@ -78,6 +98,73 @@ export type LayoutResponseDto = {
 };
 
 /** @internal */
+export const UpdatedBy$inboundSchema: z.ZodType<
+  UpdatedBy,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  _id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    "_id": "id",
+  });
+});
+
+/** @internal */
+export type UpdatedBy$Outbound = {
+  _id: string;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
+  externalId?: string | null | undefined;
+};
+
+/** @internal */
+export const UpdatedBy$outboundSchema: z.ZodType<
+  UpdatedBy$Outbound,
+  z.ZodTypeDef,
+  UpdatedBy
+> = z.object({
+  id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.string()).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    id: "_id",
+  });
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace UpdatedBy$ {
+  /** @deprecated use `UpdatedBy$inboundSchema` instead. */
+  export const inboundSchema = UpdatedBy$inboundSchema;
+  /** @deprecated use `UpdatedBy$outboundSchema` instead. */
+  export const outboundSchema = UpdatedBy$outboundSchema;
+  /** @deprecated use `UpdatedBy$Outbound` instead. */
+  export type Outbound = UpdatedBy$Outbound;
+}
+
+export function updatedByToJSON(updatedBy: UpdatedBy): string {
+  return JSON.stringify(UpdatedBy$outboundSchema.parse(updatedBy));
+}
+
+export function updatedByFromJSON(
+  jsonString: string,
+): SafeParseResult<UpdatedBy, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => UpdatedBy$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'UpdatedBy' from JSON`,
+  );
+}
+
+/** @internal */
 export const LayoutResponseDto$inboundSchema: z.ZodType<
   LayoutResponseDto,
   z.ZodTypeDef,
@@ -85,13 +172,14 @@ export const LayoutResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string(),
   layoutId: z.string(),
+  slug: z.string(),
   name: z.string(),
   isDefault: z.boolean(),
   updatedAt: z.string(),
+  updatedBy: z.nullable(z.lazy(() => UpdatedBy$inboundSchema)).optional(),
   createdAt: z.string(),
   origin: ResourceOriginEnum$inboundSchema,
   type: ResourceTypeEnum$inboundSchema,
-  issues: z.record(RuntimeIssueDto$inboundSchema).optional(),
   variables: z.nullable(z.record(z.any())).optional(),
   controls: LayoutControlsDto$inboundSchema,
 }).transform((v) => {
@@ -104,13 +192,14 @@ export const LayoutResponseDto$inboundSchema: z.ZodType<
 export type LayoutResponseDto$Outbound = {
   _id: string;
   layoutId: string;
+  slug: string;
   name: string;
   isDefault: boolean;
   updatedAt: string;
+  updatedBy?: UpdatedBy$Outbound | null | undefined;
   createdAt: string;
   origin: string;
   type: string;
-  issues?: { [k: string]: RuntimeIssueDto$Outbound } | undefined;
   variables?: { [k: string]: any } | null | undefined;
   controls: LayoutControlsDto$Outbound;
 };
@@ -123,13 +212,14 @@ export const LayoutResponseDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string(),
   layoutId: z.string(),
+  slug: z.string(),
   name: z.string(),
   isDefault: z.boolean(),
   updatedAt: z.string(),
+  updatedBy: z.nullable(z.lazy(() => UpdatedBy$outboundSchema)).optional(),
   createdAt: z.string(),
   origin: ResourceOriginEnum$outboundSchema,
   type: ResourceTypeEnum$outboundSchema,
-  issues: z.record(RuntimeIssueDto$outboundSchema).optional(),
   variables: z.nullable(z.record(z.any())).optional(),
   controls: LayoutControlsDto$outboundSchema,
 }).transform((v) => {

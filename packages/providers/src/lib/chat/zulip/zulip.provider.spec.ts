@@ -11,7 +11,6 @@ test('should trigger zulip library correctly', async () => {
   const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
     return {
       date: new Date().toISOString(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   });
 

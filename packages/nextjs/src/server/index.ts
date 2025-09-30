@@ -1,16 +1,18 @@
-/* eslint-disable no-restricted-imports */
-
 export type * from '@novu/react';
 
 export {
+  Bell,
   Inbox,
   InboxContent,
   Notifications,
-  Preferences,
-  Bell,
   NovuProvider,
-  useNovu,
+  PreferenceLevel,
+  Preferences,
+  SeverityLevelEnum,
   useCounts,
   useNotifications,
+  useNovu,
   usePreferences,
+  useSchedule,
+  WorkflowCriticalityEnum,
 } from '@novu/react/server';

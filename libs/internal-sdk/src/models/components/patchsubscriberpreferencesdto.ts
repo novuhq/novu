@@ -12,16 +12,26 @@ import {
   PatchPreferenceChannelsDto$Outbound,
   PatchPreferenceChannelsDto$outboundSchema,
 } from "./patchpreferencechannelsdto.js";
+import {
+  ScheduleDto,
+  ScheduleDto$inboundSchema,
+  ScheduleDto$Outbound,
+  ScheduleDto$outboundSchema,
+} from "./scheduledto.js";
 
 export type PatchSubscriberPreferencesDto = {
   /**
    * Channel-specific preference settings
    */
-  channels: PatchPreferenceChannelsDto;
+  channels?: PatchPreferenceChannelsDto | undefined;
   /**
    * Workflow internal _id, identifier or slug. If provided, update workflow specific preferences, otherwise update global preferences
    */
   workflowId?: string | undefined;
+  /**
+   * Subscriber schedule
+   */
+  schedule?: ScheduleDto | undefined;
 };
 
 /** @internal */
@@ -30,14 +40,16 @@ export const PatchSubscriberPreferencesDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  channels: PatchPreferenceChannelsDto$inboundSchema,
+  channels: PatchPreferenceChannelsDto$inboundSchema.optional(),
   workflowId: z.string().optional(),
+  schedule: ScheduleDto$inboundSchema.optional(),
 });
 
 /** @internal */
 export type PatchSubscriberPreferencesDto$Outbound = {
-  channels: PatchPreferenceChannelsDto$Outbound;
+  channels?: PatchPreferenceChannelsDto$Outbound | undefined;
   workflowId?: string | undefined;
+  schedule?: ScheduleDto$Outbound | undefined;
 };
 
 /** @internal */
@@ -46,8 +58,9 @@ export const PatchSubscriberPreferencesDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   PatchSubscriberPreferencesDto
 > = z.object({
-  channels: PatchPreferenceChannelsDto$outboundSchema,
+  channels: PatchPreferenceChannelsDto$outboundSchema.optional(),
   workflowId: z.string().optional(),
+  schedule: ScheduleDto$outboundSchema.optional(),
 });
 
 /**

@@ -1,7 +1,13 @@
-import type { JSXElement } from 'solid-js';
+import { Schedule } from 'src/preferences';
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
-import type { NotificationFilter, NovuOptions, Preference } from '../types';
+import {
+  type NotificationFilter,
+  type NovuOptions,
+  type Preference,
+  type UnreadCount,
+  WorkflowCriticalityEnum,
+} from '../types';
 import { appearanceKeys } from './config';
 import { Localization } from './context/LocalizationContext';
 
@@ -9,9 +15,12 @@ export type NotificationClickHandler = (notification: Notification) => void;
 export type NotificationActionClickHandler = (notification: Notification) => void;
 
 export type NotificationRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
+export type AvatarRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
 export type SubjectRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
 export type BodyRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
-export type BellRenderer = (el: HTMLDivElement, unreadCount: number) => () => void;
+export type DefaultActionsRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
+export type CustomActionsRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
+export type BellRenderer = (el: HTMLDivElement, unreadCount: UnreadCount) => () => void;
 export type RouterPush = (path: string) => void;
 
 export type Tab = {
@@ -20,7 +29,7 @@ export type Tab = {
    * @deprecated Use `filter` instead
    */
   value?: Array<string>;
-  filter?: Pick<NotificationFilter, 'tags' | 'data'>;
+  filter?: Pick<NotificationFilter, 'tags' | 'data' | 'severity'>;
 };
 
 export type CSSProperties = {
@@ -44,10 +53,167 @@ export type Variables = {
   fontSize?: string;
   borderRadius?: string;
   colorStripes?: string;
+  colorSeverityHigh?: string;
+  colorSeverityMedium?: string;
+  colorSeverityLow?: string;
 };
 
+export type AppearanceCallback = {
+  // Bell
+  bellDot: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  bellIcon: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  bellContainer: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  severityHigh__bellContainer: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+  severityMedium__bellContainer: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+  severityLow__bellContainer: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  bellSeverityGlow: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  severityGlowHigh__bellSeverityGlow: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+  severityGlowMedium__bellSeverityGlow: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+  severityGlowLow__bellSeverityGlow: (context: {
+    unreadCount: { total: number; severity: Record<string, number> };
+  }) => string;
+
+  // Preferences list shared between preferences and grouped preferences
+  preferencesContainer: (context: {
+    preferences?: Preference[];
+    groups: Array<{ name: string; preferences: Preference[] }>;
+  }) => string;
+
+  // Preference
+  workflowContainer: (context: { preference: Preference }) => string;
+  workflowLabelContainer: (context: { preference: Preference }) => string;
+  workflowLabelHeader: (context: { preference: Preference }) => string;
+  workflowLabelHeaderContainer: (context: { preference: Preference }) => string;
+  workflowLabelIcon: (context: { preference: Preference }) => string;
+  workflowLabel: (context: { preference: Preference }) => string;
+  workflowArrow__icon: (context: { preference: Preference }) => string;
+  workflowContainerRight__icon: (context: { preference: Preference }) => string;
+
+  // Channel
+  channelsContainer: (context: { preference: Preference }) => string;
+  channelName: (context: { preference: Preference }) => string;
+
+  // Channel Row shared between preferences and grouped preferences
+  channelContainer: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channelLabelContainer: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channelIconContainer: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channelLabel: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channelSwitchContainer: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+  channel__icon: (context: {
+    preference?: Preference;
+    preferenceGroup?: { name: string; preferences: Preference[] };
+  }) => string;
+
+  // Schedule
+  scheduleContainer: (context: { schedule?: Schedule }) => string;
+  scheduleHeader: (context: { schedule?: Schedule }) => string;
+  scheduleLabelContainer: (context: { schedule?: Schedule }) => string;
+  scheduleLabelScheduleIcon: (context: { schedule?: Schedule }) => string;
+  scheduleLabelInfoIcon: (context: { schedule?: Schedule }) => string;
+  scheduleLabel: (context: { schedule?: Schedule }) => string;
+  scheduleActionsContainer: (context: { schedule?: Schedule }) => string;
+  scheduleActionsContainerRight: (context: { schedule?: Schedule }) => string;
+  scheduleBody: (context: { schedule?: Schedule }) => string;
+  scheduleDescription: (context: { schedule?: Schedule }) => string;
+  scheduleTable: (context: { schedule?: Schedule }) => string;
+  scheduleTableHeader: (context: { schedule?: Schedule }) => string;
+  scheduleHeaderColumn: (context: { schedule?: Schedule }) => string;
+  scheduleTableBody: (context: { schedule?: Schedule }) => string;
+  scheduleBodyRow: (context: { schedule?: Schedule }) => string;
+  scheduleBodyColumn: (context: { schedule?: Schedule }) => string;
+  scheduleInfoContainer: (context: { schedule?: Schedule }) => string;
+  scheduleInfoIcon: (context: { schedule?: Schedule }) => string;
+  scheduleInfo: (context: { schedule?: Schedule }) => string;
+
+  // Day Schedule Copy
+  dayScheduleCopyTitle: (context: { schedule?: Schedule }) => string;
+  dayScheduleCopyIcon: (context: { schedule?: Schedule }) => string;
+  dayScheduleCopySelectAll: (context: { schedule?: Schedule }) => string;
+  dayScheduleCopyDay: (context: { schedule?: Schedule }) => string;
+  dayScheduleCopyFooterContainer: (context: { schedule?: Schedule }) => string;
+
+  // Preferences Group
+  preferencesGroupContainer: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupHeader: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupLabelContainer: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupLabelIcon: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupLabel: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupActionsContainer: (context: {
+    preferenceGroup: { name: string; preferences: Preference[] };
+  }) => string;
+  preferencesGroupActionsContainerRight__icon: (context: {
+    preferenceGroup: { name: string; preferences: Preference[] };
+  }) => string;
+  preferencesGroupBody: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupChannels: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupInfo: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupInfoIcon: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  preferencesGroupWorkflows: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+
+  // Notification list
+  notificationList: (context: { notifications: Notification[] }) => string;
+  notificationListContainer: (context: { notifications: Notification[] }) => string;
+
+  // Notification
+  notification: (context: { notification: Notification }) => string;
+  severityHigh__notification: (context: { notification: Notification }) => string;
+  severityMedium__notification: (context: { notification: Notification }) => string;
+  severityLow__notification: (context: { notification: Notification }) => string;
+  notificationBar: (context: { notification: Notification }) => string;
+  severityHigh__notificationBar: (context: { notification: Notification }) => string;
+  severityMedium__notificationBar: (context: { notification: Notification }) => string;
+  severityLow__notificationBar: (context: { notification: Notification }) => string;
+  notificationImageLoadingFallback: (context: { notification: Notification }) => string;
+  notificationImage: (context: { notification: Notification }) => string;
+  notificationContent: (context: { notification: Notification }) => string;
+  notificationTextContainer: (context: { notification: Notification }) => string;
+  notificationSubject: (context: { notification: Notification }) => string;
+  notificationBody: (context: { notification: Notification }) => string;
+  notificationDefaultActions: (context: { notification: Notification }) => string;
+  notificationCustomActions: (context: { notification: Notification }) => string;
+  notificationPrimaryAction__button: (context: { notification: Notification }) => string;
+  notificationSecondaryAction__button: (context: { notification: Notification }) => string;
+  notificationDate: (context: { notification: Notification }) => string;
+  notificationDeliveredAt__badge: (context: { notification: Notification }) => string;
+  notificationDeliveredAt__icon: (context: { notification: Notification }) => string;
+  notificationSnoozedUntil__icon: (context: { notification: Notification }) => string;
+  notificationDot: (context: { notification: Notification }) => string;
+};
+export type AppearanceCallbackKeys = keyof AppearanceCallback;
+export type AppearanceCallbackFunction<K extends AppearanceCallbackKeys> = AppearanceCallback[K];
 export type AppearanceKey = (typeof appearanceKeys)[number];
-export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
+export type Elements = Partial<
+  {
+    // regular appearance keys with static styles
+    [K in Exclude<AppearanceKey, AppearanceCallbackKeys>]: ElementStyles;
+  } & {
+    // callback keys that can be either static styles or callback functions
+    [K in Extract<AppearanceKey, AppearanceCallbackKeys>]: ElementStyles | AppearanceCallbackFunction<K>;
+  }
+>;
 
 export type IconKey =
   | 'bell'
@@ -74,7 +240,9 @@ export type IconKey =
   | 'arrowDown'
   | 'routeFill'
   | 'info'
-  | 'nodeTree';
+  | 'nodeTree'
+  | 'calendarSchedule'
+  | 'copy';
 
 export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
 
@@ -98,6 +266,7 @@ export type BaseNovuProviderProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
+  preferencesSort?: PreferencesSort;
   routerPush?: RouterPush;
   novu?: Novu;
 };
@@ -114,7 +283,11 @@ export enum NotificationStatus {
   SNOOZED = 'snoozed',
 }
 
-export type PreferencesFilter = Pick<NotificationFilter, 'tags'>;
+export type PreferencesFilter = Pick<NotificationFilter, 'tags' | 'severity'> & {
+  criticality?: WorkflowCriticalityEnum;
+};
+
+export type PreferencesSort = (a: Preference, b: Preference) => number;
 
 type PreferenceFilterFunction = (args: { preferences: Preference[] }) => Preference[];
 

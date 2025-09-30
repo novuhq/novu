@@ -1,14 +1,13 @@
 import * as ProgressPrimitive from '@radix-ui/react-progress';
-import * as React from 'react';
-
-import { cn } from '@/utils/ui';
 import { cva, VariantProps } from 'class-variance-authority';
+import * as React from 'react';
+import { cn } from '@/utils/ui';
 
 const indicatorVariants = cva(`h-full w-full flex-1 transition-all`, {
   variants: {
     variant: {
       default: 'bg-neutral-800',
-      novu: 'bg-information',
+      primary: 'bg-primary-base',
       warning: 'bg-warning',
       error: 'bg-error-base',
     },

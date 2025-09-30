@@ -32,7 +32,6 @@ const BaseWorkflowsDetailPage = () => {
       workflowId: currentWorkflowId,
       env: isLocalStudio ? 'local' : 'cloud',
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading) {

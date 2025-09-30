@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
-import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
-import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
+import { InstrumentUsecase } from '../../instrumentation';
+import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
+import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
+import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 
 @Injectable()
@@ -20,8 +21,12 @@ export class CreateOrUpdateSubscriberUseCase {
     maxRetries: 3,
     delay: 500,
   })
+  @InstrumentUsecase()
   async execute(command: CreateOrUpdateSubscriberCommand) {
     const persistedSubscriber = await this.getExistingSubscriber(command);
+    if (command.failIfExists && persistedSubscriber) {
+      throw new ConflictException(`Subscriber with id "${command.subscriberId}" already exists`);
+    }
 
     if (persistedSubscriber) {
       if (command.allowUpdate) {
@@ -35,13 +40,22 @@ export class CreateOrUpdateSubscriberUseCase {
       await this.updateCredentials(command);
     }
 
-    return await this.fetchSubscriber({
-      _environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
-    });
+    return persistedSubscriber && !command.allowUpdate
+      ? persistedSubscriber
+      : await this.fetchSubscriber({
+          _environmentId: command.environmentId,
+          subscriberId: command.subscriberId,
+        });
   }
 
   private async updateSubscriber(command: CreateOrUpdateSubscriberCommand, existingSubscriber: SubscriberEntity) {
+    await this.invalidateCache.invalidateByKey({
+      key: buildSubscriberKey({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
     return await this.updateSubscriberUseCase.execute(
       UpdateSubscriberCommand.create({
         environmentId: command.environmentId,

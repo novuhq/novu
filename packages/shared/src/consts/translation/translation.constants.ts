@@ -4,14 +4,46 @@
 export const DEFAULT_LOCALE = 'en_US';
 
 /**
- * Regular expression to match translation keys in the format {t.key}
+ * Translation namespace separator
  */
-export const TRANSLATION_KEY_REGEX = /\{t\.([^}]+)\}/g;
+export const TRANSLATION_NAMESPACE_SEPARATOR = 't.';
 
 /**
- * Regular expression to match a single translation key in the format {t.key}
+ * Regular expression to match a single translation key in the format {{t.key}} with optional spaces
  * (non-global version for single matches)
+ *
+ * ⚠️ WARNING: Do NOT add global flag (/g) to this regex! Global regexes maintain state
+ * and cause inconsistent .test() results when shared across calls.
+ * Use: new RegExp(TRANSLATION_KEY_SINGLE_REGEX.source, 'g') for global matching instead.
  */
-export const TRANSLATION_KEY_SINGLE_REGEX = /\{t\.([^}]+)\}/;
+export const TRANSLATION_KEY_SINGLE_REGEX = /\{\{\s*t\.([^}]+?)\s*\}\}/;
 
-export const TRANSLATION_TRIGGER_CHARACTER = '{t.';
+/**
+ * Translation trigger character (without spaces)
+ */
+export const TRANSLATION_TRIGGER_CHARACTER = '{{t.';
+
+/**
+ * Opening delimiter for translation format
+ */
+export const TRANSLATION_DELIMITER_OPEN = '{{';
+
+/**
+ * Closing delimiter for translation format
+ */
+export const TRANSLATION_DELIMITER_CLOSE = '}}';
+
+/**
+ * Length of the translation prefix ({{t.)
+ */
+export const TRANSLATION_PREFIX_LENGTH = 4;
+
+/**
+ * Template for missing translation placeholder
+ */
+export const MISSING_TRANSLATION_TEMPLATE = (key: string) => `[Translation missing: ${key}]`;
+
+/**
+ * Default template for translation key patterns
+ */
+export const TRANSLATION_DEFAULT_TEMPLATE = (key: string) => `{{t.${key}}}`;

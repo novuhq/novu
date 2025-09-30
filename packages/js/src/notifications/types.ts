@@ -1,4 +1,4 @@
-import type { ActionTypeEnum, NotificationFilter } from '../types';
+import type { ActionTypeEnum, NotificationFilter, SeverityLevelEnum } from '../types';
 import { Notification } from './notification';
 
 export type ListNotificationsArgs = {
@@ -7,6 +7,8 @@ export type ListNotificationsArgs = {
   data?: Record<string, unknown>;
   archived?: boolean;
   snoozed?: boolean;
+  seen?: boolean;
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
   limit?: number;
   after?: string;
   offset?: number;
@@ -21,6 +23,8 @@ export type FilterCountArgs = {
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
+  seen?: boolean;
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 };
 
 export type FiltersCountArgs = {
@@ -29,7 +33,9 @@ export type FiltersCountArgs = {
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;
+    seen?: boolean;
     data?: Record<string, unknown>;
+    severity?: SeverityLevelEnum | SeverityLevelEnum[];
   }>;
 };
 
@@ -63,6 +69,8 @@ export type ReadArgs = BaseArgs | InstanceArgs;
 export type UnreadArgs = BaseArgs | InstanceArgs;
 export type ArchivedArgs = BaseArgs | InstanceArgs;
 export type UnarchivedArgs = BaseArgs | InstanceArgs;
+export type DeletedArgs = BaseArgs | InstanceArgs;
+export type SeenArgs = BaseArgs | InstanceArgs;
 export type SnoozeArgs = (BaseArgs | InstanceArgs) & {
   snoozeUntil: string;
 };

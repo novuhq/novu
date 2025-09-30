@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { ISmsOptions } from '@novu/stateless';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { BrevoSmsProvider } from './brevo-sms.provider';
 
 const mockConfig = {
@@ -41,7 +41,7 @@ describe('sendMessage method', () => {
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetchMock).toBeCalled();
+    expect(fetchMock).toHaveBeenCalled();
   });
 
   test('should call brevo API transactional sms endpoint with right URL', async () => {

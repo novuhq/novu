@@ -1,15 +1,14 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
 import { ChangeRepository, LayoutRepository, MessageTemplateRepository } from '@novu/dal';
-import { EmailBlockTypeEnum, StepTypeEnum, TemplateVariableTypeEnum, ResourceTypeEnum } from '@novu/shared';
+import { EmailBlockTypeEnum, ResourceTypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-
-import { CreateMessageTemplate } from './create-message-template.usecase';
-import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { CreateChange } from '../../create-change';
 import { UpdateChange } from '../../update-change';
+import { CreateMessageTemplateCommand } from './create-message-template.command';
+import { CreateMessageTemplate } from './create-message-template.usecase';
 
-describe('Create Message Template', function () {
+describe('Create Message Template', () => {
   let useCase: CreateMessageTemplate;
   let session: UserSession;
 
@@ -25,7 +24,7 @@ describe('Create Message Template', function () {
     useCase = moduleRef.get<CreateMessageTemplate>(CreateMessageTemplate);
   });
 
-  it('should create the message template', async function () {
+  it('should create the message template', async () => {
     const parentChangeId = MessageTemplateRepository.createObjectId();
     const content = [{ type: EmailBlockTypeEnum.TEXT, content: 'test' }];
     const command = CreateMessageTemplateCommand.create({

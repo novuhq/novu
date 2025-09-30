@@ -1,6 +1,6 @@
 import { ActionStepEnum } from '../../constants';
 import { emptySchema } from '../../schemas';
-import type { Awaitable, DiscoverWorkflowOutput, Schema, ActionStep, StepOptions, FromSchema } from '../../types';
+import type { ActionStep, Awaitable, DiscoverWorkflowOutput, FromSchema, Schema, StepOptions } from '../../types';
 import { transformSchema } from '../../validators';
 import { discoverStep } from './discover-step';
 
@@ -10,7 +10,6 @@ export async function discoverActionStepFactory(
   outputSchema: Schema,
   resultSchema: Schema
   // TODO: fix typing for `resolve` to use generic typings
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<ActionStep<any, any>> {
   return async (stepId, resolve, options = {}) => {
     const controlSchema = options?.controlSchema || emptySchema;

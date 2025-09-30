@@ -1,4 +1,4 @@
-import { IsString, IsDefined, IsOptional } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class GetVercelIntegrationProjectsCommand extends EnvironmentWithUserCommand {

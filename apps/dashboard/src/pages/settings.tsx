@@ -1,23 +1,24 @@
-import { Card } from '@/components/primitives/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { ROUTES } from '@/utils/routes';
 import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
 import { Appearance } from '@clerk/types';
-import { motion } from 'motion/react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Plan } from '../components/billing/plan';
-import { DashboardLayout } from '../components/dashboard-layout';
-import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
-  getFeatureForTierAsBoolean,
   GetSubscriptionDto,
+  getFeatureForTierAsBoolean,
 } from '@novu/shared';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { motion } from 'motion/react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Card } from '@/components/primitives/card';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { OrganizationSettings } from '@/components/settings/organization-settings';
+import { IS_SELF_HOSTED } from '@/config';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { ROUTES } from '@/utils/routes';
+import { Plan } from '../components/billing/plan';
+import { DashboardLayout } from '../components/dashboard-layout';
+import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 
 const FADE_ANIMATION = {
   initial: { opacity: 0 },
@@ -28,8 +29,9 @@ const FADE_ANIMATION = {
 
 const getClerkComponentAppearance = (isRbacEnabled: boolean): Appearance => ({
   variables: {
-    colorPrimary: 'rgba(82, 88, 102, 0.95)',
+    colorPrimary: 'hsl(var(--bg-surface))',
     colorText: 'rgba(82, 88, 102, 0.95)',
+    fontSize: '14px',
   },
   elements: {
     navbar: { display: 'none' },
@@ -104,14 +106,17 @@ export function SettingsPage() {
         navigate(ROUTES.SETTINGS_TEAM);
         break;
       case 'billing':
-        navigate(ROUTES.SETTINGS_BILLING);
+        if (!IS_SELF_HOSTED) {
+          navigate(ROUTES.SETTINGS_BILLING);
+        }
+
         break;
     }
   };
 
   return (
     <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Settings</h1>}>
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2 w-full">
         <TabsList align="center" variant="regular" className="border-t-transparent !py-0">
           <TabsTrigger variant="regular" value="account" size="xl">
             Account
@@ -123,12 +128,16 @@ export function SettingsPage() {
             Team
           </TabsTrigger>
 
-          <TabsTrigger variant="regular" value="billing" size="xl">
-            Billing
-          </TabsTrigger>
+          {!IS_SELF_HOSTED && (
+            <TabsTrigger variant="regular" value="billing" size="xl">
+              Billing
+            </TabsTrigger>
+          )}
         </TabsList>
 
-        <div className={`mx-auto mt-1 px-1.5 ${currentTab === 'billing' ? 'max-w-[1400px]' : 'max-w-[700px]'}`}>
+        <div
+          className={`mx-auto mt-1 px-1.5 ${currentTab === 'billing' && !IS_SELF_HOSTED ? 'max-w-[1400px]' : 'max-w-[700px]'}`}
+        >
           <TabsContent value="account" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
@@ -173,7 +182,7 @@ export function SettingsPage() {
           <TabsContent value="team" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
-                <div className="pb-6 pt-4">
+                <div className={`pb-6 pt-4 ${isRbacEnabled ? 'show-role-column' : 'hide-role-column'}`}>
                   {isRbacEnabledFlag && !isRbacEnabled && (
                     <InlineToast
                       title="Tip:"
@@ -193,15 +202,17 @@ export function SettingsPage() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="billing" className="rounded-lg">
-            <motion.div {...FADE_ANIMATION}>
-              <Card className="border-none shadow-none">
-                <div className="pb-6 pt-4">
-                  <Plan />
-                </div>
-              </Card>
-            </motion.div>
-          </TabsContent>
+          {!IS_SELF_HOSTED && (
+            <TabsContent value="billing" className="rounded-lg">
+              <motion.div {...FADE_ANIMATION}>
+                <Card className="border-none shadow-none">
+                  <div className="pb-6 pt-4">
+                    <Plan />
+                  </div>
+                </Card>
+              </motion.div>
+            </TabsContent>
+          )}
         </div>
       </Tabs>
     </DashboardLayout>

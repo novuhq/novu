@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { RiSettings4Line, RiDeleteBin6Line } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiSettings4Line } from 'react-icons/ri';
 
 import { Button } from '@/components/primitives/button';
 import { Popover, PopoverTrigger } from '@/components/primitives/popover';
+import { cn } from '@/utils/ui';
 import { SchemaPropertySettingsPopover } from '../schema-property-settings-popover';
 import type { VariableUsageInfo } from '../utils/check-variable-usage';
-import { cn } from '@/utils/ui';
 
 type PropertyActionsProps = {
   definitionPath: string;
@@ -54,10 +54,11 @@ export function PropertyActions({
         variant="error"
         mode="ghost"
         size="2xs"
-        leadingIcon={RiDeleteBin6Line}
-        onClick={onDeleteProperty}
+        leadingIcon={RiDeleteBin2Line}
+        onClick={isDisabled ? undefined : onDeleteProperty}
         aria-label="Delete property"
         className={cn('border-1 !ml-0 h-7 w-7 border-neutral-200')}
+        disabled={isDisabled}
       />
     </>
   );

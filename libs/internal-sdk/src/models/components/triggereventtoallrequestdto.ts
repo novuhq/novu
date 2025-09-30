@@ -11,6 +11,17 @@ import {
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  EmailChannelOverrides,
+  EmailChannelOverrides$inboundSchema,
+  EmailChannelOverrides$Outbound,
+  EmailChannelOverrides$outboundSchema,
+} from "./emailchanneloverrides.js";
+import {
+  SeverityLevelEnum,
+  SeverityLevelEnum$inboundSchema,
+  SeverityLevelEnum$outboundSchema,
+} from "./severitylevelenum.js";
+import {
   StepsOverrides,
   StepsOverrides$inboundSchema,
   StepsOverrides$Outbound,
@@ -30,13 +41,27 @@ import {
 } from "./tenantpayloaddto.js";
 
 /**
+ * Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.
+ */
+export type TriggerEventToAllRequestDtoChannels = {
+  /**
+   * Email channel specific overrides
+   */
+  email?: EmailChannelOverrides | undefined;
+};
+
+/**
  * This could be used to override provider specific configurations
  */
 export type TriggerEventToAllRequestDtoOverrides = {
   /**
-   * This could be used to override provider specific configurations
+   * This could be used to override provider specific configurations or layout at the step level
    */
   steps?: { [k: string]: StepsOverrides } | undefined;
+  /**
+   * Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.
+   */
+  channels?: TriggerEventToAllRequestDtoChannels | undefined;
   /**
    * Overrides the provider configuration for the entire workflow and all steps
    */
@@ -71,6 +96,10 @@ export type TriggerEventToAllRequestDtoOverrides = {
    * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   layoutIdentifier?: string | undefined;
+  /**
+   * Severity of the workflow
+   */
+  severity?: SeverityLevelEnum | undefined;
   additionalProperties?: { [k: string]: { [k: string]: any } };
 };
 
@@ -88,7 +117,7 @@ export type TriggerEventToAllRequestDtoActor = SubscriberPayloadDto | string;
  * @remarks
  *     If a new tenant object is provided, we will create a new tenant.
  */
-export type TriggerEventToAllRequestDtoTenant = TenantPayloadDto | string;
+export type TriggerEventToAllRequestDtoTenant = string | TenantPayloadDto;
 
 export type TriggerEventToAllRequestDto = {
   /**
@@ -124,8 +153,67 @@ export type TriggerEventToAllRequestDto = {
    * @remarks
    *     If a new tenant object is provided, we will create a new tenant.
    */
-  tenant?: TenantPayloadDto | string | undefined;
+  tenant?: string | TenantPayloadDto | undefined;
 };
+
+/** @internal */
+export const TriggerEventToAllRequestDtoChannels$inboundSchema: z.ZodType<
+  TriggerEventToAllRequestDtoChannels,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  email: EmailChannelOverrides$inboundSchema.optional(),
+});
+
+/** @internal */
+export type TriggerEventToAllRequestDtoChannels$Outbound = {
+  email?: EmailChannelOverrides$Outbound | undefined;
+};
+
+/** @internal */
+export const TriggerEventToAllRequestDtoChannels$outboundSchema: z.ZodType<
+  TriggerEventToAllRequestDtoChannels$Outbound,
+  z.ZodTypeDef,
+  TriggerEventToAllRequestDtoChannels
+> = z.object({
+  email: EmailChannelOverrides$outboundSchema.optional(),
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace TriggerEventToAllRequestDtoChannels$ {
+  /** @deprecated use `TriggerEventToAllRequestDtoChannels$inboundSchema` instead. */
+  export const inboundSchema =
+    TriggerEventToAllRequestDtoChannels$inboundSchema;
+  /** @deprecated use `TriggerEventToAllRequestDtoChannels$outboundSchema` instead. */
+  export const outboundSchema =
+    TriggerEventToAllRequestDtoChannels$outboundSchema;
+  /** @deprecated use `TriggerEventToAllRequestDtoChannels$Outbound` instead. */
+  export type Outbound = TriggerEventToAllRequestDtoChannels$Outbound;
+}
+
+export function triggerEventToAllRequestDtoChannelsToJSON(
+  triggerEventToAllRequestDtoChannels: TriggerEventToAllRequestDtoChannels,
+): string {
+  return JSON.stringify(
+    TriggerEventToAllRequestDtoChannels$outboundSchema.parse(
+      triggerEventToAllRequestDtoChannels,
+    ),
+  );
+}
+
+export function triggerEventToAllRequestDtoChannelsFromJSON(
+  jsonString: string,
+): SafeParseResult<TriggerEventToAllRequestDtoChannels, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      TriggerEventToAllRequestDtoChannels$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'TriggerEventToAllRequestDtoChannels' from JSON`,
+  );
+}
 
 /** @internal */
 export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
@@ -135,12 +223,15 @@ export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
 > = collectExtraKeys$(
   z.object({
     steps: z.record(StepsOverrides$inboundSchema).optional(),
+    channels: z.lazy(() => TriggerEventToAllRequestDtoChannels$inboundSchema)
+      .optional(),
     providers: z.record(z.record(z.any())).optional(),
     email: z.record(z.any()).optional(),
     push: z.record(z.any()).optional(),
     sms: z.record(z.any()).optional(),
     chat: z.record(z.any()).optional(),
     layoutIdentifier: z.string().optional(),
+    severity: SeverityLevelEnum$inboundSchema.optional(),
   }).catchall(z.record(z.any())),
   "additionalProperties",
   true,
@@ -149,12 +240,14 @@ export const TriggerEventToAllRequestDtoOverrides$inboundSchema: z.ZodType<
 /** @internal */
 export type TriggerEventToAllRequestDtoOverrides$Outbound = {
   steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
+  channels?: TriggerEventToAllRequestDtoChannels$Outbound | undefined;
   providers?: { [k: string]: { [k: string]: any } } | undefined;
   email?: { [k: string]: any } | undefined;
   push?: { [k: string]: any } | undefined;
   sms?: { [k: string]: any } | undefined;
   chat?: { [k: string]: any } | undefined;
   layoutIdentifier?: string | undefined;
+  severity?: string | undefined;
   [additionalProperties: string]: unknown;
 };
 
@@ -165,12 +258,15 @@ export const TriggerEventToAllRequestDtoOverrides$outboundSchema: z.ZodType<
   TriggerEventToAllRequestDtoOverrides
 > = z.object({
   steps: z.record(StepsOverrides$outboundSchema).optional(),
+  channels: z.lazy(() => TriggerEventToAllRequestDtoChannels$outboundSchema)
+    .optional(),
   providers: z.record(z.record(z.any())).optional(),
   email: z.record(z.any()).optional(),
   push: z.record(z.any()).optional(),
   sms: z.record(z.any()).optional(),
   chat: z.record(z.any()).optional(),
   layoutIdentifier: z.string().optional(),
+  severity: SeverityLevelEnum$outboundSchema.optional(),
   additionalProperties: z.record(z.record(z.any())),
 }).transform((v) => {
   return {
@@ -274,19 +370,19 @@ export const TriggerEventToAllRequestDtoTenant$inboundSchema: z.ZodType<
   TriggerEventToAllRequestDtoTenant,
   z.ZodTypeDef,
   unknown
-> = z.union([TenantPayloadDto$inboundSchema, z.string()]);
+> = z.union([z.string(), TenantPayloadDto$inboundSchema]);
 
 /** @internal */
 export type TriggerEventToAllRequestDtoTenant$Outbound =
-  | TenantPayloadDto$Outbound
-  | string;
+  | string
+  | TenantPayloadDto$Outbound;
 
 /** @internal */
 export const TriggerEventToAllRequestDtoTenant$outboundSchema: z.ZodType<
   TriggerEventToAllRequestDtoTenant$Outbound,
   z.ZodTypeDef,
   TriggerEventToAllRequestDtoTenant
-> = z.union([TenantPayloadDto$outboundSchema, z.string()]);
+> = z.union([z.string(), TenantPayloadDto$outboundSchema]);
 
 /**
  * @internal
@@ -334,7 +430,7 @@ export const TriggerEventToAllRequestDto$inboundSchema: z.ZodType<
     .optional(),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$inboundSchema, z.string()]).optional(),
-  tenant: z.union([TenantPayloadDto$inboundSchema, z.string()]).optional(),
+  tenant: z.union([z.string(), TenantPayloadDto$inboundSchema]).optional(),
 });
 
 /** @internal */
@@ -344,7 +440,7 @@ export type TriggerEventToAllRequestDto$Outbound = {
   overrides?: TriggerEventToAllRequestDtoOverrides$Outbound | undefined;
   transactionId?: string | undefined;
   actor?: SubscriberPayloadDto$Outbound | string | undefined;
-  tenant?: TenantPayloadDto$Outbound | string | undefined;
+  tenant?: string | TenantPayloadDto$Outbound | undefined;
 };
 
 /** @internal */
@@ -359,7 +455,7 @@ export const TriggerEventToAllRequestDto$outboundSchema: z.ZodType<
     .optional(),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$outboundSchema, z.string()]).optional(),
-  tenant: z.union([TenantPayloadDto$outboundSchema, z.string()]).optional(),
+  tenant: z.union([z.string(), TenantPayloadDto$outboundSchema]).optional(),
 });
 
 /**

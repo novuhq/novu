@@ -1,6 +1,9 @@
-import { useUser } from './index';
-import { Button } from '@/components/primitives/button';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRef, useState } from 'react';
+import { RiCalendarEventLine, RiExternalLinkLine, RiLogoutBoxRLine, RiSignpostFill } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
+import { Button } from '@/components/primitives/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,13 +11,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { useState, useRef } from 'react';
-import { UserAvatar } from './icons';
-import { openInNewTab } from '../url';
 import { SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
-import { RiCalendarEventLine, RiExternalLinkLine, RiSignpostFill, RiLogoutBoxRLine } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { openInNewTab } from '../url';
+import { UserAvatar } from './icons';
+import { useUser } from './index';
 
 const JWT_STORAGE_KEY = 'self-hosted-jwt'; // As defined in components.tsx
 

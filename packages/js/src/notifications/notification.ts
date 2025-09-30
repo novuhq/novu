@@ -1,23 +1,37 @@
 import { InboxService } from '../api';
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
 import { ActionTypeEnum, InboxNotification, Result } from '../types';
-import { archive, completeAction, read, revertAction, unarchive, unread, snooze, unsnooze } from './helpers';
+import {
+  archive,
+  completeAction,
+  deleteNotification,
+  read,
+  revertAction,
+  seen,
+  snooze,
+  unarchive,
+  unread,
+  unsnooze,
+} from './helpers';
 
 export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotification {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
 
   readonly id: InboxNotification['id'];
+  readonly transactionId: InboxNotification['transactionId'];
   readonly subject?: InboxNotification['subject'];
   readonly body: InboxNotification['body'];
   readonly to: InboxNotification['to'];
   readonly isRead: InboxNotification['isRead'];
+  readonly isSeen: InboxNotification['isSeen'];
   readonly isArchived: InboxNotification['isArchived'];
   readonly isSnoozed: InboxNotification['isSnoozed'];
   readonly snoozedUntil?: InboxNotification['snoozedUntil'];
   readonly deliveredAt?: InboxNotification['deliveredAt'];
   readonly createdAt: InboxNotification['createdAt'];
   readonly readAt?: InboxNotification['readAt'];
+  readonly firstSeenAt?: InboxNotification['firstSeenAt'];
   readonly archivedAt?: InboxNotification['archivedAt'];
   readonly avatar?: InboxNotification['avatar'];
   readonly primaryAction?: InboxNotification['primaryAction'];
@@ -27,22 +41,26 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
   readonly redirect: InboxNotification['redirect'];
   readonly data?: InboxNotification['data'];
   readonly workflow?: InboxNotification['workflow'];
+  readonly severity: InboxNotification['severity'];
 
   constructor(notification: InboxNotification, emitter: NovuEventEmitter, inboxService: InboxService) {
     this.#emitter = emitter;
     this.#inboxService = inboxService;
 
     this.id = notification.id;
+    this.transactionId = notification.transactionId;
     this.subject = notification.subject;
     this.body = notification.body;
     this.to = notification.to;
     this.isRead = notification.isRead;
+    this.isSeen = notification.isSeen;
     this.isArchived = notification.isArchived;
     this.isSnoozed = notification.isSnoozed;
     this.snoozedUntil = notification.snoozedUntil;
     this.deliveredAt = notification.deliveredAt;
     this.createdAt = notification.createdAt;
     this.readAt = notification.readAt;
+    this.firstSeenAt = notification.firstSeenAt;
     this.archivedAt = notification.archivedAt;
     this.avatar = notification.avatar;
     this.primaryAction = notification.primaryAction;
@@ -52,6 +70,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
     this.redirect = notification.redirect;
     this.data = notification.data;
     this.workflow = notification.workflow;
+    this.severity = notification.severity;
   }
 
   read(): Result<Notification> {
@@ -74,6 +93,16 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
     });
   }
 
+  seen(): Result<Notification> {
+    return seen({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      args: {
+        notification: this,
+      },
+    });
+  }
+
   archive(): Result<Notification> {
     return archive({
       emitter: this.#emitter,
@@ -86,6 +115,16 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
 
   unarchive(): Result<Notification> {
     return unarchive({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      args: {
+        notification: this,
+      },
+    });
+  }
+
+  delete(): Result<void> {
+    return deleteNotification({
       emitter: this.#emitter,
       apiService: this.#inboxService,
       args: {

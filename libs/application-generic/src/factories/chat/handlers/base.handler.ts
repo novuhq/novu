@@ -1,17 +1,13 @@
+import { ChatProviderIdEnum } from '@novu/shared';
 import { IChatOptions, IChatProvider } from '@novu/stateless';
-import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
+import { BaseHandler } from '../../shared/interfaces';
 import { IChatHandler } from '../interfaces';
 
-export abstract class BaseChatHandler implements IChatHandler {
+export abstract class BaseChatHandler extends BaseHandler<IChatProvider> implements IChatHandler {
   protected provider: IChatProvider;
 
-  protected constructor(
-    private providerId: ChatProviderIdEnum,
-    private channelType: string,
-  ) {}
-
-  canHandle(providerId: string, channelType: ChannelTypeEnum) {
-    return providerId === this.providerId && channelType === this.channelType;
+  protected constructor(providerId: ChatProviderIdEnum, channelType: string) {
+    super(providerId, channelType);
   }
 
   abstract buildProvider(credentials);

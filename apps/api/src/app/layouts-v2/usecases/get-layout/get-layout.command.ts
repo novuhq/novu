@@ -1,5 +1,5 @@
-import { IsString, IsBoolean, IsOptional } from 'class-validator';
 import { EnvironmentCommand } from '@novu/application-generic';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class GetLayoutCommand extends EnvironmentCommand {
   @IsString()
