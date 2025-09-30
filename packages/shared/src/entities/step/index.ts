@@ -46,7 +46,9 @@ export enum DigestTypeEnum {
 
 export enum DelayTypeEnum {
   REGULAR = 'regular',
+  /** @deprecated used in v0, use TIMED instead */
   SCHEDULED = 'scheduled',
+  TIMED = 'timed',
 }
 
 export enum MonthlyTypeEnum {

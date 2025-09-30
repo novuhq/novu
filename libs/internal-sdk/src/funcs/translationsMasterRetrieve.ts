@@ -142,7 +142,7 @@ async function $do(
       query: query,
       body: body,
       userAgent: client._options.userAgent,
-      timeoutMs: options?.timeoutMs || client._options.timeoutMs || 5000,
+      timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
     },
     options
   );
