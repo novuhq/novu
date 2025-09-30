@@ -71,7 +71,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
       return;
     }
 
-    apiHostnameManager.setRegionSwitching(true);
     setSelectedRegion(region);
 
     if (isInOnboardingFlow()) {
@@ -87,7 +86,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
         apiHostnameManager.setApiHostname(newApiHostname);
         apiHostnameManager.setWebSocketHostname(newWebSocketHostname);
         queryClient.clear();
-        apiHostnameManager.setRegionSwitching(false);
       }
 
       return;
@@ -113,11 +111,9 @@ export function RegionProvider({ children }: RegionProviderProps) {
           window.location.reload();
         }
       } catch (error) {
-        apiHostnameManager.setRegionSwitching(false);
         setSelectedRegion(previousRegion);
       }
     } else {
-      apiHostnameManager.setRegionSwitching(false);
       setOrgCreationModal({
         open: true,
         targetRegion: region,

@@ -38,12 +38,6 @@ const request = async <T>(
   const { body, environment, headers, method = 'GET', version = 'v1', signal } = options || {};
 
   try {
-    // Wait for region switching to complete before making API calls
-    while (apiHostnameManager.isCurrentlyRegionSwitching()) {
-      console.log('Waiting for region switching to complete...');
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-
     const jwt = await getToken();
     const config: RequestInit = {
       method,

@@ -4,7 +4,6 @@ import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '@/config';
 class HostnameManager {
   private currentApiHostname: string;
   private currentWebSocketHostname: string;
-  private isRegionSwitching: boolean = false;
 
   constructor() {
     // Initialize with US hostnames (default)
@@ -35,14 +34,6 @@ class HostnameManager {
 
   getHostname(): string {
     return this.getApiHostname();
-  }
-
-  setRegionSwitching(switching: boolean) {
-    this.isRegionSwitching = switching;
-  }
-
-  isCurrentlyRegionSwitching(): boolean {
-    return this.isRegionSwitching;
   }
 }
 
