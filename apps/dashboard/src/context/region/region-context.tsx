@@ -9,8 +9,10 @@ import { RegionModals } from './region-modals';
 import { type OrgCreationModalState, type Region, type RegionContextType } from './region-types';
 import {
   detectRegionFromOrganization,
+  detectRegionFromURL,
   findOrganizationForRegion,
   getApiHostnameForRegion,
+  getDashboardUrlForRegion,
   getWebSocketHostnameForRegion,
   isInOnboardingFlow,
 } from './region-utils';
@@ -38,20 +40,12 @@ export function RegionProvider({ children }: RegionProviderProps) {
     userMemberships: { infinite: true },
   });
 
+  // Initialize region based on URL instead of localStorage
   const [selectedRegion, setSelectedRegion] = useState<Region>(() => {
-    // Check if we're creating an org for a specific region first
-    const regionForNewOrg = localStorage.getItem('novu-region-for-new-org');
-    if (regionForNewOrg === 'singapore' || regionForNewOrg === 'us') {
-      return regionForNewOrg as Region;
-    }
-
-    // Otherwise, check saved preference
-    const savedRegion = localStorage.getItem('novu-selected-region');
-    return savedRegion === 'singapore' || savedRegion === 'us' ? (savedRegion as Region) : 'us';
+    const urlBasedRegion = detectRegionFromURL();
+    console.log('Initial region detection from URL:', urlBasedRegion);
+    return urlBasedRegion;
   });
-
-  // Flag to prevent conflicts between manual region selection and auto-sync
-  const [isManualRegionChange, setIsManualRegionChange] = useState(false);
 
   // Modal state for organization creation confirmation
   const [orgCreationModal, setOrgCreationModal] = useState<OrgCreationModalState>({
@@ -59,9 +53,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
     targetRegion: 'us',
     previousRegion: 'us',
   });
-
-  // Flag to track if we're waiting for user decision on org creation
-  const [isPendingOrgCreation, setIsPendingOrgCreation] = useState(false);
 
   const getApiHostname = useCallback(() => getApiHostnameForRegion(selectedRegion), [selectedRegion]);
 
@@ -72,22 +63,23 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
   const findOrganizationForRegionCallback = useCallback(
     (region: Region) => findOrganizationForRegion(region, userMemberships),
-    [userMemberships.data]
+    [userMemberships]
   );
 
   const handleSetSelectedRegion = async (region: Region) => {
     const previousRegion = selectedRegion;
     console.log(`Manual region selection: ${previousRegion} → ${region}`);
 
-    // Set flag to prevent auto-sync during manual change
-    setIsManualRegionChange(true);
+    if (previousRegion === region) {
+      console.log('Same region selected, no action needed');
+      return;
+    }
+
     setSelectedRegion(region);
 
-    // If we're in organization creation flow, update everything without refresh for better UX
+    // If we're in organization creation flow, update API hostname without redirect
     if (isInOnboardingFlow()) {
       console.log('In organization creation flow, updating API hostname for new region:', region);
-      localStorage.setItem('novu-selected-region', region);
-      localStorage.setItem('novu-region-for-new-org', region);
 
       // Update API and WebSocket hostnames for org creation
       const newApiHostname = getApiHostnameForRegion(region);
@@ -98,141 +90,101 @@ export function RegionProvider({ children }: RegionProviderProps) {
       // Clear any cached queries to ensure fresh data from new region
       queryClient.clear();
 
-      // Reset flags and let components re-render naturally
-      setIsManualRegionChange(false);
-
-      console.log('Updated API hostname without refresh for better UX');
+      console.log('Updated API hostname for onboarding flow without redirect');
       return;
     }
 
-    // Dashboard flow - check for organizations and handle accordingly
-    if (previousRegion !== region) {
-      // Set region switching flag to block API calls
-      apiHostnameManager.setRegionSwitching(true);
-      console.log('Region switching started - blocking API calls');
+    // For region switching in dashboard - redirect to the appropriate dashboard URL
+    const targetDashboardUrl = getDashboardUrlForRegion(region);
+    const currentPath = window.location.pathname + window.location.search + window.location.hash;
 
-      // Clear React Query caches
-      queryClient.getQueryCache().clear();
-      queryClient.getMutationCache().clear();
+    // Find and switch to an organization in the target region
+    const targetOrgMembership = findOrganizationForRegionCallback(region);
 
-      // Update API and WebSocket hostnames first
-      const newApiHostname = getApiHostnameForRegion(region);
-      const newWebSocketHostname = getWebSocketHostnameForRegion(region);
-      apiHostnameManager.setApiHostname(newApiHostname);
-      apiHostnameManager.setWebSocketHostname(newWebSocketHostname);
+    if (targetOrgMembership && clerk) {
+      try {
+        console.log(`Switching to organization "${targetOrgMembership.organization.name}" for ${region} region`);
 
-      // Find and switch to an organization in the selected region
-      const targetOrgMembership = findOrganizationForRegionCallback(region);
-
-      if (targetOrgMembership && clerk) {
-        try {
-          console.log(`Switching to organization "${targetOrgMembership.organization.name}" for ${region} region`);
-
-          // Update localStorage since we have a valid organization
-          localStorage.setItem('novu-selected-region', region);
-
-          // Switch to the organization for the selected region
-          await clerk.setActive({
-            organization: targetOrgMembership.organization,
-          });
-
-          // Immediate refresh after successful org switch
-          window.location.reload();
-        } catch (error) {
-          console.error('Failed to switch organization:', error);
-          // Reset flag on error and revert region
-          apiHostnameManager.setRegionSwitching(false);
-          setSelectedRegion(previousRegion);
-        }
-      } else {
-        console.log(`No organization found for region: ${region}, showing creation confirmation`);
-
-        // Set pending flag to prevent any automatic resets
-        setIsPendingOrgCreation(true);
-
-        // Show modal to confirm organization creation
-        setOrgCreationModal({
-          open: true,
-          targetRegion: region,
-          previousRegion: previousRegion,
+        // Switch to the organization for the selected region
+        await clerk.setActive({
+          organization: targetOrgMembership.organization,
         });
 
-        // Don't reset manual change flag while modal is open - exit early
-        return;
-      }
-    }
+        // Redirect to the correct dashboard URL for the target region
+        const newUrl = `${targetDashboardUrl}${currentPath}`;
+        console.log('Redirecting to:', newUrl);
 
-    // Only reset flags if we're not pending org creation decision
-    if (!isPendingOrgCreation) {
-      // Reset flag after a delay
-      setTimeout(() => {
-        if (!isPendingOrgCreation) {
-          // Double check in case modal opened during timeout
-          setIsManualRegionChange(false);
+        if (targetDashboardUrl !== window.location.origin) {
+          window.location.href = newUrl;
+        } else {
+          // Same dashboard URL - just refresh to update the region
+          window.location.reload();
         }
-      }, 2000);
+      } catch (error) {
+        console.error('Failed to switch organization:', error);
+        // Revert region on error
+        setSelectedRegion(previousRegion);
+      }
+    } else {
+      console.log(`No organization found for region: ${region}, showing creation confirmation`);
+
+      // Show modal to confirm organization creation
+      setOrgCreationModal({
+        open: true,
+        targetRegion: region,
+        previousRegion: previousRegion,
+      });
     }
   };
 
   // Auto-sync region when user switches to an organization from different region
   useEffect(() => {
-    if (currentOrganization) {
-      // Clean up the org creation flag if we successfully have an organization
-      const regionForNewOrg = localStorage.getItem('novu-region-for-new-org');
-      if (regionForNewOrg) {
-        console.log('Organization creation completed, cleaning up region flag');
-        localStorage.removeItem('novu-region-for-new-org');
-
-        // Reset any pending flags that might interfere with normal operation
-        setIsManualRegionChange(false);
-        setIsPendingOrgCreation(false);
-        apiHostnameManager.setRegionSwitching(false);
-      }
-
-      // Don't auto-switch regions during onboarding flows
-      if (isInOnboardingFlow()) {
-        console.log('In onboarding flow, preserving current region selection:', selectedRegion);
-        return;
-      }
-
-      // Don't auto-sync if we're in the middle of a manual region change
-      if (isManualRegionChange) {
-        console.log('Manual region change in progress, skipping auto-sync');
-        return;
-      }
-
+    if (currentOrganization && !isInOnboardingFlow()) {
       const detectedRegion = detectRegionFromCurrentOrg();
+      const urlRegion = detectRegionFromURL();
 
-      // If the selected organization belongs to a different region, auto-switch
-      if (detectedRegion !== selectedRegion) {
-        console.log(
-          `Auto-sync: Organization "${currentOrganization.name}" belongs to ${detectedRegion} region, switching from ${selectedRegion}`
-        );
+      console.log('Region detection:', {
+        fromOrg: detectedRegion,
+        fromURL: urlRegion,
+        selected: selectedRegion,
+        orgName: currentOrganization.name,
+      });
 
-        // Set region switching flag to block API calls
-        apiHostnameManager.setRegionSwitching(true);
-        console.log('Auto region switching started - blocking API calls');
+      // If the URL indicates we should be in a different region than the organization,
+      // it means we need to find and switch to an organization in the URL's region
+      if (urlRegion !== detectedRegion) {
+        console.log(`URL region (${urlRegion}) doesn't match organization region (${detectedRegion})`);
 
+        const targetOrgMembership = findOrganizationForRegionCallback(urlRegion);
+
+        if (targetOrgMembership && clerk) {
+          console.log(
+            `Switching to organization "${targetOrgMembership.organization.name}" for URL region: ${urlRegion}`
+          );
+
+          clerk
+            .setActive({
+              organization: targetOrgMembership.organization,
+            })
+            .then(() => {
+              // Update selected region to match URL
+              setSelectedRegion(urlRegion);
+            })
+            .catch((error) => {
+              console.error('Failed to auto-switch organization for URL region:', error);
+            });
+        } else if (targetOrgMembership === undefined) {
+          console.log(`No organization found for URL region: ${urlRegion}, staying with current organization`);
+          // Update the selected region to match the current organization since we can't switch
+          setSelectedRegion(detectedRegion);
+        }
+      } else if (selectedRegion !== detectedRegion) {
+        // URL and organization match, but our selected region is wrong - update it
+        console.log(`Updating selected region from ${selectedRegion} to ${detectedRegion} to match organization`);
         setSelectedRegion(detectedRegion);
-        localStorage.setItem('novu-selected-region', detectedRegion);
-
-        // Clear all React Query caches immediately
-        queryClient.getQueryCache().clear();
-        queryClient.getMutationCache().clear();
-
-        // Update API and WebSocket hostnames immediately
-        const newApiHostname = getApiHostnameForRegion(detectedRegion);
-        const newWebSocketHostname = getWebSocketHostnameForRegion(detectedRegion);
-        apiHostnameManager.setApiHostname(newApiHostname);
-        apiHostnameManager.setWebSocketHostname(newWebSocketHostname);
-
-        // Immediate refresh to use new region's API
-        window.location.reload();
-      } else {
-        console.log(`Organization "${currentOrganization.name}" matches current region: ${selectedRegion}`);
       }
     }
-  }, [currentOrganization, detectRegionFromCurrentOrg, selectedRegion, isManualRegionChange, queryClient]);
+  }, [currentOrganization, detectRegionFromCurrentOrg, selectedRegion, findOrganizationForRegionCallback, clerk]);
 
   // Initialize API and WebSocket hostnames on region changes
   useEffect(() => {
@@ -240,25 +192,29 @@ export function RegionProvider({ children }: RegionProviderProps) {
     const webSocketHostname = getWebSocketHostnameForRegion(selectedRegion);
     apiHostnameManager.setApiHostname(apiHostname);
     apiHostnameManager.setWebSocketHostname(webSocketHostname);
+
+    console.log('Updated API hostname for region:', selectedRegion, apiHostname);
   }, [selectedRegion]);
 
   // Handle organization creation confirmation
   const handleConfirmOrgCreation = () => {
     console.log(`Confirmed organization creation for region: ${orgCreationModal.targetRegion}`);
 
-    // Store the target region for the creation flow
-    localStorage.setItem('novu-region-for-new-org', orgCreationModal.targetRegion);
-
-    // Update localStorage since we're proceeding with the new region
-    localStorage.setItem('novu-selected-region', orgCreationModal.targetRegion);
-
-    // Reset flags and close modal
+    // Close modal
     setOrgCreationModal({ open: false, targetRegion: 'us', previousRegion: 'us' });
-    setIsPendingOrgCreation(false);
-    setIsManualRegionChange(false);
 
-    // Navigate to organization creation (API hostname already set to target region)
-    navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
+    // Redirect to the correct dashboard URL for organization creation
+    const targetDashboardUrl = getDashboardUrlForRegion(orgCreationModal.targetRegion);
+    const orgCreationPath = ROUTES.SIGNUP_ORGANIZATION_LIST;
+    const newUrl = `${targetDashboardUrl}${orgCreationPath}`;
+
+    console.log('Redirecting to organization creation:', newUrl);
+
+    if (targetDashboardUrl !== window.location.origin) {
+      window.location.href = newUrl;
+    } else {
+      navigate(orgCreationPath);
+    }
   };
 
   // Handle organization creation cancellation
@@ -267,23 +223,11 @@ export function RegionProvider({ children }: RegionProviderProps) {
       `Cancelled organization creation, reverting from ${orgCreationModal.targetRegion} back to ${orgCreationModal.previousRegion}`
     );
 
-    // Revert region and localStorage to previous values
+    // Revert region
     setSelectedRegion(orgCreationModal.previousRegion);
-    localStorage.setItem('novu-selected-region', orgCreationModal.previousRegion);
 
-    // Update API and WebSocket hostnames back to previous region
-    const previousApiHostname = getApiHostnameForRegion(orgCreationModal.previousRegion);
-    const previousWebSocketHostname = getWebSocketHostnameForRegion(orgCreationModal.previousRegion);
-    apiHostnameManager.setApiHostname(previousApiHostname);
-    apiHostnameManager.setWebSocketHostname(previousWebSocketHostname);
-
-    // Reset the region switching flag to allow API calls again
-    apiHostnameManager.setRegionSwitching(false);
-
-    // Close modal and reset all flags
+    // Close modal
     setOrgCreationModal({ open: false, targetRegion: 'us', previousRegion: 'us' });
-    setIsPendingOrgCreation(false);
-    setIsManualRegionChange(false);
 
     console.log(`Reverted to previous region: ${orgCreationModal.previousRegion}`);
   };
