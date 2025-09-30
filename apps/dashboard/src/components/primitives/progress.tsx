@@ -7,7 +7,7 @@ const indicatorVariants = cva(`h-full w-full flex-1 transition-all`, {
   variants: {
     variant: {
       default: 'bg-neutral-800',
-      novu: 'bg-information',
+      primary: 'bg-primary-base',
       warning: 'bg-warning',
       error: 'bg-error-base',
     },

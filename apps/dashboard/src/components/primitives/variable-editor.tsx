@@ -36,6 +36,7 @@ type VariableEditorProps = {
   completionSources?: CompletionSource[];
   isPayloadSchemaEnabled?: boolean;
   isTranslationEnabled?: boolean;
+  isContextEnabled?: boolean;
   digestStepName?: string;
   getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
   onCreateNewVariable?: (variableName: string) => Promise<void>;
@@ -86,6 +87,7 @@ export function VariableEditor({
   completionSources,
   isPayloadSchemaEnabled = false,
   isTranslationEnabled = false,
+  isContextEnabled = false,
   digestStepName,
   skipContainerClick = false,
   getSchemaPropertyByKey = () => undefined,
@@ -113,8 +115,8 @@ export function VariableEditor({
 
   const onVariableSelect = useCallback(
     (completion: CompletionOption) => {
-      if (completion.isNewVariable && completion.label.startsWith('payload.')) {
-        onCreateNewVariable(completion.label.replace('payload.', ''));
+      if (completion.isNewVariable) {
+        onCreateNewVariable(completion.label);
       }
 
       if (completion.type === 'digest') {
@@ -158,6 +160,7 @@ export function VariableEditor({
     completionSources,
     isPayloadSchemaEnabled,
     isTranslationEnabled,
+    isContextEnabled,
     multiline,
     extensions,
   });
@@ -173,6 +176,7 @@ export function VariableEditor({
     completionSources,
     isPayloadSchemaEnabled,
     isTranslationEnabled,
+    isContextEnabled,
     multiline,
     extensions,
   };
@@ -188,6 +192,7 @@ export function VariableEditor({
     completionSources,
     isPayloadSchemaEnabled,
     isTranslationEnabled,
+    isContextEnabled,
     multiline,
     extensions,
   };
@@ -199,7 +204,8 @@ export function VariableEditor({
         (completion: CompletionOption) => callbacksRef.current.onVariableSelect(completion),
         async (variableName: string) => callbacksRef.current.onCreateNewVariable(variableName),
         callbacksRef.current.isPayloadSchemaEnabled,
-        callbacksRef.current.isTranslationEnabled
+        callbacksRef.current.isTranslationEnabled,
+        callbacksRef.current.isContextEnabled
       )(context);
     };
   }, []);

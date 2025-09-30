@@ -132,7 +132,7 @@ export class ExecuteBridgeRequest {
     });
 
     const url = bridgeActionUrl.toString();
-    const timeOut = bridgeUrl?.includes(process.env.API_INTERNAL_ORIGIN) ? 30_000 : DEFAULT_TIMEOUT;
+    const timeOut = bridgeUrl?.includes(process.env.API_INTERNAL_ORIGIN) ? 60_000 : DEFAULT_TIMEOUT;
     const options: OptionsOfTextResponseBody = {
       timeout: timeOut,
       json: command.event,

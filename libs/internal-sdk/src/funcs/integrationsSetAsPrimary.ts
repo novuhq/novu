@@ -160,7 +160,7 @@ async function $do(
     headers: headers,
     body: body,
     userAgent: client._options.userAgent,
-    timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
+    timeoutMs: options?.timeoutMs || client._options.timeoutMs || 5000,
   }, options);
   if (!requestRes.ok) {
     return [requestRes, { status: "invalid" }];

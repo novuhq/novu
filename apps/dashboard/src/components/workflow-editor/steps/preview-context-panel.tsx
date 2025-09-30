@@ -1,15 +1,24 @@
-import { ISubscriberResponseDto } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ISubscriberResponseDto } from '@novu/shared';
+import { JSONSchema7 } from 'json-schema';
+
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Accordion } from '@/components/primitives/accordion';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
+import { useDynamicPreviewSchema } from '@/hooks/use-dynamic-preview-schema';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { StepTypeEnum } from '@/utils/enums';
 import { usePreviewContext } from '../../../hooks/use-preview-context';
 import { PayloadSchemaDrawer } from '../payload-schema-drawer';
-import { PreviewPayloadSection, PreviewStepResultsSection, PreviewSubscriberSection } from './components';
+import {
+  PreviewContextSection,
+  PreviewPayloadSection,
+  PreviewStepResultsSection,
+  PreviewSubscriberSection,
+} from './components';
 import { DEFAULT_ACCORDION_VALUES } from './constants/preview-context.constants';
 import { usePersistedPreviewContext } from './hooks/use-persisted-preview-context';
 import { usePreviewDataInitialization } from './hooks/use-preview-data-initialization';
@@ -90,8 +99,20 @@ export function PreviewContextPanel({
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const { isPayloadSchemaDrawerOpen, highlightedVariableKey, openSchemaDrawer, closeSchemaDrawer } =
     useCreateVariable();
+
+  const previewSchema = useDynamicPreviewSchema();
+  const schemas = useMemo(
+    () => ({
+      payload: workflow?.payloadSchema,
+      subscriber: previewSchema?.properties?.subscriber as JSONSchema7 | undefined,
+      context: previewSchema?.properties?.context as JSONSchema7 | undefined,
+      steps: previewSchema?.properties?.steps as JSONSchema7 | undefined,
+    }),
+    [previewSchema, workflow?.payloadSchema]
+  );
 
   const hasDigestStep = useMemo(() => {
     return workflow?.steps?.some((step) => step.type === StepTypeEnum.DIGEST) ?? false;
@@ -109,6 +130,9 @@ export function PreviewContextPanel({
     loadPersistedSubscriber,
     savePersistedSubscriber,
     clearPersistedSubscriber,
+    loadPersistedContext,
+    savePersistedContext,
+    clearPersistedContext,
   } = usePersistedPreviewContext({
     workflowId: workflow?.workflowId || '',
     stepId: currentStepId || '',
@@ -127,16 +151,21 @@ export function PreviewContextPanel({
       subscriber: null,
       payload: null,
       steps: null,
+      context: null,
     },
     parseJsonValue,
     onDataPersist: (data: ParsedData) => {
-      // Persist both payload and subscriber data
+      // Persist payload, subscriber and context data
       if (data.payload !== undefined) {
         savePersistedPayload(data.payload);
       }
 
       if (data.subscriber !== undefined) {
         savePersistedSubscriber(data.subscriber);
+      }
+
+      if (data.context !== undefined) {
+        savePersistedContext(data.context);
       }
     },
   });
@@ -152,6 +181,7 @@ export function PreviewContextPanel({
     isPayloadSchemaEnabled,
     loadPersistedPayload,
     loadPersistedSubscriber,
+    loadPersistedContext,
   });
 
   // Initialize default subscriber data if none exists (after data initialization)
@@ -202,6 +232,11 @@ export function PreviewContextPanel({
     updateJsonSection('subscriber', createDefaultSubscriberData());
   };
 
+  const handleClearPersistedContext = () => {
+    clearPersistedContext();
+    updateJsonSection('context', null);
+  };
+
   const canClearPersisted = !!(workflow?.workflowId && currentStepId && currentEnvironment?._id);
 
   return (
@@ -211,6 +246,7 @@ export function PreviewContextPanel({
           errors={errors}
           localParsedData={localParsedData}
           workflow={workflow}
+          schema={schemas.payload}
           onUpdate={updateJsonSection}
           onClearPersisted={canClearPersisted ? handleClearPersistedPayload : undefined}
           hasDigestStep={hasDigestStep}
@@ -220,7 +256,7 @@ export function PreviewContextPanel({
         <PreviewSubscriberSection
           error={errors.subscriber}
           subscriber={localParsedData.subscriber}
-          workflow={workflow}
+          schema={schemas.subscriber}
           onUpdate={updateJsonSection}
           onSubscriberSelect={handleSubscriberSelection}
           onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
@@ -233,6 +269,16 @@ export function PreviewContextPanel({
           onUpdate={updateJsonSection}
           currentStepId={currentStepId}
         />
+
+        {isContextEnabled && (
+          <PreviewContextSection
+            error={errors.context}
+            context={localParsedData.context}
+            schema={schemas.context}
+            onUpdate={updateJsonSection}
+            onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
+          />
+        )}
       </Accordion>
       <PayloadSchemaDrawer
         isOpen={isPayloadSchemaDrawerOpen}

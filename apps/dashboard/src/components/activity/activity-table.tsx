@@ -1,18 +1,25 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ActivityFilters } from '@/api/activity';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/primitives/table';
+import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { parsePageParam } from '@/utils/parse-page-param';
 import { useFetchActivities } from '../../hooks/use-fetch-activities';
 import { ActivityEmptyState } from './activity-empty-state';
 import { ActivityTableRow } from './components/activity-table-row';
-import { ArrowPagination } from './components/arrow-pagination';
-import { CursorPagination } from './components/cursor-pagination';
 
 export interface ActivityTableProps {
   selectedActivityId: string | null;
@@ -37,6 +44,9 @@ export function ActivityTable({
   const navigate = useNavigate();
   const isWorkflowRunMigrationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_PAGE_MIGRATION_ENABLED);
 
+  // Page size state
+  const [pageSize, setPageSize] = useState(10);
+
   // Get pagination parameters from URL
   const page = parsePageParam(searchParams.get('page'));
   const cursor = searchParams.get('cursor');
@@ -46,6 +56,7 @@ export function ActivityTable({
       filters,
       page: isWorkflowRunMigrationEnabled ? undefined : page,
       cursor: isWorkflowRunMigrationEnabled ? cursor : undefined,
+      limit: pageSize,
     },
     {
       refetchOnWindowFocus: false,
@@ -103,77 +114,84 @@ export function ActivityTable({
     }
   }
 
-  function handleFirst() {
-    handleCursorNavigation(null, 'first');
+  function handlePageSizeChange(newPageSize: number) {
+    setPageSize(newPageSize);
   }
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      {!isLoading && activities.length === 0 ? (
-        <motion.div
-          key="empty-state"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex h-full w-full items-center justify-center"
-        >
-          <ActivityEmptyState
-            filters={filters}
-            emptySearchResults={hasActiveFilters}
-            onClearFilters={onClearFilters}
-            onTriggerWorkflow={onTriggerWorkflow}
-          />
-        </motion.div>
-      ) : (
-        <motion.div
-          key="table-state"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex flex-col"
-        >
-          <Table isLoading={isLoading} loadingRow={<SkeletonRow />}>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-text-strong h-8 px-2 py-0">Workflow runs</TableHead>
-                <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {activities.map((activity) => (
-                <ActivityTableRow
-                  key={activity._id}
-                  activity={activity}
-                  isSelected={selectedActivityId === activity._id}
-                  onClick={onActivitySelect}
-                />
-              ))}
-            </TableBody>
-          </Table>
-
-          {isWorkflowRunMigrationEnabled ? (
-            <CursorPagination
-              hasMore={hasMore}
-              hasPrevious={!!previous}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              onFirst={handleFirst}
-              className="border-t-0 bg-transparent"
+    <div>
+      <AnimatePresence mode="wait" initial={false}>
+        {!isLoading && activities.length === 0 ? (
+          <motion.div
+            key="empty-state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex h-full w-full items-center justify-center"
+          >
+            <ActivityEmptyState
+              filters={filters}
+              emptySearchResults={hasActiveFilters}
+              onClearFilters={onClearFilters}
+              onTriggerWorkflow={onTriggerWorkflow}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="table-state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-1 flex-col overflow-hidden"
+          >
+            <Table
               isLoading={isLoading}
-            />
-          ) : (
-            <ArrowPagination
-              page={page}
-              hasMore={hasMore}
-              onPageChange={handlePageChange}
-              className="border-t-0 bg-transparent"
-            />
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
+              loadingRow={<SkeletonRow />}
+              containerClassname="flex-1 overflow-y-auto border-0 shadow-none rounded-none bg-transparent h-full w-full shadow-xs flex h-full flex-col overflow-hidden rounded-lg border bg-white"
+            >
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-text-strong h-8 px-2 py-0">Workflow runs</TableHead>
+                  <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {activities.map((activity) => (
+                  <ActivityTableRow
+                    key={activity._id}
+                    activity={activity}
+                    isSelected={selectedActivityId === activity._id}
+                    onClick={onActivitySelect}
+                  />
+                ))}
+              </TableBody>
+              <TableFooter className="border-t border-t-neutral-200">
+                <TableRow>
+                  <TableCell colSpan={7} className="p-0">
+                    <TablePaginationFooter
+                      pageSize={pageSize}
+                      currentPageItemsCount={activities.length}
+                      onPreviousPage={
+                        isWorkflowRunMigrationEnabled ? handlePrevious : () => handlePageChange(Math.max(0, page - 1))
+                      }
+                      onNextPage={isWorkflowRunMigrationEnabled ? handleNext : () => handlePageChange(page + 1)}
+                      onPageSizeChange={handlePageSizeChange}
+                      hasPreviousPage={isWorkflowRunMigrationEnabled ? !!previous : page > 0}
+                      hasNextPage={hasMore}
+                      className="bg-transparent shadow-none"
+                      itemName="workflow runs"
+                      pageSizeOptions={[10, 20, 50]}
+                    />
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 

@@ -1,16 +1,15 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
+import { NotificationTemplateEntity, OrganizationEntity } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { FullPayloadForRender } from './render-command';
 
 @Injectable()
 export abstract class BaseTranslationRendererUsecase {
   constructor(
     protected moduleRef: ModuleRef,
-    protected logger: PinoLogger,
-    protected featureFlagsService: FeatureFlagsService
+    protected logger: PinoLogger
   ) {}
 
   protected async processTranslations({
@@ -20,6 +19,8 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    dbWorkflow,
+    organization,
   }: {
     controls: Record<string, unknown>;
     variables: FullPayloadForRender;
@@ -27,10 +28,10 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    dbWorkflow?: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
   }): Promise<Record<string, unknown>> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
-
-    if (!isTranslationEnabled) {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
       return controls;
     }
 
@@ -41,6 +42,8 @@ export abstract class BaseTranslationRendererUsecase {
       organizationId,
       workflowId,
       locale,
+      dbWorkflow,
+      organization,
     }) as Promise<Record<string, unknown>>;
   }
 
@@ -51,6 +54,7 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    organization,
   }: {
     content: string;
     variables: FullPayloadForRender;
@@ -58,10 +62,9 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<string> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
-
-    if (!isTranslationEnabled) {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
       return content;
     }
 
@@ -72,15 +75,8 @@ export abstract class BaseTranslationRendererUsecase {
       organizationId,
       workflowId,
       locale,
+      organization,
     }) as Promise<string>;
-  }
-
-  private async isTranslationFeatureEnabled(organizationId: string): Promise<boolean> {
-    return await this.featureFlagsService.getFlag({
-      organization: { _id: organizationId },
-      key: FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED,
-      defaultValue: false,
-    });
   }
 
   private async executeTranslation({
@@ -90,6 +86,8 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    dbWorkflow,
+    organization,
   }: {
     content: string | Record<string, unknown>;
     variables: FullPayloadForRender;
@@ -97,8 +95,17 @@ export abstract class BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    dbWorkflow?: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
   }): Promise<string | Record<string, unknown>> {
     if (!workflowId) {
+      this.logger.warn('Workflow ID is required for translation module', {
+        workflowId,
+        organizationId,
+        environmentId,
+        locale,
+      });
+
       return content;
     }
 
@@ -117,6 +124,8 @@ export abstract class BaseTranslationRendererUsecase {
         content: contentString,
         payload: variables,
         liquidEngine,
+        dbWorkflow,
+        organization,
       });
 
       return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);

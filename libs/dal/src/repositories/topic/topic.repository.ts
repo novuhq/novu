@@ -179,6 +179,8 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
     topics: TopicEntity[];
     next: string | null;
     previous: string | null;
+    totalCount: number;
+    totalCountCapped: boolean;
   }> {
     if (before && after) {
       throw new Error('Cannot specify both "before" and "after" cursors at the same time.');
@@ -199,6 +201,8 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
           topics: [],
           next: null,
           previous: null,
+          totalCount: 0,
+          totalCountCapped: false,
         };
       }
     }
@@ -234,6 +238,8 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
       topics: pagination.data,
       next: pagination.next,
       previous: pagination.previous,
+      totalCount: pagination.totalCount,
+      totalCountCapped: pagination.totalCountCapped,
     };
   }
 }

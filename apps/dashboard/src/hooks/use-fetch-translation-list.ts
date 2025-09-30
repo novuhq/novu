@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getTranslationsList, TranslationsFilter } from '@/api/translations';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
 interface UseFetchTranslationListOptions {
@@ -14,12 +14,10 @@ export const useFetchTranslationList = (filterValues: TranslationsFilter, option
   return useQuery({
     queryKey: [QueryKeys.fetchTranslationGroups, filterValues, currentEnvironment?._id],
     queryFn: async () => {
-      if (!currentEnvironment) {
-        throw new Error('Environment is required');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'Environment is required');
 
       return getTranslationsList({
-        environment: currentEnvironment,
+        environment,
         ...filterValues,
       });
     },

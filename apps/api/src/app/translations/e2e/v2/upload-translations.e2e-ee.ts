@@ -11,9 +11,6 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
   let workflowId: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -51,11 +48,6 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
       ],
     });
     workflowId = workflow.workflowId;
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should upload single translation file', async () => {

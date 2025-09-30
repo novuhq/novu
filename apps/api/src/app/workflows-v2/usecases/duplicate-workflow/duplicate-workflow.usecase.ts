@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, shortId } from '@novu/application-generic';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { PreferencesTypeEnum, ResourceOriginEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { DuplicateWorkflowDto, StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
@@ -74,6 +74,8 @@ export class DuplicateWorkflowUseCase {
       name: step.name ?? '',
       type: step.type,
       controlValues: step.controls.values ?? null,
+      stepId: step.stepId,
+      slug: step.slug,
     }));
   }
 

@@ -99,7 +99,7 @@ export class UpsertLayout {
           organizationId: command.organizationId,
           userId: command.userId,
           name: command.layoutDto.name,
-          identifier: command.preserveLayoutId ? (command.layoutDto.layoutId ?? '') : slugify(command.layoutDto.name),
+          identifier: command.layoutDto.layoutId || slugify(command.layoutDto.name),
           type: ResourceTypeEnum.BRIDGE,
           origin: ResourceOriginEnum.NOVU_CLOUD,
           isDefault: !defaultLayout,

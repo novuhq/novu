@@ -23,16 +23,17 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   GetContextResponseDto,
-  GetContextsRequestDto,
-  GetContextsResponseDto,
+  ListContextsQueryDto,
+  ListContextsResponseDto,
   mapContextEntityToDto,
   UpsertContextRequestDto,
 } from './dtos';
 import { DeleteContext, DeleteContextCommand } from './usecases/delete-context';
 import { GetContext, GetContextCommand } from './usecases/get-context';
-import { GetContexts, GetContextsCommand } from './usecases/get-contexts';
+import { ListContexts, ListContextsCommand } from './usecases/list-contexts';
 import { UpsertContext, UpsertContextCommand } from './usecases/upsert-context';
-@Controller('/contexts')
+
+@Controller({ path: '/contexts', version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @ThrottlerCategory(ApiRateLimitCategoryEnum.GLOBAL)
 @RequireAuthentication()
@@ -43,7 +44,7 @@ export class ContextsController {
   constructor(
     private upsertContextUsecase: UpsertContext,
     private getContextUsecase: GetContext,
-    private getContextsUsecase: GetContexts,
+    private listContextsUsecase: ListContexts,
     private deleteContextUsecase: DeleteContext,
     private featureFlagsService: FeatureFlagsService
   ) {}
@@ -64,7 +65,7 @@ export class ContextsController {
   @Post('')
   @ApiResponse(GetContextResponseDto, 201)
   @ApiOperation({
-    summary: 'Upsert context',
+    summary: 'Upsert contexts',
     description:
       'Create a new context with the specified type, key, and data, or update an existing context data if it already exists',
   })
@@ -72,37 +73,35 @@ export class ContextsController {
   async createContext(
     @UserSession() user: UserSessionData,
     @Body() body: UpsertContextRequestDto
-  ): Promise<GetContextResponseDto> {
+  ): Promise<GetContextResponseDto[]> {
     await this.checkFeatureEnabled(user);
 
-    const entity = await this.upsertContextUsecase.execute(
+    const entities = await this.upsertContextUsecase.execute(
       UpsertContextCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        type: body.type,
-        id: body.id,
-        data: body.data || {},
+        context: body.context,
       })
     );
 
-    return mapContextEntityToDto(entity);
+    return entities.map(mapContextEntityToDto);
   }
 
   @Get('')
-  @ApiResponse(GetContextsResponseDto)
+  @ApiResponse(ListContextsResponseDto)
   @ApiOperation({
-    summary: 'Get contexts',
+    summary: 'List contexts',
     description: 'Retrieve a paginated list of contexts, optionally filtered by type and key pattern',
   })
   @ExternalApiAccessible()
-  async getContexts(
+  async listContexts(
     @UserSession() user: UserSessionData,
-    @Query() query: GetContextsRequestDto
-  ): Promise<GetContextsResponseDto> {
+    @Query() query: ListContextsQueryDto
+  ): Promise<ListContextsResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    const result = await this.getContextsUsecase.execute(
-      GetContextsCommand.create({
+    const result = await this.listContextsUsecase.execute(
+      ListContextsCommand.create({
         user,
         limit: query.limit || 10,
         after: query.after,
@@ -112,6 +111,7 @@ export class ContextsController {
         includeCursor: query.includeCursor,
         type: query.type,
         id: query.id,
+        search: query.search,
       })
     );
 
@@ -119,6 +119,8 @@ export class ContextsController {
       data: result.data.map(mapContextEntityToDto),
       next: result.next,
       previous: result.previous,
+      totalCount: result.totalCount!,
+      totalCountCapped: result.totalCountCapped!,
     };
   }
 

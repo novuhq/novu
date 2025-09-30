@@ -1,10 +1,27 @@
-import { Calendar, Code2, ExternalLink, FileCode2, FileText, KeyRound, LayoutGrid, Users } from 'lucide-react';
+import {
+  Bell,
+  Calendar,
+  Code2,
+  CreditCard,
+  ExternalLink,
+  FileCode2,
+  FileText,
+  KeyRound,
+  LayoutGrid,
+  MessageSquare,
+  Settings,
+  Shield,
+  Star,
+  Users,
+} from 'lucide-react';
 import { motion } from 'motion/react';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { useTemplateStore } from '@/hooks/use-template-store';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { buildRoute, ROUTES } from '../../utils/routes';
+import { TemplateCategory } from './types';
 
 interface WorkflowSidebarProps {
   selectedCategory: string;
@@ -70,55 +87,116 @@ function SidebarButton({
   );
 }
 
-const useCases = [
-  {
-    id: 'popular',
-    icon: <LayoutGrid className="h-3 w-3 text-blue-700" />,
-    label: 'Popular',
-    bgColor: 'bg-blue-50',
-  },
-  {
-    id: 'authentication',
-    icon: <KeyRound className="h-3 w-3 text-green-700" />,
-    label: 'Auth',
-    bgColor: 'bg-green-50',
-  },
-  {
-    id: 'billing',
-    icon: <FileText className="h-3 w-3 text-orange-700" />,
-    label: 'Billing',
-    bgColor: 'bg-orange-50',
-  },
-  {
-    id: 'subscription',
-    icon: <Calendar className="h-3 w-3 text-purple-700" />,
-    label: 'Subscriptions',
-    bgColor: 'bg-purple-50',
-  },
-  {
-    id: 'usage',
-    icon: <FileCode2 className="h-3 w-3 text-sky-700" />,
-    label: 'Usage',
-    bgColor: 'bg-sky-50',
-  },
-  {
-    id: 'engagement',
-    icon: <Users className="h-3 w-3 text-pink-700" />,
-    label: 'Engagement',
-    bgColor: 'bg-pink-50',
-  },
-  {
-    id: 'operational',
-    icon: <LayoutGrid className="h-3 w-3 text-blue-700" />,
-    label: 'Operational',
-    bgColor: 'bg-blue-50',
-  },
-] as const;
+// Function to map tags to category configurations
+function getTagCategoryConfig(tag: string): TemplateCategory {
+  const tagConfigs: Record<string, TemplateCategory> = {
+    popular: {
+      id: 'popular',
+      label: 'Popular',
+      icon: <Star className="h-3 w-3 text-yellow-700" />,
+      bgColor: 'bg-yellow-50',
+      tag: 'popular',
+    },
+    authentication: {
+      id: 'authentication',
+      label: 'Authentication',
+      icon: <KeyRound className="h-3 w-3 text-green-700" />,
+      bgColor: 'bg-green-50',
+      tag: 'authentication',
+    },
+    auth: {
+      id: 'auth',
+      label: 'Auth',
+      icon: <KeyRound className="h-3 w-3 text-green-700" />,
+      bgColor: 'bg-green-50',
+      tag: 'auth',
+    },
+    security: {
+      id: 'security',
+      label: 'Security',
+      icon: <Shield className="h-3 w-3 text-red-700" />,
+      bgColor: 'bg-red-50',
+      tag: 'security',
+    },
+    billing: {
+      id: 'billing',
+      label: 'Billing',
+      icon: <CreditCard className="h-3 w-3 text-orange-700" />,
+      bgColor: 'bg-orange-50',
+      tag: 'billing',
+    },
+    subscription: {
+      id: 'subscription',
+      label: 'Subscriptions',
+      icon: <Calendar className="h-3 w-3 text-purple-700" />,
+      bgColor: 'bg-purple-50',
+      tag: 'subscription',
+    },
+    usage: {
+      id: 'usage',
+      label: 'Usage',
+      icon: <FileCode2 className="h-3 w-3 text-sky-700" />,
+      bgColor: 'bg-sky-50',
+      tag: 'usage',
+    },
+    engagement: {
+      id: 'engagement',
+      label: 'Engagement',
+      icon: <Users className="h-3 w-3 text-pink-700" />,
+      bgColor: 'bg-pink-50',
+      tag: 'engagement',
+    },
+    operational: {
+      id: 'operational',
+      label: 'Operational',
+      icon: <Settings className="h-3 w-3 text-blue-700" />,
+      bgColor: 'bg-blue-50',
+      tag: 'operational',
+    },
+    social: {
+      id: 'social',
+      label: 'Social',
+      icon: <MessageSquare className="h-3 w-3 text-indigo-700" />,
+      bgColor: 'bg-indigo-50',
+      tag: 'social',
+    },
+    events: {
+      id: 'events',
+      label: 'Events',
+      icon: <Bell className="h-3 w-3 text-emerald-700" />,
+      bgColor: 'bg-emerald-50',
+      tag: 'events',
+    },
+  };
+
+  // Default configuration for unknown tags
+  return (
+    tagConfigs[tag] || {
+      id: tag,
+      label: tag.charAt(0).toUpperCase() + tag.slice(1),
+      icon: <LayoutGrid className="h-3 w-3 text-gray-700" />,
+      bgColor: 'bg-gray-50',
+      tag: tag,
+    }
+  );
+}
 
 export function WorkflowSidebar({ selectedCategory, onCategorySelect }: WorkflowSidebarProps) {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
   const track = useTelemetry();
+  const { availableTags } = useTemplateStore();
+
+  // Generate dynamic categories from available tags
+  const dynamicCategories = useMemo(() => {
+    const categories = availableTags.map(getTagCategoryConfig);
+
+    // Always include popular category first if it exists
+    const popularCategory = categories.find((cat) => cat.tag === 'popular');
+    const otherCategories = categories.filter((cat) => cat.tag !== 'popular');
+
+    return popularCategory ? [popularCategory, ...otherCategories] : otherCategories;
+  }, [availableTags]);
 
   const handleCreateWorkflow = () => {
     track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
@@ -175,14 +253,14 @@ export function WorkflowSidebar({ selectedCategory, onCategorySelect }: Workflow
         </div>
 
         <div className="flex flex-col gap-2">
-          {useCases.map((item) => (
+          {dynamicCategories.map((category) => (
             <SidebarButton
-              key={item.id}
-              icon={item.icon}
-              label={item.label}
-              onClick={() => onCategorySelect(item.id)}
-              isActive={selectedCategory === item.id}
-              bgColor={item.bgColor}
+              key={category.id}
+              icon={category.icon}
+              label={category.label}
+              onClick={() => onCategorySelect(category.tag)}
+              isActive={selectedCategory === category.tag}
+              bgColor={category.bgColor}
             />
           ))}
         </div>

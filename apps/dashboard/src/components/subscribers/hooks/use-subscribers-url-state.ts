@@ -39,6 +39,7 @@ export interface SubscribersUrlState {
   handlePrevious: () => void;
   handleFirst: () => void;
   handleNavigationAfterDelete: (afterCursor: string) => void;
+  handlePageSizeChange: (newSize: number) => void;
 }
 
 type UseSubscribersUrlStateProps = {
@@ -79,6 +80,7 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
         'name',
         'orderBy',
         'orderDirection',
+        'limit',
       ];
 
       const isResetPaginationFilterChanged = resetPaginationFilterKeys.some((key) => data[key] !== filterValues[key]);
@@ -229,6 +231,16 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     navigate(`${location.pathname}?${newParams}`, { replace: true });
   };
 
+  const handlePageSizeChange = useCallback(
+    (newSize: number) => {
+      updateSearchParams({
+        ...filterValues,
+        limit: newSize,
+      });
+    },
+    [updateSearchParams, filterValues]
+  );
+
   return {
     filterValues,
     handleFiltersChange: debouncedUpdateParams,
@@ -238,5 +250,6 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     handlePrevious,
     handleFirst,
     handleNavigationAfterDelete,
+    handlePageSizeChange,
   };
 }

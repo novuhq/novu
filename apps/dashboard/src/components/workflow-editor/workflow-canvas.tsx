@@ -138,7 +138,13 @@ const WorkflowCanvasChild = ({
             }
           }}
         >
-          <Background variant={BackgroundVariant.Dots} gap={12} size={1} className="!bg-bg-weak" />
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={24}
+            size={1}
+            bgColor="hsl(var(--bg-weak))"
+            color="hsl(var(--bg-muted))"
+          />
         </ReactFlow>
 
         {currentWorkflow &&

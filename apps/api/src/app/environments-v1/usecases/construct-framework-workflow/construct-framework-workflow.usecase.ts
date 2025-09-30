@@ -1,10 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { emailControlSchema, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
+  CommunityOrganizationRepository,
   EnvironmentRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
@@ -34,6 +36,7 @@ export class ConstructFrameworkWorkflow {
     private logger: PinoLogger,
     private workflowsRepository: NotificationTemplateRepository,
     private environmentRepository: EnvironmentRepository,
+    private communityOrganizationRepository: CommunityOrganizationRepository,
     private inAppOutputRendererUseCase: InAppOutputRendererUsecase,
     private emailOutputRendererUseCase: EmailOutputRendererUsecase,
     private smsOutputRendererUseCase: SmsOutputRendererUsecase,
@@ -57,8 +60,11 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
+    const organization = (await this.communityOrganizationRepository.findById(dbWorkflow._organizationId)) || undefined;
+
     return this.constructFrameworkWorkflow({
       dbWorkflow,
+      organization,
       skipLayoutRendering: command.skipLayoutRendering,
       jobId: command.jobId,
     });
@@ -72,13 +78,13 @@ export class ConstructFrameworkWorkflow {
       throw new InternalServerErrorException(`Environment ${command.environmentId} not found`);
     }
 
-    return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber }) => {
+    return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber, context }) => {
       await step.email(
         LAYOUT_PREVIEW_EMAIL_STEP,
         async (controlValues) => {
           return this.emailOutputRendererUseCase.execute({
             controlValues,
-            fullPayloadForRender: { payload, subscriber, steps: {} },
+            fullPayloadForRender: { payload, subscriber, context, steps: {} },
             environmentId: environment._id,
             organizationId: environment._organizationId,
             locale: subscriber.locale ?? undefined,
@@ -98,20 +104,23 @@ export class ConstructFrameworkWorkflow {
   @Instrument()
   private constructFrameworkWorkflow({
     dbWorkflow,
+    organization,
     skipLayoutRendering,
     jobId,
   }: {
     dbWorkflow: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
     skipLayoutRendering?: boolean;
     jobId?: string;
   }): Workflow {
     return workflow(
       dbWorkflow.triggers[0].identifier,
-      async ({ step, payload, subscriber }) => {
+      async ({ step, payload, subscriber, context }) => {
         const fullPayloadForRender: FullPayloadForRender = {
           workflow: dbWorkflow as unknown as Record<string, unknown>,
           payload,
           subscriber,
+          context,
           steps: {},
         };
         for (const staticStep of dbWorkflow.steps) {
@@ -120,6 +129,7 @@ export class ConstructFrameworkWorkflow {
             staticStep,
             fullPayloadForRender,
             dbWorkflow,
+            organization,
             locale: subscriber.locale ?? undefined,
             skipLayoutRendering,
             jobId,
@@ -151,6 +161,7 @@ export class ConstructFrameworkWorkflow {
     staticStep,
     fullPayloadForRender,
     dbWorkflow,
+    organization,
     locale,
     skipLayoutRendering,
     jobId,
@@ -159,6 +170,7 @@ export class ConstructFrameworkWorkflow {
     staticStep: NotificationStepEntity;
     fullPayloadForRender: FullPayloadForRender;
     dbWorkflow: NotificationTemplateEntity;
+    organization?: OrganizationEntity;
     locale?: string;
     skipLayoutRendering?: boolean;
     jobId?: string;
@@ -191,6 +203,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -207,6 +220,7 @@ export class ConstructFrameworkWorkflow {
               environmentId: dbWorkflow._environmentId,
               organizationId: dbWorkflow._organizationId,
               workflowId: dbWorkflow._id,
+              organization,
               locale,
               skipLayoutRendering,
               jobId,
@@ -223,6 +237,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -236,6 +251,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },
@@ -249,6 +265,7 @@ export class ConstructFrameworkWorkflow {
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
+              organization,
               locale,
             });
           },

@@ -1,3 +1,17 @@
+## v3.10.1 (2025-09-22)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
+## v3.10.0 (2025-09-22)
+
+### 🚀 Features
+
+- **react,js:** default schedule and useSchedule hook fixes NV-6616 ([#9110](https://github.com/novuhq/novu/pull/9110))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
 ## v3.9.3 (2025-09-03)
 
 This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.

@@ -1,4 +1,4 @@
-import { IChatOptions } from '@novu/stateless';
+import { ChannelEndpointByType, ENDPOINT_TYPES, IChatOptions } from '@novu/stateless';
 import { nanoid } from 'nanoid';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
@@ -27,8 +27,12 @@ test('should trigger whatsapp-business library correctly with simple text messag
   const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
   const options: IChatOptions = {
-    phoneNumber: '+111111111',
     content: 'Simple text message',
+    channelData: {
+      identifier: '-',
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: '+111111111' },
+    },
   };
 
   const res = await provider.sendMessage(options);
@@ -41,7 +45,7 @@ test('should trigger whatsapp-business library correctly with simple text messag
       body: options.content,
       preview_url: false,
     },
-    to: options.phoneNumber,
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE]).phoneNumber,
     type: 'text',
   });
 
@@ -58,8 +62,12 @@ test('should trigger whatsapp-business library correctly with template message',
   const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
   const options: IChatOptions = {
-    phoneNumber: '+111111111',
     content: 'Simple text message',
+    channelData: {
+      identifier: '-',
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: '+111111111' },
+    },
     customData: {
       template: {
         name: 'hello_world',
@@ -77,7 +85,7 @@ test('should trigger whatsapp-business library correctly with template message',
     messaging_product: 'whatsapp',
     recipient_type: 'individual',
     template: options.customData.template,
-    to: options.phoneNumber,
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE]).phoneNumber,
     type: 'template',
   });
 
@@ -94,7 +102,11 @@ test('should trigger whatsapp-business library correctly with simple text messag
   const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
   const options: IChatOptions = {
-    phoneNumber: '+111111111',
+    channelData: {
+      identifier: '-',
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: '+111111111' },
+    },
     content: 'Simple text message',
   };
 
@@ -116,7 +128,7 @@ test('should trigger whatsapp-business library correctly with simple text messag
       body: `${options.content} _passthrough`,
       preview_url: false,
     },
-    to: options.phoneNumber,
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE]).phoneNumber,
     type: 'text',
   });
 
@@ -133,7 +145,11 @@ test('should trigger whatsapp-business library correctly with template message w
   const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
   const options: IChatOptions = {
-    phoneNumber: '+111111111',
+    channelData: {
+      identifier: '-',
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: '+111111111' },
+    },
     content: 'Simple text message',
     customData: {
       template: {
@@ -168,7 +184,7 @@ test('should trigger whatsapp-business library correctly with template message w
         code: 'en_US',
       },
     },
-    to: options.phoneNumber,
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE]).phoneNumber,
     type: 'template',
   });
 

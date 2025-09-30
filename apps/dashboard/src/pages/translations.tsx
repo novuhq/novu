@@ -1,5 +1,4 @@
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { Navigate } from 'react-router-dom';
+import { EnvironmentTypeEnum } from '@novu/shared';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
@@ -7,17 +6,10 @@ import { Badge } from '@/components/primitives/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationList } from '@/components/translations/translation-list';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { ROUTES } from '@/utils/routes';
 
 export const TranslationsPage = () => {
-  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
   const { currentEnvironment } = useEnvironment();
   const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
-
-  if (!isTranslationEnabled) {
-    return <Navigate to={ROUTES.WORKFLOWS} />;
-  }
 
   return (
     <>

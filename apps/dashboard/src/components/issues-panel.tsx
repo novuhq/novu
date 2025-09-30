@@ -1,6 +1,6 @@
 import { RuntimeIssue } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { RiErrorWarningFill, RiErrorWarningLine, RiInformationLine } from 'react-icons/ri';
+import { RiErrorWarningFill, RiErrorWarningLine, RiInformation2Line } from 'react-icons/ri';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
 import { countIssues, getAllStepIssues, getFirstErrorMessage } from '@/components/workflow-editor/step-utils';
 import { cn } from '@/utils/ui';
@@ -88,7 +88,7 @@ export function IssuesPanel({
           </HoverCard>
         ) : (
           <div className="flex items-center gap-2">
-            <RiInformationLine className="size-4 text-neutral-500" />
+            <RiInformation2Line className="size-4 text-neutral-500" />
             <span className="text-paragraph-xs text-neutral-600">{displayHintMessage}</span>
           </div>
         )}

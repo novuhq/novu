@@ -99,11 +99,13 @@ export async function triggerWorkflow({
   name,
   payload,
   to,
+  context,
 }: {
   environment: IEnvironment;
   name: string;
   payload: unknown;
   to: unknown;
+  context?: unknown;
 }) {
   return post<{ data: { transactionId?: string } }>(`/events/trigger`, {
     environment,
@@ -111,6 +113,7 @@ export async function triggerWorkflow({
       name,
       to,
       payload: { ...(payload ?? {}), __source: (payload as any)?.__source ?? 'dashboard' },
+      context: context ?? undefined,
     },
   });
 }

@@ -210,6 +210,28 @@ describe('UpsertLayoutUseCase', () => {
         expect(createCommand.isDefault).to.be.true;
       });
 
+      it('should use custom layoutId when provided instead of slugified name', async () => {
+        const customLayoutId = 'custom-layout-identifier';
+        const layoutDtoWithCustomId = {
+          ...mockLayoutDto,
+          layoutId: customLayoutId,
+        };
+
+        const command = UpsertLayoutCommand.create({
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
+          layoutDto: layoutDtoWithCustomId,
+        });
+
+        await upsertLayoutUseCase.execute(command);
+
+        expect(createLayoutUseCaseMock.execute.calledOnce).to.be.true;
+        const createCommand = createLayoutUseCaseMock.execute.firstCall.args[0];
+        expect(createCommand.identifier).to.equal(customLayoutId);
+        expect(createCommand.name).to.equal(mockLayoutDto.name);
+      });
+
       it('should set isDefault to false when a default layout already exists', async () => {
         const existingDefaultLayout = { ...mockExistingLayout, isDefault: true };
         layoutRepositoryMock.findOne.resolves(existingDefaultLayout as any);
