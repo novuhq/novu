@@ -2,6 +2,7 @@ import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { PreviewPayloadDto } from '../../dtos';
 
 // Type for optimistic step data used during sync
 export interface IOptimisticStepInfo {
@@ -29,4 +30,7 @@ export class BuildVariableSchemaCommand extends EnvironmentWithUserCommand {
    */
   @IsOptional()
   optimisticSteps?: IOptimisticStepInfo[];
+
+  @IsOptional()
+  previewData?: PreviewPayloadDto;
 }

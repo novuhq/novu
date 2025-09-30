@@ -40,7 +40,6 @@ import { PatchWorkflowUsecase } from './usecases/patch-workflow';
 import { MockDataGeneratorService } from './usecases/preview/services/mock-data-generator.service';
 import { PayloadMergerService } from './usecases/preview/services/payload-merger.service';
 import { PreviewPayloadProcessorService } from './usecases/preview/services/preview-payload-processor.service';
-import { SchemaBuilderService } from './usecases/preview/services/schema-builder.service';
 import { PreviewErrorHandler } from './usecases/preview/utils/preview-error-handler';
 import { WorkflowController } from './workflow.controller';
 
@@ -87,7 +86,6 @@ const MODULES = [
     TierRestrictionsValidateUsecase,
     ControlValueSanitizerService,
     PayloadMergerService,
-    SchemaBuilderService,
     PreviewPayloadProcessorService,
     MockDataGeneratorService,
     PreviewErrorHandler,
