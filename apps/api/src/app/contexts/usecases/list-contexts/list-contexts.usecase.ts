@@ -43,6 +43,8 @@ export class ListContexts {
           data: [],
           next: null,
           previous: null,
+          totalCount: 0,
+          totalCountCapped: false,
         };
       }
     }
@@ -78,6 +80,8 @@ export class ListContexts {
       data: pagination.data,
       next: pagination.next,
       previous: pagination.previous,
+      totalCount: pagination.totalCount,
+      totalCountCapped: pagination.totalCountCapped,
     };
   }
 }

@@ -19,11 +19,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/primitives/table';
+import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { cn } from '@/utils/ui';
-import { DefaultPagination } from '../default-pagination';
-import { Skeleton } from '../primitives/skeleton';
 import { CreateLayoutButton } from './create-layout-btn';
 import { LayoutsListUpgradeCta } from './layouts-list-upgrade-cta';
 
@@ -54,32 +53,22 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
 
 type LayoutListTableProps = HTMLAttributes<HTMLTableElement> & {
   toggleSort: ReturnType<typeof useLayoutsUrlState>['toggleSort'];
-  hrefFromOffset: ReturnType<typeof useLayoutsUrlState>['hrefFromOffset'];
   orderBy: LayoutsSortableColumn;
   orderDirection?: DirectionEnum;
-  limit: number;
-  offset: number;
-  hasData: boolean;
-  totalCount: number;
-  currentPage: number;
-  totalPages: number;
+  paginationProps?: {
+    pageSize: number;
+    currentPageItemsCount: number;
+    onPreviousPage: () => void;
+    onNextPage: () => void;
+    onPageSizeChange: (pageSize: number) => void;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+    totalCount?: number;
+  };
 };
 
 const LayoutListTable = (props: LayoutListTableProps) => {
-  const {
-    toggleSort,
-    hrefFromOffset,
-    children,
-    orderBy,
-    orderDirection,
-    limit,
-    offset,
-    hasData,
-    totalCount,
-    currentPage,
-    totalPages,
-    ...rest
-  } = props;
+  const { toggleSort, children, orderBy, orderDirection, paginationProps, ...rest } = props;
 
   return (
     <Table {...rest}>
@@ -110,29 +99,21 @@ const LayoutListTable = (props: LayoutListTableProps) => {
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
-      {hasData && limit < totalCount && (
+      {paginationProps && (
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={5}>
-              <div className="flex items-center justify-between">
-                {hasData ? (
-                  <span className="text-foreground-600 block text-sm font-normal">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                ) : (
-                  <Skeleton className="h-5 w-[20ch]" />
-                )}
-                {hasData ? (
-                  <DefaultPagination
-                    hrefFromOffset={hrefFromOffset}
-                    totalCount={totalCount}
-                    limit={limit}
-                    offset={offset}
-                  />
-                ) : (
-                  <Skeleton className="h-5 w-32" />
-                )}
-              </div>
+            <TableCell colSpan={4} className="p-0">
+              <TablePaginationFooter
+                pageSize={paginationProps.pageSize}
+                currentPageItemsCount={paginationProps.currentPageItemsCount}
+                onPreviousPage={paginationProps.onPreviousPage}
+                onNextPage={paginationProps.onNextPage}
+                onPageSizeChange={paginationProps.onPageSizeChange}
+                hasPreviousPage={paginationProps.hasPreviousPage}
+                hasNextPage={paginationProps.hasNextPage}
+                itemName="layouts"
+                totalCount={paginationProps.totalCount}
+              />
             </TableCell>
           </TableRow>
         </TableFooter>
@@ -144,9 +125,9 @@ const LayoutListTable = (props: LayoutListTableProps) => {
 type LayoutListProps = HTMLAttributes<HTMLDivElement>;
 
 export const LayoutList = (props: LayoutListProps) => {
-  const { filterValues, hrefFromOffset, handleFiltersChange, toggleSort, resetFilters } = useLayoutsUrlState();
+  const { filterValues, handleFiltersChange, toggleSort, resetFilters } = useLayoutsUrlState();
   const areFiltersApplied = (Object.keys(filterValues) as (keyof LayoutsFilter)[]).some(
-    (key) => ['query', 'before', 'after'].includes(key) && filterValues[key] !== ''
+    (key) => ['query'].includes(key) && filterValues[key] !== ''
   );
 
   const { data, isPending, isFetching } = useFetchLayouts({
@@ -163,6 +144,23 @@ export const LayoutList = (props: LayoutListProps) => {
   const currentPage = Math.floor(filterValues.offset / filterValues.limit) + 1;
   const totalPages = Math.ceil((data?.totalCount || 0) / filterValues.limit);
 
+  const handlePreviousPage = () => {
+    const newOffset = Math.max(0, filterValues.offset - filterValues.limit);
+    handleFiltersChange({ offset: newOffset });
+  };
+
+  const handleNextPage = () => {
+    const newOffset = filterValues.offset + filterValues.limit;
+    handleFiltersChange({ offset: newOffset });
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    handleFiltersChange({
+      limit: newPageSize,
+      offset: 0, // Reset to first page when changing page size
+    });
+  };
+
   if (isPending) {
     return (
       <LayoutListWrapper
@@ -176,15 +174,8 @@ export const LayoutList = (props: LayoutListProps) => {
           orderBy={filterValues.orderBy}
           orderDirection={filterValues.orderDirection}
           toggleSort={toggleSort}
-          hrefFromOffset={hrefFromOffset}
-          limit={12}
-          totalCount={0}
-          currentPage={1}
-          totalPages={1}
-          hasData={false}
-          offset={0}
         >
-          {new Array(12).fill(0).map((_, index) => (
+          {new Array(10).fill(0).map((_, index) => (
             <LayoutRowSkeleton key={index} />
           ))}
         </LayoutListTable>
@@ -239,13 +230,16 @@ export const LayoutList = (props: LayoutListProps) => {
         orderBy={filterValues.orderBy}
         orderDirection={filterValues.orderDirection}
         toggleSort={toggleSort}
-        hrefFromOffset={hrefFromOffset}
-        limit={filterValues.limit}
-        totalCount={data.totalCount}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        offset={filterValues.offset}
-        hasData={!!data.layouts.length}
+        paginationProps={{
+          pageSize: filterValues.limit,
+          currentPageItemsCount: data.layouts.length,
+          onPreviousPage: handlePreviousPage,
+          onNextPage: handleNextPage,
+          onPageSizeChange: handlePageSizeChange,
+          hasPreviousPage: filterValues.offset > 0,
+          hasNextPage: currentPage < totalPages,
+          totalCount: data.totalCount,
+        }}
       >
         {data.layouts.map((layout) => (
           <LayoutRow key={layout._id} layout={layout} />

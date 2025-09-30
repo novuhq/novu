@@ -110,7 +110,7 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
           onFiltersChange={setFilters}
           onReset={handleClearFilters}
           hide={['dateRange', 'subscriberId']}
-          className="min-h-max overflow-x-auto"
+          className="min-h-max overflow-x-auto py-2 pl-2"
         />
         <SubscriberActivityList
           isLoading={isLoading}

@@ -1,13 +1,13 @@
 import { PushProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
-import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { PushBaseProvider } from '../push.base-provider';
 
-export class ExpoPushProvider extends BaseProvider implements IPushProvider {
+export class ExpoPushProvider extends PushBaseProvider implements IPushProvider {
   id = PushProviderIdEnum.EXPO;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
-  channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   private expo: Expo;
   constructor(

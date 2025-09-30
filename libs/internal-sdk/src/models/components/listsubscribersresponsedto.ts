@@ -26,6 +26,14 @@ export type ListSubscribersResponseDto = {
    * The cursor for the previous page of results, or null if this is the first page.
    */
   previous: string | null;
+  /**
+   * The total count of items (up to 50,000)
+   */
+  totalCount: number;
+  /**
+   * Whether there are more than 50,000 results available
+   */
+  totalCountCapped: boolean;
 };
 
 /** @internal */
@@ -37,6 +45,8 @@ export const ListSubscribersResponseDto$inboundSchema: z.ZodType<
   data: z.array(SubscriberResponseDto$inboundSchema),
   next: z.nullable(z.string()),
   previous: z.nullable(z.string()),
+  totalCount: z.number(),
+  totalCountCapped: z.boolean(),
 });
 
 /** @internal */
@@ -44,6 +54,8 @@ export type ListSubscribersResponseDto$Outbound = {
   data: Array<SubscriberResponseDto$Outbound>;
   next: string | null;
   previous: string | null;
+  totalCount: number;
+  totalCountCapped: boolean;
 };
 
 /** @internal */
@@ -55,6 +67,8 @@ export const ListSubscribersResponseDto$outboundSchema: z.ZodType<
   data: z.array(SubscriberResponseDto$outboundSchema),
   next: z.nullable(z.string()),
   previous: z.nullable(z.string()),
+  totalCount: z.number(),
+  totalCountCapped: z.boolean(),
 });
 
 /**

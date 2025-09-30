@@ -1,5 +1,5 @@
 import { SeverityLevelEnum } from '../../consts';
-import { ChannelTypeEnum, ISubscriber } from '../../types';
+import { ChannelTypeEnum, ContextKey, ISubscriber } from '../../types';
 import { IExecutionDetail } from '../execution-details';
 import { IJob as IJobBase } from '../job';
 import { INotificationTemplate } from '../notification-template';
@@ -30,4 +30,5 @@ export interface IActivity {
   jobs: IActivityJob[];
   severity?: SeverityLevelEnum;
   critical?: boolean;
+  contextKeys?: ContextKey[];
 }

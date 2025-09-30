@@ -2,8 +2,10 @@ import { type OrganizationResource } from '@clerk/types';
 import { ApiServiceLevelEnum, FeatureNameEnum, type GetSubscriptionDto, getFeatureForTierAsNumber } from '@novu/shared';
 import { IS_SELF_HOSTED } from '../config';
 
+export const DEFAULT_ACTIVITY_FEED_RANGE = '24h';
+
 export const DATE_RANGE_OPTIONS = [
-  { value: '24h', label: 'Last 24 hours', ms: 24 * 60 * 60 * 1000 },
+  { value: DEFAULT_ACTIVITY_FEED_RANGE, label: 'Last 24 hours', ms: 24 * 60 * 60 * 1000 },
   { value: '7d', label: 'Last 7 days', ms: 7 * 24 * 60 * 60 * 1000 },
   { value: '30d', label: 'Last 30 days', ms: 30 * 24 * 60 * 60 * 1000 },
   { value: '90d', label: 'Last 90 days', ms: 90 * 24 * 60 * 60 * 1000 },
@@ -46,7 +48,7 @@ export function getMaxAvailableActivityFeedDateRange({
   organization: OrganizationResource | null;
 }>) {
   if (!organization || !subscription) {
-    return '24h';
+    return DEFAULT_ACTIVITY_FEED_RANGE;
   }
 
   const lastAvailableActivityFeedFilter = buildActivityDateFilters({
@@ -56,5 +58,5 @@ export function getMaxAvailableActivityFeedDateRange({
     .filter((option) => !option.disabled)
     .at(-1);
 
-  return lastAvailableActivityFeedFilter?.value ?? '24h';
+  return lastAvailableActivityFeedFilter?.value ?? DEFAULT_ACTIVITY_FEED_RANGE;
 }

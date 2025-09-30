@@ -21,10 +21,10 @@ export type MessagePayloadValidationExceptionDto4 = {};
  * Value that failed validation
  */
 export type PayloadValidationExceptionDtoMessage =
-  | MessagePayloadValidationExceptionDto4
   | string
   | number
   | boolean
+  | MessagePayloadValidationExceptionDto4
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 /**
@@ -49,10 +49,10 @@ export type PayloadValidationExceptionDtoData = {
    * Value that failed validation
    */
   message?:
-    | MessagePayloadValidationExceptionDto4
     | string
     | number
     | boolean
+    | MessagePayloadValidationExceptionDto4
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -254,10 +254,10 @@ export const PayloadValidationExceptionDtoMessage$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.union([
-  z.lazy(() => MessagePayloadValidationExceptionDto4$inboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
+  z.lazy(() => MessagePayloadValidationExceptionDto4$inboundSchema),
   z.array(
     z.nullable(
       z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -267,10 +267,10 @@ export const PayloadValidationExceptionDtoMessage$inboundSchema: z.ZodType<
 
 /** @internal */
 export type PayloadValidationExceptionDtoMessage$Outbound =
-  | MessagePayloadValidationExceptionDto4$Outbound
   | string
   | number
   | boolean
+  | MessagePayloadValidationExceptionDto4$Outbound
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 /** @internal */
@@ -279,10 +279,10 @@ export const PayloadValidationExceptionDtoMessage$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   PayloadValidationExceptionDtoMessage
 > = z.union([
-  z.lazy(() => MessagePayloadValidationExceptionDto4$outboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
+  z.lazy(() => MessagePayloadValidationExceptionDto4$outboundSchema),
   z.array(
     z.nullable(
       z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -378,10 +378,10 @@ export const PayloadValidationExceptionDto$inboundSchema: z.ZodType<
   path: z.string(),
   message: z.nullable(
     z.union([
-      z.lazy(() => MessagePayloadValidationExceptionDto4$inboundSchema),
       z.string(),
       z.number(),
       z.boolean(),
+      z.lazy(() => MessagePayloadValidationExceptionDto4$inboundSchema),
       z.array(
         z.nullable(
           z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -412,10 +412,10 @@ export type PayloadValidationExceptionDto$Outbound = {
   timestamp: string;
   path: string;
   message?:
-    | MessagePayloadValidationExceptionDto4$Outbound
     | string
     | number
     | boolean
+    | MessagePayloadValidationExceptionDto4$Outbound
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -439,10 +439,10 @@ export const PayloadValidationExceptionDto$outboundSchema: z.ZodType<
     path: z.string(),
     message: z.nullable(
       z.union([
-        z.lazy(() => MessagePayloadValidationExceptionDto4$outboundSchema),
         z.string(),
         z.number(),
         z.boolean(),
+        z.lazy(() => MessagePayloadValidationExceptionDto4$outboundSchema),
         z.array(
           z.nullable(
             z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),

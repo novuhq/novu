@@ -1,9 +1,17 @@
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
 import { RiUserSharedLine } from 'react-icons/ri';
-import { CursorPagination } from '@/components/cursor-pagination';
 import { PermissionButton } from '@/components/primitives/permission-button';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/primitives/table';
+import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import {
   SubscribersFilter,
@@ -58,10 +66,21 @@ type SubscriberListTableProps = HTMLAttributes<HTMLTableElement> & {
   toggleSort: ReturnType<typeof useSubscribersUrlState>['toggleSort'];
   orderBy?: SubscribersSortableColumn;
   orderDirection?: DirectionEnum;
+  paginationProps?: {
+    hasNext: boolean;
+    hasPrevious: boolean;
+    onNext: () => void;
+    onPrevious: () => void;
+    limit: number;
+    currentItemsCount: number;
+    totalCount?: number;
+    totalCountCapped?: boolean;
+    onPageSizeChange: (newSize: number) => void;
+  };
 };
 
 const SubscriberListTable = (props: SubscriberListTableProps) => {
-  const { children, orderBy, orderDirection, toggleSort, ...rest } = props;
+  const { children, orderBy, orderDirection, toggleSort, paginationProps, ...rest } = props;
   return (
     <Table {...rest}>
       <TableHeader>
@@ -87,6 +106,26 @@ const SubscriberListTable = (props: SubscriberListTableProps) => {
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
+      {paginationProps && (
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={6} className="p-0">
+              <TablePaginationFooter
+                pageSize={paginationProps.limit}
+                currentPageItemsCount={paginationProps.currentItemsCount}
+                onPreviousPage={paginationProps.onPrevious}
+                onNextPage={paginationProps.onNext}
+                onPageSizeChange={paginationProps.onPageSizeChange}
+                hasPreviousPage={paginationProps.hasPrevious}
+                hasNextPage={paginationProps.hasNext}
+                itemName="subscribers"
+                totalCount={paginationProps.totalCount}
+                totalCountCapped={paginationProps.totalCountCapped}
+              />
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      )}
     </Table>
   );
 };
@@ -94,18 +133,25 @@ const SubscriberListTable = (props: SubscriberListTableProps) => {
 type SubscriberListProps = HTMLAttributes<HTMLDivElement>;
 
 export const SubscriberList = (props: SubscriberListProps) => {
-  const { className, ...rest } = props;
+  const { ...rest } = props;
   const [nextPageAfter, setNextPageAfter] = useState<string | undefined>(undefined);
   const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
-  const { filterValues, handleFiltersChange, toggleSort, resetFilters, handleNext, handlePrevious, handleFirst } =
-    useSubscribersUrlState({
-      after: nextPageAfter,
-      before: previousPageBefore,
-    });
+  const {
+    filterValues,
+    handleFiltersChange,
+    toggleSort,
+    resetFilters,
+    handleNext,
+    handlePrevious,
+    handlePageSizeChange,
+  } = useSubscribersUrlState({
+    after: nextPageAfter,
+    before: previousPageBefore,
+  });
   const areFiltersApplied = (Object.keys(filterValues) as (keyof SubscribersFilter)[]).some(
     (key) => ['email', 'phone', 'name', 'subscriberId', 'before', 'after'].includes(key) && filterValues[key] !== ''
   );
-  const limit = 10;
+  const limit = filterValues.limit || 10;
 
   const { data, isPending, isFetching } = useFetchSubscribers(filterValues, {
     meta: { errorMessage: 'Issue fetching subscribers' },
@@ -191,6 +237,17 @@ export const SubscriberList = (props: SubscriberListProps) => {
         orderBy={filterValues.orderBy}
         orderDirection={filterValues.orderDirection}
         toggleSort={toggleSort}
+        paginationProps={{
+          hasNext: !!data.next,
+          hasPrevious: !!data.previous,
+          onNext: handleNext,
+          onPrevious: handlePrevious,
+          limit,
+          currentItemsCount: data.data.length,
+          totalCount: data.totalCount,
+          totalCountCapped: data.totalCountCapped,
+          onPageSizeChange: handlePageSizeChange,
+        }}
       >
         {data.data.map((subscriber) => (
           <SubscriberRow
@@ -201,16 +258,6 @@ export const SubscriberList = (props: SubscriberListProps) => {
           />
         ))}
       </SubscriberListTable>
-
-      {!!(data.next || data.previous) && (
-        <CursorPagination
-          hasNext={!!data.next}
-          hasPrevious={!!data.previous}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onFirst={handleFirst}
-        />
-      )}
     </SubscriberListWrapper>
   );
 };

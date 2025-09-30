@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { type GetChartsResponse, getCharts, ReportTypeEnum } from '@/api/activity';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { generateMockAnalyticsData } from '@/utils/analytics-mock-data';
 import { QueryKeys } from '@/utils/query-keys';
 
@@ -61,12 +61,10 @@ export function useFetchCharts({
         return Promise.resolve(generateMockAnalyticsData());
       }
 
-      if (!currentEnvironment) {
-        throw new Error('Environment is required');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'Environment is required');
 
       return getCharts({
-        environment: currentEnvironment,
+        environment,
         createdAtGte,
         createdAtLte,
         reportType,

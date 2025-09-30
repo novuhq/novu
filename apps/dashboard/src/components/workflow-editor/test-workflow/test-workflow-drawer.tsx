@@ -1,5 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type ISubscriberResponseDto, PermissionsEnum, type WorkflowTestDataResponseDto } from '@novu/shared';
+import {
+  ContextPayload,
+  type ISubscriberResponseDto,
+  PermissionsEnum,
+  type WorkflowTestDataResponseDto,
+} from '@novu/shared';
 import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiArrowDownSLine, RiFileCopyLine } from 'react-icons/ri';
@@ -26,6 +31,7 @@ import { useAuth } from '@/context/auth/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTestWorkflowContextPersistence } from '@/hooks/use-test-workflow-context-persistence';
 import { useTestWorkflowSubscriberPersistence } from '@/hooks/use-test-workflow-subscriber-persistence';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
@@ -59,12 +65,17 @@ type TestWorkflowFormType = {
   payload: string; // JSON string that gets parsed
 };
 
+const getContextSpread = (contextData: Partial<ContextPayload> | null) => {
+  return contextData && Object.keys(contextData).length > 0 ? { context: contextData } : {};
+};
+
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
   const { isOpen, onOpenChange, initialPayload } = props;
   const [transactionId, setTransactionId] = useState<string>();
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
   const [subscriberData, setSubscriberData] = useState<Partial<ISubscriberResponseDto> | null>(null);
+  const [contextData, setContextData] = useState<Partial<ContextPayload> | null>(null);
   const [currentFormData, setCurrentFormData] = useState<{ to: unknown; payload: string } | null>(null);
 
   // Cleanup expired storage data on component mount
@@ -96,13 +107,19 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       environmentId: currentEnvironment?._id || '',
     });
 
+  // Test workflow context persistence
+  const { loadPersistedContext, savePersistedContext } = useTestWorkflowContextPersistence({
+    workflowId: workflow?.workflowId || '',
+    environmentId: currentEnvironment?._id || '',
+  });
+
   // Track if we've initialized the subscriber data
-  const [hasInitializedSubscriber, setHasInitializedSubscriber] = useState(false);
+  const [hasInitializedData, setHasInitializedData] = useState(false);
 
   // Reset initialization flag when drawer closes
   useEffect(() => {
     if (!isOpen) {
-      setHasInitializedSubscriber(false);
+      setHasInitializedData(false);
     }
   }, [isOpen]);
 
@@ -124,7 +141,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   // Initialize subscriber data from persisted storage when drawer opens
   useEffect(() => {
     if (
-      !hasInitializedSubscriber &&
+      !hasInitializedData &&
       isOpen &&
       workflow?.workflowId &&
       currentEnvironment?._id &&
@@ -132,6 +149,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       !subscriberData?.subscriberId
     ) {
       const persistedSubscriber = loadPersistedSubscriber();
+      const persistedContext = loadPersistedContext();
 
       if (persistedSubscriber) {
         // Try to use the persisted subscriber
@@ -147,16 +165,21 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         setSubscriberData(fallbackData);
       }
 
-      setHasInitializedSubscriber(true);
+      if (persistedContext) {
+        setContextData(persistedContext);
+      }
+
+      setHasInitializedData(true);
     }
   }, [
-    hasInitializedSubscriber,
+    hasInitializedData,
     isOpen,
     workflow?.workflowId,
     currentEnvironment?._id,
     currentUser,
     subscriberData?.subscriberId,
     loadPersistedSubscriber,
+    loadPersistedContext,
   ]);
 
   // Handle fetched subscriber data and error cases
@@ -236,6 +259,14 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     [savePersistedSubscriber]
   );
 
+  const handleContextSelect = useCallback(
+    (context: ContextPayload) => {
+      setContextData(context);
+      savePersistedContext(context);
+    },
+    [savePersistedContext]
+  );
+
   const handleSubscriberDrawerClose = useCallback(
     (open: boolean) => {
       setIsSubscriberDrawerOpen(open);
@@ -260,6 +291,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         name: workflow?.workflowId ?? '',
         to: subscriberData,
         payload: data.payload,
+        ...getContextSpread(contextData),
       });
 
       if (!newTransactionId) {
@@ -307,6 +339,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         workflowId: workflow.workflowId,
         to: subscriberData,
         payload: formData.payload,
+        ...getContextSpread(contextData),
         apiKey: apiKey,
       });
 
@@ -326,7 +359,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     } catch {
       showErrorToast('Failed to copy cURL command', 'Copy Error');
     }
-  }, [workflow?.workflowId, subscriberData, apiKey, form]);
+  }, [workflow?.workflowId, subscriberData, apiKey, form, contextData]);
 
   const handleOpenInPostman = useCallback(async () => {
     if (!workflow?.workflowId || !subscriberData) {
@@ -341,6 +374,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         workflowId: workflow.workflowId,
         to: subscriberData,
         payload: formData.payload,
+        ...getContextSpread(contextData),
         apiKey,
       });
 
@@ -364,7 +398,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     } catch {
       showErrorToast('Failed to copy Postman collection', 'Postman Error');
     }
-  }, [workflow?.workflowId, subscriberData, apiKey, form]);
+  }, [workflow?.workflowId, subscriberData, apiKey, form, contextData]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -379,9 +413,11 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
             <TestWorkflowContent
               workflow={workflow}
               subscriberData={subscriberData}
+              contextData={contextData}
               isLoadingSubscriber={isLoadingSubscriber}
               onOpenSubscriberDrawer={() => setIsSubscriberDrawerOpen(true)}
               onSubscriberSelect={handleSubscriberSelect}
+              onContextSelect={handleContextSelect}
             />
 
             <div className="border-t border-neutral-200 bg-white">
@@ -410,7 +446,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
                           leadingIcon={RiArrowDownSLine}
                         ></Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" withPortal={false}>
                         <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
                           <RiFileCopyLine />
                           Copy cURL

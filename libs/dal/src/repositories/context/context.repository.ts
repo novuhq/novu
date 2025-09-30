@@ -1,4 +1,4 @@
-import { ContextData, ContextId, ContextKey, ContextType, createContextKey } from '@novu/shared';
+import { ContextData, ContextId, ContextKey, ContextPayload, ContextType, createContextKey } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepository } from '../base-repository';
@@ -53,6 +53,26 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
 
       return this.create(newContext);
     }
+  }
+
+  async upsertContextsFromPayload(
+    environmentId: string,
+    organizationId: string,
+    contextPayload: ContextPayload
+  ): Promise<ContextEntity[]> {
+    const upsertPromises = Object.entries(contextPayload).map(([type, value]) => {
+      if (!value) return null; // Skip undefined values
+
+      const { id, data } =
+        typeof value === 'string' ? { id: value, data: undefined } : { id: value.id, data: value.data };
+
+      return this.upsertContext(environmentId, organizationId, type, id, data);
+    });
+
+    // Filter out null promises and execute in parallel
+    const validPromises = upsertPromises.filter((promise): promise is Promise<ContextEntity> => promise !== null);
+
+    return Promise.all(validPromises);
   }
 
   async findByKeys(environmentId: string, organizationId: string, contextKeys: ContextKey[]): Promise<ContextEntity[]> {

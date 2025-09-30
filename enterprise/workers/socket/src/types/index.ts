@@ -14,8 +14,8 @@ export interface IConnectionMetadata {
 }
 
 export interface IWebSocketRoom {
-  sendToUser(userId: string, event: string, data: any): Promise<void>;
-  broadcast(event: string, data: any, excludeUserId?: string): Promise<void>;
+  sendToUser(userId: string, event: string, data: unknown): Promise<void>;
   getActiveConnectionsForUser(userId: string): number;
-  getConnectedUsers(): string[];
+  getTotalActiveConnections(): number;
+  getConnectionCapacity(): { current: number; max: number; available: number };
 }

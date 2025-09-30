@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   ComputeJobWaitDurationService,
   ConditionsFilter,
@@ -6,7 +6,6 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
-  FeatureFlagsService,
   getDigestType,
   getNestedValue,
   IFilterVariables,
@@ -18,6 +17,7 @@ import {
   LogDecorator,
   NormalizeVariables,
   NormalizeVariablesCommand,
+  PinoLogger,
   RedisThrottleService,
   StandardQueueService,
   StepRunRepository,
@@ -66,8 +66,6 @@ type AddJobResult = {
   stepStatus?: StepRunStatus;
 };
 
-const LOG_CONTEXT = 'AddJob';
-
 @Injectable()
 export class AddJob {
   constructor(
@@ -86,18 +84,21 @@ export class AddJob {
     private executeBridgeJob: ExecuteBridgeJob,
     private stepRunRepository: StepRunRepository,
     private subscriberRepository: SubscriberRepository,
-    private redisThrottleService: RedisThrottleService
-  ) {}
+    private redisThrottleService: RedisThrottleService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   @LogDecorator()
   public async execute(command: AddJobCommand): Promise<AddJobResult> {
-    Logger.verbose('Getting Job', LOG_CONTEXT);
+    this.logger.trace('Getting Job');
     const { job } = command;
-    Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
+    this.logger.debug(`Job contents for job ${job._id}`, job);
 
     if (!job) {
-      Logger.warn(`Job was null in both the input and search`, LOG_CONTEXT);
+      this.logger.warn(`Job was null in both the input and search`);
 
       return {
         workflowStatus: null,
@@ -105,7 +106,7 @@ export class AddJob {
       };
     }
 
-    Logger.log(`Scheduling New Job ${job._id} of type: ${job.type}`, LOG_CONTEXT);
+    this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -230,7 +231,7 @@ export class AddJob {
           };
         }
       } catch (error) {
-        Logger.error(`Throttle validation failed for job ${job._id}: ${error.message}`, LOG_CONTEXT);
+        this.logger.error(`Throttle validation failed for job ${job._id}: ${error.message}`);
 
         // Update job status to failed
         await this.jobRepository.updateOne(
@@ -270,7 +271,7 @@ export class AddJob {
       });
 
       if (delayAmount === undefined) {
-        Logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`, LOG_CONTEXT);
+        this.logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`);
 
         return {
           workflowStatus: null,
@@ -280,7 +281,7 @@ export class AddJob {
     }
 
     if ((digestAmount || delayAmount) && filtered) {
-      Logger.verbose(`Delay for job ${job._id} will be 0 because job was filtered`, LOG_CONTEXT);
+      this.logger.trace(`Delay for job ${job._id} will be 0 because job was filtered`);
     }
 
     const delay = this.getExecutionDelayAmount(filtered, digestAmount, delayAmount);
@@ -329,7 +330,7 @@ export class AddJob {
 
     if (errors.length > 0) {
       const uniqueErrors = _.uniq(errors.map((error) => error.message));
-      Logger.warn({ errors, jobId: job._id }, uniqueErrors, LOG_CONTEXT);
+      this.logger.warn({ errors, jobId: job._id }, uniqueErrors);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -352,7 +353,7 @@ export class AddJob {
   private async executeNoneDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 
-    Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
+    this.logger.trace(`Updating status to queued for job ${job._id}`);
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
 
     await this.stepRunRepository.create(job, {
@@ -402,7 +403,7 @@ export class AddJob {
 
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.DELAYED);
 
-    Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
+    this.logger.debug(`Delay step Amount is: ${delayAmount}`);
 
     return delayAmount;
   }
@@ -535,7 +536,7 @@ export class AddJob {
     const value = getNestedValue(job.payload, keyPath);
 
     if (!value) {
-      Logger.debug(`Dynamic throttle key '${dynamicKey}' not found in payload data`, LOG_CONTEXT);
+      this.logger.debug(`Dynamic throttle key '${dynamicKey}' not found in payload data`);
       return null;
     }
 
@@ -561,7 +562,7 @@ export class AddJob {
       };
     }
 
-    Logger.warn(`Dynamic throttle value '${JSON.stringify(value)}' is not a valid format`, LOG_CONTEXT);
+    this.logger.warn(`Dynamic throttle value '${JSON.stringify(value)}' is not a valid format`);
     return null;
   }
 
@@ -585,9 +586,8 @@ export class AddJob {
     };
 
     if (!unitMap[unit]) {
-      Logger.warn(
-        `Invalid throttle unit '${unit}', falling back to minutes. Supported units: minutes, hours, days`,
-        LOG_CONTEXT
+      this.logger.warn(
+        `Invalid throttle unit '${unit}', falling back to minutes. Supported units: minutes, hours, days`
       );
       return amount * unitMap.minutes;
     }
@@ -609,27 +609,27 @@ export class AddJob {
     if (type === 'fixed') {
       const { amount, unit } = throttleConfig;
       if (!amount || !unit) {
-        Logger.warn(`Fixed throttle configuration missing amount or unit for job ${job._id}`, LOG_CONTEXT);
+        this.logger.warn(`Fixed throttle configuration missing amount or unit for job ${job._id}`);
         return { shouldSkip: false };
       }
       windowMs = this.convertToMilliseconds(amount as number, unit as string);
     } else if (type === 'dynamic') {
       const { dynamicKey } = throttleConfig;
       if (!dynamicKey) {
-        Logger.warn(`Dynamic throttle configuration missing dynamicKey for job ${job._id}`, LOG_CONTEXT);
+        this.logger.warn(`Dynamic throttle configuration missing dynamicKey for job ${job._id}`);
         return { shouldSkip: false };
       }
 
       // Parse dynamic window value
       const dynamicValue = this.parseDynamicThrottleValue(job, dynamicKey as string);
       if (!dynamicValue) {
-        Logger.warn(`Could not parse dynamic throttle value for job ${job._id}, key: ${dynamicKey}`, LOG_CONTEXT);
+        this.logger.warn(`Could not parse dynamic throttle value for job ${job._id}, key: ${dynamicKey}`);
         return { shouldSkip: false };
       }
 
       windowMs = dynamicValue.windowMs;
     } else {
-      Logger.warn(`Unknown throttle type '${type}' for job ${job._id}`, LOG_CONTEXT);
+      this.logger.warn(`Unknown throttle type '${type}' for job ${job._id}`);
       return { shouldSkip: false };
     }
 
@@ -659,7 +659,7 @@ export class AddJob {
       throttleValue: throttleValue,
     });
 
-    Logger.debug(
+    this.logger.debug(
       {
         jobId: job._id,
         reservationResult,
@@ -667,8 +667,7 @@ export class AddJob {
         windowMs,
         type,
       },
-      'Redis throttle reservation result',
-      LOG_CONTEXT
+      'Redis throttle reservation result'
     );
 
     if (!reservationResult.granted) {
@@ -725,7 +724,7 @@ export class AddJob {
         timezone,
       });
 
-    Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
+    this.logger.debug(`Digest step amount is: ${digestAmount}`);
 
     const digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
       MergeOrCreateDigestCommand.create({
@@ -757,7 +756,7 @@ export class AddJob {
   }
 
   private handleDigestMerged() {
-    Logger.log('Digest was merged, queueing next job', LOG_CONTEXT);
+    this.logger.info('Digest was merged, queueing next job');
   }
 
   private async handleDigestSkip(command: AddJobCommand, job) {
@@ -784,9 +783,8 @@ export class AddJob {
     job: JobEntity,
     throttleResult: { shouldSkip: boolean; executionCount: number; threshold: number; throttledUntil: string }
   ) {
-    Logger.log(
-      `Job ${job._id} throttled: ${throttleResult.executionCount} executions exceed threshold ${throttleResult.threshold as number}`,
-      LOG_CONTEXT
+    this.logger.info(
+      `Job ${job._id} throttled: ${throttleResult.executionCount} executions exceed threshold ${throttleResult.threshold as number}`
     );
 
     await this.jobRepository.updateOne(
@@ -848,7 +846,6 @@ export class AddJob {
     untilDate: Date | null;
     timezone?: string;
   }) {
-    Logger.verbose(`Adding Job ${job._id} to Queue`, LOG_CONTEXT);
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
     const options: JobsOptions = {
       delay,
@@ -867,7 +864,7 @@ export class AddJob {
       _userId: job._userId,
     };
 
-    Logger.verbose(jobData, 'Going to add a minimal job in Standard Queue', LOG_CONTEXT);
+    this.logger.trace(jobData, 'Going to add a minimal job in Standard Queue');
 
     await this.standardQueueService.add({
       name: job._id,
@@ -884,7 +881,7 @@ export class AddJob {
             ? 'Digest is active, Creating execution details'
             : 'Unexpected job type, Creating execution details';
 
-      Logger.verbose(logMessage, LOG_CONTEXT);
+      this.logger.trace(logMessage);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -923,10 +920,7 @@ export class AddJob {
   ): Promise<void> {
     // For dynamic throttles, validate that the window is in the future
     if (throttleType === 'dynamic' && windowMs <= 0) {
-      Logger.error(
-        `Dynamic throttle window must be in the future. windowMs: ${windowMs}, jobId: ${job._id}`,
-        LOG_CONTEXT
-      );
+      this.logger.error(`Dynamic throttle window must be in the future. windowMs: ${windowMs}, jobId: ${job._id}`);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -955,7 +949,7 @@ export class AddJob {
 
     if (tierValidationErrors && tierValidationErrors.length > 0) {
       const errorMessage = tierValidationErrors[0].message;
-      Logger.error(`Throttle window exceeds tier limits: ${errorMessage}, jobId: ${job._id}`, LOG_CONTEXT);
+      this.logger.error(`Throttle window exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

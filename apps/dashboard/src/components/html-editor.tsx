@@ -27,6 +27,7 @@ type HtmlEditorProps = {
   children?: React.ReactNode;
   isPayloadSchemaEnabled?: boolean;
   isTranslationEnabled?: boolean;
+  isContextEnabled?: boolean;
   className?: string;
   digestStepName?: string;
   getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
@@ -55,6 +56,7 @@ export function HtmlEditor({
   saveForm,
   isPayloadSchemaEnabled = false,
   isTranslationEnabled = false,
+  isContextEnabled = false,
   digestStepName,
   skipContainerClick = false,
   className,
@@ -213,6 +215,7 @@ export function HtmlEditor({
         completionSources={allCompletionSources}
         isPayloadSchemaEnabled={isPayloadSchemaEnabled}
         isTranslationEnabled={isTranslationEnabled}
+        isContextEnabled={isContextEnabled}
         getSchemaPropertyByKey={getSchemaPropertyByKey}
         extensions={allExtensions}
         digestStepName={digestStepName}

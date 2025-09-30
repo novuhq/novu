@@ -61,10 +61,11 @@ const PropertyListItemSchema = z.object({
     .refine(
       (val) => {
         // For non-empty strings, enforce proper naming rules
-        return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(val);
+        return /^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(val);
       },
       {
-        message: 'Name must start with a letter or underscore, and contain only letters, numbers, or underscores.',
+        message:
+          'Name must start with a letter or underscore, and contain only letters, numbers, underscores, or hyphens.',
       }
     ),
   definition: baseJsonSchema, // The schema definition for this property's value

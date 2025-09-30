@@ -1,6 +1,6 @@
 import cronParser from 'cron-parser';
 import { useMemo } from 'react';
-import { RiInformationLine } from 'react-icons/ri';
+import { RiInformation2Line } from 'react-icons/ri';
 import { Hint, HintIcon } from '@/components/primitives/hint';
 import { DaysOfWeek } from '@/components/workflow-editor/steps/digest-delay-tabs/days-of-week';
 import { NumbersPicker } from '@/components/workflow-editor/steps/digest-delay-tabs/numbers-picker';
@@ -140,7 +140,7 @@ export const ScheduledType = ({
         )}
       </div>
       <Hint className="text-text-soft text-2xs">
-        <HintIcon as={RiInformationLine} />
+        <HintIcon as={RiInformation2Line} />
         Delivered in subscriber's timezone
       </Hint>
     </div>
