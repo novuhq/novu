@@ -37,6 +37,7 @@ import { UpdateIntegrationSidebar } from './components/integrations/components/u
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
+import { ContextsPage } from './pages/contexts';
 import { CreateSubscriberPage } from './pages/create-subscriber';
 import { CreateTopicPage } from './pages/create-topic';
 import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
@@ -222,6 +223,14 @@ const router = createBrowserRouter([
                     ),
                   },
                 ],
+              },
+              {
+                path: ROUTES.CONTEXTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                    <ContextsPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.LAYOUTS,
