@@ -76,7 +76,7 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
     // If we're in organization creation flow, redirect to maintain URL consistency
     if (isInOnboardingFlow()) {
-      // Redirect to the correct dashboard URL for the selected region
+      // Redirect to the correct dashboard URL for the selected region to maintain consistency
       const targetDashboardUrl = getDashboardUrlForRegion(region);
       const currentPath = window.location.pathname + window.location.search + window.location.hash;
       const newUrl = `${targetDashboardUrl}${currentPath}`;
@@ -120,7 +120,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
           window.location.reload();
         }
       } catch (error) {
-        console.error('Failed to switch organization:', error);
         // Revert region on error
         setSelectedRegion(previousRegion);
       }
@@ -140,23 +139,16 @@ export function RegionProvider({ children }: RegionProviderProps) {
       const detectedRegion = detectRegionFromCurrentOrg();
       const urlRegion = detectRegionFromURL();
       const isInOrgCreation = isInOnboardingFlow();
-
       // If the URL region doesn't match the organization region,
       // redirect to the correct dashboard URL for the organization's region
       if (urlRegion !== detectedRegion) {
-        // During organization creation flow, still redirect when selecting existing organizations
-        // from different regions to maintain URL consistency
+        // DON'T redirect during organization creation if we're creating a NEW organization
+        // Only redirect if user selected an EXISTING organization
         if (isInOrgCreation) {
-          // In org creation: redirect to maintain URL consistency when switching to existing orgs
-          const correctDashboardUrl = getDashboardUrlForRegion(detectedRegion);
-          const currentPath = window.location.pathname + window.location.search + window.location.hash;
-          const newUrl = `${correctDashboardUrl}${currentPath}`;
-
-          if (correctDashboardUrl !== window.location.origin) {
-            // Different dashboard URL - redirect to maintain consistency
-            window.location.href = newUrl;
-            return;
-          }
+          // Just update the selected region state, don't redirect
+          // This allows user to create org in region different from current URL
+          setSelectedRegion(urlRegion);
+          return;
         } else {
           // Normal dashboard flow: redirect to correct region
           const correctDashboardUrl = getDashboardUrlForRegion(detectedRegion);
