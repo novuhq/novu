@@ -15,14 +15,13 @@ export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
 
 export const API_HOSTNAME = window._env_?.VITE_API_HOSTNAME || import.meta.env.VITE_API_HOSTNAME;
 
-export const API_HOSTNAME_SG = window._env_?.VITE_API_HOSTNAME_SG || import.meta.env.VITE_API_HOSTNAME_SG;
+export const API_HOSTNAME_SG = import.meta.env.VITE_API_HOSTNAME_SG;
 
 export const IS_EU = API_HOSTNAME === 'https://eu.api.novu.co';
 
 export const WEBSOCKET_HOSTNAME = window._env_?.VITE_WEBSOCKET_HOSTNAME || import.meta.env.VITE_WEBSOCKET_HOSTNAME;
 
-export const WEBSOCKET_HOSTNAME_SG =
-  window._env_?.VITE_WEBSOCKET_HOSTNAME_SG || import.meta.env.VITE_WEBSOCKET_HOSTNAME_SG;
+export const WEBSOCKET_HOSTNAME_SG = import.meta.env.VITE_WEBSOCKET_HOSTNAME_SG;
 
 export const INTERCOM_APP_ID = import.meta.env.VITE_INTERCOM_APP_ID;
 
