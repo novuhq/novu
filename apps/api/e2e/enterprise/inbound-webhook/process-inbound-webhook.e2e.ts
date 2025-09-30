@@ -26,16 +26,13 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
   let novuClient: Novu;
 
   before(() => {
-    // Enable trace logs feature flag for tests
     process.env.IS_TRACE_LOGS_ENABLED = 'true';
   });
 
   after(() => {
-    // Clean up the feature flag
     delete process.env.IS_TRACE_LOGS_ENABLED;
   });
 
-  // Test data based on the unit tests
   const mockWebhookBody = {
     eventId: 'A0E2DB50-21D8-4F99-93C9-2BC0A4D32228',
     eventType: 'clicked',
@@ -66,7 +63,6 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
     traceLogRepository = session.testServer?.getService(TraceLogRepository);
     subscriberRepository = session.testServer?.getService(SubscriberRepository);
 
-    // Create a push notification template for testing
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
