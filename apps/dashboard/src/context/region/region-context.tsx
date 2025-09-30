@@ -43,7 +43,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
   // Initialize region based on URL instead of localStorage
   const [selectedRegion, setSelectedRegion] = useState<Region>(() => {
     const urlBasedRegion = detectRegionFromURL();
-    console.log('Initial region detection from URL:', urlBasedRegion);
     return urlBasedRegion;
   });
 
@@ -68,29 +67,32 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
   const handleSetSelectedRegion = async (region: Region) => {
     const previousRegion = selectedRegion;
-    console.log(`Manual region selection: ${previousRegion} → ${region}`);
 
     if (previousRegion === region) {
-      console.log('Same region selected, no action needed');
       return;
     }
 
     setSelectedRegion(region);
 
-    // If we're in organization creation flow, update API hostname without redirect
+    // If we're in organization creation flow, redirect to maintain URL consistency
     if (isInOnboardingFlow()) {
-      console.log('In organization creation flow, updating API hostname for new region:', region);
+      // Redirect to the correct dashboard URL for the selected region
+      const targetDashboardUrl = getDashboardUrlForRegion(region);
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
+      const newUrl = `${targetDashboardUrl}${currentPath}`;
 
-      // Update API and WebSocket hostnames for org creation
-      const newApiHostname = getApiHostnameForRegion(region);
-      const newWebSocketHostname = getWebSocketHostnameForRegion(region);
-      apiHostnameManager.setApiHostname(newApiHostname);
-      apiHostnameManager.setWebSocketHostname(newWebSocketHostname);
+      if (targetDashboardUrl !== window.location.origin) {
+        // Different dashboard URL - redirect to maintain consistency
+        window.location.href = newUrl;
+      } else {
+        // Same dashboard URL - just update API hostnames
+        const newApiHostname = getApiHostnameForRegion(region);
+        const newWebSocketHostname = getWebSocketHostnameForRegion(region);
+        apiHostnameManager.setApiHostname(newApiHostname);
+        apiHostnameManager.setWebSocketHostname(newWebSocketHostname);
+        queryClient.clear();
+      }
 
-      // Clear any cached queries to ensure fresh data from new region
-      queryClient.clear();
-
-      console.log('Updated API hostname for onboarding flow without redirect');
       return;
     }
 
@@ -103,8 +105,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
     if (targetOrgMembership && clerk) {
       try {
-        console.log(`Switching to organization "${targetOrgMembership.organization.name}" for ${region} region`);
-
         // Switch to the organization for the selected region
         await clerk.setActive({
           organization: targetOrgMembership.organization,
@@ -112,7 +112,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
         // Redirect to the correct dashboard URL for the target region
         const newUrl = `${targetDashboardUrl}${currentPath}`;
-        console.log('Redirecting to:', newUrl);
 
         if (targetDashboardUrl !== window.location.origin) {
           window.location.href = newUrl;
@@ -126,8 +125,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
         setSelectedRegion(previousRegion);
       }
     } else {
-      console.log(`No organization found for region: ${region}, showing creation confirmation`);
-
       // Show modal to confirm organization creation
       setOrgCreationModal({
         open: true,
@@ -139,42 +136,44 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
   // Auto-sync region when user switches to an organization from different region
   useEffect(() => {
-    if (currentOrganization && !isInOnboardingFlow()) {
+    if (currentOrganization) {
       const detectedRegion = detectRegionFromCurrentOrg();
       const urlRegion = detectRegionFromURL();
-
-      console.log('Region detection:', {
-        fromOrg: detectedRegion,
-        fromURL: urlRegion,
-        selected: selectedRegion,
-        orgName: currentOrganization.name,
-      });
+      const isInOrgCreation = isInOnboardingFlow();
 
       // If the URL region doesn't match the organization region,
       // redirect to the correct dashboard URL for the organization's region
       if (urlRegion !== detectedRegion) {
-        console.log(
-          `URL region (${urlRegion}) doesn't match organization region (${detectedRegion}) for org "${currentOrganization.name}"`
-        );
-        console.log(`Redirecting to ${detectedRegion} dashboard URL for current organization`);
+        // During organization creation flow, still redirect when selecting existing organizations
+        // from different regions to maintain URL consistency
+        if (isInOrgCreation) {
+          // In org creation: redirect to maintain URL consistency when switching to existing orgs
+          const correctDashboardUrl = getDashboardUrlForRegion(detectedRegion);
+          const currentPath = window.location.pathname + window.location.search + window.location.hash;
+          const newUrl = `${correctDashboardUrl}${currentPath}`;
 
-        // Redirect to the correct dashboard URL for the organization's region
-        const correctDashboardUrl = getDashboardUrlForRegion(detectedRegion);
-        const currentPath = window.location.pathname + window.location.search + window.location.hash;
-        const newUrl = `${correctDashboardUrl}${currentPath}`;
-
-        console.log('Redirecting to correct region dashboard:', newUrl);
-
-        if (correctDashboardUrl !== window.location.origin) {
-          // Different dashboard URL - redirect
-          window.location.href = newUrl;
+          if (correctDashboardUrl !== window.location.origin) {
+            // Different dashboard URL - redirect to maintain consistency
+            window.location.href = newUrl;
+            return;
+          }
         } else {
-          // Same dashboard URL but wrong region state - just update the region
-          setSelectedRegion(detectedRegion);
+          // Normal dashboard flow: redirect to correct region
+          const correctDashboardUrl = getDashboardUrlForRegion(detectedRegion);
+          const currentPath = window.location.pathname + window.location.search + window.location.hash;
+          const newUrl = `${correctDashboardUrl}${currentPath}`;
+
+          if (correctDashboardUrl !== window.location.origin) {
+            // Different dashboard URL - redirect
+            window.location.href = newUrl;
+            return;
+          }
         }
+
+        // Same dashboard URL but wrong region state - just update the region
+        setSelectedRegion(detectedRegion);
       } else if (selectedRegion !== detectedRegion) {
         // URL and organization match, but our selected region state is wrong - update it
-        console.log(`Updating selected region from ${selectedRegion} to ${detectedRegion} to match organization`);
         setSelectedRegion(detectedRegion);
       }
     }
@@ -186,14 +185,10 @@ export function RegionProvider({ children }: RegionProviderProps) {
     const webSocketHostname = getWebSocketHostnameForRegion(selectedRegion);
     apiHostnameManager.setApiHostname(apiHostname);
     apiHostnameManager.setWebSocketHostname(webSocketHostname);
-
-    console.log('Updated API hostname for region:', selectedRegion, apiHostname);
   }, [selectedRegion]);
 
   // Handle organization creation confirmation
   const handleConfirmOrgCreation = () => {
-    console.log(`Confirmed organization creation for region: ${orgCreationModal.targetRegion}`);
-
     // Close modal
     setOrgCreationModal({ open: false, targetRegion: 'us', previousRegion: 'us' });
 
@@ -201,8 +196,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
     const targetDashboardUrl = getDashboardUrlForRegion(orgCreationModal.targetRegion);
     const orgCreationPath = ROUTES.SIGNUP_ORGANIZATION_LIST;
     const newUrl = `${targetDashboardUrl}${orgCreationPath}`;
-
-    console.log('Redirecting to organization creation:', newUrl);
 
     if (targetDashboardUrl !== window.location.origin) {
       window.location.href = newUrl;
@@ -213,17 +206,11 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
   // Handle organization creation cancellation
   const handleCancelOrgCreation = () => {
-    console.log(
-      `Cancelled organization creation, reverting from ${orgCreationModal.targetRegion} back to ${orgCreationModal.previousRegion}`
-    );
-
     // Revert region
     setSelectedRegion(orgCreationModal.previousRegion);
 
     // Close modal
     setOrgCreationModal({ open: false, targetRegion: 'us', previousRegion: 'us' });
-
-    console.log(`Reverted to previous region: ${orgCreationModal.previousRegion}`);
   };
 
   const value: RegionContextType = {

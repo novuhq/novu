@@ -72,7 +72,6 @@ function OrganizationForm() {
 
       if (isOnFormPage !== showRegionSelector) {
         setShowRegionSelector(isOnFormPage);
-        console.log(`Organization form page visibility changed: ${isOnFormPage ? 'Page 2 (Form)' : 'Page 1 (List)'}`);
       }
     });
 
@@ -165,11 +164,8 @@ export default function OrganizationCreate() {
       // Set the region metadata for the newly created organization
       const regionMetadata = selectedRegion === 'singapore' ? 'ap-southeast-1' : 'us-east-1';
 
-      console.log(`New organization "${organization.name}" created in region: ${regionMetadata}`);
-
       // Note: Organization metadata with region should be set via backend API or Clerk webhook
-      // For now, we track this information in telemetry and localStorage
-      console.log(`Organization created in ${selectedRegion} region with metadata: ${regionMetadata}`);
+      // For now, we track this information in telemetry
     }
   }, [organization, track, selectedRegion]);
 
