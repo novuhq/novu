@@ -34,7 +34,7 @@ export const LEGACY_DASHBOARD_URL =
 
 export const DASHBOARD_URL = window._env_?.VITE_DASHBOARD_URL || import.meta.env.VITE_DASHBOARD_URL;
 
-export const DASHBOARD_URL_SG = window._env_?.VITE_DASHBOARD_URL_SG || import.meta.env.VITE_DASHBOARD_URL_SG;
+export const DASHBOARD_URL_SG = meta.env.VITE_DASHBOARD_URL_SG;
 
 export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT_APP_ID;
 
