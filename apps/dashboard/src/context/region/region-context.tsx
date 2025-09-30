@@ -1,9 +1,9 @@
-import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { ROUTES } from '@/utils/routes';
 import { useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { ROUTES } from '@/utils/routes';
 
 import { RegionModals } from './region-modals';
 import { type OrgCreationModalState, type Region, type RegionContextType } from './region-types';
