@@ -8,17 +8,26 @@ import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 import { LocalizationResourceEnum } from '@/types/translations';
 
 type WorkflowTranslationStatusProps = {
-  workflowId: string;
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
+  isTranslationEnabledOnResource: boolean;
   className?: string;
 };
 
-export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTranslationStatusProps) {
+export function TranslationStatus({
+  resourceId,
+  resourceType,
+  isTranslationEnabledOnResource,
+  className,
+}: WorkflowTranslationStatusProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const isTranslationsEnabled = useIsTranslationEnabled();
+  const isTranslationsEnabled = useIsTranslationEnabled({
+    isTranslationEnabledOnResource,
+  });
 
   const { data: translationGroup } = useFetchTranslationGroup({
-    resourceId: workflowId,
-    resourceType: LocalizationResourceEnum.WORKFLOW,
+    resourceId,
+    resourceType,
     enabled: isTranslationsEnabled,
   });
 
@@ -78,8 +87,8 @@ export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTra
         <TranslationDrawer
           isOpen={isDrawerOpen}
           onOpenChange={setIsDrawerOpen}
-          resourceType={LocalizationResourceEnum.WORKFLOW}
-          resourceId={workflowId}
+          resourceType={resourceType}
+          resourceId={resourceId}
         />
       </>
     );
@@ -92,8 +101,8 @@ export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTra
       <TranslationDrawer
         isOpen={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
-        resourceType={LocalizationResourceEnum.WORKFLOW}
-        resourceId={workflowId}
+        resourceType={resourceType}
+        resourceId={resourceId}
       />
     </>
   );

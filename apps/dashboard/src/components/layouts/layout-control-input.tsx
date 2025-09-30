@@ -1,16 +1,13 @@
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
 import { useMemo, useRef } from 'react';
-import { EditorOverlays } from '@/components/editor-overlays';
 import { CompletionRange, VariableEditor } from '@/components/primitives/variable-editor';
-import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
-import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
-import { LocalizationResourceEnum } from '../../../types/translations';
+import { EditTranslationPopover } from '../workflow-editor/steps/email/translations/edit-translation-popover/edit-translation-popover';
+import { useLayoutEditor } from './layout-editor-provider';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -26,7 +23,7 @@ const variants = cva('relative w-full', {
   },
 });
 
-type ControlInputProps = {
+type LayoutControlInputProps = {
   className?: string;
   value: string;
   onChange: (value: string) => void;
@@ -43,7 +40,7 @@ type ControlInputProps = {
   disabled?: boolean;
 };
 
-export function ControlInput({
+export function LayoutControlInput({
   value,
   onChange,
   onBlur,
@@ -58,20 +55,12 @@ export function ControlInput({
   isAllowedVariable,
   enableTranslations = false,
   disabled = false,
-}: ControlInputProps) {
+}: LayoutControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
-  const { workflow, digestStepBeforeCurrent } = useWorkflow();
-  const resourceId = workflow?.workflowId || '';
-  const resourceType = LocalizationResourceEnum.WORKFLOW;
-  const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
-  const {
-    handleCreateNewVariable,
-    isPayloadSchemaDrawerOpen,
-    highlightedVariableKey,
-    openSchemaDrawer,
-    closeSchemaDrawer,
-  } = useCreateVariable();
+  const { layout } = useLayoutEditor();
+  const resourceId = layout?.layoutId || '';
+  const resourceType = LocalizationResourceEnum.LAYOUT;
 
   const {
     translationCompletionSource,
@@ -90,13 +79,7 @@ export function ControlInput({
     resourceId,
     resourceType,
     enableTranslations,
-    isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
-  });
-
-  const { enhancedIsAllowedVariable } = useEnhancedVariableValidation({
-    isAllowedVariable,
-    currentSchema,
-    getSchemaPropertyByKey,
+    isTranslationEnabledOnResource: !!layout?.isTranslationEnabled,
   });
 
   const extensions = useMemo(() => {
@@ -114,7 +97,7 @@ export function ControlInput({
       onChange={onChange}
       onBlur={onBlur}
       variables={variables}
-      isAllowedVariable={enhancedIsAllowedVariable}
+      isAllowedVariable={isAllowedVariable}
       placeholder={placeholder}
       autoFocus={autoFocus}
       id={id}
@@ -122,38 +105,27 @@ export function ControlInput({
       indentWithTab={indentWithTab}
       size={size}
       completionSources={translationCompletionSource}
-      isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+      isPayloadSchemaEnabled={false}
       isTranslationEnabled={shouldEnableTranslations}
-      getSchemaPropertyByKey={getSchemaPropertyByKey}
       extensions={extensions}
-      digestStepName={digestStepBeforeCurrent?.stepId}
       skipContainerClick={isTranslationPopoverOpen}
-      onManageSchemaClick={openSchemaDrawer}
-      onCreateNewVariable={handleCreateNewVariable}
       disabled={disabled}
     >
-      <EditorOverlays
-        resourceId={resourceId}
-        resourceType={resourceType}
-        isTranslationPopoverOpen={isTranslationPopoverOpen}
-        selectedTranslation={selectedTranslation}
-        onTranslationPopoverOpenChange={handleTranslationPopoverOpenChange}
-        onTranslationDelete={handleTranslationDelete}
-        onTranslationReplaceKey={handleTranslationReplaceKey}
-        translationTriggerPosition={translationTriggerPosition}
-        variables={variables}
-        isAllowedVariable={enhancedIsAllowedVariable}
-        workflow={workflow}
-        isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
-        onPayloadSchemaDrawerOpenChange={(isOpen) => {
-          if (!isOpen) {
-            closeSchemaDrawer();
-          }
-        }}
-        highlightedVariableKey={highlightedVariableKey}
-        enableTranslations={shouldEnableTranslations}
-        translationValueInput={ControlInput}
-      />
+      {isTranslationPopoverOpen && selectedTranslation && resourceId && enableTranslations && (
+        <EditTranslationPopover
+          open={isTranslationPopoverOpen}
+          onOpenChange={handleTranslationPopoverOpenChange}
+          translationKey={selectedTranslation.translationKey}
+          onDelete={handleTranslationDelete}
+          onReplaceKey={handleTranslationReplaceKey}
+          variables={variables}
+          isAllowedVariable={isAllowedVariable}
+          resourceId={resourceId}
+          resourceType={resourceType}
+          position={translationTriggerPosition || undefined}
+          translationValueInput={LayoutControlInput}
+        />
+      )}
     </VariableEditor>
   );
 }

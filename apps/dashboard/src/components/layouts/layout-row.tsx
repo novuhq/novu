@@ -1,6 +1,6 @@
 import { EnvironmentTypeEnum, LayoutResponseDto, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
-import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiFileCopyLine, RiLayout5Line, RiMore2Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
 import { DeleteLayoutDialog } from '@/components/layouts/delete-layout-dialog';
@@ -25,6 +25,7 @@ import { formatDateSimple } from '@/utils/format-date';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { TranslatedLayoutIcon } from '../icons/translated-layout-icon';
 import { Badge } from '../primitives/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
@@ -132,6 +133,11 @@ export const LayoutRow = ({ layout }: LayoutRowProps) => {
       >
         <LayoutTableCell>
           <div className="flex items-center gap-3">
+            {layout.isTranslationEnabled ? (
+              <TranslatedLayoutIcon className="text-feature size-4" />
+            ) : (
+              <RiLayout5Line className="text-feature size-4" />
+            )}
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <TruncatedText className="text-text-strong max-w-[36ch] font-medium">{layout.name}</TruncatedText>

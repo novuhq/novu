@@ -28,6 +28,7 @@ export enum LayoutCreationSourceEnum {
 export type CreateLayoutDto = {
   layoutId: string;
   name: string;
+  isTranslationEnabled?: boolean;
   __source: LayoutCreationSourceEnum;
 };
 
@@ -42,11 +43,13 @@ export type LayoutControlValuesDto = {
 
 export type UpdateLayoutDto = {
   name: string;
+  isTranslationEnabled?: boolean;
   controlValues: LayoutControlValuesDto;
 };
 
 export type DuplicateLayoutDto = {
   name: string;
+  isTranslationEnabled?: boolean;
 };
 
 export type LayoutCreateAndUpdateKeys = keyof CreateLayoutDto | keyof UpdateLayoutDto;
@@ -63,6 +66,7 @@ export type LayoutResponseDto = {
   type: ResourceTypeEnum;
   controls: Controls;
   variables?: JSONSchemaDto;
+  isTranslationEnabled: boolean;
 };
 
 export type ListLayoutsResponse = {

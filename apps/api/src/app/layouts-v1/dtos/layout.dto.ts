@@ -72,4 +72,7 @@ export class LayoutDto {
   })
   @Type(() => ControlsMetadataDto)
   controls: ControlsMetadataDto;
+
+  @ApiPropertyOptional()
+  isTranslationEnabled?: boolean;
 }

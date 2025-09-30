@@ -2,6 +2,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Translation } from '@/api/translations';
 import { UpdateTranslationValueParams } from '@/hooks/use-update-translation-value';
+import { LocalizationResourceEnum } from '@/types/translations';
 
 const getTranslationValue = (content: Record<string, unknown> | undefined, key: string): string => {
   if (!content || !key) return '';
@@ -23,7 +24,8 @@ const getTranslationValue = (content: Record<string, unknown> | undefined, key: 
 const useAutoSave = (
   editKey: string,
   editValue: string,
-  workflowId: string,
+  resourceId: string,
+  resourceType: LocalizationResourceEnum,
   updateTranslationValue: UseMutationResult<any, Error, UpdateTranslationValueParams, unknown>,
   hasUserEditedKey: boolean,
   initialKeyOnOpen: string,
@@ -53,7 +55,8 @@ const useAutoSave = (
         // Save value if it changed
         if (needsValueSave) {
           updateTranslationValue.mutate({
-            workflowId,
+            resourceId,
+            resourceType,
             translationKey: trimmedKey,
             translationValue: editValue,
           });
@@ -72,7 +75,16 @@ const useAutoSave = (
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [editValue, editKey, workflowId, updateTranslationValue, hasUserEditedKey, onReplaceKey, initialKeyOnOpen]);
+  }, [
+    editValue,
+    editKey,
+    resourceId,
+    resourceType,
+    updateTranslationValue,
+    hasUserEditedKey,
+    onReplaceKey,
+    initialKeyOnOpen,
+  ]);
 
   return { lastSavedValueRef, debounceTimeoutRef };
 };
@@ -81,7 +93,8 @@ export const useTranslationEditor = (
   initialKey: string,
   initialValue: string,
   translationData: Translation | null,
-  workflowId: string,
+  resourceId: string,
+  resourceType: LocalizationResourceEnum,
   updateTranslationValue: UseMutationResult<Translation, Error, UpdateTranslationValueParams, unknown>,
   onReplaceKey?: (newKey: string) => void
 ) => {
@@ -98,7 +111,8 @@ export const useTranslationEditor = (
   const { lastSavedValueRef, debounceTimeoutRef } = useAutoSave(
     editKey,
     editValue,
-    workflowId,
+    resourceId,
+    resourceType,
     updateTranslationValue,
     hasUserEditedKey,
     initialKeyOnOpen,

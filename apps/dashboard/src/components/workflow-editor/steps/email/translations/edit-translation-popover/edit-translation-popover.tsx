@@ -1,5 +1,5 @@
 import { DEFAULT_LOCALE } from '@novu/shared';
-import React, { useCallback, useId, useState } from 'react';
+import React, { ComponentType, useCallback, useId, useState } from 'react';
 import { RiDeleteBin2Line, RiErrorWarningLine, RiListView, RiQuestionLine } from 'react-icons/ri';
 import { TranslateVariableIcon } from '@/components/icons/translate-variable';
 import { Button } from '@/components/primitives/button';
@@ -9,7 +9,6 @@ import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/inpu
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
-import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
@@ -19,6 +18,17 @@ import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useTranslationEditor } from './use-translation-editor';
 import { useTranslationForm } from './use-translation-form';
 import { useVirtualAnchor } from './use-virtual-anchor';
+
+export type TranslationValueInputComponent = ComponentType<{
+  value: string;
+  onChange: (value: string) => void;
+  variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
+  placeholder: string;
+  multiline: boolean;
+  size?: 'md' | 'sm' | '2xs' | '3xs';
+  className: string;
+}>;
 
 interface EditTranslationPopoverProps {
   open: boolean;
@@ -30,7 +40,9 @@ interface EditTranslationPopoverProps {
   position?: { top: number; left: number };
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
-  workflowId: string;
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
+  translationValueInput: TranslationValueInputComponent;
 }
 
 const PopoverHeader = ({ onDelete }: { onDelete: () => void }) => (
@@ -53,7 +65,8 @@ const TranslationKeyInput = ({
   onAddTranslationKey,
   isLoading,
   isCreatingKey,
-  workflowId,
+  resourceId,
+  resourceType,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -63,7 +76,8 @@ const TranslationKeyInput = ({
   onAddTranslationKey: () => void;
   isLoading: boolean;
   isCreatingKey: boolean;
-  workflowId: string;
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -139,8 +153,8 @@ const TranslationKeyInput = ({
       <TranslationDrawer
         isOpen={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
-        resourceType={LocalizationResourceEnum.WORKFLOW}
-        resourceId={workflowId}
+        resourceType={resourceType}
+        resourceId={resourceId}
       />
     </FormItem>
   );
@@ -152,12 +166,14 @@ const TranslationValueInput = ({
   variables,
   isAllowedVariable,
   isSaving,
+  translationValueInput: TranslationValueInputComponent,
 }: {
   value: string;
   onChange: (value: string) => void;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   isSaving: boolean;
+  translationValueInput: TranslationValueInputComponent;
 }) => (
   <FormItem>
     <FormControl>
@@ -185,7 +201,7 @@ const TranslationValueInput = ({
           )}
         </div>
         <InputRoot size="2xs" className="min-h-[4rem] overflow-visible">
-          <ControlInput
+          <TranslationValueInputComponent
             value={value}
             onChange={onChange}
             variables={variables}
@@ -211,11 +227,14 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
   position,
   variables,
   isAllowedVariable,
-  workflowId,
+  resourceId,
+  resourceType,
+  translationValueInput,
 }) => {
   const id = useId();
   const { translationKeys, isLoading, translationData } = useFetchTranslationKeys({
-    workflowId,
+    resourceId,
+    resourceType,
     enabled: open,
   });
 
@@ -224,7 +243,8 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
     translationKey,
     translationValue,
     translationData || null,
-    workflowId,
+    resourceId,
+    resourceType,
     updateTranslationValue,
     onReplaceKey
   );
@@ -243,7 +263,8 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
       }
 
       updateTranslationValue.mutate({
-        workflowId,
+        resourceId,
+        resourceType,
         translationKey: trimmedKey,
         translationValue: editor.editValue,
       });
@@ -256,12 +277,13 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
     }
 
     onOpenChange(false);
-  }, [editor, workflowId, updateTranslationValue, onReplaceKey, onOpenChange]);
+  }, [editor, resourceId, resourceType, updateTranslationValue, onReplaceKey, onOpenChange]);
 
   const form = useTranslationForm(
     editor.editKey,
     editor.editValue,
-    workflowId,
+    resourceId,
+    resourceType,
     translationKey,
     translationKeys,
     onReplaceKey,
@@ -281,7 +303,8 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
       }
 
       updateTranslationValue.mutate({
-        workflowId,
+        resourceId,
+        resourceType,
         translationKey: trimmedKey,
         translationValue: editor.editValue,
       });
@@ -292,7 +315,7 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
     if (editor.hasUserEditedKey && onReplaceKey && trimmedKey && trimmedKey !== editor.initialKeyOnOpen) {
       onReplaceKey(trimmedKey);
     }
-  }, [editor, workflowId, updateTranslationValue, onReplaceKey]);
+  }, [editor, resourceId, resourceType, updateTranslationValue, onReplaceKey]);
 
   const handleDelete = useCallback(() => {
     onDelete();
@@ -345,7 +368,8 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
               onAddTranslationKey={form.handleAddTranslationKey}
               isLoading={isLoading}
               isCreatingKey={form.isCreatingKey}
-              workflowId={workflowId}
+              resourceId={resourceId}
+              resourceType={resourceType}
             />
 
             <TranslationValueInput
@@ -354,6 +378,7 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
               variables={variables}
               isAllowedVariable={isAllowedVariable}
               isSaving={editor.isSaving}
+              translationValueInput={translationValueInput}
             />
           </div>
         </div>

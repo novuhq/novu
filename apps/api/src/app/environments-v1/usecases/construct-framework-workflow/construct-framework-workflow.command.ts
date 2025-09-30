@@ -7,6 +7,10 @@ export class ConstructFrameworkWorkflowCommand extends EnvironmentLevelCommand {
   @IsDefined()
   workflowId: string;
 
+  @IsString()
+  @IsOptional()
+  layoutId?: string;
+
   @IsObject()
   @IsDefined()
   controlValues: Record<string, unknown>;

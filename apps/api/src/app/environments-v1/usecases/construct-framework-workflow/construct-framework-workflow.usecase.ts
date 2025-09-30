@@ -89,6 +89,7 @@ export class ConstructFrameworkWorkflow {
             organizationId: environment._organizationId,
             locale: subscriber.locale ?? undefined,
             stepId: LAYOUT_PREVIEW_EMAIL_STEP,
+            layoutId: command.layoutId,
           });
         },
         {

@@ -8,7 +8,8 @@ import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
 
 type CreateTranslationKeyParams = {
-  workflowId: string;
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
   translationKey: string;
   defaultValue?: string;
 };
@@ -19,7 +20,7 @@ export const useCreateTranslationKey = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ workflowId, translationKey, defaultValue = '' }: CreateTranslationKeyParams) => {
+    mutationFn: async ({ resourceId, resourceType, translationKey, defaultValue = '' }: CreateTranslationKeyParams) => {
       if (!currentEnvironment) {
         throw new Error('Environment is required');
       }
@@ -32,8 +33,8 @@ export const useCreateTranslationKey = () => {
       try {
         const existingTranslation = await getTranslation({
           environment: currentEnvironment,
-          resourceId: workflowId,
-          resourceType: LocalizationResourceEnum.WORKFLOW,
+          resourceId,
+          resourceType,
           locale: defaultLocale,
         });
 
@@ -67,8 +68,8 @@ export const useCreateTranslationKey = () => {
       // Save the updated translation
       return await saveTranslation({
         environment: currentEnvironment,
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId,
+        resourceType,
         locale: defaultLocale,
         content: updatedContent,
       });
@@ -78,15 +79,15 @@ export const useCreateTranslationKey = () => {
 
       // Invalidate translation keys query to refresh the list
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslationKeys, variables.workflowId, defaultLocale, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchTranslationKeys, variables.resourceId, defaultLocale, currentEnvironment?._id],
       });
 
       // Invalidate the specific translation query
       queryClient.invalidateQueries({
         queryKey: [
           QueryKeys.fetchTranslation,
-          variables.workflowId,
-          LocalizationResourceEnum.WORKFLOW,
+          variables.resourceId,
+          variables.resourceType,
           defaultLocale,
           currentEnvironment?._id,
         ],
