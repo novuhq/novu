@@ -1,74 +1,68 @@
-import {
-  API_HOSTNAME,
-  API_HOSTNAME_SG,
-  DASHBOARD_URL,
-  DASHBOARD_URL_SG,
-  WEBSOCKET_HOSTNAME,
-  WEBSOCKET_HOSTNAME_SG,
-} from '@/config';
 import { type OrganizationMembershipResource, type OrganizationResource } from '@clerk/types';
-import { type OrganizationMetadata, REGION_METADATA_MAP, type Region } from './region-types';
+import { DEFAULT_REGION, getRegionCodeFromAws, getRegionConfig, REGIONS } from './region-config';
+import { type OrganizationMetadata, type Region } from './region-types';
 
 export function getApiHostnameForRegion(region: Region): string {
-  switch (region) {
-    case 'singapore':
-      return API_HOSTNAME_SG || API_HOSTNAME;
-    case 'us':
-    default:
-      return API_HOSTNAME;
+  const config = getRegionConfig(region);
+  if (config) {
+    return config.apiHostname;
   }
+
+  // Fallback to default region
+  const defaultConfig = getRegionConfig(DEFAULT_REGION);
+  return defaultConfig?.apiHostname || '';
 }
 
 export function getWebSocketHostnameForRegion(region: Region): string {
-  switch (region) {
-    case 'singapore':
-      return WEBSOCKET_HOSTNAME_SG || WEBSOCKET_HOSTNAME;
-    case 'us':
-    default:
-      return WEBSOCKET_HOSTNAME;
+  const config = getRegionConfig(region);
+  if (config) {
+    return config.websocketHostname;
   }
+
+  // Fallback to default region
+  const defaultConfig = getRegionConfig(DEFAULT_REGION);
+  return defaultConfig?.websocketHostname || '';
 }
 
 export function detectRegionFromOrganization(organization: OrganizationResource | null | undefined): Region {
-  if (!organization) return 'us';
+  if (!organization) return DEFAULT_REGION;
 
   const orgMetadata = organization.publicMetadata as OrganizationMetadata;
-  const orgRegion = orgMetadata?.region;
+  const awsRegion = orgMetadata?.region;
 
-  // No region metadata means US (default behavior)
-  if (!orgRegion) {
-    return 'us';
+  // No region metadata means default region
+  if (!awsRegion) {
+    return DEFAULT_REGION;
   }
 
-  // Explicit region mapping
-  if (orgRegion === 'us-east-1') {
-    return 'us';
-  }
-
-  if (orgRegion === 'ap-southeast-1') {
-    return 'singapore';
-  }
-
-  // Fallback to US for any unknown region
-  return 'us';
+  // Map AWS region to region code
+  const regionCode = getRegionCodeFromAws(awsRegion);
+  return regionCode;
 }
 
 export function findOrganizationForRegion(
   region: Region,
   userMemberships: { data?: OrganizationMembershipResource[] }
 ) {
-  const expectedMetadataRegion = REGION_METADATA_MAP[region];
+  // Get the AWS region for the requested region code
+  const regionConfig = getRegionConfig(region);
+  if (!regionConfig) {
+    return undefined;
+  }
+
+  const expectedAwsRegion = regionConfig.awsRegion;
 
   const found = userMemberships.data?.find((membership) => {
     const orgMetadata = membership.organization.publicMetadata as OrganizationMetadata;
-    const orgRegion = orgMetadata?.region;
+    const awsRegion = orgMetadata?.region;
 
-    // If no region metadata, assume us-east-1
-    if (!orgRegion) {
-      return expectedMetadataRegion === 'us-east-1';
+    // If no region metadata, assume default region
+    if (!awsRegion) {
+      const defaultConfig = getRegionConfig(DEFAULT_REGION);
+      return expectedAwsRegion === defaultConfig?.awsRegion;
     }
 
-    return orgRegion === expectedMetadataRegion;
+    return awsRegion === expectedAwsRegion;
   });
 
   return found;
@@ -89,42 +83,45 @@ export function isInOnboardingFlow(): boolean {
  */
 export function detectRegionFromURL(): Region {
   const currentOrigin = window.location.origin;
+  const normalizeUrl = (url: string) => url.replace(/\/$/, '');
+  const currentNormalized = normalizeUrl(currentOrigin);
 
-  // If we have specific dashboard URLs configured, use them for detection
-  if (DASHBOARD_URL_SG && DASHBOARD_URL) {
-    // Normalize URLs for comparison (remove trailing slashes)
-    const normalizeUrl = (url: string) => url.replace(/\/$/, '');
-    const currentNormalized = normalizeUrl(currentOrigin);
-    const sgNormalized = normalizeUrl(DASHBOARD_URL_SG);
-    const usNormalized = normalizeUrl(DASHBOARD_URL);
-
-    if (currentNormalized === sgNormalized) {
-      return 'singapore';
-    }
-
-    if (currentNormalized === usNormalized) {
-      return 'us';
+  // Try to match current URL with any configured region's dashboard URL
+  for (const region of REGIONS) {
+    const regionDashboardUrl = normalizeUrl(region.dashboardUrl);
+    if (currentNormalized === regionDashboardUrl) {
+      return region.code;
     }
   }
 
-  // Fallback: detect based on domain patterns
-  if (currentOrigin.includes('sg.') || currentOrigin.includes('singapore.') || currentOrigin.includes('asia.')) {
-    return 'singapore';
+  // Fallback: detect based on domain patterns in region codes
+  // e.g., if origin contains 'sg.' and we have a 'singapore' region
+  const lowerOrigin = currentOrigin.toLowerCase();
+  for (const region of REGIONS) {
+    // Check if origin contains region code or common patterns
+    if (
+      lowerOrigin.includes(`${region.code}.`) ||
+      lowerOrigin.includes(`.${region.code}.`) ||
+      lowerOrigin.includes(`-${region.code}.`)
+    ) {
+      return region.code;
+    }
   }
 
-  // Default to US region
-  return 'us';
+  // Default to base region
+  return DEFAULT_REGION;
 }
 
 /**
  * Gets the dashboard URL for a specific region
  */
 export function getDashboardUrlForRegion(region: Region): string {
-  switch (region) {
-    case 'singapore':
-      return DASHBOARD_URL_SG || DASHBOARD_URL || window.location.origin;
-    case 'us':
-    default:
-      return DASHBOARD_URL || window.location.origin;
+  const config = getRegionConfig(region);
+  if (config) {
+    return config.dashboardUrl;
   }
+
+  // Fallback to default region or current origin
+  const defaultConfig = getRegionConfig(DEFAULT_REGION);
+  return defaultConfig?.dashboardUrl || window.location.origin;
 }

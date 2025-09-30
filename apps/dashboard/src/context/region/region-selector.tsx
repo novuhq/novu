@@ -1,15 +1,17 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { IS_EU } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { Globe } from 'lucide-react';
+import { REGIONS } from './region-config';
 import { useRegion } from './region-context';
-import { type Region } from './region-types';
 
-const REGION_OPTIONS: Array<{ value: Region; label: string; flag: string }> = [
-  { value: 'us', label: 'US', flag: '🇺🇸' },
-  { value: 'singapore', label: 'Singapore', flag: '🇸🇬' },
-];
+// Dynamically load region options from configuration
+const REGION_OPTIONS = REGIONS.map((region) => ({
+  value: region.code,
+  label: region.name,
+  flag: region.flag,
+}));
 
 export function RegionSelector() {
   const { selectedRegion, setSelectedRegion } = useRegion();
