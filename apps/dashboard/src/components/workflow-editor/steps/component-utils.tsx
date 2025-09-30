@@ -1,6 +1,6 @@
 import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
 import { EmailEditorSelect } from '@/components/email-editor-select';
-import { DigestDelayTabs } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-dellay-tabs';
+import { DigestDelayTabs } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-delay-tabs';
 import { DigestKey } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-key';
 import { EmailBody } from '@/components/workflow-editor/steps/email/email-body';
 import { EmailSubject } from '@/components/workflow-editor/steps/email/email-subject';
