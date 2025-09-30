@@ -77,9 +77,6 @@ export function isInOnboardingFlow(): boolean {
   );
 }
 
-/**
- * Detects the current region based on the dashboard URL
- */
 export function detectRegionFromURL(): Region {
   const currentOrigin = window.location.origin;
   const normalizeUrl = (url: string) => url.replace(/\/$/, '');
@@ -93,11 +90,9 @@ export function detectRegionFromURL(): Region {
     }
   }
 
-  // Fallback: detect based on domain patterns in region codes
-  // e.g., if origin contains 'sg.' and we have a 'singapore' region
+  // Fallback: detect based on domain patterns
   const lowerOrigin = currentOrigin.toLowerCase();
   for (const region of REGIONS) {
-    // Check if origin contains region code or common patterns
     if (
       lowerOrigin.includes(`${region.code}.`) ||
       lowerOrigin.includes(`.${region.code}.`) ||
@@ -111,9 +106,6 @@ export function detectRegionFromURL(): Region {
   return DEFAULT_REGION;
 }
 
-/**
- * Gets the dashboard URL for a specific region
- */
 export function getDashboardUrlForRegion(region: Region): string {
   const config = getRegionConfig(region);
   if (config) {

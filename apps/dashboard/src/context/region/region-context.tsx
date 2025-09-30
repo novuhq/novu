@@ -73,18 +73,14 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
     setSelectedRegion(region);
 
-    // If we're in organization creation flow, redirect to maintain URL consistency
     if (isInOnboardingFlow()) {
-      // Redirect to the correct dashboard URL for the selected region to maintain consistency
       const targetDashboardUrl = getDashboardUrlForRegion(region);
       const currentPath = window.location.pathname + window.location.search + window.location.hash;
       const newUrl = `${targetDashboardUrl}${currentPath}`;
 
       if (targetDashboardUrl !== window.location.origin) {
-        // Different dashboard URL - redirect to maintain consistency
         window.location.href = newUrl;
       } else {
-        // Same dashboard URL - just update API hostnames
         const newApiHostname = getApiHostnameForRegion(region);
         const newWebSocketHostname = getWebSocketHostnameForRegion(region);
         apiHostnameManager.setApiHostname(newApiHostname);
@@ -95,7 +91,6 @@ export function RegionProvider({ children }: RegionProviderProps) {
       return;
     }
 
-    // For region switching in dashboard - redirect to the appropriate dashboard URL
     const targetDashboardUrl = getDashboardUrlForRegion(region);
     const currentPath = window.location.pathname + window.location.search + window.location.hash;
 
@@ -104,26 +99,21 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
     if (targetOrgMembership && clerk) {
       try {
-        // Switch to the organization for the selected region
         await clerk.setActive({
           organization: targetOrgMembership.organization,
         });
 
-        // Redirect to the correct dashboard URL for the target region
         const newUrl = `${targetDashboardUrl}${currentPath}`;
 
         if (targetDashboardUrl !== window.location.origin) {
           window.location.href = newUrl;
         } else {
-          // Same dashboard URL - just refresh to update the region
           window.location.reload();
         }
       } catch (error) {
-        // Revert region on error
         setSelectedRegion(previousRegion);
       }
     } else {
-      // Show modal to confirm organization creation
       setOrgCreationModal({
         open: true,
         targetRegion: region,
@@ -149,22 +139,18 @@ export function RegionProvider({ children }: RegionProviderProps) {
           setSelectedRegion(urlRegion);
           return;
         } else {
-          // Normal dashboard flow: redirect to correct region
           const correctDashboardUrl = getDashboardUrlForRegion(detectedRegion);
           const currentPath = window.location.pathname + window.location.search + window.location.hash;
           const newUrl = `${correctDashboardUrl}${currentPath}`;
 
           if (correctDashboardUrl !== window.location.origin) {
-            // Different dashboard URL - redirect
             window.location.href = newUrl;
             return;
           }
         }
 
-        // Same dashboard URL but wrong region state - just update the region
         setSelectedRegion(detectedRegion);
       } else if (selectedRegion !== detectedRegion) {
-        // URL and organization match, but our selected region state is wrong - update it
         setSelectedRegion(detectedRegion);
       }
     }
@@ -180,10 +166,8 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
   // Handle organization creation confirmation
   const handleConfirmOrgCreation = () => {
-    // Close modal
     setOrgCreationModal({ open: false, targetRegion: 'us', previousRegion: 'us' });
 
-    // Redirect to the correct dashboard URL for organization creation
     const targetDashboardUrl = getDashboardUrlForRegion(orgCreationModal.targetRegion);
     const orgCreationPath = ROUTES.SIGNUP_ORGANIZATION_LIST;
     const newUrl = `${targetDashboardUrl}${orgCreationPath}`;
@@ -197,10 +181,7 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
   // Handle organization creation cancellation
   const handleCancelOrgCreation = () => {
-    // Revert region
     setSelectedRegion(orgCreationModal.previousRegion);
-
-    // Close modal
     setOrgCreationModal({ open: false, targetRegion: 'us', previousRegion: 'us' });
   };
 

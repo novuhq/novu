@@ -44,22 +44,20 @@ function parseRegionsFromEnv(): RegionConfig[] {
     const upperCode = code.toUpperCase();
     const isBaseRegion = code === baseRegionCode;
 
-    // Base region (first in VITE_REGIONS) uses env vars without suffix, all others use _SUFFIX
-    // e.g., if base is 'us': VITE_DASHBOARD_URL for base, VITE_DASHBOARD_URL_SG for others
+    // Base region uses env vars without suffix, others use _SUFFIX
     const dashboardUrl = isBaseRegion ? DASHBOARD_URL : getEnvVar(`VITE_DASHBOARD_URL_${upperCode}`, '');
 
     const apiHostname = isBaseRegion ? API_HOSTNAME : getEnvVar(`VITE_API_HOSTNAME_${upperCode}`, '');
 
     const websocketHostname = isBaseRegion ? WEBSOCKET_HOSTNAME : getEnvVar(`VITE_WEBSOCKET_HOSTNAME_${upperCode}`, '');
 
-    // AWS region mapping - base region uses NO suffix, others use suffix
-    // Example: VITE_AWS_REGION (base), VITE_AWS_REGION_SG (others)
+    // AWS region mapping
     const baseAwsRegion = baseRegionCode === 'us' ? 'us-east-1' : '';
     const awsRegion = isBaseRegion
       ? getEnvVar('VITE_AWS_REGION', baseAwsRegion)
       : getEnvVar(`VITE_AWS_REGION_${upperCode}`, '');
 
-    // Region display name and flag - base region uses NO suffix, others use suffix
+    // Region display name and flag
     const defaultName = code.toUpperCase();
     const defaultFlag = isBaseRegion && code === 'us' ? '🇺🇸' : '🌍';
     const regionName = isBaseRegion
@@ -69,7 +67,7 @@ function parseRegionsFromEnv(): RegionConfig[] {
       ? getEnvVar('VITE_REGION_FLAG', defaultFlag)
       : getEnvVar(`VITE_REGION_FLAG_${upperCode}`, defaultFlag);
 
-    // Skip if essential config is missing (except for base region which has defaults)
+    // Skip if essential config is missing
     if (!dashboardUrl || !apiHostname || !websocketHostname) {
       if (!isBaseRegion) {
         console.warn(`Skipping region ${code}: missing required environment variables`);
