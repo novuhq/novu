@@ -1,3 +1,4 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
 import { useMemo, useRef } from 'react';
@@ -8,6 +9,7 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
 import { LocalizationResourceEnum } from '../../../types/translations';
@@ -65,6 +67,7 @@ export function ControlInput({
   const resourceId = workflow?.workflowId || '';
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const {
     handleCreateNewVariable,
     isPayloadSchemaDrawerOpen,
@@ -124,6 +127,7 @@ export function ControlInput({
       completionSources={translationCompletionSource}
       isPayloadSchemaEnabled={isPayloadSchemaEnabled}
       isTranslationEnabled={shouldEnableTranslations}
+      isContextEnabled={isContextEnabled}
       getSchemaPropertyByKey={getSchemaPropertyByKey}
       extensions={extensions}
       digestStepName={digestStepBeforeCurrent?.stepId}

@@ -1,4 +1,5 @@
 import { Variable } from '@maily-to/core/extensions';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Editor, NodeViewProps } from '@tiptap/core';
 import { EditorView } from '@uiw/react-codemirror';
 import React, { useCallback, useMemo, useRef } from 'react';
@@ -18,6 +19,7 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -141,6 +143,7 @@ export const EmailBody = () => {
   const resourceId = workflow?.workflowId || '';
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const { saveForm } = useSaveForm();
   const track = useTelemetry();
 
@@ -293,6 +296,7 @@ export const EmailBody = () => {
               completionSources={translationCompletionSource}
               isPayloadSchemaEnabled={isPayloadSchemaEnabled}
               isTranslationEnabled={isTranslationEnabled}
+              isContextEnabled={isContextEnabled}
               getSchemaPropertyByKey={getSchemaPropertyByKey}
               extensions={extensions}
               digestStepName={digestStepBeforeCurrent?.stepId}
@@ -335,6 +339,7 @@ export const EmailBody = () => {
             blocks={blocks}
             isPayloadSchemaEnabled={isPayloadSchemaEnabled}
             isTranslationEnabled={isTranslationEnabled}
+            isContextEnabled={isContextEnabled}
             translationKeys={translationKeys}
             translationValueInput={ControlInput}
             addDigestVariables={!!digestStepBeforeCurrent?.stepId}

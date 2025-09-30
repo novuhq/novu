@@ -12,7 +12,7 @@ export abstract class BasePushHandler extends BaseHandler<IPushProvider> impleme
 
   async send(options: IPushOptions) {
     if (process.env.NODE_ENV === 'test') {
-      throw new Error('Currently 3rd-party packages test are not support on test env');
+      return {};
     }
 
     const { bridgeProviderData, ...otherOptions } = options;

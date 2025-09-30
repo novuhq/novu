@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getWorkflow, getWorkflows } from '@/api/workflows';
 import { QueryKeys } from '@/utils/query-keys';
 import { ONBOARDING_DEMO_WORKFLOW_ID } from '../config';
-import { useEnvironment } from '../context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '../context/environment/hooks';
 
 type FirstTriggerDetectionOptions = {
   enabled?: boolean;
@@ -41,9 +41,10 @@ export function useFirstTriggerDetection({
   } = useQuery({
     queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id, ONBOARDING_DEMO_WORKFLOW_ID],
     queryFn: () => {
-      if (!currentEnvironment) throw new Error('Environment not available');
+      const environment = requireEnvironment(currentEnvironment, 'Environment not available');
+
       return getWorkflows({
-        environment: currentEnvironment,
+        environment,
         limit: 50,
         offset: 0,
         query: ONBOARDING_DEMO_WORKFLOW_ID,
@@ -82,9 +83,14 @@ export function useFirstTriggerDetection({
   } = useQuery({
     queryKey: [QueryKeys.fetchWorkflow, currentEnvironment?._id, workflowSlug],
     queryFn: () => {
-      if (!currentEnvironment || !workflowSlug) throw new Error('Environment or workflow slug not available');
+      const environment = requireEnvironment(currentEnvironment, 'Environment or workflow slug not available');
+
+      if (!workflowSlug) {
+        throw new Error('Environment or workflow slug not available');
+      }
+
       return getWorkflow({
-        environment: currentEnvironment,
+        environment,
         workflowSlug: workflowSlug,
       });
     },

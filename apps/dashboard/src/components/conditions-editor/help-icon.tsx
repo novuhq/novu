@@ -1,4 +1,4 @@
-import { RiErrorWarningLine, RiInformationLine } from 'react-icons/ri';
+import { RiErrorWarningLine, RiInformation2Line } from 'react-icons/ri';
 import type { HelpTextInfo } from '@/components/conditions-editor/field-type-editors';
 import { Badge } from '@/components/primitives/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
@@ -13,7 +13,7 @@ type HelpIconProps = {
 export function HelpIcon({ hasError, errorMessage, helpText, contentWidth = 'w-[240px]' }: HelpIconProps) {
   if (!helpText && !hasError) return null;
 
-  const IconComponent = hasError ? RiErrorWarningLine : RiInformationLine;
+  const IconComponent = hasError ? RiErrorWarningLine : RiInformation2Line;
   const iconColor = hasError ? 'text-destructive' : 'text-foreground-400 hover:text-foreground-600';
 
   return (

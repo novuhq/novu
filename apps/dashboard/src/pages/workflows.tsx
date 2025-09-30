@@ -152,7 +152,7 @@ export const WorkflowsPage = () => {
   }, [quickTemplates]);
 
   const offset = parseInt(searchParams.get('offset') || '0', 10);
-  const limit = parseInt(searchParams.get('limit') || '12', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
 
   const {
     data: workflowsData,
@@ -305,7 +305,9 @@ export const WorkflowsPage = () => {
               </ScrollArea>
             </div>
           )}
-          {shouldShowStartWithTemplatesSection && <div className="text-label-xs text-text-soft">Your Workflows</div>}
+          {shouldShowStartWithTemplatesSection && (
+            <div className="text-label-xs text-text-soft my-2">Your Workflows</div>
+          )}
           <WorkflowList
             hasActiveFilters={!!hasActiveFilters}
             onClearFilters={clearFilters}
@@ -315,6 +317,14 @@ export const WorkflowsPage = () => {
             isLoading={isPending}
             isError={isError}
             limit={limit}
+            onPageSizeChange={(newPageSize) => {
+              setSearchParams((prev) => {
+                const sp = new URLSearchParams(prev);
+                sp.set('limit', newPageSize.toString());
+                sp.delete('offset'); // Reset to first page when changing page size
+                return sp;
+              });
+            }}
           />
         </div>
         <Outlet />

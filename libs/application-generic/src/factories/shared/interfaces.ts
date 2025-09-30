@@ -90,7 +90,8 @@ export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> i
     if (!this.provider?.autoConfigureInboundWebhook) {
       return Promise.resolve({
         success: false,
-        message: 'A support of auto-configuration of inbound webhook is not implemented by provider',
+        message:
+          'A support of auto-configuration of inbound webhook is not implemented by provider, manual configuration is required',
       });
     }
 

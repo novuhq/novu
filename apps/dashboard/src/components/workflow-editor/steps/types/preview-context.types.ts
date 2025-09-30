@@ -1,4 +1,5 @@
 import { ContextPayload, ISubscriberResponseDto, SubscriberDto, WorkflowResponseDto } from '@novu/shared';
+import { JSONSchema7 } from 'json-schema';
 import { type ContextResponseDto } from '@/api/contexts';
 
 export type PayloadData = Record<string, unknown>;
@@ -37,6 +38,7 @@ export type AccordionSectionProps = {
 };
 
 export type PayloadSectionProps = AccordionSectionProps & {
+  schema?: JSONSchema7;
   onClearPersisted?: () => void;
   hasDigestStep?: boolean;
 };
@@ -48,6 +50,7 @@ export type StepResultsSectionProps = AccordionSectionProps & {
 export type SubscriberSectionProps = Omit<AccordionSectionProps, 'errors' | 'localParsedData' | 'onUpdate'> & {
   error: string | null;
   subscriber: Partial<SubscriberDto>;
+  schema?: JSONSchema7;
   onUpdate: (section: 'subscriber', data: PreviewSubscriberData) => void;
   onSubscriberSelect: (subscriber: ISubscriberResponseDto) => void;
   onClearPersisted?: () => void;
@@ -56,7 +59,7 @@ export type SubscriberSectionProps = Omit<AccordionSectionProps, 'errors' | 'loc
 export type ContextSectionProps = Omit<AccordionSectionProps, 'errors' | 'localParsedData' | 'onUpdate'> & {
   error: string | null;
   context: ContextPayload;
+  schema?: JSONSchema7;
   onUpdate: (section: 'context', data: ContextPayload) => void;
-  onContextSelect: (context: ContextResponseDto) => void;
   onClearPersisted?: () => void;
 };

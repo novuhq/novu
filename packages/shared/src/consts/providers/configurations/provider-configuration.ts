@@ -3,6 +3,9 @@ import { ConfigConfiguration, ConfigConfigurationGroup } from '../provider.inter
 const emailActivityTrackingDescription =
   'When enabled, Novu will auto-configure delivery webhooks using your existing API key. If they lack permissions, follow the manual set-up guide.';
 
+const pushActivityTrackingDescription =
+  'Enable receiving push events to track delivery status and user interactions with push notifications.';
+
 const sendgridConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',
@@ -91,6 +94,22 @@ const sesConfigurations: ConfigConfiguration[] = [
   },
 ];
 
+export const expoConfigurations: ConfigConfiguration[] = [
+  {
+    key: 'inboundWebhookEnabled',
+    displayName: 'Push Activity Tracking',
+    description: pushActivityTrackingDescription,
+    type: 'switch',
+    required: false,
+  },
+  {
+    key: 'pushResources',
+    displayName: 'Push Resources',
+    type: 'pushResources',
+    required: false,
+  },
+];
+
 export const sendgridGroupConfigurations: ConfigConfigurationGroup[] = [
   {
     groupType: 'inboundWebhook',
@@ -126,5 +145,14 @@ export const sesGroupConfigurations: ConfigConfigurationGroup[] = [
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide:
       'https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook#add-an-event-webhook',
+  },
+];
+
+export const expoGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: expoConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide: 'https://docs.expo.dev/push-notifications/sending-notifications/',
   },
 ];

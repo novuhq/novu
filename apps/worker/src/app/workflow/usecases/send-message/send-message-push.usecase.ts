@@ -199,19 +199,19 @@ export class SendMessagePush extends SendMessageBase {
 
       await this.sendSelectedIntegrationExecution(command.job, integration);
 
-      const message = await this.createMessage({
-        command,
-        integration,
-        title,
-        content,
-        deviceTokens: target,
-        overrides,
-      });
-
       /**
        * There are no targets available for the subscriber, but credentials provided in the overrides
        */
       if (!target?.length && uniqueOverrideChannels?.length) {
+        const message = await this.createMessage({
+          command,
+          integration,
+          title,
+          content,
+          deviceTokens: target,
+          overrides,
+        });
+
         const result = await this.sendMessage(
           command,
           message,
@@ -236,11 +236,27 @@ export class SendMessagePush extends SendMessageBase {
           );
         }
 
+        this.messageRepository.update(
+          { _id: message._id, _environmentId: command.environmentId },
+          {
+            identifier: message._id,
+          }
+        );
+
         continue;
       }
 
       const targetDeviceTokens = target || [];
       for (const deviceToken of targetDeviceTokens) {
+        const message = await this.createMessage({
+          command,
+          integration,
+          title,
+          content,
+          deviceTokens: target,
+          overrides,
+        });
+
         const result = await this.sendMessage(
           command,
           message,
@@ -251,6 +267,13 @@ export class SendMessagePush extends SendMessageBase {
           content,
           overrides,
           stepData
+        );
+
+        this.messageRepository.update(
+          { _id: message._id, _environmentId: command.environmentId },
+          {
+            identifier: message._id,
+          }
         );
 
         if (result.success) {
@@ -469,7 +492,7 @@ export class SendMessagePush extends SendMessageBase {
         target: [deviceToken],
         title: (bridgeOutputs as PushOutput)?.subject || title,
         content: (bridgeOutputs as PushOutput)?.body || content,
-        payload: command.payload,
+        payload: { ...command.payload, __nvMessageId: message._id },
         overrides,
         subscriber,
         step,

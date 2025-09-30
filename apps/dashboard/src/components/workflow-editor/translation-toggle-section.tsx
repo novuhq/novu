@@ -1,7 +1,6 @@
-import { InfoIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiInformation2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
@@ -68,7 +67,7 @@ export function TranslationToggleSection({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <InfoIcon className="text-text-soft h-4 w-4 cursor-help" />
+                <RiInformation2Line className="size-4 text-text-soft cursor-help" />
               </TooltipTrigger>
               <TooltipPortal>
                 <TooltipContent side="left" hideWhenDetached>
@@ -106,10 +105,9 @@ export function TranslationToggleSection({
               BETA
             </Badge>
           </span>
-
           <Tooltip>
             <TooltipTrigger asChild>
-              <InfoIcon className="text-text-soft h-4 w-4 cursor-help" />
+              <RiInformation2Line className="size-4 text-text-soft cursor-help" />
             </TooltipTrigger>
             <TooltipPortal>
               <TooltipContent side="left" hideWhenDetached>

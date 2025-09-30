@@ -62,7 +62,7 @@ export class PreviewUsecase {
       payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
 
       // Add resolved context to payload example for schema building
-      if (context.resolvedContext && !payloadExample.context) {
+      if (context.resolvedContext && Object.keys(context.resolvedContext).length > 0 && !payloadExample.context) {
         payloadExample.context = context.resolvedContext;
       }
 

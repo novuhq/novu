@@ -2,7 +2,7 @@ import { DEFAULT_LOCALE } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTranslation, saveTranslation } from '@/api/translations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
@@ -21,10 +21,7 @@ export const useCreateTranslationKey = () => {
 
   return useMutation({
     mutationFn: async ({ resourceId, resourceType, translationKey, defaultValue = '' }: CreateTranslationKeyParams) => {
-      if (!currentEnvironment) {
-        throw new Error('Environment is required');
-      }
-
+      const environment = requireEnvironment(currentEnvironment, 'Environment is required');
       const defaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
 
       // First, try to get existing translation content
@@ -32,7 +29,7 @@ export const useCreateTranslationKey = () => {
 
       try {
         const existingTranslation = await getTranslation({
-          environment: currentEnvironment,
+          environment,
           resourceId,
           resourceType,
           locale: defaultLocale,
@@ -67,7 +64,7 @@ export const useCreateTranslationKey = () => {
 
       // Save the updated translation
       return await saveTranslation({
-        environment: currentEnvironment,
+        environment,
         resourceId,
         resourceType,
         locale: defaultLocale,

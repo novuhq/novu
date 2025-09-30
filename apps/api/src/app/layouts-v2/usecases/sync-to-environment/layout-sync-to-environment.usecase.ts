@@ -56,7 +56,6 @@ export class LayoutSyncToEnvironmentUseCase {
 
     const upsertedLayout = await this.upsertLayoutUseCase.execute(
       UpsertLayoutCommand.create({
-        preserveLayoutId: true,
         environmentId: command.targetEnvironmentId,
         organizationId: command.user.organizationId,
         userId: command.user._id,

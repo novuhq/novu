@@ -110,6 +110,11 @@ export class PayloadMergerService {
 
     mergedPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
 
+    // Preserve user-provided context data only if it exists
+    if (userPayloadExample?.context !== undefined) {
+      mergedPayload.context = userPayloadExample.context;
+    }
+
     if (workflow && stepIdOrInternalId) {
       /*
        * Preserve steps from payloadExample (which contains correctly generated digest events)
@@ -175,6 +180,11 @@ export class PayloadMergerService {
     const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
     finalPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
+
+    // Preserve user-provided context data only if it exists
+    if (userPayloadExample?.context !== undefined) {
+      finalPayload.context = userPayloadExample.context;
+    }
 
     if (workflow && stepIdOrInternalId) {
       /*

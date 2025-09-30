@@ -35,8 +35,4 @@ export class UpsertLayoutCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   layoutIdOrInternalId?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  preserveLayoutId?: boolean;
 }

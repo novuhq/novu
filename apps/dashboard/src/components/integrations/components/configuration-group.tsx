@@ -1,4 +1,5 @@
 import {
+  ChannelTypeEnum,
   ConfigConfiguration,
   ConfigConfigurationGroup,
   CredentialsKeyEnum,
@@ -6,27 +7,15 @@ import {
   IIntegration,
   IProviderConfig,
 } from '@novu/shared';
-import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Control, useWatch } from 'react-hook-form';
 import { RiCheckLine, RiCloseLine } from 'react-icons/ri';
-import { CopyButton } from '@/components/primitives/copy-button';
-import { FormLabel } from '@/components/primitives/form/form';
-import { Input } from '@/components/primitives/input';
 import { LoadingIndicator } from '@/components/primitives/loading-indicator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { fadeIn } from '@/utils/animation';
-import { API_HOSTNAME } from '../../../config';
-import { useEnvironment } from '../../../context/environment/hooks';
 import { useAutoConfigureIntegration } from '../../../hooks/use-auto-configure-integration';
-import { InlineToast } from '../../primitives/inline-toast';
 import { IntegrationFormData } from '../types';
 import { CredentialSection } from './credential-section';
-
-function generateInboundWebhookUrl(environmentId: string, integrationId?: string): string {
-  const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-  return `${baseUrl}/v2/inbound-webhooks/delivery-providers/${environmentId}/${integrationId}`;
-}
+import { InboundWebhookUrl } from './inbound-webhook-url';
 
 function configurationToCredential(config: ConfigConfiguration): IConfigCredential {
   return {
@@ -100,11 +89,8 @@ export function ConfigurationGroup({
   formData?: IntegrationFormData;
   onAutoConfigureSuccess?: (integration: IIntegration) => void;
 }) {
-  const { currentEnvironment } = useEnvironment();
   const { groupType, configurations, enabler } = group;
   const { mutateAsync: autoConfigureIntegration } = useAutoConfigureIntegration();
-  // biome-ignore lint/style/noNonNullAssertion: <explanation> x
-  const inboundWebhookUrl = generateInboundWebhookUrl(currentEnvironment?._id!, integrationId);
 
   // Track the previous enabled state to detect toggle changes
   const prevIsEnabledRef = useRef<boolean | null>(null);
@@ -147,14 +133,13 @@ export function ConfigurationGroup({
       prevIsEnabledRef.current = isEnabled;
 
       // Only proceed if toggle was just enabled and we have required info
-      if (!wasToggleJustEnabled || !provider || !currentEnvironment || isReadOnly) {
+      if (!wasToggleJustEnabled || !provider || isReadOnly) {
         return;
       }
 
-      if (integrationId && !hasRequiredConfigurations && formData) {
+      if (provider.channel !== ChannelTypeEnum.PUSH && integrationId && !hasRequiredConfigurations && formData) {
         try {
-          const res = await setAutoConfigureState('loading');
-          console.log('Auto-configure state:', res);
+          setAutoConfigureState('loading');
           const response = await autoConfigureIntegration({
             integrationId,
           });
@@ -182,7 +167,6 @@ export function ConfigurationGroup({
     isEnabled,
     integrationId,
     provider,
-    currentEnvironment,
     isReadOnly,
     hasRequiredConfigurations,
     formData,
@@ -200,7 +184,7 @@ export function ConfigurationGroup({
       {enablerConfig && (
         <>
           <CredentialSection
-            key={String(enablerConfig.key)}
+            key={`${String(enablerConfig.key)}-${integrationId || 'no-id'}`}
             name="configurations"
             credential={configurationToCredential(enablerConfig)}
             control={control}
@@ -209,52 +193,31 @@ export function ConfigurationGroup({
             disabledSwitchMessage={
               !integrationId ? 'To enable Email activity tracking, create the integration first' : undefined
             }
+            integrationId={integrationId}
           />
 
           {/* status indicator */}
           {isEnabled && (
             <>
               <div className="border-l border-neutral-alpha-200 pl-5">
-                <div className="mb-4">
-                  <FormLabel htmlFor={'inboundWebhookUrl'} optional={false}>
-                    Inbound Webhook URL
-                  </FormLabel>
-                  <Input
-                    className="cursor-default font-mono !text-neutral-500"
-                    id={'inboundWebhookUrl'}
-                    value={inboundWebhookUrl}
-                    type="text"
-                    readOnly={true}
-                    trailingNode={<CopyButton valueToCopy={inboundWebhookUrl} />}
+                {provider?.channel !== ChannelTypeEnum.PUSH && (
+                  <InboundWebhookUrl
+                    integrationId={integrationId}
+                    autoConfigureState={autoConfigureState}
+                    provider={provider}
+                    group={group}
                   />
-
-                  {/* Show instructions only when auto-configure fails */}
-                  <AnimatePresence mode="wait">
-                    {autoConfigureState === 'error' && (
-                      <motion.div key="error-instructions" {...fadeIn}>
-                        <InlineToast
-                          variant={'tip'}
-                          className="mt-3"
-                          title="Manual setup"
-                          description={`Copy this URL into the ${provider?.displayName} webhook settings. Note: Required scopes must be enabled.`}
-                          ctaLabel="View Guide"
-                          onCtaClick={() => {
-                            window.open(group?.setupWebhookUrlGuide ?? '', '_blank');
-                          }}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                )}
 
                 {nonEnablerConfigs.length > 0 &&
                   nonEnablerConfigs.map((config) => (
                     <CredentialSection
-                      key={String(config.key)}
+                      key={`${String(config.key)}-${integrationId || 'no-id'}`}
                       name="configurations"
                       credential={configurationToCredential(config)}
                       control={control}
                       isReadOnly={isReadOnly}
+                      integrationId={integrationId}
                     />
                   ))}
               </div>

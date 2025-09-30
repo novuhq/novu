@@ -1,7 +1,13 @@
-import { type ISubscriberResponseDto, type WorkflowResponseDto } from '@novu/shared';
+import {
+  ContextPayload,
+  FeatureFlagsKeysEnum,
+  type ISubscriberResponseDto,
+  type WorkflowResponseDto,
+} from '@novu/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RiInformationLine, RiPencilLine, RiSearchLine } from 'react-icons/ri';
+import { RiInformation2Line, RiPencilLine, RiSearchLine } from 'react-icons/ri';
+import { ContextSearchEditor } from '@/components/context-search-editor';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Button } from '@/components/primitives/button';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
@@ -10,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
 import { ACCORDION_STYLES } from '@/components/workflow-editor/steps/constants/preview-context.constants';
 import { EditableJsonViewer } from '@/components/workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { cn } from '@/utils/ui';
 
@@ -20,23 +27,32 @@ type TestWorkflowFormType = {
 type TestWorkflowContentProps = {
   workflow?: WorkflowResponseDto;
   subscriberData: Partial<ISubscriberResponseDto> | null;
+  contextData: ContextPayload | null;
   isLoadingSubscriber?: boolean;
   onOpenSubscriberDrawer: () => void;
   onSubscriberSelect: (subscriber: ISubscriberResponseDto) => void;
+  onContextSelect: (context: ContextPayload) => void;
 };
 
 export function TestWorkflowContent({
   workflow,
   subscriberData,
+  contextData,
   isLoadingSubscriber = false,
   onOpenSubscriberDrawer,
   onSubscriberSelect,
+  onContextSelect,
 }: TestWorkflowContentProps) {
   const { control, setValue, watch } = useFormContext<TestWorkflowFormType>();
-  const [accordionValue, setAccordionValue] = useState(['payload', 'subscriber']);
-  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState('');
-
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
+
+  const [accordionValue, setAccordionValue] = useState([
+    'payload',
+    'subscriber',
+    ...(isContextEnabled ? ['context'] : []),
+  ]);
+  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState('');
   const payload = watch('payload');
 
   const payloadJsonData = useMemo(() => {
@@ -48,11 +64,11 @@ export function TestWorkflowContent({
   }, [payload]);
 
   const handleJsonChange = useCallback(
-    (updatedData: any) => {
+    (updatedData: unknown) => {
       try {
         const stringified = JSON.stringify(updatedData, null, 2);
         setValue('payload', stringified);
-      } catch (error) {
+      } catch {
         // Handle error silently
       }
     },
@@ -91,7 +107,7 @@ export function TestWorkflowContent({
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-1 flex-col min-h-0">
       <div className="border-b border-neutral-200 px-3 py-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-label-lg text-text-strong">Test workflow</h2>
@@ -109,7 +125,7 @@ export function TestWorkflowContent({
         </div>
       </div>
 
-      <div className="bg-bg-weak flex-1 overflow-auto">
+      <div className="bg-bg-weak flex-1 min-h-0 overflow-auto">
         <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
           <AccordionItem value="payload" className={ACCORDION_STYLES.item}>
             <AccordionTrigger className={ACCORDION_STYLES.trigger}>
@@ -120,7 +136,7 @@ export function TestWorkflowContent({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-foreground-400 inline-block hover:cursor-help">
-                          <RiInformationLine className="size-3" />
+                          <RiInformation2Line className="size-3" />
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
@@ -157,7 +173,7 @@ export function TestWorkflowContent({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="subscriber" className={cn(ACCORDION_STYLES.item, 'border-b-0')}>
+          <AccordionItem value="subscriber" className={ACCORDION_STYLES.item}>
             <AccordionTrigger className={ACCORDION_STYLES.trigger}>
               <div className="flex w-full items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -166,7 +182,7 @@ export function TestWorkflowContent({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-foreground-400 inline-block hover:cursor-help">
-                          <RiInformationLine className="size-3" />
+                          <RiInformation2Line className="size-3" />
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
@@ -220,6 +236,36 @@ export function TestWorkflowContent({
               </div>
             </AccordionContent>
           </AccordionItem>
+
+          {isContextEnabled && (
+            <AccordionItem value="context" className={ACCORDION_STYLES.item}>
+              <AccordionTrigger className={ACCORDION_STYLES.trigger}>
+                <div className="flex w-full items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-0.5">
+                      Context
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-foreground-400 inline-block hover:cursor-help">
+                            <RiInformation2Line className="size-3" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          Additional context data that can be used in your workflow. This includes custom objects and
+                          variables that provide extra information for processing.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="flex flex-col gap-2">
+                <div className="flex flex-1 flex-col gap-2 overflow-auto">
+                  <ContextSearchEditor value={contextData} onUpdate={onContextSelect} />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
         </Accordion>
       </div>
     </div>

@@ -1,10 +1,12 @@
 import { FeatureFlagsKeysEnum, ISubscriberResponseDto } from '@novu/shared';
+import { JSONSchema7 } from 'json-schema';
+
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { type ContextResponseDto } from '@/api/contexts';
 import { Accordion } from '@/components/primitives/accordion';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
+import { useDynamicPreviewSchema } from '@/hooks/use-dynamic-preview-schema';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
@@ -100,6 +102,17 @@ export function PreviewContextPanel({
   const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const { isPayloadSchemaDrawerOpen, highlightedVariableKey, openSchemaDrawer, closeSchemaDrawer } =
     useCreateVariable();
+
+  const previewSchema = useDynamicPreviewSchema();
+  const schemas = useMemo(
+    () => ({
+      payload: workflow?.payloadSchema,
+      subscriber: previewSchema?.properties?.subscriber as JSONSchema7 | undefined,
+      context: previewSchema?.properties?.context as JSONSchema7 | undefined,
+      steps: previewSchema?.properties?.steps as JSONSchema7 | undefined,
+    }),
+    [previewSchema, workflow?.payloadSchema]
+  );
 
   const hasDigestStep = useMemo(() => {
     return workflow?.steps?.some((step) => step.type === StepTypeEnum.DIGEST) ?? false;
@@ -204,22 +217,6 @@ export function PreviewContextPanel({
     [updatePreviewSection, selectedLocale, onLocaleChange]
   );
 
-  const handleContextSelection = useCallback(
-    (context: ContextResponseDto) => {
-      // Add the selected context to the ContextPayload by its type
-      const currentContext = previewContext.context || {};
-      const updatedContext = {
-        ...currentContext,
-        [context.type]: {
-          id: context.id,
-          data: context.data || {},
-        },
-      };
-      updatePreviewSection('context', updatedContext);
-    },
-    [updatePreviewSection, previewContext.context]
-  );
-
   const handleClearPersistedPayload = () => {
     clearPersistedPayload();
 
@@ -250,6 +247,7 @@ export function PreviewContextPanel({
           localParsedData={previewContext}
           workflow={workflow}
           onUpdate={updatePreviewSection}
+          schema={schemas.payload}
           onClearPersisted={canClearPersisted ? handleClearPersistedPayload : undefined}
           hasDigestStep={hasDigestStep}
           onManageSchema={openSchemaDrawer}
@@ -260,20 +258,10 @@ export function PreviewContextPanel({
           subscriber={previewContext.subscriber}
           workflow={workflow}
           onUpdate={updatePreviewSection}
+          schema={schemas.subscriber}
           onSubscriberSelect={handleSubscriberSelection}
           onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
         />
-
-        {isContextEnabled && (
-          <PreviewContextSection
-            error={errors.context}
-            context={previewContext.context}
-            workflow={workflow}
-            onUpdate={updatePreviewSection}
-            onContextSelect={handleContextSelection}
-            onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
-          />
-        )}
 
         <PreviewStepResultsSection
           errors={errors}
@@ -282,6 +270,16 @@ export function PreviewContextPanel({
           onUpdate={updatePreviewSection}
           currentStepId={currentStepId}
         />
+
+        {isContextEnabled && (
+          <PreviewContextSection
+            error={errors.context}
+            context={previewContext.context}
+            schema={schemas.context}
+            onUpdate={updatePreviewSection}
+            onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
+          />
+        )}
       </Accordion>
       <PayloadSchemaDrawer
         isOpen={isPayloadSchemaDrawerOpen}

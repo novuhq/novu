@@ -29,6 +29,7 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
   onCreateNewTranslationKey?: (translationKey: string) => Promise<void>;
   isPayloadSchemaEnabled?: boolean;
   isTranslationEnabled?: boolean;
+  isContextEnabled?: boolean;
   translationKeys?: TranslationKey[];
   translationValueInput: TranslationValueInputComponent;
   variableSuggestionsPopover?: ForwardRefExoticComponent<{
@@ -69,6 +70,7 @@ export const Maily = ({
   blocks,
   isPayloadSchemaEnabled,
   isTranslationEnabled,
+  isContextEnabled = false,
   addDigestVariables,
   onCreateNewVariable = () => Promise.resolve(),
   onCreateNewTranslationKey = () => Promise.resolve(),
@@ -103,6 +105,7 @@ export const Maily = ({
     addDigestVariables,
     isPayloadSchemaEnabled,
     isTranslationEnabled,
+    isContextEnabled,
   });
 
   const handleCalculateVariables = useCallback(

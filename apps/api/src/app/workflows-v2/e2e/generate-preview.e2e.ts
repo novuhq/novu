@@ -157,10 +157,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               },
               data: {
                 type: 'object',
+                properties: {},
+                required: [],
                 additionalProperties: true,
               },
             },
-            additionalProperties: true,
+            additionalProperties: false,
           },
           steps: {
             type: 'object',
@@ -187,6 +189,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               },
               additionalProperties: true,
             },
+          },
+          context: {
+            additionalProperties: true,
+            description: 'Context data for the workflow execution',
+            properties: {},
+            type: 'object',
           },
         },
         additionalProperties: false,
@@ -377,13 +385,15 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             type: 'object',
           },
           subscriber: {
-            additionalProperties: true,
+            additionalProperties: false,
             properties: {
               avatar: {
                 type: 'string',
               },
               data: {
                 additionalProperties: true,
+                properties: {},
+                required: [],
                 type: 'object',
               },
               email: {
@@ -436,6 +446,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               },
               additionalProperties: true,
             },
+          },
+          context: {
+            additionalProperties: true,
+            description: 'Context data for the workflow execution',
+            properties: {},
+            type: 'object',
           },
         },
         type: 'object',

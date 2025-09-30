@@ -130,7 +130,7 @@ export type Actor = SubscriberPayloadDto | string;
  * @remarks
  *     Existing tenants will be updated with the provided details.
  */
-export type Tenant = TenantPayloadDto | string;
+export type Tenant = string | TenantPayloadDto;
 
 export type TriggerEventRequestDto = {
   /**
@@ -177,7 +177,7 @@ export type TriggerEventRequestDto = {
    * @remarks
    *     Existing tenants will be updated with the provided details.
    */
-  tenant?: TenantPayloadDto | string | undefined;
+  tenant?: string | TenantPayloadDto | undefined;
 };
 
 /** @internal */
@@ -460,17 +460,17 @@ export function actorFromJSON(
 
 /** @internal */
 export const Tenant$inboundSchema: z.ZodType<Tenant, z.ZodTypeDef, unknown> = z
-  .union([TenantPayloadDto$inboundSchema, z.string()]);
+  .union([z.string(), TenantPayloadDto$inboundSchema]);
 
 /** @internal */
-export type Tenant$Outbound = TenantPayloadDto$Outbound | string;
+export type Tenant$Outbound = string | TenantPayloadDto$Outbound;
 
 /** @internal */
 export const Tenant$outboundSchema: z.ZodType<
   Tenant$Outbound,
   z.ZodTypeDef,
   Tenant
-> = z.union([TenantPayloadDto$outboundSchema, z.string()]);
+> = z.union([z.string(), TenantPayloadDto$outboundSchema]);
 
 /**
  * @internal
@@ -522,7 +522,7 @@ export const TriggerEventRequestDto$inboundSchema: z.ZodType<
   ]),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$inboundSchema, z.string()]).optional(),
-  tenant: z.union([TenantPayloadDto$inboundSchema, z.string()]).optional(),
+  tenant: z.union([z.string(), TenantPayloadDto$inboundSchema]).optional(),
 }).transform((v) => {
   return remap$(v, {
     "name": "workflowId",
@@ -541,7 +541,7 @@ export type TriggerEventRequestDto$Outbound = {
     | string;
   transactionId?: string | undefined;
   actor?: SubscriberPayloadDto$Outbound | string | undefined;
-  tenant?: TenantPayloadDto$Outbound | string | undefined;
+  tenant?: string | TenantPayloadDto$Outbound | undefined;
 };
 
 /** @internal */
@@ -567,7 +567,7 @@ export const TriggerEventRequestDto$outboundSchema: z.ZodType<
   ]),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$outboundSchema, z.string()]).optional(),
-  tenant: z.union([TenantPayloadDto$outboundSchema, z.string()]).optional(),
+  tenant: z.union([z.string(), TenantPayloadDto$outboundSchema]).optional(),
 }).transform((v) => {
   return remap$(v, {
     workflowId: "name",

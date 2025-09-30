@@ -421,15 +421,8 @@ export const useCreateExtensions = ({
           command: ({ editor, range, props }) => {
             const query = props.id + '}}';
 
-            // Check if this is a new variable by seeing if it's a payload variable that doesn't exist in our schema
-            const isPayloadVariable = props.id.startsWith('payload.') || props.id.startsWith('current.payload.');
             const existsInSchema = parsedVariables.variables.some((v) => v.name === props.id);
-            const isNewVariable =
-              isPayloadSchemaEnabled &&
-              isPayloadVariable &&
-              !existsInSchema &&
-              props.id !== 'payload' &&
-              props.id !== 'current.payload';
+            const isNewVariable = !existsInSchema && !props.id.startsWith('current.');
 
             if (props.id === TRANSLATION_NAMESPACE_SEPARATOR) {
               // just insert "{{t." (not closed) to trigger the translation extension
@@ -439,7 +432,7 @@ export const useCreateExtensions = ({
             }
 
             if (isNewVariable) {
-              const variableName = props.id.replace('current.payload.', '').replace('payload.', '');
+              const variableName = props.id;
               onCreateNewVariable?.(variableName);
 
               insertVariableToEditor({
@@ -459,11 +452,33 @@ export const useCreateExtensions = ({
                 return;
               }
 
-              insertVariableToEditor({
-                query,
-                editor,
-                range,
-              });
+              if (isNewVariable) {
+                const variableName = props.id.replace('current.payload.', '').replace('payload.', '');
+                onCreateNewVariable?.(variableName);
+
+                insertVariableToEditor({
+                  query,
+                  editor,
+                  range,
+                });
+              } else {
+                // Calculate aliasFor before validation to properly handle "current." variables
+                const aliasFor = resolveRepeatBlockAlias(props.id, editor);
+                const isAllowed = parsedVariables.isAllowedVariable({
+                  name: props.id,
+                  aliasFor,
+                });
+
+                if (!isAllowed) {
+                  return;
+                }
+
+                insertVariableToEditor({
+                  query,
+                  editor,
+                  range,
+                });
+              }
             }
           },
         },

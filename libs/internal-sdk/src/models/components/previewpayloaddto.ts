@@ -26,6 +26,10 @@ export type PreviewPayloadDto = {
    * Steps data
    */
   steps?: { [k: string]: any } | undefined;
+  /**
+   * Context data for the preview
+   */
+  context?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -37,6 +41,7 @@ export const PreviewPayloadDto$inboundSchema: z.ZodType<
   subscriber: SubscriberResponseDtoOptional$inboundSchema.optional(),
   payload: z.record(z.any()).optional(),
   steps: z.record(z.any()).optional(),
+  context: z.record(z.any()).optional(),
 });
 
 /** @internal */
@@ -44,6 +49,7 @@ export type PreviewPayloadDto$Outbound = {
   subscriber?: SubscriberResponseDtoOptional$Outbound | undefined;
   payload?: { [k: string]: any } | undefined;
   steps?: { [k: string]: any } | undefined;
+  context?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -55,6 +61,7 @@ export const PreviewPayloadDto$outboundSchema: z.ZodType<
   subscriber: SubscriberResponseDtoOptional$outboundSchema.optional(),
   payload: z.record(z.any()).optional(),
   steps: z.record(z.any()).optional(),
+  context: z.record(z.any()).optional(),
 });
 
 /**

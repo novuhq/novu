@@ -110,7 +110,12 @@ export const InboxButton = () => {
 
   return (
     <Inbox
-      subscriberId={isTestPage ? user.externalId : `org_${currentOrganization._id}:user_${user.externalId}`}
+      subscriber={{
+        subscriberId: isTestPage ? user.externalId : `org_${currentOrganization._id}:user_${user.externalId}`,
+        email: user.primaryEmailAddress?.emailAddress ?? '',
+        firstName: user.firstName ?? '',
+        lastName: user.lastName ?? '',
+      }}
       applicationIdentifier={appId}
       /**
        * We want to ensure our staging environment is using the production API and WebSocket endpoints.

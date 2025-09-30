@@ -1,10 +1,3 @@
-import { Card } from '@/components/primitives/card';
-import { InlineToast } from '@/components/primitives/inline-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { OrganizationSettings } from '@/components/settings/organization-settings';
-import { IS_SELF_HOSTED } from '@/config';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { ROUTES } from '@/utils/routes';
 import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
 import { Appearance } from '@clerk/types';
 import {
@@ -16,6 +9,13 @@ import {
 } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Card } from '@/components/primitives/card';
+import { InlineToast } from '@/components/primitives/inline-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { OrganizationSettings } from '@/components/settings/organization-settings';
+import { IS_SELF_HOSTED } from '@/config';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { ROUTES } from '@/utils/routes';
 import { Plan } from '../components/billing/plan';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
@@ -29,8 +29,9 @@ const FADE_ANIMATION = {
 
 const getClerkComponentAppearance = (isRbacEnabled: boolean): Appearance => ({
   variables: {
-    colorPrimary: 'rgba(82, 88, 102, 0.95)',
+    colorPrimary: 'hsl(var(--bg-surface))',
     colorText: 'rgba(82, 88, 102, 0.95)',
+    fontSize: '14px',
   },
   elements: {
     navbar: { display: 'none' },

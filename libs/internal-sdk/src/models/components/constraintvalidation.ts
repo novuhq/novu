@@ -15,10 +15,10 @@ export type Four = {};
  * Value that failed validation
  */
 export type Value =
-  | Four
   | string
   | number
   | boolean
+  | Four
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 export type ConstraintValidation = {
@@ -30,10 +30,10 @@ export type ConstraintValidation = {
    * Value that failed validation
    */
   value?:
-    | Four
     | string
     | number
     | boolean
+    | Four
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -118,10 +118,10 @@ export function fourFromJSON(
 /** @internal */
 export const Value$inboundSchema: z.ZodType<Value, z.ZodTypeDef, unknown> = z
   .union([
-    z.lazy(() => Four$inboundSchema),
     z.string(),
     z.number(),
     z.boolean(),
+    z.lazy(() => Four$inboundSchema),
     z.array(
       z.nullable(
         z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -131,10 +131,10 @@ export const Value$inboundSchema: z.ZodType<Value, z.ZodTypeDef, unknown> = z
 
 /** @internal */
 export type Value$Outbound =
-  | Four$Outbound
   | string
   | number
   | boolean
+  | Four$Outbound
   | Array<string | number | boolean | { [k: string]: any } | null>;
 
 /** @internal */
@@ -143,10 +143,10 @@ export const Value$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   Value
 > = z.union([
-  z.lazy(() => Four$outboundSchema),
   z.string(),
   z.number(),
   z.boolean(),
+  z.lazy(() => Four$outboundSchema),
   z.array(
     z.nullable(
       z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -190,10 +190,10 @@ export const ConstraintValidation$inboundSchema: z.ZodType<
   messages: z.array(z.string()),
   value: z.nullable(
     z.union([
-      z.lazy(() => Four$inboundSchema),
       z.string(),
       z.number(),
       z.boolean(),
+      z.lazy(() => Four$inboundSchema),
       z.array(
         z.nullable(
           z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),
@@ -207,10 +207,10 @@ export const ConstraintValidation$inboundSchema: z.ZodType<
 export type ConstraintValidation$Outbound = {
   messages: Array<string>;
   value?:
-    | Four$Outbound
     | string
     | number
     | boolean
+    | Four$Outbound
     | Array<string | number | boolean | { [k: string]: any } | null>
     | null
     | undefined;
@@ -225,10 +225,10 @@ export const ConstraintValidation$outboundSchema: z.ZodType<
   messages: z.array(z.string()),
   value: z.nullable(
     z.union([
-      z.lazy(() => Four$outboundSchema),
       z.string(),
       z.number(),
       z.boolean(),
+      z.lazy(() => Four$outboundSchema),
       z.array(
         z.nullable(
           z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]),

@@ -163,7 +163,7 @@ export const EditVariablePopover = ({
 
   const handleAddToSchema = useCallback(() => {
     if (onAddToSchemaClick && name) {
-      onAddToSchemaClick(validation.variableKey);
+      onAddToSchemaClick(validation.variableName);
       handleOpenChange(false);
     }
   }, [onAddToSchemaClick, name, validation.variableKey, handleOpenChange]);
