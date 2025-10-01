@@ -676,7 +676,12 @@ export class RunJob {
     );
 
     // re-queue the job with the new delay
-    await this.addJobUsecase.queueJob(updatedJob, delayMs);
+    await this.addJobUsecase.queueJob({
+      job: updatedJob,
+      delay: delayMs,
+      untilDate: nextAvailableTime,
+      timezone,
+    });
 
     this.logger.info(
       {

@@ -46,7 +46,9 @@ export enum DigestTypeEnum {
 
 export enum DelayTypeEnum {
   REGULAR = 'regular',
+  /** @deprecated used in v0, use TIMED instead */
   SCHEDULED = 'scheduled',
+  TIMED = 'timed',
 }
 
 export enum MonthlyTypeEnum {
@@ -107,6 +109,7 @@ export interface ITimedConfig {
   ordinalValue?: OrdinalValueEnum;
   monthlyType?: MonthlyTypeEnum;
   cronExpression?: CronExpressionEnum | string;
+  untilDate?: string;
 }
 
 export interface IDigestTimedMetadata extends IDigestBaseMetadata {
