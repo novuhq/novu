@@ -129,31 +129,48 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           },
           subscriber: {
             type: 'object',
+            description: 'Schema representing the subscriber entity',
             properties: {
-              subscriberId: {
-                type: 'string',
-              },
               firstName: {
                 type: 'string',
+                description: "Subscriber's first name",
               },
               lastName: {
                 type: 'string',
+                description: "Subscriber's last name",
               },
               email: {
                 type: 'string',
-                format: 'email',
+                description: "Subscriber's email address",
               },
               phone: {
                 type: 'string',
+                description: "Subscriber's phone number (optional)",
               },
               avatar: {
                 type: 'string',
+                description: "URL to the subscriber's avatar image (optional)",
               },
               locale: {
                 type: 'string',
+                description: 'Locale for the subscriber (optional)',
               },
               timezone: {
                 type: 'string',
+                description: 'Timezone for the subscriber (optional)',
+              },
+              subscriberId: {
+                type: 'string',
+                description: 'Unique identifier for the subscriber',
+              },
+              isOnline: {
+                type: 'boolean',
+                description: 'Indicates if the subscriber is online (optional)',
+              },
+              lastOnlineAt: {
+                type: 'string',
+                format: 'date-time',
+                description: 'The last time the subscriber was online (optional)',
               },
               data: {
                 type: 'object',
@@ -162,39 +179,15 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
                 additionalProperties: true,
               },
             },
+            required: ['subscriberId'],
             additionalProperties: false,
           },
           steps: {
             type: 'object',
-            description: 'Steps data from previous workflow executions',
-            additionalProperties: {
-              type: 'object',
-              properties: {
-                eventCount: {
-                  type: 'number',
-                },
-                events: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      payload: {
-                        type: 'object',
-                        additionalProperties: true,
-                      },
-                    },
-                    additionalProperties: true,
-                  },
-                },
-              },
-              additionalProperties: true,
-            },
-          },
-          context: {
-            additionalProperties: true,
-            description: 'Context data for the workflow execution',
             properties: {},
-            type: 'object',
+            required: [],
+            additionalProperties: false,
+            description: 'Previous Steps Results',
           },
         },
         additionalProperties: false,
@@ -386,9 +379,48 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           },
           subscriber: {
             additionalProperties: false,
+            description: 'Schema representing the subscriber entity',
             properties: {
+              firstName: {
+                type: 'string',
+                description: "Subscriber's first name",
+              },
+              lastName: {
+                type: 'string',
+                description: "Subscriber's last name",
+              },
+              email: {
+                type: 'string',
+                description: "Subscriber's email address",
+              },
+              phone: {
+                type: 'string',
+                description: "Subscriber's phone number (optional)",
+              },
               avatar: {
                 type: 'string',
+                description: "URL to the subscriber's avatar image (optional)",
+              },
+              locale: {
+                type: 'string',
+                description: 'Locale for the subscriber (optional)',
+              },
+              timezone: {
+                type: 'string',
+                description: 'Timezone for the subscriber (optional)',
+              },
+              subscriberId: {
+                type: 'string',
+                description: 'Unique identifier for the subscriber',
+              },
+              isOnline: {
+                type: 'boolean',
+                description: 'Indicates if the subscriber is online (optional)',
+              },
+              lastOnlineAt: {
+                type: 'string',
+                format: 'date-time',
+                description: 'The last time the subscriber was online (optional)',
               },
               data: {
                 additionalProperties: true,
@@ -396,62 +428,16 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
                 required: [],
                 type: 'object',
               },
-              email: {
-                format: 'email',
-                type: 'string',
-              },
-              firstName: {
-                type: 'string',
-              },
-              lastName: {
-                type: 'string',
-              },
-              locale: {
-                type: 'string',
-              },
-              phone: {
-                type: 'string',
-              },
-              subscriberId: {
-                type: 'string',
-              },
-              timezone: {
-                type: 'string',
-              },
             },
+            required: ['subscriberId'],
             type: 'object',
           },
           steps: {
             type: 'object',
-            description: 'Steps data from previous workflow executions',
-            additionalProperties: {
-              type: 'object',
-              properties: {
-                eventCount: {
-                  type: 'number',
-                },
-                events: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      payload: {
-                        type: 'object',
-                        additionalProperties: true,
-                      },
-                    },
-                    additionalProperties: true,
-                  },
-                },
-              },
-              additionalProperties: true,
-            },
-          },
-          context: {
-            additionalProperties: true,
-            description: 'Context data for the workflow execution',
             properties: {},
-            type: 'object',
+            required: [],
+            additionalProperties: false,
+            description: 'Previous Steps Results',
           },
         },
         type: 'object',

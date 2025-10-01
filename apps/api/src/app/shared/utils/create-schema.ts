@@ -86,7 +86,7 @@ export const buildSubscriberSchema = (subscriber: unknown) => {
         subscriber && typeof subscriber === 'object' && 'data' in subscriber ? subscriber.data : {}
       ),
     },
-    required: ['firstName', 'lastName', 'email', 'subscriberId'],
+    required: ['subscriberId'],
     additionalProperties: false,
   };
 };
@@ -111,11 +111,11 @@ export const buildWorkflowSchema = () => {
   };
 };
 
-export const buildContextSchema = () => {
-  return {
+export const buildContextSchema = (context?: unknown) => {
+  const baseSchema = {
     type: JsonSchemaTypeEnum.OBJECT,
     description: 'Context data passed at trigger time following ContextPayload structure',
-    properties: {},
+    properties: {} as Record<string, JSONSchemaDto>,
     required: [],
     additionalProperties: {
       type: JsonSchemaTypeEnum.OBJECT,
@@ -135,5 +135,48 @@ export const buildContextSchema = () => {
       required: [],
       additionalProperties: false,
     },
+  };
+
+  // If no context data provided, return the base schema with additionalProperties
+  if (!context || typeof context !== 'object' || Object.keys(context).length === 0) {
+    return baseSchema;
+  }
+
+  // Build specific properties for each context entity
+  const contextProperties: Record<string, JSONSchemaDto> = {};
+
+  for (const [entityType, entityValue] of Object.entries(context)) {
+    if (entityValue && typeof entityValue === 'object') {
+      const entity = entityValue as Record<string, unknown>;
+
+      // Each context entity should have id and data properties
+      const entitySchema: JSONSchemaDto = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        properties: {
+          id: {
+            type: JsonSchemaTypeEnum.STRING,
+            description: 'Context identifier',
+          },
+          data:
+            entity.data && typeof entity.data === 'object'
+              ? buildVariablesSchema(entity.data) // Dynamic schema for entity.data
+              : {
+                  type: JsonSchemaTypeEnum.OBJECT,
+                  description: 'Additional context data',
+                  additionalProperties: true,
+                },
+        },
+        required: ['id'],
+        additionalProperties: false, // Only allow id and data
+      };
+
+      contextProperties[entityType] = entitySchema;
+    }
+  }
+
+  // Return schema with both specific properties AND additionalProperties for new entities
+  return {
+    ...baseSchema,
+    properties: contextProperties,
   };
 };

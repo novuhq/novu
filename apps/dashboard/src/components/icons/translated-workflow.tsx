@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import React from 'react';
 
 export const TranslatedWorkflowIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => (

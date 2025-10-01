@@ -315,7 +315,6 @@ export const useCreateExtensions = ({
   parsedVariables: ParsedVariables;
   blocks: BlockGroupItem[];
   onCreateNewVariable?: (variableName: string) => Promise<void>;
-  isPayloadSchemaEnabled?: boolean;
   isTranslationEnabled?: boolean;
   translationKeys?: TranslationKey[];
   resourceId: string;
@@ -422,7 +421,7 @@ export const useCreateExtensions = ({
             const query = props.id + '}}';
 
             const existsInSchema = parsedVariables.variables.some((v) => v.name === props.id);
-            const isNewVariable = !existsInSchema && !props.id.startsWith('current.');
+            const isNewVariable = !existsInSchema && !(props.id.startsWith('current.') || props.id === 'current');
 
             if (props.id === TRANSLATION_NAMESPACE_SEPARATOR) {
               // just insert "{{t." (not closed) to trigger the translation extension

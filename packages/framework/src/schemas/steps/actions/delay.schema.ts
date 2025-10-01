@@ -1,11 +1,10 @@
 import type { JsonSchema } from '../../../types/schema.types';
 
-export const delayOutputSchema = {
+export const delayRegularOutputSchema = {
   type: 'object',
   properties: {
     type: {
       enum: ['regular'],
-      default: 'regular',
     },
     amount: { type: 'number' },
     unit: {
@@ -16,6 +15,23 @@ export const delayOutputSchema = {
   },
   required: ['amount', 'unit'],
   additionalProperties: false,
+} as const satisfies JsonSchema;
+
+export const delayTimedOutputSchema = {
+  type: 'object',
+  properties: {
+    type: {
+      enum: ['timed'],
+    },
+    cron: { type: 'string' },
+    extendToSchedule: { type: 'boolean' },
+  },
+  required: ['cron'],
+  additionalProperties: false,
+} as const satisfies JsonSchema;
+
+export const delayOutputSchema = {
+  oneOf: [delayRegularOutputSchema, delayTimedOutputSchema],
 } as const satisfies JsonSchema;
 
 export const delayResultSchema = {
