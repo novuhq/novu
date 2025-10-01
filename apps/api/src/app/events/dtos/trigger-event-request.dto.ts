@@ -10,7 +10,7 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import { IsArray, IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
@@ -47,6 +47,15 @@ export class TopicPayloadDto {
     enumName: 'TriggerRecipientsTypeEnum',
   })
   type: TriggerRecipientsTypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Optional array of subscriber IDs to exclude from the topic trigger',
+    type: [String],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  exclude?: string[];
 }
 
 export class StepsOverrides {
