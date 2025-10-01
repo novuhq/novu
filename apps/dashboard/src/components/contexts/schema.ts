@@ -26,3 +26,18 @@ export const CreateContextFormSchema = z.object({
     })
     .optional(),
 });
+
+export const EditContextFormSchema = z.object({
+  data: z
+    .string()
+    .transform((str, ctx) => {
+      try {
+        if (!str) return {};
+        return JSON.parse(str);
+      } catch (_e) {
+        ctx.addIssue({ code: 'custom', message: 'Custom data must be a valid JSON' });
+        return z.NEVER;
+      }
+    })
+    .optional(),
+});

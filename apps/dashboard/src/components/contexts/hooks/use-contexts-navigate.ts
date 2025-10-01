@@ -1,3 +1,4 @@
+import { ContextId, ContextType } from '@novu/shared';
 import { useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -13,6 +14,13 @@ export const useContextsNavigate = () => {
     navigate(buildRoute(ROUTES.CONTEXTS_CREATE, { environmentSlug }));
   }, [navigate, environmentSlug]);
 
+  const navigateToEditContextPage = useCallback(
+    (type: ContextType, id: ContextId) => {
+      navigate(buildRoute(ROUTES.CONTEXTS_EDIT, { environmentSlug, type, id }));
+    },
+    [navigate, environmentSlug]
+  );
+
   const navigateToContextsPage = useCallback(() => {
     const currentSearchParams = searchParams.toString();
 
@@ -21,6 +29,7 @@ export const useContextsNavigate = () => {
 
   return {
     navigateToCreateContextPage,
+    navigateToEditContextPage,
     navigateToContextsPage,
   };
 };

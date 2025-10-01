@@ -75,8 +75,8 @@ const ContextListTable = (props: ContextListTableProps) => {
     <Table {...rest}>
       <TableHeader>
         <TableRow>
-          <TableHead>ID</TableHead>
           <TableHead>Type</TableHead>
+          <TableHead>ID</TableHead>
           <TableHead
             sortable
             sortDirection={orderBy === 'createdAt' ? orderDirection : false}

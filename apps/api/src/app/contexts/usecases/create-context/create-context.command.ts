@@ -1,6 +1,6 @@
 import { EnvironmentWithUserCommand, IsValidContextData } from '@novu/application-generic';
 import { ContextData, ContextId, ContextType } from '@novu/shared';
-import { IsDefined, IsString } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class CreateContextCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -11,7 +11,7 @@ export class CreateContextCommand extends EnvironmentWithUserCommand {
   @IsString()
   id: ContextId;
 
-  @IsDefined()
+  @IsOptional()
   @IsValidContextData()
   data?: ContextData;
 }
