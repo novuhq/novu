@@ -53,11 +53,12 @@ export function ActivityFeed() {
   // Redirect legacy activity-feed URLs to the new runs URL when feature flag is enabled
   useEffect(() => {
     if (isHttpLogsPageEnabled && location.pathname.includes('/activity-feed') && currentEnvironment?.slug) {
-      navigate(buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug }), {
+      const newPath = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
+      navigate(`${newPath}${location.search}`, {
         replace: true,
       });
     }
-  }, [isHttpLogsPageEnabled, location.pathname, currentEnvironment?.slug, navigate]);
+  }, [isHttpLogsPageEnabled, location.pathname, location.search, currentEnvironment?.slug, navigate]);
 
   // Track page visit for requests tab
   useEffect(() => {

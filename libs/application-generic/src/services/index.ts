@@ -19,7 +19,11 @@ export * from './content.service';
 export * from './cron';
 export * from './feature-flags';
 export * from './in-memory-provider';
-export { MessageInteractionService, MessageInteractionResult, MessageInteractionTrace } from './message-interaction.service';
+export {
+  MessageInteractionResult,
+  MessageInteractionService,
+  MessageInteractionTrace,
+} from './message-interaction.service';
 export * from './metrics';
 export * from './queues';
 export { INovuWorker, ReadinessService } from './readiness';

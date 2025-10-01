@@ -5,8 +5,7 @@ import jwt from 'jsonwebtoken';
 export { UserSession };
 
 export const SubscriberSession = createParamDecorator((data, ctx) => {
-  const req =
-    ctx.getType() === 'graphql' ? ctx.getArgs()[2].req : ctx.switchToHttp().getRequest();
+  const req = ctx.getType() === 'graphql' ? ctx.getArgs()[2].req : ctx.switchToHttp().getRequest();
 
   if (req.user) {
     return req.user;

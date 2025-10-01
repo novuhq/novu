@@ -66,7 +66,7 @@ import {
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
 } from './usecases';
-import { AddDelayJob, AddJob, MergeOrCreateDigest } from './usecases/add-job';
+import { AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
 import { ExecuteStepCustom } from './usecases/send-message/execute-step-custom.usecase';
@@ -143,7 +143,6 @@ const svixProvider: Provider = {
 };
 
 const USE_CASES = [
-  AddDelayJob,
   TierRestrictionsValidateUsecase,
   MergeOrCreateDigest,
   AddJob,

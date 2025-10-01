@@ -1,5 +1,12 @@
 import { JSONSchemaEntity } from '@novu/dal';
-import { DigestUnitEnum, TimeUnitEnum, UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import {
+  DigestTypeEnum,
+  DigestUnitEnum,
+  TimeUnitEnum,
+  UiComponentEnum,
+  UiSchema,
+  UiSchemaGroupEnum,
+} from '@novu/shared';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
@@ -15,6 +22,7 @@ const lookBackWindowZodSchema = z
 const digestRegularControlZodSchema = z
   .object({
     skip: skipZodSchema,
+    type: z.enum([DigestTypeEnum.REGULAR]).optional(),
     amount: z.number().min(1),
     unit: z.nativeEnum(TimeUnitEnum),
     digestKey: z.string().optional(),
@@ -22,9 +30,11 @@ const digestRegularControlZodSchema = z
     extendToSchedule: z.boolean().optional(),
   })
   .strict();
+
 const digestTimedControlZodSchema = z
   .object({
     skip: skipZodSchema,
+    type: z.enum([DigestTypeEnum.TIMED]).optional(),
     cron: z.string().min(1),
     digestKey: z.string().optional(),
     extendToSchedule: z.boolean().optional(),
@@ -75,6 +85,10 @@ export const digestUiSchema: UiSchema = {
     cron: {
       component: UiComponentEnum.DIGEST_CRON,
       placeholder: '',
+    },
+    type: {
+      component: UiComponentEnum.DIGEST_TYPE,
+      placeholder: 'regular',
     },
     extendToSchedule: {
       component: UiComponentEnum.EXTEND_TO_SCHEDULE,

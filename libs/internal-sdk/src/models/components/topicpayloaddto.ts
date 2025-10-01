@@ -15,6 +15,10 @@ import {
 export type TopicPayloadDto = {
   topicKey: string;
   type: TriggerRecipientsTypeEnum;
+  /**
+   * Optional array of subscriber IDs to exclude from the topic trigger
+   */
+  exclude?: Array<string> | undefined;
 };
 
 /** @internal */
@@ -25,12 +29,14 @@ export const TopicPayloadDto$inboundSchema: z.ZodType<
 > = z.object({
   topicKey: z.string(),
   type: TriggerRecipientsTypeEnum$inboundSchema,
+  exclude: z.array(z.string()).optional(),
 });
 
 /** @internal */
 export type TopicPayloadDto$Outbound = {
   topicKey: string;
   type: string;
+  exclude?: Array<string> | undefined;
 };
 
 /** @internal */
@@ -41,6 +47,7 @@ export const TopicPayloadDto$outboundSchema: z.ZodType<
 > = z.object({
   topicKey: z.string(),
   type: TriggerRecipientsTypeEnum$outboundSchema,
+  exclude: z.array(z.string()).optional(),
 });
 
 /**
