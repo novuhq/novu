@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useRegion } from '@/context/region';
+import { getRegionConfig } from '@/context/region/region-config';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { PermissionsEnum } from '@novu/shared';
 import { useState } from 'react';
@@ -70,7 +71,7 @@ export function ApiKeysPage() {
   }
 
   // Use dynamic region from region selector
-  const region = selectedRegion === 'singapore' ? 'Singapore' : 'US';
+  const region = getRegionConfig(selectedRegion)?.name || selectedRegion.toUpperCase();
 
   return (
     <>
