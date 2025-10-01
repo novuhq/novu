@@ -83,11 +83,13 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.DIGEST_AMOUNT:
     case UiComponentEnum.DIGEST_UNIT:
+    case UiComponentEnum.DIGEST_TYPE:
     case UiComponentEnum.DIGEST_CRON:
       return <DigestDelayTabs isDigest />;
 
     case UiComponentEnum.DELAY_AMOUNT:
     case UiComponentEnum.DELAY_UNIT:
+    case UiComponentEnum.DELAY_TYPE:
     case UiComponentEnum.DELAY_CRON:
       return <DigestDelayTabs isDigest={false} />;
 

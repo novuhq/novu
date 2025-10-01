@@ -3,6 +3,9 @@ import type { JsonSchema } from '../../../types/schema.types';
 export const delayRegularOutputSchema = {
   type: 'object',
   properties: {
+    type: {
+      enum: ['regular'],
+    },
     amount: { type: 'number' },
     unit: {
       type: 'string',
@@ -17,6 +20,9 @@ export const delayRegularOutputSchema = {
 export const delayTimedOutputSchema = {
   type: 'object',
   properties: {
+    type: {
+      enum: ['timed'],
+    },
     cron: { type: 'string' },
     extendToSchedule: { type: 'boolean' },
   },

@@ -123,6 +123,7 @@ function sanitizeChat(controlValues: ChatControlType) {
 function sanitizeDigest(controlValues: DigestControlSchemaType) {
   if (isTimedDigestControl(controlValues)) {
     const mappedValues: DigestTimedControlType = {
+      type: controlValues.type,
       cron: controlValues.cron,
       digestKey: controlValues.digestKey,
       skip: controlValues.skip,
@@ -135,6 +136,7 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
   if (isRegularDigestControl(controlValues)) {
     const lookBackAmount = (controlValues.lookBackWindow as LookBackWindowType)?.amount;
     const mappedValues: DigestRegularControlType = {
+      type: controlValues.type,
       // Cast to trigger Ajv validation errors - possible undefined
       ...(parseAmount(controlValues.amount) as { amount?: number }),
       unit: controlValues.unit,
@@ -176,6 +178,7 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
 function sanitizeDelay(controlValues: DelayControlType) {
   if (isTimedDelayControl(controlValues)) {
     const mappedValues: DelayTimedControlType = {
+      type: controlValues.type,
       cron: controlValues.cron,
       skip: controlValues.skip,
       extendToSchedule: controlValues.extendToSchedule,
@@ -186,6 +189,7 @@ function sanitizeDelay(controlValues: DelayControlType) {
 
   if (isRegularDelayControl(controlValues)) {
     const mappedValues: DelayRegularControlType = {
+      type: controlValues.type,
       // Cast to trigger Ajv validation errors - possible undefined
       ...(parseAmount(controlValues.amount) as { amount?: number }),
       unit: controlValues.unit,

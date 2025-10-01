@@ -1,4 +1,4 @@
-import { EnvironmentTypeEnum, ResourceOriginEnum, TimeUnitEnum } from '@novu/shared';
+import { DelayTypeEnum, DigestTypeEnum, EnvironmentTypeEnum, ResourceOriginEnum, TimeUnitEnum } from '@novu/shared';
 import { Tabs } from '@radix-ui/react-tabs';
 import { useState } from 'react';
 import { FieldValues, useFormContext } from 'react-hook-form';
@@ -7,7 +7,7 @@ import { FormField, FormLabel, FormMessagePure } from '@/components/primitives/f
 import { Separator } from '@/components/primitives/separator';
 import { TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { AMOUNT_KEY, CRON_KEY, UNIT_KEY } from '@/components/workflow-editor/steps/digest-delay-tabs/keys';
+import { AMOUNT_KEY, CRON_KEY, TYPE_KEY, UNIT_KEY } from '@/components/workflow-editor/steps/digest-delay-tabs/keys';
 import { RegularType } from '@/components/workflow-editor/steps/digest-delay-tabs/regular-type';
 import { ScheduledType } from '@/components/workflow-editor/steps/digest-delay-tabs/scheduled-type';
 import { EVERY_MINUTE_CRON } from '@/components/workflow-editor/steps/digest-delay-tabs/utils';
@@ -57,14 +57,17 @@ export const DigestDelayTabs = ({ isDigest = true }: { isDigest?: boolean }) => 
       setValue(AMOUNT_KEY, preservedFormValues.amount, { shouldDirty: true });
       setValue(UNIT_KEY, preservedFormValues.unit, { shouldDirty: true });
       setValue(CRON_KEY, preservedFormValues.cron, { shouldDirty: true });
+      setValue(TYPE_KEY, preservedFormValues.type, { shouldDirty: true });
     } else if (value === SCHEDULED_TYPE) {
       setValue(AMOUNT_KEY, undefined, { shouldDirty: true });
       setValue(UNIT_KEY, undefined, { shouldDirty: true });
       setValue(CRON_KEY, EVERY_MINUTE_CRON, { shouldDirty: true });
+      setValue(TYPE_KEY, isDigest ? DigestTypeEnum.TIMED : DelayTypeEnum.TIMED, { shouldDirty: true });
     } else {
       setValue(AMOUNT_KEY, '', { shouldDirty: true });
       setValue(UNIT_KEY, TimeUnitEnum.SECONDS, { shouldDirty: true });
       setValue(CRON_KEY, undefined, { shouldDirty: true });
+      setValue(TYPE_KEY, isDigest ? DigestTypeEnum.REGULAR : DelayTypeEnum.REGULAR, { shouldDirty: true });
     }
 
     await trigger();

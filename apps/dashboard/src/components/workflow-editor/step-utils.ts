@@ -5,10 +5,12 @@ import { ERROR_AVATAR, INFO_AVATAR, WARNING_AVATAR } from '@/utils/avatars';
 import {
   DEFAULT_CONTROL_DELAY_AMOUNT,
   DEFAULT_CONTROL_DELAY_CRON,
+  DEFAULT_CONTROL_DELAY_TYPE,
   DEFAULT_CONTROL_DELAY_UNIT,
   DEFAULT_CONTROL_DIGEST_AMOUNT,
   DEFAULT_CONTROL_DIGEST_CRON,
   DEFAULT_CONTROL_DIGEST_DIGEST_KEY,
+  DEFAULT_CONTROL_DIGEST_TYPE,
   DEFAULT_CONTROL_DIGEST_UNIT,
   DEFAULT_CONTROL_THROTTLE_THRESHOLD,
   DEFAULT_CONTROL_THROTTLE_TYPE,
@@ -128,6 +130,7 @@ export const createStep = (
   const controlValue: Record<string, unknown> = {};
 
   if (type === StepTypeEnum.DIGEST) {
+    controlValue.type = DEFAULT_CONTROL_DIGEST_TYPE;
     controlValue.amount = DEFAULT_CONTROL_DIGEST_AMOUNT;
     controlValue.unit = DEFAULT_CONTROL_DIGEST_UNIT;
     controlValue.digestKey = DEFAULT_CONTROL_DIGEST_DIGEST_KEY;
@@ -135,6 +138,7 @@ export const createStep = (
   }
 
   if (type === StepTypeEnum.DELAY) {
+    controlValue.type = DEFAULT_CONTROL_DELAY_TYPE;
     controlValue.amount = DEFAULT_CONTROL_DELAY_AMOUNT;
     controlValue.unit = DEFAULT_CONTROL_DELAY_UNIT;
     controlValue.cron = DEFAULT_CONTROL_DELAY_CRON;
