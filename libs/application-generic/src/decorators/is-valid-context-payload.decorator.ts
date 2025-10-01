@@ -2,10 +2,13 @@ import { ContextPayload, ContextValue, isValidContextPayload } from '@novu/share
 import { registerDecorator, ValidationOptions } from 'class-validator';
 
 const MAX_SIZE_KB = 64;
-const CONTEXT_DATA_MAX_SIZE_BYTES = MAX_SIZE_KB * 1024;
 
 export interface ContextPayloadValidationOptions extends ValidationOptions {
   maxCount?: number;
+}
+
+export interface ContextDataValidationOptions extends ValidationOptions {
+  maxSizeKB?: number;
 }
 
 export interface ContextPayloadValidationResult {
@@ -13,15 +16,28 @@ export interface ContextPayloadValidationResult {
   error?: string;
 }
 
-function calculateDataSize(data: unknown): { sizeInBytes: number; isValid: boolean } {
-  if (!data) return { sizeInBytes: 0, isValid: true };
+function calculateDataSize(data: unknown, maxSizeKB = MAX_SIZE_KB): ContextPayloadValidationResult {
+  if (!data) return { isValid: true };
 
   try {
     const jsonString = JSON.stringify(data);
     const sizeInBytes = Buffer.byteLength(jsonString, 'utf8');
-    return { sizeInBytes, isValid: sizeInBytes <= CONTEXT_DATA_MAX_SIZE_BYTES };
+    const maxSizeBytes = maxSizeKB * 1024;
+
+    if (sizeInBytes > maxSizeBytes) {
+      const currentSizeKB = Math.round(sizeInBytes / 1024);
+      return {
+        isValid: false,
+        error: `Data is too large: ${currentSizeKB}KB exceeds ${maxSizeKB}KB limit`,
+      };
+    }
+
+    return { isValid: true };
   } catch {
-    return { sizeInBytes: 0, isValid: false };
+    return {
+      isValid: false,
+      error: 'Data is invalid: cannot serialize to JSON',
+    };
   }
 }
 
@@ -54,20 +70,12 @@ function validateSingleContextData(contextType: string, contextValue: unknown): 
   }
 
   const data = (contextValue as ContextValue & { data?: unknown }).data;
-  const { sizeInBytes, isValid } = calculateDataSize(data);
+  const result = calculateDataSize(data);
 
-  if (!isValid) {
-    if (sizeInBytes === 0) {
-      return {
-        isValid: false,
-        error: `Context '${contextType}' data is invalid: cannot serialize to JSON`,
-      };
-    }
-
-    const currentSizeKB = Math.round(sizeInBytes / 1024);
+  if (!result.isValid) {
     return {
       isValid: false,
-      error: `Context '${contextType}' data is too large: ${currentSizeKB}KB exceeds ${MAX_SIZE_KB}KB limit`,
+      error: `Context '${contextType}' ${result.error}`,
     };
   }
 
@@ -102,26 +110,58 @@ export function validateContextPayload(value: unknown, maxCount?: number): boole
   return validateContextPayloadWithDetails(value, maxCount).isValid;
 }
 
-// Decorator
-export function IsValidContextPayload(validationOptions?: ContextPayloadValidationOptions) {
-  return (object: object, propertyName: string) => {
-    let lastValidationError: string | undefined;
+export function validateContextDataWithDetails(value: unknown, maxSizeKB?: number): ContextPayloadValidationResult {
+  if (value == null) return { isValid: true };
 
-    registerDecorator({
-      name: 'isValidContextPayload',
-      target: object.constructor,
-      propertyName: propertyName,
-      options: validationOptions,
-      validator: {
-        validate(value: unknown) {
-          const result = validateContextPayloadWithDetails(value, validationOptions?.maxCount);
-          lastValidationError = result.error;
-          return result.isValid;
+  // Must be an object
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    return {
+      isValid: false,
+      error: 'Context data must be an object',
+    };
+  }
+
+  return calculateDataSize(value, maxSizeKB);
+}
+
+function createValidationDecorator<T extends ValidationOptions>(
+  name: string,
+  validationFn: (value: unknown, options?: T) => ContextPayloadValidationResult,
+  defaultMessage: string
+) {
+  return (validationOptions?: T) => {
+    return (object: object, propertyName: string) => {
+      let lastValidationError: string | undefined;
+
+      registerDecorator({
+        name,
+        target: object.constructor,
+        propertyName: propertyName,
+        options: validationOptions,
+        validator: {
+          validate(value: unknown) {
+            const result = validationFn(value, validationOptions);
+            lastValidationError = result.error;
+            return result.isValid;
+          },
+          defaultMessage() {
+            return lastValidationError || defaultMessage;
+          },
         },
-        defaultMessage() {
-          return lastValidationError || 'Invalid context payload';
-        },
-      },
-    });
+      });
+    };
   };
 }
+
+// Decorators
+export const IsValidContextPayload = createValidationDecorator<ContextPayloadValidationOptions>(
+  'isValidContextPayload',
+  (value, options) => validateContextPayloadWithDetails(value, options?.maxCount),
+  'Invalid context payload'
+);
+
+export const IsValidContextData = createValidationDecorator<ContextDataValidationOptions>(
+  'isValidContextData',
+  (value, options) => validateContextDataWithDetails(value, options?.maxSizeKB),
+  'Invalid context data'
+);
