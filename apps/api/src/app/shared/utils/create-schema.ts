@@ -86,7 +86,7 @@ export const buildSubscriberSchema = (subscriber: unknown) => {
         subscriber && typeof subscriber === 'object' && 'data' in subscriber ? subscriber.data : {}
       ),
     },
-    required: ['firstName', 'lastName', 'email', 'subscriberId'],
+    required: ['subscriberId'],
     additionalProperties: false,
   };
 };

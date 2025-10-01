@@ -179,7 +179,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
                 additionalProperties: true,
               },
             },
-            required: ['firstName', 'lastName', 'email', 'subscriberId'],
+            required: ['subscriberId'],
             additionalProperties: false,
           },
           steps: {
@@ -429,7 +429,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
                 type: 'object',
               },
             },
-            required: ['firstName', 'lastName', 'email', 'subscriberId'],
+            required: ['subscriberId'],
             type: 'object',
           },
           steps: {
