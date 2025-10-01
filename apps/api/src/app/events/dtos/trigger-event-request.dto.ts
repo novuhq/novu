@@ -10,7 +10,16 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsDefined,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
@@ -53,6 +62,7 @@ export class TopicPayloadDto {
     type: [String],
   })
   @IsArray()
+  @ArrayMaxSize(100)
   @IsString({ each: true })
   @IsOptional()
   exclude?: string[];
