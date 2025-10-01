@@ -125,7 +125,6 @@ export const Maily = ({
     parsedVariables: variables,
     blocks: blocks ?? [],
     onCreateNewVariable,
-    isPayloadSchemaEnabled,
     isTranslationEnabled,
     translationKeys,
     onCreateNewTranslationKey,

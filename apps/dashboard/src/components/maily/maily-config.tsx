@@ -360,7 +360,6 @@ export const useCreateExtensions = ({
       parsedVariables,
       blocks,
       onCreateNewVariable,
-      isPayloadSchemaEnabled,
       variableSuggestionsPopover,
       renderVariable,
       createVariableNodeView,
