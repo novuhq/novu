@@ -1,30 +1,45 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DelayTypeEnum, TimeUnitEnum } from '@novu/shared';
-import { IsEnum, IsNumber, Min, ValidateIf } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, Min, MinLength, ValidateIf } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 export class DelayControlDto extends SkipControlDto {
   @ApiProperty({
     description: "Type of the delay. Currently only 'regular' is supported by the schema.",
-    enum: [DelayTypeEnum.REGULAR],
+    enum: [DelayTypeEnum.REGULAR, DelayTypeEnum.TIMED],
     default: DelayTypeEnum.REGULAR,
   })
-  @IsEnum({ REGULAR: DelayTypeEnum.REGULAR })
-  type: DelayTypeEnum.REGULAR;
+  @IsEnum([DelayTypeEnum.REGULAR, DelayTypeEnum.TIMED])
+  @IsOptional()
+  type?: DelayTypeEnum.REGULAR | DelayTypeEnum.TIMED;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Amount of time to delay.',
     type: Number,
     minimum: 1,
   })
+  @ValidateIf((obj) => obj.type === DelayTypeEnum.REGULAR)
   @IsNumber()
   @Min(1)
-  amount: number;
+  @IsOptional()
+  amount?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Unit of time for the delay amount.',
     enum: TimeUnitEnum,
   })
+  @ValidateIf((obj) => obj.type === DelayTypeEnum.REGULAR)
   @IsEnum(TimeUnitEnum)
-  unit: TimeUnitEnum;
+  @IsOptional()
+  unit?: TimeUnitEnum;
+
+  @ApiPropertyOptional({
+    description: 'Cron expression for the delay. Min length 1.',
+    type: String,
+  })
+  @ValidateIf((obj) => obj.type === DelayTypeEnum.TIMED)
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  cron?: string;
 }

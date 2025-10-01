@@ -2,12 +2,12 @@ import { TimeUnitEnum } from '@novu/shared';
 import { useMemo } from 'react';
 
 import { AmountInput } from '@/components/amount-input';
-import { AMOUNT_KEY, UNIT_KEY } from '@/components/workflow-editor/steps/digest/keys';
+import { AMOUNT_KEY, UNIT_KEY } from '@/components/workflow-editor/steps/digest-delay-tabs/keys';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TIME_UNIT_OPTIONS } from '@/components/workflow-editor/steps/time-units';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
-export const RegularDigest = ({ isReadOnly }: { isReadOnly: boolean }) => {
+export const RegularType = ({ isReadOnly, isDigest }: { isReadOnly: boolean; isDigest: boolean }) => {
   const { step } = useWorkflow();
   const { saveForm } = useSaveForm();
   const { dataSchema } = step?.controls ?? {};
@@ -28,7 +28,9 @@ export const RegularDigest = ({ isReadOnly }: { isReadOnly: boolean }) => {
 
   return (
     <div className="flex items-center justify-between">
-      <span className="text-foreground-600 text-xs font-medium">Digest events for</span>
+      <span className="text-foreground-600 text-xs font-medium">
+        {isDigest ? 'Digest events for' : 'Delay execution by'}
+      </span>
       <AmountInput
         fields={{ inputKey: `${AMOUNT_KEY}`, selectKey: `${UNIT_KEY}` }}
         options={TIME_UNIT_OPTIONS}
@@ -37,7 +39,7 @@ export const RegularDigest = ({ isReadOnly }: { isReadOnly: boolean }) => {
         onValueChange={() => saveForm()}
         showError={false}
         min={minAmountValue}
-        dataTestId="regular-digest-amount-input"
+        dataTestId="regular-type-amount-input"
         isReadOnly={isReadOnly}
       />
     </div>

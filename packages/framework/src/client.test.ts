@@ -618,8 +618,6 @@ describe('Novu Client', () => {
       const { amount } = delayExecutionResult.outputs;
       expect(amount).toBe(delayConfiguration.amount);
       expect(delayExecutionResult.providers).toEqual({});
-      const { type } = delayExecutionResult.outputs;
-      expect(type).toBe('regular');
     });
 
     it('should compile default control variable', async () => {

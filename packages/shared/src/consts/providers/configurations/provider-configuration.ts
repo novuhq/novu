@@ -16,7 +16,7 @@ const sendgridConfigurations: ConfigConfiguration[] = [
     links: [
       {
         text: 'set-up guide',
-        url: 'https://docs.novu.co/integrations/providers/email/sendgrid#manual-setup',
+        url: 'https://docs.novu.co/platform/integrations/email/sendgrid#manual-setup',
       },
     ],
   },
@@ -38,7 +38,7 @@ const resendConfigurations: ConfigConfiguration[] = [
     links: [
       {
         text: 'set-up guide',
-        url: 'https://docs.novu.co/integrations/providers/email/resend#manual-setup',
+        url: 'https://docs.novu.co/platform/integrations/email/resend#manual-setup',
       },
     ],
   },
@@ -60,7 +60,7 @@ const mailgunConfigurations: ConfigConfiguration[] = [
     links: [
       {
         text: 'set-up guide',
-        url: 'https://docs.novu.co/integrations/providers/email/mailgun#manual-setup',
+        url: 'https://docs.novu.co/platform/integrations/email/mailgun#manual-setup',
       },
     ],
   },
@@ -82,7 +82,7 @@ const sesConfigurations: ConfigConfiguration[] = [
     links: [
       {
         text: 'set-up guide',
-        url: 'https://docs.novu.co/integrations/providers/email/amazon-ses#manual-setup',
+        url: 'https://docs.novu.co/platform/integrations/email/amazon-ses#manual-setup',
       },
     ],
   },
