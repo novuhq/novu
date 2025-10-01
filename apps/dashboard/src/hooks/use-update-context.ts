@@ -1,49 +1,39 @@
-import { ContextData, ContextId, ContextType } from '@novu/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+// Removed unused imports
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ContextResponseDto, updateContext } from '@/api/contexts';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
+import { OmitEnvironmentFromParameters } from '@/utils/types';
 
-type UseUpdateContextProps = {
-  onSuccess?: (data: ContextResponseDto) => void;
-  onError?: (error: Error) => void;
-};
+export type UpdateContextParameters = OmitEnvironmentFromParameters<typeof updateContext>;
 
-export const useUpdateContext = ({ onSuccess, onError }: UseUpdateContextProps = {}) => {
+export const useUpdateContext = (
+  options?: UseMutationOptions<ContextResponseDto, unknown, UpdateContextParameters>
+) => {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
-  const { mutateAsync: updateContextMutation, isPending } = useMutation({
-    mutationFn: ({ type, id, data }: { type: ContextType; id: ContextId; data: ContextData }) => {
+  const { mutateAsync, ...rest } = useMutation({
+    mutationFn: (args: UpdateContextParameters) => {
       const environment = requireEnvironment(currentEnvironment, 'No environment available');
-
-      return updateContext({
-        environment,
-        type,
-        id,
-        data,
-      });
+      return updateContext({ environment, ...args });
     },
-    onSuccess: (data) => {
-      // Invalidate contexts queries to refresh the list
+    ...options,
+    onSuccess: async (data, variables, ctx) => {
+      // Invalidate contexts list queries
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchContexts] });
+
+      // Invalidate specific context query
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchContext, currentEnvironment?._id, data.type, data.id],
       });
 
-      if (onSuccess) {
-        onSuccess(data);
-      }
-    },
-    onError: (error: Error) => {
-      if (onError) {
-        onError(error);
-      }
+      options?.onSuccess?.(data, variables, ctx);
     },
   });
 
   return {
-    updateContext: updateContextMutation,
-    isPending,
+    ...rest,
+    updateContext: mutateAsync,
   };
 };

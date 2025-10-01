@@ -41,7 +41,7 @@ const ContextTableCell = (props: ContextTableCellProps) => {
 export const ContextRow = ({ context }: ContextRowProps) => {
   const { navigateToEditContextPage } = useContextsNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const { deleteContext, isDeleting } = useDeleteContext();
+  const { deleteContext, isPending: isDeleting } = useDeleteContext();
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();

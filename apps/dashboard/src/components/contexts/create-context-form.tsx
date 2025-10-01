@@ -52,10 +52,7 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
     onSuccess: () => {
       showSuccessToast(`Context created successfully`, undefined, toastOptions);
       track(TelemetryEvent.CONTEXTS_PAGE_VISIT);
-
-      if (onSuccess) {
-        onSuccess();
-      }
+      onSuccess?.();
     },
     onError: (error) => {
       if (error instanceof NovuApiError && error.status === 409) {
@@ -63,14 +60,12 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
           type: 'manual',
           message: 'A context with this ID and type already exists',
         });
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to create context';
+        showErrorToast(errorMessage, undefined, toastOptions);
       }
 
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create context';
-      showErrorToast(errorMessage, undefined, toastOptions);
-
-      if (onError && error instanceof Error) {
-        onError(error);
-      }
+      onError?.(error instanceof Error ? error : new Error('Unknown error'));
     },
   });
 
@@ -93,9 +88,7 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
   }, []);
 
   const onSubmit = async (formData: z.infer<typeof CreateContextFormSchema>) => {
-    if (onSubmitStart) {
-      onSubmitStart();
-    }
+    onSubmitStart?.();
 
     await createContext({
       type: formData.type.trim(),

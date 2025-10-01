@@ -33,22 +33,25 @@ export const useContextsUrlState = (): ContextsUrlState => {
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [previousCursor, setPreviousCursor] = useState<string | undefined>(undefined);
 
-  const search = searchParams.get('search') || '';
-  const orderBy = (searchParams.get('orderBy') as ContextsSortableColumn) || undefined;
-  const orderDirection = (searchParams.get('orderDirection') as DirectionEnum) || undefined;
-  const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : DEFAULT_LIMIT;
-  const urlAfter = searchParams.get('after') || undefined;
-  const urlBefore = searchParams.get('before') || undefined;
+  const filterValues: ContextsFilter = useMemo(() => {
+    const search = searchParams.get('search') || '';
+    const orderBy = (searchParams.get('orderBy') as ContextsSortableColumn) || undefined;
+    const orderDirection = (searchParams.get('orderDirection') as DirectionEnum) || undefined;
+    const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : DEFAULT_LIMIT;
+    const urlAfter = searchParams.get('after') || undefined;
+    const urlBefore = searchParams.get('before') || undefined;
 
-  const defaultFilterValues: ContextsFilter = useMemo(
-    () => ({
+    return {
       search: search || undefined,
       orderBy,
       orderDirection,
       limit,
-    }),
-    [search, orderBy, orderDirection, limit]
-  );
+      after: urlAfter,
+      before: urlBefore,
+      nextCursor,
+      previousCursor,
+    };
+  }, [searchParams, nextCursor, previousCursor]);
 
   const toggleSort = useCallback(
     (column: ContextsSortableColumn) => {
@@ -172,17 +175,6 @@ export const useContextsUrlState = (): ContextsUrlState => {
       });
     },
     [setSearchParams]
-  );
-
-  const filterValues: ContextsFilter = useMemo(
-    () => ({
-      ...defaultFilterValues,
-      after: urlAfter,
-      before: urlBefore,
-      nextCursor,
-      previousCursor,
-    }),
-    [defaultFilterValues, urlAfter, urlBefore, nextCursor, previousCursor]
   );
 
   return {

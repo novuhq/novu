@@ -1,6 +1,6 @@
 import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ContextResponseDto, createContext } from '@/api/contexts';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 
@@ -13,7 +13,10 @@ export const useCreateContext = (
   const { currentEnvironment } = useEnvironment();
 
   const { mutateAsync, ...rest } = useMutation({
-    mutationFn: (args: CreateContextParameters) => createContext({ environment: currentEnvironment!, ...args }),
+    mutationFn: (args: CreateContextParameters) => {
+      const environment = requireEnvironment(currentEnvironment, 'No environment available');
+      return createContext({ environment, ...args });
+    },
     ...options,
     onSuccess: async (data, variables, ctx) => {
       queryClient.invalidateQueries({

@@ -52,10 +52,7 @@ export const CreateContextDrawer = forwardRef<HTMLDivElement, CreateContextDrawe
 
   const handleSuccess = () => {
     onOpenChange(false);
-
-    if (onSuccess) {
-      onSuccess();
-    }
+    onSuccess?.();
   };
 
   return (

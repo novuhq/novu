@@ -95,7 +95,7 @@ const ContextOverviewForm = ({ context, readOnly }: { context: ContextResponseDt
   const formId = useId();
   const { navigateToContextsPage } = useContextsNavigate();
 
-  const { updateContext } = useUpdateContext({
+  const { updateContext, isPending: isUpdating } = useUpdateContext({
     onSuccess: () => {
       showSuccessToast(`Context updated successfully`, undefined, toastOptions);
       track(TelemetryEvent.CONTEXTS_PAGE_VISIT);
@@ -108,7 +108,7 @@ const ContextOverviewForm = ({ context, readOnly }: { context: ContextResponseDt
     },
   });
 
-  const { deleteContext, isDeleting } = useDeleteContext();
+  const { deleteContext, isPending: isDeleting } = useDeleteContext();
 
   const form = useForm<z.infer<typeof EditContextFormSchema>>({
     defaultValues: {
@@ -122,11 +122,16 @@ const ContextOverviewForm = ({ context, readOnly }: { context: ContextResponseDt
 
   const onSubmit = async (formData: z.infer<typeof EditContextFormSchema>) => {
     setIsSubmitting(true);
-    await updateContext({
-      type: context.type,
-      id: context.id,
-      data: formData.data && Object.keys(formData.data).length > 0 ? formData.data : {},
-    });
+    try {
+      await updateContext({
+        type: context.type,
+        id: context.id,
+        data: formData.data && Object.keys(formData.data).length > 0 ? formData.data : {},
+      });
+    } catch {
+      // Error is handled by the hook's onError callback
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteContext = async () => {
@@ -138,9 +143,8 @@ const ContextOverviewForm = ({ context, readOnly }: { context: ContextResponseDt
       showSuccessToast(`Deleted context: ${context.id}`, undefined, toastOptions);
       setIsDeleteModalOpen(false);
       navigateToContextsPage();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete context';
-      showErrorToast(errorMessage, undefined, toastOptions);
+    } catch {
+      // Error is handled by the hook's onError callback
     }
   };
 
@@ -251,7 +255,7 @@ const ContextOverviewForm = ({ context, readOnly }: { context: ContextResponseDt
               type="submit"
               form={formId}
               disabled={!form.formState.isDirty}
-              isLoading={isSubmitting}
+              isLoading={isSubmitting || isUpdating}
             >
               Save changes
             </Button>
