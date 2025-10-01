@@ -120,6 +120,10 @@ export type ActivityNotificationResponseDto = {
    * Criticality of the notification
    */
   critical?: boolean | undefined;
+  /**
+   * Contexts (keys) in which the notification was sent
+   */
+  contextKeys?: Array<string> | undefined;
 };
 
 /** @internal */
@@ -149,6 +153,7 @@ export const ActivityNotificationResponseDto$inboundSchema: z.ZodType<
   topics: z.array(ActivityTopicDto$inboundSchema).optional(),
   severity: SeverityLevelEnum$inboundSchema.optional(),
   critical: z.boolean().optional(),
+  contextKeys: z.array(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -182,6 +187,7 @@ export type ActivityNotificationResponseDto$Outbound = {
   topics?: Array<ActivityTopicDto$Outbound> | undefined;
   severity?: string | undefined;
   critical?: boolean | undefined;
+  contextKeys?: Array<string> | undefined;
 };
 
 /** @internal */
@@ -211,6 +217,7 @@ export const ActivityNotificationResponseDto$outboundSchema: z.ZodType<
   topics: z.array(ActivityTopicDto$outboundSchema).optional(),
   severity: SeverityLevelEnum$outboundSchema.optional(),
   critical: z.boolean().optional(),
+  contextKeys: z.array(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",
