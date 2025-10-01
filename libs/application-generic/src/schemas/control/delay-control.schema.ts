@@ -14,7 +14,7 @@ import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
 export const delayRegularControlZodSchema = z
   .object({
     skip: skipZodSchema,
-    type: z.enum([DelayTypeEnum.REGULAR]),
+    type: z.enum([DelayTypeEnum.REGULAR]).optional(),
     amount: z.number().min(1),
     unit: z.nativeEnum(TimeUnitEnum),
     extendToSchedule: z.boolean().optional(),
@@ -24,7 +24,7 @@ export const delayRegularControlZodSchema = z
 const delayTimedControlZodSchema = z
   .object({
     skip: skipZodSchema,
-    type: z.enum([DelayTypeEnum.TIMED]),
+    type: z.enum([DelayTypeEnum.TIMED]).optional(),
     cron: z.string().min(1),
     extendToSchedule: z.boolean().optional(),
   })
