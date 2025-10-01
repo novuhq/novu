@@ -18,6 +18,7 @@ import { PermissionButton } from '../primitives/permission-button';
 import { ContextListBlank } from './context-list-blank';
 import { ContextRow, ContextRowSkeleton } from './context-row';
 import { ContextsFilters } from './contexts-filters';
+import { useContextsNavigate } from './hooks/use-contexts-navigate';
 import {
   ContextsFilter,
   ContextsSortableColumn,
@@ -58,8 +59,9 @@ const ContextListWrapper = (
             className="py-2.5"
           />
         ) : (
-          <div /> // Empty div placeholder to maintain layout
+          <div />
         )}
+        {!showEmptyState && <CreateContextButton />}
       </div>
       {children}
     </div>
@@ -262,6 +264,8 @@ export const ContextList = (props: ContextListProps) => {
 };
 
 export const CreateContextButton = () => {
+  const { navigateToCreateContextPage } = useContextsNavigate();
+
   return (
     <PermissionButton
       permission={PermissionsEnum.WORKFLOW_WRITE}
@@ -269,8 +273,9 @@ export const CreateContextButton = () => {
       mode="gradient"
       size="xs"
       leadingIcon={RiAddCircleLine}
+      onClick={navigateToCreateContextPage}
     >
-      Create Topic
+      Create context
     </PermissionButton>
   );
 };

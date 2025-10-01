@@ -1,5 +1,5 @@
 import type { ContextData, ContextId, ContextType, DirectionEnum, IEnvironment } from '@novu/shared';
-import { getV2 } from './api.client';
+import { getV2, postV2 } from './api.client';
 
 export type ContextResponseDto = {
   id: ContextId;
@@ -95,6 +95,25 @@ export const getContext = async ({
 }): Promise<ContextResponseDto> => {
   const response = await getV2<ContextResponseDto>(`/contexts/${type}/${id}`, {
     environment,
+  });
+
+  return response;
+};
+
+export const createContext = async ({
+  environment,
+  type,
+  id,
+  data,
+}: {
+  environment: IEnvironment;
+  type: ContextType;
+  id: ContextId;
+  data?: ContextData;
+}): Promise<ContextResponseDto> => {
+  const response = await postV2<ContextResponseDto>(`/contexts`, {
+    environment,
+    body: { type, id, data },
   });
 
   return response;
