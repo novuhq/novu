@@ -211,21 +211,31 @@ export class Session {
       }
     }
 
-    const token = await this.authService.getSubscriberWidgetToken(subscriberEntity);
-    const organization = await this.organizationRepository.findById(environment._organizationId);
+    const [token, organization] = await Promise.all([
+      this.authService.getSubscriberWidgetToken(subscriberEntity),
+      this.organizationRepository.findById(environment._organizationId),
+    ]);
 
     if (!organization) {
       throw new NotFoundException('Organization not found');
     }
 
-    const { removeNovuBranding } = await this.getOrganizationSettingsUsecase.execute(
-      GetOrganizationSettingsCommand.create({
-        organizationId: environment._organizationId,
-        organization,
-      })
-    );
+    const schedulePromise = this.createDefaultSchedule({
+      environment,
+      defaultSchedule: command.requestData.defaultSchedule,
+      subscriber: subscriberEntity,
+    });
 
-    const maxSnoozeDurationHours = await this.getMaxSnoozeDurationHours(organization?.apiServiceLevel);
+    const [{ removeNovuBranding }, maxSnoozeDurationHours, schedule] = await Promise.all([
+      this.getOrganizationSettingsUsecase.execute(
+        GetOrganizationSettingsCommand.create({
+          organizationId: environment._organizationId,
+          organization,
+        })
+      ),
+      this.getMaxSnoozeDurationHours(organization.apiServiceLevel),
+      schedulePromise,
+    ]);
 
     /**
      * We want to prevent the playground inbox demo from marking the integration as connected
@@ -251,12 +261,6 @@ export class Session {
         }
       );
     }
-
-    const schedule = await this.createDefaultSchedule({
-      environment,
-      defaultSchedule: command.requestData.defaultSchedule,
-      subscriber: subscriberEntity,
-    });
 
     return {
       applicationIdentifier: environment.identifier,
