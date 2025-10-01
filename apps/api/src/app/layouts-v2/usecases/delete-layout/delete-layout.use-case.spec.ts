@@ -1,5 +1,6 @@
 import { ConflictException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import { ModuleRef } from '@nestjs/core';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -13,6 +14,8 @@ describe('DeleteLayoutUseCase', () => {
   let layoutRepositoryMock: sinon.SinonStubbedInstance<LayoutRepository>;
   let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
+  let moduleRefMock: sinon.SinonStubbedInstance<ModuleRef>;
+  let pinoLoggerMock: sinon.SinonStubbedInstance<PinoLogger>;
   let deleteLayoutUseCase: DeleteLayoutUseCase;
 
   const mockUser = {
@@ -74,12 +77,16 @@ describe('DeleteLayoutUseCase', () => {
     layoutRepositoryMock = sinon.createStubInstance(LayoutRepository);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
+    pinoLoggerMock = sinon.createStubInstance(PinoLogger);
+    moduleRefMock = sinon.createStubInstance(ModuleRef);
 
     deleteLayoutUseCase = new DeleteLayoutUseCase(
       getLayoutUseCaseMock as any,
       layoutRepositoryMock as any,
       controlValuesRepositoryMock as any,
-      analyticsServiceMock as any
+      analyticsServiceMock as any,
+      moduleRefMock as any,
+      pinoLoggerMock as any
     );
 
     // Default mocks

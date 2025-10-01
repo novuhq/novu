@@ -1,4 +1,5 @@
-import { AnalyticsService } from '@novu/application-generic';
+import { ModuleRef } from '@nestjs/core';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -13,6 +14,8 @@ describe('DuplicateLayoutUseCase', () => {
   let upsertLayoutUseCaseMock: sinon.SinonStubbedInstance<UpsertLayout>;
   let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
+  let moduleRefMock: sinon.SinonStubbedInstance<ModuleRef>;
+  let pinoLoggerMock: sinon.SinonStubbedInstance<PinoLogger>;
   let duplicateLayoutUseCase: DuplicateLayoutUseCase;
 
   const mockUser = {
@@ -77,12 +80,16 @@ describe('DuplicateLayoutUseCase', () => {
     upsertLayoutUseCaseMock = sinon.createStubInstance(UpsertLayout);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
+    moduleRefMock = sinon.createStubInstance(ModuleRef);
+    pinoLoggerMock = sinon.createStubInstance(PinoLogger);
 
     duplicateLayoutUseCase = new DuplicateLayoutUseCase(
       getLayoutUseCaseMock as any,
       upsertLayoutUseCaseMock as any,
       controlValuesRepositoryMock as any,
-      analyticsServiceMock as any
+      analyticsServiceMock as any,
+      moduleRefMock as any,
+      pinoLoggerMock as any
     );
 
     // Default mocks

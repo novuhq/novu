@@ -245,15 +245,15 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       }
     }
 
-    const overridenStepLayoutId = overrideLayoutId || (overrideLayoutId === null ? null : stepLayoutId);
+    const overriddenStepLayoutId = overrideLayoutId || (overrideLayoutId === null ? null : stepLayoutId);
 
     let layoutControlsEntity: ControlValuesEntity | null = null;
     // if the step control values have a layoutId then find layout controls entity
-    if (overridenStepLayoutId) {
+    if (overriddenStepLayoutId) {
       try {
         const layout = await this.getLayoutUseCase.execute(
           GetLayoutCommand.create({
-            layoutIdOrInternalId: overridenStepLayoutId,
+            layoutIdOrInternalId: overriddenStepLayoutId,
             environmentId,
             organizationId,
             skipAdditionalFields: true,
@@ -294,7 +294,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
                 isTest: false,
                 isRetry: false,
                 raw: JSON.stringify({
-                  layoutId: overridenStepLayoutId,
+                  layoutId: overriddenStepLayoutId,
                   error: error.message,
                 }),
               })
@@ -340,7 +340,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       },
       environmentId,
       organizationId,
-      resourceId: overridenStepLayoutId ?? undefined,
+      resourceId: overriddenStepLayoutId ?? undefined,
       resourceType: LocalizationResourceEnum.LAYOUT,
       locale,
     });
