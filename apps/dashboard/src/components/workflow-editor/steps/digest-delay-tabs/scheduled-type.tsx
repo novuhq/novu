@@ -2,9 +2,9 @@ import cronParser from 'cron-parser';
 import { useMemo } from 'react';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Hint, HintIcon } from '@/components/primitives/hint';
-import { DaysOfWeek } from '@/components/workflow-editor/steps/digest/days-of-week';
-import { NumbersPicker } from '@/components/workflow-editor/steps/digest/numbers-picker';
-import { Period } from '@/components/workflow-editor/steps/digest/period';
+import { DaysOfWeek } from '@/components/workflow-editor/steps/digest-delay-tabs/days-of-week';
+import { NumbersPicker } from '@/components/workflow-editor/steps/digest-delay-tabs/numbers-picker';
+import { Period } from '@/components/workflow-editor/steps/digest-delay-tabs/period';
 import {
   getCronBasedOnPeriod,
   getPeriodFromCronParts,
@@ -13,16 +13,18 @@ import {
   toCronFields,
   toUiFields,
   UiCronFields,
-} from '@/components/workflow-editor/steps/digest/utils';
+} from '@/components/workflow-editor/steps/digest-delay-tabs/utils';
 
-export const ScheduledDigest = ({
+export const ScheduledType = ({
   value,
   isDisabled,
+  isDigest,
   onValueChange,
   onError,
 }: {
   value: string;
   isDisabled?: boolean;
+  isDigest: boolean;
   onValueChange: (cron: string) => void;
   onError?: (error: unknown) => void;
 }) => {
@@ -76,7 +78,7 @@ export const ScheduledDigest = ({
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-x-1 gap-y-2">
         <div className="flex items-center gap-1">
-          <span className="text-foreground-600 text-xs font-medium">Every</span>
+          <span className="text-foreground-600 text-xs font-medium">{isDigest ? 'Every' : 'Until'}</span>
           <Period value={period} onPeriodChange={handlePeriodChange} isDisabled={isDisabled} />
         </div>
         {period !== PeriodValues.HOUR && period !== PeriodValues.MONTH && <span className="min-w-full" />}
@@ -137,9 +139,9 @@ export const ScheduledDigest = ({
           </div>
         )}
       </div>
-      <Hint className="text-text-soft text-label-2xs">
+      <Hint className="text-text-soft text-2xs">
         <HintIcon as={RiInformation2Line} />
-        Delivered in subscriber's timezone, if exists.
+        Delivered in subscriber's timezone
       </Hint>
     </div>
   );

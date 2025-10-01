@@ -213,13 +213,11 @@ export class GetWorkflowRuns {
       // Fetch step runs for all workflow runs efficiently
       const stepRunsByCompositeKey = await this.getStepRunsForWorkflowRuns(command, workflowRuns);
 
-      const data = await Promise.all(
-        workflowRuns.map((workflowRun) => {
-          const compositeKey = `${workflowRun.subscriber_id}:${workflowRun.transaction_id}`;
+      const data = workflowRuns.map((workflowRun) => {
+        const compositeKey = `${workflowRun.subscriber_id}:${workflowRun.transaction_id}`;
 
-          return this.mapWorkflowRunToDto(workflowRun, stepRunsByCompositeKey.get(compositeKey) || []);
-        })
-      );
+        return this.mapWorkflowRunToDto(workflowRun, stepRunsByCompositeKey.get(compositeKey) || []);
+      });
 
       return {
         data,
@@ -379,10 +377,10 @@ export class GetWorkflowRuns {
     }
   }
 
-  private async mapWorkflowRunToDto(
+  private mapWorkflowRunToDto(
     workflowRun: WorkflowRunFetchResult,
     stepRuns: StepRunFetchResult[]
-  ): Promise<GetWorkflowRunsDto> {
+  ): GetWorkflowRunsDto {
     return {
       id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,

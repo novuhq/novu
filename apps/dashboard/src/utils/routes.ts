@@ -54,6 +54,7 @@ export const ROUTES = {
   TOPICS: '/env/:environmentSlug/topics',
   TOPICS_CREATE: '/env/:environmentSlug/topics/create',
   TOPICS_EDIT: '/env/:environmentSlug/topics/:topicKey/edit',
+  CONTEXTS: '/env/:environmentSlug/contexts',
   LAYOUTS: '/env/:environmentSlug/layouts',
   LAYOUTS_CREATE: '/env/:environmentSlug/layouts/create',
   LAYOUTS_DUPLICATE: '/env/:environmentSlug/layouts/duplicate/:layoutId',

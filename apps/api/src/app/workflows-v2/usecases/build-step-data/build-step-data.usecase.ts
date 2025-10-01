@@ -5,7 +5,7 @@ import { ControlValuesLevelEnum, ResourceOriginEnum, ShortIsPrefixEnum } from '@
 import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { buildSlug } from '../../../shared/helpers/build-slug';
-import { StepResponseDto } from '../../dtos';
+import { PreviewPayloadDto, StepResponseDto } from '../../dtos';
 import { InvalidStepException } from '../../exceptions/invalid-step.exception';
 import { BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { BuildStepDataCommand } from './build-step-data.command';
@@ -43,7 +43,7 @@ export class BuildStepDataUsecase {
     }
 
     const controlValues = await this.getControlValues(command, currentStep, workflow._id);
-    const variables = await this.buildAvailableVariableSchema(command, currentStep, workflow);
+    const variables = await this.buildAvailableVariableSchema(command, currentStep, workflow, command.previewPayload);
 
     return BuildStepDataUsecase.mapToStepResponse(workflow, currentStep, controlValues, variables);
   }
@@ -80,7 +80,8 @@ export class BuildStepDataUsecase {
   private async buildAvailableVariableSchema(
     command: BuildStepDataCommand,
     currentStep: NotificationStepEntity,
-    workflow: NotificationTemplateEntity
+    workflow: NotificationTemplateEntity,
+    previewData?: PreviewPayloadDto
   ) {
     return await this.buildAvailableVariableSchemaUsecase.execute({
       environmentId: command.user.environmentId,
@@ -88,6 +89,7 @@ export class BuildStepDataUsecase {
       userId: command.user._id,
       stepInternalId: currentStep._templateId,
       workflow,
+      previewData,
     });
   }
 

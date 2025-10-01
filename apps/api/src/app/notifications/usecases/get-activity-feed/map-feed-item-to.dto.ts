@@ -248,6 +248,7 @@ export function mapDigest(
         ordinalValue: digestItem.timed?.ordinalValue,
         monthlyType: digestItem.timed?.monthlyType,
         cronExpression: digestItem.timed?.cronExpression,
+        untilDate: digestItem.timed?.untilDate,
       },
     };
   }

@@ -131,16 +131,20 @@ export class CreateNovuIntegrations {
   }
 
   async execute(command: CreateNovuIntegrationsCommand): Promise<void> {
+    const integrationPromises: Array<Promise<void>> = [];
+
     if (!command.channels || command.channels.includes(ChannelTypeEnum.EMAIL)) {
-      await this.createEmailIntegration(command);
+      integrationPromises.push(this.createEmailIntegration(command));
     }
 
     if (!command.channels || command.channels.includes(ChannelTypeEnum.IN_APP)) {
-      await this.createInAppIntegration(command);
+      integrationPromises.push(this.createInAppIntegration(command));
     }
 
     if (!command.channels || command.channels.includes(ChannelTypeEnum.CHAT)) {
-      await this.createSlackIntegration(command);
+      integrationPromises.push(this.createSlackIntegration(command));
     }
+
+    await Promise.all(integrationPromises);
   }
 }
