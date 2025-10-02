@@ -1,6 +1,6 @@
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { StepTypeEnum } from '@novu/shared';
-import { IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 import {
   ChatControlDto,
   CustomControlDto,
@@ -16,13 +16,21 @@ import {
 // Base DTO for common properties
 export class BaseStepConfigDto {
   @ApiProperty({
-    description: 'Unique identifier of the step',
+    description: 'Database identifier of the step. Used for updating the step.',
     type: 'string',
     required: false,
   })
   @IsString()
   @IsOptional()
   _id?: string;
+
+  @ApiPropertyOptional({ description: 'Unique identifier for the step' })
+  @IsString()
+  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+    message: 'must be a valid slug format (lowercase letters, numbers, and hyphens only)',
+  })
+  @IsOptional()
+  stepId?: string;
 
   @ApiProperty({
     description: 'Name of the step',
