@@ -8,6 +8,7 @@ import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { cn } from '@/utils/ui';
+import { ContextActivity } from './context-activity';
 import { ContextOverview } from './context-overview';
 
 const tabTriggerClasses =
@@ -54,9 +55,15 @@ function ContextTabs(props: ContextTabsProps) {
           <TabsTrigger value="overview" className={tabTriggerClasses}>
             Overview
           </TabsTrigger>
+          <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
+            Activity Feed
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="h-full w-full overflow-y-auto">
           <ContextOverview type={type} id={id} readOnly={readOnly} />
+        </TabsContent>
+        <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
+          <ContextActivity type={type} id={id} />
         </TabsContent>
 
         {ProtectionAlert}
