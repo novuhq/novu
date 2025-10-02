@@ -28,7 +28,7 @@ export class ExecuteBridgeRequestCommand extends EnvironmentLevelCommand {
   event?: Omit<Event, `${HttpQueryKeysEnum}`>;
 
   @IsOptional()
-  searchParams?: Partial<Record<HttpQueryKeysEnum | 'skipLayoutRendering' | 'jobId', string>>;
+  searchParams?: Partial<Record<HttpQueryKeysEnum | 'skipLayoutRendering' | 'jobId' | 'layoutId', string>>;
 
   @IsOptional()
   processError?: ProcessError;

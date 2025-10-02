@@ -70,6 +70,7 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
       type,
       origin,
       controls,
+      isTranslationEnabled,
     } = entity;
 
     return await this.create({
@@ -88,6 +89,7 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
       type,
       origin,
       controls,
+      isTranslationEnabled,
     });
   }
 

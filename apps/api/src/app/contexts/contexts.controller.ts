@@ -15,8 +15,14 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
-import { FeatureFlagsService } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, ContextType, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
+import { FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
+import {
+  ApiRateLimitCategoryEnum,
+  ContextType,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -74,6 +80,7 @@ export class ContextsController {
     summary: 'Create context',
     description: 'Create a new context with the specified type, id, and data. Returns 409 if context already exists.',
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
   async createContext(
     @UserSession() user: UserSessionData,
@@ -101,6 +108,7 @@ export class ContextsController {
     summary: 'Update context data',
     description: 'Update the data of an existing context. Returns 404 if context does not exist.',
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
   async updateContext(
     @UserSession() user: UserSessionData,
@@ -130,6 +138,7 @@ export class ContextsController {
     summary: 'List contexts',
     description: 'Retrieve a paginated list of contexts, optionally filtered by type and key pattern',
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @ExternalApiAccessible()
   async listContexts(
     @UserSession() user: UserSessionData,
@@ -167,6 +176,7 @@ export class ContextsController {
     summary: 'Get context by id',
     description: 'Retrieve a specific context by its type and id',
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @ExternalApiAccessible()
   async getContext(
     @UserSession() user: UserSessionData,
@@ -193,6 +203,7 @@ export class ContextsController {
     summary: 'Delete context',
     description: 'Delete a context by its type and id',
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
   async deleteContext(
     @UserSession() user: UserSessionData,

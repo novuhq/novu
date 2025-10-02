@@ -49,6 +49,11 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
     result.severity = severity as SeverityLevelEnum[];
   }
 
+  const contextSearch = searchParams.get('contextSearch');
+  if (contextSearch) {
+    result.contextSearch = contextSearch;
+  }
+
   return result;
 }
 
@@ -63,6 +68,7 @@ function parseFilterValues(searchParams: URLSearchParams): ActivityFiltersData {
     subscriberId: searchParams.get('subscriberId') || '',
     topicKey: searchParams.get('topicKey') || '',
     severity: (searchParams.get('severity')?.split(',').filter(Boolean) as SeverityLevelEnum[]) || [],
+    contextSearch: searchParams.get('contextSearch') || '',
   };
 }
 
@@ -140,6 +146,10 @@ export function useActivityUrlState(): ActivityUrlState & {
 
       if (data.severity?.length) {
         newParams.set('severity', data.severity.join(','));
+      }
+
+      if (data.contextSearch) {
+        newParams.set('contextSearch', data.contextSearch);
       }
 
       setSearchParams(newParams, { replace: true });

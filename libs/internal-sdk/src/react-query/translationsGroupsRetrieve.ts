@@ -28,7 +28,7 @@ export type TranslationsGroupsRetrieveQueryData = components.TranslationGroupDto
  * Retrieve a translation group
  *
  * @remarks
- * Retrieves a single translation group by resource type (workflow) and resource ID (workflowId)
+ * Retrieves a single translation group by resource type (workflow, layout) and resource ID (workflowId, layoutId)
  */
 export function useTranslationsGroupsRetrieve(
   resourceType: operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
@@ -47,7 +47,7 @@ export function useTranslationsGroupsRetrieve(
  * Retrieve a translation group
  *
  * @remarks
- * Retrieves a single translation group by resource type (workflow) and resource ID (workflowId)
+ * Retrieves a single translation group by resource type (workflow, layout) and resource ID (workflowId, layoutId)
  */
 export function useTranslationsGroupsRetrieveSuspense(
   resourceType: operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,

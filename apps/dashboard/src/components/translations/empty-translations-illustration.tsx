@@ -14,15 +14,7 @@ export const EmptyTranslationsIllustration = () => {
       />
       <rect x="38.2588" y="24" width="48" height="5" rx="2.5" fill="url(#paint0_linear_640_550983)" />
       <rect x="88.2588" y="24" width="34" height="5" rx="2.5" fill="url(#paint1_linear_640_550983)" />
-      <rect
-        x="88.2588"
-        y="24"
-        width="34"
-        height="5"
-        rx="2.5"
-        fill="url(#paint2_linear_640_550983)"
-        fill-opacity="0.2"
-      />
+      <rect x="88.2588" y="24" width="34" height="5" rx="2.5" fill="url(#paint2_linear_640_550983)" fillOpacity="0.2" />
       <rect x="88.2588" y="24" width="34" height="5" rx="2.5" fill="url(#paint3_linear_640_550983)" />
       <path
         d="M38.594 19.5V14.39H39.35V16.504H40.848V14.39H41.604V19.5H40.848V17.204H39.35V19.5H38.594ZM42.7633 19.5V18.814H44.1143V16.336H42.9383V15.65H44.8493V18.814H46.0883V19.5H42.7633ZM44.4083 14.985C44.245 14.985 44.1143 14.943 44.0163 14.859C43.9183 14.7703 43.8693 14.6537 43.8693 14.509C43.8693 14.3597 43.9183 14.243 44.0163 14.159C44.1143 14.0703 44.245 14.026 44.4083 14.026C44.5716 14.026 44.7023 14.0703 44.8003 14.159C44.8983 14.243 44.9473 14.3597 44.9473 14.509C44.9473 14.6537 44.8983 14.7703 44.8003 14.859C44.7023 14.943 44.5716 14.985 44.4083 14.985ZM47.4996 20.62L48.0596 18.443H49.0676L48.1576 20.62H47.4996ZM56.6781 19.57C56.1741 19.57 55.7774 19.43 55.4881 19.15C55.1988 18.87 55.0541 18.4897 55.0541 18.009H55.8031C55.8031 18.2937 55.8801 18.5153 56.0341 18.674C56.1881 18.828 56.4028 18.905 56.6781 18.905C56.9534 18.905 57.1681 18.828 57.3221 18.674C57.4761 18.5153 57.5531 18.296 57.5531 18.016V15.083H56.3491V14.39H58.3021V18.016C58.3021 18.4967 58.1551 18.877 57.8611 19.157C57.5718 19.4323 57.1774 19.57 56.6781 19.57ZM60.7004 19.57C60.299 19.57 59.9817 19.4673 59.7484 19.262C59.5197 19.052 59.4054 18.7673 59.4054 18.408C59.4054 18.044 59.5267 17.7593 59.7694 17.554C60.0167 17.344 60.355 17.239 60.7844 17.239H61.8554V16.882C61.8554 16.672 61.79 16.5087 61.6594 16.392C61.5287 16.2753 61.3444 16.217 61.1064 16.217C60.8964 16.217 60.7214 16.2637 60.5814 16.357C60.4414 16.4457 60.3597 16.5647 60.3364 16.714H59.5944C59.6364 16.3687 59.795 16.0933 60.0704 15.888C60.3504 15.6827 60.7027 15.58 61.1274 15.58C61.5847 15.58 61.9464 15.6967 62.2124 15.93C62.4784 16.1587 62.6114 16.4713 62.6114 16.868V19.5H61.8764V18.793H61.7504L61.8764 18.653C61.8764 18.933 61.769 19.157 61.5544 19.325C61.3397 19.4883 61.055 19.57 60.7004 19.57ZM60.9244 18.989C61.195 18.989 61.4167 18.9213 61.5894 18.786C61.7667 18.646 61.8554 18.4687 61.8554 18.254V17.75H60.7984C60.6024 17.75 60.446 17.8037 60.3294 17.911C60.2174 18.0183 60.1614 18.1653 60.1614 18.352C60.1614 18.548 60.229 18.7043 60.3644 18.821C60.4997 18.933 60.6864 18.989 60.9244 18.989ZM63.5956 19.5V15.65H64.2256V16.14H64.3656L64.2606 16.287C64.2606 16.0723 64.319 15.902 64.4356 15.776C64.5523 15.6453 64.7086 15.58 64.9046 15.58C65.1146 15.58 65.2756 15.6617 65.3876 15.825C65.5043 15.9883 65.5626 16.2123 65.5626 16.497L65.3946 16.14H65.6606L65.5486 16.287C65.5486 16.0723 65.607 15.902 65.7236 15.776C65.845 15.6453 66.006 15.58 66.2066 15.58C66.4446 15.58 66.6313 15.671 66.7666 15.853C66.902 16.0303 66.9696 16.2683 66.9696 16.567V19.5H66.2976V16.588C66.2976 16.4433 66.265 16.3313 66.1996 16.252C66.139 16.1727 66.0503 16.133 65.9336 16.133C65.817 16.133 65.726 16.1727 65.6606 16.252C65.6 16.3267 65.5696 16.4363 65.5696 16.581V19.5H65.0026V16.588C65.0026 16.4387 64.97 16.3267 64.9046 16.252C64.8393 16.1727 64.746 16.133 64.6246 16.133C64.508 16.133 64.4193 16.1727 64.3586 16.252C64.3026 16.3267 64.2746 16.4363 64.2746 16.581V19.5H63.5956ZM69.4799 19.57C69.1672 19.57 68.8919 19.5093 68.6539 19.388C68.4205 19.262 68.2409 19.087 68.1149 18.863C67.9889 18.639 67.9259 18.3777 67.9259 18.079V17.071C67.9259 16.7677 67.9889 16.5063 68.1149 16.287C68.2409 16.063 68.4205 15.8903 68.6539 15.769C68.8919 15.643 69.1672 15.58 69.4799 15.58C69.7972 15.58 70.0725 15.643 70.3059 15.769C70.5392 15.8903 70.7189 16.063 70.8449 16.287C70.9709 16.5063 71.0339 16.7677 71.0339 17.071V17.757H68.6539V18.079C68.6539 18.3637 68.7239 18.5807 68.8639 18.73C69.0085 18.8793 69.2162 18.954 69.4869 18.954C69.7062 18.954 69.8835 18.9167 70.0189 18.842C70.1542 18.7627 70.2382 18.6483 70.2709 18.499H71.0199C70.9639 18.8257 70.7959 19.087 70.5159 19.283C70.2359 19.4743 69.8905 19.57 69.4799 19.57ZM70.3059 17.302V17.064C70.3059 16.784 70.2359 16.567 70.0959 16.413C69.9559 16.259 69.7505 16.182 69.4799 16.182C69.2139 16.182 69.0085 16.259 68.8639 16.413C68.7239 16.567 68.6539 16.7863 68.6539 17.071V17.246L70.3619 17.239L70.3059 17.302ZM73.5441 19.563C73.2688 19.563 73.0261 19.5187 72.8161 19.43C72.6108 19.3413 72.4475 19.22 72.3261 19.066C72.2095 18.9073 72.1418 18.7207 72.1231 18.506H72.8791C72.8978 18.632 72.9655 18.7347 73.0821 18.814C73.1988 18.8887 73.3528 18.926 73.5441 18.926H73.8451C74.0738 18.926 74.2465 18.8793 74.3631 18.786C74.4798 18.6927 74.5381 18.569 74.5381 18.415C74.5381 18.2657 74.4845 18.149 74.3771 18.065C74.2745 17.9763 74.1205 17.918 73.9151 17.89L73.4181 17.813C73.0075 17.7477 72.7041 17.631 72.5081 17.463C72.3168 17.2903 72.2211 17.036 72.2211 16.7C72.2211 16.3453 72.3355 16.0723 72.5641 15.881C72.7975 15.685 73.1405 15.587 73.5931 15.587H73.8591C74.2605 15.587 74.5801 15.6803 74.8181 15.867C75.0608 16.049 75.1985 16.294 75.2311 16.602H74.4751C74.4565 16.49 74.3935 16.399 74.2861 16.329C74.1835 16.259 74.0411 16.224 73.8591 16.224H73.5931C73.3738 16.224 73.2128 16.266 73.1101 16.35C73.0121 16.4293 72.9631 16.5483 72.9631 16.707C72.9631 16.847 73.0075 16.952 73.0961 17.022C73.1848 17.092 73.3225 17.141 73.5091 17.169L74.0201 17.253C74.4541 17.3137 74.7715 17.435 74.9721 17.617C75.1775 17.7943 75.2801 18.0533 75.2801 18.394C75.2801 18.7627 75.1588 19.0497 74.9161 19.255C74.6781 19.4603 74.3211 19.563 73.8451 19.563H73.5441ZM77.6014 17.932L77.4474 15.293V14.39H78.3014V15.293L78.1474 17.932H77.6014ZM77.7694 19.535C77.6387 19.535 77.5314 19.4953 77.4474 19.416C77.3634 19.332 77.3214 19.2247 77.3214 19.094C77.3214 18.9633 77.3634 18.8583 77.4474 18.779C77.5314 18.695 77.6387 18.653 77.7694 18.653H77.9794C78.1194 18.653 78.2291 18.695 78.3084 18.779C78.3877 18.8583 78.4274 18.961 78.4274 19.087C78.4274 19.2177 78.3854 19.325 78.3014 19.409C78.2174 19.493 78.1101 19.535 77.9794 19.535H77.7694Z"
@@ -50,7 +42,7 @@ export const EmptyTranslationsIllustration = () => {
         height="5"
         rx="2.5"
         fill="url(#paint12_linear_640_550983)"
-        fill-opacity="0.2"
+        fillOpacity="0.2"
       />
       <rect x="68.2588" y="82" width="33" height="5" rx="2.5" fill="url(#paint13_linear_640_550983)" />
       <rect x="103.259" y="82" width="19" height="5" rx="2.5" fill="url(#paint14_linear_640_550983)" />
@@ -60,44 +52,44 @@ export const EmptyTranslationsIllustration = () => {
       <path
         d="M208.259 57H188.453C187.515 57 186.616 56.7893 185.953 56.4142C185.29 56.0391 184.918 55.5304 184.918 55V23C184.918 22.4696 184.546 21.9609 183.883 21.5858C183.22 21.2107 182.321 21 181.383 21H132.259"
         stroke="#DD2450"
-        stroke-width="0.5"
-        stroke-linejoin="round"
-        stroke-dasharray="4 4"
+        strokeWidth="0.5"
+        strokeLinejoin="round"
+        strokeDasharray="4 4"
       />
       <path
         d="M208.259 57H188.453C187.515 57 186.616 56.7893 185.953 56.4142C185.29 56.0391 184.918 55.5304 184.918 55V23C184.918 22.4696 184.546 21.9609 183.883 21.5858C183.22 21.2107 182.321 21 181.383 21H132.259"
         stroke="url(#paint18_linear_640_550983)"
-        stroke-width="0.5"
-        stroke-linejoin="round"
-        stroke-dasharray="4 4"
+        strokeWidth="0.5"
+        strokeLinejoin="round"
+        strokeDasharray="4 4"
       />
       <path
         d="M208.259 57H188.453C187.515 57 186.616 57.2107 185.953 57.5858C185.29 57.9609 184.918 58.4696 184.918 59V91C184.918 91.5304 184.546 92.0391 183.883 92.4142C183.22 92.7893 182.321 93 181.383 93H132.259"
         stroke="#DD2450"
-        stroke-width="0.5"
-        stroke-linejoin="round"
-        stroke-dasharray="4 4"
+        strokeWidth="0.5"
+        strokeLinejoin="round"
+        strokeDasharray="4 4"
       />
       <path
         d="M208.259 57H188.453C187.515 57 186.616 57.2107 185.953 57.5858C185.29 57.9609 184.918 58.4696 184.918 59V91C184.918 91.5304 184.546 92.0391 183.883 92.4142C183.22 92.7893 182.321 93 181.383 93H132.259"
         stroke="url(#paint19_linear_640_550983)"
-        stroke-width="0.5"
-        stroke-linejoin="round"
-        stroke-dasharray="4 4"
+        strokeWidth="0.5"
+        strokeLinejoin="round"
+        strokeDasharray="4 4"
       />
       <path
         d="M208.741 57H228.547C229.484 57 230.384 56.7893 231.046 56.4142C231.709 56.0391 232.082 55.5304 232.082 55V23C232.082 22.4696 232.454 21.9609 233.117 21.5858C233.78 21.2107 234.679 21 235.617 21H284.741"
         stroke="#DD2450"
-        stroke-width="0.5"
-        stroke-linejoin="round"
-        stroke-dasharray="4 4"
+        strokeWidth="0.5"
+        strokeLinejoin="round"
+        strokeDasharray="4 4"
       />
       <path
         d="M208.741 57H228.547C229.484 57 230.384 57.2107 231.046 57.5858C231.709 57.9609 232.082 58.4696 232.082 59V91C232.082 91.5304 232.454 92.0391 233.117 92.4142C233.78 92.7893 234.679 93 235.617 93H284.741"
         stroke="#DD2450"
-        stroke-width="0.5"
-        stroke-linejoin="round"
-        stroke-dasharray="4 4"
+        strokeWidth="0.5"
+        strokeLinejoin="round"
+        strokeDasharray="4 4"
       />
       <rect x="285.241" y="0.5" width="131" height="45" rx="7.5" stroke="#E1E4EA" />
       <rect x="287.241" y="2.5" width="127" height="41" rx="5.5" fill="white" />
@@ -119,7 +111,7 @@ export const EmptyTranslationsIllustration = () => {
         height="5"
         rx="2.5"
         fill="url(#paint22_linear_640_550983)"
-        fill-opacity="0.2"
+        fillOpacity="0.2"
       />
       <rect x="372.741" y="24" width="34" height="5" rx="2.5" fill="url(#paint23_linear_640_550983)" />
       <path
@@ -148,7 +140,7 @@ export const EmptyTranslationsIllustration = () => {
         height="5"
         rx="2.5"
         fill="url(#paint32_linear_640_550983)"
-        fill-opacity="0.2"
+        fillOpacity="0.2"
       />
       <rect x="352.741" y="85" width="33" height="5" rx="2.5" fill="url(#paint33_linear_640_550983)" />
       <rect x="387.741" y="85" width="19" height="5" rx="2.5" fill="url(#paint34_linear_640_550983)" />
@@ -156,10 +148,10 @@ export const EmptyTranslationsIllustration = () => {
       <rect x="362.741" y="92" width="44" height="5" rx="2.5" fill="url(#paint36_linear_640_550983)" />
       <rect x="294.741" y="99" width="50" height="5" rx="2.5" fill="url(#paint37_linear_640_550983)" />
       <rect x="176.874" y="48.375" width="63.25" height="17.25" rx="3.625" fill="white" />
-      <rect x="176.874" y="48.375" width="63.25" height="17.25" rx="3.625" stroke="#DD2450" stroke-width="0.75" />
-      <rect x="176.874" y="48.375" width="63.25" height="17.25" rx="3.625" stroke="#E1E4EA" stroke-width="0.75" />
+      <rect x="176.874" y="48.375" width="63.25" height="17.25" rx="3.625" stroke="#DD2450" strokeWidth="0.75" />
+      <rect x="176.874" y="48.375" width="63.25" height="17.25" rx="3.625" stroke="#E1E4EA" strokeWidth="0.75" />
       <rect x="178.874" y="50.375" width="59.25" height="13.25" rx="1.625" fill="white" />
-      <rect x="178.874" y="50.375" width="59.25" height="13.25" rx="1.625" stroke="#F2F5F8" stroke-width="0.75" />
+      <rect x="178.874" y="50.375" width="59.25" height="13.25" rx="1.625" stroke="#F2F5F8" strokeWidth="0.75" />
       <rect
         x="178.874"
         y="50.375"
@@ -167,11 +159,11 @@ export const EmptyTranslationsIllustration = () => {
         height="13.25"
         rx="1.625"
         stroke="#FB3748"
-        stroke-opacity="0.24"
-        stroke-width="0.75"
+        strokeOpacity="0.24"
+        strokeWidth="0.75"
       />
-      <rect x="178.874" y="50.375" width="59.25" height="13.25" rx="1.625" stroke="#F2F5F8" stroke-width="0.75" />
-      <g clip-path="url(#clip0_640_550983)">
+      <rect x="178.874" y="50.375" width="59.25" height="13.25" rx="1.625" stroke="#F2F5F8" strokeWidth="0.75" />
+      <g clipPath="url(#clip0_640_550983)">
         <path
           d="M188.257 51.06C187.977 51.06 187.729 51.012 187.513 50.916C187.301 50.816 187.131 50.678 187.003 50.502C186.879 50.322 186.809 50.112 186.793 49.872H187.441C187.461 50.064 187.545 50.216 187.693 50.328C187.841 50.436 188.029 50.49 188.257 50.49C188.505 50.49 188.703 50.424 188.851 50.292C188.999 50.16 189.073 49.988 189.073 49.776C189.073 49.56 188.999 49.388 188.851 49.26C188.707 49.128 188.509 49.062 188.257 49.062H187.693V48.48H188.251C188.483 48.48 188.667 48.412 188.803 48.276C188.943 48.136 189.013 47.966 189.013 47.766C189.013 47.562 188.943 47.406 188.803 47.298C188.667 47.186 188.483 47.13 188.251 47.13C188.031 47.13 187.853 47.19 187.717 47.31C187.581 47.43 187.509 47.59 187.501 47.79H186.853C186.857 47.542 186.919 47.326 187.039 47.142C187.159 46.958 187.323 46.816 187.531 46.716C187.743 46.612 187.987 46.56 188.263 46.56C188.691 46.56 189.031 46.656 189.283 46.848C189.535 47.036 189.661 47.304 189.661 47.652C189.661 47.856 189.615 48.038 189.523 48.198C189.435 48.358 189.309 48.482 189.145 48.57C188.985 48.658 188.791 48.7 188.563 48.696V48.606C188.803 48.602 189.011 48.648 189.187 48.744C189.363 48.836 189.499 48.97 189.595 49.146C189.691 49.318 189.739 49.52 189.739 49.752C189.739 50.008 189.679 50.234 189.559 50.43C189.439 50.626 189.267 50.78 189.043 50.892C188.819 51.004 188.557 51.06 188.257 51.06ZM190.265 51.84V50.448H190.505C190.573 50.38 190.643 50.252 190.715 50.064C190.791 49.872 190.831 49.63 190.835 49.338L190.871 47.7H193.109V50.448H193.511V51.84H192.923V51H190.853V51.84H190.265ZM191.177 50.448H192.479V48.27H191.477L191.453 49.344C191.449 49.636 191.415 49.878 191.351 50.07C191.291 50.258 191.233 50.384 191.177 50.448ZM194.198 52.08V47.7H194.84V48.33H194.978L194.84 48.48C194.84 48.22 194.92 48.016 195.08 47.868C195.244 47.716 195.462 47.64 195.734 47.64C196.066 47.64 196.33 47.752 196.526 47.976C196.726 48.196 196.826 48.498 196.826 48.882V49.812C196.826 50.068 196.78 50.29 196.688 50.478C196.6 50.662 196.474 50.806 196.31 50.91C196.15 51.01 195.958 51.06 195.734 51.06C195.466 51.06 195.25 50.986 195.086 50.838C194.922 50.686 194.84 50.48 194.84 50.22L194.978 50.37H194.828L194.846 51.138V52.08H194.198ZM195.512 50.496C195.724 50.496 195.888 50.436 196.004 50.316C196.124 50.192 196.184 50.014 196.184 49.782V48.918C196.184 48.686 196.124 48.51 196.004 48.39C195.888 48.266 195.724 48.204 195.512 48.204C195.308 48.204 195.146 48.268 195.026 48.396C194.906 48.52 194.846 48.694 194.846 48.918V49.782C194.846 50.006 194.906 50.182 195.026 50.31C195.146 50.434 195.308 50.496 195.512 50.496ZM198.762 51.06C198.418 51.06 198.146 50.972 197.946 50.796C197.75 50.616 197.652 50.372 197.652 50.064C197.652 49.752 197.756 49.508 197.964 49.332C198.176 49.152 198.466 49.062 198.834 49.062H199.752V48.756C199.752 48.576 199.696 48.436 199.584 48.336C199.472 48.236 199.314 48.186 199.11 48.186C198.93 48.186 198.78 48.226 198.66 48.306C198.54 48.382 198.47 48.484 198.45 48.612H197.814C197.85 48.316 197.986 48.08 198.222 47.904C198.462 47.728 198.764 47.64 199.128 47.64C199.52 47.64 199.83 47.74 200.058 47.94C200.286 48.136 200.4 48.404 200.4 48.744V51H199.77V50.394H199.662L199.77 50.274C199.77 50.514 199.678 50.706 199.494 50.85C199.31 50.99 199.066 51.06 198.762 51.06ZM198.954 50.562C199.186 50.562 199.376 50.504 199.524 50.388C199.676 50.268 199.752 50.116 199.752 49.932V49.5H198.846C198.678 49.5 198.544 49.546 198.444 49.638C198.348 49.73 198.3 49.856 198.3 50.016C198.3 50.184 198.358 50.318 198.474 50.418C198.59 50.514 198.75 50.562 198.954 50.562ZM201.4 51V47.7H202.852C203.212 47.7 203.494 47.778 203.698 47.934C203.902 48.09 204.004 48.306 204.004 48.582C204.004 48.81 203.922 48.992 203.758 49.128C203.594 49.264 203.378 49.332 203.11 49.332V49.278C203.402 49.278 203.636 49.35 203.812 49.494C203.992 49.634 204.082 49.822 204.082 50.058C204.082 50.354 203.976 50.586 203.764 50.754C203.552 50.918 203.26 51 202.888 51H201.4ZM202.036 50.478H202.876C203.052 50.478 203.19 50.438 203.29 50.358C203.394 50.278 203.446 50.168 203.446 50.028C203.446 49.884 203.394 49.772 203.29 49.692C203.19 49.608 203.052 49.566 202.876 49.566H202.036V50.478ZM202.036 49.086H202.852C203.012 49.086 203.138 49.048 203.23 48.972C203.322 48.896 203.368 48.79 203.368 48.654C203.368 48.522 203.322 48.418 203.23 48.342C203.138 48.262 203.012 48.222 202.852 48.222H202.036V49.086ZM206.305 51.06C206.033 51.06 205.793 51.01 205.585 50.91C205.381 50.806 205.223 50.658 205.111 50.466C205.003 50.27 204.949 50.042 204.949 49.782V48.918C204.949 48.654 205.003 48.426 205.111 48.234C205.223 48.042 205.381 47.896 205.585 47.796C205.793 47.692 206.033 47.64 206.305 47.64C206.701 47.64 207.019 47.744 207.259 47.952C207.499 48.16 207.625 48.444 207.637 48.804H206.989C206.977 48.616 206.911 48.47 206.791 48.366C206.671 48.262 206.509 48.21 206.305 48.21C206.085 48.21 205.911 48.272 205.783 48.396C205.655 48.516 205.591 48.688 205.591 48.912V49.782C205.591 50.006 205.655 50.18 205.783 50.304C205.911 50.428 206.085 50.49 206.305 50.49C206.509 50.49 206.671 50.438 206.791 50.334C206.911 50.23 206.977 50.084 206.989 49.896H207.637C207.625 50.256 207.499 50.54 207.259 50.748C207.019 50.956 206.701 51.06 206.305 51.06ZM209.561 51V48.282H208.397V47.7H211.373V48.282H210.209V51H209.561ZM212.193 51V47.7H213.645C214.005 47.7 214.287 47.778 214.491 47.934C214.695 48.09 214.797 48.306 214.797 48.582C214.797 48.81 214.715 48.992 214.551 49.128C214.387 49.264 214.171 49.332 213.903 49.332V49.278C214.195 49.278 214.429 49.35 214.605 49.494C214.785 49.634 214.875 49.822 214.875 50.058C214.875 50.354 214.769 50.586 214.557 50.754C214.345 50.918 214.053 51 213.681 51H212.193ZM212.829 50.478H213.669C213.845 50.478 213.983 50.438 214.083 50.358C214.187 50.278 214.239 50.168 214.239 50.028C214.239 49.884 214.187 49.772 214.083 49.692C213.983 49.608 213.845 49.566 213.669 49.566H212.829V50.478ZM212.829 49.086H213.645C213.805 49.086 213.931 49.048 214.023 48.972C214.115 48.896 214.161 48.79 214.161 48.654C214.161 48.522 214.115 48.418 214.023 48.342C213.931 48.262 213.805 48.222 213.645 48.222H212.829V49.086ZM216.312 52.08L216.786 50.808L215.556 47.7H216.27L216.96 49.56C216.988 49.64 217.016 49.736 217.044 49.848C217.072 49.96 217.096 50.052 217.116 50.124C217.132 50.052 217.154 49.96 217.182 49.848C217.21 49.736 217.238 49.64 217.266 49.56L217.914 47.7H218.604L216.996 52.08H216.312ZM219.394 51V47.7H219.988V49.41C219.988 49.522 219.984 49.646 219.976 49.782C219.968 49.914 219.958 50.044 219.946 50.172C219.934 50.296 219.922 50.404 219.91 50.496L221.152 47.7H221.962V51H221.368V49.29C221.368 49.178 221.372 49.058 221.38 48.93C221.388 48.798 221.398 48.67 221.41 48.546C221.422 48.422 221.434 48.32 221.446 48.24L220.204 51H219.394ZM220.702 47.166C220.402 47.166 220.16 47.086 219.976 46.926C219.792 46.766 219.7 46.554 219.7 46.29H220.204C220.204 46.434 220.248 46.55 220.336 46.638C220.428 46.726 220.548 46.77 220.696 46.77C220.852 46.77 220.974 46.726 221.062 46.638C221.154 46.55 221.2 46.434 221.2 46.29H221.704C221.704 46.554 221.612 46.766 221.428 46.926C221.244 47.086 221.002 47.166 220.702 47.166ZM223.952 51V48.282H222.788V47.7H225.764V48.282H224.6V51H223.952ZM227.873 51.06C227.605 51.06 227.369 51.008 227.165 50.904C226.965 50.796 226.811 50.646 226.703 50.454C226.595 50.262 226.541 50.038 226.541 49.782V48.918C226.541 48.658 226.595 48.434 226.703 48.246C226.811 48.054 226.965 47.906 227.165 47.802C227.369 47.694 227.605 47.64 227.873 47.64C228.145 47.64 228.381 47.694 228.581 47.802C228.781 47.906 228.935 48.054 229.043 48.246C229.151 48.434 229.205 48.658 229.205 48.918V49.506H227.165V49.782C227.165 50.026 227.225 50.212 227.345 50.34C227.469 50.468 227.647 50.532 227.879 50.532C228.067 50.532 228.219 50.5 228.335 50.436C228.451 50.368 228.523 50.27 228.551 50.142H229.193C229.145 50.422 229.001 50.646 228.761 50.814C228.521 50.978 228.225 51.06 227.873 51.06ZM228.581 49.116V48.912C228.581 48.672 228.521 48.486 228.401 48.354C228.281 48.222 228.105 48.156 227.873 48.156C227.645 48.156 227.469 48.222 227.345 48.354C227.225 48.486 227.165 48.674 227.165 48.918V49.068L228.629 49.062L228.581 49.116Z"
           fill="#99A0AE"
@@ -214,9 +206,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="26.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint1_linear_640_550983"
@@ -226,9 +218,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="26.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint2_linear_640_550983"
@@ -239,7 +231,7 @@ export const EmptyTranslationsIllustration = () => {
           gradientUnits="userSpaceOnUse"
         >
           <stop />
-          <stop offset="1" stop-opacity="0.1" />
+          <stop offset="1" stopOpacity="0.1" />
         </linearGradient>
         <linearGradient
           id="paint3_linear_640_550983"
@@ -249,9 +241,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="26.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint4_linear_640_550983"
@@ -261,9 +253,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="77.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint5_linear_640_550983"
@@ -273,9 +265,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="77.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint6_linear_640_550983"
@@ -285,9 +277,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="77.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint7_linear_640_550983"
@@ -297,9 +289,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="77.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint8_linear_640_550983"
@@ -309,9 +301,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="77.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint9_linear_640_550983"
@@ -321,9 +313,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="84.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint10_linear_640_550983"
@@ -333,9 +325,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="84.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint11_linear_640_550983"
@@ -345,9 +337,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="84.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint12_linear_640_550983"
@@ -357,8 +349,8 @@ export const EmptyTranslationsIllustration = () => {
           y2="84.5"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-opacity="0.5" />
-          <stop offset="1" stop-opacity="0.1" />
+          <stop stopOpacity="0.5" />
+          <stop offset="1" stopOpacity="0.1" />
         </linearGradient>
         <linearGradient
           id="paint13_linear_640_550983"
@@ -368,9 +360,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="84.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint14_linear_640_550983"
@@ -380,9 +372,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="84.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint15_linear_640_550983"
@@ -392,9 +384,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="91.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint16_linear_640_550983"
@@ -404,9 +396,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="91.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint17_linear_640_550983"
@@ -416,9 +408,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="98.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint18_linear_640_550983"
@@ -428,8 +420,8 @@ export const EmptyTranslationsIllustration = () => {
           y2="-20.8708"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#BCC3CE" />
-          <stop offset="1" stop-color="white" stop-opacity="0.5" />
+          <stop stopColor="#BCC3CE" />
+          <stop offset="1" stopColor="white" stopOpacity="0.5" />
         </linearGradient>
         <linearGradient
           id="paint19_linear_640_550983"
@@ -439,8 +431,8 @@ export const EmptyTranslationsIllustration = () => {
           y2="134.871"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#BCC3CE" />
-          <stop offset="1" stop-color="white" stop-opacity="0.5" />
+          <stop stopColor="#BCC3CE" />
+          <stop offset="1" stopColor="white" stopOpacity="0.5" />
         </linearGradient>
         <linearGradient
           id="paint20_linear_640_550983"
@@ -450,9 +442,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="26.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint21_linear_640_550983"
@@ -462,9 +454,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="26.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint22_linear_640_550983"
@@ -475,7 +467,7 @@ export const EmptyTranslationsIllustration = () => {
           gradientUnits="userSpaceOnUse"
         >
           <stop />
-          <stop offset="1" stop-opacity="0.1" />
+          <stop offset="1" stopOpacity="0.1" />
         </linearGradient>
         <linearGradient
           id="paint23_linear_640_550983"
@@ -485,9 +477,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="26.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint24_linear_640_550983"
@@ -497,9 +489,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="80.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint25_linear_640_550983"
@@ -509,9 +501,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="80.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint26_linear_640_550983"
@@ -521,9 +513,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="80.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint27_linear_640_550983"
@@ -533,9 +525,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="80.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint28_linear_640_550983"
@@ -545,9 +537,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="80.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint29_linear_640_550983"
@@ -557,9 +549,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="87.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint30_linear_640_550983"
@@ -569,9 +561,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="87.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint31_linear_640_550983"
@@ -581,9 +573,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="87.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint32_linear_640_550983"
@@ -593,8 +585,8 @@ export const EmptyTranslationsIllustration = () => {
           y2="87.5"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-opacity="0.5" />
-          <stop offset="1" stop-opacity="0.1" />
+          <stop stopOpacity="0.5" />
+          <stop offset="1" stopOpacity="0.1" />
         </linearGradient>
         <linearGradient
           id="paint33_linear_640_550983"
@@ -604,9 +596,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="87.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint34_linear_640_550983"
@@ -616,9 +608,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="87.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint35_linear_640_550983"
@@ -628,9 +620,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="94.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint36_linear_640_550983"
@@ -640,9 +632,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="94.1257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint37_linear_640_550983"
@@ -652,9 +644,9 @@ export const EmptyTranslationsIllustration = () => {
           y2="101.126"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
-          <stop offset="0.48" stop-color="#F9F8F8" />
-          <stop offset="0.992158" stop-color="#F9F8F8" stop-opacity="0.75" />
+          <stop stopColor="#F1EFEF" />
+          <stop offset="0.48" stopColor="#F9F8F8" />
+          <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient
           id="paint38_linear_640_550983"
@@ -664,8 +656,8 @@ export const EmptyTranslationsIllustration = () => {
           y2="60.9176"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.231667" stop-color="#FF884D" />
-          <stop offset="0.801667" stop-color="#E300BD" />
+          <stop offset="0.231667" stopColor="#FF884D" />
+          <stop offset="0.801667" stopColor="#E300BD" />
         </linearGradient>
         <linearGradient
           id="paint39_linear_640_550983"
@@ -675,8 +667,8 @@ export const EmptyTranslationsIllustration = () => {
           y2="67.6162"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.231667" stop-color="#FF884D" />
-          <stop offset="0.801667" stop-color="#E300BD" />
+          <stop offset="0.231667" stopColor="#FF884D" />
+          <stop offset="0.801667" stopColor="#E300BD" />
         </linearGradient>
         <linearGradient
           id="paint40_linear_640_550983"
@@ -686,8 +678,8 @@ export const EmptyTranslationsIllustration = () => {
           y2="62.1192"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.162166" stop-color="white" stop-opacity="0" />
-          <stop offset="0.441669" stop-color="white" />
+          <stop offset="0.162166" stopColor="white" stopOpacity="0" />
+          <stop offset="0.441669" stopColor="white" />
         </linearGradient>
         <linearGradient
           id="paint41_linear_640_550983"
@@ -697,8 +689,8 @@ export const EmptyTranslationsIllustration = () => {
           y2="88.0336"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.521629" stop-color="white" stop-opacity="0" />
-          <stop offset="0.746087" stop-color="white" />
+          <stop offset="0.521629" stopColor="white" stopOpacity="0" />
+          <stop offset="0.746087" stopColor="white" />
         </linearGradient>
         <clipPath id="clip0_640_550983">
           <rect width="44" height="13" fill="white" transform="translate(186.499 50.5)" />

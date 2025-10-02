@@ -36,6 +36,7 @@ export class LayoutEntity {
   updatedAt?: string;
   controls?: ControlSchemas;
   readonly updatedBy?: UserEntity;
+  isTranslationEnabled?: boolean;
 }
 
 export type LayoutDBModel = ChangePropsValueType<

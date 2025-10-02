@@ -131,7 +131,7 @@ function AnimatedImportButton({
           {isPending ? (
             <RiLoader4Line className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <RiUpload2Line className="h-3.5 w-3.5" />
+            <RiDownload2Line className="h-3.5 w-3.5" />
           )}
           Import
         </motion.div>
@@ -211,7 +211,7 @@ function ActionButtons() {
             {exportMutation.isPending ? (
               <RiLoader4Line className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <RiDownload2Line className="h-3.5 w-3.5" />
+              <RiUpload2Line className="h-3.5 w-3.5" />
             )}
             Export
           </Button>

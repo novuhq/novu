@@ -59,6 +59,10 @@ const layoutSchema = new Schema<LayoutDBModel>(
       type: Schema.Types.String,
     },
     controls: { schema: Schema.Types.Mixed, uiSchema: Schema.Types.Mixed },
+    isTranslationEnabled: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
   },
   schemaOptions
 );

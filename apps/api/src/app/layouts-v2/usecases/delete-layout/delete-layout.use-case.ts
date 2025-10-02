@@ -1,7 +1,9 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
-import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
+import { ModuleRef } from '@nestjs/core';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { ControlValuesRepository, LayoutRepository, LocalizationResourceEnum } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
+import { LayoutResponseDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { DeleteLayoutCommand } from './delete-layout.command';
 
@@ -11,7 +13,9 @@ export class DeleteLayoutUseCase {
     private getLayoutUseCase: GetLayoutUseCase,
     private layoutRepository: LayoutRepository,
     private controlValuesRepository: ControlValuesRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger
   ) {}
 
   async execute(command: DeleteLayoutCommand): Promise<void> {
@@ -37,6 +41,8 @@ export class DeleteLayoutUseCase {
       environmentId,
       organizationId,
     });
+
+    await this.deleteTranslationGroup(layout, command);
 
     await this.layoutRepository.deleteLayout(layout._id!, environmentId, organizationId);
 
@@ -79,6 +85,40 @@ export class DeleteLayoutUseCase {
         },
         { $unset: { 'controls.layoutId': '' } }
       );
+    }
+  }
+
+  private async deleteTranslationGroup(layout: LayoutResponseDto, command: DeleteLayoutCommand) {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+
+    if (!isEnterprise || isSelfHosted) {
+      return;
+    }
+
+    try {
+      const deleteTranslationGroupUseCase = this.moduleRef.get(
+        require('@novu/ee-translation')?.DeleteTranslationGroup,
+        {
+          strict: false,
+        }
+      );
+
+      await deleteTranslationGroupUseCase.execute({
+        resourceId: layout.layoutId,
+        resourceType: LocalizationResourceEnum.LAYOUT,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to delete translations for layout`, {
+        layoutId: layout.layoutId,
+        organizationId: command.organizationId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      // translation group might not be present, so we can ignore the error
     }
   }
 }

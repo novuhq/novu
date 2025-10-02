@@ -1,14 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import {
   AnalyticsService,
-  GetLayoutCommand,
-  GetLayoutUseCase,
+  GetLayoutCommand as GetLayoutCommandV0,
+  GetLayoutUseCase as GetLayoutUseCaseV0,
   InstrumentUsecase,
   layoutControlSchema,
+  PinoLogger,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
 } from '@novu/application-generic';
-import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
+import { ControlValuesRepository, LayoutRepository, LocalizationResourceEnum } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
   LayoutControlValuesDto,
@@ -27,23 +29,24 @@ import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-uti
 import { LayoutResponseDto } from '../../dtos';
 import { BuildLayoutIssuesCommand } from '../build-layout-issues/build-layout-issues.command';
 import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
-import { LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
-import { LayoutVariablesSchemaCommand } from '../layout-variables-schema/layout-variables-schema.command';
-import { mapToResponseDto } from '../mapper';
+import { GetLayoutCommand } from '../get-layout';
+import { GetLayoutUseCase } from '../get-layout/get-layout.use-case';
 import { UpsertLayoutCommand } from './upsert-layout.command';
 
 @Injectable()
 export class UpsertLayout {
   constructor(
-    private getLayoutUseCaseV0: GetLayoutUseCase,
+    private getLayoutUseCaseV0: GetLayoutUseCaseV0,
     private createLayoutUseCaseV0: CreateLayoutUseCase,
     private updateLayoutUseCaseV0: UpdateLayoutUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
-    private layoutVariablesSchemaUseCase: LayoutVariablesSchemaUseCase,
     private layoutRepository: LayoutRepository,
     private analyticsService: AnalyticsService,
-    private buildLayoutIssuesUsecase: BuildLayoutIssuesUsecase
+    private buildLayoutIssuesUsecase: BuildLayoutIssuesUsecase,
+    private getLayoutUseCase: GetLayoutUseCase,
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger
   ) {}
 
   @InstrumentUsecase()
@@ -57,7 +60,7 @@ export class UpsertLayout {
 
     const existingLayout = command.layoutIdOrInternalId
       ? await this.getLayoutUseCaseV0.execute(
-          GetLayoutCommand.create({
+          GetLayoutCommandV0.create({
             layoutIdOrInternalId: command.layoutIdOrInternalId,
             environmentId: command.environmentId,
             organizationId: command.organizationId,
@@ -107,21 +110,18 @@ export class UpsertLayout {
       );
     }
 
-    const upsertedControlValues = await this.upsertControlValues(command, upsertedLayout._id!);
+    await this.toggleTranslationsForLayout(command, upsertedLayout);
 
-    const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
-      LayoutVariablesSchemaCommand.create({
+    await this.upsertControlValues(command, upsertedLayout._id!);
+
+    return await this.getLayoutUseCase.execute(
+      GetLayoutCommand.create({
+        layoutIdOrInternalId: upsertedLayout.identifier,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        controlValues: (controlValues ?? {}) as Record<string, unknown>,
+        userId: command.userId,
       })
     );
-
-    return mapToResponseDto({
-      layout: upsertedLayout,
-      controlValues: upsertedControlValues?.controls ?? {},
-      variables: layoutVariablesSchema,
-    });
   }
 
   private async validateLayout({
@@ -211,5 +211,42 @@ export class UpsertLayout {
       name: command.layoutDto.name,
       source: command.layoutDto.__source,
     });
+  }
+
+  private async toggleTranslationsForLayout(command: UpsertLayoutCommand, layoutDto: LayoutDto) {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+
+    if (!isEnterprise || isSelfHosted) {
+      return;
+    }
+
+    try {
+      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
+        strict: false,
+      });
+
+      await manageTranslations.execute({
+        enabled: command.layoutDto.isTranslationEnabled,
+        resourceId: layoutDto.identifier,
+        resourceType: LocalizationResourceEnum.LAYOUT,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        resourceEntity: layoutDto,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to ${command.layoutDto.isTranslationEnabled ? 'enable' : 'disable'} translations for layout`,
+        {
+          layoutId: layoutDto.identifier,
+          enabled: command.layoutDto.isTranslationEnabled,
+          organizationId: command.organizationId,
+          error: error instanceof Error ? error.message : String(error),
+        }
+      );
+
+      throw error;
+    }
   }
 }

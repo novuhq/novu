@@ -72,6 +72,7 @@ import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useSyncWorkflow } from '@/hooks/use-sync-workflow';
 import { useTags } from '@/hooks/use-tags';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -454,51 +455,54 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
             </SidebarContent>
           </FormRoot>
         </Form>
-        <>
-          <Separator />
-          <SidebarContent size="lg">
-            <Link to={ROUTES.EDIT_WORKFLOW_PREFERENCES}>
-              <Button
-                variant="secondary"
-                mode="outline"
-                leadingIcon={RiSettingsLine}
-                className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
-                type="button"
-                trailingIcon={RiArrowRightSLine}
-              >
-                Configure channel preferences
-                <span className="ml-auto" />
-              </Button>
-            </Link>
-            {workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
-              <Button
-                variant="secondary"
-                mode="outline"
-                leadingIcon={RiListView}
-                className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
-                type="button"
-                onClick={() => setIsPayloadSchemaDrawerOpen(true)}
-                trailingIcon={RiArrowRightSLine}
-              >
-                Manage payload schema
-                <span className="ml-auto" />
-              </Button>
+        <Separator />
+        <SidebarContent size="lg">
+          <Link to={ROUTES.EDIT_WORKFLOW_PREFERENCES}>
+            <Button
+              variant="secondary"
+              mode="outline"
+              leadingIcon={RiSettingsLine}
+              className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
+              type="button"
+              trailingIcon={RiArrowRightSLine}
+            >
+              Configure channel preferences
+              <span className="ml-auto" />
+            </Button>
+          </Link>
+          {workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
+            <Button
+              variant="secondary"
+              mode="outline"
+              leadingIcon={RiListView}
+              className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
+              type="button"
+              onClick={() => setIsPayloadSchemaDrawerOpen(true)}
+              trailingIcon={RiArrowRightSLine}
+            >
+              Manage payload schema
+              <span className="ml-auto" />
+            </Button>
+          )}
+          <FormField
+            control={form.control}
+            name="isTranslationEnabled"
+            render={({ field }) => (
+              <TranslationToggleSection
+                value={field.value ?? false}
+                onChange={(checked) => {
+                  field.onChange(checked);
+                  saveForm();
+                }}
+                isReadOnly={isReadOnly}
+                resourceId={workflow?.workflowId}
+                resourceType={LocalizationResourceEnum.WORKFLOW}
+                showDrawer={!!(workflow?.workflowId && workflow?.isTranslationEnabled)}
+              />
             )}
-            <TranslationToggleSection
-              control={form.control}
-              fieldName="isTranslationEnabled"
-              onChange={(checked) => {
-                form.setValue('isTranslationEnabled', checked, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                saveForm();
-              }}
-              isReadOnly={isReadOnly}
-            />
-          </SidebarContent>
-          <Separator />
-        </>
+          />
+        </SidebarContent>
+        <Separator />
       </motion.div>
     </>
   );

@@ -73,9 +73,10 @@ export const TranslationDrawer = forwardRef<HTMLDivElement, TranslationDrawerPro
     }, [onOpenChange]);
 
     return (
-      <div ref={ref}>
+      <>
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
           <SheetContent
+            ref={ref}
             side="right"
             className="w-[1100px] !max-w-none"
             onInteractOutside={handleCloseAttempt}
@@ -109,7 +110,7 @@ export const TranslationDrawer = forwardRef<HTMLDivElement, TranslationDrawerPro
           onCancel={() => setShowUnsavedDialog(false)}
           onProceed={handleConfirmClose}
         />
-      </div>
+      </>
     );
   }
 );

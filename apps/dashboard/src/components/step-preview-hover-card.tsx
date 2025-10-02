@@ -53,7 +53,7 @@ export function StepPreview({ type, controlValues }: StepPreviewProps) {
         <EmailPreviewHeader />
         <EmailPreviewSubject className="px-3 py-2" subject={subject} />
         <div className="mx-auto w-full overflow-auto">
-          <Maily value={body} />
+          <Maily value={body} translationValueInput={() => null} />
         </div>
       </div>
     );

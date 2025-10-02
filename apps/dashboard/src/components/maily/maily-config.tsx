@@ -38,10 +38,15 @@ import {
   VariableExtension,
   Variables,
 } from '@maily-to/core/extensions';
-import { StepResponseDto, TRANSLATION_NAMESPACE_SEPARATOR, TRANSLATION_TRIGGER_CHARACTER } from '@novu/shared';
-import type { Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
+import {
+  LAYOUT_CONTENT_VARIABLE,
+  StepResponseDto,
+  TRANSLATION_NAMESPACE_SEPARATOR,
+  TRANSLATION_TRIGGER_CHARACTER,
+} from '@novu/shared';
+import type { AnyExtension, Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import { ForwardRefExoticComponent } from 'react';
+import { ForwardRefExoticComponent, useMemo } from 'react';
 import { createCards } from '@/components/maily//blocks/cards';
 import { createDigestBlock } from '@/components/maily//blocks/digest';
 import { createFooters } from '@/components/maily/blocks/footers';
@@ -49,10 +54,12 @@ import { createHeaders } from '@/components/maily/blocks/headers';
 import { createHtmlCodeBlock } from '@/components/maily/blocks/html';
 import { ForView } from '@/components/maily/views/for-view';
 import { HTMLCodeBlockView } from '@/components/maily/views/html-view';
+import { useDataRef } from '@/hooks/use-data-ref';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { TranslationKey } from '@/types/translations';
+import { LocalizationResourceEnum, TranslationKey } from '@/types/translations';
 import { IsAllowedVariable, LiquidVariable, ParsedVariables } from '@/utils/parseStepVariables';
-import { createTranslationExtension } from '../workflow-editor/steps/email/translations';
+import { useCreateTranslationExtension } from '../workflow-editor/steps/email/translations';
+import { TranslationValueInputComponent } from '../workflow-editor/steps/email/translations/edit-translation-popover/edit-translation-popover';
 import { isInsideRepeatBlock, resolveRepeatBlockAlias } from './repeat-block-aliases';
 import { CalculateVariablesProps, insertVariableToEditor } from './variables';
 
@@ -300,17 +307,9 @@ const getAvailableBlocks = (blocks: BlockGroupItem[], editor: TiptapEditor | nul
   return blocks;
 };
 
-export const createExtensions = ({
-  handleCalculateVariables,
-  parsedVariables,
-  blocks,
-  onCreateNewVariable,
-  isTranslationEnabled = false,
-  translationKeys = [],
-  onCreateNewTranslationKey,
-  variableSuggestionsPopover,
-  renderVariable,
-  createVariableNodeView,
+export const useCreateExtensions = ({
+  isTranslationEnabled,
+  ...props
 }: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: ParsedVariables;
@@ -318,6 +317,8 @@ export const createExtensions = ({
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   isTranslationEnabled?: boolean;
   translationKeys?: TranslationKey[];
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
   onCreateNewTranslationKey?: (translationKey: string) => Promise<void>;
   variableSuggestionsPopover?: ForwardRefExoticComponent<{
     items: Variable[];
@@ -333,250 +334,306 @@ export const createExtensions = ({
     variables: LiquidVariable[],
     isAllowedVariable: IsAllowedVariable
   ) => (props: NodeViewProps) => JSX.Element;
+  translationValueInput: TranslationValueInputComponent;
 }) => {
-  const extensions = [
-    RepeatExtension.extend({
-      addNodeView() {
-        return ReactNodeViewRenderer(ForView, {
-          className: 'mly-relative',
-        });
-      },
-      addAttributes() {
-        // Find the first array property from the parsed variables that starts with 'payload.'
-        // Since the actual user payload is nested under payload.payload, we need to filter for payload arrays
-        const payloadArrays = parsedVariables.arrays.filter((array) => array.name.startsWith('payload.'));
-        const firstArrayVariable = payloadArrays.length > 0 ? payloadArrays[0].name : 'payload.items';
+  /**
+   * Maily doesn't re-render if the extensions change, so we need to use a data ref to store the latest props.
+   * Otherwise, it will store the stale props data.
+   * If you need to force a re-render, you should update the key property on the Maily component.
+   */
+  const propsRef = useDataRef(props);
 
-        return {
-          each: {
-            default: firstArrayVariable,
-          },
-        };
-      },
-    }),
-    SlashCommandExtension.configure({
-      suggestion: {
-        ...getSlashCommandSuggestions(blocks),
-        items: ({ query, editor }) => {
-          return searchSlashCommands(query, editor, getAvailableBlocks(blocks, editor));
+  const translationExtension = useCreateTranslationExtension({
+    isTranslationEnabled: isTranslationEnabled ?? false,
+    translationKeys: props.translationKeys,
+    resourceId: props.resourceId,
+    resourceType: props.resourceType,
+    variables: props.parsedVariables.variables.filter((v) => v.name !== LAYOUT_CONTENT_VARIABLE),
+    isAllowedVariable: props.parsedVariables.isAllowedVariable,
+    onCreateNewTranslationKey: props.onCreateNewTranslationKey,
+    translationValueInput: props.translationValueInput,
+  });
+
+  return useMemo(() => {
+    const {
+      handleCalculateVariables,
+      parsedVariables,
+      blocks,
+      onCreateNewVariable,
+      variableSuggestionsPopover,
+      renderVariable,
+      createVariableNodeView,
+    } = propsRef.current;
+
+    const extensions: AnyExtension[] = [
+      RepeatExtension.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(ForView, {
+            className: 'mly-relative',
+          });
         },
-      },
-    }),
-    VariableExtension.extend({
-      addNodeView() {
-        return ReactNodeViewRenderer(
-          createVariableNodeView(parsedVariables.variables, parsedVariables.isAllowedVariable),
-          {
-            // the variable pill is 3px smaller than the default text size, but never smaller than 12px
-            className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
-            as: 'div',
-          }
-        );
-      },
-      addAttributes() {
-        const attributes = this.parent?.();
-        return {
-          ...attributes,
-          aliasFor: {
-            default: null,
+        addAttributes() {
+          // Find the first array property from the parsed variables that starts with 'payload.'
+          // Since the actual user payload is nested under payload.payload, we need to filter for payload arrays
+          const payloadArrays = parsedVariables.arrays.filter((array) => array.name.startsWith('payload.'));
+          const firstArrayVariable = payloadArrays.length > 0 ? payloadArrays[0].name : 'payload.items';
+
+          return {
+            each: {
+              default: firstArrayVariable,
+            },
+          };
+        },
+      }),
+      SlashCommandExtension.configure({
+        suggestion: {
+          ...getSlashCommandSuggestions(blocks),
+          items: ({ query, editor }) => {
+            return searchSlashCommands(query, editor, getAvailableBlocks(blocks, editor));
           },
-        };
-      },
-    }).configure({
-      suggestion: {
-        ...getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
-        command: ({ editor, range, props }) => {
-          const query = props.id + '}}';
+        },
+      }),
+      VariableExtension.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(
+            createVariableNodeView(parsedVariables.variables, parsedVariables.isAllowedVariable),
+            {
+              // the variable pill is 3px smaller than the default text size, but never smaller than 12px
+              className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
+              as: 'div',
+            }
+          );
+        },
+        addAttributes() {
+          const attributes = this.parent?.();
+          return {
+            ...attributes,
+            aliasFor: {
+              default: null,
+            },
+          };
+        },
+      }).configure({
+        suggestion: {
+          ...getVariableSuggestions(VARIABLE_TRIGGER_CHARACTER),
+          command: ({ editor, range, props }) => {
+            const query = props.id + '}}';
 
-          const existsInSchema = parsedVariables.variables.some((v) => v.name === props.id);
-          const isNewVariable = !existsInSchema && !(props.id.startsWith('current.') || props.id === 'current');
+            const existsInSchema = parsedVariables.variables.some((v) => v.name === props.id);
+            const isNewVariable = !existsInSchema && !(props.id.startsWith('current.') || props.id === 'current');
 
-          if (props.id === TRANSLATION_NAMESPACE_SEPARATOR) {
-            // just insert "{{t." (not closed) to trigger the translation extension
-            editor.chain().focus().insertContentAt(range, TRANSLATION_TRIGGER_CHARACTER).run();
+            if (props.id === TRANSLATION_NAMESPACE_SEPARATOR) {
+              // just insert "{{t." (not closed) to trigger the translation extension
+              editor.chain().focus().insertContentAt(range, TRANSLATION_TRIGGER_CHARACTER).run();
 
-            return;
-          }
-
-          if (isNewVariable) {
-            const variableName = props.id;
-            onCreateNewVariable?.(variableName);
-
-            insertVariableToEditor({
-              query,
-              editor,
-              range,
-            });
-          } else {
-            // Calculate aliasFor before validation to properly handle "current." variables
-            const aliasFor = resolveRepeatBlockAlias(props.id, editor);
-            const isAllowed = parsedVariables.isAllowedVariable({
-              name: props.id,
-              aliasFor,
-            });
-
-            if (!isAllowed) {
               return;
             }
 
-            insertVariableToEditor({
-              query,
-              editor,
-              range,
-            });
-          }
+            if (isNewVariable) {
+              const variableName = props.id;
+              onCreateNewVariable?.(variableName);
+
+              insertVariableToEditor({
+                query,
+                editor,
+                range,
+              });
+            } else {
+              // Calculate aliasFor before validation to properly handle "current." variables
+              const aliasFor = resolveRepeatBlockAlias(props.id, editor);
+              const isAllowed = parsedVariables.isAllowedVariable({
+                name: props.id,
+                aliasFor,
+              });
+
+              if (!isAllowed) {
+                return;
+              }
+
+              if (isNewVariable) {
+                const variableName = props.id.replace('current.payload.', '').replace('payload.', '');
+                onCreateNewVariable?.(variableName);
+
+                insertVariableToEditor({
+                  query,
+                  editor,
+                  range,
+                });
+              } else {
+                // Calculate aliasFor before validation to properly handle "current." variables
+                const aliasFor = resolveRepeatBlockAlias(props.id, editor);
+                const isAllowed = parsedVariables.isAllowedVariable({
+                  name: props.id,
+                  aliasFor,
+                });
+
+                if (!isAllowed) {
+                  return;
+                }
+
+                insertVariableToEditor({
+                  query,
+                  editor,
+                  range,
+                });
+              }
+            }
+          },
         },
-      },
-      // variable pills inside buttons and bubble menus (repeat, showIf...)
-      renderVariable,
-      variables: handleCalculateVariables as Variables,
-      variableSuggestionsPopover,
-    }),
-    HTMLCodeBlockExtension.extend({
-      addNodeView() {
-        return ReactNodeViewRenderer(HTMLCodeBlockView, {
-          className: 'mly-relative',
-        });
-      },
-    }),
-    createTranslationExtension(isTranslationEnabled, translationKeys, onCreateNewTranslationKey),
-  ];
+        // variable pills inside buttons and bubble menus (repeat, showIf...)
+        renderVariable,
+        variables: handleCalculateVariables as Variables,
+        variableSuggestionsPopover,
+      }),
+      HTMLCodeBlockExtension.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(HTMLCodeBlockView, {
+            className: 'mly-relative',
+          });
+        },
+      }),
+    ];
 
-  extensions.push(
-    ButtonExtension.extend({
-      addAttributes() {
-        const attributes = this.parent?.();
+    if (isTranslationEnabled) {
+      extensions.push(translationExtension);
+    }
 
-        return {
-          ...attributes,
-          aliasFor: {
-            default: null,
-          },
-        };
-      },
+    extensions.push(
+      ButtonExtension.extend({
+        addAttributes() {
+          const attributes = this.parent?.();
 
-      addCommands() {
-        const commands = this.parent?.();
-        const editor = this.editor;
+          return {
+            ...attributes,
+            aliasFor: {
+              default: null,
+            },
+          };
+        },
 
-        if (!commands) return {};
+        addCommands() {
+          const commands = this.parent?.();
+          const editor = this.editor;
 
-        return {
-          ...commands,
-          updateButtonAttributes: (attrs: MailyButtonAttributes) => {
-            const { text, url, isTextVariable, isUrlVariable } = attrs;
+          if (!commands) return {};
 
-            if (isTextVariable || isUrlVariable) {
-              const aliasFor = resolveRepeatBlockAlias(isTextVariable ? (text ?? '') : (url ?? ''), editor);
-              return commands.updateButtonAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
-            }
+          return {
+            ...commands,
+            updateButtonAttributes: (attrs: MailyButtonAttributes) => {
+              const { text, url, isTextVariable, isUrlVariable } = attrs;
 
-            return commands.updateButtonAttributes?.(attrs);
-          },
-        };
-      },
-    }),
-    ImageExtension.extend({
-      addAttributes() {
-        const attributes = this.parent?.();
+              if (isTextVariable || isUrlVariable) {
+                const aliasFor = resolveRepeatBlockAlias(isTextVariable ? (text ?? '') : (url ?? ''), editor);
+                return commands.updateButtonAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
+              }
 
-        return {
-          ...attributes,
-          aliasFor: {
-            default: null,
-          },
-        };
-      },
+              return commands.updateButtonAttributes?.(attrs);
+            },
+          };
+        },
+      }),
+      ImageExtension.extend({
+        addAttributes() {
+          const attributes = this.parent?.();
 
-      addCommands() {
-        const commands = this.parent?.();
-        const editor = this.editor;
+          return {
+            ...attributes,
+            aliasFor: {
+              default: null,
+            },
+          };
+        },
 
-        if (!commands) return {};
+        addCommands() {
+          const commands = this.parent?.();
+          const editor = this.editor;
 
-        return {
-          ...commands,
-          updateImageAttributes: (attrs) => {
-            const { src, isSrcVariable, externalLink, isExternalLinkVariable } = attrs;
+          if (!commands) return {};
 
-            if (isSrcVariable || isExternalLinkVariable) {
-              const aliasFor = resolveRepeatBlockAlias(isSrcVariable ? (src ?? '') : (externalLink ?? ''), editor);
-              return commands.updateImageAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
-            }
+          return {
+            ...commands,
+            updateImageAttributes: (attrs) => {
+              const { src, isSrcVariable, externalLink, isExternalLinkVariable } = attrs;
 
-            return commands.updateImageAttributes?.(attrs);
-          },
-        };
-      },
-    }),
-    InlineImageExtension.extend({
-      addAttributes() {
-        const attributes = this.parent?.();
+              if (isSrcVariable || isExternalLinkVariable) {
+                const aliasFor = resolveRepeatBlockAlias(isSrcVariable ? (src ?? '') : (externalLink ?? ''), editor);
+                return commands.updateImageAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
+              }
 
-        return {
-          ...attributes,
-          aliasFor: {
-            default: null,
-          },
-        };
-      },
+              return commands.updateImageAttributes?.(attrs);
+            },
+          };
+        },
+      }),
+      InlineImageExtension.extend({
+        addAttributes() {
+          const attributes = this.parent?.();
 
-      addCommands() {
-        const commands = this.parent?.();
-        const editor = this.editor;
+          return {
+            ...attributes,
+            aliasFor: {
+              default: null,
+            },
+          };
+        },
 
-        if (!commands) return {};
+        addCommands() {
+          const commands = this.parent?.();
+          const editor = this.editor;
 
-        return {
-          ...commands,
-          updateInlineImageAttributes: (attrs) => {
-            const { src, isSrcVariable, externalLink, isExternalLinkVariable } = attrs;
+          if (!commands) return {};
 
-            if (isSrcVariable || isExternalLinkVariable) {
-              const aliasFor = resolveRepeatBlockAlias(isSrcVariable ? (src ?? '') : (externalLink ?? ''), editor);
-              return commands.updateInlineImageAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
-            }
+          return {
+            ...commands,
+            updateInlineImageAttributes: (attrs) => {
+              const { src, isSrcVariable, externalLink, isExternalLinkVariable } = attrs;
 
-            return commands.updateInlineImageAttributes?.(attrs);
-          },
-        };
-      },
-    }),
-    LinkExtension.extend({
-      addAttributes() {
-        const attributes = this.parent?.();
+              if (isSrcVariable || isExternalLinkVariable) {
+                const aliasFor = resolveRepeatBlockAlias(isSrcVariable ? (src ?? '') : (externalLink ?? ''), editor);
+                return commands.updateInlineImageAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
+              }
 
-        return {
-          ...attributes,
-          aliasFor: {
-            default: null,
-          },
-        };
-      },
+              return commands.updateInlineImageAttributes?.(attrs);
+            },
+          };
+        },
+      }),
+      LinkExtension.extend({
+        addAttributes() {
+          const attributes = this.parent?.();
 
-      addCommands() {
-        const commands = this.parent?.();
-        const editor = this.editor;
+          return {
+            ...attributes,
+            aliasFor: {
+              default: null,
+            },
+          };
+        },
 
-        if (!commands) return {};
+        addCommands() {
+          const commands = this.parent?.();
+          const editor = this.editor;
 
-        return {
-          ...commands,
-          updateLinkAttributes: (attrs: MailyLinkAttributes) => {
-            const { href, isUrlVariable } = attrs;
+          if (!commands) return {};
 
-            if (isUrlVariable) {
-              const aliasFor = resolveRepeatBlockAlias(href ?? '', editor);
-              return commands.updateLinkAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
-            }
+          return {
+            ...commands,
+            updateLinkAttributes: (attrs: MailyLinkAttributes) => {
+              const { href, isUrlVariable } = attrs;
 
-            // @ts-expect-error - the core and core-digest collides
-            return commands.updateLinkAttributes?.(attrs);
-          },
-        };
-      },
-    })
-  );
+              if (isUrlVariable) {
+                const aliasFor = resolveRepeatBlockAlias(href ?? '', editor);
+                return commands.updateLinkAttributes?.({ ...attrs, aliasFor: aliasFor ?? null });
+              }
 
-  return extensions;
+              // @ts-expect-error - the core and core-digest collides
+              return commands.updateLinkAttributes?.(attrs);
+            },
+          };
+        },
+      })
+    );
+
+    return extensions;
+  }, [propsRef, translationExtension, isTranslationEnabled]);
 };

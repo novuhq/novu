@@ -26,6 +26,7 @@ export class PreviewStep {
       searchParams: {
         [HttpQueryKeysEnum.WORKFLOW_ID]: command.workflowId,
         [HttpQueryKeysEnum.STEP_ID]: command.stepId,
+        layoutId: command.layoutId,
         skipLayoutRendering: command.skipLayoutRendering ? 'true' : 'false',
       },
       workflowOrigin: command.workflowOrigin,

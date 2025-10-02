@@ -42,6 +42,10 @@ export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   topicKey?: string;
 
   @IsOptional()
+  @IsString()
+  contextSearch?: string;
+
+  @IsOptional()
   @IsArray()
   @IsEnum(SeverityLevelEnum, { each: true })
   severity?: SeverityLevelEnum[] | null;

@@ -377,10 +377,7 @@ export class GetWorkflowRuns {
     }
   }
 
-  private mapWorkflowRunToDto(
-    workflowRun: WorkflowRunFetchResult,
-    stepRuns: StepRunFetchResult[]
-  ): GetWorkflowRunsDto {
+  private mapWorkflowRunToDto(workflowRun: WorkflowRunFetchResult, stepRuns: StepRunFetchResult[]): GetWorkflowRunsDto {
     return {
       id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,

@@ -2,7 +2,6 @@ import { DEFAULT_LOCALE } from '@novu/shared';
 import React, { useImperativeHandle, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { VariableList, VariableListRef } from '@/components/variable/variable-list';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { LocalizationResourceEnum, TranslationKey } from '@/types/translations';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -28,18 +27,22 @@ type TranslationSuggestionsPopoverRef = {
 
 export const TranslationSuggestionsListView = React.forwardRef<
   TranslationSuggestionsPopoverRef,
-  TranslationSuggestionsPopoverProps & { translationKeys?: TranslationKey[] }
->(({ items, onSelectItem, translationKeys = [] }, ref) => {
+  TranslationSuggestionsPopoverProps & {
+    translationKeys?: TranslationKey[];
+    resourceId: string;
+    resourceType: LocalizationResourceEnum;
+    isTranslationEnabled: boolean;
+  }
+>(({ items, onSelectItem, translationKeys = [], resourceId, resourceType, isTranslationEnabled }, ref) => {
   const { environmentSlug } = useParams();
-  const { workflow } = useWorkflow();
   const { data: organizationSettings } = useFetchOrganizationSettings();
 
   const defaultLocale = organizationSettings?.data?.defaultLocale ?? DEFAULT_LOCALE;
 
   const translationsUrl = buildRoute(ROUTES.TRANSLATIONS_EDIT, {
     environmentSlug: environmentSlug ?? '',
-    resourceType: LocalizationResourceEnum.WORKFLOW,
-    resourceId: workflow?.workflowId ?? '',
+    resourceType,
+    resourceId,
     locale: DEFAULT_LOCALE,
   });
 
@@ -90,7 +93,7 @@ export const TranslationSuggestionsListView = React.forwardRef<
     },
   }));
 
-  if (items.length === 0) {
+  if (!isTranslationEnabled || items.length === 0) {
     return null;
   }
 

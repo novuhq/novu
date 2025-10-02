@@ -36,6 +36,7 @@ export class NotificationRepository extends BaseRepository<
       severity?: SeverityLevelEnum[] | null;
       after?: string;
       before?: string;
+      contextSearch?: string;
     } = {},
     skip = 0,
     limit = 10
@@ -92,6 +93,23 @@ export class NotificationRepository extends BaseRepository<
         $in: query.channels,
       };
     }
+
+    if (query.contextSearch) {
+      if (query.contextSearch.includes(':')) {
+        // Exact match: "tenant:org-123"
+        requestQuery.contextKeys = {
+          $in: [query.contextSearch],
+        };
+      } else {
+        // Partial match: search for any context key containing this string
+        // This allows searching by type only ("tenant") or ID only ("org-123")
+        requestQuery.contextKeys = {
+          $regex: query.contextSearch,
+          $options: 'i', // case insensitive
+        };
+      }
+    }
+
     // combine all $or conditions properly
     const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
     if (severityCondition.length > 0) {

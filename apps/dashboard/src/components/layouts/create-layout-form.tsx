@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { slugify } from '@novu/shared';
 import { useForm } from 'react-hook-form';
@@ -13,11 +15,13 @@ import {
   FormMessage,
   FormRoot,
 } from '@/components/primitives/form/form';
+import { TranslationToggleSection } from '../workflow-editor/translation-toggle-section';
 
 interface CreateLayoutFormProps {
   onSubmit: (formData: z.infer<typeof layoutSchema>) => void;
   template?: {
     name: string;
+    isTranslationEnabled?: boolean;
   };
 }
 
@@ -27,6 +31,7 @@ export function CreateLayoutForm({ onSubmit, template }: CreateLayoutFormProps) 
     defaultValues: {
       name: template?.name ?? '',
       layoutId: slugify(template?.name ?? ''),
+      isTranslationEnabled: template?.isTranslationEnabled ?? false,
     },
   });
 
@@ -71,6 +76,14 @@ export function CreateLayoutForm({ onSubmit, template }: CreateLayoutFormProps) 
               </FormControl>
               <FormMessage />
             </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="isTranslationEnabled"
+          render={({ field }) => (
+            <TranslationToggleSection value={field.value} showManageLink={false} onChange={field.onChange} />
           )}
         />
       </FormRoot>

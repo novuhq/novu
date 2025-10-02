@@ -1,31 +1,46 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { VariableIcon } from '@/components/variable/components/variable-icon';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
-import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTranslationValidation } from '@/hooks/use-translation-validation';
+import { LocalizationResourceEnum } from '@/types/translations';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
-import { EditTranslationPopover } from './edit-translation-popover/edit-translation-popover';
+import {
+  EditTranslationPopover,
+  TranslationValueInputComponent,
+} from './edit-translation-popover/edit-translation-popover';
 import { TranslationTooltip } from './translation-tooltip';
 
-interface TranslationPillProps {
+type TranslationPillProps = {
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
+  variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
   decoratorKey: string; // "common.submit"
   onUpdate?: (key: string) => void;
   onDelete?: () => void;
-}
+  translationValueInput: TranslationValueInputComponent;
+};
 
-export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, onUpdate, onDelete }) => {
+export const TranslationPill: React.FC<TranslationPillProps> = ({
+  resourceId,
+  resourceType,
+  variables,
+  isAllowedVariable,
+  decoratorKey,
+  onUpdate,
+  onDelete,
+  translationValueInput,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number } | undefined>();
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-
   // Fetch translation keys to validate if the current key exists
   const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
-    workflowId: workflow?._id || '',
-    enabled: !!workflow?._id,
+    resourceId,
+    resourceType,
+    enabled: !!resourceId,
   });
 
   const displayTranslationKey = useMemo(() => {
@@ -116,7 +131,9 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
         position={popoverPosition}
         variables={variables}
         isAllowedVariable={isAllowedVariable}
-        workflowId={workflow?._id || ''}
+        resourceId={resourceId}
+        resourceType={resourceType}
+        translationValueInput={translationValueInput}
       />
     </>
   );

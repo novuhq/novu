@@ -174,7 +174,7 @@ export type WorkflowResponseDto = {
    */
   isTranslationEnabled?: boolean | undefined;
   /**
-   * Unique identifier of the workflow
+   * Database identifier of the workflow
    */
   id: string;
   /**

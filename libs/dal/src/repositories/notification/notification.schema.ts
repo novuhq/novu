@@ -199,6 +199,15 @@ notificationSchema.index(
  */
 notificationSchema.index({ createdAt: 1 });
 
+/*
+ * Index for context key filtering
+ * Supports both exact matches and regex searches
+ */
+notificationSchema.index({
+  _environmentId: 1,
+  contextKeys: 1,
+});
+
 export const Notification =
   (mongoose.models.Notification as mongoose.Model<NotificationDBModel>) ||
   mongoose.model<NotificationDBModel>('Notification', notificationSchema);

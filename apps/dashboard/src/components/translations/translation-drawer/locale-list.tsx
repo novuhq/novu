@@ -176,7 +176,7 @@ export function LocaleList({
   }, [locales, actualDefaultLocale]);
 
   return (
-    <div className="w-[400px] border-r border-neutral-200">
+    <div className="min-w-[400px] border-r border-neutral-200">
       <TranslationStatusSection updatedAt={updatedAt} outdatedLocales={outdatedLocales} />
 
       <div className="p-4">

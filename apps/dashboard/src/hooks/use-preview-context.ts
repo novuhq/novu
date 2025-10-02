@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDataRef } from './use-data-ref';
 
 type PreviewContextState<D, E extends Record<keyof D, string | null>> = {
   accordionValue: string[];
@@ -75,28 +76,32 @@ export function usePreviewContext<D, E extends Record<keyof D, string | null>>({
     [onDataPersist]
   );
 
-  const updateJsonSection = useCallback(
+  const updateJsonRef = useDataRef({ onChange, value, setError, updateLocalData, parseJsonValue });
+
+  const updatePreviewSection = useCallback(
     (section: keyof D, updatedData: any) => {
       if (isUpdatingRef.current) return;
 
       isUpdatingRef.current = true;
 
+      const local = updateJsonRef.current;
+
       try {
-        const currentData = parseJsonValue(value);
+        const currentData = local.parseJsonValue(local.value);
         const newData = { ...currentData, [section]: updatedData };
         const stringified = JSON.stringify(newData, null, 2);
 
-        const error = onChange(stringified);
+        const error = local.onChange(stringified);
 
         if (error) {
-          setError(section, error.message);
+          local.setError(section, error.message);
         } else {
-          updateLocalData(section, updatedData);
-          setError(section, null);
+          local.updateLocalData(section, updatedData);
+          local.setError(section, null);
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to update JSON';
-        setError(section, errorMessage);
+        local.setError(section, errorMessage);
       } finally {
         // Use setTimeout to ensure the ref is reset after the current execution cycle
         setTimeout(() => {
@@ -104,7 +109,7 @@ export function usePreviewContext<D, E extends Record<keyof D, string | null>>({
         }, 0);
       }
     },
-    [onChange, value, setError, updateLocalData, parseJsonValue]
+    [updateJsonRef]
   );
 
   const setAccordionValue = useCallback((value: string[]) => {
@@ -115,7 +120,7 @@ export function usePreviewContext<D, E extends Record<keyof D, string | null>>({
     accordionValue: state.accordionValue,
     setAccordionValue,
     errors: state.errors,
-    localParsedData: state.localParsedData,
-    updateJsonSection,
+    previewContext: state.localParsedData,
+    updatePreviewSection,
   };
 }

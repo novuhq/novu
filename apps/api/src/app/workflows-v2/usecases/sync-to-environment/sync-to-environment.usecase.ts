@@ -82,17 +82,29 @@ export class SyncToEnvironmentUseCase {
     const targetWorkflow = await this.findWorkflowInTargetEnvironment(command, externalId);
     const workflowDto = await this.buildRequestDto(sourceWorkflow, preferencesToClone, targetWorkflow);
 
+    const layoutsToSync: string[] = [];
     for (const step of workflowDto.steps) {
       if (step.type === StepTypeEnum.EMAIL && step.controlValues?.layoutId) {
-        await this.layoutSyncToEnvironmentUseCase.execute(
-          LayoutSyncToEnvironmentCommand.create({
-            user: command.user,
-            layoutIdOrInternalId: step.controlValues.layoutId as string,
-            targetEnvironmentId: command.targetEnvironmentId,
-          })
-        );
+        const layoutId = step.controlValues?.layoutId as string;
+        layoutsToSync.push(layoutId);
       }
     }
+
+    const layoutsToSyncPromises = layoutsToSync.map((layoutId) =>
+      this.layoutSyncToEnvironmentUseCase.execute(
+        LayoutSyncToEnvironmentCommand.create({
+          user: command.user,
+          layoutIdOrInternalId: layoutId,
+          targetEnvironmentId: command.targetEnvironmentId,
+        })
+      )
+    );
+    await Promise.all(layoutsToSyncPromises);
+
+    const layoutsTranslationGroupsPromises = layoutsToSync.map((layoutId) =>
+      this.publishTranslationGroup(layoutId, LocalizationResourceEnum.LAYOUT, command)
+    );
+    await Promise.all(layoutsTranslationGroupsPromises);
 
     const upsertedWorkflow = await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
@@ -104,7 +116,7 @@ export class SyncToEnvironmentUseCase {
       })
     );
 
-    await this.publishTranslationGroup(sourceWorkflow.workflowId, command);
+    await this.publishTranslationGroup(sourceWorkflow.workflowId, LocalizationResourceEnum.WORKFLOW, command);
 
     // Update the source workflow with publish information
     await this.notificationTemplateRepository.updatePublishFields(
@@ -130,7 +142,11 @@ export class SyncToEnvironmentUseCase {
     return upsertedWorkflow;
   }
 
-  private async publishTranslationGroup(workflowIdentifier: string, command: SyncToEnvironmentCommand): Promise<void> {
+  private async publishTranslationGroup(
+    resourceId: string,
+    resourceType: LocalizationResourceEnum,
+    command: SyncToEnvironmentCommand
+  ): Promise<void> {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
     const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
 
@@ -146,8 +162,8 @@ export class SyncToEnvironmentUseCase {
 
     await publishTranslationGroup.execute({
       user,
-      resourceId: workflowIdentifier,
-      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId,
+      resourceType,
       sourceEnvironmentId: user.environmentId,
       targetEnvironmentId,
     });

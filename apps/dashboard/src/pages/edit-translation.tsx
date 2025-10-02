@@ -33,14 +33,6 @@ export const EditTranslationPage = () => {
     }
   };
 
-  const handleOpenChange = (isOpen: boolean) => {
-    setOpen(isOpen);
-
-    if (!isOpen) {
-      navigateToTranslationsPage();
-    }
-  };
-
   const handleLocaleChange = (newLocale: string) => {
     setCurrentLocale(newLocale);
 
@@ -69,7 +61,7 @@ export const EditTranslationPage = () => {
     <TranslationDrawer
       ref={unmountRef}
       isOpen={open}
-      onOpenChange={handleOpenChange}
+      onOpenChange={setOpen}
       resourceType={resourceType}
       resourceId={resourceId}
       initialLocale={currentLocale}

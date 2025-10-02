@@ -23,10 +23,12 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { EnhancedParsedVariables, IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { Maily } from '../../../maily/maily';
 import { createEditorBlocks, DEFAULT_BLOCK_CONFIG } from '../../../maily/maily-config';
 import { isMailyJson } from '../../../maily/maily-utils';
+import { ControlInput } from '../../control-input';
 import { useWorkflow } from '../../workflow-provider';
 import { useWorkflowSchema } from '../../workflow-schema-provider';
 
@@ -81,10 +83,12 @@ const BubbleMenuVariablePillForWorkflows = ({
         <EditorOverlays
           variables={parsedVariables.variables}
           isAllowedVariable={parsedVariables.isAllowedVariable}
-          workflow={workflow}
+          resourceId={workflow?.workflowId || ''}
+          resourceType={LocalizationResourceEnum.WORKFLOW}
           isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
           onPayloadSchemaDrawerOpenChange={(isOpen) => !isOpen && closeSchemaDrawer()}
           highlightedVariableKey={highlightedVariableKey}
+          translationValueInput={ControlInput}
         />
       )}
     </BubbleMenuVariablePill>
@@ -118,10 +122,12 @@ function createVariableNodeView(variables: LiquidVariable[], isAllowedVariable: 
         <EditorOverlays
           variables={variables}
           isAllowedVariable={isAllowedVariable}
-          workflow={workflow}
+          resourceId={workflow?.workflowId || ''}
+          resourceType={LocalizationResourceEnum.WORKFLOW}
           isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
           onPayloadSchemaDrawerOpenChange={(isOpen) => !isOpen && closeSchemaDrawer()}
           highlightedVariableKey={highlightedVariableKey}
+          translationValueInput={ControlInput}
         />
       </NodeVariablePill>
     );
@@ -134,6 +140,8 @@ export const EmailBody = () => {
   const { control, setValue } = useFormContext();
   const editorType = useWatch({ name: 'editorType', control });
   const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
+  const resourceId = workflow?.workflowId || '';
+  const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
   const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const { saveForm } = useSaveForm();
@@ -194,29 +202,34 @@ export const EmailBody = () => {
     viewRef,
     lastCompletionRef,
     onChange,
-    workflow,
+    resourceId,
+    resourceType,
+    isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
   });
 
   const createTranslationKeyMutation = useCreateTranslationKey();
 
   const handleCreateNewTranslationKey = useCallback(
     async (translationKey: string) => {
-      if (!workflow?._id) return;
+      if (!resourceId) return;
 
       await createTranslationKeyMutation.mutateAsync({
-        workflowId: workflow._id,
+        resourceId,
+        resourceType,
         translationKey,
         defaultValue: `[${translationKey}]`, // Placeholder value to indicate missing translation
       });
     },
-    [workflow?._id, createTranslationKeyMutation]
+    [resourceId, resourceType, createTranslationKeyMutation]
   );
 
   const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
-    workflowId: workflow?._id || '',
-    enabled: shouldEnableTranslations && !!workflow?._id,
+    resourceId,
+    resourceType,
+    enabled: shouldEnableTranslations && !!resourceId,
   });
 
+  const isTranslationEnabled = shouldEnableTranslations && !isTranslationKeysLoading;
   // Create a key that changes when variables or translation state changes to force extension recreation
   const editorKey = useMemo(() => {
     const variableNames = [...parsedVariables.primitives, ...parsedVariables.arrays, ...parsedVariables.namespaces]
@@ -226,14 +239,14 @@ export const EmailBody = () => {
 
     // Include translation state to force re-mount when translation extension becomes ready
     // Note: Removed isTranslationKeysLoading to prevent re-mount during loading state changes
-    const translationState = `translation-${shouldEnableTranslations ? 'enabled' : 'disabled'}-${translationKeys.length}`;
+    const translationState = `translation-${isTranslationEnabled ? 'enabled' : 'disabled'}-${translationKeys.length}`;
 
     return `vars-${variableNames.length}-${variableNames.slice(0, 100)}-${translationState}`;
   }, [
     parsedVariables.primitives,
     parsedVariables.arrays,
     parsedVariables.namespaces,
-    shouldEnableTranslations,
+    isTranslationEnabled,
     translationKeys.length,
   ]);
 
@@ -282,7 +295,7 @@ export const EmailBody = () => {
               saveForm={saveForm}
               completionSources={translationCompletionSource}
               isPayloadSchemaEnabled={isPayloadSchemaEnabled}
-              isTranslationEnabled={shouldEnableTranslations && !isTranslationKeysLoading}
+              isTranslationEnabled={isTranslationEnabled}
               isContextEnabled={isContextEnabled}
               getSchemaPropertyByKey={getSchemaPropertyByKey}
               extensions={extensions}
@@ -299,9 +312,11 @@ export const EmailBody = () => {
                 onTranslationDelete={handleTranslationDelete}
                 onTranslationReplaceKey={handleTranslationReplaceKey}
                 translationTriggerPosition={translationTriggerPosition}
+                translationValueInput={ControlInput}
                 variables={parsedVariables.variables}
                 isAllowedVariable={enhancedIsAllowedVariable}
-                workflow={workflow}
+                resourceId={resourceId}
+                resourceType={resourceType}
                 isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
                 onPayloadSchemaDrawerOpenChange={(isOpen) => {
                   if (!isOpen) {
@@ -323,15 +338,18 @@ export const EmailBody = () => {
             variables={parsedVariables}
             blocks={blocks}
             isPayloadSchemaEnabled={isPayloadSchemaEnabled}
-            isTranslationEnabled={shouldEnableTranslations && !isTranslationKeysLoading}
+            isTranslationEnabled={isTranslationEnabled}
             isContextEnabled={isContextEnabled}
             translationKeys={translationKeys}
+            translationValueInput={ControlInput}
             addDigestVariables={!!digestStepBeforeCurrent?.stepId}
             onCreateNewTranslationKey={handleCreateNewTranslationKey}
             onCreateNewVariable={handleCreateNewVariable}
             variableSuggestionsPopover={MailyVariablesListViewForWorkflows}
             renderVariable={renderVariable}
             createVariableNodeView={createVariableNodeView}
+            resourceId={resourceId}
+            resourceType={resourceType}
           >
             <EditorOverlays
               isTranslationPopoverOpen={isTranslationPopoverOpen}
@@ -340,9 +358,11 @@ export const EmailBody = () => {
               onTranslationDelete={handleTranslationDelete}
               onTranslationReplaceKey={handleTranslationReplaceKey}
               translationTriggerPosition={translationTriggerPosition}
+              translationValueInput={ControlInput}
               variables={parsedVariables.variables}
               isAllowedVariable={enhancedIsAllowedVariable}
-              workflow={workflow}
+              resourceId={resourceId}
+              resourceType={resourceType}
               isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
               onPayloadSchemaDrawerOpenChange={(isOpen) => {
                 if (!isOpen) {

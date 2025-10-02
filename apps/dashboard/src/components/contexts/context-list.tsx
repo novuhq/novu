@@ -18,33 +18,24 @@ import { PermissionButton } from '../primitives/permission-button';
 import { ContextListBlank } from './context-list-blank';
 import { ContextRow, ContextRowSkeleton } from './context-row';
 import { ContextsFilters } from './contexts-filters';
-import {
-  ContextsFilter,
-  ContextsSortableColumn,
-  ContextsUrlState,
-  useContextsUrlState,
-} from './hooks/use-contexts-url-state';
+import { useContextsNavigate } from './hooks/use-contexts-navigate';
+import { ContextsSortableColumn, ContextsUrlState, useContextsUrlState } from './hooks/use-contexts-url-state';
 
-// Use type alias instead of interface for component props
 type ContextListProps = HTMLAttributes<HTMLDivElement>;
 
-// Wrapper similar to TopicListWrapper
-const ContextListWrapper = (
-  props: ContextListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean; showEmptyState?: boolean }
-) => {
-  const {
-    className,
-    children,
-    filterValues,
-    handleFiltersChange,
-    resetFilters,
-    isLoading,
-    isFetching,
-    hasData,
-    areFiltersApplied,
-    showEmptyState,
-    ...rest
-  } = props;
+const ContextListWrapper = ({
+  className,
+  children,
+  filterValues,
+  handleFiltersChange,
+  resetFilters,
+  isLoading,
+  isFetching,
+  hasData,
+  areFiltersApplied,
+  showEmptyState,
+  ...rest
+}: ContextListFiltersProps & { hasData?: boolean; areFiltersApplied?: boolean; showEmptyState?: boolean }) => {
   return (
     <div className={cn('flex h-full flex-col', showEmptyState && 'h-[calc(100vh-100px)]', className)} {...rest}>
       <div className="flex items-center justify-between">
@@ -58,23 +49,29 @@ const ContextListWrapper = (
             className="py-2.5"
           />
         ) : (
-          <div /> // Empty div placeholder to maintain layout
+          <div />
         )}
+        {!showEmptyState && <CreateContextButton />}
       </div>
       {children}
     </div>
   );
 };
 
-// Table component similar to TopicListTable
-const ContextListTable = (props: ContextListTableProps) => {
-  const { children, orderBy, orderDirection, toggleSort, paginationProps, ...rest } = props;
+const ContextListTable = ({
+  children,
+  orderBy,
+  orderDirection,
+  toggleSort,
+  paginationProps,
+  ...rest
+}: ContextListTableProps) => {
   return (
     <Table {...rest}>
       <TableHeader>
         <TableRow>
-          <TableHead>ID</TableHead>
           <TableHead>Type</TableHead>
+          <TableHead>ID</TableHead>
           <TableHead
             sortable
             sortDirection={orderBy === 'createdAt' ? orderDirection : false}
@@ -143,7 +140,6 @@ type ContextListTableProps = HTMLAttributes<HTMLTableElement> & {
 export const ContextList = (props: ContextListProps) => {
   const { ...rest } = props;
 
-  // Use the hook as the primary source for URL state
   const {
     filterValues,
     handleFiltersChange,
@@ -154,27 +150,22 @@ export const ContextList = (props: ContextListProps) => {
     handlePageSizeChange,
   } = useContextsUrlState();
 
-  // Get limit from filterValues, fallback to 10
   const limit = filterValues.limit || 10;
-
-  // Consolidate fetch parameters
-  const fetchParams: ContextsFilter = {
-    // Use values from the hook
-    search: filterValues.search,
-    orderBy: filterValues.orderBy,
-    orderDirection: filterValues.orderDirection,
-    // Pagination params from hook
-    after: filterValues.after,
-    before: filterValues.before,
-    limit: limit,
-  };
-
-  // Determine if filters are active based on hook values
   const areFiltersApplied = !!(filterValues.search || filterValues.before || filterValues.after);
 
-  const { data, isLoading, isFetching } = useFetchContexts(fetchParams, {
-    meta: { errorMessage: 'Issue fetching contexts' },
-  });
+  const { data, isLoading, isFetching } = useFetchContexts(
+    {
+      search: filterValues.search,
+      orderBy: filterValues.orderBy,
+      orderDirection: filterValues.orderDirection,
+      after: filterValues.after,
+      before: filterValues.before,
+      limit,
+    },
+    {
+      meta: { errorMessage: 'Issue fetching contexts' },
+    }
+  );
 
   // Update the URL state hook with the latest cursor values from the API response
   useEffect(() => {
@@ -186,42 +177,39 @@ export const ContextList = (props: ContextListProps) => {
     }
   }, [data, handleFiltersChange]);
 
-  // Define wrapper props once
-  const wrapperProps = {
-    filterValues,
-    handleFiltersChange,
-    resetFilters,
-    isLoading: isLoading, // Pass loading state
-    isFetching: isFetching, // Pass fetching state for spinner
-    hasData: !!data?.data.length,
-    areFiltersApplied,
-    ...rest,
-  };
-
-  // Define table props once
-  const tableProps = {
-    orderBy: filterValues.orderBy, // Use state from hook via filterValues
-    orderDirection: filterValues.orderDirection, // Use state from hook via filterValues
-    toggleSort,
-    paginationProps: data
-      ? {
-          hasNext: !!data.next,
-          hasPrevious: !!data.previous,
-          onNext: handleNext,
-          onPrevious: handlePrevious,
-          limit,
-          currentItemsCount: data.data.length,
-          totalCount: data.totalCount,
-          totalCountCapped: data.totalCountCapped,
-          onPageSizeChange: handlePageSizeChange,
-        }
-      : undefined,
-  };
+  const hasData = !!data?.data.length;
+  const paginationProps = data
+    ? {
+        hasNext: !!data.next,
+        hasPrevious: !!data.previous,
+        onNext: handleNext,
+        onPrevious: handlePrevious,
+        limit,
+        currentItemsCount: data.data.length,
+        totalCount: data.totalCount,
+        totalCountCapped: data.totalCountCapped,
+        onPageSizeChange: handlePageSizeChange,
+      }
+    : undefined;
 
   if (isLoading) {
     return (
-      <ContextListWrapper {...wrapperProps}>
-        <ContextListTable {...tableProps}>
+      <ContextListWrapper
+        filterValues={filterValues}
+        handleFiltersChange={handleFiltersChange}
+        resetFilters={resetFilters}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        hasData={hasData}
+        areFiltersApplied={areFiltersApplied}
+        {...rest}
+      >
+        <ContextListTable
+          orderBy={filterValues.orderBy}
+          orderDirection={filterValues.orderDirection}
+          toggleSort={toggleSort}
+          paginationProps={paginationProps}
+        >
           {Array.from({ length: limit }).map((_, index) => (
             <ContextRowSkeleton key={index} />
           ))}
@@ -230,17 +218,36 @@ export const ContextList = (props: ContextListProps) => {
     );
   }
 
-  if (!areFiltersApplied && !data?.data.length) {
+  if (!areFiltersApplied && !hasData) {
     return (
-      <ContextListWrapper {...wrapperProps} showEmptyState={true}>
+      <ContextListWrapper
+        filterValues={filterValues}
+        handleFiltersChange={handleFiltersChange}
+        resetFilters={resetFilters}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        hasData={hasData}
+        areFiltersApplied={areFiltersApplied}
+        showEmptyState={true}
+        {...rest}
+      >
         <ContextListBlank />
       </ContextListWrapper>
     );
   }
 
-  if (!data?.data.length) {
+  if (!hasData) {
     return (
-      <ContextListWrapper {...wrapperProps}>
+      <ContextListWrapper
+        filterValues={filterValues}
+        handleFiltersChange={handleFiltersChange}
+        resetFilters={resetFilters}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        hasData={hasData}
+        areFiltersApplied={areFiltersApplied}
+        {...rest}
+      >
         <ListNoResults
           title="No contexts found"
           description="We couldn't find any contexts that match your search criteria. Try adjusting your filters."
@@ -251,8 +258,22 @@ export const ContextList = (props: ContextListProps) => {
   }
 
   return (
-    <ContextListWrapper {...wrapperProps}>
-      <ContextListTable {...tableProps}>
+    <ContextListWrapper
+      filterValues={filterValues}
+      handleFiltersChange={handleFiltersChange}
+      resetFilters={resetFilters}
+      isLoading={isLoading}
+      isFetching={isFetching}
+      hasData={hasData}
+      areFiltersApplied={areFiltersApplied}
+      {...rest}
+    >
+      <ContextListTable
+        orderBy={filterValues.orderBy}
+        orderDirection={filterValues.orderDirection}
+        toggleSort={toggleSort}
+        paginationProps={paginationProps}
+      >
         {data.data.map((context) => (
           <ContextRow key={`${context.type}-${context.id}`} context={context} />
         ))}
@@ -262,6 +283,8 @@ export const ContextList = (props: ContextListProps) => {
 };
 
 export const CreateContextButton = () => {
+  const { navigateToCreateContextPage } = useContextsNavigate();
+
   return (
     <PermissionButton
       permission={PermissionsEnum.WORKFLOW_WRITE}
@@ -269,8 +292,9 @@ export const CreateContextButton = () => {
       mode="gradient"
       size="xs"
       leadingIcon={RiAddCircleLine}
+      onClick={navigateToCreateContextPage}
     >
-      Create Topic
+      Create context
     </PermissionButton>
   );
 };

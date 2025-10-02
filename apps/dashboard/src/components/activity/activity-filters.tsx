@@ -1,10 +1,11 @@
 import { useOrganization } from '@clerk/clerk-react';
-import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum, SeverityLevelEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/primitives/badge';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ActivityFiltersData } from '@/types/activity';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
@@ -17,7 +18,15 @@ import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { CHANNEL_OPTIONS } from './constants';
 
-type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId' | 'topicKey' | 'severity';
+type Fields =
+  | 'dateRange'
+  | 'workflows'
+  | 'channels'
+  | 'transactionId'
+  | 'subscriberId'
+  | 'topicKey'
+  | 'severity'
+  | 'contextSearch';
 
 export type ActivityFilters = {
   filters: ActivityFiltersData;
@@ -59,6 +68,7 @@ export function ActivityFilters({
   const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED, false);
 
   const maxActivityFeedRetentionOptions = useMemo(() => {
     const missingSubscription = !subscription && !IS_SELF_HOSTED;
@@ -166,6 +176,17 @@ export function ActivityFilters({
           }))}
           selected={filters.severity}
           onSelect={(values) => onFiltersChange({ ...filters, severity: values as SeverityLevelEnum[] })}
+        />
+      )}
+
+      {!hide.includes('contextSearch') && isContextEnabled && (
+        <FacetedFormFilter
+          type="text"
+          size="small"
+          title="Context"
+          value={filters.contextSearch}
+          onChange={(value) => onFiltersChange({ ...filters, contextSearch: value })}
+          placeholder="Search by type, ID, or 'type:id'"
         />
       )}
 

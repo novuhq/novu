@@ -1,6 +1,8 @@
-import { ComponentProps } from 'react';
-import { RiFileCopyLine, RiMore2Fill } from 'react-icons/ri';
+import { PermissionsEnum } from '@novu/shared';
+import { ComponentProps, useState } from 'react';
+import { RiDeleteBin2Line, RiMore2Fill } from 'react-icons/ri';
 import { ContextResponseDto } from '@/api/contexts';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Badge } from '@/components/primitives/badge';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -14,8 +16,11 @@ import {
 import { Skeleton } from '@/components/primitives/skeleton';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { useDeleteContext } from '@/hooks/use-delete-context';
 import { formatDateSimple } from '@/utils/format-date';
+import { Protect } from '@/utils/protect';
 import { cn } from '@/utils/ui';
+import { useContextsNavigate } from './hooks/use-contexts-navigate';
 
 type ContextRowProps = {
   context: ContextResponseDto;
@@ -34,45 +39,100 @@ const ContextTableCell = (props: ContextTableCellProps) => {
 };
 
 export const ContextRow = ({ context }: ContextRowProps) => {
+  const { navigateToEditContextPage } = useContextsNavigate();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const { deleteContext, isPending: isDeleting } = useDeleteContext();
+
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
+  const handleDeletion = async () => {
+    try {
+      await deleteContext({
+        type: context.type,
+        id: context.id,
+      });
+      setIsDeleteModalOpen(false);
+    } catch {
+      // Error is already handled by the useDeleteContext hook
+    }
+  };
+
   return (
-    <TableRow className="group relative isolate">
-      <ContextTableCell>
-        <div className="flex items-center">
-          <span className="max-w-[300px] truncate font-medium">{context.id}</span>
-        </div>
-      </ContextTableCell>
-      <ContextTableCell>
-        <div className="flex items-center">
-          <Badge variant="lighter" color="purple" size="md">
-            {context.type}
-          </Badge>
-        </div>
-      </ContextTableCell>
-      <ContextTableCell>
-        {context.createdAt && (
-          <TimeDisplayHoverCard date={context.createdAt}>{formatDateSimple(context.createdAt)}</TimeDisplayHoverCard>
-        )}
-      </ContextTableCell>
-      <ContextTableCell>
-        {context.updatedAt && (
-          <TimeDisplayHoverCard date={context.updatedAt}>{formatDateSimple(context.updatedAt)}</TimeDisplayHoverCard>
-        )}
-      </ContextTableCell>
-      <ContextTableCell className="w-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <CompactButton icon={RiMore2Fill} variant="ghost" className="z-10 h-8 w-8 p-0" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-44" onClick={stopPropagation}>
-            <DropdownMenuGroup>{/* No actions available for now */}</DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </ContextTableCell>
-    </TableRow>
+    <>
+      <TableRow
+        className="group relative isolate cursor-pointer"
+        onClick={() => {
+          navigateToEditContextPage(context.type, context.id);
+        }}
+      >
+        <ContextTableCell>
+          <span className="max-w-[300px] truncate font-medium">{context.type}</span>
+        </ContextTableCell>
+        <ContextTableCell>
+          <div className="flex items-center gap-1">
+            <div className="font-code text-text-soft max-w-[300px] truncate">{context.id}</div>
+            <CopyButton
+              className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
+              valueToCopy={context.id}
+              size="2xs"
+            />
+          </div>
+        </ContextTableCell>
+        <ContextTableCell>
+          {context.createdAt && (
+            <TimeDisplayHoverCard date={context.createdAt}>{formatDateSimple(context.createdAt)}</TimeDisplayHoverCard>
+          )}
+        </ContextTableCell>
+        <ContextTableCell>
+          {context.updatedAt && (
+            <TimeDisplayHoverCard date={context.updatedAt}>{formatDateSimple(context.updatedAt)}</TimeDisplayHoverCard>
+          )}
+        </ContextTableCell>
+        <ContextTableCell className="w-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <CompactButton
+                icon={RiMore2Fill}
+                variant="ghost"
+                className="z-10 h-8 w-8 p-0"
+                onClick={stopPropagation}
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-44" onClick={stopPropagation}>
+              <DropdownMenuGroup>
+                <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
+                  <DropdownMenuItem
+                    className="text-destructive cursor-pointer"
+                    onClick={() => {
+                      setTimeout(() => setIsDeleteModalOpen(true), 0);
+                    }}
+                  >
+                    <RiDeleteBin2Line />
+                    Delete context
+                  </DropdownMenuItem>
+                </Protect>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </ContextTableCell>
+      </TableRow>
+      <ConfirmationModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={handleDeletion}
+        title="Delete context"
+        description={
+          <span>
+            Are you sure you want to delete context <span className="font-bold">{context.id}</span>? This action cannot
+            be undone.
+          </span>
+        }
+        confirmButtonText="Delete context"
+        isLoading={isDeleting}
+      />
+    </>
   );
 };
 

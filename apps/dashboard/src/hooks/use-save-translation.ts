@@ -55,6 +55,7 @@ export const useSaveTranslation = () => {
 
       // Invalidate preview queries to refetch with updated translations
       queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.previewLayout] });
 
       showSuccessToast('Translation saved successfully');
     },

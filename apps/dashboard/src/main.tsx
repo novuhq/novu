@@ -38,9 +38,11 @@ import { ChannelPreferences } from './components/workflow-editor/channel-prefere
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { ContextsPage } from './pages/contexts';
+import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
 import { CreateTopicPage } from './pages/create-topic';
 import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
+import { EditContextPage } from './pages/edit-context';
 import { EditLayoutPage } from './pages/edit-layout';
 import { EditSubscriberPage } from './pages/edit-subscriber-page';
 import { EditTopicPage } from './pages/edit-topic';
@@ -231,6 +233,24 @@ const router = createBrowserRouter([
                     <ContextsPage />
                   </ProtectedRoute>
                 ),
+                children: [
+                  {
+                    path: ROUTES.CONTEXTS_CREATE,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
+                        <CreateContextPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.CONTEXTS_EDIT,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ} isDrawerRoute>
+                        <EditContextPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
               },
               {
                 path: ROUTES.LAYOUTS,
