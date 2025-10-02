@@ -1,4 +1,4 @@
-export { ContextDrawer } from './context-drawer';
+export { ContextDrawer, ContextDrawerButton } from './context-drawer';
 export { ContextList } from './context-list';
 export { ContextListBlank } from './context-list-blank';
 export { ContextOverview, ContextOverviewSkeleton } from './context-overview';

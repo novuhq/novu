@@ -1,5 +1,5 @@
 import { ContextId, ContextType, createContextKey } from '@novu/shared';
-import { forwardRef, useState } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { RiBuildingLine } from 'react-icons/ri';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
@@ -94,3 +94,29 @@ export const ContextDrawer = forwardRef<HTMLDivElement, ContextDrawerProps>((pro
     </Sheet>
   );
 });
+
+type ContextDrawerButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  contextKey: string;
+  readOnly?: boolean;
+};
+
+export const ContextDrawerButton = (props: ContextDrawerButtonProps) => {
+  const { contextKey, onClick, readOnly = false, ...rest } = props;
+  const [open, setOpen] = useState(false);
+
+  // Parse context key to extract type and id
+  const [type, id] = contextKey.split(':') as [ContextType, ContextId];
+
+  return (
+    <>
+      <button
+        {...rest}
+        onClick={(e) => {
+          setOpen(true);
+          onClick?.(e);
+        }}
+      />
+      <ContextDrawer open={open} onOpenChange={setOpen} type={type} id={id} readOnly={readOnly} />
+    </>
+  );
+};

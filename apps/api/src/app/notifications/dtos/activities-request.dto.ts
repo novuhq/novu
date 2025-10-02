@@ -97,6 +97,14 @@ export class ActivitiesRequestDto {
 
   @ApiPropertyOptional({
     type: String,
+    description: 'Context search - can search by type, ID, or exact format "type:id"',
+  })
+  @IsOptional()
+  @IsString()
+  contextSearch?: string;
+
+  @ApiPropertyOptional({
+    type: String,
     description: 'Date filter for records after this timestamp. Defaults to earliest date allowed by subscription plan',
   })
   @IsOptional()

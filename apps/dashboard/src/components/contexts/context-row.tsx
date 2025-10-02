@@ -68,11 +68,7 @@ export const ContextRow = ({ context }: ContextRowProps) => {
         }}
       >
         <ContextTableCell>
-          <div className="flex items-center">
-            <Badge variant="lighter" color="purple" size="md">
-              {context.type}
-            </Badge>
-          </div>
+          <span className="max-w-[300px] truncate font-medium">{context.type}</span>
         </ContextTableCell>
         <ContextTableCell>
           <div className="flex items-center gap-1">

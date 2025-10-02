@@ -10,6 +10,7 @@ export type ActivityFilters = {
   dateRange?: string;
   topicKey?: string;
   severity?: SeverityLevelEnum[];
+  contextSearch?: string;
 };
 
 export interface ActivityResponse {
@@ -227,6 +228,10 @@ export function getActivityList({
 
   if (filters?.topicKey) {
     searchParams.append('topicKey', filters.topicKey);
+  }
+
+  if (filters?.contextSearch) {
+    searchParams.append('contextSearch', filters.contextSearch);
   }
 
   if (filters?.dateRange) {
