@@ -21,7 +21,6 @@ import {
   ProcessTenant,
   RedisThrottleService,
   ResolveContextFromKeys,
-  ResolveContextFromPayload,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -193,7 +192,6 @@ const USE_CASES = [
   GetPreferences,
   WorkflowRunService,
   ResolveContextFromKeys,
-  ResolveContextFromPayload,
   GetSubscriberSchedule,
 ];
 
