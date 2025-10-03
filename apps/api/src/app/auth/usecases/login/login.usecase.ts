@@ -42,8 +42,10 @@ export class Login {
       throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
     }
 
-    // TODO: Trigger a password reset flow automatically for existing OAuth users instead of throwing an error
-    if (!user.password) throw new BadRequestException('Please sign in using Github.');
+    // For OAuth users without password, provide helpful guidance instead of generic error
+    if (!user.password) {
+      throw new BadRequestException(this.getOAuthUserErrorMessage());
+    }
 
     const isMatching = await bcrypt.compare(command.password, user.password);
     if (!isMatching) {
@@ -156,5 +158,18 @@ export class Login {
     const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
 
     return this.BLOCKED_PERIOD_IN_MINUTES - diff;
+  }
+
+  /**
+   * Provides user-friendly error message for OAuth users attempting email/password login
+   * Future enhancement: Could detect the specific OAuth provider used during account creation
+   * and provide more targeted guidance (e.g., "Continue with GitHub" vs "Continue with Google")
+   */
+  private getOAuthUserErrorMessage(): string {
+    return (
+      'This account was created using OAuth (GitHub/Google). ' +
+      'Please use the "Continue with GitHub" button to sign in, ' +
+      'or contact support if you need to set up a password.'
+    );
   }
 }
