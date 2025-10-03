@@ -1,3 +1,13 @@
+## v3.8.2 (2025-10-03)
+
+### 🩹 Fixes
+
+- **js:** correct archiveAllRead endpoint URL to match server implementation ([4b9fe22d30](https://github.com/novuhq/novu/commit/4b9fe22d30))
+
+### ❤️ Thank You
+
+- Paweł
+
 ## v3.8.1 (2025-08-13)
 
 ### 🚀 Features
