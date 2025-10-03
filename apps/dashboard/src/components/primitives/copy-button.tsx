@@ -21,7 +21,23 @@ export const CopyButton = (props: CopyButtonProps) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      // Fallback to legacy clipboard API for older browsers
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = valueToCopy;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      } catch (fallbackErr) {
+        // Both clipboard methods failed - this is rare but possible
+        // Could integrate with toast notification system here if available
+        console.warn('Copy operation failed. Please copy manually:', valueToCopy);
+      }
     }
   };
 
@@ -75,7 +91,7 @@ export const CopyButton = (props: CopyButtonProps) => {
         </button>
       </TooltipTrigger>
       <TooltipContent className="px-2 py-1 text-xs" sideOffset={4}>
-        {copied ? 'Copied!' : 'Click to copy'}
+        {copied ? 'Copied to clipboard!' : 'Copy to clipboard'}
       </TooltipContent>
     </Tooltip>
   );
