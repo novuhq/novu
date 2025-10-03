@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  ContextKey,
   DaysEnum,
   DigestTypeEnum,
   DigestUnitEnum,
@@ -473,7 +472,7 @@ export class ActivityNotificationResponseDto {
   critical?: boolean;
 
   @ApiPropertyOptional({ description: 'Contexts (keys) in which the notification was sent', type: [String] })
-  contextKeys?: ContextKey[];
+  contextKeys?: string[];
 }
 
 // Activities Response DTO
