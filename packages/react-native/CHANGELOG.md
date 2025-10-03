@@ -1,3 +1,7 @@
+## v3.7.1 (2025-10-03)
+
+This was a version bump only for @novu/react-native to align it with other projects, there were no code changes.
+
 ## v3.7.0 (2025-07-22)
 
 ### 🩹 Fixes
