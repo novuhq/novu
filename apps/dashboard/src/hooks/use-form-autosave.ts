@@ -21,6 +21,7 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
   save: (data: U, options: { onSuccess?: () => void }) => void;
 }) {
   const formRef = useDataRef(propsForm);
+  const saveRef = useDataRef(save);
 
   const onSave = useCallback(
     async (data: T, options?: { forceSubmit?: boolean; onSuccess?: () => void }) => {
@@ -52,9 +53,9 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
       // so other blur/change events might trigger in the meantime
       // we also send the invalid values to api and should keep the errors in the form
       form.reset(values, { keepErrors: true });
-      save(values, { onSuccess: options?.onSuccess });
+      saveRef.current(values, { onSuccess: options?.onSuccess });
     },
-    [formRef, previousData, isReadOnly, save, shouldClientValidate]
+    [formRef, previousData, isReadOnly, saveRef, shouldClientValidate]
   );
 
   const debouncedOnSave = useDebounce(onSave, TEN_SECONDS);
