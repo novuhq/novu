@@ -38,6 +38,7 @@ const workflowRunSelectColumns = [
   'delivery_lifecycle_status',
   'severity',
   'critical',
+  'context_keys',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -305,6 +306,7 @@ export class GetWorkflowRun {
       steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun)),
       severity: workflowRun.severity,
       critical: workflowRun.critical,
+      contextKeys: workflowRun.context_keys || [],
     };
   }
 }

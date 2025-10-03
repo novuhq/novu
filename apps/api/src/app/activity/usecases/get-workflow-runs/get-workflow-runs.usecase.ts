@@ -38,6 +38,7 @@ const workflowRunSelectColumns = [
   'delivery_lifecycle_status',
   'severity',
   'critical',
+  'context_keys',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -160,6 +161,17 @@ export class GetWorkflowRuns {
 
       if (command.topicKey) {
         queryBuilder.whereLike('topics', `%${command.topicKey}%`);
+      }
+
+      if (command.contextSearch) {
+        // For ClickHouse array fields, we need to use array functions
+        // Since the QueryBuilder doesn't support hasAny directly, we'll skip context search for now
+        // and implement it properly later with ClickHouse array functions
+        // TODO: Implement proper context search using ClickHouse hasAny function
+        this.logger.warn('Context search not yet implemented for array fields', {
+          contextSearch: command.contextSearch,
+          reason: 'ClickHouse array functions not supported in QueryBuilder',
+        });
       }
 
       const safeWhere = queryBuilder.build();
@@ -400,6 +412,7 @@ export class GetWorkflowRuns {
       })),
       severity: workflowRun.severity,
       critical: workflowRun.critical,
+      contextKeys: workflowRun.context_keys || [],
     };
   }
 }
