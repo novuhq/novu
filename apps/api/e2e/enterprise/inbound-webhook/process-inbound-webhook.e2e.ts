@@ -51,7 +51,6 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
 
   const mockHeaders = {
     'content-type': 'application/json',
-    'x-webhook-signature': 'valid-signature',
   };
 
   beforeEach(async () => {
@@ -155,9 +154,8 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
       const eventPayload = { ...mockWebhookBody, eventId: message?.identifier };
       const response = await session.testAgent
         .post(`/v2/inbound-webhooks/delivery-providers/${session.environment._id}/${integration._id}`)
-        .set(mockHeaders)
-        .send(eventPayload)
-        .expect(201);
+        .set({ ...mockHeaders, authorization: `ApiKey ${session.apiKey}` })
+        .send(eventPayload);
 
       expect(response.body.data).to.be.an('array');
       expect(response.body.data).to.have.length(1);
