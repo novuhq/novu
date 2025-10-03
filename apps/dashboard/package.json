@@ -1,7 +1,7 @@
 {
   "name": "@novu/dashboard",
   "private": true,
-  "version": "3.9.4",
+  "version": "2.3.4",
   "type": "module",
   "scripts": {
     "start": "vite",

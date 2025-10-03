@@ -1,32 +1,6 @@
-## v3.10.1 (2025-09-22)
+## v3.7.1 (2025-10-03)
 
 This was a version bump only for @novu/react-native to align it with other projects, there were no code changes.
-
-## v3.10.0 (2025-09-22)
-
-This was a version bump only for @novu/react-native to align it with other projects, there were no code changes.
-
-## v3.9.3 (2025-09-03)
-
-This was a version bump only for @novu/react-native to align it with other projects, there were no code changes.
-
-## v3.9.2 (2025-09-03)
-
-This was a version bump only for @novu/react-native to align it with other projects, there were no code changes.
-
-## v3.9.1 (2025-08-27)
-
-This was a version bump only for @novu/react-native to align it with other projects, there were no code changes.
-
-## v3.8.1 (2025-08-13)
-
-### 🩹 Fixes
-
-- **root:** nx release publish issue for syntax error fixes NV-6506 ([#8922](https://github.com/novuhq/novu/pull/8922))
-
-### ❤️ Thank You
-
-- Himanshu Garg @merrcury
 
 ## v3.7.0 (2025-07-22)
 

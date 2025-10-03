@@ -1,97 +1,12 @@
-## v3.10.1 (2025-09-22)
+## v3.7.1 (2025-10-03)
 
 ### 🩹 Fixes
 
-- **js, react:** fix created at date issue ([8af3afee3d](https://github.com/novuhq/novu/commit/8af3afee3d))
+- **js:** correct archiveAllRead endpoint URL to match server implementation ([f2c1206930](https://github.com/novuhq/novu/commit/f2c1206930))
 
 ### ❤️ Thank You
 
-- Dima Grossman @scopsy
-
-## v3.10.0 (2025-09-22)
-
-### 🚀 Features
-
-- **react, js:** Add preferenceSort support to preferences UI fixes NV-6608 ([#9109](https://github.com/novuhq/novu/pull/9109))
-- **dashboard:** allow updating subscribers schedule fixes NV-6617 ([#9118](https://github.com/novuhq/novu/pull/9118))
-- **react,js:** default schedule and useSchedule hook fixes NV-6616 ([#9110](https://github.com/novuhq/novu/pull/9110))
-- **js:** inbox subscribers schedule fixes NV-6616 ([#9103](https://github.com/novuhq/novu/pull/9103))
-- **js, api-service, react:** add permanent delete option for notifications fixes NV-6613 ([#9095](https://github.com/novuhq/novu/pull/9095))
-- **js:** schedule sub module fixes NV-6615 ([#9080](https://github.com/novuhq/novu/pull/9080))
-
-### 🩹 Fixes
-
-- **api-service,dashboard,worker:** subscriber schedule bug bashing fixes fixes NV-6691 ([#9167](https://github.com/novuhq/novu/pull/9167))
-
-### ❤️ Thank You
-
-- Dima Grossman @scopsy
-- Paweł Tymczuk @LetItRock
-
-## v3.9.3 (2025-09-03)
-
-### 🩹 Fixes
-
-- **js,react:** Fix ui shift for dropdown popover position fixes NV-6493 ([#9057](https://github.com/novuhq/novu/pull/9057))
-
-### ❤️ Thank You
-
-- Dima Grossman @scopsy
-
-## v3.9.2 (2025-09-03)
-
-### 🚀 Features
-
-- **js,react,api-service:** inbox allow filtering preferences by workflow criticality fixes NV-6577 ([#9011](https://github.com/novuhq/novu/pull/9011))
-
-### 🩹 Fixes
-
-- **js:** correct archiveAllRead endpoint URL to match server implementation fixes NV-6612 ([#9052](https://github.com/novuhq/novu/pull/9052))
-- **js,react:** re-export types for the react-native package; fix partysocket event target polyfill fixes NV-6448 ([#9036](https://github.com/novuhq/novu/pull/9036))
-- **react-native:** expo unable to resolve novu internal module fixes NV-6485 ([#8965](https://github.com/novuhq/novu/pull/8965))
-
-### ❤️ Thank You
-
-- Dima Grossman
-- Paweł Tymczuk @LetItRock
-
-## v3.9.1 (2025-08-27)
-
-### 🚀 Features
-
-- **js,react,nextjs:** inbox appearance keys as a callback with the context prop fixes NV-6447 ([#8983](https://github.com/novuhq/novu/pull/8983))
-- **js,react:** inbox render props for avatar, default and custom actions fixes NV-6535 ([#8977](https://github.com/novuhq/novu/pull/8977))
-- **dashboard:** edited the product onboarding fixes MRK-1000 ([#8945](https://github.com/novuhq/novu/pull/8945))
-- **js:** auto-load new notifications on first inbox open fixes NV-5976 ([#8935](https://github.com/novuhq/novu/pull/8935))
-- **js,react,api-service,ws:** support severity in inbox components and hooks fixes NV-6470 ([#8913](https://github.com/novuhq/novu/pull/8913))
-- **js:** severity support in js sdk fixes NV-6469 ([#8884](https://github.com/novuhq/novu/pull/8884))
-
-### 🩹 Fixes
-
-- **js:** unread dot indicator layout shift fixes NV-6461 ([#8943](https://github.com/novuhq/novu/pull/8943))
-- **js:** new notification count in banner with multiple tabs fixes NV-6514 ([#8934](https://github.com/novuhq/novu/pull/8934))
-
-### ❤️ Thank You
-
-- Adam Chmara @ChmaraX
-- Emil Pearce @iampearceman
-- Paweł Tymczuk @LetItRock
-
-## v3.8.1 (2025-08-13)
-
-### 🚀 Features
-
-- **api,js:** add tx id to inbox notification fixes NV-6457 ([#8907](https://github.com/novuhq/novu/pull/8907))
-- **js,react:** useNotifications hook realtime updates fixes NV-5502 ([#8892](https://github.com/novuhq/novu/pull/8892))
-
-### 🩹 Fixes
-
-- **root:** nx release publish issue for syntax error fixes NV-6506 ([#8922](https://github.com/novuhq/novu/pull/8922))
-
-### ❤️ Thank You
-
-- Adam Chmara @ChmaraX
-- Himanshu Garg @merrcury
+- Paweł
 
 ## v3.7.0 (2025-07-22)
 
