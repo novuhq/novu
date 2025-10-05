@@ -97,7 +97,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
   };
 
   return (
-    <FormItem className="bg-bg-weak flex flex-col gap-2 rounded-lg border border-neutral-200 p-2">
+    <FormItem className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-2">
       <div className="flex items-center gap-2">
         <RiInputField className="text-feature size-4" />
         <span className="text-xs">Data object</span>
@@ -116,7 +116,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
           }
         />
       </div>
-      <Card className="rounded-md">
+      <Card className="rounded-md shadow-none">
         <CardContent className="flex flex-col gap-1 p-2">
           <div className="flex flex-col gap-1">
             {currentPairs.map((pair, index) => {

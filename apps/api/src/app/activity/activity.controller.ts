@@ -1,7 +1,7 @@
 import { ClassSerializerInterceptor, Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import { RequirePermissions, UserSession } from '@novu/application-generic';
-import { PermissionsEnum, UserSessionData } from '@novu/shared';
+import { FeatureFlagsService, RequirePermissions, UserSession } from '@novu/application-generic';
+import { FeatureFlagsKeysEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { GetChartsRequestDto } from './dtos/get-charts.request.dto';
@@ -33,7 +33,8 @@ export class ActivityController {
     private getWorkflowRunsUsecase: GetWorkflowRuns,
     private getWorkflowRunUsecase: GetWorkflowRun,
     private getRequestUsecase: GetRequest,
-    private getChartsUsecase: GetCharts
+    private getChartsUsecase: GetCharts,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @Get('requests')
@@ -85,12 +86,24 @@ export class ActivityController {
     @UserSession() user: UserSessionData,
     @Query() query: GetWorkflowRunsRequestDto
   ): Promise<GetWorkflowRunsResponseDto> {
+    // Check if context search is enabled via feature flag
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
+      defaultValue: false,
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      environment: { _id: user.environmentId },
+    });
+
+    const contextSearchQuery: string | undefined = isContextEnabled ? query.contextSearch : undefined;
+
     return this.getWorkflowRunsUsecase.execute(
       GetWorkflowRunsCommand.create({
         ...query,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
+        contextSearch: contextSearchQuery,
       })
     );
   }

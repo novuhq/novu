@@ -485,7 +485,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       severity: notification.severity || SeverityLevelEnum.NONE,
       critical: notification.critical || false,
-      context_keys: notification.contextKeys || [],
+      context_keys: notification.contextKeys ? JSON.stringify(notification.contextKeys) : null,
     };
   }
 
