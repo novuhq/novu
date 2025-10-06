@@ -10,7 +10,7 @@ export type ActivityFilters = {
   dateRange?: string;
   topicKey?: string;
   severity?: SeverityLevelEnum[];
-  contextKeys?: string[];
+  contextKeys?: string;
 };
 
 export interface ActivityResponse {
@@ -232,9 +232,18 @@ export function getActivityList({
     searchParams.append('topicKey', filters.topicKey);
   }
 
-  if (filters?.contextKeys?.length) {
-    for (const key of filters.contextKeys) {
-      searchParams.append('contextKeys', key);
+  if (filters?.contextKeys) {
+    const contextKeys = filters.contextKeys
+      .split(',')
+      .map((key) => key.trim())
+      .filter(Boolean);
+
+    if (contextKeys.length > 1) {
+      for (const key of contextKeys) {
+        searchParams.append('contextKeys', key);
+      }
+    } else if (contextKeys.length === 1) {
+      searchParams.append('contextKeys', contextKeys[0]);
     }
   }
 
@@ -338,9 +347,18 @@ export async function getWorkflowRunsList({
     }
   }
 
-  if (filters?.contextKeys?.length) {
-    for (const key of filters.contextKeys) {
-      searchParams.append('contextKeys', key);
+  if (filters?.contextKeys) {
+    const contextKeys = filters.contextKeys
+      .split(',')
+      .map((key) => key.trim())
+      .filter(Boolean);
+
+    if (contextKeys.length > 1) {
+      for (const key of contextKeys) {
+        searchParams.append('contextKeys', key);
+      }
+    } else if (contextKeys.length === 1) {
+      searchParams.append('contextKeys', contextKeys[0]);
     }
   }
 

@@ -49,12 +49,13 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
     result.severity = severity as SeverityLevelEnum[];
   }
 
-  const contextKeys = searchParams.get('contextKeys');
-  if (contextKeys) {
-    result.contextKeys = contextKeys
-      .split(',')
-      .map((k) => k.trim())
-      .filter(Boolean);
+  const contextKey = searchParams.get('contextKeys');
+  const contextKeys = searchParams.getAll('contextKeys');
+
+  if (contextKeys.length > 1) {
+    result.contextKeys = contextKeys.join(',');
+  } else if (contextKey) {
+    result.contextKeys = contextKey;
   }
 
   return result;

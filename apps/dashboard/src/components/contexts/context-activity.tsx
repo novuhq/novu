@@ -26,20 +26,9 @@ export const ContextActivity = ({ type, id }: { type: ContextType; id: ContextId
   const [filters, setFilters] = useState<ActivityFiltersData>(() => getInitialFilters(contextKey));
   const [activityItemId, setActivityItemId] = useState<string>('');
 
-  const apiFilters = useMemo(() => {
-    const contextKeysList = filters.contextKeys
-      ?.split(',')
-      .map((k) => k.trim())
-      .filter(Boolean);
-    return {
-      ...filters,
-      contextKeys: contextKeysList?.length ? contextKeysList : undefined,
-    };
-  }, [filters]);
-
   const { activities, isLoading } = useFetchActivities(
     {
-      filters: apiFilters,
+      filters,
       page: 0,
       limit: 50,
     },
