@@ -20,7 +20,6 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import {
-  ContextKey,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   FeatureFlagsKeysEnum,

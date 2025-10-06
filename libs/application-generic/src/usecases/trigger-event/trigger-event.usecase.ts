@@ -10,7 +10,6 @@ import {
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
-  ContextKey,
   FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITenantDefine,
@@ -375,7 +374,7 @@ export class TriggerEvent {
     return subscriber;
   }
 
-  private async resolveContextKeys(command: TriggerEventCommand): Promise<ContextKey[] | undefined> {
+  private async resolveContextKeys(command: TriggerEventCommand): Promise<string[] | undefined> {
     if (!command.context) {
       return undefined;
     }
