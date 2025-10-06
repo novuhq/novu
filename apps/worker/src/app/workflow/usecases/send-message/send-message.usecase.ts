@@ -19,10 +19,9 @@ import {
   NormalizeVariables,
   NormalizeVariablesCommand,
   PlatformException,
-  ResolveContextFromKeys,
-  ResolveContextFromKeysCommand,
 } from '@novu/application-generic';
 import {
+  ContextRepository,
   JobEntity,
   NotificationTemplateRepository,
   SubscriberRepository,
@@ -78,7 +77,7 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
-    private resolveContextFromKeys: ResolveContextFromKeys,
+    private contextRepository: ContextRepository,
     private executeBridgeJob: ExecuteBridgeJob,
     private featureFlagsService: FeatureFlagsService
   ) {}
@@ -455,14 +454,11 @@ export class SendMessage {
   private async resolveContext(command: SendMessageCommand): Promise<ContextResolved> {
     const { contextKeys, environmentId, organizationId } = command;
 
-    const contexts = await this.resolveContextFromKeys.execute(
-      ResolveContextFromKeysCommand.create({
-        environmentId,
-        organizationId,
-        userId: command.userId,
-        contextKeys: contextKeys || [],
-      })
-    );
+    if (!contextKeys || contextKeys.length === 0) {
+      return {} as ContextResolved;
+    }
+
+    const contexts = await this.contextRepository.findByKeys(environmentId, organizationId, contextKeys);
 
     return contexts.reduce((acc, context) => {
       acc[context.type] = {
