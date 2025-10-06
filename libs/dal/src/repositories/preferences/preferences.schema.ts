@@ -73,26 +73,35 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
 preferencesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 // Subscriber Global Preferences
-preferencesSchema.index({
-  _environmentId: 1,
-  _subscriberId: 1,
-  type: 1,
-});
+preferencesSchema.index(
+  {
+    _environmentId: 1,
+    _subscriberId: 1,
+    type: 1,
+  },
+  { unique: true }
+);
 
 // Subscriber Workflow Preferences
-preferencesSchema.index({
-  _environmentId: 1,
-  _subscriberId: 1,
-  _templateId: 1,
-  type: 1,
-});
+preferencesSchema.index(
+  {
+    _environmentId: 1,
+    _subscriberId: 1,
+    _templateId: 1,
+    type: 1,
+  },
+  { unique: true }
+);
 
 // Workflow Preferences (both Resource and User)
-preferencesSchema.index({
-  _environmentId: 1,
-  _templateId: 1,
-  type: 1,
-});
+preferencesSchema.index(
+  {
+    _environmentId: 1,
+    _templateId: 1,
+    type: 1,
+  },
+  { unique: true }
+);
 
 export const Preferences =
   (mongoose.models.Preferences as mongoose.Model<PreferencesDBModel>) ||
