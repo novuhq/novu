@@ -30,7 +30,7 @@ const schemaDefinition = {
   user_id: { type: CHNullable(CHString()) },
   subscriber_id: { type: CHString() },
   external_subscriber_id: { type: CHNullable(CHString()) },
-  context_keys: { type: CHNullable(CHString()) }, // JSON array of context keys (type:identifier)
+  context_keys: { type: CHString('[]') }, // JSON array of context keys (type:identifier)
 
   // Execution metadata
   status: { type: CHLowCardinality(CHString()) }, // processing, error, completed

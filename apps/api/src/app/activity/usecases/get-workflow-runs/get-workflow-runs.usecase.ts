@@ -405,7 +405,7 @@ export class GetWorkflowRuns {
       })),
       severity: workflowRun.severity,
       critical: workflowRun.critical,
-      contextKeys: workflowRun.context_keys ? JSON.parse(workflowRun.context_keys) : [],
+      contextKeys: JSON.parse(workflowRun.context_keys),
     };
   }
 }
