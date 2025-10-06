@@ -1,6 +1,7 @@
 import { PermissionsEnum } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
-import { RiDeleteBin2Line, RiMore2Fill } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { ContextResponseDto } from '@/api/contexts';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Badge } from '@/components/primitives/badge';
@@ -16,9 +17,11 @@ import {
 import { Skeleton } from '@/components/primitives/skeleton';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteContext } from '@/hooks/use-delete-context';
 import { formatDateSimple } from '@/utils/format-date';
 import { Protect } from '@/utils/protect';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useContextsNavigate } from './hooks/use-contexts-navigate';
 
@@ -40,6 +43,7 @@ const ContextTableCell = (props: ContextTableCellProps) => {
 
 export const ContextRow = ({ context }: ContextRowProps) => {
   const { navigateToEditContextPage } = useContextsNavigate();
+  const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { deleteContext, isPending: isDeleting } = useDeleteContext();
 
@@ -102,6 +106,22 @@ export const ContextRow = ({ context }: ContextRowProps) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-44" onClick={stopPropagation}>
               <DropdownMenuGroup>
+                <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link
+                      to={
+                        buildRoute(ROUTES.ACTIVITY_FEED, {
+                          environmentSlug: currentEnvironment?.slug ?? '',
+                        }) +
+                        '?' +
+                        new URLSearchParams({ contextKeys: `${context.type}:${context.id}` }).toString()
+                      }
+                    >
+                      <RiPulseFill />
+                      View activity
+                    </Link>
+                  </DropdownMenuItem>
+                </Protect>
                 <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
                   <DropdownMenuItem
                     className="text-destructive cursor-pointer"
