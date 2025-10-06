@@ -15,7 +15,10 @@ interface WorkflowStatusUpdateParams {
 }
 
 type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id'>;
-type MessageResult = Pick<MessageEntity, 'seen' | 'read' | 'snoozedUntil' | 'archived' | 'channel' | 'deliveredAt'>;
+type MessageResult = Pick<
+  MessageEntity,
+  'seen' | 'read' | 'snoozedUntil' | 'archived' | 'channel' | 'deliveredAt' | '_jobId'
+>;
 
 type ProjectionFromPick<T> = {
   [K in keyof T]: 1;
@@ -35,6 +38,7 @@ const messageResultProjection: ProjectionFromPick<MessageResult> = {
   archived: 1,
   channel: 1,
   deliveredAt: 1,
+  _jobId: 1,
 };
 
 @Injectable()
@@ -73,6 +77,12 @@ export class WorkflowRunService {
         });
         deliveryLifecycleStatus = result.deliveryLifecycleStatus;
         deliveryLifecycleDetail = result.deliveryLifecycleDetail;
+      }
+
+      if (deliveryLifecycleStatus === DeliveryLifecycleStatus.PENDING) {
+        // Optimization: Skip workflow run updates when delivery lifecycle is pending
+        // since the workflow run should already be in the expected pending state
+        return;
       }
 
       await this.workflowRunRepository.updateWorkflowRunState(
@@ -186,12 +196,13 @@ export class WorkflowRunService {
    * Priority Order (highest → lowest):
    * 1. INTERACTED - If any message has seen/read/snoozedUntil/archived as true
    * 2. DELIVERED - If any message has been delivered (has deliveredAt) and no interaction found
-   * 3. SENT - If any step has COMPLETED status, workflow delivery is considered SENT
-   * 4. SKIPPED - If any step has SKIPPED status OR statusReason starting with "skipped"
+   * 3. SENT - If any step has COMPLETED status and has a message created for it
+   * 4. SKIPPED - If all steps finish processing AND at least one step has SKIPPED status
    *    - Detail Priority: SUBSCRIBER_PREFERENCE > USER_STEP_CONDITION > other details
    * 5. CANCELED - If any step has CANCELED status (only if no SKIPPED found)
    * 6. ERRORED - If any step has FAILED status
    * 7. MERGED - If all steps are MERGED
+   * 8. PENDING - If any step has PENDING, QUEUED, RUNNING, or DELAYED status
    */
   private buildDeliveryLifecycle(
     jobs: JobResult[],
@@ -220,24 +231,32 @@ export class WorkflowRunService {
     }
 
     // Priority 2: DELIVERED - If any message has been delivered (has deliveredAt) and no interaction found
-    const hasInAppMessage = messages.some((message) => !!message.deliveredAt);
-    if (hasInAppMessage) {
+    if (messages.some((message) => !!message.deliveredAt)) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.DELIVERED };
     }
 
-    // Priority 3: SENT - If any step is COMPLETED, workflow delivery lifecycle is SENT
-    const hasCompletedSteps = channelJobs.some((job) => job.status === JobStatusEnum.COMPLETED);
-    if (hasCompletedSteps) {
+    // Priority 3: SENT - If any step is COMPLETED and has a message created for it
+    const messageSent = channelJobs.some((job) => {
+      if (job.status !== JobStatusEnum.COMPLETED) return false;
+      return messages.some((message) => message._jobId === job._id);
+    });
+    if (messageSent) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.SENT };
     }
 
-    // Priority 4: SKIPPED - Any job with SKIPPED status OR delivery lifecycle status is "skipped"
+    // Priority 4: SKIPPED - Only when all steps finish processing AND at least one job is SKIPPED
+    const finishedStatuses = [
+      JobStatusEnum.COMPLETED,
+      JobStatusEnum.FAILED,
+      JobStatusEnum.CANCELED,
+      JobStatusEnum.MERGED,
+      JobStatusEnum.SKIPPED,
+    ];
+    const allStepsFinished = channelJobs.every((job) => finishedStatuses.includes(job.status));
     const skippedJobs = channelJobs.filter(
-      (job) =>
-        job.status === JobStatusEnum.SKIPPED ||
-        (job.deliveryLifecycleState?.status && job.deliveryLifecycleState.status === 'skipped')
+      (job) => job.deliveryLifecycleState?.status && job.deliveryLifecycleState.status === 'skipped'
     );
-    if (skippedJobs.length > 0) {
+    if (allStepsFinished && skippedJobs.length > 0) {
       // Priority order for delivery lifecycle details (highest → lowest):
       // 1. SUBSCRIBER_PREFERENCE - User preference settings
       // 2. USER_STEP_CONDITION - Step condition evaluation
@@ -274,7 +293,9 @@ export class WorkflowRunService {
     }
 
     // Priority 5: CANCELED - Any job with CANCELED status (only if no SKIPPED found)
-    const hasUserCanceled = channelJobs.some((job) => job.status === JobStatusEnum.CANCELED);
+    const hasUserCanceled = channelJobs.some(
+      (job) => isJobCancelled(job) || job.deliveryLifecycleState?.status === DeliveryLifecycleStatus.CANCELED
+    );
     if (hasUserCanceled) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.CANCELED };
     }
@@ -291,7 +312,18 @@ export class WorkflowRunService {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.MERGED };
     }
 
-    // Default fallback - if no clear status can be determined
+    // Priority 8: PENDING - If any step is pending (pending, queued, running, delayed)
+    const hasPendingSteps = channelJobs.some(
+      (job) =>
+        job.status === JobStatusEnum.PENDING ||
+        job.status === JobStatusEnum.QUEUED ||
+        job.status === JobStatusEnum.RUNNING ||
+        job.status === JobStatusEnum.DELAYED
+    );
+    if (hasPendingSteps) {
+      return { deliveryLifecycleStatus: DeliveryLifecycleStatus.PENDING };
+    }
+
     this.logger.warn(
       {
         jobIds: channelJobs.map((job) => job._id),
@@ -300,9 +332,17 @@ export class WorkflowRunService {
           deliveryLifecycleState: job.deliveryLifecycleState,
         })),
       },
-      'WorkflowRunDeliveryLifecycle: No matching delivery lifecycle found for jobs, falling back to ERRORED'
+      'No matching delivery lifecycle found for jobs, falling back to ERRORED'
     );
 
-    return { deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED };
+    return {
+      deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
+      deliveryLifecycleDetail: DeliveryLifecycleDetail.UNKNOWN_ERROR,
+    };
   }
+}
+
+// backward compatibility - will be removed once the database is updated with the deliveryLifecycleState field
+function isJobCancelled(job: JobResult): boolean {
+  return job.status === JobStatusEnum.CANCELED && !job.deliveryLifecycleState?.status;
 }

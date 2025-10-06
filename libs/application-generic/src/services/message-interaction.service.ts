@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DeliveryLifecycleStatus } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatus } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { Trace, TraceLogRepository } from './analytic-logs/trace-log';
 import { WorkflowRunService } from './workflow-run.service';
@@ -26,7 +26,8 @@ export class MessageInteractionService {
 
   async trace(
     interactionsTraces: MessageInteractionTrace[],
-    deliveryLifecycleStatus: DeliveryLifecycleStatus | null
+    deliveryLifecycleStatus: DeliveryLifecycleStatus | null,
+    deliveryLifecycleDetail?: DeliveryLifecycleDetail
   ): Promise<MessageInteractionResult> {
     try {
       if (interactionsTraces.length > 0) {
@@ -61,7 +62,11 @@ export class MessageInteractionService {
           `Successfully logged ${interactionsTraces.length} message interaction traces`
         );
 
-        await this.updateDeliveryLifecycle(interactionsTraces, deliveryLifecycleStatus);
+        await this.updateDeliveryLifecycle({
+          traces: interactionsTraces,
+          deliveryLifecycleStatus,
+          deliveryLifecycleDetail,
+        });
       }
 
       return {
@@ -87,10 +92,15 @@ export class MessageInteractionService {
     }
   }
 
-  private async updateDeliveryLifecycle(
-    traces: MessageInteractionTrace[],
-    deliveryLifecycleStatus: DeliveryLifecycleStatus
-  ) {
+  private async updateDeliveryLifecycle({
+    traces,
+    deliveryLifecycleStatus,
+    deliveryLifecycleDetail,
+  }: {
+    traces: MessageInteractionTrace[];
+    deliveryLifecycleStatus: DeliveryLifecycleStatus;
+    deliveryLifecycleDetail?: DeliveryLifecycleDetail;
+  }) {
     const tracesByNotificationId = traces.reduce<Record<string, MessageInteractionTrace[]>>((acc, trace) => {
       if (!acc[trace._notificationId]) acc[trace._notificationId] = [];
       acc[trace._notificationId].push(trace);
@@ -107,6 +117,7 @@ export class MessageInteractionService {
         organizationId: trace.organization_id,
         subscriberId: trace.subscriber_id,
         deliveryLifecycleStatus,
+        ...(deliveryLifecycleDetail && { deliveryLifecycleDetail }),
       });
     }
   }
