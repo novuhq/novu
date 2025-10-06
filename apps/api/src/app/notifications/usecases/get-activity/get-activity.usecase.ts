@@ -339,7 +339,7 @@ export class GetActivity {
         jobs: [],
         to: mostRecentWorkflowRun.subscriber_to ? JSON.parse(mostRecentWorkflowRun.subscriber_to) : {},
         payload: mostRecentWorkflowRun.payload ? JSON.parse(mostRecentWorkflowRun.payload) : {},
-        contextKeys: mostRecentWorkflowRun.context_keys ? JSON.parse(mostRecentWorkflowRun.context_keys) : [],
+        contextKeys: mostRecentWorkflowRun.context_keys,
         createdAt: new Date(mostRecentWorkflowRun.created_at).toISOString(),
         updatedAt: new Date(mostRecentWorkflowRun.updated_at).toISOString(),
         channels: mostRecentWorkflowRun.channels ? JSON.parse(mostRecentWorkflowRun.channels) : [],

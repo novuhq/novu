@@ -104,5 +104,5 @@ export const defaultActivityFilters: ActivityFiltersData = {
   subscriberId: '',
   topicKey: '',
   severity: [],
-  contextSearch: '',
+  contextKeys: '',
 } as const;

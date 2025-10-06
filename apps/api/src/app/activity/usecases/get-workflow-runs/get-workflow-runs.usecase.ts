@@ -163,8 +163,9 @@ export class GetWorkflowRuns {
         queryBuilder.whereLike('topics', `%${command.topicKey}%`);
       }
 
-      if (command.contextSearch) {
-        queryBuilder.whereLike('context_keys', `%${command.contextSearch}%`);
+      if (command.contextKeys?.length) {
+        // This checks if context_keys array contains any of the specified keys
+        queryBuilder.whereHasAny('context_keys', command.contextKeys);
       }
 
       const safeWhere = queryBuilder.build();
@@ -405,7 +406,7 @@ export class GetWorkflowRuns {
       })),
       severity: workflowRun.severity,
       critical: workflowRun.critical,
-      contextKeys: workflowRun.context_keys ? JSON.parse(workflowRun.context_keys) : [],
+      contextKeys: workflowRun.context_keys,
     };
   }
 }

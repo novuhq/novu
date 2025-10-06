@@ -374,6 +374,7 @@ export class TriggerEventRequestDto {
   //     ],
   //   },
   // })
+  // TODO: IS_CONTEXT_ENABLED
   @ApiHideProperty()
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })
