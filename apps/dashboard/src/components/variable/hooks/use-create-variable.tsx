@@ -1,7 +1,5 @@
 import merge from 'lodash.merge';
 import { useCallback, useContext, useState } from 'react';
-import { RiListView } from 'react-icons/ri';
-import { Button } from '@/components/primitives/button';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
@@ -53,7 +51,7 @@ function parseVariablePath(variablePath: string): VariableInfo | null {
 /**
  * Create success toast for payload variable creation
  */
-function createPayloadVariableSuccessToast(onManageSchemaClick: () => void) {
+function createPayloadVariableSuccessToast() {
   return showToast({
     children: () => (
       <div className="flex min-w-[350px] items-center justify-between gap-1.5">
@@ -61,16 +59,6 @@ function createPayloadVariableSuccessToast(onManageSchemaClick: () => void) {
           <ToastIcon variant="success" />
           <span className="min-w-[100px] text-sm">Payload variable added to schema</span>
         </div>
-        <Button
-          variant="secondary"
-          mode="outline"
-          size="2xs"
-          leadingIcon={RiListView}
-          onClick={onManageSchemaClick}
-          className="shrink-0"
-        >
-          Manage schema
-        </Button>
       </div>
     ),
     options: {
@@ -126,7 +114,7 @@ export const useCreateVariable = () => {
       addSchemaProperty({ keyName: variableInfo.key }, 'string' as JSONSchema7TypeName);
       await handleSaveSchemaChanges();
 
-      createPayloadVariableSuccessToast(() => setIsPayloadSchemaDrawerOpen(true));
+      createPayloadVariableSuccessToast();
     },
     [isPayloadSchemaEnabled, addSchemaProperty, handleSaveSchemaChanges]
   );
