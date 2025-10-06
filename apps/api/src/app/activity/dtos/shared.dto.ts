@@ -75,6 +75,9 @@ export class GetWorkflowRunResponseBaseDto {
   @ApiProperty({ description: 'Critical flag' })
   @IsBoolean()
   critical: boolean;
+
+  @ApiPropertyOptional({ description: 'Contexts (keys) in which the workflow run was executed', type: [String] })
+  contextKeys?: string[];
 }
 
 export enum ReportTypeEnum {
