@@ -10,5 +10,13 @@ export const ConfigureStep = () => {
     return null;
   }
 
-  return <ConfigureStepForm workflow={workflow} step={step} environment={currentEnvironment} update={update} />;
+  return (
+    <ConfigureStepForm
+      key={`${workflow.workflowId}-${step.stepId}`}
+      workflow={workflow}
+      step={step}
+      environment={currentEnvironment}
+      update={update}
+    />
+  );
 };
