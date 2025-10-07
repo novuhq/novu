@@ -1,65 +1,28 @@
 import { ContextPayload } from '@novu/shared';
-import { useCallback, useEffect, useRef } from 'react';
-import { ParsedData, PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
+import { useEffect } from 'react';
+import { PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
 import {
   cleanupExpiredPreviewData,
   clearContextData,
   clearPayloadData,
-  clearPreviewContextData,
   clearSubscriberData,
   loadContextData,
   loadPayloadData,
-  loadPreviewContextData,
   loadSubscriberData,
-  mergePreviewContextData,
   saveContextData,
   savePayloadData,
-  savePreviewContextData,
   saveSubscriberData,
 } from '../utils/preview-context-storage.utils';
 
 type UsePersistedPreviewContextProps = {
   workflowId: string;
-  stepId: string;
   environmentId: string;
-  ttlDays?: number;
 };
 
-export function usePersistedPreviewContext({ workflowId, stepId, environmentId }: UsePersistedPreviewContextProps) {
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-
+export function usePersistedPreviewContext({ workflowId, environmentId }: UsePersistedPreviewContextProps) {
   useEffect(() => {
     cleanupExpiredPreviewData();
   }, []);
-
-  const loadPersistedData = (): ParsedData | null => {
-    if (!workflowId || !stepId || !environmentId) return null;
-
-    return loadPreviewContextData(workflowId, stepId, environmentId);
-  };
-
-  const savePersistedData = useCallback(
-    (data: ParsedData) => {
-      if (!workflowId || !stepId || !environmentId) return;
-
-      // Clear existing timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      // Debounce save operation
-      saveTimeoutRef.current = setTimeout(() => {
-        savePreviewContextData(workflowId, stepId, environmentId, data);
-      }, 500);
-    },
-    [workflowId, stepId, environmentId]
-  );
-
-  const clearPersistedData = () => {
-    if (!workflowId || !stepId || !environmentId) return;
-
-    clearPreviewContextData(workflowId, stepId, environmentId);
-  };
 
   const loadPersistedPayload = (): PayloadData | null => {
     if (!workflowId || !environmentId) return null;
@@ -115,23 +78,7 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     clearContextData(workflowId, environmentId);
   };
 
-  const mergeWithDefaults = (persistedData: ParsedData, serverDefaults: ParsedData): ParsedData => {
-    return mergePreviewContextData(persistedData, serverDefaults);
-  };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return {
-    loadPersistedData,
-    savePersistedData,
-    clearPersistedData,
     loadPersistedPayload,
     savePersistedPayload,
     clearPersistedPayload,
@@ -141,6 +88,5 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     loadPersistedContext,
     savePersistedContext,
     clearPersistedContext,
-    mergeWithDefaults,
   };
 }
