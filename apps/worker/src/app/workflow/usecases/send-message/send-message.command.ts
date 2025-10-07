@@ -1,6 +1,6 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import type { JobEntity, NotificationStepEntity } from '@novu/dal';
-import type { ContextKey, SeverityLevelEnum, TriggerOverrides, WorkflowPreferences } from '@novu/shared';
+import type { SeverityLevelEnum, TriggerOverrides, WorkflowPreferences } from '@novu/shared';
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
@@ -52,5 +52,5 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   statelessPreferences?: WorkflowPreferences;
 
   @IsOptional()
-  contextKeys?: ContextKey[];
+  contextKeys?: string[];
 }

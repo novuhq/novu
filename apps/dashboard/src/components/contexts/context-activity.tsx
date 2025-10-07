@@ -15,7 +15,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 const getInitialFilters = (contextKey: string, dateRange?: string): ActivityFiltersData => ({
   ...defaultActivityFilters,
   dateRange: dateRange || '24h',
-  contextSearch: contextKey,
+  contextKeys: contextKey,
 });
 
 export const ContextActivity = ({ type, id }: { type: ContextType; id: ContextId }) => {
@@ -53,9 +53,7 @@ export const ContextActivity = ({ type, id }: { type: ContextType; id: ContextId
   }, [filters]);
 
   const searchParams = useMemo(() => {
-    const params = new URLSearchParams({
-      contextSearch: contextKey,
-    });
+    const params = new URLSearchParams();
 
     if (filters.workflows.length > 0) {
       params.set('workflows', filters.workflows.join(','));
@@ -81,8 +79,12 @@ export const ContextActivity = ({ type, id }: { type: ContextType; id: ContextId
       params.set('severity', filters.severity.join(','));
     }
 
+    if (filters.contextKeys) {
+      params.set('contextKeys', filters.contextKeys);
+    }
+
     return params;
-  }, [contextKey, filters]);
+  }, [filters]);
 
   const handleActivitySelect = (activityId: string) => {
     setActivityItemId(activityId);
@@ -96,7 +98,7 @@ export const ContextActivity = ({ type, id }: { type: ContextType; id: ContextId
           showReset={hasChangesInFilters}
           onFiltersChange={setFilters}
           onReset={handleClearFilters}
-          hide={['dateRange', 'contextSearch']}
+          hide={['dateRange', 'contextKeys']}
           className="min-h-max overflow-x-auto py-2 pl-2"
         />
         <SubscriberActivityList

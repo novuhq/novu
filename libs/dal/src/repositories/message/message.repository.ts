@@ -960,6 +960,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     query: Partial<Omit<MessageEntity, 'transactionId'>> & {
       _environmentId: string;
       transactionId?: string[];
+      contextKeys?: string[];
     },
     select = '',
     options?: {
@@ -971,6 +972,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     const filterQuery: FilterQuery<MessageEntity> = { ...query };
     if (query.transactionId) {
       filterQuery.transactionId = { $in: query.transactionId };
+    }
+
+    if (query.contextKeys && query.contextKeys.length > 0) {
+      filterQuery.contextKeys = { $in: query.contextKeys };
     }
     const data = await this.MongooseModel.find(filterQuery, select, {
       sort: options?.sort,
