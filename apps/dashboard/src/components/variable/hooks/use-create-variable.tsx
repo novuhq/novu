@@ -100,7 +100,6 @@ export const useCreateVariable = () => {
 
   const { savePersistedSubscriber, savePersistedContext } = usePersistedPreviewContext({
     workflowId: workflow?.workflowId || '',
-    stepId: step?.stepId || '',
     environmentId: currentEnvironment?._id || '',
   });
 
