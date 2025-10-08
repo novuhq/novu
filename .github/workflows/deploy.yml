@@ -31,7 +31,8 @@ on:
           - staging-apse1
           - production-us
           - production-eu
-          - production-both
+          - production-apse1
+          - production-us-and-eu
 
       deploy_api:
         description: "Deploy API"
@@ -97,7 +98,10 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" == "production-eu" ]; then
             envs+=("\"prod-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-both" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "production-apse1" ]; then
+            envs+=("\"prod-apse1\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-us-and-eu" ]; then
             envs+=("\"prod-us\"")
             envs+=("\"prod-eu\"")
           fi
@@ -403,7 +407,7 @@ jobs:
       - name: Send webhook notification for US production
         if: |
           github.event.inputs.environment == 'production-us' || 
-          github.event.inputs.environment == 'production-both'
+          github.event.inputs.environment == 'production-us-and-eu'
         run: |
           curl -X POST https://webhooks.bug0.com/integrations/test/run \
             -H "Content-Type: application/json" \
@@ -413,7 +417,7 @@ jobs:
       - name: Send webhook notification for EU production
         if: |
           github.event.inputs.environment == 'production-eu' || 
-          github.event.inputs.environment == 'production-both'
+          github.event.inputs.environment == 'production-us-and-eu'
         run: |
           curl -X POST https://webhooks.bug0.com/integrations/test/run \
             -H "Content-Type: application/json" \
