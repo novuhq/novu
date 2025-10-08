@@ -396,6 +396,10 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     setContextData(null);
   }, [workflow?.workflowId, currentEnvironment?._id]);
 
+  const handleEditSubscriber = useCallback(() => {
+    setIsSubscriberDrawerOpen(true);
+  }, []);
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent ref={forwardedRef} className="w-[500px]">
@@ -424,6 +428,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
             onClearPersistedContext={
               workflow?.workflowId && currentEnvironment?._id ? handleClearPersistedContext : undefined
             }
+            onEditSubscriber={handleEditSubscriber}
           />
 
           <div className="border-t border-neutral-200 bg-white">

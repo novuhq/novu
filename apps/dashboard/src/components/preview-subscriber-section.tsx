@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiInformation2Line, RiRefreshLine } from 'react-icons/ri';
+import { RiEdit2Line, RiInformation2Line, RiRefreshLine } from 'react-icons/ri';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
@@ -15,6 +15,7 @@ export function PreviewSubscriberSection({
   onUpdate,
   onSubscriberSelect,
   onClearPersisted,
+  onEditSubscriber,
 }: SubscriberSectionProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -37,7 +38,26 @@ export function PreviewSubscriberSection({
               </Tooltip>
             </div>
           </div>
-          {onClearPersisted && (
+          {onEditSubscriber ? (
+            <div className="mr-2">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+
+                  onEditSubscriber();
+                }}
+                type="button"
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="text-foreground-600 gap-1"
+              >
+                <RiEdit2Line className="h-3 w-3" />
+                Edit subscriber
+              </Button>
+            </div>
+          ) : onClearPersisted ? (
             <div className="mr-2">
               <Button
                 onClick={(e) => {
@@ -56,7 +76,7 @@ export function PreviewSubscriberSection({
                 Reset defaults
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       </AccordionTrigger>
       <AccordionContent className="flex flex-col gap-2">
@@ -76,13 +96,16 @@ export function PreviewSubscriberSection({
             onChange={(updatedData) => onUpdate('subscriber', updatedData)}
             schema={schema}
             className={ACCORDION_STYLES.jsonViewer}
+            isReadOnly={!!onEditSubscriber}
           />
           {error && <p className="text-destructive text-xs">{error}</p>}
         </div>
-        <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-          <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
-          <span>Changes here only affect the preview and won't be saved to the subscriber.</span>
-        </div>
+        {onEditSubscriber && (
+          <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
+            <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
+            <span>Click "Edit subscriber" above to modify subscriber details.</span>
+          </div>
+        )}
       </AccordionContent>
     </AccordionItem>
   );
