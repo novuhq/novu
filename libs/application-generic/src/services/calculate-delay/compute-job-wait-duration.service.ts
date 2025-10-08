@@ -53,7 +53,7 @@ export class ComputeJobWaitDurationService {
       const { dynamicKey } = stepMetadata as IDelayDynamicMetadata;
       if (!dynamicKey) throw new BadRequestException(`Dynamic delay key not found`);
 
-      const value = getNestedValue(payload, dynamicKey);
+      const value = getNestedValue({ payload }, dynamicKey);
 
       if (!value) {
         throw new BadRequestException(`Dynamic delay key '${dynamicKey}' not found in payload`);
@@ -70,7 +70,6 @@ export class ComputeJobWaitDurationService {
 
         return delay;
       }
-
       if (typeof value === 'object' && value !== null && 'unit' in value && 'amount' in value) {
         const durationObj = value as { unit: string; amount: number };
         const unit = this.castUnitToDigestUnitEnum(durationObj.unit);

@@ -13,7 +13,11 @@ function parseLiquidVariables(value: string | undefined): string {
   if (!value) return '';
   const matches = value.match(/\{\{[^}]+\}\}/g) || [];
 
-  return matches.map((match) => match.replace(/[{}]/g, '').trim()).join(' ');
+  if (matches.length > 0) {
+    return matches.map((match) => match.replace(/[{}]/g, '').trim()).join(' ');
+  }
+
+  return value;
 }
 
 const FORM_CONTROL_NAME = 'controlValues.dynamicKey';

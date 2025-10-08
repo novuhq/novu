@@ -32,7 +32,7 @@ export const isLookBackDigestOutput = (outputs: DigestOutput | DelayOutput): out
 };
 
 export const isDynamicOutput = (outputs: DelayOutput | undefined): boolean => {
-  return (outputs as any)?.dynamicKey != null;
+  return (outputs as { dynamicKey?: string })?.dynamicKey != null;
 };
 
 export const isRegularOutput = (
