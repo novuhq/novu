@@ -1,6 +1,6 @@
 import { EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { ComponentProps, useCallback } from 'react';
-import { RiDeleteBin2Line, RiMore2Fill, RiRouteFill } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiLayout5Line, RiMore2Fill, RiRouteFill } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TranslationGroup } from '@/api/translations';
 import { StackedFlagCircles } from '@/components/flag-circle';
@@ -23,6 +23,7 @@ import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { LocalizationResourceEnum } from '../../types/translations';
 import { TranslationStatus } from './translation-status';
 
 type TranslationTableCellProps = ComponentProps<typeof TableCell>;
@@ -38,19 +39,26 @@ function TranslationTableCell({ className, children, ...props }: TranslationTabl
 
 type ResourceInfoProps = {
   resourceId: string;
+  resourceType: LocalizationResourceEnum;
   resourceName: string;
 };
 
-function ResourceInfo({ resourceId, resourceName }: ResourceInfoProps) {
+function ResourceInfo({ resourceId, resourceType, resourceName }: ResourceInfoProps) {
   return (
     <div className="flex items-center gap-2">
       <Tooltip delayDuration={300}>
         <TooltipTrigger>
-          <RiRouteFill className="text-feature size-4" />
+          {resourceType === LocalizationResourceEnum.WORKFLOW ? (
+            <RiRouteFill className="text-feature size-4" />
+          ) : (
+            <RiLayout5Line className="text-feature size-4" />
+          )}
         </TooltipTrigger>
         <TooltipPortal>
           <TooltipContent>
-            <span className="font-medium">Workflow Translation</span>
+            <span className="font-medium">
+              {resourceType === LocalizationResourceEnum.WORKFLOW ? 'Workflow Translation' : 'Layout Translation'}
+            </span>
           </TooltipContent>
         </TooltipPortal>
       </Tooltip>
@@ -213,7 +221,11 @@ export function TranslationRow({ translation, onTranslationClick, onDeleteClick 
   return (
     <TableRow key={translation.resourceId} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
       <TranslationTableCell className="font-medium">
-        <ResourceInfo resourceId={translation.resourceId} resourceName={translation.resourceName} />
+        <ResourceInfo
+          resourceId={translation.resourceId}
+          resourceType={translation.resourceType}
+          resourceName={translation.resourceName}
+        />
       </TranslationTableCell>
 
       <TranslationTableCell>

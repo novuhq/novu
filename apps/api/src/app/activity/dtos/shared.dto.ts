@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DeliveryLifecycleStatus, SeverityLevelEnum } from '@novu/shared';
-import { IsBoolean, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 
 export enum WorkflowRunStatusDtoEnum {
   PROCESSING = 'processing',
@@ -75,6 +75,12 @@ export class GetWorkflowRunResponseBaseDto {
   @ApiProperty({ description: 'Critical flag' })
   @IsBoolean()
   critical: boolean;
+
+  @ApiPropertyOptional({ description: 'Contexts (keys) in which the workflow run was executed', type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 }
 
 export enum ReportTypeEnum {

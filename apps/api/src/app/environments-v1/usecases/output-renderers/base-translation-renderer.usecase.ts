@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { PinoLogger } from '@novu/application-generic';
-import { NotificationTemplateEntity, OrganizationEntity } from '@novu/dal';
+import { LayoutDto, PinoLogger } from '@novu/application-generic';
+import { LocalizationResourceEnum, NotificationTemplateEntity, OrganizationEntity } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
 import { FullPayloadForRender } from './render-command';
 
@@ -17,18 +17,20 @@ export abstract class BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
-    dbWorkflow,
+    resourceEntity,
     organization,
   }: {
     controls: Record<string, unknown>;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
-    dbWorkflow?: NotificationTemplateEntity;
+    resourceEntity?: NotificationTemplateEntity | LayoutDto;
     organization?: OrganizationEntity;
   }): Promise<Record<string, unknown>> {
     if (process.env.NOVU_ENTERPRISE !== 'true') {
@@ -40,9 +42,10 @@ export abstract class BaseTranslationRendererUsecase {
       variables,
       environmentId,
       organizationId,
-      workflowId,
+      resourceId,
+      resourceType,
       locale,
-      dbWorkflow,
+      resourceEntity,
       organization,
     }) as Promise<Record<string, unknown>>;
   }
@@ -52,7 +55,8 @@ export abstract class BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
     organization,
   }: {
@@ -60,7 +64,8 @@ export abstract class BaseTranslationRendererUsecase {
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
     organization?: OrganizationEntity;
   }): Promise<string> {
@@ -73,7 +78,8 @@ export abstract class BaseTranslationRendererUsecase {
       variables,
       environmentId,
       organizationId,
-      workflowId,
+      resourceId,
+      resourceType,
       locale,
       organization,
     }) as Promise<string>;
@@ -84,23 +90,26 @@ export abstract class BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
-    dbWorkflow,
+    resourceEntity,
     organization,
   }: {
     content: string | Record<string, unknown>;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
-    dbWorkflow?: NotificationTemplateEntity;
+    resourceEntity?: NotificationTemplateEntity | LayoutDto;
     organization?: OrganizationEntity;
   }): Promise<string | Record<string, unknown>> {
-    if (!workflowId) {
-      this.logger.warn('Workflow ID is required for translation module', {
-        workflowId,
+    if (!resourceId) {
+      this.logger.warn('Resource ID is required for translation module', {
+        resourceId,
+        resourceType,
         organizationId,
         environmentId,
         locale,
@@ -116,7 +125,8 @@ export abstract class BaseTranslationRendererUsecase {
       const liquidEngine = createLiquidEngine();
 
       const translatedContent = await translate.execute({
-        workflowIdOrInternalId: workflowId,
+        resourceId,
+        resourceType,
         organizationId,
         environmentId,
         userId: 'system',
@@ -124,7 +134,7 @@ export abstract class BaseTranslationRendererUsecase {
         content: contentString,
         payload: variables,
         liquidEngine,
-        dbWorkflow,
+        resourceEntity,
         organization,
       });
 
@@ -132,7 +142,8 @@ export abstract class BaseTranslationRendererUsecase {
     } catch (error) {
       this.logger.error('Translation processing failed', {
         error: error?.message || error,
-        workflowId,
+        resourceId,
+        resourceType,
         organizationId,
         environmentId,
         locale,
@@ -140,7 +151,7 @@ export abstract class BaseTranslationRendererUsecase {
       });
 
       throw new InternalServerErrorException(
-        `Translation processing failed for workflow ${workflowId}: ${error?.message || String(error)}`
+        `Translation processing failed for resource ${resourceId}: ${error?.message || String(error)}`
       );
     }
   }

@@ -94,7 +94,8 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
           </div>
         )}
 
-        <div className="flex h-full">
+        {/* 109px is the height of the header and footer */}
+        <div className="flex flex-1 h-[calc(100%-109px)]">
           <LocaleList
             locales={translationGroup.locales}
             selectedLocale={selectedLocale}
@@ -109,7 +110,8 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             selectedTranslation={selectedTranslation}
             isLoadingTranslation={isLoadingTranslation}
             translationError={translationError}
-            modifiedContentString={editor.modifiedContentString}
+            content={editor.modifiedContentString ?? editor.originalContent}
+            modifiedContent={editor.modifiedContent}
             jsonError={editor.jsonError}
             onContentChange={editor.handleContentChange}
             outdatedLocales={translationGroup.outdatedLocales}

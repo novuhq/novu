@@ -18,6 +18,7 @@ export type VariableValidationState = {
   hasError: boolean;
   errorMessage: string;
   variableKey: string;
+  variableName: string;
 };
 
 export const useVariableValidation = (
@@ -36,6 +37,7 @@ export const useVariableValidation = (
         hasError: false,
         errorMessage: '',
         variableKey: '',
+        variableName: '',
       };
     }
 
@@ -49,6 +51,7 @@ export const useVariableValidation = (
         hasError: false,
         errorMessage: '',
         variableKey: variableName,
+        variableName: variableName,
       };
     }
 
@@ -72,6 +75,7 @@ export const useVariableValidation = (
       hasError,
       errorMessage,
       variableKey,
+      variableName: variableName,
     };
   }, [variableName, aliasFor, isAllowedVariable, getSchemaPropertyByKey]);
 };

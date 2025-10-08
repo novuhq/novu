@@ -16,6 +16,10 @@ export class UpsertLayoutDataCommand {
   name: string;
 
   @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
+
+  @IsOptional()
   @IsEnum(LayoutCreationSourceEnum)
   __source?: LayoutCreationSourceEnum;
 
@@ -31,8 +35,4 @@ export class UpsertLayoutCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   layoutIdOrInternalId?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  preserveLayoutId?: boolean;
 }

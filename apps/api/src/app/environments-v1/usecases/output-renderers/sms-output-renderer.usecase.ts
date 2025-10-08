@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
 import { SmsRenderOutput } from '@novu/shared';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
 import { RenderCommand } from './render-command';
@@ -30,9 +30,10 @@ export class SmsOutputRendererUsecase extends BaseTranslationRendererUsecase {
       variables: renderCommand.fullPayloadForRender,
       environmentId: _environmentId,
       organizationId: _organizationId,
-      workflowId,
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
       locale: renderCommand.locale,
-      dbWorkflow: renderCommand.dbWorkflow,
+      resourceEntity: renderCommand.dbWorkflow,
       organization: renderCommand.organization,
     });
 

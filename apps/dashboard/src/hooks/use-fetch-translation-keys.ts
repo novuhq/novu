@@ -7,11 +7,12 @@ import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
 
 type FetchTranslationKeysParams = {
-  workflowId: string;
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
   enabled?: boolean;
 };
 
-export const useFetchTranslationKeys = ({ workflowId, enabled = true }: FetchTranslationKeysParams) => {
+export const useFetchTranslationKeys = ({ resourceId, resourceType, enabled = true }: FetchTranslationKeysParams) => {
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
 
@@ -22,7 +23,7 @@ export const useFetchTranslationKeys = ({ workflowId, enabled = true }: FetchTra
     isLoading: isTranslationDataLoading,
     error,
   } = useQuery({
-    queryKey: [QueryKeys.fetchTranslationKeys, workflowId, defaultLocale, currentEnvironment?._id],
+    queryKey: [QueryKeys.fetchTranslationKeys, resourceId, defaultLocale, currentEnvironment?._id],
     queryFn: async () => {
       if (!currentEnvironment || !defaultLocale) {
         throw new Error('Environment and default locale are required');
@@ -31,19 +32,19 @@ export const useFetchTranslationKeys = ({ workflowId, enabled = true }: FetchTra
       try {
         return await getTranslation({
           environment: currentEnvironment,
-          resourceId: workflowId,
-          resourceType: LocalizationResourceEnum.WORKFLOW,
+          resourceId,
+          resourceType,
           locale: defaultLocale,
         });
       } catch (error) {
         // If translation doesn't exist, return null instead of throwing
         // This allows the component to work even without translations
-        console.debug('No translation found for workflow:', workflowId, 'locale:', defaultLocale);
+        console.debug('No translation found for workflow:', resourceId, 'locale:', defaultLocale);
 
         return null;
       }
     },
-    enabled: !!currentEnvironment && !!defaultLocale && !!workflowId && enabled,
+    enabled: !!currentEnvironment && !!defaultLocale && !!resourceId && enabled,
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

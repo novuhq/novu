@@ -48,7 +48,7 @@ export class TriggerMulticast extends TriggerBase {
     try {
       const mappedRecipients = Array.isArray(recipients) ? recipients : [recipients];
 
-      const { singleSubscribers, topicKeys } = splitByRecipientType(mappedRecipients);
+      const { singleSubscribers, topicKeys, topicExclusions } = splitByRecipientType(mappedRecipients);
       const subscribersToProcess = Array.from(singleSubscribers.values());
       let totalProcessed = 0;
 
@@ -63,13 +63,16 @@ export class TriggerMulticast extends TriggerBase {
 
       const topicIds = topics.map((topic) => topic._id);
       const singleSubscriberIds = Array.from(singleSubscribers.keys());
+      const allTopicExcludedSubscribers = Array.from(
+        new Set([...Array.from(topicExclusions.values()).flatMap((set) => Array.from(set))])
+      );
       let subscribersList: { subscriberId: string; topics: Pick<TopicEntity, '_id' | 'key'>[] }[] = [];
       const getTopicDistinctSubscribersGenerator = this.topicSubscribersRepository.getTopicDistinctSubscribers({
         query: {
           _organizationId: organizationId,
           _environmentId: environmentId,
           topicIds,
-          excludeSubscribers: singleSubscriberIds,
+          excludeSubscribers: [...singleSubscriberIds, ...allTopicExcludedSubscribers],
         },
         batchSize: SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE,
       });
@@ -230,6 +233,7 @@ export const splitByRecipientType = (
 ): {
   singleSubscribers: Map<string, ISubscribersDefine>;
   topicKeys: Set<string>;
+  topicExclusions: Map<string, Set<string>>;
 } => {
   return mappedRecipients.reduce(
     (acc, recipient) => {
@@ -239,6 +243,14 @@ export const splitByRecipientType = (
 
       if (isTopic(recipient)) {
         acc.topicKeys.add(recipient.topicKey);
+        const topicRecipient = recipient as ITopic;
+        if (topicRecipient.exclude && topicRecipient.exclude.length > 0) {
+          const existingExclusions = acc.topicExclusions.get(topicRecipient.topicKey) || new Set<string>();
+          for (const subscriberId of topicRecipient.exclude) {
+            existingExclusions.add(subscriberId);
+          }
+          acc.topicExclusions.set(topicRecipient.topicKey, existingExclusions);
+        }
       } else {
         const subscribersDefine = buildSubscriberDefine(recipient);
 
@@ -250,6 +262,7 @@ export const splitByRecipientType = (
     {
       singleSubscribers: new Map<string, ISubscribersDefine>(),
       topicKeys: new Set<string>(),
+      topicExclusions: new Map<string, Set<string>>(),
     }
   );
 };

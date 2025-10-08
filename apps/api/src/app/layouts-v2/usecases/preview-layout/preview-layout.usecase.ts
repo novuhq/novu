@@ -92,6 +92,7 @@ export class PreviewLayoutUsecase {
           userId: command.user._id,
           workflowId: LAYOUT_PREVIEW_WORKFLOW_ID,
           workflowOrigin: ResourceOriginEnum.NOVU_CLOUD,
+          layoutId: layout.layoutId,
           state: [],
         })
       );

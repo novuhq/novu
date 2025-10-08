@@ -3,6 +3,9 @@ import { ConfigConfiguration, ConfigConfigurationGroup } from '../provider.inter
 const emailActivityTrackingDescription =
   'When enabled, Novu will auto-configure delivery webhooks using your existing API key. If they lack permissions, follow the manual set-up guide.';
 
+const pushActivityTrackingDescription =
+  'Enable receiving push events to track delivery status and user interactions with push notifications.';
+
 const sendgridConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',
@@ -12,8 +15,8 @@ const sendgridConfigurations: ConfigConfiguration[] = [
     required: false,
     links: [
       {
-        text: 'set-up guide',
-        url: 'https://docs.novu.co/integrations/providers/email/sendgrid#manual-setup',
+        text: 'manual set-up guide',
+        url: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/sendgrid',
       },
     ],
   },
@@ -34,8 +37,8 @@ const resendConfigurations: ConfigConfiguration[] = [
     required: false,
     links: [
       {
-        text: 'set-up guide',
-        url: 'https://docs.novu.co/integrations/providers/email/resend#manual-setup',
+        text: 'manual set-up guide',
+        url: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/resend',
       },
     ],
   },
@@ -56,8 +59,8 @@ const mailgunConfigurations: ConfigConfiguration[] = [
     required: false,
     links: [
       {
-        text: 'set-up guide',
-        url: 'https://docs.novu.co/integrations/providers/email/mailgun#manual-setup',
+        text: 'manual set-up guide',
+        url: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/mailgun',
       },
     ],
   },
@@ -78,8 +81,8 @@ const sesConfigurations: ConfigConfiguration[] = [
     required: false,
     links: [
       {
-        text: 'set-up guide',
-        url: 'https://docs.novu.co/integrations/providers/email/amazon-ses#manual-setup',
+        text: 'manual set-up guide',
+        url: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/ses',
       },
     ],
   },
@@ -91,13 +94,29 @@ const sesConfigurations: ConfigConfiguration[] = [
   },
 ];
 
+export const expoConfigurations: ConfigConfiguration[] = [
+  {
+    key: 'inboundWebhookEnabled',
+    displayName: 'Push Activity Tracking',
+    description: pushActivityTrackingDescription,
+    type: 'switch',
+    required: false,
+  },
+  {
+    key: 'pushResources',
+    displayName: 'Push Resources',
+    type: 'pushResources',
+    required: false,
+  },
+];
+
 export const sendgridGroupConfigurations: ConfigConfigurationGroup[] = [
   {
     groupType: 'inboundWebhook',
     configurations: sendgridConfigurations,
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide:
-      'https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook#add-an-event-webhook',
+      'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/sendgrid',
   },
 ];
 
@@ -106,7 +125,7 @@ export const resendGroupConfigurations: ConfigConfigurationGroup[] = [
     groupType: 'inboundWebhook',
     configurations: resendConfigurations,
     enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide: 'https://resend.com/docs/dashboard/webhooks/introduction#what-is-a-webhook%3F',
+    setupWebhookUrlGuide: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/resend',
   },
 ];
 
@@ -115,7 +134,7 @@ export const mailgunGroupConfigurations: ConfigConfigurationGroup[] = [
     groupType: 'inboundWebhook',
     configurations: mailgunConfigurations,
     enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide: 'https://documentation.mailgun.com/docs/mailgun/user-manual/events/webhooks',
+    setupWebhookUrlGuide: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/mailgun',
   },
 ];
 
@@ -125,6 +144,15 @@ export const sesGroupConfigurations: ConfigConfigurationGroup[] = [
     configurations: sesConfigurations,
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide:
-      'https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook#add-an-event-webhook',
+      'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/ses',
+  },
+];
+
+export const expoGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: expoConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide: 'https://docs.expo.dev/push-notifications/sending-notifications/',
   },
 ];

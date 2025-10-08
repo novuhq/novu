@@ -788,7 +788,7 @@ function extractVariablesFromCondition(condition: string): string[] {
   processedCondition = processedCondition.replace(/\|\s*[a-zA-Z_][a-zA-Z0-9_]*(?:\s*:[^|%}]*)?/g, '');
 
   // Now match variable patterns from the processed condition
-  const variableMatches = processedCondition.match(/[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:\[\d+\])*/g);
+  const variableMatches = processedCondition.match(/[a-zA-Z_][a-zA-Z0-9_[\].-]+/g);
 
   if (variableMatches) {
     variables.push(

@@ -23,7 +23,12 @@ export function extractLiquidExpressions(str: string): string[] {
 }
 
 export const DIGEST_EVENTS_VARIABLE_PATTERN = /^steps\.[^.]+\.events$/;
-export const VALID_DYNAMIC_PATHS = ['subscriber.data.', 'payload.', /^steps\.[^.]+\.events\[\d+\]\.payload\./] as const;
+export const VALID_DYNAMIC_PATHS = [
+  'subscriber.data.',
+  'payload.',
+  'context.',
+  /^steps\.[^.]+\.events\[\d+\]\.payload\./,
+] as const;
 
 export function isValidDynamicPath(variableName: string): boolean {
   return VALID_DYNAMIC_PATHS.some((path) =>

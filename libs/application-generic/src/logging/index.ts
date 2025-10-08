@@ -74,7 +74,10 @@ export function createNestLoggingModuleOptions(settings: {
   }
 
   return {
-    exclude: [{ path: '*/health-check', method: RequestMethod.GET }],
+    exclude: [
+      { path: '*/health-check', method: RequestMethod.GET },
+      { path: '/v1/internal/subscriber-online-state', method: RequestMethod.POST }
+    ],
     assignResponse: true,
     pinoHttp: {
       useOnlyCustomLevels: true,

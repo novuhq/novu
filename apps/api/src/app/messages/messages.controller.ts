@@ -60,6 +60,7 @@ export class MessagesController {
         environmentId: user.environmentId,
         channel: query.channel,
         subscriberId: query.subscriberId,
+        contextKeys: query.contextKeys,
         page: query.page ? Number(query.page) : 0,
         limit: query.limit ? Number(query.limit) : 10,
         transactionIds: transactionIdQuery,

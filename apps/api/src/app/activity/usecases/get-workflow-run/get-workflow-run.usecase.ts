@@ -38,6 +38,7 @@ const workflowRunSelectColumns = [
   'delivery_lifecycle_status',
   'severity',
   'critical',
+  'context_keys',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -206,11 +207,16 @@ export class GetWorkflowRun {
           }) satisfies IStepRunWithDetails
       );
     } catch (error) {
-      this.logger.warn('Failed to get step runs for workflow run', {
-        error: error.message,
-        workflowRunId: command.workflowRunId,
-        transactionId: workflowRun.transaction_id,
-      });
+      this.logger.warn(
+        {
+          nv: {
+            error: error.message,
+            workflowRunId: command.workflowRunId,
+            transactionId: workflowRun.transaction_id,
+          },
+        },
+        'Failed to get step runs for workflow run'
+      );
 
       return [];
     }
@@ -300,6 +306,7 @@ export class GetWorkflowRun {
       steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun)),
       severity: workflowRun.severity,
       critical: workflowRun.critical,
+      contextKeys: workflowRun.context_keys,
     };
   }
 }

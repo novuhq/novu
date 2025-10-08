@@ -1,13 +1,13 @@
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 
-export const useIsTranslationEnabled = () => {
-  const { workflow } = useWorkflow();
+export const useIsTranslationEnabled = ({
+  isTranslationEnabledOnResource = false,
+}: {
+  isTranslationEnabledOnResource?: boolean;
+} = {}) => {
   const { subscription } = useFetchSubscription();
-
-  const isWorkflowToggleEnabled = workflow?.isTranslationEnabled ?? false;
 
   const canUseTranslationFeature =
     getFeatureForTierAsBoolean(
@@ -16,7 +16,7 @@ export const useIsTranslationEnabled = () => {
     ) &&
     (!IS_SELF_HOSTED || IS_ENTERPRISE);
 
-  const isTranslationEnabled = isWorkflowToggleEnabled && canUseTranslationFeature;
+  const isTranslationEnabled = isTranslationEnabledOnResource && canUseTranslationFeature;
 
   return isTranslationEnabled;
 };

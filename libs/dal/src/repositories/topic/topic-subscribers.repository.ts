@@ -151,17 +151,13 @@ export class TopicSubscribersRepository extends BaseRepository<
     after,
     orderDirection = DirectionEnum.DESC,
     includeCursor,
-  }: {
-    environmentId: EnvironmentId;
-    organizationId: OrganizationId;
-    topicKey?: TopicKey;
-    subscriberId?: ExternalSubscriberId;
-    limit?: number;
-    before?: string;
-    after?: string;
-    orderDirection?: DirectionEnum;
-    includeCursor?: boolean;
-  }) {
+  }): Promise<{
+    data: TopicSubscribersEntity[];
+    next: string | null;
+    previous: string | null;
+    totalCount: number;
+    totalCountCapped: boolean;
+  }> {
     // Build query for topic subscriptions
     const query: FilterQuery<TopicSubscribersDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: environmentId,
@@ -192,6 +188,8 @@ export class TopicSubscribersRepository extends BaseRepository<
           data: [],
           next: null,
           previous: null,
+          totalCount: 0,
+          totalCountCapped: false,
         };
       }
     }

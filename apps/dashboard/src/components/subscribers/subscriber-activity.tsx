@@ -23,6 +23,7 @@ const getInitialFilters = (subscriberId: string, dateRange: string): ActivityFil
   workflows: [],
   topicKey: '',
   severity: [],
+  contextKeys: '',
 });
 
 export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) => {
@@ -65,7 +66,8 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
       filters.channels.length > 0 ||
       filters.workflows.length > 0 ||
       filters.transactionId !== defaultActivityFilters.transactionId ||
-      filters.topicKey !== defaultActivityFilters.topicKey
+      filters.topicKey !== defaultActivityFilters.topicKey ||
+      filters.contextKeys !== defaultActivityFilters.contextKeys
     );
   }, [filters]);
 
@@ -94,6 +96,10 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
       params.set('severity', filters.severity.join(','));
     }
 
+    if (filters.contextKeys) {
+      params.set('contextKeys', filters.contextKeys);
+    }
+
     return params;
   }, [subscriberId, filters]);
 
@@ -110,7 +116,7 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
           onFiltersChange={setFilters}
           onReset={handleClearFilters}
           hide={['dateRange', 'subscriberId']}
-          className="min-h-max overflow-x-auto"
+          className="min-h-max overflow-x-auto py-2 pl-2"
         />
         <SubscriberActivityList
           isLoading={isLoading}

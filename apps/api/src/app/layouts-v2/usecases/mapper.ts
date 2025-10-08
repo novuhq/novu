@@ -42,5 +42,6 @@ export const mapToResponseDto = ({
         ...(isEmailLayout ? { email: controlValues?.email as EmailControlsDto } : {}),
       },
     },
+    isTranslationEnabled: !!layout.isTranslationEnabled,
   };
 };

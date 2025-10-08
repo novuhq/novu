@@ -1,11 +1,16 @@
 import { WorkflowResponseDto } from '@novu/shared';
-import React from 'react';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { EditTranslationPopover } from '@/components/workflow-editor/steps/email/translations/edit-translation-popover/edit-translation-popover';
+import {
+  EditTranslationPopover,
+  type TranslationValueInputComponent,
+} from '@/components/workflow-editor/steps/email/translations/edit-translation-popover/edit-translation-popover';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
 type EditorOverlaysProps = {
   // Translation-related props
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
   isTranslationPopoverOpen?: boolean;
   selectedTranslation?: { translationKey: string; from: number; to: number } | null;
   onTranslationPopoverOpenChange?: (open: boolean) => void;
@@ -17,17 +22,20 @@ type EditorOverlaysProps = {
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
 
-  // Workflow and schema-related props
+  // Schema-related props
   workflow?: WorkflowResponseDto;
-  isPayloadSchemaDrawerOpen: boolean;
-  onPayloadSchemaDrawerOpenChange: (open: boolean) => void;
+  isPayloadSchemaDrawerOpen?: boolean;
+  onPayloadSchemaDrawerOpenChange?: (open: boolean) => void;
   highlightedVariableKey?: string | null;
 
   // Feature flags
   enableTranslations?: boolean;
+  translationValueInput: TranslationValueInputComponent;
 };
 
 export function EditorOverlays({
+  resourceId,
+  resourceType,
   isTranslationPopoverOpen,
   selectedTranslation,
   onTranslationPopoverOpenChange = () => {},
@@ -37,14 +45,15 @@ export function EditorOverlays({
   variables,
   isAllowedVariable,
   workflow,
-  isPayloadSchemaDrawerOpen,
-  onPayloadSchemaDrawerOpenChange,
+  isPayloadSchemaDrawerOpen = false,
+  onPayloadSchemaDrawerOpenChange = () => {},
   highlightedVariableKey,
   enableTranslations = false,
+  translationValueInput,
 }: EditorOverlaysProps) {
   return (
     <>
-      {isTranslationPopoverOpen && selectedTranslation && workflow?._id && enableTranslations && (
+      {isTranslationPopoverOpen && selectedTranslation && resourceId && enableTranslations && (
         <EditTranslationPopover
           open={isTranslationPopoverOpen}
           onOpenChange={onTranslationPopoverOpenChange}
@@ -53,17 +62,21 @@ export function EditorOverlays({
           onReplaceKey={onTranslationReplaceKey}
           variables={variables}
           isAllowedVariable={isAllowedVariable}
-          workflowId={workflow._id}
+          resourceId={resourceId}
+          resourceType={resourceType}
           position={translationTriggerPosition || undefined}
+          translationValueInput={translationValueInput}
         />
       )}
 
-      <PayloadSchemaDrawer
-        isOpen={isPayloadSchemaDrawerOpen}
-        onOpenChange={onPayloadSchemaDrawerOpenChange}
-        workflow={workflow}
-        highlightedPropertyKey={highlightedVariableKey || undefined}
-      />
+      {isPayloadSchemaDrawerOpen && (
+        <PayloadSchemaDrawer
+          isOpen={isPayloadSchemaDrawerOpen}
+          onOpenChange={onPayloadSchemaDrawerOpenChange}
+          workflow={workflow}
+          highlightedPropertyKey={highlightedVariableKey || undefined}
+        />
+      )}
     </>
   );
 }

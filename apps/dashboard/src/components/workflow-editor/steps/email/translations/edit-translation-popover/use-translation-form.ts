@@ -1,12 +1,13 @@
 import { useCallback } from 'react';
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useTranslationValidation } from '@/hooks/use-translation-validation';
-import { TranslationKey } from '@/types/translations';
+import { LocalizationResourceEnum, TranslationKey } from '@/types/translations';
 
 export const useTranslationForm = (
   editKey: string,
   editValue: string,
-  workflowId: string,
+  resourceId: string,
+  resourceType: LocalizationResourceEnum,
   translationKey: string,
   availableKeys: TranslationKey[],
   onReplaceKey?: (newKey: string) => void,
@@ -25,7 +26,8 @@ export const useTranslationForm = (
     const oldKey = translationKey;
 
     const result = await createTranslationKeyMutation.mutateAsync({
-      workflowId,
+      resourceId,
+      resourceType,
       translationKey: newKey,
       defaultValue: editValue || `[${newKey}]`,
     });
@@ -37,7 +39,16 @@ export const useTranslationForm = (
 
       onClose?.();
     }
-  }, [editKey, editValue, workflowId, createTranslationKeyMutation, translationKey, onReplaceKey, onClose]);
+  }, [
+    editKey,
+    editValue,
+    resourceId,
+    resourceType,
+    createTranslationKeyMutation,
+    translationKey,
+    onReplaceKey,
+    onClose,
+  ]);
 
   return {
     validation,

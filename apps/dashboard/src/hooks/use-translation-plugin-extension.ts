@@ -3,19 +3,22 @@ import { MutableRefObject, useMemo } from 'react';
 import { createTranslationExtension } from '@/components/primitives/translation-plugin';
 import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useTranslations } from '@/hooks/use-translations';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { useFetchTranslationKeys } from './use-fetch-translation-keys';
 
 export const useTranslationPluginExtension = ({
   viewRef,
   lastCompletionRef,
   onChange,
-  workflow,
+  resourceId,
+  resourceType,
   shouldEnableTranslations,
 }: {
   viewRef: MutableRefObject<EditorView | null>;
   lastCompletionRef: MutableRefObject<CompletionRange | null>;
   onChange: (value: string) => void;
-  workflow?: { _id: string };
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
   shouldEnableTranslations: boolean;
 }) => {
   const {
@@ -28,8 +31,9 @@ export const useTranslationPluginExtension = ({
 
   // Translation keys for autocompletion - only fetch if translations are enabled
   const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
-    workflowId: workflow?._id || '',
-    enabled: shouldEnableTranslations && !!workflow?._id,
+    resourceId,
+    resourceType,
+    enabled: shouldEnableTranslations && !!resourceId,
   });
 
   const translationPluginExtension = useMemo(() => {

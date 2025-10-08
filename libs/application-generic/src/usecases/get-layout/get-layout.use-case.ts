@@ -62,6 +62,7 @@ export class GetLayoutUseCase {
             dataSchema: layout.controls.schema,
           }
         : undefined,
+      isTranslationEnabled: layout.isTranslationEnabled,
     };
   }
 

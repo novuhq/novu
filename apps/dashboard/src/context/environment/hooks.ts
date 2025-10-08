@@ -7,6 +7,14 @@ import { EnvironmentContext } from './environment-context';
 
 const useEnvironmentContext = createContextHook(EnvironmentContext);
 
+export function requireEnvironment<T>(environment: T, message: string): NonNullable<T> {
+  if (!environment) {
+    throw new Error(message);
+  }
+
+  return environment as NonNullable<T>;
+}
+
 export function useEnvironment() {
   const { readOnly, ...rest } = useEnvironmentContext();
 

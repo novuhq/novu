@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
+  ContextRepository,
   EnvironmentRepository,
   JobEntity,
   JobRepository,
@@ -9,7 +10,6 @@ import {
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
-  ContextKey,
   FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITenantDefine,
@@ -25,7 +25,6 @@ import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../se
 import { AnalyticsService } from '../../services/analytics.service';
 import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
-import { ResolveContextFromPayload, ResolveContextFromPayloadCommand } from '../resolve-context';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
@@ -48,7 +47,7 @@ export class TriggerEvent {
     private triggerMulticast: TriggerMulticast,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
-    private resolveContextFromPayload: ResolveContextFromPayload,
+    private contextRepository: ContextRepository,
     private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
@@ -375,19 +374,16 @@ export class TriggerEvent {
     return subscriber;
   }
 
-  private async resolveContextKeys(command: TriggerEventCommand): Promise<ContextKey[] | undefined> {
+  private async resolveContextKeys(command: TriggerEventCommand): Promise<string[] | undefined> {
     if (!command.context) {
       return undefined;
     }
 
     try {
-      const contexts = await this.resolveContextFromPayload.execute(
-        ResolveContextFromPayloadCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          context: command.context,
-        })
+      const contexts = await this.contextRepository.upsertContextsFromPayload(
+        command.environmentId,
+        command.organizationId,
+        command.context
       );
 
       this.createWorkflowTrace(command, 'workflow_context_resolution_completed', 'success', 'Context resolved', {

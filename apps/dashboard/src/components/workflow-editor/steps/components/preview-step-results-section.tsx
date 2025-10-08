@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { RiContractUpDownLine, RiExpandUpDownLine, RiInformationLine } from 'react-icons/ri';
+import { RiContractUpDownLine, RiExpandUpDownLine, RiInformation2Line } from 'react-icons/ri';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ACCORDION_STYLES } from '../constants/preview-context.constants';
@@ -66,7 +66,7 @@ export function PreviewStepResultsSection({
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-foreground-400 inline-block hover:cursor-help">
-                <RiInformationLine className="size-3" />
+                <RiInformation2Line className="size-3" />
               </span>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
@@ -119,7 +119,7 @@ export function PreviewStepResultsSection({
                         {stepType === 'digest' && (
                           <div className="pt-2">
                             <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-                              <RiInformationLine className="h-3 w-3 flex-shrink-0" />
+                              <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
                               <span>
                                 Event count and events array are synchronized automatically. The event payload is
                                 originating from the workflow trigger payload.

@@ -40,7 +40,7 @@ import { WorkflowCommonsFields } from './workflow-commons.dto';
   UserResponseDto
 )
 export class WorkflowResponseDto extends WorkflowCommonsFields {
-  @ApiProperty({ description: 'Unique identifier of the workflow' })
+  @ApiProperty({ description: 'Database identifier of the workflow' })
   @IsString()
   _id: string;
 

@@ -34,6 +34,7 @@ import { EditStepConditionsLayout } from './edit-step-conditions-layout';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
+const CONTEXT_FIELD_PREFIX = 'context.';
 
 // Custom rule processor to handle relative date operators
 const customRuleProcessor = (rule: RuleType, options: any) => {
@@ -62,7 +63,10 @@ const customRuleProcessor = (rule: RuleType, options: any) => {
   return defaultRuleProcessorJsonLogic(rule, options);
 };
 
-const getRuleSchema = (fields: Array<{ value: string }>): z.ZodType<RuleType | RuleGroupType> => {
+const getRuleSchema = (
+  fields: Array<{ value: string }>,
+  isAllowedVariableFn: (variable: { name: string }) => boolean
+): z.ZodType<RuleType | RuleGroupType> => {
   const allowedFields = fields.map((field) => field.value);
 
   return z.union([
@@ -120,15 +124,24 @@ const getRuleSchema = (fields: Array<{ value: string }>): z.ZodType<RuleType | R
         const isPayloadField = field.startsWith(PAYLOAD_FIELD_PREFIX) && field.length > PAYLOAD_FIELD_PREFIX.length;
         const isSubscriberDataField =
           field.startsWith(SUBSCRIBER_DATA_FIELD_PREFIX) && field.length > SUBSCRIBER_DATA_FIELD_PREFIX.length;
+        const isContextField = field.startsWith(CONTEXT_FIELD_PREFIX) && field.length > CONTEXT_FIELD_PREFIX.length;
 
-        if (!allowedFields.includes(field) && !isPayloadField && !isSubscriberDataField) {
+        // Context fields use additionalProperties schema pattern instead of explicit properties,
+        // so they don't appear in allowedFields and need validation with isAllowedVariable
+        // Example: 'context.<anything>.id' or 'context.<anything>.data' are valid, but 'context.<anything>.invalid' is not
+        const isValidContextField = isContextField ? isAllowedVariableFn({ name: field }) : false;
+
+        const shouldAddError =
+          !allowedFields.includes(field) && !isPayloadField && !isSubscriberDataField && !isValidContextField;
+
+        if (shouldAddError) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is not valid', path: ['field'] });
         }
       }),
     z
       .object({
         combinator: z.string(),
-        rules: z.array(z.lazy(() => getRuleSchema(fields))),
+        rules: z.array(z.lazy(() => getRuleSchema(fields, isAllowedVariableFn))),
       })
       .passthrough(),
   ]);
@@ -138,12 +151,15 @@ type FormQuery = {
   query: RuleGroupType;
 };
 
-const getConditionsSchema = (fields: Array<{ value: string }>): z.ZodType<FormQuery> => {
+const getConditionsSchema = (
+  fields: Array<{ value: string }>,
+  isAllowedVariableFn: (variable: { name: string }) => boolean
+): z.ZodType<FormQuery> => {
   return z.object({
     query: z
       .object({
         combinator: z.string(),
-        rules: z.array(getRuleSchema(fields)),
+        rules: z.array(getRuleSchema(fields, isAllowedVariableFn)),
       })
       .passthrough(),
   });
@@ -203,7 +219,7 @@ export const EditStepConditionsForm = () => {
 
   const form = useForm<FormQuery>({
     mode: 'onSubmit',
-    resolver: zodResolver(getConditionsSchema(fields)),
+    resolver: zodResolver(getConditionsSchema(fields, isAllowedVariable)),
     defaultValues: {
       query,
     },

@@ -16,6 +16,7 @@ import {
   buildVariablesSchema,
   buildWorkflowSchema,
 } from '../../../shared/utils/create-schema';
+import { PreviewPayloadDto } from '../../dtos';
 import { computeResultSchema } from '../../shared';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
@@ -31,7 +32,7 @@ export class BuildVariableSchemaUsecase {
 
   @InstrumentUsecase()
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
-    const { workflow, stepInternalId, optimisticSteps } = command;
+    const { workflow, stepInternalId, optimisticSteps, previewData } = command;
 
     let workflowControlValues: unknown[] = [];
     if (workflow) {
@@ -55,13 +56,22 @@ export class BuildVariableSchemaUsecase {
     }
 
     const optimisticControlValues = Object.values(command.optimisticControlValues || {});
-    const { payload, subscriber } = await this.createVariablesObject.execute(
+    const { payload, subscriber, context } = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         controlValues: optimisticControlValues.length > 0 ? optimisticControlValues : workflowControlValues,
       })
     );
+
+    // Merge preview data with extracted variables if available
+    const {
+      payload: finalPayload,
+      subscriber: finalSubscriber,
+      context: finalContext,
+    } = previewData
+      ? this.mergePreviewData({ payload, subscriber, context }, previewData)
+      : { payload: payload || {}, subscriber: subscriber || {}, context: context || {} };
 
     // Build effective steps by combining persisted steps with optimistic steps
     const effectiveSteps = this.buildEffectiveSteps(workflow, optimisticSteps);
@@ -88,13 +98,13 @@ export class BuildVariableSchemaUsecase {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {
         ...(isNotificationSeverityEnabled ? { workflow: buildWorkflowSchema() } : {}),
-        subscriber: buildSubscriberSchema(subscriber),
+        subscriber: buildSubscriberSchema(finalSubscriber),
         steps: buildPreviousStepsSchema({
           previousSteps,
           payloadSchema: workflow?.payloadSchema,
         }),
-        payload: await this.resolvePayloadSchema(workflow, payload),
-        ...(isContextEnabled ? { context: buildContextSchema() } : {}),
+        payload: await this.resolvePayloadSchema(workflow, finalPayload),
+        ...(isContextEnabled ? { context: buildContextSchema(finalContext) } : {}),
       },
       additionalProperties: false,
     } as const satisfies JSONSchemaDto;
@@ -164,6 +174,20 @@ export class BuildVariableSchemaUsecase {
     }
 
     return buildVariablesSchema(payload);
+  }
+
+  /**
+   * Merges preview data with extracted variables for preview scenarios
+   */
+  private mergePreviewData(
+    extracted: { payload?: unknown; subscriber?: unknown; context?: unknown },
+    previewData?: PreviewPayloadDto
+  ): { payload: Record<string, unknown>; subscriber: Record<string, unknown>; context: Record<string, unknown> } {
+    return {
+      payload: { ...((extracted.payload as Record<string, unknown>) || {}), ...(previewData?.payload || {}) },
+      subscriber: { ...((extracted.subscriber as Record<string, unknown>) || {}), ...(previewData?.subscriber || {}) },
+      context: { ...((extracted.context as Record<string, unknown>) || {}), ...(previewData?.context || {}) },
+    };
   }
 }
 

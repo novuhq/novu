@@ -1,7 +1,7 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiHideProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsArray, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
 
 export class ActivitiesRequestDto {
@@ -94,6 +94,17 @@ export class ActivitiesRequestDto {
   @IsOptional()
   @IsString()
   topicKey?: string;
+
+  @ApiHideProperty()
+  // @ApiPropertyOptional({
+  //   type: [String],
+  //   description: 'Filter by exact context keys (format: "type:id")',
+  //   example: ['tenant:org-123', 'region:us-east-1'],
+  // })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 
   @ApiPropertyOptional({
     type: String,

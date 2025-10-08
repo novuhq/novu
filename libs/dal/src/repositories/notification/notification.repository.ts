@@ -36,6 +36,7 @@ export class NotificationRepository extends BaseRepository<
       severity?: SeverityLevelEnum[] | null;
       after?: string;
       before?: string;
+      contextKeys?: string[];
     } = {},
     skip = 0,
     limit = 10
@@ -55,6 +56,8 @@ export class NotificationRepository extends BaseRepository<
     }
 
     const severityCondition: Array<FilterQuery<NotificationDBModel>> = [];
+    const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
+
     if (query.severity && query.severity?.length > 0) {
       if (query.severity.includes(SeverityLevelEnum.NONE)) {
         severityCondition.push({ severity: { $exists: false } }, { severity: { $in: query.severity } });
@@ -92,8 +95,12 @@ export class NotificationRepository extends BaseRepository<
         $in: query.channels,
       };
     }
+
+    if (query.contextKeys && query.contextKeys.length > 0) {
+      requestQuery.contextKeys = { $in: query.contextKeys };
+    }
+
     // combine all $or conditions properly
-    const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
     if (severityCondition.length > 0) {
       orConditions.push({ $or: severityCondition });
     }

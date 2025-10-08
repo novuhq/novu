@@ -37,6 +37,12 @@ export class LayoutResponseDto {
   @IsBoolean()
   isDefault: boolean;
 
+  @ApiProperty({
+    description: 'Whether the layout translations are enabled',
+  })
+  @IsBoolean()
+  isTranslationEnabled: boolean;
+
   @ApiProperty({ description: 'Last updated timestamp' })
   @IsString()
   updatedAt: string;

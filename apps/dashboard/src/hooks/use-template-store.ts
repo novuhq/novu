@@ -1,5 +1,5 @@
 import { StepCreateDto, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { IWorkflowSuggestion } from '@/components/template-store/types';
 import { extractApiItems } from '@/utils/api-response-normalizer';
 
@@ -270,7 +270,7 @@ export function useTemplateStore() {
     };
   }, []);
 
-  const availableTags = extractUniqueTags(suggestions);
+  const availableTags = useMemo(() => extractUniqueTags(suggestions), [suggestions]);
 
   return {
     suggestions,

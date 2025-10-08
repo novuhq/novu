@@ -24,6 +24,7 @@ generation:
     skipResponseBodyAssertions: false
 typescript:
   version: 0.1.21
+  acceptHeaderEnum: true
   additionalDependencies:
     dependencies: {}
     devDependencies: {}
@@ -53,6 +54,7 @@ typescript:
   jsonpath: rfc9535
   maxMethodParams: 3
   methodArguments: require-security-and-request
+  modelPropertyCasing: camel
   moduleFormat: commonjs
   outputModelSuffix: output
   packageName: '@novu/api'

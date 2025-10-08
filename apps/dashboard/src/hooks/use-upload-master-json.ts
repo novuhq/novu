@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UploadMasterJsonResponse, uploadMasterJson } from '@/api/translations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
 type UseUploadMasterJsonProps = {
@@ -15,12 +15,10 @@ export function useUploadMasterJson({ onSuccess, onError }: UseUploadMasterJsonP
 
   const mutation = useMutation({
     mutationFn: async ({ file }: { file: File }) => {
-      if (!currentEnvironment) {
-        throw new Error('No environment selected');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
 
       return await uploadMasterJson({
-        environment: currentEnvironment,
+        environment,
         file,
       });
     },

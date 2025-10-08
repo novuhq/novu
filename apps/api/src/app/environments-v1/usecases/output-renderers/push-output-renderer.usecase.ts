@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
 import { PushRenderOutput } from '@novu/shared';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
 import { RenderCommand } from './render-command';
@@ -30,10 +30,11 @@ export class PushOutputRendererUsecase extends BaseTranslationRendererUsecase {
       variables: renderCommand.fullPayloadForRender,
       environmentId: _environmentId,
       organizationId: _organizationId,
-      workflowId,
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
       locale: renderCommand.locale,
       organization: renderCommand.organization,
-      dbWorkflow: renderCommand.dbWorkflow,
+      resourceEntity: renderCommand.dbWorkflow,
     });
 
     return translatedControls as any;
