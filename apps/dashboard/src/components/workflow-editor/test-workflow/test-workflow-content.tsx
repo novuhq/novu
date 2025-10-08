@@ -26,6 +26,7 @@ type TestWorkflowContentProps = {
   onClearPersistedPayload?: () => void;
   onClearPersistedSubscriber?: () => void;
   onClearPersistedContext?: () => void;
+  onEditSubscriber?: () => void;
 };
 
 export function TestWorkflowContent({
@@ -40,6 +41,7 @@ export function TestWorkflowContent({
   onClearPersistedPayload,
   onClearPersistedSubscriber,
   onClearPersistedContext,
+  onEditSubscriber,
 }: TestWorkflowContentProps) {
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
@@ -89,6 +91,7 @@ export function TestWorkflowContent({
             onUpdate={(_section, data) => onSubscriberUpdate(data)}
             onSubscriberSelect={onSubscriberSelect}
             onClearPersisted={onClearPersistedSubscriber}
+            onEditSubscriber={onEditSubscriber}
           />
 
           {isContextEnabled && (
