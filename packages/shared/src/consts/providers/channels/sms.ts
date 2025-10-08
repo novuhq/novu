@@ -27,6 +27,7 @@ import {
   ringCentralConfig,
   sendchampConfig,
   simpleTextingConfig,
+  sinchConfig,
   sms77Config,
   smsCentralConfig,
   smsmodeProviderConfig,
@@ -292,6 +293,14 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'mobishastra.png', dark: 'mobishastra.png' },
   },
   {
+    id: SmsProviderIdEnum.Sinch,
+    displayName: 'Sinch',
+    channel: ChannelTypeEnum.SMS,
+    credentials: sinchConfig,
+    docReference: `https://docs.novu.co/integrations/providers/sms/sinch${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'sinch.png', dark: 'sinch.png' },
+  },
+  {
     id: SmsProviderIdEnum.AfroSms,
     displayName: 'Afro Message',
     channel: ChannelTypeEnum.SMS,
@@ -307,7 +316,7 @@ export const smsProviders: IProviderConfig[] = [
     docReference: 'https://docs.unifonic.com/articles/#!products-documentation/getting-started-with-unifonic',
     logoFileName: { light: 'unifonic.svg', dark: 'unifonic.svg' },
   },
-    {
+  {
     id: SmsProviderIdEnum.Smsmode,
     displayName: 'smsmode',
     channel: ChannelTypeEnum.SMS,
