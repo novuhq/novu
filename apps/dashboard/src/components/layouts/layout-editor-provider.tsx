@@ -265,8 +265,7 @@ export const LayoutEditorProvider = ({
     setSelectedLocale(newLocale);
   }, []);
 
-  const defaultSubscriberData = useDefaultSubscriberData(undefined, organizationSettings?.data?.defaultLocale);
-  const createDefaultSubscriberData = useCallback(() => defaultSubscriberData, [defaultSubscriberData]);
+  const createDefaultSubscriberData = useDefaultSubscriberData(undefined, organizationSettings?.data?.defaultLocale);
 
   const {
     loadPersistedSubscriber,
@@ -419,7 +418,17 @@ export const LayoutEditorProvider = ({
       onLocaleChange(organizationSettings.data.defaultLocale);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layout?._id, currentEnvironment?._id, isOrgSettingsLoading, organizationSettings?.data?.defaultLocale]);
+  }, [
+    layout?._id,
+    currentEnvironment?._id,
+    isOrgSettingsLoading,
+    organizationSettings?.data?.defaultLocale,
+    loadPersistedSubscriber,
+    loadPersistedContext,
+    createDefaultSubscriberData,
+    setPreviewContextValueSafe,
+    onLocaleChange,
+  ]);
 
   const handleBlockerProceed = useCallback(() => {
     if (blocker.state === 'blocked') {

@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EmailControlType, InstrumentUsecase, LayoutControlType } from '@novu/application-generic';
+import { JsonSchemaTypeEnum } from '@novu/dal';
+import { ContextResolved } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
   LAYOUT_PREVIEW_EMAIL_STEP,
@@ -9,6 +11,7 @@ import {
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
 import { CreateVariablesObject, CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object';
+import { buildContextSchema, buildSubscriberSchema } from '../../../shared/utils/create-schema';
 import { PayloadMergerService } from '../../../workflows-v2/usecases/preview/services/payload-merger.service';
 import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
 import { GenerateLayoutPreviewResponseDto } from '../../dtos/generate-layout-preview-response.dto';
@@ -80,6 +83,7 @@ export class PreviewLayoutUsecase {
         PreviewStepCommand.create({
           payload: (cleanedPayloadExample.payload ?? {}) as Record<string, unknown>,
           subscriber: cleanedPayloadExample.subscriber ?? {},
+          context: (cleanedPayloadExample.context ?? {}) as ContextResolved,
           // mapping the email layout controls to the email step controls
           controls: {
             subject: 'email-layout-preview',
@@ -99,12 +103,22 @@ export class PreviewLayoutUsecase {
 
       const { body: previewBody } = executeOutput.outputs as any;
 
+      // Generate schema from the preview payload example
+      const schema = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        properties: {
+          subscriber: buildSubscriberSchema(payloadExample.subscriber),
+          context: buildContextSchema(payloadExample.context),
+        },
+      };
+
       return {
         result: {
           preview: { body: previewBody },
           type: ChannelTypeEnum.EMAIL,
         },
         previewPayloadExample: payloadExample,
+        schema,
       };
     } catch (error) {
       /*
@@ -116,6 +130,7 @@ export class PreviewLayoutUsecase {
           type: ChannelTypeEnum.EMAIL,
         },
         previewPayloadExample: {},
+        schema: null,
       };
     }
   }
