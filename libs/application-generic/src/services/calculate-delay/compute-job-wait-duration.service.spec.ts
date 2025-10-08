@@ -52,7 +52,7 @@ describe('Compute Job Wait Duration Service', () => {
       const stepMetadata = {
         type: DelayTypeEnum.DYNAMIC,
         dynamicKey: 'payload.delayWindow',
-      };
+      } as const;
       const payload = {
         delayWindow: {
           amount: 5,
@@ -73,7 +73,7 @@ describe('Compute Job Wait Duration Service', () => {
       const stepMetadata = {
         type: DelayTypeEnum.DYNAMIC,
         dynamicKey: 'payload.missingKey',
-      };
+      } as const;
       const payload = {
         otherField: 'value',
       };
@@ -92,7 +92,7 @@ describe('Compute Job Wait Duration Service', () => {
       const stepMetadata = {
         type: DelayTypeEnum.DYNAMIC,
         dynamicKey: 'payload.scheduledTime',
-      };
+      } as const;
       const payload = {
         scheduledTime: pastTime.toISOString(),
       };
@@ -110,7 +110,7 @@ describe('Compute Job Wait Duration Service', () => {
       const stepMetadata = {
         type: DelayTypeEnum.DYNAMIC,
         dynamicKey: 'payload.scheduledTime',
-      };
+      } as const;
       const payload = {
         scheduledTime: 'invalid-timestamp',
       };
@@ -128,7 +128,7 @@ describe('Compute Job Wait Duration Service', () => {
       const stepMetadata = {
         type: DelayTypeEnum.DYNAMIC,
         dynamicKey: 'payload.delayWindow',
-      };
+      } as const;
       const payload = {
         delayWindow: {
           amount: 5,
@@ -149,7 +149,7 @@ describe('Compute Job Wait Duration Service', () => {
       const stepMetadata = {
         type: DelayTypeEnum.DYNAMIC,
         dynamicKey: 'payload.delayWindow',
-      };
+      } as const;
       const payload = {
         delayWindow: {
           amount: -5,
@@ -170,7 +170,7 @@ describe('Compute Job Wait Duration Service', () => {
       const stepMetadata = {
         type: DelayTypeEnum.DYNAMIC,
         dynamicKey: 'payload.config.delaySettings',
-      };
+      } as const;
       const payload = {
         config: {
           delaySettings: {
