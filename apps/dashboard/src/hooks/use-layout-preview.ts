@@ -38,6 +38,7 @@ export const useLayoutPreview = ({
       });
     },
     enabled: Boolean(layoutSlug && currentEnvironment && parsedEditorPayload),
+    placeholderData: (previousData) => previousData,
   });
 
   return {
