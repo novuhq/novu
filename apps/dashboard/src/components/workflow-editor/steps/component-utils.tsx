@@ -1,5 +1,6 @@
 import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
 import { EmailEditorSelect } from '@/components/email-editor-select';
+import { DelayWindow } from '@/components/workflow-editor/steps/delay/delay-window';
 import { DigestDelayTabs } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-delay-tabs';
 import { DigestKey } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-key';
 import { EmailBody } from '@/components/workflow-editor/steps/email/email-body';
@@ -91,7 +92,8 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
     case UiComponentEnum.DELAY_UNIT:
     case UiComponentEnum.DELAY_TYPE:
     case UiComponentEnum.DELAY_CRON:
-      return <DigestDelayTabs isDigest={false} />;
+    case UiComponentEnum.DELAY_DYNAMIC_KEY:
+      return <DelayWindow />;
 
     case UiComponentEnum.THROTTLE_TYPE:
     case UiComponentEnum.THROTTLE_WINDOW:

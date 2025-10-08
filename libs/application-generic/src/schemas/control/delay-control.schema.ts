@@ -11,30 +11,50 @@ import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
 
-export const delayRegularControlZodSchema = z
+const DelayTypeEnumValues = {
+  REGULAR: DelayTypeEnum.REGULAR,
+  TIMED: DelayTypeEnum.TIMED,
+  DYNAMIC: DelayTypeEnum.DYNAMIC,
+} as const;
+
+export const delayControlZodSchema = z
   .object({
     skip: skipZodSchema,
-    type: z.enum([DelayTypeEnum.REGULAR]).optional(),
-    amount: z.number().min(1),
-    unit: z.nativeEnum(TimeUnitEnum),
+    type: z
+      .enum([DelayTypeEnumValues.REGULAR, DelayTypeEnumValues.TIMED, DelayTypeEnumValues.DYNAMIC])
+      .default(DelayTypeEnumValues.REGULAR),
+    // Regular delay fields
+    amount: z.number().min(1).optional(),
+    unit: z.nativeEnum(TimeUnitEnum).optional(),
+    // Timed delay fields
+    cron: z.string().min(1).optional(),
+    // Dynamic delay fields
+    dynamicKey: z.string().min(1).optional(),
+    // Common fields
     extendToSchedule: z.boolean().optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => {
+      if (data.type === DelayTypeEnumValues.REGULAR) {
+        return data.amount !== undefined && data.unit !== undefined;
+      }
+      if (data.type === DelayTypeEnumValues.TIMED) {
+        return data.cron !== undefined && data.cron.length > 0;
+      }
+      if (data.type === DelayTypeEnumValues.DYNAMIC) {
+        return data.dynamicKey !== undefined && data.dynamicKey.length > 0;
+      }
+      return true;
+    },
+    {
+      message:
+        "Regular delay requires 'amount' and 'unit', timed delay requires 'cron', dynamic delay requires 'dynamicKey'",
+    }
+  );
 
-const delayTimedControlZodSchema = z
-  .object({
-    skip: skipZodSchema,
-    type: z.enum([DelayTypeEnum.TIMED]).optional(),
-    cron: z.string().min(1),
-    extendToSchedule: z.boolean().optional(),
-  })
-  .strict();
-
-export type DelayRegularControlType = z.infer<typeof delayRegularControlZodSchema>;
-export type DelayTimedControlType = z.infer<typeof delayTimedControlZodSchema>;
 export type DelayControlType = z.infer<typeof delayControlZodSchema>;
 
-export const delayControlZodSchema = z.union([delayRegularControlZodSchema, delayTimedControlZodSchema]);
 export const delayControlSchema = zodToJsonSchema(delayControlZodSchema, defaultOptions) as JSONSchemaEntity;
 
 export const delayUiSchema: UiSchema = {
@@ -52,6 +72,10 @@ export const delayUiSchema: UiSchema = {
     cron: {
       component: UiComponentEnum.DELAY_CRON,
       placeholder: '',
+    },
+    dynamicKey: {
+      component: UiComponentEnum.DELAY_DYNAMIC_KEY,
+      placeholder: 'payload.scheduledTime',
     },
     type: {
       component: UiComponentEnum.DELAY_TYPE,
