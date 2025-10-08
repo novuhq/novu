@@ -49,7 +49,8 @@ type NotificationUnreadEvents = BaseEvents<'notification.unread', UnreadArgs, No
 type NotificationSeenEvents = BaseEvents<'notification.seen', SeenArgs, Notification>;
 type NotificationArchiveEvents = BaseEvents<'notification.archive', ArchivedArgs, Notification>;
 type NotificationUnarchiveEvents = BaseEvents<'notification.unarchive', UnarchivedArgs, Notification>;
-type NotificationDeleteEvents = BaseEvents<'notification.delete', DeletedArgs, void>;
+// FIX: Changed from 'void' to 'Notification' to include notification in args
+type NotificationDeleteEvents = BaseEvents<'notification.delete', DeletedArgs, Notification>;
 type NotificationSnoozeEvents = BaseEvents<'notification.snooze', SnoozeArgs, Notification>;
 type NotificationUnsnoozeEvents = BaseEvents<'notification.unsnooze', UnsnoozeArgs, Notification>;
 type NotificationCompleteActionEvents = BaseEvents<'notification.complete_action', CompleteArgs, Notification>;
