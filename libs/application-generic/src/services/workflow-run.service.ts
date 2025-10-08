@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum, MessageEntity, MessageRepository } from '@novu/dal';
-import { DeliveryLifecycleDetail, DeliveryLifecycleStatus } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatusEnum } from '@novu/shared';
 import { PinoLogger } from '../logging';
 import { WorkflowRunRepository, WorkflowRunStatusEnum } from './analytic-logs';
 
@@ -10,7 +10,7 @@ interface WorkflowStatusUpdateParams {
   organizationId: string;
   subscriberId: string;
   error?: unknown;
-  deliveryLifecycleStatus?: DeliveryLifecycleStatus;
+  deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum;
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
 
@@ -62,7 +62,7 @@ export class WorkflowRunService {
     deliveryLifecycleDetail: providedDetail,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
-      let deliveryLifecycleStatus: DeliveryLifecycleStatus;
+      let deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
       let deliveryLifecycleDetail: DeliveryLifecycleDetail | undefined;
 
       if (providedStatus) {
@@ -79,7 +79,7 @@ export class WorkflowRunService {
         deliveryLifecycleDetail = result.deliveryLifecycleDetail;
       }
 
-      if (deliveryLifecycleStatus === DeliveryLifecycleStatus.PENDING) {
+      if (deliveryLifecycleStatus === DeliveryLifecycleStatusEnum.PENDING) {
         // Optimization: Skip workflow run updates when delivery lifecycle is pending
         // since the workflow run should already be in the expected pending state
         return;
@@ -123,7 +123,7 @@ export class WorkflowRunService {
     organizationId,
     subscriberId,
   }: WorkflowStatusUpdateParams): Promise<{
-    deliveryLifecycleStatus: DeliveryLifecycleStatus;
+    deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
     deliveryLifecycleDetail?: DeliveryLifecycleDetail;
   }> {
     try {
@@ -208,7 +208,7 @@ export class WorkflowRunService {
     jobs: JobResult[],
     messages: MessageResult[]
   ): {
-    deliveryLifecycleStatus: DeliveryLifecycleStatus;
+    deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
     deliveryLifecycleDetail?: DeliveryLifecycleDetail;
   } {
     // Filter for channel jobs (exclude non-channel jobs like trigger, delay, digest, custom)
@@ -216,7 +216,7 @@ export class WorkflowRunService {
 
     if (channelJobs.length === 0) {
       return {
-        deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
+        deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
         deliveryLifecycleDetail: DeliveryLifecycleDetail.WORKFLOW_MISSING_CHANNEL_STEP,
       };
     }
@@ -227,12 +227,12 @@ export class WorkflowRunService {
     );
 
     if (hasInteractedMessage) {
-      return { deliveryLifecycleStatus: DeliveryLifecycleStatus.INTERACTED };
+      return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.INTERACTED };
     }
 
     // Priority 2: DELIVERED - If any message has been delivered (has deliveredAt) and no interaction found
     if (messages.some((message) => !!message.deliveredAt)) {
-      return { deliveryLifecycleStatus: DeliveryLifecycleStatus.DELIVERED };
+      return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.DELIVERED };
     }
 
     // Priority 3: SENT - If any step is COMPLETED and has a message created for it
@@ -241,7 +241,7 @@ export class WorkflowRunService {
       return messages.some((message) => message._jobId === job._id);
     });
     if (messageSent) {
-      return { deliveryLifecycleStatus: DeliveryLifecycleStatus.SENT };
+      return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SENT };
     }
 
     // Priority 4: SKIPPED - Only when all steps finish processing AND at least one job is SKIPPED
@@ -287,29 +287,29 @@ export class WorkflowRunService {
       }
 
       return {
-        deliveryLifecycleStatus: DeliveryLifecycleStatus.SKIPPED,
+        deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SKIPPED,
         deliveryLifecycleDetail: selectedDetail,
       };
     }
 
     // Priority 5: CANCELED - Any job with CANCELED status (only if no SKIPPED found)
     const hasUserCanceled = channelJobs.some(
-      (job) => isJobCancelled(job) || job.deliveryLifecycleState?.status === DeliveryLifecycleStatus.CANCELED
+      (job) => isJobCancelled(job) || job.deliveryLifecycleState?.status === DeliveryLifecycleStatusEnum.CANCELED
     );
     if (hasUserCanceled) {
-      return { deliveryLifecycleStatus: DeliveryLifecycleStatus.CANCELED };
+      return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.CANCELED };
     }
 
     // Priority 6: ERRORED - If any step has failed
     const hasFailedSteps = channelJobs.some((job) => job.status === JobStatusEnum.FAILED);
     if (hasFailedSteps) {
-      return { deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED };
+      return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED };
     }
 
     // Priority 7: MERGED - If all steps are merged
     const allStepsMerged = channelJobs.every((job) => job.status === JobStatusEnum.MERGED);
     if (allStepsMerged) {
-      return { deliveryLifecycleStatus: DeliveryLifecycleStatus.MERGED };
+      return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.MERGED };
     }
 
     // Priority 8: PENDING - If any step is pending (pending, queued, running, delayed)
@@ -321,7 +321,7 @@ export class WorkflowRunService {
         job.status === JobStatusEnum.DELAYED
     );
     if (hasPendingSteps) {
-      return { deliveryLifecycleStatus: DeliveryLifecycleStatus.PENDING };
+      return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.PENDING };
     }
 
     this.logger.warn(
@@ -336,7 +336,7 @@ export class WorkflowRunService {
     );
 
     return {
-      deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
+      deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
       deliveryLifecycleDetail: DeliveryLifecycleDetail.UNKNOWN_ERROR,
     };
   }

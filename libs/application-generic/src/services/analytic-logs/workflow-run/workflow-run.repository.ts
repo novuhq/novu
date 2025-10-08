@@ -7,7 +7,7 @@ import {
 } from '@novu/dal';
 import {
   DeliveryLifecycleDetail,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   FeatureFlagsKeysEnum,
   SeverityLevelEnum,
 } from '@novu/shared';
@@ -44,7 +44,7 @@ interface IWorkflowRunOptions {
   status?: WorkflowRunStatusEnum;
   userId?: string;
   externalSubscriberId?: string;
-  deliveryLifecycleStatus?: DeliveryLifecycleStatus;
+  deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum;
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
 
@@ -192,7 +192,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       organizationId: string;
       environmentId: string;
     },
-    deliveryLifecycleStatus?: DeliveryLifecycleStatus,
+    deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum,
     deliveryLifecycleDetail?: DeliveryLifecycleDetail
   ): Promise<void> {
     try {

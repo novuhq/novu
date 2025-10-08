@@ -10,7 +10,7 @@ import {
   StepType,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { DeliveryLifecycleDetail, DeliveryLifecycleStatus, StepTypeEnum } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatusEnum, StepTypeEnum } from '@novu/shared';
 
 import { CancelDelayedCommand } from './cancel-delayed.command';
 
@@ -57,7 +57,7 @@ export class CancelDelayed {
         $set: {
           status: JobStatusEnum.CANCELED,
           deliveryLifecycleState: {
-            status: DeliveryLifecycleStatus.CANCELED,
+            status: DeliveryLifecycleStatusEnum.CANCELED,
             detail: DeliveryLifecycleDetail.EXECUTION_CANCELED_BY_USER,
           },
         },
@@ -167,7 +167,7 @@ export class CancelDelayed {
 
       await this.messageInteractionService.trace(
         interactionTraces,
-        DeliveryLifecycleStatus.CANCELED,
+        DeliveryLifecycleStatusEnum.CANCELED,
         DeliveryLifecycleDetail.EXECUTION_CANCELED_BY_USER
       );
     } catch (error) {

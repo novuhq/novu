@@ -32,7 +32,7 @@ import {
 import { ContextResolved, ExecuteOutput } from '@novu/framework/internal';
 import {
   DeliveryLifecycleDetail,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -142,7 +142,7 @@ export class SendMessage {
       return {
         status: SendMessageStatus.SKIPPED,
         deliveryLifecycleState: {
-          status: DeliveryLifecycleStatus.SKIPPED,
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
           detail: !channelPreference.result
             ? DeliveryLifecycleDetail.SUBSCRIBER_PREFERENCE
             : DeliveryLifecycleDetail.USER_STEP_CONDITION,

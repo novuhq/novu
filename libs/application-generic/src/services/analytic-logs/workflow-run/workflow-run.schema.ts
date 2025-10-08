@@ -1,4 +1,4 @@
-import { DeliveryLifecycleStatus, SeverityLevelEnum } from '@novu/shared';
+import { DeliveryLifecycleStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import {
   CHBoolean,
   CHDateTime64,
@@ -93,7 +93,7 @@ type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;
 export type WorkflowRun = Prettify<
   Omit<NativeWorkflowRun, 'status' | 'delivery_lifecycle_status' | 'severity'> & {
     status: WorkflowRunStatusEnum;
-    delivery_lifecycle_status: DeliveryLifecycleStatus;
+    delivery_lifecycle_status: DeliveryLifecycleStatusEnum;
     severity: SeverityLevelEnum;
   }
 >;

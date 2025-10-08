@@ -1,6 +1,6 @@
 import {
   DeliveryLifecycleDetail,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   DigestCreationResultEnum,
   IDigestBaseMetadata,
   IDigestRegularMetadata,
@@ -323,7 +323,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         $set: {
           status: JobStatusEnum.CANCELED,
           deliveryLifecycleState: {
-            status: DeliveryLifecycleStatus.CANCELED,
+            status: DeliveryLifecycleStatusEnum.CANCELED,
             detail: DeliveryLifecycleDetail.EXECUTION_STOPPED,
           },
         },

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DeliveryLifecycleDetail, DeliveryLifecycleStatus } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatusEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { Trace, TraceLogRepository } from './analytic-logs/trace-log';
 import { WorkflowRunService } from './workflow-run.service';
@@ -26,7 +26,7 @@ export class MessageInteractionService {
 
   async trace(
     interactionsTraces: MessageInteractionTrace[],
-    deliveryLifecycleStatus: DeliveryLifecycleStatus | null,
+    deliveryLifecycleStatus: DeliveryLifecycleStatusEnum | null,
     deliveryLifecycleDetail?: DeliveryLifecycleDetail
   ): Promise<MessageInteractionResult> {
     try {
@@ -98,7 +98,7 @@ export class MessageInteractionService {
     deliveryLifecycleDetail,
   }: {
     traces: MessageInteractionTrace[];
-    deliveryLifecycleStatus: DeliveryLifecycleStatus;
+    deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
     deliveryLifecycleDetail?: DeliveryLifecycleDetail;
   }) {
     const tracesByNotificationId = traces.reduce<Record<string, MessageInteractionTrace[]>>((acc, trace) => {

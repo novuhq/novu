@@ -1,7 +1,7 @@
 import {
   ContextKey,
   DeliveryLifecycleDetail,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   ITenantDefine,
   IWorkflowStepMetadata,
   JobStatusEnum,
@@ -18,7 +18,7 @@ import type { OrganizationId } from '../organization';
 export { JobStatusEnum };
 
 export type DeliveryLifecycleState = {
-  status?: DeliveryLifecycleStatus;
+  status?: DeliveryLifecycleStatusEnum;
   detail?: DeliveryLifecycleDetail;
 };
 
