@@ -102,9 +102,9 @@ jobs:
       - name: Publish packages (nightly only)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NX_PUBLISH_ARGS: --tag nightly
         run: |
           if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
-            export NX_RELEASE_TAG=nightly
             pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
           else
             echo "Skipping publish for non-nightly release"
