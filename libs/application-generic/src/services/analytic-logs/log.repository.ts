@@ -26,10 +26,13 @@ const CLICKHOUSE_OPERATORS = [
   'GLOBAL NOT IN',
   'IS NULL',
   'IS NOT NULL',
+  'has',
+  'hasAny',
+  'hasAll',
 ] as const;
 
 // Define array operators that require array values
-type ArrayOperators = 'IN' | 'NOT IN' | 'GLOBAL IN' | 'GLOBAL NOT IN';
+type ArrayOperators = 'IN' | 'NOT IN' | 'GLOBAL IN' | 'GLOBAL NOT IN' | 'hasAny' | 'hasAll';
 
 // Define null operators that don't require values
 type NullOperators = 'IS NULL' | 'IS NOT NULL';
@@ -118,6 +121,11 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
 
   private getColumnType(column: string): string {
     return this.schema.schema[column]?.type?.toString() || 'String';
+  }
+
+  private isArrayColumn(column: string): boolean {
+    const typeString = this.getColumnType(column);
+    return typeString.startsWith('Array(');
   }
 
   private validateColumnName(columnName: SchemaKeys<TSchema>): void {
@@ -245,9 +253,20 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
       params[paramName] = value;
 
       let paramType = this.getColumnType(String(field));
-      const arrayOperators: ArrayOperators[] = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN'];
+      const arrayOperators: ArrayOperators[] = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN', 'hasAny', 'hasAll'];
+      const arrayFunctionOperators = ['has', 'hasAny', 'hasAll'];
+
+      // For array operators with array values, wrap non-array columns with Array()
+      // Array columns (e.g., context_keys: Array(String)) should not be double-wrapped
       if (arrayOperators.includes(operator as ArrayOperators) && Array.isArray(value)) {
-        paramType = `Array(${paramType})`;
+        if (!this.isArrayColumn(String(field))) {
+          paramType = `Array(${paramType})`;
+        }
+      }
+
+      // ClickHouse array functions use function syntax: has(array, value)
+      if (arrayFunctionOperators.includes(operator)) {
+        return `${operator}(${String(field)}, {${paramName}:${paramType}})`;
       }
 
       return `${String(field)} ${operator} {${paramName}:${paramType}}`;
@@ -593,6 +612,66 @@ export class QueryBuilder<T> {
     this.where(field, '<=', max);
 
     return this;
+  }
+
+  /**
+   * Check if an array field contains a specific value using ClickHouse has() function
+   *
+   * @param field Array field to check
+   * @param value Single value to look for in the array
+   *
+   * @example
+   * ```typescript
+   * // Check if context_keys array contains 'tenant:org-123'
+   * queryBuilder.whereHas('context_keys', 'tenant:org-123')
+   *
+   * // Generates SQL: WHERE has(context_keys, 'tenant:org-123')
+   * ```
+   */
+  whereHas<K extends keyof T>(field: K, value: T[K] extends readonly (infer U)[] ? U : T[K]): this {
+    return this.where(field, 'has', value as T[K]);
+  }
+
+  /**
+   * Check if an array field contains any of the specified values using ClickHouse hasAny() function
+   *
+   * @param field Array field to check
+   * @param values Array of values to look for (OR logic)
+   *
+   * @example
+   * ```typescript
+   * // Check if context_keys contains any of these values
+   * queryBuilder.whereHasAny('context_keys', ['tenant:org-123', 'region:us-east-1'])
+   *
+   * // Generates SQL: WHERE hasAny(context_keys, ['tenant:org-123', 'region:us-east-1'])
+   * ```
+   */
+  whereHasAny<K extends keyof T>(field: K, values: T[K]): this {
+    // Type assertion needed because where() expects T[K][] for ArrayOperators,
+    // but for array fields T[K] is already an array (e.g., string[])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.where(field, 'hasAny', values as any);
+  }
+
+  /**
+   * Check if an array field contains all of the specified values using ClickHouse hasAll() function
+   *
+   * @param field Array field to check
+   * @param values Array of values that must all be present (AND logic)
+   *
+   * @example
+   * ```typescript
+   * // Check if context_keys contains all of these values
+   * queryBuilder.whereHasAll('context_keys', ['tenant:org-123', 'region:us-east-1'])
+   *
+   * // Generates SQL: WHERE hasAll(context_keys, ['tenant:org-123', 'region:us-east-1'])
+   * ```
+   */
+  whereHasAll<K extends keyof T>(field: K, values: T[K]): this {
+    // Type assertion needed because where() expects T[K][] for ArrayOperators,
+    // but for array fields T[K] is already an array (e.g., string[])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.where(field, 'hasAll', values as any);
   }
 
   /**

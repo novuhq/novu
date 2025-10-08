@@ -2,7 +2,6 @@ import {
   ChannelEndpointByType,
   ChannelEndpointType,
   ChannelTypeEnum,
-  ContextKey,
   IActor,
   IMessageCTA,
   SeverityLevelEnum,
@@ -134,7 +133,7 @@ export class MessageEntity {
 
   channelData?: MessageChannelData[];
 
-  contextKeys?: ContextKey[];
+  contextKeys?: string[];
 }
 
 export type MessageDBModel = ChangePropsValueType<

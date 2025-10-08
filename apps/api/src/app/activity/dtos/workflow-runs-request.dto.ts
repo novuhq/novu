@@ -66,6 +66,8 @@ export class GetWorkflowRunsRequestDto {
   severity?: SeverityLevelEnum[];
 
   @IsOptional()
-  @IsString()
-  contextSearch?: string;
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 }

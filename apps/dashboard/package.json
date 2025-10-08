@@ -8,7 +8,7 @@
     "start:test": "vite --mode test",
     "start:static:build": "http-server dist -p 4201 --proxy http://127.0.0.1:4201?",
     "dev": "pnpm start",
-    "build": "tsc -b && vite build",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' tsc -b && NODE_OPTIONS='--max-old-space-size=8192' vite build",
     "docker:build": "docker buildx build --load -f ./dockerfile -t novu-dashboard ./../.. $DOCKER_BUILD_ARGUMENTS",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",

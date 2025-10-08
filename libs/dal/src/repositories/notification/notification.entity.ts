@@ -1,4 +1,4 @@
-import { ContextKey, ISubscribersDefine, SeverityLevelEnum, StatelessControls, StepTypeEnum } from '@novu/shared';
+import { ISubscribersDefine, SeverityLevelEnum, StatelessControls, StepTypeEnum } from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';

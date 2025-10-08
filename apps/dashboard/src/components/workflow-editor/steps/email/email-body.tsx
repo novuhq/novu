@@ -83,6 +83,7 @@ const BubbleMenuVariablePillForWorkflows = ({
         <EditorOverlays
           variables={parsedVariables.variables}
           isAllowedVariable={parsedVariables.isAllowedVariable}
+          workflow={workflow}
           resourceId={workflow?.workflowId || ''}
           resourceType={LocalizationResourceEnum.WORKFLOW}
           isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
@@ -122,6 +123,7 @@ function createVariableNodeView(variables: LiquidVariable[], isAllowedVariable: 
         <EditorOverlays
           variables={variables}
           isAllowedVariable={isAllowedVariable}
+          workflow={workflow}
           resourceId={workflow?.workflowId || ''}
           resourceType={LocalizationResourceEnum.WORKFLOW}
           isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
@@ -315,6 +317,7 @@ export const EmailBody = () => {
                 translationValueInput={ControlInput}
                 variables={parsedVariables.variables}
                 isAllowedVariable={enhancedIsAllowedVariable}
+                workflow={workflow}
                 resourceId={resourceId}
                 resourceType={resourceType}
                 isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}
@@ -361,6 +364,7 @@ export const EmailBody = () => {
               translationValueInput={ControlInput}
               variables={parsedVariables.variables}
               isAllowedVariable={enhancedIsAllowedVariable}
+              workflow={workflow}
               resourceId={resourceId}
               resourceType={resourceType}
               isPayloadSchemaDrawerOpen={isPayloadSchemaDrawerOpen}

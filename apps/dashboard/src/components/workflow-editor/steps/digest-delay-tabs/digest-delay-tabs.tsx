@@ -13,6 +13,7 @@ import { ScheduledType } from '@/components/workflow-editor/steps/digest-delay-t
 import { EVERY_MINUTE_CRON } from '@/components/workflow-editor/steps/digest-delay-tabs/utils';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useEnvironment } from '@/context/environment/hooks';
+import { DEFAULT_CONTROL_DELAY_AMOUNT, DEFAULT_CONTROL_DIGEST_AMOUNT } from '@/utils/constants';
 import { useWorkflow } from '../../workflow-provider';
 
 const REGULAR_TYPE = 'regular';
@@ -64,7 +65,9 @@ export const DigestDelayTabs = ({ isDigest = true }: { isDigest?: boolean }) => 
       setValue(CRON_KEY, EVERY_MINUTE_CRON, { shouldDirty: true });
       setValue(TYPE_KEY, isDigest ? DigestTypeEnum.TIMED : DelayTypeEnum.TIMED, { shouldDirty: true });
     } else {
-      setValue(AMOUNT_KEY, '', { shouldDirty: true });
+      setValue(AMOUNT_KEY, isDigest ? DEFAULT_CONTROL_DIGEST_AMOUNT : DEFAULT_CONTROL_DELAY_AMOUNT, {
+        shouldDirty: true,
+      });
       setValue(UNIT_KEY, TimeUnitEnum.SECONDS, { shouldDirty: true });
       setValue(CRON_KEY, undefined, { shouldDirty: true });
       setValue(TYPE_KEY, isDigest ? DigestTypeEnum.REGULAR : DelayTypeEnum.REGULAR, { shouldDirty: true });

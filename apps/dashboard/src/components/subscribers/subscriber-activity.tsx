@@ -23,7 +23,7 @@ const getInitialFilters = (subscriberId: string, dateRange: string): ActivityFil
   workflows: [],
   topicKey: '',
   severity: [],
-  contextSearch: '',
+  contextKeys: '',
 });
 
 export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) => {
@@ -67,7 +67,7 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
       filters.workflows.length > 0 ||
       filters.transactionId !== defaultActivityFilters.transactionId ||
       filters.topicKey !== defaultActivityFilters.topicKey ||
-      filters.contextSearch !== defaultActivityFilters.contextSearch
+      filters.contextKeys !== defaultActivityFilters.contextKeys
     );
   }, [filters]);
 
@@ -96,8 +96,8 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
       params.set('severity', filters.severity.join(','));
     }
 
-    if (filters.contextSearch) {
-      params.set('contextSearch', filters.contextSearch);
+    if (filters.contextKeys) {
+      params.set('contextKeys', filters.contextKeys);
     }
 
     return params;
