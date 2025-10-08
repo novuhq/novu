@@ -685,10 +685,11 @@ export class AddJob {
         }
       );
     } else if (isRegularOutput(outputs)) {
+      const regularOutputs = outputs as { amount?: number; unit?: string };
       metadata = {
         type: DelayTypeEnum.REGULAR,
-        amount: outputs?.amount || 0,
-        unit: outputs.unit ? castUnitToDigestUnitEnum(outputs?.unit) : undefined,
+        amount: regularOutputs?.amount || 0,
+        unit: regularOutputs.unit ? castUnitToDigestUnitEnum(regularOutputs?.unit) : undefined,
       } as IDelayRegularMetadata;
 
       await this.jobRepository.updateOne(
@@ -912,11 +913,11 @@ export class AddJob {
 
   private getBridgeNextCronDate(bridgeResponse: ExecuteOutput | null, timezone?: string): Date | null {
     const outputs = bridgeResponse?.outputs as DigestOutput | DelayOutput;
-    if (!isTimedOutput(outputs)) {
+    if (!isTimedOutput(outputs) || !outputs.cron) {
       return null;
     }
 
-    const bridgeAmountExpression = parseCronExpression(outputs?.cron, { tz: timezone });
+    const bridgeAmountExpression = parseCronExpression(outputs.cron, { tz: timezone });
     const bridgeAmountDate = bridgeAmountExpression.next();
 
     return bridgeAmountDate.toDate();
