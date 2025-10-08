@@ -11,9 +11,9 @@ import {
   IWorkflowStepMetadata,
 } from '@novu/shared';
 import { differenceInMilliseconds } from 'date-fns';
-
 import { getNestedValue } from '../../utils';
 import { isRegularDigest } from '../../utils/digest';
+import { DurationUtils } from '../../utils/duration-utils';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 
 export class ComputeJobWaitDurationService {
@@ -59,7 +59,7 @@ export class ComputeJobWaitDurationService {
         throw new BadRequestException(`Dynamic delay key '${dynamicKey}' not found in payload`);
       }
 
-      if (typeof value === 'string' && this.isISO8601(value)) {
+      if (typeof value === 'string' && DurationUtils.isISO8601(value)) {
         const targetTime = new Date(value).getTime();
         const now = Date.now();
         const delay = targetTime - now;
@@ -70,19 +70,19 @@ export class ComputeJobWaitDurationService {
 
         return delay;
       }
+
       if (typeof value === 'object' && value !== null && 'unit' in value && 'amount' in value) {
         const durationObj = value as { unit: string; amount: number };
-        const unit = this.castUnitToDigestUnitEnum(durationObj.unit);
-
-        if (!unit) {
-          throw new BadRequestException(`Invalid time unit '${durationObj.unit}' in dynamic delay`);
-        }
 
         if (typeof durationObj.amount !== 'number' || durationObj.amount < 0) {
           throw new BadRequestException(`Invalid amount '${durationObj.amount}' in dynamic delay`);
         }
 
-        return this.toMilliseconds(durationObj.amount, unit);
+        try {
+          return DurationUtils.convertToMilliseconds(durationObj.amount, durationObj.unit);
+        } catch {
+          throw new BadRequestException(`Invalid time unit '${durationObj.unit}' in dynamic delay`);
+        }
       }
 
       throw new BadRequestException(
@@ -163,35 +163,5 @@ export class ComputeJobWaitDurationService {
     const includesValidDelayUnit = digestUnits.includes(overrides.delay.unit as unknown as DigestUnitEnum);
 
     return isDelayAmountANumber && includesValidDelayUnit;
-  }
-
-  private isISO8601(value: string): boolean {
-    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?$/;
-    if (!iso8601Regex.test(value)) {
-      return false;
-    }
-
-    const date = new Date(value);
-
-    return !Number.isNaN(date.getTime());
-  }
-
-  private castUnitToDigestUnitEnum(unit: string): DigestUnitEnum | undefined {
-    switch (unit) {
-      case 'seconds':
-        return DigestUnitEnum.SECONDS;
-      case 'minutes':
-        return DigestUnitEnum.MINUTES;
-      case 'hours':
-        return DigestUnitEnum.HOURS;
-      case 'days':
-        return DigestUnitEnum.DAYS;
-      case 'weeks':
-        return DigestUnitEnum.WEEKS;
-      case 'months':
-        return DigestUnitEnum.MONTHS;
-      default:
-        return undefined;
-    }
   }
 }

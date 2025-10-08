@@ -127,6 +127,12 @@ export interface IDelayScheduledMetadata {
   delayPath: string;
 }
 
+export interface IDelayTimedMetadata {
+  type: DelayTypeEnum.TIMED;
+  amount: number;
+  unit: DigestUnitEnum;
+}
+
 export interface IDelayDynamicMetadata {
   type: DelayTypeEnum.DYNAMIC;
   dynamicKey: string;
@@ -149,5 +155,6 @@ export type IWorkflowStepMetadata =
   | IDigestTimedMetadata
   | IDelayRegularMetadata
   | IDelayScheduledMetadata
+  | IDelayTimedMetadata
   | IDelayDynamicMetadata
   | IThrottleMetadata;
