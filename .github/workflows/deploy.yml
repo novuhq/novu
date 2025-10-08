@@ -128,7 +128,28 @@ jobs:
                 service_name=$(echo "$worker_service" | jq -r '.service')
                 task_name=$(echo "$worker_service" | jq -r '.task_name')
                 image=$(echo "$worker_service" | jq -r '.image')
-                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                
+                # Check if service has environments filter, otherwise deploy to all
+                allowed_envs=$(echo "$worker_service" | jq -r '.environments // empty')
+                should_deploy=false
+                
+                if [ -z "$allowed_envs" ]; then
+                  # No environment filter, deploy to all environments
+                  should_deploy=true
+                else
+                  # Check if any of the selected environments match the allowed environments
+                  for env in "${envs[@]}"; do
+                    env_clean=$(echo "$env" | tr -d '"')
+                    if echo "$allowed_envs" | jq -e --arg env "$env_clean" 'index($env) != null' > /dev/null; then
+                      should_deploy=true
+                      break
+                    fi
+                  done
+                fi
+                
+                if [ "$should_deploy" == "true" ]; then
+                  deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                fi
               done
             elif [ "$service" == "\"api\"" ]; then
               for api_service in $(echo "$API_SERVICE" | jq -c '.[]'); do
@@ -137,7 +158,28 @@ jobs:
                 service_name=$(echo "$api_service" | jq -r '.service')
                 task_name=$(echo "$api_service" | jq -r '.task_name')
                 image=$(echo "$api_service" | jq -r '.image')
-                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                
+                # Check if service has environments filter, otherwise deploy to all
+                allowed_envs=$(echo "$api_service" | jq -r '.environments // empty')
+                should_deploy=false
+                
+                if [ -z "$allowed_envs" ]; then
+                  # No environment filter, deploy to all environments
+                  should_deploy=true
+                else
+                  # Check if any of the selected environments match the allowed environments
+                  for env in "${envs[@]}"; do
+                    env_clean=$(echo "$env" | tr -d '"')
+                    if echo "$allowed_envs" | jq -e --arg env "$env_clean" 'index($env) != null' > /dev/null; then
+                      should_deploy=true
+                      break
+                    fi
+                  done
+                fi
+                
+                if [ "$should_deploy" == "true" ]; then
+                  deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                fi
               done
             elif [ "$service" == "\"ws\"" ]; then
               cluster_name=ws-cluster
