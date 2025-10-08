@@ -10,6 +10,7 @@ import {
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import {
   CacheService,
   FeatureFlagsService,
@@ -21,6 +22,7 @@ import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/
 import { createHash } from 'crypto';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { EXCLUDE_FROM_IDEMPOTENCY } from './exclude-from-idempotency';
 
 const IDEMPOTENCY_CACHE_TTL = 60 * 60 * 24; // 24h
 const IDEMPOTENCY_PROGRESS_TTL = 60 * 5; // 5min
@@ -38,6 +40,7 @@ const ALLOWED_METHODS = ['post', 'patch'];
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
   constructor(
+    private readonly reflector: Reflector,
     private readonly cacheService: CacheService,
     private featureFlagService: FeatureFlagsService,
     private logger: PinoLogger
@@ -46,6 +49,14 @@ export class IdempotencyInterceptor implements NestInterceptor {
   }
 
   protected async isEnabled(context: ExecutionContext): Promise<boolean> {
+    const isExcluded = this.reflector.getAllAndOverride<boolean>(EXCLUDE_FROM_IDEMPOTENCY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isExcluded) {
+      return false;
+    }
+
     const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
     if (!isAllowedAuthScheme) {
       return true;

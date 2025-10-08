@@ -26,7 +26,7 @@ type Fields =
   | 'subscriberId'
   | 'topicKey'
   | 'severity'
-  | 'contextSearch';
+  | 'contextKeys';
 
 export type ActivityFilters = {
   filters: ActivityFiltersData;
@@ -179,14 +179,14 @@ export function ActivityFilters({
         />
       )}
 
-      {!hide.includes('contextSearch') && isContextEnabled && (
+      {!hide.includes('contextKeys') && isContextEnabled && (
         <FacetedFormFilter
           type="text"
           size="small"
           title="Context"
-          value={filters.contextSearch}
-          onChange={(value) => onFiltersChange({ ...filters, contextSearch: value })}
-          placeholder="Search by type, ID, or 'type:id'"
+          value={filters.contextKeys}
+          onChange={(value) => onFiltersChange({ ...filters, contextKeys: value })}
+          placeholder="e.g., tenant:org-123, region:us-east-1"
         />
       )}
 

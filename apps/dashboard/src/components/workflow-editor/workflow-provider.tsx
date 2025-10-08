@@ -13,6 +13,7 @@ import {
 } from '@/components/primitives/alert-dialog';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useBeforeUnload } from '@/hooks/use-before-unload';
+import { useDataRef } from '@/hooks/use-data-ref';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useInvocationQueue } from '@/hooks/use-invocation-queue';
 import { usePatchWorkflow } from '@/hooks/use-patch-workflow';
@@ -65,6 +66,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const { workflow, isPending, error } = useFetchWorkflow({
     workflowSlug,
   });
+  const workflowRef = useDataRef<WorkflowResponseDto | undefined>(workflow);
 
   const getStep = useCallback(() => {
     return workflow?.steps.find(
@@ -139,15 +141,16 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
   const update = useCallback(
     (data: UpdateWorkflowDto, options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }) => {
-      if (workflow) {
+      const currentWorkflow = workflowRef.current;
+      if (currentWorkflow) {
         enqueue(async () => {
-          const res = await updateWorkflow({ workflowSlug: workflow.slug, workflow: { ...data } });
+          const res = await updateWorkflow({ workflowSlug: currentWorkflow.slug, workflow: { ...data } });
           options?.onSuccess?.(res);
           return res;
         });
       }
     },
-    [enqueue, updateWorkflow, workflow]
+    [enqueue, updateWorkflow, workflowRef]
   );
 
   const { optimisticWorkflow, optimisticAddStep, optimisticRemoveStep, optimisticReorderSteps, hasPendingOperations } =
@@ -179,11 +182,12 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
   const patch = useCallback(
     (data: PatchWorkflowDto) => {
-      if (workflow) {
-        enqueue(() => patchWorkflow({ workflowSlug: workflow.slug, workflow: { ...data } }));
+      const currentWorkflow = workflowRef.current;
+      if (currentWorkflow) {
+        enqueue(() => patchWorkflow({ workflowSlug: currentWorkflow.slug, workflow: { ...data } }));
       }
     },
-    [enqueue, patchWorkflow, workflow]
+    [enqueue, patchWorkflow, workflowRef]
   );
 
   useLayoutEffect(() => {

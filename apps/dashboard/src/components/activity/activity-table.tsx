@@ -143,12 +143,12 @@ export function ActivityTable({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex flex-1 flex-col overflow-hidden"
+          className="flex flex-1 flex-col h-full"
         >
           <Table
             isLoading={isLoading}
             loadingRow={<SkeletonRow />}
-            containerClassname="flex-1 overflow-y-auto border-0 shadow-none rounded-none bg-transparent h-full w-full shadow-xs flex h-full flex-col overflow-hidden rounded-lg border bg-white"
+            containerClassname="bg-transparent w-full flex flex-col overflow-y-auto overflow-x-hidden max-h-full rounded-lg border border-neutral-200 bg-white"
           >
             <TableHeader>
               <TableRow>

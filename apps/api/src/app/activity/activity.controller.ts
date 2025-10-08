@@ -95,7 +95,7 @@ export class ActivityController {
       environment: { _id: user.environmentId },
     });
 
-    const contextSearchQuery: string | undefined = isContextEnabled ? query.contextSearch : undefined;
+    const contextKeysQuery: string[] | undefined = isContextEnabled ? query.contextKeys : undefined;
 
     return this.getWorkflowRunsUsecase.execute(
       GetWorkflowRunsCommand.create({
@@ -103,7 +103,7 @@ export class ActivityController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
-        contextSearch: contextSearchQuery,
+        contextKeys: contextKeysQuery,
       })
     );
   }

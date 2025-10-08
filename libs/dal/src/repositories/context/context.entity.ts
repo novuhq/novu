@@ -1,4 +1,4 @@
-import { Context, ContextData, ContextId, ContextKey, ContextType } from '@novu/shared';
+import { Context, ContextData, ContextId, ContextType } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -12,7 +12,7 @@ export class ContextEntity implements Context {
   type: ContextType;
   data: ContextData;
 
-  key: ContextKey;
+  key: string;
 
   createdAt: string;
   updatedAt: string;
