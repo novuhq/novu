@@ -94,36 +94,13 @@ This script relies on native `clickhouse-migrations` environment variables:
 - `CH_MIGRATIONS_USER` - Database username
 - `CH_MIGRATIONS_PASSWORD` - Database password
 - `CH_MIGRATIONS_DB` - Target database name
-- `CH_MIGRATIONS_HOME` - Migrations directory (optional, defaults to `./clickhouse-migrations`)
-
-**Optional variables:**
-- `CH_MIGRATIONS_DB_ENGINE` - DB engine (e.g., `Atomic`)
-- `CH_MIGRATIONS_TIMEOUT` - Client request timeout
-- `CH_MIGRATIONS_CA_CERT` - CA certificate file path (for TLS)
-- `CH_MIGRATIONS_CERT` - Client certificate file path (for TLS)
-- `CH_MIGRATIONS_KEY` - Client key file path (for TLS)
+- `CH_MIGRATIONS_HOME` - Migrations directory (optional, defaults to `./migrations/clickhouse-migrations`)
 
 These should be set in your deployment environment (GitHub Actions secrets, Kubernetes secrets, etc.).
 
 ## CI/CD Integration
 
 Migrations run automatically in CI/CD before deployments using `pnpm run clickhouse:migrate:prod`:
-
-1. **Staging**: Migrations run before deploying to staging environment
-2. **Production**: Migrations run before deploying to production (US/EU)
-
-The CI workflow:
-- Checks out the code
-- Installs dependencies
-- Sets `CH_MIGRATIONS_*` environment variables from secrets
-- Runs `pnpm run clickhouse:migrate:prod`
-- Only proceeds with deployment if migrations succeed
-
-**Required CI/CD Environment Variables:**
-- `CH_MIGRATIONS_HOST`
-- `CH_MIGRATIONS_USER`
-- `CH_MIGRATIONS_PASSWORD`
-- `CH_MIGRATIONS_DB`
 
 ## Example Migration
 
