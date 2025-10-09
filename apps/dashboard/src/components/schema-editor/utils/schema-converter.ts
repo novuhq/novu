@@ -28,17 +28,26 @@ export function convertSchemaToPropertyList(
       }
     }
 
-    // Handle object types with properties
-    if (definition.type === 'object' && definition.properties) {
+    // Handle object types with properties (check normalized type)
+    if (definitionForListItem.type === 'object' && definition.properties) {
       nestedPropertyList = convertSchemaToPropertyList(definition.properties, definition.required);
       delete definitionForListItem.properties;
     }
 
-    // Handle array types with object items that have properties
-    if (isArrayWithObjectItems(definition)) {
+    // Handle array types with object items that have properties (check normalized type)
+    if (definitionForListItem.type === 'array' && definition.items) {
       const items = definition.items as JSONSchema7;
 
-      if (items.type === 'object' && items.properties) {
+      // Normalize item type if it's nullable
+      let itemType = items.type;
+      if (Array.isArray(items.type) && items.type.includes('null')) {
+        const nonNullTypes = items.type.filter((t) => t !== 'null');
+        if (nonNullTypes.length > 0) {
+          itemType = nonNullTypes[0];
+        }
+      }
+
+      if (itemType === 'object' && items.properties) {
         const itemsPropertyList = convertSchemaToPropertyList(items.properties, items.required);
         definitionForListItem.items = {
           ...items,
