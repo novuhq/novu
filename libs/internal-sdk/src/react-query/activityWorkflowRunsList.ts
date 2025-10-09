@@ -99,6 +99,7 @@ export function setActivityWorkflowRunsListData(
       createdGte?: string | undefined;
       createdLte?: string | undefined;
       severity?: Array<operations.Severity> | undefined;
+      contextKeys?: Array<string> | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -124,6 +125,7 @@ export function invalidateActivityWorkflowRunsList(
       createdGte?: string | undefined;
       createdLte?: string | undefined;
       severity?: Array<operations.Severity> | undefined;
+      contextKeys?: Array<string> | undefined;
       idempotencyKey?: string | undefined;
     }]
   >,
@@ -168,6 +170,7 @@ export function buildActivityWorkflowRunsListQuery(
       createdGte: request.createdGte,
       createdLte: request.createdLte,
       severity: request.severity,
+      contextKeys: request.contextKeys,
       idempotencyKey: request.idempotencyKey,
     }),
     queryFn: async function activityWorkflowRunsListQueryFn(
@@ -201,6 +204,7 @@ export function queryKeyActivityWorkflowRunsList(
     createdGte?: string | undefined;
     createdLte?: string | undefined;
     severity?: Array<operations.Severity> | undefined;
+    contextKeys?: Array<string> | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {

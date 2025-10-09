@@ -8,64 +8,65 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { translationsDelete } from "../funcs/translationsDelete.js";
+import { activityTrack } from "../funcs/activityTrack.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
+import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type TranslationsDeleteMutationVariables = {
-  request: operations.TranslationControllerDeleteTranslationEndpointRequest;
+export type ActivityTrackMutationVariables = {
+  request: operations.InboundWebhooksControllerHandleWebhookRequest;
   options?: RequestOptions;
 };
 
-export type TranslationsDeleteMutationData = void;
+export type ActivityTrackMutationData = Array<components.WebhookResultDto>;
 
 /**
- * Delete a translation
+ * Track activity and engagement events
  *
  * @remarks
- * Delete a specific translation by resource type, resource ID and locale
+ * Track activity and engagement events for a specific delivery provider
  */
-export function useTranslationsDeleteMutation(
+export function useActivityTrackMutation(
   options?: MutationHookOptions<
-    TranslationsDeleteMutationData,
+    ActivityTrackMutationData,
     Error,
-    TranslationsDeleteMutationVariables
+    ActivityTrackMutationVariables
   >,
 ): UseMutationResult<
-  TranslationsDeleteMutationData,
+  ActivityTrackMutationData,
   Error,
-  TranslationsDeleteMutationVariables
+  ActivityTrackMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildTranslationsDeleteMutation(client, options),
+    ...buildActivityTrackMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyTranslationsDelete(): MutationKey {
-  return ["@novu/api", "Translations", "delete"];
+export function mutationKeyActivityTrack(): MutationKey {
+  return ["@novu/api", "Activity", "track"];
 }
 
-export function buildTranslationsDeleteMutation(
+export function buildActivityTrackMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: TranslationsDeleteMutationVariables,
-  ) => Promise<TranslationsDeleteMutationData>;
+    variables: ActivityTrackMutationVariables,
+  ) => Promise<ActivityTrackMutationData>;
 } {
   return {
-    mutationKey: mutationKeyTranslationsDelete(),
-    mutationFn: function translationsDeleteMutationFn({
+    mutationKey: mutationKeyActivityTrack(),
+    mutationFn: function activityTrackMutationFn({
       request,
       options,
-    }): Promise<TranslationsDeleteMutationData> {
+    }): Promise<ActivityTrackMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -78,7 +79,7 @@ export function buildTranslationsDeleteMutation(
           ),
         },
       };
-      return unwrapAsync(translationsDelete(
+      return unwrapAsync(activityTrack(
         client$,
         request,
         mergedOptions,
