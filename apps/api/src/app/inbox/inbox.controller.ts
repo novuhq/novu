@@ -27,6 +27,7 @@ import { TriggerEventRequestDto } from '../events/dtos';
 import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
 import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
 import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
+import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
@@ -82,6 +83,7 @@ import type { InboxNotification, InboxPreference } from './utils/types';
 @ApiCommonResponses()
 @Controller('/inbox')
 @ApiExcludeController()
+@ExcludeFromIdempotency()
 export class InboxController {
   constructor(
     private initializeSessionUsecase: Session,

@@ -1,5 +1,5 @@
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import { ContextKey, ITenantDefine } from '@novu/shared';
+import { ITenantDefine } from '@novu/shared';
 import { IsArray, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { TriggerEventBroadcastCommand } from '../trigger-event';
@@ -17,7 +17,7 @@ export class TriggerBroadcastCommand extends TriggerEventBroadcastCommand {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  contextKeys?: ContextKey[];
+  contextKeys?: string[];
 
   @IsDefined()
   @IsString()

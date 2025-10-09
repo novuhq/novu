@@ -42,8 +42,9 @@ export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   topicKey?: string;
 
   @IsOptional()
-  @IsString()
-  contextSearch?: string;
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 
   @IsOptional()
   @IsArray()

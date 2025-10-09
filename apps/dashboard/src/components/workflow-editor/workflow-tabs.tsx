@@ -6,11 +6,10 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
 import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -20,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ToastClose, ToastIcon } from '../primitives/sonner';
 import { showErrorToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
+import { getInitialPayload } from './steps/utils/preview-context-storage.utils';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
 import { WorkflowActivity } from './workflow-activity';
 import { WorkflowCanvas } from './workflow-canvas';
@@ -33,10 +33,7 @@ export const WorkflowTabs = () => {
   const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
 
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
-  const { getInitialPayload } = useWorkflowPayloadPersistence({
-    workflowId: workflow?.workflowId || '',
-    environmentId: currentEnvironment?._id || '',
-  });
+  const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 
   // API key management
   const has = useHasPermission();
@@ -49,13 +46,13 @@ export const WorkflowTabs = () => {
   };
 
   const handleCopyPostmanCollection = useCallback(async () => {
-    if (!workflow?.workflowId || !currentUser) {
+    if (!workflow?.workflowId || !currentUser || !currentEnvironment?._id) {
       showErrorToast('Workflow information or user is missing');
       return;
     }
 
     try {
-      const payload = getInitialPayload(workflow);
+      const payload = getInitialPayload(workflow.workflowId, currentEnvironment._id, workflow, isPayloadSchemaEnabled);
       const subscriberData = {
         subscriberId: currentUser._id,
         firstName: currentUser.firstName ?? undefined,
@@ -90,16 +87,16 @@ export const WorkflowTabs = () => {
     } catch {
       showErrorToast('Failed to copy Postman collection', 'Postman Error');
     }
-  }, [workflow, currentUser, apiKey, getInitialPayload]);
+  }, [workflow, currentUser, currentEnvironment?._id, apiKey, isPayloadSchemaEnabled]);
 
   const handleCopyCurl = useCallback(async () => {
-    if (!workflow?.workflowId || !currentUser) {
+    if (!workflow?.workflowId || !currentUser || !currentEnvironment?._id) {
       showErrorToast('Workflow information or user is missing');
       return;
     }
 
     try {
-      const payload = getInitialPayload(workflow);
+      const payload = getInitialPayload(workflow.workflowId, currentEnvironment._id, workflow, isPayloadSchemaEnabled);
       const subscriberData = {
         subscriberId: currentUser._id,
         firstName: currentUser.firstName ?? undefined,
@@ -130,16 +127,21 @@ export const WorkflowTabs = () => {
     } catch {
       showErrorToast('Failed to copy cURL command', 'Copy Error');
     }
-  }, [workflow, currentUser, apiKey, getInitialPayload]);
+  }, [workflow, currentUser, currentEnvironment?._id, apiKey, isPayloadSchemaEnabled]);
 
   const handleFireAndForget = useCallback(async () => {
-    if (!workflow || !currentUser) {
+    if (!workflow || !currentUser || !currentEnvironment?._id) {
       showErrorToast('Workflow or user information is missing');
       return;
     }
 
     try {
-      const payload = getInitialPayload(workflow);
+      const payload = getInitialPayload(
+        workflow.workflowId ?? '',
+        currentEnvironment._id,
+        workflow,
+        isPayloadSchemaEnabled
+      );
       const subscriberData = {
         subscriberId: currentUser._id,
         firstName: currentUser.firstName ?? undefined,
@@ -257,7 +259,7 @@ export const WorkflowTabs = () => {
         'Failed to trigger workflow'
       );
     }
-  }, [workflow, currentUser, triggerWorkflow, getInitialPayload, navigate, currentEnvironment]);
+  }, [workflow, currentUser, currentEnvironment, triggerWorkflow, navigate, isPayloadSchemaEnabled]);
 
   // Determine current tab based on URL
   const currentTab = activityMatch ? 'activity' : 'workflow';

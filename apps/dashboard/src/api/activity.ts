@@ -10,7 +10,7 @@ export type ActivityFilters = {
   dateRange?: string;
   topicKey?: string;
   severity?: SeverityLevelEnum[];
-  contextSearch?: string;
+  contextKeys?: string;
 };
 
 export interface ActivityResponse {
@@ -232,8 +232,19 @@ export function getActivityList({
     searchParams.append('topicKey', filters.topicKey);
   }
 
-  if (filters?.contextSearch) {
-    searchParams.append('contextSearch', filters.contextSearch);
+  if (filters?.contextKeys) {
+    const contextKeys = filters.contextKeys
+      .split(',')
+      .map((key) => key.trim())
+      .filter(Boolean);
+
+    if (contextKeys.length > 1) {
+      for (const key of contextKeys) {
+        searchParams.append('contextKeys', key);
+      }
+    } else if (contextKeys.length === 1) {
+      searchParams.append('contextKeys', contextKeys[0]);
+    }
   }
 
   if (filters?.dateRange) {
@@ -336,8 +347,19 @@ export async function getWorkflowRunsList({
     }
   }
 
-  if (filters?.contextSearch) {
-    searchParams.append('contextSearch', filters.contextSearch);
+  if (filters?.contextKeys) {
+    const contextKeys = filters.contextKeys
+      .split(',')
+      .map((key) => key.trim())
+      .filter(Boolean);
+
+    if (contextKeys.length > 1) {
+      for (const key of contextKeys) {
+        searchParams.append('contextKeys', key);
+      }
+    } else if (contextKeys.length === 1) {
+      searchParams.append('contextKeys', contextKeys[0]);
+    }
   }
 
   const response = await get<GetWorkflowRunsResponseDto>(`/activity/workflow-runs?${searchParams.toString()}`, {

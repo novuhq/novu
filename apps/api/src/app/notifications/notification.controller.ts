@@ -94,7 +94,7 @@ export class NotificationsController {
       environment: { _id: user.environmentId },
     });
 
-    const contextSearchQuery: string | undefined = isContextEnabled ? query.contextSearch : undefined;
+    const contextKeysQuery: string[] | undefined = isContextEnabled ? query.contextKeys : undefined;
 
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
@@ -113,7 +113,7 @@ export class NotificationsController {
         severity: severityQuery,
         after: query.after,
         before: query.before,
-        contextSearch: contextSearchQuery,
+        contextKeys: contextKeysQuery,
       })
     );
   }

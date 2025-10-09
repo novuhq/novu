@@ -1,6 +1,3 @@
-import { ReactNode } from 'react';
-import { IconType } from 'react-icons';
-import { RiAlertFill } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import {
   Dialog,
@@ -12,6 +9,9 @@ import {
   DialogPortal,
   DialogTitle,
 } from '@/components/primitives/dialog';
+import { ReactNode } from 'react';
+import { IconType } from 'react-icons';
+import { RiAlertFill } from 'react-icons/ri';
 
 type ConfirmationModalProps = {
   open: boolean;

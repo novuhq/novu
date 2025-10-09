@@ -20,7 +20,6 @@ import {
   NormalizeVariables,
   ProcessTenant,
   RedisThrottleService,
-  ResolveContextFromKeys,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -191,7 +190,6 @@ const USE_CASES = [
   ExecuteBridgeJob,
   GetPreferences,
   WorkflowRunService,
-  ResolveContextFromKeys,
   GetSubscriberSchedule,
 ];
 

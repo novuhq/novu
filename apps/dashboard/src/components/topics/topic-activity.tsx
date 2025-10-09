@@ -23,7 +23,7 @@ const getInitialFilters = (topicKey: string, dateRange: string): ActivityFilters
   workflows: [],
   topicKey,
   severity: [],
-  contextSearch: '',
+  contextKeys: '',
 });
 
 export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
@@ -67,7 +67,7 @@ export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
       filters.workflows.length > 0 ||
       filters.transactionId !== defaultActivityFilters.transactionId ||
       (filters.subscriberId !== defaultActivityFilters.subscriberId && filters.subscriberId !== '') ||
-      filters.contextSearch !== defaultActivityFilters.contextSearch
+      filters.contextKeys !== defaultActivityFilters.contextKeys
     );
   }, [filters]);
 
@@ -96,8 +96,8 @@ export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
       params.set('severity', filters.severity.join(','));
     }
 
-    if (filters.contextSearch) {
-      params.set('contextSearch', filters.contextSearch);
+    if (filters.contextKeys) {
+      params.set('contextKeys', filters.contextKeys);
     }
 
     return params;

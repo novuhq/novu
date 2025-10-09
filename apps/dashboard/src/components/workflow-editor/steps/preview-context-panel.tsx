@@ -135,7 +135,6 @@ export function PreviewContextPanel({
     clearPersistedContext,
   } = usePersistedPreviewContext({
     workflowId: workflow?.workflowId || '',
-    stepId: currentStepId || '',
     environmentId: currentEnvironment?._id || '',
   });
 
@@ -187,11 +186,21 @@ export function PreviewContextPanel({
   // Initialize default subscriber data if none exists (after data initialization)
   useEffect(() => {
     if (!isOrgSettingsLoading && previewContext.subscriber && Object.keys(previewContext.subscriber).length === 0) {
-      // No subscriber data exists, create default
-      const defaultSubscriber = createDefaultSubscriberData();
-      updatePreviewSection('subscriber', defaultSubscriber);
+      // Check if persisted data exists in localStorage before creating defaults
+      const persistedSubscriber = loadPersistedSubscriber();
+      if (!persistedSubscriber || Object.keys(persistedSubscriber).length === 0) {
+        // No persisted data exists, create default
+        const defaultSubscriber = createDefaultSubscriberData();
+        updatePreviewSection('subscriber', defaultSubscriber);
+      }
     }
-  }, [isOrgSettingsLoading, previewContext.subscriber, updatePreviewSection, createDefaultSubscriberData]);
+  }, [
+    isOrgSettingsLoading,
+    previewContext.subscriber,
+    updatePreviewSection,
+    createDefaultSubscriberData,
+    loadPersistedSubscriber,
+  ]);
 
   // Smart two-way locale synchronization
   useLocaleSynchronization({
@@ -217,25 +226,24 @@ export function PreviewContextPanel({
     [updatePreviewSection, selectedLocale, onLocaleChange]
   );
 
-  const handleClearPersistedPayload = () => {
+  const handleClearPersistedPayload = useCallback(() => {
     clearPersistedPayload();
 
-    // Reset payload to server defaults if available
     const newPayload: PayloadData =
       workflow?.payloadExample && isPayloadSchemaEnabled ? (workflow.payloadExample as PayloadData) : {};
 
     updatePreviewSection('payload', newPayload);
-  };
+  }, [clearPersistedPayload, workflow?.payloadExample, isPayloadSchemaEnabled, updatePreviewSection]);
 
-  const handleClearPersistedSubscriber = () => {
+  const handleClearPersistedSubscriber = useCallback(() => {
     clearPersistedSubscriber();
     updatePreviewSection('subscriber', createDefaultSubscriberData());
-  };
+  }, [clearPersistedSubscriber, updatePreviewSection, createDefaultSubscriberData]);
 
-  const handleClearPersistedContext = () => {
+  const handleClearPersistedContext = useCallback(() => {
     clearPersistedContext();
     updatePreviewSection('context', null);
-  };
+  }, [clearPersistedContext, updatePreviewSection]);
 
   const canClearPersisted = !!(workflow?.workflowId && currentStepId && currentEnvironment?._id);
 

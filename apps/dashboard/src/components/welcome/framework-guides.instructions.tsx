@@ -1,5 +1,6 @@
+import { API_HOSTNAME, IS_EU } from '@/config';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
-import { API_HOSTNAME, IS_EU, WEBSOCKET_HOSTNAME } from '@/config';
 import { Language } from '../primitives/code-block';
 import { getFrameworkPrompt } from './ai-prompts/simple-prompt-getter';
 
@@ -26,7 +27,8 @@ export interface InstallationStep {
 }
 
 const isDefaultApi = API_HOSTNAME === 'https://api.novu.co';
-const isDefaultWs = WEBSOCKET_HOSTNAME === 'https://ws.novu.co';
+const currentWebSocketHostname = apiHostnameManager.getWebSocketHostname();
+const isDefaultWs = currentWebSocketHostname === 'https://ws.novu.co';
 
 // Convert https:// to wss:// for WebSocket URLs
 const getWebSocketUrl = (url: string) => {
@@ -34,10 +36,10 @@ const getWebSocketUrl = (url: string) => {
   return url.replace(/^https:\/\//, 'wss://');
 };
 
-const websocketUrl = getWebSocketUrl(WEBSOCKET_HOSTNAME);
+const websocketUrl = getWebSocketUrl(currentWebSocketHostname);
 
 // Shared helpers to minimize duplication
-const cliFlags = `${isDefaultApi && IS_EU ? ' --region=eu' : ''}${!isDefaultApi ? ` --backendUrl ${API_HOSTNAME}` : ''}${!isDefaultWs ? ` --socketUrl ${WEBSOCKET_HOSTNAME}` : ''}`;
+const cliFlags = `${isDefaultApi && IS_EU ? ' --region=eu' : ''}${!isDefaultApi ? ` --backendUrl ${API_HOSTNAME}` : ''}${!isDefaultWs ? ` --socketUrl ${currentWebSocketHostname}` : ''}`;
 
 function optionalAttrProps(indent: string): string {
   return `${!isDefaultApi ? `\n${indent}${`backendUrl="${API_HOSTNAME}"`}` : ''}${!isDefaultWs ? `\n${indent}${`socketUrl="${websocketUrl}"`}` : ''}`;

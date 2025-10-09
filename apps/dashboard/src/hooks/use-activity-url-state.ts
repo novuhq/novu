@@ -49,9 +49,13 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
     result.severity = severity as SeverityLevelEnum[];
   }
 
-  const contextSearch = searchParams.get('contextSearch');
-  if (contextSearch) {
-    result.contextSearch = contextSearch;
+  const contextKey = searchParams.get('contextKeys');
+  const contextKeys = searchParams.getAll('contextKeys');
+
+  if (contextKeys.length > 1) {
+    result.contextKeys = contextKeys.join(',');
+  } else if (contextKey) {
+    result.contextKeys = contextKey;
   }
 
   return result;
@@ -68,7 +72,7 @@ function parseFilterValues(searchParams: URLSearchParams): ActivityFiltersData {
     subscriberId: searchParams.get('subscriberId') || '',
     topicKey: searchParams.get('topicKey') || '',
     severity: (searchParams.get('severity')?.split(',').filter(Boolean) as SeverityLevelEnum[]) || [],
-    contextSearch: searchParams.get('contextSearch') || '',
+    contextKeys: searchParams.get('contextKeys') || '',
   };
 }
 
@@ -148,8 +152,8 @@ export function useActivityUrlState(): ActivityUrlState & {
         newParams.set('severity', data.severity.join(','));
       }
 
-      if (data.contextSearch) {
-        newParams.set('contextSearch', data.contextSearch);
+      if (data.contextKeys) {
+        newParams.set('contextKeys', data.contextKeys);
       }
 
       setSearchParams(newParams, { replace: true });
