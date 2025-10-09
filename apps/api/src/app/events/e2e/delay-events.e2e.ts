@@ -1,4 +1,5 @@
 import { Novu } from '@novu/api';
+import { CreateWorkflowDto, WorkflowCreationSourceEnum } from '@novu/api/models/components';
 import { JobRepository, JobStatusEnum, MessageRepository, SubscriberEntity } from '@novu/dal';
 import { DelayTypeEnum, DigestTypeEnum, DigestUnitEnum, JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
@@ -286,31 +287,43 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
 
   describe('Dynamic Delay', () => {
     it('should delay execution based on ISO-8601 timestamp from payload', async () => {
-      const template = await session.createTemplate({
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Dynamic Delay ISO-8601 Test',
+        workflowId: 'dynamic-delay-iso-test',
+        source: WorkflowCreationSourceEnum.Dashboard,
         steps: [
           {
             type: StepTypeEnum.IN_APP,
-            content: 'Before delay' as string,
+            name: 'Before delay',
+            controlValues: {
+              body: 'Before delay',
+            },
           },
           {
             type: StepTypeEnum.DELAY,
-            content: '',
-            metadata: {
+            name: 'Dynamic Delay',
+            controlValues: {
               type: DelayTypeEnum.DYNAMIC,
               dynamicKey: 'payload.scheduledTime',
             },
           },
           {
             type: StepTypeEnum.IN_APP,
-            content: 'After delay' as string,
+            name: 'After delay',
+            controlValues: {
+              body: 'After delay',
+            },
           },
         ],
-      });
+      };
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      const workflow = createResponse.body.data;
 
       const futureTime = addSeconds(new Date(), 2);
 
       await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
+        workflowId: workflow.workflowId,
         to: [subscriber.subscriberId],
         payload: {
           scheduledTime: futureTime.toISOString(),
@@ -324,7 +337,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
         jobRepository,
         query: {
           _environmentId: session.environment._id,
-          _templateId: template._id,
+          _templateId: workflow._id,
           type: StepTypeEnum.DELAY,
         },
         timeout: 5000,
@@ -339,7 +352,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
       const messagesBefore = await messageRepository.find({
         _environmentId: session.environment._id,
         _subscriberId: subscriber._id,
-        channel: StepTypeEnum.IN_APP,
+        channel: 'in_app' as any,
       });
 
       expect(messagesBefore.length).to.equal(1);
@@ -347,29 +360,41 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     });
 
     it('should delay execution based on duration object from payload', async () => {
-      const template = await session.createTemplate({
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Dynamic Delay Duration Test',
+        workflowId: 'dynamic-delay-duration-test',
+        source: WorkflowCreationSourceEnum.Dashboard,
         steps: [
           {
             type: StepTypeEnum.IN_APP,
-            content: 'Before delay' as string,
+            name: 'Before delay',
+            controlValues: {
+              body: 'Before delay',
+            },
           },
           {
             type: StepTypeEnum.DELAY,
-            content: '',
-            metadata: {
+            name: 'Dynamic Delay',
+            controlValues: {
               type: DelayTypeEnum.DYNAMIC,
               dynamicKey: 'payload.delayWindow',
             },
           },
           {
             type: StepTypeEnum.IN_APP,
-            content: 'After delay' as string,
+            name: 'After delay',
+            controlValues: {
+              body: 'After delay',
+            },
           },
         ],
-      });
+      };
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      const workflow = createResponse.body.data;
 
       await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
+        workflowId: workflow.workflowId,
         to: [subscriber.subscriberId],
         payload: {
           delayWindow: {
@@ -386,8 +411,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
         jobRepository,
         query: {
           _environmentId: session.environment._id,
-          _templateId: template._id,
-          type: StepTypeEnum.DELAY,
+          _templateId: workflow._id,
+          type: 'delay' as any,
         },
         timeout: 5000,
       });
@@ -400,25 +425,34 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     });
 
     it('should fail when dynamic key is missing from payload', async () => {
-      const template = await session.createTemplate({
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Dynamic Delay Missing Key Test',
+        workflowId: 'dynamic-delay-missing-key-test',
+        source: WorkflowCreationSourceEnum.Dashboard,
         steps: [
           {
             type: StepTypeEnum.DELAY,
-            content: '',
-            metadata: {
+            name: 'Dynamic Delay',
+            controlValues: {
               type: DelayTypeEnum.DYNAMIC,
               dynamicKey: 'payload.scheduledTime',
             },
           },
           {
             type: StepTypeEnum.IN_APP,
-            content: 'Should not be sent' as string,
+            name: 'Should not be sent',
+            controlValues: {
+              body: 'Should not be sent',
+            },
           },
         ],
-      });
+      };
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      const workflow = createResponse.body.data;
 
       await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
+        workflowId: workflow.workflowId,
         to: [subscriber.subscriberId],
         payload: {
           otherField: 'value',
@@ -432,8 +466,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
         jobRepository,
         query: {
           _environmentId: session.environment._id,
-          _templateId: template._id,
-          type: StepTypeEnum.DELAY,
+          _templateId: workflow._id,
+          type: 'delay' as any,
         },
         timeout: 5000,
       });
@@ -443,27 +477,36 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     });
 
     it('should fail when dynamic delay timestamp is in the past', async () => {
-      const template = await session.createTemplate({
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Dynamic Delay Past Time Test',
+        workflowId: 'dynamic-delay-past-time-test',
+        source: WorkflowCreationSourceEnum.Dashboard,
         steps: [
           {
             type: StepTypeEnum.DELAY,
-            content: '',
-            metadata: {
+            name: 'Dynamic Delay',
+            controlValues: {
               type: DelayTypeEnum.DYNAMIC,
               dynamicKey: 'payload.scheduledTime',
             },
           },
           {
             type: StepTypeEnum.IN_APP,
-            content: 'Should not be sent' as string,
+            name: 'Should not be sent',
+            controlValues: {
+              body: 'Should not be sent',
+            },
           },
         ],
-      });
+      };
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      const workflow = createResponse.body.data;
 
       const pastTime = addSeconds(new Date(), -10);
 
       await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
+        workflowId: workflow.workflowId,
         to: [subscriber.subscriberId],
         payload: {
           scheduledTime: pastTime.toISOString(),
@@ -477,8 +520,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
         jobRepository,
         query: {
           _environmentId: session.environment._id,
-          _templateId: template._id,
-          type: StepTypeEnum.DELAY,
+          _templateId: workflow._id,
+          type: 'delay' as any,
         },
         timeout: 5000,
       });
@@ -488,25 +531,34 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     });
 
     it('should fail when dynamic delay value has invalid format', async () => {
-      const template = await session.createTemplate({
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Dynamic Delay Invalid Format Test',
+        workflowId: 'dynamic-delay-invalid-format-test',
+        source: WorkflowCreationSourceEnum.Dashboard,
         steps: [
           {
             type: StepTypeEnum.DELAY,
-            content: '',
-            metadata: {
+            name: 'Dynamic Delay',
+            controlValues: {
               type: DelayTypeEnum.DYNAMIC,
               dynamicKey: 'payload.delayValue',
             },
           },
           {
             type: StepTypeEnum.IN_APP,
-            content: 'Should not be sent' as string,
+            name: 'Should not be sent',
+            controlValues: {
+              body: 'Should not be sent',
+            },
           },
         ],
-      });
+      };
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      const workflow = createResponse.body.data;
 
       await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
+        workflowId: workflow.workflowId,
         to: [subscriber.subscriberId],
         payload: {
           delayValue: 'invalid-format',
@@ -520,8 +572,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
         jobRepository,
         query: {
           _environmentId: session.environment._id,
-          _templateId: template._id,
-          type: StepTypeEnum.DELAY,
+          _templateId: workflow._id,
+          type: 'delay' as any,
         },
         timeout: 5000,
       });
@@ -531,28 +583,37 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     });
 
     it('should support different time units in duration objects', async () => {
-      const template = await session.createTemplate({
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Dynamic Delay Time Units Test',
+        workflowId: 'dynamic-delay-time-units-test',
+        source: WorkflowCreationSourceEnum.Dashboard,
         steps: [
           {
             type: StepTypeEnum.DELAY,
-            content: '',
-            metadata: {
+            name: 'Dynamic Delay',
+            controlValues: {
               type: DelayTypeEnum.DYNAMIC,
               dynamicKey: 'payload.delayConfig',
             },
           },
           {
             type: StepTypeEnum.IN_APP,
-            content: 'Delayed message' as string,
+            name: 'Delayed message',
+            controlValues: {
+              body: 'Delayed message',
+            },
           },
         ],
-      });
+      };
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      const workflow = createResponse.body.data;
 
       const units = ['seconds', 'minutes', 'hours'];
 
       for (const unit of units) {
         await novuClient.trigger({
-          workflowId: template.triggers[0].identifier,
+          workflowId: workflow.workflowId,
           to: [subscriber.subscriberId],
           payload: {
             delayConfig: {
@@ -568,8 +629,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
 
       const delayedJobs = await jobRepository.find({
         _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.DELAY,
+        _templateId: workflow._id,
+        type: 'delay' as any,
       });
 
       expect(delayedJobs.length).to.equal(3);
@@ -579,25 +640,34 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     });
 
     it('should fail when duration object has invalid unit', async () => {
-      const template = await session.createTemplate({
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Dynamic Delay Invalid Unit Test',
+        workflowId: 'dynamic-delay-invalid-unit-test',
+        source: WorkflowCreationSourceEnum.Dashboard,
         steps: [
           {
             type: StepTypeEnum.DELAY,
-            content: '',
-            metadata: {
+            name: 'Dynamic Delay',
+            controlValues: {
               type: DelayTypeEnum.DYNAMIC,
               dynamicKey: 'payload.delayConfig',
             },
           },
           {
             type: StepTypeEnum.IN_APP,
-            content: 'Should not be sent' as string,
+            name: 'Should not be sent',
+            controlValues: {
+              body: 'Should not be sent',
+            },
           },
         ],
-      });
+      };
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      const workflow = createResponse.body.data;
 
       await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
+        workflowId: workflow.workflowId,
         to: [subscriber.subscriberId],
         payload: {
           delayConfig: {
@@ -614,8 +684,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
         jobRepository,
         query: {
           _environmentId: session.environment._id,
-          _templateId: template._id,
-          type: StepTypeEnum.DELAY,
+          _templateId: workflow._id,
+          type: 'delay' as any,
         },
         timeout: 5000,
       });
