@@ -769,7 +769,8 @@
     "smsmode",
     "BLKTM",
     "Novuand",
-    "kobalte"
+    "kobalte",
+    "jsonrepair"
   ],
   "flagWords": [],
   "patterns": [

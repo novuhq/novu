@@ -1,3 +1,4 @@
+import { jsonrepair } from 'jsonrepair';
 import { Liquid } from 'liquidjs';
 
 import { PostActionEnum } from './constants';
@@ -699,8 +700,10 @@ export class Client {
       };
 
       const compiledString = await this.templateEngine.render(parsedTemplate, renderVariables);
-
-      return JSON.parse(compiledString);
+      // repair the string to fix invalid JSON, it could happen in the case when the control value
+      // doesn't have escaped quotes like '"foo"' then compiled string '{"body":""foo""}' is not valid JSON and parse will fail
+      const repairedString = jsonrepair(compiledString);
+      return JSON.parse(repairedString);
     } catch (error) {
       throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
     }
