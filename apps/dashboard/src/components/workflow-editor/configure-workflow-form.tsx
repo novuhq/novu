@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
   MAX_DESCRIPTION_LENGTH,
   PermissionsEnum,
   ResourceOriginEnum,
@@ -77,7 +76,6 @@ import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { PayloadSchemaDrawer } from './payload-schema-drawer';
 import { TranslationToggleSection } from './translation-toggle-section';
 
@@ -104,9 +102,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   const { currentEnvironment } = useEnvironment();
   const { currentOrganization } = useAuth();
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
-  const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
-
-  const isNewChangeMechanismEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED);
+  const { isSyncable, PromoteConfirmModal } = useSyncWorkflow(workflow);
 
   const { show: showComingSoonBanner } = usePromotionalBanner({
     content: {
@@ -260,43 +256,6 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                       Export to Code
                     </DropdownMenuItem>
                   )}
-                  {!isNewChangeMechanismEnabled &&
-                    (isSyncable ? (
-                      otherEnvironments.length === 1 ? (
-                        <DropdownMenuItem onClick={() => safeSync(otherEnvironments[0]._id)}>
-                          <LuBookUp2 />
-                          {`Sync to ${otherEnvironments[0].name}`}
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger className="gap-2">
-                            <LuBookUp2 />
-                            Sync workflow
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                            <DropdownMenuSubContent>
-                              {otherEnvironments.map((env) => (
-                                <DropdownMenuItem key={env._id} onClick={() => safeSync(env._id)}>
-                                  {env.name}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                        </DropdownMenuSub>
-                      )
-                    ) : (
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <DropdownMenuItem disabled>
-                            <LuBookUp2 />
-                            Sync workflow
-                          </DropdownMenuItem>
-                        </TooltipTrigger>
-                        <TooltipPortal>
-                          <TooltipContent>{tooltipContent}</TooltipContent>
-                        </TooltipPortal>
-                      </Tooltip>
-                    ))}
                   {isDuplicable && currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
                     <Link
                       to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {

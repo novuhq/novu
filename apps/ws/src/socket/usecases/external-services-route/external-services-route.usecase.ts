@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { FeatureFlagsService } from '@novu/application-generic';
 import { MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, FeatureFlagsKeysEnum, WebSocketEventEnum } from '@novu/shared';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { WSGateway } from '../../ws.gateway';
 import { ExternalServicesRouteCommand } from './external-services-route.command';
 import { IUnreadCountPaginationIndication, IUnseenCountPaginationIndication } from './types';
@@ -12,8 +11,7 @@ const LOG_CONTEXT = 'ExternalServicesRoute';
 export class ExternalServicesRoute {
   constructor(
     private wsGateway: WSGateway,
-    private messageRepository: MessageRepository,
-    private featureFlagsService: FeatureFlagsService
+    private messageRepository: MessageRepository
   ) {}
 
   public async execute(command: ExternalServicesRouteCommand) {
@@ -65,22 +63,6 @@ export class ExternalServicesRoute {
       return;
     }
 
-    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-      defaultValue: false,
-      environment: { _id: command._environmentId },
-    });
-
-    const severityCountsPromise = isNotificationSeverityEnabled
-      ? this.messageRepository.getCountBySeverity(
-          command._environmentId,
-          command.userId,
-          ChannelTypeEnum.IN_APP,
-          { read: false, snoozed: false },
-          { limit: 99 }
-        )
-      : Promise.resolve([]);
-
     const [unreadCount, severityCounts] = await Promise.all([
       this.messageRepository.getCount(
         command._environmentId,
@@ -91,7 +73,13 @@ export class ExternalServicesRoute {
         undefined,
         'primary'
       ),
-      severityCountsPromise,
+      this.messageRepository.getCountBySeverity(
+        command._environmentId,
+        command.userId,
+        ChannelTypeEnum.IN_APP,
+        { read: false, snoozed: false },
+        { limit: 99 }
+      ),
     ]);
 
     const paginationIndication: IUnreadCountPaginationIndication =

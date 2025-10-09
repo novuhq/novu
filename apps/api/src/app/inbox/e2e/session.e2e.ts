@@ -14,7 +14,6 @@ import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const integrationRepository = new IntegrationRepository();
 const mockSubscriberId = '12345';
-const isNotificationSeverityEnabled = process.env.IS_NOTIFICATION_SEVERITY_ENABLED;
 
 describe('Session - /inbox/session (POST) #novu-v2', async () => {
   let session: UserSession;
@@ -43,14 +42,10 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       invalidateCache
     );
     // @ts-expect-error
-    process.env.IS_NOTIFICATION_SEVERITY_ENABLED = 'true';
-    // @ts-expect-error
     process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
   });
 
   afterEach(() => {
-    // @ts-expect-error
-    process.env.IS_NOTIFICATION_SEVERITY_ENABLED = isNotificationSeverityEnabled;
     // @ts-expect-error
     process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
   });

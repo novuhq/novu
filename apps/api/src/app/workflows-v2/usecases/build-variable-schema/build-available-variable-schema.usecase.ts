@@ -78,14 +78,6 @@ export class BuildVariableSchemaUsecase {
 
     const previousSteps = effectiveSteps?.slice(0, this.findStepIndex(effectiveSteps, stepInternalId));
 
-    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      user: { _id: command.userId },
-      defaultValue: false,
-    });
-
     const isContextEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
       organization: { _id: command.organizationId },
@@ -97,7 +89,7 @@ export class BuildVariableSchemaUsecase {
     return {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {
-        ...(isNotificationSeverityEnabled ? { workflow: buildWorkflowSchema() } : {}),
+        workflow: buildWorkflowSchema(),
         subscriber: buildSubscriberSchema(finalSubscriber),
         steps: buildPreviousStepsSchema({
           previousSteps,
