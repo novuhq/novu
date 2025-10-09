@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, PreferencesTypeEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { PreferencesDBModel } from './preferences.entity';
@@ -73,9 +73,9 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
 preferencesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 // Subscriber Global Preferences
-// Ensures one global preference per subscriber per type (e.g., SUBSCRIBER_GLOBAL)
-// Partial filter ensures this only applies when _subscriberId exists and _templateId doesn't,
-// preventing conflicts with subscriber workflow preferences (which have both fields)
+// Ensures one global preference per subscriber (SUBSCRIBER_GLOBAL type)
+// Partial filter ensures this only applies to SUBSCRIBER_GLOBAL type,
+// preventing conflicts with other preference types
 preferencesSchema.index(
   {
     _environmentId: 1,
@@ -85,16 +85,15 @@ preferencesSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      _templateId: { $exists: false },
-      _subscriberId: { $exists: true },
+      type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     },
   }
 );
 
 // Subscriber Workflow Preferences
-// Ensures one workflow preference per subscriber per template (e.g., SUBSCRIBER_WORKFLOW)
-// Partial filter ensures this only applies when both _subscriberId and _templateId exist,
-// preventing conflicts with global subscriber preferences and workflow-level preferences
+// Ensures one workflow preference per subscriber per template (SUBSCRIBER_WORKFLOW type)
+// Partial filter ensures this only applies to SUBSCRIBER_WORKFLOW type,
+// preventing conflicts with other preference types
 preferencesSchema.index(
   {
     _environmentId: 1,
@@ -105,16 +104,15 @@ preferencesSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      _subscriberId: { $exists: true },
-      _templateId: { $exists: true },
+      type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
     },
   }
 );
 
 // Workflow Preferences (both Resource and User)
-// Ensures one workflow-level preference per template per type (e.g., USER_WORKFLOW, WORKFLOW_RESOURCE)
-// Partial filter ensures this only applies when _templateId exists and _subscriberId doesn't,
-// preventing conflicts with subscriber workflow preferences (which have both fields)
+// Ensures one workflow-level preference per template per type (USER_WORKFLOW, WORKFLOW_RESOURCE)
+// Partial filter ensures this only applies to USER_WORKFLOW and WORKFLOW_RESOURCE types,
+// preventing conflicts with subscriber-specific preferences
 preferencesSchema.index(
   {
     _environmentId: 1,
@@ -124,8 +122,7 @@ preferencesSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      _subscriberId: { $exists: false },
-      _templateId: { $exists: true },
+      type: { $in: [PreferencesTypeEnum.USER_WORKFLOW, PreferencesTypeEnum.WORKFLOW_RESOURCE] },
     },
   }
 );
