@@ -68,8 +68,9 @@ const PropertyListItemSchema = z.object({
           'Name must start with a letter or underscore, and contain only letters, numbers, underscores, or hyphens.',
       }
     ),
-  definition: baseJsonSchema, // The schema definition for this property's value
+  definition: baseJsonSchema,
   isRequired: z.boolean().optional(),
+  isNullable: z.boolean().optional(),
 });
 export type PropertyListItem = z.infer<typeof PropertyListItemSchema>;
 
