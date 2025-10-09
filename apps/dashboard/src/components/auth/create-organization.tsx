@@ -1,5 +1,6 @@
+import { RegionSelector, useRegion } from '@/context/region';
 import { OrganizationList as OrganizationListForm, useOrganization } from '@clerk/clerk-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { clerkSignupAppearance } from '../../utils/clerk-appearance';
 import { ROUTES } from '../../utils/routes';
@@ -60,7 +61,41 @@ function FormContainer({ children }: FormContainerProps) {
 }
 
 function OrganizationForm() {
-  return <OrganizationListForm appearance={FORM_APPEARANCE} {...ORGANIZATION_FORM_CONFIG} />;
+  const [showRegionSelector, setShowRegionSelector] = useState(false);
+
+  useEffect(() => {
+    // Watch for DOM changes to detect when we're on the form page (Page 2)
+    const observer = new MutationObserver(() => {
+      // Check if the organization creation form (with name input) is visible
+      const nameInput = document.querySelector('input[name="name"]');
+      const isOnFormPage = !!nameInput;
+
+      if (isOnFormPage !== showRegionSelector) {
+        setShowRegionSelector(isOnFormPage);
+      }
+    });
+
+    // Start observing
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, [showRegionSelector]);
+
+  return (
+    <div className="relative">
+      {/* Region selector - only visible on Page 2 (form page), aligned with form content */}
+      {showRegionSelector && (
+        <div className="absolute -top-14 left-4 z-20">
+          <RegionSelector />
+        </div>
+      )}
+
+      <OrganizationListForm appearance={FORM_APPEARANCE} {...ORGANIZATION_FORM_CONFIG} />
+    </div>
+  );
 }
 
 function OrganizationFormSection() {
@@ -113,6 +148,7 @@ function PageContent() {
 
 export default function OrganizationCreate() {
   const { organization } = useOrganization();
+  const { selectedRegion } = useRegion();
   const track = useTelemetry();
 
   useEffect(() => {
@@ -122,9 +158,10 @@ export default function OrganizationCreate() {
         location: 'web',
         organizationId: organization.id,
         organizationName: organization.name,
+        region: selectedRegion,
       });
     }
-  }, [organization, track]);
+  }, [organization, track, selectedRegion]);
 
   return (
     <div className="flex w-full flex-1 flex-row items-center justify-center">

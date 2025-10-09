@@ -1,11 +1,12 @@
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
-import { HTMLAttributes, ReactNode } from 'react';
-import { RiSearchLine } from 'react-icons/ri';
 import { useCommandPalette } from '@/components/command-palette/hooks/use-command-palette';
 import { InboxButton } from '@/components/inbox-button';
 import { UserProfile } from '@/components/user-profile';
+import { RegionSelector } from '@/context/region/region-selector';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { cn } from '@/utils/ui';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import { HTMLAttributes, ReactNode } from 'react';
+import { RiSearchLine } from 'react-icons/ri';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useHasPermission } from '../../hooks/use-has-permission';
@@ -54,8 +55,10 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
         )}
         {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
         {!(IS_SELF_HOSTED && IS_ENTERPRISE) && <CustomerSupportButton />}
-        <div className="flex pr-0.5">
+        <div className="flex items-center gap-2">
           <InboxButton />
+          <div className="h-4 w-px bg-neutral-200" />
+          <RegionSelector />
         </div>
         <UserProfile />
       </div>

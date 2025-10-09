@@ -40,4 +40,5 @@ export const smsProviderSchemas = {
   'afro-message': genericProviderSchemas,
   unifonic: genericProviderSchemas,
   imedia: genericProviderSchemas,
+  sinch: genericProviderSchemas,
 } as const satisfies Record<SmsProviderIdEnum, { output: JsonSchema }>;

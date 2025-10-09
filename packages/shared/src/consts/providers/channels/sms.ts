@@ -27,6 +27,7 @@ import {
   ringCentralConfig,
   sendchampConfig,
   simpleTextingConfig,
+  sinchConfig,
   sms77Config,
   smsCentralConfig,
   smsmodeProviderConfig,
@@ -290,6 +291,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: mobishastraConfig,
     docReference: 'https://telkosh.com/mobishastra/',
     logoFileName: { light: 'mobishastra.png', dark: 'mobishastra.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Sinch,
+    displayName: 'Sinch',
+    channel: ChannelTypeEnum.SMS,
+    credentials: sinchConfig,
+    docReference: `https://docs.novu.co/integrations/providers/sms/sinch${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'sinch.png', dark: 'sinch.png' },
   },
   {
     id: SmsProviderIdEnum.AfroSms,

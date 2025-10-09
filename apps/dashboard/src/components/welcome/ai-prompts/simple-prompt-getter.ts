@@ -1,4 +1,5 @@
-import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../../config';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { API_HOSTNAME } from '../../../config';
 import {
   getAngularPromptString,
   getJavaScriptPromptString,
@@ -40,7 +41,7 @@ function getWebSocketUrl(url: string): string {
 function getRegionConfig(region: 'us' | 'eu'): RegionConfig | null {
   if (region === 'eu') {
     return {
-      socketUrl: getWebSocketUrl(WEBSOCKET_HOSTNAME),
+      socketUrl: getWebSocketUrl(apiHostnameManager.getWebSocketHostname()),
       backendUrl: API_HOSTNAME,
     };
   }
