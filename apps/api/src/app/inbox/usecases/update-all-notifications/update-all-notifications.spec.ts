@@ -117,6 +117,7 @@ describe('UpdateAllNotifications', () => {
         subscriberId: mockSubscriber._id,
         from: command.from,
         to: command.to,
+        contextKeys: undefined,
       },
     ]);
   });
@@ -165,6 +166,7 @@ describe('UpdateAllNotifications', () => {
         _subscriberId: mockSubscriber._id,
         from: command.from,
         to: command.to,
+        contextKeys: undefined,
       },
     ]);
     expect(webSocketsQueueServiceMock.add.calledOnce).to.be.true;
