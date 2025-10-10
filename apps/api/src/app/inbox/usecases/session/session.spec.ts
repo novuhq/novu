@@ -18,7 +18,7 @@ import {
   NotificationTemplateRepository,
   PreferencesRepository,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -49,6 +49,11 @@ const mockIntegration = {
   deletedAt: '',
   deletedBy: '',
 };
+
+const mockSeverityCounts = [
+  { severity: SeverityLevelEnum.HIGH, count: 10 },
+  { severity: SeverityLevelEnum.MEDIUM, count: 20 },
+];
 
 describe('Session', () => {
   let session: Session;
@@ -123,6 +128,8 @@ describe('Session', () => {
       getSubscriberSchedule as any,
       updatePreferencesUsecase as any
     );
+
+    messageRepository.getCountBySeverity.resolves(mockSeverityCounts);
   });
 
   it('should throw an error if the environment is not found', async () => {
@@ -280,7 +287,11 @@ describe('Session', () => {
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
     expect(response.token).to.equal(token);
-    expect(response.totalUnreadCount).to.equal(notificationCount.data[0].count);
+    expect(response.unreadCount.total).to.equal(notificationCount.data[0].count);
+    expect(response.unreadCount.severity[SeverityLevelEnum.HIGH]).to.equal(mockSeverityCounts[0].count);
+    expect(response.unreadCount.severity[SeverityLevelEnum.MEDIUM]).to.equal(mockSeverityCounts[1].count);
+    expect(response.unreadCount.severity[SeverityLevelEnum.LOW]).to.equal(0);
+    expect(response.unreadCount.severity[SeverityLevelEnum.NONE]).to.equal(0);
     expect(
       analyticsService.mixpanelTrack.calledWith(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
         _organization: environment._organizationId,
