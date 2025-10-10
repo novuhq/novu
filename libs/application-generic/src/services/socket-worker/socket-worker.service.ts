@@ -163,6 +163,7 @@ export class SocketWorkerService {
           { read: false },
           { limit: 101 },
           undefined,
+          undefined,
           'primary'
         ),
         isNotificationSeverityEnabled
