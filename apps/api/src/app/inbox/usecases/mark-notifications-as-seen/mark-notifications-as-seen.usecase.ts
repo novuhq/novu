@@ -160,6 +160,7 @@ export class MarkNotificationsAsSeen {
         event: WebSocketEventEnum.UNSEEN,
         userId: subscriber._id,
         _environmentId: command.environmentId,
+        contextKeys,
       },
       groupId: subscriber._organizationId,
     });
