@@ -32,20 +32,6 @@ export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResp
     [workflow.origin, workflow.status]
   );
 
-  const getTooltipContent = () => {
-    if (workflow.origin === ResourceOriginEnum.EXTERNAL) {
-      return 'Code-first workflows cannot be synced using dashboard.';
-    }
-
-    if (workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1) {
-      return 'V1 workflows cannot be synced using dashboard. Please visit the legacy portal.';
-    }
-
-    if (workflow.status === WorkflowStatusEnum.ERROR) {
-      return 'This workflow has errors and cannot be synced. Please fix the errors first.';
-    }
-  };
-
   const safeSync = async (envId: string) => {
     try {
       setTargetEnvironmentId(envId);
@@ -155,7 +141,6 @@ export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResp
     sync: syncWorkflowMutation,
     isSyncable,
     isLoading,
-    tooltipContent: getTooltipContent(),
     PromoteConfirmModal: () => {
       const targetEnvironment = environments.find((env) => env._id === targetEnvironmentId);
 
