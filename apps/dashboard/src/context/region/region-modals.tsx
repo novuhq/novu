@@ -1,5 +1,5 @@
-import { RiAddLine } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { RiAddLine } from 'react-icons/ri';
 import { getRegionConfig } from './region-config';
 import { type OrgCreationModalState } from './region-types';
 

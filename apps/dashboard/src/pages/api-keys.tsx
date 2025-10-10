@@ -1,7 +1,3 @@
-import { PermissionsEnum } from '@novu/shared';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { PageMeta } from '@/components/page-meta';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -13,6 +9,10 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useRegion } from '@/context/region';
 import { getRegionConfig } from '@/context/region/region-config';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { PermissionsEnum } from '@novu/shared';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { Button } from '../components/primitives/button';
 import { Container } from '../components/primitives/container';

@@ -1,12 +1,12 @@
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
-import { HTMLAttributes, ReactNode } from 'react';
-import { RiSearchLine } from 'react-icons/ri';
 import { useCommandPalette } from '@/components/command-palette/hooks/use-command-palette';
 import { InboxButton } from '@/components/inbox-button';
 import { UserProfile } from '@/components/user-profile';
 import { RegionSelector } from '@/context/region/region-selector';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { cn } from '@/utils/ui';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import { HTMLAttributes, ReactNode } from 'react';
+import { RiSearchLine } from 'react-icons/ri';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useHasPermission } from '../../hooks/use-has-permission';
