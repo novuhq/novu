@@ -2,6 +2,7 @@
 
 import {
   ContentIssueEnum,
+  ContextPayload,
   DEFAULT_LOCALE,
   EmailControlsDto,
   GeneratePreviewResponseDto,
@@ -18,7 +19,6 @@ import { NovuApiError } from '@/api/api.client';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useBeforeUnload } from '@/hooks/use-before-unload';
-import { useDataRef } from '@/hooks/use-data-ref';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
 import { useLayoutPreview } from '@/hooks/use-layout-preview';
@@ -26,24 +26,26 @@ import { usePreviewContext } from '@/hooks/use-preview-context';
 import { UpdateLayoutParameters, useUpdateLayout } from '@/hooks/use-update-layout';
 import { createContextHook } from '@/utils/context';
 import { getLayoutControlsDefaultValues } from '@/utils/default-values';
-import { parse, stringify } from '@/utils/json';
+import { parse } from '@/utils/json';
 import { useFetchOrganizationSettings } from '../../hooks/use-fetch-organization-settings';
 import { Form, FormRoot } from '../primitives/form/form';
 import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { flattenIssues, getFirstErrorMessage } from '../workflow-editor/step-utils';
-import { loadSubscriberData, saveSubscriberData } from './utils/layout-preview-context-storage';
+import { usePersistedPreviewContext } from '../workflow-editor/steps/hooks/use-persisted-preview-context';
 
-type ParsedData = { subscriber: Partial<SubscriberDto> };
+type ParsedData = { subscriber: Partial<SubscriberDto>; context: ContextPayload };
 
 function parseJsonValue(value: string): ParsedData {
   try {
     const parsed = JSON.parse(value || '{}');
     return {
       subscriber: parsed.subscriber || {},
+      context: parsed.context || {},
     };
   } catch {
     return {
       subscriber: {},
+      context: {},
     };
   }
 }
@@ -122,15 +124,18 @@ export type LayoutContextType = {
   isLayoutEditable: boolean;
   isUpdating: boolean;
   updateLayout: (data: UpdateLayoutParameters) => Promise<LayoutResponseDto>;
-  updatePreviewSection: (section: 'subscriber', data: any) => void;
+  updatePreviewSection: ((section: 'subscriber', data: Partial<SubscriberDto>) => void) &
+    ((section: 'context', data: ContextPayload) => void);
   issues: { controls: Record<string, RuntimeIssue[]> };
   selectedLocale: string;
   onLocaleChange: (locale: string) => void;
   accordionValue: string[];
   setAccordionValue: (value: string[]) => void;
-  errors: { subscriber: string | null };
+  errors: { subscriber: string | null; context: string | null };
   previewContext: ParsedData;
   hasUnsavedChanges: boolean;
+  clearPersistedSubscriber: () => void;
+  clearPersistedContext: () => void;
 };
 
 export const LayoutEditorContext = createContext<LayoutContextType>({} as LayoutContextType);
@@ -147,7 +152,6 @@ export const LayoutEditorProvider = ({
   isPending: boolean;
 }) => {
   const [previewContextValue, setPreviewContextValue] = useState('{}');
-  const previewContextValueRef = useDataRef(previewContextValue);
   const location = useLocation();
   const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
   const { currentEnvironment } = useEnvironment();
@@ -263,17 +267,37 @@ export const LayoutEditorProvider = ({
 
   const createDefaultSubscriberData = useDefaultSubscriberData(undefined, organizationSettings?.data?.defaultLocale);
 
-  const { accordionValue, setAccordionValue, errors, previewContext, updatePreviewSection } = usePreviewContext({
+  const {
+    loadPersistedSubscriber,
+    savePersistedSubscriber,
+    clearPersistedSubscriber,
+    loadPersistedContext,
+    savePersistedContext,
+    clearPersistedContext,
+  } = usePersistedPreviewContext({
+    workflowId: layout?._id || '',
+    environmentId: currentEnvironment?._id || '',
+  });
+
+  const { accordionValue, setAccordionValue, errors, previewContext, updatePreviewSection } = usePreviewContext<
+    ParsedData,
+    { subscriber: string | null; context: string | null }
+  >({
     value: previewContextValue,
     onChange: setPreviewContextValueSafe,
-    defaultAccordionValue: ['subscriber'],
+    defaultAccordionValue: ['subscriber', 'context'],
     defaultErrors: {
       subscriber: null,
+      context: null,
     },
     parseJsonValue,
     onDataPersist: (data: ParsedData) => {
       if (data.subscriber !== undefined) {
-        saveSubscriberData(layout?._id || '', currentEnvironment?._id || '', data.subscriber);
+        savePersistedSubscriber(data.subscriber);
+      }
+
+      if (data.context !== undefined) {
+        savePersistedContext(data.context);
       }
     },
   });
@@ -320,6 +344,8 @@ export const LayoutEditorProvider = ({
       errors,
       previewContext,
       hasUnsavedChanges,
+      clearPersistedSubscriber,
+      clearPersistedContext,
     }),
     [
       layout,
@@ -339,6 +365,8 @@ export const LayoutEditorProvider = ({
       errors,
       previewContext,
       hasUnsavedChanges,
+      clearPersistedSubscriber,
+      clearPersistedContext,
     ]
   );
 
@@ -354,26 +382,6 @@ export const LayoutEditorProvider = ({
   }, [form, debouncedPreview, layoutSlug, previewContextValue]);
 
   useEffect(() => {
-    const serverPayloadExample = previewData?.previewPayloadExample;
-    if (!serverPayloadExample || !serverPayloadExample.subscriber) return;
-
-    // Check if there's existing stored data before overwriting with server defaults
-    if (layout?._id && currentEnvironment?._id) {
-      const storedSubscriberData = loadSubscriberData(layout._id, currentEnvironment._id);
-      if (storedSubscriberData && Object.keys(storedSubscriberData).length > 0) {
-        // Don't overwrite if we have stored data
-        return;
-      }
-    }
-
-    const newPreviewContextValue = stringify({ subscriber: serverPayloadExample.subscriber });
-
-    if (previewContextValueRef.current === newPreviewContextValue) return;
-
-    setPreviewContextValue(newPreviewContextValue);
-  }, [previewData?.previewPayloadExample, previewContextValueRef, layout?._id, currentEnvironment?._id]);
-
-  useEffect(() => {
     if (
       !layout?._id ||
       !currentEnvironment?._id ||
@@ -383,26 +391,43 @@ export const LayoutEditorProvider = ({
       return;
     }
 
-    const storedSubscriberData = loadSubscriberData(layout._id, currentEnvironment?._id);
-    if (storedSubscriberData && Object.keys(storedSubscriberData).length > 0) {
-      updatePreviewSection('subscriber', storedSubscriberData);
-    } else {
-      updatePreviewSection('subscriber', createDefaultSubscriberData());
-    }
+    const storedSubscriberData = loadPersistedSubscriber();
+    const storedContextData = loadPersistedContext();
+
+    const subscriberToUse =
+      storedSubscriberData && Object.keys(storedSubscriberData).length > 0
+        ? storedSubscriberData
+        : createDefaultSubscriberData();
+
+    const contextToUse = storedContextData && Object.keys(storedContextData).length > 0 ? storedContextData : {};
+
+    const completePreviewContext = JSON.stringify(
+      {
+        subscriber: subscriberToUse,
+        context: contextToUse,
+      },
+      null,
+      2
+    );
+
+    setPreviewContextValueSafe(completePreviewContext);
 
     if (storedSubscriberData?.locale) {
       onLocaleChange(storedSubscriberData.locale);
     } else {
       onLocaleChange(organizationSettings.data.defaultLocale);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    isOrgSettingsLoading,
-    organizationSettings?.data?.defaultLocale,
     layout?._id,
     currentEnvironment?._id,
-    onLocaleChange,
-    updatePreviewSection,
+    isOrgSettingsLoading,
+    organizationSettings?.data?.defaultLocale,
+    loadPersistedSubscriber,
+    loadPersistedContext,
     createDefaultSubscriberData,
+    setPreviewContextValueSafe,
+    onLocaleChange,
   ]);
 
   const handleBlockerProceed = useCallback(() => {

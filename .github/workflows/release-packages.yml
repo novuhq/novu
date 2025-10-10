@@ -38,6 +38,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          ref: ${{ github.ref_name }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -101,9 +102,9 @@ jobs:
       - name: Publish packages (nightly only)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NX_PUBLISH_ARGS: --tag nightly
         run: |
           if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
-            export NX_RELEASE_TAG=nightly
             pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
           else
             echo "Skipping publish for non-nightly release"
@@ -118,20 +119,20 @@ jobs:
           title: "🚀 Release ${{ github.event.inputs.version }} - ${{ github.event.inputs.packages }}"
           body: |
             ## 🚀 Release ${{ github.event.inputs.version }}
-            
+
             This PR contains the release changes for version **${{ github.event.inputs.version }}**
-            
+
             ### 📦 Packages Released:
             ```
             ${{ github.event.inputs.packages }}
             ```
-            
+
             ### 🔄 Changes:
             - Updated package versions to ${{ github.event.inputs.version }}
             - Generated changelogs from ${{ github.event.inputs.previous_tag }}
             - Built packages for release
-            
+
             **Please review the changes and merge when ready for the release to be tagged and GitHub releases to be created.**
           branch: release-${{ github.event.inputs.version }}
-          base: next
+          base: ${{ github.ref_name }}
           delete-branch: false
