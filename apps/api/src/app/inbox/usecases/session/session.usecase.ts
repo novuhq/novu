@@ -25,6 +25,7 @@ import {
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
+  ContextRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationRepository,
@@ -37,6 +38,7 @@ import {
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  ContextPayload,
   ControlValuesLevelEnum,
   CustomDataType,
   FeatureFlagsKeysEnum,
@@ -89,6 +91,7 @@ export class Session {
     private integrationRepository: IntegrationRepository,
     private organizationRepository: CommunityOrganizationRepository,
     private communityOrganizationRepository: CommunityOrganizationRepository,
+    private contextRepository: ContextRepository,
     private generateUniqueApiKey: GenerateUniqueApiKey,
     private createNovuIntegrationsUsecase: CreateNovuIntegrations,
     private communityUserRepository: CommunityUserRepository,
@@ -117,6 +120,12 @@ export class Session {
     if (!environment) {
       throw new BadRequestException('Please provide a valid application identifier');
     }
+
+    const contextKeys = await this.resolveContexts(
+      environment._id,
+      environment._organizationId,
+      command.requestData.context
+    );
 
     const inAppIntegration = await this.selectIntegration.execute(
       SelectIntegrationCommand.create({
@@ -165,6 +174,7 @@ export class Session {
       environmentName: environment.name,
       _subscriber: subscriberEntity._id,
       origin: command.requestData.applicationIdentifier ? command.origin : 'keyless',
+      context: contextKeys,
     });
 
     const { data } = await this.notificationsCount.execute(
@@ -174,6 +184,7 @@ export class Session {
         subscriberId: subscriber.subscriberId,
         filters: [{ read: false, snoozed: false }],
         subscriber: subscriberEntity,
+        contextKeys,
       })
     );
     const [{ count: totalUnreadCount }] = data;
@@ -191,7 +202,8 @@ export class Session {
           subscriberEntity._id,
           ChannelTypeEnum.IN_APP,
           { read: false, snoozed: false },
-          { limit: MAX_NOTIFICATIONS_COUNT }
+          { limit: MAX_NOTIFICATIONS_COUNT },
+          contextKeys
         )
       : [];
 
@@ -212,7 +224,7 @@ export class Session {
     }
 
     const [token, organization] = await Promise.all([
-      this.authService.getSubscriberWidgetToken(subscriberEntity),
+      this.authService.getSubscriberWidgetToken(subscriberEntity, contextKeys),
       this.organizationRepository.findById(environment._organizationId),
     ]);
 
@@ -385,6 +397,27 @@ export class Session {
         : requestData.applicationIdentifier;
 
     return applicationIdentifier;
+  }
+
+  private async resolveContexts(
+    environmentId: string,
+    organizationId: string,
+    context?: ContextPayload
+  ): Promise<string[]> {
+    const isContextsEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+    });
+
+    if (!context || !isContextsEnabled) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.upsertContextsFromPayload(environmentId, organizationId, context);
+
+    return contexts.map((context) => context.key);
   }
 
   private async getMaxSnoozeDurationHours(apiServiceLevel: ApiServiceLevelEnum) {

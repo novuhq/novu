@@ -66,6 +66,7 @@ export class UpdateAllNotifications {
       subscriberId: subscriber._id,
       from: fromField,
       to: command.to,
+      contextKeys: command.contextKeys,
     });
 
     await this.sendWebhookEvents(command, updatedMessages);
@@ -89,6 +90,7 @@ export class UpdateAllNotifications {
       _subscriberId: subscriber._id,
       from: command.from,
       to: command.to,
+      contextKeys: command.contextKeys,
     });
 
     this.webSocketsQueueService.add({

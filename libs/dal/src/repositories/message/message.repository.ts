@@ -77,6 +77,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       data?: Record<string, unknown>;
       severity?: SeverityLevelEnum[];
     } = {},
+    contextKeys?: string[],
     createdAt?: {
       $gte: Date;
     }
@@ -144,6 +145,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       } else {
         requestQuery.severity = { $in: query.severity };
       }
+    }
+
+    if (contextKeys && contextKeys?.length > 0) {
+      requestQuery.contextKeys = { $in: contextKeys };
     }
 
     if (createdAt != null) {
@@ -222,6 +227,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen,
       data,
       severity: severityArray,
+      contextKeys,
     }: {
       environmentId: string;
       subscriberId: string;
@@ -233,6 +239,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen?: boolean;
       data?: Record<string, unknown>;
       severity?: SeverityLevelEnum[];
+      contextKeys?: string[];
     },
     options: { limit: number; offset: number; after?: string }
   ) {
@@ -249,6 +256,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       } else {
         query.severity = { $in: severityArray };
       }
+    }
+
+    if (contextKeys && contextKeys?.length > 0) {
+      query.contextKeys = { $in: contextKeys };
     }
 
     if (tags && tags?.length > 0) {
@@ -342,6 +353,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       severity?: SeverityLevelEnum[];
     } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
+    contextKeys?: string[],
     createdAt?: {
       $gte: Date;
     },
@@ -362,6 +374,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         data: query.data,
         severity: query.severity,
       },
+      contextKeys,
       createdAt
     );
 
@@ -376,12 +389,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read?: boolean;
       snoozed?: boolean;
     } = {},
-    options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
+    options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
+    contextKeys?: string[]
   ): Promise<{ severity: SeverityLevelEnum; count: number }[]> {
     const severityLevels = Object.values(SeverityLevelEnum);
 
     const promises = severityLevels.map((severity) =>
-      this.getCount(environmentId, subscriberId, channel, { ...query, severity: [severity] }, options)
+      this.getCount(environmentId, subscriberId, channel, { ...query, severity: [severity] }, options, contextKeys)
     );
 
     const results = await Promise.all(promises);
@@ -647,6 +661,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     read,
     archived,
     snoozedUntil,
+    contextKeys,
   }: {
     environmentId: string;
     subscriberId: string;
@@ -655,10 +670,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     read?: boolean;
     archived?: boolean;
     snoozedUntil?: Date | null;
+    contextKeys?: string[];
   }): Promise<MessageEntity[]> {
     const query: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
+      ...(contextKeys && contextKeys?.length > 0 && { contextKeys: { $in: contextKeys } }),
       _id: {
         $in: ids.map((id) => {
           return new Types.ObjectId(id);
@@ -678,11 +695,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   async updateMessagesFromToStatus({
     environmentId,
     subscriberId,
+    contextKeys,
     from,
     to,
   }: {
     environmentId: string;
     subscriberId: string;
+    contextKeys?: string[];
     from: {
       tags?: string[];
       data?: Record<string, unknown>;
@@ -706,6 +725,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       ...(from.tags && from.tags?.length > 0 && { tags: { $in: from.tags } }),
+      ...(contextKeys && contextKeys?.length > 0 && { contextKeys: { $in: contextKeys } }),
     };
 
     if (isFromArchived) {
@@ -1027,6 +1047,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId,
     subscriberId,
     filters,
+    contextKeys,
   }: {
     environmentId: string;
     subscriberId: string;
@@ -1036,6 +1057,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read?: boolean;
       archived?: boolean;
     };
+    contextKeys?: string[];
   }): Promise<MessageEntity[]> {
     const flatData = filters.data ? getFlatObject({ data: filters.data }) : {};
 
@@ -1044,6 +1066,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       ...(filters.tags && filters.tags?.length > 0 && { tags: { $in: filters.tags } }),
+      ...(contextKeys && contextKeys?.length > 0 && { contextKeys: { $in: contextKeys } }),
     };
 
     const isReadFiltered = filters.read !== undefined;

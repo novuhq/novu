@@ -152,6 +152,7 @@ export class SnoozeNotification {
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.IN_APP,
       _id: command.notificationId,
+      ...(command.contextKeys && command.contextKeys?.length > 0 && { contextKeys: { $in: command.contextKeys } }),
     });
 
     if (!message) {
