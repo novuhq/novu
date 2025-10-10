@@ -11,6 +11,7 @@ import {
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
+  ContextRepository,
   EnvironmentRepository,
   IntegrationRepository,
   MessageRepository,
@@ -66,6 +67,7 @@ describe('Session', () => {
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let communityOrganizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let contextRepository: sinon.SinonStubbedInstance<ContextRepository>;
   let generateUniqueApiKey: sinon.SinonStubbedInstance<GenerateUniqueApiKey>;
   let createNovuIntegrationsUsecase: sinon.SinonStubbedInstance<CreateNovuIntegrations>;
   let communityUserRepository: sinon.SinonStubbedInstance<CommunityUserRepository>;
@@ -90,6 +92,7 @@ describe('Session', () => {
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
     communityOrganizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    contextRepository = sinon.createStubInstance(ContextRepository);
     generateUniqueApiKey = sinon.createStubInstance(GenerateUniqueApiKey);
     createNovuIntegrationsUsecase = sinon.createStubInstance(CreateNovuIntegrations);
     communityUserRepository = sinon.createStubInstance(CommunityUserRepository);
@@ -114,6 +117,7 @@ describe('Session', () => {
       integrationRepository as any,
       organizationRepository as any,
       communityOrganizationRepository as any,
+      contextRepository as any,
       generateUniqueApiKey as any,
       createNovuIntegrationsUsecase as any,
       communityUserRepository as any,
@@ -298,6 +302,7 @@ describe('Session', () => {
         environmentName: environment.name,
         _subscriber: subscriber._id,
         origin: command.origin,
+        context: [],
       })
     ).to.be.true;
   });
