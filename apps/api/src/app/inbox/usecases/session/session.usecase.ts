@@ -178,22 +178,14 @@ export class Session {
     );
     const [{ count: totalUnreadCount }] = data;
 
-    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-      defaultValue: false,
-      organization: { _id: environment._organizationId },
-    });
-
     // get severity-based unread counts
-    const severityCounts = isNotificationSeverityEnabled
-      ? await this.messageRepository.getCountBySeverity(
-          environment._id,
-          subscriberEntity._id,
-          ChannelTypeEnum.IN_APP,
-          { read: false, snoozed: false },
-          { limit: MAX_NOTIFICATIONS_COUNT }
-        )
-      : [];
+    const severityCounts = await this.messageRepository.getCountBySeverity(
+      environment._id,
+      subscriberEntity._id,
+      ChannelTypeEnum.IN_APP,
+      { read: false, snoozed: false },
+      { limit: MAX_NOTIFICATIONS_COUNT }
+    );
 
     const unreadCount: SubscriberSessionResponseDto['unreadCount'] = {
       total: totalUnreadCount,

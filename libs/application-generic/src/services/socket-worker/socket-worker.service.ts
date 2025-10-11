@@ -7,11 +7,6 @@ import { FeatureFlagsService } from '../feature-flags';
 
 const LOG_CONTEXT = 'SocketWorkerService';
 
-type UnseenCountPaginationIndication = {
-  unseenCount: number;
-  hasMore: boolean;
-};
-
 type UnreadCountPaginationIndication = {
   unreadCount: number;
   hasMore: boolean;
@@ -149,12 +144,6 @@ export class SocketWorkerService {
 
   private async sendUnreadCountChange(userId: string, environmentId: string, organizationId?: string): Promise<void> {
     try {
-      const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-        defaultValue: false,
-        organization: { _id: organizationId },
-      });
-
       const [unreadCount, severityCounts] = await Promise.all([
         this.messageRepository.getCount(
           environmentId,
@@ -165,15 +154,13 @@ export class SocketWorkerService {
           undefined,
           'primary'
         ),
-        isNotificationSeverityEnabled
-          ? await this.messageRepository.getCountBySeverity(
-              environmentId,
-              userId,
-              ChannelTypeEnum.IN_APP,
-              { read: false, snoozed: false },
-              { limit: 99 }
-            )
-          : [],
+        this.messageRepository.getCountBySeverity(
+          environmentId,
+          userId,
+          ChannelTypeEnum.IN_APP,
+          { read: false, snoozed: false },
+          { limit: 99 }
+        ),
       ]);
 
       const counts = {
