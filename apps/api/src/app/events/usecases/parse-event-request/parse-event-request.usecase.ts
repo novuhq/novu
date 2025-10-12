@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import type { EventType, Trace } from '@novu/application-generic';
 import {
@@ -18,6 +18,7 @@ import {
   WorkflowQueueService,
 } from '@novu/application-generic';
 import {
+  EnvironmentRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   TenantEntity,
@@ -31,6 +32,7 @@ import {
   FeatureFlagsKeysEnum,
   ReservedVariablesMap,
   ResourceOriginEnum,
+  ShortIsPrefixEnum,
   TriggerContextTypeEnum,
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
@@ -39,6 +41,8 @@ import { addBreadcrumb } from '@sentry/node';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { toMerged } from 'es-toolkit';
+import { shortenEnvironmentName } from '../../../environments-v1/usecases/get-my-environments/get-my-environments.usecase';
+import { buildSlug } from '../../../shared/helpers/build-slug';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
@@ -62,6 +66,7 @@ export class ParseEventRequest {
     private logger: PinoLogger,
     private featureFlagService: FeatureFlagsService,
     private traceLogRepository: TraceLogRepository,
+    private environmentRepository: EnvironmentRepository,
     protected moduleRef: ModuleRef
   ) {
     this.logger.setContext(this.constructor.name);
@@ -377,10 +382,18 @@ export class ParseEventRequest {
       'Event dispatched to [Workflow] Queue'
     );
 
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+    if (!environment) {
+      throw new NotFoundException(`Environment not found for id ${command.environmentId}`);
+    }
+    const shortEnvName = shortenEnvironmentName(environment.name);
+    const environmentSlug = buildSlug(shortEnvName, ShortIsPrefixEnum.ENVIRONMENT, command.environmentId);
+    const activityFeedLink = `https://dashboard.novu.co/env/${environmentSlug}/activity/requests?selectedLogId=${requestId}`;
     return {
       acknowledged: true,
       status: TriggerEventStatusEnum.PROCESSED,
       transactionId,
+      activityFeedLink,
     };
   }
 
