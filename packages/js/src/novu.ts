@@ -5,7 +5,7 @@ import { Notifications } from './notifications';
 import { Preferences } from './preferences';
 import { Session } from './session';
 import type { NovuOptions, Subscriber } from './types';
-import { buildSubscriber } from './ui/internal';
+import { buildContextKey, buildSubscriber } from './ui/internal';
 import { createSocket } from './ws';
 import type { BaseSocketInterface } from './ws/base-socket';
 
@@ -35,6 +35,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
 
   public get context() {
     return this.#session.context;
+  }
+
+  public get contextKey() {
+    return buildContextKey(this.#session.context);
   }
 
   constructor(options: NovuOptions) {

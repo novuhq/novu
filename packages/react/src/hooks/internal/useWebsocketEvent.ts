@@ -12,7 +12,7 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   eventHandler: (args: Events[E]) => void;
 }) => {
   const novu = useNovu();
-  const channelName = `nv_ws_connection:a=${novu.applicationIdentifier}:s=${novu.subscriberId}:e=${webSocketEvent}`;
+  const channelName = `nv_ws_connection:a=${novu.applicationIdentifier}:s=${novu.subscriberId}:c=${novu.contextKey}:e=${webSocketEvent}`;
 
   const { postMessage } = useBrowserTabsChannel({
     channelName,

@@ -70,7 +70,7 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
         defaultSchedule,
         context,
       }),
-    [applicationIdentifier, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType]
+    [applicationIdentifier, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType, context]
   );
 
   useEffect(() => {
@@ -78,7 +78,6 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
       subscriber: subscriberObj,
       subscriberHash: props.subscriberHash,
     });
-    // todo novu.setContext(props.context); ??
   }, [subscriberObj.subscriberId, props.subscriberHash, novu]);
 
   return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;
