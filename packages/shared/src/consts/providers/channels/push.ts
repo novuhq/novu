@@ -2,8 +2,8 @@ import { ChannelTypeEnum, PushProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
   apnsGroupConfigurations,
+  expoGroupConfigurations,
   fcmGroupConfigurations,
-  oneSignalGroupConfigurations,
   pushpadGroupConfigurations,
   pushWebhookGroupConfigurations,
 } from '../configurations/provider-configuration';
