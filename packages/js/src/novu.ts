@@ -33,6 +33,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     return this.#session.subscriberId;
   }
 
+  public get context() {
+    return this.#session.context;
+  }
+
   constructor(options: NovuOptions) {
     this.#inboxService = new InboxService({
       apiUrl: options.apiUrl || options.backendUrl,
@@ -45,6 +49,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
         subscriberHash: options.subscriberHash,
         subscriber: buildSubscriber({ subscriberId: options.subscriberId, subscriber: options.subscriber }),
         defaultSchedule: options.defaultSchedule,
+        context: options.context,
       },
       this.#inboxService,
       this.#emitter

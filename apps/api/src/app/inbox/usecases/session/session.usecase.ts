@@ -275,6 +275,7 @@ export class Session {
       maxSnoozeDurationHours,
       isDevelopmentMode: environment.name.toLowerCase() !== 'production',
       schedule,
+      contextKeys,
     };
   }
 
