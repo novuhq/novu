@@ -8,31 +8,29 @@ interface TimeDisplayHoverCardProps {
   className?: string;
 }
 
+const DATE_TIME_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = Object.freeze({
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+});
+
+const LOCAL_TIME_FORMATTER = new Intl.DateTimeFormat('default', DATE_TIME_FORMAT_OPTIONS);
+const UTC_TIME_FORMATTER = new Intl.DateTimeFormat('default', {
+  ...DATE_TIME_FORMAT_OPTIONS,
+  timeZone: 'UTC',
+});
+
 export function TimeDisplayHoverCard({ date, children, className }: TimeDisplayHoverCardProps) {
   if (!date) {
     return <span className={className}>{children}</span>;
   }
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-  const dateConfig: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  };
-
-  const dateTimeFormat = new Intl.DateTimeFormat('default', dateConfig);
-
-  const utcFormat = new Intl.DateTimeFormat('default', {
-    ...dateConfig,
-    timeZone: 'UTC',
-  });
-
-  const utcTime = utcFormat.format(dateObj);
-  const localTime = dateTimeFormat.format(dateObj);
+  const utcTime = UTC_TIME_FORMATTER.format(dateObj);
+  const localTime = LOCAL_TIME_FORMATTER.format(dateObj);
   const timeAgo = formatDistanceToNow(dateObj, { addSuffix: true });
 
   return (
