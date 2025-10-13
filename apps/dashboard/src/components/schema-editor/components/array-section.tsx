@@ -7,6 +7,7 @@ import { Button } from '@/components/primitives/button';
 import { Label } from '@/components/primitives/label';
 import { cn } from '@/utils/ui';
 import { MAX_NESTING_DEPTH } from '../constants';
+import { useSchemaPropertyType } from '../hooks/use-schema-property-type';
 import type { JSONSchema7 } from '../json-schema';
 import { SchemaPropertyRow } from '../schema-property-row';
 import type { VariableUsageInfo } from '../utils/check-variable-usage';
@@ -91,7 +92,8 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
   readOnly = false,
 }) {
   const itemSchemaObject = useWatch({ control, name: itemSchemaObjectPath }) as JSONSchema7 | undefined;
-  const itemIsObject = itemSchemaObject?.type === 'object';
+  const itemType = useSchemaPropertyType(itemSchemaObject);
+  const itemIsObject = itemType === 'object';
 
   const { fields, append, remove } = useFieldArray({
     control,

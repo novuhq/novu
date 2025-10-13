@@ -72,6 +72,7 @@ export class ExternalServicesRoute {
         { limit: 101 },
         command.contextKeys,
         undefined,
+        undefined,
         'primary'
       ),
       this.messageRepository.getCountBySeverity(

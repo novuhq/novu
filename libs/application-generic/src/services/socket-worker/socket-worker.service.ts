@@ -180,6 +180,7 @@ export class SocketWorkerService {
           { limit: 101 },
           contextKeys,
           undefined,
+          undefined,
           'primary'
         ),
         this.messageRepository.getCountBySeverity(
