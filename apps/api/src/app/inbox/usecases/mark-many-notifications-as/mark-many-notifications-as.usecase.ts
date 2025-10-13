@@ -111,7 +111,7 @@ export class MarkManyNotificationsAs {
         event: WebSocketEventEnum.UNREAD,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
-        contextKeys: command.contextKeys,
+        ...(command.contextKeys && { contextKeys: command.contextKeys }),
       },
       groupId: subscriber._organizationId,
     });
