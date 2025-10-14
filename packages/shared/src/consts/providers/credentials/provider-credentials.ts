@@ -1306,3 +1306,27 @@ export const sinchConfig: IConfigCredential[] = [
   },
   ...smsConfigBase,
 ];
+export const msGraphConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Your Microsoft Graph application client ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client secret',
+    description: 'Your Microsoft Graph application client secret',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.TenantId,
+    displayName: 'Tenant ID',
+    description: 'Your Azure AD tenant ID',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];

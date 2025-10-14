@@ -25,6 +25,7 @@ import {
   sendinblueConfig,
   sesConfig,
   sparkpostConfig,
+  msGraphConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 
@@ -186,4 +187,12 @@ export const emailProviders: IProviderConfig[] = [
     docReference: `https://docs.novu.co/channels/email/email-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'email_webhook.svg', dark: 'email_webhook.svg' },
   },
+  {
+    id: EmailProviderIdEnum.MsGraph,
+    displayName: 'Microsoft Graph',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: msGraphConfig,
+    docReference: 'https://docs.microsoft.com/en-us/graph/api/user-sendmail',
+    logoFileName: { light: 'msgraph.svg', dark: 'msgraph.svg' },
+  }
 ];

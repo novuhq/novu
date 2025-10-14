@@ -18,3 +18,4 @@ export * from './sendgrid.handler';
 export * from './sendinblue.handler';
 export * from './ses.handler';
 export * from './sparkpost.handler';
+export * from './msgraph.handler';

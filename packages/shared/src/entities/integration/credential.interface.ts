@@ -48,4 +48,5 @@ export interface ICredentials {
   appSid?: string;
   senderId?: string;
   servicePlanId?: string;
+  tenantId?: string;
 }

@@ -20,6 +20,7 @@ import {
   SendgridHandler,
   SendinblueHandler,
   SparkPostHandler,
+  MsGraphHandler,
 } from './handlers';
 import { IMailFactory, IMailHandler } from './interfaces';
 
@@ -45,6 +46,7 @@ export class MailFactory implements IMailFactory {
     new EmailWebhookHandler(),
     new NovuEmailHandler(),
     new BrazeEmailHandler(),
+    new MsGraphHandler(),
   ];
 
   getHandler(

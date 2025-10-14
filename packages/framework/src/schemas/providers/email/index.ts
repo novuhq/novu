@@ -29,4 +29,5 @@ export const emailProviderSchemas = {
   sendinblue: genericProviderSchemas,
   ses: genericProviderSchemas,
   sparkpost: genericProviderSchemas,
+  msgraph: genericProviderSchemas,
 } as const satisfies Record<EmailProviderIdEnum, { output: JsonSchema }>;

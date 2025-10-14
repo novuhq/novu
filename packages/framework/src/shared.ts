@@ -121,6 +121,7 @@ export enum EmailProviderIdEnum {
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
+  MsGraph = 'msgraph',
 }
 
 export enum SmsProviderIdEnum {

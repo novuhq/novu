@@ -50,6 +50,7 @@ export enum CredentialsKeyEnum {
   AppSid = 'appSid',
   SenderId = 'senderId',
   ServicePlanId = 'servicePlanId',
+  TenantId = 'tenantId',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -76,6 +77,7 @@ export enum EmailProviderIdEnum {
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
+  MsGraph = 'msgraph',
 }
 
 export enum SmsProviderIdEnum {
