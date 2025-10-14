@@ -1,15 +1,14 @@
 import { ReactNode } from 'react';
 import { cn } from '@/utils/ui';
-import { OptimisticStep } from './use-optimistic-workflow';
 
-interface OptimisticStepWrapperProps {
+interface AnimationStepWrapperProps {
   children: ReactNode;
   isPending?: boolean;
   isRemoving?: boolean;
   className?: string;
 }
 
-export function AnimationStepWrapper({ children, isPending, isRemoving, className }: OptimisticStepWrapperProps) {
+export function AnimationStepWrapper({ children, isPending, isRemoving, className }: AnimationStepWrapperProps) {
   return (
     <div
       className={cn(
