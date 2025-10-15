@@ -101,9 +101,6 @@ export function AnalyticsPage() {
         headerStartItems={
           <h1 className="text-foreground-950 flex items-center gap-1">
             <span>Analytics</span>
-            <Badge variant="lighter" className="text-xs">
-              BETA
-            </Badge>
             {isDevMockMode && (
               <Badge variant="filled" color="orange" className="text-xs">
                 DEV MOCK DATA

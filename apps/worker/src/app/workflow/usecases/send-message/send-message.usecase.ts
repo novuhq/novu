@@ -8,7 +8,6 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
-  FeatureFlagsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -19,10 +18,9 @@ import {
   NormalizeVariables,
   NormalizeVariablesCommand,
   PlatformException,
-  ResolveContextFromKeys,
-  ResolveContextFromKeysCommand,
 } from '@novu/application-generic';
 import {
+  ContextRepository,
   JobEntity,
   NotificationTemplateRepository,
   SubscriberRepository,
@@ -36,7 +34,6 @@ import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
   IPreferenceChannels,
@@ -78,9 +75,8 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
-    private resolveContextFromKeys: ResolveContextFromKeys,
-    private executeBridgeJob: ExecuteBridgeJob,
-    private featureFlagsService: FeatureFlagsService
+    private contextRepository: ContextRepository,
+    private executeBridgeJob: ExecuteBridgeJob
   ) {}
 
   @InstrumentUsecase()
@@ -150,20 +146,9 @@ export class SendMessage {
       };
     }
 
-    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-    });
-
     let severity = command.severity;
     const { overrides } = command;
-    if (
-      isNotificationSeverityEnabled &&
-      stepType !== StepTypeEnum.TRIGGER &&
-      overrides?.severity &&
-      overrides.severity !== severity
-    ) {
+    if (stepType !== StepTypeEnum.TRIGGER && overrides?.severity && overrides.severity !== severity) {
       severity = overrides.severity;
 
       await this.createExecutionDetails.execute(
@@ -455,14 +440,11 @@ export class SendMessage {
   private async resolveContext(command: SendMessageCommand): Promise<ContextResolved> {
     const { contextKeys, environmentId, organizationId } = command;
 
-    const contexts = await this.resolveContextFromKeys.execute(
-      ResolveContextFromKeysCommand.create({
-        environmentId,
-        organizationId,
-        userId: command.userId,
-        contextKeys: contextKeys || [],
-      })
-    );
+    if (!contextKeys || contextKeys.length === 0) {
+      return {} as ContextResolved;
+    }
+
+    const contexts = await this.contextRepository.findByKeys(environmentId, organizationId, contextKeys);
 
     return contexts.reduce((acc, context) => {
       acc[context.type] = {

@@ -10,7 +10,7 @@ export type Context = {
   type: ContextType;
   data: ContextData;
 
-  key: ContextKey;
+  key: string;
 
   createdAt: string;
   updatedAt: string;
@@ -20,9 +20,7 @@ export type ContextType = string;
 
 export type ContextId = string;
 
-export type ContextKey = `${ContextType}:${ContextId}`;
-
-export const createContextKey = (type: ContextType, id: ContextId): ContextKey => `${type}:${id}`;
+export const createContextKey = (type: ContextType, id: ContextId): string => `${type}:${id}`;
 
 export type ContextData = Record<string, unknown>;
 

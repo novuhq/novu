@@ -36,7 +36,7 @@ export class NotificationRepository extends BaseRepository<
       severity?: SeverityLevelEnum[] | null;
       after?: string;
       before?: string;
-      contextSearch?: string;
+      contextKeys?: string[];
     } = {},
     skip = 0,
     limit = 10
@@ -56,6 +56,8 @@ export class NotificationRepository extends BaseRepository<
     }
 
     const severityCondition: Array<FilterQuery<NotificationDBModel>> = [];
+    const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
+
     if (query.severity && query.severity?.length > 0) {
       if (query.severity.includes(SeverityLevelEnum.NONE)) {
         severityCondition.push({ severity: { $exists: false } }, { severity: { $in: query.severity } });
@@ -94,24 +96,11 @@ export class NotificationRepository extends BaseRepository<
       };
     }
 
-    if (query.contextSearch) {
-      if (query.contextSearch.includes(':')) {
-        // Exact match: "tenant:org-123"
-        requestQuery.contextKeys = {
-          $in: [query.contextSearch],
-        };
-      } else {
-        // Partial match: search for any context key containing this string
-        // This allows searching by type only ("tenant") or ID only ("org-123")
-        requestQuery.contextKeys = {
-          $regex: query.contextSearch,
-          $options: 'i', // case insensitive
-        };
-      }
+    if (query.contextKeys && query.contextKeys.length > 0) {
+      requestQuery.contextKeys = { $in: query.contextKeys };
     }
 
     // combine all $or conditions properly
-    const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
     if (severityCondition.length > 0) {
       orConditions.push({ $or: severityCondition });
     }

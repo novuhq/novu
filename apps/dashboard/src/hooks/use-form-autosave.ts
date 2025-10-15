@@ -7,23 +7,24 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 const TEN_SECONDS = 10 * 1000;
 
-export function useFormAutosave<U extends Record<string, unknown>, T extends FieldValues = FieldValues>({
-  previousData,
-  form: propsForm,
-  isReadOnly,
-  shouldClientValidate = false,
-  save,
-}: {
+type UseFormAutosaveProps<U extends Record<string, unknown>, T extends FieldValues = FieldValues> = {
   previousData: U;
   form: UseFormReturn<T>;
   isReadOnly?: boolean;
   shouldClientValidate?: boolean;
   save: (data: U, options: { onSuccess?: () => void }) => void;
-}) {
+};
+
+export function useFormAutosave<U extends Record<string, unknown>, T extends FieldValues = FieldValues>({
+  form: propsForm,
+  ...saveProps
+}: UseFormAutosaveProps<U, T>) {
   const formRef = useDataRef(propsForm);
+  const savePropsRef = useDataRef({ ...saveProps });
 
   const onSave = useCallback(
     async (data: T, options?: { forceSubmit?: boolean; onSuccess?: () => void }) => {
+      const { save, isReadOnly, shouldClientValidate, previousData } = savePropsRef.current;
       if (isReadOnly) {
         return;
       }
@@ -54,7 +55,7 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
       form.reset(values, { keepErrors: true });
       save(values, { onSuccess: options?.onSuccess });
     },
-    [formRef, previousData, isReadOnly, save, shouldClientValidate]
+    [formRef, savePropsRef]
   );
 
   const debouncedOnSave = useDebounce(onSave, TEN_SECONDS);
@@ -75,25 +76,22 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
   );
 
   // flush the form updates right away
-  const saveForm = ({
-    forceSubmit = false,
-    onSuccess,
-  }: {
-    forceSubmit?: boolean;
-    onSuccess?: () => void;
-  } = {}): Promise<void> => {
-    return new Promise((resolve) => {
-      // await for the state to be updated
-      setTimeout(async () => {
-        // use the form reference instead of destructuring the props to avoid stale closures
-        const form = formRef.current;
-        const values = form.getValues();
-        await onSave(values, { forceSubmit, onSuccess });
+  const saveForm = useCallback(
+    ({ forceSubmit = false, onSuccess }: { forceSubmit?: boolean; onSuccess?: () => void } = {}): Promise<void> => {
+      return new Promise((resolve) => {
+        // await for the state to be updated
+        setTimeout(async () => {
+          // use the form reference instead of destructuring the props to avoid stale closures
+          const form = formRef.current;
+          const values = form.getValues();
+          await onSave(values, { forceSubmit, onSuccess });
 
-        resolve();
-      }, 0);
-    });
-  };
+          resolve();
+        }, 0);
+      });
+    },
+    [formRef, onSave]
+  );
 
   useEffect(() => {
     const form = formRef.current;

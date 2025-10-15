@@ -63,7 +63,7 @@ export class CreateEnvironment {
       throw new BadRequestException('Color property is required');
     }
 
-    const type = await this.getEnvironmentType(command.name, command.organizationId, command.type);
+    const type = await this.getEnvironmentType(command.name, command.type);
 
     const environment = await this.environmentRepository.create({
       _organizationId: command.organizationId,
@@ -151,22 +151,8 @@ export class CreateEnvironment {
     return commandColor;
   }
 
-  private async getEnvironmentType(
-    name: string,
-    organizationId: string,
-    commandType?: EnvironmentTypeEnum
-  ): Promise<EnvironmentTypeEnum> {
+  private async getEnvironmentType(name: string, commandType?: EnvironmentTypeEnum): Promise<EnvironmentTypeEnum> {
     if (commandType) return commandType;
-
-    const isNewChangeMechanismEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED,
-      organization: { _id: organizationId },
-      defaultValue: false,
-    });
-
-    if (!isNewChangeMechanismEnabled) {
-      return EnvironmentTypeEnum.DEV;
-    }
 
     if (name === EnvironmentEnum.DEVELOPMENT) return EnvironmentTypeEnum.DEV;
     if (name === EnvironmentEnum.PRODUCTION) return EnvironmentTypeEnum.PROD;

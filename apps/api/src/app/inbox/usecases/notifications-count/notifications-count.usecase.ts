@@ -63,7 +63,8 @@ export class NotificationsCount {
         },
         {
           limit: MAX_NOTIFICATIONS_COUNT,
-        }
+        },
+        command.contextKeys
       );
     });
 

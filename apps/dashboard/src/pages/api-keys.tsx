@@ -6,6 +6,9 @@ import { Input } from '@/components/primitives/input';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useRegion } from '@/context/region';
+import { getRegionConfig } from '@/context/region/region-config';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { PermissionsEnum } from '@novu/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -17,7 +20,7 @@ import { HelpTooltipIndicator } from '../components/primitives/help-tooltip-indi
 import { showErrorToast, showSuccessToast } from '../components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../components/primitives/tooltip';
 import { RegenerateApiKeysDialog } from '../components/regenerate-api-keys-dialog';
-import { API_HOSTNAME, IS_SELF_HOSTED, WEBSOCKET_HOSTNAME } from '../config';
+import { IS_SELF_HOSTED } from '../config';
 import { useFetchApiKeys, useRegenerateApiKeys } from '../hooks/use-fetch-api-keys';
 import { useHasPermission } from '../hooks/use-has-permission';
 
@@ -36,6 +39,7 @@ interface ApiKeysFormData {
 export function ApiKeysPage() {
   const apiKeysQuery = useFetchApiKeys();
   const { currentEnvironment } = useEnvironment();
+  const { selectedRegion } = useRegion();
   const apiKeys = apiKeysQuery.data?.data;
   const isLoading = apiKeysQuery.isLoading;
   const [isRegenerateDialogOpen, setIsRegenerateDialogOpen] = useState(false);
@@ -66,7 +70,8 @@ export function ApiKeysPage() {
     return null;
   }
 
-  const region = window.location.hostname.includes('eu') ? 'EU' : 'US';
+  // Use dynamic region from region selector
+  const region = getRegionConfig(selectedRegion)?.name || selectedRegion.toUpperCase();
 
   return (
     <>
@@ -125,10 +130,9 @@ export function ApiKeysPage() {
               <CardHeader>
                 API URLs
                 <p className="text-foreground-500 mt-1 text-xs font-normal">
-                  {IS_SELF_HOSTED 
+                  {IS_SELF_HOSTED
                     ? 'API and WebSocket endpoints for your self-hosted Novu instance. '
-                    : `API and WebSocket URLs for Novu Cloud in the ${region} region. `
-                  }
+                    : `API and WebSocket URLs for Novu Cloud in the ${region} region. `}
                   <ExternalLink href="https://docs.novu.co/api-reference/overview" className="text-foreground-500">
                     Learn more
                   </ExternalLink>
@@ -138,19 +142,19 @@ export function ApiKeysPage() {
                 <div className="space-y-4">
                   <SettingField
                     label="API Hostname"
-                    tooltip={IS_SELF_HOSTED 
-                      ? 'Your self-hosted Novu API endpoint'
-                      : `For Novu Cloud in the ${region} region`
+                    tooltip={
+                      IS_SELF_HOSTED ? 'Your self-hosted Novu API endpoint' : `For Novu Cloud in the ${region} region`
                     }
-                    value={API_HOSTNAME}
+                    value={apiHostnameManager.getHostname()}
                   />
                   <SettingField
                     label="WebSocket Hostname"
-                    tooltip={IS_SELF_HOSTED 
-                      ? 'Your self-hosted Novu WebSocket endpoint'
-                      : `WebSocket endpoint for Novu Cloud in the ${region} region`
+                    tooltip={
+                      IS_SELF_HOSTED
+                        ? 'Your self-hosted Novu WebSocket endpoint'
+                        : `WebSocket endpoint for Novu Cloud in the ${region} region`
                     }
-                    value={getWebSocketUrl(WEBSOCKET_HOSTNAME)}
+                    value={getWebSocketUrl(apiHostnameManager.getWebSocketHostname())}
                   />
                 </div>
               </CardContent>

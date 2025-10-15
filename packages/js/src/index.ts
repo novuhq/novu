@@ -3,6 +3,7 @@ export { Novu } from './novu';
 export {
   ChannelPreference,
   ChannelType,
+  Context,
   DaySchedule,
   DefaultSchedule,
   FiltersCountResponse,

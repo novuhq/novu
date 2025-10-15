@@ -1,29 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { FeatureFlagsService, InstrumentUsecase } from '@novu/application-generic';
 import { JsonSchemaTypeEnum } from '@novu/dal';
-import { LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
+import { FeatureFlagsKeysEnum, LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { buildSubscriberSchema } from '../../../shared/utils/create-schema';
+import { buildContextSchema, buildSubscriberSchema } from '../../../shared/utils/create-schema';
 import { LayoutVariablesSchemaCommand } from './layout-variables-schema.command';
 
 @Injectable()
 export class LayoutVariablesSchemaUseCase {
-  constructor(private readonly createVariablesObject: CreateVariablesObject) {}
+  constructor(
+    private readonly createVariablesObject: CreateVariablesObject,
+    private readonly featureFlagsService: FeatureFlagsService
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: LayoutVariablesSchemaCommand): Promise<JSONSchemaDto> {
     const { controlValues } = command;
 
-    const { subscriber } = await this.createVariablesObject.execute(
+    const { subscriber, context } = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         controlValues: Object.values(controlValues?.email ?? {}),
       })
     );
+
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      defaultValue: false,
+    });
 
     return {
       type: JsonSchemaTypeEnum.OBJECT,
@@ -32,6 +42,7 @@ export class LayoutVariablesSchemaUseCase {
         [LAYOUT_CONTENT_VARIABLE]: {
           type: JsonSchemaTypeEnum.STRING,
         },
+        ...(isContextEnabled ? { context: buildContextSchema(context) } : {}),
       },
       additionalProperties: false,
     };

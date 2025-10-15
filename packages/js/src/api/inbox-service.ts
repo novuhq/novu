@@ -1,6 +1,7 @@
 import type {
   ActionTypeEnum,
   ChannelPreference,
+  Context,
   DefaultSchedule,
   InboxNotification,
   NotificationFilter,
@@ -31,17 +32,20 @@ export class InboxService {
     subscriberHash,
     subscriber,
     defaultSchedule,
+    context,
   }: {
     applicationIdentifier?: string;
     subscriberHash?: string;
     subscriber?: Subscriber;
     defaultSchedule?: DefaultSchedule;
+    context?: Context;
   }): Promise<Session> {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
       subscriberHash,
       subscriber,
       defaultSchedule,
+      context,
     })) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
     this.#httpClient.setKeylessHeader(response.applicationIdentifier);

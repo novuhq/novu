@@ -15,8 +15,8 @@ const sendgridConfigurations: ConfigConfiguration[] = [
     required: false,
     links: [
       {
-        text: 'set-up guide',
-        url: 'https://docs.novu.co/platform/integrations/email/sendgrid#manual-setup',
+        text: 'manual set-up guide',
+        url: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/sendgrid',
       },
     ],
   },
@@ -37,8 +37,8 @@ const resendConfigurations: ConfigConfiguration[] = [
     required: false,
     links: [
       {
-        text: 'set-up guide',
-        url: 'https://docs.novu.co/platform/integrations/email/resend#manual-setup',
+        text: 'manual set-up guide',
+        url: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/resend',
       },
     ],
   },
@@ -59,8 +59,8 @@ const mailgunConfigurations: ConfigConfiguration[] = [
     required: false,
     links: [
       {
-        text: 'set-up guide',
-        url: 'https://docs.novu.co/platform/integrations/email/mailgun#manual-setup',
+        text: 'manual set-up guide',
+        url: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/mailgun',
       },
     ],
   },
@@ -81,8 +81,8 @@ const sesConfigurations: ConfigConfiguration[] = [
     required: false,
     links: [
       {
-        text: 'set-up guide',
-        url: 'https://docs.novu.co/platform/integrations/email/amazon-ses#manual-setup',
+        text: 'manual set-up guide',
+        url: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/ses',
       },
     ],
   },
@@ -94,7 +94,7 @@ const sesConfigurations: ConfigConfiguration[] = [
   },
 ];
 
-export const expoConfigurations: ConfigConfiguration[] = [
+export const pushConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',
     displayName: 'Push Activity Tracking',
@@ -116,7 +116,7 @@ export const sendgridGroupConfigurations: ConfigConfigurationGroup[] = [
     configurations: sendgridConfigurations,
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide:
-      'https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook#add-an-event-webhook',
+      'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/sendgrid',
   },
 ];
 
@@ -125,7 +125,8 @@ export const resendGroupConfigurations: ConfigConfigurationGroup[] = [
     groupType: 'inboundWebhook',
     configurations: resendConfigurations,
     enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide: 'https://resend.com/docs/dashboard/webhooks/introduction#what-is-a-webhook%3F',
+    setupWebhookUrlGuide:
+      'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/resend',
   },
 ];
 
@@ -134,7 +135,8 @@ export const mailgunGroupConfigurations: ConfigConfigurationGroup[] = [
     groupType: 'inboundWebhook',
     configurations: mailgunConfigurations,
     enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide: 'https://documentation.mailgun.com/docs/mailgun/user-manual/events/webhooks',
+    setupWebhookUrlGuide:
+      'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/mailgun',
   },
 ];
 
@@ -143,16 +145,52 @@ export const sesGroupConfigurations: ConfigConfigurationGroup[] = [
     groupType: 'inboundWebhook',
     configurations: sesConfigurations,
     enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide:
-      'https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook#add-an-event-webhook',
+    setupWebhookUrlGuide: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/ses',
+  },
+];
+
+export const pushpadGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: pushConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide: 'https://developer.android.com/develop/ui/views/notifications/build-notification',
+  },
+];
+
+export const fcmGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: pushConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide: 'https://developer.android.com/develop/ui/views/notifications/build-notification',
   },
 ];
 
 export const expoGroupConfigurations: ConfigConfigurationGroup[] = [
   {
     groupType: 'inboundWebhook',
-    configurations: expoConfigurations,
+    configurations: pushConfigurations,
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide: 'https://docs.expo.dev/push-notifications/sending-notifications/',
+  },
+];
+
+export const apnsGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: pushConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide:
+      'https://developer.apple.com/documentation/usernotifications/unusernotificationcenterdelegate',
+  },
+];
+
+export const pushWebhookGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: pushConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide: 'https://docs.novu.co/platform/integrations/push/push-webhook?utm_campaign=in-app',
   },
 ];

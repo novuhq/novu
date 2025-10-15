@@ -15,37 +15,42 @@ description: |
   It builds Docker images, pushes them to Amazon ECR, and deploys them to Amazon ECS.
   Additionally, it creates Sentry releases and New Relic deployment markers.
 
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: "Environment to deploy to"
         required: true
         type: choice
         default: staging
         options:
           - staging
+          - staging-apse1
           - production-us
           - production-eu
-          - production-both
+          - production-apse1
+          - production-us-and-eu
 
       deploy_api:
-        description: 'Deploy API'
+        description: "Deploy API"
         required: true
         type: boolean
         default: true
       deploy_worker:
-        description: 'Deploy Worker'
+        description: "Deploy Worker"
         required: true
         type: boolean
         default: false
       deploy_ws:
-        description: 'Deploy WS'
+        description: "Deploy WS"
         required: true
         type: boolean
         default: false
       deploy_webhook:
-        description: 'Deploy Webhook'
+        description: "Deploy Webhook"
         required: true
         type: boolean
         default: false
@@ -84,13 +89,19 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
             envs+=("\"staging-eu\"")
           fi
+          if [ "${{ github.event.inputs.environment }}" == "staging-apse1" ]; then
+            envs+=("\"staging-apse1\"")
+          fi
           if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then
             envs+=("\"prod-us\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-eu" ]; then
             envs+=("\"prod-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-both" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "production-apse1" ]; then
+            envs+=("\"prod-apse1\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-us-and-eu" ]; then
             envs+=("\"prod-us\"")
             envs+=("\"prod-eu\"")
           fi
@@ -121,7 +132,28 @@ jobs:
                 service_name=$(echo "$worker_service" | jq -r '.service')
                 task_name=$(echo "$worker_service" | jq -r '.task_name')
                 image=$(echo "$worker_service" | jq -r '.image')
-                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                
+                # Check if service has environments filter, otherwise deploy to all
+                allowed_envs=$(echo "$worker_service" | jq -r '.environments // empty')
+                should_deploy=false
+                
+                if [ -z "$allowed_envs" ]; then
+                  # No environment filter, deploy to all environments
+                  should_deploy=true
+                else
+                  # Check if any of the selected environments match the allowed environments
+                  for env in "${envs[@]}"; do
+                    env_clean=$(echo "$env" | tr -d '"')
+                    if echo "$allowed_envs" | jq -e --arg env "$env_clean" 'index($env) != null' > /dev/null; then
+                      should_deploy=true
+                      break
+                    fi
+                  done
+                fi
+                
+                if [ "$should_deploy" == "true" ]; then
+                  deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                fi
               done
             elif [ "$service" == "\"api\"" ]; then
               for api_service in $(echo "$API_SERVICE" | jq -c '.[]'); do
@@ -130,7 +162,28 @@ jobs:
                 service_name=$(echo "$api_service" | jq -r '.service')
                 task_name=$(echo "$api_service" | jq -r '.task_name')
                 image=$(echo "$api_service" | jq -r '.image')
-                deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                
+                # Check if service has environments filter, otherwise deploy to all
+                allowed_envs=$(echo "$api_service" | jq -r '.environments // empty')
+                should_deploy=false
+                
+                if [ -z "$allowed_envs" ]; then
+                  # No environment filter, deploy to all environments
+                  should_deploy=true
+                else
+                  # Check if any of the selected environments match the allowed environments
+                  for env in "${envs[@]}"; do
+                    env_clean=$(echo "$env" | tr -d '"')
+                    if echo "$allowed_envs" | jq -e --arg env "$env_clean" 'index($env) != null' > /dev/null; then
+                      should_deploy=true
+                      break
+                    fi
+                  done
+                fi
+                
+                if [ "$should_deploy" == "true" ]; then
+                  deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
+                fi
               done
             elif [ "$service" == "\"ws\"" ]; then
               cluster_name=ws-cluster
@@ -192,8 +245,8 @@ jobs:
       - name: Setup Node Version
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.0'
-          cache: 'pnpm'
+          node-version: "20.19.0"
+          cache: "pnpm"
 
       - name: Install Dependencies
         shell: bash
@@ -202,7 +255,7 @@ jobs:
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: 'image=moby/buildkit:v0.13.1'
+          driver-opts: "image=moby/buildkit:v0.13.1"
 
       - name: Prepare Variables
         run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
@@ -303,7 +356,7 @@ jobs:
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ matrix.service }}
         with:
-          version: '${{ github.sha }}'
+          version: "${{ github.sha }}"
           version_prefix: v
           environment: ${{vars.SENTRY_ENV}}
           ignore_empty: true
@@ -326,9 +379,9 @@ jobs:
           region: EU
           apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
           guid: ${{ matrix.nr == 'api' && secrets.NEW_RELIC_API_GUID || matrix.nr == 'worker' && secrets.NEW_RELIC_Worker_GUID }}
-          version: '${{ github.sha }}'
-          user: '${{ github.actor }}'
-          description: 'Novu Cloud Deployment'
+          version: "${{ github.sha }}"
+          user: "${{ github.actor }}"
+          description: "Novu Cloud Deployment"
 
   sync_novu_state:
     needs: [deploy, prepare-matrix]
@@ -350,22 +403,21 @@ jobs:
       needs.deploy.result == 'success' && 
       (contains(github.event.inputs.environment, 'production'))
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
-    
     steps:
       - name: Send webhook notification for US production
         if: |
           github.event.inputs.environment == 'production-us' || 
-          github.event.inputs.environment == 'production-both'
+          github.event.inputs.environment == 'production-us-and-eu'
         run: |
           curl -X POST https://webhooks.bug0.com/integrations/test/run \
             -H "Content-Type: application/json" \
             -H "x-api-key: ${{ secrets.BUG0_SECRET_KEY }}" \
             -d '{"url": "https://dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
-      
+
       - name: Send webhook notification for EU production
         if: |
           github.event.inputs.environment == 'production-eu' || 
-          github.event.inputs.environment == 'production-both'
+          github.event.inputs.environment == 'production-us-and-eu'
         run: |
           curl -X POST https://webhooks.bug0.com/integrations/test/run \
             -H "Content-Type: application/json" \

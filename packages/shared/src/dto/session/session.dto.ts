@@ -6,6 +6,7 @@ export interface ISubscriberJwtDto {
   subscriberId: string;
   organizationId: string;
   environmentId: string;
+  contextKeys?: string[];
   aud: 'widget_user';
 }
 

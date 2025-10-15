@@ -1,11 +1,12 @@
-import { useUser } from '@clerk/clerk-react';
-import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
-import { useEffect, useState } from 'react';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
-import { API_HOSTNAME, APP_ID, IS_SELF_HOSTED, WEBSOCKET_HOSTNAME } from '@/config';
+import { APP_ID, IS_SELF_HOSTED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useWorkflowEditorPage } from '@/hooks/use-workflow-editor-page';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { useUser } from '@clerk/clerk-react';
+import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
+import { useEffect, useState } from 'react';
 import { HeaderButton } from './header-navigation/header-button';
 import { InboxBellFilledDev } from './icons/inbox-bell-filled-dev';
 
@@ -120,11 +121,15 @@ export const InboxButton = () => {
       /**
        * We want to ensure our staging environment is using the production API and WebSocket endpoints.
        */
-      backendUrl={API_HOSTNAME === 'https://api.novu-staging.co' && !isTestPage ? 'https://api.novu.co' : API_HOSTNAME}
+      backendUrl={
+        apiHostnameManager.getHostname() === 'https://api.novu-staging.co' && !isTestPage
+          ? 'https://api.novu.co'
+          : apiHostnameManager.getHostname()
+      }
       socketUrl={
-        WEBSOCKET_HOSTNAME === 'https://socket.novu-staging.co' && !isTestPage
+        apiHostnameManager.getWebSocketHostname() === 'https://socket.novu-staging.co' && !isTestPage
           ? 'https://ws.novu.co'
-          : WEBSOCKET_HOSTNAME
+          : apiHostnameManager.getWebSocketHostname()
       }
       localization={{
         'inbox.filters.labels.default': `Inbox${localizationTestSuffix}`,

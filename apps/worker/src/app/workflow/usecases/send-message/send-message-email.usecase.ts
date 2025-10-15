@@ -312,6 +312,8 @@ export class SendMessageEmail extends SendMessageBase {
           mime: attachment.mime,
           name: attachment.name,
           channels: attachment.channels,
+          cid: attachment.cid,
+          disposition: attachment.disposition,
         }
     );
 

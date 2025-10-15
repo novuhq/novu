@@ -53,6 +53,7 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
     useCache,
     userAgentType,
     defaultSchedule,
+    context,
   } = props;
 
   const novu = useMemo(
@@ -67,8 +68,9 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
         __userAgent: `${baseUserAgent} ${userAgentType}`,
         subscriber: subscriberObj,
         defaultSchedule,
+        context,
       }),
-    [applicationIdentifier, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType]
+    [applicationIdentifier, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType, context]
   );
 
   useEffect(() => {

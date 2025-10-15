@@ -215,7 +215,7 @@ export class GetActivityFeed {
         after: command.after,
         before: command.before,
         severity: command.severity,
-        contextSearch: command.contextSearch,
+        contextKeys: command.contextKeys,
       },
       command.page * command.limit,
       command.limit

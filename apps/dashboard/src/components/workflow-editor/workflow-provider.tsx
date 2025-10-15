@@ -1,4 +1,4 @@
-import { PatchWorkflowDto, StepCreateDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import { PatchWorkflowDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
 import { CheckCircleIcon } from 'lucide-react';
 import { createContext, ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
@@ -13,6 +13,7 @@ import {
 } from '@/components/primitives/alert-dialog';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useBeforeUnload } from '@/hooks/use-before-unload';
+import { useDataRef } from '@/hooks/use-data-ref';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useInvocationQueue } from '@/hooks/use-invocation-queue';
 import { usePatchWorkflow } from '@/hooks/use-patch-workflow';
@@ -21,13 +22,13 @@ import { createContextHook } from '@/utils/context';
 import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { showErrorToast, showSavingToast, showSuccessToast } from './toasts';
-import { useOptimisticWorkflow } from './use-optimistic-workflow';
 import { WorkflowSchemaProvider } from './workflow-schema-provider';
 
 export type UpdateWorkflowFn = (
   data: UpdateWorkflowDto,
   options?: {
     onSuccess?: (workflow: WorkflowResponseDto) => void;
+    onError?: (error: unknown) => void;
   }
 ) => void;
 
@@ -35,23 +36,10 @@ export type WorkflowContextType = {
   isPending: boolean;
   isUpdatePatchPending: boolean;
   workflow?: WorkflowResponseDto;
-  optimisticWorkflow?: WorkflowResponseDto;
   step?: StepResponseDto;
   update: UpdateWorkflowFn;
   patch: (data: PatchWorkflowDto) => void;
   digestStepBeforeCurrent?: StepResponseDto;
-  optimisticAddStep: (
-    stepType: string,
-    insertIndex: number,
-    createStepFn: () => StepCreateDto,
-    options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }
-  ) => void;
-  optimisticRemoveStep: (stepSlug: string, options?: { onSuccess?: () => void }) => void;
-  optimisticReorderSteps: (
-    newSteps: StepResponseDto[],
-    options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }
-  ) => void;
-  hasPendingOperations: boolean;
 };
 
 export const WorkflowContext = createContext<WorkflowContextType>({} as WorkflowContextType);
@@ -65,6 +53,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const { workflow, isPending, error } = useFetchWorkflow({
     workflowSlug,
   });
+  const workflowRef = useDataRef<WorkflowResponseDto | undefined>(workflow);
 
   const getStep = useCallback(() => {
     return workflow?.steps.find(
@@ -138,25 +127,27 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const update = useCallback(
-    (data: UpdateWorkflowDto, options?: { onSuccess?: (workflow: WorkflowResponseDto) => void }) => {
-      if (workflow) {
+    (
+      data: UpdateWorkflowDto,
+      options?: { onSuccess?: (workflow: WorkflowResponseDto) => void; onError?: (error: unknown) => void }
+    ) => {
+      const currentWorkflow = workflowRef.current;
+      if (currentWorkflow) {
         enqueue(async () => {
-          const res = await updateWorkflow({ workflowSlug: workflow.slug, workflow: { ...data } });
-          options?.onSuccess?.(res);
-          return res;
+          try {
+            const res = await updateWorkflow({ workflowSlug: currentWorkflow.slug, workflow: { ...data } });
+            options?.onSuccess?.(res);
+          } catch (error) {
+            options?.onError?.(error);
+            showErrorToast(toastId, error);
+          }
         });
       }
     },
-    [enqueue, updateWorkflow, workflow]
+    [enqueue, updateWorkflow, workflowRef, toastId]
   );
 
-  const { optimisticWorkflow, optimisticAddStep, optimisticRemoveStep, optimisticReorderSteps, hasPendingOperations } =
-    useOptimisticWorkflow({
-      workflow,
-      onUpdate: update,
-    });
-
-  const isUpdatePatchPending = isPatchPending || isUpdatePending || hasPendingItems || hasPendingOperations;
+  const isUpdatePatchPending = isPatchPending || isUpdatePending || hasPendingItems;
 
   const blocker = useBlocker(({ nextLocation }) => {
     const workflowEditorBasePath = buildRoute(ROUTES.EDIT_WORKFLOW, {
@@ -179,11 +170,12 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
   const patch = useCallback(
     (data: PatchWorkflowDto) => {
-      if (workflow) {
-        enqueue(() => patchWorkflow({ workflowSlug: workflow.slug, workflow: { ...data } }));
+      const currentWorkflow = workflowRef.current;
+      if (currentWorkflow) {
+        enqueue(() => patchWorkflow({ workflowSlug: currentWorkflow.slug, workflow: { ...data } }));
       }
     },
-    [enqueue, patchWorkflow, workflow]
+    [enqueue, patchWorkflow, workflowRef]
   );
 
   useLayoutEffect(() => {
@@ -223,29 +215,11 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
       patch,
       isPending,
       workflow,
-      optimisticWorkflow,
       step: getStep(),
       digestStepBeforeCurrent,
       isUpdatePatchPending,
-      optimisticAddStep,
-      optimisticRemoveStep,
-      optimisticReorderSteps,
-      hasPendingOperations,
     }),
-    [
-      update,
-      patch,
-      isPending,
-      workflow,
-      optimisticWorkflow,
-      getStep,
-      digestStepBeforeCurrent,
-      isUpdatePatchPending,
-      optimisticAddStep,
-      optimisticRemoveStep,
-      optimisticReorderSteps,
-      hasPendingOperations,
-    ]
+    [update, patch, isPending, workflow, getStep, digestStepBeforeCurrent, isUpdatePatchPending]
   );
 
   return (

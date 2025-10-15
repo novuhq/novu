@@ -6,65 +6,28 @@ type ResourceRowProps = {
   resource: IResourceDiffResult;
 };
 
+const RESOURCE_ICONS = {
+  workflow: RiRouteFill,
+  layout: RiLayout5Line,
+  translation: RiTranslate2,
+} as const;
+const DEFAULT_RESOURCE_ICON = RiRouteFill;
+const DEFAULT_RESOURCE_NAME = 'Unnamed Resource';
+const DEFAULT_ICON_COLOR = 'text-feature';
+
 export function ResourceRow({ resource }: ResourceRowProps) {
-  const getResourceIcon = (resourceType: string) => {
-    switch (resourceType) {
-      case 'workflow':
-        return RiRouteFill;
-      case 'layout':
-        return RiLayout5Line;
-      case 'translation':
-        return RiTranslate2;
-      default:
-        return RiRouteFill;
-    }
-  };
-
-  const getResourceIconColor = (resourceType: string) => {
-    switch (resourceType) {
-      case 'workflow':
-        return 'text-feature';
-      case 'layout':
-        return 'text-feature';
-      case 'translation':
-        return 'text-feature';
-      default:
-        return 'text-feature';
-    }
-  };
-
-  const getResourceDisplayName = (resource: IResourceDiffResult) => {
-    return resource.targetResource?.name || resource.sourceResource?.name || 'Unnamed Resource';
-  };
-
-  const getResourceIdentifier = (resource: IResourceDiffResult) => {
-    const name = getResourceDisplayName(resource);
-    return name.toLowerCase().replace(/\s+/g, '-');
-  };
-
-  const getResourceUpdatedBy = (resource: IResourceDiffResult) => {
-    const sourceUpdatedBy = resource.sourceResource?.updatedBy;
-    const targetUpdatedBy = resource.targetResource?.updatedBy;
-    return sourceUpdatedBy || targetUpdatedBy;
-  };
-
-  const getResourceUpdatedAt = (resource: IResourceDiffResult) => {
-    const sourceUpdatedAt = resource.sourceResource?.updatedAt;
-    const targetUpdatedAt = resource.targetResource?.updatedAt;
-    return sourceUpdatedAt || targetUpdatedAt;
-  };
-
-  const IconComponent = getResourceIcon(resource.resourceType);
-  const iconColor = getResourceIconColor(resource.resourceType);
-  const displayName = getResourceDisplayName(resource);
-  const identifier = getResourceIdentifier(resource);
-  const updatedBy = getResourceUpdatedBy(resource);
-  const updatedAt = getResourceUpdatedAt(resource);
+  const IconComponent =
+    RESOURCE_ICONS[resource.resourceType as keyof typeof RESOURCE_ICONS] ?? DEFAULT_RESOURCE_ICON;
+  const displayName =
+    resource.targetResource?.name ?? resource.sourceResource?.name ?? DEFAULT_RESOURCE_NAME;
+  const identifier = displayName.toLowerCase().replace(/\s+/g, '-');
+  const updatedBy = resource.sourceResource?.updatedBy ?? resource.targetResource?.updatedBy;
+  const updatedAt = resource.sourceResource?.updatedAt ?? resource.targetResource?.updatedAt;
 
   return (
     <div className="border-stroke-soft-100 flex items-center gap-1 border-b p-1 last:border-b-0">
       <div className="flex size-5 items-center justify-center">
-        <IconComponent className={`size-3.5 ${iconColor}`} />
+        <IconComponent className={`size-3.5 ${DEFAULT_ICON_COLOR}`} />
       </div>
 
       <div className="min-w-0 flex-1">

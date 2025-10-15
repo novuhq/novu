@@ -11,6 +11,7 @@ import {
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
+  ContextRepository,
   EnvironmentRepository,
   IntegrationRepository,
   MessageRepository,
@@ -18,7 +19,7 @@ import {
   NotificationTemplateRepository,
   PreferencesRepository,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -50,6 +51,11 @@ const mockIntegration = {
   deletedBy: '',
 };
 
+const mockSeverityCounts = [
+  { severity: SeverityLevelEnum.HIGH, count: 10 },
+  { severity: SeverityLevelEnum.MEDIUM, count: 20 },
+];
+
 describe('Session', () => {
   let session: Session;
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
@@ -61,6 +67,7 @@ describe('Session', () => {
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let communityOrganizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let contextRepository: sinon.SinonStubbedInstance<ContextRepository>;
   let generateUniqueApiKey: sinon.SinonStubbedInstance<GenerateUniqueApiKey>;
   let createNovuIntegrationsUsecase: sinon.SinonStubbedInstance<CreateNovuIntegrations>;
   let communityUserRepository: sinon.SinonStubbedInstance<CommunityUserRepository>;
@@ -85,6 +92,7 @@ describe('Session', () => {
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
     communityOrganizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    contextRepository = sinon.createStubInstance(ContextRepository);
     generateUniqueApiKey = sinon.createStubInstance(GenerateUniqueApiKey);
     createNovuIntegrationsUsecase = sinon.createStubInstance(CreateNovuIntegrations);
     communityUserRepository = sinon.createStubInstance(CommunityUserRepository);
@@ -109,6 +117,7 @@ describe('Session', () => {
       integrationRepository as any,
       organizationRepository as any,
       communityOrganizationRepository as any,
+      contextRepository as any,
       generateUniqueApiKey as any,
       createNovuIntegrationsUsecase as any,
       communityUserRepository as any,
@@ -123,6 +132,8 @@ describe('Session', () => {
       getSubscriberSchedule as any,
       updatePreferencesUsecase as any
     );
+
+    messageRepository.getCountBySeverity.resolves(mockSeverityCounts);
   });
 
   it('should throw an error if the environment is not found', async () => {
@@ -280,13 +291,18 @@ describe('Session', () => {
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
     expect(response.token).to.equal(token);
-    expect(response.totalUnreadCount).to.equal(notificationCount.data[0].count);
+    expect(response.unreadCount.total).to.equal(notificationCount.data[0].count);
+    expect(response.unreadCount.severity[SeverityLevelEnum.HIGH]).to.equal(mockSeverityCounts[0].count);
+    expect(response.unreadCount.severity[SeverityLevelEnum.MEDIUM]).to.equal(mockSeverityCounts[1].count);
+    expect(response.unreadCount.severity[SeverityLevelEnum.LOW]).to.equal(0);
+    expect(response.unreadCount.severity[SeverityLevelEnum.NONE]).to.equal(0);
     expect(
       analyticsService.mixpanelTrack.calledWith(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
         _organization: environment._organizationId,
         environmentName: environment.name,
         _subscriber: subscriber._id,
         origin: command.origin,
+        context: [],
       })
     ).to.be.true;
   });

@@ -1,7 +1,6 @@
 import { SubscriberEntity, TopicEntity } from '@novu/dal';
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
-  ContextKey,
   ISubscribersDefine,
   ITenantDefine,
   StatelessControls,
@@ -24,7 +23,7 @@ export interface IProcessSubscriberDataDto {
   overrides: TriggerOverrides;
   tenant?: ITenantDefine;
   actor?: SubscriberEntity;
-  contextKeys?: ContextKey[];
+  contextKeys?: string[];
   subscriber: ISubscribersDefine;
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;

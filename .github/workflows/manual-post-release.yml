@@ -18,6 +18,11 @@ on:
         required: true
         type: boolean
         default: false
+      mark_as_latest:
+        description: 'Mark the packages as latest'
+        required: true
+        type: boolean
+        default: true
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -33,11 +38,11 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-          ref: next
+          ref: ${{ github.ref_name }}
 
       - name: Pull latest changes
         run: |
-          git pull origin next
+          git pull origin ${{ github.ref_name }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -63,8 +68,8 @@ jobs:
       - name: Publish packages to NPM
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NX_PUBLISH_ARGS: ${{ github.event.inputs.mark_as_latest == 'true' && '--tag latest' || '' }}
         run: |
-          export NX_RELEASE_TAG=latest
           pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
 
       - name: Create and push tags
@@ -122,10 +127,18 @@ jobs:
             done
             
             # Create the GitHub release
-            gh release create "$tag_name" \
-              --title "$tag_name" \
-              --notes "$release_body" \
-              --target next
-            
+            if [ "${{ github.event.inputs.mark_as_latest }}" = "true" ]; then
+              gh release create "$tag_name" \
+                --title "$tag_name" \
+                --notes "$release_body" \
+                --target next
+            else
+              gh release create "$tag_name" \
+                --title "$tag_name" \
+                --notes "$release_body" \
+                --target next \
+                --latest=false
+            fi
+
             echo "✅ Created GitHub release for $tag_name"
           done 
