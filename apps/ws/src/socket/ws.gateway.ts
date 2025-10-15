@@ -11,6 +11,7 @@ import { SubscriberOnlineService } from '../shared/subscriber-online';
 const nr = require('newrelic');
 
 const LOG_CONTEXT = 'WSGateway';
+const DEFAULT_CONTEXT_ROOM = '__default__';
 
 @WebSocketGateway()
 export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy {
@@ -147,6 +148,8 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
       return this.disconnect(connection);
     }
 
+    const contextKeys = subscriber.contextKeys || [];
+
     Logger.log(
       `Connection request received from ${subscriber._id} external id: ${subscriber.subscriberId} organization id: ${subscriber.organizationId}`,
       LOG_CONTEXT
@@ -154,21 +157,47 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
 
     await connection.join(subscriber._id);
 
+    // Join context-specific rooms for efficient message routing
+    if (contextKeys.length === 0) {
+      // Join default room for connections without context
+      await connection.join(`${subscriber._id}:${DEFAULT_CONTEXT_ROOM}`);
+      Logger.log(`Connection ${connection.id} joined default room for ${subscriber._id}`, LOG_CONTEXT);
+    } else {
+      // Join a room for each context key
+      for (const contextKey of contextKeys) {
+        await connection.join(`${subscriber._id}:${contextKey}`);
+      }
+      Logger.log(
+        `Connection ${connection.id} joined context rooms for ${subscriber._id}: ${contextKeys.join(', ')}`,
+        LOG_CONTEXT
+      );
+    }
+
     Logger.log(`Connection request accepted for ${subscriber._id}`, LOG_CONTEXT);
 
     await this.subscriberOnlineService.handleConnection(subscriber);
   }
 
-  async sendMessage(userId: string, event: string, data: any) {
+  async sendMessage(userId: string, event: string, data: any, contextKeys?: string[]) {
     if (!this.server) {
       Logger.error('No sw server available to send message', LOG_CONTEXT);
 
       return;
     }
 
-    Logger.log(`Sending event ${event} message to ${userId}`, LOG_CONTEXT);
+    const messageContextKeys = contextKeys || [];
 
-    this.server.to(userId).emit(event, data);
+    if (messageContextKeys.length === 0) {
+      // Send to default room (connections without context)
+      Logger.log(`Sending event ${event} to ${userId}:${DEFAULT_CONTEXT_ROOM} (no context)`, LOG_CONTEXT);
+      this.server.to(`${userId}:${DEFAULT_CONTEXT_ROOM}`).emit(event, data);
+    } else {
+      // Send to all matching context rooms
+      Logger.log(`Sending event ${event} to ${userId} with contexts: ${messageContextKeys.join(', ')}`, LOG_CONTEXT);
+      for (const contextKey of messageContextKeys) {
+        this.server.to(`${userId}:${contextKey}`).emit(event, data);
+      }
+    }
   }
 
   private disconnect(socket: Socket) {

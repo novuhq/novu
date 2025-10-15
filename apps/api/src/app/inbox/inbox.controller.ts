@@ -15,7 +15,6 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { SubscriberEntity } from '@novu/dal';
 import {
   AddressingTypeEnum,
   MessageActionStatusEnum,
@@ -121,7 +120,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications')
   async getNotifications(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Query() query: GetNotificationsRequestDto
   ): Promise<GetNotificationsResponseDto> {
     return await this.getNotificationsUsecase.execute(
@@ -129,6 +128,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         limit: query.limit,
         offset: query.offset,
         after: query.after,
@@ -146,15 +146,15 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/count')
   async getNotificationsCount(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Query()
-    query: GetNotificationsCountRequestDto
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Query() query: GetNotificationsCountRequestDto
   ): Promise<GetNotificationsCountResponseDto> {
     const res = await this.notificationsCountUsecase.execute(
       NotificationsCountCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         filters: query.filters,
       })
     );
@@ -165,7 +165,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/preferences')
   async getAllPreferences(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Query() query: GetPreferencesRequestDto
   ): Promise<GetPreferencesResponseDto[]> {
     return await this.getInboxPreferencesUsecase.execute(
@@ -182,7 +182,7 @@ export class InboxController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/preferences/global')
-  async getSchedule(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<InboxPreference> {
+  async getSchedule(@SubscriberSession() subscriberSession: SubscriberSession): Promise<InboxPreference> {
     const globalPreference = await this.getSubscriberGlobalPreference.execute(
       GetSubscriberGlobalPreferenceCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -202,7 +202,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/read')
   async markNotificationAsRead(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
   ): Promise<InboxNotification> {
     return await this.markNotificationAsUsecase.execute(
@@ -210,6 +210,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationId,
         read: true,
       })
@@ -219,7 +220,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/unread')
   async markNotificationAsUnread(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
   ): Promise<InboxNotification> {
     return await this.markNotificationAsUsecase.execute(
@@ -227,6 +228,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationId,
         read: false,
       })
@@ -236,7 +238,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/archive')
   async markNotificationAsArchived(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
   ): Promise<InboxNotification> {
     return await this.markNotificationAsUsecase.execute(
@@ -244,6 +246,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationId,
         archived: true,
       })
@@ -253,7 +256,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/unarchive')
   async markNotificationAsUnarchived(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
   ): Promise<InboxNotification> {
     return await this.markNotificationAsUsecase.execute(
@@ -261,6 +264,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationId,
         archived: false,
       })
@@ -270,7 +274,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/snooze')
   async snoozeNotification(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string,
     @Body() body: SnoozeNotificationRequestDto
   ): Promise<InboxNotification> {
@@ -279,6 +283,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationId,
         snoozeUntil: body.snoozeUntil,
       })
@@ -288,7 +293,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/unsnooze')
   async unsnoozeNotification(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
   ): Promise<InboxNotification> {
     return await this.unsnoozeNotificationUsecase.execute(
@@ -296,6 +301,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationId,
       })
     );
@@ -305,7 +311,7 @@ export class InboxController {
   @Delete('/notifications/:id/delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteNotification(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string
   ): Promise<void> {
     await this.deleteNotificationUsecase.execute(
@@ -313,6 +319,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationId,
       })
     );
@@ -321,7 +328,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/complete')
   async completeAction(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string,
     @Body() body: ActionTypeRequestDto
   ): Promise<InboxNotification> {
@@ -330,6 +337,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationId,
         actionType: body.actionType,
         actionStatus: MessageActionStatusEnum.DONE,
@@ -340,7 +348,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/revert')
   async revertAction(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('id') notificationId: string,
     @Body() body: ActionTypeRequestDto
   ): Promise<InboxNotification> {
@@ -349,6 +357,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationId,
         actionType: body.actionType,
         actionStatus: MessageActionStatusEnum.PENDING,
@@ -359,7 +368,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/preferences')
   async updateGlobalPreference(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
     return await this.updatePreferencesUsecase.execute(
@@ -386,7 +395,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/preferences/bulk')
   async bulkUpdateWorkflowPreferences(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: BulkUpdatePreferencesRequestDto
   ): Promise<GetPreferencesResponseDto[]> {
     return await this.bulkUpdatePreferencesUsecase.execute(
@@ -402,7 +411,7 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/preferences/:workflowIdOrIdentifier')
   async updateWorkflowPreference(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
@@ -427,7 +436,7 @@ export class InboxController {
   @Post('/notifications/seen')
   @HttpCode(HttpStatus.NO_CONTENT)
   async markNotificationsAsSeen(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: MarkNotificationsAsSeenRequestDto
   ): Promise<void> {
     await this.markNotificationsAsSeenUsecase.execute(
@@ -435,6 +444,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         notificationIds: body.notificationIds,
         tags: body.tags,
         data: body.data,
@@ -446,7 +456,7 @@ export class InboxController {
   @Post('/notifications/read')
   @HttpCode(HttpStatus.NO_CONTENT)
   async markAllAsRead(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: UpdateAllNotificationsRequestDto
   ): Promise<void> {
     await this.updateAllNotifications.execute(
@@ -454,6 +464,7 @@ export class InboxController {
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys,
         from: {
           tags: body.tags,
           data: body.data,
@@ -469,7 +480,7 @@ export class InboxController {
   @Post('/notifications/archive')
   @HttpCode(HttpStatus.NO_CONTENT)
   async markAllAsArchived(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: UpdateAllNotificationsRequestDto
   ): Promise<void> {
     await this.updateAllNotifications.execute(
@@ -477,6 +488,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         from: {
           tags: body.tags,
           data: body.data,
@@ -492,7 +504,7 @@ export class InboxController {
   @Post('/notifications/read-archive')
   @HttpCode(HttpStatus.NO_CONTENT)
   async markAllAsReadArchived(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: UpdateAllNotificationsRequestDto
   ): Promise<void> {
     await this.updateAllNotifications.execute(
@@ -500,6 +512,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         from: {
           tags: body.tags,
           read: true,
@@ -516,7 +529,7 @@ export class InboxController {
   @Post('/notifications/delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAllNotifications(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: UpdateAllNotificationsRequestDto
   ): Promise<void> {
     await this.deleteAllNotificationsUsecase.execute(
@@ -524,6 +537,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         filters: {
           tags: body.tags,
           data: body.data,
@@ -551,6 +565,7 @@ export class InboxController {
         to: body.to,
         actor: body.actor,
         tenant: body.tenant,
+        context: body.context,
         transactionId: body.transactionId,
         addressingType: AddressingTypeEnum.MULTICAST,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,

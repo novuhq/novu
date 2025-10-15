@@ -79,7 +79,7 @@ export function isInOnboardingFlow(): boolean {
 
 export function detectRegionFromURL(): Region {
   const currentOrigin = window.location.origin;
-  const normalizeUrl = (url: string) => url.replace(/\/$/, '');
+  const normalizeUrl = (url: string) => url?.replace(/\/$/, '');
   const currentNormalized = normalizeUrl(currentOrigin);
 
   // Try to match current URL with any configured region's dashboard URL

@@ -26,6 +26,10 @@ export class Session {
     return this.#options.subscriber?.subscriberId;
   }
 
+  public get context() {
+    return this.#options.context;
+  }
+
   private handleApplicationIdentifier(method: 'get' | 'store' | 'delete', identifier?: string): string | null {
     if (typeof window === 'undefined' || !window.localStorage) {
       return null;
@@ -64,7 +68,7 @@ export class Session {
       if (options) {
         this.#options = options;
       }
-      const { subscriber, subscriberHash, applicationIdentifier, defaultSchedule } = this.#options;
+      const { subscriber, subscriberHash, applicationIdentifier, defaultSchedule, context } = this.#options;
       let currentTimezone;
       if (isBrowser()) {
         currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -90,6 +94,7 @@ export class Session {
           timezone: subscriber?.timezone ?? currentTimezone,
         },
         defaultSchedule,
+        context,
       });
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {

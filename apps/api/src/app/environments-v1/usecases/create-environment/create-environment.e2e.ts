@@ -22,14 +22,6 @@ describe('Create Environment - /environments (POST)', async () => {
       noEnvironment: true,
     });
     session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
-
-    // Enable the new change mechanism by default for normal tests
-    (process.env as any).IS_NEW_CHANGE_MECHANISM_ENABLED = 'true';
-  });
-
-  after(async () => {
-    // Clean up the feature flag
-    delete (process.env as any).IS_NEW_CHANGE_MECHANISM_ENABLED;
   });
 
   it('should create environment entity correctly', async () => {
@@ -109,35 +101,6 @@ describe('Create Environment - /environments (POST)', async () => {
 
     const dbApp = await environmentRepository.findOne({ _id: body.data._id });
     expect(dbApp?.type).to.equal(EnvironmentTypeEnum.PROD);
-  });
-
-  it('should create all environments with DEV type when IS_NEW_CHANGE_MECHANISM_ENABLED is disabled', async () => {
-    // Set the feature flag to disabled
-    (process.env as any).IS_NEW_CHANGE_MECHANISM_ENABLED = 'false';
-
-    const testCases = [
-      { name: 'Development', expectedType: EnvironmentTypeEnum.DEV },
-      { name: 'Production', expectedType: EnvironmentTypeEnum.DEV },
-      { name: 'Staging', expectedType: EnvironmentTypeEnum.DEV },
-      { name: 'Custom Environment', expectedType: EnvironmentTypeEnum.DEV },
-    ];
-
-    for (const testCase of testCases) {
-      const demoEnvironment = {
-        name: testCase.name,
-        color: '#3A7F5C',
-      };
-      const { body } = await session.testAgent.post('/v1/environments').send(demoEnvironment).expect(201);
-
-      expect(body.data.name).to.eq(demoEnvironment.name);
-      expect(body.data.type).to.eq(testCase.expectedType);
-
-      const dbApp = await environmentRepository.findOne({ _id: body.data._id });
-      expect(dbApp?.type).to.equal(testCase.expectedType);
-    }
-
-    // Reset the feature flag to enabled for other tests
-    (process.env as any).IS_NEW_CHANGE_MECHANISM_ENABLED = 'true';
   });
 
   it('should apply default type to existing environments without type field', async () => {

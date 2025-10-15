@@ -131,10 +131,10 @@ export const smsProviders: IProviderConfig[] = [
   },
   {
     id: SmsProviderIdEnum.BurstSms,
-    displayName: 'BurstSMS',
+    displayName: 'Kudosity (formerly BurstSMS)',
     channel: ChannelTypeEnum.SMS,
     credentials: burstSmsConfig,
-    docReference: 'https://developer.transmitsms.com/',
+    docReference: 'https://docs.novu.co/platform/integrations/sms/kudosity',
     logoFileName: { light: 'burst-sms.svg', dark: 'burst-sms.svg' },
   },
   {

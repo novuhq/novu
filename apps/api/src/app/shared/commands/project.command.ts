@@ -1,5 +1,5 @@
 import { BaseCommand } from '@novu/application-generic';
-import { IsNotEmpty } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export abstract class EnvironmentCommand extends BaseCommand {
   @IsNotEmpty()
@@ -23,4 +23,9 @@ export abstract class EnvironmentWithSubscriber extends EnvironmentCommand {
 
   @IsNotEmpty()
   readonly subscriberId: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  readonly contextKeys?: string[];
 }
