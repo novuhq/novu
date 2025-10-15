@@ -79,7 +79,8 @@ export class ExternalServicesRoute {
         command.userId,
         ChannelTypeEnum.IN_APP,
         { read: false, snoozed: false },
-        { limit: 99 }
+        { limit: 99 },
+        command.contextKeys
       ),
     ]);
 

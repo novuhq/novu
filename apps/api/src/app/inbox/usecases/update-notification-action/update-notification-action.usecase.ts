@@ -31,8 +31,8 @@ export class UpdateNotificationAction {
     const message = await this.messageRepository.findOne({
       _environmentId: command.environmentId,
       _subscriberId: subscriber._id,
-      ...(command.contextKeys && command.contextKeys?.length > 0 && { contextKeys: { $in: command.contextKeys } }),
       _id: command.notificationId,
+      contextKeys: command.contextKeys,
     });
     if (!message) {
       throw new NotFoundException(`Notification with id: ${command.notificationId} is not found.`);
