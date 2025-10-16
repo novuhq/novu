@@ -299,8 +299,11 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
           hasMore: paginationIndication.hasMore,
         });
 
+        const contextDisplay =
+          contextKeys === undefined ? 'FF disabled' : contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
+
         Logger.log(
-          `Sent unread count to socket ${socket.id} with contexts [${contextKeys.join(', ')}]: ${counts.total}`,
+          `Sent unread count to socket ${socket.id} with contexts [${contextDisplay}]: ${counts.total}`,
           LOG_CONTEXT
         );
       } catch (error) {
@@ -344,8 +347,11 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
           hasMore: paginationIndication.hasMore,
         });
 
+        const contextDisplay =
+          contextKeys === undefined ? 'FF disabled' : contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
+
         Logger.log(
-          `Sent unseen count to socket ${socket.id} with contexts [${contextKeys.join(', ')}]: ${unseenCount}`,
+          `Sent unseen count to socket ${socket.id} with contexts [${contextDisplay}]: ${unseenCount}`,
           LOG_CONTEXT
         );
       } catch (error) {
