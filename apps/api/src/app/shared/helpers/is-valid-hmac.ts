@@ -22,9 +22,7 @@ export function isContextHmacValid(
   }
 
   const key = decryptApiKey(secretKey);
-  console.log('key', key);
   const computedContextHash = createContextHash(key, context);
-  console.log('computedContextHash', computedContextHash);
-  console.log('contextHash', contextHash);
+
   return computedContextHash === contextHash;
 }
