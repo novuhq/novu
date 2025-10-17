@@ -114,7 +114,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     }
   }
 
-  public async changeContext(options: { context: Context; contextHash: string }): Promise<void> {
+  public async changeContext(options: { context: Context; contextHash?: string }): Promise<void> {
     const currentSubscriber = this.#session.subscriber;
     if (!currentSubscriber) {
       throw new Error('Cannot change context without an active subscriber');
