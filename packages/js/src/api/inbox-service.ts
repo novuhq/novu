@@ -30,12 +30,14 @@ export class InboxService {
   async initializeSession({
     applicationIdentifier,
     subscriberHash,
+    contextHash,
     subscriber,
     defaultSchedule,
     context,
   }: {
     applicationIdentifier?: string;
     subscriberHash?: string;
+    contextHash?: string;
     subscriber?: Subscriber;
     defaultSchedule?: DefaultSchedule;
     context?: Context;
@@ -43,6 +45,7 @@ export class InboxService {
     const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
       subscriberHash,
+      contextHash,
       subscriber,
       defaultSchedule,
       context,

@@ -2,11 +2,12 @@ import {
   buildIntegrationKey,
   CacheInMemoryProviderService,
   CacheService,
+  createContextHash,
   createHash,
   InvalidateCacheService,
 } from '@novu/application-generic';
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ContextPayload, InAppProviderIdEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
@@ -57,6 +58,8 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     subscriber,
     origin,
     defaultSchedule,
+    context,
+    contextHash,
   }: {
     applicationIdentifier: string;
     subscriberId?: string;
@@ -64,6 +67,8 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     subscriber?: Record<string, unknown>;
     origin?: string;
     defaultSchedule?: Record<string, unknown>;
+    context?: ContextPayload;
+    contextHash?: string;
   }) => {
     const request = session.testAgent.post('/v1/inbox/session');
 
@@ -77,6 +82,8 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       subscriberHash,
       subscriber,
       defaultSchedule,
+      context,
+      contextHash,
     });
   };
 
@@ -341,6 +348,134 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
 
     expect(status).to.equal(400);
     expect(body.message).to.contain('Please provide a valid HMAC hash');
+  });
+
+  describe('Context HMAC validation', () => {
+    it('should initialize session with valid context and contextHash when HMAC enabled', async () => {
+      const secretKey = session.environment.apiKeys[0].key;
+      const subscriberHash = createHash(secretKey, mockSubscriberId);
+      const context: ContextPayload = { tenant: 'acme', app: 'dashboard' };
+      const contextHash = createContextHash(secretKey, context);
+
+      const { body, status } = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: mockSubscriberId,
+        subscriberHash,
+        context,
+        contextHash,
+      });
+
+      expect(status).to.equal(201);
+      expect(body.data.token).to.be.ok;
+      expect(body.data.totalUnreadCount).to.equal(0);
+    });
+
+    it('should throw error when invalid contextHash provided', async () => {
+      const secretKey = session.environment.apiKeys[0].key;
+      const subscriberHash = createHash(secretKey, mockSubscriberId);
+      const context: ContextPayload = { tenant: 'acme', app: 'dashboard' };
+      const invalidContextHash = 'invalid-context-hash';
+
+      const { body, status } = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: mockSubscriberId,
+        subscriberHash,
+        context,
+        contextHash: invalidContextHash,
+      });
+
+      expect(status).to.equal(400);
+      expect(body.message).to.contain('Please provide a valid context HMAC hash');
+    });
+
+    it('should throw error when context provided without contextHash when HMAC enabled', async () => {
+      const secretKey = session.environment.apiKeys[0].key;
+      const subscriberHash = createHash(secretKey, mockSubscriberId);
+      const context: ContextPayload = { tenant: 'acme', app: 'dashboard' };
+
+      const { body, status } = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: mockSubscriberId,
+        subscriberHash,
+        context,
+      });
+
+      expect(status).to.equal(400);
+      expect(body.message).to.contain('Please provide a valid context HMAC hash');
+    });
+
+    it('should handle context with different key orders - hash should match', async () => {
+      const secretKey = session.environment.apiKeys[0].key;
+      const subscriberHash = createHash(secretKey, mockSubscriberId);
+
+      // Create context with keys in one order
+      const context1: ContextPayload = { tenant: 'acme', app: 'dashboard', env: 'prod' };
+      const contextHash1 = createContextHash(secretKey, context1);
+
+      // Create context with keys in different order - should produce same hash
+      const context2: ContextPayload = { env: 'prod', tenant: 'acme', app: 'dashboard' };
+      const contextHash2 = createContextHash(secretKey, context2);
+
+      // Verify hashes match
+      expect(contextHash1).to.equal(contextHash2);
+
+      // Use context2 with contextHash1 (from different order) - should succeed
+      const { body, status } = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: mockSubscriberId,
+        subscriberHash,
+        context: context2,
+        contextHash: contextHash1,
+      });
+
+      expect(status).to.equal(201);
+      expect(body.data.token).to.be.ok;
+    });
+
+    it('should accept context without contextHash when HMAC disabled', async () => {
+      await setIntegrationConfig(
+        {
+          _environmentId: session.environment._id,
+          _organizationId: session.environment._organizationId,
+          hmac: false,
+        },
+        invalidateCache
+      );
+
+      const context: ContextPayload = { tenant: 'acme', app: 'dashboard' };
+
+      const { body, status } = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: mockSubscriberId,
+        context,
+      });
+
+      expect(status).to.equal(201);
+      expect(body.data.token).to.be.ok;
+    });
+
+    it('should detect context tampering - different context should fail validation', async () => {
+      const secretKey = session.environment.apiKeys[0].key;
+      const subscriberHash = createHash(secretKey, mockSubscriberId);
+
+      // Create hash for one context
+      const originalContext: ContextPayload = { tenant: 'acme', app: 'dashboard' };
+      const contextHash = createContextHash(secretKey, originalContext);
+
+      // Try to use hash with different context (tampering attempt)
+      const tamperedContext: ContextPayload = { tenant: 'malicious', app: 'dashboard' };
+
+      const { body, status } = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: mockSubscriberId,
+        subscriberHash,
+        context: tamperedContext,
+        contextHash,
+      });
+
+      expect(status).to.equal(400);
+      expect(body.message).to.contain('Please provide a valid context HMAC hash');
+    });
   });
 
   it('should throw an error when subscriber object is missing subscriberId', async () => {
