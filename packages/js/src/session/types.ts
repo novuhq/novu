@@ -8,6 +8,7 @@ export type InitializeSessionArgs =
       applicationIdentifier: string;
       subscriber: Subscriber;
       subscriberHash?: string;
+      contextHash?: string;
       defaultSchedule?: DefaultSchedule;
       context?: Context;
     };
