@@ -4,13 +4,14 @@
 
 import * as z from "zod";
 import { NovuCore } from "../core.js";
-import { encodeSimple } from "../lib/encodings.js";
+import { encodeJSON, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -25,15 +26,19 @@ import * as operations from "../models/operations/index.js";
 import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
-export function inboundWebhooksControllerHandleWebhook(
+/**
+ * Track activity and engagement events
+ *
+ * @remarks
+ * Track activity and engagement events for a specific delivery provider
+ */
+export function activityTrack(
   client: NovuCore,
-  environmentId: string,
-  integrationId: string,
-  idempotencyKey?: string | undefined,
+  request: operations.InboundWebhooksControllerHandleWebhookRequest,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    void,
+    Array<components.WebhookResultDto>,
     | NovuError
     | ResponseValidationError
     | ConnectionError
@@ -46,23 +51,19 @@ export function inboundWebhooksControllerHandleWebhook(
 > {
   return new APIPromise($do(
     client,
-    environmentId,
-    integrationId,
-    idempotencyKey,
+    request,
     options,
   ));
 }
 
 async function $do(
   client: NovuCore,
-  environmentId: string,
-  integrationId: string,
-  idempotencyKey?: string | undefined,
+  request: operations.InboundWebhooksControllerHandleWebhookRequest,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      void,
+      Array<components.WebhookResultDto>,
       | NovuError
       | ResponseValidationError
       | ConnectionError
@@ -75,14 +76,8 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.InboundWebhooksControllerHandleWebhookRequest = {
-    environmentId: environmentId,
-    integrationId: integrationId,
-    idempotencyKey: idempotencyKey,
-  };
-
   const parsed = safeParse(
-    input,
+    request,
     (value) =>
       operations.InboundWebhooksControllerHandleWebhookRequest$outboundSchema
         .parse(value),
@@ -92,7 +87,7 @@ async function $do(
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = null;
+  const body = encodeJSON("body", payload.RequestBody, { explode: true });
 
   const pathParams = {
     environmentId: encodeSimple("environmentId", payload.environmentId, {
@@ -110,7 +105,8 @@ async function $do(
   )(pathParams);
 
   const headers = new Headers(compactMap({
-    Accept: "*/*",
+    "Content-Type": "application/json",
+    Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
       payload["idempotency-key"],
@@ -173,7 +169,7 @@ async function $do(
   const response = doResult.value;
 
   const [result] = await M.match<
-    void,
+    Array<components.WebhookResultDto>,
     | NovuError
     | ResponseValidationError
     | ConnectionError
@@ -183,7 +179,7 @@ async function $do(
     | UnexpectedClientError
     | SDKValidationError
   >(
-    M.nil(201, z.void()),
+    M.json(200, z.array(components.WebhookResultDto$inboundSchema)),
     M.fail("4XX"),
     M.fail("5XX"),
   )(response, req);

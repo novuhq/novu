@@ -17,7 +17,7 @@ import {
 /**
  * Workflow run status
  */
-export const Status = {
+export const GetWorkflowRunsDtoStatus = {
   Processing: "processing",
   Completed: "completed",
   Error: "error",
@@ -25,7 +25,9 @@ export const Status = {
 /**
  * Workflow run status
  */
-export type Status = ClosedEnum<typeof Status>;
+export type GetWorkflowRunsDtoStatus = ClosedEnum<
+  typeof GetWorkflowRunsDtoStatus
+>;
 
 /**
  * Workflow run delivery lifecycle status
@@ -93,7 +95,7 @@ export type GetWorkflowRunsDto = {
   /**
    * Workflow run status
    */
-  status: Status;
+  status: GetWorkflowRunsDtoStatus;
   /**
    * Workflow run delivery lifecycle status
    */
@@ -133,22 +135,24 @@ export type GetWorkflowRunsDto = {
 };
 
 /** @internal */
-export const Status$inboundSchema: z.ZodNativeEnum<typeof Status> = z
-  .nativeEnum(Status);
+export const GetWorkflowRunsDtoStatus$inboundSchema: z.ZodNativeEnum<
+  typeof GetWorkflowRunsDtoStatus
+> = z.nativeEnum(GetWorkflowRunsDtoStatus);
 
 /** @internal */
-export const Status$outboundSchema: z.ZodNativeEnum<typeof Status> =
-  Status$inboundSchema;
+export const GetWorkflowRunsDtoStatus$outboundSchema: z.ZodNativeEnum<
+  typeof GetWorkflowRunsDtoStatus
+> = GetWorkflowRunsDtoStatus$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Status$ {
-  /** @deprecated use `Status$inboundSchema` instead. */
-  export const inboundSchema = Status$inboundSchema;
-  /** @deprecated use `Status$outboundSchema` instead. */
-  export const outboundSchema = Status$outboundSchema;
+export namespace GetWorkflowRunsDtoStatus$ {
+  /** @deprecated use `GetWorkflowRunsDtoStatus$inboundSchema` instead. */
+  export const inboundSchema = GetWorkflowRunsDtoStatus$inboundSchema;
+  /** @deprecated use `GetWorkflowRunsDtoStatus$outboundSchema` instead. */
+  export const outboundSchema = GetWorkflowRunsDtoStatus$outboundSchema;
 }
 
 /** @internal */
@@ -204,7 +208,7 @@ export const GetWorkflowRunsDto$inboundSchema: z.ZodType<
   environmentId: z.string(),
   internalSubscriberId: z.string(),
   subscriberId: z.string().optional(),
-  status: Status$inboundSchema,
+  status: GetWorkflowRunsDtoStatus$inboundSchema,
   deliveryLifecycleStatus: DeliveryLifecycleStatus$inboundSchema,
   triggerIdentifier: z.string(),
   transactionId: z.string(),
@@ -250,7 +254,7 @@ export const GetWorkflowRunsDto$outboundSchema: z.ZodType<
   environmentId: z.string(),
   internalSubscriberId: z.string(),
   subscriberId: z.string().optional(),
-  status: Status$outboundSchema,
+  status: GetWorkflowRunsDtoStatus$outboundSchema,
   deliveryLifecycleStatus: DeliveryLifecycleStatus$outboundSchema,
   triggerIdentifier: z.string(),
   transactionId: z.string(),
