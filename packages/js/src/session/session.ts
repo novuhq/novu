@@ -30,6 +30,18 @@ export class Session {
     return this.#options.context;
   }
 
+  public get subscriberHash() {
+    return this.#options.subscriberHash;
+  }
+
+  public get contextHash() {
+    return this.#options.contextHash;
+  }
+
+  public get subscriber() {
+    return this.#options.subscriber;
+  }
+
   private handleApplicationIdentifier(method: 'get' | 'store' | 'delete', identifier?: string): string | null {
     if (typeof window === 'undefined' || !window.localStorage) {
       return null;
@@ -60,7 +72,10 @@ export class Session {
   }
 
   public async initialize(options?: InitializeSessionArgs): Promise<void> {
-    if (this.#options.subscriber?.subscriberId === options?.subscriber?.subscriberId) {
+    const subscriberUnchanged = this.#options.subscriber?.subscriberId === options?.subscriber?.subscriberId;
+    const contextUnchanged = JSON.stringify(this.#options.context) === JSON.stringify(options?.context);
+
+    if (subscriberUnchanged && contextUnchanged) {
       return;
     }
 
@@ -68,8 +83,9 @@ export class Session {
       if (options) {
         this.#options = options;
       }
-      const { subscriber, subscriberHash, applicationIdentifier, defaultSchedule, context } = this.#options;
-      let currentTimezone;
+      const { subscriber, subscriberHash, contextHash, applicationIdentifier, defaultSchedule, context } =
+        this.#options;
+      let currentTimezone: string | undefined;
       if (isBrowser()) {
         currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       }
@@ -88,6 +104,7 @@ export class Session {
       const response = await this.#inboxService.initializeSession({
         applicationIdentifier: finalApplicationIdentifier,
         subscriberHash,
+        contextHash,
         subscriber: {
           ...subscriber,
           subscriberId: subscriber?.subscriberId ?? '',
