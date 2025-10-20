@@ -66,7 +66,7 @@ import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
-import { validateHmacEncryption } from '../../utils/encryption';
+import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
@@ -147,6 +147,14 @@ export class Session {
         subscriberId: subscriber.subscriberId,
         subscriberHash: command.requestData.subscriberHash,
       });
+
+      if (command.requestData.context) {
+        validateContextHmacEncryption({
+          apiKey: environment.apiKeys[0].key,
+          context: command.requestData.context,
+          contextHash: command.requestData.contextHash,
+        });
+      }
     }
 
     const subscriberEntity = await this.createSubscriber.execute(

@@ -56,6 +56,7 @@ export type DefaultInboxProps = {
 
 type StandardBaseProps = {
   subscriberHash?: string;
+  contextHash?: string;
   backendUrl?: string;
   socketUrl?: string;
   appearance?: ReactAppearance;
