@@ -302,7 +302,7 @@ describe('Session', () => {
         environmentName: environment.name,
         _subscriber: subscriber._id,
         origin: command.origin,
-        context: [],
+        context: undefined,
       })
     ).to.be.true;
   });

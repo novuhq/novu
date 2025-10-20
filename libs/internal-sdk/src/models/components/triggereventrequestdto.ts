@@ -132,6 +132,19 @@ export type Actor = SubscriberPayloadDto | string;
  */
 export type Tenant = string | TenantPayloadDto;
 
+/**
+ * Rich context object with id and optional data
+ */
+export type Context2 = {
+  id: string;
+  /**
+   * Optional additional context data
+   */
+  data?: { [k: string]: any } | undefined;
+};
+
+export type TriggerEventRequestDtoContext = Context2 | string;
+
 export type TriggerEventRequestDto = {
   /**
    * The trigger identifier of the workflow you wish to send. This identifier can be found on the workflow page.
@@ -178,6 +191,7 @@ export type TriggerEventRequestDto = {
    *     Existing tenants will be updated with the provided details.
    */
   tenant?: string | TenantPayloadDto | undefined;
+  context?: { [k: string]: Context2 | string } | undefined;
 };
 
 /** @internal */
@@ -500,6 +514,109 @@ export function tenantFromJSON(
 }
 
 /** @internal */
+export const Context2$inboundSchema: z.ZodType<
+  Context2,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  id: z.string(),
+  data: z.record(z.any()).optional(),
+});
+
+/** @internal */
+export type Context2$Outbound = {
+  id: string;
+  data?: { [k: string]: any } | undefined;
+};
+
+/** @internal */
+export const Context2$outboundSchema: z.ZodType<
+  Context2$Outbound,
+  z.ZodTypeDef,
+  Context2
+> = z.object({
+  id: z.string(),
+  data: z.record(z.any()).optional(),
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Context2$ {
+  /** @deprecated use `Context2$inboundSchema` instead. */
+  export const inboundSchema = Context2$inboundSchema;
+  /** @deprecated use `Context2$outboundSchema` instead. */
+  export const outboundSchema = Context2$outboundSchema;
+  /** @deprecated use `Context2$Outbound` instead. */
+  export type Outbound = Context2$Outbound;
+}
+
+export function context2ToJSON(context2: Context2): string {
+  return JSON.stringify(Context2$outboundSchema.parse(context2));
+}
+
+export function context2FromJSON(
+  jsonString: string,
+): SafeParseResult<Context2, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Context2$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Context2' from JSON`,
+  );
+}
+
+/** @internal */
+export const TriggerEventRequestDtoContext$inboundSchema: z.ZodType<
+  TriggerEventRequestDtoContext,
+  z.ZodTypeDef,
+  unknown
+> = z.union([z.lazy(() => Context2$inboundSchema), z.string()]);
+
+/** @internal */
+export type TriggerEventRequestDtoContext$Outbound = Context2$Outbound | string;
+
+/** @internal */
+export const TriggerEventRequestDtoContext$outboundSchema: z.ZodType<
+  TriggerEventRequestDtoContext$Outbound,
+  z.ZodTypeDef,
+  TriggerEventRequestDtoContext
+> = z.union([z.lazy(() => Context2$outboundSchema), z.string()]);
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace TriggerEventRequestDtoContext$ {
+  /** @deprecated use `TriggerEventRequestDtoContext$inboundSchema` instead. */
+  export const inboundSchema = TriggerEventRequestDtoContext$inboundSchema;
+  /** @deprecated use `TriggerEventRequestDtoContext$outboundSchema` instead. */
+  export const outboundSchema = TriggerEventRequestDtoContext$outboundSchema;
+  /** @deprecated use `TriggerEventRequestDtoContext$Outbound` instead. */
+  export type Outbound = TriggerEventRequestDtoContext$Outbound;
+}
+
+export function triggerEventRequestDtoContextToJSON(
+  triggerEventRequestDtoContext: TriggerEventRequestDtoContext,
+): string {
+  return JSON.stringify(
+    TriggerEventRequestDtoContext$outboundSchema.parse(
+      triggerEventRequestDtoContext,
+    ),
+  );
+}
+
+export function triggerEventRequestDtoContextFromJSON(
+  jsonString: string,
+): SafeParseResult<TriggerEventRequestDtoContext, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => TriggerEventRequestDtoContext$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'TriggerEventRequestDtoContext' from JSON`,
+  );
+}
+
+/** @internal */
 export const TriggerEventRequestDto$inboundSchema: z.ZodType<
   TriggerEventRequestDto,
   z.ZodTypeDef,
@@ -523,6 +640,8 @@ export const TriggerEventRequestDto$inboundSchema: z.ZodType<
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$inboundSchema, z.string()]).optional(),
   tenant: z.union([z.string(), TenantPayloadDto$inboundSchema]).optional(),
+  context: z.record(z.union([z.lazy(() => Context2$inboundSchema), z.string()]))
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     "name": "workflowId",
@@ -542,6 +661,7 @@ export type TriggerEventRequestDto$Outbound = {
   transactionId?: string | undefined;
   actor?: SubscriberPayloadDto$Outbound | string | undefined;
   tenant?: string | TenantPayloadDto$Outbound | undefined;
+  context?: { [k: string]: Context2$Outbound | string } | undefined;
 };
 
 /** @internal */
@@ -568,6 +688,9 @@ export const TriggerEventRequestDto$outboundSchema: z.ZodType<
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$outboundSchema, z.string()]).optional(),
   tenant: z.union([z.string(), TenantPayloadDto$outboundSchema]).optional(),
+  context: z.record(
+    z.union([z.lazy(() => Context2$outboundSchema), z.string()]),
+  ).optional(),
 }).transform((v) => {
   return remap$(v, {
     workflowId: "name",

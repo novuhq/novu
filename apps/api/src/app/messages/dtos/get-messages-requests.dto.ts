@@ -23,13 +23,11 @@ export class GetMessagesRequestDto {
   @IsOptional()
   transactionId?: string[];
 
-  // @ApiPropertyOptional({
-  //   type: [String],
-  //   description: 'Filter by exact context keys (format: "type:id")',
-  //   example: ['tenant:org-123', 'region:us-east-1'],
-  // })
-  // TODO: IS_CONTEXT_ENABLED
-  @ApiHideProperty()
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Filter by exact context keys (format: "type:id")',
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

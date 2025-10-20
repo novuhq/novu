@@ -28,7 +28,7 @@ export class UnsnoozeNotification {
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.IN_APP,
       snoozedUntil: { $exists: true, $ne: null },
-      ...(command.contextKeys && command.contextKeys?.length > 0 && { contextKeys: { $in: command.contextKeys } }),
+      contextKeys: command.contextKeys,
     });
 
     if (!snoozedNotification) {
@@ -69,6 +69,7 @@ export class UnsnoozeNotification {
           subscriberId: command.subscriberId,
           notificationId: command.notificationId,
           snoozedUntil: null,
+          contextKeys: command.contextKeys,
         })
       );
     });

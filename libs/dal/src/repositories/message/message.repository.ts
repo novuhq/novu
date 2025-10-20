@@ -62,6 +62,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     super(Message, MessageEntity);
   }
 
+  async findOne(
+    query: FilterQuery<MessageDBModel> & EnforceEnvId,
+    select?: ProjectionType<MessageEntity>,
+    options: {
+      readPreference?: 'secondaryPreferred' | 'primary';
+      query?: any;
+      session?: any;
+    } = {}
+  ): Promise<MessageEntity | null> {
+    const transformedQuery = this.transformContextKeysQuery(query) as FilterQuery<MessageDBModel> & EnforceEnvId;
+
+    return super.findOne(transformedQuery, select, options);
+  }
+
   private async getFilterQueryForMessage(
     environmentId: string,
     subscriberId: string,
@@ -147,8 +161,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       }
     }
 
-    if (contextKeys && contextKeys?.length > 0) {
-      requestQuery.contextKeys = { $in: contextKeys };
+    if (contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(contextKeys);
+      requestQuery.$and = [...(requestQuery.$and ?? []), contextQuery];
     }
 
     if (createdAt != null) {
@@ -258,8 +273,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       }
     }
 
-    if (contextKeys && contextKeys?.length > 0) {
-      query.contextKeys = { $in: contextKeys };
+    if (contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(contextKeys);
+      query.$and = [...(query.$and ?? []), contextQuery];
     }
 
     if (tags && tags?.length > 0) {
@@ -994,9 +1010,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       filterQuery.transactionId = { $in: query.transactionId };
     }
 
-    if (query.contextKeys && query.contextKeys.length > 0) {
-      filterQuery.contextKeys = { $in: query.contextKeys };
+    if (query.contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(query.contextKeys);
+      filterQuery.$and = [...(filterQuery.$and ?? []), contextQuery];
     }
+
     const data = await this.MongooseModel.find(filterQuery, select, {
       sort: options?.sort,
       limit: options?.limit,
@@ -1093,5 +1111,38 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     await this.delete(query);
 
     return messagesToDelete;
+  }
+
+  private transformContextKeysQuery(query: FilterQuery<MessageDBModel>): FilterQuery<MessageDBModel> {
+    if (!('contextKeys' in query)) {
+      return query;
+    }
+
+    const contextKeys = query.contextKeys as string[] | undefined;
+    const { contextKeys: _, ...restQuery } = query;
+
+    // undefined = feature disabled, skip context filtering
+    if (contextKeys === undefined) {
+      return restQuery;
+    }
+
+    return {
+      ...restQuery,
+      ...this.buildContextExactMatchQuery(contextKeys),
+    };
+  }
+
+  private buildContextExactMatchQuery(contextKeys: string[]): MessageQuery {
+    // empty array = inbox has no (default) context, only match messages with no context
+    if (contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match filtering
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }
