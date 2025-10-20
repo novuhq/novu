@@ -50,7 +50,6 @@ import { UpdateContext } from './usecases/update-context/update-context.usecase'
 @RequireAuthentication()
 @ApiTags('Contexts')
 @ApiCommonResponses()
-@ApiExcludeController()
 export class ContextsController {
   constructor(
     private createContextUsecase: CreateContext,
