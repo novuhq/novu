@@ -79,7 +79,7 @@ export type DelayStepResponseDtoControlValues = {
    * Cron expression for the delay. Min length 1.
    */
   cron?: string | undefined;
-  additionalProperties?: { [k: string]: any };
+  additionalProperties?: { [k: string]: any } | undefined;
 };
 
 export type DelayStepResponseDto = {
@@ -212,7 +212,7 @@ export const DelayStepResponseDtoControlValues$outboundSchema: z.ZodType<
     amount: z.number().optional(),
     unit: DelayStepResponseDtoUnit$outboundSchema.optional(),
     cron: z.string().optional(),
-    additionalProperties: z.record(z.any()),
+    additionalProperties: z.record(z.any()).optional(),
   })
   .transform((v) => {
     return {
