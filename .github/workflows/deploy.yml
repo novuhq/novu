@@ -251,15 +251,15 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile
 
-      - name: Allowlist Runner IP in ClickHouse Cloud
-        id: allowlist-ip
+      - name: Allow Runner IP in ClickHouse Cloud
+        id: allow-ip
         working-directory: apps/api
         env:
           CLICKHOUSE_CLOUD_API_KEY_ID: ${{ secrets.CLICKHOUSE_CLOUD_API_KEY_ID }}
           CLICKHOUSE_CLOUD_API_KEY_SECRET: ${{ secrets.CLICKHOUSE_CLOUD_API_KEY_SECRET }}
           CLICKHOUSE_CLOUD_ORG_ID: ${{ secrets.CLICKHOUSE_CLOUD_ORG_ID }}
           CLICKHOUSE_CLOUD_SERVICE_ID: ${{ secrets.CLICKHOUSE_CLOUD_SERVICE_ID }}
-        run: npx tsx scripts/clickhouse-cloud/allowlist-ip.ts
+        run: npx tsx scripts/clickhouse-cloud/allow-ip.ts
 
       - name: Run ClickHouse Migrations
         working-directory: apps/api
@@ -279,10 +279,10 @@ jobs:
           CLICKHOUSE_CLOUD_ORG_ID: ${{ secrets.CLICKHOUSE_CLOUD_ORG_ID }}
           CLICKHOUSE_CLOUD_SERVICE_ID: ${{ secrets.CLICKHOUSE_CLOUD_SERVICE_ID }}
         run: |
-          if [ -n "${{ steps.allowlist-ip.outputs.runner_ip }}" ]; then
-            npx tsx scripts/clickhouse-cloud/remove-ip.ts ${{ steps.allowlist-ip.outputs.runner_ip }}
+          if [ -n "${{ steps.allow-ip.outputs.runner_ip }}" ]; then
+            npx tsx scripts/clickhouse-cloud/remove-ip.ts ${{ steps.allow-ip.outputs.runner_ip }}
           else
-            echo "⚠️  No runner IP found to remove (allowlist step may have failed)"
+            echo "⚠️  No runner IP found to remove (allow-ip step may have failed)"
           fi
 
   build:
