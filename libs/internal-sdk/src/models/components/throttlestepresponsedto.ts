@@ -84,7 +84,7 @@ export type ThrottleStepResponseDtoControlValues = {
    * Optional key for grouping throttle rules. If not provided, defaults to workflow and subscriber combination.
    */
   throttleKey?: string | undefined;
-  additionalProperties?: { [k: string]: any };
+  additionalProperties?: { [k: string]: any } | undefined;
 };
 
 export type ThrottleStepResponseDto = {
@@ -223,7 +223,7 @@ export const ThrottleStepResponseDtoControlValues$outboundSchema: z.ZodType<
     dynamicKey: z.string().optional(),
     threshold: z.number().default(1),
     throttleKey: z.string().optional(),
-    additionalProperties: z.record(z.any()),
+    additionalProperties: z.record(z.any()).optional(),
   })
   .transform((v) => {
     return {

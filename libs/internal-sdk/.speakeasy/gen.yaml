@@ -18,6 +18,8 @@ generation:
     oAuth2PasswordEnabled: false
     hoistGlobalSecurity: true
   sdkHooksConfigAccess: true
+  schemas:
+    allOfMergeStrategy: shallowMerge
   tests:
     generateTests: true
     generateNewTests: false
