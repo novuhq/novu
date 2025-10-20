@@ -85,6 +85,7 @@ export class ProcessUnsnoozeJob {
             event: WebSocketEventEnum.RECEIVED,
             userId: job._subscriberId,
             _environmentId: job._environmentId,
+            contextKeys: snoozedNotification.contextKeys,
             payload: {
               messageId: snoozedNotification._id,
             },

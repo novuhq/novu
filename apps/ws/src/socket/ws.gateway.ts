@@ -152,23 +152,212 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
       LOG_CONTEXT
     );
 
+    // Store contexts in socket metadata for filtering
+    // undefined = FF OFF, [] = FF ON with no context, ['key'] = FF ON with context
+    connection.data.contextKeys = subscriber.contextKeys;
+
+    // Join single user room (no per-context rooms needed)
     await connection.join(subscriber._id);
 
-    Logger.log(`Connection request accepted for ${subscriber._id}`, LOG_CONTEXT);
+    const contextDisplay =
+      subscriber.contextKeys === undefined
+        ? 'FF disabled'
+        : subscriber.contextKeys.length === 0
+          ? 'no context'
+          : subscriber.contextKeys.join(', ');
+    Logger.log(
+      `Connection ${connection.id} accepted for ${subscriber._id} with contexts: ${contextDisplay}`,
+      LOG_CONTEXT
+    );
 
     await this.subscriberOnlineService.handleConnection(subscriber);
   }
 
-  async sendMessage(userId: string, event: string, data: any) {
+  async sendMessage(userId: string, event: string, data: any, contextKeys?: string[]) {
     if (!this.server) {
       Logger.error('No sw server available to send message', LOG_CONTEXT);
 
       return;
     }
 
-    Logger.log(`Sending event ${event} message to ${userId}`, LOG_CONTEXT);
+    const sockets = await this.server.in(userId).fetchSockets();
 
-    this.server.to(userId).emit(event, data);
+    // FF OFF: message contextKeys is undefined, broadcast to all sockets
+    if (contextKeys === undefined) {
+      Logger.log(`Sending event ${event} to all ${sockets.length} socket(s) (FF disabled)`, LOG_CONTEXT);
+      for (const socket of sockets) {
+        socket.emit(event, data);
+      }
+
+      return;
+    }
+
+    // FF ON: filter by exact context match
+    const messageContextKeys = contextKeys;
+
+    Logger.log(
+      `Sending event ${event} to ${userId} with message contexts: ${messageContextKeys.length === 0 ? 'none' : messageContextKeys.join(', ')} (${sockets.length} socket(s))`,
+      LOG_CONTEXT
+    );
+
+    for (const socket of sockets) {
+      const inboxContextKeys = socket.data.contextKeys;
+
+      if (this.isExactMatch(messageContextKeys, inboxContextKeys)) {
+        socket.emit(event, data);
+        Logger.log(
+          `Delivered to socket ${socket.id} with inbox contexts: ${inboxContextKeys?.length === 0 ? 'none' : inboxContextKeys?.join(', ')}`,
+          LOG_CONTEXT
+        );
+      } else {
+        Logger.log(
+          `Skipped socket ${socket.id} - contexts mismatch. Message: [${messageContextKeys.join(', ') || 'none'}], Inbox: [${inboxContextKeys?.join(', ') || 'none'}]`,
+          LOG_CONTEXT
+        );
+      }
+    }
+  }
+
+  private isExactMatch(messageContextKeys: string[], inboxContextKeys?: string[]): boolean {
+    // When FF is OFF, inbox contextKeys will be undefined - should never happen here since we early return above
+    // This is just a safety check
+    if (inboxContextKeys === undefined) {
+      return true;
+    }
+
+    if (messageContextKeys.length === 0) {
+      return inboxContextKeys.length === 0;
+    }
+
+    if (messageContextKeys.length !== inboxContextKeys.length) {
+      return false;
+    }
+
+    // Order-independent match: all message keys must exist in inbox keys
+    return messageContextKeys.every((key) => inboxContextKeys.includes(key));
+  }
+
+  async sendUnreadCountToAllConnections(userId: string, environmentId: string, messageRepository: any) {
+    if (!this.server) {
+      Logger.error('No server available to send unread count', LOG_CONTEXT);
+
+      return;
+    }
+
+    const sockets = await this.server.in(userId).fetchSockets();
+
+    Logger.log(`Sending individualized unread counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
+
+    for (const socket of sockets) {
+      // Preserve undefined (FF OFF) vs [] (FF ON, no context)
+      const contextKeys = socket.data.contextKeys;
+
+      try {
+        const [unreadCount, severityCounts] = await Promise.all([
+          messageRepository.getCount(
+            environmentId,
+            userId,
+            'in_app',
+            { read: false },
+            { limit: 101 },
+            contextKeys,
+            undefined,
+            'primary'
+          ),
+          messageRepository.getCountBySeverity(
+            environmentId,
+            userId,
+            'in_app',
+            { read: false, snoozed: false },
+            { limit: 99 },
+            contextKeys
+          ),
+        ]);
+
+        const paginationIndication =
+          unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
+
+        const counts = {
+          total: unreadCount,
+          severity: {
+            high: 0,
+            medium: 0,
+            low: 0,
+            none: 0,
+          },
+        };
+
+        for (const { severity, count } of severityCounts) {
+          if (severity in counts.severity) {
+            counts.severity[severity] = count;
+          }
+        }
+
+        socket.emit('unread_count_changed', {
+          unreadCount: paginationIndication.unreadCount,
+          counts,
+          hasMore: paginationIndication.hasMore,
+        });
+
+        const contextDisplay =
+          contextKeys === undefined ? 'FF disabled' : contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
+
+        Logger.log(
+          `Sent unread count to socket ${socket.id} with contexts [${contextDisplay}]: ${counts.total}`,
+          LOG_CONTEXT
+        );
+      } catch (error) {
+        Logger.error(`Failed to send unread count to socket ${socket.id}: ${error.message}`, LOG_CONTEXT);
+      }
+    }
+  }
+
+  async sendUnseenCountToAllConnections(userId: string, environmentId: string, messageRepository: any) {
+    if (!this.server) {
+      Logger.error('No server available to send unseen count', LOG_CONTEXT);
+
+      return;
+    }
+
+    const sockets = await this.server.in(userId).fetchSockets();
+
+    Logger.log(`Sending individualized unseen counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
+
+    for (const socket of sockets) {
+      // Preserve undefined (FF OFF) vs [] (FF ON, no context)
+      const contextKeys = socket.data.contextKeys;
+
+      try {
+        const unseenCount = await messageRepository.getCount(
+          environmentId,
+          userId,
+          'in_app',
+          { seen: false },
+          { limit: 101 },
+          contextKeys,
+          undefined,
+          'primary'
+        );
+
+        const paginationIndication =
+          unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
+
+        socket.emit('unseen_count_changed', {
+          unseenCount: paginationIndication.unseenCount,
+          hasMore: paginationIndication.hasMore,
+        });
+
+        const contextDisplay =
+          contextKeys === undefined ? 'FF disabled' : contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
+
+        Logger.log(
+          `Sent unseen count to socket ${socket.id} with contexts [${contextDisplay}]: ${unseenCount}`,
+          LOG_CONTEXT
+        );
+      } catch (error) {
+        Logger.error(`Failed to send unseen count to socket ${socket.id}: ${error.message}`, LOG_CONTEXT);
+      }
+    }
   }
 
   private disconnect(socket: Socket) {

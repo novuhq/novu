@@ -301,6 +301,23 @@ export class JsonSchemaMock {
   }
 
   /**
+   * Normalize type arrays to remove null for example generation
+   * This ensures nullable properties generate actual values instead of null
+   */
+  private static normalizeTypeForExamples(type: any): any {
+    if (Array.isArray(type)) {
+      const nonNullTypes = type.filter((t: string) => t !== 'null');
+      if (nonNullTypes.length === 1) {
+        return nonNullTypes[0];
+      } else if (nonNullTypes.length > 1) {
+        return nonNullTypes;
+      }
+    }
+
+    return type;
+  }
+
+  /**
    * Add intelligent examples to schema properties based on their names and types
    */
   private static addExamplesToSchema(schema: any): any {
@@ -310,11 +327,24 @@ export class JsonSchemaMock {
 
     const enhancedSchema = _.cloneDeep(schema);
 
+    // Remove 'null' from type arrays at root level to ensure we generate actual values
+    if (enhancedSchema.type) {
+      enhancedSchema.type = JsonSchemaMock.normalizeTypeForExamples(enhancedSchema.type);
+    }
+
     // Recursively add examples to properties
     if (enhancedSchema.properties && typeof enhancedSchema.properties === 'object') {
       for (const [key, propertySchema] of Object.entries(enhancedSchema.properties)) {
         if (propertySchema && typeof propertySchema === 'object') {
           const prop = propertySchema as any;
+
+          // Remove 'null' from type arrays to ensure we generate actual values
+          if (prop.type) {
+            prop.type = JsonSchemaMock.normalizeTypeForExamples(prop.type);
+          }
+
+          // Get the effective type for example generation
+          const effectiveType = prop.type;
 
           // Handle enum values first - use the first enum value
           if (prop.enum && Array.isArray(prop.enum) && prop.enum.length > 0 && !prop.examples && !prop.example) {
@@ -323,12 +353,17 @@ export class JsonSchemaMock {
           }
 
           // Add examples for string properties to override lorem ipsum
-          if (prop.type === 'string' && !prop.examples && !prop.example && !prop.default) {
+          if (effectiveType === 'string' && !prop.examples && !prop.example && !prop.default) {
             prop.examples = [JsonSchemaMock.getExampleValueForStringProperty(key, prop)];
           }
 
           // Add examples for number properties to override large random numbers
-          if ((prop.type === 'number' || prop.type === 'integer') && !prop.examples && !prop.example && !prop.default) {
+          if (
+            (effectiveType === 'number' || effectiveType === 'integer') &&
+            !prop.examples &&
+            !prop.example &&
+            !prop.default
+          ) {
             // Use schema constraints if available
             if (prop.minimum !== undefined && prop.maximum !== undefined) {
               const midpoint = Math.floor((prop.minimum + prop.maximum) / 2);
@@ -347,20 +382,20 @@ export class JsonSchemaMock {
               } else if (
                 JsonSchemaMock.matchesPattern(lowerKey, ['price', 'cost', 'amount', 'value', 'fee', 'salary'])
               ) {
-                prop.examples = [prop.type === 'integer' ? 99 : 99.99];
+                prop.examples = [effectiveType === 'integer' ? 99 : 99.99];
               } else if (JsonSchemaMock.matchesPattern(lowerKey, ['percent', 'percentage', 'rate', 'ratio'])) {
                 prop.examples = [15];
               } else if (JsonSchemaMock.matchesPattern(lowerKey, ['weight', 'height', 'length', 'width', 'size'])) {
-                prop.examples = [prop.type === 'integer' ? 100 : 100.5];
+                prop.examples = [effectiveType === 'integer' ? 100 : 100.5];
               } else {
                 // Default to reasonable numbers
-                prop.examples = [prop.type === 'integer' ? 42 : 42.5];
+                prop.examples = [effectiveType === 'integer' ? 42 : 42.5];
               }
             }
           }
 
           // Add examples for boolean properties
-          if (prop.type === 'boolean' && !prop.examples && !prop.example && !prop.default) {
+          if (effectiveType === 'boolean' && !prop.examples && !prop.example && !prop.default) {
             const lowerKey = key.toLowerCase();
             // Smart defaults for boolean properties
             if (JsonSchemaMock.matchesPattern(lowerKey, ['active', 'enabled', 'verified', 'confirmed', 'approved'])) {
@@ -373,12 +408,17 @@ export class JsonSchemaMock {
           }
 
           // Recursively process nested objects
-          if (prop.type === 'object' || prop.properties) {
+          if (effectiveType === 'object' || prop.properties) {
+            // The prop has already been normalized above, so just recurse
             enhancedSchema.properties[key] = JsonSchemaMock.addExamplesToSchema(prop);
           }
 
           // Process array items
-          if (prop.type === 'array' && prop.items) {
+          if (effectiveType === 'array' && prop.items) {
+            // Normalize items type before recursing
+            if (prop.items && typeof prop.items === 'object' && prop.items.type) {
+              prop.items.type = JsonSchemaMock.normalizeTypeForExamples(prop.items.type);
+            }
             prop.items = JsonSchemaMock.addExamplesToSchema(prop.items);
           }
         }

@@ -19,6 +19,7 @@ interface SchemaPropertySettingsPopoverProps {
   definitionPath: string;
   propertyKeyForDisplay: string;
   isRequiredPath: string;
+  isNullablePath: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleteProperty: () => void;
@@ -82,6 +83,7 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
       definitionPath,
       propertyKeyForDisplay,
       isRequiredPath,
+      isNullablePath,
       open,
       onOpenChange,
       onDeleteProperty,
@@ -260,6 +262,19 @@ export const SchemaPropertySettingsPopover = forwardRef<HTMLDivElement, SchemaPr
               <FormLabel className="text-xs">Required</FormLabel>
               <Controller
                 name={isRequiredPath as Path<SchemaEditorFormValues>}
+                control={control}
+                render={({ field }) => (
+                  <FormControl>
+                    <Switch className="mt-0" checked={!!field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                )}
+              />
+            </FormItem>
+
+            <FormItem className="flex flex-row items-center justify-between">
+              <FormLabel className="text-xs">Nullable</FormLabel>
+              <Controller
+                name={isNullablePath as Path<SchemaEditorFormValues>}
                 control={control}
                 render={({ field }) => (
                   <FormControl>

@@ -1,4 +1,5 @@
 import { Variable } from '@maily-to/core/extensions';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Editor } from '@tiptap/core';
 import { EditorView } from '@uiw/react-codemirror';
 import React, { useCallback, useMemo, useRef } from 'react';
@@ -9,6 +10,7 @@ import { isMailyJson } from '@/components/maily/maily-utils';
 import { FormField } from '@/components/primitives/form/form';
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -38,9 +40,10 @@ export const LayoutEmailBody = () => {
   const { layout } = useLayoutEditor();
   const { control, setValue } = useFormContext();
   const editorType = useWatch({ name: 'editorType', control });
-  const parsedVariables = useParseVariables(layout?.variables);
+  const parsedVariables = useParseVariables(layout?.variables, undefined, undefined, true);
   const resourceId = layout?.layoutId || '';
   const resourceType = LocalizationResourceEnum.LAYOUT;
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
 
   const track = useTelemetry();
 
@@ -121,7 +124,7 @@ export const LayoutEmailBody = () => {
   const isTranslationEnabled = shouldEnableTranslations && !isTranslationKeysLoading;
   const editorKey = useMemo(() => {
     const variableNames = [...parsedVariables.primitives, ...parsedVariables.arrays, ...parsedVariables.namespaces]
-      .map((v: any) => v.name)
+      .map((v) => v.name)
       .sort()
       .join(',');
 
@@ -193,6 +196,7 @@ export const LayoutEmailBody = () => {
             addDigestVariables={false}
             isPayloadSchemaEnabled={false}
             isTranslationEnabled={isTranslationEnabled}
+            isContextEnabled={isContextEnabled}
             translationKeys={translationKeys}
             translationValueInput={LayoutControlInput}
             onCreateNewTranslationKey={handleCreateNewTranslationKey}

@@ -1,4 +1,4 @@
-import type { DefaultSchedule, Subscriber, UnreadCount } from '@novu/js';
+import type { Context, DefaultSchedule, Subscriber, UnreadCount } from '@novu/js';
 import type {
   IconKey,
   InboxProps,
@@ -56,6 +56,7 @@ export type DefaultInboxProps = {
 
 type StandardBaseProps = {
   subscriberHash?: string;
+  contextHash?: string;
   backendUrl?: string;
   socketUrl?: string;
   appearance?: ReactAppearance;
@@ -66,6 +67,7 @@ type StandardBaseProps = {
   preferencesSort?: PreferencesSort;
   defaultSchedule?: DefaultSchedule;
   routerPush?: RouterPush;
+  context?: Context;
 } & (
   | {
       // TODO: Backward compatibility support - remove in future versions (see NV-5801)

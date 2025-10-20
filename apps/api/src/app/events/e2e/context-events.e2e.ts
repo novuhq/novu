@@ -374,7 +374,7 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
 
     expect(contexts).to.have.length(0);
 
-    // Verify notification entity has no contextKeys
+    // Verify notification entity has empty contextKeys array
     const notifications = await notificationRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -382,9 +382,10 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
 
     expect(notifications).to.have.length(1);
     const notification = notifications[0];
-    expect(notification.contextKeys).to.satisfy((keys: any) => !keys);
+    expect(notification.contextKeys).to.be.an('array');
+    expect(notification.contextKeys).to.have.length(0);
 
-    // Verify message entities have no contextKeys
+    // Verify message entities have empty contextKeys array
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -393,10 +394,11 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
     expect(messages.length).to.be.greaterThan(0);
 
     for (const message of messages) {
-      expect(message.contextKeys).to.satisfy((keys: any) => !keys);
+      expect(message.contextKeys).to.be.an('array');
+      expect(message.contextKeys).to.have.length(0);
     }
 
-    // Verify job entities have no contextKeys
+    // Verify job entities have empty contextKeys array
     const jobs = await jobRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -405,7 +407,8 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
     expect(jobs.length).to.be.greaterThan(0);
 
     for (const job of jobs) {
-      expect(job.contextKeys).to.satisfy((keys: any) => !keys);
+      expect(job.contextKeys).to.be.an('array');
+      expect(job.contextKeys).to.have.length(0);
     }
   });
 });

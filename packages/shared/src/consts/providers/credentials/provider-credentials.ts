@@ -1274,3 +1274,35 @@ export const smsmodeProviderConfig: IConfigCredential[] = [
   },
   ...smsConfigBase,
 ];
+
+export const sinchConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ServicePlanId,
+    displayName: 'Service Plan ID',
+    description: 'Your Sinch Service Plan ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'API Token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Region',
+    description: 'Select your Sinch region',
+    type: 'dropdown',
+    required: true,
+    value: 'eu',
+    dropdown: [
+      { name: 'EU (Ireland, Sweden)', value: 'eu' },
+      { name: 'US', value: 'us' },
+      { name: 'Australia', value: 'au' },
+      { name: 'Brazil', value: 'br' },
+      { name: 'Canada', value: 'ca' },
+    ],
+  },
+  ...smsConfigBase,
+];

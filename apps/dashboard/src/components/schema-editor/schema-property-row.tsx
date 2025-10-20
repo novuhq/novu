@@ -121,6 +121,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           definitionPath={paths.definition}
           propertyKeyForDisplay={currentKeyName || ''}
           isRequiredPath={paths.isRequired}
+          isNullablePath={paths.isNullable}
           onDeleteProperty={onDeleteProperty}
           isDisabled={isKeyNameEmpty || readOnly}
           variableUsageInfo={variableUsageInfo}

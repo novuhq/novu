@@ -9,7 +9,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import { Resend } from 'resend';
+import { CreateEmailOptions, Resend } from 'resend';
 import { Webhook } from 'svix';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -70,7 +70,7 @@ function isResendError(response: ResendResponse | unknown): response is ResendRe
 }
 
 export class ResendEmailProvider extends BaseProvider implements IEmailProvider {
-  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   id = EmailProviderIdEnum.Resend;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private resendClient: Resend;
@@ -95,21 +95,22 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
     const fromAddress = options.from || this.config.from;
 
     const response = await this.resendClient.emails.send(
-      this.transform<any>(bridgeProviderData, {
+      this.transform<CreateEmailOptions>(bridgeProviderData, {
         from: senderName ? `${senderName} <${fromAddress}>` : fromAddress,
         to: options.to,
         subject: options.subject,
         text: options.text,
         html: options.html,
         cc: options.cc,
-        reply_to: options.replyTo || null,
+        replyTo: options.replyTo || null,
         attachments: options.attachments?.map((attachment) => ({
           filename: attachment?.name,
           content: attachment.file,
+          contentId: attachment.cid,
         })),
         bcc: options.bcc,
         headers: options.headers,
-      }).body
+      } satisfies CreateEmailOptions).body
     );
 
     if (isResendError(response)) {
@@ -136,6 +137,7 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
         attachments: options.attachments?.map((attachment) => ({
           filename: attachment?.name,
           content: attachment.file,
+          contentId: attachment.cid,
         })),
         bcc: options.bcc,
       });

@@ -25,6 +25,7 @@ import {
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
+  ContextRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationRepository,
@@ -37,6 +38,7 @@ import {
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  ContextPayload,
   ControlValuesLevelEnum,
   CustomDataType,
   FeatureFlagsKeysEnum,
@@ -64,7 +66,7 @@ import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
-import { validateHmacEncryption } from '../../utils/encryption';
+import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
@@ -89,6 +91,7 @@ export class Session {
     private integrationRepository: IntegrationRepository,
     private organizationRepository: CommunityOrganizationRepository,
     private communityOrganizationRepository: CommunityOrganizationRepository,
+    private contextRepository: ContextRepository,
     private generateUniqueApiKey: GenerateUniqueApiKey,
     private createNovuIntegrationsUsecase: CreateNovuIntegrations,
     private communityUserRepository: CommunityUserRepository,
@@ -118,6 +121,12 @@ export class Session {
       throw new BadRequestException('Please provide a valid application identifier');
     }
 
+    const contextKeys = await this.resolveContexts(
+      environment._id,
+      environment._organizationId,
+      command.requestData.context
+    );
+
     const inAppIntegration = await this.selectIntegration.execute(
       SelectIntegrationCommand.create({
         environmentId: environment._id,
@@ -138,6 +147,14 @@ export class Session {
         subscriberId: subscriber.subscriberId,
         subscriberHash: command.requestData.subscriberHash,
       });
+
+      if (command.requestData.context) {
+        validateContextHmacEncryption({
+          apiKey: environment.apiKeys[0].key,
+          context: command.requestData.context,
+          contextHash: command.requestData.contextHash,
+        });
+      }
     }
 
     const subscriberEntity = await this.createSubscriber.execute(
@@ -165,6 +182,7 @@ export class Session {
       environmentName: environment.name,
       _subscriber: subscriberEntity._id,
       origin: command.requestData.applicationIdentifier ? command.origin : 'keyless',
+      context: contextKeys,
     });
 
     const { data } = await this.notificationsCount.execute(
@@ -174,26 +192,20 @@ export class Session {
         subscriberId: subscriber.subscriberId,
         filters: [{ read: false, snoozed: false }],
         subscriber: subscriberEntity,
+        contextKeys,
       })
     );
     const [{ count: totalUnreadCount }] = data;
 
-    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-      defaultValue: false,
-      organization: { _id: environment._organizationId },
-    });
-
     // get severity-based unread counts
-    const severityCounts = isNotificationSeverityEnabled
-      ? await this.messageRepository.getCountBySeverity(
-          environment._id,
-          subscriberEntity._id,
-          ChannelTypeEnum.IN_APP,
-          { read: false, snoozed: false },
-          { limit: MAX_NOTIFICATIONS_COUNT }
-        )
-      : [];
+    const severityCounts = await this.messageRepository.getCountBySeverity(
+      environment._id,
+      subscriberEntity._id,
+      ChannelTypeEnum.IN_APP,
+      { read: false, snoozed: false },
+      { limit: MAX_NOTIFICATIONS_COUNT },
+      contextKeys
+    );
 
     const unreadCount: SubscriberSessionResponseDto['unreadCount'] = {
       total: totalUnreadCount,
@@ -212,7 +224,7 @@ export class Session {
     }
 
     const [token, organization] = await Promise.all([
-      this.authService.getSubscriberWidgetToken(subscriberEntity),
+      this.authService.getSubscriberWidgetToken(subscriberEntity, contextKeys),
       this.organizationRepository.findById(environment._organizationId),
     ]);
 
@@ -271,6 +283,7 @@ export class Session {
       maxSnoozeDurationHours,
       isDevelopmentMode: environment.name.toLowerCase() !== 'production',
       schedule,
+      contextKeys,
     };
   }
 
@@ -385,6 +398,31 @@ export class Session {
         : requestData.applicationIdentifier;
 
     return applicationIdentifier;
+  }
+
+  private async resolveContexts(
+    environmentId: string,
+    organizationId: string,
+    context?: ContextPayload
+  ): Promise<string[] | undefined> {
+    const isContextsEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+    });
+
+    if (!isContextsEnabled) {
+      return undefined;
+    }
+
+    if (!context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.upsertContextsFromPayload(environmentId, organizationId, context);
+
+    return contexts.map((context) => context.key);
   }
 
   private async getMaxSnoozeDurationHours(apiServiceLevel: ApiServiceLevelEnum) {

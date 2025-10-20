@@ -25,8 +25,16 @@ export class WebSocketsQueueService extends QueueBaseService {
     const isSocketWorkerEnabled = await this.socketWorkerService.isEnabled(data.data?._environmentId);
 
     if (isSocketWorkerEnabled && data.data) {
-      const { userId, event, _environmentId, _organizationId, subscriberId, payload } = data.data;
-      await this.socketWorkerService.sendMessage(userId, event, payload, _organizationId, _environmentId, subscriberId);
+      const { userId, event, _environmentId, _organizationId, subscriberId, payload, contextKeys } = data.data;
+      await this.socketWorkerService.sendMessage({
+        userId,
+        event,
+        data: payload,
+        organizationId: _organizationId,
+        environmentId: _environmentId,
+        subscriberId,
+        contextKeys,
+      });
 
       Logger.debug(`Sent message directly to socket worker for user ${userId}, event ${event}`, LOG_CONTEXT);
     }
@@ -44,16 +52,17 @@ export class WebSocketsQueueService extends QueueBaseService {
     if (isSocketWorkerEnabled) {
       const promises = data.map(async (item) => {
         if (item.data) {
-          const { userId, event, _environmentId, _organizationId, subscriberId, payload } = item.data;
+          const { userId, event, _environmentId, _organizationId, subscriberId, payload, contextKeys } = item.data;
 
-          return this.socketWorkerService.sendMessage(
+          return this.socketWorkerService.sendMessage({
             userId,
             event,
-            payload,
-            _organizationId,
-            _environmentId,
-            subscriberId
-          );
+            data: payload,
+            organizationId: _organizationId,
+            environmentId: _environmentId,
+            subscriberId,
+            contextKeys,
+          });
         }
       });
 

@@ -14,18 +14,40 @@ export function convertSchemaToPropertyList(
     const definition = value as JSONSchema7;
     const definitionForListItem: JSONSchema7 = { ...definition };
     let nestedPropertyList: PropertyListItem[] | undefined;
+    let isNullable = false;
 
-    // Handle object types with properties
-    if (definition.type === 'object' && definition.properties) {
+    // Detect nullable: check if type is an array containing 'null'
+    if (Array.isArray(definition.type) && definition.type.includes('null')) {
+      isNullable = true;
+      // Extract the non-null type as the primary type
+      const nonNullTypes = definition.type.filter((t) => t !== 'null');
+      if (nonNullTypes.length === 1) {
+        definitionForListItem.type = nonNullTypes[0] as any;
+      } else if (nonNullTypes.length > 1) {
+        definitionForListItem.type = nonNullTypes as any;
+      }
+    }
+
+    // Handle object types with properties (check normalized type)
+    if (definitionForListItem.type === 'object' && definition.properties) {
       nestedPropertyList = convertSchemaToPropertyList(definition.properties, definition.required);
       delete definitionForListItem.properties;
     }
 
-    // Handle array types with object items that have properties
-    if (isArrayWithObjectItems(definition)) {
+    // Handle array types with object items that have properties (check normalized type)
+    if (definitionForListItem.type === 'array' && definition.items) {
       const items = definition.items as JSONSchema7;
 
-      if (items.type === 'object' && items.properties) {
+      // Normalize item type if it's nullable
+      let itemType = items.type;
+      if (Array.isArray(items.type) && items.type.includes('null')) {
+        const nonNullTypes = items.type.filter((t) => t !== 'null');
+        if (nonNullTypes.length > 0) {
+          itemType = nonNullTypes[0];
+        }
+      }
+
+      if (itemType === 'object' && items.properties) {
         const itemsPropertyList = convertSchemaToPropertyList(items.properties, items.required);
         definitionForListItem.items = {
           ...items,
@@ -44,6 +66,7 @@ export function convertSchemaToPropertyList(
         ...(nestedPropertyList ? { propertyList: nestedPropertyList } : {}),
       },
       isRequired: requiredArray?.includes(key) || false,
+      isNullable,
     };
   });
 }
@@ -64,7 +87,7 @@ export function convertPropertyListToSchema(propertyList?: PropertyListItem[]): 
       return;
     }
 
-    const currentDefinition = processPropertyDefinition(item.definition);
+    const currentDefinition = processPropertyDefinition(item.definition, item.isNullable);
 
     if (item.isRequired) {
       required.push(item.keyName);
@@ -76,7 +99,7 @@ export function convertPropertyListToSchema(propertyList?: PropertyListItem[]): 
   return { properties, ...(required.length > 0 ? { required } : {}) };
 }
 
-function processPropertyDefinition(definition: JSONSchema7): JSONSchema7 {
+function processPropertyDefinition(definition: JSONSchema7, isNullable?: boolean): JSONSchema7 {
   const currentDefinition = { ...definition };
   const definitionAsObjectWithList = currentDefinition as JSONSchema7 & { propertyList?: PropertyListItem[] };
 
@@ -97,6 +120,15 @@ function processPropertyDefinition(definition: JSONSchema7): JSONSchema7 {
     currentDefinition.items = processArrayItems(currentDefinition.items as JSONSchema7);
   }
 
+  // Handle nullable: convert type to array with null
+  if (isNullable && currentDefinition.type && currentDefinition.type !== 'null') {
+    if (typeof currentDefinition.type === 'string') {
+      currentDefinition.type = [currentDefinition.type, 'null'] as any;
+    } else if (Array.isArray(currentDefinition.type) && !currentDefinition.type.includes('null')) {
+      currentDefinition.type = [...currentDefinition.type, 'null'] as any;
+    }
+  }
+
   delete (currentDefinition as any).propertyList;
 
   return currentDefinition;
@@ -107,8 +139,7 @@ function processArrayItems(items: JSONSchema7): JSONSchema7 {
 
   if (isObjectWithPropertyList(itemsWithList)) {
     const itemsConversion = convertPropertyListToSchema(itemsWithList.propertyList);
-    // Destructure to exclude propertyList from the spread
-    const { propertyList, ...itemsWithoutPropertyList } = itemsWithList;
+    const { propertyList: _propertyList, ...itemsWithoutPropertyList } = itemsWithList;
 
     return {
       ...itemsWithoutPropertyList,

@@ -159,6 +159,7 @@ export enum SmsProviderIdEnum {
   Unifonic = 'unifonic',
   Smsmode = 'smsmode',
   IMedia = 'imedia',
+  Sinch = 'sinch',
 }
 
 export enum ChatProviderIdEnum {

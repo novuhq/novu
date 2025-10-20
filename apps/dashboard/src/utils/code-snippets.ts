@@ -1,4 +1,5 @@
 import { API_HOSTNAME, IS_EU, IS_SELF_HOSTED } from '@/config';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 
 export type CodeSnippet = {
   identifier: string;
@@ -102,7 +103,7 @@ export const generateTriggerCurlCommand = ({
   payload,
   apiKey,
   context,
-  baseUrl = API_HOSTNAME ?? 'https://api.novu.co',
+  baseUrl = apiHostnameManager.getHostname(),
   addDashboardSource = true,
 }: TriggerCurlCommandOptions) => {
   const body = createTriggerRequestBody({ workflowId, to, payload, addDashboardSource, context });
@@ -128,7 +129,7 @@ export const generatePostmanCollection = ({
   to,
   payload,
   apiKey,
-  baseUrl = API_HOSTNAME ?? 'https://api.novu.co',
+  baseUrl = apiHostnameManager.getHostname(),
   addDashboardSource = true,
   context,
 }: PostmanCollectionOptions) => {

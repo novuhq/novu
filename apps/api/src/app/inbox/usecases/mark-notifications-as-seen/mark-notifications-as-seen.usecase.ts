@@ -39,7 +39,7 @@ export class MarkNotificationsAsSeen {
   }
 
   async execute(command: MarkNotificationsAsSeenCommand): Promise<void> {
-    const { notificationIds, tags, data } = command;
+    const { notificationIds, tags, data, contextKeys } = command;
 
     // Return early if notificationIds is an empty array
     if (notificationIds && notificationIds.length === 0) {
@@ -71,6 +71,7 @@ export class MarkNotificationsAsSeen {
       updatedMessages = await this.messageRepository.updateMessagesStatusByIds({
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
+        contextKeys,
         ids: notificationIds,
         seen: true,
       });
@@ -116,6 +117,7 @@ export class MarkNotificationsAsSeen {
       await this.messageRepository.updateMessagesFromToStatus({
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
+        contextKeys,
         from: fromFilters,
         to: {
           seen: true,
@@ -158,6 +160,7 @@ export class MarkNotificationsAsSeen {
         event: WebSocketEventEnum.UNSEEN,
         userId: subscriber._id,
         _environmentId: command.environmentId,
+        ...(contextKeys && { contextKeys }),
       },
       groupId: subscriber._organizationId,
     });

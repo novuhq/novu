@@ -24,6 +24,7 @@ export * from './plivo/plivo.provider';
 export * from './ring-central/ring-central.provider';
 export * from './sendchamp/sendchamp.provider';
 export * from './simpletexting/simpletexting.provider';
+export * from './sinch/sinch.provider';
 export * from './sms-central/sms-central.provider';
 export * from './sms77/sms77.provider';
 export * from './smsmode/smsmode.provider';
