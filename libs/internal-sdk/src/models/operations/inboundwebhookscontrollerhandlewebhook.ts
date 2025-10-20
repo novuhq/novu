@@ -9,22 +9,12 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type InboundWebhooksControllerHandleWebhookRequest = {
-  /**
-   * The environment identifier
-   */
   environmentId: string;
-  /**
-   * The integration identifier for the delivery provider
-   */
   integrationId: string;
   /**
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
-  /**
-   * Webhook event payload from the delivery provider
-   */
-  requestBody?: any | undefined;
 };
 
 /** @internal */
@@ -37,11 +27,9 @@ export const InboundWebhooksControllerHandleWebhookRequest$inboundSchema:
     environmentId: z.string(),
     integrationId: z.string(),
     "idempotency-key": z.string().optional(),
-    RequestBody: z.any().optional(),
   }).transform((v) => {
     return remap$(v, {
       "idempotency-key": "idempotencyKey",
-      "RequestBody": "requestBody",
     });
   });
 
@@ -50,7 +38,6 @@ export type InboundWebhooksControllerHandleWebhookRequest$Outbound = {
   environmentId: string;
   integrationId: string;
   "idempotency-key"?: string | undefined;
-  RequestBody?: any | undefined;
 };
 
 /** @internal */
@@ -63,11 +50,9 @@ export const InboundWebhooksControllerHandleWebhookRequest$outboundSchema:
     environmentId: z.string(),
     integrationId: z.string(),
     idempotencyKey: z.string().optional(),
-    requestBody: z.any().optional(),
   }).transform((v) => {
     return remap$(v, {
       idempotencyKey: "idempotency-key",
-      requestBody: "RequestBody",
     });
   });
 
