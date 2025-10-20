@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { FeatureFlagsService } from '@novu/application-generic';
 import { MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, FeatureFlagsKeysEnum, WebSocketEventEnum } from '@novu/shared';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { WSGateway } from '../../ws.gateway';
 import { ExternalServicesRouteCommand } from './external-services-route.command';
 import { IUnreadCountPaginationIndication, IUnseenCountPaginationIndication } from './types';
@@ -12,8 +11,7 @@ const LOG_CONTEXT = 'ExternalServicesRoute';
 export class ExternalServicesRoute {
   constructor(
     private wsGateway: WSGateway,
-    private messageRepository: MessageRepository,
-    private featureFlagsService: FeatureFlagsService
+    private messageRepository: MessageRepository
   ) {}
 
   public async execute(command: ExternalServicesRouteCommand) {
@@ -43,14 +41,14 @@ export class ExternalServicesRoute {
     // TODO: Retro-compatibility for a bit just in case stalled messages
     if (message) {
       Logger.log('Sending full message in the payload', LOG_CONTEXT);
-      await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
+      await this.wsGateway.sendMessage(command.userId, command.event, command.payload, command.contextKeys);
     } else if (messageId) {
       Logger.log(`Sending messageId: ${messageId} in the payload, we need to retrieve the full message`, LOG_CONTEXT);
       const storedMessage = await this.messageRepository.findOne({
         _id: messageId,
         _environmentId: command._environmentId,
       });
-      await this.wsGateway.sendMessage(command.userId, command.event, { message: storedMessage });
+      await this.wsGateway.sendMessage(command.userId, command.event, { message: storedMessage }, command.contextKeys);
     }
 
     // Only recalculate the counts if we send a messageId/message.
@@ -65,22 +63,6 @@ export class ExternalServicesRoute {
       return;
     }
 
-    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-      defaultValue: false,
-      environment: { _id: command._environmentId },
-    });
-
-    const severityCountsPromise = isNotificationSeverityEnabled
-      ? this.messageRepository.getCountBySeverity(
-          command._environmentId,
-          command.userId,
-          ChannelTypeEnum.IN_APP,
-          { read: false, snoozed: false },
-          { limit: 99 }
-        )
-      : Promise.resolve([]);
-
     const [unreadCount, severityCounts] = await Promise.all([
       this.messageRepository.getCount(
         command._environmentId,
@@ -88,10 +70,18 @@ export class ExternalServicesRoute {
         ChannelTypeEnum.IN_APP,
         { read: false },
         { limit: 101 },
+        command.contextKeys,
         undefined,
         'primary'
       ),
-      severityCountsPromise,
+      this.messageRepository.getCountBySeverity(
+        command._environmentId,
+        command.userId,
+        ChannelTypeEnum.IN_APP,
+        { read: false, snoozed: false },
+        { limit: 99 },
+        command.contextKeys
+      ),
     ]);
 
     const paginationIndication: IUnreadCountPaginationIndication =
@@ -113,11 +103,16 @@ export class ExternalServicesRoute {
       }
     }
 
-    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNREAD, {
-      unreadCount: paginationIndication.unreadCount,
-      counts,
-      hasMore: paginationIndication.hasMore,
-    });
+    await this.wsGateway.sendMessage(
+      command.userId,
+      WebSocketEventEnum.UNREAD,
+      {
+        unreadCount: paginationIndication.unreadCount,
+        counts,
+        hasMore: paginationIndication.hasMore,
+      },
+      command.contextKeys
+    );
   }
 
   private async sendUnseenCountChange(command: ExternalServicesRouteCommand) {
@@ -132,16 +127,22 @@ export class ExternalServicesRoute {
       command.userId,
       ChannelTypeEnum.IN_APP,
       { seen: false },
-      { limit: 101 }
+      { limit: 101 },
+      command.contextKeys
     );
 
     const paginationIndication: IUnseenCountPaginationIndication =
       unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
 
-    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNSEEN, {
-      unseenCount: paginationIndication.unseenCount,
-      hasMore: paginationIndication.hasMore,
-    });
+    await this.wsGateway.sendMessage(
+      command.userId,
+      WebSocketEventEnum.UNSEEN,
+      {
+        unseenCount: paginationIndication.unseenCount,
+        hasMore: paginationIndication.hasMore,
+      },
+      command.contextKeys
+    );
   }
 
   private async connectionExist(command: ExternalServicesRouteCommand): Promise<boolean | undefined> {

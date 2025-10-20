@@ -34,6 +34,7 @@ type InboxContextType = {
   isSnoozeEnabled: Accessor<boolean>;
   isKeyless: Accessor<boolean>;
   applicationIdentifier: Accessor<string | null>;
+  contextKeys: Accessor<string[] | undefined>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -77,6 +78,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
   );
   const [isKeyless, setIsKeyless] = createSignal(false);
   const [applicationIdentifier, setApplicationIdentifier] = createSignal<string | null>(null);
+  const [contextKeys, setContextKeys] = createSignal<string[] | undefined>(undefined);
   const [preferenceGroups, setPreferenceGroups] = createSignal<PreferenceGroups | undefined>(props.preferenceGroups);
   const [preferencesSort, setPreferencesSort] = createSignal<PreferencesSort | undefined>(props.preferencesSort);
 
@@ -141,6 +143,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
       setHideBranding(data.removeNovuBranding);
       setIsDevelopmentMode(data.isDevelopmentMode);
       setMaxSnoozeDurationHours(data.maxSnoozeDurationHours);
+      setContextKeys(data.contextKeys);
 
       if (data.isDevelopmentMode && !props.applicationIdentifier) {
         setIsKeyless(!data.applicationIdentifier || !!identifier?.startsWith('pk_keyless_'));
@@ -174,6 +177,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
         isSnoozeEnabled,
         isKeyless,
         applicationIdentifier,
+        contextKeys,
       }}
     >
       {props.children}

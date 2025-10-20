@@ -11,6 +11,7 @@ type PropertyActionsProps = {
   definitionPath: string;
   propertyKeyForDisplay: string;
   isRequiredPath: string;
+  isNullablePath: string;
   onDeleteProperty: () => void;
   isDisabled?: boolean;
   variableUsageInfo?: VariableUsageInfo;
@@ -20,6 +21,7 @@ export function PropertyActions({
   definitionPath,
   propertyKeyForDisplay,
   isRequiredPath,
+  isNullablePath,
   onDeleteProperty,
   isDisabled = false,
   variableUsageInfo,
@@ -46,6 +48,7 @@ export function PropertyActions({
           definitionPath={definitionPath}
           propertyKeyForDisplay={propertyKeyForDisplay}
           isRequiredPath={isRequiredPath}
+          isNullablePath={isNullablePath}
           onDeleteProperty={onDeleteProperty}
           variableUsageInfo={variableUsageInfo}
         />

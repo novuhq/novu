@@ -9,6 +9,7 @@ export interface IWebSocketDataDto {
   _organizationId?: string;
   subscriberId?: string;
   payload?: { messageId: string };
+  contextKeys?: string[];
 }
 
 export interface IWebSocketJob extends IJobParams {

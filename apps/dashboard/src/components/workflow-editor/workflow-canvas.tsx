@@ -18,7 +18,7 @@ import { useHasPermission } from '@/hooks/use-has-permission';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Step } from '@/utils/types';
 import { NODE_WIDTH } from './base-node';
-import { DragContext } from './drag-context';
+import { CanvasContext } from './drag-context';
 import { edgeTypes, nodeTypes } from './node-utils';
 import { useCanvasNodesEdges } from './use-canvas-nodes-edges';
 import { WorkflowChecklist } from './workflow-checklist';
@@ -27,15 +27,17 @@ const panOnDrag = [1, 2];
 
 const WorkflowCanvasChild = ({
   steps,
-  isTemplateStorePreview,
+  showStepPreview,
+  isReadOnly,
 }: {
   steps: Step[];
-  isTemplateStorePreview?: boolean;
+  showStepPreview?: boolean;
+  isReadOnly?: boolean;
 }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
   const { currentEnvironment } = useEnvironment();
-  const { workflow: currentWorkflow, optimisticWorkflow } = useWorkflow();
+  const { workflow } = useWorkflow();
   const navigate = useNavigate();
   const { user } = useUser();
   const {
@@ -47,14 +49,19 @@ const WorkflowCanvasChild = ({
     onNodesChange,
     onEdgesChange,
     removeEdges,
-    forceUpdateNodesAndEdges,
+    updateEdges,
+    selectNode,
+    selectedNodeId,
+    unselectNode,
     onNodeDragStart,
     onNodeDragMove,
     onNodeDragEnd,
+    copyNode,
+    addNode,
+    removeNode,
   } = useCanvasNodesEdges({
     steps,
-    isTemplateStorePreview,
-    workflow: optimisticWorkflow || currentWorkflow,
+    reactFlowInstance,
   });
 
   const positionCanvas = useCallback(
@@ -83,16 +90,26 @@ const WorkflowCanvasChild = ({
 
   const dragContextValue = useMemo(() => {
     return {
+      isReadOnly,
+      showStepPreview,
       onNodeDragStart,
       onNodeDragMove,
       onNodeDragEnd,
       draggedNodeId,
       intersectingNodeId,
       intersectingEdgeId,
-      forceUpdateNodesAndEdges,
+      updateEdges,
       removeEdges,
+      copyNode,
+      addNode,
+      removeNode,
+      selectNode,
+      selectedNodeId,
+      unselectNode,
     };
   }, [
+    isReadOnly,
+    showStepPreview,
     onNodeDragStart,
     onNodeDragMove,
     onNodeDragEnd,
@@ -100,11 +117,17 @@ const WorkflowCanvasChild = ({
     intersectingNodeId,
     intersectingEdgeId,
     removeEdges,
-    forceUpdateNodesAndEdges,
+    updateEdges,
+    copyNode,
+    addNode,
+    removeNode,
+    selectNode,
+    selectedNodeId,
+    unselectNode,
   ]);
 
   return (
-    <DragContext.Provider value={dragContextValue}>
+    <CanvasContext.Provider value={dragContextValue}>
       {/* biome-ignore lint/correctness/useUniqueElementIds: used for the preview hover card */}
       <div ref={reactFlowWrapper} className="h-full w-full" id="workflow-canvas-container">
         <ReactFlow
@@ -123,16 +146,17 @@ const WorkflowCanvasChild = ({
           nodesDraggable={false}
           nodesConnectable={false}
           onPaneClick={() => {
-            if (isTemplateStorePreview) {
+            if (isReadOnly) {
               return;
             }
 
             // unselect node if clicked on background
-            if (currentEnvironment?.slug && currentWorkflow?.slug) {
+            unselectNode();
+            if (currentEnvironment?.slug && workflow?.slug) {
               navigate(
                 buildRoute(ROUTES.EDIT_WORKFLOW, {
                   environmentSlug: currentEnvironment.slug,
-                  workflowSlug: currentWorkflow.slug,
+                  workflowSlug: workflow.slug,
                 })
               );
             }
@@ -147,27 +171,27 @@ const WorkflowCanvasChild = ({
           />
         </ReactFlow>
 
-        {currentWorkflow &&
+        {workflow &&
           currentEnvironment?.name === EnvironmentEnum.DEVELOPMENT &&
-          currentWorkflow.origin === ResourceOriginEnum.NOVU_CLOUD &&
-          !user?.unsafeMetadata?.workflowChecklistCompleted && (
-            <WorkflowChecklist steps={steps} workflow={currentWorkflow} />
-          )}
+          workflow.origin === ResourceOriginEnum.NOVU_CLOUD &&
+          !user?.unsafeMetadata?.workflowChecklistCompleted && <WorkflowChecklist steps={steps} workflow={workflow} />}
       </div>
-    </DragContext.Provider>
+    </CanvasContext.Provider>
   );
 };
 
 export const WorkflowCanvas = ({
   steps,
-  isTemplateStorePreview,
+  showStepPreview,
+  isReadOnly,
 }: {
   steps: Step[];
-  isTemplateStorePreview?: boolean;
+  showStepPreview?: boolean;
+  isReadOnly?: boolean;
 }) => {
   const has = useHasPermission();
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
-  const { workflow: currentWorkflow, optimisticWorkflow } = useWorkflow();
+  const { workflow: currentWorkflow } = useWorkflow();
   const navigate = useNavigate();
   const hasPermission = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
   const showReadOnlyOverlay =
@@ -191,8 +215,9 @@ export const WorkflowCanvas = ({
     <ReactFlowProvider>
       <div className="relative h-full w-full">
         <WorkflowCanvasChild
-          steps={(optimisticWorkflow || currentWorkflow)?.steps || steps || []}
-          isTemplateStorePreview={isTemplateStorePreview}
+          steps={currentWorkflow?.steps || steps || []}
+          showStepPreview={showStepPreview}
+          isReadOnly={isReadOnly}
         />
 
         {showReadOnlyOverlay && (
