@@ -35,7 +35,6 @@ export class SubscriberSessionRequestDto {
   @IsValidContextPayload({ maxCount: 5 })
   readonly context?: ContextPayload;
 
-  @ApiHideProperty()
   @IsString()
   @IsOptional()
   readonly contextHash?: string;
