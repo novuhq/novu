@@ -36,6 +36,7 @@ export type ActivityControllerGetWorkflowRunsRequest = {
   createdGte?: string | undefined;
   createdLte?: string | undefined;
   severity?: Array<Severity> | undefined;
+  contextKeys?: Array<string> | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -99,6 +100,7 @@ export const ActivityControllerGetWorkflowRunsRequest$inboundSchema: z.ZodType<
   createdGte: z.string().optional(),
   createdLte: z.string().optional(),
   severity: z.array(Severity$inboundSchema).optional(),
+  contextKeys: z.array(z.string()).optional(),
   "idempotency-key": z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -119,6 +121,7 @@ export type ActivityControllerGetWorkflowRunsRequest$Outbound = {
   createdGte?: string | undefined;
   createdLte?: string | undefined;
   severity?: Array<string> | undefined;
+  contextKeys?: Array<string> | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -139,6 +142,7 @@ export const ActivityControllerGetWorkflowRunsRequest$outboundSchema: z.ZodType<
   createdGte: z.string().optional(),
   createdLte: z.string().optional(),
   severity: z.array(Severity$outboundSchema).optional(),
+  contextKeys: z.array(z.string()).optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {

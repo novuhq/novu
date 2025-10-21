@@ -45,7 +45,7 @@ export type SmsStepResponseDtoControlValues = {
    * Content of the SMS message.
    */
   body?: string | undefined;
-  additionalProperties?: { [k: string]: any };
+  additionalProperties?: { [k: string]: any } | undefined;
 };
 
 export type SmsStepResponseDto = {
@@ -128,7 +128,7 @@ export const SmsStepResponseDtoControlValues$outboundSchema: z.ZodType<
 > = z.object({
   skip: z.record(z.any()).optional(),
   body: z.string().optional(),
-  additionalProperties: z.record(z.any()),
+  additionalProperties: z.record(z.any()).optional(),
 }).transform((v) => {
   return {
     ...v.additionalProperties,

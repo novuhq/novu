@@ -69,23 +69,15 @@ export class DeleteLayoutUseCase {
     environmentId: string;
     organizationId: string;
   }): Promise<void> {
-    const stepControlValues = await this.controlValuesRepository.findMany({
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      'controls.layoutId': layoutId,
-    });
-
-    for (const controlValue of stepControlValues) {
-      await this.controlValuesRepository.updateOne(
-        {
-          _id: controlValue._id,
-          _environmentId: environmentId,
-          _organizationId: organizationId,
-        },
-        { $unset: { 'controls.layoutId': '' } }
-      );
-    }
+    await this.controlValuesRepository.update(
+      {
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        'controls.layoutId': layoutId,
+      },
+      { $unset: { 'controls.layoutId': '' } }
+    );
   }
 
   private async deleteTranslationGroup(layout: LayoutResponseDto, command: DeleteLayoutCommand) {

@@ -15,7 +15,7 @@ export abstract class PushBaseProvider extends BaseProvider {
   parseEventBody(body: unknown | unknown[], _identifier: string): IPushEventBody | undefined {
     return {
       status: (body as any)?.eventType,
-      row: body as string,
+      row: JSON.stringify(body),
       date: new Date().toISOString(),
     };
   }

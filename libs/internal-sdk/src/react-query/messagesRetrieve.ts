@@ -95,6 +95,7 @@ export function setMessagesRetrieveData(
       channel?: components.ChannelTypeEnum | undefined;
       subscriberId?: string | undefined;
       transactionId?: Array<string> | undefined;
+      contextKeys?: Array<string> | undefined;
       page?: number | undefined;
       limit?: number | undefined;
       idempotencyKey?: string | undefined;
@@ -114,6 +115,7 @@ export function invalidateMessagesRetrieve(
       channel?: components.ChannelTypeEnum | undefined;
       subscriberId?: string | undefined;
       transactionId?: Array<string> | undefined;
+      contextKeys?: Array<string> | undefined;
       page?: number | undefined;
       limit?: number | undefined;
       idempotencyKey?: string | undefined;
@@ -152,6 +154,7 @@ export function buildMessagesRetrieveQuery(
       channel: request.channel,
       subscriberId: request.subscriberId,
       transactionId: request.transactionId,
+      contextKeys: request.contextKeys,
       page: request.page,
       limit: request.limit,
       idempotencyKey: request.idempotencyKey,
@@ -179,6 +182,7 @@ export function queryKeyMessagesRetrieve(
     channel?: components.ChannelTypeEnum | undefined;
     subscriberId?: string | undefined;
     transactionId?: Array<string> | undefined;
+    contextKeys?: Array<string> | undefined;
     page?: number | undefined;
     limit?: number | undefined;
     idempotencyKey?: string | undefined;

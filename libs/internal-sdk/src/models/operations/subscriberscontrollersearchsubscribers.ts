@@ -13,14 +13,16 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 /**
  * Direction of sorting
  */
-export const OrderDirection = {
+export const QueryParamOrderDirection = {
   Asc: "ASC",
   Desc: "DESC",
 } as const;
 /**
  * Direction of sorting
  */
-export type OrderDirection = ClosedEnum<typeof OrderDirection>;
+export type QueryParamOrderDirection = ClosedEnum<
+  typeof QueryParamOrderDirection
+>;
 
 export type SubscribersControllerSearchSubscribersRequest = {
   /**
@@ -38,7 +40,7 @@ export type SubscribersControllerSearchSubscribersRequest = {
   /**
    * Direction of sorting
    */
-  orderDirection?: OrderDirection | undefined;
+  orderDirection?: QueryParamOrderDirection | undefined;
   /**
    * Field to order by
    */
@@ -75,24 +77,24 @@ export type SubscribersControllerSearchSubscribersResponse = {
 };
 
 /** @internal */
-export const OrderDirection$inboundSchema: z.ZodNativeEnum<
-  typeof OrderDirection
-> = z.nativeEnum(OrderDirection);
+export const QueryParamOrderDirection$inboundSchema: z.ZodNativeEnum<
+  typeof QueryParamOrderDirection
+> = z.nativeEnum(QueryParamOrderDirection);
 
 /** @internal */
-export const OrderDirection$outboundSchema: z.ZodNativeEnum<
-  typeof OrderDirection
-> = OrderDirection$inboundSchema;
+export const QueryParamOrderDirection$outboundSchema: z.ZodNativeEnum<
+  typeof QueryParamOrderDirection
+> = QueryParamOrderDirection$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace OrderDirection$ {
-  /** @deprecated use `OrderDirection$inboundSchema` instead. */
-  export const inboundSchema = OrderDirection$inboundSchema;
-  /** @deprecated use `OrderDirection$outboundSchema` instead. */
-  export const outboundSchema = OrderDirection$outboundSchema;
+export namespace QueryParamOrderDirection$ {
+  /** @deprecated use `QueryParamOrderDirection$inboundSchema` instead. */
+  export const inboundSchema = QueryParamOrderDirection$inboundSchema;
+  /** @deprecated use `QueryParamOrderDirection$outboundSchema` instead. */
+  export const outboundSchema = QueryParamOrderDirection$outboundSchema;
 }
 
 /** @internal */
@@ -105,7 +107,7 @@ export const SubscribersControllerSearchSubscribersRequest$inboundSchema:
     after: z.string().optional(),
     before: z.string().optional(),
     limit: z.number().optional(),
-    orderDirection: OrderDirection$inboundSchema.optional(),
+    orderDirection: QueryParamOrderDirection$inboundSchema.optional(),
     orderBy: z.string().optional(),
     includeCursor: z.boolean().optional(),
     email: z.string().optional(),
@@ -144,7 +146,7 @@ export const SubscribersControllerSearchSubscribersRequest$outboundSchema:
     after: z.string().optional(),
     before: z.string().optional(),
     limit: z.number().optional(),
-    orderDirection: OrderDirection$outboundSchema.optional(),
+    orderDirection: QueryParamOrderDirection$outboundSchema.optional(),
     orderBy: z.string().optional(),
     includeCursor: z.boolean().optional(),
     email: z.string().optional(),

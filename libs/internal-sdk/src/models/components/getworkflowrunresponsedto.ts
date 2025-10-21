@@ -132,6 +132,10 @@ export type GetWorkflowRunResponseDto = {
    */
   critical: boolean;
   /**
+   * Contexts (keys) in which the workflow run was executed
+   */
+  contextKeys?: Array<string> | undefined;
+  /**
    * Step runs
    */
   steps: Array<StepRunDto>;
@@ -270,6 +274,7 @@ export const GetWorkflowRunResponseDto$inboundSchema: z.ZodType<
   updatedAt: z.string(),
   severity: GetWorkflowRunResponseDtoSeverity$inboundSchema,
   critical: z.boolean(),
+  contextKeys: z.array(z.string()).optional(),
   steps: z.array(StepRunDto$inboundSchema),
   payload: z.lazy(() => Payload$inboundSchema),
 });
@@ -291,6 +296,7 @@ export type GetWorkflowRunResponseDto$Outbound = {
   updatedAt: string;
   severity: string;
   critical: boolean;
+  contextKeys?: Array<string> | undefined;
   steps: Array<StepRunDto$Outbound>;
   payload: Payload$Outbound;
 };
@@ -317,6 +323,7 @@ export const GetWorkflowRunResponseDto$outboundSchema: z.ZodType<
   updatedAt: z.string(),
   severity: GetWorkflowRunResponseDtoSeverity$outboundSchema,
   critical: z.boolean(),
+  contextKeys: z.array(z.string()).optional(),
   steps: z.array(StepRunDto$outboundSchema),
   payload: z.lazy(() => Payload$outboundSchema),
 });

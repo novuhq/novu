@@ -253,6 +253,7 @@ export type StandardNovuOptions = {
   __userAgent?: string;
   applicationIdentifier: string;
   subscriberHash?: string;
+  contextHash?: string;
   apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;

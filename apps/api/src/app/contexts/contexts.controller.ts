@@ -13,8 +13,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
@@ -50,7 +49,6 @@ import { UpdateContext } from './usecases/update-context/update-context.usecase'
 @RequireAuthentication()
 @ApiTags('Contexts')
 @ApiCommonResponses()
-@ApiExcludeController()
 export class ContextsController {
   constructor(
     private createContextUsecase: CreateContext,
@@ -103,6 +101,8 @@ export class ContextsController {
   }
 
   @Patch('/:type/:id')
+  @ApiParam({ name: 'type', type: String, description: 'Context type' })
+  @ApiParam({ name: 'id', type: String, description: 'Context ID' })
   @ApiResponse(GetContextResponseDto, 200)
   @ApiOperation({
     summary: 'Update context data',
@@ -171,6 +171,8 @@ export class ContextsController {
   }
 
   @Get('/:type/:id')
+  @ApiParam({ name: 'type', type: String, description: 'Context type' })
+  @ApiParam({ name: 'id', type: String, description: 'Context ID' })
   @ApiResponse(GetContextResponseDto, 200)
   @ApiOperation({
     summary: 'Get context by id',
@@ -198,6 +200,8 @@ export class ContextsController {
   }
 
   @Delete('/:type/:id')
+  @ApiParam({ name: 'type', type: String, description: 'Context type' })
+  @ApiParam({ name: 'id', type: String, description: 'Context ID' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete context',

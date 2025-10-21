@@ -1,9 +1,9 @@
-import { ApiHideProperty } from '@nestjs/swagger';
 import { IsValidContextPayload } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ScheduleDto } from '../../shared/dtos/schedule';
+import { ApiContextPayload } from '../../shared/framework/swagger';
 
 export class SubscriberSessionRequestDto {
   @IsString()
@@ -30,11 +30,14 @@ export class SubscriberSessionRequestDto {
   @Type(() => ScheduleDto)
   readonly defaultSchedule?: ScheduleDto;
 
-  // TODO: IS_CONTEXT_ENABLED
-  @ApiHideProperty()
+  @ApiContextPayload()
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })
-  context?: ContextPayload;
+  readonly context?: ContextPayload;
+
+  @IsString()
+  @IsOptional()
+  readonly contextHash?: string;
 }
 
 export class SubscriberDto {
