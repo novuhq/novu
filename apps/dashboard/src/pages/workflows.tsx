@@ -208,7 +208,7 @@ export const WorkflowsPage = () => {
                 size="small"
                 title="Search"
                 value={form.watch('query') || ''}
-                onChange={(value) => form.setValue('query', value || '')}
+                onChange={(value) => form.setValue('query', value || '', { shouldDirty: true })}
                 placeholder="Search workflows..."
               />
               <FacetedFormFilter
@@ -218,7 +218,7 @@ export const WorkflowsPage = () => {
                 placeholder="Filter by tags"
                 options={tags?.map((tag) => ({ label: tag.name, value: tag.name })) || []}
                 selected={form.watch('tags')}
-                onSelect={(values) => form.setValue('tags', values)}
+                onSelect={(values) => form.setValue('tags', values, { shouldDirty: true })}
               />
               <FacetedFormFilter
                 size="small"
@@ -231,7 +231,7 @@ export const WorkflowsPage = () => {
                   { label: 'Error', value: WorkflowStatusEnum.ERROR },
                 ]}
                 selected={form.watch('status')}
-                onSelect={(values) => form.setValue('status', values)}
+                onSelect={(values) => form.setValue('status', values, { shouldDirty: true })}
               />
 
               {hasActiveFilters && (
