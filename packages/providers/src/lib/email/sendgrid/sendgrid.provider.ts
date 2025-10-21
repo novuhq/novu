@@ -286,18 +286,18 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
   }
 
   parseEventBody(body: unknown | unknown[], identifier: string): IEmailEventBody | undefined {
-    let eventBody: any;
+    let eventBody: Record<string, unknown>;
     if (Array.isArray(body)) {
-      eventBody = body.find((item: any) => item.id === identifier);
+      eventBody = body.find((item: Record<string, unknown>) => item.id === identifier);
     } else {
-      eventBody = body;
+      eventBody = body as Record<string, unknown>;
     }
 
     if (!eventBody) {
       return undefined;
     }
 
-    const status = this.getStatus(eventBody.event);
+    const status = this.getStatus(eventBody.event as string);
 
     if (status === undefined) {
       return undefined;
@@ -306,10 +306,10 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     return {
       status,
       date: new Date().toISOString(),
-      externalId: eventBody.id,
-      attempts: eventBody.attempt ? parseInt(eventBody.attempt, 10) : 1,
-      response: eventBody.response ? eventBody.response : '',
-      row: eventBody,
+      externalId: eventBody.id as string,
+      attempts: eventBody.attempt ? parseInt(eventBody.attempt as string, 10) : 1,
+      response: eventBody.response ? (eventBody.response as string) : '',
+      row: JSON.stringify(eventBody),
     };
   }
 

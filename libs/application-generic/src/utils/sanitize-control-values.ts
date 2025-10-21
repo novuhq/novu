@@ -4,6 +4,7 @@ import { PinoLogger } from '../logging';
 import {
   ChatControlType,
   DelayControlType,
+  DelayDynamicControlType,
   DelayRegularControlType,
   DelayTimedControlType,
   DigestControlSchemaType,
@@ -187,6 +188,17 @@ function sanitizeDelay(controlValues: DelayControlType) {
     return filterNullishValues(mappedValues);
   }
 
+  if (isDynamicDelayControl(controlValues)) {
+    const mappedValues: DelayDynamicControlType = {
+      type: controlValues.type,
+      dynamicKey: controlValues.dynamicKey,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
   if (isRegularDelayControl(controlValues)) {
     const mappedValues: DelayRegularControlType = {
       type: controlValues.type,
@@ -320,6 +332,10 @@ function isTimedDelayControl(controlValues: unknown): controlValues is DelayTime
   return !isEmpty((controlValues as DelayTimedControlType)?.cron);
 }
 
+function isDynamicDelayControl(controlValues: unknown): controlValues is DelayDynamicControlType {
+  return !isEmpty((controlValues as DelayDynamicControlType)?.dynamicKey);
+}
+
 function isRegularDelayControl(controlValues: unknown): controlValues is DelayRegularControlType {
-  return !isTimedDelayControl(controlValues);
+  return !isTimedDelayControl(controlValues) && !isDynamicDelayControl(controlValues);
 }
