@@ -17,7 +17,7 @@ export const defaultLayoutsFilter: LayoutsFilter = {
   orderBy: 'createdAt',
   orderDirection: DirectionEnum.DESC,
   offset: 0,
-  limit: 12,
+  limit: 10,
 };
 
 export type LayoutsUrlState = {
