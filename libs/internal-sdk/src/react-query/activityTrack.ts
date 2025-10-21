@@ -8,65 +8,65 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { contextsUpdate } from "../funcs/contextsUpdate.js";
+import { activityTrack } from "../funcs/activityTrack.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
+import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type ContextsUpdateMutationVariables = {
-  request: operations.ContextsControllerUpdateContextRequest;
+export type ActivityTrackMutationVariables = {
+  request: operations.InboundWebhooksControllerHandleWebhookRequest;
   options?: RequestOptions;
 };
 
-export type ContextsUpdateMutationData =
-  operations.ContextsControllerUpdateContextResponse;
+export type ActivityTrackMutationData = Array<components.WebhookResultDto>;
 
 /**
- * Update context data
+ * Track activity and engagement events
  *
  * @remarks
- * Update the data of an existing context. Returns 404 if context does not exist.
+ * Track activity and engagement events for a specific delivery provider
  */
-export function useContextsUpdateMutation(
+export function useActivityTrackMutation(
   options?: MutationHookOptions<
-    ContextsUpdateMutationData,
+    ActivityTrackMutationData,
     Error,
-    ContextsUpdateMutationVariables
+    ActivityTrackMutationVariables
   >,
 ): UseMutationResult<
-  ContextsUpdateMutationData,
+  ActivityTrackMutationData,
   Error,
-  ContextsUpdateMutationVariables
+  ActivityTrackMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildContextsUpdateMutation(client, options),
+    ...buildActivityTrackMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyContextsUpdate(): MutationKey {
-  return ["@novu/api", "Contexts", "update"];
+export function mutationKeyActivityTrack(): MutationKey {
+  return ["@novu/api", "Activity", "track"];
 }
 
-export function buildContextsUpdateMutation(
+export function buildActivityTrackMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: ContextsUpdateMutationVariables,
-  ) => Promise<ContextsUpdateMutationData>;
+    variables: ActivityTrackMutationVariables,
+  ) => Promise<ActivityTrackMutationData>;
 } {
   return {
-    mutationKey: mutationKeyContextsUpdate(),
-    mutationFn: function contextsUpdateMutationFn({
+    mutationKey: mutationKeyActivityTrack(),
+    mutationFn: function activityTrackMutationFn({
       request,
       options,
-    }): Promise<ContextsUpdateMutationData> {
+    }): Promise<ActivityTrackMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -79,7 +79,7 @@ export function buildContextsUpdateMutation(
           ),
         },
       };
-      return unwrapAsync(contextsUpdate(
+      return unwrapAsync(activityTrack(
         client$,
         request,
         mergedOptions,
