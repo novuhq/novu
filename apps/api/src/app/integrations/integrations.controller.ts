@@ -200,7 +200,7 @@ export class IntegrationsController {
 
       const { credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as IntegrationResponseDto;
+      return integrationWithoutCredentials as unknown as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -252,7 +252,7 @@ export class IntegrationsController {
 
       const { credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as IntegrationResponseDto;
+      return integrationWithoutCredentials as unknown as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -323,7 +323,7 @@ export class IntegrationsController {
 
     const { credentials, ...integrationWithoutCredentials } = integration;
 
-    return integrationWithoutCredentials as IntegrationResponseDto;
+    return integrationWithoutCredentials as unknown as IntegrationResponseDto;
   }
 
   @Delete('/:integrationId')
