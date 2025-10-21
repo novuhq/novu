@@ -312,12 +312,11 @@ export class WorkflowRunService {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.MERGED };
     }
 
-    // Priority 8: PENDING - If any step is pending (pending, queued, running, delayed)
+    // Priority 8: PENDING - If any step is pending (pending, queued, delayed)
     const hasPendingSteps = channelJobs.some(
       (job) =>
         job.status === JobStatusEnum.PENDING ||
         job.status === JobStatusEnum.QUEUED ||
-        job.status === JobStatusEnum.RUNNING ||
         job.status === JobStatusEnum.DELAYED
     );
     if (hasPendingSteps) {
