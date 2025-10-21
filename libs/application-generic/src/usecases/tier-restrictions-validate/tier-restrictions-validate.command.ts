@@ -21,6 +21,14 @@ export class TierRestrictionsValidateCommand extends OrganizationLevelCommand {
   @IsString()
   cron?: string;
 
+  @IsOptional()
+  @IsString()
+  type?: string;
+
+  @IsOptional()
+  @IsString()
+  dynamicKey?: string;
+
   @IsEnum(StepTypeEnum)
   @IsOptional()
   stepType?: StepTypeEnum;
