@@ -49,7 +49,7 @@ export type PushStepResponseDtoControlValues = {
    * Body content of the push notification.
    */
   body?: string | undefined;
-  additionalProperties?: { [k: string]: any };
+  additionalProperties?: { [k: string]: any } | undefined;
 };
 
 export type PushStepResponseDto = {
@@ -135,7 +135,7 @@ export const PushStepResponseDtoControlValues$outboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   subject: z.string().optional(),
   body: z.string().optional(),
-  additionalProperties: z.record(z.any()),
+  additionalProperties: z.record(z.any()).optional(),
 }).transform((v) => {
   return {
     ...v.additionalProperties,

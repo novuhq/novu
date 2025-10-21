@@ -92,7 +92,7 @@ export function setSubscribersSearchData(
       after?: string | undefined;
       before?: string | undefined;
       limit?: number | undefined;
-      orderDirection?: operations.OrderDirection | undefined;
+      orderDirection?: operations.QueryParamOrderDirection | undefined;
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
       email?: string | undefined;
@@ -116,7 +116,7 @@ export function invalidateSubscribersSearch(
       after?: string | undefined;
       before?: string | undefined;
       limit?: number | undefined;
-      orderDirection?: operations.OrderDirection | undefined;
+      orderDirection?: operations.QueryParamOrderDirection | undefined;
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
       email?: string | undefined;
@@ -191,7 +191,7 @@ export function queryKeySubscribersSearch(
     after?: string | undefined;
     before?: string | undefined;
     limit?: number | undefined;
-    orderDirection?: operations.OrderDirection | undefined;
+    orderDirection?: operations.QueryParamOrderDirection | undefined;
     orderBy?: string | undefined;
     includeCursor?: boolean | undefined;
     email?: string | undefined;

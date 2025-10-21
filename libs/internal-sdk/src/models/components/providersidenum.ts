@@ -64,6 +64,7 @@ export const ProvidersIdEnum = {
   Unifonic: "unifonic",
   Smsmode: "smsmode",
   Imedia: "imedia",
+  Sinch: "sinch",
   Fcm: "fcm",
   Apns: "apns",
   Expo: "expo",

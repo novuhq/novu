@@ -104,7 +104,7 @@ export type DigestStepResponseDtoControlValues = {
    * Specify a custom key for digesting events instead of the default event key.
    */
   digestKey?: string | undefined;
-  additionalProperties?: { [k: string]: any };
+  additionalProperties?: { [k: string]: any } | undefined;
 };
 
 export type DigestStepResponseDto = {
@@ -244,7 +244,7 @@ export const DigestStepResponseDtoControlValues$outboundSchema: z.ZodType<
   lookBackWindow: LookBackWindowDto$outboundSchema.optional(),
   cron: z.string().optional(),
   digestKey: z.string().optional(),
-  additionalProperties: z.record(z.any()),
+  additionalProperties: z.record(z.any()).optional(),
 }).transform((v) => {
   return {
     ...v.additionalProperties,

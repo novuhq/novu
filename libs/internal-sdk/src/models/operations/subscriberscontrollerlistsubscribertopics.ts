@@ -13,16 +13,18 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 /**
  * Direction of sorting
  */
-export const QueryParamOrderDirection = {
-  Asc: "ASC",
-  Desc: "DESC",
-} as const;
+export const SubscribersControllerListSubscriberTopicsQueryParamOrderDirection =
+  {
+    Asc: "ASC",
+    Desc: "DESC",
+  } as const;
 /**
  * Direction of sorting
  */
-export type QueryParamOrderDirection = ClosedEnum<
-  typeof QueryParamOrderDirection
->;
+export type SubscribersControllerListSubscriberTopicsQueryParamOrderDirection =
+  ClosedEnum<
+    typeof SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+  >;
 
 export type SubscribersControllerListSubscriberTopicsRequest = {
   /**
@@ -44,7 +46,9 @@ export type SubscribersControllerListSubscriberTopicsRequest = {
   /**
    * Direction of sorting
    */
-  orderDirection?: QueryParamOrderDirection | undefined;
+  orderDirection?:
+    | SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+    | undefined;
   /**
    * Field to order by
    */
@@ -69,24 +73,31 @@ export type SubscribersControllerListSubscriberTopicsResponse = {
 };
 
 /** @internal */
-export const QueryParamOrderDirection$inboundSchema: z.ZodNativeEnum<
-  typeof QueryParamOrderDirection
-> = z.nativeEnum(QueryParamOrderDirection);
+export const SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema:
+  z.ZodNativeEnum<
+    typeof SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+  > = z.nativeEnum(
+    SubscribersControllerListSubscriberTopicsQueryParamOrderDirection,
+  );
 
 /** @internal */
-export const QueryParamOrderDirection$outboundSchema: z.ZodNativeEnum<
-  typeof QueryParamOrderDirection
-> = QueryParamOrderDirection$inboundSchema;
+export const SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$outboundSchema:
+  z.ZodNativeEnum<
+    typeof SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+  > =
+    SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace QueryParamOrderDirection$ {
-  /** @deprecated use `QueryParamOrderDirection$inboundSchema` instead. */
-  export const inboundSchema = QueryParamOrderDirection$inboundSchema;
-  /** @deprecated use `QueryParamOrderDirection$outboundSchema` instead. */
-  export const outboundSchema = QueryParamOrderDirection$outboundSchema;
+export namespace SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$ {
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema` instead. */
+  export const inboundSchema =
+    SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema;
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$outboundSchema` instead. */
+  export const outboundSchema =
+    SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$outboundSchema;
 }
 
 /** @internal */
@@ -100,7 +111,9 @@ export const SubscribersControllerListSubscriberTopicsRequest$inboundSchema:
     after: z.string().optional(),
     before: z.string().optional(),
     limit: z.number().optional(),
-    orderDirection: QueryParamOrderDirection$inboundSchema.optional(),
+    orderDirection:
+      SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema
+        .optional(),
     orderBy: z.string().optional(),
     includeCursor: z.boolean().optional(),
     key: z.string().optional(),
@@ -135,7 +148,9 @@ export const SubscribersControllerListSubscriberTopicsRequest$outboundSchema:
     after: z.string().optional(),
     before: z.string().optional(),
     limit: z.number().optional(),
-    orderDirection: QueryParamOrderDirection$outboundSchema.optional(),
+    orderDirection:
+      SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$outboundSchema
+        .optional(),
     orderBy: z.string().optional(),
     includeCursor: z.boolean().optional(),
     key: z.string().optional(),

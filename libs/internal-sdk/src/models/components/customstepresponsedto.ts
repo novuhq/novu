@@ -41,7 +41,7 @@ export type CustomStepResponseDtoControlValues = {
    * Custom control values for the step.
    */
   custom?: { [k: string]: any } | undefined;
-  additionalProperties?: { [k: string]: any };
+  additionalProperties?: { [k: string]: any } | undefined;
 };
 
 export type CustomStepResponseDto = {
@@ -121,7 +121,7 @@ export const CustomStepResponseDtoControlValues$outboundSchema: z.ZodType<
   CustomStepResponseDtoControlValues
 > = z.object({
   custom: z.record(z.any()).optional(),
-  additionalProperties: z.record(z.any()),
+  additionalProperties: z.record(z.any()).optional(),
 }).transform((v) => {
   return {
     ...v.additionalProperties,
