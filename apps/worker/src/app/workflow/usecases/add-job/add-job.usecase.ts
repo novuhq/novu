@@ -259,7 +259,7 @@ export class AddJob {
         });
 
         if (delayAmount === undefined) {
-          this.logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`);
+          this.logger.warn(`Delay Amount does not exist on a delay job ${job._id}`);
 
           return {
             workflowStatus: null,
