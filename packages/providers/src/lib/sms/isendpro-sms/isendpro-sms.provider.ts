@@ -15,7 +15,6 @@ interface ISendProPayload {
     message: {
       text: string;
       to: string;
-      sender?: string;
     };
   };
   headers?: Record<string, string>;
