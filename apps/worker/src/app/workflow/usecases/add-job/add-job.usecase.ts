@@ -164,8 +164,6 @@ export class AddJob {
     const filtered = !shouldRun.passed;
     const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
 
-    console.log({ bridgeResponse });
-
     if (filtered || bridgeResponse?.options?.skip) {
       return {
         workflowStatus: null,
@@ -192,8 +190,6 @@ export class AddJob {
     const bridgeDelayAmount = bridgeDelayAmountDate
       ? differenceInMilliseconds(bridgeDelayAmountDate, new Date())
       : undefined;
-
-    console.log({ bridgeDelayAmountDate, bridgeDelayAmount });
 
     if (job.type === StepTypeEnum.DIGEST) {
       digestResult = await this.handleDigest({
@@ -261,8 +257,6 @@ export class AddJob {
           bridgeDelayAmount,
           timezone: subscriber?.timezone,
         });
-
-        console.log({ delayAmount });
 
         if (delayAmount === undefined) {
           this.logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`);
@@ -891,7 +885,6 @@ export class AddJob {
         timezone,
       });
 
-    console.log({ digestAmount });
     this.logger.debug(`Digest step amount is: ${digestAmount}`);
 
     const digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
