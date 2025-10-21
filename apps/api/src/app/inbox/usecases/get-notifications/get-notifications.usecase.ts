@@ -64,6 +64,7 @@ export class GetNotifications {
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
         channel: ChannelTypeEnum.IN_APP,
+        contextKeys: command.contextKeys,
         tags: command.tags,
         read: command.read,
         archived: command.archived,

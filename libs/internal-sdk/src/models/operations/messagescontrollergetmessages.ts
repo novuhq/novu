@@ -16,6 +16,10 @@ export type MessagesControllerGetMessagesRequest = {
   channel?: components.ChannelTypeEnum | undefined;
   subscriberId?: string | undefined;
   transactionId?: Array<string> | undefined;
+  /**
+   * Filter by exact context keys (format: "type:id")
+   */
+  contextKeys?: Array<string> | undefined;
   page?: number | undefined;
   limit?: number | undefined;
   /**
@@ -38,6 +42,7 @@ export const MessagesControllerGetMessagesRequest$inboundSchema: z.ZodType<
   channel: components.ChannelTypeEnum$inboundSchema.optional(),
   subscriberId: z.string().optional(),
   transactionId: z.array(z.string()).optional(),
+  contextKeys: z.array(z.string()).optional(),
   page: z.number().default(0),
   limit: z.number().default(10),
   "idempotency-key": z.string().optional(),
@@ -52,6 +57,7 @@ export type MessagesControllerGetMessagesRequest$Outbound = {
   channel?: string | undefined;
   subscriberId?: string | undefined;
   transactionId?: Array<string> | undefined;
+  contextKeys?: Array<string> | undefined;
   page: number;
   limit: number;
   "idempotency-key"?: string | undefined;
@@ -66,6 +72,7 @@ export const MessagesControllerGetMessagesRequest$outboundSchema: z.ZodType<
   channel: components.ChannelTypeEnum$outboundSchema.optional(),
   subscriberId: z.string().optional(),
   transactionId: z.array(z.string()).optional(),
+  contextKeys: z.array(z.string()).optional(),
   page: z.number().default(0),
   limit: z.number().default(10),
   idempotencyKey: z.string().optional(),

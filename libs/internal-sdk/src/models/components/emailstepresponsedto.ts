@@ -76,7 +76,7 @@ export type EmailStepResponseDtoControlValues = {
    * Layout ID to use for the email. Null means no layout, undefined means default layout.
    */
   layoutId?: string | null | undefined;
-  additionalProperties?: { [k: string]: any };
+  additionalProperties?: { [k: string]: any } | undefined;
 };
 
 export type EmailStepResponseDto = {
@@ -192,7 +192,7 @@ export const EmailStepResponseDtoControlValues$outboundSchema: z.ZodType<
   editorType: EmailStepResponseDtoEditorType$outboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
   layoutId: z.nullable(z.string()).optional(),
-  additionalProperties: z.record(z.any()),
+  additionalProperties: z.record(z.any()).optional(),
 }).transform((v) => {
   return {
     ...v.additionalProperties,

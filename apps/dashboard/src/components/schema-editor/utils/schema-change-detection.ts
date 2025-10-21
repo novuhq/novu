@@ -38,7 +38,19 @@ function getSchemaRequired(schema?: JSONSchema7): string[] {
 
 function getPropertyType(property: JSONSchema7): JSONSchema7TypeName | undefined {
   if (typeof property === 'boolean') return undefined;
-  return property.type as JSONSchema7TypeName;
+
+  const type = property.type;
+
+  // Handle type arrays (nullable properties with type like ["string", "null"])
+  // Extract the non-null type for comparison to avoid false positives
+  if (Array.isArray(type)) {
+    const nonNullTypes = type.filter((t) => t !== 'null');
+    if (nonNullTypes.length > 0) {
+      return nonNullTypes[0] as JSONSchema7TypeName;
+    }
+  }
+
+  return type as JSONSchema7TypeName;
 }
 
 export function detectSchemaChanges(

@@ -1,6 +1,10 @@
 import { ChannelStepEnum } from '../constants';
 import { actionStepSchemas } from '../schemas/steps/actions';
-import { delayRegularOutputSchema, delayTimedOutputSchema } from '../schemas/steps/actions/delay.schema';
+import {
+  delayDynamicOutputSchema,
+  delayRegularOutputSchema,
+  delayTimedOutputSchema,
+} from '../schemas/steps/actions/delay.schema';
 import { digestRegularOutputSchema, digestTimedOutputSchema } from '../schemas/steps/actions/digest.schema';
 import { channelStepSchemas } from '../schemas/steps/channels';
 import type { Providers } from './provider.types';
@@ -203,9 +207,11 @@ export type InAppOutputUnvalidated = FromSchemaUnvalidated<(typeof channelStepSc
 export type InAppResult = FromSchema<(typeof channelStepSchemas)['in_app']['result']>;
 
 export type DelayRegularOutput = FromSchema<typeof delayRegularOutputSchema>;
-export type DelayTimedOutput = FromSchema<typeof delayTimedOutputSchema>;
 export type DelayRegularOutputUnvalidated = FromSchemaUnvalidated<typeof delayRegularOutputSchema>;
+export type DelayTimedOutput = FromSchema<typeof delayTimedOutputSchema>;
 export type DelayTimedOutputUnvalidated = FromSchemaUnvalidated<typeof delayTimedOutputSchema>;
+export type DelayDynamicOutput = FromSchema<typeof delayDynamicOutputSchema>;
+export type DelayDynamicOutputUnvalidated = FromSchemaUnvalidated<typeof delayDynamicOutputSchema>;
 
 export type DelayOutput = FromSchema<(typeof actionStepSchemas)['delay']['output']>;
 export type DelayOutputUnvalidated = FromSchemaUnvalidated<(typeof actionStepSchemas)['delay']['output']>;

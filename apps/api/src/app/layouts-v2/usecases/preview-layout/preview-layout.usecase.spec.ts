@@ -154,13 +154,14 @@ describe('PreviewLayoutUsecase', () => {
 
       const result = await previewLayoutUsecase.execute(command);
 
-      expect(result).to.deep.equal({
-        result: {
-          preview: { body: '<html>Final rendered content</html>' },
-          type: ChannelTypeEnum.EMAIL,
-        },
-        previewPayloadExample: mockPayloadExample,
+      expect(result.result).to.deep.equal({
+        preview: { body: '<html>Final rendered content</html>' },
+        type: ChannelTypeEnum.EMAIL,
       });
+      expect(result.previewPayloadExample).to.deep.equal(mockPayloadExample);
+      expect(result.schema).to.exist;
+      expect(result.schema?.type).to.equal('object');
+      expect(result.schema?.properties).to.have.keys(['subscriber', 'context']);
     });
 
     it('should use layout control values when command control values are not provided', async () => {
@@ -387,7 +388,7 @@ describe('PreviewLayoutUsecase', () => {
             },
           });
 
-          const result = await previewLayoutUsecase.execute(command);
+          await previewLayoutUsecase.execute(command);
         } catch (error) {
           expect(error.message).to.equal('Layout not found');
         }
@@ -412,6 +413,7 @@ describe('PreviewLayoutUsecase', () => {
             type: ChannelTypeEnum.EMAIL,
           },
           previewPayloadExample: {},
+          schema: null,
         });
       });
 
@@ -434,6 +436,7 @@ describe('PreviewLayoutUsecase', () => {
             type: ChannelTypeEnum.EMAIL,
           },
           previewPayloadExample: {},
+          schema: null,
         });
       });
 
@@ -456,6 +459,7 @@ describe('PreviewLayoutUsecase', () => {
             type: ChannelTypeEnum.EMAIL,
           },
           previewPayloadExample: {},
+          schema: null,
         });
       });
 
@@ -478,6 +482,7 @@ describe('PreviewLayoutUsecase', () => {
             type: ChannelTypeEnum.EMAIL,
           },
           previewPayloadExample: {},
+          schema: null,
         });
       });
 
@@ -500,6 +505,7 @@ describe('PreviewLayoutUsecase', () => {
             type: ChannelTypeEnum.EMAIL,
           },
           previewPayloadExample: {},
+          schema: null,
         });
       });
 

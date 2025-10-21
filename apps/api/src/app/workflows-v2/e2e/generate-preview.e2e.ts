@@ -22,6 +22,7 @@ import { expect } from 'chai';
 import { beforeEach } from 'mocha';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { DEFAULT_ARRAY_ELEMENTS } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
+import { buildWorkflowSchema } from '../../shared/utils/create-schema';
 import { fullCodeSnippet, previewPayloadExample } from '../maily-test-data';
 import { buildWorkflow } from '../workflow.controller.e2e';
 
@@ -189,6 +190,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             additionalProperties: false,
             description: 'Previous Steps Results',
           },
+          workflow: buildWorkflowSchema(),
         },
         additionalProperties: false,
       },
@@ -439,6 +441,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             additionalProperties: false,
             description: 'Previous Steps Results',
           },
+          workflow: buildWorkflowSchema(),
         },
         type: 'object',
       },

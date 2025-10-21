@@ -23,7 +23,7 @@ async function getDatabaseConnection(): Promise<Connection> {
 async function dropDatabase(): Promise<void> {
   try {
     const conn = await getDatabaseConnection();
-    await conn.db.dropDatabase();
+    await conn.dropDatabase();
   } catch (error) {
     console.error('Error dropping the database:', error);
   }

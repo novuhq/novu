@@ -109,10 +109,12 @@ export const Inbox = React.memo((props: InboxProps) => {
   const providerProps = {
     applicationIdentifier,
     subscriberHash: props.subscriberHash,
+    contextHash: props.contextHash,
     backendUrl: props.backendUrl,
     socketUrl: props.socketUrl,
     subscriber,
     defaultSchedule: props.defaultSchedule,
+    context: props.context,
   } satisfies StandardNovuOptions;
 
   return (
@@ -135,10 +137,12 @@ const InboxChild = withRenderer(
       applicationIdentifier = '', // for keyless we provide an empty string, the api will generate a identifier
       subscriberId,
       subscriberHash,
+      contextHash,
       backendUrl,
       socketUrl,
       subscriber,
       defaultSchedule,
+      context,
     } = props;
     const novu = useNovu();
 
@@ -154,10 +158,12 @@ const InboxChild = withRenderer(
         options: {
           applicationIdentifier,
           subscriberHash,
+          contextHash,
           backendUrl,
           socketUrl,
           subscriber: buildSubscriber({ subscriberId, subscriber }),
           defaultSchedule,
+          context,
         },
       };
     }, [
@@ -170,9 +176,11 @@ const InboxChild = withRenderer(
       applicationIdentifier,
       subscriberId,
       subscriberHash,
+      contextHash,
       backendUrl,
       socketUrl,
       subscriber,
+      context,
     ]);
 
     if (isWithChildrenProps(props)) {

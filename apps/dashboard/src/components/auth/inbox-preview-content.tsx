@@ -1,6 +1,6 @@
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { useUser } from '@clerk/clerk-react';
 import { Inbox, InboxContent, InboxProps } from '@novu/react';
-import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../config';
 import { useAuth } from '../../context/auth/hooks';
 import { useFetchEnvironments } from '../../context/environment/hooks';
 
@@ -32,8 +32,8 @@ export function InboxPreviewContent() {
   const configuration: InboxProps = {
     applicationIdentifier: currentEnvironment?.identifier,
     subscriberId: user?.externalId as string,
-    backendUrl: API_HOSTNAME ?? 'https://api.novu.co',
-    socketUrl: WEBSOCKET_HOSTNAME ?? 'https://ws.novu.co',
+    backendUrl: apiHostnameManager.getHostname(),
+    socketUrl: apiHostnameManager.getWebSocketHostname(),
     localization: {
       'notifications.emptyNotice': 'Click Send Notification to see your first notification',
     },

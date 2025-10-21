@@ -100,7 +100,7 @@ export type TriggerEventToAllRequestDtoOverrides = {
    * Severity of the workflow
    */
   severity?: SeverityLevelEnum | undefined;
-  additionalProperties?: { [k: string]: { [k: string]: any } };
+  additionalProperties?: { [k: string]: { [k: string]: any } } | undefined;
 };
 
 /**
@@ -267,7 +267,7 @@ export const TriggerEventToAllRequestDtoOverrides$outboundSchema: z.ZodType<
   chat: z.record(z.any()).optional(),
   layoutIdentifier: z.string().optional(),
   severity: SeverityLevelEnum$outboundSchema.optional(),
-  additionalProperties: z.record(z.record(z.any())),
+  additionalProperties: z.record(z.record(z.any())).optional(),
 }).transform((v) => {
   return {
     ...v.additionalProperties,

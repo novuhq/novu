@@ -85,7 +85,7 @@ export type InAppStepResponseDtoControlValues = {
    * Additional data payload for the step.
    */
   data?: { [k: string]: any } | undefined;
-  additionalProperties?: { [k: string]: any };
+  additionalProperties?: { [k: string]: any } | undefined;
 };
 
 export type InAppStepResponseDto = {
@@ -189,7 +189,7 @@ export const InAppStepResponseDtoControlValues$outboundSchema: z.ZodType<
   redirect: RedirectDto$outboundSchema.optional(),
   disableOutputSanitization: z.boolean().default(false),
   data: z.record(z.any()).optional(),
-  additionalProperties: z.record(z.any()),
+  additionalProperties: z.record(z.any()).optional(),
 }).transform((v) => {
   return {
     ...v.additionalProperties,

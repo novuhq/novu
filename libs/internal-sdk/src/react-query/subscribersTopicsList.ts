@@ -93,7 +93,9 @@ export function setSubscribersTopicsListData(
       after?: string | undefined;
       before?: string | undefined;
       limit?: number | undefined;
-      orderDirection?: operations.QueryParamOrderDirection | undefined;
+      orderDirection?:
+        | operations.SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+        | undefined;
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
       key?: string | undefined;
@@ -116,7 +118,9 @@ export function invalidateSubscribersTopicsList(
         after?: string | undefined;
         before?: string | undefined;
         limit?: number | undefined;
-        orderDirection?: operations.QueryParamOrderDirection | undefined;
+        orderDirection?:
+          | operations.SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+          | undefined;
         orderBy?: string | undefined;
         includeCursor?: boolean | undefined;
         key?: string | undefined;
@@ -187,7 +191,9 @@ export function queryKeySubscribersTopicsList(
     after?: string | undefined;
     before?: string | undefined;
     limit?: number | undefined;
-    orderDirection?: operations.QueryParamOrderDirection | undefined;
+    orderDirection?:
+      | operations.SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+      | undefined;
     orderBy?: string | undefined;
     includeCursor?: boolean | undefined;
     key?: string | undefined;
