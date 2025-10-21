@@ -73,7 +73,7 @@ export const DelayWindow = () => {
       setValue('controlValues.amount', undefined, { shouldDirty: true });
       setValue('controlValues.unit', undefined, { shouldDirty: true });
       setValue('controlValues.cron', undefined, { shouldDirty: true });
-      setValue('controlValues.dynamicKey', 'payload.scheduledTime', { shouldDirty: true });
+      setValue('controlValues.dynamicKey', undefined, { shouldDirty: true });
     } else if (value === SCHEDULED_TYPE) {
       setValue('controlValues.type', DelayTypeEnum.TIMED, { shouldDirty: true });
       setValue('controlValues.amount', undefined, { shouldDirty: true });

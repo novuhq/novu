@@ -70,7 +70,7 @@ export const delayUiSchema: UiSchema = {
     },
     dynamicKey: {
       component: UiComponentEnum.DELAY_DYNAMIC_KEY,
-      placeholder: 'payload.scheduledTime',
+      placeholder: '',
     },
     type: {
       component: UiComponentEnum.DELAY_TYPE,
