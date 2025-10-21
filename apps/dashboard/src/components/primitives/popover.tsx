@@ -21,17 +21,11 @@ const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & { portal?: boolean }
 >(({ className, align = 'center', portal = true, sideOffset = DEFAULT_SIDE_OFFSET, onClick, ...props }, ref) => {
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    onClick?.(e);
-  };
-
   const body = (
     <PopoverPrimitive.Content
       ref={ref}
       align={align}
       sideOffset={sideOffset}
-      onClick={handleClick}
       className={cn(
         `bg-background text-foreground-950 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-72 overflow-auto rounded-lg border border-neutral-100 p-4 shadow-md outline-none ${arrowClipPathClassName}`,
         className
