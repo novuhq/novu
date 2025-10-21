@@ -109,7 +109,7 @@ export class RunJob {
       });
 
       // Update workflow run delivery lifecycle after job cancellation
-      await this.conditionallyUpdateDeliveryLifecycle(job);
+      await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED);
 
       return;
     }
@@ -220,7 +220,7 @@ export class RunJob {
           );
 
           // Update workflow run delivery lifecycle after schedule-based cancellation
-          await this.conditionallyUpdateDeliveryLifecycle(job);
+          await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED);
 
           return;
         }
@@ -278,7 +278,7 @@ export class RunJob {
         });
 
         // Update workflow run delivery lifecycle after successful step completion
-        await this.conditionallyUpdateDeliveryLifecycle(job);
+        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING);
       } else if (sendMessageResult.status === 'failed') {
         await this.jobRepository.update(
           {
@@ -302,6 +302,7 @@ export class RunJob {
         // Update workflow run delivery lifecycle after step failure
         await this.conditionallyUpdateDeliveryLifecycle(
           job,
+          WorkflowRunStatusEnum.ERROR,
           new Error(sendMessageResult.errorMessage || 'Send message failed')
         );
 
@@ -326,7 +327,7 @@ export class RunJob {
         });
 
         // Update workflow run delivery lifecycle after step skip/cancellation
-        await this.conditionallyUpdateDeliveryLifecycle(job);
+        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING);
       }
     } catch (caughtError: unknown) {
       error = caughtError as Error;
@@ -335,9 +336,6 @@ export class RunJob {
         errorCode: 'execution_error',
         errorMessage: error.message,
       });
-
-      // Update workflow run delivery lifecycle after execution error
-      await this.conditionallyUpdateDeliveryLifecycle(job, error);
 
       if (shouldHaltOnStepFailure(job) && !this.shouldBackoff(error)) {
         await this.jobRepository.cancelPendingJobs({
@@ -358,10 +356,11 @@ export class RunJob {
       } else if (!isJobExtendedToSubscriberSchedule) {
         // Update workflow run status based on step runs when halting on step failure
         await this.workflowRunService.updateDeliveryLifecycle({
+          workflowStatus: error ? WorkflowRunStatusEnum.ERROR : WorkflowRunStatusEnum.COMPLETED,
           notificationId: job._notificationId,
           environmentId: job._environmentId,
           organizationId: job._organizationId,
-          subscriberId: job._subscriberId,
+          _subscriberId: job._subscriberId,
           error: error,
         });
         // Remove the attachments if the job should not be queued
@@ -402,10 +401,11 @@ export class RunJob {
         if (!nextJob) {
           // Update workflow run status when there is no next job (workflow complete)
           await this.workflowRunService.updateDeliveryLifecycle({
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
             notificationId: currentJob._notificationId,
             environmentId: currentJob._environmentId,
             organizationId: currentJob._organizationId,
-            subscriberId: currentJob._subscriberId,
+            _subscriberId: currentJob._subscriberId,
           });
           return;
         }
@@ -444,7 +444,7 @@ export class RunJob {
           );
 
           // Update workflow run delivery lifecycle after step skip
-          await this.conditionallyUpdateDeliveryLifecycle(nextJob);
+          await this.conditionallyUpdateDeliveryLifecycle(nextJob, WorkflowRunStatusEnum.PROCESSING);
 
           currentJob = nextJob; // if skipped, continue to the next job
         } else {
@@ -453,10 +453,11 @@ export class RunJob {
 
         if (addJobResult.workflowStatus === WorkflowRunStatusEnum.COMPLETED) {
           await this.workflowRunService.updateDeliveryLifecycle({
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
             notificationId: nextJob._notificationId,
             environmentId: nextJob._environmentId,
             organizationId: nextJob._organizationId,
-            subscriberId: nextJob._subscriberId,
+            _subscriberId: nextJob._subscriberId,
           });
         }
       } catch (error: unknown) {
@@ -464,13 +465,25 @@ export class RunJob {
           // Fallback: update workflow run status if nextJob is unexpectedly missing
           // (should not occur due to prior nextJob check in loop)
           await this.workflowRunService.updateDeliveryLifecycle({
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
             notificationId: currentJob._notificationId,
             environmentId: currentJob._environmentId,
             organizationId: currentJob._organizationId,
-            subscriberId: currentJob._subscriberId,
+            _subscriberId: currentJob._subscriberId,
           });
           return;
         }
+
+        const jobAfterNext: Pick<JobEntity, '_id'> | null = await this.jobRepository.findOne(
+          {
+            _environmentId: nextJob._environmentId,
+            _parentId: nextJob._id,
+          },
+          '_id'
+        );
+
+        const isHaltingWorkflow = shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error as Error);
+        const isLastJobInWorkflow = !jobAfterNext || isHaltingWorkflow;
 
         await this.setJobAsFailed.execute(
           SetJobAsFailedCommand.create({
@@ -478,19 +491,12 @@ export class RunJob {
             jobId: nextJob._id,
             organizationId: nextJob._organizationId,
             userId: nextJob._userId,
+            isLastJobInWorkflow,
           }),
           error as Error
         );
 
-        if (shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error as Error)) {
-          // Update workflow run status based on step runs when halting on step failure
-          await this.workflowRunService.updateDeliveryLifecycle({
-            notificationId: nextJob._notificationId,
-            environmentId: nextJob._environmentId,
-            organizationId: nextJob._organizationId,
-            subscriberId: nextJob._subscriberId,
-            error: error,
-          });
+        if (isHaltingWorkflow) {
           await this.jobRepository.cancelPendingJobs({
             transactionId: nextJob.transactionId,
             _environmentId: nextJob._environmentId,
@@ -644,7 +650,11 @@ export class RunJob {
    * will complete quickly. Also skips updating if the current job itself is an action step.
    * Additionally, skips execution if the current step is the last step in the workflow, because it will be updated as part of the workflow run finalization.
    */
-  private async conditionallyUpdateDeliveryLifecycle(job: JobEntity, error?: Error): Promise<void> {
+  private async conditionallyUpdateDeliveryLifecycle(
+    job: JobEntity,
+    workflowStatus: WorkflowRunStatusEnum,
+    error?: Error
+  ): Promise<void> {
     this.logger.info({ nv: { job, error } }, 'Conditionally updating delivery lifecycle');
 
     if (
@@ -689,10 +699,11 @@ export class RunJob {
     }
 
     await this.workflowRunService.updateDeliveryLifecycle({
+      workflowStatus,
       notificationId: job._notificationId,
       environmentId: job._environmentId,
       organizationId: job._organizationId,
-      subscriberId: job._subscriberId,
+      _subscriberId: job._subscriberId,
       error: error,
     });
   }

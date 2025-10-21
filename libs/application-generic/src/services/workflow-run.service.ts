@@ -5,10 +5,11 @@ import { PinoLogger } from '../logging';
 import { WorkflowRunRepository, WorkflowRunStatusEnum } from './analytic-logs';
 
 interface WorkflowStatusUpdateParams {
+  workflowStatus: WorkflowRunStatusEnum;
   notificationId: string;
   environmentId: string;
   organizationId: string;
-  subscriberId: string;
+  _subscriberId: string;
   error?: unknown;
   deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum;
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
@@ -56,8 +57,8 @@ export class WorkflowRunService {
     notificationId,
     environmentId,
     organizationId,
-    subscriberId,
-    error,
+    _subscriberId,
+    workflowStatus,
     deliveryLifecycleStatus: providedStatus,
     deliveryLifecycleDetail: providedDetail,
   }: WorkflowStatusUpdateParams): Promise<void> {
@@ -70,10 +71,11 @@ export class WorkflowRunService {
         deliveryLifecycleDetail = providedDetail;
       } else {
         const result = await this.getDeliveryLifecycle({
+          workflowStatus,
           notificationId,
           environmentId,
           organizationId,
-          subscriberId,
+          _subscriberId,
         });
         deliveryLifecycleStatus = result.deliveryLifecycleStatus;
         deliveryLifecycleDetail = result.deliveryLifecycleDetail;
@@ -87,7 +89,7 @@ export class WorkflowRunService {
 
       await this.workflowRunRepository.updateWorkflowRunState(
         notificationId,
-        error ? WorkflowRunStatusEnum.ERROR : WorkflowRunStatusEnum.COMPLETED,
+        workflowStatus,
         {
           organizationId,
           environmentId,
@@ -121,15 +123,15 @@ export class WorkflowRunService {
     notificationId,
     environmentId,
     organizationId,
-    subscriberId,
+    _subscriberId,
   }: WorkflowStatusUpdateParams): Promise<{
     deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
     deliveryLifecycleDetail?: DeliveryLifecycleDetail;
   }> {
     try {
       const [jobs, messages] = await Promise.all([
-        this.getJobsForWorkflowRun(notificationId, environmentId, organizationId, subscriberId),
-        this.getMessagesForWorkflowRun(notificationId, environmentId, organizationId, subscriberId),
+        this.getJobsForWorkflowRun(notificationId, environmentId, organizationId, _subscriberId),
+        this.getMessagesForWorkflowRun(notificationId, environmentId, organizationId, _subscriberId),
       ]);
 
       return this.buildDeliveryLifecycle(jobs, messages);
@@ -145,17 +147,17 @@ export class WorkflowRunService {
   }
 
   private async getJobsForWorkflowRun(
-    workflowRunId: string,
+    notificationId: string,
     environmentId: string,
     organizationId: string,
-    subscriberId: string
+    _subscriberId: string
   ): Promise<JobResult[]> {
     const jobs = await this.jobRepository.find(
       {
-        _notificationId: workflowRunId,
+        _notificationId: notificationId,
         _environmentId: environmentId,
         _organizationId: organizationId,
-        _subscriberId: subscriberId,
+        _subscriberId,
       },
       jobResultProjection,
       {
@@ -168,17 +170,17 @@ export class WorkflowRunService {
   }
 
   private async getMessagesForWorkflowRun(
-    workflowRunId: string,
+    notificationId: string,
     environmentId: string,
     organizationId: string,
-    subscriberId: string
+    _subscriberId: string
   ): Promise<MessageResult[]> {
     const messages = await this.messageRepository.find(
       {
-        _notificationId: workflowRunId,
+        _notificationId: notificationId,
         _environmentId: environmentId,
         _organizationId: organizationId,
-        _subscriberId: subscriberId,
+        _subscriberId,
       },
       messageResultProjection,
       {
@@ -200,7 +202,7 @@ export class WorkflowRunService {
    * 4. SKIPPED - If all steps finish processing AND at least one step has SKIPPED status
    *    - Detail Priority: SUBSCRIBER_PREFERENCE > USER_STEP_CONDITION > other details
    * 5. CANCELED - If any step has CANCELED status (only if no SKIPPED found)
-   * 6. ERRORED - If any step has FAILED status
+   * 6. ERRORED - Workflow Run will not be sent due to failure in all steps
    * 7. MERGED - If all steps are MERGED
    * 8. PENDING - If any step has PENDING, QUEUED, RUNNING, or DELAYED status
    */
@@ -300,9 +302,10 @@ export class WorkflowRunService {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.CANCELED };
     }
 
-    // Priority 6: ERRORED - If any step has failed
-    const hasFailedSteps = channelJobs.some((job) => job.status === JobStatusEnum.FAILED);
-    if (hasFailedSteps) {
+    // Priority 6: ERRORED - If all steps have failed
+    const allStepsFailed = channelJobs.every((job) => job.status === JobStatusEnum.FAILED);
+
+    if (allStepsFailed) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED };
     }
 

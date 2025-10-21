@@ -115,7 +115,7 @@ export class MessageInteractionService {
         notificationId: trace._notificationId,
         environmentId: trace.environment_id,
         organizationId: trace.organization_id,
-        subscriberId: trace.subscriber_id,
+        _subscriberId: trace.subscriber_id,
         deliveryLifecycleStatus,
         ...(deliveryLifecycleDetail && { deliveryLifecycleDetail }),
       });

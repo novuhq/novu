@@ -58,8 +58,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     jobId: string,
     status: JobStatusEnum,
     deliveryLifecycleState?: DeliveryLifecycleState
-  ): Promise<IUpdateResult> {
-    return this.MongooseModel.updateOne(
+  ): Promise<JobEntity | null> {
+    return this.MongooseModel.findOneAndUpdate(
       {
         _environmentId: environmentId,
         _id: jobId,
@@ -69,7 +69,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
           status,
           deliveryLifecycleState,
         },
-      }
+      },
+      { new: true }
     );
   }
 
