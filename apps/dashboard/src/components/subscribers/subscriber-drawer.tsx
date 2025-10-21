@@ -4,6 +4,7 @@ import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { SubscriberTabs } from '@/components/subscribers/subscriber-tabs';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
+import { cn } from '../../utils/ui';
 
 type SubscriberDrawerProps = {
   open: boolean;
@@ -28,7 +29,12 @@ export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps
 
   return (
     <>
-      <Sheet open={open} onOpenChange={protectedOnValueChange}>
+      <Sheet open={open} modal={false} onOpenChange={protectedOnValueChange}>
+        <div
+          className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
+            'pointer-events-none opacity-0': !open,
+          })}
+        />
         <SheetContent ref={combinedRef}>
           <VisuallyHidden>
             <SheetTitle />
