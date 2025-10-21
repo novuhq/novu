@@ -165,6 +165,7 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
       status: this.getStatus(body.type),
       date: new Date().toISOString(),
       externalId: body.data.email_id,
+      row: JSON.stringify(body),
     };
   }
 
