@@ -69,7 +69,6 @@ export type ReadArgs = BaseArgs | InstanceArgs;
 export type UnreadArgs = BaseArgs | InstanceArgs;
 export type ArchivedArgs = BaseArgs | InstanceArgs;
 export type UnarchivedArgs = BaseArgs | InstanceArgs;
-// FIX: Ensure DeletedArgs properly includes notification property
 export type DeletedArgs = BaseArgs | InstanceArgs;
 export type SeenArgs = BaseArgs | InstanceArgs;
 export type SnoozeArgs = (BaseArgs | InstanceArgs) & {
