@@ -3,6 +3,7 @@ import { DeliveryLifecycleDetail, DeliveryLifecycleStatusEnum } from '@novu/shar
 import { PinoLogger } from 'nestjs-pino';
 import { Trace, TraceLogRepository } from './analytic-logs/trace-log';
 import { WorkflowRunService } from './workflow-run.service';
+import { WorkflowRunStatusEnum } from './analytic-logs';
 
 export interface MessageInteractionResult {
   success: boolean;
@@ -112,6 +113,7 @@ export class MessageInteractionService {
       const trace = tracesByNotificationId[notificationId][0];
 
       await this.workflowRunService.updateDeliveryLifecycle({
+        workflowStatus: WorkflowRunStatusEnum.COMPLETED,
         notificationId: trace._notificationId,
         environmentId: trace.environment_id,
         organizationId: trace.organization_id,
