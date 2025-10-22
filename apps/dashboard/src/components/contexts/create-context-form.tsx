@@ -135,7 +135,7 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
                     }}
                   />
                 </FormControl>
-                <FormMessage>Specific instance identifier (e.g., user-123, org-acme)</FormMessage>
+                <FormMessage>Specific instance identifier (e.g., 123, acme)</FormMessage>
               </FormItem>
             )}
           />
@@ -182,7 +182,7 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
             render={({ field, fieldState }) => (
               <FormItem className="w-full">
                 <FormLabel
-                  tooltip={`Store additional context details as key-value pairs in the custom data field.
+                  tooltip={`Store additional context details as key-value pairs. This data can be used as variables in notification content, conditions etc.
                      \nExample: {\n "companyName": "Acme Inc",\n "plan": "enterprise"\n}`}
                 >
                   Custom data (JSON)
