@@ -32,6 +32,7 @@ import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   castUnitToDigestUnitEnum,
+  DelayTypeEnum,
   DeliveryLifecycleStatusEnum,
   DigestCreationResultEnum,
   DigestTypeEnum,
@@ -260,7 +261,7 @@ export class AddJob {
 
         return {
           workflowStatus: WorkflowRunStatusEnum.ERROR,
-          deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
+          deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
         };
       }
     }
@@ -527,7 +528,7 @@ export class AddJob {
 
     return {
       workflowStatus: WorkflowRunStatusEnum.ERROR,
-      deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
+      deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
     };
   }
 
