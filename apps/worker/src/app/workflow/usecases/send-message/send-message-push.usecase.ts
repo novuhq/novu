@@ -1,6 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  buildSubscriberKey,
   CompileTemplate,
   CompileTemplateCommand,
   CreateExecutionDetails,
@@ -8,6 +9,7 @@ import {
   DetailEnum,
   GetNovuProviderCredentials,
   InstrumentUsecase,
+  InvalidateCacheService,
   IPushHandler,
   messageWebhookMapper,
   PushFactory,
@@ -59,7 +61,8 @@ export class SendMessagePush extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private invalidateCache: InvalidateCacheService
   ) {
     super(
       messageRepository,
@@ -544,6 +547,17 @@ export class SendMessagePush extends SendMessageBase {
         LOG_CONTEXT
       );
 
+      const pushHandler = this.getIntegrationHandler(integration);
+      if (pushHandler?.isTokenExpired?.(e)) {
+        Logger.log(
+          { jobId: command.jobId, deviceToken, providerId: integration.providerId },
+          `Expired device token detected for jobId ${command.jobId}, removing token from subscriber`,
+          LOG_CONTEXT
+        );
+
+        await this.removeExpiredDeviceToken(command._subscriberId, deviceToken, integration._id, command);
+      }
+
       await this.sendErrorStatus(
         message,
         'error',
@@ -712,6 +726,56 @@ export class SendMessagePush extends SendMessageBase {
         return null;
       default:
         return null;
+    }
+  }
+
+  private async removeExpiredDeviceToken(
+    subscriberId: string,
+    deviceToken: string,
+    integrationId: string,
+    command: SendMessageChannelCommand
+  ): Promise<void> {
+    try {
+      await this.subscriberRepository.update(
+        {
+          _environmentId: command.environmentId,
+          _id: subscriberId,
+          'channels._integrationId': integrationId,
+        },
+        {
+          $pull: {
+            'channels.$.credentials.deviceTokens': deviceToken,
+          },
+        }
+      );
+
+      await this.invalidateCache.invalidateByKey({
+        key: buildSubscriberKey({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
+      });
+
+      Logger.log(
+        {
+          subscriberId: command.subscriberId,
+          deviceToken,
+          integrationId,
+        },
+        `Successfully removed expired device token from subscriber`,
+        LOG_CONTEXT
+      );
+    } catch (error) {
+      Logger.error(
+        {
+          subscriberId: command.subscriberId,
+          deviceToken,
+          integrationId,
+          error: error.message,
+        },
+        `Failed to remove expired device token from subscriber: ${error.message}`,
+        LOG_CONTEXT
+      );
     }
   }
 }
