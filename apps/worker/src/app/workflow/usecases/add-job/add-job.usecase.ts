@@ -237,32 +237,13 @@ export class AddJob {
           };
         }
       } catch (error) {
-        this.logger.error(`Throttle validation failed for job ${job._id}: ${error.message}`);
-
-        // Update job status to failed
-        await this.jobRepository.updateOne(
-          { _id: job._id, _environmentId: command.environmentId },
-          {
-            $set: {
-              status: JobStatusEnum.FAILED,
-              error: {
-                message: error.message,
-                name: error.name,
-                stack: error.stack,
-              },
-            },
-          }
+        return await this.handleStepValidationError(
+          command,
+          job,
+          error,
+          StepTypeEnum.THROTTLE,
+          DetailEnum.DELAY_MISCONFIGURATION
         );
-
-        // Create step run record
-        await this.stepRunRepository.create(job, {
-          status: JobStatusEnum.FAILED,
-        });
-
-        return {
-          workflowStatus: WorkflowRunStatusEnum.ERROR,
-          deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
-        };
       }
     }
 
