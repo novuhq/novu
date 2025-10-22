@@ -145,6 +145,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     options: {
       enabled: !!subscriberIdToFetch && !!currentEnvironment,
       retry: false,
+      meta: { showError: false },
     },
   });
 
