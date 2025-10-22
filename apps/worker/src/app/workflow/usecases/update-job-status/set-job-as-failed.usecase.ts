@@ -30,14 +30,12 @@ export class SetJobAsFailed {
 
     await this.jobRepository.setError(command.organizationId, command.jobId, error);
 
-    const finalWorkflowStatus = error ? WorkflowRunStatusEnum.ERROR : WorkflowRunStatusEnum.COMPLETED;
-
     await this.workflowRunService.updateDeliveryLifecycle({
       notificationId: jobEntity._notificationId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       _subscriberId: jobEntity._subscriberId,
-      workflowStatus: command.isLastJobInWorkflow ? finalWorkflowStatus : WorkflowRunStatusEnum.PROCESSING,
+      workflowStatus: command.isLastJobInWorkflow ? WorkflowRunStatusEnum.COMPLETED : WorkflowRunStatusEnum.PROCESSING,
     });
 
     return jobEntity;

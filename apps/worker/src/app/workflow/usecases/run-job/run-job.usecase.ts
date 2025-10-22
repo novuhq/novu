@@ -300,11 +300,7 @@ export class RunJob {
         });
 
         // Update workflow run delivery lifecycle after step failure
-        await this.conditionallyUpdateDeliveryLifecycle(
-          job,
-          WorkflowRunStatusEnum.ERROR,
-          new Error(sendMessageResult.errorMessage || 'Send message failed')
-        );
+        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED);
 
         if (shouldHaltOnStepFailure(job)) {
           shouldQueueNextJob = false;
@@ -356,12 +352,11 @@ export class RunJob {
       } else if (!isJobExtendedToSubscriberSchedule) {
         // Update workflow run status based on step runs when halting on step failure
         await this.workflowRunService.updateDeliveryLifecycle({
-          workflowStatus: error ? WorkflowRunStatusEnum.ERROR : WorkflowRunStatusEnum.COMPLETED,
+          workflowStatus: WorkflowRunStatusEnum.COMPLETED,
           notificationId: job._notificationId,
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           _subscriberId: job._subscriberId,
-          error: error,
         });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
@@ -652,10 +647,9 @@ export class RunJob {
    */
   private async conditionallyUpdateDeliveryLifecycle(
     job: JobEntity,
-    workflowStatus: WorkflowRunStatusEnum,
-    error?: Error
+    workflowStatus: WorkflowRunStatusEnum
   ): Promise<void> {
-    this.logger.info({ nv: { job, error } }, 'Conditionally updating delivery lifecycle');
+    this.logger.info({ nv: { job } }, 'Conditionally updating delivery lifecycle');
 
     if (
       job.type === StepTypeEnum.TRIGGER ||
@@ -704,7 +698,6 @@ export class RunJob {
       environmentId: job._environmentId,
       organizationId: job._organizationId,
       _subscriberId: job._subscriberId,
-      error: error,
     });
   }
 

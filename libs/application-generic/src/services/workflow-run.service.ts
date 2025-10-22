@@ -10,7 +10,6 @@ interface WorkflowStatusUpdateParams {
   environmentId: string;
   organizationId: string;
   _subscriberId: string;
-  error?: unknown;
   deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum;
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
