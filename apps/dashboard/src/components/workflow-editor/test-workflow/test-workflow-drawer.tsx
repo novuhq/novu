@@ -485,6 +485,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       />
 
       <SubscriberDrawer
+        modal={true}
         open={isSubscriberDrawerOpen}
         onOpenChange={handleSubscriberDrawerClose}
         subscriberId={subscriberData?.subscriberId || ''}

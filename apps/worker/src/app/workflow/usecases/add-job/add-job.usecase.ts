@@ -6,10 +6,12 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  DurationUtils,
   getDigestType,
   getNestedValue,
   IFilterVariables,
   InstrumentUsecase,
+  isDynamicOutput,
   isLookBackDigestOutput,
   isRegularOutput,
   isTimedOutput,
@@ -30,11 +32,15 @@ import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   castUnitToDigestUnitEnum,
+  DelayTypeEnum,
   DeliveryLifecycleStatus,
   DigestCreationResultEnum,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IDelayDynamicMetadata,
+  IDelayRegularMetadata,
+  IDelayTimedMetadata,
   IDigestBaseMetadata,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
@@ -231,52 +237,43 @@ export class AddJob {
           };
         }
       } catch (error) {
-        this.logger.error(`Throttle validation failed for job ${job._id}: ${error.message}`);
-
-        // Update job status to failed
-        await this.jobRepository.updateOne(
-          { _id: job._id, _environmentId: command.environmentId },
-          {
-            $set: {
-              status: JobStatusEnum.FAILED,
-              error: {
-                message: error.message,
-                name: error.name,
-                stack: error.stack,
-              },
-            },
-          }
+        return await this.handleStepValidationError(
+          command,
+          job,
+          error,
+          StepTypeEnum.THROTTLE,
+          DetailEnum.DELAY_MISCONFIGURATION
         );
-
-        // Create step run record
-        await this.stepRunRepository.create(job, {
-          status: JobStatusEnum.FAILED,
-        });
-
-        return {
-          workflowStatus: WorkflowRunStatusEnum.ERROR,
-          deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
-        };
       }
     }
 
     if (job.type === StepTypeEnum.DELAY) {
-      delayAmount = await this.handleDelay({
-        command,
-        job,
-        bridgeResponse,
-        bridgeDelayAmountDate,
-        bridgeDelayAmount,
-        timezone: subscriber?.timezone,
-      });
+      try {
+        delayAmount = await this.handleDelay({
+          command,
+          job,
+          bridgeResponse,
+          bridgeDelayAmountDate,
+          bridgeDelayAmount,
+          timezone: subscriber?.timezone,
+        });
 
-      if (delayAmount === undefined) {
-        this.logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`);
+        if (delayAmount === undefined) {
+          this.logger.warn(`Delay Amount does not exist on a delay job ${job._id}`);
 
-        return {
-          workflowStatus: null,
-          deliveryLifecycleStatus: null,
-        };
+          return {
+            workflowStatus: null,
+            deliveryLifecycleStatus: null,
+          };
+        }
+      } catch (error) {
+        return await this.handleStepValidationError(
+          command,
+          job,
+          error,
+          StepTypeEnum.DELAY,
+          DetailEnum.DELAY_MISCONFIGURATION
+        );
       }
     }
 
@@ -401,11 +398,119 @@ export class AddJob {
         timezone,
       }));
 
+    const delayType = 'type' in metadata ? metadata.type : null;
+    if (delayType === DelayTypeEnum.DYNAMIC) {
+      await this.validateDynamicDuration(command, job, delayAmount, StepTypeEnum.DELAY);
+    }
+
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.DELAYED);
 
     this.logger.debug(`Delay step Amount is: ${delayAmount}`);
 
     return delayAmount;
+  }
+
+  private async validateDynamicDuration(
+    command: AddJobCommand,
+    job: JobEntity,
+    durationMs: number,
+    stepType: StepTypeEnum.DELAY | StepTypeEnum.THROTTLE
+  ): Promise<void> {
+    const stepTypeName = stepType === StepTypeEnum.DELAY ? 'delay' : 'throttle';
+    const pastTimeDetail =
+      stepType === StepTypeEnum.DELAY ? DetailEnum.DELAY_MISCONFIGURATION : DetailEnum.THROTTLE_WINDOW_IN_PAST;
+
+    if (durationMs <= 0) {
+      this.logger.error(`Dynamic ${stepTypeName} must be in the future. durationMs: ${durationMs}, jobId: ${job._id}`);
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: pastTimeDetail,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ error: `${stepTypeName} must be in the future` }),
+        })
+      );
+
+      throw new Error(`Dynamic ${stepTypeName} must be in the future. durationMs: ${durationMs}`);
+    }
+
+    const tierValidationErrors = await this.tierRestrictionsValidateUsecase.execute(
+      TierRestrictionsValidateCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        stepType,
+        deferDurationMs: durationMs,
+      })
+    );
+
+    if (tierValidationErrors && tierValidationErrors.length > 0) {
+      const errorMessage = tierValidationErrors[0].message;
+      this.logger.error(`${stepTypeName} duration exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.DEFER_DURATION_LIMIT_EXCEEDED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ errorMessage }),
+        })
+      );
+
+      throw new Error(`${stepTypeName} duration exceeds tier limits: ${errorMessage}`);
+    }
+  }
+
+  private async handleStepValidationError(
+    command: AddJobCommand,
+    job: JobEntity,
+    error: Error,
+    stepType: StepTypeEnum,
+    detail: DetailEnum
+  ): Promise<AddJobResult> {
+    const stepTypeName = stepType.toLowerCase();
+    this.logger.error(`${stepTypeName} validation failed for job ${job._id}: ${error.message}`);
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.FAILED,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({ error: error.message }),
+      })
+    );
+
+    await this.jobRepository.updateOne(
+      { _id: job._id, _environmentId: command.environmentId },
+      {
+        $set: {
+          status: JobStatusEnum.FAILED,
+          error: {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+          },
+        },
+      }
+    );
+
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.FAILED,
+    });
+
+    return {
+      workflowStatus: WorkflowRunStatusEnum.ERROR,
+      deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
+    };
   }
 
   private async fetchBridgeData(
@@ -429,6 +534,11 @@ export class AddJob {
 
   private async updateMetadata(response: ExecuteOutput, command: AddJobCommand, untilDate?: Date | null) {
     let metadata = {} as IWorkflowStepMetadata;
+
+    if (command.job.type === StepTypeEnum.DELAY) {
+      return this.updateDelayMetadata(response, command);
+    }
+
     const digest = command.job.digest as IDigestBaseMetadata;
 
     const outputs = response.outputs as DigestOutput;
@@ -528,71 +638,116 @@ export class AddJob {
     return metadata;
   }
 
-  private parseDynamicThrottleValue(
+  private async updateDelayMetadata(response: ExecuteOutput, command: AddJobCommand) {
+    const outputs = response.outputs as DelayOutput;
+    let metadata = {} as IWorkflowStepMetadata;
+
+    if (isDynamicOutput(outputs)) {
+      metadata = {
+        type: DelayTypeEnum.DYNAMIC,
+        dynamicKey: (outputs as { dynamicKey: string }).dynamicKey,
+      } as IDelayDynamicMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'step.metadata.type': metadata.type,
+            'step.metadata.dynamicKey': (metadata as IDelayDynamicMetadata).dynamicKey,
+          },
+        }
+      );
+    } else if (isTimedOutput(outputs)) {
+      metadata = {
+        type: DelayTypeEnum.TIMED,
+        amount: 0,
+        unit: castUnitToDigestUnitEnum('seconds'),
+      } as IDelayTimedMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'step.metadata.type': DelayTypeEnum.TIMED,
+          },
+        }
+      );
+    } else if (isRegularOutput(outputs)) {
+      const regularOutputs = outputs as { amount?: number; unit?: string };
+      metadata = {
+        type: DelayTypeEnum.REGULAR,
+        amount: regularOutputs?.amount || 0,
+        unit: regularOutputs.unit ? castUnitToDigestUnitEnum(regularOutputs?.unit) : undefined,
+      } as IDelayRegularMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'step.metadata.type': metadata.type,
+            'step.metadata.amount': metadata.amount,
+            'step.metadata.unit': metadata.unit,
+          },
+        }
+      );
+    }
+
+    return metadata;
+  }
+
+  private parseDynamicDurationValue(
     job: JobEntity,
-    dynamicKey: string
-  ): { windowMs: number; identifier: string } | null {
+    dynamicKey: string,
+    stepType: 'delay' | 'throttle'
+  ): { durationMs: number; identifier: string } | null {
     const keyPath = dynamicKey?.replace('payload.', '');
     const value = getNestedValue(job.payload, keyPath);
 
     if (!value) {
-      this.logger.debug(`Dynamic throttle key '${dynamicKey}' not found in payload data`);
+      this.logger.debug(`Dynamic ${stepType} key '${dynamicKey}' not found in payload data`);
+
       return null;
     }
 
-    // Handle ISO-8601 timestamp
-    if (typeof value === 'string' && this.isISO8601(value)) {
+    if (typeof value === 'string' && DurationUtils.isISO8601(value)) {
       const targetTime = new Date(value).getTime();
       const now = Date.now();
 
       return {
-        windowMs: targetTime - now,
-        identifier: value, // Use the timestamp as identifier
+        durationMs: targetTime - now,
+        identifier: value,
       };
     }
 
-    // Handle relative duration object
     if (typeof value === 'object' && value !== null && 'unit' in value && 'amount' in value) {
       const durationObj = value as { unit: string; amount: number };
-      const windowMs = this.convertToMilliseconds(durationObj.amount, durationObj.unit);
 
-      return {
-        windowMs,
-        identifier: `${durationObj.amount}:${durationObj.unit}`,
-      };
+      try {
+        const durationMs = DurationUtils.convertToMilliseconds(durationObj.amount, durationObj.unit);
+
+        return {
+          durationMs,
+          identifier: `${durationObj.amount}:${durationObj.unit}`,
+        };
+      } catch (error) {
+        this.logger.warn(`Invalid ${stepType} duration unit '${durationObj.unit}': ${error.message}`);
+
+        return null;
+      }
     }
 
-    this.logger.warn(`Dynamic throttle value '${JSON.stringify(value)}' is not a valid format`);
+    this.logger.warn(`Dynamic ${stepType} value '${JSON.stringify(value)}' is not a valid format`);
+
     return null;
-  }
-
-  private isISO8601(value: string): boolean {
-    // Basic ISO-8601 validation - allow flexible milliseconds (1-3 digits)
-    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?$/;
-    if (!iso8601Regex.test(value)) {
-      return false;
-    }
-
-    // Check if it's a valid date
-    const date = new Date(value);
-    return !Number.isNaN(date.getTime());
-  }
-
-  private convertToMilliseconds(amount: number, unit: string): number {
-    const unitMap: Record<string, number> = {
-      minutes: 60 * 1000,
-      hours: 60 * 60 * 1000,
-      days: 24 * 60 * 60 * 1000,
-    };
-
-    if (!unitMap[unit]) {
-      this.logger.warn(
-        `Invalid throttle unit '${unit}', falling back to minutes. Supported units: minutes, hours, days`
-      );
-      return amount * unitMap.minutes;
-    }
-
-    return amount * unitMap[unit];
   }
 
   private async handleThrottle(
@@ -612,7 +767,13 @@ export class AddJob {
         this.logger.warn(`Fixed throttle configuration missing amount or unit for job ${job._id}`);
         return { shouldSkip: false };
       }
-      windowMs = this.convertToMilliseconds(amount as number, unit as string);
+
+      try {
+        windowMs = DurationUtils.convertToMilliseconds(amount as number, unit as string);
+      } catch {
+        this.logger.warn(`Invalid throttle unit '${unit}' for job ${job._id}`);
+        return { shouldSkip: false };
+      }
     } else if (type === 'dynamic') {
       const { dynamicKey } = throttleConfig;
       if (!dynamicKey) {
@@ -621,13 +782,13 @@ export class AddJob {
       }
 
       // Parse dynamic window value
-      const dynamicValue = this.parseDynamicThrottleValue(job, dynamicKey as string);
+      const dynamicValue = this.parseDynamicDurationValue(job, dynamicKey as string, 'throttle');
       if (!dynamicValue) {
         this.logger.warn(`Could not parse dynamic throttle value for job ${job._id}, key: ${dynamicKey}`);
         return { shouldSkip: false };
       }
 
-      windowMs = dynamicValue.windowMs;
+      windowMs = dynamicValue.durationMs;
     } else {
       this.logger.warn(`Unknown throttle type '${type}' for job ${job._id}`);
       return { shouldSkip: false };
@@ -745,11 +906,11 @@ export class AddJob {
 
   private getBridgeNextCronDate(bridgeResponse: ExecuteOutput | null, timezone?: string): Date | null {
     const outputs = bridgeResponse?.outputs as DigestOutput | DelayOutput;
-    if (!isTimedOutput(outputs)) {
+    if (!isTimedOutput(outputs) || !outputs.cron) {
       return null;
     }
 
-    const bridgeAmountExpression = parseCronExpression(outputs?.cron, { tz: timezone });
+    const bridgeAmountExpression = parseCronExpression(outputs.cron, { tz: timezone });
     const bridgeAmountDate = bridgeAmountExpression.next();
 
     return bridgeAmountDate.toDate();
@@ -918,52 +1079,8 @@ export class AddJob {
     windowMs: number,
     throttleType: string
   ): Promise<void> {
-    // For dynamic throttles, validate that the window is in the future
-    if (throttleType === 'dynamic' && windowMs <= 0) {
-      this.logger.error(`Dynamic throttle window must be in the future. windowMs: ${windowMs}, jobId: ${job._id}`);
-
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.THROTTLE_WINDOW_IN_PAST,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-
-      throw new Error(`Dynamic throttle window must be in the future. windowMs: ${windowMs}`);
-    }
-
-    // Validate against tier restrictions
-    const tierValidationErrors = await this.tierRestrictionsValidateUsecase.execute(
-      TierRestrictionsValidateCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        stepType: StepTypeEnum.THROTTLE,
-        amount: Math.floor(windowMs / 1000 / 60), // Convert to minutes for validation
-        unit: 'minutes',
-      })
-    );
-
-    if (tierValidationErrors && tierValidationErrors.length > 0) {
-      const errorMessage = tierValidationErrors[0].message;
-      this.logger.error(`Throttle window exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
-
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.DEFER_DURATION_LIMIT_EXCEEDED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({ errorMessage }),
-        })
-      );
-
-      throw new Error(`Throttle window exceeds tier limits: ${errorMessage}`);
+    if (throttleType === 'dynamic') {
+      await this.validateDynamicDuration(command, job, windowMs, StepTypeEnum.THROTTLE);
     }
   }
 }
