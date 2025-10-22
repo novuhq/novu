@@ -548,7 +548,9 @@ export class SendMessagePush extends SendMessageBase {
       );
 
       const pushHandler = this.getIntegrationHandler(integration);
-      if (pushHandler?.isTokenExpired?.(e)) {
+      const isTokenExpired = pushHandler?.isTokenExpired?.(e);
+
+      if (isTokenExpired) {
         Logger.log(
           { jobId: command.jobId, deviceToken, providerId: integration.providerId },
           `Expired device token detected for jobId ${command.jobId}, removing token from subscriber`,
@@ -570,11 +572,15 @@ export class SendMessagePush extends SendMessageBase {
       const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
 
       await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_SENT,
+        eventType: WebhookEventEnum.MESSAGE_FAILED,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
           object: messageWebhookMapper(message, command.subscriberId),
           error: {
+            push: {
+              reason: isTokenExpired ? 'token_expired' : 'generic_error',
+              deviceToken: deviceToken,
+            },
             message: e.message || e.name || 'Error while sending push with provider',
           },
         },
