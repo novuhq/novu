@@ -5,9 +5,11 @@ import { getComponentByType } from '@/components/workflow-editor/steps/component
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
+const typeKey = 'type';
 const amountKey = 'amount';
 const unitKey = 'unit';
 const cronKey = 'cron';
+const dynamicKeyKey = 'dynamicKey';
 const extendToScheduleKey = 'extendToSchedule';
 
 export const DelayControlValues = () => {
@@ -20,19 +22,22 @@ export const DelayControlValues = () => {
   }
 
   const {
+    [typeKey]: type,
     [amountKey]: amount,
     [unitKey]: unit,
     [cronKey]: cron,
+    [dynamicKeyKey]: dynamicKey,
     [extendToScheduleKey]: extendToSchedule,
   } = uiSchema.properties ?? {};
 
   return (
     <>
-      {((amount && unit) || cron) && (
+      {(type || amount || unit || cron || dynamicKey) && (
         <>
           <SidebarContent size="lg">
             {getComponentByType({
-              component: amount.component || unit.component || cron.component,
+              component:
+                type?.component || amount?.component || unit?.component || cron?.component || dynamicKey?.component,
             })}
           </SidebarContent>
           {isSubscribersScheduleEnabled && (
