@@ -69,8 +69,6 @@ export class WebSocketRoom extends DurableObject<IEnv> {
       contextKeys,
     });
 
-    this.logConnectionAccepted(userId, contextKeys);
-
     // Use waitUntil to allow hibernation without waiting for API call
     this.ctx.waitUntil(
       this.notifySubscriberOnlineState(userId, environmentId, true, undefined, jwtToken).catch((error) =>
@@ -142,9 +140,9 @@ export class WebSocketRoom extends DurableObject<IEnv> {
     });
 
     if (this.isFeatureFlagOff(contextKeys)) {
-      await this.broadcastToAllSockets(userId, event, message, userConnections);
+      await this.broadcastToAllSockets(userId, message, userConnections);
     } else {
-      await this.sendToMatchingContexts(userId, event, message, contextKeys, userConnections);
+      await this.sendToMatchingContexts(userId, message, contextKeys, userConnections);
     }
   }
 
@@ -310,29 +308,6 @@ export class WebSocketRoom extends DurableObject<IEnv> {
   }
 
   /**
-   * Log connection acceptance with context information
-   */
-  private logConnectionAccepted(userId: string, contextKeys?: string[]): void {
-    const contextDisplay = this.formatContextDisplay(contextKeys);
-    console.log(`Connection accepted for ${userId} with contexts: ${contextDisplay}`);
-  }
-
-  /**
-   * Format context keys for display in logs
-   */
-  private formatContextDisplay(contextKeys?: string[]): string {
-    if (contextKeys === undefined) {
-      return 'FF disabled';
-    }
-
-    if (contextKeys.length === 0) {
-      return 'no context';
-    }
-
-    return contextKeys.join(', ');
-  }
-
-  /**
    * Check if feature flag is OFF (contextKeys is undefined)
    */
   private isFeatureFlagOff(contextKeys?: string[]): boolean {
@@ -342,14 +317,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
   /**
    * Broadcast message to all user connections (FF OFF behavior)
    */
-  private async broadcastToAllSockets(
-    userId: string,
-    event: string,
-    message: string,
-    sockets: WebSocket[]
-  ): Promise<void> {
-    console.log(`Sending event ${event} to all ${sockets.length} socket(s) (FF disabled)`);
-
+  private async broadcastToAllSockets(userId: string, message: string, sockets: WebSocket[]): Promise<void> {
     const sendPromises = sockets.map(async (ws) => {
       try {
         ws.send(message);
@@ -367,7 +335,6 @@ export class WebSocketRoom extends DurableObject<IEnv> {
    */
   private async sendToMatchingContexts(
     userId: string,
-    event: string,
     message: string,
     messageContextKeys: string[] | undefined,
     sockets: WebSocket[]
@@ -375,16 +342,11 @@ export class WebSocketRoom extends DurableObject<IEnv> {
     if (!messageContextKeys) {
       return;
     }
-    console.log(
-      `Sending event ${event} to ${userId} with message contexts: ${this.formatContextDisplay(messageContextKeys)} (${sockets.length} socket(s))`
-    );
 
     const sendPromises = sockets.map(async (ws) => {
       const metadata = this.getConnectionMetadata(ws);
 
       if (!metadata) {
-        console.warn(`No metadata found for socket, skipping`);
-
         return;
       }
 
@@ -392,8 +354,6 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 
       if (this.shouldDeliverMessage(messageContextKeys, inboxContextKeys)) {
         await this.deliverMessageToSocket(ws, message, userId, inboxContextKeys);
-      } else {
-        this.logContextMismatch(messageContextKeys, inboxContextKeys);
       }
     });
 
@@ -414,24 +374,13 @@ export class WebSocketRoom extends DurableObject<IEnv> {
     ws: WebSocket,
     message: string,
     userId: string,
-    inboxContextKeys?: string[]
+    _inboxContextKeys?: string[]
   ): Promise<void> {
     try {
       ws.send(message);
-      console.log(`Delivered to socket with inbox contexts: ${this.formatContextDisplay(inboxContextKeys)}`);
     } catch (error) {
       console.error(`Failed to send message to user ${userId}:`, error);
       throw error;
     }
-  }
-
-  /**
-   * Log when a socket is skipped due to context mismatch
-   */
-  private logContextMismatch(messageContextKeys: string[], inboxContextKeys?: string[]): void {
-    const messageDisplay = messageContextKeys.length === 0 ? 'none' : messageContextKeys.join(', ');
-    const inboxDisplay = inboxContextKeys?.length === 0 ? 'none' : inboxContextKeys?.join(', ') || 'none';
-
-    console.log(`Skipped socket - contexts mismatch. Message: [${messageDisplay}], Inbox: [${inboxDisplay}]`);
   }
 }

@@ -59,7 +59,9 @@ export async function handleSendMessage(context: Context) {
     // Create room ID based on environment and user
     const roomId = `${environmentId}:${userId}`;
 
-    console.log(`[Internal API] Routing message to room: ${roomId} for user: ${userId}, event: ${event}`);
+    console.log(
+      `[Internal API] Routing message to room: ${roomId} for user: ${userId}, event: ${event}, contextKeys: ${contextKeys}`
+    );
 
     /*
      * Get the Durable Object instance for the appropriate room
