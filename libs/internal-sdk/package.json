@@ -35,6 +35,6 @@
     "typescript-eslint": "^8.26.0"
   },
   "dependencies": {
-    "zod": "^3.20.0"
+    "zod": "3.25.0 || ^4.0.0"
   }
 }
