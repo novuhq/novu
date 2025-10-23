@@ -387,4 +387,12 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
+  workflow: {
+    background: {
+      dots: {
+        value: { base: '{colors.mauve.50.light}', _dark: '{colors.mauve.50.dark}' },
+        type: 'color',
+      },
+    },
+  },
 });
