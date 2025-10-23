@@ -475,11 +475,20 @@ class Mailin extends events.EventEmitter {
     logger.info('Stopping mailin.', LOG_CONTEXT);
 
     /*
-     * FIXME A bug in the RAI module prevents the callback to be called, so
-     * call end and call the callback directly.
+     * Workaround for a bug in the smtp-server module where the callback
+     * may not be called reliably. We ensure the callback is only executed once.
      */
-    this._smtp.close(callback);
-    callback();
+    let callbackCalled = false;
+    const safeCallback = () => {
+      if (!callbackCalled) {
+        callbackCalled = true;
+        callback();
+      }
+    };
+
+    this._smtp.close(safeCallback);
+    // Call immediately in case close() doesn't invoke the callback due to the module bug
+    safeCallback();
   }
 
   public _convertTextToHtml(text) {
