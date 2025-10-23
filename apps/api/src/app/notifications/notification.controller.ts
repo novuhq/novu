@@ -94,7 +94,10 @@ export class NotificationsController {
       environment: { _id: user.environmentId },
     });
 
-    const contextKeysQuery: string[] | undefined = isContextEnabled ? query.contextKeys : undefined;
+    let contextKeysQuery: string[] | undefined;
+    if (isContextEnabled && query.contextKeys !== undefined) {
+      contextKeysQuery = Array.isArray(query.contextKeys) ? query.contextKeys : [query.contextKeys];
+    }
 
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
