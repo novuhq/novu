@@ -9978,7 +9978,6 @@ packages:
   '@opentelemetry/exporter-jaeger@1.19.0':
     resolution: {integrity: sha512-MExQskVNb824wRHGcfxx6eoXpdzIhaduMSm1OUcZpl97BrBMvIa0+KnlbKLvt3Qi7SxTc1/WXoPP01obSCwf+g==}
     engines: {node: '>=14'}
-    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
     peerDependencies:
       '@opentelemetry/api': ^1.0.0
 
@@ -49855,7 +49854,7 @@ snapshots:
 
   '@types/cors@2.8.13':
     dependencies:
-      '@types/node': 22.15.13
+      '@types/node': 20.19.10
 
   '@types/cross-spawn@6.0.0':
     dependencies:
@@ -55624,7 +55623,7 @@ snapshots:
     dependencies:
       '@types/cookie': 0.4.1
       '@types/cors': 2.8.13
-      '@types/node': 22.15.13
+      '@types/node': 20.19.10
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.7.2
@@ -63241,7 +63240,7 @@ snapshots:
     dependencies:
       debug: 3.2.7(supports-color@5.5.0)
       iconv-lite: 0.6.3
-      sax: 1.4.1
+      sax: 1.2.4
     transitivePeerDependencies:
       - supports-color
     optional: true
@@ -68629,7 +68628,7 @@ snapshots:
       accepts: 1.3.8
       base64id: 2.0.0
       cors: 2.8.5
-      debug: 4.3.6
+      debug: 4.3.4(supports-color@8.1.1)
       engine.io: 6.6.2
       socket.io-adapter: 2.5.2
       socket.io-parser: 4.2.4

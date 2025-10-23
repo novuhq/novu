@@ -354,4 +354,146 @@ describe('Session', () => {
     const enterpriseResponse: SubscriberSessionResponseDto = await session.execute(command);
     expect(enterpriseResponse.maxSnoozeDurationHours).to.equal(90 * 24);
   });
+
+  it('should upsert contexts and return contextKeys when context is provided', async () => {
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+        context: { teamId: 'team-123', projectId: 'project-456' },
+      },
+    };
+
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      name: 'env-name',
+      apiKeys: [{ key: 'api-key' }],
+    };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+    const mockContexts = [{ key: 'teamId:team-123' }, { key: 'projectId:project-456' }];
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves(organization as any);
+    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+    getOrganizationSettingsUsecase.execute.resolves({
+      removeNovuBranding: false,
+      defaultLocale: 'en_US',
+    });
+    featureFlagsService.getFlag.resolves(true);
+    contextRepository.upsertContextsFromPayload.resolves(mockContexts as any);
+
+    const response: SubscriberSessionResponseDto = await session.execute(command);
+
+    expect(contextRepository.upsertContextsFromPayload.calledOnce).to.be.true;
+    expect(
+      contextRepository.upsertContextsFromPayload.calledWith(
+        environment._id,
+        environment._organizationId,
+        command.requestData.context
+      )
+    ).to.be.true;
+
+    expect(response.contextKeys).to.deep.equal(['teamId:team-123', 'projectId:project-456']);
+  });
+
+  it('should validate context HMAC when HMAC is enabled and context is provided', async () => {
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+        subscriberHash: 'subscriber-hash',
+        context: { teamId: 'team-123' },
+        contextHash: 'context-hash',
+      },
+    };
+
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      name: 'env-name',
+      apiKeys: [{ key: 'api-key' }],
+    };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+    const mockContexts = [{ key: 'teamId:team-123' }];
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves(organization as any);
+    selectIntegration.execute.resolves(mockIntegration);
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+    getOrganizationSettingsUsecase.execute.resolves({
+      removeNovuBranding: false,
+      defaultLocale: 'en_US',
+    });
+    featureFlagsService.getFlag.resolves(true);
+    contextRepository.upsertContextsFromPayload.resolves(mockContexts as any);
+
+    const validateHmacEncryptionStub = sinon.stub(encryption, 'validateHmacEncryption');
+    const validateContextHmacEncryptionStub = sinon.stub(encryption, 'validateContextHmacEncryption');
+
+    await session.execute(command);
+
+    expect(validateContextHmacEncryptionStub.calledOnce).to.be.true;
+    expect(
+      validateContextHmacEncryptionStub.calledWith(
+        sinon.match({
+          apiKey: environment.apiKeys[0].key,
+          context: command.requestData.context,
+          contextHash: command.requestData.contextHash,
+        })
+      )
+    ).to.be.true;
+
+    validateHmacEncryptionStub.restore();
+    validateContextHmacEncryptionStub.restore();
+  });
+
+  it('should return empty contextKeys array when no context is provided', async () => {
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+      },
+    };
+
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      name: 'env-name',
+      apiKeys: [{ key: 'api-key' }],
+    };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves(organization as any);
+    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+    getOrganizationSettingsUsecase.execute.resolves({
+      removeNovuBranding: false,
+      defaultLocale: 'en_US',
+    });
+    featureFlagsService.getFlag.resolves(true);
+
+    const response: SubscriberSessionResponseDto = await session.execute(command);
+
+    expect(contextRepository.upsertContextsFromPayload.called).to.be.false;
+
+    expect(response.contextKeys).to.deep.equal([]);
+  });
 });
