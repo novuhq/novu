@@ -25,7 +25,6 @@ const contextSchema = new Schema<ContextDBModel>(
     key: {
       type: Schema.Types.String,
       required: true,
-      unique: true,
     },
     data: {
       type: Schema.Types.Mixed,

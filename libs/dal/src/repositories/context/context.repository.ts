@@ -58,7 +58,20 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
       data: data || {},
     };
 
-    return this.create(newContext);
+    try {
+      return await this.create(newContext);
+    } catch (error) {
+      const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+
+      if (isDuplicateKeyError) {
+        const context = await this.findOne(query);
+        if (context) {
+          return context;
+        }
+      }
+
+      throw error;
+    }
   }
 
   async findByKeys(environmentId: string, organizationId: string, contextKeys: string[]): Promise<ContextEntity[]> {

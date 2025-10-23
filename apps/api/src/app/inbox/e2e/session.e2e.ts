@@ -31,8 +31,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);
     subscriberRepository = new SubscriberRepository();
-    // @ts-expect-error
-    process.env.IS_CONTEXT_ENABLED = 'true';
   });
 
   beforeEach(async () => {
@@ -48,16 +46,15 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     );
     // @ts-expect-error
     process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
-  });
-
-  after(() => {
     // @ts-expect-error
-    process.env.IS_CONTEXT_ENABLED = isContextEnabled;
+    process.env.IS_CONTEXT_ENABLED = 'true';
   });
 
   afterEach(() => {
     // @ts-expect-error
     process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
+    // @ts-expect-error
+    process.env.IS_CONTEXT_ENABLED = isContextEnabled;
   });
 
   const initializeSession = async ({
