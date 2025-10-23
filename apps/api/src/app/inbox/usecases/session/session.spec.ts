@@ -387,13 +387,13 @@ describe('Session', () => {
       defaultLocale: 'en_US',
     });
     featureFlagsService.getFlag.resolves(true);
-    contextRepository.upsertContextsFromPayload.resolves(mockContexts as any);
+    contextRepository.findOrCreateContextsFromPayload.resolves(mockContexts as any);
 
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
-    expect(contextRepository.upsertContextsFromPayload.calledOnce).to.be.true;
+    expect(contextRepository.findOrCreateContextsFromPayload.calledOnce).to.be.true;
     expect(
-      contextRepository.upsertContextsFromPayload.calledWith(
+      contextRepository.findOrCreateContextsFromPayload.calledWith(
         environment._id,
         environment._organizationId,
         command.requestData.context
@@ -437,7 +437,7 @@ describe('Session', () => {
       defaultLocale: 'en_US',
     });
     featureFlagsService.getFlag.resolves(true);
-    contextRepository.upsertContextsFromPayload.resolves(mockContexts as any);
+    contextRepository.findOrCreateContextsFromPayload.resolves(mockContexts as any);
 
     const validateHmacEncryptionStub = sinon.stub(encryption, 'validateHmacEncryption');
     const validateContextHmacEncryptionStub = sinon.stub(encryption, 'validateContextHmacEncryption');
@@ -492,7 +492,7 @@ describe('Session', () => {
 
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
-    expect(contextRepository.upsertContextsFromPayload.called).to.be.false;
+    expect(contextRepository.findOrCreateContextsFromPayload.called).to.be.false;
 
     expect(response.contextKeys).to.deep.equal([]);
   });

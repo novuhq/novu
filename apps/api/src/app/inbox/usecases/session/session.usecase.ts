@@ -420,7 +420,11 @@ export class Session {
       return [];
     }
 
-    const contexts = await this.contextRepository.upsertContextsFromPayload(environmentId, organizationId, context);
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      environmentId,
+      organizationId,
+      context
+    );
 
     return contexts.map((context) => context.key);
   }
