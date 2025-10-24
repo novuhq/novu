@@ -20,7 +20,7 @@ import { PushOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
   DeliveryLifecycleDetail,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IChannelSettings,
@@ -303,7 +303,7 @@ export class SendMessagePush extends SendMessageBase {
       return {
         status: SendMessageStatus.SKIPPED,
         deliveryLifecycleState: {
-          status: DeliveryLifecycleStatus.SKIPPED,
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
           detail: DeliveryLifecycleDetail.USER_MISSING_PUSH_TOKEN,
         },
       };

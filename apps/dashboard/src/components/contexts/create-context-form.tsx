@@ -135,7 +135,7 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
                     }}
                   />
                 </FormControl>
-                <FormMessage>Specific instance identifier (e.g., user-123, org-acme)</FormMessage>
+                <FormMessage>Specific instance identifier (e.g., 123, acme)</FormMessage>
               </FormItem>
             )}
           />
@@ -182,7 +182,7 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
             render={({ field, fieldState }) => (
               <FormItem className="w-full">
                 <FormLabel
-                  tooltip={`Store additional context details as key-value pairs in the custom data field.
+                  tooltip={`Store additional context details as key-value pairs. This data can be used as variables in notification content, conditions etc.
                      \nExample: {\n "companyName": "Acme Inc",\n "plan": "enterprise"\n}`}
                 >
                   Custom data (JSON)
@@ -217,10 +217,11 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
         description={
           <>
             <span className="text-xs text-neutral-600">
-              <strong>Tip:</strong> Learn the best instructions on how to load model's or context.{' '}
+              <strong>Tip:</strong> Learn how to effectively use contexts to organize and personalize your
+              notifications.{' '}
             </span>
             <Link
-              to="https://docs.novu.co/platform/concepts/contexts"
+              to="https://docs.novu.co/platform/workflow/contexts"
               className="text-xs font-medium text-neutral-600 underline"
               target="_blank"
             >
