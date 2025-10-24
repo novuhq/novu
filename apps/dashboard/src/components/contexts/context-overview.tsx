@@ -191,7 +191,7 @@ const ContextOverviewForm = ({ context, readOnly }: { context: ContextResponseDt
               render={({ field, fieldState }) => (
                 <FormItem className="w-full">
                   <FormLabel
-                    tooltip={`Store additional context details as key-value pairs in the custom data field.
+                    tooltip={`Store additional context details as key-value pairs. This data can be used as variables in notification content, conditions etc.
                        \nExample: {\n "companyName": "Acme Inc",\n "plan": "enterprise"\n}`}
                   >
                     Custom data (JSON)

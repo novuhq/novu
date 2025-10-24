@@ -54,13 +54,18 @@ export class MessagesController {
       transactionIdQuery = Array.isArray(query.transactionId) ? query.transactionId : [query.transactionId];
     }
 
+    let contextKeysQuery: string[] | undefined;
+    if (query.contextKeys !== undefined) {
+      contextKeysQuery = Array.isArray(query.contextKeys) ? query.contextKeys : [query.contextKeys];
+    }
+
     return await this.getMessagesUsecase.execute(
       GetMessagesCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         channel: query.channel,
         subscriberId: query.subscriberId,
-        contextKeys: query.contextKeys,
+        contextKeys: contextKeysQuery,
         page: query.page ? Number(query.page) : 0,
         limit: query.limit ? Number(query.limit) : 10,
         transactionIds: transactionIdQuery,

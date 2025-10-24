@@ -226,6 +226,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step filter failed';
     case 'step_completed':
       return 'Step completed';
+    case 'step_canceled':
+      return 'Step canceled';
     case 'step_throttled':
       return 'Step throttled';
 
