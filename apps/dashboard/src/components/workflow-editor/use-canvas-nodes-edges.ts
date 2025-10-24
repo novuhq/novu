@@ -55,7 +55,7 @@ export const useCanvasNodesEdges = ({
 }) => {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
-  const { workflow: currentWorkflow, update } = useWorkflow();
+  const { workflow: currentWorkflow, step: currentStep, update } = useWorkflow();
   const { data: layoutsResponse } = useFetchLayouts({
     limit: 100,
     refetchOnWindowFocus: false,
@@ -65,8 +65,8 @@ export const useCanvasNodesEdges = ({
     return generateNodesAndEdges(steps, currentShowStepPreview ?? false, currentWorkflow, currentEnvironment);
   }, [steps, currentShowStepPreview, currentWorkflow, currentEnvironment]);
   // to have a nice animation in the workflow canvas, we need to store the nodes and edges in the state and perform the updates on the state
-  const [currentNodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [currentEdges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [currentNodes, setNodes] = useNodesState(initialNodes);
+  const [currentEdges, setEdges] = useEdgesState(initialEdges);
   const [currentSelectedNodeId, setSelectedNodeId] = useState<string | undefined>();
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [intersectingNodeId, setIntersectingNodeId] = useState<string | null>(null);
@@ -74,6 +74,7 @@ export const useCanvasNodesEdges = ({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dataRef = useDataRef({
+    step: currentStep,
     reactFlowInstance: currentReactFlowInstance,
     selectedNodeId: currentSelectedNodeId,
     environment: currentEnvironment,
@@ -322,12 +323,21 @@ export const useCanvasNodesEdges = ({
       newSteps: WorkflowResponseDto['steps'],
       options?: { onSuccess?: () => void; onError?: () => void }
     ) => {
+      const step = dataRef.current.step;
       const workflow = dataRef.current.workflow;
       const nodes = dataRef.current.nodes;
       if (!workflow) return;
 
       const oldNodes = [...nodes];
 
+      const selectedNode = newNodes.find(
+        (node) =>
+          getIdFromSlug({ slug: step?.slug ?? '', divider: STEP_DIVIDER }) ===
+          getIdFromSlug({ slug: node.data.stepSlug ?? '', divider: STEP_DIVIDER })
+      );
+      if (selectedNode) {
+        setSelectedNodeId(selectedNode.id);
+      }
       setNodes(recalculatePositionAndIndex(newNodes));
       removeEdges();
 
@@ -620,6 +630,7 @@ export const useCanvasNodesEdges = ({
     const timeout = setTimeout(() => {
       if (currentWorkflow) {
         const nodes = dataRef.current.nodes;
+        const step = dataRef.current.step;
         const triggerNode = nodes.find((node) => node.type === 'trigger');
         const addNode = nodes.find((node) => node.type === 'add');
 
@@ -643,7 +654,14 @@ export const useCanvasNodesEdges = ({
           return newNode;
         });
         const finalNodes = [triggerNode, ...newNodes, addNode].filter((node) => node !== undefined);
-
+        const finalSelectedNode = finalNodes.find(
+          (node) =>
+            getIdFromSlug({ slug: step?.slug ?? '', divider: STEP_DIVIDER }) ===
+            getIdFromSlug({ slug: node.data.stepSlug ?? '', divider: STEP_DIVIDER })
+        );
+        if (step && finalSelectedNode) {
+          setSelectedNodeId(finalSelectedNode.id);
+        }
         setNodes(recalculatePositionAndIndex(finalNodes));
         updateEdges();
       }
@@ -663,8 +681,6 @@ export const useCanvasNodesEdges = ({
     draggedNodeId,
     intersectingNodeId,
     intersectingEdgeId,
-    onNodesChange,
-    onEdgesChange,
     removeEdges,
     updateEdges,
     onNodeDragStart: handleNodeDragStart,
