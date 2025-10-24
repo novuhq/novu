@@ -107,7 +107,7 @@ export const SubscribersControllerCreateSubscriberResponse$inboundSchema: z.ZodT
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.SubscriberResponseDto$inboundSchema,
   })
   .transform((v) => {

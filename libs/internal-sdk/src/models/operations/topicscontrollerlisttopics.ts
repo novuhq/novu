@@ -184,7 +184,7 @@ export const TopicsControllerListTopicsResponse$inboundSchema: z.ZodType<
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.ListTopicsResponseDto$inboundSchema,
   })
   .transform((v) => {

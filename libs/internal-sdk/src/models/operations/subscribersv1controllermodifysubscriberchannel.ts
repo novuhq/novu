@@ -106,7 +106,7 @@ export const SubscribersV1ControllerModifySubscriberChannelResponse$inboundSchem
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.SubscriberResponseDto$inboundSchema,
   })
   .transform((v) => {

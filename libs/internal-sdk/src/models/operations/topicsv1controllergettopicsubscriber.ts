@@ -108,7 +108,7 @@ export const TopicsV1ControllerGetTopicSubscriberResponse$inboundSchema: z.ZodTy
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.TopicSubscriberDto$inboundSchema,
   })
   .transform((v) => {

@@ -98,7 +98,7 @@ export const EventsControllerTriggerResponse$inboundSchema: z.ZodType<
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.TriggerEventResponseDto$inboundSchema,
   })
   .transform((v) => {

@@ -109,7 +109,7 @@ export const TopicsControllerCreateTopicSubscriptionsResponse$inboundSchema: z.Z
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.CreateTopicSubscriptionsResponseDto$inboundSchema,
   })
   .transform((v) => {

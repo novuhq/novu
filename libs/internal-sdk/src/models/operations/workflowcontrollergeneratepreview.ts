@@ -111,7 +111,7 @@ export const WorkflowControllerGeneratePreviewResponse$inboundSchema: z.ZodType<
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.GeneratePreviewResponseDto$inboundSchema,
   })
   .transform((v) => {

@@ -99,7 +99,7 @@ export const TopicsControllerGetTopicResponse$inboundSchema: z.ZodType<
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.TopicResponseDto$inboundSchema,
   })
   .transform((v) => {

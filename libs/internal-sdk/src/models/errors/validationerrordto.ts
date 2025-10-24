@@ -125,7 +125,7 @@ export type Message5$Outbound =
     };
 
 /** @internal */
-export const Message5$outboundSchema: z.ZodType<Message5$Outbound, z.ZodTypeDef, Message5> = z.union([
+export const Message5$outboundSchema: z.ZodType<Message5$Outbound, z.ZodTypeDef, unknown> = z.union([
   z.string(),
   z.number(),
   z.boolean(),
@@ -213,7 +213,7 @@ export type ValidationErrorDtoMessage$Outbound =
 export const ValidationErrorDtoMessage$outboundSchema: z.ZodType<
   ValidationErrorDtoMessage$Outbound,
   z.ZodTypeDef,
-  ValidationErrorDtoMessage
+  unknown
 > = z.union([
   z.string(),
   z.number(),

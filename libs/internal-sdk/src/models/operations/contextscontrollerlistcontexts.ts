@@ -187,7 +187,7 @@ export const ContextsControllerListContextsResponse$inboundSchema: z.ZodType<
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.ListContextsResponseDto$inboundSchema,
   })
   .transform((v) => {
