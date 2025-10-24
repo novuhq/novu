@@ -33,7 +33,7 @@ import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/intern
 import {
   castUnitToDigestUnitEnum,
   DelayTypeEnum,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   DigestCreationResultEnum,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -68,7 +68,7 @@ export enum BackoffStrategiesEnum {
  */
 type AddJobResult = {
   workflowStatus: WorkflowRunStatusEnum | null;
-  deliveryLifecycleStatus: DeliveryLifecycleStatus | null;
+  deliveryLifecycleStatus: DeliveryLifecycleStatusEnum | null;
   stepStatus?: StepRunStatus;
 };
 
@@ -205,14 +205,14 @@ export class AddJob {
         if (digestResult.digestCreationResult === DigestCreationResultEnum.MERGED) {
           return {
             workflowStatus: WorkflowRunStatusEnum.COMPLETED,
-            deliveryLifecycleStatus: DeliveryLifecycleStatus.MERGED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.MERGED,
           };
         }
 
         if (digestResult.digestCreationResult === DigestCreationResultEnum.SKIPPED) {
           return {
             workflowStatus: WorkflowRunStatusEnum.COMPLETED,
-            deliveryLifecycleStatus: DeliveryLifecycleStatus.SKIPPED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SKIPPED,
           };
         }
       }
@@ -233,7 +233,7 @@ export class AddJob {
 
           return {
             workflowStatus: WorkflowRunStatusEnum.COMPLETED,
-            deliveryLifecycleStatus: DeliveryLifecycleStatus.SKIPPED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SKIPPED,
           };
         }
       } catch (error) {
@@ -509,7 +509,7 @@ export class AddJob {
 
     return {
       workflowStatus: WorkflowRunStatusEnum.ERROR,
-      deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
+      deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
     };
   }
 
@@ -645,7 +645,7 @@ export class AddJob {
     if (isDynamicOutput(outputs)) {
       metadata = {
         type: DelayTypeEnum.DYNAMIC,
-        dynamicKey: (outputs as { dynamicKey: string }).dynamicKey,
+        dynamicKey: (outputs as unknown as { dynamicKey: string }).dynamicKey,
       } as IDelayDynamicMetadata;
 
       await this.jobRepository.updateOne(
