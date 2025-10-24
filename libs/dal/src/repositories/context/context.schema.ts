@@ -58,6 +58,12 @@ contextSchema.index(
   }
 );
 
+contextSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  createdAt: -1,
+});
+
 export const Context =
   (mongoose.models.Context as mongoose.Model<ContextDBModel>) ||
   mongoose.model<ContextDBModel>('Context', contextSchema);
