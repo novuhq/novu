@@ -67,8 +67,9 @@ export const CreateContextDrawer = forwardRef<HTMLDivElement, CreateContextDrawe
           <SheetHeader className="px-5 py-5">
             <SheetTitle>Create context</SheetTitle>
             <SheetDescription>
-              Contexts scope inbox feeds, organize credentials, and drive conditional content.{' '}
-              <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
+              Contexts are flexible, user-defined data objects that help you organize and personalize your
+              notifications.{' '}
+              <ExternalLink href="https://docs.novu.co/platform/workflow/contexts">Learn more</ExternalLink>
             </SheetDescription>
           </SheetHeader>
           <Separator />
