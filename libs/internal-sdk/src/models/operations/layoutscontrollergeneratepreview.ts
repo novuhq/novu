@@ -107,7 +107,7 @@ export const LayoutsControllerGeneratePreviewResponse$inboundSchema: z.ZodType<
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.GenerateLayoutPreviewResponseDto$inboundSchema,
   })
   .transform((v) => {

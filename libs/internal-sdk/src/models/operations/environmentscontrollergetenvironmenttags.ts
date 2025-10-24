@@ -103,7 +103,7 @@ export const EnvironmentsControllerGetEnvironmentTagsResponse$inboundSchema: z.Z
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: z.array(components.GetEnvironmentTagsDto$inboundSchema),
   })
   .transform((v) => {

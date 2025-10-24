@@ -196,7 +196,7 @@ export const SubscribersControllerSearchSubscribersResponse$inboundSchema: z.Zod
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.ListSubscribersResponseDto$inboundSchema,
   })
   .transform((v) => {

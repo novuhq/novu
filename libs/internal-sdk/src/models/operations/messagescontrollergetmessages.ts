@@ -124,7 +124,7 @@ export const MessagesControllerGetMessagesResponse$inboundSchema: z.ZodType<
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.MessagesResponseDto$inboundSchema,
   })
   .transform((v) => {

@@ -112,7 +112,7 @@ export const SubscribersV1ControllerGetUnseenCountResponse$inboundSchema: z.ZodT
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.UnseenCountResponse$inboundSchema,
   })
   .transform((v) => {

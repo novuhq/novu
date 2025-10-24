@@ -102,7 +102,7 @@ export const SubscribersV1ControllerDeleteSubscriberCredentialsResponse$inboundS
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
   })
   .transform((v) => {
     return remap$(v, {

@@ -106,7 +106,7 @@ export const SubscribersV1ControllerUpdateSubscriberOnlineFlagResponse$inboundSc
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.SubscriberResponseDto$inboundSchema,
   })
   .transform((v) => {

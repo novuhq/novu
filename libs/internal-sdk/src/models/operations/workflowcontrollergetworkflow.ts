@@ -102,7 +102,7 @@ export const WorkflowControllerGetWorkflowResponse$inboundSchema: z.ZodType<
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
     Result: components.WorkflowResponseDto$inboundSchema,
   })
   .transform((v) => {

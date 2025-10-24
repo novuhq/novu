@@ -106,7 +106,7 @@ export const ContextsControllerDeleteContextResponse$inboundSchema: z.ZodType<
   unknown
 > = z
   .object({
-    Headers: z.record(z.array(z.string())),
+    Headers: z.record(z.array(z.string())).default({}),
   })
   .transform((v) => {
     return remap$(v, {
