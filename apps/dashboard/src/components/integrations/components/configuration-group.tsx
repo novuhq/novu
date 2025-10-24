@@ -1,5 +1,6 @@
-import { ConfigConfigurationGroup, IIntegration, IProviderConfig } from '@novu/shared';
+import { ConfigConfigurationGroup, FeatureFlagsKeysEnum, IIntegration, IProviderConfig } from '@novu/shared';
 import { Control } from 'react-hook-form';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { IntegrationFormData } from '../types';
 import { CrossChannelConfigsGroup } from './cross-channel-configs-group';
 import { InboundWebhookGroup } from './inbound-webhook-group';
@@ -22,6 +23,7 @@ export function ConfigurationGroup({
   onAutoConfigureSuccess?: (integration: IIntegration) => void;
 }) {
   const { groupType } = group;
+  const isPushUnreadCountEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PUSH_UNREAD_COUNT_ENABLED, false);
 
   if (groupType === 'inboundWebhook') {
     return (
@@ -37,7 +39,7 @@ export function ConfigurationGroup({
     );
   }
 
-  if (groupType === 'crossChannelConfigs') {
+  if (groupType === 'pushResources' && isPushUnreadCountEnabled) {
     return (
       <CrossChannelConfigsGroup integrationId={integrationId} control={control} isReadOnly={isReadOnly} group={group} />
     );
