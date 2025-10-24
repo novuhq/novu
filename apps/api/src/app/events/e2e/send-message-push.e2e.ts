@@ -1,3 +1,4 @@
+/** cspell:disable */
 import { Novu } from '@novu/api';
 import { WorkflowCreationSourceEnum } from '@novu/api/models/components';
 import { DetailEnum } from '@novu/application-generic';
