@@ -18,7 +18,7 @@ export function useFetchRequestLogs(
   // Convert status array to statusCode parameter for API
   const apiParams = {
     ...queryParams,
-    ...(status && status.length > 0 && { statusCode: status.join(',') }),
+    ...(status && status.length > 0 && { statusCodes: status.join(',') }),
   };
 
   return useQuery<GetRequestLogsResponse>({

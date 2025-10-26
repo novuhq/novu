@@ -226,6 +226,10 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step filter failed';
     case 'step_completed':
       return 'Step completed';
+    case 'step_canceled':
+      return 'Step canceled';
+    case 'step_throttled':
+      return 'Step throttled';
 
     // Message events
     case 'message_created':
@@ -270,6 +274,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Message unsubscribed';
     case 'message_delayed':
       return 'Message delayed';
+    case 'message_deleted':
+      return 'Message deleted';
     case 'message_complaint':
       return 'Message complaint';
     case 'message_delivered':
@@ -290,6 +296,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Subscriber missing email address';
     case 'subscriber_missing_phone_number':
       return 'Subscriber missing phone number';
+
+    // Throttle events
+    case 'throttle_limit_exceeded':
+      return 'Throttle limit exceeded';
+    case 'throttle_window_in_past':
+      return 'Throttle window in past';
 
     // Provider events
     case 'provider_error':
@@ -424,6 +436,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Workflow execution failed';
     case 'workflow_actor_processing_failed':
       return 'Workflow actor processing failed';
+    case 'workflow_context_resolution_completed':
+      return 'Workflow context resolution completed';
+    case 'workflow_context_resolution_failed':
+      return 'Workflow context resolution failed';
+    case 'workflow_context_not_found':
+      return 'Workflow context not found';
 
     // Request fan-out events
     case 'request_subscriber_processing_completed':
@@ -436,6 +454,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     // Step skipped events
     case 'step_skipped':
       return 'Step skipped';
+    case 'step_skipped_outside_of_the_schedule':
+      return "The step was skipped as it fell outside the subscriber's schedule";
+    case 'step_extended_to_schedule':
+      return 'Step was extended to the next available time in the subscriber schedule';
+    case 'step_skipped_max_extensions_reached':
+      return 'Step was executed due to maximum number of subscriber schedule extensions reached';
 
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases

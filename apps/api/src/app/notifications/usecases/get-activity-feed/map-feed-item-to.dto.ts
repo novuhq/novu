@@ -77,13 +77,14 @@ export function mapFeedItemToDto(entity: NotificationFeedItemEntity): ActivityNo
     tags: entity.tags,
     transactionId: entity.transactionId,
     updatedAt: entity.updatedAt,
-    controls: entity.controls,
-    payload: entity.payload,
-    to: entity.to,
+    controls: entity.controls as Record<string, unknown>,
+    payload: entity.payload as Record<string, unknown>,
+    to: entity.to as Record<string, unknown>,
     subscriber: entity.subscriber ? buildSubscriberDto(entity.subscriber) : undefined,
     template: entity.template ? buildTemplate(entity.template) : undefined,
     severity: entity.severity ?? SeverityLevelEnum.NONE,
     critical: entity.critical,
+    contextKeys: entity.contextKeys,
   };
 }
 
@@ -185,11 +186,11 @@ function convertStepToResponse(step: NotificationStepEntity): ActivityNotificati
 }
 
 function isDigestRegularMetadata(item: IWorkflowStepMetadata): item is IDigestRegularMetadata {
-  return item.type === DigestTypeEnum.REGULAR || item.type === DigestTypeEnum.BACKOFF;
+  return 'type' in item && (item.type === DigestTypeEnum.REGULAR || item.type === DigestTypeEnum.BACKOFF);
 }
 
 function isDigestTimedMetadata(item: IWorkflowStepMetadata): item is IDigestTimedMetadata {
-  return item.type === DigestTypeEnum.TIMED;
+  return 'type' in item && item.type === DigestTypeEnum.TIMED;
 }
 
 export function mapDigest(
@@ -247,6 +248,7 @@ export function mapDigest(
         ordinalValue: digestItem.timed?.ordinalValue,
         monthlyType: digestItem.timed?.monthlyType,
         cronExpression: digestItem.timed?.cronExpression,
+        untilDate: digestItem.timed?.untilDate,
       },
     };
   }
@@ -266,6 +268,7 @@ function mapJobToDto(item: JobFeedItem): ActivityNotificationJobResponseDto {
     providerId: item.providerId as ProvidersIdEnum,
     status: item.status,
     updatedAt: item.updatedAt,
+    scheduleExtensionsCount: item.scheduleExtensionsCount,
   };
 }
 

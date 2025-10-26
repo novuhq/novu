@@ -1,4 +1,5 @@
 import { MessageEntity } from '@novu/dal';
+import { ChannelData } from '@novu/stateless';
 
 export type MessageWebhookResponseDto = Pick<
   MessageEntity,
@@ -26,9 +27,11 @@ export type MessageWebhookResponseDto = Pick<
   | 'status'
   | 'errorId'
   | 'errorText'
+  | 'contextKeys'
 > & {
   providerResponseId?: string;
   deviceToken?: string;
   webhookUrl?: string;
+  channelData?: ChannelData;
   subscriberId?: string;
 };

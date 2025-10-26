@@ -83,6 +83,7 @@ export interface IChannelCredentials {
 export interface ITopic {
   type: 'Topic';
   topicKey: string;
+  exclude?: string[];
 }
 
 export type TriggerRecipientsPayload = string | ISubscriberPayload | ITopic | ISubscriberPayload[] | ITopic[];
@@ -158,6 +159,7 @@ export enum SmsProviderIdEnum {
   Unifonic = 'unifonic',
   Smsmode = 'smsmode',
   IMedia = 'imedia',
+  Sinch = 'sinch',
 }
 
 export enum ChatProviderIdEnum {

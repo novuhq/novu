@@ -1,5 +1,6 @@
-import { DeliveryLifecycleStatus, SeverityLevelEnum } from '@novu/shared';
+import { DeliveryLifecycleStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import {
+  CHArray,
   CHBoolean,
   CHDateTime64,
   CHLowCardinality,
@@ -30,6 +31,7 @@ const schemaDefinition = {
   user_id: { type: CHNullable(CHString()) },
   subscriber_id: { type: CHString() },
   external_subscriber_id: { type: CHNullable(CHString()) },
+  context_keys: { type: CHArray(CHString(), []) }, // Array of context keys (type:identifier)
 
   // Execution metadata
   status: { type: CHLowCardinality(CHString()) }, // processing, error, completed
@@ -92,7 +94,7 @@ type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;
 export type WorkflowRun = Prettify<
   Omit<NativeWorkflowRun, 'status' | 'delivery_lifecycle_status' | 'severity'> & {
     status: WorkflowRunStatusEnum;
-    delivery_lifecycle_status: DeliveryLifecycleStatus;
+    delivery_lifecycle_status: DeliveryLifecycleStatusEnum;
     severity: SeverityLevelEnum;
   }
 >;

@@ -11,7 +11,7 @@ import {
 import { NotificationFilter, Redirect } from '../../types';
 import { DEFAULT_REFERRER, DEFAULT_TARGET, getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
-import { NotificationStatus, PreferenceGroups, PreferencesFilter, RouterPush, Tab } from '../types';
+import { NotificationStatus, PreferenceGroups, PreferencesFilter, PreferencesSort, RouterPush, Tab } from '../types';
 
 type InboxContextType = {
   setStatus: (status: NotificationStatus) => void;
@@ -22,6 +22,7 @@ type InboxContextType = {
   tabs: Accessor<Array<Tab>>;
   preferencesFilter: Accessor<PreferencesFilter | undefined>;
   preferenceGroups: Accessor<PreferenceGroups | undefined>;
+  preferencesSort: Accessor<PreferencesSort | undefined>;
   activeTab: Accessor<string>;
   setActiveTab: (tab: string) => void;
   isOpened: Accessor<boolean>;
@@ -33,6 +34,7 @@ type InboxContextType = {
   isSnoozeEnabled: Accessor<boolean>;
   isKeyless: Accessor<boolean>;
   applicationIdentifier: Accessor<string | null>;
+  contextKeys: Accessor<string[] | undefined>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -50,6 +52,7 @@ type InboxProviderProps = ParentProps<{
   tabs: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
+  preferencesSort?: PreferencesSort;
   routerPush?: RouterPush;
   applicationIdentifier?: string;
 }>;
@@ -57,7 +60,7 @@ type InboxProviderProps = ParentProps<{
 export const InboxProvider = (props: InboxProviderProps) => {
   const [isOpened, setIsOpened] = createSignal<boolean>(false);
   const [tabs, setTabs] = createSignal<Array<Tab>>(props.tabs);
-  const [activeTab, setActiveTab] = createSignal<string>((props.tabs[0] && props.tabs[0].label) ?? '');
+  const [activeTab, setActiveTab] = createSignal<string>(props.tabs[0]?.label ?? '');
   const [status, setStatus] = createSignal<NotificationStatus>(NotificationStatus.UNREAD_READ);
   const [limit, setLimit] = createSignal<number>(DEFAULT_LIMIT);
   const [filter, setFilter] = createSignal<NotificationFilter>({
@@ -75,7 +78,9 @@ export const InboxProvider = (props: InboxProviderProps) => {
   );
   const [isKeyless, setIsKeyless] = createSignal(false);
   const [applicationIdentifier, setApplicationIdentifier] = createSignal<string | null>(null);
+  const [contextKeys, setContextKeys] = createSignal<string[] | undefined>(undefined);
   const [preferenceGroups, setPreferenceGroups] = createSignal<PreferenceGroups | undefined>(props.preferenceGroups);
+  const [preferencesSort, setPreferencesSort] = createSignal<PreferencesSort | undefined>(props.preferencesSort);
 
   const setNewStatus = (newStatus: NotificationStatus) => {
     setStatus(newStatus);
@@ -138,6 +143,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
       setHideBranding(data.removeNovuBranding);
       setIsDevelopmentMode(data.isDevelopmentMode);
       setMaxSnoozeDurationHours(data.maxSnoozeDurationHours);
+      setContextKeys(data.contextKeys);
 
       if (data.isDevelopmentMode && !props.applicationIdentifier) {
         setIsKeyless(!data.applicationIdentifier || !!identifier?.startsWith('pk_keyless_'));
@@ -165,11 +171,13 @@ export const InboxProvider = (props: InboxProviderProps) => {
         hideBranding,
         preferencesFilter,
         preferenceGroups,
+        preferencesSort,
         isDevelopmentMode,
         maxSnoozeDurationHours,
         isSnoozeEnabled,
         isKeyless,
         applicationIdentifier,
+        contextKeys,
       }}
     >
       {props.children}

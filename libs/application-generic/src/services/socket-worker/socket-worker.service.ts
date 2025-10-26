@@ -7,15 +7,20 @@ import { FeatureFlagsService } from '../feature-flags';
 
 const LOG_CONTEXT = 'SocketWorkerService';
 
-type UnseenCountPaginationIndication = {
-  unseenCount: number;
-  hasMore: boolean;
-};
-
 type UnreadCountPaginationIndication = {
   unreadCount: number;
   hasMore: boolean;
 };
+
+export interface SendMessageParams {
+  userId: string;
+  event: string;
+  data: any;
+  organizationId?: string;
+  environmentId?: string;
+  subscriberId?: string;
+  contextKeys?: string[];
+}
 
 @Injectable()
 export class SocketWorkerService {
@@ -30,14 +35,15 @@ export class SocketWorkerService {
     this.socketWorkerApiKey = process.env.INTERNAL_SERVICES_API_KEY;
   }
 
-  async sendMessage(
-    userId: string,
-    event: string,
-    data: any,
-    organizationId?: string,
-    environmentId?: string,
-    subscriberId?: string
-  ): Promise<void> {
+  async sendMessage({
+    userId,
+    event,
+    data,
+    organizationId,
+    environmentId,
+    subscriberId,
+    contextKeys,
+  }: SendMessageParams): Promise<void> {
     if (event === WebSocketEventEnum.RECEIVED) {
       const { messageId } = data || {};
       const storedMessage = await this.messageRepository.findOne({
@@ -51,39 +57,49 @@ export class SocketWorkerService {
         return;
       }
 
-      await this.sendMessageInternal(
+      await this.sendMessageInternal({
         userId,
         event,
-        { message: storedMessage },
+        data: { message: storedMessage },
         organizationId,
         environmentId,
-        subscriberId
-      );
+        subscriberId,
+        contextKeys,
+      });
 
       // Only recalculate the counts if we send a messageId/message.
       if (messageId) {
         await Promise.all([
-          this.sendUnseenCount(userId, environmentId, organizationId),
-          this.sendUnreadCount(userId, environmentId, organizationId),
+          this.sendUnseenCount(userId, environmentId, organizationId, contextKeys),
+          this.sendUnreadCount(userId, environmentId, organizationId, contextKeys),
         ]);
       }
     } else if (event === WebSocketEventEnum.UNREAD) {
-      await this.sendUnreadCount(userId, environmentId, organizationId);
+      await this.sendUnreadCount(userId, environmentId, organizationId, contextKeys);
     } else if (event === WebSocketEventEnum.UNSEEN) {
-      await this.sendUnseenCount(userId, environmentId, organizationId);
+      await this.sendUnseenCount(userId, environmentId, organizationId, contextKeys);
     } else {
-      await this.sendMessageInternal(userId, event, data, organizationId, environmentId, subscriberId);
+      await this.sendMessageInternal({
+        userId,
+        event,
+        data,
+        organizationId,
+        environmentId,
+        subscriberId,
+        contextKeys,
+      });
     }
   }
 
-  private async sendMessageInternal(
-    userId: string,
-    event: string,
-    data: any,
-    organizationId?: string,
-    environmentId?: string,
-    subscriberId?: string
-  ): Promise<void> {
+  private async sendMessageInternal({
+    userId,
+    event,
+    data,
+    organizationId,
+    environmentId,
+    subscriberId,
+    contextKeys,
+  }: SendMessageParams): Promise<void> {
     if (!this.socketWorkerUrl) {
       Logger.debug('Socket worker URL not configured, skipping dispatch', LOG_CONTEXT);
 
@@ -104,6 +120,7 @@ export class SocketWorkerService {
         organizationId,
         environmentId,
         subscriberId,
+        contextKeys,
       };
 
       Logger.log(`Dispatching event ${event} to socket worker for user ${userId}`, LOG_CONTEXT);
@@ -147,14 +164,13 @@ export class SocketWorkerService {
     }
   }
 
-  private async sendUnreadCountChange(userId: string, environmentId: string, organizationId?: string): Promise<void> {
+  private async sendUnreadCountChange(
+    userId: string,
+    environmentId: string,
+    organizationId?: string,
+    contextKeys?: string[]
+  ): Promise<void> {
     try {
-      const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-        defaultValue: false,
-        organization: { _id: organizationId },
-      });
-
       const [unreadCount, severityCounts] = await Promise.all([
         this.messageRepository.getCount(
           environmentId,
@@ -162,18 +178,18 @@ export class SocketWorkerService {
           ChannelTypeEnum.IN_APP,
           { read: false },
           { limit: 101 },
+          contextKeys,
           undefined,
           'primary'
         ),
-        isNotificationSeverityEnabled
-          ? await this.messageRepository.getCountBySeverity(
-              environmentId,
-              userId,
-              ChannelTypeEnum.IN_APP,
-              { read: false, snoozed: false },
-              { limit: 99 }
-            )
-          : [],
+        this.messageRepository.getCountBySeverity(
+          environmentId,
+          userId,
+          ChannelTypeEnum.IN_APP,
+          { read: false, snoozed: false },
+          { limit: 99 },
+          contextKeys
+        ),
       ]);
 
       const counts = {
@@ -195,17 +211,18 @@ export class SocketWorkerService {
       const paginationIndication: UnreadCountPaginationIndication =
         unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
 
-      await this.sendMessageInternal(
+      await this.sendMessageInternal({
         userId,
-        WebSocketEventEnum.UNREAD,
-        {
+        event: WebSocketEventEnum.UNREAD,
+        data: {
           unreadCount: paginationIndication.unreadCount,
           counts,
           hasMore: paginationIndication.hasMore,
         },
         organizationId,
-        environmentId
-      );
+        environmentId,
+        contextKeys,
+      });
     } catch (error) {
       Logger.error(
         `Error sending unread count change: ${error instanceof Error ? error.message : String(error)}`,
@@ -214,9 +231,21 @@ export class SocketWorkerService {
     }
   }
 
-  private async sendUnseenCountChange(userId: string, environmentId: string, organizationId?: string): Promise<void> {
+  private async sendUnseenCountChange(
+    userId: string,
+    environmentId: string,
+    organizationId?: string,
+    contextKeys?: string[]
+  ): Promise<void> {
     try {
-      await this.sendMessageInternal(userId, WebSocketEventEnum.UNSEEN, {}, organizationId, environmentId);
+      await this.sendMessageInternal({
+        userId,
+        event: WebSocketEventEnum.UNSEEN,
+        data: {},
+        organizationId,
+        environmentId,
+        contextKeys,
+      });
     } catch (error) {
       Logger.error(
         `Error sending unseen count change: ${error instanceof Error ? error.message : String(error)}`,
@@ -225,12 +254,22 @@ export class SocketWorkerService {
     }
   }
 
-  async sendUnseenCount(userId: string, environmentId: string, organizationId?: string): Promise<void> {
-    return this.sendUnseenCountChange(userId, environmentId, organizationId);
+  async sendUnseenCount(
+    userId: string,
+    environmentId: string,
+    organizationId?: string,
+    contextKeys?: string[]
+  ): Promise<void> {
+    return this.sendUnseenCountChange(userId, environmentId, organizationId, contextKeys);
   }
 
-  async sendUnreadCount(userId: string, environmentId: string, organizationId?: string): Promise<void> {
-    return this.sendUnreadCountChange(userId, environmentId, organizationId);
+  async sendUnreadCount(
+    userId: string,
+    environmentId: string,
+    organizationId?: string,
+    contextKeys?: string[]
+  ): Promise<void> {
+    return this.sendUnreadCountChange(userId, environmentId, organizationId, contextKeys);
   }
 
   async isEnabled(environmentId?: string): Promise<boolean> {

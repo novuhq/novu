@@ -4,7 +4,7 @@ ENV NX_DAEMON=false
 
 
 RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@10.11.0
+RUN npm --no-update-notifier --no-fund --global install pnpm@10.16.1
 RUN pnpm --version
 
 
@@ -72,4 +72,4 @@ RUN --mount=type=cache,id=pnpm-store-worker,target=/root/.pnpm-store\
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
 WORKDIR /usr/src/app/apps/worker
-ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/worker -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV -h=$IS_SELF_HOSTED && pm2-runtime start dist/main.js -i max" ]
+ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV -h=$IS_SELF_HOSTED && pm2-runtime start dist/main.js -i max" ]

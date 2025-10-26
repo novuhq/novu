@@ -1,7 +1,13 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '@novu/application-generic';
-import { ChannelTypeEnum, PermissionsEnum, SeverityLevelEnum, UserSessionData } from '@novu/shared';
+import { FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
+import {
+  ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  SeverityLevelEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
@@ -28,7 +34,8 @@ export class NotificationsController {
     private getActivityFeedUsecase: GetActivityFeed,
     private getActivityStatsUsecase: GetActivityStats,
     private getActivityGraphStatsUsecase: GetActivityGraphStats,
-    private getActivityUsecase: GetActivity
+    private getActivityUsecase: GetActivity,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @Get('')
@@ -38,13 +45,13 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'List all events',
     description: `List all notification events (triggered events) for the current environment. 
-    This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**. 
+    This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**, **severity**, **contextKeys**. 
     Checkout all available filters in the query section.
     This API returns event triggers, to list each channel notifications, check messages APIs.`,
   })
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
-  listNotifications(
+  async listNotifications(
     @UserSession() user: UserSessionData,
     @Query() query: ActivitiesRequestDto
   ): Promise<ActivitiesResponseDto> {
@@ -78,6 +85,20 @@ export class NotificationsController {
       severityQuery = Array.isArray(query.severity) ? query.severity : [query.severity];
     }
 
+    // Check if context search is enabled via feature flag
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
+      defaultValue: false,
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      environment: { _id: user.environmentId },
+    });
+
+    let contextKeysQuery: string[] | undefined;
+    if (isContextEnabled && query.contextKeys !== undefined) {
+      contextKeysQuery = Array.isArray(query.contextKeys) ? query.contextKeys : [query.contextKeys];
+    }
+
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
         page: query.page,
@@ -95,6 +116,7 @@ export class NotificationsController {
         severity: severityQuery,
         after: query.after,
         before: query.before,
+        contextKeys: contextKeysQuery,
       })
     );
   }

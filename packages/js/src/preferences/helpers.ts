@@ -1,16 +1,19 @@
 import { InboxService } from '../api';
 import { PreferencesCache } from '../cache/preferences-cache';
+import { ScheduleCache } from '../cache/schedule-cache';
 import type { NovuEventEmitter } from '../event-emitter';
 import type { ChannelPreference, Result } from '../types';
 import { ChannelType, PreferenceLevel } from '../types';
 import { NovuError } from '../utils/errors';
 import { Preference } from './preference';
-import type { UpdatePreferenceArgs } from './types';
+import { Schedule } from './schedule';
+import type { UpdatePreferenceArgs, UpdateScheduleArgs } from './types';
 
 type UpdatePreferenceParams = {
   emitter: NovuEventEmitter;
   apiService: InboxService;
   cache: PreferencesCache;
+  scheduleCache: ScheduleCache;
   useCache: boolean;
   args: UpdatePreferenceArgs;
 };
@@ -19,14 +22,24 @@ type BulkUpdatePreferenceParams = {
   emitter: NovuEventEmitter;
   apiService: InboxService;
   cache: PreferencesCache;
+  scheduleCache: ScheduleCache;
   useCache: boolean;
   args: Array<UpdatePreferenceArgs>;
+};
+
+type UpdateScheduleParams = {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  cache: ScheduleCache;
+  useCache: boolean;
+  args: UpdateScheduleArgs;
 };
 
 export const updatePreference = async ({
   emitter,
   apiService,
   cache,
+  scheduleCache,
   useCache,
   args,
 }: UpdatePreferenceParams): Result<Preference> => {
@@ -50,6 +63,7 @@ export const updatePreference = async ({
                 emitterInstance: emitter,
                 inboxServiceInstance: apiService,
                 cache,
+                scheduleCache,
                 useCache,
               }
             )
@@ -60,7 +74,7 @@ export const updatePreference = async ({
     if (workflowId) {
       response = await apiService.updateWorkflowPreferences({ workflowId, channels });
     } else {
-      optimisticUpdateWorkflowPreferences({ emitter, apiService, cache, useCache, args });
+      optimisticUpdateWorkflowPreferences({ emitter, apiService, cache, scheduleCache, useCache, args });
       response = await apiService.updateGlobalPreferences(channels);
     }
 
@@ -68,6 +82,7 @@ export const updatePreference = async ({
       emitterInstance: emitter,
       inboxServiceInstance: apiService,
       cache,
+      scheduleCache,
       useCache,
     });
     emitter.emit('preference.update.resolved', { args, data: preference });
@@ -84,6 +99,7 @@ export const bulkUpdatePreference = async ({
   emitter,
   apiService,
   cache,
+  scheduleCache,
   useCache,
   args,
 }: BulkUpdatePreferenceParams): Result<Preference[]> => {
@@ -108,6 +124,7 @@ export const bulkUpdatePreference = async ({
                 emitterInstance: emitter,
                 inboxServiceInstance: apiService,
                 cache,
+                scheduleCache,
                 useCache,
               }
             )
@@ -135,6 +152,7 @@ export const bulkUpdatePreference = async ({
           emitterInstance: emitter,
           inboxServiceInstance: apiService,
           cache,
+          scheduleCache,
           useCache,
         })
     );
@@ -152,6 +170,7 @@ const optimisticUpdateWorkflowPreferences = ({
   emitter,
   apiService,
   cache,
+  scheduleCache,
   useCache,
   args,
 }: UpdatePreferenceParams): void => {
@@ -174,6 +193,7 @@ const optimisticUpdateWorkflowPreferences = ({
               emitterInstance: emitter,
               inboxServiceInstance: apiService,
               cache,
+              scheduleCache,
               useCache,
             })
           : undefined;
@@ -189,4 +209,61 @@ const optimisticUpdateWorkflowPreferences = ({
       }
     }
   });
+};
+
+export const updateSchedule = async ({
+  emitter,
+  apiService,
+  cache,
+  useCache,
+  args,
+}: UpdateScheduleParams): Result<Schedule> => {
+  try {
+    const { isEnabled, weeklySchedule } = args;
+    const optimisticallyUpdatedSchedule = new Schedule(
+      {
+        isEnabled,
+        weeklySchedule,
+      },
+      {
+        emitterInstance: emitter,
+        inboxServiceInstance: apiService,
+        cache,
+        useCache,
+      }
+    );
+    emitter.emit('preference.schedule.update.pending', { args, data: optimisticallyUpdatedSchedule });
+
+    // Call the API to update global preferences
+    const response = await apiService.updateGlobalPreferences({
+      schedule: {
+        isEnabled,
+        weeklySchedule,
+      },
+    });
+
+    // Create new Schedule instance with updated data
+    const updatedSchedule = new Schedule(
+      {
+        isEnabled: response.schedule?.isEnabled,
+        weeklySchedule: response.schedule?.weeklySchedule,
+      },
+      {
+        emitterInstance: emitter,
+        inboxServiceInstance: apiService,
+        cache,
+        useCache,
+      }
+    );
+
+    emitter.emit('preference.schedule.update.resolved', {
+      args,
+      data: updatedSchedule,
+    });
+
+    return { data: updatedSchedule };
+  } catch (error) {
+    emitter.emit('preference.schedule.update.resolved', { args, error });
+    return { error: new NovuError('Failed to update preference', error) };
+  }
 };

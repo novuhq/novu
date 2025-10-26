@@ -13,7 +13,7 @@ export class UpdateSubscriberOnlineState {
   }
 
   async execute(command: UpdateSubscriberOnlineStateCommand): Promise<{ success: boolean; message?: string }> {
-    this.logger.info(
+    this.logger.debug(
       `Updating subscriber online state: ${command.subscriberId} in environment ${command.environmentId} to ${command.isOnline}`
     );
 
@@ -26,10 +26,13 @@ export class UpdateSubscriberOnlineState {
       { subscriberId: command.subscriberId, _environmentId: command.environmentId },
       {
         $set: updatePayload,
+      },
+      {
+        writeConcern: { w: 1 },
       }
     );
 
-    this.logger.info(
+    this.logger.debug(
       `Subscriber ${command.subscriberId} is now ${command.isOnline ? 'online' : 'offline'} in environment ${command.environmentId}`
     );
 

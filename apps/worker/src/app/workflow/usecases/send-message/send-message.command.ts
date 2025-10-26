@@ -50,4 +50,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   statelessPreferences?: WorkflowPreferences;
+
+  @IsOptional()
+  contextKeys?: string[];
 }

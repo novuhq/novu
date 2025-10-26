@@ -1,19 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
-import { ChannelEndpointEntity, ChannelEndpointRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { ProvidersIdEnum } from '@novu/shared';
-import { GetChannelEndpointResponseDto } from '../../dtos/get-channel-endpoint-response.dto';
+import { InstrumentUsecase, validateEndpointForType } from '@novu/application-generic';
+import { ChannelEndpointEntity, ChannelEndpointRepository } from '@novu/dal';
 import { UpdateChannelEndpointCommand } from './update-channel-endpoint.command';
 
 @Injectable()
 export class UpdateChannelEndpoint {
-  constructor(
-    private readonly channelEndpointRepository: ChannelEndpointRepository,
-    private readonly integrationRepository: IntegrationRepository
-  ) {}
+  constructor(private readonly channelEndpointRepository: ChannelEndpointRepository) {}
 
   @InstrumentUsecase()
-  async execute(command: UpdateChannelEndpointCommand): Promise<GetChannelEndpointResponseDto> {
+  async execute(command: UpdateChannelEndpointCommand): Promise<ChannelEndpointEntity> {
     // Check if the channel endpoint exists
     const existingChannelEndpoint = await this.channelEndpointRepository.findOne({
       identifier: command.identifier,
@@ -27,15 +22,12 @@ export class UpdateChannelEndpoint {
       );
     }
 
+    // Validate that the new endpoint matches the existing type
+    validateEndpointForType(existingChannelEndpoint.type, command.endpoint);
+
     const updatedChannelEndpoint = await this.updateChannelEndpoint(command);
 
-    const integration = await this.integrationRepository.findOne({
-      _id: existingChannelEndpoint._integrationId,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-    });
-
-    return this.mapChannelEndpointEntityToDto(updatedChannelEndpoint, integration);
+    return updatedChannelEndpoint;
   }
 
   private async updateChannelEndpoint(command: UpdateChannelEndpointCommand): Promise<ChannelEndpointEntity> {
@@ -47,7 +39,6 @@ export class UpdateChannelEndpoint {
       },
       {
         endpoint: command.endpoint,
-        routing: command.routing,
       },
       {
         new: true,
@@ -59,21 +50,5 @@ export class UpdateChannelEndpoint {
     }
 
     return channelEndpoint;
-  }
-
-  private mapChannelEndpointEntityToDto(
-    channelEndpoint: ChannelEndpointEntity,
-    integration: IntegrationEntity | null
-  ): GetChannelEndpointResponseDto {
-    return {
-      identifier: channelEndpoint.identifier,
-      channel: integration?.channel ?? null,
-      provider: (integration?.providerId as ProvidersIdEnum) ?? null,
-      integrationIdentifier: integration?.identifier ?? null,
-      endpoint: channelEndpoint.endpoint,
-      routing: channelEndpoint.routing,
-      createdAt: channelEndpoint.createdAt,
-      updatedAt: channelEndpoint.updatedAt,
-    };
   }
 }

@@ -89,12 +89,12 @@ export function ActivityEmptyState({
               duration: 0.2,
               delay: 0.25,
             }}
-            className="flex flex-col items-center gap-1 text-center"
+            className="flex flex-col items-center gap-2 text-center"
           >
-            <h2 className="text-foreground-900 text-lg font-medium">
+            <h2 className="text-text-sub text-md font-medium">
               {emptySearchResults ? emptySearchTitle : emptyFiltersTitle}
             </h2>
-            <p className="text-foreground-600 max-w-md text-sm font-normal">
+            <p className="text-text-soft max-w-md text-sm font-normal">
               {emptySearchResults ? emptySearchDescription : emptyFiltersDescription}
             </p>
           </motion.div>

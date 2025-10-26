@@ -13,7 +13,6 @@ export class GetWorkflowByIdsCommand extends EnvironmentCommand {
   userId?: string;
 
   @IsOptional()
-  @IsString()
   @Exclude()
   session?: ClientSession | null;
 }

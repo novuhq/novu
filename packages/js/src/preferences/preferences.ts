@@ -1,16 +1,20 @@
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { PreferencesCache } from '../cache/preferences-cache';
+import { ScheduleCache } from '../cache/schedule-cache';
 import { NovuEventEmitter } from '../event-emitter';
 import { Result, WorkflowCriticalityEnum } from '../types';
 import { bulkUpdatePreference, updatePreference } from './helpers';
 import { Preference } from './preference';
+import { PreferenceSchedule } from './preference-schedule';
 import type { BasePreferenceArgs, InstancePreferenceArgs, ListPreferencesArgs, UpdatePreferenceArgs } from './types';
 
 export class Preferences extends BaseModule {
   #useCache: boolean;
 
   readonly cache: PreferencesCache;
+  readonly scheduleCache: ScheduleCache;
+  readonly schedule: PreferenceSchedule;
 
   constructor({
     useCache,
@@ -28,7 +32,16 @@ export class Preferences extends BaseModule {
     this.cache = new PreferencesCache({
       emitterInstance: this._emitter,
     });
+    this.scheduleCache = new ScheduleCache({
+      emitterInstance: this._emitter,
+    });
     this.#useCache = useCache;
+    this.schedule = new PreferenceSchedule({
+      cache: this.scheduleCache,
+      useCache,
+      inboxServiceInstance,
+      eventEmitterInstance,
+    });
   }
 
   async list(args: ListPreferencesArgs = {}): Result<Preference[]> {
@@ -49,6 +62,7 @@ export class Preferences extends BaseModule {
                 emitterInstance: this._emitter,
                 inboxServiceInstance: this._inboxService,
                 cache: this.cache,
+                scheduleCache: this.scheduleCache,
                 useCache: this.#useCache,
               })
           );
@@ -77,6 +91,7 @@ export class Preferences extends BaseModule {
         emitter: this._emitter,
         apiService: this._inboxService,
         cache: this.cache,
+        scheduleCache: this.scheduleCache,
         useCache: this.#useCache,
         args,
       })
@@ -91,6 +106,7 @@ export class Preferences extends BaseModule {
         emitter: this._emitter,
         apiService: this._inboxService,
         cache: this.cache,
+        scheduleCache: this.scheduleCache,
         useCache: this.#useCache,
         args,
       })

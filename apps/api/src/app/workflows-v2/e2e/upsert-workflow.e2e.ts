@@ -3,6 +3,7 @@ import {
   CreateLayoutDto,
   CreateWorkflowDto,
   EmailStepResponseDto,
+  InAppControlDto,
   JSONSchemaDto,
   LayoutCreationSourceEnum,
   LayoutResponseDto,
@@ -60,6 +61,33 @@ describe('Upsert Workflow #novu-v2', () => {
 
       expect(workflow.name).to.equal('Test Workflow');
       expect(workflow.workflowId).to.equal('test-workflow-123');
+    });
+
+    it('should create a workflow and preserve stepId', async () => {
+      const workflow = await createWorkflow({
+        name: 'Test Workflow',
+        workflowId: 'test-workflow-123',
+        steps: [
+          {
+            name: 'Test Step',
+            stepId: 'test-step-123',
+            type: StepTypeEnum.InApp,
+            controlValues: {
+              body: 'Test Body',
+            },
+          },
+        ],
+      });
+
+      expect(workflow.name).to.equal('Test Workflow');
+      expect(workflow.workflowId).to.equal('test-workflow-123');
+      expect(workflow.steps.length).to.equal(1);
+      expect(workflow.steps[0].id).to.exist;
+      expect(workflow.steps[0].type).to.equal(StepTypeEnum.InApp);
+      expect(workflow.steps[0].stepId).to.equal('test-step-123');
+      expect(workflow.steps[0].controls).to.exist;
+      expect(workflow.steps[0].controls.values).to.exist;
+      expect((workflow.steps[0].controls.values as InAppControlDto).body).to.equal('Test Body');
     });
   });
 

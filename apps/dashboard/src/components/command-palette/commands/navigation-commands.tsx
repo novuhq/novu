@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import { PermissionsEnum } from '@novu/shared';
 import { useCallback } from 'react';
 import {
   RiBarChartBoxLine,
@@ -13,7 +13,7 @@ import {
   RiTranslate2,
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Command, CommandExecutionContext } from '../command-types';
@@ -23,8 +23,7 @@ export function useNavigationCommands(context: CommandExecutionContext): Command
   const hasPermission = useHasPermission();
   const hasWorkflowPermission = hasPermission({ permission: PermissionsEnum.WORKFLOW_READ });
   const hasSubscriberPermission = hasPermission({ permission: PermissionsEnum.SUBSCRIBER_READ });
-  const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
-  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
+  const isEnterprise = !IS_SELF_HOSTED || IS_ENTERPRISE;
 
   const createNavigationCommand = useCallback(
     (id: string, label: string, route: string, icon: React.ReactNode, permission?: () => boolean) => ({
@@ -95,27 +94,17 @@ export function useNavigationCommands(context: CommandExecutionContext): Command
   // Environments
   commands.push(createNavigationCommand('nav-environments', 'Environments', ROUTES.ENVIRONMENTS, <RiDatabase2Line />));
 
-  // Conditional navigation commands
-  if (isEmailLayoutsPageActive) {
-    commands.push(
-      createNavigationCommand(
-        'nav-layouts',
-        'Email Layouts',
-        ROUTES.LAYOUTS,
-        <RiLayout5Line />,
-        () => isEmailLayoutsPageActive
-      )
-    );
-  }
+  // Layouts
+  commands.push(createNavigationCommand('nav-layouts', 'Email Layouts', ROUTES.LAYOUTS, <RiLayout5Line />));
 
-  if (isTranslationEnabled) {
+  if (isEnterprise) {
     commands.push(
       createNavigationCommand(
         'nav-translations',
         'Translations',
         ROUTES.TRANSLATIONS,
         <RiTranslate2 />,
-        () => isTranslationEnabled
+        () => isEnterprise
       )
     );
   }

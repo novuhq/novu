@@ -196,7 +196,7 @@ export class CommunityAuthService implements IAuthService {
     };
   }
 
-  public async getSubscriberWidgetToken(subscriber: SubscriberEntity): Promise<string> {
+  public async getSubscriberWidgetToken(subscriber: SubscriberEntity, contextKeys?: string[]): Promise<string> {
     return this.jwtService.sign(
       {
         _id: subscriber._id,
@@ -206,6 +206,7 @@ export class CommunityAuthService implements IAuthService {
         organizationId: subscriber._organizationId,
         environmentId: subscriber._environmentId,
         subscriberId: subscriber.subscriberId,
+        contextKeys,
       },
       {
         expiresIn: process.env.SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME || '15 days',

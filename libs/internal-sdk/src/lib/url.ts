@@ -10,7 +10,7 @@ export function pathToFunc(
   pathPattern: string,
   options?: { charEncoding?: "percent" | "none" },
 ): (params?: Params) => string {
-  const paramRE = /\{([a-zA-Z0-9_]+?)\}/g;
+  const paramRE = /\{([a-zA-Z0-9_][a-zA-Z0-9_-]*?)\}/g;
 
   return function buildURLPath(params: Record<string, unknown> = {}): string {
     return pathPattern.replace(paramRE, function (_, placeholder) {

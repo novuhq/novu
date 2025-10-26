@@ -2,6 +2,7 @@ import { NovuError } from './utils/errors';
 
 export type { FiltersCountResponse, ListNotificationsResponse, Notification } from './notifications';
 export type { Preference } from './preferences/preference';
+export type { Schedule } from './preferences/schedule';
 export type { NovuError } from './utils/errors';
 
 declare global {
@@ -85,6 +86,7 @@ export type Session = {
   isDevelopmentMode: boolean;
   maxSnoozeDurationHours: number;
   applicationIdentifier?: string;
+  contextKeys?: string[];
 };
 
 export type Subscriber = {
@@ -178,12 +180,50 @@ export type PaginatedResponse<T = unknown> = {
   page: number;
 };
 
+export type TimeRange = {
+  start: string;
+  end: string;
+};
+
+export type DaySchedule = {
+  isEnabled: boolean;
+  hours?: Array<TimeRange>;
+};
+
+export type WeeklySchedule = {
+  monday?: DaySchedule;
+  tuesday?: DaySchedule;
+  wednesday?: DaySchedule;
+  thursday?: DaySchedule;
+  friday?: DaySchedule;
+  saturday?: DaySchedule;
+  sunday?: DaySchedule;
+};
+
+export type DefaultSchedule = {
+  isEnabled?: boolean;
+  weeklySchedule?: WeeklySchedule;
+};
+
+export type ContextValue =
+  | string
+  | {
+      id: string;
+      data?: Record<string, unknown>;
+    };
+
+export type Context = Partial<Record<string, ContextValue>>;
+
 export type PreferencesResponse = {
   level: PreferenceLevel;
   enabled: boolean;
   channels: ChannelPreference;
   overrides?: IPreferenceOverride[];
   workflow?: Workflow;
+  schedule?: {
+    isEnabled: boolean;
+    weeklySchedule?: WeeklySchedule;
+  };
 };
 
 export enum PreferenceOverrideSourceEnum {
@@ -213,9 +253,12 @@ export type StandardNovuOptions = {
   __userAgent?: string;
   applicationIdentifier: string;
   subscriberHash?: string;
+  contextHash?: string;
   apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
+  defaultSchedule?: DefaultSchedule;
+  context?: Context;
 } & (
   | {
       // TODO: Backward compatibility support - remove in future versions (see NV-5801)

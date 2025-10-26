@@ -13,10 +13,13 @@ import {
   GetNovuLayout,
   GetNovuProviderCredentials,
   GetPreferences,
+  GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
+  InMemoryProviderService,
   NormalizeVariables,
   ProcessTenant,
+  RedisThrottleService,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -28,8 +31,11 @@ import {
   WorkflowRunService,
 } from '@novu/application-generic';
 import {
+  ChannelConnectionRepository,
+  ChannelEndpointRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
+  ContextRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -54,10 +60,11 @@ import {
   SendMessageSms,
   SetJobAsCompleted,
   SetJobAsFailed,
+  Throttle,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
 } from './usecases';
-import { AddDelayJob, AddJob, MergeOrCreateDigest } from './usecases/add-job';
+import { AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
 import { ExecuteStepCustom } from './usecases/send-message/execute-step-custom.usecase';
@@ -87,7 +94,15 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   return modules;
 };
 
-const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository, CommunityUserRepository];
+const REPOSITORIES = [
+  JobRepository,
+  CommunityOrganizationRepository,
+  PreferencesRepository,
+  CommunityUserRepository,
+  ChannelEndpointRepository,
+  ChannelConnectionRepository,
+  ContextRepository,
+];
 
 const webhookProvider: Provider = {
   provide: SendWebhookMessage,
@@ -126,7 +141,6 @@ const svixProvider: Provider = {
 };
 
 const USE_CASES = [
-  AddDelayJob,
   TierRestrictionsValidateUsecase,
   MergeOrCreateDigest,
   AddJob,
@@ -158,6 +172,7 @@ const USE_CASES = [
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
+  Throttle,
   ExecuteStepCustom,
   StoreSubscriberJobs,
   SetJobAsCompleted,
@@ -175,9 +190,10 @@ const USE_CASES = [
   ExecuteBridgeJob,
   GetPreferences,
   WorkflowRunService,
+  GetSubscriberSchedule,
 ];
 
-const PROVIDERS: Provider[] = [];
+const PROVIDERS: Provider[] = [RedisThrottleService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {
@@ -197,11 +213,20 @@ const memoryQueueService = {
   },
 };
 
+const inMemoryProviderService = {
+  provide: InMemoryProviderService,
+  useFactory: (workflowInMemoryProviderService: WorkflowInMemoryProviderService) => {
+    return workflowInMemoryProviderService.inMemoryProviderService;
+  },
+  inject: [WorkflowInMemoryProviderService],
+};
+
 @Module({
   imports: [SharedModule, ...enterpriseImports()],
   controllers: [],
   providers: [
     memoryQueueService,
+    inMemoryProviderService,
     ...ACTIVE_WORKERS,
     ...PROVIDERS,
     ...USE_CASES,

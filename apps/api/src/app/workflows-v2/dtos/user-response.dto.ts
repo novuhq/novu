@@ -6,17 +6,17 @@ export class UserResponseDto {
   @IsString()
   _id: string;
 
-  @ApiPropertyOptional({ description: 'User first name', nullable: true })
+  @ApiPropertyOptional({ type: 'string', description: 'User first name', nullable: true })
   @IsOptional()
   @IsString()
   firstName?: string;
 
-  @ApiPropertyOptional({ description: 'User last name', nullable: true })
+  @ApiPropertyOptional({ type: 'string', description: 'User last name', nullable: true })
   @IsOptional()
   @IsString()
   lastName?: string | null;
 
-  @ApiPropertyOptional({ description: 'User external ID', nullable: true })
+  @ApiPropertyOptional({ type: 'string', description: 'User external ID', nullable: true })
   @IsOptional()
   @IsString()
   externalId?: string;

@@ -1,6 +1,8 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
@@ -78,6 +80,7 @@ export const AddStepMenu = ({
   onMenuItemClick: (stepType: StepTypeEnum) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const isThrottleStepEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_THROTTLE_STEP_ENABLED);
 
   const handleMenuItemClick = (stepType: StepTypeEnum) => {
     onMenuItemClick(stepType);
@@ -143,6 +146,11 @@ export const AddStepMenu = ({
                 <MenuItem stepType={StepTypeEnum.DIGEST} onClick={() => handleMenuItemClick(StepTypeEnum.DIGEST)}>
                   Digest
                 </MenuItem>
+                {isThrottleStepEnabled && (
+                  <MenuItem stepType={StepTypeEnum.THROTTLE} onClick={() => handleMenuItemClick(StepTypeEnum.THROTTLE)}>
+                    Throttle
+                  </MenuItem>
+                )}
               </MenuItemsGroup>
             </MenuGroup>
           </div>

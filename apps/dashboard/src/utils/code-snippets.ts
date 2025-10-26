@@ -1,4 +1,5 @@
 import { API_HOSTNAME, IS_EU, IS_SELF_HOSTED } from '@/config';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 
 export type CodeSnippet = {
   identifier: string;
@@ -14,6 +15,7 @@ export type TriggerCurlCommandOptions = {
   apiKey: string;
   baseUrl?: string;
   addDashboardSource?: boolean;
+  context?: Record<string, unknown>;
 };
 
 const SECRET_KEY_ENV_KEY = 'NOVU_SECRET_KEY';
@@ -77,6 +79,7 @@ export const createTriggerRequestBody = ({
   to,
   payload,
   addDashboardSource = true,
+  context,
 }: Omit<TriggerCurlCommandOptions, 'apiKey' | 'baseUrl'>) => {
   let parsedPayload = {};
 
@@ -90,6 +93,7 @@ export const createTriggerRequestBody = ({
     name: workflowId,
     to,
     payload: addDashboardSource ? { ...parsedPayload, __source: 'dashboard' } : parsedPayload,
+    context,
   };
 };
 
@@ -98,10 +102,11 @@ export const generateTriggerCurlCommand = ({
   to,
   payload,
   apiKey,
-  baseUrl = API_HOSTNAME ?? 'https://api.novu.co',
+  context,
+  baseUrl = apiHostnameManager.getHostname(),
   addDashboardSource = true,
 }: TriggerCurlCommandOptions) => {
-  const body = createTriggerRequestBody({ workflowId, to, payload, addDashboardSource });
+  const body = createTriggerRequestBody({ workflowId, to, payload, addDashboardSource, context });
 
   return `curl -X POST "${baseUrl}/v1/events/trigger" \\
   -H "Authorization: ApiKey ${apiKey}" \\
@@ -116,6 +121,7 @@ export type PostmanCollectionOptions = {
   apiKey: string;
   baseUrl?: string;
   addDashboardSource?: boolean;
+  context?: Record<string, unknown>;
 };
 
 export const generatePostmanCollection = ({
@@ -123,10 +129,11 @@ export const generatePostmanCollection = ({
   to,
   payload,
   apiKey,
-  baseUrl = API_HOSTNAME ?? 'https://api.novu.co',
+  baseUrl = apiHostnameManager.getHostname(),
   addDashboardSource = true,
+  context,
 }: PostmanCollectionOptions) => {
-  const body = createTriggerRequestBody({ workflowId, to, payload, addDashboardSource });
+  const body = createTriggerRequestBody({ workflowId, to, payload, addDashboardSource, context });
 
   return {
     info: {

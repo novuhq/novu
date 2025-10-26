@@ -13,32 +13,45 @@ export abstract class Filter {
     const filterValue = this.parseValue(actualValue, fieldFilter.value);
     let result = false;
 
-    if (fieldFilter.operator === FieldOperatorEnum.EQUAL) {
-      result = actualValue === filterValue;
-    }
-    if (fieldFilter.operator === FieldOperatorEnum.NOT_EQUAL) {
-      result = actualValue !== filterValue;
-    }
-    if (fieldFilter.operator === FieldOperatorEnum.LARGER) {
-      result = actualValue > filterValue;
-    }
-    if (fieldFilter.operator === FieldOperatorEnum.SMALLER) {
-      result = actualValue < filterValue;
-    }
-    if (fieldFilter.operator === FieldOperatorEnum.LARGER_EQUAL) {
-      result = actualValue >= filterValue;
-    }
-    if (fieldFilter.operator === FieldOperatorEnum.SMALLER_EQUAL) {
-      result = actualValue <= filterValue;
-    }
-    if (fieldFilter.operator === FieldOperatorEnum.NOT_IN) {
-      result = !actualValue.includes(filterValue);
-    }
-    if (fieldFilter.operator === FieldOperatorEnum.IN) {
-      result = actualValue.includes(filterValue);
-    }
-    if (fieldFilter.operator === FieldOperatorEnum.IS_DEFINED) {
-      result = actualValue !== undefined;
+    switch (fieldFilter.operator) {
+      case FieldOperatorEnum.EQUAL:
+        result = actualValue === filterValue;
+
+        break;
+      case FieldOperatorEnum.NOT_EQUAL:
+        result = actualValue !== filterValue;
+
+        break;
+      case FieldOperatorEnum.LARGER:
+        result = actualValue > filterValue;
+
+        break;
+      case FieldOperatorEnum.SMALLER:
+        result = actualValue < filterValue;
+
+        break;
+      case FieldOperatorEnum.LARGER_EQUAL:
+        result = actualValue >= filterValue;
+
+        break;
+      case FieldOperatorEnum.SMALLER_EQUAL:
+        result = actualValue <= filterValue;
+
+        break;
+      case FieldOperatorEnum.NOT_IN:
+        result = !actualValue.includes(filterValue);
+
+        break;
+      case FieldOperatorEnum.IN:
+        result = actualValue.includes(filterValue);
+
+        break;
+      case FieldOperatorEnum.IS_DEFINED:
+        result = actualValue !== undefined;
+
+        break;
+      default:
+        break;
     }
     const actualValueString: string = Array.isArray(actualValue) ? JSON.stringify(actualValue) : `${actualValue ?? ''}`;
 

@@ -137,6 +137,8 @@ export const buttonVariants = tv({
           'hover:after:opacity-100',
           // focus
           'focus-visible:bg-bg-white focus-visible:shadow-button-primary-focus focus-visible:ring-primary-base',
+          // disabled
+          'disabled:bg-bg-weak disabled:text-text-disabled disabled:shadow-none disabled:before:hidden disabled:after:hidden',
         ],
       },
     },

@@ -1,4 +1,4 @@
-import { RiAlertFill, RiArrowRightSLine } from 'react-icons/ri';
+import { RiAlertFill } from 'react-icons/ri';
 import {
   AlertDialog,
   AlertDialogAction,

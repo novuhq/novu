@@ -11,6 +11,8 @@ import {
   CreateOrUpdateSubscriberUseCase,
   encryptApiKey,
   FeatureFlagsService,
+  GetSubscriberSchedule,
+  GetSubscriberScheduleCommand,
   generateTimestampHex,
   LogDecorator,
   PinoLogger,
@@ -23,6 +25,7 @@ import {
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
+  ContextRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationRepository,
@@ -35,6 +38,7 @@ import {
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  ContextPayload,
   ControlValuesLevelEnum,
   CustomDataType,
   FeatureFlagsKeysEnum,
@@ -59,14 +63,10 @@ import { GetOrganizationSettingsCommand } from '../../../organization/usecases/g
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
-import {
-  GetSubscriberSchedule,
-  GetSubscriberScheduleCommand,
-} from '../../../subscribers/usecases/get-subscriber-schedule';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
-import { validateHmacEncryption } from '../../utils/encryption';
+import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
@@ -91,6 +91,7 @@ export class Session {
     private integrationRepository: IntegrationRepository,
     private organizationRepository: CommunityOrganizationRepository,
     private communityOrganizationRepository: CommunityOrganizationRepository,
+    private contextRepository: ContextRepository,
     private generateUniqueApiKey: GenerateUniqueApiKey,
     private createNovuIntegrationsUsecase: CreateNovuIntegrations,
     private communityUserRepository: CommunityUserRepository,
@@ -140,7 +141,21 @@ export class Session {
         subscriberId: subscriber.subscriberId,
         subscriberHash: command.requestData.subscriberHash,
       });
+
+      if (command.requestData.context) {
+        validateContextHmacEncryption({
+          apiKey: environment.apiKeys[0].key,
+          context: command.requestData.context,
+          contextHash: command.requestData.contextHash,
+        });
+      }
     }
+
+    const contextKeys = await this.resolveContexts(
+      environment._id,
+      environment._organizationId,
+      command.requestData.context
+    );
 
     const subscriberEntity = await this.createSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -167,6 +182,7 @@ export class Session {
       environmentName: environment.name,
       _subscriber: subscriberEntity._id,
       origin: command.requestData.applicationIdentifier ? command.origin : 'keyless',
+      context: contextKeys,
     });
 
     const { data } = await this.notificationsCount.execute(
@@ -176,26 +192,20 @@ export class Session {
         subscriberId: subscriber.subscriberId,
         filters: [{ read: false, snoozed: false }],
         subscriber: subscriberEntity,
+        contextKeys,
       })
     );
     const [{ count: totalUnreadCount }] = data;
 
-    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-      defaultValue: false,
-      organization: { _id: environment._organizationId },
-    });
-
     // get severity-based unread counts
-    const severityCounts = isNotificationSeverityEnabled
-      ? await this.messageRepository.getCountBySeverity(
-          environment._id,
-          subscriberEntity._id,
-          ChannelTypeEnum.IN_APP,
-          { read: false, snoozed: false },
-          { limit: MAX_NOTIFICATIONS_COUNT }
-        )
-      : [];
+    const severityCounts = await this.messageRepository.getCountBySeverity(
+      environment._id,
+      subscriberEntity._id,
+      ChannelTypeEnum.IN_APP,
+      { read: false, snoozed: false },
+      { limit: MAX_NOTIFICATIONS_COUNT },
+      contextKeys
+    );
 
     const unreadCount: SubscriberSessionResponseDto['unreadCount'] = {
       total: totalUnreadCount,
@@ -213,21 +223,31 @@ export class Session {
       }
     }
 
-    const token = await this.authService.getSubscriberWidgetToken(subscriberEntity);
-    const organization = await this.organizationRepository.findById(environment._organizationId);
+    const [token, organization] = await Promise.all([
+      this.authService.getSubscriberWidgetToken(subscriberEntity, contextKeys),
+      this.organizationRepository.findById(environment._organizationId),
+    ]);
 
     if (!organization) {
       throw new NotFoundException('Organization not found');
     }
 
-    const { removeNovuBranding } = await this.getOrganizationSettingsUsecase.execute(
-      GetOrganizationSettingsCommand.create({
-        organizationId: environment._organizationId,
-        organization,
-      })
-    );
+    const schedulePromise = this.createDefaultSchedule({
+      environment,
+      defaultSchedule: command.requestData.defaultSchedule,
+      subscriber: subscriberEntity,
+    });
 
-    const maxSnoozeDurationHours = await this.getMaxSnoozeDurationHours(organization?.apiServiceLevel);
+    const [{ removeNovuBranding }, maxSnoozeDurationHours, schedule] = await Promise.all([
+      this.getOrganizationSettingsUsecase.execute(
+        GetOrganizationSettingsCommand.create({
+          organizationId: environment._organizationId,
+          organization,
+        })
+      ),
+      this.getMaxSnoozeDurationHours(organization.apiServiceLevel),
+      schedulePromise,
+    ]);
 
     /**
      * We want to prevent the playground inbox demo from marking the integration as connected
@@ -254,12 +274,6 @@ export class Session {
       );
     }
 
-    const schedule = await this.createDefaultSchedule({
-      environment,
-      defaultSchedule: command.requestData.defaultSchedule,
-      subscriber: subscriberEntity,
-    });
-
     return {
       applicationIdentifier: environment.identifier,
       token,
@@ -269,6 +283,7 @@ export class Session {
       maxSnoozeDurationHours,
       isDevelopmentMode: environment.name.toLowerCase() !== 'production',
       schedule,
+      contextKeys,
     };
   }
 
@@ -383,6 +398,35 @@ export class Session {
         : requestData.applicationIdentifier;
 
     return applicationIdentifier;
+  }
+
+  private async resolveContexts(
+    environmentId: string,
+    organizationId: string,
+    context?: ContextPayload
+  ): Promise<string[] | undefined> {
+    const isContextsEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+    });
+
+    if (!isContextsEnabled) {
+      return undefined;
+    }
+
+    if (!context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      environmentId,
+      organizationId,
+      context
+    );
+
+    return contexts.map((context) => context.key);
   }
 
   private async getMaxSnoozeDurationHours(apiServiceLevel: ApiServiceLevelEnum) {

@@ -1,6 +1,6 @@
 import {
   DeliveryLifecycleDetail,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   ITenantDefine,
   IWorkflowStepMetadata,
   JobStatusEnum,
@@ -16,10 +16,8 @@ import type { OrganizationId } from '../organization';
 
 export { JobStatusEnum };
 
-
-
 export type DeliveryLifecycleState = {
-  status?: DeliveryLifecycleStatus;
+  status?: DeliveryLifecycleStatusEnum;
   detail?: DeliveryLifecycleDetail;
 };
 
@@ -55,6 +53,11 @@ export class JobEntity {
   actorId?: string;
   stepOutput?: Record<string, unknown>;
   preferences?: WorkflowPreferences;
+  contextKeys?: string[];
+  /**
+   * used to track the number of times a step has been extended to the next available time in the subscriber schedule
+   */
+  scheduleExtensionsCount?: number;
 }
 
 export type JobDBModel = ChangePropsValueType<

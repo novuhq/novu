@@ -7,7 +7,7 @@ import {
 } from '@novu/dal';
 import {
   DeliveryLifecycleDetail,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   FeatureFlagsKeysEnum,
   SeverityLevelEnum,
 } from '@novu/shared';
@@ -37,13 +37,14 @@ type QueryNotificationEntity = Pick<
   | 'createdAt'
   | 'severity'
   | 'critical'
+  | 'contextKeys'
 >;
 
 interface IWorkflowRunOptions {
   status?: WorkflowRunStatusEnum;
   userId?: string;
   externalSubscriberId?: string;
-  deliveryLifecycleStatus?: DeliveryLifecycleStatus;
+  deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum;
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
 
@@ -84,9 +85,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     try {
       const isEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED,
-        organization: { _id: notification._organizationId },
-        environment: { _id: notification._environmentId },
-        user: { _id: options.userId },
+        organization: { _id: String(notification._organizationId) },
+        environment: { _id: String(notification._environmentId) },
+        user: { _id: String(options.userId) },
         defaultValue: false,
       });
 
@@ -191,7 +192,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       organizationId: string;
       environmentId: string;
     },
-    deliveryLifecycleStatus?: DeliveryLifecycleStatus,
+    deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum,
     deliveryLifecycleDetail?: DeliveryLifecycleDetail
   ): Promise<void> {
     try {
@@ -229,6 +230,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
           createdAt: 1,
           severity: 1,
           critical: 1,
+          contextKeys: 1,
         }
       );
 
@@ -458,7 +460,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       external_subscriber_id: options.externalSubscriberId || null,
 
       // Execution metadata
-      status: options.status || ('pending' as WorkflowRunStatusEnum),
+      status: options.status || WorkflowRunStatusEnum.PROCESSING,
       trigger_identifier: this.getTriggerIdentifier(workflow),
 
       // Correlation and grouping
@@ -483,6 +485,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       severity: notification.severity || SeverityLevelEnum.NONE,
       critical: notification.critical || false,
+      context_keys: notification.contextKeys || [],
     };
   }
 

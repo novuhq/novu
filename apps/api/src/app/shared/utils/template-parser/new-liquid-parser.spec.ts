@@ -261,6 +261,24 @@ describe('extractLiquidTemplateVariables', () => {
       expect(invalidVariables[0].name).to.equal('invalid');
     });
 
+    it('should handle variables with hyphens in if conditions', () => {
+      const template = '{% if steps.digest-step.events[0].id %}Hello{% endif %}';
+      const variableSchema: JSONSchemaDto = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        properties: {
+          steps: {
+            type: JsonSchemaTypeEnum.OBJECT,
+            additionalProperties: true,
+          },
+        },
+      };
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template, variableSchema });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('steps.digest-step.events[0].id');
+    });
+
     it('should handle unless statements with invalid condition', () => {
       const template = '{% unless user.banned %}Show content{{invalid}}{% endunless %}';
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
@@ -367,6 +385,33 @@ describe('extractLiquidTemplateVariables', () => {
       expect(validVariables).to.have.lengthOf(1);
       expect(invalidVariables).to.have.lengthOf(0);
       expect(validVariables[0].name).to.equal('payload.firstName');
+    });
+
+    it('should handle assign statements with whitespace control - both sides', () => {
+      const template = '{%- assign first_name = payload.first_name -%} Hello {{first_name}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.first_name');
+    });
+
+    it('should handle assign statements with whitespace control - left side only', () => {
+      const template = '{%- assign first_name = payload.first_name %} Hello {{first_name}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.first_name');
+    });
+
+    it('should handle assign statements with whitespace control - right side only', () => {
+      const template = '{% assign first_name = payload.first_name -%} Hello {{first_name}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.first_name');
     });
   });
 

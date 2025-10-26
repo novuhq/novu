@@ -1,4 +1,4 @@
-import type { Subscriber, UnreadCount } from '@novu/js';
+import type { Context, DefaultSchedule, Subscriber, UnreadCount } from '@novu/js';
 import type {
   IconKey,
   InboxProps,
@@ -9,6 +9,7 @@ import type {
   NotificationClickHandler,
   PreferenceGroups,
   PreferencesFilter,
+  PreferencesSort,
   RouterPush,
   Tab,
 } from '@novu/js/ui';
@@ -55,6 +56,7 @@ export type DefaultInboxProps = {
 
 type StandardBaseProps = {
   subscriberHash?: string;
+  contextHash?: string;
   backendUrl?: string;
   socketUrl?: string;
   appearance?: ReactAppearance;
@@ -62,7 +64,10 @@ type StandardBaseProps = {
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
+  preferencesSort?: PreferencesSort;
+  defaultSchedule?: DefaultSchedule;
   routerPush?: RouterPush;
+  context?: Context;
 } & (
   | {
       // TODO: Backward compatibility support - remove in future versions (see NV-5801)

@@ -3,6 +3,9 @@ export { Novu } from './novu';
 export {
   ChannelPreference,
   ChannelType,
+  Context,
+  DaySchedule,
+  DefaultSchedule,
   FiltersCountResponse,
   InboxNotification,
   ListNotificationsResponse,
@@ -14,11 +17,14 @@ export {
   Preference,
   PreferenceLevel,
   PreferencesResponse,
+  Schedule,
   SeverityLevelEnum,
   StandardNovuOptions,
   Subscriber,
+  TimeRange,
   UnreadCount,
   WebSocketEvent,
+  WeeklySchedule,
   WorkflowCriticalityEnum,
 } from './types';
 export {

@@ -15,7 +15,7 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository, MessageEntity, MessageRepository } from '@novu/dal';
-import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { DeliveryLifecycleStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -39,7 +39,7 @@ export class MarkNotificationsAsSeen {
   }
 
   async execute(command: MarkNotificationsAsSeenCommand): Promise<void> {
-    const { notificationIds, tags, data } = command;
+    const { notificationIds, tags, data, contextKeys } = command;
 
     // Return early if notificationIds is an empty array
     if (notificationIds && notificationIds.length === 0) {
@@ -71,6 +71,7 @@ export class MarkNotificationsAsSeen {
       updatedMessages = await this.messageRepository.updateMessagesStatusByIds({
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
+        contextKeys,
         ids: notificationIds,
         seen: true,
       });
@@ -116,6 +117,7 @@ export class MarkNotificationsAsSeen {
       await this.messageRepository.updateMessagesFromToStatus({
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
+        contextKeys,
         from: fromFilters,
         to: {
           seen: true,
@@ -158,6 +160,7 @@ export class MarkNotificationsAsSeen {
         event: WebSocketEventEnum.UNSEEN,
         userId: subscriber._id,
         _environmentId: command.environmentId,
+        ...(contextKeys && { contextKeys }),
       },
       groupId: subscriber._organizationId,
     });
@@ -262,7 +265,7 @@ export class MarkNotificationsAsSeen {
 
     if (allTraceData.length > 0) {
       try {
-        await this.messageInteractionService.trace(allTraceData);
+        await this.messageInteractionService.trace(allTraceData, DeliveryLifecycleStatusEnum.INTERACTED);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create seen traces for ${allTraceData.length} messages`);
       }
@@ -295,7 +298,7 @@ export class MarkNotificationsAsSeen {
       entity_type: 'step_run',
       entity_id: message._jobId,
       step_run_type: message.channel as StepType,
-      workflow_run_identifier: message.templateIdentifier,
+      workflow_run_identifier: '',
       _notificationId: message._notificationId,
     };
   }

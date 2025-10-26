@@ -30,7 +30,6 @@ export enum DetailEnum {
   MESSAGE_SNOOZED = 'Message snoozed',
   MESSAGE_UNSNOOZED = 'Message unsnoozed',
   MESSAGE_UNSNOOZE_FAILED = 'Message unsnooze failed',
-  SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED = 'Successful Bridge response received',
   FAILED_BRIDGE_EXECUTION = 'Bridge execution failed',
   SKIPPED_BRIDGE_EXECUTION = 'Bridge execution skipped',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
@@ -46,12 +45,12 @@ export enum DetailEnum {
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
   MESSAGE_SENT = 'Message sent',
   PROVIDER_ERROR = 'Unexpected provider error',
-  START_SENDING = 'Start sending message',
   START_DIGESTING = 'Start digesting',
   STEP_COMPLETED = 'Step completed',
   PROCESSING_STEP_FILTER = 'Processing step filter',
   PROCESSING_STEP_FILTER_ERROR = 'Processing step filter failed',
   SKIPPED_STEP_BY_CONDITIONS = 'Step was skipped based on steps conditions',
+  SKIPPED_STEP_OUTSIDE_OF_THE_SCHEDULE = "The step was skipped as it fell outside the subscriber's schedule",
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEP_FILTERED_BY_SUBSCRIBER_WORKFLOW_PREFERENCES = 'Step filtered by subscriber workflow preferences',
   STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES = 'Step filtered by subscriber global preferences',
@@ -69,4 +68,13 @@ export enum DetailEnum {
   DELAY_MISCONFIGURATION = 'Invalid delay configuration',
   DEFER_DURATION_LIMIT_EXCEEDED = 'Defer duration limit exceeded',
   MESSAGE_SEVERITY_OVERRIDDEN = 'Severity for the message was overridden',
+  STEP_THROTTLED = 'Step was throttled due to rate limiting',
+  THROTTLE_LIMIT_EXCEEDED = 'Throttle limit exceeded for the given window',
+  THROTTLE_WINDOW_IN_PAST = 'Throttle window date is in the past',
+  STEP_EXTENDED_TO_SCHEDULE = 'Step was extended to the next available time in the subscriber schedule',
+  SKIPPED_STEP_MAX_EXTENSIONS_REACHED = 'Step was executed due to maximum number of subscriber schedule extensions reached',
+}
+
+export function createProviderSelectedMessage(providerId: string): string {
+  return `${providerId} provider was selected`;
 }

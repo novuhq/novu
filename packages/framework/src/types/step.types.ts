@@ -1,5 +1,10 @@
 import { ChannelStepEnum } from '../constants';
 import { actionStepSchemas } from '../schemas/steps/actions';
+import {
+  delayDynamicOutputSchema,
+  delayRegularOutputSchema,
+  delayTimedOutputSchema,
+} from '../schemas/steps/actions/delay.schema';
 import { digestRegularOutputSchema, digestTimedOutputSchema } from '../schemas/steps/actions/digest.schema';
 import { channelStepSchemas } from '../schemas/steps/channels';
 import type { Providers } from './provider.types';
@@ -201,6 +206,13 @@ export type InAppOutput = FromSchema<(typeof channelStepSchemas)['in_app']['outp
 export type InAppOutputUnvalidated = FromSchemaUnvalidated<(typeof channelStepSchemas)['in_app']['output']>;
 export type InAppResult = FromSchema<(typeof channelStepSchemas)['in_app']['result']>;
 
+export type DelayRegularOutput = FromSchema<typeof delayRegularOutputSchema>;
+export type DelayRegularOutputUnvalidated = FromSchemaUnvalidated<typeof delayRegularOutputSchema>;
+export type DelayTimedOutput = FromSchema<typeof delayTimedOutputSchema>;
+export type DelayTimedOutputUnvalidated = FromSchemaUnvalidated<typeof delayTimedOutputSchema>;
+export type DelayDynamicOutput = FromSchema<typeof delayDynamicOutputSchema>;
+export type DelayDynamicOutputUnvalidated = FromSchemaUnvalidated<typeof delayDynamicOutputSchema>;
+
 export type DelayOutput = FromSchema<(typeof actionStepSchemas)['delay']['output']>;
 export type DelayOutputUnvalidated = FromSchemaUnvalidated<(typeof actionStepSchemas)['delay']['output']>;
 export type DelayResult = FromSchema<(typeof actionStepSchemas)['delay']['result']>;
@@ -213,6 +225,10 @@ export type DigestTimedOutputUnvalidated = FromSchemaUnvalidated<typeof digestTi
 export type DigestOutput = FromSchema<(typeof actionStepSchemas)['digest']['output']>;
 export type DigestOutputUnvalidated = FromSchemaUnvalidated<(typeof actionStepSchemas)['digest']['output']>;
 export type DigestResult = FromSchema<(typeof actionStepSchemas)['digest']['result']>;
+
+export type ThrottleOutput = FromSchema<(typeof actionStepSchemas)['throttle']['output']>;
+export type ThrottleOutputUnvalidated = FromSchemaUnvalidated<(typeof actionStepSchemas)['throttle']['output']>;
+export type ThrottleResult = FromSchema<(typeof actionStepSchemas)['throttle']['result']>;
 
 /**
  * The step type.
@@ -232,6 +248,8 @@ export type Step = {
   digest: ActionStep<DigestOutputUnvalidated, DigestResult>;
   /** Delay the workflow for a period of time. */
   delay: ActionStep<DelayOutputUnvalidated, DelayResult>;
+  /** Throttle workflow executions within a time window. */
+  throttle: ActionStep<ThrottleOutputUnvalidated, ThrottleResult>;
   /** Execute custom code */
   custom: CustomStep;
 };

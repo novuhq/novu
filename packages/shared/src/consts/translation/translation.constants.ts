@@ -9,14 +9,12 @@ export const DEFAULT_LOCALE = 'en_US';
 export const TRANSLATION_NAMESPACE_SEPARATOR = 't.';
 
 /**
- * Regular expression to match translation keys in the format {{t.key}} with optional spaces
- * Matches: {{t.key}}, {{ t.key }}, {{  t.key  }}, etc.
- */
-export const TRANSLATION_KEY_REGEX = /\{\{\s*t\.([^}]+?)\s*\}\}/g;
-
-/**
  * Regular expression to match a single translation key in the format {{t.key}} with optional spaces
  * (non-global version for single matches)
+ *
+ * ⚠️ WARNING: Do NOT add global flag (/g) to this regex! Global regexes maintain state
+ * and cause inconsistent .test() results when shared across calls.
+ * Use: new RegExp(TRANSLATION_KEY_SINGLE_REGEX.source, 'g') for global matching instead.
  */
 export const TRANSLATION_KEY_SINGLE_REGEX = /\{\{\s*t\.([^}]+?)\s*\}\}/;
 

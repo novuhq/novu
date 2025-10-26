@@ -14,7 +14,7 @@ const SelectValue = SelectPrimitive.Value;
 const SelectIcon = SelectPrimitive.Icon;
 
 export const selectTriggerVariants = cva(
-  'border-input ring-offset-background text-foreground-600 placeholder:text-foreground-400 focus:ring-ring shadow-xs flex w-full items-center justify-between whitespace-nowrap rounded-lg border bg-transparent text-sm focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+  'border-input ring-offset-background text-foreground-600 placeholder:text-foreground-400 focus:border-stroke-soft focus:ring-stroke-soft/50 focus:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive shadow-xs flex w-full items-center justify-between whitespace-nowrap rounded-lg border bg-transparent text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
   {
     variants: {
       size: {

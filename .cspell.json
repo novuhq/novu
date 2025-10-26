@@ -17,6 +17,8 @@
     "amannn",
     "analagous",
     "Angularjs",
+    "sinch",
+    "evalsha",
     "antd",
     "anthonybaxter",
     "anticon",
@@ -729,6 +731,8 @@
     "Unvalidated",
     "upsert",
     "upserted",
+    "upserting",
+    "unstub",
     "upstash",
     "Upstash",
     "usecase",
@@ -762,7 +766,11 @@
     "Brandname",
     "telco",
     "unifonic",
-    "smsmode"
+    "smsmode",
+    "BLKTM",
+    "Novuand",
+    "kobalte",
+    "jsonrepair"
   ],
   "flagWords": [],
   "patterns": [

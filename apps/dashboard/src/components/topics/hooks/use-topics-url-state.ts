@@ -1,5 +1,5 @@
 import { DirectionEnum } from '@novu/shared';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 export type TopicsSortableColumn = '_id' | 'updatedAt' | 'name';
@@ -13,6 +13,8 @@ export interface TopicsFilter {
   orderDirection?: DirectionEnum;
   limit?: number;
   includeCursor?: boolean;
+  nextCursor?: string;
+  previousCursor?: string;
 }
 
 export interface TopicsUrlState {
@@ -23,18 +25,23 @@ export interface TopicsUrlState {
   handleNext: () => void;
   handlePrevious: () => void;
   handleFirst: () => void;
+  handlePageSizeChange: (newSize: number) => void;
 }
 
 const DEFAULT_LIMIT = 10;
 
-export const useTopicsUrlState = ({ after, before }: { after?: string; before?: string }): TopicsUrlState => {
+export const useTopicsUrlState = (): TopicsUrlState => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
+  const [previousCursor, setPreviousCursor] = useState<string | undefined>(undefined);
 
   const key = searchParams.get('key') || '';
   const name = searchParams.get('name') || '';
   const orderBy = (searchParams.get('orderBy') as TopicsSortableColumn) || undefined;
   const orderDirection = (searchParams.get('orderDirection') as DirectionEnum) || undefined;
   const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : DEFAULT_LIMIT;
+  const urlAfter = searchParams.get('after') || undefined;
+  const urlBefore = searchParams.get('before') || undefined;
 
   const defaultFilterValues: TopicsFilter = useMemo(
     () => ({
@@ -73,6 +80,15 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
 
   const handleFiltersChange = useCallback(
     (filter: Partial<TopicsFilter>) => {
+      // Handle cursor state updates
+      if ('nextCursor' in filter) {
+        setNextCursor(filter.nextCursor);
+      }
+
+      if ('previousCursor' in filter) {
+        setPreviousCursor(filter.previousCursor);
+      }
+
       setSearchParams((prev) => {
         if ('after' in filter) {
           if (filter.after) {
@@ -113,6 +129,8 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
   );
 
   const resetFilters = useCallback(() => {
+    setNextCursor(undefined);
+    setPreviousCursor(undefined);
     setSearchParams((prev) => {
       prev.delete('key');
       prev.delete('name');
@@ -127,25 +145,25 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
     setSearchParams((prev) => {
       prev.delete('before');
 
-      if (after) {
-        prev.set('after', after);
+      if (nextCursor) {
+        prev.set('after', nextCursor);
       }
 
       return prev;
     });
-  }, [after, setSearchParams]);
+  }, [nextCursor, setSearchParams]);
 
   const handlePrevious = useCallback(() => {
     setSearchParams((prev) => {
       prev.delete('after');
 
-      if (before) {
-        prev.set('before', before);
+      if (previousCursor) {
+        prev.set('before', previousCursor);
       }
 
       return prev;
     });
-  }, [before, setSearchParams]);
+  }, [previousCursor, setSearchParams]);
 
   const handleFirst = useCallback(() => {
     setSearchParams((prev) => {
@@ -156,11 +174,29 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
     });
   }, [setSearchParams]);
 
+  const handlePageSizeChange = useCallback(
+    (newSize: number) => {
+      setNextCursor(undefined);
+      setPreviousCursor(undefined);
+      setSearchParams((prev) => {
+        prev.set('limit', newSize.toString());
+        // Reset pagination when page size changes
+        prev.delete('before');
+        prev.delete('after');
+
+        return prev;
+      });
+    },
+    [setSearchParams]
+  );
+
   return {
     filterValues: {
       ...defaultFilterValues,
-      before: before || undefined,
-      after: after || undefined,
+      before: urlBefore,
+      after: urlAfter,
+      nextCursor,
+      previousCursor,
     },
     toggleSort,
     handleFiltersChange,
@@ -168,5 +204,6 @@ export const useTopicsUrlState = ({ after, before }: { after?: string; before?: 
     handleNext,
     handlePrevious,
     handleFirst,
+    handlePageSizeChange,
   };
 };

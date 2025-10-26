@@ -372,6 +372,14 @@ export const bulkSmsConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Sender ID',
+    description:
+      'Sender Id is used for from field in the request. If not provided, from field will not be sent in the request',
+    type: 'string',
+    required: false,
+  },
 ];
 
 export const iSendSmsConfig: IConfigCredential[] = [
@@ -566,7 +574,7 @@ export const fcmConfig: IConfigCredential[] = [
         if (!value || value.trim() === '') {
           return true; // Let required validation handle empty values
         }
-        
+
         try {
           JSON.parse(value);
 
@@ -1263,6 +1271,38 @@ export const smsmodeProviderConfig: IConfigCredential[] = [
     description: 'API key provided by smsmode',
     type: 'string',
     required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const sinchConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ServicePlanId,
+    displayName: 'Service Plan ID',
+    description: 'Your Sinch Service Plan ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'API Token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Region',
+    description: 'Select your Sinch region',
+    type: 'dropdown',
+    required: true,
+    value: 'eu',
+    dropdown: [
+      { name: 'EU (Ireland, Sweden)', value: 'eu' },
+      { name: 'US', value: 'us' },
+      { name: 'Australia', value: 'au' },
+      { name: 'Brazil', value: 'br' },
+      { name: 'Canada', value: 'ca' },
+    ],
   },
   ...smsConfigBase,
 ];

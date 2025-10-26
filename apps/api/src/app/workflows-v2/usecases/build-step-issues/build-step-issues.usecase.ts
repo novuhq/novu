@@ -7,20 +7,18 @@ import {
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
-import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
+import { ControlValuesRepository } from '@novu/dal';
 import {
   ContentIssueEnum,
   ControlValuesLevelEnum,
-  IntegrationIssueEnum,
   ResourceOriginEnum,
   RuntimeIssue,
   StepIssuesDto,
   StepTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { isEmpty, merge } from 'es-toolkit/compat';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
-import isEmpty from 'lodash/isEmpty';
-import merge from 'lodash/merge';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import {
   QueryIssueTypeEnum,
@@ -37,6 +35,7 @@ import { BuildStepIssuesCommand } from './build-step-issues.command';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
+const CONTEXT_FIELD_PREFIX = 'context.';
 
 @Injectable()
 export class BuildStepIssuesUsecase {
@@ -45,8 +44,7 @@ export class BuildStepIssuesUsecase {
     private controlValuesRepository: ControlValuesRepository,
     @Inject(forwardRef(() => TierRestrictionsValidateUsecase))
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
-    private logger: PinoLogger,
-    private integrationsRepository: IntegrationRepository
+    private logger: PinoLogger
   ) {}
 
   @InstrumentUsecase()
@@ -105,13 +103,8 @@ export class BuildStepIssuesUsecase {
     const skipLogicIssues = sanitizedControlValues?.skip
       ? this.validateSkipField(variableSchema, sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
       : {};
-    const integrationIssues = await this.validateIntegration({
-      stepType,
-      environmentId: user.environmentId,
-      organizationId: user.organizationId,
-    });
 
-    return merge(schemaIssues, liquidIssues, customIssues, skipLogicIssues, integrationIssues);
+    return merge(schemaIssues, liquidIssues, customIssues, skipLogicIssues);
   }
 
   @Instrument()
@@ -136,7 +129,10 @@ export class BuildStepIssuesUsecase {
         amount: controlValues?.amount as number | undefined,
         unit: controlValues?.unit as string | undefined,
         cron: controlValues?.cron as string | undefined,
+        type: controlValues?.type as string | undefined,
+        dynamicKey: controlValues?.dynamicKey as string | undefined,
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         stepType,
       })
     );
@@ -182,7 +178,7 @@ export class BuildStepIssuesUsecase {
     const issues: StepIssuesDto = {};
     const { primitives } = parseStepVariables(variableSchema);
     const allowedVariables = primitives.map((variable) => variable.name);
-    const allowedNamespaces = [PAYLOAD_FIELD_PREFIX, SUBSCRIBER_DATA_FIELD_PREFIX];
+    const allowedNamespaces = [PAYLOAD_FIELD_PREFIX, SUBSCRIBER_DATA_FIELD_PREFIX, CONTEXT_FIELD_PREFIX];
 
     const queryValidatorService = new QueryValidatorService(allowedVariables, allowedNamespaces);
     const skipRulesIssues = queryValidatorService.validateQueryRules(skipLogic);
@@ -201,64 +197,5 @@ export class BuildStepIssuesUsecase {
     }
 
     return issues.controls?.skip.length ? issues : {};
-  }
-
-  @Instrument()
-  private async validateIntegration(args: {
-    stepType: StepTypeEnum;
-    environmentId: string;
-    organizationId: string;
-  }): Promise<StepIssuesDto> {
-    const issues: StepIssuesDto = {};
-
-    const integrationNeeded = [
-      StepTypeEnum.EMAIL,
-      StepTypeEnum.SMS,
-      StepTypeEnum.IN_APP,
-      StepTypeEnum.PUSH,
-      StepTypeEnum.CHAT,
-    ].includes(args.stepType);
-
-    if (!integrationNeeded) {
-      return issues;
-    }
-
-    const primaryNeeded = args.stepType === StepTypeEnum.EMAIL || args.stepType === StepTypeEnum.SMS;
-    const validIntegrationForStep = await this.integrationsRepository.findOne({
-      _environmentId: args.environmentId,
-      _organizationId: args.organizationId,
-      active: true,
-      ...(primaryNeeded && { primary: true }),
-      channel: args.stepType,
-    });
-
-    if (args.stepType === StepTypeEnum.IN_APP) {
-      if (!validIntegrationForStep || !validIntegrationForStep.connected) {
-        issues.integration = {
-          [args.stepType]: [
-            {
-              issueType: IntegrationIssueEnum.MISSING_INTEGRATION,
-              message: validIntegrationForStep
-                ? 'Inbox is not connected. Please connect your Inbox integration.'
-                : 'Missing active integration provider',
-            },
-          ],
-        };
-      }
-      return issues;
-    }
-
-    if (!validIntegrationForStep) {
-      issues.integration = {
-        [args.stepType]: [
-          {
-            issueType: IntegrationIssueEnum.MISSING_INTEGRATION,
-            message: `Missing active${primaryNeeded ? ' primary' : ''} integration provider`,
-          },
-        ],
-      };
-    }
-
-    return issues;
   }
 }

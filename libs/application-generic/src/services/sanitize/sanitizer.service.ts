@@ -25,6 +25,11 @@ const sanitizeOptions: IOptions = {
   // Setting this to false to allow all attributes.
   allowedAttributes: false,
   /**
+   * Additional URL schemes to allow in src, href, and other URL attributes.
+   * Including 'cid:' for Content-ID references used in email attachments.
+   */
+  allowedSchemes: sanitizeTypes.defaults.allowedSchemes.concat(['cid']),
+  /**
    * Required to disable console warnings when allowing style tags.
    *
    * We are allowing style tags to support the use of styles in the In-App Editor.

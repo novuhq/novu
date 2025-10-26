@@ -152,6 +152,7 @@ export class SnoozeNotification {
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.IN_APP,
       _id: command.notificationId,
+      contextKeys: command.contextKeys,
     });
 
     if (!message) {
@@ -196,6 +197,7 @@ export class SnoozeNotification {
         subscriberId: command.subscriberId,
         notificationId: command.notificationId,
         snoozedUntil: command.snoozeUntil,
+        contextKeys: command.contextKeys,
       })
     );
   }

@@ -9,12 +9,14 @@ export function parseJsonValue(value: string): ParsedData {
       payload: parsed.payload || {},
       subscriber: parsed.subscriber || {},
       steps: parsed.steps || {},
+      context: parsed.context || {},
     };
   } catch {
     return {
       payload: {},
       subscriber: {},
       steps: {},
+      context: {},
     };
   }
 }
@@ -29,7 +31,7 @@ export function createSubscriberData(subscriber: ISubscriberResponseDto): Previe
     avatar: subscriber.avatar || '',
     locale: subscriber.locale || DEFAULT_LOCALE,
     timezone: subscriber.timezone || '',
-    data: {},
+    data: subscriber.data || {},
   };
 }
 

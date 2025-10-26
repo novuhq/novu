@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ExternalToast } from 'sonner';
 import { deleteTopic } from '@/api/topics';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
 const toastOptions: ExternalToast = {
@@ -18,12 +18,10 @@ export const useDeleteTopic = () => {
 
   const { mutate, isPending } = useMutation({
     mutationFn: (topicKey: string) => {
-      if (!currentEnvironment) {
-        throw new Error('No environment selected');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
 
       return deleteTopic({
-        environment: currentEnvironment,
+        environment,
         topicKey,
       });
     },

@@ -219,6 +219,13 @@ function isPropertyAllowed(schema: JSONSchemaDto | undefined, propertyPath: stri
       return true;
     }
 
+    // Check if additionalProperties is a schema object (for complex schemas)
+    if (typeof additionalProperties === 'object' && additionalProperties !== null) {
+      // Set the current schema to the additionalProperties schema and continue validation
+      currentSchema = additionalProperties as JSONSchemaDto;
+      continue;
+    }
+
     return false;
   }
 
@@ -538,8 +545,8 @@ function processTagToken({
       });
     }
   } else if (template instanceof AssignTag) {
-    // Extract assigned variable from token content: {% assign myVar = value %}
-    const assignMatch = output.match(/^\s*{%\s*assign\s+(\w+)\s*=\s*(.+?)\s*%}/);
+    // Extract assigned variable from token content: {% assign myVar = value %} or {%- assign myVar = value -%}
+    const assignMatch = output.match(/^\s*{%-?\s*assign\s+(\w+)\s*=\s*(.+?)\s*-?%}/);
     if (assignMatch) {
       const [, assignedVariable, valueExpression] = assignMatch;
 
@@ -781,7 +788,7 @@ function extractVariablesFromCondition(condition: string): string[] {
   processedCondition = processedCondition.replace(/\|\s*[a-zA-Z_][a-zA-Z0-9_]*(?:\s*:[^|%}]*)?/g, '');
 
   // Now match variable patterns from the processed condition
-  const variableMatches = processedCondition.match(/[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:\[\d+\])*/g);
+  const variableMatches = processedCondition.match(/[a-zA-Z_][a-zA-Z0-9_[\].-]+/g);
 
   if (variableMatches) {
     variables.push(

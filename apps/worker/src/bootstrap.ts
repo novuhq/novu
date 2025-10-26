@@ -74,7 +74,7 @@ export async function bootstrap(): Promise<INestApplication> {
     process.exit(1);
   }
 
-  await app.listen(process.env.PORT);
+  await app.listen(process.env.PORT!);
 
   Logger.log(`[@novu/worker]: Listening for NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 

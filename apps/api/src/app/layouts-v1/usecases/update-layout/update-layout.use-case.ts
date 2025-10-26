@@ -120,6 +120,7 @@ export class UpdateLayoutUseCase {
         dataSchema: layout.controls?.schema,
         uiSchema: layout.controls?.uiSchema,
       },
+      isTranslationEnabled: layout.isTranslationEnabled,
     };
   }
 
@@ -135,6 +136,7 @@ export class UpdateLayoutUseCase {
         schema: layout.controls?.dataSchema ?? layoutControlSchema,
         uiSchema: layout.controls?.uiSchema,
       },
+      isTranslationEnabled: layout.isTranslationEnabled,
     };
   }
 }

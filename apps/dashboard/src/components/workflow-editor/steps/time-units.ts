@@ -26,3 +26,19 @@ export const TIME_UNIT_OPTIONS: Array<{ label: string; value: TimeUnitEnum }> = 
     value: TimeUnitEnum.MONTHS,
   },
 ];
+
+// Throttle-specific time units (excluding seconds for performance reasons)
+export const THROTTLE_TIME_UNIT_OPTIONS: Array<{ label: string; value: TimeUnitEnum }> = [
+  {
+    label: 'minute(s)',
+    value: TimeUnitEnum.MINUTES,
+  },
+  {
+    label: 'hour(s)',
+    value: TimeUnitEnum.HOURS,
+  },
+  {
+    label: 'day(s)',
+    value: TimeUnitEnum.DAYS,
+  },
+];

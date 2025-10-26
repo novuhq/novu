@@ -10,12 +10,13 @@ import { DefaultPreferences } from './DefaultPreferences';
 import { GroupedPreferences } from './GroupedPreferences';
 import { PreferencesListSkeleton } from './PreferencesListSkeleton';
 import { PreferencesRow } from './PreferencesRow';
+import { ScheduleRow } from './ScheduleRow';
 
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
   const novu = useNovu();
   const style = useStyle();
-  const { preferencesFilter, preferenceGroups } = useInboxContext();
+  const { preferencesFilter, preferenceGroups, preferencesSort } = useInboxContext();
 
   const { preferences, loading } = usePreferences({
     tags: preferencesFilter()?.tags,
@@ -24,8 +25,12 @@ export const Preferences = () => {
   });
 
   const allPreferences = createMemo(() => {
-    const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL)!;
-    const workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
+    const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
+    let workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
+
+    if (workflowPreferences && preferencesSort()) {
+      workflowPreferences = [...workflowPreferences].sort(preferencesSort());
+    }
 
     return { globalPreference, workflowPreferences };
   });
@@ -35,7 +40,9 @@ export const Preferences = () => {
     setDynamicLocalization((prev) => ({
       ...prev,
       ...allPreferences().workflowPreferences?.reduce<Record<string, string>>((acc, preference) => {
-        acc[preference.workflow!.identifier] = preference.workflow!.name;
+        if (preference.workflow?.identifier && preference.workflow?.name) {
+          acc[preference.workflow.identifier] = preference.workflow.name;
+        }
 
         return acc;
       }, {}),
@@ -78,19 +85,25 @@ export const Preferences = () => {
         }
 
         if (typeof filter === 'object') {
+          let filteredPreferences = workflowPreferences.filter((preference) => {
+            const workflowId = preference.workflow?.id || preference.workflow?.identifier;
+
+            return (
+              filter.workflowIds?.includes(workflowId ?? '') ||
+              filter.tags?.some((tag) => preference.workflow?.tags?.includes(tag)) ||
+              (Array.isArray(filter.severity) &&
+                filter.severity.some((severity) => preference.workflow?.severity === severity)) ||
+              (!Array.isArray(filter.severity) && filter.severity === preference.workflow?.severity)
+            );
+          });
+
+          if (preferencesSort()) {
+            filteredPreferences = [...filteredPreferences].sort(preferencesSort());
+          }
+
           return {
             name: group.name,
-            preferences: workflowPreferences.filter((preference) => {
-              const workflowId = preference.workflow?.id || preference.workflow?.identifier;
-
-              return (
-                filter.workflowIds?.includes(workflowId ?? '') ||
-                filter.tags?.some((tag) => preference.workflow?.tags?.includes(tag)) ||
-                (Array.isArray(filter.severity) &&
-                  filter.severity.some((severity) => preference.workflow?.severity === severity)) ||
-                (!Array.isArray(filter.severity) && filter.severity === preference.workflow?.severity)
-              );
-            }),
+            preferences: filteredPreferences,
           };
         }
 
@@ -107,17 +120,22 @@ export const Preferences = () => {
       class={style({
         key: 'preferencesContainer',
         className:
-          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
+          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-2 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
         context: { preferences: preferences(), groups: groupedPreferences() } satisfies Parameters<
           AppearanceCallback['preferencesContainer']
         >[0],
       })}
     >
-      <PreferencesRow
-        iconKey="cogs"
-        preference={allPreferences().globalPreference}
-        onChange={() => updatePreference(allPreferences().globalPreference)}
-      />
+      <Show when={allPreferences().globalPreference}>
+        <PreferencesRow
+          iconKey="cogs"
+          preference={allPreferences().globalPreference!}
+          onChange={() => updatePreference(allPreferences().globalPreference)}
+        />
+      </Show>
+      <Show when={allPreferences().globalPreference}>
+        <ScheduleRow globalPreference={allPreferences().globalPreference} />
+      </Show>
       <Show
         when={groupedPreferences().length > 0}
         fallback={

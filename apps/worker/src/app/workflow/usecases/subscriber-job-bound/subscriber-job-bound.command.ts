@@ -9,7 +9,7 @@ import {
   TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
-import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -37,6 +37,11 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   actor?: SubscriberEntity;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 
   @IsDefined()
   @IsMongoId()

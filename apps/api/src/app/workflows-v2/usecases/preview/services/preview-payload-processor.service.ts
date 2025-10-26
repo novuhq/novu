@@ -22,9 +22,13 @@ export class PreviewPayloadProcessorService {
       reorderedPayload.subscriber = cleanedPayloadExample.subscriber;
     }
 
+    if (cleanedPayloadExample.context !== undefined) {
+      reorderedPayload.context = cleanedPayloadExample.context;
+    }
+
     // Add remaining keys
     Object.keys(cleanedPayloadExample).forEach((key) => {
-      if (key !== 'payload' && key !== 'subscriber') {
+      if (key !== 'payload' && key !== 'subscriber' && key !== 'context') {
         reorderedPayload[key] = cleanedPayloadExample[key];
       }
     });

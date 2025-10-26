@@ -1,16 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { LayoutDto, PinoLogger } from '@novu/application-generic';
+import { LocalizationResourceEnum, NotificationTemplateEntity, OrganizationEntity } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { FullPayloadForRender } from './render-command';
 
 @Injectable()
 export abstract class BaseTranslationRendererUsecase {
   constructor(
     protected moduleRef: ModuleRef,
-    protected logger: PinoLogger,
-    protected featureFlagsService: FeatureFlagsService
+    protected logger: PinoLogger
   ) {}
 
   protected async processTranslations({
@@ -18,19 +17,23 @@ export abstract class BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
+    resourceEntity,
+    organization,
   }: {
     controls: Record<string, unknown>;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
+    resourceEntity?: NotificationTemplateEntity | LayoutDto;
+    organization?: OrganizationEntity;
   }): Promise<Record<string, unknown>> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
-
-    if (!isTranslationEnabled) {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
       return controls;
     }
 
@@ -39,8 +42,11 @@ export abstract class BaseTranslationRendererUsecase {
       variables,
       environmentId,
       organizationId,
-      workflowId,
+      resourceId,
+      resourceType,
       locale,
+      resourceEntity,
+      organization,
     }) as Promise<Record<string, unknown>>;
   }
 
@@ -49,19 +55,21 @@ export abstract class BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
+    organization,
   }: {
     content: string;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<string> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
-
-    if (!isTranslationEnabled) {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
       return content;
     }
 
@@ -70,17 +78,11 @@ export abstract class BaseTranslationRendererUsecase {
       variables,
       environmentId,
       organizationId,
-      workflowId,
+      resourceId,
+      resourceType,
       locale,
+      organization,
     }) as Promise<string>;
-  }
-
-  private async isTranslationFeatureEnabled(organizationId: string): Promise<boolean> {
-    return await this.featureFlagsService.getFlag({
-      organization: { _id: organizationId },
-      key: FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED,
-      defaultValue: false,
-    });
   }
 
   private async executeTranslation({
@@ -88,34 +90,43 @@ export abstract class BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
+    resourceEntity,
+    organization,
   }: {
     content: string | Record<string, unknown>;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
+    resourceEntity?: NotificationTemplateEntity | LayoutDto;
+    organization?: OrganizationEntity;
   }): Promise<string | Record<string, unknown>> {
-    if (!workflowId) {
+    if (!resourceId) {
+      this.logger.warn('Resource ID is required for translation module', {
+        resourceId,
+        resourceType,
+        organizationId,
+        environmentId,
+        locale,
+      });
+
       return content;
     }
 
     try {
       const translate = this.getTranslationModule();
 
-      if (!translate) {
-        this.logger.debug('Translation module not available, skipping translation');
-
-        return content;
-      }
-
       const contentString = typeof content === 'string' ? content : JSON.stringify(content);
       const liquidEngine = createLiquidEngine();
 
       const translatedContent = await translate.execute({
-        workflowIdOrInternalId: workflowId,
+        resourceId,
+        resourceType,
         organizationId,
         environmentId,
         userId: 'system',
@@ -123,23 +134,43 @@ export abstract class BaseTranslationRendererUsecase {
         content: contentString,
         payload: variables,
         liquidEngine,
+        resourceEntity,
+        organization,
       });
 
       return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);
     } catch (error) {
-      this.logger.error('Translation processing failed, falling back to original content', error);
+      this.logger.error('Translation processing failed', {
+        error: error?.message || error,
+        resourceId,
+        resourceType,
+        organizationId,
+        environmentId,
+        locale,
+        stack: error?.stack,
+      });
 
-      return content;
+      throw new InternalServerErrorException(
+        `Translation processing failed for resource ${resourceId}: ${error?.message || String(error)}`
+      );
     }
   }
 
   private getTranslationModule() {
     try {
-      return this.moduleRef.get(require('@novu/ee-translation')?.Translate, { strict: false });
-    } catch (error) {
-      this.logger.debug('Translation module not found', error);
+      const translationModule = require('@novu/ee-translation')?.Translate;
+      if (!translationModule) {
+        throw new Error('Translation module (@novu/ee-translation) not found or Translate class not exported');
+      }
 
-      return null;
+      return this.moduleRef.get(translationModule, { strict: false });
+    } catch (error) {
+      this.logger.error('Translation module loading failed', {
+        error: error?.message || error,
+        stack: error?.stack,
+      });
+
+      throw new InternalServerErrorException(`Unable to load Translation module: ${error?.message || String(error)}`);
     }
   }
 }

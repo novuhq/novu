@@ -55,4 +55,9 @@ export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
   @IsString({ each: true })
   @IsIn(Object.values(SeverityLevelEnum), { each: true })
   severity?: SeverityLevelEnum[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 }

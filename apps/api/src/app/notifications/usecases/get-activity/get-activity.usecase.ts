@@ -46,6 +46,7 @@ const workflowRunSelectColumns = [
   'subscriber_to',
   'payload',
   'topics',
+  'context_keys',
   'created_at',
   'updated_at',
 ] as const;
@@ -58,6 +59,7 @@ const stepRunSelectColumns = [
   'status',
   'created_at',
   'updated_at',
+  'schedule_extensions_count',
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
@@ -80,29 +82,29 @@ export class GetActivity {
       _organization: command.organizationId,
     });
 
-    const tracesEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_READ_ENABLED,
-      defaultValue: false,
+    const flagContext = {
       organization: { _id: command.organizationId },
       user: { _id: command.userId },
       environment: { _id: command.environmentId },
-    });
+    } as const;
 
-    const stepRunsEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_READ_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-      user: { _id: command.userId },
-      environment: { _id: command.environmentId },
-    });
-
-    const workflowRunsEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_LOGS_READ_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-      user: { _id: command.userId },
-      environment: { _id: command.environmentId },
-    });
+    const [tracesEnabled, stepRunsEnabled, workflowRunsEnabled] = await Promise.all([
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_READ_ENABLED,
+        defaultValue: false,
+        ...flagContext,
+      }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_READ_ENABLED,
+        defaultValue: false,
+        ...flagContext,
+      }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_LOGS_READ_ENABLED,
+        defaultValue: false,
+        ...flagContext,
+      }),
+    ]);
 
     this.logger.debug('feature flags', {
       tracesEnabled,
@@ -336,6 +338,7 @@ export class GetActivity {
         jobs: [],
         to: mostRecentWorkflowRun.subscriber_to ? JSON.parse(mostRecentWorkflowRun.subscriber_to) : {},
         payload: mostRecentWorkflowRun.payload ? JSON.parse(mostRecentWorkflowRun.payload) : {},
+        contextKeys: mostRecentWorkflowRun.context_keys,
         createdAt: new Date(mostRecentWorkflowRun.created_at).toISOString(),
         updatedAt: new Date(mostRecentWorkflowRun.updated_at).toISOString(),
         channels: mostRecentWorkflowRun.channels ? JSON.parse(mostRecentWorkflowRun.channels) : [],
@@ -442,6 +445,7 @@ function mapStepRunToJob(
     updatedAt: new Date(stepRun.updated_at).toISOString(),
     digest: undefined, // Step runs don't have digest info
     executionDetails,
+    scheduleExtensionsCount: stepRun.schedule_extensions_count,
   };
 
   return jobDto;

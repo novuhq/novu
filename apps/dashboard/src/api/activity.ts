@@ -10,6 +10,7 @@ export type ActivityFilters = {
   dateRange?: string;
   topicKey?: string;
   severity?: SeverityLevelEnum[];
+  contextKeys?: string;
 };
 
 export interface ActivityResponse {
@@ -30,6 +31,7 @@ export interface StepRunDto {
   updatedAt: Date;
   executionDetails: any[];
   digest?: any;
+  scheduleExtensionsCount?: number;
 }
 
 export interface GetWorkflowRunsDto {
@@ -49,6 +51,7 @@ export interface GetWorkflowRunsDto {
   steps: StepRunDto[];
   severity: SeverityLevelEnum;
   critical: boolean;
+  contextKeys?: string[];
 }
 
 export type GetWorkflowRunResponse = GetWorkflowRunsDto & {
@@ -79,6 +82,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
     tags: [], // Not available in workflow runs, empty array for compatibility
     createdAt: workflowRun.createdAt,
     updatedAt: workflowRun.updatedAt,
+    contextKeys: workflowRun.contextKeys || [],
     template: {
       _id: workflowRun.workflowId,
       name: workflowRun.workflowName,
@@ -148,6 +152,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
       transactionId: workflowRun.transactionId,
       createdAt: workflowRun.createdAt,
       updatedAt: workflowRun.updatedAt,
+      scheduleExtensionsCount: step.scheduleExtensionsCount,
     })),
   };
 }
@@ -225,6 +230,21 @@ export function getActivityList({
 
   if (filters?.topicKey) {
     searchParams.append('topicKey', filters.topicKey);
+  }
+
+  if (filters?.contextKeys) {
+    const contextKeys = filters.contextKeys
+      .split(',')
+      .map((key) => key.trim())
+      .filter(Boolean);
+
+    if (contextKeys.length > 1) {
+      for (const key of contextKeys) {
+        searchParams.append('contextKeys', key);
+      }
+    } else if (contextKeys.length === 1) {
+      searchParams.append('contextKeys', contextKeys[0]);
+    }
   }
 
   if (filters?.dateRange) {
@@ -324,6 +344,21 @@ export async function getWorkflowRunsList({
   if (filters?.severity?.length) {
     for (const severity of filters.severity) {
       searchParams.append('severity', severity);
+    }
+  }
+
+  if (filters?.contextKeys) {
+    const contextKeys = filters.contextKeys
+      .split(',')
+      .map((key) => key.trim())
+      .filter(Boolean);
+
+    if (contextKeys.length > 1) {
+      for (const key of contextKeys) {
+        searchParams.append('contextKeys', key);
+      }
+    } else if (contextKeys.length === 1) {
+      searchParams.append('contextKeys', contextKeys[0]);
     }
   }
 

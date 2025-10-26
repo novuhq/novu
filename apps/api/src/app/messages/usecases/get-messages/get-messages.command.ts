@@ -9,6 +9,11 @@ export class GetMessagesCommand extends EnvironmentCommand {
   @IsOptional()
   channel?: ChannelTypeEnum;
 
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
+
   @IsNumber()
   page = 0;
 

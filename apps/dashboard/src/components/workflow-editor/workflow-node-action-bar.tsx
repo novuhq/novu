@@ -22,7 +22,7 @@ type WorkflowNodeActionBarProps = {
   onRemoveClick: () => void;
   onEditContentClick: () => void;
   onCopyClick: () => void;
-  isReadOnly: boolean;
+  isReadOnly?: boolean;
 };
 
 export const WorkflowNodeActionBar = ({

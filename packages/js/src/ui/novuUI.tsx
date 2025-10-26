@@ -10,6 +10,7 @@ import type {
   NovuProviderProps,
   PreferenceGroups,
   PreferencesFilter,
+  PreferencesSort,
   RouterPush,
   Tab,
 } from './types';
@@ -37,6 +38,8 @@ export class NovuUI {
   #setPreferencesFilter: Setter<PreferencesFilter | undefined>;
   #preferenceGroups: Accessor<PreferenceGroups | undefined>;
   #setPreferenceGroups: Setter<PreferenceGroups | undefined>;
+  #preferencesSort: Accessor<PreferencesSort | undefined>;
+  #setPreferencesSort: Setter<PreferencesSort | undefined>;
   #predefinedNovu;
   id: string;
 
@@ -49,6 +52,7 @@ export class NovuUI {
     const [tabs, setTabs] = createSignal(props.tabs ?? []);
     const [preferencesFilter, setPreferencesFilter] = createSignal(props.preferencesFilter);
     const [preferenceGroups, setPreferenceGroups] = createSignal(props.preferenceGroups);
+    const [preferencesSort, setPreferencesSort] = createSignal(props.preferencesSort);
     const [routerPush, setRouterPush] = createSignal(props.routerPush);
     const [container, setContainer] = createSignal(this.#getContainerElement(props.container));
     this.#mountedElements = mountedElements;
@@ -68,6 +72,8 @@ export class NovuUI {
     this.#setPreferencesFilter = setPreferencesFilter;
     this.#preferenceGroups = preferenceGroups;
     this.#setPreferenceGroups = setPreferenceGroups;
+    this.#preferencesSort = preferencesSort;
+    this.#setPreferencesSort = setPreferencesSort;
     this.#container = container;
     this.#setContainer = setContainer;
 
@@ -108,6 +114,7 @@ export class NovuUI {
           tabs={this.#tabs()}
           preferencesFilter={this.#preferencesFilter()}
           preferenceGroups={this.#preferenceGroups()}
+          preferencesSort={this.#preferencesSort()}
           routerPush={this.#routerPush()}
           novu={this.#predefinedNovu}
           container={this.#container()}
@@ -183,6 +190,10 @@ export class NovuUI {
 
   updatePreferenceGroups(preferenceGroups?: PreferenceGroups) {
     this.#setPreferenceGroups(preferenceGroups);
+  }
+
+  updatePreferencesSort(preferencesSort?: PreferencesSort) {
+    this.#setPreferencesSort(() => preferencesSort);
   }
 
   updateRouterPush(routerPush?: RouterPush) {

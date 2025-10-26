@@ -380,15 +380,8 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
 
   describe('Localization Group Diff Tests', () => {
     beforeEach(async () => {
-      // Enable translation feature for testing
-      (process.env as any).IS_TRANSLATION_ENABLED = 'true';
       // Set organization service level to business to avoid payment required errors
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
-    });
-
-    afterEach(() => {
-      // Disable translation feature after each test
-      (process.env as any).IS_TRANSLATION_ENABLED = 'false';
     });
 
     it('should detect localization group modifications when translation content changes', async () => {

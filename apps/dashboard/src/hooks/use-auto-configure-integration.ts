@@ -2,7 +2,7 @@ import { IIntegration } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AutoConfigureIntegrationResponse, autoConfigureIntegration } from '../api/integrations';
 import { showErrorToast, showSuccessToast } from '../components/primitives/sonner-helpers';
-import { useEnvironment } from '../context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '../context/environment/hooks';
 import { QueryKeys } from '../utils/query-keys';
 
 type AutoConfigureIntegrationVariables = {
@@ -15,10 +15,8 @@ export function useAutoConfigureIntegration() {
 
   return useMutation<AutoConfigureIntegrationResponse, Error, AutoConfigureIntegrationVariables>({
     mutationFn: async ({ integrationId }) => {
-      if (!currentEnvironment) {
-        throw new Error('No environment available');
-      }
-      return autoConfigureIntegration(integrationId, currentEnvironment);
+      const environment = requireEnvironment(currentEnvironment, 'No environment available');
+      return autoConfigureIntegration(integrationId, environment);
     },
     onSuccess: (data) => {
       if (data.success) {

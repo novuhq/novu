@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsService } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { createMockObjectFromSchema, ResourceOriginEnum, UserSessionData } from '@novu/shared';
-import _ from 'lodash';
+import { ContextResolved } from '@novu/framework/internal';
+import { ContextPayload, createMockObjectFromSchema, ResourceOriginEnum, UserSessionData } from '@novu/shared';
+import { isPlainObject, pick } from 'es-toolkit';
+import { keys, merge, mergeWith } from 'es-toolkit/compat';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
 import { mergeCommonObjectKeys } from '../../../util/utils';
@@ -12,7 +13,6 @@ import { MockDataGeneratorService } from './mock-data-generator.service';
 @Injectable()
 export class PayloadMergerService {
   constructor(
-    private readonly featureFlagService: FeatureFlagsService,
     private readonly mockDataGenerator: MockDataGeneratorService,
     private readonly buildStepDataUsecase: BuildStepDataUsecase
   ) {}
@@ -87,7 +87,7 @@ export class PayloadMergerService {
       });
     }
 
-    let mergedPayload = _.merge({}, schemaBasedPayloadExample);
+    let mergedPayload = merge({}, schemaBasedPayloadExample);
 
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
       // Filter userPayloadExample to only include keys that exist in schemaBasedPayloadExample
@@ -96,7 +96,7 @@ export class PayloadMergerService {
         schemaBasedPayloadExample
       );
 
-      mergedPayload = _.mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
+      mergedPayload = mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
         if (Array.isArray(srcValue)) {
           return srcValue;
         }
@@ -109,7 +109,9 @@ export class PayloadMergerService {
     // Preserve user-provided subscriber data even if it was filtered out earlier
     const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
-    mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
+    mergedPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
+
+    mergedPayload.context = this.resolveContext(userPayloadExample?.context);
 
     if (workflow && stepIdOrInternalId) {
       /*
@@ -128,7 +130,7 @@ export class PayloadMergerService {
        * Merge with priority: user steps > payloadExample steps > generated mock steps
        * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
        */
-      mergedPayload.steps = _.mergeWith(
+      mergedPayload.steps = mergeWith(
         {},
         generatedStepsObject,
         stepsFromPayloadExample,
@@ -145,6 +147,27 @@ export class PayloadMergerService {
     }
 
     return mergedPayload;
+  }
+
+  /**
+   * Convert ContextPayload to ContextResolved without upserting actual db entities
+   * just for the preview purposes
+   */
+  private resolveContext(contextPayload?: ContextPayload): ContextResolved | undefined {
+    if (!contextPayload) return undefined;
+
+    const resolved: ContextResolved = {};
+
+    for (const [contextType, contextValue] of Object.entries(contextPayload)) {
+      if (!contextValue) continue;
+
+      resolved[contextType] =
+        typeof contextValue === 'string'
+          ? { id: contextValue, data: {} }
+          : { id: contextValue.id, data: contextValue.data || {} };
+    }
+
+    return Object.keys(resolved).length > 0 ? resolved : undefined;
   }
 
   private async mergeWithoutPayloadSchema({
@@ -175,7 +198,9 @@ export class PayloadMergerService {
     // Preserve user-provided subscriber data even if it was filtered out earlier
     const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
-    finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
+    finalPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
+
+    finalPayload.context = this.resolveContext(userPayloadExample?.context);
 
     if (workflow && stepIdOrInternalId) {
       /*
@@ -194,7 +219,7 @@ export class PayloadMergerService {
        * Merge with priority: user steps > payloadExample steps > generated mock steps
        * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
        */
-      finalPayload.steps = _.mergeWith(
+      finalPayload.steps = mergeWith(
         {},
         generatedStepsObject,
         stepsFromPayloadExample,
@@ -292,11 +317,11 @@ export class PayloadMergerService {
     schemaPayload: Record<string, unknown>
   ): Record<string, unknown> {
     // Use lodash pick to only include keys that exist in the schema
-    const filtered = _.pick(userPayload, _.keys(schemaPayload));
+    const filtered = pick(userPayload, keys(schemaPayload));
 
     // Recursively filter nested objects and arrays
     for (const [key, value] of Object.entries(filtered)) {
-      if (_.isPlainObject(value) && _.isPlainObject(schemaPayload[key])) {
+      if (isPlainObject(value) && isPlainObject(schemaPayload[key])) {
         filtered[key] = this.filterPayloadBySchema(
           value as Record<string, unknown>,
           schemaPayload[key] as Record<string, unknown>
@@ -304,11 +329,11 @@ export class PayloadMergerService {
       } else if (Array.isArray(value) && Array.isArray(schemaPayload[key])) {
         // Handle arrays by filtering each element
         filtered[key] = value.map((item) => {
-          if (_.isPlainObject(item) && schemaPayload[key] && Array.isArray(schemaPayload[key])) {
+          if (isPlainObject(item) && schemaPayload[key] && Array.isArray(schemaPayload[key])) {
             const schemaArray = schemaPayload[key] as unknown[];
             // Use the first element of the schema array as the template for filtering
             const schemaTemplate =
-              schemaArray.length > 0 && _.isPlainObject(schemaArray[0])
+              schemaArray.length > 0 && isPlainObject(schemaArray[0])
                 ? (schemaArray[0] as Record<string, unknown>)
                 : {};
 

@@ -64,10 +64,12 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       accessKey: Schema.Types.String,
       appSid: Schema.Types.String,
       senderId: Schema.Types.String,
+      servicePlanId: Schema.Types.String,
     },
     configurations: {
       inboundWebhookEnabled: Schema.Types.Boolean,
       inboundWebhookSigningKey: Schema.Types.String,
+      configurationSetName: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,

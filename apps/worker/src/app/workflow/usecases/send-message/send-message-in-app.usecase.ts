@@ -209,7 +209,7 @@ export class SendMessageInApp extends SendMessageBase {
     const bridgeOutputs = command.bridgeData?.outputs as InAppOutput;
     const inAppMessage = inAppMessageFromBridgeOutputs(bridgeOutputs);
 
-    const channelData: Partial<
+    const additionalFields: Partial<
       Pick<MessageEntity, 'content' | 'subject' | 'avatar' | 'payload' | 'cta' | 'tags' | 'data' | 'severity'>
     > = {
       content: (this.storeContent() ? inAppMessage.content || content : null) as string,
@@ -224,6 +224,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
+        deliveredAt: [new Date()],
         _notificationId: command.notificationId,
         _organizationId: command.organizationId,
         _environmentId: command.environmentId,
@@ -236,12 +237,13 @@ export class SendMessageInApp extends SendMessageBase {
         _feedId: step.template._feedId,
         channel: ChannelTypeEnum.IN_APP,
         _jobId: command.jobId,
+        ...(command.contextKeys && { contextKeys: command.contextKeys }),
         ...(actor &&
           actor.type !== ActorTypeEnum.NONE && {
             actor,
             _actorId: command.job?._actorId,
           }),
-        ...channelData,
+        ...additionalFields,
       });
     }
 
@@ -253,7 +255,7 @@ export class SendMessageInApp extends SendMessageBase {
             seen: false,
             createdAt: new Date(),
             updatedAt: new Date(),
-            ...channelData,
+            ...additionalFields,
           },
         },
         {
@@ -284,6 +286,7 @@ export class SendMessageInApp extends SendMessageBase {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
+        contextKeys: command.contextKeys,
         payload: {
           messageId: message._id,
         },

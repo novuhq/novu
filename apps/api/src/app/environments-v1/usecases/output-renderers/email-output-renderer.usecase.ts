@@ -6,21 +6,27 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   EmailControlType,
-  FeatureFlagsService,
   InstrumentUsecase,
   LayoutControlType,
   PinoLogger,
   sanitizeHTML,
 } from '@novu/application-generic';
-import { ControlValuesEntity, ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
+import {
+  ControlValuesEntity,
+  ControlValuesRepository,
+  JobEntity,
+  JobRepository,
+  LocalizationResourceEnum,
+  OrganizationEntity,
+} from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
   EmailRenderOutput,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
   LAYOUT_CONTENT_VARIABLE,
+  LAYOUT_PREVIEW_EMAIL_STEP,
 } from '@novu/shared';
 import { Liquid } from 'liquidjs';
 import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
@@ -52,6 +58,7 @@ export class EmailOutputRendererCommand extends RenderCommand {
   skipLayoutRendering?: boolean;
   jobId?: string;
   stepId: string;
+  layoutId?: string;
 }
 
 function isJsonString(str: string): boolean {
@@ -72,13 +79,12 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     private getOrganizationSettings: GetOrganizationSettings,
     protected moduleRef: ModuleRef,
     protected logger: PinoLogger,
-    protected featureFlagsService: FeatureFlagsService,
     private controlValuesRepository: ControlValuesRepository,
     private getLayoutUseCase: GetLayoutUseCase,
     private jobRepository: JobRepository,
     private createExecutionDetails: CreateExecutionDetails
   ) {
-    super(moduleRef, logger, featureFlagsService);
+    super(moduleRef, logger);
     this.liquidEngine = createLiquidEngine();
   }
 
@@ -88,7 +94,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       body,
       subject: controlSubject,
       disableOutputSanitization,
-      layoutId,
+      layoutId: stepLayoutId,
     } = renderCommand.controlValues as EmailControlType;
 
     if (!body || typeof body !== 'string') {
@@ -113,6 +119,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       skipLayoutRendering,
       jobId,
       stepId,
+      layoutId: layoutIdForPreview,
+      organization,
     } = renderCommand;
 
     // Step 1: Apply translations to subject (already liquid-interpolated)
@@ -122,13 +130,14 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       environmentId,
       organizationId,
       workflowId,
-      locale
+      locale,
+      organization
     );
 
     // Step 2: Process body content (with translations applied before rendering)
     const renderedHtml = await this.renderWithLayout({
       body,
-      layoutId,
+      stepLayoutId,
       payload: fullPayloadForRender,
       environmentId,
       organizationId,
@@ -137,6 +146,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       skipLayoutRendering,
       jobId,
       stepId,
+      organization,
+      layoutIdForPreview,
     });
 
     // Step 3: Add Novu branding
@@ -197,7 +208,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
   private async renderWithLayout({
     body,
-    layoutId: controlValueLayoutId,
+    stepLayoutId,
     payload,
     environmentId,
     organizationId,
@@ -206,9 +217,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     skipLayoutRendering,
     jobId,
     stepId,
+    organization,
+    layoutIdForPreview,
   }: {
     body: string;
-    layoutId?: string | null;
+    stepLayoutId?: string | null;
     payload: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
@@ -217,6 +230,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     skipLayoutRendering?: boolean;
     jobId?: string;
     stepId: string;
+    organization?: OrganizationEntity;
+    layoutIdForPreview?: string;
   }): Promise<string> {
     let job: JobEntity | null = null;
     let overrideLayoutId: string | null | undefined;
@@ -230,15 +245,15 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       }
     }
 
-    const layoutId = overrideLayoutId || (overrideLayoutId === null ? null : controlValueLayoutId);
+    const overriddenStepLayoutId = overrideLayoutId || (overrideLayoutId === null ? null : stepLayoutId);
 
     let layoutControlsEntity: ControlValuesEntity | null = null;
     // if the step control values have a layoutId then find layout controls entity
-    if (layoutId) {
+    if (overriddenStepLayoutId) {
       try {
         const layout = await this.getLayoutUseCase.execute(
           GetLayoutCommand.create({
-            layoutIdOrInternalId: layoutId,
+            layoutIdOrInternalId: overriddenStepLayoutId,
             environmentId,
             organizationId,
             skipAdditionalFields: true,
@@ -279,7 +294,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
                 isTest: false,
                 isRetry: false,
                 raw: JSON.stringify({
-                  layoutId,
+                  layoutId: overriddenStepLayoutId,
                   error: error.message,
                 }),
               })
@@ -292,14 +307,17 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       }
     }
 
+    const isLayoutRendering = stepId === LAYOUT_PREVIEW_EMAIL_STEP && !!layoutIdForPreview;
     const stepBodyHtml = await this.processBodyContent({
       body,
       payload,
       environmentId,
       organizationId,
-      workflowId,
+      resourceId: isLayoutRendering ? layoutIdForPreview : workflowId,
+      resourceType: isLayoutRendering ? LocalizationResourceEnum.LAYOUT : LocalizationResourceEnum.WORKFLOW,
       locale,
       noHtmlWrappingTags: !!layoutControlsEntity,
+      organization,
     });
 
     const cleanedStepBodyHtml = stepBodyHtml
@@ -308,7 +326,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       .replace(/<!--\/\$-->/g, '')
       .replace(/<!--[\s\S]*?-->/g, '');
 
-    if (!layoutControlsEntity || skipLayoutRendering) {
+    if (!layoutControlsEntity || skipLayoutRendering || isLayoutRendering) {
       return cleanedStepBodyHtml;
     }
 
@@ -322,7 +340,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       },
       environmentId,
       organizationId,
-      workflowId,
+      resourceId: overriddenStepLayoutId ?? undefined,
+      resourceType: LocalizationResourceEnum.LAYOUT,
       locale,
     });
   }
@@ -349,17 +368,21 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     payload,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
     noHtmlWrappingTags,
+    organization,
   }: {
     body: string;
     payload: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
     noHtmlWrappingTags?: boolean;
+    organization?: OrganizationEntity;
   }): Promise<string> {
     if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
       const escapedPayloadForJson = this.deepEscapePayloadStrings(payload);
@@ -370,8 +393,10 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         variables: escapedPayloadForJson,
         environmentId,
         organizationId,
-        workflowId,
+        resourceId,
+        resourceType,
         locale,
+        organization,
       });
       const parsedMaily = await this.parseMailyContentByLiquid(translatedMaily, escapedPayloadForJson);
 
@@ -383,8 +408,10 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         variables: payload,
         environmentId,
         organizationId,
-        workflowId,
+        resourceId,
+        resourceType,
         locale,
+        organization,
       });
 
       return processedHtml;
@@ -397,15 +424,18 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     environmentId: string,
     organizationId: string,
     workflowId?: string,
-    locale?: string
+    locale?: string,
+    organization?: OrganizationEntity
   ): Promise<string> {
     return this.processStringTranslations({
       content: subject,
       variables,
       environmentId,
       organizationId,
-      workflowId,
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
       locale,
+      organization,
     });
   }
 
@@ -414,33 +444,33 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
+    organization,
   }: {
     mailyContent: MailyJSONContent;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<MailyJSONContent> {
-    try {
-      const contentString = JSON.stringify(mailyContent);
-      const translatedContent = await this.processStringTranslations({
-        content: contentString,
-        variables,
-        environmentId,
-        organizationId,
-        workflowId,
-        locale,
-      });
+    const contentString = JSON.stringify(mailyContent);
+    const translatedContent = await this.processStringTranslations({
+      content: contentString,
+      variables,
+      environmentId,
+      organizationId,
+      resourceId,
+      resourceType,
+      locale,
+      organization,
+    });
 
-      return JSON.parse(translatedContent);
-    } catch (error) {
-      this.logger.error('Maily translation processing failed, falling back to original content', error);
-
-      return mailyContent;
-    }
+    return JSON.parse(translatedContent);
   }
 
   private async processTextTranslations({
@@ -448,32 +478,32 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
+    organization,
   }: {
     text: string;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<string> {
-    try {
-      const translatedText = await this.processStringTranslations({
-        content: text,
-        variables,
-        environmentId,
-        organizationId,
-        workflowId,
-        locale,
-      });
+    const translatedText = await this.processStringTranslations({
+      content: text,
+      variables,
+      environmentId,
+      organizationId,
+      resourceId,
+      resourceType,
+      locale,
+      organization,
+    });
 
-      return await this.liquidEngine.parseAndRender(translatedText, variables);
-    } catch (error) {
-      this.logger.error('Text translation processing failed, falling back to liquid processing', error);
-
-      return await this.liquidEngine.parseAndRender(text, variables);
-    }
+    return await this.liquidEngine.parseAndRender(translatedText, variables);
   }
 
   private async parseMailyContentByLiquid(

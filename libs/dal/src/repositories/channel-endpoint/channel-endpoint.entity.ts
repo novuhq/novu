@@ -1,33 +1,33 @@
-import { ChannelEndpointRouting, ExternalSubscriberId } from '@novu/shared';
+import {
+  ChannelEndpointByType,
+  ChannelEndpointType,
+  ChannelTypeEnum,
+  IChannelEndpoint,
+  ProvidersIdEnum,
+  ResourceKey,
+} from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 
-export class ChannelEndpointEntity {
+export class ChannelEndpointEntity<T extends ChannelEndpointType = ChannelEndpointType> implements IChannelEndpoint<T> {
   _id: string;
-
   identifier: string;
 
-  _integrationId: string;
-
   _organizationId: OrganizationId;
-
   _environmentId: EnvironmentId;
 
-  subscriberId: ExternalSubscriberId;
+  connectionIdentifier?: string;
+  integrationIdentifier: string;
 
-  endpoint: string;
-
-  routing: ChannelEndpointRouting;
-
-  deleted: boolean;
+  providerId: ProvidersIdEnum;
+  channel: ChannelTypeEnum;
+  resource: ResourceKey;
+  type: T;
+  endpoint: ChannelEndpointByType[T];
 
   createdAt: string;
-
   updatedAt: string;
 }
 
-export type ChannelEndpointDBModel = ChangePropsValueType<
-  ChannelEndpointEntity,
-  '_environmentId' | '_organizationId' | '_integrationId'
->;
+export type ChannelEndpointDBModel = ChangePropsValueType<ChannelEndpointEntity, '_environmentId' | '_organizationId'>;

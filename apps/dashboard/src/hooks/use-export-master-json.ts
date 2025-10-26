@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { getMasterJson } from '@/api/translations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 
 function countExportedResources(data: Record<string, unknown>): number {
   let total = 0;
@@ -25,12 +25,10 @@ export function useExportMasterJson({ onSuccess, onError }: UseExportMasterJsonP
 
   return useMutation({
     mutationFn: async ({ locale }: { locale: string }) => {
-      if (!currentEnvironment) {
-        throw new Error('No environment selected');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
 
       const data = await getMasterJson({
-        environment: currentEnvironment,
+        environment,
         locale,
       });
 

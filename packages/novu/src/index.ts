@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { IInitCommandOptions, init } from './commands/init';
 import { sync } from './commands/sync';
+import { pullTranslations, pushTranslations } from './commands/translations';
 import { NOVU_API_URL, NOVU_SECRET_KEY } from './constants';
 import { AnalyticService, ConfigService } from './services';
 
@@ -97,6 +98,42 @@ program
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
   .action(async (options: IInitCommandOptions) => {
     return await init(options, anonymousId);
+  });
+
+const translationsCommand = program.command('translations').description('Manage Novu translations');
+
+translationsCommand
+  .command('pull')
+  .description('Pull all translation files from Novu Cloud')
+  .option('-s, --secret-key <secret-key>', 'The Novu Secret Key', NOVU_SECRET_KEY || '')
+  .option('-a, --api-url <url>', 'The Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
+  .option('-d, --directory <path>', 'Directory to save translation files', './translations')
+  .action(async (options) => {
+    analytics.track({
+      identity: {
+        anonymousId,
+      },
+      data: {},
+      event: 'Pull Translations',
+    });
+    await pullTranslations(options);
+  });
+
+translationsCommand
+  .command('push')
+  .description('Push translation files to Novu Cloud')
+  .option('-s, --secret-key <secret-key>', 'The Novu Secret Key', NOVU_SECRET_KEY || '')
+  .option('-a, --api-url <url>', 'The Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
+  .option('-d, --directory <path>', 'Directory containing translation files', './translations')
+  .action(async (options) => {
+    analytics.track({
+      identity: {
+        anonymousId,
+      },
+      data: {},
+      event: 'Push Translations',
+    });
+    await pushTranslations(options);
   });
 
 program.parse(process.argv);

@@ -124,9 +124,9 @@ function Novu() {
 
 When Novu's user adds the Inbox component to their application, developers need to provide a subscriber prop with the value of their customer's subscriberId, along with an application identifier that serves as a public key for API communication.
 
-A malicious actor can access the user feed by accessing the API and passing another `subscriberId` using the public application identifier.
+A malicious actor can access the user feed by accessing the API and passing another `subscriberId` using the public application identifier.
 
-HMAC encryption will make sure that a `subscriberId` is encrypted using the secret API key, and those will prevent malicious actors from impersonating users.
+HMAC encryption will make sure that a `subscriberId` is encrypted using the secret API key, and those will prevent malicious actors from impersonating users.
 
 ### Enabling HMAC Encryption
 
@@ -136,15 +136,17 @@ In order to enable Hash-Based Message Authentication Codes, you need to visit th
   <img src="/images/notification-center/client/react/get-started/hmac-encryption-enable.png" />
 </Frame> -->
 
-1. Next step would be to generate an HMAC encrypted subscriberId on your backend:
+#### Subscriber HMAC
+
+1. Generate an HMAC encrypted subscriberId on your backend:
 
 ```jsx
 import { createHmac } from 'crypto';
 
-const hmacHash = createHmac('sha256', process.env.NOVU_API_KEY).update(subscriberId).digest('hex');
+const subscriberHash = createHmac('sha256', process.env.NOVU_API_KEY).update(subscriberId).digest('hex');
 ```
 
-2. Then pass the created HMAC to your client side application forward it to the component:
+2. Pass the created HMAC to your client side application:
 
 ```jsx
 <Inbox
@@ -156,3 +158,33 @@ const hmacHash = createHmac('sha256', process.env.NOVU_API_KEY).update(subscribe
 
 > Note: If HMAC encryption is active in In-App provider settings and `subscriberHash`
 > along with `subscriberId` is not provided, then Inbox will not load
+
+#### Context HMAC (Optional)
+
+If you're using the `context` prop to pass additional data (e.g., tenant information, environment, etc.), you should also generate a `contextHash` to prevent context tampering:
+
+1. Generate an HMAC for the context on your backend:
+
+```jsx
+import { createHmac } from 'crypto';
+import { canonicalize } from '@tufjs/canonical-json';
+
+const context = { tenant: 'acme', app: 'dashboard' };
+const contextHash = createHmac('sha256', process.env.NOVU_API_KEY)
+  .update(canonicalize(context))
+  .digest('hex');
+```
+
+2. Pass both the context and contextHash to the component:
+
+```jsx
+<Inbox
+  subscriber={'SUBSCRIBER_ID_PLAIN_VALUE'}
+  subscriberHash={'SUBSCRIBER_ID_HASH_VALUE'}
+  context={{ tenant: 'acme', app: 'dashboard' }}
+  contextHash={'CONTEXT_HASH_VALUE'}
+  applicationIdentifier={'APPLICATION_IDENTIFIER'}
+/>
+```
+
+> Note: When HMAC encryption is enabled and `context` is provided, the `contextHash` is required. The hash is order-independent, so `{a:1, b:2}` produces the same hash as `{b:2, a:1}`.

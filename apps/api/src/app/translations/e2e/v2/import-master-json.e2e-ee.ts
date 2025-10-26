@@ -12,9 +12,6 @@ describe('Import master JSON - /v2/translations/master-json (POST) #novu-v2', as
   let workflowId2: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -62,11 +59,6 @@ describe('Import master JSON - /v2/translations/master-json (POST) #novu-v2', as
       ],
     });
     workflowId2 = workflow2.workflowId;
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should import master JSON with valid workflows only', async () => {

@@ -7,6 +7,7 @@ export enum StepTypeEnum {
   DIGEST = 'digest',
   TRIGGER = 'trigger',
   DELAY = 'delay',
+  THROTTLE = 'throttle',
   CUSTOM = 'custom',
 }
 

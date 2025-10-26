@@ -14,7 +14,7 @@ interface UseLayoutsParams {
 }
 
 export const useFetchLayouts = ({
-  limit = 12,
+  limit = 10,
   offset = 0,
   query = '',
   orderBy = '',

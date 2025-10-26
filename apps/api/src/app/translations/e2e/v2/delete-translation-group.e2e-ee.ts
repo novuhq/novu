@@ -10,9 +10,6 @@ describe('Delete translation group - /v2/translations/:resourceType/:resourceId 
   let workflowId: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -38,11 +35,6 @@ describe('Delete translation group - /v2/translations/:resourceType/:resourceId 
       ],
     });
     workflowId = workflow.workflowId;
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should delete entire translation group with all translations successfully', async () => {

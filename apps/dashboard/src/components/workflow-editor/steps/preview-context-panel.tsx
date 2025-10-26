@@ -1,15 +1,24 @@
-import { ISubscriberResponseDto } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ISubscriberResponseDto } from '@novu/shared';
+import { JSONSchema7 } from 'json-schema';
+
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Accordion } from '@/components/primitives/accordion';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
+import { useDynamicPreviewSchema } from '@/hooks/use-dynamic-preview-schema';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { StepTypeEnum } from '@/utils/enums';
 import { usePreviewContext } from '../../../hooks/use-preview-context';
 import { PayloadSchemaDrawer } from '../payload-schema-drawer';
-import { PreviewPayloadSection, PreviewStepResultsSection, PreviewSubscriberSection } from './components';
+import {
+  PreviewContextSection,
+  PreviewPayloadSection,
+  PreviewStepResultsSection,
+  PreviewSubscriberSection,
+} from './components';
 import { DEFAULT_ACCORDION_VALUES } from './constants/preview-context.constants';
 import { usePersistedPreviewContext } from './hooks/use-persisted-preview-context';
 import { usePreviewDataInitialization } from './hooks/use-preview-data-initialization';
@@ -35,17 +44,17 @@ function useLocaleSynchronization({
   subscriberLocale,
   isOrgSettingsLoading,
   hasSubscriberData,
-  updateJsonSection,
+  updatePreviewSection,
   onLocaleChange,
-  localParsedData,
+  previewContext,
 }: {
   selectedLocale?: string;
   subscriberLocale?: string;
   isOrgSettingsLoading: boolean;
   hasSubscriberData: boolean;
-  updateJsonSection: (section: 'subscriber', data: PreviewSubscriberData) => void;
+  updatePreviewSection: (section: 'subscriber', data: PreviewSubscriberData) => void;
   onLocaleChange?: (locale: string) => void;
-  localParsedData: ParsedData;
+  previewContext: ParsedData;
 }) {
   const prevSelectedLocale = usePrevious(selectedLocale);
   const prevSubscriberLocale = usePrevious(subscriberLocale);
@@ -59,8 +68,8 @@ function useLocaleSynchronization({
     const subscriberLocaleChanged = subscriberLocale !== prevSubscriberLocale;
 
     if (selectedLocaleChanged && selectedLocale !== subscriberLocale) {
-      updateJsonSection('subscriber', {
-        ...localParsedData.subscriber,
+      updatePreviewSection('subscriber', {
+        ...previewContext.subscriber,
         locale: selectedLocale,
       });
     } else if (subscriberLocaleChanged && subscriberLocale && subscriberLocale !== selectedLocale && onLocaleChange) {
@@ -73,9 +82,9 @@ function useLocaleSynchronization({
     prevSubscriberLocale,
     isOrgSettingsLoading,
     hasSubscriberData,
-    updateJsonSection,
+    updatePreviewSection,
     onLocaleChange,
-    localParsedData.subscriber,
+    previewContext.subscriber,
   ]);
 }
 
@@ -90,8 +99,20 @@ export function PreviewContextPanel({
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const { isPayloadSchemaDrawerOpen, highlightedVariableKey, openSchemaDrawer, closeSchemaDrawer } =
     useCreateVariable();
+
+  const previewSchema = useDynamicPreviewSchema();
+  const schemas = useMemo(
+    () => ({
+      payload: workflow?.payloadSchema,
+      subscriber: previewSchema?.properties?.subscriber as JSONSchema7 | undefined,
+      context: previewSchema?.properties?.context as JSONSchema7 | undefined,
+      steps: previewSchema?.properties?.steps as JSONSchema7 | undefined,
+    }),
+    [previewSchema, workflow?.payloadSchema]
+  );
 
   const hasDigestStep = useMemo(() => {
     return workflow?.steps?.some((step) => step.type === StepTypeEnum.DIGEST) ?? false;
@@ -109,14 +130,16 @@ export function PreviewContextPanel({
     loadPersistedSubscriber,
     savePersistedSubscriber,
     clearPersistedSubscriber,
+    loadPersistedContext,
+    savePersistedContext,
+    clearPersistedContext,
   } = usePersistedPreviewContext({
     workflowId: workflow?.workflowId || '',
-    stepId: currentStepId || '',
     environmentId: currentEnvironment?._id || '',
   });
 
   // Use the preview context hook with persistence callback
-  const { accordionValue, setAccordionValue, errors, localParsedData, updateJsonSection } = usePreviewContext<
+  const { accordionValue, setAccordionValue, errors, previewContext, updatePreviewSection } = usePreviewContext<
     ParsedData,
     ValidationErrors
   >({
@@ -127,16 +150,21 @@ export function PreviewContextPanel({
       subscriber: null,
       payload: null,
       steps: null,
+      context: null,
     },
     parseJsonValue,
     onDataPersist: (data: ParsedData) => {
-      // Persist both payload and subscriber data
+      // Persist payload, subscriber and context data
       if (data.payload !== undefined) {
         savePersistedPayload(data.payload);
       }
 
       if (data.subscriber !== undefined) {
         savePersistedSubscriber(data.subscriber);
+      }
+
+      if (data.context !== undefined) {
+        savePersistedContext(data.context);
       }
     },
   });
@@ -152,55 +180,70 @@ export function PreviewContextPanel({
     isPayloadSchemaEnabled,
     loadPersistedPayload,
     loadPersistedSubscriber,
+    loadPersistedContext,
   });
 
   // Initialize default subscriber data if none exists (after data initialization)
   useEffect(() => {
-    if (!isOrgSettingsLoading && localParsedData.subscriber && Object.keys(localParsedData.subscriber).length === 0) {
-      // No subscriber data exists, create default
-      const defaultSubscriber = createDefaultSubscriberData();
-      updateJsonSection('subscriber', defaultSubscriber);
+    if (!isOrgSettingsLoading && previewContext.subscriber && Object.keys(previewContext.subscriber).length === 0) {
+      // Check if persisted data exists in localStorage before creating defaults
+      const persistedSubscriber = loadPersistedSubscriber();
+      if (!persistedSubscriber || Object.keys(persistedSubscriber).length === 0) {
+        // No persisted data exists, create default
+        const defaultSubscriber = createDefaultSubscriberData();
+        updatePreviewSection('subscriber', defaultSubscriber);
+      }
     }
-  }, [isOrgSettingsLoading, localParsedData.subscriber, updateJsonSection, createDefaultSubscriberData]);
+  }, [
+    isOrgSettingsLoading,
+    previewContext.subscriber,
+    updatePreviewSection,
+    createDefaultSubscriberData,
+    loadPersistedSubscriber,
+  ]);
 
   // Smart two-way locale synchronization
   useLocaleSynchronization({
     selectedLocale,
-    subscriberLocale: localParsedData.subscriber?.locale,
+    subscriberLocale: previewContext.subscriber?.locale,
     isOrgSettingsLoading,
-    hasSubscriberData: Object.keys(localParsedData.subscriber || {}).length > 0,
-    updateJsonSection,
+    hasSubscriberData: Object.keys(previewContext.subscriber || {}).length > 0,
+    updatePreviewSection,
     onLocaleChange,
-    localParsedData,
+    previewContext,
   });
 
   const handleSubscriberSelection = useCallback(
     (subscriber: ISubscriberResponseDto) => {
       const subscriberData = createSubscriberData(subscriber);
-      updateJsonSection('subscriber', subscriberData);
+      updatePreviewSection('subscriber', subscriberData);
 
       // If the selected subscriber has a different locale, update the selected locale
       if (subscriber.locale && subscriber.locale !== selectedLocale && onLocaleChange) {
         onLocaleChange(subscriber.locale);
       }
     },
-    [updateJsonSection, selectedLocale, onLocaleChange]
+    [updatePreviewSection, selectedLocale, onLocaleChange]
   );
 
-  const handleClearPersistedPayload = () => {
+  const handleClearPersistedPayload = useCallback(() => {
     clearPersistedPayload();
 
-    // Reset payload to server defaults if available
     const newPayload: PayloadData =
       workflow?.payloadExample && isPayloadSchemaEnabled ? (workflow.payloadExample as PayloadData) : {};
 
-    updateJsonSection('payload', newPayload);
-  };
+    updatePreviewSection('payload', newPayload);
+  }, [clearPersistedPayload, workflow?.payloadExample, isPayloadSchemaEnabled, updatePreviewSection]);
 
-  const handleClearPersistedSubscriber = () => {
+  const handleClearPersistedSubscriber = useCallback(() => {
     clearPersistedSubscriber();
-    updateJsonSection('subscriber', createDefaultSubscriberData());
-  };
+    updatePreviewSection('subscriber', createDefaultSubscriberData());
+  }, [clearPersistedSubscriber, updatePreviewSection, createDefaultSubscriberData]);
+
+  const handleClearPersistedContext = useCallback(() => {
+    clearPersistedContext();
+    updatePreviewSection('context', null);
+  }, [clearPersistedContext, updatePreviewSection]);
 
   const canClearPersisted = !!(workflow?.workflowId && currentStepId && currentEnvironment?._id);
 
@@ -209,9 +252,10 @@ export function PreviewContextPanel({
       <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
         <PreviewPayloadSection
           errors={errors}
-          localParsedData={localParsedData}
+          localParsedData={previewContext}
           workflow={workflow}
-          onUpdate={updateJsonSection}
+          onUpdate={updatePreviewSection}
+          schema={schemas.payload}
           onClearPersisted={canClearPersisted ? handleClearPersistedPayload : undefined}
           hasDigestStep={hasDigestStep}
           onManageSchema={openSchemaDrawer}
@@ -219,20 +263,31 @@ export function PreviewContextPanel({
 
         <PreviewSubscriberSection
           error={errors.subscriber}
-          subscriber={localParsedData.subscriber}
+          subscriber={previewContext.subscriber}
           workflow={workflow}
-          onUpdate={updateJsonSection}
+          onUpdate={updatePreviewSection}
+          schema={schemas.subscriber}
           onSubscriberSelect={handleSubscriberSelection}
           onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
         />
 
         <PreviewStepResultsSection
           errors={errors}
-          localParsedData={localParsedData}
+          localParsedData={previewContext}
           workflow={workflow}
-          onUpdate={updateJsonSection}
+          onUpdate={updatePreviewSection}
           currentStepId={currentStepId}
         />
+
+        {isContextEnabled && (
+          <PreviewContextSection
+            error={errors.context}
+            context={previewContext.context}
+            schema={schemas.context}
+            onUpdate={updatePreviewSection}
+            onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
+          />
+        )}
       </Accordion>
       <PayloadSchemaDrawer
         isOpen={isPayloadSchemaDrawerOpen}

@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.6.7",
+  "version": "2.7.0",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
@@ -236,6 +236,7 @@
     "chalk": "^4.1.2",
     "cross-fetch": "^4.0.0",
     "json-schema-to-ts": "^3.0.0",
+    "jsonrepair": "^3.13.1",
     "liquidjs": "^10.20.0",
     "pluralize": "^8.0.0",
     "sanitize-html": "^2.13.0"

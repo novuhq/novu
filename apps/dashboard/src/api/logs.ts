@@ -6,7 +6,7 @@ export interface GetRequestLogsParams {
   environment: IEnvironment;
   page?: number;
   limit?: number;
-  statusCode?: string;
+  statusCodes?: string;
   url?: string;
   urlPattern?: string;
   transactionId?: string;

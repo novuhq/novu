@@ -38,6 +38,7 @@ export type BaseTriggerCommand = {
   overrides: TriggerOverrides;
   template: NotificationTemplateEntity;
   actor?: SubscriberEntity | undefined;
+  contextKeys?: string[];
   tenant: ITenantDefine | null;
   environmentName: string;
   requestCategory?: TriggerRequestCategoryEnum;

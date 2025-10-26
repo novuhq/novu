@@ -1,5 +1,5 @@
-import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
-import { useEffect } from 'react';
+import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum, WorkflowStatusEnum } from '@novu/shared';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   RiArrowDownSLine,
@@ -23,8 +23,9 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { getTemplates, WorkflowTemplate } from '@/components/template-store/templates';
+import { selectPopularByIdStrict } from '@/components/template-store/featured';
 import { WorkflowCard } from '@/components/template-store/workflow-card';
 import { WorkflowTemplateModal } from '@/components/template-store/workflow-template-modal';
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
@@ -34,6 +35,7 @@ import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { QuickTemplate, useTemplateStore } from '@/hooks/use-template-store';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -60,56 +62,64 @@ export const WorkflowsPage = () => {
     },
   });
 
-  useEffect(() => {
-    if (!searchParams.has('query') && form.getValues('query')) {
-      form.setValue('query', '');
-    }
-  }, []);
+  const updateSearchParams = useCallback(
+    (updates: Partial<{ query: string; tags: string[]; status: string[] }>) => {
+      setSearchParams((prev) => {
+        const sp = new URLSearchParams(prev);
 
-  const updateSearchParam = (value: string) => {
-    if (value) {
-      searchParams.set('query', value);
-    } else {
-      searchParams.delete('query');
-    }
+        if ('query' in updates) {
+          if (updates.query) {
+            sp.set('query', updates.query);
+          } else {
+            sp.delete('query');
+          }
+        }
 
-    setSearchParams(searchParams);
-  };
+        if ('tags' in updates) {
+          sp.delete('tags');
+          for (const tag of updates.tags || []) {
+            sp.append('tags', tag);
+          }
+        }
 
-  const updateTagsParam = (tags: string[]) => {
-    searchParams.delete('tags');
-    tags.forEach((tag) => searchParams.append('tags', tag));
-    setSearchParams(searchParams);
-  };
+        if ('status' in updates) {
+          sp.delete('status');
+          for (const s of updates.status || []) {
+            sp.append('status', s);
+          }
+        }
 
-  const updateStatusParam = (status: string[]) => {
-    searchParams.delete('status');
-    status.forEach((s) => searchParams.append('status', s));
-    setSearchParams(searchParams);
-  };
+        return sp;
+      });
+    },
+    [setSearchParams]
+  );
 
-  const debouncedSearch = useDebounce((value: string) => updateSearchParam(value), 500);
+  const debouncedSearch = useDebounce((searchQuery: string) => updateSearchParams({ query: searchQuery }), 500);
 
   const clearFilters = () => {
     form.reset({ query: '', tags: [], status: [] });
-    searchParams.delete('query');
-    searchParams.delete('tags');
-    searchParams.delete('status');
-    setSearchParams(searchParams);
+    updateSearchParams({ query: '', tags: [], status: [] });
   };
 
   useEffect(() => {
     const subscription = form.watch((value) => {
+      const updates: Partial<{ query: string; tags: string[]; status: string[] }> = {};
+
       if (value.query !== undefined) {
         debouncedSearch(value.query || '');
       }
 
       if (value.tags !== undefined) {
-        updateTagsParam(value.tags as string[]);
+        updates.tags = value.tags as string[];
       }
 
       if (value.status !== undefined) {
-        updateStatusParam(value.status as string[]);
+        updates.status = value.status as string[];
+      }
+
+      if (Object.keys(updates).length > 0) {
+        updateSearchParams(updates);
       }
     });
 
@@ -117,12 +127,25 @@ export const WorkflowsPage = () => {
       subscription.unsubscribe();
       debouncedSearch.cancel();
     };
-  }, [form, debouncedSearch]);
-  const templates = getTemplates();
-  const popularTemplates = templates.filter((template) => template.isPopular).slice(0, 4);
+  }, [form, debouncedSearch, updateSearchParams]);
 
-  const offset = parseInt(searchParams.get('offset') || '0');
-  const limit = parseInt(searchParams.get('limit') || '12');
+  const { quickTemplates, isLoading: isLoadingQuickStart } = useTemplateStore();
+
+  const quickStartTemplates = useMemo(() => {
+    const popularByTag = quickTemplates
+      .filter((template) => Array.isArray(template.tags) && template.tags.includes('popular'))
+      .slice(0, 4);
+
+    if (popularByTag.length > 0) {
+      return popularByTag;
+    }
+
+    const popularByLegacy = selectPopularByIdStrict(quickTemplates, (template) => template.workflowId, 4);
+    return popularByLegacy.length ? popularByLegacy : quickTemplates.slice(0, 4);
+  }, [quickTemplates]);
+
+  const offset = parseInt(searchParams.get('offset') || '0', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
 
   const {
     data: workflowsData,
@@ -142,10 +165,9 @@ export const WorkflowsPage = () => {
   const { currentEnvironment } = useEnvironment();
   const { tags } = useTags();
 
+  const queryParam = searchParams.get('query') || '';
   const hasActiveFilters =
-    (searchParams.get('query') ? searchParams.get('query')!.trim() !== '' : false) ||
-    searchParams.getAll('tags').length > 0 ||
-    searchParams.getAll('status').length > 0;
+    queryParam.trim() !== '' || searchParams.getAll('tags').length > 0 || searchParams.getAll('status').length > 0;
 
   const isProdEnv = currentEnvironment?.name === 'Production';
 
@@ -156,14 +178,14 @@ export const WorkflowsPage = () => {
     track(TelemetryEvent.WORKFLOWS_PAGE_VISIT);
   }, [track]);
 
-  const handleTemplateClick = (template: WorkflowTemplate) => {
+  const handleTemplateClick = (template: QuickTemplate) => {
     track(TelemetryEvent.TEMPLATE_WORKFLOW_CLICK);
 
     navigate(
-      buildRoute(ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW, {
+      `${buildRoute(ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW, {
         environmentSlug: environmentSlug || '',
-        templateId: template.id,
-      }) + '?source=template-store-card-row'
+        templateId: template.workflowId,
+      })}?source=template-store-card-row`
     );
   };
 
@@ -179,7 +201,9 @@ export const WorkflowsPage = () => {
                 size="small"
                 title="Search"
                 value={form.watch('query') || ''}
-                onChange={(value) => form.setValue('query', value || '')}
+                onChange={(value) => {
+                  form.setValue('query', value || '');
+                }}
                 placeholder="Search workflows..."
               />
               <FacetedFormFilter
@@ -189,7 +213,9 @@ export const WorkflowsPage = () => {
                 placeholder="Filter by tags"
                 options={tags?.map((tag) => ({ label: tag.name, value: tag.name })) || []}
                 selected={form.watch('tags')}
-                onSelect={(values) => form.setValue('tags', values)}
+                onSelect={(values) => {
+                  form.setValue('tags', values, { shouldDirty: true, shouldTouch: true });
+                }}
               />
               <FacetedFormFilter
                 size="small"
@@ -202,7 +228,9 @@ export const WorkflowsPage = () => {
                   { label: 'Error', value: WorkflowStatusEnum.ERROR },
                 ]}
                 selected={form.watch('status')}
-                onSelect={(values) => form.setValue('status', values)}
+                onSelect={(values) => {
+                  form.setValue('status', values, { shouldDirty: true, shouldTouch: true });
+                }}
               />
 
               {hasActiveFilters && (
@@ -225,9 +253,9 @@ export const WorkflowsPage = () => {
                   variant="gray"
                   onClick={() =>
                     navigate(
-                      buildRoute(ROUTES.TEMPLATE_STORE, {
+                      `${buildRoute(ROUTES.TEMPLATE_STORE, {
                         environmentSlug: environmentSlug || '',
-                      }) + '?source=start-with'
+                      })}?source=start-with`
                     )
                   }
                   trailingIcon={RiArrowRightSLine}
@@ -237,31 +265,48 @@ export const WorkflowsPage = () => {
               </div>
               <ScrollArea className="w-full">
                 <div className="bg-bg-weak rounded-12 flex gap-4 p-3">
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => {
-                      track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
-
-                      navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
-                    }}
-                  >
-                    <WorkflowCard name="Start from scratch" description="Create a workflow from scratch" steps={[]} />
-                  </div>
-                  {popularTemplates.map((template) => (
-                    <WorkflowCard
-                      key={template.id}
-                      name={template.name}
-                      description={template.description}
-                      steps={template.workflowDefinition.steps.map((step) => step.type as StepTypeEnum)}
-                      onClick={() => handleTemplateClick(template)}
-                    />
-                  ))}
+                  {isLoadingQuickStart && (
+                    <>
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                    </>
+                  )}
+                  {!isLoadingQuickStart && (
+                    <>
+                      <div className="w-[250px] flex-shrink-0">
+                        <WorkflowCard
+                          name="Start from scratch"
+                          description="Create a workflow from scratch"
+                          steps={[]}
+                          onClick={() => {
+                            track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
+                            navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
+                          }}
+                        />
+                      </div>
+                      {quickStartTemplates.map((template) => (
+                        <div key={template.workflowId} className="w-[250px] flex-shrink-0">
+                          <WorkflowCard
+                            name={template.name}
+                            description={template.description}
+                            steps={template.steps}
+                            onClick={() => handleTemplateClick(template)}
+                          />
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
                 <ScrollBar orientation="horizontal" />
               </ScrollArea>
             </div>
           )}
-          {shouldShowStartWithTemplatesSection && <div className="text-label-xs text-text-soft">Your Workflows</div>}
+          {shouldShowStartWithTemplatesSection && (
+            <div className="text-label-xs text-text-soft my-2">Your Workflows</div>
+          )}
           <WorkflowList
             hasActiveFilters={!!hasActiveFilters}
             onClearFilters={clearFilters}
@@ -271,6 +316,14 @@ export const WorkflowsPage = () => {
             isLoading={isPending}
             isError={isError}
             limit={limit}
+            onPageSizeChange={(newPageSize) => {
+              setSearchParams((prev) => {
+                const sp = new URLSearchParams(prev);
+                sp.set('limit', newPageSize.toString());
+                sp.delete('offset'); // Reset to first page when changing page size
+                return sp;
+              });
+            }}
           />
         </div>
         <Outlet />
@@ -293,9 +346,9 @@ const CreateWorkflowButton = () => {
 
   const navigateToTemplateStore = () => {
     navigate(
-      buildRoute(ROUTES.TEMPLATE_STORE, {
+      `${buildRoute(ROUTES.TEMPLATE_STORE, {
         environmentSlug: environmentSlug || '',
-      }) + '?source=create-workflow-dropdown'
+      })}?source=create-workflow-dropdown`
     );
   };
 
@@ -361,10 +414,10 @@ const CreateWorkflowButton = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
             <DropdownMenuItem className="cursor-pointer" asChild>
-              <div className="w-full" onClick={handleCreateWorkflow}>
+              <button type="button" className="w-full text-left" onClick={handleCreateWorkflow}>
                 <RiFileAddLine />
                 From Blank
-              </div>
+              </button>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onSelect={navigateToTemplateStore}>
               <RiFileMarkedLine />
@@ -379,9 +432,7 @@ const CreateWorkflowButton = () => {
 
 export const TemplateModal = () => {
   const navigate = useNavigate();
-  const { templateId, environmentSlug } = useParams();
-  const templates = getTemplates();
-  const selectedTemplate = templateId ? templates.find((template) => template.id === templateId) : undefined;
+  const { environmentSlug } = useParams();
 
   const handleCloseTemplateModal = () => {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: environmentSlug || '' }));
@@ -395,7 +446,6 @@ export const TemplateModal = () => {
           handleCloseTemplateModal();
         }
       }}
-      selectedTemplate={selectedTemplate}
     />
   );
 };

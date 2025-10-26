@@ -16,7 +16,6 @@ import {
   UpsertPreferences,
 } from '@novu/application-generic';
 import {
-  ChannelEndpointRepository,
   CommunityOrganizationRepository,
   EnvironmentRepository,
   IntegrationRepository,
@@ -29,6 +28,7 @@ import {
   TopicSubscribersRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
+import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { InboxModule } from '../inbox/inbox.module';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
@@ -36,6 +36,8 @@ import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.m
 import { GetSubscriberGlobalPreference } from '../subscribers/usecases/get-subscriber-global-preference';
 import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference';
 import { TopicsV2Module } from '../topics-v2/topics-v2.module';
+import { ChannelConnectionsController } from './channel-connections.controller';
+import { ChannelEndpointsController } from './channel-endpoints.controller';
 import { SubscribersController } from './subscribers.controller';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { SlackOauthCallback } from './usecases/chat-oauth-callback/slack-oauth-callback/slack-oauth-callback.usecase';
@@ -83,12 +85,17 @@ const DAL_MODELS = [
   WorkflowOverrideRepository,
   TenantRepository,
   MessageRepository,
-  ChannelEndpointRepository,
 ];
 
 @Module({
-  imports: [TopicsV2Module, InboxModule, OutboundWebhooksModule.forRoot(), ChannelEndpointsModule],
-  controllers: [SubscribersController],
+  imports: [
+    TopicsV2Module,
+    InboxModule,
+    OutboundWebhooksModule.forRoot(),
+    ChannelConnectionsModule,
+    ChannelEndpointsModule,
+  ],
+  controllers: [SubscribersController, ChannelEndpointsController, ChannelConnectionsController],
   providers: [
     ...USE_CASES,
     ...DAL_MODELS,

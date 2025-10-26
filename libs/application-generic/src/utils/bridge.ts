@@ -1,8 +1,15 @@
-import { DigestOutput, DigestRegularOutput, DigestTimedOutput } from '@novu/framework/internal';
+import {
+  DelayOutput,
+  DelayRegularOutput,
+  DelayTimedOutput,
+  DigestOutput,
+  DigestRegularOutput,
+  DigestTimedOutput,
+} from '@novu/framework/internal';
 import { DigestTypeEnum } from '@novu/shared';
 
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
-  if (isTimedDigestOutput(outputs)) {
+  if (isTimedOutput(outputs)) {
     return DigestTypeEnum.TIMED;
   } else if (isLookBackDigestOutput(outputs)) {
     return DigestTypeEnum.BACKOFF;
@@ -11,19 +18,27 @@ export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
   return DigestTypeEnum.REGULAR;
 }
 
-export const isTimedDigestOutput = (outputs: DigestOutput | undefined): outputs is DigestTimedOutput => {
+export const isTimedOutput = (
+  outputs: DigestOutput | DelayOutput | undefined
+): outputs is DigestTimedOutput | DelayTimedOutput => {
   return (outputs as DigestTimedOutput)?.cron != null;
 };
 
-export const isLookBackDigestOutput = (outputs: DigestOutput): outputs is DigestRegularOutput => {
+export const isLookBackDigestOutput = (outputs: DigestOutput | DelayOutput): outputs is DigestRegularOutput => {
   return (
     (outputs as DigestRegularOutput)?.lookBackWindow?.amount != null &&
     (outputs as DigestRegularOutput)?.lookBackWindow?.unit != null
   );
 };
 
-export const isRegularDigestOutput = (outputs: DigestOutput): outputs is DigestRegularOutput => {
-  return !isTimedDigestOutput(outputs) && !isLookBackDigestOutput(outputs);
+export const isDynamicOutput = (outputs: DelayOutput | undefined): boolean => {
+  return (outputs as { dynamicKey?: string })?.dynamicKey != null;
+};
+
+export const isRegularOutput = (
+  outputs: DigestOutput | DelayOutput
+): outputs is DigestRegularOutput | DelayRegularOutput => {
+  return !isTimedOutput(outputs) && !isLookBackDigestOutput(outputs) && !isDynamicOutput(outputs);
 };
 
 export const BRIDGE_EXECUTION_ERROR = {

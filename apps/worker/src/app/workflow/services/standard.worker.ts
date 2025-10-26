@@ -184,7 +184,26 @@ export class StandardWorker extends StandardWorkerService {
 
       const shouldBeSetAsFailed = !hasToBackoff || shouldHandleLastFailedJob;
       if (shouldBeSetAsFailed) {
-        await this.setJobAsFailed.execute(SetJobAsFailedCommand.create(minimalData), error);
+        let isLastJobInWorkflow = false;
+
+        const jobEntity = await this.jobRepository.findOne({
+          _id: minimalData.jobId,
+          _environmentId: minimalData.environmentId,
+        });
+
+        if (jobEntity) {
+          const hasNextJob = await this.jobRepository.findOne({
+            _environmentId: minimalData.environmentId,
+            _parentId: minimalData.jobId,
+          });
+
+          const shouldHaltOnFailure =
+            jobEntity.step?.shouldStopOnFail === undefined ? true : jobEntity.step.shouldStopOnFail;
+
+          isLastJobInWorkflow = !hasNextJob || shouldHaltOnFailure;
+        }
+
+        await this.setJobAsFailed.execute(SetJobAsFailedCommand.create({ ...minimalData, isLastJobInWorkflow }), error);
       }
 
       if (shouldHandleLastFailedJob) {

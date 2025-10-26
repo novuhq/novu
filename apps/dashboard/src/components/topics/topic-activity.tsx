@@ -23,6 +23,7 @@ const getInitialFilters = (topicKey: string, dateRange: string): ActivityFilters
   workflows: [],
   topicKey,
   severity: [],
+  contextKeys: '',
 });
 
 export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
@@ -65,7 +66,8 @@ export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
       filters.channels.length > 0 ||
       filters.workflows.length > 0 ||
       filters.transactionId !== defaultActivityFilters.transactionId ||
-      (filters.subscriberId !== defaultActivityFilters.subscriberId && filters.subscriberId !== '')
+      (filters.subscriberId !== defaultActivityFilters.subscriberId && filters.subscriberId !== '') ||
+      filters.contextKeys !== defaultActivityFilters.contextKeys
     );
   }, [filters]);
 
@@ -92,6 +94,10 @@ export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
 
     if (filters.severity.length > 0) {
       params.set('severity', filters.severity.join(','));
+    }
+
+    if (filters.contextKeys) {
+      params.set('contextKeys', filters.contextKeys);
     }
 
     return params;
