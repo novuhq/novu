@@ -142,6 +142,7 @@ export type EventType =
   | 'notification_error'
   | 'execution_detail'
   | 'step_completed'
+  | 'step_canceled'
   | 'request_received'
   | 'request_queued'
   | 'request_failed'

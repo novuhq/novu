@@ -217,10 +217,11 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
         description={
           <>
             <span className="text-xs text-neutral-600">
-              <strong>Tip:</strong> Learn the best instructions on how to load model's or context.{' '}
+              <strong>Tip:</strong> Learn how to effectively use contexts to organize and personalize your
+              notifications.{' '}
             </span>
             <Link
-              to="https://docs.novu.co/platform/concepts/contexts"
+              to="https://docs.novu.co/platform/workflow/contexts"
               className="text-xs font-medium text-neutral-600 underline"
               target="_blank"
             >

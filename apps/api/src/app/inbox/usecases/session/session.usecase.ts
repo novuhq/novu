@@ -121,12 +121,6 @@ export class Session {
       throw new BadRequestException('Please provide a valid application identifier');
     }
 
-    const contextKeys = await this.resolveContexts(
-      environment._id,
-      environment._organizationId,
-      command.requestData.context
-    );
-
     const inAppIntegration = await this.selectIntegration.execute(
       SelectIntegrationCommand.create({
         environmentId: environment._id,
@@ -156,6 +150,12 @@ export class Session {
         });
       }
     }
+
+    const contextKeys = await this.resolveContexts(
+      environment._id,
+      environment._organizationId,
+      command.requestData.context
+    );
 
     const subscriberEntity = await this.createSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -420,7 +420,11 @@ export class Session {
       return [];
     }
 
-    const contexts = await this.contextRepository.upsertContextsFromPayload(environmentId, organizationId, context);
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      environmentId,
+      organizationId,
+      context
+    );
 
     return contexts.map((context) => context.key);
   }
