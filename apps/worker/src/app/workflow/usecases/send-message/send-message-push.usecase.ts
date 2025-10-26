@@ -557,7 +557,14 @@ export class SendMessagePush extends SendMessageBase {
           LOG_CONTEXT
         );
 
-        await this.removeInvalidDeviceToken(command._subscriberId, deviceToken, integration._id, command);
+        await this.removeInvalidDeviceToken(
+          command._subscriberId,
+          deviceToken,
+          integration._id,
+          command,
+          e.message || e.toString(),
+          message._id
+        );
       }
 
       await this.sendErrorStatus(
@@ -739,7 +746,9 @@ export class SendMessagePush extends SendMessageBase {
     subscriberId: string,
     deviceToken: string,
     integrationId: string,
-    command: SendMessageChannelCommand
+    command: SendMessageChannelCommand,
+    providerErrorMessage: string,
+    messageId: string
   ): Promise<void> {
     try {
       await this.subscriberRepository.update(
@@ -761,6 +770,22 @@ export class SendMessagePush extends SendMessageBase {
           _environmentId: command.environmentId,
         }),
       });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId,
+          detail: DetailEnum.PUSH_INVALID_TOKEN_REMOVED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            deviceToken,
+            providerError: providerErrorMessage,
+          }),
+        })
+      );
 
       Logger.log(
         {
