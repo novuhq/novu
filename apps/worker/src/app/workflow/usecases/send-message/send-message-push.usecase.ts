@@ -548,16 +548,16 @@ export class SendMessagePush extends SendMessageBase {
       );
 
       const pushHandler = this.getIntegrationHandler(integration);
-      const isTokenExpired = pushHandler?.isTokenExpired?.(e);
+      const isTokenInvalid = pushHandler?.isTokenInvalid?.(e);
 
-      if (isTokenExpired) {
+      if (isTokenInvalid) {
         Logger.log(
           { jobId: command.jobId, deviceToken, providerId: integration.providerId },
-          `Expired device token detected for jobId ${command.jobId}, removing token from subscriber`,
+          `Invalid device token detected for jobId ${command.jobId}, removing token from subscriber`,
           LOG_CONTEXT
         );
 
-        await this.removeExpiredDeviceToken(command._subscriberId, deviceToken, integration._id, command);
+        await this.removeInvalidDeviceToken(command._subscriberId, deviceToken, integration._id, command);
       }
 
       await this.sendErrorStatus(
@@ -578,7 +578,7 @@ export class SendMessagePush extends SendMessageBase {
           object: messageWebhookMapper(message, command.subscriberId),
           error: {
             push: {
-              reason: isTokenExpired ? 'token_expired' : 'generic_error',
+              reason: isTokenInvalid ? 'token_invalid' : 'generic_error',
               deviceToken: deviceToken,
             },
             message: e.message || e.name || 'Error while sending push with provider',
@@ -735,7 +735,7 @@ export class SendMessagePush extends SendMessageBase {
     }
   }
 
-  private async removeExpiredDeviceToken(
+  private async removeInvalidDeviceToken(
     subscriberId: string,
     deviceToken: string,
     integrationId: string,
@@ -768,7 +768,7 @@ export class SendMessagePush extends SendMessageBase {
           deviceToken,
           integrationId,
         },
-        `Successfully removed expired device token from subscriber`,
+        `Successfully removed invalid device token from subscriber`,
         LOG_CONTEXT
       );
     } catch (error) {
@@ -779,7 +779,7 @@ export class SendMessagePush extends SendMessageBase {
           integrationId,
           error: error.message,
         },
-        `Failed to remove expired device token from subscriber: ${error.message}`,
+        `Failed to remove invalid device token from subscriber: ${error.message}`,
         LOG_CONTEXT
       );
     }

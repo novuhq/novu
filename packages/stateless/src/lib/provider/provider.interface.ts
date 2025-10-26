@@ -210,7 +210,7 @@ export interface IChatProvider extends IProvider {
 }
 
 export interface IPushProvider extends IProvider {
-  isTokenExpired?: (errorMessage: string) => boolean;
+  isTokenInvalid?: (errorMessage: string) => boolean;
 
   sendMessage(options: IPushOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
 

@@ -49,8 +49,8 @@ export class MessageFailedWebhookDto {
 }
 
 export class MessageFailedPushDto {
-  @ApiProperty({ description: 'Is expired token' })
-  isExpiredToken: boolean;
+  @ApiProperty({ description: 'Is invalid token' })
+  isInvalidToken: boolean;
 
   @ApiProperty({ description: 'Device token' })
   deviceToken: string;

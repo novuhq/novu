@@ -11,7 +11,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
 
-  private readonly EXPIRED_TOKEN_ERRORS = ['Requested entity was not found'];
+  private readonly INVALID_TOKEN_ERRORS = ['Requested entity was not found'];
 
   private appName: string;
   private messaging: Messaging;
@@ -133,8 +133,8 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     };
   }
 
-  isTokenExpired(errorMessage: string): boolean {
-    return this.EXPIRED_TOKEN_ERRORS.some((error) => errorMessage?.includes(error));
+  isTokenInvalid(errorMessage: string): boolean {
+    return this.INVALID_TOKEN_ERRORS.some((error) => errorMessage?.includes(error));
   }
 
   private cleanPayload(payload: object): Record<string, string> {
