@@ -548,7 +548,7 @@ export class SendMessagePush extends SendMessageBase {
       );
 
       const pushHandler = this.getIntegrationHandler(integration);
-      const isTokenInvalid = pushHandler?.isTokenInvalid?.(e);
+      const isTokenInvalid = pushHandler?.isTokenInvalid?.(e.message || e.toString());
 
       if (isTokenInvalid) {
         Logger.log(

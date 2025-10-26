@@ -8,6 +8,7 @@ import { PushBaseProvider } from '../push.base-provider';
 export class ExpoPushProvider extends PushBaseProvider implements IPushProvider {
   id = PushProviderIdEnum.EXPO;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
+  private readonly INVALID_TOKEN_ERRORS = ['not a valid Expo push token'];
 
   private expo: Expo;
   constructor(
@@ -17,6 +18,10 @@ export class ExpoPushProvider extends PushBaseProvider implements IPushProvider 
   ) {
     super();
     this.expo = new Expo({ accessToken: this.config.accessToken });
+  }
+
+  isTokenInvalid(errorMessage: string): boolean {
+    return this.INVALID_TOKEN_ERRORS.some((error) => errorMessage?.includes(error));
   }
 
   async sendMessage(
