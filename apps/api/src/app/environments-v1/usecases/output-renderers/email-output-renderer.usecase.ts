@@ -659,7 +659,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     index: number
   ): Array<MailyJSONContent | MailyJSONMarks> {
     return nodes.map((node) => {
-      const processedNode = { ...node };
+      const processedNode = structuredClone(node);
 
       if (isVariableNode(processedNode)) {
         this.processVariableNodeTypes(processedNode);
