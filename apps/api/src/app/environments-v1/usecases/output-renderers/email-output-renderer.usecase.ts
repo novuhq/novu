@@ -159,11 +159,10 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       return { subject: translatedSubject, body: cleanedHtml };
     }
 
-    const sanitizedSubject = sanitizeHTML(translatedSubject);
     const sanitizedBody = sanitizeHTML(cleanedHtml);
 
     return {
-      subject: sanitizedSubject,
+      subject: translatedSubject,
       body: sanitizedBody,
     };
   }
@@ -659,7 +658,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     index: number
   ): Array<MailyJSONContent | MailyJSONMarks> {
     return nodes.map((node) => {
-      const processedNode = { ...node };
+      const processedNode = structuredClone(node);
 
       if (isVariableNode(processedNode)) {
         this.processVariableNodeTypes(processedNode);

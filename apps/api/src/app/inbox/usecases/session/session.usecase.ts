@@ -75,7 +75,7 @@ import { SessionCommand } from './session.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
-const MAX_NOTIFICATIONS_COUNT = 99;
+const MAX_NOTIFICATIONS_COUNT = 100;
 
 @Injectable()
 export class Session {

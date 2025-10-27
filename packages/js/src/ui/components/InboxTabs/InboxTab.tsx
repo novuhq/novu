@@ -5,7 +5,7 @@ import { NotificationStatus, Tab } from '../../types';
 import { Dropdown, dropdownItemVariants, Tabs } from '../primitives';
 import { tabsTriggerVariants } from '../primitives/Tabs/TabsTrigger';
 
-const getDisplayCount = (count: number) => (count >= 100 ? '99+' : count);
+const getDisplayCount = (count: number) => (count > 99 ? '99+' : String(count));
 
 export const InboxTabUnreadNotificationsCount = (props: { count: number }) => {
   const style = useStyle();

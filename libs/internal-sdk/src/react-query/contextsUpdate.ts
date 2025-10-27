@@ -20,10 +20,12 @@ export type ContextsUpdateMutationVariables = {
 export type ContextsUpdateMutationData = operations.ContextsControllerUpdateContextResponse;
 
 /**
- * Update context data
+ * Update a context
  *
  * @remarks
- * Update the data of an existing context. Returns 404 if context does not exist.
+ * Update the data of an existing context.
+ *       **type** and **id** are required fields, **data** is required. Only the data field is updated, the rest of the context is not affected.
+ *       If the context does not exist, it returns the 404 response
  */
 export function useContextsUpdateMutation(
   options?: MutationHookOptions<ContextsUpdateMutationData, Error, ContextsUpdateMutationVariables>
