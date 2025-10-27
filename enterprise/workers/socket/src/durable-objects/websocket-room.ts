@@ -49,6 +49,8 @@ export class WebSocketRoom extends DurableObject<IEnv> {
       return new Response('Missing JWT token', { status: 400 });
     }
 
+    const contextKeys = this.extractContextKeysFromHeader(request);
+
     const [client, server] = Object.values(new WebSocketPair());
 
     /*
@@ -64,6 +66,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
     server.serializeAttachment({
       jwtToken,
       connectedAt: Date.now(),
+      contextKeys,
     });
 
     // Use waitUntil to allow hibernation without waiting for API call
@@ -122,7 +125,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
   /**
    * Send message to a specific user
    */
-  async sendToUser(userId: string, event: string, data: unknown): Promise<void> {
+  async sendToUser(userId: string, event: string, data: unknown, contextKeys?: string[]): Promise<void> {
     const userConnections = this.ctx.getWebSockets(`user:${userId}`);
 
     if (userConnections.length === 0) {
@@ -136,20 +139,30 @@ export class WebSocketRoom extends DurableObject<IEnv> {
       timestamp: Date.now(),
     });
 
-    // Send to all user connections in parallel using Promise.allSettled
-    // This prevents one failed connection from blocking others
-    const sendPromises = userConnections.map(async (ws) => {
-      try {
-        ws.send(message);
-      } catch (error) {
-        console.error(`Failed to send message to user ${userId}:`, error);
-        // Connection will be cleaned up automatically by Cloudflare
-        throw error; // Re-throw to be caught by Promise.allSettled
-      }
-    });
+    if (this.isFeatureFlagOff(contextKeys)) {
+      await this.broadcastToAllSockets(userId, message, userConnections);
+    } else {
+      await this.sendToMatchingContexts(userId, message, contextKeys, userConnections);
+    }
+  }
 
-    // Wait for all sends to complete, but don't fail if some connections error
-    await Promise.allSettled(sendPromises);
+  /**
+   * Context matching logic (same as ws.gateway.ts)
+   */
+  private isExactMatch(messageContextKeys: string[], inboxContextKeys?: string[]): boolean {
+    if (inboxContextKeys === undefined) {
+      return true;
+    }
+
+    if (messageContextKeys.length === 0) {
+      return inboxContextKeys.length === 0;
+    }
+
+    if (messageContextKeys.length !== inboxContextKeys.length) {
+      return false;
+    }
+
+    return messageContextKeys.every((key) => inboxContextKeys.includes(key));
   }
 
   /**
@@ -255,6 +268,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
       environmentId,
       connectedAt: attachment.connectedAt || Date.now(),
       jwtToken: attachment.jwtToken,
+      contextKeys: attachment.contextKeys,
     };
   }
 
@@ -274,6 +288,99 @@ export class WebSocketRoom extends DurableObject<IEnv> {
           metadata.jwtToken
         ).catch((error) => console.error('Failed to notify subscriber offline state:', error))
       );
+    }
+  }
+
+  private extractContextKeysFromHeader(request: Request): string[] | undefined {
+    const contextKeysHeader = request.headers.get('X-Context-Keys');
+
+    if (!contextKeysHeader) {
+      return undefined;
+    }
+
+    try {
+      return JSON.parse(contextKeysHeader);
+    } catch (e) {
+      console.error('Failed to parse contextKeys:', e);
+
+      return undefined;
+    }
+  }
+
+  /**
+   * Check if feature flag is OFF (contextKeys is undefined)
+   */
+  private isFeatureFlagOff(contextKeys?: string[]): boolean {
+    return contextKeys === undefined;
+  }
+
+  /**
+   * Broadcast message to all user connections (FF OFF behavior)
+   */
+  private async broadcastToAllSockets(userId: string, message: string, sockets: WebSocket[]): Promise<void> {
+    const sendPromises = sockets.map(async (ws) => {
+      try {
+        ws.send(message);
+      } catch (error) {
+        console.error(`Failed to send message to user ${userId}:`, error);
+        throw error;
+      }
+    });
+
+    await Promise.allSettled(sendPromises);
+  }
+
+  /**
+   * Send message only to sockets with matching contexts (FF ON behavior)
+   */
+  private async sendToMatchingContexts(
+    userId: string,
+    message: string,
+    messageContextKeys: string[] | undefined,
+    sockets: WebSocket[]
+  ): Promise<void> {
+    if (!messageContextKeys) {
+      return;
+    }
+
+    const sendPromises = sockets.map(async (ws) => {
+      const metadata = this.getConnectionMetadata(ws);
+
+      if (!metadata) {
+        return;
+      }
+
+      const inboxContextKeys = metadata.contextKeys;
+
+      if (this.shouldDeliverMessage(messageContextKeys, inboxContextKeys)) {
+        await this.deliverMessageToSocket(ws, message, userId, inboxContextKeys);
+      }
+    });
+
+    await Promise.allSettled(sendPromises);
+  }
+
+  /**
+   * Determine if message should be delivered based on context match
+   */
+  private shouldDeliverMessage(messageContextKeys: string[], inboxContextKeys?: string[]): boolean {
+    return this.isExactMatch(messageContextKeys, inboxContextKeys);
+  }
+
+  /**
+   * Deliver message to a specific socket
+   */
+  private async deliverMessageToSocket(
+    ws: WebSocket,
+    message: string,
+    userId: string,
+    _inboxContextKeys?: string[]
+  ): Promise<void> {
+    try {
+      ws.send(message);
+    } catch (error) {
+      console.error(`Failed to send message to user ${userId}:`, error);
+      throw error;
     }
   }
 }

@@ -30,7 +30,7 @@ import { Result } from '../types/fp.js';
  *
  * @remarks
  * List all notification events (triggered events) for the current environment.
- *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**.
+ *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**, **severity**, **contextKeys**.
  *     Checkout all available filters in the query section.
  *     This API returns event triggers, to list each channel notifications, check messages APIs.
  */
@@ -95,6 +95,7 @@ async function $do(
     after: payload.after,
     before: payload.before,
     channels: payload.channels,
+    contextKeys: payload.contextKeys,
     emails: payload.emails,
     limit: payload.limit,
     page: payload.page,
@@ -123,7 +124,7 @@ async function $do(
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? '',
     operationID: 'NotificationsController_listNotifications',
-    oAuth2Scopes: [],
+    oAuth2Scopes: null,
 
     resolvedSecurity: requestSecurity,
 

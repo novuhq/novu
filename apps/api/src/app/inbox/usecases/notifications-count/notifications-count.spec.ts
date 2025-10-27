@@ -91,7 +91,7 @@ describe('NotificationsCount', () => {
             severity: undefined,
           },
           {
-            limit: 99,
+            limit: 100,
           }
         )
       ).to.be.true;
@@ -118,7 +118,7 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { read: true, severity: undefined },
-          { limit: 99 }
+          { limit: 100 }
         )
       ).to.be.true;
 
@@ -135,7 +135,7 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { read: false, severity: undefined },
-          { limit: 99 }
+          { limit: 100 }
         )
       ).to.be.true;
 
@@ -152,7 +152,7 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { severity: undefined },
-          { limit: 99 }
+          { limit: 100 }
         )
       ).to.be.true;
 
@@ -169,7 +169,7 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { archived: true, severity: undefined },
-          { limit: 99 }
+          { limit: 100 }
         )
       ).to.be.true;
 
@@ -186,7 +186,7 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { archived: false, severity: undefined },
-          { limit: 99 }
+          { limit: 100 }
         )
       ).to.be.true;
 
@@ -203,7 +203,7 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { snoozed: true, severity: undefined },
-          { limit: 99 }
+          { limit: 100 }
         )
       ).to.be.true;
 
@@ -220,7 +220,7 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { snoozed: false, severity: undefined },
-          { limit: 99 }
+          { limit: 100 }
         )
       ).to.be.true;
 
@@ -237,7 +237,7 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { severity: undefined },
-          { limit: 99 }
+          { limit: 100 }
         )
       ).to.be.true;
 
@@ -254,7 +254,7 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           { read: true, archived: true, severity: undefined },
-          { limit: 99 }
+          { limit: 100 }
         )
       ).to.be.true;
     });

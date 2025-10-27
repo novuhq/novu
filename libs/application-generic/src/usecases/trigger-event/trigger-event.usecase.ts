@@ -232,7 +232,7 @@ export class TriggerEvent {
       ...command,
       tenant: this.mapTenant(command.tenant),
       actor: this.mapActor(command.actor),
-      ...(isContextEnabled && command.context && { contextKeys: await this.resolveContextKeys(command) }),
+      ...(isContextEnabled && { contextKeys: await this.resolveContextKeys(command) }),
     };
   }
 
@@ -374,13 +374,13 @@ export class TriggerEvent {
     return subscriber;
   }
 
-  private async resolveContextKeys(command: TriggerEventCommand): Promise<string[] | undefined> {
+  private async resolveContextKeys(command: TriggerEventCommand): Promise<string[]> {
     if (!command.context) {
-      return undefined;
+      return [];
     }
 
     try {
-      const contexts = await this.contextRepository.upsertContextsFromPayload(
+      const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
         command.environmentId,
         command.organizationId,
         command.context

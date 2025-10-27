@@ -66,7 +66,7 @@ import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
-import { validateHmacEncryption } from '../../utils/encryption';
+import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
@@ -75,7 +75,7 @@ import { SessionCommand } from './session.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
-const MAX_NOTIFICATIONS_COUNT = 99;
+const MAX_NOTIFICATIONS_COUNT = 100;
 
 @Injectable()
 export class Session {
@@ -121,12 +121,6 @@ export class Session {
       throw new BadRequestException('Please provide a valid application identifier');
     }
 
-    const contextKeys = await this.resolveContexts(
-      environment._id,
-      environment._organizationId,
-      command.requestData.context
-    );
-
     const inAppIntegration = await this.selectIntegration.execute(
       SelectIntegrationCommand.create({
         environmentId: environment._id,
@@ -147,7 +141,21 @@ export class Session {
         subscriberId: subscriber.subscriberId,
         subscriberHash: command.requestData.subscriberHash,
       });
+
+      if (command.requestData.context) {
+        validateContextHmacEncryption({
+          apiKey: environment.apiKeys[0].key,
+          context: command.requestData.context,
+          contextHash: command.requestData.contextHash,
+        });
+      }
     }
+
+    const contextKeys = await this.resolveContexts(
+      environment._id,
+      environment._organizationId,
+      command.requestData.context
+    );
 
     const subscriberEntity = await this.createSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -396,7 +404,7 @@ export class Session {
     environmentId: string,
     organizationId: string,
     context?: ContextPayload
-  ): Promise<string[]> {
+  ): Promise<string[] | undefined> {
     const isContextsEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
       defaultValue: false,
@@ -404,11 +412,19 @@ export class Session {
       organization: { _id: organizationId },
     });
 
-    if (!context || !isContextsEnabled) {
+    if (!isContextsEnabled) {
+      return undefined;
+    }
+
+    if (!context) {
       return [];
     }
 
-    const contexts = await this.contextRepository.upsertContextsFromPayload(environmentId, organizationId, context);
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      environmentId,
+      organizationId,
+      context
+    );
 
     return contexts.map((context) => context.key);
   }

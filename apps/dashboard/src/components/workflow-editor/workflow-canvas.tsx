@@ -46,8 +46,6 @@ const WorkflowCanvasChild = ({
     draggedNodeId,
     intersectingNodeId,
     intersectingEdgeId,
-    onNodesChange,
-    onEdgesChange,
     removeEdges,
     updateEdges,
     selectNode,
@@ -132,9 +130,7 @@ const WorkflowCanvasChild = ({
       <div ref={reactFlowWrapper} className="h-full w-full" id="workflow-canvas-container">
         <ReactFlow
           nodes={nodes}
-          onNodesChange={onNodesChange}
           edges={edges}
-          onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           deleteKeyCode={null}

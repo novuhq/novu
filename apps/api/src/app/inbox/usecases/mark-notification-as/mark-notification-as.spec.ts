@@ -120,6 +120,7 @@ describe('MarkNotificationAs', () => {
         read: command.read,
         archived: command.archived,
         snoozedUntil: command.snoozedUntil,
+        contextKeys: command.contextKeys,
       }),
     ]);
     expect(mapToDto(updatedMessageMock)).to.deep.equal(updatedMessage);

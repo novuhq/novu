@@ -30,8 +30,21 @@ export const delayTimedOutputSchema = {
   additionalProperties: false,
 } as const satisfies JsonSchema;
 
+export const delayDynamicOutputSchema = {
+  type: 'object',
+  properties: {
+    type: {
+      enum: ['dynamic'],
+    },
+    dynamicKey: { type: 'string' },
+    extendToSchedule: { type: 'boolean' },
+  },
+  required: ['dynamicKey'],
+  additionalProperties: false,
+} as const satisfies JsonSchema;
+
 export const delayOutputSchema = {
-  oneOf: [delayRegularOutputSchema, delayTimedOutputSchema],
+  oneOf: [delayRegularOutputSchema, delayTimedOutputSchema, delayDynamicOutputSchema],
 } as const satisfies JsonSchema;
 
 export const delayResultSchema = {
