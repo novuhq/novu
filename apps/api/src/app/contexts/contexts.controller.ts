@@ -75,8 +75,9 @@ export class ContextsController {
   @Post('')
   @ApiResponse(GetContextResponseDto, 201)
   @ApiOperation({
-    summary: 'Create context',
-    description: 'Create a new context with the specified type, id, and data. Returns 409 if context already exists.',
+    summary: 'Create a context',
+    description: `Create a new context with the specified type, id, and data. Returns 409 if context already exists.
+      **type** and **id** are required fields, **data** is optional, if the context already exists, it returns the 409 response`,
   })
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
@@ -105,8 +106,10 @@ export class ContextsController {
   @ApiParam({ name: 'id', type: String, description: 'Context ID' })
   @ApiResponse(GetContextResponseDto, 200)
   @ApiOperation({
-    summary: 'Update context data',
-    description: 'Update the data of an existing context. Returns 404 if context does not exist.',
+    summary: 'Update a context',
+    description: `Update the data of an existing context.
+      **type** and **id** are required fields, **data** is required. Only the data field is updated, the rest of the context is not affected.
+      If the context does not exist, it returns the 404 response`,
   })
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
@@ -135,8 +138,11 @@ export class ContextsController {
   @Get('')
   @ApiResponse(ListContextsResponseDto)
   @ApiOperation({
-    summary: 'List contexts',
-    description: 'Retrieve a paginated list of contexts, optionally filtered by type and key pattern',
+    summary: 'List all contexts',
+    description: `Retrieve a paginated list of all contexts, optionally filtered by type and key pattern.
+      **type** and **id** are optional fields, if provided, only contexts with the matching type and id will be returned.
+      **search** is an optional field, if provided, only contexts with the matching key pattern will be returned.
+      Checkout all possible parameters in the query section below for more details`,
   })
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @ExternalApiAccessible()
@@ -175,8 +181,9 @@ export class ContextsController {
   @ApiParam({ name: 'id', type: String, description: 'Context ID' })
   @ApiResponse(GetContextResponseDto, 200)
   @ApiOperation({
-    summary: 'Get context by id',
-    description: 'Retrieve a specific context by its type and id',
+    summary: 'Retrieve a context',
+    description: `Retrieve a specific context by its type and id.
+      **type** and **id** are required fields, if the context does not exist, it returns the 404 response`,
   })
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @ExternalApiAccessible()
@@ -204,8 +211,9 @@ export class ContextsController {
   @ApiParam({ name: 'id', type: String, description: 'Context ID' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Delete context',
-    description: 'Delete a context by its type and id',
+    summary: 'Delete a context',
+    description: `Delete a context by its type and id.
+      **type** and **id** are required fields, if the context does not exist, it returns the 404 response`,
   })
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
