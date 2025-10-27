@@ -159,11 +159,10 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       return { subject: translatedSubject, body: cleanedHtml };
     }
 
-    const sanitizedSubject = sanitizeHTML(translatedSubject);
     const sanitizedBody = sanitizeHTML(cleanedHtml);
 
     return {
-      subject: sanitizedSubject,
+      subject: translatedSubject,
       body: sanitizedBody,
     };
   }
