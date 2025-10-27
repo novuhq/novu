@@ -571,42 +571,50 @@ export class SendMessagePush extends SendMessageBase {
         );
       }
 
-      const pushHandler = this.getIntegrationHandler(integration);
-      const isTokenInvalid = pushHandler?.isTokenInvalid?.(e.message || e.toString());
+      try {
+        const pushHandler = this.getIntegrationHandler(integration);
+        const isTokenInvalid = pushHandler?.isTokenInvalid?.(e.message || e.toString());
 
-      if (isTokenInvalid) {
-        Logger.log(
-          { jobId: command.jobId, deviceToken, providerId: integration.providerId },
-          `Invalid device token detected for jobId ${command.jobId}, removing token from subscriber`,
+        if (isTokenInvalid) {
+          Logger.log(
+            { jobId: command.jobId, deviceToken, providerId: integration.providerId },
+            `Invalid device token detected for jobId ${command.jobId}, removing token from subscriber`,
+            LOG_CONTEXT
+          );
+
+          await this.removeInvalidDeviceToken(
+            command._subscriberId,
+            deviceToken,
+            integration._id,
+            command,
+            e.message || e.toString(),
+            message._id
+          );
+        }
+
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_FAILED,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId),
+            error: {
+              push: {
+                reason: isTokenInvalid ? 'token_invalid' : 'generic_error',
+                deviceToken: deviceToken,
+              },
+              message: e.message || e.name || 'Error while sending push with provider',
+            },
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        });
+      } catch (err) {
+        Logger.error(
+          { jobId: command.jobId },
+          `Error sending webhook message for jobId ${command.jobId} ${err.message || err.toString()}`,
           LOG_CONTEXT
         );
-
-        await this.removeInvalidDeviceToken(
-          command._subscriberId,
-          deviceToken,
-          integration._id,
-          command,
-          e.message || e.toString(),
-          message._id
-        );
       }
-
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_FAILED,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, command.subscriberId),
-          error: {
-            push: {
-              reason: isTokenInvalid ? 'token_invalid' : 'generic_error',
-              deviceToken: deviceToken,
-            },
-            message: e.message || e.name || 'Error while sending push with provider',
-          },
-        },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
 
       return { success: false, error: e };
     }
