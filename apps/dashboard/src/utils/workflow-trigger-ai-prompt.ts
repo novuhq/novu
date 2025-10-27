@@ -27,7 +27,7 @@ const generateCodeSnippets = (config: CodeSnippetConfig) => {
   const subscriberEmail = subscriberData.email || 'user@example.com';
 
   // Escape single quotes for safe interpolation into single-quoted strings
-  const escapeForSingleQuotes = (value: string) => value.replace(/'/g, "\\'");
+  const escapeForSingleQuotes = (value: string) => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   const subscriberIdEscaped = escapeForSingleQuotes(subscriberId);
   const subscriberEmailEscaped = escapeForSingleQuotes(subscriberEmail);
 
