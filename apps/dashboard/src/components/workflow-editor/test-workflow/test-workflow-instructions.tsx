@@ -1,6 +1,7 @@
 import type { WorkflowResponseDto } from '@novu/shared';
 import { PermissionsEnum } from '@novu/shared';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { RiSparklingFill } from 'react-icons/ri';
 import {
   Sheet,
   SheetContent,
@@ -23,9 +24,13 @@ import {
   createPythonSnippet,
 } from '@/utils/code-snippets';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { generateWorkflowTriggerAIPrompt } from '@/utils/workflow-trigger-ai-prompt';
+import { Button } from '../../primitives/button';
 import { CodeBlock, Language } from '../../primitives/code-block';
 import { InlineToast } from '../../primitives/inline-toast';
 import { Separator } from '../../primitives/separator';
+import { ToastClose, ToastIcon } from '../../primitives/sonner';
+import { showErrorToast, showToast } from '../../primitives/sonner-helpers';
 import { TimelineContainer, TimelineStep } from '../../primitives/timeline';
 import { ExternalLink } from '../../shared/external-link';
 import { SnippetLanguage } from './types';
@@ -119,16 +124,21 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
   const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? '') : 'API_KEY';
   const track = useTelemetry();
 
+  const [isAIPromptCopied, setIsAIPromptCopied] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       track(TelemetryEvent.WORKFLOW_INSTRUCTIONS_OPENED);
     }
-  }, [isOpen, track, identifier]);
+  }, [isOpen, track]);
 
   const getSnippetForLanguage = (language: SnippetLanguage) => {
     const snippetUtil = LANGUAGE_TO_SNIPPET_UTIL[language];
 
-    return snippetUtil({ identifier, to: to ?? {}, payload: payload ?? '' });
+    // Only pass the actual API key to the cURL snippet for immediate use
+    const secretKey = language === 'shell' && canReadApiKeys && apiKey ? apiKey : undefined;
+
+    return snippetUtil({ identifier, to: to ?? {}, payload: payload ?? '', secretKey });
   };
 
   // Calculate the positions to mask the API key, showing only last 4 characters
@@ -143,15 +153,69 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
 
   const { maskStart, maskEnd } = getApiKeyMaskPositions(apiKey);
 
+  const handleCopyAIPrompt = async () => {
+    try {
+      let parsedPayload = {};
+      try {
+        parsedPayload = payload ? JSON.parse(payload) : {};
+      } catch {
+        parsedPayload = {};
+      }
+
+      const aiPrompt = generateWorkflowTriggerAIPrompt({
+        workflowId: identifier,
+        workflowName: workflow?.name ?? identifier,
+        apiKey: canReadApiKeys && apiKey ? apiKey : 'NOVU_SECRET_KEY',
+        subscriberData: to ?? {},
+        payload: parsedPayload,
+      });
+
+      await navigator.clipboard.writeText(aiPrompt);
+      setIsAIPromptCopied(true);
+      setTimeout(() => setIsAIPromptCopied(false), 2000);
+
+      track(TelemetryEvent.AI_PROMPT_COPIED, { workflowId: identifier });
+
+      showToast({
+        children: ({ close }) => (
+          <>
+            <ToastIcon variant="success" />
+            <span>AI prompt copied to clipboard</span>
+            <ToastClose onClick={close} />
+          </>
+        ),
+        options: {
+          position: 'bottom-right',
+        },
+      });
+    } catch {
+      showErrorToast('Failed to copy AI prompt');
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="min-w-[500px]">
         <SheetHeader className="space-y-initial p-3 py-4">
-          <SheetTitle className="text-label-lg">Trigger workflow from your application</SheetTitle>
-          <SheetDescription className="text-paragraph-xs text-text-soft mt-1 block">
-            It's time to integrate the workflow with your application.{' '}
-            <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
-          </SheetDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1">
+              <SheetTitle className="text-label-lg">Trigger workflow from your application</SheetTitle>
+              <SheetDescription className="text-paragraph-xs text-text-soft mt-1 block">
+                It's time to integrate the workflow with your application.{' '}
+                <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
+              </SheetDescription>
+            </div>
+            <Button
+              variant="secondary"
+              mode="gradient"
+              size="xs"
+              leadingIcon={RiSparklingFill}
+              onClick={handleCopyAIPrompt}
+              className="shrink-0"
+            >
+              {isAIPromptCopied ? 'Copied!' : 'Copy AI prompt'}
+            </Button>
+          </div>
         </SheetHeader>
         <Separator />
         <SheetMain className="p-0">
