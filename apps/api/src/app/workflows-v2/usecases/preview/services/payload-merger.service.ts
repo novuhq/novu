@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { createMockObjectFromSchema, ResourceOriginEnum, UserSessionData } from '@novu/shared';
+import { ContextResolved } from '@novu/framework/internal';
+import { ContextPayload, createMockObjectFromSchema, ResourceOriginEnum, UserSessionData } from '@novu/shared';
 import { isPlainObject, pick } from 'es-toolkit';
 import { keys, merge, mergeWith } from 'es-toolkit/compat';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
@@ -110,10 +111,7 @@ export class PayloadMergerService {
 
     mergedPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
 
-    // Preserve user-provided context data only if it exists
-    if (userPayloadExample?.context !== undefined) {
-      mergedPayload.context = userPayloadExample.context;
-    }
+    mergedPayload.context = this.resolveContext(userPayloadExample?.context);
 
     if (workflow && stepIdOrInternalId) {
       /*
@@ -151,6 +149,27 @@ export class PayloadMergerService {
     return mergedPayload;
   }
 
+  /**
+   * Convert ContextPayload to ContextResolved without upserting actual db entities
+   * just for the preview purposes
+   */
+  private resolveContext(contextPayload?: ContextPayload): ContextResolved | undefined {
+    if (!contextPayload) return undefined;
+
+    const resolved: ContextResolved = {};
+
+    for (const [contextType, contextValue] of Object.entries(contextPayload)) {
+      if (!contextValue) continue;
+
+      resolved[contextType] =
+        typeof contextValue === 'string'
+          ? { id: contextValue, data: {} }
+          : { id: contextValue.id, data: contextValue.data || {} };
+    }
+
+    return Object.keys(resolved).length > 0 ? resolved : undefined;
+  }
+
   private async mergeWithoutPayloadSchema({
     payloadExample,
     userPayloadExample,
@@ -181,10 +200,7 @@ export class PayloadMergerService {
 
     finalPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
 
-    // Preserve user-provided context data only if it exists
-    if (userPayloadExample?.context !== undefined) {
-      finalPayload.context = userPayloadExample.context;
-    }
+    finalPayload.context = this.resolveContext(userPayloadExample?.context);
 
     if (workflow && stepIdOrInternalId) {
       /*

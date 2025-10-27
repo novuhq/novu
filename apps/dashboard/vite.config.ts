@@ -35,6 +35,11 @@ export default defineConfig(({ mode }) => {
         // Auth tokens can be obtained from https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
         authToken: env.SENTRY_AUTH_TOKEN,
         reactComponentAnnotation: { enabled: true },
+        sourcemaps: {
+          assets: './dist/**',
+          filesToDeleteAfterUpload: ['**/*.js.map'],
+        },
+        telemetry: false,
       }),
     ],
     css: {
@@ -62,6 +67,7 @@ export default defineConfig(({ mode }) => {
       include: ['@novu/api'],
     },
     build: {
+      sourcemap: true,
       chunkSizeWarningLimit: 12000,
       commonjsOptions: {
         include: [/@novu\/api/, /node_modules/],

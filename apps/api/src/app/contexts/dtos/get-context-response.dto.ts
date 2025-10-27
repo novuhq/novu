@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ContextData, ContextType } from '@novu/shared';
 
 export class GetContextResponseDto {
-  @ApiProperty()
+  @ApiProperty({ type: String })
   type: ContextType;
 
   @ApiProperty()

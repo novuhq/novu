@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, ContextRepository } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { OrganizationModule } from '../organization/organization.module';
@@ -20,7 +20,7 @@ import { USE_CASES } from './usecases';
     OrganizationModule,
     OutboundWebhooksModule.forRoot(),
   ],
-  providers: [...USE_CASES, CommunityOrganizationRepository],
+  providers: [...USE_CASES, CommunityOrganizationRepository, ContextRepository],
   exports: [...USE_CASES],
   controllers: [InboxController],
 })

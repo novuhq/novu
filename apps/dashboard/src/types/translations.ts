@@ -5,6 +5,7 @@ export type TranslationResource = {
 
 export enum LocalizationResourceEnum {
   WORKFLOW = 'workflow',
+  LAYOUT = 'layout',
 }
 
 export type TranslationKey = {

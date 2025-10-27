@@ -1,8 +1,9 @@
-import { IEnvironment, ResourceOriginEnum, WorkflowResponseDto } from '@novu/shared';
+import { IEnvironment, ResourceOriginEnum, Slug, WorkflowResponseDto } from '@novu/shared';
 import { Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { getFirstErrorMessage } from '@/components/workflow-editor/step-utils';
 import { StepTypeEnum } from '@/utils/enums';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { Step } from '@/utils/types';
 import { generateUUID } from '@/utils/uuid';
 import { NODE_HEIGHT } from './base-node';
@@ -21,7 +22,6 @@ import {
   ThrottleNode,
   TriggerNode,
 } from './nodes';
-import { OptimisticStep } from './use-optimistic-workflow';
 
 // y distance = node height + space between nodes
 const Y_DISTANCE = NODE_HEIGHT + 50;
@@ -40,19 +40,30 @@ export const nodeTypes = {
   add: AddNode,
 };
 
+export const NODE_TYPE_TO_STEP_TYPE: Omit<Record<keyof typeof nodeTypes, StepTypeEnum>, 'add'> = {
+  trigger: StepTypeEnum.TRIGGER,
+  email: StepTypeEnum.EMAIL,
+  sms: StepTypeEnum.SMS,
+  in_app: StepTypeEnum.IN_APP,
+  push: StepTypeEnum.PUSH,
+  chat: StepTypeEnum.CHAT,
+  delay: StepTypeEnum.DELAY,
+  digest: StepTypeEnum.DIGEST,
+  throttle: StepTypeEnum.THROTTLE,
+  custom: StepTypeEnum.CUSTOM,
+};
+
 export const edgeTypes = {
   addNode: AddNodeEdge,
   default: DefaultEdge,
 };
 
-const mapStepToNodeContent = (step: Step, workflowOrigin: ResourceOriginEnum): string | undefined => {
-  const controlValues = step.controls.values;
-  const delayMessage =
-    workflowOrigin === ResourceOriginEnum.EXTERNAL
-      ? 'Delay duration defined in code'
-      : `Delay for ${controlValues.amount} ${controlValues.unit}`;
-
-  switch (step.type) {
+export const mapStepToNodeContent = (
+  stepType: StepTypeEnum,
+  controlValues: Record<string, unknown>,
+  workflowOrigin: ResourceOriginEnum
+): string => {
+  switch (stepType) {
     case StepTypeEnum.TRIGGER:
       return 'This step triggers this workflow';
     case StepTypeEnum.EMAIL:
@@ -65,8 +76,18 @@ const mapStepToNodeContent = (step: Step, workflowOrigin: ResourceOriginEnum): s
       return 'Sends Push notification to your subscribers';
     case StepTypeEnum.CHAT:
       return 'Sends Chat message to your subscribers';
-    case StepTypeEnum.DELAY:
+    case StepTypeEnum.DELAY: {
+      const delayMessage =
+        workflowOrigin === ResourceOriginEnum.EXTERNAL
+          ? 'Delay duration defined in code'
+          : controlValues.dynamicKey
+            ? `Delay based on ${controlValues.dynamicKey} variable`
+            : controlValues.cron
+              ? `Delay until the scheduled time`
+              : `Delay for ${controlValues.amount} ${controlValues.unit}`;
+
       return delayMessage;
+    }
     case StepTypeEnum.DIGEST:
       return 'Batches events into one coherent message before delivery to the subscriber.';
     case StepTypeEnum.THROTTLE:
@@ -74,63 +95,146 @@ const mapStepToNodeContent = (step: Step, workflowOrigin: ResourceOriginEnum): s
     case StepTypeEnum.CUSTOM:
       return 'Executes the business logic in your bridge application';
     default:
-      return undefined;
+      return '';
   }
 };
 
-const mapStepToNode = ({
-  addStepIndex,
+export const recalculatePositionAndIndex = (nodes: Node<NodeData, keyof typeof nodeTypes>[]) => {
+  const position = { x: 0, y: 0 };
+
+  return nodes.map((node, index) => {
+    const newNode = {
+      ...node,
+      position: { ...position },
+      data: {
+        ...node.data,
+        index,
+      },
+    };
+
+    position.y += Y_DISTANCE;
+
+    return newNode;
+  });
+};
+
+export const createNode = ({
+  x,
+  y,
+  name,
+  content,
+  index,
+  stepSlug,
+  error,
+  controlValues,
+  isPending,
+  type,
+}: {
+  x: number;
+  y: number;
+  name: string;
+  content: string;
+  index: number;
+  stepSlug?: Slug;
+  error: string;
+  controlValues: Record<string, unknown>;
+  isPending?: boolean;
+  type: StepTypeEnum;
+}): Node<NodeData, keyof typeof nodeTypes> => {
+  return {
+    // the random id is used to identify the node and to be able to re-render the nodes and edges
+    id: generateUUID(),
+    position: { x, y: y + Y_DISTANCE },
+    data: {
+      name,
+      content,
+      index,
+      stepSlug,
+      error,
+      controlValues,
+      isPending,
+    },
+    type,
+  };
+};
+
+export const mapStepToNode = ({
+  index,
   previousPosition,
   step,
   workflowOrigin = ResourceOriginEnum.NOVU_CLOUD,
-  isTemplateStorePreview,
 }: {
-  addStepIndex: number;
+  index: number;
   previousPosition: { x: number; y: number };
   step: Step;
   workflowOrigin?: ResourceOriginEnum;
-  isTemplateStorePreview?: boolean;
 }): Node<NodeData, keyof typeof nodeTypes> => {
-  const content = mapStepToNodeContent(step, workflowOrigin);
+  const content = mapStepToNodeContent(step.type, step.controls.values, workflowOrigin);
 
   const error = step.issues
     ? getFirstErrorMessage(step.issues, 'controls') || getFirstErrorMessage(step.issues, 'integration')
     : undefined;
 
-  return {
-    // the random id is used to identify the node and to be able to re-render the nodes and edges
-    id: generateUUID(),
-    position: { x: previousPosition.x, y: previousPosition.y + Y_DISTANCE },
-    data: {
-      stepId: step._id,
-      name: step.name,
-      content,
-      addStepIndex,
-      stepSlug: step.slug,
-      error: error?.message,
-      controlValues: step.controls.values,
-      isTemplateStorePreview,
-      optimisticStep: (step as OptimisticStep)?._optimistic ? (step as OptimisticStep) : undefined,
-    },
+  return createNode({
+    x: previousPosition.x,
+    y: previousPosition.y,
+    name: step.name,
+    content: content ?? '',
+    index,
+    stepSlug: step.slug,
+    error: error?.message ?? '',
+    controlValues: step.controls.values,
     type: step.type,
-  };
+  });
 };
 
-export const generateNodesAndEdges = (
+export const createEdges = (nodes: Node<NodeData, keyof typeof nodeTypes>[], showStepPreview?: boolean) => {
+  return nodes.reduce<AddNodeEdgeType[]>((acc, node, index) => {
+    if (index === 0) {
+      return acc;
+    }
+
+    const parent = nodes[index - 1];
+
+    acc.push({
+      id: `edge-${parent.id}-${node.id}`,
+      source: parent.id,
+      sourceHandle: 'b',
+      targetHandle: 'a',
+      target: node.id,
+      type: showStepPreview ? 'default' : 'addNode',
+      style: {
+        stroke: 'hsl(var(--neutral-alpha-200))',
+        strokeWidth: 2,
+        strokeDasharray: 5,
+      },
+      data: showStepPreview
+        ? undefined
+        : {
+            isLast: index === nodes.length - 1,
+            addStepIndex: index - 1,
+          },
+    });
+
+    return acc;
+  }, []);
+};
+
+export const createNodes = (
   steps: Step[],
-  isTemplateStorePreview: boolean,
   currentWorkflow?: WorkflowResponseDto,
   currentEnvironment?: IEnvironment
-): { nodes: Node<NodeData, keyof typeof nodeTypes>[]; edges: AddNodeEdgeType[] } => {
+) => {
   const id = generateUUID();
   const triggerNode: Node<NodeData, 'trigger'> = {
     id,
     position: { x: 0, y: 0 },
     data: {
-      stepId: id,
-      workflowSlug: currentWorkflow?.slug ?? '',
-      environment: currentEnvironment?.slug ?? '',
-      isTemplateStorePreview,
+      index: 0,
+      triggerLink: buildRoute(ROUTES.TRIGGER_WORKFLOW, {
+        environmentSlug: currentEnvironment?.slug ?? '',
+        workflowSlug: currentWorkflow?.slug ?? '',
+      }),
     },
     type: 'trigger',
   };
@@ -140,56 +244,38 @@ export const generateNodesAndEdges = (
     const node = mapStepToNode({
       step,
       previousPosition,
-      addStepIndex: index,
+      index: index + 1, // +1 because we have the trigger node
       workflowOrigin: currentWorkflow?.origin,
-      isTemplateStorePreview,
     });
     previousPosition = node.position;
     return node;
   });
 
-  let allNodes: Node<NodeData, keyof typeof nodeTypes>[] = [triggerNode, ...createdNodes];
+  const allNodes: Node<NodeData, keyof typeof nodeTypes>[] = [triggerNode, ...createdNodes];
 
   const addNodeId = generateUUID();
   const addNode: Node<NodeData, 'add'> = {
     id: addNodeId,
     position: { ...previousPosition, y: previousPosition.y + Y_DISTANCE },
     data: {
-      stepId: addNodeId,
+      index: allNodes.length,
     },
     type: 'add',
   };
-  allNodes = [...allNodes, addNode];
 
-  const edges = allNodes.reduce<AddNodeEdgeType[]>((acc, node, index) => {
-    if (index === 0) {
-      return acc;
-    }
+  return [...allNodes, addNode];
+};
 
-    const parent = allNodes[index - 1];
+export const generateNodesAndEdges = (
+  steps: Step[],
+  showStepPreview?: boolean,
+  currentWorkflow?: WorkflowResponseDto,
+  currentEnvironment?: IEnvironment
+): { nodes: Node<NodeData, keyof typeof nodeTypes>[]; edges: AddNodeEdgeType[] } => {
+  const nodes = createNodes(steps, currentWorkflow, currentEnvironment);
 
-    acc.push({
-      id: `edge-${parent.id}-${node.id}`,
-      source: parent.id,
-      sourceHandle: 'b',
-      targetHandle: 'a',
-      target: node.id,
-      type: isTemplateStorePreview ? 'default' : 'addNode',
-      style: {
-        stroke: 'hsl(var(--neutral-alpha-200))',
-        strokeWidth: 2,
-        strokeDasharray: 5,
-      },
-      data: isTemplateStorePreview
-        ? undefined
-        : {
-            isLast: index === allNodes.length - 1,
-            addStepIndex: index - 1,
-          },
-    });
-
-    return acc;
-  }, []);
-
-  return { nodes: allNodes, edges };
+  return {
+    nodes,
+    edges: createEdges(nodes, showStepPreview),
+  };
 };

@@ -7,27 +7,22 @@ import {
   QueryClient,
   QueryFunctionContext,
   QueryKey,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { activityWorkflowRunsList } from "../funcs/activityWorkflowRunsList.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as components from "../models/components/index.js";
-import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
-import { useNovuContext } from "./_context.js";
-import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import { NovuCore } from '../core.js';
+import { activityWorkflowRunsList } from '../funcs/activityWorkflowRunsList.js';
+import { combineSignals } from '../lib/primitives.js';
+import { RequestOptions } from '../lib/sdks.js';
+import * as components from '../models/components/index.js';
+import * as operations from '../models/operations/index.js';
+import { unwrapAsync } from '../types/fp.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 
-export type ActivityWorkflowRunsListQueryData =
-  components.GetWorkflowRunsResponseDto;
+export type ActivityWorkflowRunsListQueryData = components.GetWorkflowRunsResponseDto;
 
 /**
  * List workflow runs
@@ -37,15 +32,11 @@ export type ActivityWorkflowRunsListQueryData =
  */
 export function useActivityWorkflowRunsList(
   request: operations.ActivityControllerGetWorkflowRunsRequest,
-  options?: QueryHookOptions<ActivityWorkflowRunsListQueryData>,
+  options?: QueryHookOptions<ActivityWorkflowRunsListQueryData>
 ): UseQueryResult<ActivityWorkflowRunsListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildActivityWorkflowRunsListQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildActivityWorkflowRunsListQuery(client, request, options),
     ...options,
   });
 }
@@ -58,15 +49,11 @@ export function useActivityWorkflowRunsList(
  */
 export function useActivityWorkflowRunsListSuspense(
   request: operations.ActivityControllerGetWorkflowRunsRequest,
-  options?: SuspenseQueryHookOptions<ActivityWorkflowRunsListQueryData>,
+  options?: SuspenseQueryHookOptions<ActivityWorkflowRunsListQueryData>
 ): UseSuspenseQueryResult<ActivityWorkflowRunsListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildActivityWorkflowRunsListQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildActivityWorkflowRunsListQuery(client, request, options),
     ...options,
   });
 }
@@ -74,13 +61,10 @@ export function useActivityWorkflowRunsListSuspense(
 export function prefetchActivityWorkflowRunsList(
   queryClient: QueryClient,
   client$: NovuCore,
-  request: operations.ActivityControllerGetWorkflowRunsRequest,
+  request: operations.ActivityControllerGetWorkflowRunsRequest
 ): Promise<void> {
   return queryClient.prefetchQuery({
-    ...buildActivityWorkflowRunsListQuery(
-      client$,
-      request,
-    ),
+    ...buildActivityWorkflowRunsListQuery(client$, request),
   });
 }
 
@@ -99,10 +83,11 @@ export function setActivityWorkflowRunsListData(
       createdGte?: string | undefined;
       createdLte?: string | undefined;
       severity?: Array<operations.Severity> | undefined;
+      contextKeys?: Array<string> | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
-  data: ActivityWorkflowRunsListQueryData,
+  data: ActivityWorkflowRunsListQueryData
 ): ActivityWorkflowRunsListQueryData | undefined {
   const key = queryKeyActivityWorkflowRunsList(...queryKeyBase);
 
@@ -112,48 +97,49 @@ export function setActivityWorkflowRunsListData(
 export function invalidateActivityWorkflowRunsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [parameters: {
-      limit: number | undefined;
-      cursor?: string | undefined;
-      workflowIds?: Array<string> | undefined;
-      subscriberIds?: Array<string> | undefined;
-      transactionIds?: Array<string> | undefined;
-      statuses?: Array<operations.QueryParamStatuses> | undefined;
-      channels?: Array<string> | undefined;
-      topicKey?: string | undefined;
-      createdGte?: string | undefined;
-      createdLte?: string | undefined;
-      severity?: Array<operations.Severity> | undefined;
-      idempotencyKey?: string | undefined;
-    }]
+    [
+      parameters: {
+        limit: number | undefined;
+        cursor?: string | undefined;
+        workflowIds?: Array<string> | undefined;
+        subscriberIds?: Array<string> | undefined;
+        transactionIds?: Array<string> | undefined;
+        statuses?: Array<operations.QueryParamStatuses> | undefined;
+        channels?: Array<string> | undefined;
+        topicKey?: string | undefined;
+        createdGte?: string | undefined;
+        createdLte?: string | undefined;
+        severity?: Array<operations.Severity> | undefined;
+        contextKeys?: Array<string> | undefined;
+        idempotencyKey?: string | undefined;
+      },
+    ]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "WorkflowRuns", "list", ...queryKeyBase],
+    queryKey: ['@novu/api', 'WorkflowRuns', 'list', ...queryKeyBase],
   });
 }
 
 export function invalidateAllActivityWorkflowRunsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "WorkflowRuns", "list"],
+    queryKey: ['@novu/api', 'WorkflowRuns', 'list'],
   });
 }
 
 export function buildActivityWorkflowRunsListQuery(
   client$: NovuCore,
   request: operations.ActivityControllerGetWorkflowRunsRequest,
-  options?: RequestOptions,
+  options?: RequestOptions
 ): {
   queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<ActivityWorkflowRunsListQueryData>;
+  queryFn: (context: QueryFunctionContext) => Promise<ActivityWorkflowRunsListQueryData>;
 } {
   return {
     queryKey: queryKeyActivityWorkflowRunsList({
@@ -168,41 +154,35 @@ export function buildActivityWorkflowRunsListQuery(
       createdGte: request.createdGte,
       createdLte: request.createdLte,
       severity: request.severity,
+      contextKeys: request.contextKeys,
       idempotencyKey: request.idempotencyKey,
     }),
-    queryFn: async function activityWorkflowRunsListQueryFn(
-      ctx,
-    ): Promise<ActivityWorkflowRunsListQueryData> {
+    queryFn: async function activityWorkflowRunsListQueryFn(ctx): Promise<ActivityWorkflowRunsListQueryData> {
       const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
       const mergedOptions = {
         ...options,
         fetchOptions: { ...options?.fetchOptions, signal: sig },
       };
 
-      return unwrapAsync(activityWorkflowRunsList(
-        client$,
-        request,
-        mergedOptions,
-      ));
+      return unwrapAsync(activityWorkflowRunsList(client$, request, mergedOptions));
     },
   };
 }
 
-export function queryKeyActivityWorkflowRunsList(
-  parameters: {
-    limit: number | undefined;
-    cursor?: string | undefined;
-    workflowIds?: Array<string> | undefined;
-    subscriberIds?: Array<string> | undefined;
-    transactionIds?: Array<string> | undefined;
-    statuses?: Array<operations.QueryParamStatuses> | undefined;
-    channels?: Array<string> | undefined;
-    topicKey?: string | undefined;
-    createdGte?: string | undefined;
-    createdLte?: string | undefined;
-    severity?: Array<operations.Severity> | undefined;
-    idempotencyKey?: string | undefined;
-  },
-): QueryKey {
-  return ["@novu/api", "WorkflowRuns", "list", parameters];
+export function queryKeyActivityWorkflowRunsList(parameters: {
+  limit: number | undefined;
+  cursor?: string | undefined;
+  workflowIds?: Array<string> | undefined;
+  subscriberIds?: Array<string> | undefined;
+  transactionIds?: Array<string> | undefined;
+  statuses?: Array<operations.QueryParamStatuses> | undefined;
+  channels?: Array<string> | undefined;
+  topicKey?: string | undefined;
+  createdGte?: string | undefined;
+  createdLte?: string | undefined;
+  severity?: Array<operations.Severity> | undefined;
+  contextKeys?: Array<string> | undefined;
+  idempotencyKey?: string | undefined;
+}): QueryKey {
+  return ['@novu/api', 'WorkflowRuns', 'list', parameters];
 }

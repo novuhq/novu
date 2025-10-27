@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import { PermissionsEnum } from '@novu/shared';
 import { useCallback } from 'react';
 import {
   RiBarChartBoxLine,
@@ -14,7 +14,6 @@ import {
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Command, CommandExecutionContext } from '../command-types';
@@ -24,7 +23,6 @@ export function useNavigationCommands(context: CommandExecutionContext): Command
   const hasPermission = useHasPermission();
   const hasWorkflowPermission = hasPermission({ permission: PermissionsEnum.WORKFLOW_READ });
   const hasSubscriberPermission = hasPermission({ permission: PermissionsEnum.SUBSCRIBER_READ });
-  const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
   const isEnterprise = !IS_SELF_HOSTED || IS_ENTERPRISE;
 
   const createNavigationCommand = useCallback(
@@ -96,18 +94,8 @@ export function useNavigationCommands(context: CommandExecutionContext): Command
   // Environments
   commands.push(createNavigationCommand('nav-environments', 'Environments', ROUTES.ENVIRONMENTS, <RiDatabase2Line />));
 
-  // Conditional navigation commands
-  if (isEmailLayoutsPageActive) {
-    commands.push(
-      createNavigationCommand(
-        'nav-layouts',
-        'Email Layouts',
-        ROUTES.LAYOUTS,
-        <RiLayout5Line />,
-        () => isEmailLayoutsPageActive
-      )
-    );
-  }
+  // Layouts
+  commands.push(createNavigationCommand('nav-layouts', 'Email Layouts', ROUTES.LAYOUTS, <RiLayout5Line />));
 
   if (isEnterprise) {
     commands.push(

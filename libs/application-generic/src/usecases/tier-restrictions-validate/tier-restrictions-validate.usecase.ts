@@ -83,6 +83,10 @@ export class TierRestrictionsValidateUsecase {
       return [amountIssue, unitIssue].filter(Boolean);
     }
 
+    if (stepType === StepTypeEnum.DELAY && isDynamicDelayAction(command)) {
+      return [];
+    }
+
     if (stepType === StepTypeEnum.THROTTLE && isRegularThrottleAction(command)) {
       const throttleDurationMs = calculateThrottleDuration(command);
 
@@ -225,12 +229,21 @@ function calculateMilliseconds(amount: number, unit: DigestUnitEnum): number {
 const isCronExpression = (cron: string) => {
   return !!cron;
 };
+
 const isRegularDeferAction = (command: TierRestrictionsValidateCommand) => {
+  if (command.type === 'dynamic') {
+    return false;
+  }
+
   if (command.deferDurationMs) {
     return true;
   }
 
   return !!command.amount && isNumber(command.amount) && !!command.unit && isValidDigestUnit(command.unit);
+};
+
+const isDynamicDelayAction = (command: TierRestrictionsValidateCommand) => {
+  return command.type === 'dynamic' && !!command.dynamicKey;
 };
 
 function buildIssue(

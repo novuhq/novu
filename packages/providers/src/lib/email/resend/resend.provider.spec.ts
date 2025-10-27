@@ -1,3 +1,4 @@
+import { IEmailOptions } from '@novu/stateless';
 import { expect, test, vi } from 'vitest';
 import { ResendEmailProvider } from './resend.provider';
 
@@ -6,17 +7,32 @@ const mockConfig = {
   from: 'test@test.com',
 };
 
-const mockNovuMessage = {
+const mockNovuMessage: IEmailOptions = {
   from: 'test@test.com',
   to: ['test@test.com'],
   html: '<div> Mail Content </div>',
   subject: 'Test subject',
-  reply_to: 'no-reply@novu.co',
+  replyTo: 'no-reply@novu.co',
   attachments: [
     {
       mime: 'text/plain',
       file: Buffer.from('test'),
       name: 'test.txt',
+    },
+  ],
+};
+const mockNovuMessageWithContentId: IEmailOptions = {
+  from: 'test@test.com',
+  to: ['test@test.com'],
+  html: '<img src="cid:test" alt="test" />',
+  subject: 'Test subject',
+  replyTo: 'no-reply@novu.co',
+  attachments: [
+    {
+      mime: 'image/png',
+      file: Buffer.from('test'),
+      name: 'test.png',
+      cid: 'test',
     },
   ],
 };
@@ -36,7 +52,7 @@ test('should trigger resend library correctly', async () => {
     html: mockNovuMessage.html,
     subject: mockNovuMessage.subject,
     attachments: mockNovuMessage.attachments,
-    reply_to: mockNovuMessage.reply_to,
+    replyTo: mockNovuMessage.replyTo,
   });
 });
 
@@ -51,21 +67,24 @@ test('should trigger resend email with From Name', async () => {
     return {};
   });
 
-  await provider.sendMessage(mockNovuMessage);
+  await provider.sendMessage(mockNovuMessageWithContentId);
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    from: `${mockConfigWithSenderName.senderName} <${mockNovuMessage.from}>`,
-    to: mockNovuMessage.to,
-    html: mockNovuMessage.html,
-    subject: mockNovuMessage.subject,
-    attachments: mockNovuMessage.attachments.map((attachment) => ({
+    from: `${mockConfigWithSenderName.senderName} <${mockNovuMessageWithContentId.from}>`,
+    to: mockNovuMessageWithContentId.to,
+    html: mockNovuMessageWithContentId.html,
+    subject: mockNovuMessageWithContentId.subject,
+    attachments: mockNovuMessageWithContentId.attachments.map((attachment) => ({
       filename: attachment?.name,
       content: attachment.file,
+      contentId: attachment.cid,
     })),
-    reply_to: null,
-    cc: undefined,
-    bcc: undefined,
+    replyTo: mockNovuMessageWithContentId.replyTo,
+    headers: mockNovuMessageWithContentId.headers,
+    cc: mockNovuMessageWithContentId.cc,
+    bcc: mockNovuMessageWithContentId.bcc,
+    text: mockNovuMessageWithContentId.text,
   });
 });
 
@@ -97,9 +116,12 @@ test('should trigger resend email correctly with _passthrough', async () => {
     attachments: mockNovuMessage.attachments.map((attachment) => ({
       filename: attachment?.name,
       content: attachment.file,
+      contentId: attachment.cid,
     })),
-    reply_to: null,
-    cc: undefined,
-    bcc: undefined,
+    replyTo: mockNovuMessage.replyTo,
+    headers: mockNovuMessage.headers,
+    cc: mockNovuMessage.cc,
+    bcc: mockNovuMessage.bcc,
+    text: mockNovuMessage.text,
   });
 });

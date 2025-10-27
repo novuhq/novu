@@ -1,16 +1,28 @@
 import { useMemo } from 'react';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { createTranslationAutocompleteSource } from '@/components/primitives/translation-plugin/autocomplete';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { useCreateTranslationKey } from './use-create-translation-key';
 import { useFetchTranslationKeys } from './use-fetch-translation-keys';
 import { useIsTranslationEnabled } from './use-is-translation-enabled';
 
-export const useTranslationCompletionSource = ({ workflow }: { workflow?: { _id: string } }) => {
-  const isTranslationEnabled = useIsTranslationEnabled();
+export const useTranslationCompletionSource = ({
+  resourceId,
+  resourceType,
+  isTranslationEnabledOnResource,
+}: {
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
+  isTranslationEnabledOnResource: boolean;
+}) => {
+  const isTranslationEnabled = useIsTranslationEnabled({
+    isTranslationEnabledOnResource,
+  });
   const createTranslationKeyMutation = useCreateTranslationKey();
   const { translationKeys } = useFetchTranslationKeys({
-    workflowId: workflow?._id || '',
-    enabled: isTranslationEnabled && !!workflow?._id,
+    resourceId,
+    resourceType,
+    enabled: isTranslationEnabled && !!resourceId,
   });
 
   const translationCompletionSource = useMemo(() => {
@@ -20,11 +32,12 @@ export const useTranslationCompletionSource = ({ workflow }: { workflow?: { _id:
       createTranslationAutocompleteSource({
         translationKeys,
         onCreateNewTranslationKey: async (translationKey: string) => {
-          if (!workflow?._id) return;
+          if (!resourceId) return;
 
           try {
             await createTranslationKeyMutation.mutateAsync({
-              workflowId: workflow._id,
+              resourceId,
+              resourceType,
               translationKey,
               defaultValue: `[${translationKey}]`,
             });
@@ -34,7 +47,7 @@ export const useTranslationCompletionSource = ({ workflow }: { workflow?: { _id:
         },
       }),
     ];
-  }, [translationKeys, createTranslationKeyMutation, workflow?._id, isTranslationEnabled]);
+  }, [translationKeys, createTranslationKeyMutation, resourceId, resourceType, isTranslationEnabled]);
 
   return translationCompletionSource;
 };

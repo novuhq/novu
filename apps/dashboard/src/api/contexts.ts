@@ -1,5 +1,5 @@
 import type { ContextData, ContextId, ContextType, DirectionEnum, IEnvironment } from '@novu/shared';
-import { getV2 } from './api.client';
+import { delV2, getV2, patchV2, postV2 } from './api.client';
 
 export type ContextResponseDto = {
   id: ContextId;
@@ -93,9 +93,61 @@ export const getContext = async ({
   type: ContextType;
   id: ContextId;
 }): Promise<ContextResponseDto> => {
-  const response = await getV2<ContextResponseDto>(`/contexts/${type}/${id}`, {
+  const { data } = await getV2<{ data: ContextResponseDto }>(`/contexts/${type}/${id}`, {
     environment,
   });
 
-  return response;
+  return data;
+};
+
+export const createContext = async ({
+  environment,
+  type,
+  id,
+  data,
+}: {
+  environment: IEnvironment;
+  type: ContextType;
+  id: ContextId;
+  data?: ContextData;
+}): Promise<ContextResponseDto> => {
+  const { data: responseData } = await postV2<{ data: ContextResponseDto }>(`/contexts`, {
+    environment,
+    body: { type, id, data },
+  });
+
+  return responseData;
+};
+
+export const updateContext = async ({
+  environment,
+  type,
+  id,
+  data,
+}: {
+  environment: IEnvironment;
+  type: ContextType;
+  id: ContextId;
+  data: ContextData;
+}): Promise<ContextResponseDto> => {
+  const { data: responseData } = await patchV2<{ data: ContextResponseDto }>(`/contexts/${type}/${id}`, {
+    environment,
+    body: { data },
+  });
+
+  return responseData;
+};
+
+export const deleteContext = async ({
+  environment,
+  type,
+  id,
+}: {
+  environment: IEnvironment;
+  type: ContextType;
+  id: ContextId;
+}): Promise<void> => {
+  await delV2(`/contexts/${type}/${id}`, {
+    environment,
+  });
 };

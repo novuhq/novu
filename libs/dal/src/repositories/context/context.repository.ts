@@ -1,4 +1,4 @@
-import { ContextData, ContextId, ContextKey, ContextPayload, ContextType, createContextKey } from '@novu/shared';
+import { ContextData, ContextId, ContextPayload, ContextType, createContextKey } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepository } from '../base-repository';
@@ -10,7 +10,26 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
     super(Context, ContextEntity);
   }
 
-  async upsertContext(
+  async findOrCreateContextsFromPayload(
+    environmentId: string,
+    organizationId: string,
+    contextPayload: ContextPayload
+  ): Promise<ContextEntity[]> {
+    const findOrCreatePromises = Object.entries(contextPayload).map(([type, value]) => {
+      if (!value) return null;
+
+      const { id, data } =
+        typeof value === 'string' ? { id: value, data: undefined } : { id: value.id, data: value.data };
+
+      return this.findOrCreateContext(environmentId, organizationId, type, id, data);
+    });
+
+    const validPromises = findOrCreatePromises.filter((promise): promise is Promise<ContextEntity> => promise !== null);
+
+    return Promise.all(validPromises);
+  }
+
+  async findOrCreateContext(
     environmentId: string,
     organizationId: string,
     type: ContextType,
@@ -24,58 +43,38 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
       type,
     };
 
-    // Try to find existing context first
     const existingContext = await this.findOne(query);
 
     if (existingContext) {
-      // Update path: context already exists
-      const updateFields: Partial<ContextEntity> = {};
+      return existingContext;
+    }
 
-      // Only update data if explicitly provided (even if empty object or null)
-      if (data !== undefined) {
-        updateFields.data = data;
+    const newContext: FilterQuery<ContextDBModel> & EnforceEnvOrOrgIds = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      id,
+      type,
+      key: createContextKey(type, id),
+      data: data || {},
+    };
+
+    try {
+      return await this.create(newContext);
+    } catch (error) {
+      const isDuplicateKeyError = error && typeof error === 'object' && 'code' in error && error.code === 11000;
+
+      if (isDuplicateKeyError) {
+        const context = await this.findOne(query);
+        if (context) {
+          return context;
+        }
       }
 
-      const updatedContext = await this.findOneAndUpdate(query, { $set: updateFields }, { new: true });
-
-      // biome-ignore lint/style/noNonNullAssertion: we know it exists since we found it
-      return updatedContext!;
-    } else {
-      // Create path: context doesn't exist, create new one
-      const newContext: FilterQuery<ContextDBModel> & EnforceEnvOrOrgIds = {
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        id,
-        type,
-        key: createContextKey(type, id),
-        data: data || {},
-      };
-
-      return this.create(newContext);
+      throw error;
     }
   }
 
-  async upsertContextsFromPayload(
-    environmentId: string,
-    organizationId: string,
-    contextPayload: ContextPayload
-  ): Promise<ContextEntity[]> {
-    const upsertPromises = Object.entries(contextPayload).map(([type, value]) => {
-      if (!value) return null; // Skip undefined values
-
-      const { id, data } =
-        typeof value === 'string' ? { id: value, data: undefined } : { id: value.id, data: value.data };
-
-      return this.upsertContext(environmentId, organizationId, type, id, data);
-    });
-
-    // Filter out null promises and execute in parallel
-    const validPromises = upsertPromises.filter((promise): promise is Promise<ContextEntity> => promise !== null);
-
-    return Promise.all(validPromises);
-  }
-
-  async findByKeys(environmentId: string, organizationId: string, contextKeys: ContextKey[]): Promise<ContextEntity[]> {
+  async findByKeys(environmentId: string, organizationId: string, contextKeys: string[]): Promise<ContextEntity[]> {
     if (contextKeys.length === 0) {
       return [];
     }

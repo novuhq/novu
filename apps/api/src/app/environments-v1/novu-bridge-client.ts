@@ -44,6 +44,7 @@ export class NovuBridgeClient {
         ConstructFrameworkWorkflowCommand.create({
           environmentId: req.params.environmentId,
           workflowId: req.query.workflowId as string,
+          layoutId: req.query.layoutId as string,
           controlValues: req.body.controls,
           action: req.query.action as PostActionEnum,
           skipLayoutRendering: req.query.skipLayoutRendering === 'true',

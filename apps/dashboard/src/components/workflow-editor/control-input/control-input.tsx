@@ -12,6 +12,7 @@ import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-val
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
+import { LocalizationResourceEnum } from '../../../types/translations';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -63,6 +64,8 @@ export function ControlInput({
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
   const { workflow, digestStepBeforeCurrent } = useWorkflow();
+  const resourceId = workflow?.workflowId || '';
+  const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
   const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const {
@@ -87,8 +90,10 @@ export function ControlInput({
     viewRef,
     lastCompletionRef,
     onChange,
-    workflow,
+    resourceId,
+    resourceType,
     enableTranslations,
+    isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
   });
 
   const { enhancedIsAllowedVariable } = useEnhancedVariableValidation({
@@ -132,6 +137,8 @@ export function ControlInput({
       disabled={disabled}
     >
       <EditorOverlays
+        resourceId={resourceId}
+        resourceType={resourceType}
         isTranslationPopoverOpen={isTranslationPopoverOpen}
         selectedTranslation={selectedTranslation}
         onTranslationPopoverOpenChange={handleTranslationPopoverOpenChange}
@@ -149,6 +156,7 @@ export function ControlInput({
         }}
         highlightedVariableKey={highlightedVariableKey}
         enableTranslations={shouldEnableTranslations}
+        translationValueInput={ControlInput}
       />
     </VariableEditor>
   );

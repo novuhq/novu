@@ -3,12 +3,14 @@ import { BlockGroupItem } from '@maily-to/core/blocks';
 import { Variable } from '@maily-to/core/extensions';
 import type { Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
 import { Editor as TiptapEditorReact } from '@tiptap/react';
-import { ForwardRefExoticComponent, HTMLAttributes, useCallback, useMemo, useRef } from 'react';
+import { ForwardRefExoticComponent, HTMLAttributes, useCallback, useMemo } from 'react';
+import { useDataRef } from '@/hooks/use-data-ref';
 import { useRemoveGrammarly } from '@/hooks/use-remove-grammarly';
-import { TranslationKey } from '@/types/translations';
+import { LocalizationResourceEnum, TranslationKey } from '@/types/translations';
 import { EnhancedParsedVariables, IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
-import { createExtensions, DEFAULT_EDITOR_CONFIG, MAILY_EMAIL_WIDTH } from './maily-config';
+import { TranslationValueInputComponent } from '../workflow-editor/steps/email/translations/edit-translation-popover/edit-translation-popover';
+import { DEFAULT_EDITOR_CONFIG, MAILY_EMAIL_WIDTH, useCreateExtensions } from './maily-config';
 import { RepeatMenuDescription } from './repeat-menu-description';
 import { VariableFrom } from './types';
 import { calculateVariables } from './variables';
@@ -29,10 +31,13 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
   isTranslationEnabled?: boolean;
   isContextEnabled?: boolean;
   translationKeys?: TranslationKey[];
+  translationValueInput: TranslationValueInputComponent;
   variableSuggestionsPopover?: ForwardRefExoticComponent<{
     items: Variable[];
     onSelectItem: (item: Variable) => void;
   }>;
+  resourceId?: string;
+  resourceType?: LocalizationResourceEnum;
   renderVariable?: (opts: {
     variable: Variable;
     fallback?: string;
@@ -70,9 +75,12 @@ export const Maily = ({
   onCreateNewVariable = () => Promise.resolve(),
   onCreateNewTranslationKey = () => Promise.resolve(),
   translationKeys,
+  resourceId = '',
+  resourceType = LocalizationResourceEnum.WORKFLOW,
   variableSuggestionsPopover = MailyVariablesListView,
   renderVariable = () => null,
   createVariableNodeView = defaultCreateVariableNodeView,
+  translationValueInput,
   ...rest
 }: MailyProps) => {
   const primitives = useMemo(
@@ -89,64 +97,44 @@ export const Maily = ({
   );
 
   const editorParentRef = useRemoveGrammarly<HTMLDivElement>();
+  const calculateVariablesDataRef = useDataRef({
+    primitives,
+    arrays,
+    namespaces,
+    isAllowedVariable: variables?.isAllowedVariable ?? (() => false),
+    addDigestVariables,
+    isPayloadSchemaEnabled,
+    isTranslationEnabled,
+    isContextEnabled,
+  });
 
   const handleCalculateVariables = useCallback(
     ({ query, editor, from }: { query: string; editor: TiptapEditor; from: VariableFrom }) => {
       return calculateVariables({
+        ...calculateVariablesDataRef.current,
         query,
         editor,
         from,
-        primitives,
-        arrays,
-        namespaces,
-        isAllowedVariable: variables?.isAllowedVariable ?? (() => false),
-        addDigestVariables,
-        isPayloadSchemaEnabled,
-        isTranslationEnabled,
-        isContextEnabled,
       });
     },
-    [
-      primitives,
-      arrays,
-      namespaces,
-      variables?.isAllowedVariable,
-      addDigestVariables,
-      isPayloadSchemaEnabled,
-      isTranslationEnabled,
-      isContextEnabled,
-    ]
+    [calculateVariablesDataRef]
   );
 
-  const extensions = useMemo(
-    () =>
-      createExtensions({
-        handleCalculateVariables,
-        parsedVariables: variables,
-        blocks: blocks ?? [],
-        onCreateNewVariable,
-        isPayloadSchemaEnabled,
-        isTranslationEnabled,
-        translationKeys,
-        onCreateNewTranslationKey,
-        variableSuggestionsPopover,
-        renderVariable,
-        createVariableNodeView,
-      }),
-    [
-      handleCalculateVariables,
-      variables,
-      blocks,
-      isPayloadSchemaEnabled,
-      onCreateNewVariable,
-      isTranslationEnabled,
-      translationKeys,
-      onCreateNewTranslationKey,
-      variableSuggestionsPopover,
-      renderVariable,
-      createVariableNodeView,
-    ]
-  );
+  const extensions = useCreateExtensions({
+    handleCalculateVariables,
+    parsedVariables: variables,
+    blocks: blocks ?? [],
+    onCreateNewVariable,
+    isTranslationEnabled,
+    translationKeys,
+    onCreateNewTranslationKey,
+    variableSuggestionsPopover,
+    renderVariable,
+    createVariableNodeView,
+    resourceId,
+    resourceType,
+    translationValueInput,
+  });
 
   /*
    * Override Maily tippy box styles as a temporary solution.

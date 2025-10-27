@@ -3,7 +3,8 @@ import { format } from 'date-fns';
 import { motion } from 'motion/react';
 import React from 'react';
 import { Link } from 'react-router-dom';
-
+import { ContextDrawerButton } from '@/components/contexts';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SubscriberDrawerButton } from '@/components/subscribers/subscriber-drawer';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
@@ -17,9 +18,6 @@ import { cn } from '@/utils/ui';
 import { JOB_STATUS_CONFIG } from '../constants';
 import { getActivityStatus } from '../helpers';
 import { OverviewItem } from './overview-item';
-
-// TODO: Remove this in a few weeks after deployment
-const DEPLOYMENT_DATE = '2025-09-04T00:00:00';
 
 export interface ActivityOverviewProps {
   activity: IActivity;
@@ -87,9 +85,11 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
 
     if (activity.contextKeys.length === 1) {
       return (
-        <span className="text-foreground-600 cursor-pointer font-mono text-xs group-hover:underline">
-          {activity.contextKeys[0]}
-        </span>
+        <ContextDrawerButton contextKey={activity.contextKeys[0]} readOnly className="group w-full text-start">
+          <span className="text-foreground-600 cursor-pointer font-mono text-xs group-hover:underline">
+            {activity.contextKeys[0]}
+          </span>
+        </ContextDrawerButton>
       );
     }
 
@@ -97,25 +97,25 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
     const othersCount = activity.contextKeys.length - 1;
 
     return (
-      <Tooltip>
-        <TooltipTrigger>
-          <span className="text-foreground-600 cursor-help font-mono text-xs">
+      <Popover>
+        <PopoverTrigger asChild>
+          <span className="text-foreground-600 cursor-pointer font-mono text-xs hover:underline">
             {firstContextKey} + {othersCount} {othersCount === 1 ? 'other' : 'others'}
           </span>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-sm" variant="light">
+        </PopoverTrigger>
+        <PopoverContent className="max-w-sm" align="start" side="top">
           <div className="font-mono text-xs">
             {activity.contextKeys.map((contextKey, index) => (
               <React.Fragment key={contextKey}>
                 {index > 0 && ', '}
-                <button className="text-foreground-600 cursor-pointer hover:underline inline bg-transparent p-0 border-none font-mono text-xs">
-                  {contextKey}
-                </button>
+                <ContextDrawerButton contextKey={contextKey} readOnly className="group inline-block bg-transparent p-0">
+                  <span className="cursor-pointer group-hover:underline">{contextKey}</span>
+                </ContextDrawerButton>
               </React.Fragment>
             ))}
           </div>
-        </TooltipContent>
-      </Tooltip>
+        </PopoverContent>
+      </Popover>
     );
   };
 
@@ -184,14 +184,14 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
             {status || 'QUEUED'}
           </span>
         </OverviewItem>
-        {typeof activity.severity !== 'undefined' && Date.parse(activity.createdAt) >= Date.parse(DEPLOYMENT_DATE) && (
+        {typeof activity.severity !== 'undefined' && (
           <OverviewItem label="Severity">
             <span className={cn('font-mono text-xs')} data-testid="activity-severity">
               {capitalize(activity.severity.toString())}
             </span>
           </OverviewItem>
         )}
-        {typeof activity.critical === 'boolean' && Date.parse(activity.createdAt) >= Date.parse(DEPLOYMENT_DATE) && (
+        {typeof activity.critical === 'boolean' && (
           <OverviewItem label="Critical">
             <span className={cn('font-mono text-xs')} data-testid="activity-severity">
               {activity.critical ? 'true' : 'false'}

@@ -22,7 +22,7 @@ export class CreateSubscriberRequestDto {
   @IsNotEmpty({
     message: 'SubscriberId is required',
   })
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   subscriberId: string;
 
   @ApiPropertyOptional({

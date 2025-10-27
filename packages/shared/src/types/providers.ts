@@ -50,6 +50,7 @@ export enum CredentialsKeyEnum {
   AppSid = 'appSid',
   SenderId = 'senderId',
   AppIOBaseUrl = 'AppIOBaseUrl',
+  ServicePlanId = 'servicePlanId',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -116,6 +117,7 @@ export enum SmsProviderIdEnum {
   // cspell:disable-next-line
   Smsmode = 'smsmode',
   IMedia = 'imedia',
+  Sinch = 'sinch',
 }
 
 export enum ChatProviderIdEnum {

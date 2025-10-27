@@ -1,7 +1,7 @@
 import { PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { RiCheckLine, RiCloseLine, RiDownloadLine, RiFileUploadLine } from 'react-icons/ri';
+import { RiCheckLine, RiCloseLine, RiFileDownloadLine, RiUploadLine } from 'react-icons/ri';
 import { FlagCircle } from '@/components/flag-circle';
 import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -43,7 +43,7 @@ function UploadButton({
       variant="secondary"
       mode="outline"
       size="xs"
-      leadingIcon={showResult ? undefined : RiFileUploadLine}
+      leadingIcon={showResult ? undefined : RiFileDownloadLine}
       disabled={disabled || isUploading}
       onClick={onClick}
       className="relative min-w-[120px]" // Fixed width to prevent resizing
@@ -151,7 +151,7 @@ export function EditorActions({ selectedTranslation, modifiedContent, isReadOnly
                   className="px-2 py-1.5"
                   onClick={() => handleDownload(selectedLocale, content)}
                 >
-                  <RiDownloadLine className="h-4 w-4" />
+                  <RiUploadLine className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Export translation JSON</TooltipContent>

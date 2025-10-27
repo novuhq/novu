@@ -86,6 +86,7 @@ export type Session = {
   isDevelopmentMode: boolean;
   maxSnoozeDurationHours: number;
   applicationIdentifier?: string;
+  contextKeys?: string[];
 };
 
 export type Subscriber = {
@@ -204,6 +205,15 @@ export type DefaultSchedule = {
   weeklySchedule?: WeeklySchedule;
 };
 
+export type ContextValue =
+  | string
+  | {
+      id: string;
+      data?: Record<string, unknown>;
+    };
+
+export type Context = Partial<Record<string, ContextValue>>;
+
 export type PreferencesResponse = {
   level: PreferenceLevel;
   enabled: boolean;
@@ -243,10 +253,12 @@ export type StandardNovuOptions = {
   __userAgent?: string;
   applicationIdentifier: string;
   subscriberHash?: string;
+  contextHash?: string;
   apiUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
   defaultSchedule?: DefaultSchedule;
+  context?: Context;
 } & (
   | {
       // TODO: Backward compatibility support - remove in future versions (see NV-5801)

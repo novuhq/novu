@@ -11,6 +11,7 @@ export const useFetchOrganizationSettings = () => {
     queryKey: [QueryKeys.organizationSettings, currentEnvironment?._id],
     queryFn: async () => await getOrganizationSettings({ environment: currentEnvironment! }),
     enabled: !!currentEnvironment?._id && !IS_SELF_HOSTED,
+    refetchOnMount: false,
   });
 
   return query;

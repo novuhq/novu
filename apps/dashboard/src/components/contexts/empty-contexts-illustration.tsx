@@ -1,9 +1,11 @@
 import { useId } from 'react';
 
 export const EmptyContextsIllustration = () => {
+  const clipPathId = useId();
+
   return (
     <svg width="137" height="126" viewBox="0 0 137 126" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_228_122336)">
+      <g clipPath={`url(#${clipPathId})`}>
         <path
           d="M128.5 80H8.5C4.35786 80 1 83.3579 1 87.5V117.5C1 121.642 4.35786 125 8.5 125H128.5C132.642 125 136 121.642 136 117.5V87.5C136 83.3579 132.642 80 128.5 80Z"
           stroke="#CACFD8"
@@ -47,7 +49,7 @@ export const EmptyContextsIllustration = () => {
         />
       </g>
       <defs>
-        <clipPath id={useId()}>
+        <clipPath id={clipPathId}>
           <rect width="137" height="126" fill="white" />
         </clipPath>
       </defs>

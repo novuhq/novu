@@ -51,4 +51,5 @@ export interface ICredentials {
   AppIOSubscriptionId?: string;
   AppIOBearerToken?: string;
   AppIOOriginalSignature?: string;
+  servicePlanId?: string;
 }

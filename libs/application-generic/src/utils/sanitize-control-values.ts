@@ -1,9 +1,12 @@
-import { StepTypeEnum, TimeUnitEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { isEmpty } from 'lodash';
 import { PinoLogger } from '../logging';
 import {
   ChatControlType,
   DelayControlType,
+  DelayDynamicControlType,
+  DelayRegularControlType,
+  DelayTimedControlType,
   DigestControlSchemaType,
   DigestRegularControlType,
   DigestTimedControlType,
@@ -121,6 +124,7 @@ function sanitizeChat(controlValues: ChatControlType) {
 function sanitizeDigest(controlValues: DigestControlSchemaType) {
   if (isTimedDigestControl(controlValues)) {
     const mappedValues: DigestTimedControlType = {
+      type: controlValues.type,
       cron: controlValues.cron,
       digestKey: controlValues.digestKey,
       skip: controlValues.skip,
@@ -133,6 +137,7 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
   if (isRegularDigestControl(controlValues)) {
     const lookBackAmount = (controlValues.lookBackWindow as LookBackWindowType)?.amount;
     const mappedValues: DigestRegularControlType = {
+      type: controlValues.type,
       // Cast to trigger Ajv validation errors - possible undefined
       ...(parseAmount(controlValues.amount) as { amount?: number }),
       unit: controlValues.unit,
@@ -172,16 +177,42 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
 }
 
 function sanitizeDelay(controlValues: DelayControlType) {
-  const mappedValues: DelayControlType = {
-    // Cast to trigger Ajv validation errors - possible undefined
-    ...(parseAmount(controlValues.amount) as { amount?: number }),
-    type: controlValues.type,
-    unit: controlValues.unit,
-    skip: controlValues.skip,
-    extendToSchedule: controlValues.extendToSchedule,
-  };
+  if (isTimedDelayControl(controlValues)) {
+    const mappedValues: DelayTimedControlType = {
+      type: controlValues.type,
+      cron: controlValues.cron,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
 
-  return filterNullishValues(mappedValues);
+    return filterNullishValues(mappedValues);
+  }
+
+  if (isDynamicDelayControl(controlValues)) {
+    const mappedValues: DelayDynamicControlType = {
+      type: controlValues.type,
+      dynamicKey: controlValues.dynamicKey,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
+  if (isRegularDelayControl(controlValues)) {
+    const mappedValues: DelayRegularControlType = {
+      type: controlValues.type,
+      // Cast to trigger Ajv validation errors - possible undefined
+      ...(parseAmount(controlValues.amount) as { amount?: number }),
+      unit: controlValues.unit,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
+  return filterNullishValues(controlValues);
 }
 
 function sanitizeLayout(controlValues: LayoutControlType) {
@@ -295,4 +326,16 @@ function isTimedDigestControl(controlValues: unknown): controlValues is DigestTi
 
 function isRegularDigestControl(controlValues: unknown): controlValues is DigestRegularControlType {
   return !isTimedDigestControl(controlValues);
+}
+
+function isTimedDelayControl(controlValues: unknown): controlValues is DelayTimedControlType {
+  return !isEmpty((controlValues as DelayTimedControlType)?.cron);
+}
+
+function isDynamicDelayControl(controlValues: unknown): controlValues is DelayDynamicControlType {
+  return !isEmpty((controlValues as DelayDynamicControlType)?.dynamicKey);
+}
+
+function isRegularDelayControl(controlValues: unknown): controlValues is DelayRegularControlType {
+  return !isTimedDelayControl(controlValues) && !isDynamicDelayControl(controlValues);
 }

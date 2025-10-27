@@ -1,24 +1,24 @@
-import { GeneratePreviewResponseDto } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { previewLayout } from '@/api/layouts';
 import { useEnvironment } from '@/context/environment/hooks';
 import { parse } from '@/utils/json';
+import { QueryKeys } from '@/utils/query-keys';
 
-export const useLayoutPreview = () => {
+export const useLayoutPreview = ({
+  layoutSlug,
+  controlValues,
+  previewContextValue,
+}: {
+  layoutSlug: string;
+  controlValues: Record<string, unknown>;
+  previewContextValue: string;
+}) => {
   const { currentEnvironment } = useEnvironment();
+  const { data: parsedEditorPayload } = parse(previewContextValue);
 
-  const {
-    data: previewData,
-    isPending,
-    mutateAsync,
-  } = useMutation<
-    GeneratePreviewResponseDto,
-    Error,
-    { controlValues: Record<string, unknown>; previewContextValue: string; layoutSlug: string }
-  >({
-    mutationFn: async ({ controlValues, previewContextValue, layoutSlug }) => {
-      const { data: parsedEditorPayload } = parse(previewContextValue);
-
+  const { data: previewData, isPending } = useQuery({
+    queryKey: [QueryKeys.previewLayout, layoutSlug, controlValues, previewContextValue],
+    queryFn: async ({ signal }) => {
       if (!layoutSlug) {
         throw new Error('Layout slug is required');
       }
@@ -34,13 +34,15 @@ export const useLayoutPreview = () => {
           controlValues,
           previewPayload: { ...parsedEditorPayload },
         },
+        signal,
       });
     },
+    enabled: Boolean(layoutSlug && currentEnvironment && parsedEditorPayload),
+    placeholderData: (previousData) => previousData,
   });
 
   return {
     previewData,
     isPending,
-    preview: mutateAsync,
   };
 };

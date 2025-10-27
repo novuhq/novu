@@ -1,9 +1,7 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { Control, FieldValues, Path } from 'react-hook-form';
 import { RiArrowRightSLine, RiInformation2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { FormField } from '@/components/primitives/form/form';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
 import { TranslationSwitch } from '@/components/translations/translation-switch';
@@ -14,28 +12,29 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { Badge } from '../primitives/badge';
 import { Button } from '../primitives/button';
 
-interface TranslationToggleSectionProps<T extends FieldValues> {
-  control: Control<T>;
-  fieldName: Path<T>;
-  onChange?: (checked: boolean) => void;
+interface TranslationToggleSectionProps {
+  value: boolean;
+  onChange: (checked: boolean) => void;
   isReadOnly?: boolean;
   showManageLink?: boolean;
-  workflowId?: string;
+  showDrawer?: boolean;
+  resourceId?: string;
+  resourceType?: LocalizationResourceEnum;
 }
 
-export function TranslationToggleSection<T extends FieldValues>({
-  control,
-  fieldName,
+export function TranslationToggleSection({
+  value,
   onChange,
   isReadOnly = false,
   showManageLink = true,
-  workflowId,
-}: TranslationToggleSectionProps<T>) {
+  showDrawer = true,
+  resourceId,
+  resourceType,
+}: TranslationToggleSectionProps) {
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
-
   const translationsUrl = buildRoute(ROUTES.TRANSLATIONS, {
     environmentSlug: currentEnvironment?.slug ?? '',
   });
@@ -46,10 +45,10 @@ export function TranslationToggleSection<T extends FieldValues>({
   const handleManageTranslationsClick = (e: React.MouseEvent) => {
     e.preventDefault();
 
-    if (workflowId) {
+    if (showDrawer) {
       setIsDrawerOpen(true);
     } else {
-      // Fallback to navigation if no workflowId is provided
+      // Fallback to navigation if no resourceId is provided
       navigate(translationsUrl);
     }
   };
@@ -98,43 +97,33 @@ export function TranslationToggleSection<T extends FieldValues>({
 
   return (
     <div className="flex flex-col border-t border-neutral-100 pt-4">
-      <FormField
-        control={control}
-        name={fieldName}
-        render={({ field }) => (
-          <div className="flex items-center justify-between py-1">
-            <div className="flex items-center gap-2">
-              <span className="text-label-xs text-text-strong">
-                Enable Translations{' '}
-                <Badge color="gray" size="sm" variant="lighter">
-                  BETA
-                </Badge>
-              </span>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <RiInformation2Line className="size-4 text-text-soft cursor-help" />
-                </TooltipTrigger>
-                <TooltipPortal>
-                  <TooltipContent side="left" hideWhenDetached>
-                    When enabled, allows you to create and manage translations for your workflow content across
-                    different languages.
-                  </TooltipContent>
-                </TooltipPortal>
-              </Tooltip>
-            </div>
-            <TranslationSwitch
-              id={`enable-translations-${fieldName}`}
-              value={field.value}
-              onChange={(checked) => {
-                field.onChange(checked);
-                onChange?.(checked);
-              }}
-              isReadOnly={isReadOnly}
-            />
-          </div>
-        )}
-      />
+      <div className="flex items-center justify-between py-1">
+        <div className="flex items-center gap-2">
+          <span className="text-label-xs text-text-strong">
+            Enable Translations{' '}
+            <Badge color="gray" size="sm" variant="lighter">
+              BETA
+            </Badge>
+          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <RiInformation2Line className="size-4 text-text-soft cursor-help" />
+            </TooltipTrigger>
+            <TooltipPortal>
+              <TooltipContent side="left" hideWhenDetached>
+                When enabled, allows you to create and manage translations for your workflow content across different
+                languages.
+              </TooltipContent>
+            </TooltipPortal>
+          </Tooltip>
+        </div>
+        <TranslationSwitch
+          id={`enable-translations-${resourceId}`}
+          value={value}
+          onChange={onChange}
+          isReadOnly={isReadOnly}
+        />
+      </div>
       {showManageLink && (
         <>
           <button
@@ -145,12 +134,12 @@ export function TranslationToggleSection<T extends FieldValues>({
             View & manage translations ↗
           </button>
 
-          {workflowId && (
+          {showDrawer && (
             <TranslationDrawer
               isOpen={isDrawerOpen}
               onOpenChange={setIsDrawerOpen}
-              resourceType={LocalizationResourceEnum.WORKFLOW}
-              resourceId={workflowId}
+              resourceType={resourceType ?? LocalizationResourceEnum.WORKFLOW}
+              resourceId={resourceId ?? ''}
             />
           )}
         </>

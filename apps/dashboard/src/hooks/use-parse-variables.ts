@@ -8,17 +8,18 @@ import { type EnhancedParsedVariables, parseStepVariables } from '@/utils/parseS
 export function useParseVariables(
   schema?: JSONSchemaDefinition | JSONSchema7,
   digestStepId?: string,
-  isPayloadSchemaEnabled?: boolean
+  isPayloadSchemaEnabled?: boolean,
+  isLayout?: boolean
 ): EnhancedParsedVariables {
-  const dynamicSchema = useDynamicPreviewSchema();
+  const previewSchema = useDynamicPreviewSchema(isLayout);
 
   const parsedVariables = useMemo(() => {
     /**
      * Combine static and dynamic schemas to get all variables available in preview
-     * Static schema - the schema defined in the workflow which is always the same or persisted = subscriber, workflow, steps, payload
-     * Dynamic schema - the schema defined in the preview data ad-hoc = context, subscriber.data.*
+     * schema - the schema created by combining the workflow/layout schema + used variables in control values
+     * preview schema - combination of ^schema + preview data (available in step editor or layout editor context)
      */
-    const mergedSchema = schema ? merge({}, schema, dynamicSchema) : schema;
+    const mergedSchema = schema ? merge({}, schema, previewSchema) : schema;
 
     return mergedSchema
       ? parseStepVariables(mergedSchema, { digestStepId, isPayloadSchemaEnabled })
@@ -30,7 +31,7 @@ export function useParseVariables(
           enhancedVariables: [],
           isAllowedVariable: () => false,
         };
-  }, [schema, digestStepId, isPayloadSchemaEnabled, dynamicSchema]);
+  }, [schema, digestStepId, isPayloadSchemaEnabled, previewSchema]);
 
   return parsedVariables;
 }

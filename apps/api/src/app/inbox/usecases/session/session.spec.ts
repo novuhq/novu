@@ -11,6 +11,7 @@ import {
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
+  ContextRepository,
   EnvironmentRepository,
   IntegrationRepository,
   MessageRepository,
@@ -18,7 +19,7 @@ import {
   NotificationTemplateRepository,
   PreferencesRepository,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -50,6 +51,11 @@ const mockIntegration = {
   deletedBy: '',
 };
 
+const mockSeverityCounts = [
+  { severity: SeverityLevelEnum.HIGH, count: 10 },
+  { severity: SeverityLevelEnum.MEDIUM, count: 20 },
+];
+
 describe('Session', () => {
   let session: Session;
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
@@ -61,6 +67,7 @@ describe('Session', () => {
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let communityOrganizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let contextRepository: sinon.SinonStubbedInstance<ContextRepository>;
   let generateUniqueApiKey: sinon.SinonStubbedInstance<GenerateUniqueApiKey>;
   let createNovuIntegrationsUsecase: sinon.SinonStubbedInstance<CreateNovuIntegrations>;
   let communityUserRepository: sinon.SinonStubbedInstance<CommunityUserRepository>;
@@ -85,6 +92,7 @@ describe('Session', () => {
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
     communityOrganizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    contextRepository = sinon.createStubInstance(ContextRepository);
     generateUniqueApiKey = sinon.createStubInstance(GenerateUniqueApiKey);
     createNovuIntegrationsUsecase = sinon.createStubInstance(CreateNovuIntegrations);
     communityUserRepository = sinon.createStubInstance(CommunityUserRepository);
@@ -109,6 +117,7 @@ describe('Session', () => {
       integrationRepository as any,
       organizationRepository as any,
       communityOrganizationRepository as any,
+      contextRepository as any,
       generateUniqueApiKey as any,
       createNovuIntegrationsUsecase as any,
       communityUserRepository as any,
@@ -123,6 +132,8 @@ describe('Session', () => {
       getSubscriberSchedule as any,
       updatePreferencesUsecase as any
     );
+
+    messageRepository.getCountBySeverity.resolves(mockSeverityCounts);
   });
 
   it('should throw an error if the environment is not found', async () => {
@@ -280,13 +291,18 @@ describe('Session', () => {
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
     expect(response.token).to.equal(token);
-    expect(response.totalUnreadCount).to.equal(notificationCount.data[0].count);
+    expect(response.unreadCount.total).to.equal(notificationCount.data[0].count);
+    expect(response.unreadCount.severity[SeverityLevelEnum.HIGH]).to.equal(mockSeverityCounts[0].count);
+    expect(response.unreadCount.severity[SeverityLevelEnum.MEDIUM]).to.equal(mockSeverityCounts[1].count);
+    expect(response.unreadCount.severity[SeverityLevelEnum.LOW]).to.equal(0);
+    expect(response.unreadCount.severity[SeverityLevelEnum.NONE]).to.equal(0);
     expect(
       analyticsService.mixpanelTrack.calledWith(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
         _organization: environment._organizationId,
         environmentName: environment.name,
         _subscriber: subscriber._id,
         origin: command.origin,
+        context: undefined,
       })
     ).to.be.true;
   });
@@ -337,5 +353,147 @@ describe('Session', () => {
     organizationRepository.findById.resolves({ apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE } as any);
     const enterpriseResponse: SubscriberSessionResponseDto = await session.execute(command);
     expect(enterpriseResponse.maxSnoozeDurationHours).to.equal(90 * 24);
+  });
+
+  it('should upsert contexts and return contextKeys when context is provided', async () => {
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+        context: { teamId: 'team-123', projectId: 'project-456' },
+      },
+    };
+
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      name: 'env-name',
+      apiKeys: [{ key: 'api-key' }],
+    };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+    const mockContexts = [{ key: 'teamId:team-123' }, { key: 'projectId:project-456' }];
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves(organization as any);
+    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+    getOrganizationSettingsUsecase.execute.resolves({
+      removeNovuBranding: false,
+      defaultLocale: 'en_US',
+    });
+    featureFlagsService.getFlag.resolves(true);
+    contextRepository.findOrCreateContextsFromPayload.resolves(mockContexts as any);
+
+    const response: SubscriberSessionResponseDto = await session.execute(command);
+
+    expect(contextRepository.findOrCreateContextsFromPayload.calledOnce).to.be.true;
+    expect(
+      contextRepository.findOrCreateContextsFromPayload.calledWith(
+        environment._id,
+        environment._organizationId,
+        command.requestData.context
+      )
+    ).to.be.true;
+
+    expect(response.contextKeys).to.deep.equal(['teamId:team-123', 'projectId:project-456']);
+  });
+
+  it('should validate context HMAC when HMAC is enabled and context is provided', async () => {
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+        subscriberHash: 'subscriber-hash',
+        context: { teamId: 'team-123' },
+        contextHash: 'context-hash',
+      },
+    };
+
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      name: 'env-name',
+      apiKeys: [{ key: 'api-key' }],
+    };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+    const mockContexts = [{ key: 'teamId:team-123' }];
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves(organization as any);
+    selectIntegration.execute.resolves(mockIntegration);
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+    getOrganizationSettingsUsecase.execute.resolves({
+      removeNovuBranding: false,
+      defaultLocale: 'en_US',
+    });
+    featureFlagsService.getFlag.resolves(true);
+    contextRepository.findOrCreateContextsFromPayload.resolves(mockContexts as any);
+
+    const validateHmacEncryptionStub = sinon.stub(encryption, 'validateHmacEncryption');
+    const validateContextHmacEncryptionStub = sinon.stub(encryption, 'validateContextHmacEncryption');
+
+    await session.execute(command);
+
+    expect(validateContextHmacEncryptionStub.calledOnce).to.be.true;
+    expect(
+      validateContextHmacEncryptionStub.calledWith(
+        sinon.match({
+          apiKey: environment.apiKeys[0].key,
+          context: command.requestData.context,
+          contextHash: command.requestData.contextHash,
+        })
+      )
+    ).to.be.true;
+
+    validateHmacEncryptionStub.restore();
+    validateContextHmacEncryptionStub.restore();
+  });
+
+  it('should return empty contextKeys array when no context is provided', async () => {
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+      },
+    };
+
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      name: 'env-name',
+      apiKeys: [{ key: 'api-key' }],
+    };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves(organization as any);
+    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+    getOrganizationSettingsUsecase.execute.resolves({
+      removeNovuBranding: false,
+      defaultLocale: 'en_US',
+    });
+    featureFlagsService.getFlag.resolves(true);
+
+    const response: SubscriberSessionResponseDto = await session.execute(command);
+
+    expect(contextRepository.findOrCreateContextsFromPayload.called).to.be.false;
+
+    expect(response.contextKeys).to.deep.equal([]);
   });
 });

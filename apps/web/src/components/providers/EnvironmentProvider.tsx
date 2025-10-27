@@ -1,15 +1,15 @@
+import { IEnvironment } from '@novu/shared';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { IEnvironment } from '@novu/shared';
-import { QueryKeys } from '../../api/query.keys';
 import { getEnvironments } from '../../api/environment';
-import { createContextAndHook } from './createContextAndHook';
+import { QueryKeys } from '../../api/query.keys';
 import { IS_SELF_HOSTED } from '../../config/index';
 import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
-import { useAuth } from './AuthProvider';
 import { ROUTES } from '../../constants/routes';
+import { useAuth } from './AuthProvider';
+import { createContextAndHook } from './createContextAndHook';
 
 export type EnvironmentName = BaseEnvironmentEnum | IEnvironment['name'];
 

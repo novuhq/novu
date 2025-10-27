@@ -1,8 +1,8 @@
 import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
 import { EmailEditorSelect } from '@/components/email-editor-select';
-import { DelayAmount } from '@/components/workflow-editor/steps/delay/delay-amount';
-import { DigestKey } from '@/components/workflow-editor/steps/digest/digest-key';
-import { DigestWindow } from '@/components/workflow-editor/steps/digest/digest-window';
+import { DelayWindow } from '@/components/workflow-editor/steps/delay/delay-window';
+import { DigestDelayTabs } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-delay-tabs';
+import { DigestKey } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-key';
 import { EmailBody } from '@/components/workflow-editor/steps/email/email-body';
 import { EmailSubject } from '@/components/workflow-editor/steps/email/email-subject';
 import { InAppAction } from '@/components/workflow-editor/steps/in-app/in-app-action';
@@ -66,11 +66,6 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
       return <InAppRedirect />;
     }
 
-    case UiComponentEnum.DELAY_AMOUNT:
-    case UiComponentEnum.DELAY_UNIT:
-    case UiComponentEnum.DELAY_TYPE:
-      return <DelayAmount />;
-
     case UiComponentEnum.EMAIL_EDITOR_SELECT: {
       return <EmailEditorSelectInternal />;
     }
@@ -89,8 +84,16 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.DIGEST_AMOUNT:
     case UiComponentEnum.DIGEST_UNIT:
+    case UiComponentEnum.DIGEST_TYPE:
     case UiComponentEnum.DIGEST_CRON:
-      return <DigestWindow />;
+      return <DigestDelayTabs isDigest />;
+
+    case UiComponentEnum.DELAY_AMOUNT:
+    case UiComponentEnum.DELAY_UNIT:
+    case UiComponentEnum.DELAY_TYPE:
+    case UiComponentEnum.DELAY_CRON:
+    case UiComponentEnum.DELAY_DYNAMIC_KEY:
+      return <DelayWindow />;
 
     case UiComponentEnum.THROTTLE_TYPE:
     case UiComponentEnum.THROTTLE_WINDOW:

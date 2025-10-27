@@ -6,7 +6,7 @@ import {
   InstrumentUsecase,
 } from '@novu/application-generic';
 import { ContextResolved } from '@novu/framework/internal';
-import { ChannelTypeEnum, ContextPayload, ResourceOriginEnum } from '@novu/shared';
+import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 // Import new services
 import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
@@ -17,7 +17,6 @@ import { BuildStepDataUsecase } from '../build-step-data';
 import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
 import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
-import { SchemaBuilderService } from './services/schema-builder.service';
 import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()
@@ -29,7 +28,6 @@ export class PreviewUsecase {
     private createVariablesObject: CreateVariablesObject,
     private readonly controlValueSanitizer: ControlValueSanitizerService,
     private readonly payloadMerger: PayloadMergerService,
-    private readonly schemaBuilder: SchemaBuilderService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
     private readonly errorHandler: PreviewErrorHandler
   ) {}
@@ -61,13 +59,7 @@ export class PreviewUsecase {
 
       payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
 
-      // Add resolved context to payload example for schema building
-      if (context.resolvedContext && Object.keys(context.resolvedContext).length > 0 && !payloadExample.context) {
-        payloadExample.context = context.resolvedContext;
-      }
-
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
-      const schema = await this.schemaBuilder.buildPreviewPayloadSchema(payloadExample, context.workflow.payloadSchema);
 
       try {
         const executeOutput = await this.executePreviewUsecase(
@@ -83,7 +75,7 @@ export class PreviewUsecase {
             type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
-          schema,
+          schema: context.variableSchema,
         };
       } catch {
         /*
@@ -96,7 +88,7 @@ export class PreviewUsecase {
             type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
-          schema,
+          schema: context.variableSchema,
         };
       }
     } catch {
@@ -112,7 +104,7 @@ export class PreviewUsecase {
     const workflow = await this.findWorkflow(command);
 
     // extract all variables from the control values and build the variables object
-    let variablesObject = await this.createVariablesObject.execute(
+    const variablesObject = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
@@ -122,16 +114,7 @@ export class PreviewUsecase {
       })
     );
 
-    // Add context to variables object for template processing
-    const resolvedContext = this.getResolvedContext(command);
-    if (resolvedContext) {
-      variablesObject = { ...variablesObject, context: resolvedContext };
-    }
-
-    // build the payload schema and merge it with the variables schema
-    const variableSchema = await this.schemaBuilder.buildVariablesSchema(variablesObject, stepData.variables);
-
-    return { stepData, controlValues, variableSchema, variablesObject, workflow, resolvedContext };
+    return { stepData, controlValues, variableSchema: stepData.variables, variablesObject, workflow };
   }
 
   @Instrument()
@@ -151,6 +134,7 @@ export class PreviewUsecase {
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       stepIdOrInternalId: command.stepIdOrInternalId,
       user: command.user,
+      previewPayload: command.generatePreviewRequestDto.previewPayload,
     });
   }
 
@@ -179,41 +163,5 @@ export class PreviewUsecase {
         skipLayoutRendering: command.skipLayoutRendering,
       })
     );
-  }
-
-  private getResolvedContext(command: PreviewCommand): ContextResolved | undefined {
-    return command.generatePreviewRequestDto.previewPayload?.context
-      ? this.resolveContext(command.generatePreviewRequestDto.previewPayload.context)
-      : undefined;
-  }
-
-  /**
-   * Convert ContextPayload to ContextResolved without upserting actual db entities
-   */
-  private resolveContext(contextPayload?: ContextPayload): ContextResolved | undefined {
-    if (!contextPayload) {
-      return undefined;
-    }
-
-    const resolved: ContextResolved = {};
-
-    for (const [contextType, contextValue] of Object.entries(contextPayload)) {
-      if (!contextValue) continue;
-
-      if (typeof contextValue === 'string') {
-        resolved[contextType] = {
-          id: contextValue,
-          data: {},
-        };
-      } else if (typeof contextValue === 'object' && 'id' in contextValue) {
-        const typedValue = contextValue as { id: string; data?: Record<string, unknown> };
-        resolved[contextType] = {
-          id: typedValue.id,
-          data: typedValue.data || {},
-        };
-      }
-    }
-
-    return Object.keys(resolved).length > 0 ? resolved : undefined;
   }
 }

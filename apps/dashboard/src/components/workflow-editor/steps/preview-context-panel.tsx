@@ -44,17 +44,17 @@ function useLocaleSynchronization({
   subscriberLocale,
   isOrgSettingsLoading,
   hasSubscriberData,
-  updateJsonSection,
+  updatePreviewSection,
   onLocaleChange,
-  localParsedData,
+  previewContext,
 }: {
   selectedLocale?: string;
   subscriberLocale?: string;
   isOrgSettingsLoading: boolean;
   hasSubscriberData: boolean;
-  updateJsonSection: (section: 'subscriber', data: PreviewSubscriberData) => void;
+  updatePreviewSection: (section: 'subscriber', data: PreviewSubscriberData) => void;
   onLocaleChange?: (locale: string) => void;
-  localParsedData: ParsedData;
+  previewContext: ParsedData;
 }) {
   const prevSelectedLocale = usePrevious(selectedLocale);
   const prevSubscriberLocale = usePrevious(subscriberLocale);
@@ -68,8 +68,8 @@ function useLocaleSynchronization({
     const subscriberLocaleChanged = subscriberLocale !== prevSubscriberLocale;
 
     if (selectedLocaleChanged && selectedLocale !== subscriberLocale) {
-      updateJsonSection('subscriber', {
-        ...localParsedData.subscriber,
+      updatePreviewSection('subscriber', {
+        ...previewContext.subscriber,
         locale: selectedLocale,
       });
     } else if (subscriberLocaleChanged && subscriberLocale && subscriberLocale !== selectedLocale && onLocaleChange) {
@@ -82,9 +82,9 @@ function useLocaleSynchronization({
     prevSubscriberLocale,
     isOrgSettingsLoading,
     hasSubscriberData,
-    updateJsonSection,
+    updatePreviewSection,
     onLocaleChange,
-    localParsedData.subscriber,
+    previewContext.subscriber,
   ]);
 }
 
@@ -135,12 +135,11 @@ export function PreviewContextPanel({
     clearPersistedContext,
   } = usePersistedPreviewContext({
     workflowId: workflow?.workflowId || '',
-    stepId: currentStepId || '',
     environmentId: currentEnvironment?._id || '',
   });
 
   // Use the preview context hook with persistence callback
-  const { accordionValue, setAccordionValue, errors, localParsedData, updateJsonSection } = usePreviewContext<
+  const { accordionValue, setAccordionValue, errors, previewContext, updatePreviewSection } = usePreviewContext<
     ParsedData,
     ValidationErrors
   >({
@@ -186,56 +185,65 @@ export function PreviewContextPanel({
 
   // Initialize default subscriber data if none exists (after data initialization)
   useEffect(() => {
-    if (!isOrgSettingsLoading && localParsedData.subscriber && Object.keys(localParsedData.subscriber).length === 0) {
-      // No subscriber data exists, create default
-      const defaultSubscriber = createDefaultSubscriberData();
-      updateJsonSection('subscriber', defaultSubscriber);
+    if (!isOrgSettingsLoading && previewContext.subscriber && Object.keys(previewContext.subscriber).length === 0) {
+      // Check if persisted data exists in localStorage before creating defaults
+      const persistedSubscriber = loadPersistedSubscriber();
+      if (!persistedSubscriber || Object.keys(persistedSubscriber).length === 0) {
+        // No persisted data exists, create default
+        const defaultSubscriber = createDefaultSubscriberData();
+        updatePreviewSection('subscriber', defaultSubscriber);
+      }
     }
-  }, [isOrgSettingsLoading, localParsedData.subscriber, updateJsonSection, createDefaultSubscriberData]);
+  }, [
+    isOrgSettingsLoading,
+    previewContext.subscriber,
+    updatePreviewSection,
+    createDefaultSubscriberData,
+    loadPersistedSubscriber,
+  ]);
 
   // Smart two-way locale synchronization
   useLocaleSynchronization({
     selectedLocale,
-    subscriberLocale: localParsedData.subscriber?.locale,
+    subscriberLocale: previewContext.subscriber?.locale,
     isOrgSettingsLoading,
-    hasSubscriberData: Object.keys(localParsedData.subscriber || {}).length > 0,
-    updateJsonSection,
+    hasSubscriberData: Object.keys(previewContext.subscriber || {}).length > 0,
+    updatePreviewSection,
     onLocaleChange,
-    localParsedData,
+    previewContext,
   });
 
   const handleSubscriberSelection = useCallback(
     (subscriber: ISubscriberResponseDto) => {
       const subscriberData = createSubscriberData(subscriber);
-      updateJsonSection('subscriber', subscriberData);
+      updatePreviewSection('subscriber', subscriberData);
 
       // If the selected subscriber has a different locale, update the selected locale
       if (subscriber.locale && subscriber.locale !== selectedLocale && onLocaleChange) {
         onLocaleChange(subscriber.locale);
       }
     },
-    [updateJsonSection, selectedLocale, onLocaleChange]
+    [updatePreviewSection, selectedLocale, onLocaleChange]
   );
 
-  const handleClearPersistedPayload = () => {
+  const handleClearPersistedPayload = useCallback(() => {
     clearPersistedPayload();
 
-    // Reset payload to server defaults if available
     const newPayload: PayloadData =
       workflow?.payloadExample && isPayloadSchemaEnabled ? (workflow.payloadExample as PayloadData) : {};
 
-    updateJsonSection('payload', newPayload);
-  };
+    updatePreviewSection('payload', newPayload);
+  }, [clearPersistedPayload, workflow?.payloadExample, isPayloadSchemaEnabled, updatePreviewSection]);
 
-  const handleClearPersistedSubscriber = () => {
+  const handleClearPersistedSubscriber = useCallback(() => {
     clearPersistedSubscriber();
-    updateJsonSection('subscriber', createDefaultSubscriberData());
-  };
+    updatePreviewSection('subscriber', createDefaultSubscriberData());
+  }, [clearPersistedSubscriber, updatePreviewSection, createDefaultSubscriberData]);
 
-  const handleClearPersistedContext = () => {
+  const handleClearPersistedContext = useCallback(() => {
     clearPersistedContext();
-    updateJsonSection('context', null);
-  };
+    updatePreviewSection('context', null);
+  }, [clearPersistedContext, updatePreviewSection]);
 
   const canClearPersisted = !!(workflow?.workflowId && currentStepId && currentEnvironment?._id);
 
@@ -244,10 +252,10 @@ export function PreviewContextPanel({
       <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
         <PreviewPayloadSection
           errors={errors}
-          localParsedData={localParsedData}
+          localParsedData={previewContext}
           workflow={workflow}
+          onUpdate={updatePreviewSection}
           schema={schemas.payload}
-          onUpdate={updateJsonSection}
           onClearPersisted={canClearPersisted ? handleClearPersistedPayload : undefined}
           hasDigestStep={hasDigestStep}
           onManageSchema={openSchemaDrawer}
@@ -255,27 +263,28 @@ export function PreviewContextPanel({
 
         <PreviewSubscriberSection
           error={errors.subscriber}
-          subscriber={localParsedData.subscriber}
+          subscriber={previewContext.subscriber}
+          workflow={workflow}
+          onUpdate={updatePreviewSection}
           schema={schemas.subscriber}
-          onUpdate={updateJsonSection}
           onSubscriberSelect={handleSubscriberSelection}
           onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
         />
 
         <PreviewStepResultsSection
           errors={errors}
-          localParsedData={localParsedData}
+          localParsedData={previewContext}
           workflow={workflow}
-          onUpdate={updateJsonSection}
+          onUpdate={updatePreviewSection}
           currentStepId={currentStepId}
         />
 
         {isContextEnabled && (
           <PreviewContextSection
             error={errors.context}
-            context={localParsedData.context}
+            context={previewContext.context}
             schema={schemas.context}
-            onUpdate={updateJsonSection}
+            onUpdate={updatePreviewSection}
             onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
           />
         )}

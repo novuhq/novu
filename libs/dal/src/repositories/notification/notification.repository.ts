@@ -36,6 +36,7 @@ export class NotificationRepository extends BaseRepository<
       severity?: SeverityLevelEnum[] | null;
       after?: string;
       before?: string;
+      contextKeys?: string[];
     } = {},
     skip = 0,
     limit = 10
@@ -55,6 +56,8 @@ export class NotificationRepository extends BaseRepository<
     }
 
     const severityCondition: Array<FilterQuery<NotificationDBModel>> = [];
+    const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
+
     if (query.severity && query.severity?.length > 0) {
       if (query.severity.includes(SeverityLevelEnum.NONE)) {
         severityCondition.push({ severity: { $exists: false } }, { severity: { $in: query.severity } });
@@ -92,8 +95,13 @@ export class NotificationRepository extends BaseRepository<
         $in: query.channels,
       };
     }
+
+    if (query.contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(query.contextKeys);
+      requestQuery.$and = [...(requestQuery.$and ?? []), contextQuery];
+    }
+
     // combine all $or conditions properly
-    const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
     if (severityCondition.length > 0) {
       orConditions.push({ $or: severityCondition });
     }
@@ -332,5 +340,19 @@ export class NotificationRepository extends BaseRepository<
 
   estimatedDocumentCount() {
     return this.MongooseModel.estimatedDocumentCount();
+  }
+
+  private buildContextExactMatchQuery(contextKeys: string[]) {
+    // empty array = inbox has no context, only match notifications with no context
+    if (contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match filtering
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }

@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { LocalizationResourceEnum } from '@novu/dal';
 import { ResourceOriginEnum } from '@novu/shared';
 import { LayoutResponseDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
@@ -25,7 +27,8 @@ class LayoutNotSyncableException extends BadRequestException {
 export class LayoutSyncToEnvironmentUseCase {
   constructor(
     private getLayoutUseCase: GetLayoutUseCase,
-    private upsertLayoutUseCase: UpsertLayout
+    private upsertLayoutUseCase: UpsertLayout,
+    private moduleRef: ModuleRef
   ) {}
 
   @InstrumentUsecase()
@@ -61,6 +64,8 @@ export class LayoutSyncToEnvironmentUseCase {
       })
     );
 
+    await this.publishTranslationGroup(sourceLayout.layoutId, LocalizationResourceEnum.LAYOUT, command);
+
     return upsertedLayout;
   }
 
@@ -72,8 +77,36 @@ export class LayoutSyncToEnvironmentUseCase {
     return {
       layoutId: sourceLayout.layoutId,
       name: sourceLayout.name,
+      isTranslationEnabled: sourceLayout.isTranslationEnabled,
       controlValues: sourceLayout.controls.values,
     };
+  }
+
+  private async publishTranslationGroup(
+    resourceId: string,
+    resourceType: LocalizationResourceEnum,
+    command: LayoutSyncToEnvironmentCommand
+  ): Promise<void> {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+
+    if (!isEnterprise || isSelfHosted) {
+      return;
+    }
+
+    const publishTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.PublishTranslationGroup, {
+      strict: false,
+    });
+
+    const { user, targetEnvironmentId } = command;
+
+    await publishTranslationGroup.execute({
+      user,
+      resourceId,
+      resourceType,
+      sourceEnvironmentId: user.environmentId,
+      targetEnvironmentId,
+    });
   }
 
   @Instrument()

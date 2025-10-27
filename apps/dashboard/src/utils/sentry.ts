@@ -35,6 +35,12 @@ export const initializeSentry = () => {
         'ResizeObserver loop completed with undelivered notifications',
         'Non-Error exception captured',
         'Non-Error promise rejection captured',
+        /validation error/i,
+        /bad request/i, // 400
+        /unauthorized/i, // 401
+        /forbidden/i, // 403
+        /not found/i, // 404
+        /unprocessable entity/i, // 422
       ],
       /*
        * This sets the sample rate to be 10%. You may want this to be 100% while

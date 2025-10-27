@@ -268,7 +268,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
             ) : (
               <div className="flex h-full w-full gap-4">
                 <div className="flex-1">
-                  <WorkflowCanvas isTemplateStorePreview steps={previewSteps} />
+                  <WorkflowCanvas isReadOnly showStepPreview steps={previewSteps} />
                 </div>
                 <div className="border-stroke-soft w-full max-w-[300px] border-l p-3">
                   <CreateWorkflowForm onSubmit={handleCreateWorkflow} template={selectedTemplate.workflowDefinition} />
