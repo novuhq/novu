@@ -26,6 +26,11 @@ const generateCodeSnippets = (config: CodeSnippetConfig) => {
   const subscriberId = subscriberData.subscriberId || 'user-id';
   const subscriberEmail = subscriberData.email || 'user@example.com';
 
+  // Escape single quotes for safe interpolation into single-quoted strings
+  const escapeForSingleQuotes = (value: string) => value.replace(/'/g, "\\'");
+  const subscriberIdEscaped = escapeForSingleQuotes(subscriberId);
+  const subscriberEmailEscaped = escapeForSingleQuotes(subscriberEmail);
+
   return {
     nodejs: `import { Novu } from '@novu/api';
 
@@ -36,8 +41,8 @@ const novu = new Novu({
 await novu.trigger({
   workflowId: '${workflowId}',
   to: {
-    subscriberId: ${subscriberId},
-    email: ${subscriberEmail},
+    subscriberId: '${subscriberIdEscaped}',
+    email: '${subscriberEmailEscaped}',
   },
   payload: ${payloadJson.replace(/\n/g, '\n  ')},
 });`,
@@ -50,7 +55,7 @@ novu = Novu(secret_key=os.environ['NOVU_SECRET_KEY'])
 novu.trigger(
     trigger_event_request_dto={
         'workflow_id': '${workflowId}',
-        'to': {'subscriber_id': ${subscriberId}, 'email': ${subscriberEmail}},
+        'to': {'subscriber_id': '${subscriberIdEscaped}', 'email': '${subscriberEmailEscaped}'},
         'payload': ${payloadJson.replace(/\n/g, '\n        ')},
     }
 )`,

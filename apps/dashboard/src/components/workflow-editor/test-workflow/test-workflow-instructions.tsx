@@ -61,6 +61,8 @@ const SNIPPET_TO_CODE_LANGUAGE: Record<SnippetLanguage, Language> = {
   framework: 'typescript',
 };
 
+const PLACEHOLDER_API_KEY = 'API_KEY';
+
 function TriggerStepContent() {
   return (
     <>
@@ -121,7 +123,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
 
   const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
-  const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? '') : 'API_KEY';
+  const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? '') : PLACEHOLDER_API_KEY;
   const track = useTelemetry();
 
   const [isAIPromptCopied, setIsAIPromptCopied] = useState(false);
@@ -132,16 +134,20 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
     }
   }, [isOpen, track]);
 
+  useEffect(() => {
+    if (isAIPromptCopied) {
+      const timer = setTimeout(() => setIsAIPromptCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAIPromptCopied]);
+
   const getSnippetForLanguage = (language: SnippetLanguage) => {
     const snippetUtil = LANGUAGE_TO_SNIPPET_UTIL[language];
-
-    // Only pass the actual API key to the cURL snippet for immediate use
     const secretKey = language === 'shell' && canReadApiKeys && apiKey ? apiKey : undefined;
 
     return snippetUtil({ identifier, to: to ?? {}, payload: payload ?? '', secretKey });
   };
 
-  // Calculate the positions to mask the API key, showing only last 4 characters
   const getApiKeyMaskPositions = (key: string) => {
     if (!key) return { maskStart: 0, maskEnd: 0 };
     const lastFourStart = key.length - 4;
@@ -165,14 +171,13 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
       const aiPrompt = generateWorkflowTriggerAIPrompt({
         workflowId: identifier,
         workflowName: workflow?.name ?? identifier,
-        apiKey: canReadApiKeys && apiKey ? apiKey : 'NOVU_SECRET_KEY',
+        apiKey: canReadApiKeys && apiKey ? apiKey : PLACEHOLDER_API_KEY,
         subscriberData: to ?? {},
         payload: parsedPayload,
       });
 
       await navigator.clipboard.writeText(aiPrompt);
       setIsAIPromptCopied(true);
-      setTimeout(() => setIsAIPromptCopied(false), 2000);
 
       track(TelemetryEvent.AI_PROMPT_COPIED, { workflowId: identifier });
 
