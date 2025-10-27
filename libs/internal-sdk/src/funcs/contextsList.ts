@@ -26,10 +26,13 @@ import { APICall, APIPromise } from '../types/async.js';
 import { Result } from '../types/fp.js';
 
 /**
- * List contexts
+ * List all contexts
  *
  * @remarks
- * Retrieve a paginated list of contexts, optionally filtered by type and key pattern
+ * Retrieve a paginated list of all contexts, optionally filtered by type and key pattern.
+ *       **type** and **id** are optional fields, if provided, only contexts with the matching type and id will be returned.
+ *       **search** is an optional field, if provided, only contexts with the matching key pattern will be returned.
+ *       Checkout all possible parameters in the query section below for more details
  */
 export function contextsList(
   client: NovuCore,
