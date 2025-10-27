@@ -486,7 +486,6 @@ export class SubscribersV1Controller {
     return await this.getPreferenceUsecase.execute(command);
   }
 
-  // @ts-expect-error
   @Patch('/:subscriberId/preferences/:parameter')
   @ExternalApiAccessible()
   @RequireAuthentication()
