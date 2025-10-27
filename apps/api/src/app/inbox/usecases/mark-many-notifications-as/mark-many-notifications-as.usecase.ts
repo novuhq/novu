@@ -15,7 +15,7 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository, MessageEntity, MessageRepository } from '@novu/dal';
-import { DeliveryLifecycleStatus, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { DeliveryLifecycleStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { MarkManyNotificationsAsCommand } from './mark-many-notifications-as.command';
@@ -225,7 +225,7 @@ export class MarkManyNotificationsAs {
 
     if (allTraceData.length > 0) {
       try {
-        await this.messageInteractionService.trace(allTraceData, DeliveryLifecycleStatus.INTERACTED);
+        await this.messageInteractionService.trace(allTraceData, DeliveryLifecycleStatusEnum.INTERACTED);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);
       }

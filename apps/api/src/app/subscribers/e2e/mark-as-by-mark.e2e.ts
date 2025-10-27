@@ -10,7 +10,11 @@ import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import {
+  expectSdkExceptionGeneric,
+  expectSdkValidationExceptionGeneric,
+  initNovuClassSdk,
+} from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const axiosInstance = axios.create();
 
@@ -156,10 +160,14 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v2', async () =>
         expect(e.message).to.be.empty;
       }
 
-      expect(e.response.data.message).to.equal('messageId is required');
-      expect(e.response.data.statusCode).to.equal(400);
+      expect(e.response.data.message).to.equal('Validation Error');
+      expect(e.response.data.statusCode).to.equal(422);
+      expect(e.response.data.errors.general.messages).to.include('messageId should not be null or undefined');
+      expect(e.response.data.errors.general.messages).to.include(
+        'messageId must be a valid MongoDB ObjectId or an array of valid MongoDB ObjectIds'
+      );
     }
-    const { error } = await expectSdkExceptionGeneric(() =>
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
       novuClient.subscribers.messages.markAllAs(
         {
           messageId: [],
@@ -169,8 +177,11 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v2', async () =>
       )
     );
 
-    expect(error?.message).to.equal('messageId is required');
-    expect(error?.statusCode).to.equal(400);
+    expect(error?.message).to.equal('Validation Error');
+    expect(error?.statusCode).to.equal(422);
+    expect(error?.errors.general.messages).to.include(
+      'messageId must be a valid MongoDB ObjectId or an array of valid MongoDB ObjectIds'
+    );
   });
 });
 

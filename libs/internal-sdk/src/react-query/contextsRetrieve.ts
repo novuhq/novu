@@ -7,26 +7,21 @@ import {
   QueryClient,
   QueryFunctionContext,
   QueryKey,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { contextsRetrieve } from "../funcs/contextsRetrieve.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
-import { useNovuContext } from "./_context.js";
-import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import { NovuCore } from '../core.js';
+import { contextsRetrieve } from '../funcs/contextsRetrieve.js';
+import { combineSignals } from '../lib/primitives.js';
+import { RequestOptions } from '../lib/sdks.js';
+import * as operations from '../models/operations/index.js';
+import { unwrapAsync } from '../types/fp.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 
-export type ContextsRetrieveQueryData =
-  operations.ContextsControllerGetContextResponse;
+export type ContextsRetrieveQueryData = operations.ContextsControllerGetContextResponse;
 
 /**
  * Get context by id
@@ -38,17 +33,11 @@ export function useContextsRetrieve(
   type: string,
   id: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<ContextsRetrieveQueryData>,
+  options?: QueryHookOptions<ContextsRetrieveQueryData>
 ): UseQueryResult<ContextsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildContextsRetrieveQuery(
-      client,
-      type,
-      id,
-      idempotencyKey,
-      options,
-    ),
+    ...buildContextsRetrieveQuery(client, type, id, idempotencyKey, options),
     ...options,
   });
 }
@@ -63,17 +52,11 @@ export function useContextsRetrieveSuspense(
   type: string,
   id: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<ContextsRetrieveQueryData>,
+  options?: SuspenseQueryHookOptions<ContextsRetrieveQueryData>
 ): UseSuspenseQueryResult<ContextsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildContextsRetrieveQuery(
-      client,
-      type,
-      id,
-      idempotencyKey,
-      options,
-    ),
+    ...buildContextsRetrieveQuery(client, type, id, idempotencyKey, options),
     ...options,
   });
 }
@@ -83,26 +66,17 @@ export function prefetchContextsRetrieve(
   client$: NovuCore,
   type: string,
   id: string,
-  idempotencyKey?: string | undefined,
+  idempotencyKey?: string | undefined
 ): Promise<void> {
   return queryClient.prefetchQuery({
-    ...buildContextsRetrieveQuery(
-      client$,
-      type,
-      id,
-      idempotencyKey,
-    ),
+    ...buildContextsRetrieveQuery(client$, type, id, idempotencyKey),
   });
 }
 
 export function setContextsRetrieveData(
   client: QueryClient,
-  queryKeyBase: [
-    type: string,
-    id: string,
-    parameters: { idempotencyKey?: string | undefined },
-  ],
-  data: ContextsRetrieveQueryData,
+  queryKeyBase: [type: string, id: string, parameters: { idempotencyKey?: string | undefined }],
+  data: ContextsRetrieveQueryData
 ): ContextsRetrieveQueryData | undefined {
   const key = queryKeyContextsRetrieve(...queryKeyBase);
 
@@ -111,28 +85,22 @@ export function setContextsRetrieveData(
 
 export function invalidateContextsRetrieve(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<
-    [
-      type: string,
-      id: string,
-      parameters: { idempotencyKey?: string | undefined },
-    ]
-  >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  queryKeyBase: TupleToPrefixes<[type: string, id: string, parameters: { idempotencyKey?: string | undefined }]>,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Contexts", "retrieve", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Contexts', 'retrieve', ...queryKeyBase],
   });
 }
 
 export function invalidateAllContextsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Contexts", "retrieve"],
+    queryKey: ['@novu/api', 'Contexts', 'retrieve'],
   });
 }
 
@@ -141,31 +109,21 @@ export function buildContextsRetrieveQuery(
   type: string,
   id: string,
   idempotencyKey?: string | undefined,
-  options?: RequestOptions,
+  options?: RequestOptions
 ): {
   queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<ContextsRetrieveQueryData>;
+  queryFn: (context: QueryFunctionContext) => Promise<ContextsRetrieveQueryData>;
 } {
   return {
     queryKey: queryKeyContextsRetrieve(type, id, { idempotencyKey }),
-    queryFn: async function contextsRetrieveQueryFn(
-      ctx,
-    ): Promise<ContextsRetrieveQueryData> {
+    queryFn: async function contextsRetrieveQueryFn(ctx): Promise<ContextsRetrieveQueryData> {
       const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
       const mergedOptions = {
         ...options,
         fetchOptions: { ...options?.fetchOptions, signal: sig },
       };
 
-      return unwrapAsync(contextsRetrieve(
-        client$,
-        type,
-        id,
-        idempotencyKey,
-        mergedOptions,
-      ));
+      return unwrapAsync(contextsRetrieve(client$, type, id, idempotencyKey, mergedOptions));
     },
   };
 }
@@ -173,7 +131,7 @@ export function buildContextsRetrieveQuery(
 export function queryKeyContextsRetrieve(
   type: string,
   id: string,
-  parameters: { idempotencyKey?: string | undefined },
+  parameters: { idempotencyKey?: string | undefined }
 ): QueryKey {
-  return ["@novu/api", "Contexts", "retrieve", type, id, parameters];
+  return ['@novu/api', 'Contexts', 'retrieve', type, id, parameters];
 }

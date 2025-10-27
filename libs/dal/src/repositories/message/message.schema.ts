@@ -248,21 +248,13 @@ messageSchema.index({
   _subscriberId: 1,
   _environmentId: 1,
   channel: 1,
+  contextKeys: 1,
+  seen: 1,
   read: 1,
   archived: 1,
-  seen: 1,
   snoozedUntil: 1,
+  severity: 1,
   createdAt: -1,
-});
-
-/*
- * Path : libs/dal/src/repositories/message/message.repository.ts
- * Context : updateFeedByMessageTemplateId()
- * Query : update({ _environmentId: environmentId, _messageTemplateId: messageId }
- */
-messageSchema.index({
-  _messageTemplateId: 1,
-  _environmentId: 1,
 });
 
 /*
@@ -336,13 +328,11 @@ messageSchema.index({ createdAt: 1 });
  */
 messageSchema.index({ _environmentId: 1, _jobId: 1, deleted: 1 });
 
-/*
- * Index for context key filtering
+/**
+ * Used in worker to find messages that are snoozed
+ * process-unsnooze-job.usecase.ts
  */
-messageSchema.index({
-  _environmentId: 1,
-  contextKeys: 1,
-});
+messageSchema.index({ _notificationId: 1, snoozedUntil: 1 });
 
 export const Message =
   (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||

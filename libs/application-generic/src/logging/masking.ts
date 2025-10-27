@@ -19,7 +19,7 @@ const phoneFields = ['homePhone', 'workPhone', 'phone'];
 
 const addressFields = ['addressLine1', 'addressLine2', 'address', 'cardAddress'];
 
-const httpFields = ['webhookUrl', 'avatar', 'avatar_url'];
+const httpFields = ['webhookUrl', 'avatar', 'avatar_url', 'payload', 'to'];
 
 const uuidFields = [];
 

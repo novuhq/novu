@@ -15,6 +15,7 @@ import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
   FeatureFlagsService,
+  GetDecryptedIntegrations,
   OtelSpan,
   RequirePermissions,
 } from '@novu/application-generic';
@@ -175,7 +176,8 @@ export class IntegrationsController {
     @Body() body: CreateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
-      return await this.createIntegrationUsecase.execute(
+      const canAccessCredentials = await this.canUserAccessCredentials(user);
+      const integration = await this.createIntegrationUsecase.execute(
         CreateIntegrationCommand.create({
           userId: user._id,
           name: body.name,
@@ -191,6 +193,14 @@ export class IntegrationsController {
           configurations: body.configurations,
         })
       );
+
+      if (canAccessCredentials) {
+        return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+      }
+
+      const { credentials, ...integrationWithoutCredentials } = integration;
+
+      return integrationWithoutCredentials as unknown as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -218,7 +228,8 @@ export class IntegrationsController {
     @Body() body: UpdateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
-      return await this.updateIntegrationUsecase.execute(
+      const canAccessCredentials = await this.canUserAccessCredentials(user);
+      const integration = await this.updateIntegrationUsecase.execute(
         UpdateIntegrationCommand.create({
           userId: user._id,
           name: body.name,
@@ -234,6 +245,14 @@ export class IntegrationsController {
           configurations: body.configurations,
         })
       );
+
+      if (canAccessCredentials) {
+        return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+      }
+
+      const { credentials, ...integrationWithoutCredentials } = integration;
+
+      return integrationWithoutCredentials as unknown as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -284,11 +303,12 @@ export class IntegrationsController {
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @SdkMethodName('setAsPrimary')
-  setIntegrationAsPrimary(
+  async setIntegrationAsPrimary(
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
   ): Promise<IntegrationResponseDto> {
-    return this.setIntegrationAsPrimaryUsecase.execute(
+    const canAccessCredentials = await this.canUserAccessCredentials(user);
+    const integration = await this.setIntegrationAsPrimaryUsecase.execute(
       SetIntegrationAsPrimaryCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
@@ -296,6 +316,14 @@ export class IntegrationsController {
         integrationId,
       })
     );
+
+    if (canAccessCredentials) {
+      return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+    }
+
+    const { credentials, ...integrationWithoutCredentials } = integration;
+
+    return integrationWithoutCredentials as unknown as IntegrationResponseDto;
   }
 
   @Delete('/:integrationId')

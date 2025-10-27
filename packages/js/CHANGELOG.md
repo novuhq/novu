@@ -1,3 +1,19 @@
+## v3.11.0-rc.1 (2025-10-24)
+
+### 🚀 Features
+
+- **js,react,api:** context HMAC & Inbox dynamic session change fixes NV-6793 ([#9365](https://github.com/novuhq/novu/pull/9365))
+- **js,react:** context-aware inbox session fixes NV-6789 ([#9344](https://github.com/novuhq/novu/pull/9344))
+
+### 🩹 Fixes
+
+- **js:** correct TypeScript types for notification.delete.pending event ([#9325](https://github.com/novuhq/novu/pull/9325))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- DipakHalkude @DipakHalkude
+
 ## v3.10.1 (2025-09-22)
 
 ### 🩹 Fixes

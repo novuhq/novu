@@ -178,7 +178,7 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
       const { unit, amount } = (job.digest || {}) as IDelayRegularMetadata;
 
       if (job.status === JobStatusEnum.COMPLETED) {
-        if ((job.digest as IDigestTimedMetadata).timed?.untilDate) {
+        if ((job.digest as IDigestTimedMetadata)?.timed?.untilDate) {
           return `Delayed until scheduled time${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
         }
         if (unit && amount) {
@@ -191,7 +191,7 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
       if (job.status === JobStatusEnum.DELAYED) {
         let msg = 'Waiting';
 
-        const untilDate = (job.digest as IDigestTimedMetadata).timed?.untilDate;
+        const untilDate = (job.digest as IDigestTimedMetadata)?.timed?.untilDate;
         if (untilDate) {
           const untilDateFormatted = format(new Date(untilDate), 'MMM d yyyy, HH:mm:ss');
           return `Waiting until ${untilDateFormatted}${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
