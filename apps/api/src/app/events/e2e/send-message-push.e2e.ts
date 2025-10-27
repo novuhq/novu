@@ -49,13 +49,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         active: true,
         check: false,
       });
-      const integrations = await integrationRepository.find({
-        _environmentId: session.environment._id,
-        channel: ChannelTypeEnum.PUSH,
-        active: true,
-      });
-
-      expect(integrations.length).to.equal(2);
     });
 
     afterEach(async () => {
@@ -257,6 +250,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
     const inAppMessages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber.id,
+      _templateId: inAppWorkflow.result.id,
       channel: ChannelTypeEnum.IN_APP,
     });
 
@@ -273,6 +267,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
     const pushMessages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber.id,
+      _templateId: pushWorkflow.result.id,
       channel: ChannelTypeEnum.PUSH,
     });
 

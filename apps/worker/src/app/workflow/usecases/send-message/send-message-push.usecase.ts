@@ -381,8 +381,8 @@ export class SendMessagePush extends SendMessageBase {
       android: {
         ...androidOverrides,
         notification: {
-          ...androidOverrides.notification,
           notificationCount: inboxUnreadCount,
+          ...androidOverrides.notification,
         },
       },
       apns: {
@@ -390,8 +390,8 @@ export class SendMessagePush extends SendMessageBase {
         payload: {
           ...apnsOverrides?.payload,
           aps: {
-            ...apnsOverrides?.payload?.aps,
             badge: inboxUnreadCount,
+            ...apnsOverrides?.payload?.aps,
           },
         },
       },

@@ -168,7 +168,7 @@ export const fcmGroupConfigurations: ConfigConfigurationGroup[] = [
     configurations: [
       {
         key: 'inboxCount',
-        displayName: 'Include in-app count',
+        displayName: 'Use inbox count in badge',
         type: 'dropdown',
         value: InboxCountTypeEnum.NONE,
         placeholder: 'Select count type',
@@ -179,7 +179,7 @@ export const fcmGroupConfigurations: ConfigConfigurationGroup[] = [
         ],
         required: false,
         tooltip:
-          'When selected, Novu will include the Inbox unread or unseen count in the FCM message payload. This will allow you to display the count in the app badge.',
+          'When selected, Novu will include the Inbox unread or unseen count in the FCM message payload. This will allow you to display the count in the app badge or use it in your custom logic.',
       },
     ],
     setupWebhookUrlGuide: 'https://docs.novu.co/platform/integrations/push?utm_campaign=in-app',
