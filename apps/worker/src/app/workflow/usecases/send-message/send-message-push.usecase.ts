@@ -547,6 +547,30 @@ export class SendMessagePush extends SendMessageBase {
         LOG_CONTEXT
       );
 
+      await this.sendErrorStatus(
+        message,
+        'error',
+        'unexpected_push_error',
+        e.message || e.name || 'Un-expect Push provider error',
+        command,
+        e
+      );
+
+      const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
+
+      try {
+        await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, command.job, {
+          messageId: message._id,
+          raw,
+        });
+      } catch (err) {
+        Logger.error(
+          { jobId: command.jobId },
+          `Error sending provider error for jobId ${command.jobId} ${err.message || err.toString()}`,
+          LOG_CONTEXT
+        );
+      }
+
       const pushHandler = this.getIntegrationHandler(integration);
       const isTokenInvalid = pushHandler?.isTokenInvalid?.(e.message || e.toString());
 
@@ -567,17 +591,6 @@ export class SendMessagePush extends SendMessageBase {
         );
       }
 
-      await this.sendErrorStatus(
-        message,
-        'error',
-        'unexpected_push_error',
-        e.message || e.name || 'Un-expect Push provider error',
-        command,
-        e
-      );
-
-      const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
-
       await this.sendWebhookMessage.execute({
         eventType: WebhookEventEnum.MESSAGE_FAILED,
         objectType: WebhookObjectTypeEnum.MESSAGE,
@@ -594,19 +607,6 @@ export class SendMessagePush extends SendMessageBase {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
       });
-
-      try {
-        await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, command.job, {
-          messageId: message._id,
-          raw,
-        });
-      } catch (err) {
-        Logger.error(
-          { jobId: command.jobId },
-          `Error sending provider error for jobId ${command.jobId} ${err.message || err.toString()}`,
-          LOG_CONTEXT
-        );
-      }
 
       return { success: false, error: e };
     }
