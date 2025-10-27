@@ -20,6 +20,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { ApiContextPayload } from '../../shared/framework/swagger';
 import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
@@ -346,36 +347,7 @@ export class TriggerEventRequestDto {
   @ApiHideProperty()
   controls?: WorkflowToStepControlValuesDto;
 
-  // @ApiPropertyOptional({
-  //   description:
-  //     'Context information for the trigger event. Each key represents a context type, and each value can be either a simple string id or a rich object with id and optional data.',
-  //   type: 'object',
-  //   additionalProperties: {
-  //     oneOf: [
-  //       {
-  //         type: 'string',
-  //         description: 'Simple context id',
-  //         example: 'org-acme',
-  //       },
-  //       {
-  //         type: 'object',
-  //         description: 'Rich context object with id and optional data',
-  //         properties: {
-  //           id: { type: 'string', example: 'org-acme' },
-  //           data: {
-  //             type: 'object',
-  //             description: 'Optional additional context data',
-  //             additionalProperties: true,
-  //             example: { name: 'Acme Corp', region: 'us-east-1' },
-  //           },
-  //         },
-  //         required: ['id'],
-  //       },
-  //     ],
-  //   },
-  // })
-  // TODO: IS_CONTEXT_ENABLED
-  @ApiHideProperty()
+  @ApiContextPayload()
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;

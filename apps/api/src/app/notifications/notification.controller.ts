@@ -45,7 +45,7 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'List all events',
     description: `List all notification events (triggered events) for the current environment. 
-    This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**. 
+    This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**, **severity**, **contextKeys**. 
     Checkout all available filters in the query section.
     This API returns event triggers, to list each channel notifications, check messages APIs.`,
   })
@@ -94,7 +94,10 @@ export class NotificationsController {
       environment: { _id: user.environmentId },
     });
 
-    const contextKeysQuery: string[] | undefined = isContextEnabled ? query.contextKeys : undefined;
+    let contextKeysQuery: string[] | undefined;
+    if (isContextEnabled && query.contextKeys !== undefined) {
+      contextKeysQuery = Array.isArray(query.contextKeys) ? query.contextKeys : [query.contextKeys];
+    }
 
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({

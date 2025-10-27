@@ -1,16 +1,14 @@
+import { InboxCountTypeEnum } from '../../../entities/integration/configuration.interface';
 import { ConfigConfiguration, ConfigConfigurationGroup } from '../provider.interface';
 
-const emailActivityTrackingDescription =
+const emailActivityTrackingTooltip =
   'When enabled, Novu will auto-configure delivery webhooks using your existing API key. If they lack permissions, follow the manual set-up guide.';
-
-const pushActivityTrackingDescription =
-  'Enable receiving push events to track delivery status and user interactions with push notifications.';
 
 const sendgridConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',
     displayName: 'Email Activity Tracking',
-    description: emailActivityTrackingDescription,
+    tooltip: emailActivityTrackingTooltip,
     type: 'switch',
     required: false,
     links: [
@@ -32,7 +30,7 @@ const resendConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',
     displayName: 'Email Activity Tracking',
-    description: emailActivityTrackingDescription,
+    tooltip: emailActivityTrackingTooltip,
     type: 'switch',
     required: false,
     links: [
@@ -54,7 +52,7 @@ const mailgunConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',
     displayName: 'Email Activity Tracking',
-    description: emailActivityTrackingDescription,
+    tooltip: emailActivityTrackingTooltip,
     type: 'switch',
     required: false,
     links: [
@@ -76,7 +74,7 @@ const sesConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',
     displayName: 'Email Activity Tracking',
-    description: emailActivityTrackingDescription,
+    tooltip: emailActivityTrackingTooltip,
     type: 'switch',
     required: false,
     links: [
@@ -98,7 +96,7 @@ export const pushConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',
     displayName: 'Push Activity Tracking',
-    description: pushActivityTrackingDescription,
+    tooltip: 'Enable receiving push events to track delivery status and user interactions with push notifications.',
     type: 'switch',
     required: false,
   },
@@ -164,6 +162,27 @@ export const fcmGroupConfigurations: ConfigConfigurationGroup[] = [
     configurations: pushConfigurations,
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide: 'https://developer.android.com/develop/ui/views/notifications/build-notification',
+  },
+  {
+    groupType: 'crossChannelConfigs',
+    configurations: [
+      {
+        key: 'inboxCount',
+        displayName: 'Use inbox count in badge',
+        type: 'dropdown',
+        value: InboxCountTypeEnum.NONE,
+        placeholder: 'Select count type',
+        dropdown: [
+          { name: 'None', value: InboxCountTypeEnum.NONE },
+          { name: 'Unread', value: InboxCountTypeEnum.UNREAD },
+          { name: 'Unseen', value: InboxCountTypeEnum.UNSEEN },
+        ],
+        required: false,
+        tooltip:
+          'When selected, Novu will include the Inbox unread or unseen count in the FCM message payload. This will allow you to display the count in the app badge or use it in your custom logic.',
+      },
+    ],
+    setupWebhookUrlGuide: 'https://docs.novu.co/platform/integrations/push?utm_campaign=in-app',
   },
 ];
 

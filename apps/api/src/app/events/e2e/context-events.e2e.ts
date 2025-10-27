@@ -163,7 +163,7 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
     expect(regionContext?.key).to.equal('region:us-east-1');
   });
 
-  it('should handle context upsert logic correctly', async () => {
+  it('should handle context find-or-create logic correctly (no updates)', async () => {
     const initialData = { name: 'Acme Corp', plan: 'basic' };
     const context1: ContextPayload = {
       tenant: {
@@ -203,12 +203,13 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
 
     expect(storedContext?.data).to.deep.equal(initialData);
 
-    // Third trigger with explicit data update
-    const updatedData = { name: 'Acme Corporation', plan: 'enterprise', region: 'us-west' };
+    // Third trigger with different data - should NOT update existing context
+    // this is to prevent accidental updates and overwrites
+    const attemptedUpdateData = { name: 'Acme Corporation', plan: 'enterprise', region: 'us-west' };
     const context3: ContextPayload = {
       tenant: {
         id: 'org-acme',
-        data: updatedData,
+        data: attemptedUpdateData,
       },
     };
 
@@ -216,7 +217,7 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
 
     await session.waitForJobCompletion(workflow._id);
 
-    // Verify context was updated, not duplicated
+    // Verify context was NOT updated - original data should remain
     const contexts = await contextRepository.find({
       _environmentId: session.environment._id,
       type: 'tenant',
@@ -224,27 +225,7 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
     });
 
     expect(contexts).to.have.length(1); // Still only one context
-    expect(contexts[0].data).to.deep.equal(updatedData); // Data should be updated
-
-    // Fourth trigger with empty data object (should update to empty)
-    const context4: ContextPayload = {
-      tenant: {
-        id: 'org-acme',
-        data: {},
-      },
-    };
-
-    await sendTrigger(workflow, subscriber.subscriberId, {}, {}, undefined, undefined, context4);
-
-    await session.waitForJobCompletion(workflow._id);
-
-    storedContext = await contextRepository.findOne({
-      _environmentId: session.environment._id,
-      type: 'tenant',
-      id: 'org-acme',
-    });
-
-    expect(storedContext?.data).to.deep.equal({}); // Should be updated to empty object
+    expect(contexts[0].data).to.deep.equal(initialData); // Data should NOT be updated - original data preserved
   });
 
   it('should reject invalid context payload', async () => {

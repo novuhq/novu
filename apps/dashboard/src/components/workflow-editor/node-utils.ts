@@ -80,9 +80,12 @@ export const mapStepToNodeContent = (
       const delayMessage =
         workflowOrigin === ResourceOriginEnum.EXTERNAL
           ? 'Delay duration defined in code'
-          : controlValues.cron
-            ? `Delay until the scheduled time`
-            : `Delay for ${controlValues.amount} ${controlValues.unit}`;
+          : controlValues.dynamicKey
+            ? `Delay based on ${controlValues.dynamicKey} variable`
+            : controlValues.cron
+              ? `Delay until the scheduled time`
+              : `Delay for ${controlValues.amount} ${controlValues.unit}`;
+
       return delayMessage;
     }
     case StepTypeEnum.DIGEST:

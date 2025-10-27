@@ -95,16 +95,13 @@ export class ActivitiesRequestDto {
   @IsString()
   topicKey?: string;
 
-  @ApiHideProperty()
-  // @ApiPropertyOptional({
-  //   type: [String],
-  //   description: 'Filter by exact context keys (format: "type:id")',
-  //   example: ['tenant:org-123', 'region:us-east-1'],
-  // })
+  @ApiPropertyOptional({
+    type: String,
+    isArray: true,
+    description: 'Filter by exact context keys (format: "type:id")',
+  })
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  contextKeys?: string[];
+  contextKeys?: string[] | string;
 
   @ApiPropertyOptional({
     type: String,

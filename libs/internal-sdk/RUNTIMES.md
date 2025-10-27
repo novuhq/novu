@@ -2,9 +2,9 @@
 
 This SDK is intended to be used in JavaScript runtimes that support ECMAScript 2020 or newer. The SDK uses the following features:
 
-* [Web Fetch API][web-fetch]
-* [Web Streams API][web-streams] and in particular `ReadableStream`
-* [Async iterables][async-iter] using `Symbol.asyncIterator`
+- [Web Fetch API][web-fetch]
+- [Web Streams API][web-streams] and in particular `ReadableStream`
+- [Async iterables][async-iter] using `Symbol.asyncIterator`
 
 [web-fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
 [web-streams]: https://developer.mozilla.org/en-US/docs/Web/API/Streams_API
@@ -25,7 +25,7 @@ Runtime environments that are explicitly supported are:
 
 The following `tsconfig.json` options are recommended for projects using this
 SDK in order to get static type support for features like async iterables,
-streams and `fetch`-related APIs ([`for await...of`][for-await-of], 
+streams and `fetch`-related APIs ([`for await...of`][for-await-of],
 [`AbortSignal`][abort-signal], [`Request`][request], [`Response`][response] and
 so on):
 
@@ -38,7 +38,7 @@ so on):
 {
   "compilerOptions": {
     "target": "es2020", // or higher
-    "lib": ["es2020", "dom", "dom.iterable"],
+    "lib": ["es2020", "dom", "dom.iterable"]
   }
 }
 ```

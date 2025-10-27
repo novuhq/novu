@@ -1,4 +1,5 @@
 import { CredentialsKeyEnum, IConfigCredential } from '@novu/shared';
+import { ReactNode } from 'react';
 import { Control, ControllerFieldState, ControllerRenderProps } from 'react-hook-form';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { Input } from '@/components/primitives/input';
@@ -28,9 +29,9 @@ const SECURE_CREDENTIALS = [
   CredentialsKeyEnum.ServiceAccount,
 ];
 
-function FormLabel({ credential }: { credential: IConfigCredential }) {
+function FormLabel({ credential, tooltip }: { credential: IConfigCredential; tooltip?: ReactNode }) {
   return (
-    <PrimitiveFormLabel htmlFor={credential.key} optional={!credential.required}>
+    <PrimitiveFormLabel htmlFor={credential.key} optional={!credential.required} tooltip={tooltip}>
       {credential.displayName}
     </PrimitiveFormLabel>
   );
@@ -42,16 +43,18 @@ function SwitchInput({
   isReadOnly,
   isDisabledWithSwitch,
   disabledSwitchMessage,
+  tooltip,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
   isDisabledWithSwitch?: boolean;
   disabledSwitchMessage?: string;
+  tooltip?: ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <FormLabel credential={credential} />
+      <FormLabel credential={credential} tooltip={tooltip} />
       <FormControl>
         {isDisabledWithSwitch && disabledSwitchMessage ? (
           <Tooltip>
@@ -84,20 +87,22 @@ function DropdownInput({
   credential,
   field,
   isReadOnly,
+  tooltip,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
+  tooltip?: ReactNode;
 }) {
   const stringValue = typeof field.value === 'string' ? field.value : '';
 
   return (
     <>
-      <FormLabel credential={credential} />
+      <FormLabel credential={credential} tooltip={tooltip} />
       <FormControl>
         <Select value={stringValue} onValueChange={field.onChange} disabled={isReadOnly}>
           <SelectTrigger>
-            <SelectValue placeholder={`Select ${credential.displayName.toLowerCase()}`} />
+            <SelectValue placeholder={credential.placeholder ?? `Select ${credential.displayName.toLowerCase()}`} />
           </SelectTrigger>
           <SelectContent>
             {credential.dropdown?.map((option) => (
@@ -273,6 +278,7 @@ function InputControl({
   isDisabledWithSwitch,
   disabledSwitchMessage,
   integrationId,
+  tooltip,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
@@ -281,6 +287,7 @@ function InputControl({
   isDisabledWithSwitch?: boolean;
   disabledSwitchMessage?: string;
   integrationId?: string;
+  tooltip?: ReactNode;
 }) {
   if (credential.type === 'pushResources') {
     return <PushResources credential={credential} integrationId={integrationId} />;
@@ -294,12 +301,13 @@ function InputControl({
         isReadOnly={isReadOnly}
         isDisabledWithSwitch={isDisabledWithSwitch}
         disabledSwitchMessage={disabledSwitchMessage}
+        tooltip={tooltip}
       />
     );
   }
 
   if (credential.type === 'dropdown' && credential.dropdown) {
-    return <DropdownInput credential={credential} field={field} isReadOnly={isReadOnly} />;
+    return <DropdownInput credential={credential} field={field} isReadOnly={isReadOnly} tooltip={tooltip} />;
   }
 
   if (credential.type === 'textarea') {
@@ -355,6 +363,11 @@ export function CredentialSection({
             isDisabledWithSwitch={isDisabledWithSwitch}
             disabledSwitchMessage={disabledSwitchMessage}
             integrationId={integrationId}
+            tooltip={
+              credential.tooltip?.text ? (
+                <DescriptionWithLinks description={credential.tooltip?.text} links={credential.links} />
+              ) : undefined
+            }
           />
 
           <FormMessage>
