@@ -24,10 +24,11 @@ import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_
 export type ContextsRetrieveQueryData = operations.ContextsControllerGetContextResponse;
 
 /**
- * Get context by id
+ * Retrieve a context
  *
  * @remarks
- * Retrieve a specific context by its type and id
+ * Retrieve a specific context by its type and id.
+ *       **type** and **id** are required fields, if the context does not exist, it returns the 404 response
  */
 export function useContextsRetrieve(
   type: string,
@@ -43,10 +44,11 @@ export function useContextsRetrieve(
 }
 
 /**
- * Get context by id
+ * Retrieve a context
  *
  * @remarks
- * Retrieve a specific context by its type and id
+ * Retrieve a specific context by its type and id.
+ *       **type** and **id** are required fields, if the context does not exist, it returns the 404 response
  */
 export function useContextsRetrieveSuspense(
   type: string,

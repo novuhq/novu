@@ -14,10 +14,11 @@ import { unwrapAsync } from '../types/fp.js';
 
 export class Contexts extends ClientSDK {
   /**
-   * Create context
+   * Create a context
    *
    * @remarks
    * Create a new context with the specified type, id, and data. Returns 409 if context already exists.
+   *       **type** and **id** are required fields, **data** is optional, if the context already exists, it returns the 409 response
    */
   async create(
     createContextRequestDto: components.CreateContextRequestDto,
@@ -28,10 +29,13 @@ export class Contexts extends ClientSDK {
   }
 
   /**
-   * List contexts
+   * List all contexts
    *
    * @remarks
-   * Retrieve a paginated list of contexts, optionally filtered by type and key pattern
+   * Retrieve a paginated list of all contexts, optionally filtered by type and key pattern.
+   *       **type** and **id** are optional fields, if provided, only contexts with the matching type and id will be returned.
+   *       **search** is an optional field, if provided, only contexts with the matching key pattern will be returned.
+   *       Checkout all possible parameters in the query section below for more details
    */
   async list(
     request: operations.ContextsControllerListContextsRequest,
@@ -41,10 +45,12 @@ export class Contexts extends ClientSDK {
   }
 
   /**
-   * Update context data
+   * Update a context
    *
    * @remarks
-   * Update the data of an existing context. Returns 404 if context does not exist.
+   * Update the data of an existing context.
+   *       **type** and **id** are required fields, **data** is required. Only the data field is updated, the rest of the context is not affected.
+   *       If the context does not exist, it returns the 404 response
    */
   async update(
     request: operations.ContextsControllerUpdateContextRequest,
@@ -54,10 +60,11 @@ export class Contexts extends ClientSDK {
   }
 
   /**
-   * Get context by id
+   * Retrieve a context
    *
    * @remarks
-   * Retrieve a specific context by its type and id
+   * Retrieve a specific context by its type and id.
+   *       **type** and **id** are required fields, if the context does not exist, it returns the 404 response
    */
   async retrieve(
     type: string,
@@ -69,10 +76,11 @@ export class Contexts extends ClientSDK {
   }
 
   /**
-   * Delete context
+   * Delete a context
    *
    * @remarks
-   * Delete a context by its type and id
+   * Delete a context by its type and id.
+   *       **type** and **id** are required fields, if the context does not exist, it returns the 404 response
    */
   async delete(
     type: string,
