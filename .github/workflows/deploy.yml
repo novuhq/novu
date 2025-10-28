@@ -244,22 +244,21 @@ jobs:
       - name: Setup Node Version
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.0'
-          cache: 'pnpm'
+          node-version: "20.19.0"
+          cache: "pnpm"
 
       - name: Install Dependencies
         shell: bash
         run: pnpm install --frozen-lockfile
 
-      - name: Allow Runner IP in ClickHouse Cloud
-        id: allow-ip
-        working-directory: apps/api
-        env:
-          CLICKHOUSE_CLOUD_API_KEY_ID: ${{ secrets.CLICKHOUSE_CLOUD_API_KEY_ID }}
-          CLICKHOUSE_CLOUD_API_KEY_SECRET: ${{ secrets.CLICKHOUSE_CLOUD_API_KEY_SECRET }}
-          CLICKHOUSE_CLOUD_ORG_ID: ${{ secrets.CLICKHOUSE_CLOUD_ORG_ID }}
-          CLICKHOUSE_CLOUD_SERVICE_ID: ${{ secrets.CLICKHOUSE_CLOUD_SERVICE_ID }}
-        run: npx tsx scripts/clickhouse-cloud/allow-ip.ts
+      - name: Whitelist Runner IP
+        id: whitelist
+        uses: novuhq/clickhouse-cloud-whitelist-ip-action@v1.0.0
+        with:
+          clickhouse-org-id: ${{ secrets.CLICKHOUSE_ORG_ID }}
+          clickhouse-service-id: ${{ secrets.CLICKHOUSE_SERVICE_ID }}
+          clickhouse-api-key-id: ${{ secrets.CLICKHOUSE_API_KEY_ID }}
+          clickhouse-api-key-secret: ${{ secrets.CLICKHOUSE_API_KEY_SECRET }}
 
       - name: Run ClickHouse Migrations
         working-directory: apps/api
@@ -269,21 +268,6 @@ jobs:
           CH_MIGRATIONS_PASSWORD: ${{ secrets.CLICK_HOUSE_PASSWORD }}
           CH_MIGRATIONS_DB: ${{ secrets.CLICK_HOUSE_DATABASE }}
         run: pnpm run clickhouse:migrate:prod
-
-      - name: Remove Runner IP from ClickHouse Cloud
-        if: always()
-        working-directory: apps/api
-        env:
-          CLICKHOUSE_CLOUD_API_KEY_ID: ${{ secrets.CLICKHOUSE_CLOUD_API_KEY_ID }}
-          CLICKHOUSE_CLOUD_API_KEY_SECRET: ${{ secrets.CLICKHOUSE_CLOUD_API_KEY_SECRET }}
-          CLICKHOUSE_CLOUD_ORG_ID: ${{ secrets.CLICKHOUSE_CLOUD_ORG_ID }}
-          CLICKHOUSE_CLOUD_SERVICE_ID: ${{ secrets.CLICKHOUSE_CLOUD_SERVICE_ID }}
-        run: |
-          if [ -n "${{ steps.allow-ip.outputs.runner_ip }}" ]; then
-            npx tsx scripts/clickhouse-cloud/remove-ip.ts ${{ steps.allow-ip.outputs.runner_ip }}
-          else
-            echo "⚠️  No runner IP found to remove (allow-ip step may have failed)"
-          fi
 
   build:
     needs: [prepare-matrix, run-clickhouse-migrations]
