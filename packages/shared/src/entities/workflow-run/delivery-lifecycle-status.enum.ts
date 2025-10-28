@@ -1,4 +1,4 @@
-export enum DeliveryLifecycleStatus {
+export enum DeliveryLifecycleStatusEnum {
   PENDING = 'pending',
   SENT = 'sent',
   ERRORED = 'errored',

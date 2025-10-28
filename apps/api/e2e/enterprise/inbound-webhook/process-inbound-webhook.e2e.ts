@@ -26,11 +26,11 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
   let novuClient: Novu;
 
   before(() => {
-    process.env.IS_TRACE_LOGS_ENABLED = 'true';
+    (process.env as any).IS_TRACE_LOGS_ENABLED = 'true';
   });
 
   after(() => {
-    delete process.env.IS_TRACE_LOGS_ENABLED;
+    delete (process.env as any).IS_TRACE_LOGS_ENABLED;
   });
 
   const mockWebhookBody = {
@@ -51,7 +51,6 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
 
   const mockHeaders = {
     'content-type': 'application/json',
-    'x-webhook-signature': 'valid-signature',
   };
 
   beforeEach(async () => {
@@ -153,17 +152,17 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
   describe('POST /v2/inbound-webhooks/delivery-providers/:environmentId/:integrationId', () => {
     it('should successfully process a push webhook with clicked event', async () => {
       const eventPayload = { ...mockWebhookBody, eventId: message?.identifier };
-      const response = await session.testAgent
-        .post(`/v2/inbound-webhooks/delivery-providers/${session.environment._id}/${integration._id}`)
-        .set(mockHeaders)
-        .send(eventPayload)
-        .expect(201);
+      const response = await novuClient.activity.track({
+        environmentId: session.environment._id,
+        integrationId: integration._id,
+        requestBody: eventPayload,
+      });
 
-      expect(response.body.data).to.be.an('array');
-      expect(response.body.data).to.have.length(1);
-      expect(response.body.data[0]).to.have.property('id', eventPayload.eventId);
-      expect(response.body.data[0].event).to.have.property('status', PushEventStatusEnum.CLICKED);
-      expect(response.body.data[0].event.row).to.deep.equal(eventPayload);
+      expect(response).to.have.length(1);
+      expect(response[0]).to.have.property('id', eventPayload.eventId);
+      expect(response[0].event).to.have.property('status', PushEventStatusEnum.CLICKED);
+      const parsedRow = JSON.parse((response[0].event as any).row);
+      expect(parsedRow).to.deep.equal(eventPayload);
 
       const updatedMessage = await messageRepository.findOne({
         _id: message._id,

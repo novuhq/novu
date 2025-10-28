@@ -9,6 +9,7 @@ import {
 } from '../configurations/provider-configuration';
 import {
   apnsConfig,
+  appIOConfig,
   expoConfig,
   fcmConfig,
   oneSignalConfig,
@@ -81,5 +82,13 @@ export const pushProviders: IProviderConfig[] = [
     credentials: pusherBeamsConfig,
     docReference: `https://docs.novu.co/platform/integrations/push/pusher-beams${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'pusher-beams.svg', dark: 'pusher-beams.svg' },
+  },
+  {
+    id: PushProviderIdEnum.AppIO,
+    displayName: 'AppIO',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: appIOConfig,
+    docReference: `https://localhost/channels-and-providers/push/pusher-beams${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'appio.svg', dark: 'appio.svg' },
   },
 ];

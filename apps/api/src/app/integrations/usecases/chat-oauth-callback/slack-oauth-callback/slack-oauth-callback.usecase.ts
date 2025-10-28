@@ -11,12 +11,10 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum, ENDPOINT_TYPES, makeResourceKey, RESOURCE } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
-import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
-import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import {
   GenerateSlackOauthUrl,
   StateData,
@@ -33,8 +31,7 @@ export class SlackOauthCallback {
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
     private getNovuProviderCredentials: GetNovuProviderCredentials,
-    private createChannelConnection: CreateChannelConnection,
-    private createChannelEndpoint: CreateChannelEndpoint
+    private createChannelConnection: CreateChannelConnection
   ) {}
 
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -44,32 +41,18 @@ export class SlackOauthCallback {
 
     const authData = await this.exchangeCodeForAuthData(command.providerCode, credentials);
 
-    const channelConnection = await this.createChannelConnection.execute(
+    await this.createChannelConnection.execute(
       CreateChannelConnectionCommand.create({
         organizationId: stateData.organizationId,
         environmentId: stateData.environmentId,
         integrationIdentifier: integration.identifier,
-        resource: makeResourceKey(RESOURCE.SUBSCRIBER, stateData.subscriberId),
+        resource: stateData.resource,
         auth: {
           accessToken: authData.access_token,
         },
         workspace: {
           id: authData.team.id,
           name: authData.team.name,
-        },
-      })
-    );
-
-    await this.createChannelEndpoint.execute(
-      CreateChannelEndpointCommand.create({
-        organizationId: stateData.organizationId,
-        environmentId: stateData.environmentId,
-        integrationIdentifier: integration.identifier,
-        connectionIdentifier: channelConnection.identifier,
-        resource: makeResourceKey(RESOURCE.SUBSCRIBER, stateData.subscriberId),
-        type: ENDPOINT_TYPES.SLACK_USER,
-        endpoint: {
-          userId: authData.authed_user.id,
         },
       })
     );

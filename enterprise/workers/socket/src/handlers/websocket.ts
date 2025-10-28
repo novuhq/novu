@@ -5,6 +5,7 @@ export async function handleWebSocketUpgrade(context: Context) {
   const subscriberId = context.get('subscriberId');
   const organizationId = context.get('organizationId');
   const environmentId = context.get('environmentId');
+  const contextKeys = context.get('contextKeys');
 
   // Extract JWT token from query parameter
   const jwtToken = context.req.query('token');
@@ -28,6 +29,7 @@ export async function handleWebSocketUpgrade(context: Context) {
       'X-Organization-Id': organizationId,
       'X-Environment-Id': environmentId,
       'X-JWT-Token': jwtToken || '',
+      'X-Context-Keys': contextKeys !== undefined ? JSON.stringify(contextKeys) : '',
     },
     body: context.req.raw.body,
   });
@@ -38,7 +40,7 @@ export async function handleWebSocketUpgrade(context: Context) {
 // Send message handler - Protected by internal API key authentication
 export async function handleSendMessage(context: Context) {
   try {
-    const { userId, event, data, environmentId } = await context.req.json();
+    const { userId, event, data, environmentId, contextKeys } = await context.req.json();
 
     // Validate required fields
     if (!userId || !event) {
@@ -57,7 +59,9 @@ export async function handleSendMessage(context: Context) {
     // Create room ID based on environment and user
     const roomId = `${environmentId}:${userId}`;
 
-    console.log(`[Internal API] Routing message to room: ${roomId} for user: ${userId}, event: ${event}`);
+    console.log(
+      `[Internal API] Routing message to room: ${roomId} for user: ${userId}, event: ${event}, contextKeys: ${contextKeys}`
+    );
 
     /*
      * Get the Durable Object instance for the appropriate room
@@ -69,7 +73,7 @@ export async function handleSendMessage(context: Context) {
     const id = namespace.idFromName(roomId);
     const stub = namespace.get(id);
 
-    await stub.sendToUser(userId, event, data);
+    await stub.sendToUser(userId, event, data, contextKeys);
 
     return context.json({ success: true, roomId, timestamp: new Date().toISOString() });
   } catch (error) {

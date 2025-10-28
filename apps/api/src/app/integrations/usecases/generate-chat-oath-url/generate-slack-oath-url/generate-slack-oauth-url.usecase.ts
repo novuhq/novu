@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, GetNovuProviderCredentials, GetNovuProviderCredentialsCommand } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, ResourceKey } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
 
 export type StateData = {
-  subscriberId: string;
+  resource: ResourceKey;
   environmentId: string;
   organizationId: string;
   integrationIdentifier: string;
@@ -37,7 +37,7 @@ export class GenerateSlackOauthUrl {
   async execute(command: GenerateSlackOauthUrlCommand): Promise<string> {
     const integration = await this.getIntegration(command);
     const { clientId } = await this.getIntegrationCredentials(integration);
-    const secureState = await this.createSecureState(integration, command.subscriberId);
+    const secureState = await this.createSecureState(integration, command.resource);
 
     return this.getOAuthUrl(clientId!, secureState);
   }
@@ -53,11 +53,11 @@ export class GenerateSlackOauthUrl {
     return `${this.SLACK_OAUTH_URL}${oauthParams.toString()}`;
   }
 
-  private async createSecureState(integration: IntegrationEntity, subscriberId: string): Promise<string> {
+  private async createSecureState(integration: IntegrationEntity, resource: ResourceKey): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
 
     const stateData: StateData = {
-      subscriberId,
+      resource,
       environmentId: _environmentId,
       organizationId: _organizationId,
       integrationIdentifier: identifier,
@@ -76,7 +76,7 @@ export class GenerateSlackOauthUrl {
     state: string,
     environmentApiKey: string
   ): Promise<{
-    subscriberId: string;
+    resource: ResourceKey;
     environmentId: string;
     organizationId: string;
     integrationIdentifier: string;

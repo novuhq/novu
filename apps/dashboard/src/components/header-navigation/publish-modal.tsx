@@ -19,7 +19,7 @@ import { Badge, BadgeIcon } from '../primitives/badge';
 import { Button } from '../primitives/button';
 import { Checkbox } from '../primitives/checkbox';
 import { Collapsible, CollapsibleContent } from '../primitives/collapsible';
-import { Dialog, DialogContent } from '../primitives/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../primitives/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { LayoutUsageIndicator } from './layout-usage-indicator';
 import { WorkflowHoverCard } from './workflow-hover-card';
@@ -448,14 +448,18 @@ function PublishModalHeader() {
 }
 
 function PublishModalContent({ environment }: { environment: IEnvironment }) {
+  const title = `Publishing changes to ${environment?.name}`;
+  const description = `You're about to publish changes to ${environment?.name}. This may cause breaking behavior. Please review all changes before proceeding.`;
+
   return (
-    <div className="space-y-1">
-      <h2 className="text-sm font-medium text-gray-900">Publishing changes to {environment?.name}</h2>
-      <p className="text-xs text-gray-500">
-        You're about to publish changes to {environment?.name}. This may cause breaking behavior. Please review all
-        changes before proceeding.
-      </p>
-    </div>
+    <>
+      <DialogDescription className="sr-only">{description}</DialogDescription>
+      <DialogTitle className="sr-only">{title}</DialogTitle>
+      <div className="space-y-1">
+        <h2 className="text-sm font-medium text-gray-900">{title}</h2>
+        <p className="text-xs text-gray-500">{description}</p>
+      </div>
+    </>
   );
 }
 

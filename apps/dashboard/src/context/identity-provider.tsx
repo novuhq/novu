@@ -12,7 +12,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
   const hasIdentifiedOrg = useRef(false);
 
   useEffect(() => {
-    if (!currentUser || !ldClient || hasIdentifiedUser.current) return;
+    if (!currentUser || !currentUser._id || !ldClient || hasIdentifiedUser.current) return;
 
     ldClient.identify({
       kind: 'user',
