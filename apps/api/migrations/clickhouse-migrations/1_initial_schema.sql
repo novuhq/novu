@@ -10,29 +10,30 @@ CREATE TABLE IF NOT EXISTS step_runs (
   updated_at DateTime64(3, 'UTC'),
   step_run_id String,
   step_id String,
-  workflow_run_id Nullable(String),
+  workflow_run_id Nullable(String) DEFAULT NULL,
   organization_id String,
   environment_id String,
   user_id String,
   subscriber_id String,
   external_subscriber_id Nullable(String),
   message_id Nullable(String),
-  context_keys Array(String),
+  context_keys Array(String) DEFAULT []
   step_type LowCardinality(String),
-  step_name Nullable(String),
+  step_name String,
   provider_id Nullable(String),
   status LowCardinality(String),
-  digest Nullable(String),
+  digest Nullable(String) DEFAULT NULL,
+  deferred_ms Nullable(UInt32),
   error_code Nullable(String),
   error_message Nullable(String),
   transaction_id String,
   expires_at DateTime64(3, 'UTC'),
-  schedule_extensions_count UInt8
+  schedule_extensions_count UInt8 DEFAULT 0,
 )
 ENGINE = ReplacingMergeTree(updated_at)
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (organization_id, step_run_id)
-TTL toDateTime(expires_at);
+TTL toDateTime(expires_at)
 
 -- Traces Table
 -- Stores event traces for debugging and monitoring workflow/step execution
@@ -56,9 +57,8 @@ CREATE TABLE IF NOT EXISTS traces (
   workflow_run_identifier String DEFAULT ''
 )
 ENGINE = MergeTree
-PARTITION BY toYYYYMM(created_at)
 ORDER BY (entity_type, organization_id, entity_id, created_at)
-TTL toDateTime(expires_at);
+SETTINGS async_insert = 1;
 
 -- Requests Table
 -- Logs HTTP requests for analytics and debugging
@@ -84,9 +84,8 @@ CREATE TABLE IF NOT EXISTS requests (
   expires_at DateTime64(3, 'UTC')
 )
 ENGINE = MergeTree
-PARTITION BY toYYYYMM(created_at)
 ORDER BY (organization_id, environment_id, transaction_id, created_at)
-TTL toDateTime(expires_at);
+SETTINGS async_insert = 0;
 
 -- Workflow Runs Table
 -- Tracks complete workflow execution instances
@@ -103,10 +102,7 @@ CREATE TABLE IF NOT EXISTS workflow_runs (
   user_id Nullable(String),
   subscriber_id String,
   external_subscriber_id Nullable(String),
-  context_keys Array(String),
   status LowCardinality(String),
-  delivery_lifecycle_status LowCardinality(String) DEFAULT '',
-  delivery_lifecycle_detail String DEFAULT '',
   trigger_identifier String,
   transaction_id String,
   channels String,
@@ -117,10 +113,13 @@ CREATE TABLE IF NOT EXISTS workflow_runs (
   is_digest LowCardinality(String),
   digested_workflow_run_id Nullable(String),
   expires_at DateTime64(3, 'UTC'),
+  delivery_lifecycle_status String DEFAULT '',
+  delivery_lifecycle_detail String DEFAULT '',
   severity LowCardinality(String) DEFAULT 'none',
-  critical Bool DEFAULT false
+  critical Bool DEFAULT false,
+  context_keys Array(String) DEFAULT []
 )
 ENGINE = ReplacingMergeTree(updated_at)
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (organization_id, workflow_run_id)
-TTL toDateTime(expires_at);
+TTL toDateTime(expires_at)
