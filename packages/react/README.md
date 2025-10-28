@@ -34,10 +34,8 @@ import { Inbox } from '@novu/react';
 function Novu() {
   return (
     <Inbox
-      options={{
-        subscriber: 'SUBSCRIBER_ID',
-        applicationIdentifier: 'APPLICATION_IDENTIFIER',
-      }}
+      subscriber='SUBSCRIBER_ID'
+      applicationIdentifier='APPLICATION_IDENTIFIER'
     />
   );
 }
@@ -53,12 +51,10 @@ import { Inbox } from '@novu/react';
 function Novu() {
   return (
     <Inbox
-      options={{
-        backendUrl: 'YOUR_BACKEND_URL',
-        socketUrl: 'YOUR_SOCKET_URL',
-        subscriber: 'SUBSCRIBER_ID',
-        applicationIdentifier: 'APPLICATION_IDENTIFIER',
-      }}
+      backendUrl='YOUR_BACKEND_URL'
+      socketUrl='YOUR_SOCKET_URL'
+      subscriber='SUBSCRIBER_ID'
+      applicationIdentifier='APPLICATION_IDENTIFIER'
     />
   );
 }
@@ -77,10 +73,8 @@ function Novu() {
   return (
     <div>
       <Inbox
-        options={{
-          subscriber: 'SUBSCRIBER_ID',
-          applicationIdentifier: 'APPLICATION_IDENTIFIER',
-        }}
+        subscriber='SUBSCRIBER_ID'
+        applicationIdentifier='APPLICATION_IDENTIFIER'
         open={isOpen}
       />
       <button onClick={() => setOpen(true)}>Open Inbox</button>
@@ -100,10 +94,8 @@ import { Inbox } from '@novu/react';
 function Novu() {
   return (
     <Inbox
-      options={{
-        subscriber: 'SUBSCRIBER_ID',
-        applicationIdentifier: 'APPLICATION_IDENTIFIER',
-      }}
+      subscriber='SUBSCRIBER_ID'
+      applicationIdentifier='APPLICATION_IDENTIFIER'
       localization={{
         'inbox.status.archived': 'Archived',
         'inbox.status.unread': 'Unread',

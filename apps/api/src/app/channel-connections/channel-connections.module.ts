@@ -3,6 +3,7 @@ import { featureFlagsService } from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
   CommunityOrganizationRepository,
+  ContextRepository,
   EnvironmentRepository,
   IntegrationRepository,
   SubscriberRepository,
@@ -27,6 +28,7 @@ const DAL_MODELS = [
   IntegrationRepository,
   EnvironmentRepository,
   CommunityOrganizationRepository,
+  ContextRepository,
 ];
 
 @Module({

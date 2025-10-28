@@ -24,17 +24,21 @@ export const isTimedOutput = (
   return (outputs as DigestTimedOutput)?.cron != null;
 };
 
-export const isLookBackDigestOutput = (outputs: DigestOutput): outputs is DigestRegularOutput => {
+export const isLookBackDigestOutput = (outputs: DigestOutput | DelayOutput): outputs is DigestRegularOutput => {
   return (
     (outputs as DigestRegularOutput)?.lookBackWindow?.amount != null &&
     (outputs as DigestRegularOutput)?.lookBackWindow?.unit != null
   );
 };
 
+export const isDynamicOutput = (outputs: DelayOutput | undefined): boolean => {
+  return (outputs as { dynamicKey?: string })?.dynamicKey != null;
+};
+
 export const isRegularOutput = (
   outputs: DigestOutput | DelayOutput
 ): outputs is DigestRegularOutput | DelayRegularOutput => {
-  return !isTimedOutput(outputs) && !isLookBackDigestOutput(outputs);
+  return !isTimedOutput(outputs) && !isLookBackDigestOutput(outputs) && !isDynamicOutput(outputs);
 };
 
 export const BRIDGE_EXECUTION_ERROR = {

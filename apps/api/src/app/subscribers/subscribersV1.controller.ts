@@ -294,9 +294,9 @@ export class SubscribersV1Controller {
   @RequireAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
-    summary: 'Upsert provider credentials',
-    description: `Upsert credentials for a provider such as slack and push tokens. 
-      **providerId** is required field. This API creates **deviceTokens** or appends to the existing ones.`,
+    summary: 'Update provider credentials',
+    description: `Update credentials for a provider such as **slack** and **FCM**. 
+      **providerId** is required field. This API creates the **deviceTokens** or replaces the existing ones.`,
   })
   @SdkGroupName('Subscribers.Credentials')
   async updateSubscriberChannel(
@@ -323,9 +323,9 @@ export class SubscribersV1Controller {
   @RequireAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
-    summary: 'Update provider credentials',
-    description: `Update credentials for a provider such as **slack** and **FCM**. 
-      **providerId** is required field. This API creates the **deviceTokens** or replaces the existing ones.`,
+    summary: 'Upsert provider credentials',
+    description: `Upsert credentials for a provider such as **slack** and **FCM**. 
+      **providerId** is required field. This API creates **deviceTokens** or appends to the existing ones.`,
   })
   @SdkGroupName('Subscribers.Credentials')
   @SdkMethodName('append')
@@ -486,7 +486,6 @@ export class SubscribersV1Controller {
     return await this.getPreferenceUsecase.execute(command);
   }
 
-  // @ts-ignore
   @Patch('/:subscriberId/preferences/:parameter')
   @ExternalApiAccessible()
   @RequireAuthentication()

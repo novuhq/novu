@@ -380,7 +380,7 @@ export class TriggerEvent {
     }
 
     try {
-      const contexts = await this.contextRepository.upsertContextsFromPayload(
+      const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
         command.environmentId,
         command.organizationId,
         command.context

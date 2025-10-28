@@ -25,7 +25,6 @@ const contextSchema = new Schema<ContextDBModel>(
     key: {
       type: Schema.Types.String,
       required: true,
-      unique: true,
     },
     data: {
       type: Schema.Types.Mixed,
@@ -58,6 +57,12 @@ contextSchema.index(
     unique: true,
   }
 );
+
+contextSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  createdAt: -1,
+});
 
 export const Context =
   (mongoose.models.Context as mongoose.Model<ContextDBModel>) ||

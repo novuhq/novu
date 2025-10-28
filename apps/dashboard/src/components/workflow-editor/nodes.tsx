@@ -1,7 +1,7 @@
 import { Slug } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ComponentProps, useCallback, useEffect, useState } from 'react';
+import { ComponentProps, KeyboardEventHandler, useCallback, useState } from 'react';
 import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link } from 'react-router-dom';
@@ -210,35 +210,27 @@ const NodeWrapper = ({ children, id, type }: { children: React.ReactNode; id: st
     [id, selectNode]
   );
 
-  useEffect(() => {
-    if (selectedNodeId !== id) {
+  const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = (e) => {
+    if (!selectedNodeId) {
       return;
     }
 
-    const listener = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        e.stopPropagation();
-        selectNode(id, 'editor');
-      }
-    };
-
-    document.addEventListener('keydown', listener);
-
-    return () => {
-      document.removeEventListener('keydown', listener);
-    };
-  }, [selectedNodeId, id, selectNode]);
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      selectNode(id, 'editor');
+    }
+  };
 
   if (showStepPreview) {
     return children;
   }
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: no need
     <div
       onClick={handleClick}
-      className="contents cursor-pointer"
+      onKeyDown={handleKeyDown}
+      className="cursor-pointer focus-visible:outline-none"
       data-testid={`${type}-node`}
       role="button"
       tabIndex={0}

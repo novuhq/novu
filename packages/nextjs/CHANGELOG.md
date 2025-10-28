@@ -1,3 +1,13 @@
+## v3.11.0 (2025-10-27)
+
+### 🚀 Features
+
+- **js,react,api:** context HMAC & Inbox dynamic session change fixes NV-6793 ([#9365](https://github.com/novuhq/novu/pull/9365))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v3.10.1 (2025-09-22)
 
 This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.

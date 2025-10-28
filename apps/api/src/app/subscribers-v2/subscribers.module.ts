@@ -39,10 +39,6 @@ import { TopicsV2Module } from '../topics-v2/topics-v2.module';
 import { ChannelConnectionsController } from './channel-connections.controller';
 import { ChannelEndpointsController } from './channel-endpoints.controller';
 import { SubscribersController } from './subscribers.controller';
-import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
-import { SlackOauthCallback } from './usecases/chat-oauth-callback/slack-oauth-callback/slack-oauth-callback.usecase';
-import { GenerateChatOauthUrl } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.usecase';
-import { GenerateSlackOauthUrl } from './usecases/generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
 import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
 import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
@@ -70,10 +66,6 @@ const USE_CASES = [
   GetSubscriberTemplatePreference,
   UpsertPreferences,
   GetWorkflowByIdsUseCase,
-  ChatOauthCallback,
-  SlackOauthCallback,
-  GenerateSlackOauthUrl,
-  GenerateChatOauthUrl,
 ];
 
 const DAL_MODELS = [
@@ -105,8 +97,6 @@ const DAL_MODELS = [
     CommunityOrganizationRepository,
     featureFlagsService,
     EnvironmentRepository,
-    GetNovuProviderCredentials,
-    CalculateLimitNovuIntegration,
   ],
 })
 export class SubscribersModule {}
