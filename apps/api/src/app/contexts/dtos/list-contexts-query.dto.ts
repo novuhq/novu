@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ContextType } from '@novu/shared';
 import { IsOptional, IsString } from 'class-validator';
-import { CursorPaginationQueryDto } from '../../subscribers-v2/dtos/cursor-pagination-query.dto';
+import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
 import { GetContextResponseDto } from './get-context-response.dto';
 
 export class ListContextsQueryDto extends CursorPaginationQueryDto<GetContextResponseDto, 'createdAt' | 'updatedAt'> {
