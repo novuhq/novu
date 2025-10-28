@@ -235,6 +235,15 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
+      - name: Whitelist Runner IP
+        id: whitelist
+        uses: novuhq/clickhouse-cloud-whitelist-ip-action@v1.0.0
+        with:
+          clickhouse-org-id: ${{ secrets.CLICKHOUSE_ORG_ID }}
+          clickhouse-service-id: ${{ secrets.CLICKHOUSE_SERVICE_ID }}
+          clickhouse-api-key-id: ${{ secrets.CLICKHOUSE_API_KEY_ID }}
+          clickhouse-api-key-secret: ${{ secrets.CLICKHOUSE_API_KEY_SECRET }}
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -250,16 +259,6 @@ jobs:
       - name: Install Dependencies
         shell: bash
         run: pnpm install --frozen-lockfile
-
-      - name: Whitelist Runner IP
-        id: whitelist
-        uses: novuhq/clickhouse-cloud-whitelist-ip-action@v1.0.0
-        with:
-          clickhouse-org-id: ${{ secrets.CLICKHOUSE_ORG_ID }}
-          clickhouse-service-id: ${{ secrets.CLICKHOUSE_SERVICE_ID }}
-          clickhouse-api-key-id: ${{ secrets.CLICKHOUSE_API_KEY_ID }}
-          clickhouse-api-key-secret: ${{ secrets.CLICKHOUSE_API_KEY_SECRET }}
-
       - name: Run ClickHouse Migrations
         working-directory: apps/api
         env:
