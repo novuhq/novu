@@ -76,7 +76,6 @@ import { UpdateIntegration } from './usecases/update-integration/update-integrat
 @ApiCommonResponses()
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
-@RequireAuthentication()
 @ApiTags('Integrations')
 export class IntegrationsController {
   constructor(
@@ -106,6 +105,7 @@ export class IntegrationsController {
     description: 'List all the channels integrations created in the organization',
   })
   @ExternalApiAccessible()
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
     const canAccessCredentials = await this.canUserAccessCredentials(user);
@@ -131,6 +131,7 @@ export class IntegrationsController {
   })
   @ExternalApiAccessible()
   @SdkMethodName('listActive')
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getActiveIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
     const canAccessCredentials = await this.canUserAccessCredentials(user);
@@ -158,6 +159,7 @@ export class IntegrationsController {
   })
   @SdkGroupName('Integrations.Webhooks')
   @ExternalApiAccessible()
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getWebhookSupportStatus(
     @UserSession() user: UserSessionData,
@@ -181,6 +183,7 @@ export class IntegrationsController {
     Each provider supports different credentials, check the provider documentation for more details.`,
   })
   @ExternalApiAccessible()
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async createIntegration(
     @UserSession() user: UserSessionData,
@@ -232,6 +235,7 @@ export class IntegrationsController {
     Each provider supports different credentials, check the provider documentation for more details.`,
   })
   @ExternalApiAccessible()
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async updateIntegrationById(
     @UserSession() user: UserSessionData,
@@ -284,6 +288,7 @@ export class IntegrationsController {
     This will automatically generate required webhook signing keys and configure webhook endpoints.`,
   })
   @ExternalApiAccessible()
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async autoConfigureIntegration(
     @UserSession() user: UserSessionData,
@@ -312,6 +317,7 @@ export class IntegrationsController {
     Primary integration is used to deliver notification for sms and email channels in the workflow.`,
   })
   @ExternalApiAccessible()
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @SdkMethodName('setAsPrimary')
   async setIntegrationAsPrimary(
@@ -345,6 +351,7 @@ export class IntegrationsController {
     This action is irreversible.`,
   })
   @ExternalApiAccessible()
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async removeIntegration(
     @UserSession() user: UserSessionData,
@@ -363,6 +370,7 @@ export class IntegrationsController {
   @Get('/:channelType/limit')
   @ApiExcludeEndpoint()
   @OtelSpan()
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getProviderLimit(
     @UserSession() user: UserSessionData,
@@ -385,6 +393,7 @@ export class IntegrationsController {
 
   @Get('/in-app/status')
   @ApiExcludeEndpoint()
+  @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getInAppActivated(@UserSession() user: UserSessionData) {
     return await this.getInAppActivatedUsecase.execute(
@@ -415,7 +424,7 @@ export class IntegrationsController {
       GenerateChatOauthUrlCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        subscriberId: body.subscriberId,
+        resource: body.resource,
         integrationIdentifier: body.integrationIdentifier,
         providerId: body.providerId,
       })

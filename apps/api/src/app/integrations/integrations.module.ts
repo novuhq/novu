@@ -3,10 +3,14 @@ import {
   CalculateLimitNovuIntegration,
   ChannelFactory,
   CompileTemplate,
-  CreateExecutionDetails,
   GetNovuProviderCredentials,
 } from '@novu/application-generic';
-import { ChannelConnectionRepository, CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
+import {
+  ChannelConnectionRepository,
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
+  ContextRepository,
+} from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
 import { IntegrationsController } from './integrations.controller';
@@ -22,6 +26,7 @@ const PROVIDERS = [ChannelFactory, CompileTemplate, GetNovuProviderCredentials, 
     CommunityOrganizationRepository,
     CommunityUserRepository,
     ChannelConnectionRepository,
+    ContextRepository,
     ...PROVIDERS,
   ],
   exports: [...USE_CASES],

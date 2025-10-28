@@ -11,7 +11,7 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum, makeResourceKey, RESOURCE } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
@@ -46,7 +46,7 @@ export class SlackOauthCallback {
         organizationId: stateData.organizationId,
         environmentId: stateData.environmentId,
         integrationIdentifier: integration.identifier,
-        resource: makeResourceKey(RESOURCE.SUBSCRIBER, stateData.subscriberId),
+        resource: stateData.resource,
         auth: {
           accessToken: authData.access_token,
         },

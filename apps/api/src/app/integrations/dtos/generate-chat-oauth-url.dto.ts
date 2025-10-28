@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChatProviderIdEnum } from '@novu/shared';
-import { Transform } from 'class-transformer';
+import { ChatProviderIdEnum, ResourceKey } from '@novu/shared';
 import { IsDefined, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 
 export class GenerateChatOauthUrlRequestDto {
   @ApiProperty({
@@ -30,13 +30,9 @@ export class GenerateChatOauthUrlRequestDto {
 
   @ApiProperty({
     type: String,
-    description: 'Unique identifier of the subscriber',
+    description: 'Resource to link the integration to (e.g. subscriber:123 or context:tenant:123)',
   })
-  @IsString()
   @IsDefined()
-  @IsNotEmpty({
-    message: 'SubscriberId is required',
-  })
-  @Transform(({ value }) => value.trim())
-  subscriberId: string;
+  @IsResourceKey()
+  resource: ResourceKey;
 }

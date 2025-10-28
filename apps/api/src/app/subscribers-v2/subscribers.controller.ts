@@ -70,6 +70,7 @@ import { UpdateSubscriberPreferences } from './usecases/update-subscriber-prefer
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Subscribers')
 @SdkGroupName('Subscribers')
+@RequireAuthentication()
 @ApiCommonResponses()
 export class SubscribersController {
   constructor(
@@ -95,7 +96,6 @@ export class SubscribersController {
   })
   @ApiResponse(ListSubscribersResponseDto)
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
-  @RequireAuthentication()
   async searchSubscribers(
     @UserSession() user: UserSessionData,
     @Query() query: ListSubscribersQueryDto
@@ -127,7 +127,6 @@ export class SubscribersController {
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('retrieve')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
-  @RequireAuthentication()
   async getSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -160,7 +159,6 @@ export class SubscribersController {
   })
   @SdkMethodName('create')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
-  @RequireAuthentication()
   async createSubscriber(
     @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto,
@@ -201,7 +199,6 @@ export class SubscribersController {
   @ApiResponse(SubscriberResponseDto)
   @SdkMethodName('patch')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
-  @RequireAuthentication()
   async patchSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -228,7 +225,6 @@ export class SubscribersController {
   })
   @SdkMethodName('delete')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
-  @RequireAuthentication()
   async removeSubscriber(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
@@ -253,7 +249,6 @@ export class SubscribersController {
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('list')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
-  @RequireAuthentication()
   async getSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -278,7 +273,6 @@ export class SubscribersController {
   @ApiResponse(SubscriberGlobalPreferenceDto)
   @SdkGroupName('Subscribers.Preferences')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
-  @RequireAuthentication()
   @SdkMethodName('globalPreference')
   @ApiExcludeEndpoint()
   async getGlobalPreference(
@@ -308,7 +302,6 @@ export class SubscribersController {
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('bulkUpdate')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
-  @RequireAuthentication()
   async bulkUpdateSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -345,7 +338,6 @@ export class SubscribersController {
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('update')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
-  @RequireAuthentication()
   async updateSubscriberPreferences(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
@@ -375,7 +367,6 @@ export class SubscribersController {
   @SdkGroupName('Subscribers.Topics')
   @SdkMethodName('list')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
-  @RequireAuthentication()
   async listSubscriberTopics(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
