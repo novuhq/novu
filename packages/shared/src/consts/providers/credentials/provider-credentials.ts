@@ -1264,6 +1264,7 @@ export const unifonicConfig: IConfigCredential[] = [
   },
   ...smsConfigBase,
 ];
+
 export const smsmodeProviderConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -1273,6 +1274,17 @@ export const smsmodeProviderConfig: IConfigCredential[] = [
     required: true,
   },
   ...smsConfigBase,
+];
+
+export const appIOConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.AppIOBaseUrl,
+    displayName: 'Base URL',
+    description: 'Base URL of the App IO API (e.g., https://api.io.italia.it/api/v1)',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
 ];
 
 export const sinchConfig: IConfigCredential[] = [

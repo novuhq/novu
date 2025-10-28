@@ -1,4 +1,4 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   CompileTemplate,
@@ -6,6 +6,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  FeatureFlagsService,
   GetNovuProviderCredentials,
   InstrumentUsecase,
   IPushHandler,
@@ -15,7 +16,14 @@ import {
   SelectVariant,
   SendWebhookMessage,
 } from '@novu/application-generic';
-import { IntegrationEntity, JobEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import {
+  IntegrationEntity,
+  JobEntity,
+  MessageEntity,
+  MessageRepository,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import { PushOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
@@ -23,7 +31,9 @@ import {
   DeliveryLifecycleStatusEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   IChannelSettings,
+  InboxCountTypeEnum,
   ProvidersIdEnum,
   PushProviderIdEnum,
   TriggerOverrides,
@@ -59,7 +69,8 @@ export class SendMessagePush extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private featureFlagsService: FeatureFlagsService
   ) {
     super(
       messageRepository,
@@ -177,7 +188,7 @@ export class SendMessagePush extends SendMessageBase {
         }
       }
 
-      let integration;
+      let integration: IntegrationEntity | undefined;
       try {
         integration = await this.getSubscriberIntegration(channel, command);
       } catch (error) {
@@ -189,15 +200,29 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
+      const noDeviceTokensAndNoOverrides = !deviceTokens && !uniqueOverrideChannels?.length;
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
-      if ((!deviceTokens || !integration || isChannelMissingDeviceTokens) && !uniqueOverrideChannels?.length) {
+      if (noDeviceTokensAndNoOverrides || !integration || isChannelMissingDeviceTokens) {
         continue;
       }
 
-      const overrides = command.overrides[integration.providerId] || {};
+      let overrides: Record<string, unknown> = command.overrides[integration.providerId] || {};
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
       await this.sendSelectedIntegrationExecution(command.job, integration);
+
+      const isPushUnreadCountEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_PUSH_UNREAD_COUNT_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId },
+        environment: { _id: command.environmentId },
+      });
+
+      const inboxCountType = integration?.configurations?.inboxCount;
+      if (isPushUnreadCountEnabled && inboxCountType && inboxCountType !== InboxCountTypeEnum.NONE) {
+        overrides = await this.updateOverridesWithInboxUnreadCount(command, overrides, subscriber, inboxCountType);
+      }
 
       /**
        * There are no targets available for the subscriber, but credentials provided in the overrides
@@ -327,6 +352,49 @@ export class SendMessagePush extends SendMessageBase {
 
     return {
       status,
+    };
+  }
+
+  private async updateOverridesWithInboxUnreadCount(
+    command: SendMessageChannelCommand,
+    overrides: Record<string, unknown>,
+    subscriber: SubscriberEntity,
+    inboxCountType: InboxCountTypeEnum
+  ): Promise<Record<string, unknown>> {
+    const filter =
+      inboxCountType === InboxCountTypeEnum.UNREAD ? { read: false, snoozed: false } : { seen: false, snoozed: false };
+
+    const inboxUnreadCount = await this.messageRepository.getCount(
+      command.environmentId,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP,
+      filter,
+      { limit: 99 },
+      command.contextKeys
+    );
+
+    const androidOverrides = (overrides.android as Record<string, any>) ?? {};
+    const apnsOverrides = (overrides.apns as Record<string, any>) ?? {};
+
+    return {
+      ...overrides,
+      android: {
+        ...androidOverrides,
+        notification: {
+          notificationCount: inboxUnreadCount,
+          ...androidOverrides.notification,
+        },
+      },
+      apns: {
+        ...apnsOverrides,
+        payload: {
+          ...apnsOverrides?.payload,
+          aps: {
+            badge: inboxUnreadCount,
+            ...apnsOverrides?.payload?.aps,
+          },
+        },
+      },
     };
   }
 

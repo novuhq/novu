@@ -1,4 +1,4 @@
-## v3.11.0-rc.1 (2025-10-24)
+## v3.11.0 (2025-10-27)
 
 ### 🚀 Features
 
@@ -7,11 +7,13 @@
 
 ### 🩹 Fixes
 
+- **js:** notification count display for 99+ fixes NV-6786 ([#9402](https://github.com/novuhq/novu/pull/9402))
 - **js:** correct TypeScript types for notification.delete.pending event ([#9325](https://github.com/novuhq/novu/pull/9325))
 
 ### ❤️ Thank You
 
 - Adam Chmara @ChmaraX
+- Dima Grossman @scopsy
 - DipakHalkude @DipakHalkude
 
 ## v3.10.1 (2025-09-22)

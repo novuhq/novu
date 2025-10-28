@@ -25,7 +25,7 @@ jobs:
         name: ['novu/api', 'novu/worker', 'novu/dashboard', 'novu/webhook', 'novu/ws']
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Variables
         shell: bash

@@ -27,10 +27,11 @@ import { APICall, APIPromise } from '../types/async.js';
 import { Result } from '../types/fp.js';
 
 /**
- * Create context
+ * Create a context
  *
  * @remarks
  * Create a new context with the specified type, id, and data. Returns 409 if context already exists.
+ *       **type** and **id** are required fields, **data** is optional, if the context already exists, it returns the 409 response
  */
 export function contextsCreate(
   client: NovuCore,

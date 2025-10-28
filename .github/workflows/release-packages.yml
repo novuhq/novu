@@ -34,7 +34,7 @@ jobs:
       pr_number: ${{ !github.event.inputs.nightly && steps.create-pr.outputs.pull-request-number || '' }}
       pr_url: ${{ !github.event.inputs.nightly && steps.create-pr.outputs.pull-request-url || '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           fetch-tags: true
