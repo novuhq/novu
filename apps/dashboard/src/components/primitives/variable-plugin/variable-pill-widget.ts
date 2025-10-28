@@ -332,7 +332,12 @@ export class VariablePillWidget extends WidgetType {
    * Used by CodeMirror to optimize re-rendering.
    */
   eq(other: VariablePillWidget) {
-    return other.fullVariableName === this.fullVariableName && other.start === this.start && other.end === this.end;
+    return (
+      other.fullVariableName === this.fullVariableName &&
+      other.start === this.start &&
+      other.end === this.end &&
+      other.isNotInSchema === this.isNotInSchema
+    );
   }
 
   /**

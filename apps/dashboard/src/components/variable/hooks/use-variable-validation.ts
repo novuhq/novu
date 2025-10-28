@@ -77,5 +77,5 @@ export const useVariableValidation = (
       variableKey,
       variableName: variableName,
     };
-  }, [variableName, aliasFor, isAllowedVariable, getSchemaPropertyByKey]);
+  }, [variableName, aliasFor, isAllowedVariable, getSchemaPropertyByKey, isPayloadSchemaEnabled]);
 };
