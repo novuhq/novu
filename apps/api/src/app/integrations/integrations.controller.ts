@@ -5,9 +5,12 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Post,
   Put,
+  Query,
+  Res,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -29,6 +32,7 @@ import {
   PermissionsEnum,
   UserSessionData,
 } from '@novu/shared';
+import { Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import {
@@ -39,16 +43,21 @@ import {
 } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AutoConfigureIntegrationRequestDto } from './dtos/auto-configure-integration-request.dto';
 import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integration-response.dto';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
+import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
+import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
+import { ResponseTypeEnum } from './usecases/chat-oauth-callback/chat-oauth-callback.response';
+import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
+import { GenerateChatOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.command';
+import { GenerateChatOauthUrl } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.usecase';
 import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
 import { GetActiveIntegrations } from './usecases/get-active-integration/get-active-integration.usecase';
 import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in-app-activated.command';
@@ -82,7 +91,9 @@ export class IntegrationsController {
     private removeIntegrationUsecase: RemoveIntegration,
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
     private organizationRepository: CommunityOrganizationRepository,
-    private featureFlagService: FeatureFlagsService
+    private generateChatOauthUrlUsecase: GenerateChatOauthUrl,
+    private chatOauthCallbackUsecase: ChatOauthCallback,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @Get('/')
@@ -384,13 +395,92 @@ export class IntegrationsController {
     );
   }
 
+  @Post('/chat/oauth')
+  @ApiOperation({
+    summary: 'Generate chat OAuth URL',
+    description: `Generate an OAuth URL for chat integrations like Slack. 
+    The subscriber will use this URL to authorize the chat integration.`,
+  })
+  @ApiResponse(String)
+  @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @RequireAuthentication()
+  async getChatOAuthUrl(
+    @UserSession() user: UserSessionData,
+    @Body() body: GenerateChatOauthUrlRequestDto
+  ): Promise<string> {
+    await this.checkFeatureEnabled(user);
+
+    return await this.generateChatOauthUrlUsecase.execute(
+      GenerateChatOauthUrlCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId: body.subscriberId,
+        integrationIdentifier: body.integrationIdentifier,
+        providerId: body.providerId,
+      })
+    );
+  }
+
+  @Get('/chat/oauth/callback')
+  @ApiOperation({
+    summary: 'Handle chat OAuth callback',
+    description: `Generic OAuth callback handler for all chat integrations (Slack, Teams, Discord, etc.). 
+    This endpoint processes the authorization code and stores the connection for any supported chat provider.`,
+  })
+  @ApiExcludeEndpoint()
+  async handleChatOAuthCallback(
+    @Res() res: Response,
+    @Query('code') providerCode: string,
+    @Query('state') state: string,
+    @Query('error') error?: string,
+    @Query('error_description') errorDescription?: string
+  ): Promise<void> {
+    if (error) {
+      throw new BadRequestException(`OAuth error: ${error}${errorDescription ? ` - ${errorDescription}` : ''}`);
+    }
+
+    if (!providerCode || !state) {
+      throw new BadRequestException('Missing required OAuth parameters: code and state');
+    }
+
+    const result = await this.chatOauthCallbackUsecase.execute(
+      ChatOauthCallbackCommand.create({
+        providerCode,
+        state,
+      })
+    );
+
+    if (result.type === ResponseTypeEnum.HTML) {
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+      res.send(result.result);
+
+      return;
+    }
+
+    res.redirect(result.result);
+  }
+
+  private async checkFeatureEnabled(user: UserSessionData) {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
+      defaultValue: false,
+      organization: { _id: user.organizationId },
+    });
+
+    if (!isEnabled) {
+      throw new NotFoundException('Feature not enabled');
+    }
+  }
+
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
     const organization = await this.organizationRepository.findOne({
       _id: user.organizationId,
     });
 
     const [isRbacFlagEnabled, isRbacFeatureEnabled] = await Promise.all([
-      this.featureFlagService.getFlag({
+      this.featureFlagsService.getFlag({
         organization: { _id: user.organizationId },
         user: { _id: user._id },
         key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
