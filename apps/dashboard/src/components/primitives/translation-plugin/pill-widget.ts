@@ -150,10 +150,7 @@ export class TranslationPillWidget extends WidgetType {
         this.tooltipElement.setAttribute('data-state', 'closed');
 
         setTimeout(() => {
-          if (this.tooltipElement) {
-            document.body.removeChild(this.tooltipElement);
-            this.tooltipElement = null;
-          }
+          this.destroyTooltip();
         }, 150);
       }
 
@@ -208,14 +205,17 @@ export class TranslationPillWidget extends WidgetType {
     return tooltip;
   }
 
-  destroy(dom: HTMLElement) {
-    dom.removeEventListener('mousedown', this.clickHandler);
-
-    // Clean up tooltip if it exists
+  destroyTooltip() {
     if (this.tooltipElement) {
+      this.tooltipElement.replaceChildren();
       document.body.removeChild(this.tooltipElement);
       this.tooltipElement = null;
     }
+  }
+
+  destroy(dom: HTMLElement) {
+    this.destroyTooltip();
+    dom.removeEventListener('mousedown', this.clickHandler);
   }
 
   ignoreEvent() {
