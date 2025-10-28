@@ -1,2 +1,0 @@
-ALTER TABLE requests 
-  ADD COLUMN IF NOT EXISTS ci_test UInt32 DEFAULT 0;
