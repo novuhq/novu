@@ -59,7 +59,7 @@ export const LayoutEditor = () => {
     <div className="flex h-full w-full">
       <ResizableLayout autoSaveId="layout-editor-page-layout">
         <ResizableLayout.ContextPanel>
-          <PanelHeader icon={RiCodeBlock} title="Preview Context" className="p-3" />
+          <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="p-3" />
           <div className="bg-bg-weak flex-1 overflow-hidden">
             <div className="h-full overflow-y-auto">
               <LayoutPreviewContextPanel />
