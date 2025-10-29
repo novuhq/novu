@@ -650,14 +650,24 @@ export class SendMessagePush extends SendMessageBase {
             LOG_CONTEXT
           );
 
-          await this.removeInvalidDeviceToken(
-            command._subscriberId,
-            deviceToken,
-            integration._id,
-            command,
-            e.message || e.toString(),
-            message._id
-          );
+          const isExpiredTokensRemovalEnabled = await this.featureFlagsService.getFlag({
+            key: FeatureFlagsKeysEnum.IS_EXPIRED_TOKENS_REMOVAL_ENABLED,
+            defaultValue: false,
+            organization: { _id: command.organizationId },
+            user: { _id: command.userId },
+            environment: { _id: command.environmentId },
+          });
+
+          if (isExpiredTokensRemovalEnabled) {
+            await this.removeInvalidDeviceToken(
+              command._subscriberId,
+              deviceToken,
+              integration._id,
+              command,
+              e.message || e.toString(),
+              message._id
+            );
+          }
         }
 
         await this.sendWebhookMessage.execute({
