@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  buildSubscriberKey,
   CompileTemplate,
   CompileTemplateCommand,
   CreateExecutionDetails,
@@ -9,6 +10,7 @@ import {
   FeatureFlagsService,
   GetNovuProviderCredentials,
   InstrumentUsecase,
+  InvalidateCacheService,
   IPushHandler,
   messageWebhookMapper,
   PushFactory,
@@ -70,6 +72,7 @@ export class SendMessagePush extends SendMessageBase {
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
     private sendWebhookMessage: SendWebhookMessage,
+    private invalidateCache: InvalidateCacheService,
     private featureFlagsService: FeatureFlagsService
   ) {
     super(
@@ -623,19 +626,6 @@ export class SendMessagePush extends SendMessageBase {
 
       const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
 
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_SENT,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, command.subscriberId),
-          error: {
-            message: e.message || e.name || 'Error while sending push with provider',
-          },
-        },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
-
       try {
         await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, command.job, {
           messageId: message._id,
@@ -645,6 +635,61 @@ export class SendMessagePush extends SendMessageBase {
         Logger.error(
           { jobId: command.jobId },
           `Error sending provider error for jobId ${command.jobId} ${err.message || err.toString()}`,
+          LOG_CONTEXT
+        );
+      }
+
+      try {
+        const pushHandler = this.getIntegrationHandler(integration);
+        const isTokenInvalid = pushHandler?.isTokenInvalid?.(e.message || e.toString());
+
+        if (isTokenInvalid) {
+          Logger.log(
+            { jobId: command.jobId, deviceToken, providerId: integration.providerId },
+            `Invalid device token detected for jobId ${command.jobId}, removing token from subscriber`,
+            LOG_CONTEXT
+          );
+
+          const isExpiredTokensRemovalEnabled = await this.featureFlagsService.getFlag({
+            key: FeatureFlagsKeysEnum.IS_EXPIRED_TOKENS_REMOVAL_ENABLED,
+            defaultValue: false,
+            organization: { _id: command.organizationId },
+            user: { _id: command.userId },
+            environment: { _id: command.environmentId },
+          });
+
+          if (isExpiredTokensRemovalEnabled) {
+            await this.removeInvalidDeviceToken(
+              command._subscriberId,
+              deviceToken,
+              integration._id,
+              command,
+              e.message || e.toString(),
+              message._id
+            );
+          }
+        }
+
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_FAILED,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId),
+            error: {
+              push: {
+                reason: isTokenInvalid ? 'token_invalid' : 'generic_error',
+                deviceToken: deviceToken,
+              },
+              message: e.message || e.name || 'Error while sending push with provider',
+            },
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        });
+      } catch (err) {
+        Logger.error(
+          { jobId: command.jobId },
+          `Error sending webhook message for jobId ${command.jobId} ${err.message || err.toString()}`,
           LOG_CONTEXT
         );
       }
@@ -780,6 +825,74 @@ export class SendMessagePush extends SendMessageBase {
         return null;
       default:
         return null;
+    }
+  }
+
+  private async removeInvalidDeviceToken(
+    subscriberId: string,
+    deviceToken: string,
+    integrationId: string,
+    command: SendMessageChannelCommand,
+    providerErrorMessage: string,
+    messageId: string
+  ): Promise<void> {
+    try {
+      await this.subscriberRepository.update(
+        {
+          _environmentId: command.environmentId,
+          _id: subscriberId,
+          'channels._integrationId': integrationId,
+        },
+        {
+          $pull: {
+            'channels.$.credentials.deviceTokens': deviceToken,
+          },
+        }
+      );
+
+      await this.invalidateCache.invalidateByKey({
+        key: buildSubscriberKey({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
+      });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId,
+          detail: DetailEnum.PUSH_INVALID_TOKEN_REMOVED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            deviceToken,
+            providerError: providerErrorMessage,
+          }),
+        })
+      );
+
+      Logger.log(
+        {
+          subscriberId: command.subscriberId,
+          deviceToken,
+          integrationId,
+        },
+        `Successfully removed invalid device token from subscriber`,
+        LOG_CONTEXT
+      );
+    } catch (error) {
+      Logger.error(
+        {
+          subscriberId: command.subscriberId,
+          deviceToken,
+          integrationId,
+          error: error.message,
+        },
+        `Failed to remove invalid device token from subscriber: ${error.message}`,
+        LOG_CONTEXT
+      );
     }
   }
 }

@@ -12,6 +12,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
+
 import {
   ApiBody,
   ApiExcludeController,
@@ -29,6 +30,7 @@ import {
   PermissionsEnum,
   UserSessionData,
 } from '@novu/shared';
+
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
