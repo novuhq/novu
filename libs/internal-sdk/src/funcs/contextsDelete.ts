@@ -26,10 +26,11 @@ import { APICall, APIPromise } from '../types/async.js';
 import { Result } from '../types/fp.js';
 
 /**
- * Delete context
+ * Delete a context
  *
  * @remarks
- * Delete a context by its type and id
+ * Delete a context by its type and id.
+ *       **type** and **id** are required fields, if the context does not exist, it returns the 404 response
  */
 export function contextsDelete(
   client: NovuCore,

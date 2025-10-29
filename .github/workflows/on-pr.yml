@@ -17,7 +17,7 @@ jobs:
     environment: Linting
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v4
 
@@ -26,7 +26,7 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     environment: Linting
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run Spell Check
         uses: streetsidesoftware/cspell-action@v6
         with:
@@ -40,7 +40,7 @@ jobs:
     environment: Linting
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Find flags
         uses: launchdarkly/find-code-references-in-pull-request@v2
@@ -81,7 +81,7 @@ jobs:
           else
             echo "branch=main" >> $GITHUB_OUTPUT
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Fetch enough history to find the merge base between base and head
           # This is typically much faster than fetch-depth: 0
@@ -133,7 +133,7 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-providers }}'
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
@@ -158,7 +158,7 @@ jobs:
       - name: Affected packages
         run: echo '${{ needs.get-affected.outputs.test-packages }}'
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-project
         with:
@@ -189,7 +189,7 @@ jobs:
     steps:
       - name: Affected libs
         run: echo '${{ needs.get-affected.outputs.test-libs }}'
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-project
 
@@ -216,7 +216,7 @@ jobs:
       id-token: write
     steps:
       - run: echo ${{ matrix.projectName }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         name: Checkout with submodules
         with:
           submodules: true
@@ -254,7 +254,7 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/run-api

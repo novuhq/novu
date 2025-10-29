@@ -57,7 +57,7 @@ function StepEditorContent() {
   return (
     <ResizableLayout autoSaveId="step-editor-main-layout">
       <ResizableLayout.ContextPanel>
-        <PanelHeader icon={RiCodeBlock} title="Preview Context" className="py-2">
+        <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
           <Protect permission={PermissionsEnum.EVENT_WRITE}>
             <Button
               variant="secondary"
