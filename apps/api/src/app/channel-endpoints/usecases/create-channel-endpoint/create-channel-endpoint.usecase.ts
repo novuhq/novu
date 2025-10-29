@@ -5,11 +5,12 @@ import {
   ChannelConnectionRepository,
   ChannelEndpointEntity,
   ChannelEndpointRepository,
+  ContextRepository,
   IntegrationEntity,
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { parseResourceKey } from '@novu/shared';
+import { parseResourceKey, RESOURCE } from '@novu/shared';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
 @Injectable()
@@ -18,7 +19,8 @@ export class CreateChannelEndpoint {
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly contextRepository: ContextRepository
   ) {}
 
   @InstrumentUsecase()
@@ -79,7 +81,7 @@ export class CreateChannelEndpoint {
     const { type, id } = parseResourceKey(command.resource);
 
     switch (type) {
-      case 'subscriber': {
+      case RESOURCE.SUBSCRIBER: {
         const found = await this.subscriberRepository.findOne({
           subscriberId: id,
           _organizationId: command.organizationId,
@@ -87,6 +89,17 @@ export class CreateChannelEndpoint {
         });
 
         if (!found) throw new NotFoundException(`Subscriber not found: ${id}`);
+
+        return;
+      }
+      case RESOURCE.CONTEXT: {
+        const found = await this.contextRepository.findOne({
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
+          key: id,
+        });
+
+        if (!found) throw new NotFoundException(`Context not found: ${id}`);
 
         return;
       }

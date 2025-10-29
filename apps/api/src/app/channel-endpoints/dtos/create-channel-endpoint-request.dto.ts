@@ -1,7 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { getApiPropertyExamples } from '@novu/application-generic';
-import { ChannelEndpointByType, ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
+import {
+  ChannelEndpointByType,
+  ChannelEndpointType,
+  ENDPOINT_TYPES,
+  makeResourceKey,
+  RESOURCE,
+  ResourceKey,
+} from '@novu/shared';
 import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 import { IsValidChannelEndpoint } from '../validators/channel-endpoint.validator';
 
 export class CreateChannelEndpointRequestDto {
@@ -14,6 +22,15 @@ export class CreateChannelEndpointRequestDto {
   @IsOptional()
   @IsString()
   identifier?: string;
+
+  @ApiProperty({
+    description: 'The resource of the channel endpoint',
+    type: String,
+    example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
+  })
+  @IsDefined()
+  @IsResourceKey()
+  resource: ResourceKey;
 
   @ApiProperty({
     description: 'The identifier of the integration to use for this channel endpoint.',

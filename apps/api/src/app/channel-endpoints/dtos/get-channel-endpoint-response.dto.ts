@@ -24,9 +24,12 @@ export class GetChannelEndpointResponseDto {
 
   @ApiProperty({
     description: 'The provider identifier (e.g., sendgrid, twilio, slack, etc.).',
-    enum: Object.values(ProvidersIdEnumConst),
+    enum: [...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))])],
+    enumName: 'ProvidersIdEnum',
+    type: String,
+    example: 'slack',
   })
-  provider: ProvidersIdEnum | null;
+  providerId: ProvidersIdEnum | null;
 
   @ApiProperty({
     description: 'The identifier of the integration to use for this channel endpoint.',

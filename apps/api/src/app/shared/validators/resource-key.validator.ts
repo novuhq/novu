@@ -1,6 +1,6 @@
 // libs/nest-validators/is-resource-key.decorator.ts
 
-import { isResourceKey } from '@novu/shared';
+import { isResourceKey, RESOURCE } from '@novu/shared';
 import {
   registerDecorator,
   ValidationOptions,
@@ -14,7 +14,7 @@ export class IsResourceKeyConstraint implements ValidatorConstraintInterface {
     return isResourceKey(value);
   }
   defaultMessage() {
-    return 'resource must be "<type>:<id>" where type ∈ {subscriber}';
+    return `resource must be "<type>:<id>" where type ∈ {${Object.values(RESOURCE).join(',')}}`;
   }
 }
 
