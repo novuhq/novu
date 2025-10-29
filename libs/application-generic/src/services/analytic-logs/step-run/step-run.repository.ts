@@ -432,6 +432,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
       // Schedule extensions count
       schedule_extensions_count: job?.scheduleExtensionsCount || 0,
+
+      deferred_ms: null,
     };
   }
 }
