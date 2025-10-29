@@ -6,9 +6,10 @@ import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 export class GenerateChatOauthUrlRequestDto {
   @ApiProperty({
     type: String,
-    description: 'Resource key',
+    description: 'Resource to link the integration to',
     example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
   })
+  @IsDefined()
   @IsResourceKey()
   resource: ResourceKey;
 

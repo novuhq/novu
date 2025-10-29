@@ -1,5 +1,10 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { ChannelFactory, CompileTemplate, CreateExecutionDetails } from '@novu/application-generic';
+import {
+  CalculateLimitNovuIntegration,
+  ChannelFactory,
+  CompileTemplate,
+  GetNovuProviderCredentials,
+} from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
   CommunityOrganizationRepository,
@@ -11,14 +16,13 @@ import { SharedModule } from '../shared/shared.module';
 import { IntegrationsController } from './integrations.controller';
 import { USE_CASES } from './usecases';
 
-const PROVIDERS = [ChannelFactory, CompileTemplate];
+const PROVIDERS = [ChannelFactory, CompileTemplate, GetNovuProviderCredentials, CalculateLimitNovuIntegration];
 
 @Module({
   imports: [SharedModule, forwardRef(() => AuthModule)],
   controllers: [IntegrationsController],
   providers: [
     ...USE_CASES,
-    CreateExecutionDetails,
     CommunityOrganizationRepository,
     CommunityUserRepository,
     ChannelConnectionRepository,

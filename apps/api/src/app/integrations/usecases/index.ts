@@ -44,8 +44,7 @@ export const USE_CASES = [
   NormalizeVariables,
   GenerateChatOauthUrl,
   GenerateSlackOauthUrl,
-  ChatOauthCallback,
   SlackOauthCallback,
-  GetNovuProviderCredentials,
+  ChatOauthCallback,
   CreateChannelConnection,
 ];
