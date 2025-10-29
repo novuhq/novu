@@ -1,13 +1,17 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { getApiPropertyExamples } from '@novu/application-generic';
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import {
-  ChannelEndpointByType,
   ChannelEndpointType,
   ChannelTypeEnum,
   ENDPOINT_TYPES,
   ProvidersIdEnum,
   ProvidersIdEnumConst,
 } from '@novu/shared';
+import {
+  PhoneEndpointDto,
+  SlackChannelEndpointDto,
+  SlackUserEndpointDto,
+  WebhookEndpointDto,
+} from './endpoint-types.dto';
 
 export class GetChannelEndpointResponseDto {
   @ApiProperty({
@@ -54,9 +58,14 @@ export class GetChannelEndpointResponseDto {
 
   @ApiProperty({
     description: 'Endpoint data specific to the channel type',
-    oneOf: getApiPropertyExamples(),
+    oneOf: [
+      { $ref: getSchemaPath(SlackChannelEndpointDto) },
+      { $ref: getSchemaPath(SlackUserEndpointDto) },
+      { $ref: getSchemaPath(WebhookEndpointDto) },
+      { $ref: getSchemaPath(PhoneEndpointDto) },
+    ],
   })
-  endpoint: ChannelEndpointByType[ChannelEndpointType];
+  endpoint: SlackChannelEndpointDto | SlackUserEndpointDto | WebhookEndpointDto | PhoneEndpointDto;
 
   @ApiProperty({
     description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',

@@ -12,15 +12,41 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiExcludeController,
+  ApiExtraModels,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { ExternalApiAccessible, FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  ENDPOINT_TYPES,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { CreateChannelEndpointRequestDto } from './dtos/create-channel-endpoint-request.dto';
+import { CreateChannelEndpointRequest } from './dtos/create-channel-endpoint-request.dto';
+import {
+  CreatePhoneEndpointDto,
+  CreateSlackChannelEndpointDto,
+  CreateSlackUserEndpointDto,
+  CreateWebhookEndpointDto,
+} from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
+import {
+  PhoneEndpointDto,
+  SlackChannelEndpointDto,
+  SlackUserEndpointDto,
+  WebhookEndpointDto,
+} from './dtos/endpoint-types.dto';
 import { GetChannelEndpointResponseDto } from './dtos/get-channel-endpoint-response.dto';
 import { ListChannelEndpointsQueryDto } from './dtos/list-channel-endpoints-query.dto';
 import { ListChannelEndpointsResponseDto } from './dtos/list-channel-endpoints-response.dto';
@@ -39,6 +65,16 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/channel-endpoints', version: '1' })
 @UseInterceptors(ClassSerializerInterceptor)
+@ApiExtraModels(
+  CreateSlackChannelEndpointDto,
+  CreateSlackUserEndpointDto,
+  CreateWebhookEndpointDto,
+  CreatePhoneEndpointDto,
+  SlackChannelEndpointDto,
+  SlackUserEndpointDto,
+  WebhookEndpointDto,
+  PhoneEndpointDto
+)
 @ApiExcludeController()
 @ExternalApiAccessible()
 @RequireAuthentication()
@@ -137,12 +173,32 @@ export class ChannelEndpointsController {
     summary: 'Create channel endpoint for a resource',
     description: `Create a new channel endpoint for a resource.`,
   })
+  @ApiBody({
+    description: 'Channel endpoint creation request. The structure varies based on the type field.',
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(CreateSlackChannelEndpointDto) },
+        { $ref: getSchemaPath(CreateSlackUserEndpointDto) },
+        { $ref: getSchemaPath(CreateWebhookEndpointDto) },
+        { $ref: getSchemaPath(CreatePhoneEndpointDto) },
+      ],
+      discriminator: {
+        propertyName: 'type',
+        mapping: {
+          [ENDPOINT_TYPES.SLACK_CHANNEL]: getSchemaPath(CreateSlackChannelEndpointDto),
+          [ENDPOINT_TYPES.SLACK_USER]: getSchemaPath(CreateSlackUserEndpointDto),
+          [ENDPOINT_TYPES.WEBHOOK]: getSchemaPath(CreateWebhookEndpointDto),
+          [ENDPOINT_TYPES.PHONE]: getSchemaPath(CreatePhoneEndpointDto),
+        },
+      },
+    },
+  })
   @ApiResponse(GetChannelEndpointResponseDto, 201)
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async createChannelEndpoint(
     @UserSession() user: UserSessionData,
-    @Body() body: CreateChannelEndpointRequestDto
+    @Body() body: CreateChannelEndpointRequest
   ): Promise<GetChannelEndpointResponseDto> {
     await this.checkFeatureEnabled(user);
 
