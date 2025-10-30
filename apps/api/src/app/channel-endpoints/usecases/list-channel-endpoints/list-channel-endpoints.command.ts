@@ -1,7 +1,7 @@
 import { CursorBasedPaginatedCommand } from '@novu/application-generic';
 import { ChannelEndpointEntity } from '@novu/dal';
 import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst, ResourceKey } from '@novu/shared';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { IsResourceKey } from '../../../shared/validators/resource-key.validator';
 
 export class ListChannelEndpointsCommand extends CursorBasedPaginatedCommand<
@@ -11,6 +11,11 @@ export class ListChannelEndpointsCommand extends CursorBasedPaginatedCommand<
   @IsOptional()
   @IsResourceKey()
   resource?: ResourceKey;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 
   @IsEnum(ChannelTypeEnum)
   @IsOptional()

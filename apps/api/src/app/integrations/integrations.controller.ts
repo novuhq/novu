@@ -429,6 +429,7 @@ export class IntegrationsController {
         resource: body.resource,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
+        context: body.context,
       })
     );
   }

@@ -128,6 +128,7 @@ export class ChannelEndpointsController {
         orderBy: query.orderBy || 'createdAt',
         includeCursor: query.includeCursor,
         resource: query.resource,
+        contextKeys: query.contextKeys,
         channel: query.channel,
         providerId: query.providerId,
         integrationIdentifier: query.integrationIdentifier,
@@ -212,6 +213,7 @@ export class ChannelEndpointsController {
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
         resource: body.resource,
+        context: body.context,
         type: body.type,
         endpoint: body.endpoint,
       })

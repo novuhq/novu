@@ -23,8 +23,9 @@ export class CreateChannelConnection {
   @InstrumentUsecase()
   async execute(command: CreateChannelConnectionCommand): Promise<ChannelConnectionEntity> {
     const integration = await this.findIntegration(command);
+    const contextKeys = await this.resolveContexts(command);
 
-    await this.assertSingleConnectionPerResourceAndIntegration(command, integration);
+    await this.assertSingleConnectionPerResourceAndIntegration(command, integration, contextKeys);
     await this.assertResourceExists(command);
 
     const identifier = command.identifier || this.generateIdentifier();
@@ -42,31 +43,54 @@ export class CreateChannelConnection {
       );
     }
 
-    const channelConnection = await this.createChannelConnection(command, identifier, integration);
+    const channelConnection = await this.createChannelConnection(command, identifier, integration, contextKeys);
 
     return channelConnection;
   }
 
+  private async resolveContexts(command: CreateChannelConnectionCommand): Promise<string[]> {
+    if (!command.context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      command.environmentId,
+      command.organizationId,
+      command.context
+    );
+
+    return contexts.map((context) => context.key);
+  }
+
   private async assertSingleConnectionPerResourceAndIntegration(
     command: CreateChannelConnectionCommand,
-    integration: IntegrationEntity
+    integration: IntegrationEntity,
+    contextKeys: string[]
   ) {
-    const existingChannelConnection = await this.channelConnectionRepository.findOne({
+    const baseQuery = {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      resource: command.resource,
       integrationIdentifier: integration.identifier,
+      resource: command.resource,
+    };
+
+    const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
+
+    const existingChannelConnection = await this.channelConnectionRepository.findOne({
+      ...baseQuery,
+      ...contextQuery,
     });
 
     if (existingChannelConnection) {
-      throw new ConflictException(`Only one channel connection per resource and integration is allowed`);
+      throw new ConflictException(`Only one channel connection per integration + resource + context is allowed`);
     }
   }
 
   private async createChannelConnection(
     command: CreateChannelConnectionCommand,
     identifier: string,
-    integration: IntegrationEntity
+    integration: IntegrationEntity,
+    contextKeys: string[]
   ): Promise<ChannelConnectionEntity> {
     const channelConnection = await this.channelConnectionRepository.create({
       identifier,
@@ -76,6 +100,7 @@ export class CreateChannelConnection {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       resource: command.resource,
+      contextKeys,
       workspace: command.workspace,
       auth: command.auth,
     });
@@ -95,17 +120,6 @@ export class CreateChannelConnection {
         });
 
         if (!found) throw new NotFoundException(`Subscriber not found: ${id}`);
-
-        return;
-      }
-      case RESOURCE.CONTEXT: {
-        const found = await this.contextRepository.findOne({
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-          key: id,
-        });
-
-        if (!found) throw new NotFoundException(`Context not found: ${id}`);
 
         return;
       }

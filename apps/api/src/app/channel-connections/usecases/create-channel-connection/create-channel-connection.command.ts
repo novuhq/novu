@@ -1,4 +1,5 @@
-import { ResourceKey } from '@novu/shared';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload, ResourceKey } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
@@ -17,6 +18,10 @@ export class CreateChannelConnectionCommand extends EnvironmentCommand {
   @IsDefined()
   @IsResourceKey()
   resource: ResourceKey;
+
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 
   @IsDefined()
   @ValidateNested()

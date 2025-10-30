@@ -10,7 +10,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { parseResourceKey, RESOURCE } from '@novu/shared';
+import { ChannelEndpointType, parseResourceKey, RESOURCE } from '@novu/shared';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
 @Injectable()
@@ -26,6 +26,7 @@ export class CreateChannelEndpoint {
   @InstrumentUsecase()
   async execute(command: CreateChannelEndpointCommand): Promise<ChannelEndpointEntity> {
     const integration = await this.findIntegration(command);
+    const contextKeys = await this.resolveContexts(command);
 
     await this.assertResourceExists(command);
 
@@ -50,16 +51,31 @@ export class CreateChannelEndpoint {
       connection = await this.findChannelConnection(command);
     }
 
-    const channelEndpoint = await this.createChannelEndpoint(command, identifier, integration, connection);
+    const channelEndpoint = await this.createChannelEndpoint(command, identifier, integration, connection, contextKeys);
 
     return channelEndpoint;
+  }
+
+  private async resolveContexts(command: CreateChannelEndpointCommand<ChannelEndpointType>): Promise<string[]> {
+    if (!command.context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      command.environmentId,
+      command.organizationId,
+      command.context
+    );
+
+    return contexts.map((context) => context.key);
   }
 
   private async createChannelEndpoint(
     command: CreateChannelEndpointCommand,
     identifier: string,
     integration: IntegrationEntity,
-    connection: ChannelConnectionEntity | null
+    connection: ChannelConnectionEntity | null,
+    contextKeys: string[]
   ): Promise<ChannelEndpointEntity> {
     const channelEndpoint = await this.channelEndpointRepository.create({
       identifier,
@@ -70,6 +86,7 @@ export class CreateChannelEndpoint {
       providerId: integration.providerId,
       channel: integration.channel,
       resource: command.resource,
+      contextKeys,
       type: command.type,
       endpoint: command.endpoint,
     });
@@ -89,17 +106,6 @@ export class CreateChannelEndpoint {
         });
 
         if (!found) throw new NotFoundException(`Subscriber not found: ${id}`);
-
-        return;
-      }
-      case RESOURCE.CONTEXT: {
-        const found = await this.contextRepository.findOne({
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-          key: id,
-        });
-
-        if (!found) throw new NotFoundException(`Context not found: ${id}`);
 
         return;
       }

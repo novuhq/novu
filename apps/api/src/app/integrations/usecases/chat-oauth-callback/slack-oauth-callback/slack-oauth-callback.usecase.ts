@@ -48,6 +48,7 @@ export class SlackOauthCallback {
         environmentId: stateData.environmentId,
         integrationIdentifier: integration.identifier,
         resource: stateData.resource,
+        context: stateData.context,
         auth: {
           accessToken: authData.access_token,
         },

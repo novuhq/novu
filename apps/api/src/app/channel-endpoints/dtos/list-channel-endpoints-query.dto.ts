@@ -7,7 +7,7 @@ import {
   RESOURCE,
   ResourceKey,
 } from '@novu/shared';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
 import { GetChannelEndpointResponseDto } from './get-channel-endpoint-response.dto';
@@ -24,6 +24,16 @@ export class ListChannelEndpointsQueryDto extends CursorPaginationQueryDto<
   @IsOptional()
   @IsResourceKey()
   resource?: ResourceKey;
+
+  @ApiPropertyOptional({
+    description: 'Context keys to filter results.',
+    type: [String],
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 
   @ApiPropertyOptional({
     description: 'Channel type to filter results.',

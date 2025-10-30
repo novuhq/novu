@@ -37,6 +37,11 @@ export class ListChannelConnections {
       filter.integrationIdentifier = command.integrationIdentifier;
     }
 
+    if (command.contextKeys !== undefined) {
+      const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(command.contextKeys);
+      filter.contextKeys = contextQuery.contextKeys;
+    }
+
     let channelConnection: ChannelConnectionEntity | null = null;
     const id = command.before || command.after;
 

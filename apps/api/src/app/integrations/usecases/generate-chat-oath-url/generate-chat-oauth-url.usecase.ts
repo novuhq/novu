@@ -25,6 +25,7 @@ export class GenerateChatOauthUrl {
             connectionIdentifier: command.connectionIdentifier,
             resource: command.resource,
             integration,
+            context: command.context,
           })
         );
 
