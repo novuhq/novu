@@ -15,9 +15,9 @@ export class CreateChannelConnectionCommand extends EnvironmentCommand {
   @IsString()
   integrationIdentifier: string;
 
-  @IsDefined()
+  @IsOptional()
   @IsResourceKey()
-  resource: ResourceKey;
+  resource?: ResourceKey;
 
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })

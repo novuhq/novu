@@ -11,9 +11,9 @@ export class GenerateChatOauthUrlRequestDto {
     description: 'Resource to link the integration to',
     example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
   })
-  @IsDefined()
+  @IsOptional()
   @IsResourceKey()
-  resource: ResourceKey;
+  resource?: ResourceKey;
 
   @ApiProperty({
     type: String,

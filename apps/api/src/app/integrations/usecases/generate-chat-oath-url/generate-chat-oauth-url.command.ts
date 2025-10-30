@@ -13,9 +13,9 @@ export class GenerateChatOauthUrlCommand extends EnvironmentCommand {
   @IsString()
   readonly connectionIdentifier?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsResourceKey()
-  readonly resource: ResourceKey;
+  readonly resource?: ResourceKey;
 
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })

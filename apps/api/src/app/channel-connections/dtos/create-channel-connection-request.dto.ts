@@ -18,14 +18,14 @@ export class CreateChannelConnectionRequestDto {
   @IsString()
   identifier?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The resource of the channel connection',
     type: String,
     example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
   })
-  @IsDefined()
+  @IsOptional()
   @IsResourceKey()
-  resource: ResourceKey;
+  resource?: ResourceKey;
 
   @ApiContextPayload()
   @IsOptional()

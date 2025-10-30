@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, GetNovuProviderCredentials, GetNovuProviderCredentialsCommand } from '@novu/application-generic';
-import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity } from '@novu/dal';
-import { ChatProviderIdEnum, ContextPayload, ResourceKey } from '@novu/shared';
+import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
+import { ChatProviderIdEnum, ContextPayload, parseResourceKey, RESOURCE, ResourceKey } from '@novu/shared';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
 
 export type StateData = {
   identifier?: string;
-  resource: ResourceKey;
+  resource?: ResourceKey;
   context?: ContextPayload;
   environmentId: string;
   organizationId: string;
@@ -31,10 +31,14 @@ export class GenerateSlackOauthUrl {
 
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private getNovuProviderCredentials: GetNovuProviderCredentials
+    private getNovuProviderCredentials: GetNovuProviderCredentials,
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   async execute(command: GenerateSlackOauthUrlCommand): Promise<string> {
+    this.validateResourceOrContext(command);
+    await this.assertResourceExists(command);
+
     const { clientId } = await this.getIntegrationCredentials(command.integration);
     const secureState = await this.createSecureState(
       command.integration,
@@ -44,6 +48,40 @@ export class GenerateSlackOauthUrl {
     );
 
     return this.getOAuthUrl(clientId!, secureState);
+  }
+
+  private validateResourceOrContext(command: GenerateSlackOauthUrlCommand): void {
+    const { resource, context } = command;
+
+    if (!resource && !context) {
+      throw new BadRequestException('Either resource or context must be provided');
+    }
+  }
+
+  private async assertResourceExists(command: GenerateSlackOauthUrlCommand) {
+    const { resource, organizationId, environmentId } = command;
+
+    if (!resource) {
+      return;
+    }
+
+    const { type, id } = parseResourceKey(resource);
+
+    switch (type) {
+      case RESOURCE.SUBSCRIBER: {
+        const found = await this.subscriberRepository.findOne({
+          subscriberId: id,
+          _organizationId: organizationId,
+          _environmentId: environmentId,
+        });
+
+        if (!found) throw new NotFoundException(`Subscriber not found: ${id}`);
+
+        return;
+      }
+      default:
+        throw new NotFoundException(`Resource type not found: ${type}`);
+    }
   }
 
   private async getOAuthUrl(clientId: string, secureState: string): Promise<string> {
@@ -59,7 +97,7 @@ export class GenerateSlackOauthUrl {
 
   private async createSecureState(
     integration: IntegrationEntity,
-    resource: ResourceKey,
+    resource?: ResourceKey,
     context?: ContextPayload,
     connectionIdentifier?: string
   ): Promise<string> {

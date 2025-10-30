@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, shortId } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
@@ -25,6 +25,7 @@ export class CreateChannelConnection {
     const integration = await this.findIntegration(command);
     const contextKeys = await this.resolveContexts(command);
 
+    this.validateResourceOrContext(command);
     await this.assertSingleConnectionPerResourceAndIntegration(command, integration, contextKeys);
     await this.assertResourceExists(command);
 
@@ -46,6 +47,14 @@ export class CreateChannelConnection {
     const channelConnection = await this.createChannelConnection(command, identifier, integration, contextKeys);
 
     return channelConnection;
+  }
+
+  private validateResourceOrContext(command: CreateChannelConnectionCommand) {
+    const { resource, context } = command;
+
+    if (!resource && !context) {
+      throw new BadRequestException('Either resource or context must be provided');
+    }
   }
 
   private async resolveContexts(command: CreateChannelConnectionCommand): Promise<string[]> {
@@ -109,6 +118,10 @@ export class CreateChannelConnection {
   }
 
   private async assertResourceExists(command: CreateChannelConnectionCommand) {
+    if (!command.resource) {
+      return;
+    }
+
     const { type, id } = parseResourceKey(command.resource);
 
     switch (type) {
