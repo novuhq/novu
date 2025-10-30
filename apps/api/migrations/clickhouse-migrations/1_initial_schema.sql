@@ -96,7 +96,6 @@ CREATE TABLE IF NOT EXISTS workflow_runs (
   created_at DateTime64(3, 'UTC'),
   updated_at DateTime64(3, 'UTC'),
   workflow_run_id String,
-  workflow_id String,
   workflow_name String,
   organization_id String,
   environment_id String,
