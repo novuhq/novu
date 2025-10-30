@@ -1,5 +1,5 @@
 import { useOrganization } from '@clerk/clerk-react';
-import { EnvironmentTypeEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
@@ -28,6 +28,7 @@ import { Badge } from '../components/primitives/badge';
 import { FacetedFormFilter } from '../components/primitives/form/faceted-filter/facated-form-filter';
 import { InlineToast } from '../components/primitives/inline-toast';
 import { useEnvironment } from '../context/environment/hooks';
+import { useFeatureFlag } from '../hooks/use-feature-flag';
 import { useFetchCharts } from '../hooks/use-fetch-charts';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import { useFetchWorkflows } from '../hooks/use-fetch-workflows';
@@ -40,6 +41,7 @@ export function AnalyticsPage() {
   const { subscription } = useFetchSubscription();
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
   const [searchParams] = useSearchParams();
+  const isWorkflowFilterEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_WORKFLOW_FILTER_ENABLED);
 
   const isDevMockMode = searchParams.get('dev_mock_date') === 'true';
 
@@ -129,19 +131,21 @@ export function AnalyticsPage() {
               onSelect={(values) => setSelectedDateRange(values[0])}
               icon={CalendarIcon}
             />
-            <FacetedFormFilter
-              size="small"
-              type="multi"
-              title="Workflows"
-              options={
-                workflowTemplates?.workflows?.map((workflow) => ({
-                  label: workflow.name,
-                  value: workflow._id,
-                })) || []
-              }
-              selected={selectedWorkflows}
-              onSelect={(values) => setSelectedWorkflows(values)}
-            />
+            {isWorkflowFilterEnabled && (
+              <FacetedFormFilter
+                size="small"
+                type="multi"
+                title="Workflows"
+                options={
+                  workflowTemplates?.workflows?.map((workflow) => ({
+                    label: workflow.name,
+                    value: workflow._id,
+                  })) || []
+                }
+                selected={selectedWorkflows}
+                onSelect={(values) => setSelectedWorkflows(values)}
+              />
+            )}
           </motion.div>
 
           <div className="flex flex-col gap-2">
