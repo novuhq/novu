@@ -14,13 +14,14 @@ export class BuildWorkflowRunsTrendChart {
 
   @InstrumentUsecase()
   async execute(command: BuildWorkflowRunsTrendChartCommand): Promise<WorkflowRunsTrendDataPointDto[]> {
-    const { environmentId, organizationId, startDate, endDate } = command;
+    const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
     const workflowRuns = await this.workflowRunRepository.getWorkflowRunsTrendData(
       environmentId,
       organizationId,
       startDate,
-      endDate
+      endDate,
+      workflowIds
     );
 
     const chartDataMap = new Map<string, Map<string, number>>();
@@ -32,7 +33,7 @@ export class BuildWorkflowRunsTrendChart {
         dateKey,
         new Map([
           ['pending', 0], // remove backward compatibility after data renews nv-6562
-          ['processing', 0], 
+          ['processing', 0],
           ['success', 0], // remove backward compatibility after data renews nv-6562
           ['completed', 0],
           ['error', 0],
@@ -48,7 +49,7 @@ export class BuildWorkflowRunsTrendChart {
       const statusMap = chartDataMap.get(date);
       if (statusMap?.has(status)) {
         const currentCount = statusMap.get(status) || 0;
-        statusMap.set(status, currentCount + parseInt(workflowRun.count, 10));      
+        statusMap.set(status, currentCount + parseInt(workflowRun.count, 10));
       }
     }
 

@@ -14,7 +14,7 @@ export class BuildMessagesDeliveredChart {
 
   @InstrumentUsecase()
   async execute(command: BuildMessagesDeliveredChartCommand): Promise<MessagesDeliveredDataPointDto> {
-    const { environmentId, organizationId, startDate, endDate } = command;
+    const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
     // Calculate previous period dates
     const periodDuration = endDate.getTime() - startDate.getTime();
@@ -27,7 +27,8 @@ export class BuildMessagesDeliveredChart {
       startDate,
       endDate,
       previousStartDate,
-      previousEndDate
+      previousEndDate,
+      workflowIds
     );
 
     return {

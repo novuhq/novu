@@ -2,7 +2,7 @@ import { useOrganization } from '@clerk/clerk-react';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   type ActiveSubscribersTrendDataPoint,
@@ -30,6 +30,7 @@ import { InlineToast } from '../components/primitives/inline-toast';
 import { useEnvironment } from '../context/environment/hooks';
 import { useFetchCharts } from '../hooks/use-fetch-charts';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
+import { useFetchWorkflows } from '../hooks/use-fetch-workflows';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
 
@@ -47,6 +48,9 @@ export function AnalyticsPage() {
     subscription,
     upgradeCtaIcon: AnalyticsUpgradeCtaIcon,
   });
+
+  const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>([]);
+  const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
 
   // Define report types for each section
   const metricsReportTypes = [
@@ -68,6 +72,7 @@ export function AnalyticsPage() {
   const { charts: metricsCharts, isLoading: isMetricsLoading } = useFetchCharts({
     reportType: metricsReportTypes,
     createdAtGte: chartsDateRange.createdAtGte,
+    workflowIds: selectedWorkflows.length > 0 ? selectedWorkflows : undefined,
     enabled: true,
     refetchInterval: CHART_CONFIG.refetchInterval,
     staleTime: CHART_CONFIG.staleTime,
@@ -81,6 +86,7 @@ export function AnalyticsPage() {
   } = useFetchCharts({
     reportType: chartsReportTypes,
     createdAtGte: chartsDateRange.createdAtGte,
+    workflowIds: selectedWorkflows.length > 0 ? selectedWorkflows : undefined,
     enabled: true,
     refetchInterval: CHART_CONFIG.refetchInterval,
     staleTime: CHART_CONFIG.staleTime,
@@ -110,7 +116,7 @@ export function AnalyticsPage() {
         }
       >
         <motion.div className="flex flex-col gap-2" variants={ANIMATION_VARIANTS.page} initial="hidden" animate="show">
-          <motion.div variants={ANIMATION_VARIANTS.section} className="flex justify-start">
+          <motion.div variants={ANIMATION_VARIANTS.section} className="flex justify-start gap-2">
             <FacetedFormFilter
               size="small"
               type="single"
@@ -122,6 +128,19 @@ export function AnalyticsPage() {
               selected={[selectedDateRange]}
               onSelect={(values) => setSelectedDateRange(values[0])}
               icon={CalendarIcon}
+            />
+            <FacetedFormFilter
+              size="small"
+              type="multi"
+              title="Workflows"
+              options={
+                workflowTemplates?.workflows?.map((workflow) => ({
+                  label: workflow.name,
+                  value: workflow._id,
+                })) || []
+              }
+              selected={selectedWorkflows}
+              onSelect={(values) => setSelectedWorkflows(values)}
             />
           </motion.div>
 

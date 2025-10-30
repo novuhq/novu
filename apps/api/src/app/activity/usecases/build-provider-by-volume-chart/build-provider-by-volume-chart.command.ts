@@ -1,5 +1,5 @@
 import { EnvironmentCommand } from '@novu/application-generic';
-import { IsDate, IsDefined } from 'class-validator';
+import { IsArray, IsDate, IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class BuildProviderByVolumeChartCommand extends EnvironmentCommand {
   @IsDate()
@@ -9,4 +9,9 @@ export class BuildProviderByVolumeChartCommand extends EnvironmentCommand {
   @IsDate()
   @IsDefined()
   endDate: Date;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  workflowIds?: string[];
 }

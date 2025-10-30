@@ -14,7 +14,7 @@ export class BuildWorkflowRunsMetricChart {
 
   @InstrumentUsecase()
   async execute(command: BuildWorkflowRunsMetricChartCommand): Promise<WorkflowRunsMetricDataPointDto> {
-    const { environmentId, organizationId, startDate, endDate } = command;
+    const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
     // Calculate previous period dates
     const periodDuration = endDate.getTime() - startDate.getTime();
@@ -27,7 +27,8 @@ export class BuildWorkflowRunsMetricChart {
       startDate,
       endDate,
       previousStartDate,
-      previousEndDate
+      previousEndDate,
+      workflowIds
     );
 
     return {
