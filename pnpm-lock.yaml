@@ -336,6 +336,9 @@ importers:
       class-validator:
         specifier: 0.14.1
         version: 0.14.1
+      clickhouse-migrations:
+        specifier: ^1.1.1
+        version: 1.1.1
       compression:
         specifier: ^1.7.4
         version: 1.7.4
@@ -6318,8 +6321,15 @@ packages:
   '@clickhouse/client-common@1.11.2':
     resolution: {integrity: sha512-H4ECHqaipzMgiZKqpb1Z4N3Ofq+lVTCn8I59XsSynqrsfR4jWZD3PipXVvIzMpDmTMvrlJWrOwAdm0DMNiMQbA==}
 
+  '@clickhouse/client-common@1.12.1':
+    resolution: {integrity: sha512-ccw1N6hB4+MyaAHIaWBwGZ6O2GgMlO99FlMj0B0UEGfjxM9v5dYVYql6FpP19rMwrVAroYs/IgX2vyZEBvzQLg==}
+
   '@clickhouse/client@1.11.2':
     resolution: {integrity: sha512-ZE7Q1qxsDNXCkGPf1zqmhpZpwAKxKT+1s4Z432J1Mb2Gm26Y4tG/sJoug81AfAJTt6s7taO2vzNBAKfSR3SStg==}
+    engines: {node: '>=16'}
+
+  '@clickhouse/client@1.12.1':
+    resolution: {integrity: sha512-7ORY85rphRazqHzImNXMrh4vsaPrpetFoTWpZYueCO2bbO6PXYDXp/GQ4DgxnGIqbWB/Di1Ai+Xuwq2o7DJ36A==}
     engines: {node: '>=16'}
 
   '@codemirror/autocomplete@6.18.3':
@@ -18631,6 +18641,11 @@ packages:
     resolution: {integrity: sha512-ouuZd4/dm2Sw5Gmqy6bGyNNNe1qt9RpmxveLSO7KcgsTnU7RXfsw+/bukWGo1abgBiMAic068rclZsO4IWmmxQ==}
     engines: {node: '>= 12'}
 
+  clickhouse-migrations@1.1.1:
+    resolution: {integrity: sha512-RCdg5Pj6bhVLtSF3H8moLIS5sVLyC4O8JoMjt7QrSjV269sI3TrCMBqJe/LKxGD5PPXvsui2pNuKyCC8fUR0DA==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   clickhouse-schema@2.0.1:
     resolution: {integrity: sha512-LQmfg15s2ABYc59eEz2ty1ZxX3isO6B11UX4DhCEsRK1BlTbnlczjjH6Bq+5I4eH68rBwYRYGt22b/gVhcJU8g==}
 
@@ -18826,6 +18841,10 @@ packages:
   commander@12.1.0:
     resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
     engines: {node: '>=18'}
+
+  commander@14.0.1:
+    resolution: {integrity: sha512-2JkV3gUZUVrbNA+1sjBOYLsMZ5cEEl8GTFP2a4AVz5hvasAMCQ1D2l2le/cX+pV4N6ZU17zjUahLpIXRrnWL8A==}
+    engines: {node: '>=20'}
 
   commander@2.15.1:
     resolution: {integrity: sha512-VlfT9F3V0v+jr4yxPc5gg9s62/fIVWsd2Bk2iD435um1NlGMYdVCq+MjcXnhYq2icNOizHr1kK+5TI6H0Hy0ag==}
@@ -37518,9 +37537,15 @@ snapshots:
 
   '@clickhouse/client-common@1.11.2': {}
 
+  '@clickhouse/client-common@1.12.1': {}
+
   '@clickhouse/client@1.11.2':
     dependencies:
       '@clickhouse/client-common': 1.11.2
+
+  '@clickhouse/client@1.12.1':
+    dependencies:
+      '@clickhouse/client-common': 1.12.1
 
   '@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)':
     dependencies:
@@ -53875,6 +53900,11 @@ snapshots:
 
   cli-width@4.1.0: {}
 
+  clickhouse-migrations@1.1.1:
+    dependencies:
+      '@clickhouse/client': 1.12.1
+      commander: 14.0.1
+
   clickhouse-schema@2.0.1: {}
 
   client-only@0.0.1: {}
@@ -54093,6 +54123,8 @@ snapshots:
   commander@11.1.0: {}
 
   commander@12.1.0: {}
+
+  commander@14.0.1: {}
 
   commander@2.15.1: {}
 
