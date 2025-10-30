@@ -150,8 +150,7 @@ export class GenerateSlackOauthUrl {
       throw new Error('API_ROOT_URL environment variable is required');
     }
 
-    // const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
-    const baseUrl = 'https://snowman-under-your-bed.loca.lt';
+    const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
     return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
