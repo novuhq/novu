@@ -210,6 +210,8 @@ export interface IChatProvider extends IProvider {
 }
 
 export interface IPushProvider extends IProvider {
+  isTokenInvalid?: (errorMessage: string) => boolean;
+
   sendMessage(options: IPushOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.PUSH;

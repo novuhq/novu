@@ -30,7 +30,7 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   DeliveryLifecycleDetail,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   ENDPOINT_TYPES,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -277,7 +277,7 @@ export class SendMessageChat extends SendMessageBase {
       return {
         status: SendMessageStatus.SKIPPED,
         deliveryLifecycleState: {
-          status: DeliveryLifecycleStatus.SKIPPED,
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
           detail: DeliveryLifecycleDetail.USER_MISSING_CREDENTIALS,
         },
       };
@@ -917,7 +917,7 @@ export class SendMessageChat extends SendMessageBase {
     return {
       status: SendMessageStatus.SKIPPED,
       deliveryLifecycleState: {
-        status: DeliveryLifecycleStatus.SKIPPED,
+        status: DeliveryLifecycleStatusEnum.SKIPPED,
         detail: lifecycleDetail,
       },
     };

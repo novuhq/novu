@@ -5,7 +5,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import type { NotificationFilter } from '../../utils/types';
 import type { NotificationsCountCommand } from './notifications-count.command';
 
-const MAX_NOTIFICATIONS_COUNT = 99;
+const MAX_NOTIFICATIONS_COUNT = 100;
 
 @Injectable()
 export class NotificationsCount {
@@ -63,7 +63,8 @@ export class NotificationsCount {
         },
         {
           limit: MAX_NOTIFICATIONS_COUNT,
-        }
+        },
+        command.contextKeys
       );
     });
 

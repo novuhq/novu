@@ -120,6 +120,7 @@ const mapDetailToEventType = {
   [DetailEnum.SKIPPED_STEP_OUTSIDE_OF_THE_SCHEDULE]: 'step_skipped_outside_of_the_schedule',
   [DetailEnum.STEP_EXTENDED_TO_SCHEDULE]: 'step_extended_to_schedule',
   [DetailEnum.SKIPPED_STEP_MAX_EXTENSIONS_REACHED]: 'step_skipped_max_extensions_reached',
+  [DetailEnum.PUSH_INVALID_TOKEN_REMOVED]: 'push_invalid_token_removed',
 } satisfies Record<DetailEnum, EventType>;
 
 @Injectable()

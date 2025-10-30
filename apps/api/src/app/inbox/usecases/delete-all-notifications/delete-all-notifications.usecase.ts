@@ -64,6 +64,7 @@ export class DeleteAllNotifications {
     const deletedMessages = await this.messageRepository.deleteMessagesWithFilters({
       environmentId: command.environmentId,
       subscriberId: subscriber._id,
+      contextKeys: command.contextKeys,
       filters,
     });
 
@@ -87,6 +88,7 @@ export class DeleteAllNotifications {
       _organization: command.organizationId,
       _subscriberId: subscriber._id,
       filters: command.filters,
+      contextKeys: command.contextKeys,
     });
 
     this.webSocketsQueueService.add({
@@ -95,6 +97,7 @@ export class DeleteAllNotifications {
         event: WebSocketEventEnum.UNREAD,
         userId: subscriber._id,
         _environmentId: command.environmentId,
+        ...(command.contextKeys && { contextKeys: command.contextKeys }),
       },
       groupId: subscriber._organizationId,
     });

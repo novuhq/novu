@@ -1,4 +1,4 @@
-import { PermissionsEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { useCallback, useState } from 'react';
 import { RiArrowDownSLine, RiCodeSSlashLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
 import { Link, useMatch, useNavigate } from 'react-router-dom';
@@ -40,6 +40,10 @@ export const WorkflowTabs = () => {
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
   const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
   const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? 'your-api-key-here') : 'your-api-key-here';
+  const isReadOnly =
+    workflow?.origin === ResourceOriginEnum.EXTERNAL ||
+    !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
+    currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   const handleIntegrateWorkflowClick = () => {
     setIsIntegrateDrawerOpen(true);
@@ -350,7 +354,7 @@ export const WorkflowTabs = () => {
           </div>
         </TabsList>
         <TabsContent value="workflow" className="mt-0 h-full w-full">
-          <WorkflowCanvas steps={workflow?.steps || []} />
+          {workflow && <WorkflowCanvas steps={workflow.steps || []} isReadOnly={isReadOnly} />}
         </TabsContent>
         <TabsContent value="activity" className="mt-0 h-full w-full">
           <WorkflowActivity />

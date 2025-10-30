@@ -19,9 +19,6 @@ import { JOB_STATUS_CONFIG } from '../constants';
 import { getActivityStatus } from '../helpers';
 import { OverviewItem } from './overview-item';
 
-// TODO: Remove this in a few weeks after deployment
-const DEPLOYMENT_DATE = '2025-09-04T00:00:00';
-
 export interface ActivityOverviewProps {
   activity: IActivity;
 }
@@ -187,14 +184,14 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
             {status || 'QUEUED'}
           </span>
         </OverviewItem>
-        {typeof activity.severity !== 'undefined' && Date.parse(activity.createdAt) >= Date.parse(DEPLOYMENT_DATE) && (
+        {typeof activity.severity !== 'undefined' && (
           <OverviewItem label="Severity">
             <span className={cn('font-mono text-xs')} data-testid="activity-severity">
               {capitalize(activity.severity.toString())}
             </span>
           </OverviewItem>
         )}
-        {typeof activity.critical === 'boolean' && Date.parse(activity.createdAt) >= Date.parse(DEPLOYMENT_DATE) && (
+        {typeof activity.critical === 'boolean' && (
           <OverviewItem label="Critical">
             <span className={cn('font-mono text-xs')} data-testid="activity-severity">
               {activity.critical ? 'true' : 'false'}

@@ -2,18 +2,13 @@ import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/
 import { Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { RiInsertRowTop } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
-import { createStep } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { fadeIn } from '@/utils/animation';
-import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { AddStepMenu } from './add-step-menu';
 import { NODE_WIDTH } from './base-node';
-import { useDragContext } from './drag-context';
+import { useCanvasContext } from './drag-context';
 
 export type AddNodeEdgeType = Edge<{ isLast: boolean; addStepIndex: number }>;
 
@@ -29,18 +24,10 @@ export function AddNodeEdge({
   markerEnd,
   id,
 }: EdgeProps<AddNodeEdgeType>) {
-  const { workflow, optimisticAddStep } = useWorkflow();
-  const navigate = useNavigate();
+  const { workflow } = useWorkflow();
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
-  const { intersectingEdgeId, draggedNodeId } = useDragContext();
-  const { data: layoutsResponse, isFetching: isFetchingLayouts } = useFetchLayouts({
-    limit: 100,
-    refetchOnWindowFocus: false,
-  });
-  const defaultLayout = layoutsResponse?.layouts.find((layout) => layout.isDefault);
-  const addDefaultLayout = !!defaultLayout;
-  const defaultLayoutId = defaultLayout?.layoutId;
+  const { intersectingEdgeId, draggedNodeId, addNode } = useCanvasContext();
   const isAnyNodeDragging = draggedNodeId !== null;
 
   const isReadOnly =
@@ -114,38 +101,7 @@ export function AddNodeEdge({
             className="nodrag nopan"
           >
             {!isReadOnly && !isAnyNodeDragging && (
-              <AddStepMenu
-                onMenuItemClick={async (stepType) => {
-                  if (workflow && !isFetchingLayouts) {
-                    const indexToAdd = data.addStepIndex;
-
-                    optimisticAddStep(
-                      stepType,
-                      indexToAdd,
-                      () => createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined, workflow.severity),
-                      {
-                        onSuccess: (data) => {
-                          if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
-                            if (currentEnvironment?.slug) {
-                              navigate(
-                                buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-                                  stepSlug: data.steps[indexToAdd].slug,
-                                })
-                              );
-                            }
-                          } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
-                            navigate(
-                              buildRoute(ROUTES.EDIT_STEP, {
-                                stepSlug: data.steps[indexToAdd].slug,
-                              })
-                            );
-                          }
-                        },
-                      }
-                    );
-                  }
-                }}
-              />
+              <AddStepMenu onMenuItemClick={async (stepType) => addNode(data.addStepIndex, stepType)} />
             )}
           </div>
         </EdgeLabelRenderer>
@@ -160,6 +116,8 @@ export const DefaultEdge = ({ id, sourceX, sourceY, targetX, targetY, style }: E
     <AnimatePresence>
       <motion.path
         {...fadeIn}
+        layout
+        layoutId={id}
         style={style}
         d={edgePath}
         fill="none"
@@ -168,6 +126,8 @@ export const DefaultEdge = ({ id, sourceX, sourceY, targetX, targetY, style }: E
       />
       <motion.path
         {...fadeIn}
+        layout
+        layoutId={id}
         d={edgePath}
         fill="none"
         strokeOpacity={0}

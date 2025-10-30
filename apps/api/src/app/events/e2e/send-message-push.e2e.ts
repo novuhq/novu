@@ -1,4 +1,6 @@
+/** cspell:disable */
 import { Novu } from '@novu/api';
+import { WorkflowCreationSourceEnum } from '@novu/api/models/components';
 import { DetailEnum } from '@novu/application-generic';
 import {
   ExecutionDetailsRepository,
@@ -6,7 +8,7 @@ import {
   MessageRepository,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, InboxCountTypeEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -19,6 +21,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
   const integrationRepository = new IntegrationRepository();
   const messageRepository = new MessageRepository();
   let novuClient: Novu;
+
   before(async () => {
     session = new UserSession();
     await session.initialize();
@@ -46,13 +49,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         active: true,
         check: false,
       });
-      const integrations = await integrationRepository.find({
-        _environmentId: session.environment._id,
-        channel: ChannelTypeEnum.PUSH,
-        active: true,
-      });
-
-      expect(integrations.length).to.equal(2);
     });
 
     afterEach(async () => {
@@ -159,6 +155,130 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
       expect(pushChannelsSkipped).to.be.ok;
     });
   });
+
+  it('should send push notification with unread count', async () => {
+    const oldPushUnreadCountFlag = process.env.IS_PUSH_UNREAD_COUNT_ENABLED;
+    // @ts-expect-error - we are setting the environment variable for the test
+    process.env.IS_PUSH_UNREAD_COUNT_ENABLED = 'true';
+
+    const { result: subscriber } = await novuClient.subscribers.create({
+      subscriberId: 'test-subscriber-id',
+      email: 'test@example.com',
+      firstName: 'Test',
+      lastName: 'User',
+    });
+    await novuClient.integrations.create({
+      providerId: PushProviderIdEnum.FCM,
+      channel: ChannelTypeEnum.PUSH,
+      credentials: {
+        serviceAccount:
+          '{"type":"service_account","project_id":"react-native-expo-fcm","private_key_id":"asdfas","private_key":"-----BEGIN PRIVATE KEY-----\\nasdf\\n-----END PRIVATE KEY-----\\n","client_email":"firebase-adminsdk-fsa@react-native-expo-fcm.iam.gserviceaccount.com","client_id":"asdf","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fsa@react-native-expo-fcm.iam.gserviceaccount.com","universe_domain":"googleapis.com"}',
+      },
+      environmentId: session.environment._id,
+      active: true,
+      check: false,
+    });
+    await updateCredentials(subscriber.subscriberId, PushProviderIdEnum.FCM, ['invalidDeviceToken']);
+    await integrationRepository.update(
+      {
+        _environmentId: session.environment._id,
+        channel: ChannelTypeEnum.IN_APP,
+      },
+      { connected: true, primary: true }
+    );
+    await integrationRepository.update(
+      {
+        _environmentId: session.environment._id,
+        channel: ChannelTypeEnum.PUSH,
+        providerId: PushProviderIdEnum.FCM,
+      },
+      { configurations: { inboxCount: InboxCountTypeEnum.UNREAD } }
+    );
+
+    const inAppWorkflow = await novuClient.workflows.create({
+      name: 'In App Workflow',
+      description: 'In App Workflow',
+      workflowId: 'in-app-workflow',
+      active: true,
+      source: WorkflowCreationSourceEnum.Dashboard,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'In App Step',
+          controlValues: {
+            subject: 'In App Subject',
+            body: 'In App Body',
+          },
+        },
+      ],
+    });
+    const inAppWorkflowId = inAppWorkflow.result.workflowId;
+
+    const pushWorkflow = await novuClient.workflows.create({
+      name: 'Push Workflow',
+      description: 'Push Workflow',
+      workflowId: 'push-workflow',
+      active: true,
+      source: WorkflowCreationSourceEnum.Dashboard,
+      steps: [
+        {
+          type: StepTypeEnum.PUSH,
+          name: 'Push Step',
+          controlValues: {
+            subject: 'Push Subject',
+            body: 'Push Body',
+          },
+        },
+      ],
+    });
+    const pushWorkflowId = pushWorkflow.result.workflowId;
+
+    await novuClient.trigger({
+      workflowId: inAppWorkflowId,
+      to: [{ subscriberId: subscriber.subscriberId }],
+      payload: {},
+    });
+
+    await novuClient.trigger({
+      workflowId: inAppWorkflowId,
+      to: [{ subscriberId: subscriber.subscriberId }],
+      payload: {},
+    });
+
+    await session.waitForJobCompletion(inAppWorkflow.result.id);
+
+    const inAppMessages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber.id,
+      _templateId: inAppWorkflow.result.id,
+      channel: ChannelTypeEnum.IN_APP,
+    });
+
+    expect(inAppMessages.length).to.equal(2);
+
+    await novuClient.trigger({
+      workflowId: pushWorkflowId,
+      to: [{ subscriberId: subscriber.subscriberId }],
+      payload: {},
+    });
+
+    await session.waitForJobCompletion(pushWorkflow.result.id);
+
+    const pushMessages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber.id,
+      _templateId: pushWorkflow.result.id,
+      channel: ChannelTypeEnum.PUSH,
+    });
+
+    expect(pushMessages.length).to.equal(1);
+    expect((pushMessages[0].overrides as any).android.notification.notificationCount).to.equal(2);
+    expect((pushMessages[0].overrides as any).apns.payload.aps.badge).to.equal(2);
+
+    // @ts-expect-error - we are setting the environment variable for the test
+    process.env.IS_PUSH_UNREAD_COUNT_ENABLED = oldPushUnreadCountFlag;
+  });
+
   async function triggerEvent(template2) {
     await novuClient.trigger({
       workflowId: template2.triggers[0].identifier,

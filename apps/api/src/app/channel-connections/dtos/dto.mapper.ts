@@ -1,5 +1,4 @@
 import { ChannelConnectionEntity } from '@novu/dal';
-import { ProvidersIdEnum } from '@novu/shared';
 import { GetChannelConnectionResponseDto } from './get-channel-connection-response.dto';
 
 export function mapChannelConnectionEntityToDto(
@@ -8,7 +7,7 @@ export function mapChannelConnectionEntityToDto(
   return {
     identifier: channelConnection.identifier,
     channel: channelConnection.channel,
-    provider: channelConnection.providerId as ProvidersIdEnum,
+    providerId: channelConnection.providerId,
     integrationIdentifier: channelConnection.integrationIdentifier,
     workspace: channelConnection.workspace,
     auth: channelConnection.auth,

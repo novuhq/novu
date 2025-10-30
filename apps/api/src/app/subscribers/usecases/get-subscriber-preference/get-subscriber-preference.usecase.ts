@@ -247,73 +247,63 @@ export class GetSubscriberPreference {
     subscriberId: string;
     workflowIds: string[];
   }) {
-    // Build query conditions for all preference types
-    const queryConditions: Array<{
-      _templateId?: { $in: string[] } | string;
-      _subscriberId?: string;
-      type: PreferencesTypeEnum;
-    }> = [
-      // Workflow resource preferences
-      {
-        _templateId: { $in: workflowIds },
-        type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      },
-      // User workflow preferences
-      {
-        _templateId: { $in: workflowIds },
-        type: PreferencesTypeEnum.USER_WORKFLOW,
-      },
-      // Subscriber workflow preferences
-      {
-        _subscriberId: subscriberId,
-        _templateId: { $in: workflowIds },
-        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-      },
-      // Subscriber global preferences
-      {
-        _subscriberId: subscriberId,
-        type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-      },
-    ];
+    const baseQuery = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    };
 
-    const allPreferences = await this.preferencesRepository.find(
-      {
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        $or: queryConditions,
-      },
-      undefined,
-      { readPreference: 'secondaryPreferred' }
-    );
+    const readOptions = { readPreference: 'secondaryPreferred' as const };
 
-    // Map results back to expected structure
-    const workflowResourcePreferences: PreferencesEntity[] = [];
-    const workflowUserPreferences: PreferencesEntity[] = [];
-    const subscriberWorkflowPreferences: PreferencesEntity[] = [];
-    let subscriberGlobalPreference: PreferencesEntity | null = null;
-
-    for (const preference of allPreferences) {
-      switch (preference.type) {
-        case PreferencesTypeEnum.WORKFLOW_RESOURCE:
-          workflowResourcePreferences.push(preference);
-          break;
-        case PreferencesTypeEnum.USER_WORKFLOW:
-          workflowUserPreferences.push(preference);
-          break;
-        case PreferencesTypeEnum.SUBSCRIBER_WORKFLOW:
-          subscriberWorkflowPreferences.push(preference);
-          break;
-        case PreferencesTypeEnum.SUBSCRIBER_GLOBAL:
-          subscriberGlobalPreference = preference;
-          break;
-      }
-    }
+    const [
+      workflowResourcePreferences,
+      workflowUserPreferences,
+      subscriberWorkflowPreferences,
+      subscriberGlobalPreferences,
+    ] = await Promise.all([
+      this.preferencesRepository.find(
+        {
+          ...baseQuery,
+          _templateId: { $in: workflowIds },
+          type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
+        },
+        undefined,
+        readOptions
+      ),
+      this.preferencesRepository.find(
+        {
+          ...baseQuery,
+          _templateId: { $in: workflowIds },
+          type: PreferencesTypeEnum.USER_WORKFLOW,
+        },
+        undefined,
+        readOptions
+      ),
+      this.preferencesRepository.find(
+        {
+          ...baseQuery,
+          _subscriberId: subscriberId,
+          _templateId: { $in: workflowIds },
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        },
+        undefined,
+        readOptions
+      ),
+      this.preferencesRepository.find(
+        {
+          ...baseQuery,
+          _subscriberId: subscriberId,
+          type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+        },
+        undefined,
+        readOptions
+      ),
+    ]);
 
     return {
       workflowResourcePreferences,
       workflowUserPreferences,
       subscriberWorkflowPreferences,
-      subscriberGlobalPreference,
+      subscriberGlobalPreference: subscriberGlobalPreferences[0] ?? null,
     };
   }
 }

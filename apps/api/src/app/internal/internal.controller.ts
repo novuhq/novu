@@ -1,7 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { SubscriberEntity } from '@novu/dal';
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import {
   UpdateSubscriberOnlineStateRequestDto,
@@ -20,7 +19,7 @@ export class InternalController {
   @HttpCode(HttpStatus.OK)
   async updateSubscriberOnlineState(
     @Body() body: UpdateSubscriberOnlineStateRequestDto,
-    @SubscriberSession() subscriberSession: SubscriberEntity
+    @SubscriberSession() subscriberSession: SubscriberSession
   ): Promise<UpdateSubscriberOnlineStateResponseDto> {
     const command = UpdateSubscriberOnlineStateCommand.create({
       subscriberId: subscriberSession.subscriberId,

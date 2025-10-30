@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { ChannelConnectionEntity, ChannelConnectionRepository } from '@novu/dal';
+import {
+  ChannelConnectionDBModel,
+  ChannelConnectionEntity,
+  ChannelConnectionRepository,
+  EnforceEnvOrOrgIds,
+} from '@novu/dal';
+import { FilterQuery } from 'mongoose';
 import { GetChannelConnectionCommand } from './get-channel-connection.command';
 
 @Injectable()
@@ -9,17 +15,16 @@ export class GetChannelConnection {
 
   @InstrumentUsecase()
   async execute(command: GetChannelConnectionCommand): Promise<ChannelConnectionEntity> {
-    const channelConnection = await this.channelConnectionRepository.findOne({
+    const query: FilterQuery<ChannelConnectionDBModel> & EnforceEnvOrOrgIds = {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      resource: command.resource,
-      integrationIdentifier: command.integrationIdentifier,
-    });
+      identifier: command.identifier,
+    };
+
+    const channelConnection = await this.channelConnectionRepository.findOne(query);
 
     if (!channelConnection) {
-      throw new NotFoundException(
-        `Channel connection with resource '${command.resource}' and integration '${command.integrationIdentifier}' not found`
-      );
+      throw new NotFoundException(`Channel connection with identifier '${command.identifier}' not found`);
     }
 
     return channelConnection;

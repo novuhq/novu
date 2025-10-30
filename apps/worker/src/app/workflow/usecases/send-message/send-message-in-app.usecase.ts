@@ -286,6 +286,7 @@ export class SendMessageInApp extends SendMessageBase {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
+        contextKeys: command.contextKeys,
         payload: {
           messageId: message._id,
         },

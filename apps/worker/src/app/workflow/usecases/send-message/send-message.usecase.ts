@@ -8,7 +8,6 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
-  FeatureFlagsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -31,11 +30,10 @@ import {
 import { ContextResolved, ExecuteOutput } from '@novu/framework/internal';
 import {
   DeliveryLifecycleDetail,
-  DeliveryLifecycleStatus,
+  DeliveryLifecycleStatusEnum,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
   IPreferenceChannels,
@@ -78,8 +76,7 @@ export class SendMessage {
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
     private contextRepository: ContextRepository,
-    private executeBridgeJob: ExecuteBridgeJob,
-    private featureFlagsService: FeatureFlagsService
+    private executeBridgeJob: ExecuteBridgeJob
   ) {}
 
   @InstrumentUsecase()
@@ -141,7 +138,7 @@ export class SendMessage {
       return {
         status: SendMessageStatus.SKIPPED,
         deliveryLifecycleState: {
-          status: DeliveryLifecycleStatus.SKIPPED,
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
           detail: !channelPreference.result
             ? DeliveryLifecycleDetail.SUBSCRIBER_PREFERENCE
             : DeliveryLifecycleDetail.USER_STEP_CONDITION,
@@ -149,20 +146,9 @@ export class SendMessage {
       };
     }
 
-    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-    });
-
     let severity = command.severity;
     const { overrides } = command;
-    if (
-      isNotificationSeverityEnabled &&
-      stepType !== StepTypeEnum.TRIGGER &&
-      overrides?.severity &&
-      overrides.severity !== severity
-    ) {
+    if (stepType !== StepTypeEnum.TRIGGER && overrides?.severity && overrides.severity !== severity) {
       severity = overrides.severity;
 
       await this.createExecutionDetails.execute(

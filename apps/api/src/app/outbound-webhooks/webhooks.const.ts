@@ -36,14 +36,40 @@ export class WebhookMessageDto {
   object: MessageWebhookResponseDto;
 }
 
+enum MessageFailedErrorCodeEnum {
+  TOKEN_EXPIRED = 'token_expired',
+}
+
+export class MessageFailedWebhookDto {
+  @ApiProperty({ description: 'Current message state' })
+  object: MessageWebhookResponseDto;
+
+  @ApiProperty({ description: 'Error message' })
+  errorCode: MessageFailedErrorCodeEnum;
+}
+
+export class MessageFailedPushDto {
+  @ApiProperty({ description: 'Is invalid token' })
+  isInvalidToken: boolean;
+
+  @ApiProperty({ description: 'Device token' })
+  deviceToken: string;
+}
+
+export class MessageFailedErrorDto {
+  @ApiProperty({ description: 'Error message' })
+  message: string;
+
+  @ApiProperty({ description: 'Push error' })
+  push?: MessageFailedPushDto;
+}
+
 export class WebhookMessageFailedDto {
   @ApiProperty({ description: 'Current message state' })
   object: MessageWebhookResponseDto;
 
   @ApiProperty({ description: 'Error message' })
-  error: {
-    message: string;
-  };
+  error: MessageFailedErrorDto;
 }
 
 export class WebhookPreferenceDto {

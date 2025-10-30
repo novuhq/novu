@@ -1,4 +1,11 @@
-import { DigestCreationResultEnum, IDigestBaseMetadata, IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
+import {
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatusEnum,
+  DigestCreationResultEnum,
+  IDigestBaseMetadata,
+  IDigestRegularMetadata,
+  StepTypeEnum,
+} from '@novu/shared';
 import { sub } from 'date-fns';
 import { ProjectionType } from 'mongoose';
 import { DalException } from '../../shared';
@@ -51,8 +58,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     jobId: string,
     status: JobStatusEnum,
     deliveryLifecycleState?: DeliveryLifecycleState
-  ): Promise<IUpdateResult> {
-    return this.MongooseModel.updateOne(
+  ): Promise<JobEntity | null> {
+    return this.MongooseModel.findOneAndUpdate(
       {
         _environmentId: environmentId,
         _id: jobId,
@@ -62,7 +69,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
           status,
           deliveryLifecycleState,
         },
-      }
+      },
+      { new: true }
     );
   }
 
@@ -315,6 +323,10 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       {
         $set: {
           status: JobStatusEnum.CANCELED,
+          deliveryLifecycleState: {
+            status: DeliveryLifecycleStatusEnum.CANCELED,
+            detail: DeliveryLifecycleDetail.EXECUTION_STOPPED,
+          },
         },
       }
     );

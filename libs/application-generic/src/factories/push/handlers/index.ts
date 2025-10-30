@@ -5,3 +5,4 @@ export * from './one-signal.handler';
 export * from './push-webhook.handler';
 export * from './pusher-beams.handler';
 export * from './pushpad.handler';
+export * from './appio.handler';

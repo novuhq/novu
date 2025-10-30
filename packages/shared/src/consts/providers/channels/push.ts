@@ -1,8 +1,15 @@
 import { ChannelTypeEnum, PushProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
-import { expoGroupConfigurations } from '../configurations/provider-configuration';
+import {
+  apnsGroupConfigurations,
+  expoGroupConfigurations,
+  fcmGroupConfigurations,
+  pushpadGroupConfigurations,
+  pushWebhookGroupConfigurations,
+} from '../configurations/provider-configuration';
 import {
   apnsConfig,
+  appIOConfig,
   expoConfig,
   fcmConfig,
   oneSignalConfig,
@@ -26,6 +33,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'Pushpad',
     channel: ChannelTypeEnum.PUSH,
     credentials: pushpadConfig,
+    configurations: pushpadGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/push/pushpad${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'pushpad.svg', dark: 'pushpad.svg' },
   },
@@ -34,6 +42,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'Firebase Cloud Messaging',
     channel: ChannelTypeEnum.PUSH,
     credentials: fcmConfig,
+    configurations: fcmGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/push/fcm${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'fcm.svg', dark: 'fcm.svg' },
   },
@@ -51,6 +60,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'APNs',
     channel: ChannelTypeEnum.PUSH,
     credentials: apnsConfig,
+    configurations: apnsGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/push/apns${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'apns.png', dark: 'apns.png' },
     betaVersion: true,
@@ -60,6 +70,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'Push Webhook',
     channel: ChannelTypeEnum.PUSH,
     credentials: pushWebhookConfig,
+    configurations: pushWebhookGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/push/push-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'push-webhook.svg', dark: 'push-webhook.svg' },
     betaVersion: true,
@@ -71,5 +82,13 @@ export const pushProviders: IProviderConfig[] = [
     credentials: pusherBeamsConfig,
     docReference: `https://docs.novu.co/platform/integrations/push/pusher-beams${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'pusher-beams.svg', dark: 'pusher-beams.svg' },
+  },
+  {
+    id: PushProviderIdEnum.AppIO,
+    displayName: 'AppIO',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: appIOConfig,
+    docReference: `https://localhost/channels-and-providers/push/pusher-beams${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'appio.svg', dark: 'appio.svg' },
   },
 ];
