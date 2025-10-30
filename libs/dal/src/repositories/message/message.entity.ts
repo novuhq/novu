@@ -23,6 +23,7 @@ export type MessageChannelData<T extends ChannelEndpointType = ChannelEndpointTy
 export class MessageEntity {
   _id: string;
 
+  // WorkflowEntity._id
   _templateId: string;
 
   _environmentId: string;

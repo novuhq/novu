@@ -1,5 +1,4 @@
 import {
-  CHArray,
   CHDateTime64,
   CHLowCardinality,
   CHNullable,
@@ -43,6 +42,7 @@ const schemaDefinition = {
 
   // Workflow run metadata
   workflow_run_identifier: { type: CHString('') }, // default value is empty string
+  workflow_id: { type: CHString('') }, // Maps to NotificationTemplateEntity._id
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = [

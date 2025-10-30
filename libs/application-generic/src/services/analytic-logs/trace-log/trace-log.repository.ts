@@ -106,17 +106,7 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     workflowIds?: string[]
   ): Promise<Array<{ date: string; event_type: string; count: string }>> {
     const workflowFilter =
-      workflowIds && workflowIds.length > 0
-        ? `AND traces.entity_id IN (
-          SELECT step_run_id FROM step_runs FINAL 
-          WHERE workflow_run_id IN (
-            SELECT id FROM workflow_runs FINAL 
-            WHERE workflow_id IN {workflowIds:Array(String)}
-              AND environment_id = {environmentId:String}
-              AND organization_id = {organizationId:String}
-          )
-        )`
-        : '';
+      workflowIds && workflowIds.length > 0 ? `AND traces.workflow_id IN {workflowIds:Array(String)}` : '';
 
     const query = `
       SELECT 
@@ -169,17 +159,7 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     workflowIds?: string[]
   ): Promise<{ currentPeriod: number; previousPeriod: number }> {
     const workflowFilter =
-      workflowIds && workflowIds.length > 0
-        ? `AND entity_id IN (
-          SELECT step_run_id FROM step_runs FINAL 
-          WHERE workflow_run_id IN (
-            SELECT id FROM workflow_runs FINAL 
-            WHERE workflow_id IN {workflowIds:Array(String)}
-              AND environment_id = {environmentId:String}
-              AND organization_id = {organizationId:String}
-          )
-        )`
-        : '';
+      workflowIds && workflowIds.length > 0 ? `AND workflow_id IN {workflowIds:Array(String)}` : '';
 
     const currentQuery = `
       SELECT count(*) as count

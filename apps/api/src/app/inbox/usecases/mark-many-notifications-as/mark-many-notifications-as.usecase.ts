@@ -263,5 +263,6 @@ function createTraceLog({
     step_run_type: message.channel as StepType,
     workflow_run_identifier: '',
     _notificationId: message._notificationId,
+    workflow_id: message._templateId,
   };
 }
