@@ -388,7 +388,7 @@ export class ParseEventRequest {
     }
     const shortEnvName = shortenEnvironmentName(environment.name);
     const environmentSlug = buildSlug(shortEnvName, ShortIsPrefixEnum.ENVIRONMENT, command.environmentId);
-    const activityFeedLink = `https://dashboard.novu.co/env/${environmentSlug}/activity/requests?selectedLogId=${requestId}`;
+    const activityFeedLink = `${process.env.FRONT_BASE_URL}/env/${environmentSlug}/activity/requests?selectedLogId=${requestId}`;
     return {
       acknowledged: true,
       status: TriggerEventStatusEnum.PROCESSED,
