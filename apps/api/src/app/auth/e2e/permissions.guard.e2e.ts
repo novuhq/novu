@@ -5,8 +5,7 @@ import { expect } from 'chai';
 
 describe('PermissionsGuard #novu-v2', () => {
   before(() => {
-    // @ts-ignore - Setting environment variables
-    process.env.IS_RBAC_ENABLED = 'true';
+    (process.env as Record<string, string>).IS_RBAC_ENABLED = 'true';
   });
 
   let session: UserSession;

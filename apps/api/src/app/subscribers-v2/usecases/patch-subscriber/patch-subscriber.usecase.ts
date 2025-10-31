@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger, UpdateSubscriber, UpdateSubscriberCommand } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   OrganizationEntity,
-  SubscriberEntity,
   SubscriberRepository,
   UserEntity,
 } from '@novu/dal';
@@ -18,6 +17,7 @@ import { PatchSubscriberCommand } from './patch-subscriber.command';
 @Injectable()
 export class PatchSubscriber {
   constructor(
+    private updateSubscriberUseCase: UpdateSubscriber,
     private subscriberRepository: SubscriberRepository,
     private featureFlagService: FeatureFlagsService,
     private environmentRepository: EnvironmentRepository,
@@ -28,22 +28,26 @@ export class PatchSubscriber {
   }
 
   async execute(command: PatchSubscriberCommand): Promise<SubscriberResponseDto> {
-    const nonUndefinedEntries = Object.entries(command.patchSubscriberRequestDto).filter(
-      ([_key, value]) => value !== undefined
-    );
-    const payload: Partial<SubscriberEntity> = Object.fromEntries(nonUndefinedEntries);
-
-    const [environment, organization] = await Promise.all([
+    const dto = command.patchSubscriberRequestDto;
+    const [environment, organization, existingSubscriber] = await Promise.all([
       this.environmentRepository.findOne({ _id: command.environmentId }),
       this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
+      this.subscriberRepository.findOne({
+        _environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+      }),
     ]);
 
     if (!organization) {
-      throw new BadRequestException('Organization not found');
+      throw new BadRequestException(`Organization ${command.organizationId} was not found`);
     }
 
     if (!environment) {
-      throw new BadRequestException('Environment not found');
+      throw new BadRequestException(`Environment ${command.environmentId} was not found`);
+    }
+
+    if (!existingSubscriber) {
+      throw new NotFoundException(`Subscriber ${command.subscriberId} was not found`);
     }
 
     await this.validateItem({
@@ -53,38 +57,22 @@ export class PatchSubscriber {
       userId: command.userId,
     });
 
-    const updatedSubscriber = await this.subscriberRepository.findOneAndUpdate(
-      {
+    const updatedSubscriber = await this.updateSubscriberUseCase.execute(
+      UpdateSubscriberCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
         subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      { ...payload },
-      {
-        new: true,
-        projection: {
-          _environmentId: 1,
-          _id: 1,
-          _organizationId: 1,
-          avatar: 1,
-          data: 1,
-          email: 1,
-          firstName: 1,
-          lastName: 1,
-          locale: 1,
-          phone: 1,
-          subscriberId: 1,
-          timezone: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          deleted: 1,
-        },
-      }
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        email: dto.email,
+        phone: dto.phone,
+        avatar: dto.avatar,
+        locale: dto.locale,
+        timezone: dto.timezone,
+        data: dto.data,
+        subscriber: existingSubscriber,
+      })
     );
-
-    if (!updatedSubscriber) {
-      throw new NotFoundException(`Subscriber: ${command.subscriberId} was not found`);
-    }
 
     return mapSubscriberEntityToDto(updatedSubscriber);
   }

@@ -1,42 +1,67 @@
 import { SubscriberEntity } from '@novu/dal';
 import { ISubscriberChannel, SubscriberCustomData } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
-
+import {
+  IsDefined,
+  IsEmail,
+  IsLocale,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsTimeZone,
+  ValidateIf,
+} from 'class-validator';
 import { EnvironmentCommand } from '../../commands';
 
 export class UpdateSubscriberCommand extends EnvironmentCommand {
   @IsString()
+  @IsDefined()
+  @IsNotEmpty({
+    message: 'SubscriberId is required',
+  })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   subscriberId: string;
 
   @IsOptional()
-  firstName?: string;
+  @ValidateIf((obj) => obj.firstName !== null)
+  @IsString()
+  firstName?: string | null;
 
   @IsOptional()
-  lastName?: string;
+  @ValidateIf((obj) => obj.lastName !== null)
+  @IsString()
+  lastName?: string | null;
 
-  @Transform((params) => (params.value === '' ? null : params.value))
   @IsOptional()
+  @ValidateIf((obj) => obj.email !== null)
   @IsEmail()
-  email?: string;
+  email?: string | null;
 
   @IsOptional()
+  @ValidateIf((obj) => obj.phone !== null)
   @IsString()
-  phone?: string;
+  phone?: string | null;
 
-  @IsString()
   @IsOptional()
-  avatar?: string;
+  @ValidateIf((obj) => obj.avatar !== null)
+  @IsString()
+  avatar?: string | null;
 
+  @IsOptional()
+  @ValidateIf((obj) => obj.locale !== null)
   @IsLocale()
-  @IsOptional()
-  locale?: string;
+  locale?: string | null;
 
   @IsOptional()
-  timezone?: string;
+  @ValidateIf((obj) => obj.timezone !== null)
+  @IsTimeZone()
+  timezone?: string | null;
 
   @IsOptional()
-  data?: SubscriberCustomData;
+  @ValidateIf((obj) => obj.data !== null)
+  @IsObject()
+  data?: SubscriberCustomData | null;
 
   @IsOptional()
   subscriber?: SubscriberEntity;

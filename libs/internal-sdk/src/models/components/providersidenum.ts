@@ -72,6 +72,7 @@ export const ProvidersIdEnum = {
   Pushpad: 'pushpad',
   PushWebhook: 'push-webhook',
   PusherBeams: 'pusher-beams',
+  Appio: 'appio',
   Novu: 'novu',
   Slack: 'slack',
   Discord: 'discord',

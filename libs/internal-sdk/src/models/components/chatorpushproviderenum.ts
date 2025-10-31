@@ -28,6 +28,7 @@ export const ChatOrPushProviderEnum = {
   Pushpad: 'pushpad',
   PushWebhook: 'push-webhook',
   PusherBeams: 'pusher-beams',
+  Appio: 'appio',
 } as const;
 /**
  * The provider identifier for the credentials

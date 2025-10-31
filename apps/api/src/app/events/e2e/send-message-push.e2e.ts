@@ -158,8 +158,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
 
   it('should send push notification with unread count', async () => {
     const oldPushUnreadCountFlag = process.env.IS_PUSH_UNREAD_COUNT_ENABLED;
-    // @ts-expect-error - we are setting the environment variable for the test
-    process.env.IS_PUSH_UNREAD_COUNT_ENABLED = 'true';
+    (process.env as Record<string, string>).IS_PUSH_UNREAD_COUNT_ENABLED = 'true';
 
     const { result: subscriber } = await novuClient.subscribers.create({
       subscriberId: 'test-subscriber-id',
@@ -275,8 +274,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
     expect((pushMessages[0].overrides as any).android.notification.notificationCount).to.equal(2);
     expect((pushMessages[0].overrides as any).apns.payload.aps.badge).to.equal(2);
 
-    // @ts-expect-error - we are setting the environment variable for the test
-    process.env.IS_PUSH_UNREAD_COUNT_ENABLED = oldPushUnreadCountFlag;
+    (process.env as Record<string, string>).IS_PUSH_UNREAD_COUNT_ENABLED = oldPushUnreadCountFlag;
   });
 
   async function triggerEvent(template2) {

@@ -9,10 +9,6 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type CreateSubscriberRequestDto = {
   /**
-   * Unique identifier of the subscriber
-   */
-  subscriberId: string;
-  /**
    * First name of the subscriber
    */
   firstName?: string | null | undefined;
@@ -33,44 +29,48 @@ export type CreateSubscriberRequestDto = {
    */
   avatar?: string | null | undefined;
   /**
-   * Timezone of the subscriber
-   */
-  timezone?: string | null | undefined;
-  /**
    * Locale of the subscriber
    */
   locale?: string | null | undefined;
   /**
-   * Additional custom data for the subscriber
+   * Timezone of the subscriber
+   */
+  timezone?: string | null | undefined;
+  /**
+   * Additional custom data associated with the subscriber
    */
   data?: { [k: string]: any } | null | undefined;
+  /**
+   * Unique identifier of the subscriber
+   */
+  subscriberId: string;
 };
 
 /** @internal */
 export const CreateSubscriberRequestDto$inboundSchema: z.ZodType<CreateSubscriberRequestDto, z.ZodTypeDef, unknown> =
   z.object({
-    subscriberId: z.string(),
     firstName: z.nullable(z.string()).optional(),
     lastName: z.nullable(z.string()).optional(),
     email: z.nullable(z.string()).optional(),
     phone: z.nullable(z.string()).optional(),
     avatar: z.nullable(z.string()).optional(),
-    timezone: z.nullable(z.string()).optional(),
     locale: z.nullable(z.string()).optional(),
+    timezone: z.nullable(z.string()).optional(),
     data: z.nullable(z.record(z.any())).optional(),
+    subscriberId: z.string(),
   });
 
 /** @internal */
 export type CreateSubscriberRequestDto$Outbound = {
-  subscriberId: string;
   firstName?: string | null | undefined;
   lastName?: string | null | undefined;
   email?: string | null | undefined;
   phone?: string | null | undefined;
   avatar?: string | null | undefined;
-  timezone?: string | null | undefined;
   locale?: string | null | undefined;
+  timezone?: string | null | undefined;
   data?: { [k: string]: any } | null | undefined;
+  subscriberId: string;
 };
 
 /** @internal */
@@ -79,15 +79,15 @@ export const CreateSubscriberRequestDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   CreateSubscriberRequestDto
 > = z.object({
-  subscriberId: z.string(),
   firstName: z.nullable(z.string()).optional(),
   lastName: z.nullable(z.string()).optional(),
   email: z.nullable(z.string()).optional(),
   phone: z.nullable(z.string()).optional(),
   avatar: z.nullable(z.string()).optional(),
-  timezone: z.nullable(z.string()).optional(),
   locale: z.nullable(z.string()).optional(),
+  timezone: z.nullable(z.string()).optional(),
   data: z.nullable(z.record(z.any())).optional(),
+  subscriberId: z.string(),
 });
 
 /**

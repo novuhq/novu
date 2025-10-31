@@ -22,8 +22,8 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   let cacheService: CacheService;
   let invalidateCache: InvalidateCacheService;
   let subscriberRepository: SubscriberRepository;
-  const isSubscribersScheduleEnabled = process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED;
-  const isContextEnabled = process.env.IS_CONTEXT_ENABLED;
+  const isSubscribersScheduleEnabled = (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED;
+  const isContextEnabled = (process.env as Record<string, string>).IS_CONTEXT_ENABLED;
 
   before(async () => {
     const cacheInMemoryProviderService = new CacheInMemoryProviderService();
@@ -44,17 +44,13 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       },
       invalidateCache
     );
-    // @ts-expect-error
-    process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
-    // @ts-expect-error
-    process.env.IS_CONTEXT_ENABLED = 'true';
+    (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
+    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
   });
 
   afterEach(() => {
-    // @ts-expect-error
-    process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
-    // @ts-expect-error
-    process.env.IS_CONTEXT_ENABLED = isContextEnabled;
+    (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
+    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = isContextEnabled;
   });
 
   const initializeSession = async ({
@@ -1123,8 +1119,8 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
 
     it('should not create schedule when feature flag is disabled', async () => {
       // Disable the feature flag
-      // @ts-expect-error process.env is not typed
-      process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'false';
+
+      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'false';
 
       await setIntegrationConfig(
         {
@@ -1156,8 +1152,8 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       expect(body.data.schedule).to.not.exist;
 
       // Re-enable the feature flag for other tests
-      // @ts-expect-error process.env is not typed
-      process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
+
+      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
     });
   });
 

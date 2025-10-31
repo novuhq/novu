@@ -119,6 +119,7 @@ export class SubscriberJobBound {
         phone: subscriber?.phone,
         avatar: subscriber?.avatar,
         locale: subscriber?.locale,
+        timezone: subscriber?.timezone,
         data: subscriber?.data,
         channels: subscriber?.channels,
         activeWorkerName: process.env.ACTIVE_WORKER,
