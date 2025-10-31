@@ -39,7 +39,7 @@ export function ConfigurationGroup({
     );
   }
 
-  if (groupType === 'pushResources' && isPushUnreadCountEnabled) {
+  if (groupType === 'crossChannelConfigs' && isPushUnreadCountEnabled) {
     return (
       <CrossChannelConfigsGroup integrationId={integrationId} control={control} isReadOnly={isReadOnly} group={group} />
     );
