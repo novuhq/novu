@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS step_runs (
   subscriber_id String,
   external_subscriber_id Nullable(String),
   message_id Nullable(String),
-  context_keys Array(String) DEFAULT []
+  context_keys Array(String) DEFAULT [],
   step_type LowCardinality(String),
   step_name String,
   provider_id Nullable(String),
@@ -28,12 +28,12 @@ CREATE TABLE IF NOT EXISTS step_runs (
   error_message Nullable(String),
   transaction_id String,
   expires_at DateTime64(3, 'UTC'),
-  schedule_extensions_count UInt8 DEFAULT 0,
+  schedule_extensions_count UInt8 DEFAULT 0
 )
 ENGINE = ReplacingMergeTree(updated_at)
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (organization_id, step_run_id)
-TTL toDateTime(expires_at)
+TTL toDateTime(expires_at);
 
 -- Traces Table
 -- Stores event traces for debugging and monitoring workflow/step execution
@@ -122,4 +122,4 @@ CREATE TABLE IF NOT EXISTS workflow_runs (
 ENGINE = ReplacingMergeTree(updated_at)
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (organization_id, workflow_run_id)
-TTL toDateTime(expires_at)
+TTL toDateTime(expires_at);
