@@ -384,7 +384,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organization?: OrganizationEntity;
   }): Promise<string> {
     if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
-      const escapedPayloadForJson = this.deepEscapePayloadStrings(payload);
+      const unescapedPayload = this.deepUnescapeTranslationStrings(payload) as FullPayloadForRender;
+      const escapedPayloadForJson = this.deepEscapePayloadStrings(unescapedPayload);
       const liquifiedMaily = wrapMailyInLiquid(this.enhanceContentVariable(body));
       const transformedMaily = await this.transformMailyContent(liquifiedMaily, escapedPayloadForJson);
       const translatedMaily = await this.processMailyTranslations({
@@ -830,6 +831,44 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       .replace(/\n/g, '\\n') // Escape newlines
       .replace(/\r/g, '\\r') // Escape carriage returns
       .replace(/\t/g, '\\t'); // Escape tabs
+  }
+
+  private unescapeJsonString(str: string): string {
+    return str
+      .replace(/\\t/g, '\t')
+      .replace(/\\r/g, '\r')
+      .replace(/\\n/g, '\n')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\');
+  }
+
+  private deepUnescapeTranslationStrings(obj: unknown): unknown {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      return this.unescapeJsonString(obj);
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.deepUnescapeTranslationStrings(item));
+    }
+
+    if (typeof obj === 'object') {
+      const unescapedObj: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        unescapedObj[key] = this.deepUnescapeTranslationStrings(value);
+      }
+
+      return unescapedObj;
+    }
+
+    return obj;
   }
 
   private cleanupRenderedHtml(html: string): string {
