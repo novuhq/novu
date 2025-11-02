@@ -2507,6 +2507,111 @@ describe('EmailOutputRendererUsecase', () => {
     });
   });
 
+  describe('Translation with escaped characters', () => {
+    beforeEach(() => {
+      getOrganizationSettingsMock.execute.resolves({
+        removeNovuBranding: false,
+        defaultLocale: 'en_US',
+      });
+    });
+
+    it('should not double-escape JSON characters from translation content', async () => {
+      const translatedContent = 'Visit <a style=\'color: #0C0D0D;\' href=\'https://sharefile.com/support\'>http://sharefile.com/support</a> and look for \\"Chat with Us.\\"';
+      
+      translateStub.restore();
+      translateStub = sinon.stub(require('@novu/ee-translation').Translate.prototype, 'execute').callsFake(async (command: any) => {
+        if (command.content.includes('{{t.footer}}')) {
+          return command.content.replace('{{t.footer}}', translatedContent);
+        }
+
+        return command.content || '';
+      });
+
+      const mockTipTapNode: MailyJSONContent = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: '{{t.footer}}',
+              },
+            ],
+          },
+        ],
+      };
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Translation Test',
+          body: JSON.stringify(mockTipTapNode),
+        },
+        fullPayloadForRender: mockFullPayload,
+        workflowId: mockDbWorkflow._id,
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('http://sharefile.com/support');
+      expect(result.body).to.include('"Chat with Us."');
+      expect(result.body).to.not.include('\\"Chat with Us.\\"');
+      expect(result.body).to.not.include('\\\\');
+    });
+
+    it('should handle translation content with multiple escaped characters', async () => {
+      const translatedContent = 'Line 1\\nLine 2\\tTabbed\\r\\nAnd \\"quoted\\"';
+      
+      translateStub.restore();
+      translateStub = sinon.stub(require('@novu/ee-translation').Translate.prototype, 'execute').callsFake(async (command: any) => {
+        if (command.content.includes('{{t.multiline}}')) {
+          return command.content.replace('{{t.multiline}}', translatedContent);
+        }
+
+        return command.content || '';
+      });
+
+      const mockTipTapNode: MailyJSONContent = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: '{{t.multiline}}',
+              },
+            ],
+          },
+        ],
+      };
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Multiline Test',
+          body: JSON.stringify(mockTipTapNode),
+        },
+        fullPayloadForRender: mockFullPayload,
+        workflowId: mockDbWorkflow._id,
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Line 1');
+      expect(result.body).to.include('Line 2');
+      expect(result.body).to.include('"quoted"');
+      expect(result.body).to.not.include('\\n');
+      expect(result.body).to.not.include('\\t');
+      expect(result.body).to.not.include('\\"');
+    });
+  });
+
   describe('Gmail clipping prevention', () => {
     beforeEach(() => {
       getOrganizationSettingsMock.execute.resolves({
