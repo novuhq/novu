@@ -16,4 +16,8 @@ export class ExpoHandler extends BasePushHandler {
       accessToken: credentials.apiKey,
     });
   }
+
+  isTokenInvalid(errorMessage: string): boolean {
+    return this.provider.isTokenInvalid(errorMessage);
+  }
 }
