@@ -288,24 +288,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       query.read = { $in: [true, false] };
     }
 
-    const archivedCondition: Array<MessageQuery> = [];
     if (typeof archived === 'boolean') {
       if (!archived) {
-        archivedCondition.push({ archived: { $exists: false } }, { archived: false });
+        query.archived = false;
       } else {
         query.archived = true;
       }
     } else {
-      archivedCondition.push({ archived: { $exists: false } }, { archived: { $in: [true, false] } });
+      query.archived = { $in: [true, false] };
     }
 
     // combine all $or conditions properly
     const orConditions: Array<MessageQuery> = [];
     if (severityCondition.length > 0) {
       orConditions.push({ $or: severityCondition });
-    }
-    if (archivedCondition.length > 0) {
-      orConditions.push({ $or: archivedCondition });
     }
 
     if (orConditions.length > 0) {
