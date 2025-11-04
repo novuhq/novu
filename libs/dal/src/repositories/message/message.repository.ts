@@ -744,7 +744,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (isFromArchived) {
       if (!from.archived) {
-        query.$or = [{ archived: { $exists: false } }, { archived: false }];
+        query.archived = false;
       } else {
         query.archived = true;
       }
