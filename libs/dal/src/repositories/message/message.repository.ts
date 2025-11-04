@@ -100,6 +100,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
+      deleted: { $exists: false },
     };
 
     if (query.feedId === null) {
@@ -262,6 +263,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
+      deleted: { $exists: false },
     };
 
     const severityCondition: Array<MessageQuery> = [];
