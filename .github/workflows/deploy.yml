@@ -28,12 +28,12 @@ on:
         default: staging
         options:
           - staging
-          - staging-lon
+          - staging-sg
           - production-us
           - production-eu
           - production-sg
           - production-au
-          - production-lon
+          - production-uk
           - production-jp
           - production-kr
           - production-us-and-eu
@@ -93,7 +93,7 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
             envs+=("\"staging-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "staging-lon" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "staging-uk" ]; then
             envs+=("\"staging-apse1\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then
@@ -108,7 +108,7 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" == "production-au" ]; then
             envs+=("\"prod-apse2\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-lon" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "production-uk" ]; then
             envs+=("\"prod-ew2\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-jp" ]; then
