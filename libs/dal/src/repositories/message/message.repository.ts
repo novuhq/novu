@@ -878,7 +878,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       await this.update(idQuery, { $set: updatePayload });
     }
 
-    return this.find(idQuery);
+    return this.find(idQuery, undefined, { limit: 200 });
   }
 
   async updateActionStatus({
