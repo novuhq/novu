@@ -210,7 +210,13 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
       await navigator.clipboard.writeText(aiPrompt);
       setIsAIPromptCopied(true);
 
-      track(TelemetryEvent.AI_PROMPT_COPIED, { workflowId: identifier, language: activeTab });
+      track(TelemetryEvent.AI_PROMPT_COPIED, {
+        workflowId: identifier,
+        workflowName: workflow?.name,
+        framework: activeTab,
+        language: SNIPPET_TO_PROMPT_LANGUAGE[activeTab],
+        context: 'workflow_instructions',
+      });
 
       showToast({
         children: ({ close }) => (

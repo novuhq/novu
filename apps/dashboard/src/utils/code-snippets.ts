@@ -193,13 +193,15 @@ novu.trigger(${JSON.stringify(
 };
 
 const transformJsonToPhpArray = (data: Record<string, unknown>, indentLevel = 4): string => {
+  indentLevel = Math.max(0, indentLevel);
+
   if (Object.keys(data).length === 0) {
     return '[]';
   }
 
   const entries = Object.entries(data);
   const indent = ' '.repeat(indentLevel);
-  const baseIndent = ' '.repeat(indentLevel - 4);
+  const baseIndent = ' '.repeat(Math.max(0, indentLevel - 4));
 
   const items = entries
     .map(([key, value]) => {
@@ -225,8 +227,7 @@ export const createPhpSnippet = ({ identifier, to, payload, secretKey }: CodeSni
     ->setServerURL('${API_HOSTNAME}')`;
   }
 
-  const toData = to as Record<string, unknown>;
-  const subscriberId = toData.subscriberId || 'subscriber-id';
+  const subscriberId = typeof to === 'string' ? to : (to as Record<string, unknown>).subscriberId || 'subscriber-id';
 
   return `<?php
 declare(strict_types=1);
@@ -260,8 +261,7 @@ export const createPythonSnippet = ({ identifier, to, payload, secretKey }: Code
     serverConfig = `,\n    server_url="${API_HOSTNAME}"`;
   }
 
-  const toData = to as Record<string, unknown>;
-  const subscriberId = toData.subscriberId || 'subscriber-id';
+  const subscriberId = typeof to === 'string' ? to : (to as Record<string, unknown>).subscriberId || 'subscriber-id';
 
   // Format payload with proper Python indentation
   const formattedPayload = JSON.stringify(safeParsePayload(payload), null, 4)
@@ -320,8 +320,7 @@ export const createGoSnippet = ({ identifier, to, payload, secretKey }: CodeSnip
     serverConfig = `\n		novugo.WithServerURL("${API_HOSTNAME}"),`;
   }
 
-  const toData = to as Record<string, unknown>;
-  const subscriberId = toData.subscriberId || 'subscriber-id';
+  const subscriberId = typeof to === 'string' ? to : (to as Record<string, unknown>).subscriberId || 'subscriber-id';
 
   const formattedPayload = convertJsonToGoMap(safeParsePayload(payload), 2);
   const osImport = needsOsImport ? '\n	"os"' : '';

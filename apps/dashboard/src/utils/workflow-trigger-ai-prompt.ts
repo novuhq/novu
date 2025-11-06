@@ -12,7 +12,6 @@ export type PromptLanguage = 'nodejs' | 'python' | 'php' | 'go' | 'shell';
 export interface WorkflowTriggerPromptConfig {
   workflowId: string;
   workflowName: string;
-  apiKey?: string;
   subscriberData: Record<string, string>;
   payload: Record<string, unknown>;
   backendUrl?: string;

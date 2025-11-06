@@ -35,6 +35,11 @@ export const WorkflowTabs = () => {
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 
+  const userId = currentUser?._id;
+  const userFirstName = currentUser?.firstName;
+  const userLastName = currentUser?.lastName;
+  const userEmail = currentUser?.email;
+
   // API key management
   const has = useHasPermission();
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
@@ -52,18 +57,16 @@ export const WorkflowTabs = () => {
       return { subscriberId: 'subscriber-id' };
     }
 
-    const initialSubscriber = getInitialSubscriber(
-      workflow.workflowId,
-      currentEnvironment._id,
-      currentUser
-        ? {
-            _id: currentUser._id,
-            firstName: currentUser.firstName ?? undefined,
-            lastName: currentUser.lastName ?? undefined,
-            email: currentUser.email ?? undefined,
-          }
-        : undefined
-    );
+    const userFields = userId
+      ? {
+          _id: userId,
+          firstName: userFirstName ?? undefined,
+          lastName: userLastName ?? undefined,
+          email: userEmail ?? undefined,
+        }
+      : undefined;
+
+    const initialSubscriber = getInitialSubscriber(workflow.workflowId, currentEnvironment._id, userFields);
 
     const data: Record<string, string> = {
       subscriberId: initialSubscriber?.subscriberId ?? 'subscriber-id',
@@ -80,7 +83,7 @@ export const WorkflowTabs = () => {
     }
 
     return data;
-  }, [workflow?.workflowId, currentEnvironment?._id, currentUser]);
+  }, [workflow?.workflowId, currentEnvironment?._id, userId, userFirstName, userLastName, userEmail]);
 
   const integrationPayload = useMemo(() => {
     if (!workflow?.workflowId || !currentEnvironment?._id) {
@@ -248,11 +251,10 @@ export const WorkflowTabs = () => {
                   mode="ghost"
                   size="xs"
                   onClick={() => {
-                    const activityUrl =
-                      buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
-                        environmentSlug: currentEnvironment?.slug ?? '',
-                        workflowSlug: workflow?.slug ?? '',
-                      }) + `?transactionId=${transactionId}`;
+                    const activityUrl = `${buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
+                      environmentSlug: currentEnvironment?.slug ?? '',
+                      workflowSlug: workflow?.slug ?? '',
+                    })}?transactionId=${transactionId}`;
                     navigate(activityUrl);
                     close();
                   }}
@@ -278,7 +280,16 @@ export const WorkflowTabs = () => {
         'Failed to trigger workflow'
       );
     }
-  }, [workflow, currentUser, currentEnvironment, triggerWorkflow, navigate, subscriberData, integrationPayload]);
+  }, [
+    workflow,
+    currentUser,
+    currentEnvironment?._id,
+    currentEnvironment?.slug,
+    triggerWorkflow,
+    navigate,
+    subscriberData,
+    integrationPayload,
+  ]);
 
   // Determine current tab based on URL
   const currentTab = activityMatch ? 'activity' : 'workflow';
