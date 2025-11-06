@@ -61,9 +61,9 @@ export function InlineToast({
 
   return (
     <div className={cn(inlineToastVariants({ variant }), className)} {...props}>
-      <div className="flex items-stretch gap-3">
-        <div className={cn('w-1 rounded-full', barColorClass)} />
-        <div className="text-foreground-600 py-[2px] text-xs">
+      <div className="flex min-w-0 flex-1 items-stretch gap-3">
+        <div className={cn('w-1 shrink-0 rounded-full', barColorClass)} />
+        <div className="text-foreground-600 min-w-0 flex-1 py-[2px] text-xs">
           {title && <span className="text-foreground-950 font-medium">{title}</span>}
           {title && description && ' '}
           {description}

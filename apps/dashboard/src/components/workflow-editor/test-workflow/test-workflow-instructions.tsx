@@ -1,7 +1,6 @@
 import type { WorkflowResponseDto } from '@novu/shared';
 import { PermissionsEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
-import { RiSparklingFill } from 'react-icons/ri';
 import {
   Sheet,
   SheetContent,
@@ -24,8 +23,7 @@ import {
   createPythonSnippet,
 } from '@/utils/code-snippets';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { generateWorkflowTriggerAIPrompt } from '@/utils/workflow-trigger-ai-prompt';
-import { Button } from '../../primitives/button';
+import { generateWorkflowTriggerAIPrompt, type PromptLanguage } from '@/utils/workflow-trigger-ai-prompt';
 import { CodeBlock, Language } from '../../primitives/code-block';
 import { InlineToast } from '../../primitives/inline-toast';
 import { Separator } from '../../primitives/separator';
@@ -61,16 +59,25 @@ const SNIPPET_TO_CODE_LANGUAGE: Record<SnippetLanguage, Language> = {
   framework: 'typescript',
 };
 
+const SNIPPET_TO_PROMPT_LANGUAGE: Record<SnippetLanguage, PromptLanguage> = {
+  shell: 'shell',
+  typescript: 'nodejs',
+  php: 'php',
+  go: 'go',
+  python: 'python',
+  framework: 'nodejs',
+};
+
 const PLACEHOLDER_API_KEY = 'API_KEY';
 
 function TriggerStepContent() {
   return (
-    <>
-      <div className="text-foreground-400 mb-3 text-xs">
+    <div className="space-y-3">
+      <div className="text-foreground-400 text-xs">
         A trigger is the starting point of every workflow — an action or event that kicks it off. To initiate this, you
         call the Novu API using workflow_id.
       </div>
-      <div className="text-foreground-400 mb-3 text-xs">
+      <div className="text-foreground-400 text-xs">
         With the trigger, you can pass a custom payload object to the workflow, and use it in the workflow steps.
       </div>
       <InlineToast
@@ -78,7 +85,7 @@ function TriggerStepContent() {
         title="Tip"
         description="To create subscribers on the fly without the need for a migration, just pass an object with the subscriberId and the subscriber details like email, firstName, and lastName."
       />
-    </>
+    </div>
   );
 }
 
@@ -106,14 +113,37 @@ function InstructionStep({
   codeLanguage = 'shell',
   secretMask,
 }: InstructionStepProps) {
+  const description = typeof children === 'string' ? children : undefined;
+  const content = typeof children !== 'string' ? children : null;
+
   return (
-    <TimelineStep index={index} title={title} description={children as string}>
+    <TimelineStep index={index} title={title} description={description}>
+      {content}
       {code && (
-        <div className="mt-3">
+        <div className="mt-3 min-w-0">
           <CodeBlock code={code} language={codeLanguage} title={codeTitle} secretMask={secretMask} />
         </div>
       )}
     </TimelineStep>
+  );
+}
+
+interface AIPromptTipProps {
+  onCopy: () => void;
+  isCopied: boolean;
+}
+
+function AIPromptTip({ onCopy, isCopied }: AIPromptTipProps) {
+  return (
+    <InlineToast
+      variant="tip"
+      title="Tip:"
+      description="Use this pre-built prompt to get started faster."
+      ctaLabel={isCopied ? 'Copied!' : 'Copy prompt'}
+      onCtaClick={onCopy}
+      ctaClassName="border-neutral-200 bg-white text-foreground-950 h-auto rounded border px-3 py-1.5 hover:bg-neutral-50"
+      className="-mt-4 mb-3"
+    />
   );
 }
 
@@ -127,6 +157,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
   const track = useTelemetry();
 
   const [isAIPromptCopied, setIsAIPromptCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<SnippetLanguage>('typescript');
 
   useEffect(() => {
     if (isOpen) {
@@ -171,15 +202,15 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
       const aiPrompt = generateWorkflowTriggerAIPrompt({
         workflowId: identifier,
         workflowName: workflow?.name ?? identifier,
-        apiKey: canReadApiKeys && apiKey ? apiKey : PLACEHOLDER_API_KEY,
         subscriberData: to ?? {},
         payload: parsedPayload,
+        language: SNIPPET_TO_PROMPT_LANGUAGE[activeTab],
       });
 
       await navigator.clipboard.writeText(aiPrompt);
       setIsAIPromptCopied(true);
 
-      track(TelemetryEvent.AI_PROMPT_COPIED, { workflowId: identifier });
+      track(TelemetryEvent.AI_PROMPT_COPIED, { workflowId: identifier, language: activeTab });
 
       showToast({
         children: ({ close }) => (
@@ -200,33 +231,23 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="min-w-[500px]">
-        <SheetHeader className="space-y-initial p-3 py-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1">
-              <SheetTitle className="text-label-lg">Trigger workflow from your application</SheetTitle>
-              <SheetDescription className="text-paragraph-xs text-text-soft mt-1 block">
-                It's time to integrate the workflow with your application.{' '}
-                <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
-              </SheetDescription>
-            </div>
-            <Button
-              variant="secondary"
-              mode="gradient"
-              size="xs"
-              leadingIcon={RiSparklingFill}
-              onClick={handleCopyAIPrompt}
-              className="shrink-0"
-            >
-              {isAIPromptCopied ? 'Copied!' : 'Copy AI prompt'}
-            </Button>
-          </div>
+      <SheetContent className="flex w-full max-w-2xl flex-col">
+        <SheetHeader className="shrink-0 space-y-initial px-6 py-4">
+          <SheetTitle className="text-label-lg">Trigger workflow from your application</SheetTitle>
+          <SheetDescription className="text-paragraph-xs text-text-soft mt-1 block">
+            It's time to integrate the workflow with your application.{' '}
+            <ExternalLink href="https://docs.novu.co/platform/concepts/workflows">Learn more</ExternalLink>
+          </SheetDescription>
         </SheetHeader>
-        <Separator />
-        <SheetMain className="p-0">
-          <Tabs defaultValue="nodejs" className="w-full">
-            <TabsList className="w-full" variant="regular">
-              <TabsTrigger value="nodejs" variant="regular" size="xl">
+        <Separator className="shrink-0" />
+        <SheetMain className="min-h-0 flex-1 overflow-y-auto p-0">
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as SnippetLanguage)}
+            className="flex h-full flex-col"
+          >
+            <TabsList className="shrink-0 w-full overflow-x-auto px-6" variant="regular">
+              <TabsTrigger value="typescript" variant="regular" size="xl">
                 NodeJS
               </TabsTrigger>
               <TabsTrigger value="shell" variant="regular" size="xl">
@@ -243,26 +264,27 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
               </TabsTrigger>
             </TabsList>
 
-            <div className="mt-5 p-3">
-              <TabsContent value="nodejs">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-5">
+              <TabsContent value="typescript" className="mt-0 min-w-0">
+                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
                 <TimelineContainer>
                   <InstructionStep
                     index={0}
-                    title="Install @novu/api"
+                    title="Install @novu/api package"
                     code="npm install @novu/api"
                     codeTitle="Terminal"
                   >
-                    The npm package to use with novu and node.js.
+                    Install the npm package to use with Novu and Node.js.
                   </InstructionStep>
 
                   <InstructionStep
                     index={1}
-                    title="Copy API Keys to"
+                    title="Add your API key to .env file"
                     code={`NOVU_SECRET_KEY=${apiKey}`}
                     codeTitle=".env"
                     secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
                   >
-                    Use this key to authenticate your API requests. Keep it secure and never share it publicly.{' '}
+                    Use this key to authenticate your API requests. Keep it secure and never share it publicly.
                   </InstructionStep>
 
                   <InstructionStep
@@ -277,36 +299,62 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
                 </TimelineContainer>
               </TabsContent>
 
-              <TabsContent value="shell">
+              <TabsContent value="shell" className="mt-0 min-w-0">
+                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
                 <TimelineContainer>
                   <InstructionStep
                     index={0}
-                    title="Trigger from your terminal"
+                    title="Set your API key as environment variable"
+                    code={`export NOVU_SECRET_KEY=${apiKey}`}
+                    codeTitle="Terminal"
+                    secretMask={
+                      canReadApiKeys
+                        ? [
+                            {
+                              line: 1,
+                              maskStart: 'export NOVU_SECRET_KEY='.length,
+                              maskEnd: `export NOVU_SECRET_KEY=${apiKey}`.length - 4,
+                            },
+                          ]
+                        : undefined
+                    }
+                  >
+                    Use this key to authenticate your API requests. Keep it secure and never share it publicly.
+                  </InstructionStep>
+
+                  <InstructionStep
+                    index={1}
+                    title="Trigger workflow from your terminal"
                     code={getSnippetForLanguage('shell')}
                     codeLanguage={SNIPPET_TO_CODE_LANGUAGE.shell}
+                    codeTitle="Terminal"
                   >
                     <TriggerStepContent />
                   </InstructionStep>
                 </TimelineContainer>
               </TabsContent>
 
-              <TabsContent value="php">
+              <TabsContent value="php" className="mt-0 min-w-0">
+                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
                 <TimelineContainer>
                   <InstructionStep
                     index={0}
-                    title="Install"
+                    title="Install Novu PHP package"
                     code='composer require "novuhq/novu"'
                     codeTitle="Terminal"
-                  />
+                  >
+                    Install the PHP package to use with Novu.
+                  </InstructionStep>
 
                   <InstructionStep
                     index={1}
-                    title="Add the Secret Key to your .env file"
-                    code={`# .env file
-NOVU_SECRET_KEY='${apiKey}'`}
+                    title="Add your API key to .env file"
+                    code={`NOVU_SECRET_KEY=${apiKey}`}
                     codeTitle=".env"
-                    secretMask={canReadApiKeys ? [{ line: 2, maskStart, maskEnd }] : undefined}
-                  />
+                    secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
+                  >
+                    Use this key to authenticate your API requests. Keep it secure and never share it publicly.
+                  </InstructionStep>
 
                   <InstructionStep
                     index={2}
@@ -320,51 +368,68 @@ NOVU_SECRET_KEY='${apiKey}'`}
                 </TimelineContainer>
               </TabsContent>
 
-              <TabsContent value="python">
+              <TabsContent value="python" className="mt-0 min-w-0">
+                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
                 <TimelineContainer>
-                  <InstructionStep index={0} title="Install" code="pip install novu" codeTitle="Terminal" />
+                  <InstructionStep
+                    index={0}
+                    title="Install Novu Python package"
+                    code="pip install novu"
+                    codeTitle="Terminal"
+                  >
+                    Install the Python package to use with Novu.
+                  </InstructionStep>
 
                   <InstructionStep
                     index={1}
-                    title="Copy API Keys to"
-                    code={`NOVU_SECRET_KEY = '${apiKey}'`}
+                    title="Add your API key to .env file"
+                    code={`NOVU_SECRET_KEY=${apiKey}`}
                     codeTitle=".env"
                     secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
-                  />
+                  >
+                    Use this key to authenticate your API requests. Keep it secure and never share it publicly.
+                  </InstructionStep>
 
                   <InstructionStep
                     index={2}
                     title="Add trigger code to your application"
                     code={getSnippetForLanguage('python')}
                     codeLanguage={SNIPPET_TO_CODE_LANGUAGE.python}
+                    codeTitle="main.py"
                   >
                     <TriggerStepContent />
                   </InstructionStep>
                 </TimelineContainer>
               </TabsContent>
 
-              <TabsContent value="go">
+              <TabsContent value="go" className="mt-0 min-w-0">
+                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
                 <TimelineContainer>
                   <InstructionStep
                     index={0}
-                    title="Install"
+                    title="Install Novu Go package"
                     code="go get github.com/novuhq/novu-go"
                     codeTitle="Terminal"
-                  />
+                  >
+                    Install the Go package to use with Novu.
+                  </InstructionStep>
 
                   <InstructionStep
                     index={1}
-                    title="Copy API Keys to"
-                    code={`NOVU_SECRET_KEY = '${apiKey}'`}
+                    title="Add your API key to .env file"
+                    code={`NOVU_SECRET_KEY=${apiKey}`}
                     codeTitle=".env"
                     secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
-                  />
+                  >
+                    Use this key to authenticate your API requests. Keep it secure and never share it publicly.
+                  </InstructionStep>
 
                   <InstructionStep
                     index={2}
                     title="Add trigger code to your application"
                     code={getSnippetForLanguage('go')}
                     codeLanguage={SNIPPET_TO_CODE_LANGUAGE.go}
+                    codeTitle="main.go"
                   >
                     <TriggerStepContent />
                   </InstructionStep>

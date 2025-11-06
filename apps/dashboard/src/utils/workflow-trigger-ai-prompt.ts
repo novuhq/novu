@@ -1,76 +1,43 @@
 import { API_HOSTNAME } from '@/config';
+import {
+  createCurlSnippet,
+  createGoSnippet,
+  createNodeJsSnippet,
+  createPhpSnippet,
+  createPythonSnippet,
+} from './code-snippets';
+
+export type PromptLanguage = 'nodejs' | 'python' | 'php' | 'go' | 'shell';
 
 export interface WorkflowTriggerPromptConfig {
   workflowId: string;
   workflowName: string;
-  apiKey: string;
+  apiKey?: string;
   subscriberData: Record<string, string>;
   payload: Record<string, unknown>;
   backendUrl?: string;
-}
-
-interface CodeSnippetConfig {
-  workflowId: string;
-  subscriberData: Record<string, string>;
-  payload: Record<string, unknown>;
-  apiKey: string;
-  backendUrl: string;
+  language?: PromptLanguage;
 }
 
 /**
- * Generates code snippets for different languages/frameworks
+ * Generates code snippets for different languages/frameworks using the centralized snippet functions
  */
-const generateCodeSnippets = (config: CodeSnippetConfig) => {
-  const { workflowId, subscriberData, payload, apiKey, backendUrl } = config;
-  const payloadJson = JSON.stringify(payload, null, 2);
-  const subscriberId = subscriberData.subscriberId || 'user-id';
-  const subscriberEmail = subscriberData.email || 'user@example.com';
+const generateCodeSnippets = (config: WorkflowTriggerPromptConfig) => {
+  const { workflowId, subscriberData, payload } = config;
+  const payloadJson = JSON.stringify(payload);
 
-  // Escape single quotes for safe interpolation into single-quoted strings
-  const escapeForSingleQuotes = (value: string) => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-  const subscriberIdEscaped = escapeForSingleQuotes(subscriberId);
-  const subscriberEmailEscaped = escapeForSingleQuotes(subscriberEmail);
+  const snippetConfig = {
+    identifier: workflowId,
+    to: subscriberData,
+    payload: payloadJson,
+  };
 
   return {
-    nodejs: `import { Novu } from '@novu/api';
-
-const novu = new Novu({ 
-  secretKey: process.env.NOVU_SECRET_KEY 
-});
-
-await novu.trigger({
-  workflowId: '${workflowId}',
-  to: {
-    subscriberId: '${subscriberIdEscaped}',
-    email: '${subscriberEmailEscaped}',
-  },
-  payload: ${payloadJson.replace(/\n/g, '\n  ')},
-});`,
-
-    python: `from novu_py import Novu
-import os
-
-novu = Novu(secret_key=os.environ['NOVU_SECRET_KEY'])
-
-novu.trigger(
-    trigger_event_request_dto={
-        'workflow_id': '${workflowId}',
-        'to': {'subscriber_id': '${subscriberIdEscaped}', 'email': '${subscriberEmailEscaped}'},
-        'payload': ${payloadJson.replace(/\n/g, '\n        ')},
-    }
-)`,
-
-    curl: `curl -X POST '${backendUrl}/v1/events/trigger' \\
-  -H 'Authorization: ApiKey ${apiKey}' \\
-  -H 'Content-Type: application/json' \\
-  -d '{
-    "name": "${workflowId}",
-    "to": {
-      "subscriberId": "${subscriberId}",
-      "email": "${subscriberEmail}"
-    },
-    "payload": ${payloadJson.replace(/\n/g, '\n    ')}
-  }'`,
+    nodejs: createNodeJsSnippet(snippetConfig),
+    python: createPythonSnippet(snippetConfig),
+    php: createPhpSnippet(snippetConfig),
+    go: createGoSnippet(snippetConfig),
+    curl: createCurlSnippet(snippetConfig),
   };
 };
 
@@ -78,22 +45,50 @@ novu.trigger(
  * Generates sections for the AI prompt based on available data
  */
 const generatePromptSections = (config: WorkflowTriggerPromptConfig) => {
-  const { workflowId, workflowName, apiKey, subscriberData, payload, backendUrl = API_HOSTNAME } = config;
+  const { workflowId, workflowName, subscriberData, payload, backendUrl = API_HOSTNAME, language = 'nodejs' } = config;
 
   const hasPayload = Object.keys(payload).length > 0;
-  const snippets = generateCodeSnippets({ workflowId, subscriberData, payload, apiKey, backendUrl });
+  const snippets = generateCodeSnippets(config);
+
+  // Language-specific implementation mapping
+  const languageImplementations: Record<PromptLanguage, Array<{ language: string; code: string }>> = {
+    nodejs: [
+      { language: 'Node.js (with @novu/api)', code: snippets.nodejs },
+      { language: 'cURL (direct HTTP call)', code: snippets.curl },
+    ],
+    python: [
+      { language: 'Python (with novu-py)', code: snippets.python },
+      { language: 'cURL (direct HTTP call)', code: snippets.curl },
+    ],
+    php: [
+      { language: 'PHP (with novuhq/novu)', code: snippets.php },
+      { language: 'cURL (direct HTTP call)', code: snippets.curl },
+    ],
+    go: [
+      { language: 'Go (with novu-go)', code: snippets.go },
+      { language: 'cURL (direct HTTP call)', code: snippets.curl },
+    ],
+    shell: [{ language: 'cURL (direct HTTP call)', code: snippets.curl }],
+  };
+
+  const selectedImplementations = languageImplementations[language];
 
   return {
     header: `You are an AI agent specialized in integrating Novu workflow triggers into applications. Your primary goal is to seamlessly embed workflow trigger calls into existing codebases while maintaining the host application's design patterns and architecture.
 
-**Critical**: You must write clean, minimal code implementation only. Do not create documentation, guides, README files, or any markdown files. Do not add console logs or verbose error handling. Focus exclusively on integrating the workflow trigger into the existing codebase with the least amount of code possible.`,
+**Critical**: You must write clean, minimal code implementation only. Do not create documentation, guides, README files, or any markdown files. Do not add console logs or verbose error handling. Focus exclusively on integrating the workflow trigger into the existing codebase with the least amount of code possible.
+
+**Official Documentation**:
+- API Reference: https://docs.novu.co/api-reference/events/trigger-event
+- Trigger Concepts: https://docs.novu.co/platform/concepts/trigger
+
+Refer to these resources for detailed information about trigger events, request/response schemas, and advanced concepts.`,
 
     workflowInfo: {
       title: 'Workflow Information',
       content: `**Workflow ID**: ${workflowId}
 **Workflow Name**: ${workflowName}
 **Novu API Endpoint**: ${backendUrl}/v1/events/trigger
-**API Key**: ${apiKey}
 
 **Subscriber Information**:
 ${Object.entries(subscriberData)
@@ -195,9 +190,9 @@ Identify where this workflow should be triggered based on business logic:
           title: 'Environment Configuration',
           objective: 'Set up environment variables for API key',
           actions: `1. Identify the environment file (.env, .env.local, config.php, etc.)
-2. Add the Novu API key:
+2. Add the Novu API key (obtain from Novu Dashboard > Settings > API Keys):
 \`\`\`env
-NOVU_SECRET_KEY=${apiKey}
+NOVU_SECRET_KEY=<your_api_key_here>
 \`\`\``,
           verification: `- [ ] Environment variable is accessible in the application
 - [ ] API key is not committed to version control`,
@@ -221,24 +216,27 @@ NOVU_SECRET_KEY=${apiKey}
           title: 'Extract Subscriber Data',
           objective: 'Get subscriber information from the application context',
           actions: `1. Identify the authenticated user or target recipient
-2. Extract required subscriber fields:
-   - subscriberId (required)${subscriberData.email ? '\n   - email (recommended)' : ''}${
-     subscriberData.firstName || subscriberData.lastName ? '\n   - firstName, lastName (optional)' : ''
-   }
+2. Extract the subscriber ID (required - can be user ID, email, or any unique identifier)
 
 **Example Patterns**:
 \`\`\`typescript
 // Node.js/Express
 const subscriberId = req.user.id;
-const email = req.user.email;
 
 // Next.js
-const { userId, user } = auth();
+const { userId } = auth();
 
-// Django
+// Django/Python
 subscriber_id = request.user.id
-email = request.user.email
-\`\`\``,
+
+// PHP/Laravel
+$subscriberId = Auth::user()->id;
+
+// Go
+subscriberID := user.ID
+\`\`\`
+
+**Note**: The subscriber ID can be any unique identifier - user ID, email address, username, etc. The Novu SDK will create the subscriber if it doesn't exist.`,
         },
         ...(hasPayload
           ? [
@@ -261,20 +259,7 @@ ${Object.entries(payload)
           number: hasPayload ? 6 : 5,
           title: 'Implement Trigger Call',
           objective: 'Add the workflow trigger code',
-          implementations: [
-            {
-              language: 'Node.js (with @novu/api)',
-              code: snippets.nodejs,
-            },
-            {
-              language: 'Python (with novu-py)',
-              code: snippets.python,
-            },
-            {
-              language: 'cURL (direct HTTP call)',
-              code: snippets.curl,
-            },
-          ],
+          implementations: selectedImplementations,
         },
         {
           number: hasPayload ? 7 : 6,
@@ -317,17 +302,19 @@ ${Object.entries(payload)
 
     useCases: {
       title: 'Example Use Cases',
-      examples: [
-        '**User Registration**: Trigger when a new user signs up to send a welcome email',
-        '**Order Confirmation**: Trigger when an order is placed to send confirmation notifications',
-        '**Status Updates**: Trigger when a status changes (shipped, delivered, etc.)',
-        '**Scheduled Digests**: Trigger from a cron job to send daily/weekly summaries',
-      ],
+      content: `- **User Registration**: Trigger when a new user signs up to send a welcome email
+- **Order Confirmation**: Trigger when an order is placed to send confirmation notifications
+- **Status Updates**: Trigger when a status changes (shipped, delivered, etc.)
+- **Scheduled Digests**: Trigger from a cron job to send daily/weekly summaries`,
     },
 
     closingNote: `Remember: Focus on clean, minimal code that fits naturally into the existing codebase. The workflow trigger should feel like a native part of the application, not a bolted-on feature.
 
-**Final Reminder**: Deliver working code only - no README files, no setup guides, no markdown documentation, no console logs. Your output should be production-ready code that can be immediately integrated into the application with zero noise.`,
+**Final Reminder**: Deliver working code only - no README files, no setup guides, no markdown documentation, no console logs. Your output should be production-ready code that can be immediately integrated into the application with zero noise.
+
+**Need More Information?**
+- API Reference: https://docs.novu.co/api-reference/events/trigger-event
+- Trigger Concepts: https://docs.novu.co/platform/concepts/trigger`,
   };
 };
 
@@ -353,7 +340,7 @@ function formatStep(step: {
   example?: string;
   implementations?: Array<{ language: string; code: string }>;
 }): string {
-  let result = `### Step ${step.number}: ${step.title}\n`;
+  let result = `### Step ${step.number}: ${step.title}\n\n`;
 
   if (step.objective) {
     result += `**Objective**: ${step.objective}\n\n`;
@@ -366,7 +353,7 @@ function formatStep(step: {
   if (step.implementations) {
     result += `**Implementation Examples**:\n\n`;
     for (const impl of step.implementations) {
-      result += `**${impl.language}**:\n\`\`\`\n${impl.code}\n\`\`\`\n\n`;
+      result += `**${impl.language}**:\n\n\`\`\`\n${impl.code}\n\`\`\`\n\n`;
     }
   }
 
@@ -375,7 +362,7 @@ function formatStep(step: {
   }
 
   if (step.example) {
-    result += `**Example**:\n\`\`\`\n${step.example}\n\`\`\`\n\n`;
+    result += `**Example**:\n\n\`\`\`\n${step.example}\n\`\`\`\n\n`;
   }
 
   if (step.verification) {
@@ -398,44 +385,44 @@ export function generateWorkflowTriggerAIPrompt(config: WorkflowTriggerPromptCon
 
   // Header
   parts.push(sections.header);
-  parts.push('');
+  parts.push('\n---\n');
 
   // Workflow Information
   parts.push(formatSection(sections.workflowInfo.title, sections.workflowInfo.content));
-  parts.push('---\n');
+  parts.push('\n---\n');
 
   // Objectives
   parts.push(formatSection(sections.objectives.title, sections.objectives.content));
-  parts.push('---\n');
+  parts.push('\n---\n');
 
   // Context Analysis
   parts.push(formatSection(sections.contextAnalysis.title, ''));
   for (const subsection of sections.contextAnalysis.subsections) {
     parts.push(formatSection(subsection.title, subsection.content, 3));
   }
-  parts.push('---\n');
+  parts.push('\n---\n');
 
   // Constraints
   parts.push(formatSection(sections.constraints.title, ''));
   for (const subsection of sections.constraints.subsections) {
     parts.push(formatSection(subsection.title, subsection.content, 3));
   }
-  parts.push('---\n');
+  parts.push('\n---\n');
 
   // Implementation
   parts.push(formatSection(sections.implementation.title, ''));
   for (const step of sections.implementation.steps) {
     parts.push(formatStep(step));
   }
-  parts.push('---\n');
+  parts.push('\n---\n');
 
   // Final Deliverables
   parts.push(formatSection(sections.finalDeliverables.title, sections.finalDeliverables.content));
-  parts.push('---\n');
+  parts.push('\n---\n');
 
   // Use Cases
-  parts.push(formatSection(sections.useCases.title, sections.useCases.examples.join('\n\n')));
-  parts.push('---\n');
+  parts.push(formatSection(sections.useCases.title, sections.useCases.content));
+  parts.push('\n---\n');
 
   // Closing Note
   parts.push(sections.closingNote);
