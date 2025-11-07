@@ -14,18 +14,46 @@ interface IPackageJson {
   packageManager?: string;
 }
 
-export function detectPackageManager(): IPackageManager {
+const PACKAGE_MANAGER_COMMANDS: Record<PackageManagerType, IPackageManager> = {
+  [PACKAGE_MANAGERS.NPM]: { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' },
+  [PACKAGE_MANAGERS.YARN]: { name: PACKAGE_MANAGERS.YARN, install: 'add', init: 'init -y' },
+  [PACKAGE_MANAGERS.PNPM]: { name: PACKAGE_MANAGERS.PNPM, install: 'add', init: 'init' },
+};
+
+export function detectPackageManager(packageManagerOverride?: PackageManagerType): IPackageManager {
+  const detectedPackageManager = detectPackageManagerType();
+
+  // If there's a package manager override, use it
+  let packageManager = packageManagerOverride || detectedPackageManager;
+
+  // If the detected package manager does not match the provided package manager, warn the user
+  if (detectedPackageManager && packageManagerOverride && detectedPackageManager !== packageManagerOverride) {
+    logger.warning(
+      `  • Detected package manager ${detectedPackageManager} does not match the provided package manager ${packageManagerOverride}, which could lead to unexpected behavior`
+    );
+  }
+
+  // If no package manager is detected, default to npm
+  if (!packageManager) {
+    logger.warning('  • No package manager detected, defaulting to npm');
+    packageManager = PACKAGE_MANAGERS.NPM;
+  }
+
+  return PACKAGE_MANAGER_COMMANDS[packageManager];
+}
+
+export function detectPackageManagerType(): PackageManagerType | null {
   const cwd = process.cwd();
 
   // Check for lock files first
   if (fileUtils.exists(fileUtils.joinPaths(cwd, 'pnpm-lock.yaml'))) {
-    return { name: PACKAGE_MANAGERS.PNPM, install: 'add', init: 'init' };
+    return PACKAGE_MANAGERS.PNPM;
   }
   if (fileUtils.exists(fileUtils.joinPaths(cwd, 'yarn.lock'))) {
-    return { name: PACKAGE_MANAGERS.YARN, install: 'add', init: 'init -y' };
+    return PACKAGE_MANAGERS.YARN;
   }
   if (fileUtils.exists(fileUtils.joinPaths(cwd, 'package-lock.json'))) {
-    return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
+    return PACKAGE_MANAGERS.NPM;
   }
 
   // If no lock file is found, check package.json for packageManager field
@@ -40,7 +68,7 @@ export function detectPackageManager(): IPackageManager {
           `  • Failed to parse package.json: ${readError instanceof Error ? readError.message : String(readError)}`
         );
 
-        return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
+        return null;
       }
       if (packageJson && typeof packageJson.packageManager === 'string') {
         const split = packageJson.packageManager.split('@');
@@ -48,11 +76,11 @@ export function detectPackageManager(): IPackageManager {
           const [name, version] = split;
           if (name && version && version.trim().length > 0) {
             if (name === PACKAGE_MANAGERS.NPM) {
-              return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
+              return PACKAGE_MANAGERS.NPM;
             } else if (name === PACKAGE_MANAGERS.YARN) {
-              return { name: PACKAGE_MANAGERS.YARN, install: 'add', init: 'init -y' };
+              return PACKAGE_MANAGERS.YARN;
             } else if (name === PACKAGE_MANAGERS.PNPM) {
-              return { name: PACKAGE_MANAGERS.PNPM, install: 'add', init: 'init' };
+              return PACKAGE_MANAGERS.PNPM;
             }
           } else {
             logger.warning(
@@ -74,10 +102,7 @@ export function detectPackageManager(): IPackageManager {
     }
   }
 
-  // If no package manager is detected, default to npm
-  logger.warning('  • No package manager detected, defaulting to npm');
-
-  return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
+  return null;
 }
 
 export async function ensurePackageJson(packageManager: IPackageManager): Promise<boolean> {
