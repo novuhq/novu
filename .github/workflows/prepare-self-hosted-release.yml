@@ -6,8 +6,17 @@ env:
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
+    inputs:
+      nightly:
+        description: "Build as nightly release"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
 
 permissions:
   contents: write
@@ -22,7 +31,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: ['novu/api', 'novu/worker', 'novu/dashboard', 'novu/webhook', 'novu/ws']
+        name:
+          [
+            "novu/api",
+            "novu/worker",
+            "novu/dashboard",
+            "novu/webhook",
+            "novu/ws",
+          ]
     steps:
       - name: Git Checkout
         uses: actions/checkout@v5
@@ -31,9 +47,21 @@ jobs:
         shell: bash
         run: |
           service=${{ matrix.name }}
-          LATEST_VERSION=$(jq -r '.version'  apps/api/package.json)
           SERVICE_NAME=$(basename "${service//-/-}")
           SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
+
+          # Determine version based on nightly flag
+          IS_NIGHTLY=${{ github.event.inputs.nightly == 'true' }}
+          if [ "$IS_NIGHTLY" == "true" ]; then
+            DATE=$(date +'%Y%m%d')
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            LATEST_VERSION="nightly-${DATE}-${SHORT_SHA}"
+            echo "IS_NIGHTLY=true" >> $GITHUB_ENV
+          else
+            LATEST_VERSION=$(jq -r '.version'  apps/api/package.json)
+            echo "IS_NIGHTLY=false" >> $GITHUB_ENV
+          fi
+
           echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
           echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
           echo "SERVICE_COMMON_NAME=$SERVICE_COMMON_NAME" >> $GITHUB_ENV
@@ -47,7 +75,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.19.0
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -71,7 +99,7 @@ jobs:
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: 'image=moby/buildkit:v0.13.1'
+          driver-opts: "image=moby/buildkit:v0.13.1"
 
       - uses: ./.github/actions/free-space
         name: Extend space in Action Container
@@ -129,6 +157,12 @@ jobs:
         shell: bash
         run: |
           docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
-          docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
           docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
-          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
+
+          if [ "${{ env.IS_NIGHTLY }}" == "true" ]; then
+            docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:nightly
+            docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:nightly
+          else
+            docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
+            docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
+          fi
