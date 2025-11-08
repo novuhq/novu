@@ -1,5 +1,20 @@
+export type { RulesLogic } from 'json-logic-js';
 export type { EventHandler, Events, SocketEventNames } from './event-emitter';
 export { Novu } from './novu';
+export type {
+  PreferenceFilter,
+  SubscriptionGroupPreference,
+  SubscriptionPreferences,
+  SubscriptionWorkflowPreference,
+  WorkflowFilter,
+  WorkflowGroupFilter,
+  WorkflowIdentifierOrId,
+} from './subscriptions';
+export {
+  Subscription,
+  SubscriptionPreference,
+  SubscriptionPreferenceGroup,
+} from './subscriptions';
 export {
   ChannelPreference,
   ChannelType,

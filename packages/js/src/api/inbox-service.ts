@@ -1,3 +1,4 @@
+import { SubscriptionPreferences } from '../subscriptions/types';
 import type {
   ActionTypeEnum,
   ChannelPreference,
@@ -9,6 +10,7 @@ import type {
   Session,
   SeverityLevelEnum,
   Subscriber,
+  SubscriptionResponse,
   WeeklySchedule,
   WorkflowCriticalityEnum,
 } from '../types';
@@ -328,5 +330,44 @@ export class InboxService {
     };
 
     return this.#httpClient.post('/inbox/events', payload);
+  }
+
+  fetchSubscriptions(topicKey: string): Promise<SubscriptionResponse[]> {
+    return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`);
+  }
+
+  getSubscription(topicKey: string, identifier: string): Promise<SubscriptionResponse> {
+    return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`);
+  }
+
+  createSubscription({
+    topicKey,
+    identifier,
+    preferences,
+  }: {
+    topicKey: string;
+    identifier: string;
+    preferences: Array<SubscriptionPreferences>;
+  }): Promise<SubscriptionResponse> {
+    return this.#httpClient.post(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`, {
+      identifier,
+      preferences,
+    });
+  }
+
+  updateSubscription({
+    subscriptionId,
+    preferences,
+  }: {
+    subscriptionId: string;
+    preferences: Array<SubscriptionPreferences>;
+  }): Promise<SubscriptionResponse> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/${subscriptionId}`, {
+      preferences,
+    });
+  }
+
+  deleteSubscription(subscriptionId: string): Promise<void> {
+    return this.#httpClient.delete(`${INBOX_ROUTE}/subscriptions/${subscriptionId}`);
   }
 }
