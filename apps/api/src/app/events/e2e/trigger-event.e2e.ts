@@ -960,6 +960,134 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(updatedSubscriber?.locale).to.equal(payload.locale);
     });
 
+    it('should allow to nullify the subscriber fields', async () => {
+      const subscriberId = SubscriberRepository.createObjectId();
+      const payload = {
+        subscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+        phone: '+1234567890',
+        avatar: 'https://example.com/avatar.jpg',
+        timezone: 'America/New_York',
+        locale: 'en-US',
+        data: { custom1: 'custom value1', custom2: 'custom value2' },
+      };
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [payload],
+      });
+
+      await session.waitForJobCompletion();
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+      expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
+      expect(createdSubscriber?.firstName).to.equal(payload.firstName);
+      expect(createdSubscriber?.lastName).to.equal(payload.lastName);
+      expect(createdSubscriber?.email).to.equal(payload.email);
+      expect(createdSubscriber?.locale).to.equal(payload.locale);
+      expect(createdSubscriber?.phone).to.equal(payload.phone);
+      expect(createdSubscriber?.avatar).to.equal(payload.avatar);
+      expect(createdSubscriber?.timezone).to.equal(payload.timezone);
+      expect(createdSubscriber?.data).to.deep.equal(payload.data);
+
+      const payload2 = {
+        subscriberId,
+        firstName: null,
+        lastName: null,
+        email: null,
+        locale: null,
+        phone: null,
+        avatar: null,
+        timezone: null,
+        data: null,
+      };
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [payload2],
+      });
+
+      await session.waitForJobCompletion();
+
+      const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+      expect(updatedSubscriber?.subscriberId).to.equal(subscriberId);
+      expect(updatedSubscriber?.firstName).to.be.null;
+      expect(updatedSubscriber?.lastName).to.be.null;
+      expect(updatedSubscriber?.email).to.be.null;
+      expect(updatedSubscriber?.locale).to.be.null;
+      expect(updatedSubscriber?.phone).to.be.null;
+      expect(updatedSubscriber?.avatar).to.be.null;
+      expect(updatedSubscriber?.timezone).to.be.null;
+      expect(updatedSubscriber?.data).to.be.null;
+    });
+
+    it('should allow to make some fields empty', async () => {
+      const subscriberId = SubscriberRepository.createObjectId();
+      const payload = {
+        subscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+        phone: '+1234567890',
+        avatar: 'https://example.com/avatar.jpg',
+        timezone: 'America/New_York',
+        locale: 'en-US',
+        data: { custom1: 'custom value1', custom2: 'custom value2' },
+      };
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [payload],
+      });
+
+      await session.waitForJobCompletion();
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+      expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
+      expect(createdSubscriber?.firstName).to.equal(payload.firstName);
+      expect(createdSubscriber?.lastName).to.equal(payload.lastName);
+      expect(createdSubscriber?.email).to.equal(payload.email);
+      expect(createdSubscriber?.locale).to.equal(payload.locale);
+      expect(createdSubscriber?.phone).to.equal(payload.phone);
+      expect(createdSubscriber?.avatar).to.equal(payload.avatar);
+      expect(createdSubscriber?.timezone).to.equal(payload.timezone);
+      expect(createdSubscriber?.data).to.deep.equal(payload.data);
+
+      const payload2 = {
+        subscriberId,
+        firstName: '',
+        lastName: '',
+        email: 'test2@email.novu',
+        locale: 'en-US',
+        phone: '',
+        avatar: '',
+        timezone: 'America/New_York',
+        data: payload.data,
+      };
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [payload2],
+      });
+
+      await session.waitForJobCompletion();
+
+      const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+      expect(updatedSubscriber?.subscriberId).to.equal(subscriberId);
+      expect(updatedSubscriber?.firstName).to.equal(payload2.firstName);
+      expect(updatedSubscriber?.lastName).to.equal(payload2.lastName);
+      expect(updatedSubscriber?.email).to.equal(payload2.email);
+      expect(updatedSubscriber?.locale).to.equal(payload2.locale);
+      expect(updatedSubscriber?.phone).to.equal(payload2.phone);
+      expect(updatedSubscriber?.avatar).to.equal(payload2.avatar);
+      expect(updatedSubscriber?.timezone).to.equal(payload2.timezone);
+      expect(updatedSubscriber?.data).to.deep.equal(payload2.data);
+    });
+
     describe('Subscriber channels', () => {
       it('should set a new subscriber with channels array', async () => {
         const subscriberId = SubscriberRepository.createObjectId();
@@ -3662,18 +3790,16 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
   });
 
   describe('Subscriber Schedule Logic', () => {
-    const isSubscribersScheduleEnabled = process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED;
+    const isSubscribersScheduleEnabled = (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED;
 
     beforeEach(async () => {
       // Enable the feature flag for schedule tests
-      // @ts-expect-error process.env is not typed
-      process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
+      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
     });
 
     afterEach(() => {
       // Restore the original feature flag state
-      // @ts-expect-error process.env is not typed
-      process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
+      (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
     });
 
     // Helper function to create a schedule that's outside current time

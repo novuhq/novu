@@ -5,6 +5,7 @@ import {
   CHNullable,
   CHString,
   CHUInt8,
+  CHUInt32,
   ClickhouseSchema,
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
@@ -34,14 +35,14 @@ const schemaDefinition = {
 
   // Step metadata
   step_type: { type: CHLowCardinality(CHString()) }, // email, sms, in_app, push, etc.
-  step_name: { type: CHNullable(CHString()) }, // todo remove this parameter because we do not have step name at this stage.
+  step_name: { type: CHString() }, // todo remove this parameter because we do not have step name at this stage.
   provider_id: { type: CHNullable(CHString()) },
 
   // Execution details
   status: { type: CHLowCardinality(CHString()) }, // pending, queued, running, completed, failed, skipped, cancelled
 
-  // Digest data
-  digest: { type: CHNullable(CHString()) }, // JSON string of digest metadata
+  // Deferred execution time
+  deferred_ms: { type: CHNullable(CHUInt32()) },
 
   // Error handling
   error_code: { type: CHNullable(CHString()) },
@@ -52,6 +53,9 @@ const schemaDefinition = {
 
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
+
+  // Digest data
+  digest: { type: CHNullable(CHString()) }, // JSON string of digest metadata
 
   // Schedule extensions count
   schedule_extensions_count: { type: CHUInt8(0) },

@@ -15,13 +15,11 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
   const isContextEnabled = process.env.IS_CONTEXT_ENABLED;
 
   before(() => {
-    // @ts-expect-error
-    process.env.IS_CONTEXT_ENABLED = 'true';
+    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
   });
 
   after(() => {
-    // @ts-expect-error
-    process.env.IS_CONTEXT_ENABLED = isContextEnabled;
+    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = isContextEnabled;
   });
 
   beforeEach(async () => {

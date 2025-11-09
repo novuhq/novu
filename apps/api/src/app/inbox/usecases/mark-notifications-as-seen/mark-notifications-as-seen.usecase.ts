@@ -76,13 +76,13 @@ export class MarkNotificationsAsSeen {
         seen: true,
       });
 
-      await this.processWebhooksInBatches(updatedMessages, command, subscriber.subscriberId, environment);
+      this.processWebhooksInBatches(updatedMessages, command, subscriber.subscriberId, environment);
 
       await this.logTraces({
+        messages: updatedMessages,
         command,
         subscriberId: subscriber.subscriberId,
         _subscriberId: subscriber._id,
-        method: 'by_ids',
       });
 
       this.analyticsService.track(AnalyticsEventsEnum.MARK_NOTIFICATIONS_AS_SEEN, '', {
@@ -124,11 +124,17 @@ export class MarkNotificationsAsSeen {
         },
       });
 
+      const updatedMessages = await this.messageRepository.find({
+        _environmentId: command.environmentId,
+        _subscriberId: subscriber._id,
+        ...fromFilters,
+      });
+
       await this.logTraces({
+        messages: updatedMessages,
         command,
         subscriberId: subscriber.subscriberId,
         _subscriberId: subscriber._id,
-        method: 'by_filters',
       });
 
       this.analyticsService.track(AnalyticsEventsEnum.MARK_NOTIFICATIONS_AS_SEEN, '', {
@@ -139,20 +145,20 @@ export class MarkNotificationsAsSeen {
       });
     }
 
-    // Invalidate caches
-    await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
+    await Promise.all([
+      this.invalidateCache.invalidateQuery({
+        key: buildFeedKey().invalidate({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
       }),
-    });
-
-    await this.invalidateCache.invalidateQuery({
-      key: buildMessageCountKey().invalidate({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
+      this.invalidateCache.invalidateQuery({
+        key: buildMessageCountKey().invalidate({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
       }),
-    });
+    ]);
 
     this.webSocketsQueueService.add({
       name: 'sendMessage',
@@ -203,47 +209,16 @@ export class MarkNotificationsAsSeen {
   }
 
   private async logTraces({
+    messages,
     command,
     subscriberId,
     _subscriberId,
-    method,
   }: {
+    messages: MessageEntity[];
     command: MarkNotificationsAsSeenCommand;
     subscriberId: string;
     _subscriberId: string;
-    method: 'by_ids' | 'by_filters';
   }): Promise<void> {
-    let messages: MessageEntity[] = [];
-
-    if (method === 'by_ids' && command.notificationIds && command.notificationIds.length > 0) {
-      messages = await this.messageRepository.find({
-        _environmentId: command.environmentId,
-        _subscriberId,
-        _id: { $in: command.notificationIds },
-      });
-    } else if (method === 'by_filters') {
-      // For filter-based approach, we need to fetch messages that match the filters
-      const fromFilters: Record<string, unknown> = {};
-      if (command.tags) {
-        fromFilters.tags = command.tags;
-      }
-      if (command.data) {
-        try {
-          const parsedData = JSON.parse(command.data);
-          fromFilters.data = parsedData;
-        } catch {
-          // If data parsing fails, skip trace logging for this case
-          return;
-        }
-      }
-
-      messages = await this.messageRepository.find({
-        _environmentId: command.environmentId,
-        _subscriberId,
-        ...fromFilters,
-      });
-    }
-
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return;
     }

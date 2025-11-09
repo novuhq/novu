@@ -15,6 +15,8 @@ import { AuthModule } from './app/auth/auth.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { BridgeModule } from './app/bridge/bridge.module';
 import { ChangeModule } from './app/change/change.module';
+import { ChannelConnectionsModule } from './app/channel-connections/channel-connections.module';
+import { ChannelEndpointsModule } from './app/channel-endpoints/channel-endpoints.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
 import { ContextsModule } from './app/contexts/contexts.module';
 import { EnvironmentsModuleV1 } from './app/environments-v1/environments-v1.module';
@@ -134,6 +136,8 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   WorkflowModule,
   EnvironmentsModule,
   NovuModule,
+  ChannelConnectionsModule,
+  ChannelEndpointsModule,
 ];
 
 const enterpriseModules = enterpriseImports();

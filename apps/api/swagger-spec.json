@@ -29402,7 +29402,7 @@
         "type": "apiKey",
         "name": "Authorization",
         "in": "header",
-        "description": "API key authentication. Allowed headers-- \"Authorization: ApiKey <api_key>\"."
+        "description": "API key authentication. Allowed headers-- \"Authorization: ApiKey <novu_secret_key>\"."
       },
       "bearerAuth": {
         "type": "http",

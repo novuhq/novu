@@ -1,10 +1,11 @@
-import { HTMLAttributes, useEffect } from 'react';
+import { HTMLAttributes } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiLoader4Line } from 'react-icons/ri';
 import { ActivityFilters } from '@/api/activity';
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
+import { useDebouncedForm } from '@/hooks/use-debounced-form';
 import { cn } from '@/utils/ui';
 import { defaultWorkflowRunsFilter } from './hooks/use-workflow-runs-url-state';
 
@@ -26,13 +27,7 @@ export function WorkflowRunsFilters(props: WorkflowRunsFiltersProps) {
   });
   const { formState, watch } = form;
 
-  useEffect(() => {
-    const subscription = watch((value) => {
-      onFiltersChange(value as ActivityFilters);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [watch, onFiltersChange]);
+  useDebouncedForm(watch, onFiltersChange, 400);
 
   const handleReset = () => {
     form.reset(defaultWorkflowRunsFilter);

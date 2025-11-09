@@ -1,13 +1,16 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  buildSubscriberKey,
   CompileTemplate,
   CompileTemplateCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  FeatureFlagsService,
   GetNovuProviderCredentials,
   InstrumentUsecase,
+  InvalidateCacheService,
   IPushHandler,
   messageWebhookMapper,
   PushFactory,
@@ -15,7 +18,14 @@ import {
   SelectVariant,
   SendWebhookMessage,
 } from '@novu/application-generic';
-import { IntegrationEntity, JobEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import {
+  IntegrationEntity,
+  JobEntity,
+  MessageEntity,
+  MessageRepository,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import { PushOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
@@ -23,7 +33,9 @@ import {
   DeliveryLifecycleStatusEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   IChannelSettings,
+  InboxCountTypeEnum,
   ProvidersIdEnum,
   PushProviderIdEnum,
   TriggerOverrides,
@@ -59,7 +71,9 @@ export class SendMessagePush extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private invalidateCache: InvalidateCacheService,
+    private featureFlagsService: FeatureFlagsService
   ) {
     super(
       messageRepository,
@@ -177,7 +191,7 @@ export class SendMessagePush extends SendMessageBase {
         }
       }
 
-      let integration;
+      let integration: IntegrationEntity | undefined;
       try {
         integration = await this.getSubscriberIntegration(channel, command);
       } catch (error) {
@@ -189,15 +203,29 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
+      const noDeviceTokensAndNoOverrides = !deviceTokens && !uniqueOverrideChannels?.length;
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
-      if ((!deviceTokens || !integration || isChannelMissingDeviceTokens) && !uniqueOverrideChannels?.length) {
+      if (noDeviceTokensAndNoOverrides || !integration || isChannelMissingDeviceTokens) {
         continue;
       }
 
-      const overrides = command.overrides[integration.providerId] || {};
+      let overrides: Record<string, unknown> = command.overrides[integration.providerId] || {};
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
       await this.sendSelectedIntegrationExecution(command.job, integration);
+
+      const isPushUnreadCountEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_PUSH_UNREAD_COUNT_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId },
+        environment: { _id: command.environmentId },
+      });
+
+      const inboxCountType = integration?.configurations?.inboxCount;
+      if (isPushUnreadCountEnabled && inboxCountType && inboxCountType !== InboxCountTypeEnum.NONE) {
+        overrides = await this.updateOverridesWithInboxUnreadCount(command, overrides, subscriber, inboxCountType);
+      }
 
       /**
        * There are no targets available for the subscriber, but credentials provided in the overrides
@@ -327,6 +355,49 @@ export class SendMessagePush extends SendMessageBase {
 
     return {
       status,
+    };
+  }
+
+  private async updateOverridesWithInboxUnreadCount(
+    command: SendMessageChannelCommand,
+    overrides: Record<string, unknown>,
+    subscriber: SubscriberEntity,
+    inboxCountType: InboxCountTypeEnum
+  ): Promise<Record<string, unknown>> {
+    const filter =
+      inboxCountType === InboxCountTypeEnum.UNREAD ? { read: false, snoozed: false } : { seen: false, snoozed: false };
+
+    const inboxUnreadCount = await this.messageRepository.getCount(
+      command.environmentId,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP,
+      filter,
+      { limit: 99 },
+      command.contextKeys
+    );
+
+    const androidOverrides = (overrides.android as Record<string, any>) ?? {};
+    const apnsOverrides = (overrides.apns as Record<string, any>) ?? {};
+
+    return {
+      ...overrides,
+      android: {
+        ...androidOverrides,
+        notification: {
+          notificationCount: inboxUnreadCount,
+          ...androidOverrides.notification,
+        },
+      },
+      apns: {
+        ...apnsOverrides,
+        payload: {
+          ...apnsOverrides?.payload,
+          aps: {
+            badge: inboxUnreadCount,
+            ...apnsOverrides?.payload?.aps,
+          },
+        },
+      },
     };
   }
 
@@ -555,19 +626,6 @@ export class SendMessagePush extends SendMessageBase {
 
       const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
 
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_SENT,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, command.subscriberId),
-          error: {
-            message: e.message || e.name || 'Error while sending push with provider',
-          },
-        },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
-
       try {
         await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, command.job, {
           messageId: message._id,
@@ -577,6 +635,61 @@ export class SendMessagePush extends SendMessageBase {
         Logger.error(
           { jobId: command.jobId },
           `Error sending provider error for jobId ${command.jobId} ${err.message || err.toString()}`,
+          LOG_CONTEXT
+        );
+      }
+
+      try {
+        const pushHandler = this.getIntegrationHandler(integration);
+        const isTokenInvalid = pushHandler?.isTokenInvalid?.(e.message || e.toString());
+
+        if (isTokenInvalid) {
+          Logger.log(
+            { jobId: command.jobId, deviceToken, providerId: integration.providerId },
+            `Invalid device token detected for jobId ${command.jobId}, removing token from subscriber`,
+            LOG_CONTEXT
+          );
+
+          const isExpiredTokensRemovalEnabled = await this.featureFlagsService.getFlag({
+            key: FeatureFlagsKeysEnum.IS_EXPIRED_TOKENS_REMOVAL_ENABLED,
+            defaultValue: false,
+            organization: { _id: command.organizationId },
+            user: { _id: command.userId },
+            environment: { _id: command.environmentId },
+          });
+
+          if (isExpiredTokensRemovalEnabled) {
+            await this.removeInvalidDeviceToken(
+              command._subscriberId,
+              deviceToken,
+              integration._id,
+              command,
+              e.message || e.toString(),
+              message._id
+            );
+          }
+        }
+
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_FAILED,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId),
+            error: {
+              push: {
+                reason: isTokenInvalid ? 'token_invalid' : 'generic_error',
+                deviceToken: deviceToken,
+              },
+              message: e.message || e.name || 'Error while sending push with provider',
+            },
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        });
+      } catch (err) {
+        Logger.error(
+          { jobId: command.jobId },
+          `Error sending webhook message for jobId ${command.jobId} ${err.message || err.toString()}`,
           LOG_CONTEXT
         );
       }
@@ -712,6 +825,74 @@ export class SendMessagePush extends SendMessageBase {
         return null;
       default:
         return null;
+    }
+  }
+
+  private async removeInvalidDeviceToken(
+    subscriberId: string,
+    deviceToken: string,
+    integrationId: string,
+    command: SendMessageChannelCommand,
+    providerErrorMessage: string,
+    messageId: string
+  ): Promise<void> {
+    try {
+      await this.subscriberRepository.update(
+        {
+          _environmentId: command.environmentId,
+          _id: subscriberId,
+          'channels._integrationId': integrationId,
+        },
+        {
+          $pull: {
+            'channels.$.credentials.deviceTokens': deviceToken,
+          },
+        }
+      );
+
+      await this.invalidateCache.invalidateByKey({
+        key: buildSubscriberKey({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
+      });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId,
+          detail: DetailEnum.PUSH_INVALID_TOKEN_REMOVED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            deviceToken,
+            providerError: providerErrorMessage,
+          }),
+        })
+      );
+
+      Logger.log(
+        {
+          subscriberId: command.subscriberId,
+          deviceToken,
+          integrationId,
+        },
+        `Successfully removed invalid device token from subscriber`,
+        LOG_CONTEXT
+      );
+    } catch (error) {
+      Logger.error(
+        {
+          subscriberId: command.subscriberId,
+          deviceToken,
+          integrationId,
+          error: error.message,
+        },
+        `Failed to remove invalid device token from subscriber: ${error.message}`,
+        LOG_CONTEXT
+      );
     }
   }
 }

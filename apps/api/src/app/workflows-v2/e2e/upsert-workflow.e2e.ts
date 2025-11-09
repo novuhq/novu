@@ -4,7 +4,6 @@ import {
   CreateWorkflowDto,
   EmailStepResponseDto,
   InAppControlDto,
-  JSONSchemaDto,
   LayoutCreationSourceEnum,
   LayoutResponseDto,
   StepTypeEnum,
@@ -14,6 +13,7 @@ import {
 } from '@novu/api/models/components';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 interface ITestStepConfig {
@@ -209,7 +209,7 @@ describe('Upsert Workflow #novu-v2', () => {
               },
             },
           ],
-        });
+        } as UpdateWorkflowDto);
 
         const updatedEmailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
 
@@ -498,7 +498,7 @@ describe('Upsert Workflow #novu-v2', () => {
             },
           },
         ],
-      });
+      } as UpdateWorkflowDto);
 
       const updatedEmailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
 
@@ -522,7 +522,7 @@ describe('Upsert Workflow #novu-v2', () => {
             },
           },
         ],
-      });
+      } as UpdateWorkflowDto);
 
       const updatedEmailStep2 = updatedWorkflow2.steps[0] as EmailStepResponseDto;
       expect(updatedEmailStep2.controls.values.editorType).to.equal('block');
@@ -557,6 +557,6 @@ describe('Upsert Workflow #novu-v2', () => {
         name: step.name,
         controlValues: step.controls?.values || {},
       })),
-    };
+    } as UpdateWorkflowDto;
   }
 });

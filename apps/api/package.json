@@ -32,6 +32,8 @@
     "test:e2e:novu-v0": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test mocha --timeout 15000 --retries 3 --grep '#novu-v0' --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e{,-ee}.ts",
     "test:e2e:novu-v2": "cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000  --retries 3 --grep '#novu-v2' --require ./swc-register.js --exit --file e2e/setup.ts 'src/**/*.e2e{,-ee}.ts' 'e2e/enterprise/**/*.e2e.ts'",
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly",
+    "clickhouse:migrate": "clickhouse-migrations migrate --host=http://localhost:8123 --user=default --password= --db=novu-local --migrations-home=./migrations/clickhouse-migrations",
+    "clickhouse:migrate:prod": "clickhouse-migrations migrate --migrations-home=./migrations/clickhouse-migrations",
     "link:submodules": "pnpm link ../../enterprise/packages/auth && pnpm link ../../enterprise/packages/translation && pnpm link ../../enterprise/packages/billing",
     "admin:remove-user-account": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-user-account.ts",
     "admin:remove-organization": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-organization.ts"
@@ -42,6 +44,7 @@
     "@google-cloud/storage": "^6.2.3",
     "@maily-to/render": "github:novuhq/maily.to#release/v0.1.3-novu.8-render&path:/packages/render",
     "@nestjs/axios": "3.0.3",
+    "clickhouse-migrations": "^1.1.1",
     "@nestjs/common": "10.4.18",
     "@nestjs/core": "10.4.18",
     "@nestjs/jwt": "10.2.0",

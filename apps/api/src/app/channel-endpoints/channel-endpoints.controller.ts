@@ -12,45 +12,79 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
+
+import {
+  ApiBody,
+  ApiExcludeController,
+  ApiExtraModels,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
+import { ExternalApiAccessible, FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
+  ENDPOINT_TYPES,
   FeatureFlagsKeysEnum,
-  makeResourceKey,
   PermissionsEnum,
-  RESOURCE,
   UserSessionData,
 } from '@novu/shared';
+
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { CreateChannelEndpointRequestDto } from '../channel-endpoints/dtos/create-channel-endpoint-request.dto';
-import { mapChannelEndpointEntityToDto } from '../channel-endpoints/dtos/dto.mapper';
-import { GetChannelEndpointResponseDto } from '../channel-endpoints/dtos/get-channel-endpoint-response.dto';
-import { GetChannelEndpointsQueryDto } from '../channel-endpoints/dtos/get-channel-endpoints-query.dto';
-import { UpdateChannelEndpointRequestDto } from '../channel-endpoints/dtos/update-channel-endpoint-request.dto';
-import { CreateChannelEndpointCommand } from '../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
-import { CreateChannelEndpoint } from '../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
-import { DeleteChannelEndpointCommand } from '../channel-endpoints/usecases/delete-channel-endpoint/delete-channel-endpoint.command';
-import { DeleteChannelEndpoint } from '../channel-endpoints/usecases/delete-channel-endpoint/delete-channel-endpoint.usecase';
-import { GetChannelEndpointCommand } from '../channel-endpoints/usecases/get-channel-endpoint/get-channel-endpoint.command';
-import { GetChannelEndpoint } from '../channel-endpoints/usecases/get-channel-endpoint/get-channel-endpoint.usecase';
-import { GetChannelEndpointsCommand } from '../channel-endpoints/usecases/get-channel-endpoints/get-channel-endpoints.command';
-import { GetChannelEndpoints } from '../channel-endpoints/usecases/get-channel-endpoints/get-channel-endpoints.usecase';
-import { UpdateChannelEndpointCommand } from '../channel-endpoints/usecases/update-channel-endpoint/update-channel-endpoint.command';
-import { UpdateChannelEndpoint } from '../channel-endpoints/usecases/update-channel-endpoint/update-channel-endpoint.usecase';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
+import { CreateChannelEndpointRequest } from './dtos/create-channel-endpoint-request.dto';
+import {
+  CreatePhoneEndpointDto,
+  CreateSlackChannelEndpointDto,
+  CreateSlackUserEndpointDto,
+  CreateWebhookEndpointDto,
+} from './dtos/create-channel-endpoint-variants.dto';
+import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
+import {
+  PhoneEndpointDto,
+  SlackChannelEndpointDto,
+  SlackUserEndpointDto,
+  WebhookEndpointDto,
+} from './dtos/endpoint-types.dto';
+import { GetChannelEndpointResponseDto } from './dtos/get-channel-endpoint-response.dto';
+import { ListChannelEndpointsQueryDto } from './dtos/list-channel-endpoints-query.dto';
+import { ListChannelEndpointsResponseDto } from './dtos/list-channel-endpoints-response.dto';
+import { UpdateChannelEndpointRequestDto } from './dtos/update-channel-endpoint-request.dto';
+import { CreateChannelEndpointCommand } from './usecases/create-channel-endpoint/create-channel-endpoint.command';
+import { CreateChannelEndpoint } from './usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { DeleteChannelEndpointCommand } from './usecases/delete-channel-endpoint/delete-channel-endpoint.command';
+import { DeleteChannelEndpoint } from './usecases/delete-channel-endpoint/delete-channel-endpoint.usecase';
+import { GetChannelEndpointCommand } from './usecases/get-channel-endpoint/get-channel-endpoint.command';
+import { GetChannelEndpoint } from './usecases/get-channel-endpoint/get-channel-endpoint.usecase';
+import { ListChannelEndpointsCommand } from './usecases/list-channel-endpoints/list-channel-endpoints.command';
+import { ListChannelEndpoints } from './usecases/list-channel-endpoints/list-channel-endpoints.usecase';
+import { UpdateChannelEndpointCommand } from './usecases/update-channel-endpoint/update-channel-endpoint.command';
+import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update-channel-endpoint.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
-@Controller({ path: '/subscribers', version: '2' })
+@Controller({ path: '/channel-endpoints', version: '1' })
 @UseInterceptors(ClassSerializerInterceptor)
+@ApiExtraModels(
+  CreateSlackChannelEndpointDto,
+  CreateSlackUserEndpointDto,
+  CreateWebhookEndpointDto,
+  CreatePhoneEndpointDto,
+  SlackChannelEndpointDto,
+  SlackUserEndpointDto,
+  WebhookEndpointDto,
+  PhoneEndpointDto
+)
 @ApiExcludeController()
+@ExternalApiAccessible()
+@RequireAuthentication()
 @ApiTags('Channel Endpoints')
 @ApiCommonResponses()
 export class ChannelEndpointsController {
   constructor(
-    private readonly getChannelEndpointsUsecase: GetChannelEndpoints,
+    private readonly listChannelEndpointsUsecase: ListChannelEndpoints,
     private readonly getChannelEndpointUsecase: GetChannelEndpoint,
     private readonly createChannelEndpointUsecase: CreateChannelEndpoint,
     private readonly updateChannelEndpointUsecase: UpdateChannelEndpoint,
@@ -70,44 +104,55 @@ export class ChannelEndpointsController {
     }
   }
 
-  @Get('/:subscriberId/channel-endpoints')
+  @Get()
   @ApiOperation({
-    summary: 'Retrieve channel endpoints',
-    description: `Retrieve all channel endpoints based on query filters.`,
+    summary: 'List channel endpoints',
+    description: `Retrieve all channel endpoints for a resource based on query filters.`,
   })
-  @ApiResponse(GetChannelEndpointResponseDto, 200, true)
+  @ApiResponse(ListChannelEndpointsResponseDto, 200)
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
-  @RequireAuthentication()
-  async getChannelEndpoints(
+  async listChannelEndpoints(
     @UserSession() user: UserSessionData,
-    @Param('subscriberId') subscriberId: string,
-    @Query() query: GetChannelEndpointsQueryDto
-  ): Promise<GetChannelEndpointResponseDto[]> {
+    @Query() query: ListChannelEndpointsQueryDto
+  ): Promise<ListChannelEndpointsResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    const channelEndpoints = await this.getChannelEndpointsUsecase.execute(
-      GetChannelEndpointsCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        resource: makeResourceKey(RESOURCE.SUBSCRIBER, subscriberId),
+    const result = await this.listChannelEndpointsUsecase.execute(
+      ListChannelEndpointsCommand.create({
+        user,
+        limit: query.limit || 10,
+        after: query.after,
+        before: query.before,
+        orderDirection: query.orderDirection,
+        orderBy: query.orderBy || 'createdAt',
+        includeCursor: query.includeCursor,
+        resource: query.resource,
         channel: query.channel,
-        provider: query.provider,
-        type: query.type,
+        providerId: query.providerId,
+        integrationIdentifier: query.integrationIdentifier,
+        connectionIdentifier: query.connectionIdentifier,
       })
     );
 
-    return channelEndpoints.map((endpoint) => mapChannelEndpointEntityToDto(endpoint));
+    return {
+      data: result.data.map(mapChannelEndpointEntityToDto),
+      next: result.next,
+      previous: result.previous,
+      totalCount: result.totalCount!,
+      totalCountCapped: result.totalCountCapped!,
+    };
   }
 
-  @Get('/channel-endpoints/:identifier')
+  @Get('/:identifier')
   @ApiOperation({
     summary: 'Retrieve channel endpoint by identifier',
     description: `Retrieve a specific channel endpoint by its unique identifier.`,
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel endpoint', type: String })
   @ApiResponse(GetChannelEndpointResponseDto, 200)
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
-  @RequireAuthentication()
   async getChannelEndpoint(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
@@ -125,18 +170,37 @@ export class ChannelEndpointsController {
     return mapChannelEndpointEntityToDto(channelEndpoint);
   }
 
-  @Post('/:subscriberId/channel-endpoints')
+  @Post()
   @ApiOperation({
-    summary: 'Create channel endpoint',
-    description: `Create a new channel endpoint.`,
+    summary: 'Create channel endpoint for a resource',
+    description: `Create a new channel endpoint for a resource.`,
+  })
+  @ApiBody({
+    description: 'Channel endpoint creation request. The structure varies based on the type field.',
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(CreateSlackChannelEndpointDto) },
+        { $ref: getSchemaPath(CreateSlackUserEndpointDto) },
+        { $ref: getSchemaPath(CreateWebhookEndpointDto) },
+        { $ref: getSchemaPath(CreatePhoneEndpointDto) },
+      ],
+      discriminator: {
+        propertyName: 'type',
+        mapping: {
+          [ENDPOINT_TYPES.SLACK_CHANNEL]: getSchemaPath(CreateSlackChannelEndpointDto),
+          [ENDPOINT_TYPES.SLACK_USER]: getSchemaPath(CreateSlackUserEndpointDto),
+          [ENDPOINT_TYPES.WEBHOOK]: getSchemaPath(CreateWebhookEndpointDto),
+          [ENDPOINT_TYPES.PHONE]: getSchemaPath(CreatePhoneEndpointDto),
+        },
+      },
+    },
   })
   @ApiResponse(GetChannelEndpointResponseDto, 201)
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
-  @RequireAuthentication()
   async createChannelEndpoint(
     @UserSession() user: UserSessionData,
-    @Param('subscriberId') subscriberId: string,
-    @Body() body: CreateChannelEndpointRequestDto
+    @Body() body: CreateChannelEndpointRequest
   ): Promise<GetChannelEndpointResponseDto> {
     await this.checkFeatureEnabled(user);
 
@@ -147,7 +211,7 @@ export class ChannelEndpointsController {
         identifier: body.identifier,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
-        resource: makeResourceKey(RESOURCE.SUBSCRIBER, subscriberId),
+        resource: body.resource,
         type: body.type,
         endpoint: body.endpoint,
       })
@@ -156,7 +220,7 @@ export class ChannelEndpointsController {
     return mapChannelEndpointEntityToDto(channelEndpoint);
   }
 
-  @Patch('/channel-endpoints/:identifier')
+  @Patch('/:identifier')
   @ApiOperation({
     summary: 'Update channel endpoint',
     description: `Update an existing channel endpoint by its unique identifier.`,
@@ -164,7 +228,7 @@ export class ChannelEndpointsController {
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel endpoint', type: String })
   @ApiResponse(GetChannelEndpointResponseDto, 200)
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
-  @RequireAuthentication()
+  @ExternalApiAccessible()
   async updateChannelEndpoint(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
@@ -184,15 +248,15 @@ export class ChannelEndpointsController {
     return mapChannelEndpointEntityToDto(channelEndpoint);
   }
 
-  @Delete('/channel-endpoints/:identifier')
+  @Delete('/:identifier')
   @HttpCode(204)
   @ApiOperation({
-    summary: 'Delete channel endpoint',
+    summary: 'Delete channel endpoint by identifier',
     description: `Delete a specific channel endpoint by its unique identifier.`,
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel endpoint', type: String })
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
-  @RequireAuthentication()
   async deleteChannelEndpoint(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string

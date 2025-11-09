@@ -219,8 +219,57 @@ jobs:
           echo "deploy_matrix=$deploy_matrix" >> $GITHUB_OUTPUT
           echo "nr_matrix=$nr_matrix" >> $GITHUB_OUTPUT
 
-  build:
+  run-clickhouse-migrations:
     needs: prepare-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
+    environment: ${{ matrix.env }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - name: Whitelist Runner IP
+        id: whitelist
+        uses: novuhq/clickhouse-cloud-whitelist-ip-action@v1.0.0
+        with:
+          clickhouse-org-id: ${{ secrets.CLICKHOUSE_ORG_ID }}
+          clickhouse-service-id: ${{ secrets.CLICKHOUSE_SERVICE_ID }}
+          clickhouse-api-key-id: ${{ secrets.CLICKHOUSE_API_KEY_ID }}
+          clickhouse-api-key-secret: ${{ secrets.CLICKHOUSE_API_KEY_SECRET }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.16.1
+          run_install: false
+
+      - name: Setup Node Version
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install --frozen-lockfile
+      - name: Run ClickHouse Migrations
+        working-directory: apps/api
+        env:
+          CH_MIGRATIONS_HOST: ${{ secrets.CLICK_HOUSE_URL }}
+          CH_MIGRATIONS_USER: ${{ secrets.CLICK_HOUSE_USER }}
+          CH_MIGRATIONS_PASSWORD: ${{ secrets.CLICK_HOUSE_PASSWORD }}
+          CH_MIGRATIONS_DB: ${{ secrets.CLICK_HOUSE_DATABASE }}
+        run: pnpm run clickhouse:migrate:prod
+
+  build:
+    needs: [prepare-matrix, run-clickhouse-migrations]
     timeout-minutes: 60
     runs-on: ubuntu-latest
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
@@ -230,7 +279,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
           fetch-depth: 0
@@ -290,7 +339,7 @@ jobs:
           docker push $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
 
   deploy:
-    needs: [build, prepare-matrix]
+    needs: [build, prepare-matrix, run-clickhouse-migrations]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -341,7 +390,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get NPM Version
         id: package-version
