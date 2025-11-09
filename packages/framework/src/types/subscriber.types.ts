@@ -6,5 +6,5 @@ export type Subscriber = {
   phone?: string | null;
   avatar?: string | null;
   locale?: string | null;
-  data?: Record<string, unknown>;
+  data?: Record<string, unknown> | null;
 };
