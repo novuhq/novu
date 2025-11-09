@@ -139,7 +139,7 @@ function AIPromptTip({ onCopy, isCopied }: AIPromptTipProps) {
       variant="tip"
       title="Tip:"
       description="Use this pre-built prompt to get started faster."
-      ctaLabel={isCopied ? 'Copied!' : 'Copy prompt'}
+      ctaLabel={isCopied ? 'Copied!' : 'Copy AI prompt'}
       onCtaClick={onCopy}
       ctaClassName="border-neutral-200 bg-white text-foreground-950 h-auto rounded border px-3 py-1.5 hover:bg-neutral-50"
       className="-mt-4 mb-3"
