@@ -1318,3 +1318,20 @@ export const sinchConfig: IConfigCredential[] = [
   },
   ...smsConfigBase,
 ];
+
+export const ISendProProviderConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'This is API key for example provider',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Sender',
+    description: 'The sender of sms',
+    type: 'text',
+    required: false,
+  }
+  ];
