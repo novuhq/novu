@@ -228,7 +228,7 @@ const { userId } = auth();
 // Django/Python
 subscriber_id = request.user.id
 
-// PHP/Laravel
+// PHP
 $subscriberId = Auth::user()->id;
 
 // Go
