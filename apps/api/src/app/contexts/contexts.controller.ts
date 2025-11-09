@@ -13,10 +13,15 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
-import { FeatureFlagsService } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
+import {
+  ApiRateLimitCategoryEnum,
+  ContextType,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -25,29 +30,31 @@ import { UserSession } from '../shared/framework/user.decorator';
 import {
   CreateContextRequestDto,
   GetContextResponseDto,
-  GetContextsRequestDto,
-  GetContextsResponseDto,
+  ListContextsQueryDto,
+  ListContextsResponseDto,
+  mapContextEntityToDto,
   UpdateContextRequestDto,
 } from './dtos';
-import { CreateContext, CreateContextCommand } from './usecases/create-context';
+import { CreateContextCommand } from './usecases/create-context/create-context.command';
+import { CreateContext } from './usecases/create-context/create-context.usecase';
 import { DeleteContext, DeleteContextCommand } from './usecases/delete-context';
 import { GetContext, GetContextCommand } from './usecases/get-context';
-import { GetContexts, GetContextsCommand } from './usecases/get-contexts';
-import { UpdateContext, UpdateContextCommand } from './usecases/update-context';
+import { ListContexts, ListContextsCommand } from './usecases/list-contexts';
+import { UpdateContextCommand } from './usecases/update-context/update-context.command';
+import { UpdateContext } from './usecases/update-context/update-context.usecase';
 
-@Controller('/contexts')
+@Controller({ path: '/contexts', version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @ThrottlerCategory(ApiRateLimitCategoryEnum.GLOBAL)
 @RequireAuthentication()
 @ApiTags('Contexts')
 @ApiCommonResponses()
-@ApiExcludeController()
 export class ContextsController {
   constructor(
     private createContextUsecase: CreateContext,
-    private getContextUsecase: GetContext,
-    private getContextsUsecase: GetContexts,
     private updateContextUsecase: UpdateContext,
+    private getContextUsecase: GetContext,
+    private listContextsUsecase: ListContexts,
     private deleteContextUsecase: DeleteContext,
     private featureFlagsService: FeatureFlagsService
   ) {}
@@ -68,9 +75,11 @@ export class ContextsController {
   @Post('')
   @ApiResponse(GetContextResponseDto, 201)
   @ApiOperation({
-    summary: 'Create context',
-    description: 'Create a new context with the specified type, key, and data',
+    summary: 'Create a context',
+    description: `Create a new context with the specified type, id, and data. Returns 409 if context already exists.
+      **type** and **id** are required fields, **data** is optional, if the context already exists, it returns the 409 response`,
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
   async createContext(
     @UserSession() user: UserSessionData,
@@ -78,32 +87,73 @@ export class ContextsController {
   ): Promise<GetContextResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return this.createContextUsecase.execute(
+    const entity = await this.createContextUsecase.execute(
       CreateContextCommand.create({
+        userId: user._id,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         type: body.type,
-        identifier: body.identifier,
+        id: body.id,
         data: body.data,
       })
     );
+
+    return mapContextEntityToDto(entity);
+  }
+
+  @Patch('/:type/:id')
+  @ApiParam({ name: 'type', type: String, description: 'Context type' })
+  @ApiParam({ name: 'id', type: String, description: 'Context ID' })
+  @ApiResponse(GetContextResponseDto, 200)
+  @ApiOperation({
+    summary: 'Update a context',
+    description: `Update the data of an existing context.
+      **type** and **id** are required fields, **data** is required. Only the data field is updated, the rest of the context is not affected.
+      If the context does not exist, it returns the 404 response`,
+  })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
+  @ExternalApiAccessible()
+  async updateContext(
+    @UserSession() user: UserSessionData,
+    @Param('type') type: ContextType,
+    @Param('id') id: string,
+    @Body() body: UpdateContextRequestDto
+  ): Promise<GetContextResponseDto> {
+    await this.checkFeatureEnabled(user);
+
+    const entity = await this.updateContextUsecase.execute(
+      UpdateContextCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        type,
+        id,
+        data: body.data,
+      })
+    );
+
+    return mapContextEntityToDto(entity);
   }
 
   @Get('')
-  @ApiResponse(GetContextsResponseDto)
+  @ApiResponse(ListContextsResponseDto)
   @ApiOperation({
-    summary: 'Get contexts',
-    description: 'Retrieve a paginated list of contexts, optionally filtered by type and key pattern',
+    summary: 'List all contexts',
+    description: `Retrieve a paginated list of all contexts, optionally filtered by type and key pattern.
+      **type** and **id** are optional fields, if provided, only contexts with the matching type and id will be returned.
+      **search** is an optional field, if provided, only contexts with the matching key pattern will be returned.
+      Checkout all possible parameters in the query section below for more details`,
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @ExternalApiAccessible()
-  async getContexts(
+  async listContexts(
     @UserSession() user: UserSessionData,
-    @Query() query: GetContextsRequestDto
-  ): Promise<GetContextsResponseDto> {
+    @Query() query: ListContextsQueryDto
+  ): Promise<ListContextsResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return this.getContextsUsecase.execute(
-      GetContextsCommand.create({
+    const result = await this.listContextsUsecase.execute(
+      ListContextsCommand.create({
         user,
         limit: query.limit || 10,
         after: query.after,
@@ -112,72 +162,74 @@ export class ContextsController {
         orderBy: query.orderBy || 'createdAt',
         includeCursor: query.includeCursor,
         type: query.type,
-        identifier: query.identifier,
+        id: query.id,
+        search: query.search,
       })
     );
+
+    return {
+      data: result.data.map(mapContextEntityToDto),
+      next: result.next,
+      previous: result.previous,
+      totalCount: result.totalCount!,
+      totalCountCapped: result.totalCountCapped!,
+    };
   }
 
-  @Get('/:identifier')
+  @Get('/:type/:id')
+  @ApiParam({ name: 'type', type: String, description: 'Context type' })
+  @ApiParam({ name: 'id', type: String, description: 'Context ID' })
   @ApiResponse(GetContextResponseDto, 200)
   @ApiOperation({
-    summary: 'Get context by identifier',
-    description: 'Retrieve a specific context by its identifier',
+    summary: 'Retrieve a context',
+    description: `Retrieve a specific context by its type and id.
+      **type** and **id** are required fields, if the context does not exist, it returns the 404 response`,
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @ExternalApiAccessible()
   async getContext(
     @UserSession() user: UserSessionData,
-    @Param('identifier') identifier: string
+    @Param('type') type: ContextType,
+    @Param('id') id: string
   ): Promise<GetContextResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return this.getContextUsecase.execute(
+    const entity = await this.getContextUsecase.execute(
       GetContextCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        identifier,
+        type,
+        id,
       })
     );
+
+    return mapContextEntityToDto(entity);
   }
 
-  @Patch('/:identifier')
-  @ApiResponse(GetContextResponseDto, 200)
-  @ApiOperation({
-    summary: 'Update context',
-    description: 'Update the data of an existing context',
-  })
-  @ExternalApiAccessible()
-  async updateContext(
-    @UserSession() user: UserSessionData,
-    @Param('identifier') identifier: string,
-    @Body() body: UpdateContextRequestDto
-  ): Promise<GetContextResponseDto> {
-    await this.checkFeatureEnabled(user);
-
-    return this.updateContextUsecase.execute(
-      UpdateContextCommand.create({
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        identifier,
-        data: body.data,
-      })
-    );
-  }
-
-  @Delete('/:identifier')
+  @Delete('/:type/:id')
+  @ApiParam({ name: 'type', type: String, description: 'Context type' })
+  @ApiParam({ name: 'id', type: String, description: 'Context ID' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Delete context',
-    description: 'Delete a context by its identifier',
+    summary: 'Delete a context',
+    description: `Delete a context by its type and id.
+      **type** and **id** are required fields, if the context does not exist, it returns the 404 response`,
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @ExternalApiAccessible()
-  async deleteContext(@UserSession() user: UserSessionData, @Param('identifier') identifier: string): Promise<void> {
+  async deleteContext(
+    @UserSession() user: UserSessionData,
+    @Param('type') type: ContextType,
+    @Param('id') id: string
+  ): Promise<void> {
     await this.checkFeatureEnabled(user);
 
     return this.deleteContextUsecase.execute(
       DeleteContextCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        identifier,
+        type,
+        id,
       })
     );
   }

@@ -1,17 +1,15 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsValidContextData } from '@novu/application-generic';
 import { ContextData } from '@novu/shared';
-import { Type } from 'class-transformer';
-import { IsOptional, ValidateNested } from 'class-validator';
-import { CONTEXT_DATA_MAX_SIZE_BYTES, IsContextDataSizeValid } from '../validators/data-size.validator';
+import { IsDefined } from 'class-validator';
 
 export class UpdateContextRequestDto {
-  @ApiPropertyOptional({
-    description: `Context data object containing metadata. Maximum size is ${Math.round(CONTEXT_DATA_MAX_SIZE_BYTES / 1024)}KB.`,
-    example: { tenantName: 'Updated Corp', region: 'us-west-2', settings: { theme: 'light' } },
+  @ApiProperty({
+    description: 'Custom data to associate with this context. Replaces existing data.',
+    example: { tenantName: 'Acme Corp', region: 'us-east-1', settings: { theme: 'dark' } },
+    required: true,
   })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => Object)
-  @IsContextDataSizeValid()
-  data?: ContextData;
+  @IsDefined()
+  @IsValidContextData()
+  data: ContextData;
 }

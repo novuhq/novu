@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { encryptApiKey, FeatureFlagsService } from '@novu/application-generic';
+import { encryptApiKey, FeatureFlagsService, SYSTEM_LIMITS } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository, NotificationGroupRepository } from '@novu/dal';
 import { EnvironmentEnum, EnvironmentTypeEnum, FeatureFlagsKeysEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
 import { createHash } from 'crypto';
@@ -30,8 +30,10 @@ export class CreateEnvironment {
     const environmentCount = await this.environmentRepository.count({
       _organizationId: command.organizationId,
     });
-    if (environmentCount >= 10) {
-      throw new BadRequestException('Organization cannot have more than 10 environments');
+
+    const maxEnvironmentCount = await this.getMaxEnvironmentCount(command.organizationId);
+    if (environmentCount >= maxEnvironmentCount) {
+      throw new BadRequestException(`Organization cannot have more than ${maxEnvironmentCount} environments`);
     }
     const normalizedName = command.name.trim();
 
@@ -61,7 +63,7 @@ export class CreateEnvironment {
       throw new BadRequestException('Color property is required');
     }
 
-    const type = await this.getEnvironmentType(command.name, command.organizationId, command.type);
+    const type = await this.getEnvironmentType(command.name, command.type);
 
     const environment = await this.environmentRepository.create({
       _organizationId: command.organizationId,
@@ -149,26 +151,20 @@ export class CreateEnvironment {
     return commandColor;
   }
 
-  private async getEnvironmentType(
-    name: string,
-    organizationId: string,
-    commandType?: EnvironmentTypeEnum
-  ): Promise<EnvironmentTypeEnum> {
+  private async getEnvironmentType(name: string, commandType?: EnvironmentTypeEnum): Promise<EnvironmentTypeEnum> {
     if (commandType) return commandType;
-
-    const isNewChangeMechanismEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED,
-      organization: { _id: organizationId },
-      defaultValue: false,
-    });
-
-    if (!isNewChangeMechanismEnabled) {
-      return EnvironmentTypeEnum.DEV;
-    }
 
     if (name === EnvironmentEnum.DEVELOPMENT) return EnvironmentTypeEnum.DEV;
     if (name === EnvironmentEnum.PRODUCTION) return EnvironmentTypeEnum.PROD;
 
     return EnvironmentTypeEnum.PROD;
+  }
+
+  private async getMaxEnvironmentCount(organizationId: string): Promise<number> {
+    return await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.MAX_ENVIRONMENT_COUNT,
+      organization: { _id: organizationId },
+      defaultValue: SYSTEM_LIMITS.ENVIRONMENTS,
+    });
   }
 }

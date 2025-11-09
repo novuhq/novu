@@ -1,4 +1,4 @@
-import { ActionTypeEnum, ChannelTypeEnum } from '../../types';
+import { ActionTypeEnum, ChannelTypeEnum, ContextPayload } from '../../types';
 import { SubscriberDto } from '../subscriber';
 import { JSONSchemaDto } from './json-schema-dto';
 
@@ -62,6 +62,18 @@ export class DelayRenderOutput extends RenderOutput {
   amount: number;
   unit: TimeUnitEnum;
 }
+
+export type ThrottleRenderOutput = RenderOutput & {
+  type: 'fixed' | 'dynamic';
+  // Fixed throttle fields
+  amount?: number;
+  unit?: 'minutes' | 'hours' | 'days';
+  // Dynamic throttle fields
+  dynamicKey?: string;
+  // Common fields
+  threshold?: number;
+  throttleKey?: string;
+};
 export enum TimeUnitEnum {
   SECONDS = 'seconds',
   MINUTES = 'minutes',
@@ -109,6 +121,7 @@ export class InAppRenderOutput extends RenderOutput {
 export class PreviewPayload {
   subscriber?: Partial<SubscriberDto>;
   payload?: Record<string, unknown>;
+  context?: ContextPayload;
   steps?: Record<string, unknown>; // step.stepId.unknown
 }
 
@@ -138,10 +151,14 @@ export class GeneratePreviewResponseDto {
       }
     | {
         type: ActionTypeEnum.DELAY;
-        preview: DigestRenderOutput;
+        preview: DelayRenderOutput;
       }
     | {
         type: ActionTypeEnum.DIGEST;
         preview: DigestRenderOutput;
+      }
+    | {
+        type: ActionTypeEnum.THROTTLE;
+        preview: ThrottleRenderOutput;
       };
 }

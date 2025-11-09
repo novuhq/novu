@@ -1,4 +1,5 @@
 import { Variable } from '@maily-to/core/extensions';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Editor } from '@tiptap/core';
 import { EditorView } from '@uiw/react-codemirror';
 import React, { useCallback, useMemo, useRef } from 'react';
@@ -7,13 +8,20 @@ import { HtmlEditor } from '@/components/html-editor';
 import { Maily } from '@/components/maily/maily';
 import { isMailyJson } from '@/components/maily/maily-utils';
 import { FormField } from '@/components/primitives/form/form';
+import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
+import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { LocalizationResourceEnum } from '@/types/translations';
+import { EditorOverlays } from '../editor-overlays';
 import { createEditorBlocks } from '../maily/maily-config';
 import { VariableFrom } from '../maily/types';
 import { MailyVariablesListView, VariableSuggestionsPopoverRef } from '../maily/views/maily-variables-list-view';
 import { BubbleMenuVariablePill, createVariableNodeView } from '../maily/views/variable-view';
 import { CompletionRange } from '../primitives/variable-editor';
+import { LayoutControlInput } from './layout-control-input';
 import { useLayoutEditor } from './layout-editor-provider';
 
 const MailyVariablesListViewForLayouts = React.forwardRef<
@@ -30,24 +38,25 @@ export const LayoutEmailBody = () => {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
   const { layout } = useLayoutEditor();
-  const { control } = useFormContext();
+  const { control, setValue } = useFormContext();
   const editorType = useWatch({ name: 'editorType', control });
-  const parsedVariables = useParseVariables(layout?.variables);
+  const parsedVariables = useParseVariables(layout?.variables, undefined, undefined, true);
+  const resourceId = layout?.layoutId || '';
+  const resourceType = LocalizationResourceEnum.LAYOUT;
+  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
 
   const track = useTelemetry();
+
+  const onChange = useCallback(
+    (value: string) => {
+      setValue('body', value);
+    },
+    [setValue]
+  );
 
   const blocks = useMemo(() => {
     return createEditorBlocks({ track });
   }, [track]);
-
-  const editorKey = useMemo(() => {
-    const variableNames = [...parsedVariables.primitives, ...parsedVariables.arrays, ...parsedVariables.namespaces]
-      .map((v: any) => v.name)
-      .sort()
-      .join(',');
-
-    return `vars-${variableNames.length}-${variableNames.slice(0, 100)}`;
-  }, [parsedVariables.primitives, parsedVariables.arrays, parsedVariables.namespaces]);
 
   const renderVariable = useCallback(
     (opts: {
@@ -71,6 +80,70 @@ export const LayoutEmailBody = () => {
     [parsedVariables]
   );
 
+  const {
+    translationCompletionSource,
+    translationPluginExtension,
+    selectedTranslation,
+    handleTranslationDelete,
+    handleTranslationReplaceKey,
+    handleTranslationPopoverOpenChange,
+    translationTriggerPosition,
+    isTranslationPopoverOpen,
+    shouldEnableTranslations,
+  } = useEditorTranslationOverlay({
+    viewRef,
+    lastCompletionRef,
+    onChange,
+    resourceId,
+    resourceType,
+    isTranslationEnabledOnResource: !!layout?.isTranslationEnabled,
+  });
+
+  const createTranslationKeyMutation = useCreateTranslationKey();
+
+  const handleCreateNewTranslationKey = useCallback(
+    async (translationKey: string) => {
+      if (!resourceId) return;
+
+      await createTranslationKeyMutation.mutateAsync({
+        resourceId,
+        resourceType,
+        translationKey,
+        defaultValue: `[${translationKey}]`, // Placeholder value to indicate missing translation
+      });
+    },
+    [resourceId, resourceType, createTranslationKeyMutation]
+  );
+
+  const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
+    resourceId,
+    resourceType,
+    enabled: shouldEnableTranslations && !!resourceId,
+  });
+
+  const isTranslationEnabled = shouldEnableTranslations && !isTranslationKeysLoading;
+  const editorKey = useMemo(() => {
+    const variableNames = [...parsedVariables.primitives, ...parsedVariables.arrays, ...parsedVariables.namespaces]
+      .map((v) => v.name)
+      .sort()
+      .join(',');
+
+    const translationState = `translation-${isTranslationEnabled ? 'enabled' : 'disabled'}-${translationKeys.length}`;
+    return `vars-${variableNames.length}-${variableNames.slice(0, 100)}-${translationState}`;
+  }, [
+    parsedVariables.primitives,
+    parsedVariables.arrays,
+    parsedVariables.namespaces,
+    isTranslationEnabled,
+    translationKeys.length,
+  ]);
+
+  const extensions = useMemo(() => {
+    if (!translationPluginExtension) return [];
+
+    return [translationPluginExtension];
+  }, [translationPluginExtension]);
+
   return (
     <FormField
       control={control}
@@ -90,8 +163,26 @@ export const LayoutEmailBody = () => {
               isAllowedVariable={parsedVariables.isAllowedVariable}
               onChange={field.onChange}
               isPayloadSchemaEnabled={false}
+              completionSources={translationCompletionSource}
+              isTranslationEnabled={isTranslationEnabled}
+              extensions={extensions}
+              skipContainerClick={isTranslationPopoverOpen}
               className="max-h-[calc(100%-45px)]"
-            />
+            >
+              <EditorOverlays
+                isTranslationPopoverOpen={isTranslationPopoverOpen}
+                selectedTranslation={selectedTranslation}
+                onTranslationPopoverOpenChange={handleTranslationPopoverOpenChange}
+                onTranslationDelete={handleTranslationDelete}
+                onTranslationReplaceKey={handleTranslationReplaceKey}
+                translationTriggerPosition={translationTriggerPosition}
+                translationValueInput={LayoutControlInput}
+                variables={parsedVariables.variables}
+                isAllowedVariable={parsedVariables.isAllowedVariable}
+                resourceId={resourceId}
+                resourceType={resourceType}
+              />
+            </HtmlEditor>
           );
         }
 
@@ -104,12 +195,31 @@ export const LayoutEmailBody = () => {
             blocks={blocks}
             addDigestVariables={false}
             isPayloadSchemaEnabled={false}
-            isTranslationEnabled={false}
-            translationKeys={[]}
+            isTranslationEnabled={isTranslationEnabled}
+            isContextEnabled={isContextEnabled}
+            translationKeys={translationKeys}
+            translationValueInput={LayoutControlInput}
+            onCreateNewTranslationKey={handleCreateNewTranslationKey}
             variableSuggestionsPopover={MailyVariablesListViewForLayouts}
             renderVariable={renderVariable}
             createVariableNodeView={createVariableNodeView}
-          />
+            resourceId={resourceId}
+            resourceType={resourceType}
+          >
+            <EditorOverlays
+              isTranslationPopoverOpen={isTranslationPopoverOpen}
+              selectedTranslation={selectedTranslation}
+              onTranslationPopoverOpenChange={handleTranslationPopoverOpenChange}
+              onTranslationDelete={handleTranslationDelete}
+              onTranslationReplaceKey={handleTranslationReplaceKey}
+              translationTriggerPosition={translationTriggerPosition}
+              translationValueInput={LayoutControlInput}
+              variables={parsedVariables.variables}
+              isAllowedVariable={parsedVariables.isAllowedVariable}
+              resourceId={resourceId}
+              resourceType={resourceType}
+            />
+          </Maily>
         );
       }}
     />

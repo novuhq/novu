@@ -53,6 +53,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         return 'chat';
       case StepTypeEnum.DIGEST:
         return 'digest';
+      case StepTypeEnum.THROTTLE:
+        return 'throttle';
       case StepTypeEnum.TRIGGER:
         return 'trigger';
       case StepTypeEnum.DELAY:
@@ -112,9 +114,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       const firstJob = jobs[0];
       const isEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
-        organization: { _id: firstJob._organizationId },
-        environment: { _id: firstJob._environmentId },
-        user: { _id: firstJob._userId },
+        organization: { _id: String(firstJob._organizationId) },
+        environment: { _id: String(firstJob._environmentId) },
         defaultValue: false,
       });
 
@@ -409,6 +410,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       subscriber_id: job._subscriberId,
       external_subscriber_id: job.subscriberId,
       message_id: options?.message?._id || null,
+      context_keys: job.contextKeys || [],
 
       // Step metadata
       step_type: stepType,
@@ -430,6 +432,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
       // Schedule extensions count
       schedule_extensions_count: job?.scheduleExtensionsCount || 0,
+
+      deferred_ms: null,
     };
   }
 }

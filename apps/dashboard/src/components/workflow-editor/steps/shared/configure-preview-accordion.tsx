@@ -10,6 +10,7 @@ import { Editor } from '@/components/primitives/editor';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { parse, stringify } from '@/utils/json';
 import { EditableJsonViewer } from './editable-json-viewer/editable-json-viewer';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
@@ -52,18 +53,19 @@ export const ConfigurePreviewAccordion = ({
   }, [editorValue, jsonData]);
 
   useEffect(() => {
-    if (isPayloadSchemaEnabled) {
-      try {
-        const parsed = JSON.parse(editorValue || '{}');
+    if (!isPayloadSchemaEnabled) return;
 
-        setJsonData(parsed);
-        setPayloadError(null);
-        setIsValidJson(true);
-      } catch (error) {
-        setPayloadError('Invalid JSON format');
-        setIsValidJson(false);
-      }
+    const { data, error } = parse(editorValue || '{}');
+
+    if (error || data === null) {
+      setPayloadError('Invalid JSON format');
+      setIsValidJson(false);
+      return;
     }
+
+    setJsonData(data);
+    setPayloadError(null);
+    setIsValidJson(true);
   }, [editorValue, isPayloadSchemaEnabled]);
 
   const setEditorValueCallback = useCallback(
@@ -82,7 +84,7 @@ export const ConfigurePreviewAccordion = ({
   const handleJsonChange = useCallback(
     (updatedData: any) => {
       try {
-        const stringified = JSON.stringify(updatedData, null, 2);
+        const stringified = stringify(updatedData);
         setEditorValueCallback(stringified);
         setJsonData(updatedData);
       } catch (error) {
@@ -96,7 +98,7 @@ export const ConfigurePreviewAccordion = ({
     // Use workflow payloadExample if available, otherwise use empty object
     const resetValue =
       isPayloadSchemaEnabled && workflow?.payloadExample
-        ? JSON.stringify({ payload: workflow.payloadExample }, null, 2)
+        ? stringify({ payload: workflow.payloadExample })
         : '{}';
 
     setEditorValueCallback(resetValue);

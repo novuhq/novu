@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
-import { ControlValuesRepository } from '@novu/dal';
+import { ModuleRef } from '@nestjs/core';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { ControlValuesRepository, LocalizationResourceEnum } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
 import { LayoutResponseDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
@@ -13,7 +14,9 @@ export class DuplicateLayoutUseCase {
     private getLayoutUseCase: GetLayoutUseCase,
     private upsertLayoutUseCase: UpsertLayout,
     private controlValuesRepository: ControlValuesRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger
   ) {}
 
   async execute(command: DuplicateLayoutCommand): Promise<LayoutResponseDto> {
@@ -38,6 +41,7 @@ export class DuplicateLayoutUseCase {
       UpsertLayoutCommand.create({
         layoutDto: {
           name: command.overrides.name,
+          isTranslationEnabled: command.overrides.isTranslationEnabled,
           controlValues: originalControlValues?.controls ?? null,
         },
         environmentId: command.environmentId,
@@ -53,6 +57,55 @@ export class DuplicateLayoutUseCase {
       duplicatedLayoutId: duplicatedLayout._id,
     });
 
+    if (duplicatedLayout.isTranslationEnabled) {
+      await this.duplicateTranslationsForLayout({
+        sourceResourceId: originalLayout.layoutId,
+        targetResourceId: duplicatedLayout.layoutId,
+        command,
+      });
+    }
+
     return duplicatedLayout;
+  }
+
+  private async duplicateTranslationsForLayout({
+    sourceResourceId,
+    targetResourceId,
+    command,
+  }: {
+    sourceResourceId: string;
+    targetResourceId: string;
+    command: DuplicateLayoutCommand;
+  }) {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+
+    if (!isEnterprise || isSelfHosted) {
+      return;
+    }
+
+    try {
+      const duplicateLocales = this.moduleRef.get(require('@novu/ee-translation')?.DuplicateLocales, {
+        strict: false,
+      });
+
+      await duplicateLocales.execute({
+        sourceResourceId,
+        sourceResourceType: LocalizationResourceEnum.LAYOUT,
+        targetResourceId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to duplicate translations for layout`, {
+        sourceResourceId,
+        targetResourceId,
+        organizationId: command.organizationId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      throw error;
+    }
   }
 }

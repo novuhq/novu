@@ -5,6 +5,7 @@ import {
   Instrument,
   InstrumentUsecase,
 } from '@novu/application-generic';
+import { ContextResolved } from '@novu/framework/internal';
 import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 // Import new services
@@ -16,7 +17,6 @@ import { BuildStepDataUsecase } from '../build-step-data';
 import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
 import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
-import { SchemaBuilderService } from './services/schema-builder.service';
 import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()
@@ -28,7 +28,6 @@ export class PreviewUsecase {
     private createVariablesObject: CreateVariablesObject,
     private readonly controlValueSanitizer: ControlValueSanitizerService,
     private readonly payloadMerger: PayloadMergerService,
-    private readonly schemaBuilder: SchemaBuilderService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
     private readonly errorHandler: PreviewErrorHandler
   ) {}
@@ -61,7 +60,6 @@ export class PreviewUsecase {
       payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
-      const schema = await this.schemaBuilder.buildPreviewPayloadSchema(payloadExample, context.workflow.payloadSchema);
 
       try {
         const executeOutput = await this.executePreviewUsecase(
@@ -73,13 +71,13 @@ export class PreviewUsecase {
 
         return {
           result: {
-            preview: executeOutput.outputs as any,
+            preview: executeOutput.outputs as Record<string, unknown>,
             type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
-          schema,
+          schema: context.variableSchema,
         };
-      } catch (previewError) {
+      } catch {
         /*
          * If preview execution fails, still return valid schema and payload example
          * but with an empty preview result
@@ -90,10 +88,10 @@ export class PreviewUsecase {
             type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
-          schema,
+          schema: context.variableSchema,
         };
       }
-    } catch (error) {
+    } catch {
       // Return default response for non-existent workflows/steps or other critical errors
       return this.errorHandler.createErrorResponse();
     }
@@ -116,10 +114,7 @@ export class PreviewUsecase {
       })
     );
 
-    // build the payload schema and merge it with the variables schema
-    const variableSchema = await this.schemaBuilder.buildVariablesSchema(variablesObject, stepData.variables);
-
-    return { stepData, controlValues, variableSchema, variablesObject, workflow };
+    return { stepData, controlValues, variableSchema: stepData.variables, variablesObject, workflow };
   }
 
   @Instrument()
@@ -139,6 +134,7 @@ export class PreviewUsecase {
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       stepIdOrInternalId: command.stepIdOrInternalId,
       user: command.user,
+      previewPayload: command.generatePreviewRequestDto.previewPayload,
     });
   }
 
@@ -156,6 +152,7 @@ export class PreviewUsecase {
         payload: previewPayloadExample.payload || {},
         subscriber: previewPayloadExample.subscriber,
         controls: controlValues || {},
+        context: previewPayloadExample.context as ContextResolved,
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
         stepId: stepData.stepId,

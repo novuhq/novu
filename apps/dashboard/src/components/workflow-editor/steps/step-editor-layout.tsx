@@ -14,7 +14,7 @@ import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/s
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
-import { WorkflowTranslationStatus } from '@/components/workflow-editor/workflow-translation-status';
+import { TranslationStatus } from '@/components/workflow-editor/translation-status';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
@@ -34,7 +34,9 @@ function StepEditorContent() {
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
-  const isTranslationsEnabled = useIsTranslationEnabled();
+  const isTranslationsEnabled = useIsTranslationEnabled({
+    isTranslationEnabledOnResource: workflow?.isTranslationEnabled ?? false,
+  });
 
   // Fetch translation group to get outdated locales status
   const { data: translationGroup } = useFetchTranslationGroup({
@@ -55,7 +57,7 @@ function StepEditorContent() {
   return (
     <ResizableLayout autoSaveId="step-editor-main-layout">
       <ResizableLayout.ContextPanel>
-        <PanelHeader icon={RiCodeBlock} title="Preview Context" className="py-2">
+        <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
           <Protect permission={PermissionsEnum.EVENT_WRITE}>
             <Button
               variant="secondary"
@@ -82,7 +84,12 @@ function StepEditorContent() {
           <ResizableLayout autoSaveId="step-editor-content-layout">
             <ResizableLayout.EditorPanel>
               <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} className="min-h-[45px] py-2">
-                <WorkflowTranslationStatus workflowId={workflow.workflowId} className="h-7 text-xs" />
+                <TranslationStatus
+                  resourceId={workflow.workflowId}
+                  resourceType={LocalizationResourceEnum.WORKFLOW}
+                  isTranslationEnabledOnResource={!!workflow.isTranslationEnabled}
+                  className="h-7 text-xs"
+                />
               </PanelHeader>
               <div className="flex-1 overflow-y-auto">
                 <div className="h-full p-3">

@@ -77,17 +77,10 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
         <>
           <Separator />
           <InAppTabsSection className="px-0 pb-0">
-            <div className="flex items-center gap-2.5 text-sm">
+            <div className="flex items-center gap-2 text-sm mb-3">
               <RiInstanceLine className="size-4" />
               <span>Developers</span>
             </div>
-          </InAppTabsSection>
-        </>
-      )}
-
-      {dataObject && (
-        <>
-          <InAppTabsSection className="px-0 pb-3">
             {getComponentByType({
               component: dataObject.component,
             })}

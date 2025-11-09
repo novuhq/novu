@@ -64,7 +64,7 @@ function PlanHeader({ planKey, planConfig, currentPlan, isOnTrial }: PlanHeaderP
         )}
       </div>
       {isCurrentPlan && (
-        <Badge variant="light" color="gray" size="sm">
+        <Badge variant="lighter" color="gray" size="md">
           {currentBadgeText}
         </Badge>
       )}

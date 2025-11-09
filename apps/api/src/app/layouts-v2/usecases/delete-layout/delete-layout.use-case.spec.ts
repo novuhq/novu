@@ -1,5 +1,6 @@
 import { ConflictException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import { ModuleRef } from '@nestjs/core';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -13,6 +14,8 @@ describe('DeleteLayoutUseCase', () => {
   let layoutRepositoryMock: sinon.SinonStubbedInstance<LayoutRepository>;
   let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
+  let moduleRefMock: sinon.SinonStubbedInstance<ModuleRef>;
+  let pinoLoggerMock: sinon.SinonStubbedInstance<PinoLogger>;
   let deleteLayoutUseCase: DeleteLayoutUseCase;
 
   const mockUser = {
@@ -74,18 +77,21 @@ describe('DeleteLayoutUseCase', () => {
     layoutRepositoryMock = sinon.createStubInstance(LayoutRepository);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
+    pinoLoggerMock = sinon.createStubInstance(PinoLogger);
+    moduleRefMock = sinon.createStubInstance(ModuleRef);
 
     deleteLayoutUseCase = new DeleteLayoutUseCase(
       getLayoutUseCaseMock as any,
       layoutRepositoryMock as any,
       controlValuesRepositoryMock as any,
-      analyticsServiceMock as any
+      analyticsServiceMock as any,
+      moduleRefMock as any,
+      pinoLoggerMock as any
     );
 
     // Default mocks
     getLayoutUseCaseMock.execute.resolves(mockLayout as any);
-    controlValuesRepositoryMock.findMany.resolves(mockStepControlValues as any);
-    controlValuesRepositoryMock.updateOne.resolves({} as any);
+    controlValuesRepositoryMock.update.resolves({ matched: 2, modified: 2 } as any);
     controlValuesRepositoryMock.delete.resolves({} as any);
     layoutRepositoryMock.deleteLayout.resolves();
   });
@@ -159,41 +165,21 @@ describe('DeleteLayoutUseCase', () => {
 
       await deleteLayoutUseCase.execute(command);
 
-      // Verify findMany was called to get step controls
-      expect(controlValuesRepositoryMock.findMany.calledOnce).to.be.true;
-      expect(controlValuesRepositoryMock.findMany.firstCall.args[0]).to.deep.equal({
+      // Verify update was called to remove layout references
+      expect(controlValuesRepositoryMock.update.calledOnce).to.be.true;
+      expect(controlValuesRepositoryMock.update.firstCall.args[0]).to.deep.equal({
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
         _environmentId: 'env_id',
         _organizationId: 'org_id',
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
         'controls.layoutId': 'layout_id',
       });
-
-      // Verify updateOne was called for each step control
-      expect(controlValuesRepositoryMock.updateOne.callCount).to.equal(2);
-
-      // Check first update call
-      expect(controlValuesRepositoryMock.updateOne.firstCall.args[0]).to.deep.equal({
-        _id: 'step_control_1',
-        _environmentId: 'env_id',
-        _organizationId: 'org_id',
-      });
-      expect(controlValuesRepositoryMock.updateOne.firstCall.args[1]).to.deep.equal({
-        $unset: { 'controls.layoutId': '' },
-      });
-
-      // Check second update call
-      expect(controlValuesRepositoryMock.updateOne.secondCall.args[0]).to.deep.equal({
-        _id: 'step_control_2',
-        _environmentId: 'env_id',
-        _organizationId: 'org_id',
-      });
-      expect(controlValuesRepositoryMock.updateOne.secondCall.args[1]).to.deep.equal({
+      expect(controlValuesRepositoryMock.update.firstCall.args[1]).to.deep.equal({
         $unset: { 'controls.layoutId': '' },
       });
     });
 
     it('should handle case where no step controls reference the layout', async () => {
-      controlValuesRepositoryMock.findMany.resolves([]);
+      controlValuesRepositoryMock.update.resolves({ matched: 0, modified: 0 } as any);
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
@@ -204,11 +190,8 @@ describe('DeleteLayoutUseCase', () => {
 
       await deleteLayoutUseCase.execute(command);
 
-      // Verify findMany was still called
-      expect(controlValuesRepositoryMock.findMany.calledOnce).to.be.true;
-
-      // Verify updateOne was not called since no step controls exist
-      expect(controlValuesRepositoryMock.updateOne.called).to.be.false;
+      // Verify update was still called (even if no documents matched)
+      expect(controlValuesRepositoryMock.update.calledOnce).to.be.true;
 
       // Verify layout was still deleted
       expect(layoutRepositoryMock.deleteLayout.calledOnce).to.be.true;
@@ -255,7 +238,7 @@ describe('DeleteLayoutUseCase', () => {
 
     it('should propagate error from step controls cleanup', async () => {
       const error = new Error('Database error');
-      controlValuesRepositoryMock.findMany.rejects(error);
+      controlValuesRepositoryMock.update.rejects(error);
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
@@ -274,7 +257,7 @@ describe('DeleteLayoutUseCase', () => {
 
     it('should propagate error from step controls update', async () => {
       const error = new Error('Update error');
-      controlValuesRepositoryMock.updateOne.rejects(error);
+      controlValuesRepositoryMock.update.rejects(error);
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
@@ -320,9 +303,8 @@ describe('DeleteLayoutUseCase', () => {
 
       await deleteLayoutUseCase.execute(command);
 
-      // Verify step controls operations were called before layout deletion
-      expect(controlValuesRepositoryMock.findMany.calledBefore(layoutRepositoryMock.deleteLayout)).to.be.true;
-      expect(controlValuesRepositoryMock.updateOne.calledBefore(layoutRepositoryMock.deleteLayout)).to.be.true;
+      // Verify step controls update was called before layout deletion
+      expect(controlValuesRepositoryMock.update.calledBefore(layoutRepositoryMock.deleteLayout)).to.be.true;
     });
   });
 });

@@ -76,6 +76,11 @@ export class DigestTimedConfigDto {
   @IsOptional()
   @IsString()
   cronExpression?: string;
+
+  @ApiPropertyOptional({ description: 'Until date for scheduling' })
+  @IsOptional()
+  @IsString()
+  untilDate?: string;
 }
 
 export class DigestMetadataDto {
@@ -465,6 +470,9 @@ export class ActivityNotificationResponseDto {
 
   @ApiPropertyOptional({ description: 'Criticality of the notification', type: Boolean })
   critical?: boolean;
+
+  @ApiPropertyOptional({ description: 'Contexts (keys) in which the notification was sent', type: [String] })
+  contextKeys?: string[];
 }
 
 // Activities Response DTO

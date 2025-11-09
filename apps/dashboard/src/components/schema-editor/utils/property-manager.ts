@@ -14,6 +14,7 @@ export interface PropertyData {
   keyName?: string;
   definition?: JSONSchema7;
   isRequired?: boolean;
+  isNullable?: boolean;
 }
 
 export function parsePropertyPath(fullPath: string): PropertyPath | null {
@@ -42,6 +43,7 @@ export function createPropertyItem(
     keyName: propertyData.keyName || '',
     definition: propertyData.definition || newProperty(defaultType),
     isRequired: propertyData.isRequired ?? false,
+    isNullable: propertyData.isNullable ?? false,
   };
 }
 
@@ -80,6 +82,7 @@ function createObjectProperty(keyName: string): PropertyListItem {
       propertyList: [],
     } as JSONSchema7 & { propertyList: PropertyListItem[] },
     isRequired: false,
+    isNullable: false,
   };
 }
 

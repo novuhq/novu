@@ -1,35 +1,43 @@
-import { WorkflowResponseDto } from '@novu/shared';
 import { EditorView } from '@uiw/react-codemirror';
 import { useCallback, useEffect, useState } from 'react';
 import { TRANSLATION_PILL_HEIGHT } from '@/components/primitives/translation-plugin/pill-widget';
 import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useTranslationCompletionSource } from '@/hooks/use-translation-completion-source';
 import { useTranslationPluginExtension } from '@/hooks/use-translation-plugin-extension';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { useIsTranslationEnabled } from './use-is-translation-enabled';
 
 type UseTranslationEditorProps = {
   viewRef: React.MutableRefObject<EditorView | null>;
   lastCompletionRef: React.MutableRefObject<CompletionRange | null>;
   onChange: (value: string) => void;
-  workflow: WorkflowResponseDto | undefined;
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
   enableTranslations?: boolean;
+  isTranslationEnabledOnResource: boolean;
 };
 
 export function useEditorTranslationOverlay({
   viewRef,
   lastCompletionRef,
   onChange,
-  workflow,
+  resourceId,
+  resourceType,
   enableTranslations = true,
+  isTranslationEnabledOnResource,
 }: UseTranslationEditorProps) {
-  const isTranslationEnabled = useIsTranslationEnabled();
+  const isTranslationEnabled = useIsTranslationEnabled({ isTranslationEnabledOnResource });
   const shouldEnableTranslations = isTranslationEnabled && enableTranslations;
 
   const [translationTriggerPosition, setTranslationTriggerPosition] = useState<{ top: number; left: number } | null>(
     null
   );
 
-  const translationCompletionSource = useTranslationCompletionSource({ workflow });
+  const translationCompletionSource = useTranslationCompletionSource({
+    resourceId,
+    resourceType,
+    isTranslationEnabledOnResource,
+  });
 
   const {
     selectedTranslation,
@@ -41,7 +49,8 @@ export function useEditorTranslationOverlay({
     viewRef,
     lastCompletionRef,
     onChange,
-    workflow,
+    resourceId,
+    resourceType,
     shouldEnableTranslations,
   });
 

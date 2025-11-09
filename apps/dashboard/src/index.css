@@ -408,3 +408,15 @@
     display: table-cell !important;
   }
 }
+
+.mly-prose :where(h2 strong):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  font-weight: bolder;
+}
+
+.mly-prose :where(strong):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  font-weight: bolder;
+}
+
+.mly-editor .mly-prose .footer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  font-size: 14px;
+}

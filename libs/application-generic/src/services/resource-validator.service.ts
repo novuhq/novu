@@ -36,6 +36,7 @@ export const SYSTEM_LIMITS = {
   LAYOUTS: 100,
   STEPS_PER_WORKFLOW: 20,
   DEFER_DURATION_MS: 180 * DAY_IN_MS,
+  ENVIRONMENTS: 10,
 } as const;
 
 /* The threshold below which validation is skipped */

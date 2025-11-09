@@ -117,9 +117,8 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const { isUserLoaded } = useAuth();
   const has = useHasPermission();
   const navigate = useNavigate();
-  const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
-
-  const isNewChangeManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED);
+  const { safeSync, PromoteConfirmModal } = useSyncWorkflow(workflow);
+  const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isV0Workflow = workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1;
   const isDuplicable =
     workflow.origin === ResourceOriginEnum.NOVU_CLOUD && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
@@ -406,19 +405,15 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                   <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
                     <SyncWorkflowMenuItem
                       currentEnvironment={currentEnvironment}
-                      isSyncable={isNewChangeManagementEnabled ? false : isSyncable}
-                      tooltipContent={
-                        isNewChangeManagementEnabled
-                          ? 'Syncing workflows is now performed in the top right corner of the navigation bar as Publish changes.'
-                          : tooltipContent
-                      }
+                      isSyncable={false}
+                      tooltipContent="Syncing workflows is now performed in the top right corner of the navigation bar as Publish changes."
                       onSync={safeSync}
                     />
                   </Protect>
                   <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
                     <Link
                       to={
-                        buildRoute(ROUTES.ACTIVITY_FEED, {
+                        buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_WORKFLOW_RUNS : ROUTES.ACTIVITY_FEED, {
                           environmentSlug: currentEnvironment?.slug ?? '',
                         }) +
                         '?' +

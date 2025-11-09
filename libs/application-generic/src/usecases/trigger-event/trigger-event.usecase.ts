@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
+  ContextRepository,
   EnvironmentRepository,
   JobEntity,
   JobRepository,
@@ -9,6 +10,7 @@ import {
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
+  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITenantDefine,
   TriggerRecipientSubscriber,
@@ -17,6 +19,7 @@ import {
 import { addBreadcrumb } from '@sentry/node';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
+import { FeatureFlagsService } from '../../services';
 import type { EventType, Trace } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { AnalyticsService } from '../../services/analytics.service';
@@ -43,7 +46,9 @@ export class TriggerEvent {
     private triggerBroadcast: TriggerBroadcast,
     private triggerMulticast: TriggerMulticast,
     private analyticsService: AnalyticsService,
-    private traceLogRepository: TraceLogRepository
+    private traceLogRepository: TraceLogRepository,
+    private contextRepository: ContextRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -53,12 +58,7 @@ export class TriggerEvent {
     await this.createWorkflowTrace(command, 'workflow_execution_started', 'success', 'Workflow execution started');
 
     try {
-      const mappedCommand = {
-        ...command,
-        tenant: this.mapTenant(command.tenant),
-        actor: this.mapActor(command.actor),
-      };
-
+      const mappedCommand = await this.getMappedCommand(command);
       const { environmentId, identifier, organizationId, userId } = mappedCommand;
 
       const environment = await this.environmentRepository.findOne({
@@ -73,6 +73,7 @@ export class TriggerEvent {
         transactionId: mappedCommand.transactionId,
         environmentId: mappedCommand.environmentId,
         organizationId: mappedCommand.organizationId,
+        contextKeys: mappedCommand.contextKeys,
       });
 
       Logger.debug(mappedCommand.actor);
@@ -218,6 +219,23 @@ export class TriggerEvent {
     }
   }
 
+  private async getMappedCommand(command: TriggerEventCommand) {
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+    });
+
+    return {
+      ...command,
+      tenant: this.mapTenant(command.tenant),
+      actor: this.mapActor(command.actor),
+      ...(isContextEnabled && { contextKeys: await this.resolveContextKeys(command) }),
+    };
+  }
+
   private async createWorkflowTrace(
     command: TriggerEventCommand,
     eventType: EventType,
@@ -354,5 +372,51 @@ export class TriggerEvent {
     }
 
     return subscriber;
+  }
+
+  private async resolveContextKeys(command: TriggerEventCommand): Promise<string[]> {
+    if (!command.context) {
+      return [];
+    }
+
+    try {
+      const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+        command.environmentId,
+        command.organizationId,
+        command.context
+      );
+
+      this.createWorkflowTrace(command, 'workflow_context_resolution_completed', 'success', 'Context resolved', {
+        context: contexts.map((context) => ({
+          id: context.id,
+          type: context.type,
+          data: context.data,
+          createdAt: context.createdAt,
+          updatedAt: context.updatedAt,
+        })),
+      });
+
+      return contexts.map((context) => context.key);
+    } catch (error) {
+      this.logger.error(
+        {
+          error,
+          transactionId: command.transactionId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          context: command.context,
+        },
+        'Failed to resolve context'
+      );
+
+      if (error instanceof BadRequestException) {
+        this.createWorkflowTrace(command, 'workflow_context_resolution_failed', 'error', 'Context resolution failed', {
+          context: command.context,
+        });
+      }
+      throw new BadRequestException(
+        `Failed to resolve context: ${error instanceof Error ? error.message : String(error)} | Context: ${JSON.stringify(command.context)}`
+      );
+    }
   }
 }

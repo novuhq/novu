@@ -19,19 +19,24 @@ export async function discoverCustomStepFactory(
     const controlSchema = options?.controlSchema || emptySchema;
     const outputSchema = options?.outputSchema || emptySchema;
 
+    const [transformedControlSchema, transformedOutputSchema] = await Promise.all([
+      transformSchema(controlSchema),
+      transformSchema(outputSchema),
+    ]);
+
     await discoverStep(targetWorkflow, stepId, {
       stepId,
       type,
       controls: {
-        schema: await transformSchema(controlSchema),
+        schema: transformedControlSchema,
         unknownSchema: controlSchema,
       },
       outputs: {
-        schema: await transformSchema(outputSchema),
+        schema: transformedOutputSchema,
         unknownSchema: outputSchema,
       },
       results: {
-        schema: await transformSchema(outputSchema),
+        schema: transformedOutputSchema,
         unknownSchema: outputSchema,
       },
       resolve: resolve as (controls: Record<string, unknown>) => Awaitable<Record<string, unknown>>,

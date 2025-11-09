@@ -1,3 +1,4 @@
+import { jsonrepair } from 'jsonrepair';
 import { Liquid } from 'liquidjs';
 
 import { PostActionEnum } from './constants';
@@ -448,6 +449,7 @@ export class Client {
           environment: {},
           controls: {},
           subscriber: event.subscriber,
+          context: event.context,
           step: {
             email: this.executeStepFactory(validatedEvent, setResult, hasResult),
             sms: this.executeStepFactory(validatedEvent, setResult, hasResult),
@@ -457,6 +459,7 @@ export class Client {
             push: this.executeStepFactory(validatedEvent, setResult, hasResult),
             chat: this.executeStepFactory(validatedEvent, setResult, hasResult),
             custom: this.executeStepFactory(validatedEvent, setResult, hasResult),
+            throttle: this.executeStepFactory(validatedEvent, setResult, hasResult),
           },
         }),
       ]);
@@ -691,13 +694,16 @@ export class Client {
         },
         payload: event.payload,
         subscriber: event.subscriber,
+        context: event.context,
         steps: buildSteps(event.state),
         t: {}, // Empty object so t.* properties are undefined and trigger default filters
       };
 
       const compiledString = await this.templateEngine.render(parsedTemplate, renderVariables);
-
-      return JSON.parse(compiledString);
+      // repair the string to fix invalid JSON, it could happen in the case when the control value
+      // doesn't have escaped quotes like '"foo"' then compiled string '{"body":""foo""}' is not valid JSON and parse will fail
+      const repairedString = jsonrepair(compiledString);
+      return JSON.parse(repairedString);
     } catch (error) {
       throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
     }

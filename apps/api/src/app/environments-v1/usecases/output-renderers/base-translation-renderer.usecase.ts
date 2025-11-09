@@ -1,16 +1,15 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { LayoutDto, PinoLogger } from '@novu/application-generic';
+import { LocalizationResourceEnum, NotificationTemplateEntity, OrganizationEntity } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { FullPayloadForRender } from './render-command';
 
 @Injectable()
 export abstract class BaseTranslationRendererUsecase {
   constructor(
     protected moduleRef: ModuleRef,
-    protected logger: PinoLogger,
-    protected featureFlagsService: FeatureFlagsService
+    protected logger: PinoLogger
   ) {}
 
   protected async processTranslations({
@@ -18,19 +17,23 @@ export abstract class BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
+    resourceEntity,
+    organization,
   }: {
     controls: Record<string, unknown>;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
+    resourceEntity?: NotificationTemplateEntity | LayoutDto;
+    organization?: OrganizationEntity;
   }): Promise<Record<string, unknown>> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
-
-    if (!isTranslationEnabled) {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
       return controls;
     }
 
@@ -39,8 +42,11 @@ export abstract class BaseTranslationRendererUsecase {
       variables,
       environmentId,
       organizationId,
-      workflowId,
+      resourceId,
+      resourceType,
       locale,
+      resourceEntity,
+      organization,
     }) as Promise<Record<string, unknown>>;
   }
 
@@ -49,19 +55,21 @@ export abstract class BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
+    organization,
   }: {
     content: string;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
+    organization?: OrganizationEntity;
   }): Promise<string> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
-
-    if (!isTranslationEnabled) {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
       return content;
     }
 
@@ -70,17 +78,11 @@ export abstract class BaseTranslationRendererUsecase {
       variables,
       environmentId,
       organizationId,
-      workflowId,
+      resourceId,
+      resourceType,
       locale,
+      organization,
     }) as Promise<string>;
-  }
-
-  private async isTranslationFeatureEnabled(organizationId: string): Promise<boolean> {
-    return await this.featureFlagsService.getFlag({
-      organization: { _id: organizationId },
-      key: FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED,
-      defaultValue: false,
-    });
   }
 
   private async executeTranslation({
@@ -88,17 +90,31 @@ export abstract class BaseTranslationRendererUsecase {
     variables,
     environmentId,
     organizationId,
-    workflowId,
+    resourceId,
+    resourceType,
     locale,
+    resourceEntity,
+    organization,
   }: {
     content: string | Record<string, unknown>;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
-    workflowId?: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
     locale?: string;
+    resourceEntity?: NotificationTemplateEntity | LayoutDto;
+    organization?: OrganizationEntity;
   }): Promise<string | Record<string, unknown>> {
-    if (!workflowId) {
+    if (!resourceId) {
+      this.logger.warn('Resource ID is required for translation module', {
+        resourceId,
+        resourceType,
+        organizationId,
+        environmentId,
+        locale,
+      });
+
       return content;
     }
 
@@ -109,7 +125,8 @@ export abstract class BaseTranslationRendererUsecase {
       const liquidEngine = createLiquidEngine();
 
       const translatedContent = await translate.execute({
-        workflowIdOrInternalId: workflowId,
+        resourceId,
+        resourceType,
         organizationId,
         environmentId,
         userId: 'system',
@@ -117,13 +134,16 @@ export abstract class BaseTranslationRendererUsecase {
         content: contentString,
         payload: variables,
         liquidEngine,
+        resourceEntity,
+        organization,
       });
 
       return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);
     } catch (error) {
       this.logger.error('Translation processing failed', {
         error: error?.message || error,
-        workflowId,
+        resourceId,
+        resourceType,
         organizationId,
         environmentId,
         locale,
@@ -131,7 +151,7 @@ export abstract class BaseTranslationRendererUsecase {
       });
 
       throw new InternalServerErrorException(
-        `Translation processing failed for workflow ${workflowId}: ${error?.message || String(error)}`
+        `Translation processing failed for resource ${resourceId}: ${error?.message || String(error)}`
       );
     }
   }

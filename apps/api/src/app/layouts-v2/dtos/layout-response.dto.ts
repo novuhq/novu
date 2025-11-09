@@ -25,7 +25,7 @@ export class LayoutResponseDto {
   @IsString()
   layoutId: string;
 
-  @ApiProperty({ description: 'Slug of the layout' })
+  @ApiProperty({ description: 'Slug of the layout', type: 'string' })
   @IsString()
   slug: Slug;
 
@@ -36,6 +36,12 @@ export class LayoutResponseDto {
   @ApiProperty({ description: 'Whether the layout is the default layout' })
   @IsBoolean()
   isDefault: boolean;
+
+  @ApiProperty({
+    description: 'Whether the layout translations are enabled',
+  })
+  @IsBoolean()
+  isTranslationEnabled: boolean;
 
   @ApiProperty({ description: 'Last updated timestamp' })
   @IsString()

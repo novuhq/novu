@@ -4,6 +4,7 @@ import type { OrganizationId } from '../organization';
 
 export enum LocalizationResourceEnum {
   WORKFLOW = 'workflow',
+  LAYOUT = 'layout',
 }
 
 export class LocalizationGroupEntity {

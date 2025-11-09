@@ -169,7 +169,7 @@ export default function Home() {
                     </p>
                   </div>
                   <a
-                    href="https://docs.novu.co/inbox/introduction/?utm_campaign=nextjs-starter&utm_source=nextjs-starter&utm_medium=nextjs"
+                    href="https://docs.novu.co/platform/inbox/overview/?utm_campaign=nextjs-starter&utm_source=nextjs-starter&utm_medium=nextjs"
                     target="_blank"
                     className={styles.link}
                     rel="noopener"

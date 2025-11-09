@@ -1,7 +1,7 @@
 import { Novu } from '@novu/api';
 import { ActivityNotificationResponseDto, ChannelTypeEnum } from '@novu/api/models/components';
 import { NotificationTemplateEntity, NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { CreateWorkflowDto, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -12,6 +12,16 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
   let smsOnlyTemplate: NotificationTemplateEntity;
   let subscriberId: string;
   let novuClient: Novu;
+  const isContextEnabled = process.env.IS_CONTEXT_ENABLED;
+
+  before(() => {
+    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
+  });
+
+  after(() => {
+    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = isContextEnabled;
+  });
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -272,5 +282,62 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     expect(activity.subscriber).to.be.undefined;
     expect(activity.channels).to.be.ok;
     expect(activity.channels).to.include.oneOf(Object.keys(ChannelTypeEnum).map((i) => ChannelTypeEnum[i]));
+  });
+
+  it('should filter by contextKeys', async () => {
+    const workflowBody: CreateWorkflowDto = {
+      name: 'Test Context Workflow',
+      workflowId: 'test-context-workflow-notifications',
+      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'Test Step',
+          controlValues: {
+            subject: 'Test Subject',
+            body: 'Test Body',
+          },
+        },
+      ],
+    };
+
+    const workflowResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+    expect(workflowResponse.status).to.equal(201);
+    const workflow: WorkflowResponseDto = workflowResponse.body.data;
+
+    await novuClient.trigger({
+      workflowId: workflow.workflowId,
+      to: subscriberId,
+      payload: {},
+      context: { projectId: 'project-alpha' },
+    });
+
+    await novuClient.trigger({
+      workflowId: workflow.workflowId,
+      to: subscriberId,
+      payload: {},
+      context: { projectId: 'project-beta' },
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+    await session.waitForStandardQueueCompletion();
+    await session.waitForJobCompletion(workflow._id);
+
+    // Test 1: No contextKeys filter - should return all notifications
+    let body = await novuClient.notifications.list({ page: 0 });
+    expect(body.result.data.length).to.be.equal(2);
+
+    // Test 2: Filter by specific context - should return only matching notification
+    body = await novuClient.notifications.list({ page: 0, contextKeys: ['projectId:project-alpha'] });
+    expect(body.result.data.length).to.be.equal(1);
+    expect(body.result.data[0].template?.id).to.equal(workflow._id);
+    expect(body.result.data[0].contextKeys).to.deep.equal(['projectId:project-alpha']);
+
+    // Test 3: Filter by different context - should return only matching notification
+    body = await novuClient.notifications.list({ page: 0, contextKeys: ['projectId:project-beta'] });
+    expect(body.result.data.length).to.be.equal(1);
+    expect(body.result.data[0].template?.id).to.equal(workflow._id);
+    expect(body.result.data[0].contextKeys).to.deep.equal(['projectId:project-beta']);
   });
 });

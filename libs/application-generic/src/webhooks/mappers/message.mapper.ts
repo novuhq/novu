@@ -29,6 +29,7 @@ export const messageWebhookMapper = (
     | 'status'
     | 'errorId'
     | 'errorText'
+    | 'contextKeys'
   >,
   subscriberId: string,
   context?: {
@@ -71,5 +72,6 @@ export const messageWebhookMapper = (
     webhookUrl: context?.webhookUrl,
     channelData: context?.channelData,
     providerResponseId: context?.providerResponseId,
+    contextKeys: message.contextKeys,
   };
 };

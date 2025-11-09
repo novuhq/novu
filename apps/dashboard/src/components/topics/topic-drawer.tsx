@@ -1,11 +1,12 @@
 import { motion } from 'motion/react';
 import { forwardRef, useEffect, useState } from 'react';
 import { RiDiscussLine } from 'react-icons/ri';
-import { TopicSubscription } from '@/api/topics';
+import { ListTopicSubscriptionsResponse, TopicSubscription } from '@/api/topics';
 import { Separator } from '@/components/primitives/separator';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { TooltipProvider } from '@/components/primitives/tooltip';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
@@ -15,6 +16,7 @@ import { AddSubscriberForm } from './add-subscriber-form';
 import { EmptyTopicsIllustration } from './empty-topics-illustration';
 import { useTopic } from './hooks/use-topic';
 import { useTopicSubscriptions } from './hooks/use-topic-subscribers';
+import { SubscriptionCountBadge } from './subscription-count-badge';
 import { TopicActivity } from './topic-activity';
 import { TopicOverviewForm, TopicOverviewSkeleton } from './topic-overview-form';
 import { TopicSubscriberFilter } from './topic-subscriber-filter';
@@ -54,37 +56,41 @@ const TopicOverview = (props: TopicOverviewProps) => {
     return <TopicNotFound />;
   }
 
-  return <TopicOverviewForm topic={data!} readOnly={readOnly} />;
+  if (!data) {
+    return <TopicOverviewSkeleton />;
+  }
+
+  return <TopicOverviewForm topic={data} readOnly={readOnly} />;
 };
 
 type TopicSubscribersProps = {
   topicKey: string;
   readOnly?: boolean;
+  subscriptionData: ListTopicSubscriptionsResponse | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  subscriberId?: string;
+  onSubscriberIdChange: (subscriberId?: string) => void;
+  onLoadingChange: (loading: boolean) => void;
 };
 
 const TopicSubscribers = (props: TopicSubscribersProps) => {
-  const { topicKey, readOnly = false } = props;
-  const [subscriberId, setSubscriberId] = useState<string | undefined>(undefined);
-  const [isFilterLoading, setIsFilterLoading] = useState(false);
-  const { data, isPending, error } = useTopicSubscriptions(topicKey, { subscriberId });
-
-  const isLoading = isPending || isFilterLoading;
-
-  useEffect(() => {
-    if (!isPending && isFilterLoading) {
-      setIsFilterLoading(false);
-    }
-  }, [isPending, isFilterLoading]);
-
-  const handleSubscriberIdChange = (newSubscriberId?: string) => {
-    setSubscriberId(newSubscriberId);
-  };
+  const {
+    topicKey,
+    readOnly = false,
+    subscriptionData,
+    isLoading,
+    error,
+    subscriberId,
+    onSubscriberIdChange,
+    onLoadingChange,
+  } = props;
 
   if (error) {
     return <TopicNotFound />;
   }
 
-  const subscriptions = data?.data || [];
+  const subscriptions = subscriptionData?.data || [];
 
   return (
     <motion.div
@@ -115,9 +121,9 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
         <TopicSubscriberFilter
           topicKey={topicKey}
           subscriberId={subscriberId}
-          onSubscriberIdChange={handleSubscriberIdChange}
+          onSubscriberIdChange={onSubscriberIdChange}
           isLoading={isLoading}
-          onLoadingChange={setIsFilterLoading}
+          onLoadingChange={onLoadingChange}
         />
       </div>
 
@@ -174,6 +180,12 @@ type TopicTabsProps = {
 function TopicTabs(props: TopicTabsProps) {
   const { topicKey, readOnly = false } = props;
   const [tab, setTab] = useState('overview');
+  const [subscriberId, setSubscriberId] = useState<string | undefined>(undefined);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+
+  // Fetch subscription data at the top level so count is always available
+  const { data: subscriptionData, isPending, error } = useTopicSubscriptions(topicKey, { subscriberId });
+
   const {
     protectedOnValueChange,
     ProtectionAlert,
@@ -182,47 +194,85 @@ function TopicTabs(props: TopicTabsProps) {
     onValueChange: setTab,
   });
 
+  const isLoading = isPending || isFilterLoading;
+
+  useEffect(() => {
+    if (!isPending && isFilterLoading) {
+      setIsFilterLoading(false);
+    }
+  }, [isPending, isFilterLoading]);
+
+  const handleSubscriberIdChange = (newSubscriberId?: string) => {
+    setSubscriberId(newSubscriberId);
+  };
+
+  // Extract count data for the badge - only use unfiltered data for count
+  const subscriptionCount =
+    subscriptionData && !subscriberId
+      ? {
+          totalCount: subscriptionData.totalCount,
+          totalCountCapped: subscriptionData.totalCountCapped,
+        }
+      : null;
+
   return (
-    <Tabs
-      ref={protectionRef}
-      className="flex h-full w-full flex-col"
-      value={tab}
-      onValueChange={protectedOnValueChange}
-    >
-      <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
-        <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
-          <RiDiscussLine className="size-5 p-0.5" />
-          <TruncatedText className="flex-1 pr-10">Topic - {topicKey}</TruncatedText>
-        </div>
-      </header>
-
-      <TabsList
-        variant={'regular'}
-        className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b border-t-0 bg-transparent px-3 py-0"
+    <TooltipProvider>
+      <Tabs
+        ref={protectionRef}
+        className="flex h-full w-full flex-col"
+        value={tab}
+        onValueChange={protectedOnValueChange}
       >
-        <TabsTrigger value="overview" className={tabTriggerClasses}>
-          Overview
-        </TabsTrigger>
-        <TabsTrigger value="subscribers" className={tabTriggerClasses}>
-          Subscriptions
-        </TabsTrigger>
-        <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
-          Activity Feed
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="overview" className="h-full w-full overflow-y-auto">
-        <TopicOverview topicKey={topicKey} readOnly={readOnly} />
-      </TabsContent>
-      <TabsContent value="subscribers" className="h-full w-full overflow-y-auto">
-        <TopicSubscribers topicKey={topicKey} readOnly={readOnly} />
-      </TabsContent>
-      <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
-        <TopicActivity topicKey={topicKey} />
-      </TabsContent>
-      <Separator />
+        <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
+          <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
+            <RiDiscussLine className="size-5 p-0.5" />
+            <TruncatedText className="flex-1 pr-10">Topic - {topicKey}</TruncatedText>
+          </div>
+        </header>
 
-      {ProtectionAlert}
-    </Tabs>
+        <TabsList
+          variant={'regular'}
+          className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b border-t-0 bg-transparent px-3 py-0"
+        >
+          <TabsTrigger value="overview" className={tabTriggerClasses}>
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="subscribers" className={cn(tabTriggerClasses, 'flex items-center')}>
+            Subscriptions
+            {subscriptionCount && (
+              <SubscriptionCountBadge
+                count={subscriptionCount.totalCount}
+                isCapped={subscriptionCount.totalCountCapped}
+              />
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
+            Activity Feed
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="h-full w-full overflow-y-auto">
+          <TopicOverview topicKey={topicKey} readOnly={readOnly} />
+        </TabsContent>
+        <TabsContent value="subscribers" className="h-full w-full overflow-y-auto">
+          <TopicSubscribers
+            topicKey={topicKey}
+            readOnly={readOnly}
+            subscriptionData={subscriptionData}
+            isLoading={isLoading}
+            error={error}
+            subscriberId={subscriberId}
+            onSubscriberIdChange={handleSubscriberIdChange}
+            onLoadingChange={setIsFilterLoading}
+          />
+        </TabsContent>
+        <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
+          <TopicActivity topicKey={topicKey} />
+        </TabsContent>
+        <Separator />
+
+        {ProtectionAlert}
+      </Tabs>
+    </TooltipProvider>
   );
 }
 

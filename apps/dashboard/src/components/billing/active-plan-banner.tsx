@@ -196,7 +196,12 @@ function UsageMetricRow({ metric, subscription, workflowsData, organization }: U
           </span>
         </span>
       </div>
-      <Progress value={usageData.current} max={usageData.included} variant="error" className="h-0.5" />
+      <Progress
+        value={Math.min(usageData.current, usageData.included)}
+        max={usageData.included}
+        variant="primary"
+        className="h-0.5"
+      />
     </div>
   );
 }

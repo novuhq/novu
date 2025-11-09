@@ -10,7 +10,7 @@
     "esModuleInterop": true,
     "rootDir": "src",
     "strict": true,
-    "types": ["node"],
+    "types": ["node", "mocha"],
     "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
   },

@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   ComputeJobWaitDurationService,
   ConditionsFilter,
@@ -6,16 +6,21 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  DurationUtils,
   getDigestType,
+  getNestedValue,
   IFilterVariables,
   InstrumentUsecase,
+  isDynamicOutput,
   isLookBackDigestOutput,
-  isRegularDigestOutput,
-  isTimedDigestOutput,
+  isRegularOutput,
+  isTimedOutput,
   JobsOptions,
   LogDecorator,
   NormalizeVariables,
   NormalizeVariablesCommand,
+  PinoLogger,
+  RedisThrottleService,
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
@@ -24,14 +29,18 @@ import {
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
-import { DigestOutput, ExecuteOutput } from '@novu/framework/internal';
+import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   castUnitToDigestUnitEnum,
-  DeliveryLifecycleStatus,
+  DelayTypeEnum,
+  DeliveryLifecycleStatusEnum,
   DigestCreationResultEnum,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IDelayDynamicMetadata,
+  IDelayRegularMetadata,
+  IDelayTimedMetadata,
   IDigestBaseMetadata,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
@@ -40,9 +49,9 @@ import {
 } from '@novu/shared';
 import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import _ from 'lodash';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
-import { AddDelayJob } from './add-delay-job.usecase';
 import { AddJobCommand } from './add-job.command';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
@@ -59,11 +68,9 @@ export enum BackoffStrategiesEnum {
  */
 type AddJobResult = {
   workflowStatus: WorkflowRunStatusEnum | null;
-  deliveryLifecycleStatus: DeliveryLifecycleStatus | null;
+  deliveryLifecycleStatus: DeliveryLifecycleStatusEnum | null;
   stepStatus?: StepRunStatus;
 };
-
-const LOG_CONTEXT = 'AddJob';
 
 @Injectable()
 export class AddJob {
@@ -74,7 +81,6 @@ export class AddJob {
     @Inject(forwardRef(() => CreateExecutionDetails))
     private createExecutionDetails: CreateExecutionDetails,
     private mergeOrCreateDigestUsecase: MergeOrCreateDigest,
-    private addDelayJob: AddDelayJob,
     @Inject(forwardRef(() => ComputeJobWaitDurationService))
     private computeJobWaitDurationService: ComputeJobWaitDurationService,
     @Inject(forwardRef(() => ConditionsFilter))
@@ -83,18 +89,22 @@ export class AddJob {
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
     private executeBridgeJob: ExecuteBridgeJob,
     private stepRunRepository: StepRunRepository,
-    private subscriberRepository: SubscriberRepository
-  ) {}
+    private subscriberRepository: SubscriberRepository,
+    private redisThrottleService: RedisThrottleService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   @LogDecorator()
   public async execute(command: AddJobCommand): Promise<AddJobResult> {
-    Logger.verbose('Getting Job', LOG_CONTEXT);
+    this.logger.trace('Getting Job');
     const { job } = command;
-    Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
+    this.logger.debug(`Job contents for job ${job._id}`, job);
 
     if (!job) {
-      Logger.warn(`Job was null in both the input and search`, LOG_CONTEXT);
+      this.logger.warn(`Job was null in both the input and search`);
 
       return {
         workflowStatus: null,
@@ -102,12 +112,7 @@ export class AddJob {
       };
     }
 
-    Logger.log(`Scheduling New Job ${job._id} of type: ${job.type}`, LOG_CONTEXT);
-
-    const result = isJobDeferredType(job.type)
-      ? await this.executeDeferredJob(command)
-      : await this.executeNoneDeferredJob(command);
-
+    this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -118,6 +123,10 @@ export class AddJob {
         isRetry: false,
       })
     );
+
+    const result = isJobDeferredType(job.type)
+      ? await this.executeDeferredJob(command)
+      : await this.executeNoneDeferredJob(command);
 
     return result;
   }
@@ -169,21 +178,41 @@ export class AddJob {
       cronExpression?: string;
     } | null = null;
 
+    const subscriber = await this.subscriberRepository.findOne(
+      {
+        _id: job._subscriberId,
+        _environmentId: job._environmentId,
+      },
+      'timezone',
+      { readPreference: 'secondaryPreferred' }
+    );
+    const bridgeDelayAmountDate = this.getBridgeNextCronDate(bridgeResponse, subscriber?.timezone);
+    const bridgeDelayAmount = bridgeDelayAmountDate
+      ? differenceInMilliseconds(bridgeDelayAmountDate, new Date())
+      : undefined;
+
     if (job.type === StepTypeEnum.DIGEST) {
-      digestResult = await this.handleDigest(command, job, digestAmount, bridgeResponse);
+      digestResult = await this.handleDigest({
+        command,
+        job,
+        bridgeResponse,
+        bridgeDelayAmountDate,
+        bridgeDelayAmount,
+        timezone: subscriber?.timezone,
+      });
 
       if (isShouldHaltJobExecution(digestResult.digestCreationResult)) {
         if (digestResult.digestCreationResult === DigestCreationResultEnum.MERGED) {
           return {
             workflowStatus: WorkflowRunStatusEnum.COMPLETED,
-            deliveryLifecycleStatus: DeliveryLifecycleStatus.MERGED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.MERGED,
           };
         }
 
         if (digestResult.digestCreationResult === DigestCreationResultEnum.SKIPPED) {
           return {
             workflowStatus: WorkflowRunStatusEnum.COMPLETED,
-            deliveryLifecycleStatus: DeliveryLifecycleStatus.SKIPPED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SKIPPED,
           };
         }
       }
@@ -191,21 +220,65 @@ export class AddJob {
       digestAmount = digestResult.digestAmount;
     }
 
+    if (job.type === StepTypeEnum.THROTTLE) {
+      try {
+        const throttleResult = await this.handleThrottle(command, job, bridgeResponse);
+
+        if (throttleResult.shouldSkip) {
+          await this.handleThrottleSkip(
+            command,
+            job,
+            throttleResult as { shouldSkip: boolean; executionCount: number; threshold: number; throttledUntil: string }
+          );
+
+          return {
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SKIPPED,
+          };
+        }
+      } catch (error) {
+        return await this.handleStepValidationError(
+          command,
+          job,
+          error,
+          StepTypeEnum.THROTTLE,
+          DetailEnum.DELAY_MISCONFIGURATION
+        );
+      }
+    }
+
     if (job.type === StepTypeEnum.DELAY) {
-      delayAmount = await this.handleDelay(command, bridgeResponse);
+      try {
+        delayAmount = await this.handleDelay({
+          command,
+          job,
+          bridgeResponse,
+          bridgeDelayAmountDate,
+          bridgeDelayAmount,
+          timezone: subscriber?.timezone,
+        });
 
-      if (delayAmount === undefined) {
-        Logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`, LOG_CONTEXT);
+        if (delayAmount === undefined) {
+          this.logger.warn(`Delay Amount does not exist on a delay job ${job._id}`);
 
-        return {
-          workflowStatus: null,
-          deliveryLifecycleStatus: null,
-        };
+          return {
+            workflowStatus: null,
+            deliveryLifecycleStatus: null,
+          };
+        }
+      } catch (error) {
+        return await this.handleStepValidationError(
+          command,
+          job,
+          error,
+          StepTypeEnum.DELAY,
+          DetailEnum.DELAY_MISCONFIGURATION
+        );
       }
     }
 
     if ((digestAmount || delayAmount) && filtered) {
-      Logger.verbose(`Delay for job ${job._id} will be 0 because job was filtered`, LOG_CONTEXT);
+      this.logger.trace(`Delay for job ${job._id} will be 0 because job was filtered`);
     }
 
     const delay = this.getExecutionDelayAmount(filtered, digestAmount, delayAmount);
@@ -216,11 +289,20 @@ export class AddJob {
       throw new Error('Defer duration limit exceeded');
     }
 
-    await this.stepRunRepository.create(command.job, {
+    const updatedJob = await this.jobRepository.findOne({
+      _id: job._id,
+      _environmentId: job._environmentId,
+    });
+
+    if (!updatedJob) {
+      throw new Error(`Job with id ${job._id} not found`);
+    }
+
+    await this.stepRunRepository.create(updatedJob, {
       status: JobStatusEnum.DELAYED,
     });
 
-    await this.queueJob(job, delay);
+    await this.queueJob({ job, delay, untilDate: bridgeDelayAmountDate, timezone: subscriber?.timezone });
 
     return {
       workflowStatus: null,
@@ -245,7 +327,7 @@ export class AddJob {
 
     if (errors.length > 0) {
       const uniqueErrors = _.uniq(errors.map((error) => error.message));
-      Logger.warn({ errors, jobId: job._id }, uniqueErrors, LOG_CONTEXT);
+      this.logger.warn({ errors, jobId: job._id }, uniqueErrors);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -268,14 +350,14 @@ export class AddJob {
   private async executeNoneDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 
-    Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
+    this.logger.trace(`Updating status to queued for job ${job._id}`);
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
 
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.QUEUED,
     });
 
-    await this.queueJob(job, 0);
+    await this.queueJob({ job, delay: 0, untilDate: null });
 
     return {
       workflowStatus: null,
@@ -283,32 +365,152 @@ export class AddJob {
     };
   }
 
-  private async handleDelay(command: AddJobCommand, bridgeResponse: ExecuteOutput | null) {
+  private async handleDelay({
+    command,
+    job,
+    bridgeResponse,
+    bridgeDelayAmountDate,
+    bridgeDelayAmount,
+    timezone,
+  }: {
+    command: AddJobCommand;
+    job: JobEntity;
+    bridgeResponse: ExecuteOutput | null;
+    bridgeDelayAmountDate: Date | null;
+    bridgeDelayAmount: number | undefined;
+    timezone: string | undefined;
+  }) {
     let metadata: IWorkflowStepMetadata;
     if (bridgeResponse) {
       // Assign V2 metadata from Bridge response
-      metadata = await this.updateMetadata(bridgeResponse, command);
+      metadata = await this.updateMetadata(bridgeResponse, command, bridgeDelayAmountDate);
     } else {
       // Assign V1 metadata from known values
       metadata = command.job.step.metadata as IWorkflowStepMetadata;
     }
 
-    const delayAmount = await this.addDelayJob.execute(
-      AddJobCommand.create({
-        ...command,
-        job: {
-          ...command.job,
-          step: {
-            ...command.job.step,
-            metadata,
-          },
-        },
+    const delayAmount =
+      bridgeDelayAmount ??
+      (await this.computeJobWaitDurationService.calculateDelay({
+        stepMetadata: metadata,
+        payload: job.payload,
+        overrides: job.overrides,
+        timezone,
+      }));
+
+    const delayType = 'type' in metadata ? metadata.type : null;
+    if (delayType === DelayTypeEnum.DYNAMIC) {
+      await this.validateDynamicDuration(command, job, delayAmount, StepTypeEnum.DELAY);
+    }
+
+    await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.DELAYED);
+
+    this.logger.debug(`Delay step Amount is: ${delayAmount}`);
+
+    return delayAmount;
+  }
+
+  private async validateDynamicDuration(
+    command: AddJobCommand,
+    job: JobEntity,
+    durationMs: number,
+    stepType: StepTypeEnum.DELAY | StepTypeEnum.THROTTLE
+  ): Promise<void> {
+    const stepTypeName = stepType === StepTypeEnum.DELAY ? 'delay' : 'throttle';
+    const pastTimeDetail =
+      stepType === StepTypeEnum.DELAY ? DetailEnum.DELAY_MISCONFIGURATION : DetailEnum.THROTTLE_WINDOW_IN_PAST;
+
+    if (durationMs <= 0) {
+      this.logger.error(`Dynamic ${stepTypeName} must be in the future. durationMs: ${durationMs}, jobId: ${job._id}`);
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: pastTimeDetail,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ error: `${stepTypeName} must be in the future` }),
+        })
+      );
+
+      throw new Error(`Dynamic ${stepTypeName} must be in the future. durationMs: ${durationMs}`);
+    }
+
+    const tierValidationErrors = await this.tierRestrictionsValidateUsecase.execute(
+      TierRestrictionsValidateCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        stepType,
+        deferDurationMs: durationMs,
       })
     );
 
-    Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
+    if (tierValidationErrors && tierValidationErrors.length > 0) {
+      const errorMessage = tierValidationErrors[0].message;
+      this.logger.error(`${stepTypeName} duration exceeds tier limits: ${errorMessage}, jobId: ${job._id}`);
 
-    return delayAmount;
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.DEFER_DURATION_LIMIT_EXCEEDED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ errorMessage }),
+        })
+      );
+
+      throw new Error(`${stepTypeName} duration exceeds tier limits: ${errorMessage}`);
+    }
+  }
+
+  private async handleStepValidationError(
+    command: AddJobCommand,
+    job: JobEntity,
+    error: Error,
+    stepType: StepTypeEnum,
+    detail: DetailEnum
+  ): Promise<AddJobResult> {
+    const stepTypeName = stepType.toLowerCase();
+    this.logger.error(`${stepTypeName} validation failed for job ${job._id}: ${error.message}`);
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.FAILED,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({ error: error.message }),
+      })
+    );
+
+    await this.jobRepository.updateOne(
+      { _id: job._id, _environmentId: command.environmentId },
+      {
+        $set: {
+          status: JobStatusEnum.FAILED,
+          error: {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+          },
+        },
+      }
+    );
+
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.FAILED,
+    });
+
+    return {
+      workflowStatus: WorkflowRunStatusEnum.ERROR,
+      deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
+    };
   }
 
   private async fetchBridgeData(
@@ -329,8 +531,14 @@ export class AddJob {
 
     return response;
   }
-  private async updateMetadata(response: ExecuteOutput, command: AddJobCommand) {
+
+  private async updateMetadata(response: ExecuteOutput, command: AddJobCommand, untilDate?: Date | null) {
     let metadata = {} as IWorkflowStepMetadata;
+
+    if (command.job.type === StepTypeEnum.DELAY) {
+      return this.updateDelayMetadata(response, command);
+    }
+
     const digest = command.job.digest as IDigestBaseMetadata;
 
     const outputs = response.outputs as DigestOutput;
@@ -338,12 +546,12 @@ export class AddJob {
     const outputDigestValue = outputs?.digestKey;
     const digestType = getDigestType(outputs);
 
-    if (isTimedDigestOutput(outputs)) {
+    if (isTimedOutput(outputs)) {
       metadata = {
         type: DigestTypeEnum.TIMED,
         digestValue: outputDigestValue || 'No-Value-Provided',
         digestKey: digest.digestKey || 'No-Key-Provided',
-        timed: { cronExpression: outputs?.cron },
+        timed: { cronExpression: outputs?.cron, untilDate: untilDate?.toISOString() },
       } as IDigestTimedMetadata;
       await this.jobRepository.updateOne(
         {
@@ -358,6 +566,7 @@ export class AddJob {
             'digest.amount': metadata.amount,
             'digest.unit': metadata.unit,
             'digest.timed.cronExpression': metadata.timed?.cronExpression,
+            'digest.timed.untilDate': metadata.timed?.untilDate,
           },
         }
       );
@@ -395,7 +604,7 @@ export class AddJob {
       );
     }
 
-    if (isRegularDigestOutput(outputs)) {
+    if (isRegularOutput(outputs)) {
       if (!outputs.amount && !outputs.unit) {
         outputs.amount = 0;
         outputs.unit = 'seconds';
@@ -429,15 +638,235 @@ export class AddJob {
     return metadata;
   }
 
-  private async handleDigest(
+  private async updateDelayMetadata(response: ExecuteOutput, command: AddJobCommand) {
+    const outputs = response.outputs as DelayOutput;
+    let metadata = {} as IWorkflowStepMetadata;
+
+    if (isDynamicOutput(outputs)) {
+      metadata = {
+        type: DelayTypeEnum.DYNAMIC,
+        dynamicKey: (outputs as unknown as { dynamicKey: string }).dynamicKey,
+      } as IDelayDynamicMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'step.metadata.type': metadata.type,
+            'step.metadata.dynamicKey': (metadata as IDelayDynamicMetadata).dynamicKey,
+          },
+        }
+      );
+    } else if (isTimedOutput(outputs)) {
+      metadata = {
+        type: DelayTypeEnum.TIMED,
+        amount: 0,
+        unit: castUnitToDigestUnitEnum('seconds'),
+      } as IDelayTimedMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'step.metadata.type': DelayTypeEnum.TIMED,
+          },
+        }
+      );
+    } else if (isRegularOutput(outputs)) {
+      const regularOutputs = outputs as { amount?: number; unit?: string };
+      metadata = {
+        type: DelayTypeEnum.REGULAR,
+        amount: regularOutputs?.amount || 0,
+        unit: regularOutputs.unit ? castUnitToDigestUnitEnum(regularOutputs?.unit) : undefined,
+      } as IDelayRegularMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'step.metadata.type': metadata.type,
+            'step.metadata.amount': metadata.amount,
+            'step.metadata.unit': metadata.unit,
+          },
+        }
+      );
+    }
+
+    return metadata;
+  }
+
+  private parseDynamicDurationValue(
+    job: JobEntity,
+    dynamicKey: string,
+    stepType: 'delay' | 'throttle'
+  ): { durationMs: number; identifier: string } | null {
+    const keyPath = dynamicKey?.replace('payload.', '');
+    const value = getNestedValue(job.payload, keyPath);
+
+    if (!value) {
+      this.logger.debug(`Dynamic ${stepType} key '${dynamicKey}' not found in payload data`);
+
+      return null;
+    }
+
+    if (typeof value === 'string' && DurationUtils.isISO8601(value)) {
+      const targetTime = new Date(value).getTime();
+      const now = Date.now();
+
+      return {
+        durationMs: targetTime - now,
+        identifier: value,
+      };
+    }
+
+    if (typeof value === 'object' && value !== null && 'unit' in value && 'amount' in value) {
+      const durationObj = value as { unit: string; amount: number };
+
+      try {
+        const durationMs = DurationUtils.convertToMilliseconds(durationObj.amount, durationObj.unit);
+
+        return {
+          durationMs,
+          identifier: `${durationObj.amount}:${durationObj.unit}`,
+        };
+      } catch (error) {
+        this.logger.warn(`Invalid ${stepType} duration unit '${durationObj.unit}': ${error.message}`);
+
+        return null;
+      }
+    }
+
+    this.logger.warn(`Dynamic ${stepType} value '${JSON.stringify(value)}' is not a valid format`);
+
+    return null;
+  }
+
+  private async handleThrottle(
     command: AddJobCommand,
     job: JobEntity,
-    digestAmount: number | undefined,
     bridgeResponse: ExecuteOutput | null
-  ) {
+  ): Promise<{ shouldSkip: boolean; executionCount?: number; threshold?: number; throttledUntil?: string }> {
+    // Get throttle configuration from bridge response or job step
+    const throttleConfig = bridgeResponse?.outputs || {};
+    const { type = 'fixed', threshold = 1, throttleKey } = throttleConfig;
+
+    let windowMs: number;
+
+    if (type === 'fixed') {
+      const { amount, unit } = throttleConfig;
+      if (!amount || !unit) {
+        this.logger.warn(`Fixed throttle configuration missing amount or unit for job ${job._id}`);
+        return { shouldSkip: false };
+      }
+
+      try {
+        windowMs = DurationUtils.convertToMilliseconds(amount as number, unit as string);
+      } catch {
+        this.logger.warn(`Invalid throttle unit '${unit}' for job ${job._id}`);
+        return { shouldSkip: false };
+      }
+    } else if (type === 'dynamic') {
+      const { dynamicKey } = throttleConfig;
+      if (!dynamicKey) {
+        this.logger.warn(`Dynamic throttle configuration missing dynamicKey for job ${job._id}`);
+        return { shouldSkip: false };
+      }
+
+      // Parse dynamic window value
+      const dynamicValue = this.parseDynamicDurationValue(job, dynamicKey as string, 'throttle');
+      if (!dynamicValue) {
+        this.logger.warn(`Could not parse dynamic throttle value for job ${job._id}, key: ${dynamicKey}`);
+        return { shouldSkip: false };
+      }
+
+      windowMs = dynamicValue.durationMs;
+    } else {
+      this.logger.warn(`Unknown throttle type '${type}' for job ${job._id}`);
+      return { shouldSkip: false };
+    }
+
+    const nowMs = Date.now();
+
+    // Validate throttle window duration
+    await this.validateThrottleWindow(command, job, windowMs, type);
+
+    if (!job.step.stepId) {
+      throw new Error('Step ID is required for throttle reservation');
+    }
+
+    const throttleValue = throttleKey ? getNestedValue(job.payload, throttleKey as string) : 'default';
+
+    const throttleJobId = `${job._id}:${Date.now()}`;
+
+    const reservationResult = await this.redisThrottleService.reserveThrottleSlot({
+      environmentId: command.environmentId,
+      subscriberId: job._subscriberId,
+      workflowId: job._templateId,
+      stepId: job.step.stepId,
+      jobId: throttleJobId,
+      windowMs,
+      limit: threshold as number,
+      nowMs,
+      throttleKey: (throttleKey as string) || 'default',
+      throttleValue: throttleValue,
+    });
+
+    this.logger.debug(
+      {
+        jobId: job._id,
+        reservationResult,
+        threshold,
+        windowMs,
+        type,
+      },
+      'Redis throttle reservation result'
+    );
+
+    if (!reservationResult.granted) {
+      return {
+        shouldSkip: true,
+        executionCount: reservationResult.count,
+        threshold: threshold as number,
+        throttledUntil: new Date(reservationResult.windowStartMs + windowMs).toISOString(),
+      };
+    }
+
+    // Slot reserved successfully, proceed with execution
+    return {
+      shouldSkip: false,
+      executionCount: reservationResult.count,
+      threshold: threshold as number,
+      throttledUntil: new Date(reservationResult.windowStartMs + windowMs).toISOString(),
+    };
+  }
+
+  private async handleDigest({
+    command,
+    job,
+    bridgeResponse,
+    bridgeDelayAmountDate,
+    bridgeDelayAmount,
+    timezone,
+  }: {
+    command: AddJobCommand;
+    job: JobEntity;
+    bridgeResponse: ExecuteOutput | null;
+    bridgeDelayAmountDate: Date | null;
+    bridgeDelayAmount: number | undefined;
+    timezone: string | undefined;
+  }) {
     let metadata: IWorkflowStepMetadata;
     if (bridgeResponse) {
-      metadata = await this.updateMetadata(bridgeResponse, command);
+      metadata = await this.updateMetadata(bridgeResponse, command, bridgeDelayAmountDate);
     } else {
       metadata = job.digest || ({} as IWorkflowStepMetadata);
     }
@@ -445,29 +874,18 @@ export class AddJob {
     // Update the job digest directly to avoid an extra database call
     command.job.digest = { ...command.job.digest, ...metadata } as IWorkflowStepMetadata;
 
-    const subscriber = await this.subscriberRepository.findOne(
-      {
-        _id: job._subscriberId,
-        _environmentId: job._environmentId,
-      },
-      'timezone',
-      { readPreference: 'secondaryPreferred' }
-    );
-
-    const bridgeAmount = this.mapBridgeTimedDigestAmount(bridgeResponse, subscriber?.timezone);
-
     validateDigest(job);
 
-    digestAmount =
-      bridgeAmount ??
+    const digestAmount =
+      bridgeDelayAmount ??
       this.computeJobWaitDurationService.calculateDelay({
         stepMetadata: metadata,
         payload: job.payload,
         overrides: job.overrides,
-        timezone: subscriber?.timezone,
+        timezone,
       });
 
-    Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
+    this.logger.debug(`Digest step amount is: ${digestAmount}`);
 
     const digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
       MergeOrCreateDigestCommand.create({
@@ -486,24 +904,20 @@ export class AddJob {
     return { digestAmount, digestCreationResult, cronExpression: bridgeResponse?.outputs?.cron as string | undefined };
   }
 
-  private mapBridgeTimedDigestAmount(bridgeResponse: ExecuteOutput | null, timezone?: string): number | null {
-    let bridgeAmount: number | null = null;
-    const outputs = bridgeResponse?.outputs as DigestOutput;
-
-    if (!isTimedDigestOutput(outputs)) {
+  private getBridgeNextCronDate(bridgeResponse: ExecuteOutput | null, timezone?: string): Date | null {
+    const outputs = bridgeResponse?.outputs as DigestOutput | DelayOutput;
+    if (!isTimedOutput(outputs) || !outputs.cron) {
       return null;
     }
 
-    const bridgeAmountExpression = parseCronExpression(outputs?.cron, { tz: timezone });
+    const bridgeAmountExpression = parseCronExpression(outputs.cron, { tz: timezone });
     const bridgeAmountDate = bridgeAmountExpression.next();
 
-    bridgeAmount = differenceInMilliseconds(bridgeAmountDate.toDate(), new Date());
-
-    return bridgeAmount;
+    return bridgeAmountDate.toDate();
   }
 
   private handleDigestMerged() {
-    Logger.log('Digest was merged, queueing next job', LOG_CONTEXT);
+    this.logger.info('Digest was merged, queueing next job');
   }
 
   private async handleDigestSkip(command: AddJobCommand, job) {
@@ -525,6 +939,55 @@ export class AddJob {
     });
   }
 
+  private async handleThrottleSkip(
+    command: AddJobCommand,
+    job: JobEntity,
+    throttleResult: { shouldSkip: boolean; executionCount: number; threshold: number; throttledUntil: string }
+  ) {
+    this.logger.info(
+      `Job ${job._id} throttled: ${throttleResult.executionCount} executions exceed threshold ${throttleResult.threshold as number}`
+    );
+
+    await this.jobRepository.updateOne(
+      { _id: job._id, _environmentId: command.environmentId },
+      {
+        $set: {
+          status: JobStatusEnum.SKIPPED,
+          stepOutput: {
+            throttled: true,
+            executionCount: throttleResult.executionCount,
+            threshold: throttleResult.threshold as number,
+            throttledUntil: throttleResult.throttledUntil,
+          },
+        },
+      }
+    );
+
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.SKIPPED,
+    });
+
+    const childJobsUpdated = await this.jobRepository.updateAllChildJobStatus(job, JobStatusEnum.SKIPPED, job._id);
+
+    if (childJobsUpdated.length > 0) {
+      await this.stepRunRepository.createMany(childJobsUpdated, {
+        status: JobStatusEnum.SKIPPED,
+      });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.THROTTLE_LIMIT_EXCEEDED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ ...throttleResult }),
+        })
+      );
+    }
+  }
+
   private getExecutionDelayAmount(
     filtered: boolean,
     digestAmount: number | undefined,
@@ -533,8 +996,17 @@ export class AddJob {
     return (filtered ? 0 : (digestAmount ?? delayAmount)) ?? 0;
   }
 
-  public async queueJob(job: JobEntity, delay: number) {
-    Logger.verbose(`Adding Job ${job._id} to Queue`, LOG_CONTEXT);
+  public async queueJob({
+    job,
+    delay,
+    untilDate,
+    timezone,
+  }: {
+    job: JobEntity;
+    delay: number;
+    untilDate: Date | null;
+    timezone?: string;
+  }) {
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
     const options: JobsOptions = {
       delay,
@@ -553,7 +1025,7 @@ export class AddJob {
       _userId: job._userId,
     };
 
-    Logger.verbose(jobData, 'Going to add a minimal job in Standard Queue', LOG_CONTEXT);
+    this.logger.trace(jobData, 'Going to add a minimal job in Standard Queue');
 
     await this.standardQueueService.add({
       name: job._id,
@@ -570,7 +1042,7 @@ export class AddJob {
             ? 'Digest is active, Creating execution details'
             : 'Unexpected job type, Creating execution details';
 
-      Logger.verbose(logMessage, LOG_CONTEXT);
+      this.logger.trace(logMessage);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -580,7 +1052,14 @@ export class AddJob {
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ delay }),
+          raw: JSON.stringify({
+            delay,
+            ...(untilDate && {
+              untilDate: timezone
+                ? formatInTimeZone(untilDate, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
+                : untilDate.toISOString(),
+            }),
+          }),
         })
       );
     }
@@ -593,12 +1072,23 @@ export class AddJob {
       });
     });
   }
+
+  private async validateThrottleWindow(
+    command: AddJobCommand,
+    job: JobEntity,
+    windowMs: number,
+    throttleType: string
+  ): Promise<void> {
+    if (throttleType === 'dynamic') {
+      await this.validateDynamicDuration(command, job, windowMs, StepTypeEnum.THROTTLE);
+    }
+  }
 }
 
 function isJobDeferredType(jobType: StepTypeEnum | undefined) {
   if (!jobType) return false;
 
-  return [StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(jobType);
+  return [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE].includes(jobType);
 }
 
 function isShouldHaltJobExecution(digestCreationResult: DigestCreationResultEnum) {

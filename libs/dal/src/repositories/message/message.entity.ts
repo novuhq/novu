@@ -132,6 +132,8 @@ export class MessageEntity {
   severity?: SeverityLevelEnum;
 
   channelData?: MessageChannelData[];
+
+  contextKeys?: string[];
 }
 
 export type MessageDBModel = ChangePropsValueType<

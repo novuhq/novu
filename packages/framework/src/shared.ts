@@ -83,6 +83,7 @@ export interface IChannelCredentials {
 export interface ITopic {
   type: 'Topic';
   topicKey: string;
+  exclude?: string[];
 }
 
 export type TriggerRecipientsPayload = string | ISubscriberPayload | ITopic | ISubscriberPayload[] | ITopic[];
@@ -158,6 +159,8 @@ export enum SmsProviderIdEnum {
   Unifonic = 'unifonic',
   Smsmode = 'smsmode',
   IMedia = 'imedia',
+  Sinch = 'sinch',
+  ISendProSms = 'isendpro-sms',
 }
 
 export enum ChatProviderIdEnum {
@@ -182,6 +185,7 @@ export enum PushProviderIdEnum {
   Pushpad = 'pushpad',
   PushWebhook = 'push-webhook',
   PusherBeams = 'pusher-beams',
+  AppIO = 'appio',
 }
 
 export enum InAppProviderIdEnum {

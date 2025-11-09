@@ -1,23 +1,23 @@
 import { errorMessage } from '@novu/design-system';
+import type { ExecuteOutput } from '@novu/framework/internal';
+import { Text, Title } from '@novu/novui';
 import { css } from '@novu/novui/css';
+import { VStack } from '@novu/novui/jsx';
+import { isAxiosError } from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
-import { VStack } from '@novu/novui/jsx';
-import { Text, Title } from '@novu/novui';
-import { isAxiosError } from 'axios';
-import type { ExecuteOutput } from '@novu/framework/internal';
-// TODO: This indicates that all onboarding pages for studio should move under the "Studio" folder
-import { useWorkflowTrigger, useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
-import { Footer } from './components/Footer';
-import { Header } from './components/Header';
 import { ROUTES } from '../../constants/routes';
-import { Wrapper } from './components/Wrapper';
-import { useStudioState } from '../../studio/StudioStateProvider';
+import { useTelemetry } from '../../hooks/useNovuAPI';
 import { WorkflowsPanelLayout } from '../../studio/components/workflows/layout';
 import { WorkflowStepEditorContentPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
+// TODO: This indicates that all onboarding pages for studio should move under the "Studio" folder
+import { useDiscover, useWorkflowPreview, useWorkflowTrigger } from '../../studio/hooks/useBridgeAPI';
 import { PageContainer } from '../../studio/layout';
-import { useTelemetry } from '../../hooks/useNovuAPI';
+import { useStudioState } from '../../studio/StudioStateProvider';
+import { Footer } from './components/Footer';
+import { Header } from './components/Header';
+import { Wrapper } from './components/Wrapper';
 
 export const StudioOnboardingPreview = () => {
   const [controls, setStepControls] = useState({});

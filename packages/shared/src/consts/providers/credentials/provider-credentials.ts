@@ -372,6 +372,14 @@ export const bulkSmsConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Sender ID',
+    description:
+      'Sender Id is used for from field in the request. If not provided, from field will not be sent in the request',
+    type: 'string',
+    required: false,
+  },
 ];
 
 export const iSendSmsConfig: IConfigCredential[] = [
@@ -1256,6 +1264,7 @@ export const unifonicConfig: IConfigCredential[] = [
   },
   ...smsConfigBase,
 ];
+
 export const smsmodeProviderConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -1266,3 +1275,63 @@ export const smsmodeProviderConfig: IConfigCredential[] = [
   },
   ...smsConfigBase,
 ];
+
+export const appIOConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.AppIOBaseUrl,
+    displayName: 'Base URL',
+    description: 'Base URL of the App IO API (e.g., https://api.io.italia.it/api/v1)',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
+export const sinchConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ServicePlanId,
+    displayName: 'Service Plan ID',
+    description: 'Your Sinch Service Plan ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'API Token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Region',
+    description: 'Select your Sinch region',
+    type: 'dropdown',
+    required: true,
+    value: 'eu',
+    dropdown: [
+      { name: 'EU (Ireland, Sweden)', value: 'eu' },
+      { name: 'US', value: 'us' },
+      { name: 'Australia', value: 'au' },
+      { name: 'Brazil', value: 'br' },
+      { name: 'Canada', value: 'ca' },
+    ],
+  },
+  ...smsConfigBase,
+];
+
+export const ISendProProviderConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'This is API key for example provider',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Sender',
+    description: 'The sender of sms',
+    type: 'text',
+    required: false,
+  }
+  ];

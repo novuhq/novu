@@ -2,13 +2,14 @@ import { DEFAULT_LOCALE } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTranslation, saveTranslation } from '@/api/translations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
 
 type CreateTranslationKeyParams = {
-  workflowId: string;
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
   translationKey: string;
   defaultValue?: string;
 };
@@ -19,11 +20,8 @@ export const useCreateTranslationKey = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ workflowId, translationKey, defaultValue = '' }: CreateTranslationKeyParams) => {
-      if (!currentEnvironment) {
-        throw new Error('Environment is required');
-      }
-
+    mutationFn: async ({ resourceId, resourceType, translationKey, defaultValue = '' }: CreateTranslationKeyParams) => {
+      const environment = requireEnvironment(currentEnvironment, 'Environment is required');
       const defaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
 
       // First, try to get existing translation content
@@ -31,9 +29,9 @@ export const useCreateTranslationKey = () => {
 
       try {
         const existingTranslation = await getTranslation({
-          environment: currentEnvironment,
-          resourceId: workflowId,
-          resourceType: LocalizationResourceEnum.WORKFLOW,
+          environment,
+          resourceId,
+          resourceType,
           locale: defaultLocale,
         });
 
@@ -66,9 +64,9 @@ export const useCreateTranslationKey = () => {
 
       // Save the updated translation
       return await saveTranslation({
-        environment: currentEnvironment,
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
+        environment,
+        resourceId,
+        resourceType,
         locale: defaultLocale,
         content: updatedContent,
       });
@@ -78,15 +76,15 @@ export const useCreateTranslationKey = () => {
 
       // Invalidate translation keys query to refresh the list
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslationKeys, variables.workflowId, defaultLocale, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchTranslationKeys, variables.resourceId, defaultLocale, currentEnvironment?._id],
       });
 
       // Invalidate the specific translation query
       queryClient.invalidateQueries({
         queryKey: [
           QueryKeys.fetchTranslation,
-          variables.workflowId,
-          LocalizationResourceEnum.WORKFLOW,
+          variables.resourceId,
+          variables.resourceType,
           defaultLocale,
           currentEnvironment?._id,
         ],

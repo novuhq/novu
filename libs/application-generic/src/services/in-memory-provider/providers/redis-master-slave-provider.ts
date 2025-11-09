@@ -1,6 +1,6 @@
+import { Logger } from '@nestjs/common';
 import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
-import { Logger } from '@nestjs/common';
 
 import { convertStringValues } from './variable-mappers';
 
@@ -57,11 +57,11 @@ export const getRedisMasterSlaveProviderConfig = (): IRedisMasterSlaveProviderCo
     keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
     family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
     keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
-    tls: (process.env.REDIS_CLUSTER_TLS as ConnectionOptions)
+    tls: process.env.REDIS_CLUSTER_TLS
       ? {
           servername: convertStringValues(process.env.REDIS_MASTER_HOST),
         }
-      : {},
+      : undefined,
   };
 
   const { masterHost, slaveHost } = redisMasterSlaveConfig;

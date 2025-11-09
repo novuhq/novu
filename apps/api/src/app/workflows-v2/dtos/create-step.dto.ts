@@ -1,6 +1,6 @@
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { StepTypeEnum } from '@novu/shared';
-import { IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 import {
   ChatControlDto,
   CustomControlDto,
@@ -10,18 +10,27 @@ import {
   InAppControlDto,
   PushControlDto,
   SmsControlDto,
+  ThrottleControlDto,
 } from './controls';
 
 // Base DTO for common properties
 export class BaseStepConfigDto {
   @ApiProperty({
-    description: 'Unique identifier of the step',
+    description: 'Database identifier of the step. Used for updating the step.',
     type: 'string',
     required: false,
   })
   @IsString()
   @IsOptional()
   _id?: string;
+
+  @ApiPropertyOptional({ description: 'Unique identifier for the step' })
+  @IsString()
+  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+    message: 'must be a valid slug format (lowercase letters, numbers, and hyphens only)',
+  })
+  @IsOptional()
+  stepId?: string;
 
   @ApiProperty({
     description: 'Name of the step',
@@ -163,6 +172,25 @@ export class DigestStepUpsertDto extends BaseStepConfigDto {
   controlValues?: DigestControlDto | Record<string, unknown> | null;
 }
 
+export class ThrottleStepUpsertDto extends BaseStepConfigDto {
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.THROTTLE,
+    description: 'Type of the step',
+  })
+  @IsEnum(StepTypeEnum)
+  readonly type: StepTypeEnum = 'throttle' as StepTypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Control values for the Throttle step.',
+    oneOf: [{ $ref: getSchemaPath(ThrottleControlDto) }, { type: 'object', additionalProperties: true }],
+  })
+  @IsOptional()
+  @IsObject()
+  controlValues?: ThrottleControlDto | Record<string, unknown> | null;
+}
+
 export class CustomStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({
     enum: StepTypeEnum,
@@ -194,4 +222,5 @@ export type StepUpsertDto =
   | ChatStepUpsertDto
   | DelayStepUpsertDto
   | DigestStepUpsertDto
+  | ThrottleStepUpsertDto
   | CustomStepUpsertDto;

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getTranslation, Translation } from '@/api/translations';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
 
@@ -20,13 +20,11 @@ export const useFetchTranslation = ({ resourceId, resourceType, locale }: FetchT
   return useQuery({
     queryKey: [QueryKeys.fetchTranslation, resourceId, resourceType, locale, currentEnvironment?._id],
     queryFn: async (): Promise<TranslationWithPlaceholder> => {
-      if (!currentEnvironment) {
-        throw new Error('Environment is required');
-      }
+      const environment = requireEnvironment(currentEnvironment, 'Environment is required');
 
       try {
         return await getTranslation({
-          environment: currentEnvironment,
+          environment,
           resourceId,
           resourceType,
           locale,

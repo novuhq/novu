@@ -119,6 +119,7 @@ export const NewLayoutDrawer = (props: NewLayoutDrawerProps) => {
     mode === 'duplicate' && layout
       ? {
           name: `${layout.name} (Copy)`,
+          isTranslationEnabled: layout.isTranslationEnabled ?? false,
         }
       : undefined;
   const title = mode === 'create' ? 'Create layout' : 'Duplicate layout';
@@ -126,62 +127,62 @@ export const NewLayoutDrawer = (props: NewLayoutDrawerProps) => {
   const isLoadingTemplate = mode === 'duplicate' && isLoadingLayout;
 
   return (
-    <>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent ref={unmountRef}>
-          <SheetHeader>
-            <SheetTitle>{title}</SheetTitle>
-            <div>
-              <SheetDescription>
-                Create a reusable email layout template for your notifications.{' '}
-                <ExternalLink href="https://docs.novu.co/platform/workflow/layouts">Learn more</ExternalLink>
-              </SheetDescription>
-            </div>
-          </SheetHeader>
-          <Separator />
-          <SheetMain>
-            {isLoadingTemplate ? (
-              <CreateLayoutFormSkeleton />
-            ) : (
-              <CreateLayoutForm
-                onSubmit={(formData) => {
-                  if (mode === 'create') {
-                    createLayout({
-                      layoutId: formData.layoutId,
-                      name: formData.name,
-                      __source: LayoutCreationSourceEnum.DASHBOARD,
-                    });
-                    return;
-                  }
-
-                  duplicateLayout({
-                    data: {
-                      name: formData.name,
-                    },
-                    layoutSlug: layoutId!,
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent ref={unmountRef}>
+        <SheetHeader>
+          <SheetTitle>{title}</SheetTitle>
+          <div>
+            <SheetDescription>
+              Create a reusable email layout template for your notifications.{' '}
+              <ExternalLink href="https://docs.novu.co/platform/workflow/layouts">Learn more</ExternalLink>
+            </SheetDescription>
+          </div>
+        </SheetHeader>
+        <Separator />
+        <SheetMain>
+          {isLoadingTemplate ? (
+            <CreateLayoutFormSkeleton />
+          ) : (
+            <CreateLayoutForm
+              onSubmit={(formData) => {
+                if (mode === 'create') {
+                  createLayout({
+                    layoutId: formData.layoutId,
+                    name: formData.name,
+                    isTranslationEnabled: formData.isTranslationEnabled,
+                    __source: LayoutCreationSourceEnum.DASHBOARD,
                   });
-                }}
-                template={template}
-              />
-            )}
-          </SheetMain>
-          <Separator />
-          <SheetFooter>
-            <Button
-              isLoading={isDuplicateLayoutPending || isCreateLayoutPending}
-              trailingIcon={RiArrowRightSLine}
-              variant="secondary"
-              mode="gradient"
-              type="submit"
-              form="create-layout"
-              disabled={isDuplicateLayoutPending || isCreateLayoutPending}
-            >
-              {buttonText}
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-    </>
+                  return;
+                }
+
+                duplicateLayout({
+                  data: {
+                    name: formData.name,
+                    isTranslationEnabled: formData.isTranslationEnabled,
+                  },
+                  layoutSlug: layoutId!,
+                });
+              }}
+              template={template}
+            />
+          )}
+        </SheetMain>
+        <Separator />
+        <SheetFooter>
+          <Button
+            isLoading={isDuplicateLayoutPending || isCreateLayoutPending}
+            trailingIcon={RiArrowRightSLine}
+            variant="secondary"
+            mode="gradient"
+            type="submit"
+            form="create-layout"
+            disabled={isDuplicateLayoutPending || isCreateLayoutPending}
+          >
+            {buttonText}
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 };
 

@@ -10,6 +10,7 @@ export enum ActionTypeEnum {
   TRIGGER = 'trigger',
   DIGEST = 'digest',
   DELAY = 'delay',
+  THROTTLE = 'throttle',
   CUSTOM = 'custom',
 }
 
@@ -24,6 +25,7 @@ export enum StepTypeEnum {
   DIGEST = 'digest',
   TRIGGER = 'trigger',
   DELAY = 'delay',
+  THROTTLE = 'throttle',
   CUSTOM = 'custom',
 }
 

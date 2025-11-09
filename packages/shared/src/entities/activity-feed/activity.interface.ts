@@ -30,4 +30,5 @@ export interface IActivity {
   jobs: IActivityJob[];
   severity?: SeverityLevelEnum;
   critical?: boolean;
+  contextKeys?: string[];
 }

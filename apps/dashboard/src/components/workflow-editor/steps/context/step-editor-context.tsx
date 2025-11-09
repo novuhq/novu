@@ -26,7 +26,7 @@ type StepEditorContextType = {
   setSelectedLocale: (locale: string) => void;
 };
 
-const StepEditorContext = createContext<StepEditorContextType | null>(null);
+export const StepEditorContext = createContext<StepEditorContextType | null>(null);
 
 type StepEditorProviderProps = {
   children: ReactNode;

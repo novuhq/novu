@@ -1,24 +1,17 @@
-import { CONTEXT_IDENTIFIER_REGEX, ContextData, ContextTypeEnum } from '@novu/shared';
-import { Type } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsString, Length, Matches, ValidateNested } from 'class-validator';
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { IsContextDataSizeValid } from '../../validators/data-size.validator';
+import { EnvironmentWithUserCommand, IsValidContextData } from '@novu/application-generic';
+import { ContextData, ContextId, ContextType } from '@novu/shared';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 
-export class CreateContextCommand extends EnvironmentCommand {
-  @IsEnum(ContextTypeEnum)
-  @IsNotEmpty()
-  type: ContextTypeEnum;
-
+export class CreateContextCommand extends EnvironmentWithUserCommand {
+  @IsDefined()
   @IsString()
-  @IsNotEmpty()
-  @Length(1, 100, { message: 'Identifier must be between 1 and 100 characters long' })
-  @Matches(CONTEXT_IDENTIFIER_REGEX, {
-    message: 'Identifier must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), or underscores (_)',
-  })
-  identifier: string;
+  type: ContextType;
 
-  @ValidateNested()
-  @Type(() => Object)
-  @IsContextDataSizeValid()
-  data: ContextData;
+  @IsDefined()
+  @IsString()
+  id: ContextId;
+
+  @IsOptional()
+  @IsValidContextData()
+  data?: ContextData;
 }

@@ -12,9 +12,6 @@ describe('Export master JSON - /v2/translations/master-json (GET) #novu-v2', asy
   let workflowId2: string;
 
   beforeEach(async () => {
-    // Enable translation feature for testing
-    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
-
     session = new UserSession();
     await session.initialize();
 
@@ -89,11 +86,6 @@ describe('Export master JSON - /v2/translations/master-json (GET) #novu-v2', asy
         },
       })
       .expect(200);
-  });
-
-  afterEach(() => {
-    // Disable translation feature after each test
-    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should export master JSON with correct structure and content filtering', async () => {

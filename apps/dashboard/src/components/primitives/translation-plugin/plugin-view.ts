@@ -1,4 +1,4 @@
-import { TRANSLATION_KEY_REGEX } from '@novu/shared';
+import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
 import { Decoration, DecorationSet, EditorView, Range } from '@uiw/react-codemirror';
 import { MutableRefObject } from 'react';
 import { validateTranslationKey } from '@/hooks/use-translation-validation';
@@ -50,7 +50,7 @@ export class TranslationPluginView {
     const decorations: Range<Decoration>[] = [];
     const content = view.state.doc.toString();
     const pos = view.state.selection.main.head;
-    const regex = new RegExp(TRANSLATION_KEY_REGEX.source, 'g');
+    const regex = new RegExp(TRANSLATION_KEY_SINGLE_REGEX.source, 'g');
 
     let match: RegExpExecArray | null = null;
 

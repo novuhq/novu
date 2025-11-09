@@ -214,8 +214,8 @@ export class UpsertWorkflowUseCase {
     const steps: NotificationStep[] = [];
 
     // Build optimistic step information for sync scenarios
-    const optimisticSteps = command.workflowDto.steps.map((step) => ({
-      stepId: step.stepId || this.generateUniqueStepId(step, command.workflowDto.steps),
+    const optimisticSteps = command.workflowDto.steps.map((step, index) => ({
+      stepId: step.stepId || this.generateUniqueStepId(step, steps.slice(0, index)),
       type: step.type,
     }));
 
@@ -252,7 +252,7 @@ export class UpsertWorkflowUseCase {
         stepId:
           updateStepId ||
           syncToEnvironmentCreateStepId ||
-          this.generateUniqueStepId(step, existingWorkflow ? existingWorkflow.steps : command.workflowDto.steps),
+          this.generateUniqueStepId(step, existingWorkflow ? existingWorkflow.steps : steps),
         name: step.name,
         issues,
       };

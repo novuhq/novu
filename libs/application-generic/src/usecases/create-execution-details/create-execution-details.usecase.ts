@@ -42,7 +42,6 @@ const mapDetailToEventType = {
   [DetailEnum.MESSAGE_UNSNOOZE_FAILED]: 'message_unsnooze_failed',
   [DetailEnum.MESSAGE_CONTENT_NOT_GENERATED]: 'message_content_failed',
   [DetailEnum.MESSAGE_CONTENT_SYNTAX_ERROR]: 'message_content_failed',
-  [DetailEnum.START_SENDING]: 'message_sending_started',
   [DetailEnum.MESSAGE_SEVERITY_OVERRIDDEN]: 'message_severity_overridden',
 
   // Subscriber events
@@ -67,11 +66,15 @@ const mapDetailToEventType = {
   [DetailEnum.DELAY_MISCONFIGURATION]: 'delay_misconfigured',
   [DetailEnum.DEFER_DURATION_LIMIT_EXCEEDED]: 'delay_limit_exceeded',
 
+  // Throttle events
+  [DetailEnum.STEP_THROTTLED]: 'step_throttled',
+  [DetailEnum.THROTTLE_LIMIT_EXCEEDED]: 'throttle_limit_exceeded',
+  [DetailEnum.THROTTLE_WINDOW_IN_PAST]: 'throttle_window_in_past',
+
   // Workflow events
   [DetailEnum.STEP_COMPLETED]: 'step_completed',
 
   // Bridge events
-  [DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED]: 'bridge_response_received',
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',
   [DetailEnum.SKIPPED_BRIDGE_EXECUTION]: 'bridge_execution_skipped',
 
@@ -117,6 +120,7 @@ const mapDetailToEventType = {
   [DetailEnum.SKIPPED_STEP_OUTSIDE_OF_THE_SCHEDULE]: 'step_skipped_outside_of_the_schedule',
   [DetailEnum.STEP_EXTENDED_TO_SCHEDULE]: 'step_extended_to_schedule',
   [DetailEnum.SKIPPED_STEP_MAX_EXTENSIONS_REACHED]: 'step_skipped_max_extensions_reached',
+  [DetailEnum.PUSH_INVALID_TOKEN_REMOVED]: 'push_invalid_token_removed',
 } satisfies Record<DetailEnum, EventType>;
 
 @Injectable()
@@ -158,6 +162,9 @@ export class CreateExecutionDetails {
   }
 
   private async createTraceLogEntry(command: CreateExecutionDetailsCommand, createdAt: string): Promise<void> {
+    // Handle dynamic provider selection messages
+    const eventType = this.getEventType(command.detail);
+
     const traceData = {
       created_at: LogRepository.formatDateTime64(new Date(createdAt)),
       organization_id: command.organizationId,
@@ -165,7 +172,7 @@ export class CreateExecutionDetails {
       user_id: null,
       subscriber_id: command._subscriberId || null,
       external_subscriber_id: command.subscriberId || null,
-      event_type: mapDetailToEventType[command.detail],
+      event_type: eventType,
       title: command.detail,
       message: null,
       raw_data: command.raw || null,
@@ -177,6 +184,16 @@ export class CreateExecutionDetails {
     };
 
     await this.traceLogRepository.createStepRun([traceData]);
+  }
+
+  private getEventType(detail: string): EventType {
+    // Check if it's a provider selection message
+    if (detail.includes('provider was selected')) {
+      return 'integration_selected';
+    }
+
+    // Use the standard mapping for enum values
+    return mapDetailToEventType[detail as DetailEnum];
   }
 
   private mapExecutionStatusToTraceStatus(status: ExecutionDetailsStatusEnum): TraceStatus {

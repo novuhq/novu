@@ -3,7 +3,7 @@ import {
   CreateLayoutDto,
   CreateWorkflowDto,
   EmailStepResponseDto,
-  JSONSchemaDto,
+  InAppControlDto,
   LayoutCreationSourceEnum,
   LayoutResponseDto,
   StepTypeEnum,
@@ -13,6 +13,7 @@ import {
 } from '@novu/api/models/components';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 interface ITestStepConfig {
@@ -60,6 +61,33 @@ describe('Upsert Workflow #novu-v2', () => {
 
       expect(workflow.name).to.equal('Test Workflow');
       expect(workflow.workflowId).to.equal('test-workflow-123');
+    });
+
+    it('should create a workflow and preserve stepId', async () => {
+      const workflow = await createWorkflow({
+        name: 'Test Workflow',
+        workflowId: 'test-workflow-123',
+        steps: [
+          {
+            name: 'Test Step',
+            stepId: 'test-step-123',
+            type: StepTypeEnum.InApp,
+            controlValues: {
+              body: 'Test Body',
+            },
+          },
+        ],
+      });
+
+      expect(workflow.name).to.equal('Test Workflow');
+      expect(workflow.workflowId).to.equal('test-workflow-123');
+      expect(workflow.steps.length).to.equal(1);
+      expect(workflow.steps[0].id).to.exist;
+      expect(workflow.steps[0].type).to.equal(StepTypeEnum.InApp);
+      expect(workflow.steps[0].stepId).to.equal('test-step-123');
+      expect(workflow.steps[0].controls).to.exist;
+      expect(workflow.steps[0].controls.values).to.exist;
+      expect((workflow.steps[0].controls.values as InAppControlDto).body).to.equal('Test Body');
     });
   });
 
@@ -181,7 +209,7 @@ describe('Upsert Workflow #novu-v2', () => {
               },
             },
           ],
-        });
+        } as UpdateWorkflowDto);
 
         const updatedEmailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
 
@@ -470,7 +498,7 @@ describe('Upsert Workflow #novu-v2', () => {
             },
           },
         ],
-      });
+      } as UpdateWorkflowDto);
 
       const updatedEmailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
 
@@ -494,7 +522,7 @@ describe('Upsert Workflow #novu-v2', () => {
             },
           },
         ],
-      });
+      } as UpdateWorkflowDto);
 
       const updatedEmailStep2 = updatedWorkflow2.steps[0] as EmailStepResponseDto;
       expect(updatedEmailStep2.controls.values.editorType).to.equal('block');
@@ -529,6 +557,6 @@ describe('Upsert Workflow #novu-v2', () => {
         name: step.name,
         controlValues: step.controls?.values || {},
       })),
-    };
+    } as UpdateWorkflowDto;
   }
 });

@@ -226,6 +226,10 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step filter failed';
     case 'step_completed':
       return 'Step completed';
+    case 'step_canceled':
+      return 'Step canceled';
+    case 'step_throttled':
+      return 'Step throttled';
 
     // Message events
     case 'message_created':
@@ -292,6 +296,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Subscriber missing email address';
     case 'subscriber_missing_phone_number':
       return 'Subscriber missing phone number';
+
+    // Throttle events
+    case 'throttle_limit_exceeded':
+      return 'Throttle limit exceeded';
+    case 'throttle_window_in_past':
+      return 'Throttle window in past';
 
     // Provider events
     case 'provider_error':
@@ -426,6 +436,10 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Workflow execution failed';
     case 'workflow_actor_processing_failed':
       return 'Workflow actor processing failed';
+    case 'workflow_context_resolution_completed':
+      return 'Workflow context resolution completed';
+    case 'workflow_context_resolution_failed':
+      return 'Workflow context resolution failed';
 
     // Request fan-out events
     case 'request_subscriber_processing_completed':
@@ -444,7 +458,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step was extended to the next available time in the subscriber schedule';
     case 'step_skipped_max_extensions_reached':
       return 'Step was executed due to maximum number of subscriber schedule extensions reached';
-
+    case 'push_invalid_token_removed':
+      return 'Invalid push device token was removed from subscriber';
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
       const _exhaustiveCheck: never = eventType;

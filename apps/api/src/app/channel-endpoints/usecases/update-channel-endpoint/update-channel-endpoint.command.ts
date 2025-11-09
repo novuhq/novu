@@ -2,7 +2,7 @@ import { BaseCommand } from '@novu/application-generic';
 import { ChannelEndpointByType, ChannelEndpointType } from '@novu/shared';
 import { IsDefined, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { IsValidChannelEndpoint } from '../../../shared/validators/channel-endpoint.validator';
+import { IsValidChannelEndpoint } from '../../validators/channel-endpoint.validator';
 
 // @ts-expect-error - Override with more specific typing for type safety
 export class UpdateChannelEndpointCommand<

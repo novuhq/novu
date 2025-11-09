@@ -52,7 +52,17 @@ export const ConfirmationModal = ({
           </div>
           <DialogFooter>
             <DialogClose asChild aria-label="Close">
-              <Button type="button" size="sm" mode="outline" variant="secondary" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                size="sm"
+                mode="outline"
+                variant="secondary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onOpenChange(false);
+                }}
+              >
                 Cancel
               </Button>
             </DialogClose>
@@ -61,7 +71,11 @@ export const ConfirmationModal = ({
               type="button"
               size="sm"
               variant="primary"
-              onClick={onConfirm}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onConfirm();
+              }}
               trailingIcon={confirmTrailingIcon}
               isLoading={isLoading}
               disabled={isConfirmDisabled}

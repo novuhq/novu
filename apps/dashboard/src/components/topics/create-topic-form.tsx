@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
+import { slugify } from '@novu/shared';
 import { NovuApiError } from '@/api/api.client';
 import {
   Form,
@@ -39,19 +40,6 @@ type CreateTopicFormProps = {
   onError?: (error: Error) => void;
   onSubmitStart?: () => void;
 };
-
-// Converts a name to a slug (kebab-case)
-function slugify(text: string): string {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/[^\w-]+/g, '') // Remove all non-word chars
-    .replace(/--+/g, '-') // Replace multiple - with single -
-    .replace(/^-+/, '') // Trim - from start of text
-    .replace(/-+$/, ''); // Trim - from end of text
-}
 
 export const CreateTopicForm = (props: CreateTopicFormProps) => {
   const { onSuccess, onError, onSubmitStart } = props;

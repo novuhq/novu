@@ -38,6 +38,7 @@ const workflowRunSelectColumns = [
   'delivery_lifecycle_status',
   'severity',
   'critical',
+  'context_keys',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -58,6 +59,7 @@ const stepRunSelectColumns = [
   'created_at',
   'updated_at',
   'digest',
+  'schedule_extensions_count',
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
@@ -205,11 +207,16 @@ export class GetWorkflowRun {
           }) satisfies IStepRunWithDetails
       );
     } catch (error) {
-      this.logger.warn('Failed to get step runs for workflow run', {
-        error: error.message,
-        workflowRunId: command.workflowRunId,
-        transactionId: workflowRun.transaction_id,
-      });
+      this.logger.warn(
+        {
+          nv: {
+            error: error.message,
+            workflowRunId: command.workflowRunId,
+            transactionId: workflowRun.transaction_id,
+          },
+        },
+        'Failed to get step runs for workflow run'
+      );
 
       return [];
     }
@@ -273,6 +280,7 @@ export class GetWorkflowRun {
       updatedAt: new Date(stepRun.updated_at),
       digest: stepRun.digest ? JSON.parse(stepRun.digest) : undefined,
       executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || []),
+      scheduleExtensionsCount: stepRun.schedule_extensions_count,
     };
   }
 
@@ -298,6 +306,7 @@ export class GetWorkflowRun {
       steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun)),
       severity: workflowRun.severity,
       critical: workflowRun.critical,
+      contextKeys: workflowRun.context_keys,
     };
   }
 }

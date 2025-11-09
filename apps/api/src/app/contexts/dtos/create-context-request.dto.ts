@@ -1,34 +1,48 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CONTEXT_IDENTIFIER_REGEX, ContextData, ContextTypeEnum } from '@novu/shared';
-import { Type } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsString, Length, Matches, ValidateNested } from 'class-validator';
-import { CONTEXT_DATA_MAX_SIZE_BYTES, IsContextDataSizeValid } from '../validators/data-size.validator';
+import { IsValidContextData } from '@novu/application-generic';
+import { CONTEXT_IDENTIFIER_REGEX, ContextData, ContextId, ContextType } from '@novu/shared';
+import { IsDefined, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class CreateContextRequestDto {
-  @ApiProperty({ enum: ContextTypeEnum })
-  @IsEnum(ContextTypeEnum)
-  @IsNotEmpty()
-  type: ContextTypeEnum;
-
   @ApiProperty({
     description:
-      'The unique identifier for the context. The identifier must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), or underscores (_). Identifiers must be unique within each environment.',
-    example: 'tenant-123',
+      'Context type (e.g., tenant, app, workspace). Must be lowercase alphanumeric with optional separators.',
+    example: 'tenant',
+    required: true,
+    type: String,
+    pattern: CONTEXT_IDENTIFIER_REGEX.source,
   })
+  @IsDefined()
   @IsString()
-  @IsNotEmpty()
-  @Length(1, 100, { message: 'Identifier must be between 1 and 100 characters long' })
+  @MinLength(1)
+  @MaxLength(100)
   @Matches(CONTEXT_IDENTIFIER_REGEX, {
-    message: 'Identifier must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), or underscores (_)',
+    message: 'Type must be lowercase alphanumeric with optional ., _, or - separators',
   })
-  identifier: string;
+  type: ContextType;
 
   @ApiProperty({
-    description: `Context data object containing metadata. Maximum size is ${Math.round(CONTEXT_DATA_MAX_SIZE_BYTES / 1024)}KB.`,
-    example: { tenantName: 'Acme Corp', region: 'us-east-1', settings: { theme: 'dark' } },
+    description: 'Unique identifier for this context. Must be lowercase alphanumeric with optional separators.',
+    example: 'org-acme',
+    required: true,
+    type: String,
+    pattern: CONTEXT_IDENTIFIER_REGEX.source,
   })
-  @ValidateNested()
-  @Type(() => Object)
-  @IsContextDataSizeValid()
-  data: ContextData;
+  @IsDefined()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  @Matches(CONTEXT_IDENTIFIER_REGEX, {
+    message: 'ID must be lowercase alphanumeric with optional ., _, or - separators',
+  })
+  id: ContextId;
+
+  @ApiProperty({
+    description: 'Optional custom data to associate with this context.',
+    example: { tenantName: 'Acme Corp', region: 'us-east-1', settings: { theme: 'dark' } },
+    required: false,
+  })
+  @IsOptional()
+  @IsValidContextData()
+  data?: ContextData;
 }

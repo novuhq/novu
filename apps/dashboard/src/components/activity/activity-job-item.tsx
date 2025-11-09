@@ -2,6 +2,7 @@ import {
   type IActivityJob,
   type IDelayRegularMetadata,
   type IDigestRegularMetadata,
+  IDigestTimedMetadata,
   JobStatusEnum,
   StepTypeEnum,
 } from '@novu/shared';
@@ -140,14 +141,31 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
       }
 
       return '';
+
+    case StepTypeEnum.THROTTLE:
+      if (job.status === JobStatusEnum.COMPLETED) {
+        return 'Throttle step completed';
+      }
+
+      return '';
     case StepTypeEnum.DIGEST:
       if (job.status === JobStatusEnum.COMPLETED) {
+        if ((job.digest as IDigestTimedMetadata).timed?.untilDate) {
+          return `Digested events until scheduled time${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
+        }
+
         return `Digested ${job.digest?.events?.length ?? 0} events for ${(job.digest as IDigestRegularMetadata)?.amount ?? 0} ${
           (job.digest as IDigestRegularMetadata)?.unit ?? ''
         }${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
       }
 
       if (job.status === JobStatusEnum.DELAYED) {
+        const untilDate = (job.digest as IDigestTimedMetadata).timed?.untilDate;
+        if (untilDate) {
+          const untilDateFormatted = format(new Date(untilDate), 'MMM d yyyy, HH:mm:ss');
+          return `Collecting events until ${untilDateFormatted}${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
+        }
+
         return job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0
           ? 'Extended to subscriber schedule'
           : `Collecting Digest events for ${(job.digest as IDigestRegularMetadata)?.amount ?? 0} ${
@@ -160,6 +178,9 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
       const { unit, amount } = (job.digest || {}) as IDelayRegularMetadata;
 
       if (job.status === JobStatusEnum.COMPLETED) {
+        if ((job.digest as IDigestTimedMetadata)?.timed?.untilDate) {
+          return `Delayed until scheduled time${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
+        }
         if (unit && amount) {
           return `Delayed for ${amount} ${unit}${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
         }
@@ -169,6 +190,12 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
 
       if (job.status === JobStatusEnum.DELAYED) {
         let msg = 'Waiting';
+
+        const untilDate = (job.digest as IDigestTimedMetadata)?.timed?.untilDate;
+        if (untilDate) {
+          const untilDateFormatted = format(new Date(untilDate), 'MMM d yyyy, HH:mm:ss');
+          return `Waiting until ${untilDateFormatted}${job.scheduleExtensionsCount && job.scheduleExtensionsCount > 0 ? `, extended to subscriber schedule` : ''}`;
+        }
 
         if (unit && amount) {
           msg =

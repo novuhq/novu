@@ -1,5 +1,7 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
+
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PermissionsEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { formatDistanceToNow } from 'date-fns';
 import { forwardRef, useCallback, useState } from 'react';
@@ -34,6 +36,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { useDeleteLayout } from '@/hooks/use-delete-layout';
 import { useUpdateLayout } from '@/hooks/use-update-layout';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { CopyButton } from '../primitives/copy-button';
@@ -41,15 +44,12 @@ import { PermissionButton } from '../primitives/permission-button';
 import { Separator } from '../primitives/separator';
 import { ToastIcon } from '../primitives/sonner';
 import TruncatedText from '../truncated-text';
+import { TranslationToggleSection } from '../workflow-editor/translation-toggle-section';
 import { DeleteLayoutDialog } from './delete-layout-dialog';
 import { useLayoutEditor } from './layout-editor-provider';
+import { layoutSchema } from './schema';
 
-const layoutSettingsFormSchema = z.object({
-  name: z.string().min(1),
-  layoutId: z.string().min(1),
-});
-
-type LayoutSettingsFormData = z.infer<typeof layoutSettingsFormSchema>;
+type LayoutSettingsFormData = z.infer<typeof layoutSchema>;
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -71,16 +71,20 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+    const isReadOnly =
+      layout?.origin === ResourceOriginEnum.EXTERNAL || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
     const form = useForm<LayoutSettingsFormData>({
-      resolver: zodResolver(layoutSettingsFormSchema),
+      resolver: zodResolver(layoutSchema),
       defaultValues: {
         name: layout?.name || '',
         layoutId: layout?.layoutId || '',
+        isTranslationEnabled: layout?.isTranslationEnabled || false,
       },
       values: {
         name: layout?.name || '',
         layoutId: layout?.layoutId || '',
+        isTranslationEnabled: layout?.isTranslationEnabled || false,
       },
     });
 
@@ -158,6 +162,7 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
       await updateLayout({
         layout: {
           name: data.name,
+          isTranslationEnabled: data.isTranslationEnabled,
           controlValues: layout.controls.values || {},
         },
         layoutSlug: layout.slug,
@@ -284,6 +289,21 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
                         </FormControl>
                         <FormMessage />
                       </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="isTranslationEnabled"
+                    render={({ field }) => (
+                      <TranslationToggleSection
+                        value={field.value}
+                        onChange={field.onChange}
+                        isReadOnly={isReadOnly}
+                        resourceId={layout?.layoutId}
+                        resourceType={LocalizationResourceEnum.LAYOUT}
+                        showDrawer={!!(layout?.layoutId && layout?.isTranslationEnabled)}
+                      />
                     )}
                   />
                 </SheetMain>

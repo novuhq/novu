@@ -22,6 +22,7 @@ import { expect } from 'chai';
 import { beforeEach } from 'mocha';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { DEFAULT_ARRAY_ELEMENTS } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
+import { buildWorkflowSchema } from '../../shared/utils/create-schema';
 import { fullCodeSnippet, previewPayloadExample } from '../maily-test-data';
 import { buildWorkflow } from '../workflow.controller.e2e';
 
@@ -129,65 +130,67 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           },
           subscriber: {
             type: 'object',
+            description: 'Schema representing the subscriber entity',
             properties: {
-              subscriberId: {
-                type: 'string',
-              },
               firstName: {
                 type: 'string',
+                description: "Subscriber's first name",
               },
               lastName: {
                 type: 'string',
+                description: "Subscriber's last name",
               },
               email: {
                 type: 'string',
-                format: 'email',
+                description: "Subscriber's email address",
               },
               phone: {
                 type: 'string',
+                description: "Subscriber's phone number (optional)",
               },
               avatar: {
                 type: 'string',
+                description: "URL to the subscriber's avatar image (optional)",
               },
               locale: {
                 type: 'string',
+                description: 'Locale for the subscriber (optional)',
               },
               timezone: {
                 type: 'string',
+                description: 'Timezone for the subscriber (optional)',
+              },
+              subscriberId: {
+                type: 'string',
+                description: 'Unique identifier for the subscriber',
+              },
+              isOnline: {
+                type: 'boolean',
+                description: 'Indicates if the subscriber is online (optional)',
+              },
+              lastOnlineAt: {
+                type: 'string',
+                format: 'date-time',
+                description: 'The last time the subscriber was online (optional)',
               },
               data: {
                 type: 'object',
+                properties: {},
+                required: [],
                 additionalProperties: true,
               },
             },
-            additionalProperties: true,
+            required: ['subscriberId'],
+            additionalProperties: false,
           },
           steps: {
             type: 'object',
-            description: 'Steps data from previous workflow executions',
-            additionalProperties: {
-              type: 'object',
-              properties: {
-                eventCount: {
-                  type: 'number',
-                },
-                events: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      payload: {
-                        type: 'object',
-                        additionalProperties: true,
-                      },
-                    },
-                    additionalProperties: true,
-                  },
-                },
-              },
-              additionalProperties: true,
-            },
+            properties: {},
+            required: [],
+            additionalProperties: false,
+            description: 'Previous Steps Results',
           },
+          workflow: buildWorkflowSchema(),
         },
         additionalProperties: false,
       },
@@ -377,66 +380,68 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             type: 'object',
           },
           subscriber: {
-            additionalProperties: true,
+            additionalProperties: false,
+            description: 'Schema representing the subscriber entity',
             properties: {
-              avatar: {
-                type: 'string',
-              },
-              data: {
-                additionalProperties: true,
-                type: 'object',
-              },
-              email: {
-                format: 'email',
-                type: 'string',
-              },
               firstName: {
                 type: 'string',
+                description: "Subscriber's first name",
               },
               lastName: {
                 type: 'string',
+                description: "Subscriber's last name",
               },
-              locale: {
+              email: {
                 type: 'string',
+                description: "Subscriber's email address",
               },
               phone: {
                 type: 'string',
+                description: "Subscriber's phone number (optional)",
               },
-              subscriberId: {
+              avatar: {
                 type: 'string',
+                description: "URL to the subscriber's avatar image (optional)",
+              },
+              locale: {
+                type: 'string',
+                description: 'Locale for the subscriber (optional)',
               },
               timezone: {
                 type: 'string',
+                description: 'Timezone for the subscriber (optional)',
+              },
+              subscriberId: {
+                type: 'string',
+                description: 'Unique identifier for the subscriber',
+              },
+              isOnline: {
+                type: 'boolean',
+                description: 'Indicates if the subscriber is online (optional)',
+              },
+              lastOnlineAt: {
+                type: 'string',
+                format: 'date-time',
+                description: 'The last time the subscriber was online (optional)',
+              },
+              data: {
+                additionalProperties: true,
+                properties: {},
+                required: [],
+                type: 'object',
               },
             },
+            required: ['subscriberId'],
             type: 'object',
           },
           steps: {
             type: 'object',
-            description: 'Steps data from previous workflow executions',
-            additionalProperties: {
-              type: 'object',
-              properties: {
-                eventCount: {
-                  type: 'number',
-                },
-                events: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      payload: {
-                        type: 'object',
-                        additionalProperties: true,
-                      },
-                    },
-                    additionalProperties: true,
-                  },
-                },
-              },
-              additionalProperties: true,
-            },
+            properties: {},
+            required: [],
+            additionalProperties: false,
+            description: 'Previous Steps Results',
           },
+          workflow: buildWorkflowSchema(),
         },
         type: 'object',
       },
@@ -847,8 +852,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
   });
 
   it('should allow using the static text and variables as a link on the email editor components', async () => {
-    const { workflowId, emailStepDatabaseId } =
-      await createWorkflowWithEmailLookingAtDigestResult(linkPayloadSchemaWithExamples);
+    const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult(
+      linkPayloadSchemaWithExamples as any
+    );
 
     const controlValues = {
       body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the paragraph"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.paragraph_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Paragraph variable link"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://paragraph.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Paragraph static link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","text":"Just the heading"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.heading_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Heading text link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://heading.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Heading static link"}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the blockquote"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.blockquote_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Blockquote text link"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://blockquote.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Blockquote static link"}]}]},{"type":"bulletList","content":[{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the bullet"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.bullet_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Bullet text link"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://bullet.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Bullet static link"}]}]}]},{"type":"button","attrs":{"text":"Just the button","isTextVariable":false,"url":"","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"button","attrs":{"text":"Button link","isTextVariable":false,"url":"payload.button_link","isUrlVariable":true,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"button","attrs":{"text":"Button static link","isTextVariable":false,"url":"https://button.static.link","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":568,"height":153.79061371841155,"alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"image","attrs":{"src":"payload.image_variable","alt":null,"title":null,"width":"auto","height":"auto","alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":true,"aspectRatio":null,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":568,"height":153.79061371841155,"alignment":"center","externalLink":"payload.image_link","isExternalLinkVariable":true,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":568,"height":153.79061371841155,"alignment":"center","externalLink":"https://image.static.link","isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"horizontalRule"},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"payload.inline_image_link","isExternalLinkVariable":true,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"https://inline_image.static.link","isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"payload.inline_image_url","isSrcVariable":true,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"orderedList","attrs":{"start":1},"content":[{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the numbered list"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.numbered_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Numbered text link"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://numbered.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Numbered static link"}]}]}]}]}',
@@ -1138,8 +1144,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       },
     };
 
-    const { workflowId, emailStepDatabaseId } =
-      await createWorkflowWithEmailLookingAtDigestResult(enhancedPayloadSchema);
+    const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult(
+      enhancedPayloadSchema as any
+    );
 
     const controlValues = {
       body: '{"type":"doc","content":[{"type":"repeat","attrs":{"each":"payload.items","isUpdatingKey":false,"showIfKey":null,"iterations":0},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the paragraph"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.paragraph_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Paragraph variable link"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.paragraph_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.paragraph_link"}},{"type":"underline"}],"text":"Paragraph current variable link"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://paragraph.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Paragraph static link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","text":"Just the heading"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.heading_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Heading variable link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.heading_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.heading_link"}},{"type":"underline"}],"text":"Heading current variable link"}]},{"type":"heading","attrs":{"textAlign":null,"level":1,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://heading.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Heading static link"}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the blockquote"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.blockquote_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Blockquote variable link"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.blockquote_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.blockquote_link"}},{"type":"underline"}],"text":"Blockquote current variable link"}]}]},{"type":"blockquote","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://blockquote.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Blockquote static link"}]}]},{"type":"bulletList","content":[{"type":"listItem","attrs":{"color":""},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the bullet"}]}]},{"type":"listItem","attrs":{"color":""},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.bullet_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Bullet variable link"}]}]},{"type":"listItem","attrs":{"color":""},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.bullet_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.bullet_link"}},{"type":"underline"}],"text":"Bullet current variable link"}]}]},{"type":"listItem","attrs":{"color":""},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://bullet.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Bullet static link"}]}]}]},{"type":"button","attrs":{"text":"Just the button","isTextVariable":false,"url":"","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"button","attrs":{"text":"Button variable link","isTextVariable":false,"url":"payload.items.button_link","isUrlVariable":true,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"button","attrs":{"text":"Button current variable link","isTextVariable":false,"url":"current.button_link","isUrlVariable":true,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":"payload.items.button_link"}},{"type":"button","attrs":{"text":"Button static link","isTextVariable":false,"url":"https://button.static.link","isUrlVariable":false,"alignment":"left","variant":"filled","borderRadius":"smooth","buttonColor":"#000000","textColor":"#ffffff","showIfKey":null,"paddingTop":10,"paddingRight":32,"paddingBottom":10,"paddingLeft":32,"width":"auto","aliasFor":null}},{"type":"horizontalRule"},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the image"}]},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":566,"height":153.24909747292418,"alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image variable"}]},{"type":"image","attrs":{"src":"payload.items.image","alt":null,"title":null,"width":"auto","height":"auto","alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":true,"aspectRatio":null,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image current variable"}]},{"type":"image","attrs":{"src":"current.image","alt":null,"title":null,"width":"auto","height":"auto","alignment":"center","externalLink":null,"isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":true,"aspectRatio":null,"lockAspectRatio":true,"showIfKey":null,"aliasFor":"payload.items.image"}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image link variable"}]},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":566,"height":153.24909747292418,"alignment":"center","externalLink":"payload.items.image_link","isExternalLinkVariable":true,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image current link variable"}]},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":566,"height":153.24909747292418,"alignment":"center","externalLink":"current.image_link","isExternalLinkVariable":true,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":"payload.items.image_link"}},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Image static link"}]},{"type":"image","attrs":{"src":"https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp","alt":null,"title":null,"width":566,"height":153.24909747292418,"alignment":"center","externalLink":"https://image.static.link","isExternalLinkVariable":false,"borderRadius":0,"isSrcVariable":false,"aspectRatio":3.6933333333333334,"lockAspectRatio":true,"showIfKey":null,"aliasFor":null}},{"type":"horizontalRule"},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image variable"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"payload.items.inline_image","isSrcVariable":true,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image current variable"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"current.inline_image","isSrcVariable":true,"alt":null,"title":null,"externalLink":null,"isExternalLinkVariable":false,"aliasFor":"payload.items.inline_image"}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image link variable"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"payload.items.inline_image_link","isExternalLinkVariable":true,"aliasFor":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image current link variable"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"current.inline_image_link","isExternalLinkVariable":true,"aliasFor":"payload.items.inline_image_link"}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Inline image static link"}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"inlineImage","attrs":{"height":20,"width":20,"src":"https://maily.to/brand/logo.png","isSrcVariable":false,"alt":null,"title":null,"externalLink":"https://inline_image.static.link","isExternalLinkVariable":false,"aliasFor":null}}]},{"type":"horizontalRule"},{"type":"orderedList","attrs":{"start":1},"content":[{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Just the numbered list"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"payload.items.numbered_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":null}},{"type":"underline"}],"text":"Numbered variable link"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"current.numbered_link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":true,"aliasFor":"payload.items.numbered_link"}},{"type":"underline"}],"text":"Numbered current variable link"}]}]},{"type":"listItem","attrs":{"color":null},"content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://numbered.static.link","target":"_blank","rel":"noopener noreferrer nofollow","class":null,"isUrlVariable":false,"aliasFor":null}},{"type":"underline"}],"text":"Numbered static link"}]}]}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null}}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null}}]}',
@@ -1409,7 +1416,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         ...mapResponseToUpdateDto(novuRestResult.result),
         steps: [
           {
-            type: novuRestResult.result.steps[0].type,
+            type: novuRestResult.result.steps[0].type as any,
             name: novuRestResult.result.steps[0].name,
             id: novuRestResult.result.steps[0].id,
             ...buildInAppControlValueWithAPlaceholderInTheUrl(),

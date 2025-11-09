@@ -1,15 +1,8 @@
 import { DirectionEnum } from '@novu/shared';
 import { keepPreviousData, UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { getTopics } from '@/api/topics';
-import { Topic } from '@/components/topics/types';
+import { getTopics, ListTopicsResponse } from '@/api/topics';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
-
-export type ListTopicsResponse = {
-  data: Array<Topic>;
-  next: string | null;
-  previous: string | null;
-};
 
 interface UseTopicsParams {
   after?: string;

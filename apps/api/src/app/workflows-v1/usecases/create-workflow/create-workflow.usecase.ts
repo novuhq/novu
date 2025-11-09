@@ -7,7 +7,6 @@ import {
   CreateChangeCommand,
   CreateMessageTemplate,
   CreateMessageTemplateCommand,
-  FeatureFlagsService,
   GetPreferences,
   Instrument,
   InstrumentUsecase,
@@ -43,7 +42,6 @@ import {
   TriggerTypeEnum,
 } from '@novu/shared';
 import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
-import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 import { CreateWorkflowCommand } from './create-workflow.command';
 
@@ -62,8 +60,7 @@ export class CreateWorkflow {
     protected moduleRef: ModuleRef,
     private upsertPreferences: UpsertPreferences,
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
-    private resourceValidatorService: ResourceValidatorService,
-    private featureFlagService: FeatureFlagsService
+    private resourceValidatorService: ResourceValidatorService
   ) {}
 
   @InstrumentUsecase()
@@ -95,7 +92,7 @@ export class CreateWorkflow {
       storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier, session);
 
       if (command.isTranslationEnabled !== undefined) {
-        await this.toggleV2TranslationsForWorkflow(triggerIdentifier, command, session);
+        await this.toggleV2TranslationsForWorkflow(triggerIdentifier, command, storedWorkflow, session);
       }
 
       await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
@@ -149,6 +146,7 @@ export class CreateWorkflow {
   private async toggleV2TranslationsForWorkflow(
     workflowIdentifier: string,
     command: CreateWorkflowCommand,
+    workflowEntity: WorkflowWithPreferencesResponseDto,
     session?: ClientSession | null
   ) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
@@ -171,6 +169,7 @@ export class CreateWorkflow {
         environmentId: command.environmentId,
         userId: command.userId,
         session,
+        resourceEntity: workflowEntity,
       });
     } catch (error) {
       this.logger.error(

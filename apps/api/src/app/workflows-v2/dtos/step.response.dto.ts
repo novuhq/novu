@@ -44,7 +44,7 @@ export class StepResponseDto<T = Record<string, unknown>> {
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'Slug of the step' })
+  @ApiProperty({ description: 'Slug of the step', type: 'string' })
   @IsString()
   slug: Slug;
 

@@ -30,6 +30,10 @@ const jobSchema = new Schema<JobDBModel>(
     tenant: {
       type: Schema.Types.Mixed,
     },
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
     step: {
       type: Schema.Types.Mixed,
     },
@@ -108,6 +112,9 @@ const jobSchema = new Schema<JobDBModel>(
       },
       timed: {
         cronExpression: {
+          type: Schema.Types.String,
+        },
+        untilDate: {
           type: Schema.Types.String,
         },
         atTime: {

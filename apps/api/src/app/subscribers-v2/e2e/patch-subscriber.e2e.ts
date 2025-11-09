@@ -2,7 +2,11 @@ import { Novu } from '@novu/api';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
-import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import {
+  expectSdkExceptionGeneric,
+  expectSdkValidationExceptionGeneric,
+  initNovuClassSdk,
+} from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { SubscriberResponseDto } from '../../subscribers/dtos';
 
 let session: UserSession;
@@ -60,6 +64,178 @@ describe('Update Subscriber - /subscribers/:subscriberId (PATCH) #novu-v2', () =
     expect(subscriber.lastName).to.equal(updatedSubscriber.lastName);
     expect(subscriber.email).to.equal(updatedSubscriber.email);
     expect(subscriber.phone).to.equal(updatedSubscriber.phone);
+  });
+
+  it('should clear simple fields with null', async () => {
+    const payload = {
+      firstName: null,
+      lastName: null,
+      phone: null,
+      avatar: null,
+    };
+
+    const res = await novuClient.subscribers.patch(payload, subscriber.subscriberId);
+    const updatedSubscriber = res.result;
+
+    expect(updatedSubscriber.firstName).to.be.null;
+    expect(updatedSubscriber.lastName).to.be.null;
+    expect(updatedSubscriber.phone).to.be.null;
+    expect(updatedSubscriber.avatar).to.be.null;
+  });
+
+  it('should clear simple fields with empty string', async () => {
+    const payload = {
+      firstName: '',
+      lastName: '',
+      phone: '',
+      avatar: '',
+    };
+
+    const res = await novuClient.subscribers.patch(payload, subscriber.subscriberId);
+    const updatedSubscriber = res.result;
+
+    expect(updatedSubscriber.firstName).to.equal(payload.firstName);
+    expect(updatedSubscriber.lastName).to.equal(payload.lastName);
+    expect(updatedSubscriber.phone).to.equal(payload.phone);
+    expect(updatedSubscriber.avatar).to.equal(payload.avatar);
+  });
+
+  it('should clear complex fields with null', async () => {
+    const payload = {
+      email: null,
+      locale: null,
+      timezone: null,
+    };
+
+    const res = await novuClient.subscribers.patch(payload, subscriber.subscriberId);
+    const updatedSubscriber = res.result;
+
+    expect(updatedSubscriber.email).to.be.null;
+    expect(updatedSubscriber.locale).to.be.null;
+    expect(updatedSubscriber.timezone).to.be.null;
+  });
+
+  it('should reject empty strings for complex fields (email)', async () => {
+    const payload = {
+      email: '',
+    };
+
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.subscribers.patch(payload, subscriber.subscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(422);
+    const errorMessages = JSON.stringify(error?.errors);
+    expect(errorMessages).to.include('email');
+  });
+
+  it('should reject empty strings for complex fields (locale)', async () => {
+    const payload = {
+      locale: '',
+    };
+
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.subscribers.patch(payload, subscriber.subscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(422);
+    const errorMessages = JSON.stringify(error?.errors);
+    expect(errorMessages).to.include('locale');
+  });
+
+  it('should reject empty strings for complex fields (timezone)', async () => {
+    const payload = {
+      timezone: '',
+    };
+
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.subscribers.patch(payload, subscriber.subscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(422);
+    const errorMessages = JSON.stringify(error?.errors);
+    expect(errorMessages).to.include('timezone');
+  });
+
+  it('should validate email format', async () => {
+    const payload = {
+      email: 'invalid-email',
+    };
+
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.subscribers.patch(payload, subscriber.subscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(422);
+    const errorMessages = JSON.stringify(error?.errors);
+    expect(errorMessages).to.include('email');
+  });
+
+  it('should validate locale format', async () => {
+    const payload = {
+      locale: '!!!invalid!!!',
+    };
+
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.subscribers.patch(payload, subscriber.subscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(422);
+    const errorMessages = JSON.stringify(error?.errors);
+    expect(errorMessages).to.include('locale');
+  });
+
+  it('should validate timezone format', async () => {
+    const payload = {
+      timezone: 'Invalid/Timezone',
+    };
+
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.subscribers.patch(payload, subscriber.subscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(422);
+    const errorMessages = JSON.stringify(error?.errors);
+    expect(errorMessages).to.include('timezone');
+  });
+
+  it('should clear data field with null', async () => {
+    const payload = {
+      data: null,
+    };
+
+    const res = await novuClient.subscribers.patch(payload, subscriber.subscriberId);
+    const updatedSubscriber = res.result;
+
+    expect(updatedSubscriber.data).to.be.null;
+  });
+
+  it('should not change fields that are not provided (undefined semantics)', async () => {
+    const payload = {
+      firstName: 'Updated Name',
+    };
+
+    const res = await novuClient.subscribers.patch(payload, subscriber.subscriberId);
+    const updatedSubscriber = res.result;
+
+    expect(updatedSubscriber.firstName).to.equal('Updated Name');
+    expect(updatedSubscriber.email).to.equal(subscriber.email);
+    expect(updatedSubscriber.phone).to.equal(subscriber.phone);
+  });
+
+  it('should not allow updating subscriberId', async () => {
+    const newSubscriberId = `new-subscriber-${randomBytes(4).toString('hex')}`;
+    const payload = {
+      subscriberId: newSubscriberId,
+      firstName: 'Updated',
+    };
+
+    const res = await novuClient.subscribers.patch(payload as any, subscriber.subscriberId);
+    const updatedSubscriber = res.result;
+
+    expect(updatedSubscriber.subscriberId).to.equal(subscriber.subscriberId);
+    expect(updatedSubscriber.subscriberId).to.not.equal(newSubscriberId);
+    expect(updatedSubscriber.firstName).to.equal('Updated');
   });
 });
 

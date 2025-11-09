@@ -84,6 +84,7 @@ export function mapFeedItemToDto(entity: NotificationFeedItemEntity): ActivityNo
     template: entity.template ? buildTemplate(entity.template) : undefined,
     severity: entity.severity ?? SeverityLevelEnum.NONE,
     critical: entity.critical,
+    contextKeys: entity.contextKeys,
   };
 }
 
@@ -185,11 +186,11 @@ function convertStepToResponse(step: NotificationStepEntity): ActivityNotificati
 }
 
 function isDigestRegularMetadata(item: IWorkflowStepMetadata): item is IDigestRegularMetadata {
-  return item.type === DigestTypeEnum.REGULAR || item.type === DigestTypeEnum.BACKOFF;
+  return 'type' in item && (item.type === DigestTypeEnum.REGULAR || item.type === DigestTypeEnum.BACKOFF);
 }
 
 function isDigestTimedMetadata(item: IWorkflowStepMetadata): item is IDigestTimedMetadata {
-  return item.type === DigestTypeEnum.TIMED;
+  return 'type' in item && item.type === DigestTypeEnum.TIMED;
 }
 
 export function mapDigest(
@@ -247,6 +248,7 @@ export function mapDigest(
         ordinalValue: digestItem.timed?.ordinalValue,
         monthlyType: digestItem.timed?.monthlyType,
         cronExpression: digestItem.timed?.cronExpression,
+        untilDate: digestItem.timed?.untilDate,
       },
     };
   }

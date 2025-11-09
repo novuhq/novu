@@ -1,17 +1,17 @@
-import { ContextData } from '@novu/shared';
-import { Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { IsContextDataSizeValid } from '../../validators/data-size.validator';
+import { EnvironmentWithUserCommand, IsValidContextData } from '@novu/application-generic';
+import { ContextData, ContextId, ContextType } from '@novu/shared';
+import { IsDefined, IsString } from 'class-validator';
 
-export class UpdateContextCommand extends EnvironmentCommand {
+export class UpdateContextCommand extends EnvironmentWithUserCommand {
+  @IsDefined()
   @IsString()
-  @IsNotEmpty()
-  identifier: string;
+  type: ContextType;
 
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => Object)
-  @IsContextDataSizeValid()
-  data?: ContextData;
+  @IsDefined()
+  @IsString()
+  id: ContextId;
+
+  @IsDefined()
+  @IsValidContextData()
+  data: ContextData;
 }

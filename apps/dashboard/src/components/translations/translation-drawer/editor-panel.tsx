@@ -39,7 +39,7 @@ export function EditorPanelSkeleton() {
 
       {/* JSON Editor skeleton - matches the actual editor */}
       <div className="flex-1 px-3 pb-3">
-        <div className="relative h-[calc(100%-10rem)] rounded-lg border border-neutral-200 bg-white p-4">
+        <div className="relative h-[calc(100%-24px)] rounded-lg border border-neutral-200 bg-white p-4">
           {/* Line numbers and content like real editor */}
           <div className="flex gap-4">
             <div className="text-neutral-400">
@@ -51,7 +51,7 @@ export function EditorPanelSkeleton() {
           </div>
         </div>
         {/* Footer timestamp */}
-        <div className="mt-2 px-1">
+        <div className="mt-2 px-1 h-6 flex items-center">
           <Skeleton className="h-3 w-60" /> {/* "Last updated at Jul 22, 2025 15:11:30 UTC" */}
         </div>
       </div>
@@ -68,12 +68,16 @@ type JSONEditorProps = {
   isReadOnly?: boolean;
 };
 
+const JSON_EXTENSIONS = [loadLanguage('json')?.extension ?? []];
+const BASIC_SETUP = { lineNumbers: true, defaultKeymap: true };
+
 function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnly = false }: JSONEditorProps) {
   return (
-    <div className="flex-1 px-3 pb-3">
+    // 112px is the height of the actions section
+    <div className="flex-1 px-3 pb-3 flex flex-col max-h-[calc(100%-112px)]">
       <div
         className={cn(
-          'relative h-[calc(100%-10rem)] rounded-lg border bg-white p-4',
+          'relative overflow-hidden w-full rounded-lg border bg-white flex-1 ',
           error ? 'border-red-300' : 'border-neutral-200',
           isReadOnly && 'bg-neutral-50'
         )}
@@ -82,19 +86,19 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
           value={content}
           onChange={onChange}
           lang="json"
-          extensions={[loadLanguage('json')?.extension ?? []]}
-          basicSetup={{ lineNumbers: true, defaultKeymap: true }}
+          extensions={JSON_EXTENSIONS}
+          basicSetup={BASIC_SETUP}
           placeholder="Enter JSON content..."
           className={cn(
-            'h-full overflow-y-auto overflow-x-hidden [&_.cm-content]:max-w-[calc(100%-2rem)]',
-            error ? 'pb-8' : ''
+            'flex-1 [&_.cm-scroller]:p-4 [&_div.cm-gutters]:bg-background [&_div.cm-gutters]:-translate-x-[16px] [&_div.cm-gutters]:pl-4 [&_div.cm-gutters]:-ml-4 [&_.cm-editor]:h-full rounded-lg [&_.cm-scroller]:!h-full [&_.cm-scroller]:overflow-auto [&_.cm-content]:max-w-[calc(100%-2rem)]',
+            error ? 'h-[calc(100%-32px)]' : 'h-full'
           )}
           foldGutter
           multiline
           readOnly={isReadOnly}
         />
         {error && (
-          <div className="absolute bottom-2 left-3 right-3 text-xs text-red-500">
+          <div className="px-4 py-2 text-xs text-red-500 h-min">
             <span className="font-medium">Invalid JSON:</span> {error}
           </div>
         )}
@@ -129,7 +133,8 @@ type EditorPanelProps = {
   selectedTranslation: TranslationWithPlaceholder | undefined;
   isLoadingTranslation: boolean;
   translationError: any;
-  modifiedContentString: string | null;
+  content: string;
+  modifiedContent: Record<string, any> | null;
   jsonError: string | null;
   onContentChange: (content: string) => void;
   outdatedLocales?: string[];
@@ -140,7 +145,8 @@ export function EditorPanel({
   selectedTranslation,
   isLoadingTranslation,
   translationError,
-  modifiedContentString,
+  content,
+  modifiedContent,
   jsonError,
   onContentChange,
   outdatedLocales,
@@ -161,29 +167,13 @@ export function EditorPanel({
     );
   }
 
-  // Use the modified string if available, otherwise format the original content
-  const contentToUse = modifiedContentString ?? JSON.stringify(selectedTranslation.content || {}, null, 2);
   const isOutdated = outdatedLocales?.includes(selectedTranslation.locale);
 
-  const parseContentForActions = () => {
-    if (!modifiedContentString || jsonError) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(modifiedContentString);
-    } catch {
-      return null;
-    }
-  };
-
-  const modifiedContentForActions = parseContentForActions();
-
   return (
-    <div className="flex flex-1 flex-col bg-neutral-50">
+    <div className="flex flex-1 flex-col bg-neutral-50 max-w-[calc(100%-400px)]">
       <EditorActions
         selectedTranslation={selectedTranslation}
-        modifiedContent={modifiedContentForActions}
+        modifiedContent={modifiedContent}
         isReadOnly={isReadOnly}
       />
 
@@ -193,7 +183,7 @@ export function EditorPanel({
         </div>
       ) : selectedTranslation ? (
         <JSONEditor
-          content={contentToUse}
+          content={content}
           onChange={onContentChange}
           error={jsonError}
           updatedAt={selectedTranslation.updatedAt}

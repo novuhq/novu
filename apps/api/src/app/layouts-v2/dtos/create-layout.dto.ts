@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import { LayoutCreationSourceEnum } from '../types';
 
 export class CreateLayoutDto {
@@ -10,6 +10,15 @@ export class CreateLayoutDto {
   @ApiProperty({ description: 'Name of the layout' })
   @IsString()
   name: string;
+
+  @ApiPropertyOptional({
+    description: 'Enable or disable translations for this layout',
+    required: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 
   @ApiProperty({
     description: 'Source of layout creation',

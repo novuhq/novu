@@ -1,11 +1,12 @@
 import { SubscriberGlobalPreferenceDto } from '@novu/api/models/components';
+import { WeeklySchedule } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import {
   RiCalendarScheduleLine,
   RiContractUpDownLine,
   RiExpandUpDownLine,
-  RiInformationLine,
+  RiInformation2Line,
   RiLoader4Line,
 } from 'react-icons/ri';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
@@ -16,6 +17,30 @@ import { useOptimisticScheduleUpdate } from '@/hooks/use-optimistic-schedule-upd
 import { cn } from '@/utils/ui';
 import { ScheduleTable } from './schedule-table';
 
+const DEFAULT_HOURS = [{ start: '09:00 AM', end: '05:00 PM' }];
+const DEFAULT_WEEKLY_SCHEDULE: WeeklySchedule = {
+  monday: {
+    isEnabled: true,
+    hours: DEFAULT_HOURS,
+  },
+  tuesday: {
+    isEnabled: true,
+    hours: DEFAULT_HOURS,
+  },
+  wednesday: {
+    isEnabled: true,
+    hours: DEFAULT_HOURS,
+  },
+  thursday: {
+    isEnabled: true,
+    hours: DEFAULT_HOURS,
+  },
+  friday: {
+    isEnabled: true,
+    hours: DEFAULT_HOURS,
+  },
+};
+
 type SubscribersScheduleProps = {
   globalPreference: SubscriberGlobalPreferenceDto;
   subscriberId: string;
@@ -23,7 +48,7 @@ type SubscribersScheduleProps = {
 
 export const SubscribersSchedule = (props: SubscribersScheduleProps) => {
   const { globalPreference, subscriberId } = props;
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(globalPreference.schedule?.isEnabled ?? false);
 
   const { updateSchedule, isPending } = useOptimisticScheduleUpdate({
     subscriberId,
@@ -45,30 +70,33 @@ export const SubscribersSchedule = (props: SubscribersScheduleProps) => {
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-foreground-400 inline-block hover:cursor-help">
-                <RiInformationLine className="size-3" />
+                <RiInformation2Line className="size-3" />
               </span>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
-              Set subscriber schedule. External notification channels are paused outside this time, except inbox and
-              critical ones.
+              Set subscriber schedule. Notifications to external channels will pause outside the schedule. In-app and
+              critical notifications are always delivered.
             </TooltipContent>
           </Tooltip>
           {isPending && <RiLoader4Line className="size-3 animate-spin text-neutral-400" />}
         </div>
-        <div
-          className="!mt-0 flex items-center gap-1.5"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
+        <div className="!mt-0 flex items-center gap-1.5">
           <Switch
             checked={globalPreference.schedule?.isEnabled}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
             onCheckedChange={async (checked) => {
+              setIsExpanded(checked);
+
               try {
+                const hasNoWeeklySchedule = !globalPreference.schedule?.weeklySchedule;
                 await updateSchedule({
                   isEnabled: checked,
-                  weeklySchedule: globalPreference.schedule?.weeklySchedule,
+                  weeklySchedule:
+                    checked && hasNoWeeklySchedule
+                      ? DEFAULT_WEEKLY_SCHEDULE
+                      : globalPreference.schedule?.weeklySchedule,
                 });
               } catch {
                 showErrorToast('Failed to update schedule. Please try again.');
@@ -99,18 +127,16 @@ export const SubscribersSchedule = (props: SubscribersScheduleProps) => {
         className="overflow-hidden"
       >
         <CardContent className="space-y-2 rounded-lg bg-white p-2">
-          <span className="text-label-xs text-text-sub text-start">Allow notifications between:</span>
+          <span className="text-xs text-text-sub text-start">Allow notifications between:</span>
           <ScheduleTable
             globalPreference={globalPreference}
             onScheduleUpdate={async (schedule) => {
               await updateSchedule(schedule);
             }}
           />
-          <div className="flex items-center mt-2.5 gap-1 text-text-soft">
-            <RiInformationLine className="size-4" />
-            <span className="text-label-xs">
-              Critical and In-app notifications still reach you outside your schedule.
-            </span>
+          <div className="flex items-center gap-1 text-text-soft pt-2">
+            <RiInformation2Line className="size-3" />
+            <span className="text-xs">Critical and In-app notifications still reach you outside your schedule.</span>
           </div>
         </CardContent>
       </motion.div>

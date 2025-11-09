@@ -56,6 +56,8 @@ export class ListTopicSubscriptionsUseCase {
       data: subscriptionsWithDetails,
       next: subscriptionsPagination.next,
       previous: subscriptionsPagination.previous,
+      totalCount: subscriptionsPagination.totalCount,
+      totalCountCapped: subscriptionsPagination.totalCountCapped,
     };
   }
 

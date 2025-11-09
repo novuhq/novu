@@ -16,8 +16,13 @@ export class VerifyPayload {
 
     for (const step of command.template.steps) {
       invalidKeys.push(...verifyPayloadService.checkRequired(step.template?.variables || [], command.payload));
-      if (step.template?.type === StepTypeEnum.DELAY && step.metadata?.type === DelayTypeEnum.SCHEDULED) {
-        if (!step.metadata.delayPath) {
+      if (
+        step.template?.type === StepTypeEnum.DELAY &&
+        step.metadata &&
+        'type' in step.metadata &&
+        step.metadata.type === DelayTypeEnum.SCHEDULED
+      ) {
+        if (!('delayPath' in step.metadata) || !step.metadata.delayPath) {
           throw new BadRequestException('Delay path is required for scheduled delay');
         }
 

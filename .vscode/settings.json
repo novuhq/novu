@@ -35,5 +35,6 @@
   "testExplorer.useNativeTesting": true,
   "vsicons.presets.nestjs": true,
   "biome.enabled": true,
-  "biome.lsp.bin": "node_modules/.bin/biome"
+  "biome.lsp.bin": "node_modules/.bin/biome",
+  "terminal.integrated.scrollback": 30000
 }

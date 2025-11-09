@@ -1,44 +1,34 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ContextEntity, ContextRepository } from '@novu/dal';
-import { mapContextEntityToDto } from '../../dtos';
 import { UpdateContextCommand } from './update-context.command';
 
 @Injectable()
 export class UpdateContext {
   constructor(private contextRepository: ContextRepository) {}
 
-  async execute(command: UpdateContextCommand) {
-    const existingContext = await this.contextRepository.findOne({
+  async execute(command: UpdateContextCommand): Promise<ContextEntity> {
+    const query = {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      identifier: command.identifier,
-    });
+      type: command.type,
+      id: command.id,
+    };
+
+    // Check if context exists
+    const existingContext = await this.contextRepository.findOne(query);
 
     if (!existingContext) {
-      throw new NotFoundException(`Context with identifier '${command.identifier}' not found`);
+      throw new NotFoundException(`Context with type '${command.type}' and id '${command.id}' not found`);
     }
 
-    const updateData: Partial<Pick<ContextEntity, 'data'>> = {};
-
-    if (command.data !== undefined) {
-      updateData.data = command.data;
-    }
-
+    // Update only the data field
     const updatedContext = await this.contextRepository.findOneAndUpdate(
-      {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        identifier: command.identifier,
-      },
-      {
-        $set: {
-          data: command.data,
-        },
-      },
+      query,
+      { $set: { data: command.data } },
       { new: true }
     );
 
-    // biome-ignore lint/style/noNonNullAssertion: updatedContext is always found
-    return mapContextEntityToDto(updatedContext!);
+    // biome-ignore lint/style/noNonNullAssertion: we know it exists since we found it
+    return updatedContext!;
   }
 }

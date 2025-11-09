@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { createVercelIntegration } from '../api/partner-integrations';
 import { useDataRef } from './use-data-ref';
 import { useVercelParams } from './use-vercel-params';
@@ -17,7 +17,9 @@ export function useCreateVercelIntegration() {
 
   const { mutateAsync, isPending, data } = useMutation({
     mutationFn: async (payload: { code: string; configurationId: string }) => {
-      const response = await createVercelIntegration({ ...payload, environment: currentEnvironment });
+      const environment = requireEnvironment(currentEnvironment, 'Environment is required to create Vercel integration');
+
+      const response = await createVercelIntegration({ ...payload, environment });
 
       return response.data;
     },
@@ -39,11 +41,9 @@ export function useCreateVercelIntegration() {
   }, [dataRef, mutateAsync]);
 
   useEffect(() => {
-    if (!currentEnvironment) {
-      return;
+    if (currentEnvironment) {
+      startVercelSetup();
     }
-
-    startVercelSetup();
   }, [currentEnvironment, startVercelSetup]);
 
   return {

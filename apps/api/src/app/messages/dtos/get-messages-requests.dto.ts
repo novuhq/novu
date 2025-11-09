@@ -1,7 +1,7 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiHideProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class GetMessagesRequestDto {
   @ApiPropertyOptional({
@@ -22,6 +22,15 @@ export class GetMessagesRequestDto {
   })
   @IsOptional()
   transactionId?: string[];
+
+  @ApiPropertyOptional({
+    type: String,
+    isArray: true,
+    description: 'Filter by exact context keys (format: "type:id")',
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  @IsOptional()
+  contextKeys?: string[] | string;
 
   @ApiPropertyOptional({
     type: Number,
