@@ -121,7 +121,7 @@ export function parseStepVariables(
 
             if (value.items) {
               const items = Array.isArray(value.items) ? value.items[0] : value.items;
-              extractProperties(items, `${fullPath}[0]`);
+              extractProperties(items, `${fullPath}.0`);
             }
           } else if (value.type === 'object') {
             result.namespaces.push({ name: fullPath });
