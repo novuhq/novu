@@ -402,7 +402,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
       return await mailyRender(parsedMaily, { noHtmlWrappingTags });
     } else {
-      // For simple text body, apply translations directly
       const processedHtml = await this.processTextTranslations({
         text: body,
         variables: payload,
@@ -427,9 +426,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale?: string,
     organization?: OrganizationEntity
   ): Promise<string> {
-    return this.processStringTranslations({
+    const unescapedVariables = this.deepUnescapeTranslationStrings(variables) as FullPayloadForRender;
+
+    const translatedSubject = await this.processStringTranslations({
       content: subject,
-      variables,
+      variables: unescapedVariables,
       environmentId,
       organizationId,
       resourceId: workflowId,
@@ -437,6 +438,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       locale,
       organization,
     });
+
+    return this.unescapeJsonString(translatedSubject);
   }
 
   private async processMailyTranslations({
@@ -492,9 +495,10 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale?: string;
     organization?: OrganizationEntity;
   }): Promise<string> {
+    const unescapedVariables = this.deepUnescapeTranslationStrings(variables) as FullPayloadForRender;
     const translatedText = await this.processStringTranslations({
       content: text,
-      variables,
+      variables: unescapedVariables,
       environmentId,
       organizationId,
       resourceId,
@@ -503,7 +507,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organization,
     });
 
-    return await this.liquidEngine.parseAndRender(translatedText, variables);
+    const unescapedTranslatedText = this.unescapeJsonString(translatedText);
+
+    return await this.liquidEngine.parseAndRender(unescapedTranslatedText, unescapedVariables);
   }
 
   private async parseMailyContentByLiquid(
@@ -839,6 +845,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       .replace(/\\r/g, '\r')
       .replace(/\\n/g, '\n')
       .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'")
       .replace(/\\\\/g, '\\');
   }
 

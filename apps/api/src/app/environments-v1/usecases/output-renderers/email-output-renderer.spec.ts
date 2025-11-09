@@ -2612,6 +2612,176 @@ describe('EmailOutputRendererUsecase', () => {
     });
   });
 
+  describe('Translation with escaped characters for plain HTML', () => {
+    beforeEach(() => {
+      getOrganizationSettingsMock.execute.resolves({
+        removeNovuBranding: false,
+        defaultLocale: 'en_US',
+      });
+    });
+
+    it('should not double-escape JSON characters from translation content in plain HTML body', async () => {
+      const translatedContent = 'Visit <a style=\'color: #0C0D0D;\' href=\'https://sharefile.com/support\'>http://sharefile.com/support</a> and look for \\"Chat with Us.\\"';
+      
+      translateStub.restore();
+      translateStub = sinon.stub(require('@novu/ee-translation').Translate.prototype, 'execute').callsFake(async (command: any) => {
+        if (command.content.includes('{{t.footer}}')) {
+          return command.content.replace('{{t.footer}}', translatedContent);
+        }
+
+        return command.content || '';
+      });
+
+      const plainHtmlBody = '<p>{{t.footer}}</p>';
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Translation Test',
+          body: plainHtmlBody,
+        },
+        fullPayloadForRender: mockFullPayload,
+        workflowId: mockDbWorkflow._id,
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('http://sharefile.com/support');
+      expect(result.body).to.include('"Chat with Us."');
+      expect(result.body).to.not.include('\\"Chat with Us.\\"');
+      expect(result.body).to.not.include('\\\\');
+    });
+
+    it('should handle plain HTML body with multiple escaped characters', async () => {
+      const translatedContent = 'Line 1\\nLine 2\\tTabbed\\r\\nAnd \\"quoted\\"';
+      
+      translateStub.restore();
+      translateStub = sinon.stub(require('@novu/ee-translation').Translate.prototype, 'execute').callsFake(async (command: any) => {
+        if (command.content.includes('{{t.multiline}}')) {
+          return command.content.replace('{{t.multiline}}', translatedContent);
+        }
+
+        return command.content || '';
+      });
+
+      const plainHtmlBody = '<div>{{t.multiline}}</div>';
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Multiline Test',
+          body: plainHtmlBody,
+        },
+        fullPayloadForRender: mockFullPayload,
+        workflowId: mockDbWorkflow._id,
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Line 1');
+      expect(result.body).to.include('Line 2');
+      expect(result.body).to.include('"quoted"');
+      expect(result.body).to.not.include('\\n');
+      expect(result.body).to.not.include('\\t');
+      expect(result.body).to.not.include('\\"');
+    });
+
+    it('should handle email subject with escaped characters', async () => {
+      const translatedSubject = 'Welcome to \\"Our Service\\" - You\\\'re all set!';
+      
+      translateStub.restore();
+      translateStub = sinon.stub(require('@novu/ee-translation').Translate.prototype, 'execute').callsFake(async (command: any) => {
+        if (command.content.includes('{{t.subject}}')) {
+          return command.content.replace('{{t.subject}}', translatedSubject);
+        }
+
+        return command.content || '';
+      });
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: '{{t.subject}}',
+          body: '<p>Test body</p>',
+        },
+        fullPayloadForRender: mockFullPayload,
+        workflowId: mockDbWorkflow._id,
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.subject).to.include('"Our Service"');
+      expect(result.subject).to.include("You're all set!");
+      expect(result.subject).to.not.include('\\"Our Service\\"');
+      expect(result.subject).to.not.include("\\'re");
+    });
+
+    it('should handle layout with plain HTML body containing escaped characters', async () => {
+      const translatedLayoutContent = 'Footer: Visit us at \\"Main Street\\" \\nCall: 555-1234';
+      
+      translateStub.restore();
+      translateStub = sinon.stub(require('@novu/ee-translation').Translate.prototype, 'execute').callsFake(async (command: any) => {
+        if (command.content.includes('{{t.layoutFooter}}')) {
+          return command.content.replace('{{t.layoutFooter}}', translatedLayoutContent);
+        }
+
+        return command.content || '';
+      });
+
+      const layoutContent = '<html><body>{{content}}<footer>{{t.layoutFooter}}</footer></body></html>';
+      const stepContent = '<p>Step content</p>';
+
+      controlValuesRepositoryMock.findOne.resolves({
+        _id: 'test_layout_id',
+        _organizationId: 'fake_org_id',
+        _environmentId: 'fake_env_id',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+        priority: 0,
+        controls: {
+          email: {
+            body: layoutContent,
+          },
+        },
+      });
+
+      getLayoutUseCase.execute.resolves({
+        _id: 'test_layout_id',
+        isDefault: false,
+        name: 'test_layout_name',
+        layoutId: 'test_layout_id',
+      } as any);
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Layout Test',
+          body: stepContent,
+          layoutId: 'test_layout_id',
+        },
+        fullPayloadForRender: mockFullPayload,
+        workflowId: mockDbWorkflow._id,
+        stepId: 'fake_step_id',
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Step content');
+      expect(result.body).to.include('"Main Street"');
+      expect(result.body).to.include('Call: 555-1234');
+      expect(result.body).to.not.include('\\"Main Street\\"');
+      expect(result.body).to.not.include('\\n');
+    });
+  });
+
   describe('Gmail clipping prevention', () => {
     beforeEach(() => {
       getOrganizationSettingsMock.execute.resolves({
