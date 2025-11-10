@@ -3,8 +3,11 @@ import {
   ChannelEndpointType,
   ChannelTypeEnum,
   ENDPOINT_TYPES,
+  makeResourceKey,
   ProvidersIdEnum,
   ProvidersIdEnumConst,
+  RESOURCE,
+  ResourceKey,
 } from '@novu/shared';
 import {
   PhoneEndpointDto,
@@ -48,6 +51,20 @@ export class GetChannelEndpointResponseDto {
     example: 'slack-connection-abc123',
   })
   connectionIdentifier: string | null;
+
+  @ApiProperty({
+    description: 'The resource of the channel connection',
+    type: String,
+    example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
+  })
+  resource: ResourceKey | null;
+
+  @ApiProperty({
+    description: 'The context of the channel connection',
+    type: [String],
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  contextKeys: string[];
 
   @ApiProperty({
     description: 'Type of channel endpoint',

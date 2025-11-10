@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  makeResourceKey,
+  ProvidersIdEnum,
+  ProvidersIdEnumConst,
+  RESOURCE,
+  ResourceKey,
+} from '@novu/shared';
 import { AuthDto, WorkspaceDto } from './shared.dto';
 
 export class GetChannelConnectionResponseDto {
@@ -30,6 +37,20 @@ export class GetChannelConnectionResponseDto {
     example: 'slack-prod',
   })
   integrationIdentifier: string | null;
+
+  @ApiProperty({
+    description: 'The resource of the channel connection',
+    type: String,
+    example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
+  })
+  resource: ResourceKey | null;
+
+  @ApiProperty({
+    description: 'The context of the channel connection',
+    type: [String],
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  contextKeys: string[];
 
   @ApiProperty({ type: WorkspaceDto })
   workspace: WorkspaceDto;

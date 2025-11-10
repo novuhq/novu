@@ -22,12 +22,13 @@ export class CreateChannelConnection {
 
   @InstrumentUsecase()
   async execute(command: CreateChannelConnectionCommand): Promise<ChannelConnectionEntity> {
+    this.validateResourceOrContext(command);
+
     const integration = await this.findIntegration(command);
     const contextKeys = await this.resolveContexts(command);
 
-    this.validateResourceOrContext(command);
-    await this.assertSingleConnectionPerResourceAndIntegration(command, integration, contextKeys);
     await this.assertResourceExists(command);
+    await this.ensureUniqueConnectionForResourceAndContext(command, integration, contextKeys);
 
     const identifier = command.identifier || this.generateIdentifier();
 
@@ -71,7 +72,11 @@ export class CreateChannelConnection {
     return contexts.map((context) => context.key);
   }
 
-  private async assertSingleConnectionPerResourceAndIntegration(
+  /**
+   * Ensures only one channel connection exists per unique combination of integration + resource + context.
+   * Any variation in integration, resource, or context creates a separate connection.
+   */
+  private async ensureUniqueConnectionForResourceAndContext(
     command: CreateChannelConnectionCommand,
     integration: IntegrationEntity,
     contextKeys: string[]
@@ -91,7 +96,12 @@ export class CreateChannelConnection {
     });
 
     if (existingChannelConnection) {
-      throw new ConflictException(`Only one channel connection per integration + resource + context is allowed`);
+      const resourcePart = command.resource ? `resource "${command.resource}"` : 'no resource';
+      const contextPart = contextKeys.length > 0 ? `context [${contextKeys.join(', ')}]` : 'no context';
+
+      throw new ConflictException(
+        `A channel connection already exists for integration "${integration.identifier}" with ${resourcePart} and ${contextPart}. Connection ID: ${existingChannelConnection.identifier}`
+      );
     }
   }
 
