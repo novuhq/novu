@@ -19,6 +19,7 @@ export interface IChannelEndpoint<T extends ChannelEndpointType = ChannelEndpoin
   providerId: ProvidersIdEnum;
   channel: ChannelTypeEnum;
   resource: ResourceKey;
+  contextKeys: string[];
   type: T;
   endpoint: ChannelEndpointByType[T];
 

@@ -1,6 +1,5 @@
 export const RESOURCE = {
   SUBSCRIBER: 'subscriber',
-  CONTEXT: 'context',
 } as const;
 
 export type ResourceType = (typeof RESOURCE)[keyof typeof RESOURCE];
