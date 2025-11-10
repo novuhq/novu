@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import { execSync } from 'node:child_process';
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import prompts from 'prompts';
 import { detectFramework, IFramework } from '../config/framework';
 import { detectPackageManager } from '../config/package-manager';
-import { FRAMEWORKS } from '../constants';
+import { FRAMEWORKS, PACKAGE_MANAGERS, PackageManagerType } from '../constants';
 import { createComponentStructure } from '../generators/component';
 import { setupEnvExampleNextJs, setupEnvExampleReact } from '../generators/env';
 import { AnalyticsEventEnum, AnalyticsService } from '../utils/analytics';
@@ -15,6 +15,15 @@ import logger from '../utils/logger';
 interface IPackageManager {
   name: string;
   install: string;
+}
+
+interface ICommandLineArgs {
+  appId?: string;
+  subscriberId?: string;
+  region: string;
+  packageManager: PackageManagerType;
+  backendUrl?: string;
+  socketUrl?: string;
 }
 
 interface IUserConfig {
@@ -42,7 +51,7 @@ interface IPackageJson {
 
 async function promptUserConfiguration(): Promise<IUserConfig | null> {
   // Parse command line arguments
-  const { appId, subscriberId, region, backendUrl, socketUrl } = parseCommandLineArgs();
+  const { appId, subscriberId, region, backendUrl, socketUrl, packageManager } = parseCommandLineArgs();
 
   // Detect framework first
   const detectedFramework = detectFramework();
@@ -67,6 +76,14 @@ async function promptUserConfiguration(): Promise<IUserConfig | null> {
     effectiveRegion = 'us'; // Default to 'us' when custom URLs are provided
   }
 
+  // Detect package manager
+  const detectedPackageManager = detectPackageManager(packageManager);
+  if (!detectedPackageManager) {
+    logger.error('  ✗ Could not detect package manager. Please ensure you have a package.json file.');
+
+    return null;
+  }
+
   // Use detected framework directly without prompting
   const initialResponses: Partial<IUserConfig> = {
     framework: detectedFramework,
@@ -75,15 +92,8 @@ async function promptUserConfiguration(): Promise<IUserConfig | null> {
     region: effectiveRegion,
     backendUrl,
     socketUrl,
+    packageManager: detectedPackageManager,
   };
-
-  // Detect package manager
-  const packageManager = detectPackageManager();
-  if (!packageManager) {
-    logger.error('  ✗ Could not detect package manager. Please ensure you have a package.json file.');
-
-    return null;
-  }
 
   const additionalPrompts: prompts.PromptObject[] = [];
   const cwd = process.cwd();
@@ -160,7 +170,6 @@ async function promptUserConfiguration(): Promise<IUserConfig | null> {
   return {
     ...initialResponses,
     ...additionalResponses,
-    packageManager,
     // Set defaults if prompts were skipped or cancelled
     overwriteComponents:
       additionalResponses.overwriteComponents !== undefined ? additionalResponses.overwriteComponents : false,
@@ -394,7 +403,7 @@ function validateSocketUrl(socketUrl: string | undefined): boolean {
   return true;
 }
 
-function parseCommandLineArgs() {
+function parseCommandLineArgs(): ICommandLineArgs {
   const program = new Command();
   program
     .option('--appId <id>', 'Novu Application Identifier')
@@ -402,12 +411,18 @@ function parseCommandLineArgs() {
     .option('--region <region>', 'Novu Region (eu or us). Optional when using custom URLs.', 'us')
     .option('--backendUrl <url>', 'Custom backend URL for Novu API')
     .option('--socketUrl <url>', 'Custom socket URL for Novu WebSocket connection')
+    .addOption(
+      new Option('--packageManager <packageManager>', `Specify the package manager to use`).choices(
+        Object.values(PACKAGE_MANAGERS)
+      )
+    )
     .parse(process.argv);
 
   return {
     appId: program.opts().appId,
     subscriberId: program.opts().subscriberId,
     region: program.opts().region,
+    packageManager: program.opts().packageManager,
     backendUrl: program.opts().backendUrl,
     socketUrl: program.opts().socketUrl,
   };
@@ -426,7 +441,7 @@ function validateProjectStructure() {
   return true;
 }
 
-async function performInstallation(config: IUserConfig, analytics?: AnalyticsService) {
+async function performInstallation(config: IUserConfig) {
   const {
     framework,
     packageManager,
@@ -444,7 +459,9 @@ async function performInstallation(config: IUserConfig, analytics?: AnalyticsSer
     logger.success(`  ✓ Detected framework: ${logger.bold(framework.framework)}`);
     logger.gray(`    Version: ${framework.version}`);
     logger.gray(`    Setup: ${framework.setup}`);
-    logger.success(`  ✓ Detected package manager: ${logger.bold(packageManager.name)}`);
+    logger.success(
+      `  ✓ ${config.packageManager ? 'Provided' : 'Detected'} package manager: ${logger.bold(packageManager.name)}`
+    );
     logger.success(`  ✓ Region: ${logger.bold(region)}`);
     if (backendUrl) {
       logger.success(`  ✓ Custom backend URL: ${logger.bold(backendUrl)}`);
@@ -556,7 +573,8 @@ function trackCliCompleted(analytics: AnalyticsService, config: IUserConfig, con
 }
 
 async function init() {
-  const { appId, subscriberId, region, backendUrl, socketUrl } = parseCommandLineArgs();
+  const { appId, subscriberId, region, backendUrl, socketUrl, packageManager } = parseCommandLineArgs();
+
   const analytics = new AnalyticsService(subscriberId);
   let config: IUserConfig | null = null;
   let errorOrCancelled = false;
@@ -578,6 +596,7 @@ async function init() {
         appId,
         subscriberId,
         region,
+        packageManager,
         backendUrl,
         socketUrl,
       });
@@ -604,7 +623,7 @@ async function init() {
     }
 
     // Perform the installation
-    const success = await performInstallation(config, analytics);
+    const success = await performInstallation(config);
     if (!success) {
       trackCliError(analytics, 'Installation failed', config ?? undefined, {
         step: 'performInstallation',
