@@ -1,7 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ENDPOINT_TYPES, makeResourceKey, RESOURCE, ResourceKey } from '@novu/shared';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload, ENDPOINT_TYPES, makeResourceKey, RESOURCE, ResourceKey } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
 import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 import {
   PhoneEndpointDto,
@@ -29,6 +31,11 @@ class CreateChannelEndpointBaseDto {
   @IsDefined()
   @IsResourceKey()
   resource: ResourceKey;
+
+  @ApiContextPayload()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 
   @ApiProperty({
     description: 'The identifier of the integration to use for this channel endpoint.',

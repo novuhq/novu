@@ -65,16 +65,22 @@ export class MarkNotificationsAsSeen {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
-    let updatedMessages: MessageEntity[] = [];
+    const updatedMessages: MessageEntity[] = [];
     // If notificationIds are provided, use them; otherwise use filters
     if (notificationIds && notificationIds.length > 0) {
-      updatedMessages = await this.messageRepository.updateMessagesStatusByIds({
-        environmentId: command.environmentId,
-        subscriberId: subscriber._id,
-        contextKeys,
-        ids: notificationIds,
-        seen: true,
-      });
+      const BATCH_SIZE = 50;
+      const notificationIdChunks = this.chunkArray(notificationIds, BATCH_SIZE);
+
+      for (const idChunk of notificationIdChunks) {
+        const batchResults = await this.messageRepository.updateMessagesStatusByIds({
+          environmentId: command.environmentId,
+          subscriberId: subscriber._id,
+          contextKeys,
+          ids: idChunk,
+          seen: true,
+        });
+        updatedMessages.push(...batchResults);
+      }
 
       this.processWebhooksInBatches(updatedMessages, command, subscriber.subscriberId, environment);
 
@@ -114,7 +120,7 @@ export class MarkNotificationsAsSeen {
         fromFilters.data = parsedData;
       }
 
-      await this.messageRepository.updateMessagesFromToStatus({
+      const updatedMessages = await this.messageRepository.updateMessagesFromToStatus({
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
         contextKeys,
@@ -122,12 +128,6 @@ export class MarkNotificationsAsSeen {
         to: {
           seen: true,
         },
-      });
-
-      const updatedMessages = await this.messageRepository.find({
-        _environmentId: command.environmentId,
-        _subscriberId: subscriber._id,
-        ...fromFilters,
       });
 
       await this.logTraces({

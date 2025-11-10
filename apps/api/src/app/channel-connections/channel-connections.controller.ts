@@ -89,6 +89,7 @@ export class ChannelConnectionsController {
         orderBy: query.orderBy || 'createdAt',
         includeCursor: query.includeCursor,
         resource: query.resource,
+        contextKeys: query.contextKeys,
         channel: query.channel,
         providerId: query.providerId,
         integrationIdentifier: query.integrationIdentifier,
@@ -125,6 +126,7 @@ export class ChannelConnectionsController {
         identifier: body.identifier,
         integrationIdentifier: body.integrationIdentifier,
         resource: body.resource,
+        context: body.context,
         workspace: body.workspace,
         auth: body.auth,
       })

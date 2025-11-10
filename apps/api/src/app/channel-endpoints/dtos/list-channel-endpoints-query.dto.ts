@@ -7,7 +7,8 @@ import {
   RESOURCE,
   ResourceKey,
 } from '@novu/shared';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
 import { GetChannelEndpointResponseDto } from './get-channel-endpoint-response.dto';
@@ -24,6 +25,28 @@ export class ListChannelEndpointsQueryDto extends CursorPaginationQueryDto<
   @IsOptional()
   @IsResourceKey()
   resource?: ResourceKey;
+
+  @ApiPropertyOptional({
+    description: 'Context keys to filter results.',
+    type: String,
+    isArray: true,
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    // No parameter = no filter
+    if (value === undefined) return undefined;
+
+    // Empty string = filter for records with no (default) context
+    if (value === '') return [];
+
+    // Normalize to array and remove empty strings
+    const array = Array.isArray(value) ? value : [value];
+    return array.filter((v) => v !== '');
+  })
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 
   @ApiPropertyOptional({
     description: 'Channel type to filter results.',

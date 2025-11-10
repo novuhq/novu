@@ -39,6 +39,11 @@ const channelEndpointSchema = new Schema<ChannelEndpointDBModel>(
       type: Schema.Types.String,
       required: true,
     },
+    contextKeys: {
+      type: [Schema.Types.String],
+      required: true,
+      default: [],
+    },
     type: {
       type: Schema.Types.String,
       enum: Object.values(ENDPOINT_TYPES),

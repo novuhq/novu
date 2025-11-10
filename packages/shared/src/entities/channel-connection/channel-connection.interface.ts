@@ -10,7 +10,8 @@ export interface IChannelConnection {
   integrationIdentifier: string;
   providerId: ProvidersIdEnum;
   channel: ChannelTypeEnum;
-  resource: ResourceKey;
+  resource?: ResourceKey;
+  contextKeys: string[];
 
   workspace: { id: string; name?: string };
   auth: { accessToken: string };

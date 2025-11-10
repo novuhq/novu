@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { makeResourceKey, RESOURCE, ResourceKey } from '@novu/shared';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload, makeResourceKey, RESOURCE, ResourceKey } from '@novu/shared';
 import { IsDefined, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
 import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 
 export class GenerateChatOauthUrlRequestDto {
@@ -9,9 +11,9 @@ export class GenerateChatOauthUrlRequestDto {
     description: 'Resource to link the integration to',
     example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
   })
-  @IsDefined()
+  @IsOptional()
   @IsResourceKey()
-  resource: ResourceKey;
+  resource?: ResourceKey;
 
   @ApiProperty({
     type: String,
@@ -31,4 +33,9 @@ export class GenerateChatOauthUrlRequestDto {
   @IsString()
   @IsOptional()
   connectionIdentifier?: string;
+
+  @ApiContextPayload()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 }

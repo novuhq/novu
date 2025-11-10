@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, shortId } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
@@ -22,10 +22,13 @@ export class CreateChannelConnection {
 
   @InstrumentUsecase()
   async execute(command: CreateChannelConnectionCommand): Promise<ChannelConnectionEntity> {
-    const integration = await this.findIntegration(command);
+    this.validateResourceOrContext(command);
 
-    await this.assertSingleConnectionPerResourceAndIntegration(command, integration);
+    const integration = await this.findIntegration(command);
+    const contextKeys = await this.resolveContexts(command);
+
     await this.assertResourceExists(command);
+    await this.ensureUniqueConnectionForResourceAndContext(command, integration, contextKeys);
 
     const identifier = command.identifier || this.generateIdentifier();
 
@@ -42,31 +45,71 @@ export class CreateChannelConnection {
       );
     }
 
-    const channelConnection = await this.createChannelConnection(command, identifier, integration);
+    const channelConnection = await this.createChannelConnection(command, identifier, integration, contextKeys);
 
     return channelConnection;
   }
 
-  private async assertSingleConnectionPerResourceAndIntegration(
+  private validateResourceOrContext(command: CreateChannelConnectionCommand) {
+    const { resource, context } = command;
+
+    if (!resource && !context) {
+      throw new BadRequestException('Either resource or context must be provided');
+    }
+  }
+
+  private async resolveContexts(command: CreateChannelConnectionCommand): Promise<string[]> {
+    if (!command.context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      command.environmentId,
+      command.organizationId,
+      command.context
+    );
+
+    return contexts.map((context) => context.key);
+  }
+
+  /**
+   * Ensures only one channel connection exists per unique combination of integration + resource + context.
+   * Any variation in integration, resource, or context creates a separate connection.
+   */
+  private async ensureUniqueConnectionForResourceAndContext(
     command: CreateChannelConnectionCommand,
-    integration: IntegrationEntity
+    integration: IntegrationEntity,
+    contextKeys: string[]
   ) {
-    const existingChannelConnection = await this.channelConnectionRepository.findOne({
+    const baseQuery = {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      resource: command.resource,
       integrationIdentifier: integration.identifier,
+      resource: command.resource,
+    };
+
+    const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
+
+    const existingChannelConnection = await this.channelConnectionRepository.findOne({
+      ...baseQuery,
+      ...contextQuery,
     });
 
     if (existingChannelConnection) {
-      throw new ConflictException(`Only one channel connection per resource and integration is allowed`);
+      const resourcePart = command.resource ? `resource "${command.resource}"` : 'no resource';
+      const contextPart = contextKeys.length > 0 ? `context [${contextKeys.join(', ')}]` : 'no context';
+
+      throw new ConflictException(
+        `A channel connection already exists for integration "${integration.identifier}" with ${resourcePart} and ${contextPart}. Connection ID: ${existingChannelConnection.identifier}`
+      );
     }
   }
 
   private async createChannelConnection(
     command: CreateChannelConnectionCommand,
     identifier: string,
-    integration: IntegrationEntity
+    integration: IntegrationEntity,
+    contextKeys: string[]
   ): Promise<ChannelConnectionEntity> {
     const channelConnection = await this.channelConnectionRepository.create({
       identifier,
@@ -76,6 +119,7 @@ export class CreateChannelConnection {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       resource: command.resource,
+      contextKeys,
       workspace: command.workspace,
       auth: command.auth,
     });
@@ -84,6 +128,10 @@ export class CreateChannelConnection {
   }
 
   private async assertResourceExists(command: CreateChannelConnectionCommand) {
+    if (!command.resource) {
+      return;
+    }
+
     const { type, id } = parseResourceKey(command.resource);
 
     switch (type) {
@@ -95,17 +143,6 @@ export class CreateChannelConnection {
         });
 
         if (!found) throw new NotFoundException(`Subscriber not found: ${id}`);
-
-        return;
-      }
-      case RESOURCE.CONTEXT: {
-        const found = await this.contextRepository.findOne({
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-          key: id,
-        });
-
-        if (!found) throw new NotFoundException(`Context not found: ${id}`);
 
         return;
       }

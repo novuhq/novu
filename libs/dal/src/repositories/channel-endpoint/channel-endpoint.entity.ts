@@ -23,6 +23,7 @@ export class ChannelEndpointEntity<T extends ChannelEndpointType = ChannelEndpoi
   providerId: ProvidersIdEnum;
   channel: ChannelTypeEnum;
   resource: ResourceKey;
+  contextKeys: string[];
   type: T;
   endpoint: ChannelEndpointByType[T];
 

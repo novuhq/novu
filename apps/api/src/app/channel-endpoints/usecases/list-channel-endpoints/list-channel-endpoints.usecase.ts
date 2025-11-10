@@ -37,6 +37,11 @@ export class ListChannelEndpoints {
       filter.connectionIdentifier = command.connectionIdentifier;
     }
 
+    if (command.contextKeys !== undefined) {
+      const contextQuery = this.channelEndpointRepository.buildContextExactMatchQuery(command.contextKeys);
+      filter.contextKeys = contextQuery.contextKeys;
+    }
+
     let channelEndpoint: ChannelEndpointEntity | null = null;
     const id = command.before || command.after;
 
