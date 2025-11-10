@@ -17,6 +17,7 @@ import {
   gupshupConfig,
   iMediaConfig,
   infobipSMSConfig,
+  ISendProProviderConfig,
   iSendSmsConfig,
   kannelConfig,
   maqsamConfig,
@@ -331,5 +332,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: iMediaConfig,
     docReference: '',
     logoFileName: { light: 'imedia.png', dark: 'imedia.png' },
+  },
+  {
+    id: SmsProviderIdEnum.ISendProSms,
+    displayName: 'iSendPro',
+    channel: ChannelTypeEnum.SMS,
+    credentials: ISendProProviderConfig,
+    docReference: 'https://www.isendpro.com/sms-api.php',
+    logoFileName: { light: 'isendpro.svg', dark: 'isendpro.svg' },
   },
 ];

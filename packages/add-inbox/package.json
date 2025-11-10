@@ -21,7 +21,9 @@
     "prebuild": "rimraf dist",
     "build": "tsc",
     "start": "ts-node src/cli/index.ts",
-    "prepublishOnly": "npm run build > /dev/null 2>&1"
+    "prepublishOnly": "npm run build > /dev/null 2>&1",
+    "test": "vitest --typecheck",
+    "test:watch": "vitest --typecheck --watch"
   },
   "keywords": [
     "novu",
@@ -55,6 +57,7 @@
     "@types/uuid": "^9.0.0",
     "rimraf": "^5.0.10",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
   }
 }
