@@ -57,7 +57,7 @@ export class ListChannelConnectionsQueryDto extends CursorPaginationQueryDto<
   integrationIdentifier?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by context keys.',
+    description: 'Filter by exact context keys, order insensitive (format: "type:id")',
     type: String,
     isArray: true,
     example: ['tenant:org-123', 'region:us-east-1'],
