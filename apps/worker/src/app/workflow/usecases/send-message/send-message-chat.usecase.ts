@@ -39,6 +39,7 @@ import {
 import { ChannelData, ISendMessageSuccessResponse } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
+import { ResolveChannelEndpointsCommand } from './channel-endpoint-resolution/resolve-channel-endpoints.command';
 import {
   IntegrationEndpoints,
   ResolveChannelEndpoints,
@@ -447,14 +448,16 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   private async getChannelEndpointGroups(command: SendMessageChannelCommand): Promise<IntegrationEndpoints[]> {
-    return this.resolveChannelEndpoints.execute({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      userId: command.userId,
-      subscriberId: command.subscriberId,
-      channelType: ChannelTypeEnum.CHAT,
-      contextKeys: command.contextKeys,
-    });
+    return this.resolveChannelEndpoints.execute(
+      ResolveChannelEndpointsCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        subscriberId: command.subscriberId,
+        channelType: ChannelTypeEnum.CHAT,
+        contextKeys: command.contextKeys,
+      })
+    );
   }
 
   private async sendErrors(
