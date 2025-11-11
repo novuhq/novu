@@ -46,6 +46,7 @@ import {
   PreferencesTypeEnum,
   ResourceOriginEnum,
 } from '@novu/shared';
+import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
 import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
@@ -167,8 +168,8 @@ export class UpdateWorkflow {
         updatePayload.validatePayload = command.validatePayload;
       }
 
-      if (command.status) {
-        updatePayload.status = command.status;
+      if (command.active) {
+        updatePayload.status = computeWorkflowStatus(command.active, updatePayload.steps || existingTemplate.steps);
       }
 
       if (command.issues) {
