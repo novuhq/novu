@@ -48,3 +48,5 @@ export function isChannelDataOfType<T extends ChannelData['type']>(
 ): data is Extract<ChannelData, { type: T }> {
   return data.type === type;
 }
+
+export const ENDPOINT_TYPES_REQUIRING_TOKEN = [ENDPOINT_TYPES.SLACK_CHANNEL, ENDPOINT_TYPES.SLACK_USER] as const;
