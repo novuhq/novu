@@ -111,7 +111,7 @@ export class ChannelEndpointsController {
   })
   @ApiResponse(ListChannelEndpointsResponseDto, 200)
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listChannelEndpoints(
     @UserSession() user: UserSessionData,
     @Query() query: ListChannelEndpointsQueryDto
@@ -153,7 +153,7 @@ export class ChannelEndpointsController {
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel endpoint', type: String })
   @ApiResponse(GetChannelEndpointResponseDto, 200)
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getChannelEndpoint(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
@@ -198,7 +198,7 @@ export class ChannelEndpointsController {
   })
   @ApiResponse(GetChannelEndpointResponseDto, 201)
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async createChannelEndpoint(
     @UserSession() user: UserSessionData,
     @Body() body: CreateChannelEndpointRequest
@@ -229,7 +229,7 @@ export class ChannelEndpointsController {
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel endpoint', type: String })
   @ApiResponse(GetChannelEndpointResponseDto, 200)
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
   async updateChannelEndpoint(
     @UserSession() user: UserSessionData,
@@ -258,7 +258,7 @@ export class ChannelEndpointsController {
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel endpoint', type: String })
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async deleteChannelEndpoint(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
