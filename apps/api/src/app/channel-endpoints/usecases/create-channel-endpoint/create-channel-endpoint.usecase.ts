@@ -10,7 +10,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelEndpointType, parseResourceKey, RESOURCE } from '@novu/shared';
+import { ChannelEndpointType } from '@novu/shared';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
 @Injectable()
@@ -28,7 +28,7 @@ export class CreateChannelEndpoint {
     const integration = await this.findIntegration(command);
     const contextKeys = await this.resolveContexts(command);
 
-    await this.assertResourceExists(command);
+    await this.assertSubscriberExists(command);
 
     const identifier = command.identifier || this.generateIdentifier();
 
@@ -85,7 +85,7 @@ export class CreateChannelEndpoint {
       integrationIdentifier: integration.identifier,
       providerId: integration.providerId,
       channel: integration.channel,
-      resource: command.resource,
+      subscriberId: command.subscriberId,
       contextKeys,
       type: command.type,
       endpoint: command.endpoint,
@@ -94,24 +94,20 @@ export class CreateChannelEndpoint {
     return channelEndpoint;
   }
 
-  private async assertResourceExists(command: CreateChannelEndpointCommand) {
-    const { type, id } = parseResourceKey(command.resource);
-
-    switch (type) {
-      case RESOURCE.SUBSCRIBER: {
-        const found = await this.subscriberRepository.findOne({
-          subscriberId: id,
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-        });
-
-        if (!found) throw new NotFoundException(`Subscriber not found: ${id}`);
-
-        return;
-      }
-      default:
-        throw new NotFoundException(`Resource type not found: ${type}`);
+  private async assertSubscriberExists(command: CreateChannelEndpointCommand) {
+    if (!command.subscriberId) {
+      return;
     }
+
+    const found = await this.subscriberRepository.findOne({
+      subscriberId: command.subscriberId,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    if (!found) throw new NotFoundException(`Subscriber not found: ${command.subscriberId}`);
+
+    return;
   }
 
   private async findIntegration(command: CreateChannelEndpointCommand) {

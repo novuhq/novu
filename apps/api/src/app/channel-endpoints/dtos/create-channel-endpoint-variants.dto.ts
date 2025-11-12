@@ -1,10 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsValidContextPayload } from '@novu/application-generic';
-import { ContextPayload, ENDPOINT_TYPES, makeResourceKey, RESOURCE, ResourceKey } from '@novu/shared';
+import { ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
-import { IsResourceKey } from '../../shared/validators/resource-key.validator';
 import {
   PhoneEndpointDto,
   SlackChannelEndpointDto,
@@ -24,13 +23,13 @@ class CreateChannelEndpointBaseDto {
   identifier?: string;
 
   @ApiProperty({
-    description: 'The resource of the channel endpoint',
+    description: 'The subscriber ID to which the channel endpoint is linked',
     type: String,
-    example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
+    example: 'subscriber-123',
   })
   @IsDefined()
-  @IsResourceKey()
-  resource: ResourceKey;
+  @IsString()
+  subscriberId: string;
 
   @ApiContextPayload()
   @IsOptional()

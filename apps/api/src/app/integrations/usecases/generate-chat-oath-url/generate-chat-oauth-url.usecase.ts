@@ -23,7 +23,7 @@ export class GenerateChatOauthUrl {
             environmentId: command.environmentId,
             organizationId: command.organizationId,
             connectionIdentifier: command.connectionIdentifier,
-            resource: command.resource,
+            subscriberId: command.subscriberId,
             integration,
             context: command.context,
           })

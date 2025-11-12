@@ -2,7 +2,6 @@ import { ChannelTypeEnum } from './channel';
 import { EnvironmentId } from './environment';
 import { OrganizationId } from './organization';
 import { ProvidersIdEnum } from './providers';
-import { ResourceKey } from './resource-key';
 
 export const ENDPOINT_TYPES = {
   SLACK_CHANNEL: 'slack_channel',
@@ -30,7 +29,7 @@ export type ChannelEndpoint<T extends ChannelEndpointType = ChannelEndpointType>
 
   providerId: ProvidersIdEnum;
   channel: ChannelTypeEnum;
-  resource: ResourceKey;
+  subscriberId: string;
   contextKeys: string[];
   type: T;
   endpoint: ChannelEndpointByType[T];

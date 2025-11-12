@@ -3,11 +3,8 @@ import {
   ChannelEndpointType,
   ChannelTypeEnum,
   ENDPOINT_TYPES,
-  makeResourceKey,
   ProvidersIdEnum,
   ProvidersIdEnumConst,
-  RESOURCE,
-  ResourceKey,
 } from '@novu/shared';
 import {
   PhoneEndpointDto,
@@ -53,11 +50,11 @@ export class GetChannelEndpointResponseDto {
   connectionIdentifier: string | null;
 
   @ApiProperty({
-    description: 'The resource of the channel connection',
+    description: 'The subscriber ID to which the channel endpoint is linked',
     type: String,
-    example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
+    example: 'subscriber-123',
   })
-  resource: ResourceKey | null;
+  subscriberId: string | null;
 
   @ApiProperty({
     description: 'The context of the channel connection',

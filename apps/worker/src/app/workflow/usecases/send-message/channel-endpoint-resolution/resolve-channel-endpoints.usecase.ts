@@ -6,7 +6,7 @@ import {
   ChannelEndpointEntity,
   ChannelEndpointRepository,
 } from '@novu/dal';
-import { makeResourceKey, ProvidersIdEnum, RESOURCE } from '@novu/shared';
+import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
 
@@ -62,7 +62,7 @@ export class ResolveChannelEndpoints {
     return this.channelEndpointRepository.find({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      resource: makeResourceKey(RESOURCE.SUBSCRIBER, command.subscriberId),
+      subscriberId: command.subscriberId,
       channel: command.channelType,
       ...contextQuery,
     });

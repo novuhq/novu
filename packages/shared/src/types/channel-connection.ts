@@ -2,7 +2,6 @@ import { ChannelTypeEnum } from './channel';
 import { EnvironmentId } from './environment';
 import { OrganizationId } from './organization';
 import { ProvidersIdEnum } from './providers';
-import { ResourceKey } from './resource-key';
 
 export type ChannelConnection = {
   _id: string;
@@ -14,7 +13,7 @@ export type ChannelConnection = {
   integrationIdentifier: string;
   providerId: ProvidersIdEnum;
   channel: ChannelTypeEnum;
-  resource?: ResourceKey;
+  subscriberId?: string;
   contextKeys: string[];
 
   workspace: { id: string; name?: string };

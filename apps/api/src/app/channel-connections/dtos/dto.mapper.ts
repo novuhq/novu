@@ -9,7 +9,7 @@ export function mapChannelConnectionEntityToDto(
     channel: channelConnection.channel,
     providerId: channelConnection.providerId,
     integrationIdentifier: channelConnection.integrationIdentifier,
-    resource: channelConnection.resource || null,
+    subscriberId: channelConnection.subscriberId || null,
     contextKeys: channelConnection.contextKeys || [],
     workspace: channelConnection.workspace,
     auth: channelConnection.auth,

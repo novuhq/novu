@@ -426,7 +426,7 @@ export class IntegrationsController {
       GenerateChatOauthUrlCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        resource: body.resource,
+        subscriberId: body.subscriberId,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
         context: body.context,

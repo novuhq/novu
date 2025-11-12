@@ -20,7 +20,6 @@ export * from './notification-templates';
 export * from './organization';
 export * from './providers';
 export * from './rate-limiting';
-export * from './resource-key';
 export * from './resource-limiting';
 export * from './response';
 export * from './secrets';

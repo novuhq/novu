@@ -1,12 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  ChannelTypeEnum,
-  makeResourceKey,
-  ProvidersIdEnum,
-  ProvidersIdEnumConst,
-  RESOURCE,
-  ResourceKey,
-} from '@novu/shared';
+import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
 import { AuthDto, WorkspaceDto } from './shared.dto';
 
 export class GetChannelConnectionResponseDto {
@@ -39,11 +32,11 @@ export class GetChannelConnectionResponseDto {
   integrationIdentifier: string | null;
 
   @ApiProperty({
-    description: 'The resource of the channel connection',
+    description: 'The subscriber ID to which the channel connection is linked',
     type: String,
-    example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
+    example: 'subscriber-123',
   })
-  resource: ResourceKey | null;
+  subscriberId: string | null;
 
   @ApiProperty({
     description: 'The context of the channel connection',

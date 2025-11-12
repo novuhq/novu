@@ -17,8 +17,8 @@ export class ListChannelEndpoints {
       _organizationId: command.user.organizationId,
     };
 
-    if (command.resource) {
-      filter.resource = command.resource;
+    if (command.subscriberId) {
+      filter.subscriberId = command.subscriberId;
     }
 
     if (command.channel) {

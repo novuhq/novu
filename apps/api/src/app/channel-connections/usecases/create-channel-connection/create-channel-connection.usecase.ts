@@ -8,7 +8,6 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { parseResourceKey, RESOURCE } from '@novu/shared';
 import { CreateChannelConnectionCommand } from './create-channel-connection.command';
 
 @Injectable()
@@ -27,7 +26,7 @@ export class CreateChannelConnection {
     const integration = await this.findIntegration(command);
     const contextKeys = await this.resolveContexts(command);
 
-    await this.assertResourceExists(command);
+    await this.assertSubscriberExists(command);
     await this.ensureUniqueConnectionForResourceAndContext(command, integration, contextKeys);
 
     const identifier = command.identifier || this.generateIdentifier();
@@ -51,10 +50,10 @@ export class CreateChannelConnection {
   }
 
   private validateResourceOrContext(command: CreateChannelConnectionCommand) {
-    const { resource, context } = command;
+    const { subscriberId, context } = command;
 
-    if (!resource && !context) {
-      throw new BadRequestException('Either resource or context must be provided');
+    if (!subscriberId && !context) {
+      throw new BadRequestException('Either subscriberId or context must be provided');
     }
   }
 
@@ -85,7 +84,7 @@ export class CreateChannelConnection {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       integrationIdentifier: integration.identifier,
-      resource: command.resource,
+      subscriberId: command.subscriberId,
     };
 
     const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
@@ -96,11 +95,11 @@ export class CreateChannelConnection {
     });
 
     if (existingChannelConnection) {
-      const resourcePart = command.resource ? `resource "${command.resource}"` : 'no resource';
+      const subscriberIdPart = command.subscriberId ? `subscriberId "${command.subscriberId}"` : 'no subscriberId';
       const contextPart = contextKeys.length > 0 ? `context [${contextKeys.join(', ')}]` : 'no context';
 
       throw new ConflictException(
-        `A channel connection already exists for integration "${integration.identifier}" with ${resourcePart} and ${contextPart}. Connection ID: ${existingChannelConnection.identifier}`
+        `A channel connection already exists for integration "${integration.identifier}" with ${subscriberIdPart} and ${contextPart}. Connection ID: ${existingChannelConnection.identifier}`
       );
     }
   }
@@ -118,7 +117,7 @@ export class CreateChannelConnection {
       channel: integration.channel,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      resource: command.resource,
+      subscriberId: command.subscriberId,
       contextKeys,
       workspace: command.workspace,
       auth: command.auth,
@@ -127,28 +126,20 @@ export class CreateChannelConnection {
     return channelConnection;
   }
 
-  private async assertResourceExists(command: CreateChannelConnectionCommand) {
-    if (!command.resource) {
+  private async assertSubscriberExists(command: CreateChannelConnectionCommand) {
+    if (!command.subscriberId) {
       return;
     }
 
-    const { type, id } = parseResourceKey(command.resource);
+    const found = await this.subscriberRepository.findOne({
+      subscriberId: command.subscriberId,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
 
-    switch (type) {
-      case RESOURCE.SUBSCRIBER: {
-        const found = await this.subscriberRepository.findOne({
-          subscriberId: id,
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-        });
+    if (!found) throw new NotFoundException(`Subscriber not found: ${command.subscriberId}`);
 
-        if (!found) throw new NotFoundException(`Subscriber not found: ${id}`);
-
-        return;
-      }
-      default:
-        throw new NotFoundException(`Resource type not found: ${type}`);
-    }
+    return;
   }
 
   private async findIntegration(command: CreateChannelConnectionCommand) {
