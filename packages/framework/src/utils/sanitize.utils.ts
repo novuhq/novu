@@ -22,8 +22,29 @@ const sanitizeOptions: IOptions = {
     'meta',
     'title',
   ]),
-  // Setting this to false to allow all attributes.
-  allowedAttributes: false,
+  /**
+   * Allowlist of safe attributes per tag to prevent XSS attacks.
+   * Event handler attributes (onerror, onclick, onload, etc.) are explicitly excluded.
+   */
+  allowedAttributes: {
+    ...sanitizeTypes.defaults.allowedAttributes,
+    '*': ['class', 'id', 'style', 'title', 'dir', 'lang'],
+    img: ['src', 'alt', 'width', 'height', 'loading', 'srcset', 'sizes', 'crossorigin', 'usemap', 'ismap'],
+    a: ['href', 'name', 'target', 'rel', 'download'],
+    link: ['href', 'rel', 'type', 'media', 'as', 'crossorigin'],
+    meta: ['name', 'content', 'charset', 'http-equiv'],
+    html: ['lang', 'dir'],
+    body: ['class', 'id', 'style'],
+    head: [],
+    style: ['type', 'media'],
+    table: ['border', 'cellpadding', 'cellspacing'],
+    td: ['colspan', 'rowspan', 'align', 'valign'],
+    th: ['colspan', 'rowspan', 'align', 'valign', 'scope'],
+    form: ['action', 'method', 'name', 'target', 'enctype'],
+    input: ['type', 'name', 'value', 'placeholder', 'disabled', 'readonly', 'required', 'checked'],
+    button: ['type', 'name', 'value', 'disabled'],
+    iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen', 'sandbox', 'loading'],
+  },
   /**
    * Required to disable console warnings when allowing style tags.
    *
