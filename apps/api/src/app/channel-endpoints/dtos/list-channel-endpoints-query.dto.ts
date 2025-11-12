@@ -27,7 +27,7 @@ export class ListChannelEndpointsQueryDto extends CursorPaginationQueryDto<
   resource?: ResourceKey;
 
   @ApiPropertyOptional({
-    description: 'Context keys to filter results.',
+    description: 'Filter by exact context keys, order insensitive (format: "type:id")',
     type: String,
     isArray: true,
     example: ['tenant:org-123', 'region:us-east-1'],

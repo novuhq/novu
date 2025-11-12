@@ -5,8 +5,6 @@ export * from './entities/activity-feed';
 export * from './entities/actor';
 export * from './entities/apiKeys';
 export * from './entities/change';
-export * from './entities/channel-connection';
-export * from './entities/channel-endpoint';
 export * from './entities/environment';
 export * from './entities/execution-details';
 export * from './entities/feed/feed.interface';
