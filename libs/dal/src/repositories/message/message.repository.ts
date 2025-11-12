@@ -62,6 +62,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     super(Message, MessageEntity);
   }
 
+  async findOne(
+    query: FilterQuery<MessageDBModel> & EnforceEnvId,
+    select?: ProjectionType<MessageEntity>,
+    options: {
+      readPreference?: 'secondaryPreferred' | 'primary';
+      query?: any;
+      session?: any;
+    } = {}
+  ): Promise<MessageEntity | null> {
+    const transformedQuery = this.transformContextKeysQuery(query) as FilterQuery<MessageDBModel> & EnforceEnvId;
+
+    return super.findOne(transformedQuery, select, options);
+  }
+
   private async getFilterQueryForMessage(
     environmentId: string,
     subscriberId: string,
@@ -86,6 +100,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
+      deleted: { $exists: false },
     };
 
     if (query.feedId === null) {
@@ -147,8 +162,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       }
     }
 
-    if (contextKeys && contextKeys?.length > 0) {
-      requestQuery.contextKeys = { $in: contextKeys };
+    if (contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(contextKeys);
+      requestQuery.$and = [...(requestQuery.$and ?? []), contextQuery];
     }
 
     if (createdAt != null) {
@@ -247,6 +263,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
+      deleted: { $exists: false },
     };
 
     const severityCondition: Array<MessageQuery> = [];
@@ -258,8 +275,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       }
     }
 
-    if (contextKeys && contextKeys?.length > 0) {
-      query.contextKeys = { $in: contextKeys };
+    if (contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(contextKeys);
+      query.$and = [...(query.$and ?? []), contextQuery];
     }
 
     if (tags && tags?.length > 0) {
@@ -272,24 +290,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       query.read = { $in: [true, false] };
     }
 
-    const archivedCondition: Array<MessageQuery> = [];
     if (typeof archived === 'boolean') {
       if (!archived) {
-        archivedCondition.push({ archived: { $exists: false } }, { archived: false });
+        query.archived = false;
       } else {
         query.archived = true;
       }
     } else {
-      archivedCondition.push({ archived: { $exists: false } }, { archived: { $in: [true, false] } });
+      query.archived = { $in: [true, false] };
     }
 
     // combine all $or conditions properly
     const orConditions: Array<MessageQuery> = [];
     if (severityCondition.length > 0) {
       orConditions.push({ $or: severityCondition });
-    }
-    if (archivedCondition.length > 0) {
-      orConditions.push({ $or: archivedCondition });
     }
 
     if (orConditions.length > 0) {
@@ -730,7 +744,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (isFromArchived) {
       if (!from.archived) {
-        query.$or = [{ archived: { $exists: false } }, { archived: false }];
+        query.archived = false;
       } else {
         query.archived = true;
       }
@@ -838,7 +852,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (shouldMarkAsSeen) {
       // First, update all matching documents with the main update
-      await this.update(idQuery, { $set: updatePayload });
+      await this.update(
+        idQuery,
+        { $set: updatePayload },
+        {
+          writeConcern: { w: 1 },
+        }
+      );
 
       // Then, set firstSeenDate only for documents that don't already have it
       await this.update(
@@ -848,6 +868,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         },
         {
           $set: { firstSeenDate: new Date() },
+        },
+        {
+          writeConcern: { w: 1 },
         }
       );
     } else {
@@ -855,7 +878,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       await this.update(idQuery, { $set: updatePayload });
     }
 
-    return this.find(idQuery);
+    return this.find(idQuery, undefined, { limit: 100 });
   }
 
   async updateActionStatus({
@@ -994,9 +1017,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       filterQuery.transactionId = { $in: query.transactionId };
     }
 
-    if (query.contextKeys && query.contextKeys.length > 0) {
-      filterQuery.contextKeys = { $in: query.contextKeys };
+    if (query.contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(query.contextKeys);
+      filterQuery.$and = [...(filterQuery.$and ?? []), contextQuery];
     }
+
     const data = await this.MongooseModel.find(filterQuery, select, {
       sort: options?.sort,
       limit: options?.limit,
@@ -1093,5 +1118,38 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     await this.delete(query);
 
     return messagesToDelete;
+  }
+
+  private transformContextKeysQuery(query: FilterQuery<MessageDBModel>): FilterQuery<MessageDBModel> {
+    if (!('contextKeys' in query)) {
+      return query;
+    }
+
+    const contextKeys = query.contextKeys as string[] | undefined;
+    const { contextKeys: _, ...restQuery } = query;
+
+    // undefined = feature disabled, skip context filtering
+    if (contextKeys === undefined) {
+      return restQuery;
+    }
+
+    return {
+      ...restQuery,
+      ...this.buildContextExactMatchQuery(contextKeys),
+    };
+  }
+
+  private buildContextExactMatchQuery(contextKeys: string[]): MessageQuery {
+    // empty array = inbox has no (default) context, only match messages with no context
+    if (contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match filtering
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }

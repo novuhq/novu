@@ -1,18 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsDefined,
-  IsEmail,
-  IsLocale,
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsString,
-  IsTimeZone,
-  ValidateIf,
-} from 'class-validator';
+import { IsDefined, IsNotEmpty, IsString } from 'class-validator';
+import { BaseSubscriberFieldsDto } from '../../shared/dtos/base-subscriber-fields.dto';
 
-export class CreateSubscriberRequestDto {
+export class CreateSubscriberRequestDto extends BaseSubscriberFieldsDto {
   @ApiProperty({
     type: String,
     description: 'Unique identifier of the subscriber',
@@ -22,87 +13,6 @@ export class CreateSubscriberRequestDto {
   @IsNotEmpty({
     message: 'SubscriberId is required',
   })
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   subscriberId: string;
-
-  @ApiPropertyOptional({
-    type: String,
-    description: 'First name of the subscriber',
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateIf((obj) => obj.firstName !== null)
-  @IsString()
-  firstName?: string | null;
-
-  @ApiPropertyOptional({
-    type: String,
-    description: 'Last name of the subscriber',
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateIf((obj) => obj.lastName !== null)
-  @IsString()
-  lastName?: string | null;
-
-  @ApiPropertyOptional({
-    type: String,
-    description: 'Email address of the subscriber',
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateIf((obj) => obj.email !== null)
-  @IsEmail()
-  email?: string | null;
-
-  @ApiPropertyOptional({
-    type: String,
-    description: 'Phone number of the subscriber',
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateIf((obj) => obj.phone !== null)
-  @IsString()
-  phone?: string | null;
-
-  @ApiPropertyOptional({
-    type: String,
-    description: 'Avatar URL or identifier',
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateIf((obj) => obj.avatar !== null)
-  @IsString()
-  avatar?: string | null;
-
-  @ApiPropertyOptional({
-    type: String,
-    description: 'Timezone of the subscriber',
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateIf((obj) => obj.timezone !== null)
-  @IsTimeZone()
-  timezone?: string | null;
-
-  @ApiPropertyOptional({
-    type: String,
-    description: 'Locale of the subscriber',
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateIf((obj) => obj.locale !== null)
-  @IsLocale()
-  locale?: string | null;
-
-  @ApiPropertyOptional({
-    type: Object,
-    description: 'Additional custom data for the subscriber',
-    nullable: true,
-    additionalProperties: true,
-  })
-  @IsOptional()
-  @ValidateIf((obj) => obj.data !== null)
-  @IsObject()
-  data?: Record<string, unknown> | null;
 }

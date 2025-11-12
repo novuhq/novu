@@ -29,8 +29,8 @@ export function FilterInput({ inputRef, value, onChange, placeholder, size, show
         )}
       />
       {showEnterIcon && (
-        <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 p-1">
-          <EnterLineIcon className="h-1.5 w-1.5 text-neutral-200" />
+        <div className="pointer-events-none shrink-0 rounded-[6px] border border-neutral-200 p-0.5">
+          <EnterLineIcon className="h-3 w-3 text-neutral-200" />
         </div>
       )}
     </div>

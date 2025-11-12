@@ -12,27 +12,20 @@ import {
   UserProfile,
 } from './components';
 import { getJwtToken, isJwtValid } from './jwt-manager';
-import { OrganizationContextProvider, useOrganization } from './organization.resource';
 import { OrganizationSwitcher } from './organization-switcher';
-import { UserContextProvider, useUser } from './user.resource';
+import { OrganizationContextProvider, useOrganization } from './organization.resource';
 import { UserButton } from './user-button';
+import { UserContextProvider, useUser } from './user.resource';
 
 export {
-  OrganizationSwitcher,
-  UserButton,
-  OrganizationContextProvider,
-  AuthContextProvider,
-  OrganizationList,
-  OrganizationProfile,
-  UserProfile,
-  SignIn,
-  SignUp,
-  RedirectToSignIn,
+  AuthContextProvider, OrganizationContextProvider, OrganizationList,
+  OrganizationProfile, OrganizationSwitcher, RedirectToSignIn,
   SignedIn,
-  SignedOut,
+  SignedOut, SignIn,
+  SignUp, UserButton, UserProfile
 };
 
-export { useOrganization, useUser, useAuth };
+  export { useAuth, useOrganization, useUser };
 
 export const useOrganizationList = () => {
   const { organization, isLoaded } = useOrganization() as {
@@ -49,7 +42,12 @@ export const useOrganizationList = () => {
 
 export const ClerkContext = React.createContext({});
 
-export const Protect = ({ children, ...rest }: any) => {
+export type ProtectProps = {
+  children: React.ReactNode;
+  [key: string]: any;
+};
+
+export const Protect = ({ children, ...rest }: ProtectProps) => {
   return children;
 };
 

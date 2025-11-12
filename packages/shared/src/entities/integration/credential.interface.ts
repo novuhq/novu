@@ -47,6 +47,10 @@ export interface ICredentials {
   apiVersion?: string;
   appSid?: string;
   senderId?: string;
+  AppIOBaseUrl?: string;
+  AppIOSubscriptionId?: string;
+  AppIOBearerToken?: string;
+  AppIOOriginalSignature?: string;
   servicePlanId?: string;
   tenantId?: string;
 }

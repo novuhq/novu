@@ -231,4 +231,9 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   tenantId?: string;
+  
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  AppIOBaseUrl?: string;
 }

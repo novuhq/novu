@@ -41,14 +41,14 @@ export class ExternalServicesRoute {
     // TODO: Retro-compatibility for a bit just in case stalled messages
     if (message) {
       Logger.log('Sending full message in the payload', LOG_CONTEXT);
-      await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
+      await this.wsGateway.sendMessage(command.userId, command.event, command.payload, command.contextKeys);
     } else if (messageId) {
       Logger.log(`Sending messageId: ${messageId} in the payload, we need to retrieve the full message`, LOG_CONTEXT);
       const storedMessage = await this.messageRepository.findOne({
         _id: messageId,
         _environmentId: command._environmentId,
       });
-      await this.wsGateway.sendMessage(command.userId, command.event, { message: storedMessage });
+      await this.wsGateway.sendMessage(command.userId, command.event, { message: storedMessage }, command.contextKeys);
     }
 
     // Only recalculate the counts if we send a messageId/message.
@@ -70,7 +70,7 @@ export class ExternalServicesRoute {
         ChannelTypeEnum.IN_APP,
         { read: false },
         { limit: 101 },
-        undefined,
+        command.contextKeys,
         undefined,
         'primary'
       ),
@@ -79,7 +79,8 @@ export class ExternalServicesRoute {
         command.userId,
         ChannelTypeEnum.IN_APP,
         { read: false, snoozed: false },
-        { limit: 99 }
+        { limit: 99 },
+        command.contextKeys
       ),
     ]);
 
@@ -102,11 +103,16 @@ export class ExternalServicesRoute {
       }
     }
 
-    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNREAD, {
-      unreadCount: paginationIndication.unreadCount,
-      counts,
-      hasMore: paginationIndication.hasMore,
-    });
+    await this.wsGateway.sendMessage(
+      command.userId,
+      WebSocketEventEnum.UNREAD,
+      {
+        unreadCount: paginationIndication.unreadCount,
+        counts,
+        hasMore: paginationIndication.hasMore,
+      },
+      command.contextKeys
+    );
   }
 
   private async sendUnseenCountChange(command: ExternalServicesRouteCommand) {
@@ -121,16 +127,22 @@ export class ExternalServicesRoute {
       command.userId,
       ChannelTypeEnum.IN_APP,
       { seen: false },
-      { limit: 101 }
+      { limit: 101 },
+      command.contextKeys
     );
 
     const paginationIndication: IUnseenCountPaginationIndication =
       unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
 
-    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNSEEN, {
-      unseenCount: paginationIndication.unseenCount,
-      hasMore: paginationIndication.hasMore,
-    });
+    await this.wsGateway.sendMessage(
+      command.userId,
+      WebSocketEventEnum.UNSEEN,
+      {
+        unseenCount: paginationIndication.unseenCount,
+        hasMore: paginationIndication.hasMore,
+      },
+      command.contextKeys
+    );
   }
 
   private async connectionExist(command: ExternalServicesRouteCommand): Promise<boolean | undefined> {

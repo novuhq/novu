@@ -96,8 +96,9 @@ export class NotificationRepository extends BaseRepository<
       };
     }
 
-    if (query.contextKeys && query.contextKeys.length > 0) {
-      requestQuery.contextKeys = { $in: query.contextKeys };
+    if (query.contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(query.contextKeys);
+      requestQuery.$and = [...(requestQuery.$and ?? []), contextQuery];
     }
 
     // combine all $or conditions properly
@@ -339,5 +340,19 @@ export class NotificationRepository extends BaseRepository<
 
   estimatedDocumentCount() {
     return this.MongooseModel.estimatedDocumentCount();
+  }
+
+  private buildContextExactMatchQuery(contextKeys: string[]) {
+    // empty array = inbox has no context, only match notifications with no context
+    if (contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match filtering
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }

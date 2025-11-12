@@ -35,3 +35,4 @@ export * from './telnyx/telnyx.provider';
 export * from './termii/termii.provider';
 export * from './twilio/twilio.provider';
 export * from './unifonic/unifonic.provider';
+export * from './isendpro-sms/isendpro-sms.provider';

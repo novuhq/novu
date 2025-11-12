@@ -358,6 +358,13 @@ export class MessageResponseDto implements IMessage {
     type: Object,
   })
   overrides?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Context (single or multi) in which the message was sent',
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  contextKeys?: string[];
 }
 
 export class MessagesResponseDto {

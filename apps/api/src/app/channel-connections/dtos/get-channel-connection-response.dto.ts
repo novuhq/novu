@@ -17,9 +17,12 @@ export class GetChannelConnectionResponseDto {
 
   @ApiProperty({
     description: 'The provider identifier (e.g., sendgrid, twilio, slack, etc.).',
-    enum: Object.values(ProvidersIdEnumConst),
+    enum: [...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))])],
+    enumName: 'ProvidersIdEnum',
+    type: String,
+    example: 'slack',
   })
-  provider: ProvidersIdEnum | null;
+  providerId: ProvidersIdEnum | null;
 
   @ApiProperty({
     description: 'The identifier of the integration to use for this channel endpoint.',
@@ -27,6 +30,20 @@ export class GetChannelConnectionResponseDto {
     example: 'slack-prod',
   })
   integrationIdentifier: string | null;
+
+  @ApiProperty({
+    description: 'The subscriber ID to which the channel connection is linked',
+    type: String,
+    example: 'subscriber-123',
+  })
+  subscriberId: string | null;
+
+  @ApiProperty({
+    description: 'The context of the channel connection',
+    type: [String],
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  contextKeys: string[];
 
   @ApiProperty({ type: WorkspaceDto })
   workspace: WorkspaceDto;

@@ -70,12 +70,12 @@ export function TimelineStep({
   }
 
   return (
-    <motion.div {...stepAnimation(index)} className="relative flex gap-6">
-      <div className="relative">
+    <motion.div {...stepAnimation(index)} className="relative flex min-w-0 gap-6">
+      <div className="relative shrink-0">
         <TimelineStepNumber index={index} />
         <TimelineLine />
       </div>
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <div className="text-label-sm text-neutral-950">{title}</div>
         {description && <div className="text-label-xs text-text-soft mt-2">{description}</div>}
         {children}

@@ -40,17 +40,20 @@ describe('Env Controller', async () => {
   describe('Update Env Protection', () => {
     it('should prevent renaming Development environment', async () => {
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
-      
+
       // Find the Development environment
       const environments = await novuClient.environments.list();
-      const devEnvironment = environments.result?.find(env => env.name === EnvironmentEnum.DEVELOPMENT);
+      const devEnvironment = environments.result?.find((env) => env.name === EnvironmentEnum.DEVELOPMENT);
       expect(devEnvironment).to.be.ok;
 
       // Try to update the Development environment name - should fail
       const { error } = await expectSdkExceptionGeneric(() =>
-        novuClient.environments.update({
-          name: 'Custom Development Name'
-        }, devEnvironment!._id!)
+        novuClient.environments.update(
+          {
+            name: 'Custom Development Name',
+          },
+          devEnvironment?.id!
+        )
       );
 
       expect(error).to.be.ok;
@@ -60,17 +63,20 @@ describe('Env Controller', async () => {
 
     it('should prevent renaming Production environment', async () => {
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
-      
+
       // Find the Production environment
       const environments = await novuClient.environments.list();
-      const prodEnvironment = environments.result?.find(env => env.name === EnvironmentEnum.PRODUCTION);
+      const prodEnvironment = environments.result?.find((env) => env.name === EnvironmentEnum.PRODUCTION);
       expect(prodEnvironment).to.be.ok;
 
       // Try to update the Production environment name - should fail
       const { error } = await expectSdkExceptionGeneric(() =>
-        novuClient.environments.update({
-          name: 'Custom Production Name'
-        }, prodEnvironment!._id!)
+        novuClient.environments.update(
+          {
+            name: 'Custom Production Name',
+          },
+          prodEnvironment?.id!
+        )
       );
 
       expect(error).to.be.ok;
@@ -80,16 +86,19 @@ describe('Env Controller', async () => {
 
     it('should allow updating other properties of protected environments', async () => {
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
-      
+
       // Find the Development environment
       const environments = await novuClient.environments.list();
-      const devEnvironment = environments.result?.find(env => env.name === EnvironmentEnum.DEVELOPMENT);
+      const devEnvironment = environments.result?.find((env) => env.name === EnvironmentEnum.DEVELOPMENT);
       expect(devEnvironment).to.be.ok;
 
       // Should be able to update color without changing name
-      const updatedEnv = await novuClient.environments.update({
-        color: '#ff0000'
-      }, devEnvironment!._id!);
+      const updatedEnv = await novuClient.environments.update(
+        {
+          color: '#ff0000',
+        },
+        devEnvironment?.id!
+      );
 
       expect(updatedEnv.result).to.be.ok;
       expect(updatedEnv.result?.name).to.equal(EnvironmentEnum.DEVELOPMENT); // Name should remain unchanged
@@ -97,7 +106,7 @@ describe('Env Controller', async () => {
 
     it('should allow renaming custom environments', async () => {
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
-      
+
       // Create a custom environment
       const { environmentRequestDto } = generateRandomEnvRequest();
       const createdEnv = await novuClient.environments.create(environmentRequestDto);
@@ -105,9 +114,12 @@ describe('Env Controller', async () => {
 
       // Should be able to update custom environment name
       const newName = generateRandomName('updated-env');
-      const updatedEnv = await novuClient.environments.update({
-        name: newName
-      }, createdEnv.result!._id!);
+      const updatedEnv = await novuClient.environments.update(
+        {
+          name: newName,
+        },
+        createdEnv.result?.id!
+      );
 
       expect(updatedEnv.result).to.be.ok;
       expect(updatedEnv.result?.name).to.equal(newName);

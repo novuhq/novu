@@ -2,10 +2,15 @@ import { Injectable } from '@nestjs/common';
 import {
   isActionStepType,
   isMainDigest,
+  LogRepository,
+  MessageInteractionService,
+  MessageInteractionTrace,
+  PinoLogger,
   StepRunRepository,
+  StepType,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatusEnum, StepTypeEnum } from '@novu/shared';
 
 import { CancelDelayedCommand } from './cancel-delayed.command';
 
@@ -14,7 +19,11 @@ export class CancelDelayed {
   constructor(
     private jobRepository: JobRepository,
     private stepRunRepository: StepRunRepository,
-  ) {}
+    private messageInteractionService: MessageInteractionService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   public async execute(command: CancelDelayedCommand): Promise<boolean> {
     let jobs: JobEntity[] = await this.jobRepository.find({
@@ -47,9 +56,15 @@ export class CancelDelayed {
       {
         $set: {
           status: JobStatusEnum.CANCELED,
+          deliveryLifecycleState: {
+            status: DeliveryLifecycleStatusEnum.CANCELED,
+            detail: DeliveryLifecycleDetail.EXECUTION_CANCELED_BY_USER,
+          },
         },
       }
     );
+
+    await this.recordCancellationTraces(jobs);
 
     await this.stepRunRepository.createMany(jobs, {
       status: JobStatusEnum.CANCELED,
@@ -125,5 +140,65 @@ export class CancelDelayed {
     );
 
     return true;
+  }
+
+  private async recordCancellationTraces(jobs: JobEntity[]): Promise<void> {
+    try {
+      const interactionTraces: MessageInteractionTrace[] = jobs.map((job) => ({
+        created_at: LogRepository.formatDateTime64(new Date()),
+        organization_id: job._organizationId,
+        environment_id: job._environmentId,
+        user_id: job._userId || null,
+        subscriber_id: job._subscriberId || null,
+        external_subscriber_id: job.subscriberId || null,
+        event_type: 'step_canceled' as const,
+        title: 'Step canceled',
+        message: 'Step execution was canceled by Novu platform user',
+        raw_data: JSON.stringify({
+          message: 'Step execution was canceled by Novu platform user',
+        }),
+        status: 'success' as const,
+        entity_type: 'step_run' as const,
+        entity_id: job._id,
+        step_run_type: this.mapStepTypeEnumToStepType(job.type) || undefined,
+        workflow_run_identifier: job.identifier || '',
+        _notificationId: job._notificationId,
+      }));
+
+      await this.messageInteractionService.trace(
+        interactionTraces,
+        DeliveryLifecycleStatusEnum.CANCELED,
+        DeliveryLifecycleDetail.EXECUTION_CANCELED_BY_USER
+      );
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to create cancel traces');
+    }
+  }
+
+  private mapStepTypeEnumToStepType(stepType: StepTypeEnum | undefined): StepType | null {
+    switch (stepType) {
+      case StepTypeEnum.EMAIL:
+        return 'email';
+      case StepTypeEnum.SMS:
+        return 'sms';
+      case StepTypeEnum.IN_APP:
+        return 'in_app';
+      case StepTypeEnum.PUSH:
+        return 'push';
+      case StepTypeEnum.CHAT:
+        return 'chat';
+      case StepTypeEnum.DIGEST:
+        return 'digest';
+      case StepTypeEnum.THROTTLE:
+        return 'throttle';
+      case StepTypeEnum.TRIGGER:
+        return 'trigger';
+      case StepTypeEnum.DELAY:
+        return 'delay';
+      case StepTypeEnum.CUSTOM:
+        return 'custom';
+      default:
+        return null;
+    }
   }
 }

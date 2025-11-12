@@ -1,12 +1,12 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { IS_EU } from '@/config';
+import { useRegion } from '@/context/region';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
-import { IS_EU } from '@/config';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { REGIONS } from './region-config';
-import { useRegion } from './region-context';
 
 const REGION_OPTIONS = REGIONS.map((region) => ({
   value: region.code,

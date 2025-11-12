@@ -49,6 +49,7 @@ const mapDetailToEventType = {
   [DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS]: 'subscriber_missing_email_address',
   [DetailEnum.SUBSCRIBER_MISSING_PHONE_NUMBER]: 'subscriber_missing_phone_number',
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL]: 'subscriber_channel_missing',
+  [DetailEnum.SUBSCRIBER_CONTEXT_NO_ACTIVE_CHANNEL]: 'subscriber_context_channel_missing',
   [DetailEnum.SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION]: 'subscriber_validation_failed',
 
   // Provider events
@@ -120,6 +121,7 @@ const mapDetailToEventType = {
   [DetailEnum.SKIPPED_STEP_OUTSIDE_OF_THE_SCHEDULE]: 'step_skipped_outside_of_the_schedule',
   [DetailEnum.STEP_EXTENDED_TO_SCHEDULE]: 'step_extended_to_schedule',
   [DetailEnum.SKIPPED_STEP_MAX_EXTENSIONS_REACHED]: 'step_skipped_max_extensions_reached',
+  [DetailEnum.PUSH_INVALID_TOKEN_REMOVED]: 'push_invalid_token_removed',
 } satisfies Record<DetailEnum, EventType>;
 
 @Injectable()

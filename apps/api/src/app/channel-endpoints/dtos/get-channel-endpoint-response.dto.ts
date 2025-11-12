@@ -1,13 +1,17 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { getApiPropertyExamples } from '@novu/application-generic';
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import {
-  ChannelEndpointByType,
   ChannelEndpointType,
   ChannelTypeEnum,
   ENDPOINT_TYPES,
   ProvidersIdEnum,
   ProvidersIdEnumConst,
 } from '@novu/shared';
+import {
+  PhoneEndpointDto,
+  SlackChannelEndpointDto,
+  SlackUserEndpointDto,
+  WebhookEndpointDto,
+} from './endpoint-types.dto';
 
 export class GetChannelEndpointResponseDto {
   @ApiProperty({
@@ -24,9 +28,12 @@ export class GetChannelEndpointResponseDto {
 
   @ApiProperty({
     description: 'The provider identifier (e.g., sendgrid, twilio, slack, etc.).',
-    enum: Object.values(ProvidersIdEnumConst),
+    enum: [...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))])],
+    enumName: 'ProvidersIdEnum',
+    type: String,
+    example: 'slack',
   })
-  provider: ProvidersIdEnum | null;
+  providerId: ProvidersIdEnum | null;
 
   @ApiProperty({
     description: 'The identifier of the integration to use for this channel endpoint.',
@@ -43,6 +50,20 @@ export class GetChannelEndpointResponseDto {
   connectionIdentifier: string | null;
 
   @ApiProperty({
+    description: 'The subscriber ID to which the channel endpoint is linked',
+    type: String,
+    example: 'subscriber-123',
+  })
+  subscriberId: string | null;
+
+  @ApiProperty({
+    description: 'The context of the channel connection',
+    type: [String],
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  contextKeys: string[];
+
+  @ApiProperty({
     description: 'Type of channel endpoint',
     enum: Object.values(ENDPOINT_TYPES),
     example: ENDPOINT_TYPES.SLACK_CHANNEL,
@@ -51,9 +72,14 @@ export class GetChannelEndpointResponseDto {
 
   @ApiProperty({
     description: 'Endpoint data specific to the channel type',
-    oneOf: getApiPropertyExamples(),
+    oneOf: [
+      { $ref: getSchemaPath(SlackChannelEndpointDto) },
+      { $ref: getSchemaPath(SlackUserEndpointDto) },
+      { $ref: getSchemaPath(WebhookEndpointDto) },
+      { $ref: getSchemaPath(PhoneEndpointDto) },
+    ],
   })
-  endpoint: ChannelEndpointByType[ChannelEndpointType];
+  endpoint: SlackChannelEndpointDto | SlackUserEndpointDto | WebhookEndpointDto | PhoneEndpointDto;
 
   @ApiProperty({
     description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',

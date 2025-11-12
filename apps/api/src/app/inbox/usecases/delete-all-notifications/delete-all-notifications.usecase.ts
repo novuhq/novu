@@ -97,6 +97,7 @@ export class DeleteAllNotifications {
         event: WebSocketEventEnum.UNREAD,
         userId: subscriber._id,
         _environmentId: command.environmentId,
+        ...(command.contextKeys && { contextKeys: command.contextKeys }),
       },
       groupId: subscriber._organizationId,
     });

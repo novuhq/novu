@@ -129,6 +129,8 @@ export class BuildStepIssuesUsecase {
         amount: controlValues?.amount as number | undefined,
         unit: controlValues?.unit as string | undefined,
         cron: controlValues?.cron as string | undefined,
+        type: controlValues?.type as string | undefined,
+        dynamicKey: controlValues?.dynamicKey as string | undefined,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         stepType,
