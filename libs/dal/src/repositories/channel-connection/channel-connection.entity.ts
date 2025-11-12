@@ -1,4 +1,4 @@
-import type { ChannelConnection, ChannelTypeEnum, ProvidersIdEnum, ResourceKey } from '@novu/shared';
+import type { ChannelConnection, ChannelTypeEnum, ProvidersIdEnum } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -13,7 +13,7 @@ export class ChannelConnectionEntity implements ChannelConnection {
   integrationIdentifier: string;
   providerId: ProvidersIdEnum;
   channel: ChannelTypeEnum;
-  resource?: ResourceKey;
+  subscriberId?: string;
   contextKeys: string[];
 
   workspace: { id: string; name?: string };

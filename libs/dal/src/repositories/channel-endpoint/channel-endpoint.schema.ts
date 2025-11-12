@@ -35,7 +35,7 @@ const channelEndpointSchema = new Schema<ChannelEndpointDBModel>(
       type: Schema.Types.String,
       required: true,
     },
-    resource: {
+    subscriberId: {
       type: Schema.Types.String,
       required: true,
     },

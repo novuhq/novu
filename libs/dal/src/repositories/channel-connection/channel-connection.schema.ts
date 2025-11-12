@@ -30,7 +30,7 @@ const channelConnectionSchema = new Schema<ChannelConnectionDBModel>(
       type: Schema.Types.String,
       required: true,
     },
-    resource: {
+    subscriberId: {
       type: Schema.Types.String,
       required: false,
       default: null,
