@@ -100,11 +100,19 @@ export class SendMessageChat extends SendMessageBase {
 
       // Check if there are any active channels
       if (channels.length === 0) {
-        await this.createExecutionDetail(
-          command,
-          DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
-          ExecutionDetailsStatusEnum.FAILED
-        );
+        if (command.contextKeys && command.contextKeys.length > 0) {
+          await this.createExecutionDetail(
+            command,
+            DetailEnum.SUBSCRIBER_CONTEXT_NO_ACTIVE_CHANNEL,
+            ExecutionDetailsStatusEnum.FAILED
+          );
+        } else {
+          await this.createExecutionDetail(
+            command,
+            DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+            ExecutionDetailsStatusEnum.FAILED
+          );
+        }
 
         return {
           status: SendMessageStatus.FAILED,

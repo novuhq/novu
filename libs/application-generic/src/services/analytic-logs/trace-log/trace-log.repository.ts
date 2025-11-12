@@ -290,6 +290,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Subscriber integration missing';
     case 'subscriber_channel_missing':
       return 'Subscriber channel missing';
+    case 'subscriber_context_channel_missing':
+      return 'Subscriber does not have a configured channel with the given context';
     case 'subscriber_validation_failed':
       return 'Subscriber validation failed';
     case 'subscriber_missing_email_address':

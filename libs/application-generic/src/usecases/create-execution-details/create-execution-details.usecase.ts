@@ -49,6 +49,7 @@ const mapDetailToEventType = {
   [DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS]: 'subscriber_missing_email_address',
   [DetailEnum.SUBSCRIBER_MISSING_PHONE_NUMBER]: 'subscriber_missing_phone_number',
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL]: 'subscriber_channel_missing',
+  [DetailEnum.SUBSCRIBER_CONTEXT_NO_ACTIVE_CHANNEL]: 'subscriber_context_channel_missing',
   [DetailEnum.SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION]: 'subscriber_validation_failed',
 
   // Provider events
