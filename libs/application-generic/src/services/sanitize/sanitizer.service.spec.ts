@@ -14,15 +14,6 @@ describe('HTML Sanitizer - XSS Prevention', () => {
       expect(sanitized).to.include('src="x"');
     });
 
-    it('should strip onclick attribute from elements', () => {
-      const maliciousHtml = '<div onclick="alert(\'XSS\')">Click me</div>';
-      const sanitized = sanitizeHTML(maliciousHtml);
-
-      expect(sanitized).to.not.include('onclick');
-      expect(sanitized).to.not.include('alert');
-      expect(sanitized).to.include('<div>Click me</div>');
-    });
-
     it('should strip onload attribute from img tags', () => {
       const maliciousHtml = '<img src="valid.jpg" onload="alert(\'XSS\')" />';
       const sanitized = sanitizeHTML(maliciousHtml);
@@ -33,13 +24,23 @@ describe('HTML Sanitizer - XSS Prevention', () => {
       expect(sanitized).to.include('src="valid.jpg"');
     });
 
-    it('should strip onmouseover attribute', () => {
-      const maliciousHtml = '<a href="#" onmouseover="alert(\'XSS\')">Hover me</a>';
+    it('should strip onclick attribute from img tags', () => {
+      const maliciousHtml = '<img src="x" onclick="alert(\'XSS\')" />';
+      const sanitized = sanitizeHTML(maliciousHtml);
+
+      expect(sanitized).to.not.include('onclick');
+      expect(sanitized).to.not.include('alert');
+      expect(sanitized).to.include('<img');
+      expect(sanitized).to.include('src="x"');
+    });
+
+    it('should strip onmouseover attribute from img tags', () => {
+      const maliciousHtml = '<img src="x" onmouseover="alert(\'XSS\')" />';
       const sanitized = sanitizeHTML(maliciousHtml);
 
       expect(sanitized).to.not.include('onmouseover');
       expect(sanitized).to.not.include('alert');
-      expect(sanitized).to.include('<a href="#">Hover me</a>');
+      expect(sanitized).to.include('<img');
     });
 
     it('should allow safe img attributes', () => {
@@ -106,17 +107,17 @@ describe('HTML Sanitizer - XSS Prevention', () => {
       expect(sanitized.title).to.equal('Safe title');
     });
 
-    it('should sanitize nested objects', () => {
+    it('should sanitize nested objects with img XSS', () => {
       const obj = {
         nested: {
-          content: '<div onclick="alert(\'XSS\')">Click</div>',
+          content: '<img src="x" onerror="alert(\'XSS\')" />',
         },
       };
 
       const sanitized = sanitizeHtmlInObject(obj);
 
-      expect(sanitized.nested.content).to.not.include('onclick');
-      expect(sanitized.nested.content).to.include('<div>Click</div>');
+      expect(sanitized.nested.content).to.not.include('onerror');
+      expect(sanitized.nested.content).to.include('<img');
     });
 
     it('should sanitize arrays', () => {

@@ -8,6 +8,8 @@ import sanitizeTypes, { IOptions } from 'sanitize-html';
  *
  * @see https://www.npmjs.com/package/sanitize-html#default-options
  */
+const SAFE_IMG_ATTRIBUTES = ['src', 'alt', 'width', 'height', 'loading', 'srcset', 'sizes', 'crossorigin', 'usemap', 'ismap', 'class', 'id', 'style', 'title', 'dir', 'lang'];
+
 const sanitizeOptions: IOptions = {
   /**
    * Additional tags to allow.
@@ -22,28 +24,26 @@ const sanitizeOptions: IOptions = {
     'meta',
     'title',
   ]),
+  allowedAttributes: false,
   /**
-   * Allowlist of safe attributes per tag to prevent XSS attacks.
-   * Event handler attributes (onerror, onclick, onload, etc.) are explicitly excluded.
+   * Transform img tags to strip dangerous event handler attributes (onerror, onload, etc.)
+   * while keeping all other attributes permissive for other tags.
    */
-  allowedAttributes: {
-    ...sanitizeTypes.defaults.allowedAttributes,
-    '*': ['class', 'id', 'style', 'title', 'dir', 'lang'],
-    img: ['src', 'alt', 'width', 'height', 'loading', 'srcset', 'sizes', 'crossorigin', 'usemap', 'ismap'],
-    a: ['href', 'name', 'target', 'rel', 'download'],
-    link: ['href', 'rel', 'type', 'media', 'as', 'crossorigin'],
-    meta: ['name', 'content', 'charset', 'http-equiv'],
-    html: ['lang', 'dir'],
-    body: ['class', 'id', 'style'],
-    head: [],
-    style: ['type', 'media'],
-    table: ['border', 'cellpadding', 'cellspacing'],
-    td: ['colspan', 'rowspan', 'align', 'valign'],
-    th: ['colspan', 'rowspan', 'align', 'valign', 'scope'],
-    form: ['action', 'method', 'name', 'target', 'enctype'],
-    input: ['type', 'name', 'value', 'placeholder', 'disabled', 'readonly', 'required', 'checked'],
-    button: ['type', 'name', 'value', 'disabled'],
-    iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen', 'sandbox', 'loading'],
+  transformTags: {
+    img: (tagName, attribs) => {
+      const safeAttribs: Record<string, string> = {};
+
+      for (const [key, value] of Object.entries(attribs)) {
+        if (SAFE_IMG_ATTRIBUTES.includes(key.toLowerCase())) {
+          safeAttribs[key] = value;
+        }
+      }
+
+      return {
+        tagName,
+        attribs: safeAttribs,
+      };
+    },
   },
   /**
    * Additional URL schemes to allow in src, href, and other URL attributes.
