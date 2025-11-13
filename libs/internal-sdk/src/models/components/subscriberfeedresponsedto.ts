@@ -46,51 +46,6 @@ export const SubscriberFeedResponseDto$inboundSchema: z.ZodType<SubscriberFeedRe
     });
   });
 
-/** @internal */
-export type SubscriberFeedResponseDto$Outbound = {
-  _id?: string | undefined;
-  firstName?: string | undefined;
-  lastName?: string | undefined;
-  avatar?: string | undefined;
-  subscriberId: string;
-};
-
-/** @internal */
-export const SubscriberFeedResponseDto$outboundSchema: z.ZodType<
-  SubscriberFeedResponseDto$Outbound,
-  z.ZodTypeDef,
-  SubscriberFeedResponseDto
-> = z
-  .object({
-    id: z.string().optional(),
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
-    avatar: z.string().optional(),
-    subscriberId: z.string(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriberFeedResponseDto$ {
-  /** @deprecated use `SubscriberFeedResponseDto$inboundSchema` instead. */
-  export const inboundSchema = SubscriberFeedResponseDto$inboundSchema;
-  /** @deprecated use `SubscriberFeedResponseDto$outboundSchema` instead. */
-  export const outboundSchema = SubscriberFeedResponseDto$outboundSchema;
-  /** @deprecated use `SubscriberFeedResponseDto$Outbound` instead. */
-  export type Outbound = SubscriberFeedResponseDto$Outbound;
-}
-
-export function subscriberFeedResponseDtoToJSON(subscriberFeedResponseDto: SubscriberFeedResponseDto): string {
-  return JSON.stringify(SubscriberFeedResponseDto$outboundSchema.parse(subscriberFeedResponseDto));
-}
-
 export function subscriberFeedResponseDtoFromJSON(
   jsonString: string
 ): SafeParseResult<SubscriberFeedResponseDto, SDKValidationError> {

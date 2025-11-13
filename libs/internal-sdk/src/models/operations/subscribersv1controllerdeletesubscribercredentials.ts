@@ -22,23 +22,6 @@ export type SubscribersV1ControllerDeleteSubscriberCredentialsResponse = {
 };
 
 /** @internal */
-export const SubscribersV1ControllerDeleteSubscriberCredentialsRequest$inboundSchema: z.ZodType<
-  SubscribersV1ControllerDeleteSubscriberCredentialsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    subscriberId: z.string(),
-    providerId: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type SubscribersV1ControllerDeleteSubscriberCredentialsRequest$Outbound = {
   subscriberId: string;
   providerId: string;
@@ -62,19 +45,6 @@ export const SubscribersV1ControllerDeleteSubscriberCredentialsRequest$outboundS
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerDeleteSubscriberCredentialsRequest$ {
-  /** @deprecated use `SubscribersV1ControllerDeleteSubscriberCredentialsRequest$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerDeleteSubscriberCredentialsRequest$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerDeleteSubscriberCredentialsRequest$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerDeleteSubscriberCredentialsRequest$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerDeleteSubscriberCredentialsRequest$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerDeleteSubscriberCredentialsRequest$Outbound;
-}
-
 export function subscribersV1ControllerDeleteSubscriberCredentialsRequestToJSON(
   subscribersV1ControllerDeleteSubscriberCredentialsRequest: SubscribersV1ControllerDeleteSubscriberCredentialsRequest
 ): string {
@@ -82,16 +52,6 @@ export function subscribersV1ControllerDeleteSubscriberCredentialsRequestToJSON(
     SubscribersV1ControllerDeleteSubscriberCredentialsRequest$outboundSchema.parse(
       subscribersV1ControllerDeleteSubscriberCredentialsRequest
     )
-  );
-}
-
-export function subscribersV1ControllerDeleteSubscriberCredentialsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<SubscribersV1ControllerDeleteSubscriberCredentialsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscribersV1ControllerDeleteSubscriberCredentialsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscribersV1ControllerDeleteSubscriberCredentialsRequest' from JSON`
   );
 }
 
@@ -109,49 +69,6 @@ export const SubscribersV1ControllerDeleteSubscriberCredentialsResponse$inboundS
       Headers: 'headers',
     });
   });
-
-/** @internal */
-export type SubscribersV1ControllerDeleteSubscriberCredentialsResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-};
-
-/** @internal */
-export const SubscribersV1ControllerDeleteSubscriberCredentialsResponse$outboundSchema: z.ZodType<
-  SubscribersV1ControllerDeleteSubscriberCredentialsResponse$Outbound,
-  z.ZodTypeDef,
-  SubscribersV1ControllerDeleteSubscriberCredentialsResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerDeleteSubscriberCredentialsResponse$ {
-  /** @deprecated use `SubscribersV1ControllerDeleteSubscriberCredentialsResponse$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerDeleteSubscriberCredentialsResponse$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerDeleteSubscriberCredentialsResponse$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerDeleteSubscriberCredentialsResponse$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerDeleteSubscriberCredentialsResponse$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerDeleteSubscriberCredentialsResponse$Outbound;
-}
-
-export function subscribersV1ControllerDeleteSubscriberCredentialsResponseToJSON(
-  subscribersV1ControllerDeleteSubscriberCredentialsResponse: SubscribersV1ControllerDeleteSubscriberCredentialsResponse
-): string {
-  return JSON.stringify(
-    SubscribersV1ControllerDeleteSubscriberCredentialsResponse$outboundSchema.parse(
-      subscribersV1ControllerDeleteSubscriberCredentialsResponse
-    )
-  );
-}
 
 export function subscribersV1ControllerDeleteSubscriberCredentialsResponseFromJSON(
   jsonString: string

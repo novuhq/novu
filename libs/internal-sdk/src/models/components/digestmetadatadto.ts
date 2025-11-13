@@ -7,14 +7,9 @@ import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  DigestTimedConfigDto,
-  DigestTimedConfigDto$inboundSchema,
-  DigestTimedConfigDto$Outbound,
-  DigestTimedConfigDto$outboundSchema,
-} from './digesttimedconfigdto.js';
-import { DigestTypeEnum, DigestTypeEnum$inboundSchema, DigestTypeEnum$outboundSchema } from './digesttypeenum.js';
-import { DigestUnitEnum, DigestUnitEnum$inboundSchema, DigestUnitEnum$outboundSchema } from './digestunitenum.js';
+import { DigestTimedConfigDto, DigestTimedConfigDto$inboundSchema } from './digesttimedconfigdto.js';
+import { DigestTypeEnum, DigestTypeEnum$inboundSchema } from './digesttypeenum.js';
+import { DigestUnitEnum, DigestUnitEnum$inboundSchema } from './digestunitenum.js';
 
 /**
  * Unit of the digest
@@ -80,21 +75,6 @@ export const DigestMetadataDtoUnit$inboundSchema: z.ZodNativeEnum<typeof DigestM
   z.nativeEnum(DigestMetadataDtoUnit);
 
 /** @internal */
-export const DigestMetadataDtoUnit$outboundSchema: z.ZodNativeEnum<typeof DigestMetadataDtoUnit> =
-  DigestMetadataDtoUnit$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestMetadataDtoUnit$ {
-  /** @deprecated use `DigestMetadataDtoUnit$inboundSchema` instead. */
-  export const inboundSchema = DigestMetadataDtoUnit$inboundSchema;
-  /** @deprecated use `DigestMetadataDtoUnit$outboundSchema` instead. */
-  export const outboundSchema = DigestMetadataDtoUnit$outboundSchema;
-}
-
-/** @internal */
 export const DigestMetadataDto$inboundSchema: z.ZodType<DigestMetadataDto, z.ZodTypeDef, unknown> = z.object({
   digestKey: z.string().optional(),
   amount: z.number().optional(),
@@ -107,52 +87,6 @@ export const DigestMetadataDto$inboundSchema: z.ZodType<DigestMetadataDto, z.Zod
   updateMode: z.boolean().optional(),
   timed: DigestTimedConfigDto$inboundSchema.optional(),
 });
-
-/** @internal */
-export type DigestMetadataDto$Outbound = {
-  digestKey?: string | undefined;
-  amount?: number | undefined;
-  unit?: string | undefined;
-  type: string;
-  events?: Array<{ [k: string]: any }> | undefined;
-  backoff?: boolean | undefined;
-  backoffAmount?: number | undefined;
-  backoffUnit?: string | undefined;
-  updateMode?: boolean | undefined;
-  timed?: DigestTimedConfigDto$Outbound | undefined;
-};
-
-/** @internal */
-export const DigestMetadataDto$outboundSchema: z.ZodType<DigestMetadataDto$Outbound, z.ZodTypeDef, DigestMetadataDto> =
-  z.object({
-    digestKey: z.string().optional(),
-    amount: z.number().optional(),
-    unit: DigestMetadataDtoUnit$outboundSchema.optional(),
-    type: DigestTypeEnum$outboundSchema,
-    events: z.array(z.record(z.any())).optional(),
-    backoff: z.boolean().optional(),
-    backoffAmount: z.number().optional(),
-    backoffUnit: DigestUnitEnum$outboundSchema.optional(),
-    updateMode: z.boolean().optional(),
-    timed: DigestTimedConfigDto$outboundSchema.optional(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestMetadataDto$ {
-  /** @deprecated use `DigestMetadataDto$inboundSchema` instead. */
-  export const inboundSchema = DigestMetadataDto$inboundSchema;
-  /** @deprecated use `DigestMetadataDto$outboundSchema` instead. */
-  export const outboundSchema = DigestMetadataDto$outboundSchema;
-  /** @deprecated use `DigestMetadataDto$Outbound` instead. */
-  export type Outbound = DigestMetadataDto$Outbound;
-}
-
-export function digestMetadataDtoToJSON(digestMetadataDto: DigestMetadataDto): string {
-  return JSON.stringify(DigestMetadataDto$outboundSchema.parse(digestMetadataDto));
-}
 
 export function digestMetadataDtoFromJSON(jsonString: string): SafeParseResult<DigestMetadataDto, SDKValidationError> {
   return safeParse(

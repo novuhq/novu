@@ -3,12 +3,8 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   PreviewPayloadDto,
-  PreviewPayloadDto$inboundSchema,
   PreviewPayloadDto$Outbound,
   PreviewPayloadDto$outboundSchema,
 } from './previewpayloaddto.js';
@@ -23,13 +19,6 @@ export type GeneratePreviewRequestDto = {
    */
   previewPayload?: PreviewPayloadDto | undefined;
 };
-
-/** @internal */
-export const GeneratePreviewRequestDto$inboundSchema: z.ZodType<GeneratePreviewRequestDto, z.ZodTypeDef, unknown> =
-  z.object({
-    controlValues: z.record(z.any()).optional(),
-    previewPayload: PreviewPayloadDto$inboundSchema.optional(),
-  });
 
 /** @internal */
 export type GeneratePreviewRequestDto$Outbound = {
@@ -47,29 +36,6 @@ export const GeneratePreviewRequestDto$outboundSchema: z.ZodType<
   previewPayload: PreviewPayloadDto$outboundSchema.optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewRequestDto$ {
-  /** @deprecated use `GeneratePreviewRequestDto$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewRequestDto$inboundSchema;
-  /** @deprecated use `GeneratePreviewRequestDto$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewRequestDto$outboundSchema;
-  /** @deprecated use `GeneratePreviewRequestDto$Outbound` instead. */
-  export type Outbound = GeneratePreviewRequestDto$Outbound;
-}
-
 export function generatePreviewRequestDtoToJSON(generatePreviewRequestDto: GeneratePreviewRequestDto): string {
   return JSON.stringify(GeneratePreviewRequestDto$outboundSchema.parse(generatePreviewRequestDto));
-}
-
-export function generatePreviewRequestDtoFromJSON(
-  jsonString: string
-): SafeParseResult<GeneratePreviewRequestDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => GeneratePreviewRequestDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'GeneratePreviewRequestDto' from JSON`
-  );
 }

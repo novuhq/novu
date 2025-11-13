@@ -30,41 +30,6 @@ export const SubscriptionsDeleteErrorDto$inboundSchema: z.ZodType<SubscriptionsD
     message: z.string(),
   });
 
-/** @internal */
-export type SubscriptionsDeleteErrorDto$Outbound = {
-  subscriberId: string;
-  code: string;
-  message: string;
-};
-
-/** @internal */
-export const SubscriptionsDeleteErrorDto$outboundSchema: z.ZodType<
-  SubscriptionsDeleteErrorDto$Outbound,
-  z.ZodTypeDef,
-  SubscriptionsDeleteErrorDto
-> = z.object({
-  subscriberId: z.string(),
-  code: z.string(),
-  message: z.string(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriptionsDeleteErrorDto$ {
-  /** @deprecated use `SubscriptionsDeleteErrorDto$inboundSchema` instead. */
-  export const inboundSchema = SubscriptionsDeleteErrorDto$inboundSchema;
-  /** @deprecated use `SubscriptionsDeleteErrorDto$outboundSchema` instead. */
-  export const outboundSchema = SubscriptionsDeleteErrorDto$outboundSchema;
-  /** @deprecated use `SubscriptionsDeleteErrorDto$Outbound` instead. */
-  export type Outbound = SubscriptionsDeleteErrorDto$Outbound;
-}
-
-export function subscriptionsDeleteErrorDtoToJSON(subscriptionsDeleteErrorDto: SubscriptionsDeleteErrorDto): string {
-  return JSON.stringify(SubscriptionsDeleteErrorDto$outboundSchema.parse(subscriptionsDeleteErrorDto));
-}
-
 export function subscriptionsDeleteErrorDtoFromJSON(
   jsonString: string
 ): SafeParseResult<SubscriptionsDeleteErrorDto, SDKValidationError> {

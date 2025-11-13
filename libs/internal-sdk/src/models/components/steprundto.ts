@@ -7,18 +7,8 @@ import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  DigestMetadataDto,
-  DigestMetadataDto$inboundSchema,
-  DigestMetadataDto$Outbound,
-  DigestMetadataDto$outboundSchema,
-} from './digestmetadatadto.js';
-import {
-  StepExecutionDetailDto,
-  StepExecutionDetailDto$inboundSchema,
-  StepExecutionDetailDto$Outbound,
-  StepExecutionDetailDto$outboundSchema,
-} from './stepexecutiondetaildto.js';
+import { DigestMetadataDto, DigestMetadataDto$inboundSchema } from './digestmetadatadto.js';
+import { StepExecutionDetailDto, StepExecutionDetailDto$inboundSchema } from './stepexecutiondetaildto.js';
 
 /**
  * Step status
@@ -86,20 +76,6 @@ export type StepRunDto = {
 export const StepRunDtoStatus$inboundSchema: z.ZodNativeEnum<typeof StepRunDtoStatus> = z.nativeEnum(StepRunDtoStatus);
 
 /** @internal */
-export const StepRunDtoStatus$outboundSchema: z.ZodNativeEnum<typeof StepRunDtoStatus> = StepRunDtoStatus$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepRunDtoStatus$ {
-  /** @deprecated use `StepRunDtoStatus$inboundSchema` instead. */
-  export const inboundSchema = StepRunDtoStatus$inboundSchema;
-  /** @deprecated use `StepRunDtoStatus$outboundSchema` instead. */
-  export const outboundSchema = StepRunDtoStatus$outboundSchema;
-}
-
-/** @internal */
 export const StepRunDto$inboundSchema: z.ZodType<StepRunDto, z.ZodTypeDef, unknown> = z.object({
   stepRunId: z.string(),
   stepId: z.string(),
@@ -118,51 +94,6 @@ export const StepRunDto$inboundSchema: z.ZodType<StepRunDto, z.ZodTypeDef, unkno
   digest: DigestMetadataDto$inboundSchema.optional(),
   scheduleExtensionsCount: z.number().optional(),
 });
-
-/** @internal */
-export type StepRunDto$Outbound = {
-  stepRunId: string;
-  stepId: string;
-  stepType: string;
-  providerId?: string | undefined;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  executionDetails: Array<StepExecutionDetailDto$Outbound>;
-  digest?: DigestMetadataDto$Outbound | undefined;
-  scheduleExtensionsCount?: number | undefined;
-};
-
-/** @internal */
-export const StepRunDto$outboundSchema: z.ZodType<StepRunDto$Outbound, z.ZodTypeDef, StepRunDto> = z.object({
-  stepRunId: z.string(),
-  stepId: z.string(),
-  stepType: z.string(),
-  providerId: z.string().optional(),
-  status: StepRunDtoStatus$outboundSchema,
-  createdAt: z.date().transform((v) => v.toISOString()),
-  updatedAt: z.date().transform((v) => v.toISOString()),
-  executionDetails: z.array(StepExecutionDetailDto$outboundSchema),
-  digest: DigestMetadataDto$outboundSchema.optional(),
-  scheduleExtensionsCount: z.number().optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepRunDto$ {
-  /** @deprecated use `StepRunDto$inboundSchema` instead. */
-  export const inboundSchema = StepRunDto$inboundSchema;
-  /** @deprecated use `StepRunDto$outboundSchema` instead. */
-  export const outboundSchema = StepRunDto$outboundSchema;
-  /** @deprecated use `StepRunDto$Outbound` instead. */
-  export type Outbound = StepRunDto$Outbound;
-}
-
-export function stepRunDtoToJSON(stepRunDto: StepRunDto): string {
-  return JSON.stringify(StepRunDto$outboundSchema.parse(stepRunDto));
-}
 
 export function stepRunDtoFromJSON(jsonString: string): SafeParseResult<StepRunDto, SDKValidationError> {
   return safeParse(

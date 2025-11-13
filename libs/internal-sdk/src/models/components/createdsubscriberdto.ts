@@ -19,37 +19,6 @@ export const CreatedSubscriberDto$inboundSchema: z.ZodType<CreatedSubscriberDto,
   subscriberId: z.string(),
 });
 
-/** @internal */
-export type CreatedSubscriberDto$Outbound = {
-  subscriberId: string;
-};
-
-/** @internal */
-export const CreatedSubscriberDto$outboundSchema: z.ZodType<
-  CreatedSubscriberDto$Outbound,
-  z.ZodTypeDef,
-  CreatedSubscriberDto
-> = z.object({
-  subscriberId: z.string(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CreatedSubscriberDto$ {
-  /** @deprecated use `CreatedSubscriberDto$inboundSchema` instead. */
-  export const inboundSchema = CreatedSubscriberDto$inboundSchema;
-  /** @deprecated use `CreatedSubscriberDto$outboundSchema` instead. */
-  export const outboundSchema = CreatedSubscriberDto$outboundSchema;
-  /** @deprecated use `CreatedSubscriberDto$Outbound` instead. */
-  export type Outbound = CreatedSubscriberDto$Outbound;
-}
-
-export function createdSubscriberDtoToJSON(createdSubscriberDto: CreatedSubscriberDto): string {
-  return JSON.stringify(CreatedSubscriberDto$outboundSchema.parse(createdSubscriberDto));
-}
-
 export function createdSubscriberDtoFromJSON(
   jsonString: string
 ): SafeParseResult<CreatedSubscriberDto, SDKValidationError> {

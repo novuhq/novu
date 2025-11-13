@@ -50,21 +50,9 @@ export type EmailControlDto = {
 /** @internal */
 export const EmailControlDtoEditorType$inboundSchema: z.ZodNativeEnum<typeof EmailControlDtoEditorType> =
   z.nativeEnum(EmailControlDtoEditorType);
-
 /** @internal */
 export const EmailControlDtoEditorType$outboundSchema: z.ZodNativeEnum<typeof EmailControlDtoEditorType> =
   EmailControlDtoEditorType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailControlDtoEditorType$ {
-  /** @deprecated use `EmailControlDtoEditorType$inboundSchema` instead. */
-  export const inboundSchema = EmailControlDtoEditorType$inboundSchema;
-  /** @deprecated use `EmailControlDtoEditorType$outboundSchema` instead. */
-  export const outboundSchema = EmailControlDtoEditorType$outboundSchema;
-}
 
 /** @internal */
 export const EmailControlDto$inboundSchema: z.ZodType<EmailControlDto, z.ZodTypeDef, unknown> = z.object({
@@ -75,7 +63,6 @@ export const EmailControlDto$inboundSchema: z.ZodType<EmailControlDto, z.ZodType
   disableOutputSanitization: z.boolean().default(false),
   layoutId: z.nullable(z.string()).optional(),
 });
-
 /** @internal */
 export type EmailControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -97,23 +84,9 @@ export const EmailControlDto$outboundSchema: z.ZodType<EmailControlDto$Outbound,
     layoutId: z.nullable(z.string()).optional(),
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailControlDto$ {
-  /** @deprecated use `EmailControlDto$inboundSchema` instead. */
-  export const inboundSchema = EmailControlDto$inboundSchema;
-  /** @deprecated use `EmailControlDto$outboundSchema` instead. */
-  export const outboundSchema = EmailControlDto$outboundSchema;
-  /** @deprecated use `EmailControlDto$Outbound` instead. */
-  export type Outbound = EmailControlDto$Outbound;
-}
-
 export function emailControlDtoToJSON(emailControlDto: EmailControlDto): string {
   return JSON.stringify(EmailControlDto$outboundSchema.parse(emailControlDto));
 }
-
 export function emailControlDtoFromJSON(jsonString: string): SafeParseResult<EmailControlDto, SDKValidationError> {
   return safeParse(
     jsonString,

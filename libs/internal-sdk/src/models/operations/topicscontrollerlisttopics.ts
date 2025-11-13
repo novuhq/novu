@@ -69,48 +69,9 @@ export type TopicsControllerListTopicsResponse = {
 };
 
 /** @internal */
-export const TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema: z.ZodNativeEnum<
-  typeof TopicsControllerListTopicsQueryParamOrderDirection
-> = z.nativeEnum(TopicsControllerListTopicsQueryParamOrderDirection);
-
-/** @internal */
 export const TopicsControllerListTopicsQueryParamOrderDirection$outboundSchema: z.ZodNativeEnum<
   typeof TopicsControllerListTopicsQueryParamOrderDirection
-> = TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerListTopicsQueryParamOrderDirection$ {
-  /** @deprecated use `TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema;
-  /** @deprecated use `TopicsControllerListTopicsQueryParamOrderDirection$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerListTopicsQueryParamOrderDirection$outboundSchema;
-}
-
-/** @internal */
-export const TopicsControllerListTopicsRequest$inboundSchema: z.ZodType<
-  TopicsControllerListTopicsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    after: z.string().optional(),
-    before: z.string().optional(),
-    limit: z.number().optional(),
-    orderDirection: TopicsControllerListTopicsQueryParamOrderDirection$inboundSchema.optional(),
-    orderBy: z.string().optional(),
-    includeCursor: z.boolean().optional(),
-    key: z.string().optional(),
-    name: z.string().optional(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
+> = z.nativeEnum(TopicsControllerListTopicsQueryParamOrderDirection);
 
 /** @internal */
 export type TopicsControllerListTopicsRequest$Outbound = {
@@ -148,33 +109,10 @@ export const TopicsControllerListTopicsRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerListTopicsRequest$ {
-  /** @deprecated use `TopicsControllerListTopicsRequest$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerListTopicsRequest$inboundSchema;
-  /** @deprecated use `TopicsControllerListTopicsRequest$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerListTopicsRequest$outboundSchema;
-  /** @deprecated use `TopicsControllerListTopicsRequest$Outbound` instead. */
-  export type Outbound = TopicsControllerListTopicsRequest$Outbound;
-}
-
 export function topicsControllerListTopicsRequestToJSON(
   topicsControllerListTopicsRequest: TopicsControllerListTopicsRequest
 ): string {
   return JSON.stringify(TopicsControllerListTopicsRequest$outboundSchema.parse(topicsControllerListTopicsRequest));
-}
-
-export function topicsControllerListTopicsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TopicsControllerListTopicsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TopicsControllerListTopicsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TopicsControllerListTopicsRequest' from JSON`
-  );
 }
 
 /** @internal */
@@ -193,48 +131,6 @@ export const TopicsControllerListTopicsResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type TopicsControllerListTopicsResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.ListTopicsResponseDto$Outbound;
-};
-
-/** @internal */
-export const TopicsControllerListTopicsResponse$outboundSchema: z.ZodType<
-  TopicsControllerListTopicsResponse$Outbound,
-  z.ZodTypeDef,
-  TopicsControllerListTopicsResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.ListTopicsResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerListTopicsResponse$ {
-  /** @deprecated use `TopicsControllerListTopicsResponse$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerListTopicsResponse$inboundSchema;
-  /** @deprecated use `TopicsControllerListTopicsResponse$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerListTopicsResponse$outboundSchema;
-  /** @deprecated use `TopicsControllerListTopicsResponse$Outbound` instead. */
-  export type Outbound = TopicsControllerListTopicsResponse$Outbound;
-}
-
-export function topicsControllerListTopicsResponseToJSON(
-  topicsControllerListTopicsResponse: TopicsControllerListTopicsResponse
-): string {
-  return JSON.stringify(TopicsControllerListTopicsResponse$outboundSchema.parse(topicsControllerListTopicsResponse));
-}
 
 export function topicsControllerListTopicsResponseFromJSON(
   jsonString: string

@@ -41,7 +41,7 @@ export class GenerateChatOauthUrlRequestDto {
 
   @ApiProperty({
     type: [String],
-    description: `OAuth scopes to request during authorization. These define the permissions your chat integration will have. If not specified, default scopes will be used: ${SLACK_DEFAULT_OAUTH_SCOPES.join(', ')}.`,
+    description: `OAuth scopes to request during authorization. These define the permissions your chat integration will have. If not specified, default scopes will be used: ${SLACK_DEFAULT_OAUTH_SCOPES.join(', ')}. Note: The generated OAuth URL expires after 5 minutes.`,
     example: [
       'chat:write',
       'chat:write.public',

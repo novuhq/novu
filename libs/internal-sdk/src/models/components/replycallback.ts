@@ -24,35 +24,6 @@ export const ReplyCallback$inboundSchema: z.ZodType<ReplyCallback, z.ZodTypeDef,
   url: z.string().optional(),
 });
 
-/** @internal */
-export type ReplyCallback$Outbound = {
-  active?: boolean | undefined;
-  url?: string | undefined;
-};
-
-/** @internal */
-export const ReplyCallback$outboundSchema: z.ZodType<ReplyCallback$Outbound, z.ZodTypeDef, ReplyCallback> = z.object({
-  active: z.boolean().optional(),
-  url: z.string().optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ReplyCallback$ {
-  /** @deprecated use `ReplyCallback$inboundSchema` instead. */
-  export const inboundSchema = ReplyCallback$inboundSchema;
-  /** @deprecated use `ReplyCallback$outboundSchema` instead. */
-  export const outboundSchema = ReplyCallback$outboundSchema;
-  /** @deprecated use `ReplyCallback$Outbound` instead. */
-  export type Outbound = ReplyCallback$Outbound;
-}
-
-export function replyCallbackToJSON(replyCallback: ReplyCallback): string {
-  return JSON.stringify(ReplyCallback$outboundSchema.parse(replyCallback));
-}
-
 export function replyCallbackFromJSON(jsonString: string): SafeParseResult<ReplyCallback, SDKValidationError> {
   return safeParse(
     jsonString,

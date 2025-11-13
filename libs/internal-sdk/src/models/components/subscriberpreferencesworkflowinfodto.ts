@@ -38,47 +38,6 @@ export const SubscriberPreferencesWorkflowInfoDto$inboundSchema: z.ZodType<
   updatedAt: z.string().optional(),
 });
 
-/** @internal */
-export type SubscriberPreferencesWorkflowInfoDto$Outbound = {
-  slug: string;
-  identifier: string;
-  name: string;
-  updatedAt?: string | undefined;
-};
-
-/** @internal */
-export const SubscriberPreferencesWorkflowInfoDto$outboundSchema: z.ZodType<
-  SubscriberPreferencesWorkflowInfoDto$Outbound,
-  z.ZodTypeDef,
-  SubscriberPreferencesWorkflowInfoDto
-> = z.object({
-  slug: z.string(),
-  identifier: z.string(),
-  name: z.string(),
-  updatedAt: z.string().optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriberPreferencesWorkflowInfoDto$ {
-  /** @deprecated use `SubscriberPreferencesWorkflowInfoDto$inboundSchema` instead. */
-  export const inboundSchema = SubscriberPreferencesWorkflowInfoDto$inboundSchema;
-  /** @deprecated use `SubscriberPreferencesWorkflowInfoDto$outboundSchema` instead. */
-  export const outboundSchema = SubscriberPreferencesWorkflowInfoDto$outboundSchema;
-  /** @deprecated use `SubscriberPreferencesWorkflowInfoDto$Outbound` instead. */
-  export type Outbound = SubscriberPreferencesWorkflowInfoDto$Outbound;
-}
-
-export function subscriberPreferencesWorkflowInfoDtoToJSON(
-  subscriberPreferencesWorkflowInfoDto: SubscriberPreferencesWorkflowInfoDto
-): string {
-  return JSON.stringify(
-    SubscriberPreferencesWorkflowInfoDto$outboundSchema.parse(subscriberPreferencesWorkflowInfoDto)
-  );
-}
-
 export function subscriberPreferencesWorkflowInfoDtoFromJSON(
   jsonString: string
 ): SafeParseResult<SubscriberPreferencesWorkflowInfoDto, SDKValidationError> {

@@ -4,10 +4,7 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
 import * as components from '../components/index.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type TranslationControllerCreateTranslationEndpointRequest = {
   /**
@@ -16,23 +13,6 @@ export type TranslationControllerCreateTranslationEndpointRequest = {
   idempotencyKey?: string | undefined;
   createTranslationRequestDto: components.CreateTranslationRequestDto;
 };
-
-/** @internal */
-export const TranslationControllerCreateTranslationEndpointRequest$inboundSchema: z.ZodType<
-  TranslationControllerCreateTranslationEndpointRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    'idempotency-key': z.string().optional(),
-    CreateTranslationRequestDto: components.CreateTranslationRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      CreateTranslationRequestDto: 'createTranslationRequestDto',
-    });
-  });
 
 /** @internal */
 export type TranslationControllerCreateTranslationEndpointRequest$Outbound = {
@@ -57,19 +37,6 @@ export const TranslationControllerCreateTranslationEndpointRequest$outboundSchem
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TranslationControllerCreateTranslationEndpointRequest$ {
-  /** @deprecated use `TranslationControllerCreateTranslationEndpointRequest$inboundSchema` instead. */
-  export const inboundSchema = TranslationControllerCreateTranslationEndpointRequest$inboundSchema;
-  /** @deprecated use `TranslationControllerCreateTranslationEndpointRequest$outboundSchema` instead. */
-  export const outboundSchema = TranslationControllerCreateTranslationEndpointRequest$outboundSchema;
-  /** @deprecated use `TranslationControllerCreateTranslationEndpointRequest$Outbound` instead. */
-  export type Outbound = TranslationControllerCreateTranslationEndpointRequest$Outbound;
-}
-
 export function translationControllerCreateTranslationEndpointRequestToJSON(
   translationControllerCreateTranslationEndpointRequest: TranslationControllerCreateTranslationEndpointRequest
 ): string {
@@ -77,15 +44,5 @@ export function translationControllerCreateTranslationEndpointRequestToJSON(
     TranslationControllerCreateTranslationEndpointRequest$outboundSchema.parse(
       translationControllerCreateTranslationEndpointRequest
     )
-  );
-}
-
-export function translationControllerCreateTranslationEndpointRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TranslationControllerCreateTranslationEndpointRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TranslationControllerCreateTranslationEndpointRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TranslationControllerCreateTranslationEndpointRequest' from JSON`
   );
 }

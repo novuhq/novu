@@ -35,7 +35,7 @@ import { Result } from '../types/fp.js';
 export function messagesDeleteByTransactionId(
   client: NovuCore,
   transactionId: string,
-  channel?: operations.Channel | undefined,
+  channel?: operations.MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): APIPromise<
@@ -59,7 +59,7 @@ export function messagesDeleteByTransactionId(
 async function $do(
   client: NovuCore,
   transactionId: string,
-  channel?: operations.Channel | undefined,
+  channel?: operations.MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): Promise<

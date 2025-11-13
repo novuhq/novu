@@ -7,23 +7,10 @@ import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ResourceOriginEnum,
-  ResourceOriginEnum$inboundSchema,
-  ResourceOriginEnum$outboundSchema,
-} from './resourceoriginenum.js';
-import {
-  StepListResponseDto,
-  StepListResponseDto$inboundSchema,
-  StepListResponseDto$Outbound,
-  StepListResponseDto$outboundSchema,
-} from './steplistresponsedto.js';
-import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
-import {
-  WorkflowStatusEnum,
-  WorkflowStatusEnum$inboundSchema,
-  WorkflowStatusEnum$outboundSchema,
-} from './workflowstatusenum.js';
+import { ResourceOriginEnum, ResourceOriginEnum$inboundSchema } from './resourceoriginenum.js';
+import { StepListResponseDto, StepListResponseDto$inboundSchema } from './steplistresponsedto.js';
+import { StepTypeEnum, StepTypeEnum$inboundSchema } from './steptypeenum.js';
+import { WorkflowStatusEnum, WorkflowStatusEnum$inboundSchema } from './workflowstatusenum.js';
 
 /**
  * User who last updated the workflow
@@ -154,51 +141,6 @@ export const WorkflowListResponseDtoUpdatedBy$inboundSchema: z.ZodType<
     });
   });
 
-/** @internal */
-export type WorkflowListResponseDtoUpdatedBy$Outbound = {
-  _id: string;
-  firstName?: string | null | undefined;
-  lastName?: string | null | undefined;
-  externalId?: string | null | undefined;
-};
-
-/** @internal */
-export const WorkflowListResponseDtoUpdatedBy$outboundSchema: z.ZodType<
-  WorkflowListResponseDtoUpdatedBy$Outbound,
-  z.ZodTypeDef,
-  WorkflowListResponseDtoUpdatedBy
-> = z
-  .object({
-    id: z.string(),
-    firstName: z.nullable(z.string()).optional(),
-    lastName: z.nullable(z.string()).optional(),
-    externalId: z.nullable(z.string()).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowListResponseDtoUpdatedBy$ {
-  /** @deprecated use `WorkflowListResponseDtoUpdatedBy$inboundSchema` instead. */
-  export const inboundSchema = WorkflowListResponseDtoUpdatedBy$inboundSchema;
-  /** @deprecated use `WorkflowListResponseDtoUpdatedBy$outboundSchema` instead. */
-  export const outboundSchema = WorkflowListResponseDtoUpdatedBy$outboundSchema;
-  /** @deprecated use `WorkflowListResponseDtoUpdatedBy$Outbound` instead. */
-  export type Outbound = WorkflowListResponseDtoUpdatedBy$Outbound;
-}
-
-export function workflowListResponseDtoUpdatedByToJSON(
-  workflowListResponseDtoUpdatedBy: WorkflowListResponseDtoUpdatedBy
-): string {
-  return JSON.stringify(WorkflowListResponseDtoUpdatedBy$outboundSchema.parse(workflowListResponseDtoUpdatedBy));
-}
-
 export function workflowListResponseDtoUpdatedByFromJSON(
   jsonString: string
 ): SafeParseResult<WorkflowListResponseDtoUpdatedBy, SDKValidationError> {
@@ -226,53 +168,6 @@ export const WorkflowListResponseDtoLastPublishedBy$inboundSchema: z.ZodType<
       _id: 'id',
     });
   });
-
-/** @internal */
-export type WorkflowListResponseDtoLastPublishedBy$Outbound = {
-  _id: string;
-  firstName?: string | null | undefined;
-  lastName?: string | null | undefined;
-  externalId?: string | null | undefined;
-};
-
-/** @internal */
-export const WorkflowListResponseDtoLastPublishedBy$outboundSchema: z.ZodType<
-  WorkflowListResponseDtoLastPublishedBy$Outbound,
-  z.ZodTypeDef,
-  WorkflowListResponseDtoLastPublishedBy
-> = z
-  .object({
-    id: z.string(),
-    firstName: z.nullable(z.string()).optional(),
-    lastName: z.nullable(z.string()).optional(),
-    externalId: z.nullable(z.string()).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowListResponseDtoLastPublishedBy$ {
-  /** @deprecated use `WorkflowListResponseDtoLastPublishedBy$inboundSchema` instead. */
-  export const inboundSchema = WorkflowListResponseDtoLastPublishedBy$inboundSchema;
-  /** @deprecated use `WorkflowListResponseDtoLastPublishedBy$outboundSchema` instead. */
-  export const outboundSchema = WorkflowListResponseDtoLastPublishedBy$outboundSchema;
-  /** @deprecated use `WorkflowListResponseDtoLastPublishedBy$Outbound` instead. */
-  export type Outbound = WorkflowListResponseDtoLastPublishedBy$Outbound;
-}
-
-export function workflowListResponseDtoLastPublishedByToJSON(
-  workflowListResponseDtoLastPublishedBy: WorkflowListResponseDtoLastPublishedBy
-): string {
-  return JSON.stringify(
-    WorkflowListResponseDtoLastPublishedBy$outboundSchema.parse(workflowListResponseDtoLastPublishedBy)
-  );
-}
 
 export function workflowListResponseDtoLastPublishedByFromJSON(
   jsonString: string
@@ -309,73 +204,6 @@ export const WorkflowListResponseDto$inboundSchema: z.ZodType<WorkflowListRespon
       _id: 'id',
     });
   });
-
-/** @internal */
-export type WorkflowListResponseDto$Outbound = {
-  name: string;
-  tags?: Array<string> | undefined;
-  updatedAt: string;
-  createdAt: string;
-  updatedBy?: WorkflowListResponseDtoUpdatedBy$Outbound | null | undefined;
-  lastPublishedAt?: string | null | undefined;
-  lastPublishedBy?: WorkflowListResponseDtoLastPublishedBy$Outbound | null | undefined;
-  _id: string;
-  workflowId: string;
-  slug: string;
-  status: string;
-  origin: string;
-  lastTriggeredAt?: string | null | undefined;
-  stepTypeOverviews: Array<string>;
-  isTranslationEnabled?: boolean | undefined;
-  steps: Array<StepListResponseDto$Outbound>;
-};
-
-/** @internal */
-export const WorkflowListResponseDto$outboundSchema: z.ZodType<
-  WorkflowListResponseDto$Outbound,
-  z.ZodTypeDef,
-  WorkflowListResponseDto
-> = z
-  .object({
-    name: z.string(),
-    tags: z.array(z.string()).optional(),
-    updatedAt: z.string(),
-    createdAt: z.string(),
-    updatedBy: z.nullable(z.lazy(() => WorkflowListResponseDtoUpdatedBy$outboundSchema)).optional(),
-    lastPublishedAt: z.nullable(z.string()).optional(),
-    lastPublishedBy: z.nullable(z.lazy(() => WorkflowListResponseDtoLastPublishedBy$outboundSchema)).optional(),
-    id: z.string(),
-    workflowId: z.string(),
-    slug: z.string(),
-    status: WorkflowStatusEnum$outboundSchema,
-    origin: ResourceOriginEnum$outboundSchema,
-    lastTriggeredAt: z.nullable(z.string()).optional(),
-    stepTypeOverviews: z.array(StepTypeEnum$outboundSchema),
-    isTranslationEnabled: z.boolean().optional(),
-    steps: z.array(StepListResponseDto$outboundSchema),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowListResponseDto$ {
-  /** @deprecated use `WorkflowListResponseDto$inboundSchema` instead. */
-  export const inboundSchema = WorkflowListResponseDto$inboundSchema;
-  /** @deprecated use `WorkflowListResponseDto$outboundSchema` instead. */
-  export const outboundSchema = WorkflowListResponseDto$outboundSchema;
-  /** @deprecated use `WorkflowListResponseDto$Outbound` instead. */
-  export type Outbound = WorkflowListResponseDto$Outbound;
-}
-
-export function workflowListResponseDtoToJSON(workflowListResponseDto: WorkflowListResponseDto): string {
-  return JSON.stringify(WorkflowListResponseDto$outboundSchema.parse(workflowListResponseDto));
-}
 
 export function workflowListResponseDtoFromJSON(
   jsonString: string

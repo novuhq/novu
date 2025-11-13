@@ -25,7 +25,6 @@ export const LayoutPreviewPayloadDto$inboundSchema: z.ZodType<LayoutPreviewPaylo
   z.object({
     subscriber: SubscriberResponseDtoOptional$inboundSchema.optional(),
   });
-
 /** @internal */
 export type LayoutPreviewPayloadDto$Outbound = {
   subscriber?: SubscriberResponseDtoOptional$Outbound | undefined;
@@ -40,23 +39,9 @@ export const LayoutPreviewPayloadDto$outboundSchema: z.ZodType<
   subscriber: SubscriberResponseDtoOptional$outboundSchema.optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutPreviewPayloadDto$ {
-  /** @deprecated use `LayoutPreviewPayloadDto$inboundSchema` instead. */
-  export const inboundSchema = LayoutPreviewPayloadDto$inboundSchema;
-  /** @deprecated use `LayoutPreviewPayloadDto$outboundSchema` instead. */
-  export const outboundSchema = LayoutPreviewPayloadDto$outboundSchema;
-  /** @deprecated use `LayoutPreviewPayloadDto$Outbound` instead. */
-  export type Outbound = LayoutPreviewPayloadDto$Outbound;
-}
-
 export function layoutPreviewPayloadDtoToJSON(layoutPreviewPayloadDto: LayoutPreviewPayloadDto): string {
   return JSON.stringify(LayoutPreviewPayloadDto$outboundSchema.parse(layoutPreviewPayloadDto));
 }
-
 export function layoutPreviewPayloadDtoFromJSON(
   jsonString: string
 ): SafeParseResult<LayoutPreviewPayloadDto, SDKValidationError> {

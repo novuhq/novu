@@ -30,29 +30,6 @@ export type AutoConfigureIntegrationResponseDto = {
 /** @internal */
 export const Integration$inboundSchema: z.ZodType<Integration, z.ZodTypeDef, unknown> = z.object({});
 
-/** @internal */
-export type Integration$Outbound = {};
-
-/** @internal */
-export const Integration$outboundSchema: z.ZodType<Integration$Outbound, z.ZodTypeDef, Integration> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Integration$ {
-  /** @deprecated use `Integration$inboundSchema` instead. */
-  export const inboundSchema = Integration$inboundSchema;
-  /** @deprecated use `Integration$outboundSchema` instead. */
-  export const outboundSchema = Integration$outboundSchema;
-  /** @deprecated use `Integration$Outbound` instead. */
-  export type Outbound = Integration$Outbound;
-}
-
-export function integrationToJSON(integration: Integration): string {
-  return JSON.stringify(Integration$outboundSchema.parse(integration));
-}
-
 export function integrationFromJSON(jsonString: string): SafeParseResult<Integration, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -71,43 +48,6 @@ export const AutoConfigureIntegrationResponseDto$inboundSchema: z.ZodType<
   message: z.string().optional(),
   integration: z.lazy(() => Integration$inboundSchema).optional(),
 });
-
-/** @internal */
-export type AutoConfigureIntegrationResponseDto$Outbound = {
-  success: boolean;
-  message?: string | undefined;
-  integration?: Integration$Outbound | undefined;
-};
-
-/** @internal */
-export const AutoConfigureIntegrationResponseDto$outboundSchema: z.ZodType<
-  AutoConfigureIntegrationResponseDto$Outbound,
-  z.ZodTypeDef,
-  AutoConfigureIntegrationResponseDto
-> = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  integration: z.lazy(() => Integration$outboundSchema).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace AutoConfigureIntegrationResponseDto$ {
-  /** @deprecated use `AutoConfigureIntegrationResponseDto$inboundSchema` instead. */
-  export const inboundSchema = AutoConfigureIntegrationResponseDto$inboundSchema;
-  /** @deprecated use `AutoConfigureIntegrationResponseDto$outboundSchema` instead. */
-  export const outboundSchema = AutoConfigureIntegrationResponseDto$outboundSchema;
-  /** @deprecated use `AutoConfigureIntegrationResponseDto$Outbound` instead. */
-  export type Outbound = AutoConfigureIntegrationResponseDto$Outbound;
-}
-
-export function autoConfigureIntegrationResponseDtoToJSON(
-  autoConfigureIntegrationResponseDto: AutoConfigureIntegrationResponseDto
-): string {
-  return JSON.stringify(AutoConfigureIntegrationResponseDto$outboundSchema.parse(autoConfigureIntegrationResponseDto));
-}
 
 export function autoConfigureIntegrationResponseDtoFromJSON(
   jsonString: string

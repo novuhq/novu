@@ -3,10 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 /**
  * The resource type to associate localizations with
@@ -32,35 +29,9 @@ export type UploadTranslationsRequestDto = {
 };
 
 /** @internal */
-export const UploadTranslationsRequestDtoResourceType$inboundSchema: z.ZodNativeEnum<
-  typeof UploadTranslationsRequestDtoResourceType
-> = z.nativeEnum(UploadTranslationsRequestDtoResourceType);
-
-/** @internal */
 export const UploadTranslationsRequestDtoResourceType$outboundSchema: z.ZodNativeEnum<
   typeof UploadTranslationsRequestDtoResourceType
-> = UploadTranslationsRequestDtoResourceType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UploadTranslationsRequestDtoResourceType$ {
-  /** @deprecated use `UploadTranslationsRequestDtoResourceType$inboundSchema` instead. */
-  export const inboundSchema = UploadTranslationsRequestDtoResourceType$inboundSchema;
-  /** @deprecated use `UploadTranslationsRequestDtoResourceType$outboundSchema` instead. */
-  export const outboundSchema = UploadTranslationsRequestDtoResourceType$outboundSchema;
-}
-
-/** @internal */
-export const UploadTranslationsRequestDto$inboundSchema: z.ZodType<
-  UploadTranslationsRequestDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  resourceId: z.string(),
-  resourceType: UploadTranslationsRequestDtoResourceType$inboundSchema,
-});
+> = z.nativeEnum(UploadTranslationsRequestDtoResourceType);
 
 /** @internal */
 export type UploadTranslationsRequestDto$Outbound = {
@@ -78,29 +49,6 @@ export const UploadTranslationsRequestDto$outboundSchema: z.ZodType<
   resourceType: UploadTranslationsRequestDtoResourceType$outboundSchema,
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UploadTranslationsRequestDto$ {
-  /** @deprecated use `UploadTranslationsRequestDto$inboundSchema` instead. */
-  export const inboundSchema = UploadTranslationsRequestDto$inboundSchema;
-  /** @deprecated use `UploadTranslationsRequestDto$outboundSchema` instead. */
-  export const outboundSchema = UploadTranslationsRequestDto$outboundSchema;
-  /** @deprecated use `UploadTranslationsRequestDto$Outbound` instead. */
-  export type Outbound = UploadTranslationsRequestDto$Outbound;
-}
-
 export function uploadTranslationsRequestDtoToJSON(uploadTranslationsRequestDto: UploadTranslationsRequestDto): string {
   return JSON.stringify(UploadTranslationsRequestDto$outboundSchema.parse(uploadTranslationsRequestDto));
-}
-
-export function uploadTranslationsRequestDtoFromJSON(
-  jsonString: string
-): SafeParseResult<UploadTranslationsRequestDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => UploadTranslationsRequestDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'UploadTranslationsRequestDto' from JSON`
-  );
 }

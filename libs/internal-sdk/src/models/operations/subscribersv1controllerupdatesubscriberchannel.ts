@@ -24,24 +24,6 @@ export type SubscribersV1ControllerUpdateSubscriberChannelResponse = {
 };
 
 /** @internal */
-export const SubscribersV1ControllerUpdateSubscriberChannelRequest$inboundSchema: z.ZodType<
-  SubscribersV1ControllerUpdateSubscriberChannelRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    subscriberId: z.string(),
-    'idempotency-key': z.string().optional(),
-    UpdateSubscriberChannelRequestDto: components.UpdateSubscriberChannelRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      UpdateSubscriberChannelRequestDto: 'updateSubscriberChannelRequestDto',
-    });
-  });
-
-/** @internal */
 export type SubscribersV1ControllerUpdateSubscriberChannelRequest$Outbound = {
   subscriberId: string;
   'idempotency-key'?: string | undefined;
@@ -66,19 +48,6 @@ export const SubscribersV1ControllerUpdateSubscriberChannelRequest$outboundSchem
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerUpdateSubscriberChannelRequest$ {
-  /** @deprecated use `SubscribersV1ControllerUpdateSubscriberChannelRequest$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerUpdateSubscriberChannelRequest$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerUpdateSubscriberChannelRequest$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerUpdateSubscriberChannelRequest$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerUpdateSubscriberChannelRequest$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerUpdateSubscriberChannelRequest$Outbound;
-}
-
 export function subscribersV1ControllerUpdateSubscriberChannelRequestToJSON(
   subscribersV1ControllerUpdateSubscriberChannelRequest: SubscribersV1ControllerUpdateSubscriberChannelRequest
 ): string {
@@ -86,16 +55,6 @@ export function subscribersV1ControllerUpdateSubscriberChannelRequestToJSON(
     SubscribersV1ControllerUpdateSubscriberChannelRequest$outboundSchema.parse(
       subscribersV1ControllerUpdateSubscriberChannelRequest
     )
-  );
-}
-
-export function subscribersV1ControllerUpdateSubscriberChannelRequestFromJSON(
-  jsonString: string
-): SafeParseResult<SubscribersV1ControllerUpdateSubscriberChannelRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscribersV1ControllerUpdateSubscriberChannelRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscribersV1ControllerUpdateSubscriberChannelRequest' from JSON`
   );
 }
 
@@ -115,52 +74,6 @@ export const SubscribersV1ControllerUpdateSubscriberChannelResponse$inboundSchem
       Result: 'result',
     });
   });
-
-/** @internal */
-export type SubscribersV1ControllerUpdateSubscriberChannelResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.SubscriberResponseDto$Outbound;
-};
-
-/** @internal */
-export const SubscribersV1ControllerUpdateSubscriberChannelResponse$outboundSchema: z.ZodType<
-  SubscribersV1ControllerUpdateSubscriberChannelResponse$Outbound,
-  z.ZodTypeDef,
-  SubscribersV1ControllerUpdateSubscriberChannelResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.SubscriberResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerUpdateSubscriberChannelResponse$ {
-  /** @deprecated use `SubscribersV1ControllerUpdateSubscriberChannelResponse$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerUpdateSubscriberChannelResponse$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerUpdateSubscriberChannelResponse$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerUpdateSubscriberChannelResponse$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerUpdateSubscriberChannelResponse$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerUpdateSubscriberChannelResponse$Outbound;
-}
-
-export function subscribersV1ControllerUpdateSubscriberChannelResponseToJSON(
-  subscribersV1ControllerUpdateSubscriberChannelResponse: SubscribersV1ControllerUpdateSubscriberChannelResponse
-): string {
-  return JSON.stringify(
-    SubscribersV1ControllerUpdateSubscriberChannelResponse$outboundSchema.parse(
-      subscribersV1ControllerUpdateSubscriberChannelResponse
-    )
-  );
-}
 
 export function subscribersV1ControllerUpdateSubscriberChannelResponseFromJSON(
   jsonString: string

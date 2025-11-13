@@ -23,23 +23,6 @@ export type EventsControllerBroadcastEventToAllResponse = {
 };
 
 /** @internal */
-export const EventsControllerBroadcastEventToAllRequest$inboundSchema: z.ZodType<
-  EventsControllerBroadcastEventToAllRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    'idempotency-key': z.string().optional(),
-    TriggerEventToAllRequestDto: components.TriggerEventToAllRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      TriggerEventToAllRequestDto: 'triggerEventToAllRequestDto',
-    });
-  });
-
-/** @internal */
 export type EventsControllerBroadcastEventToAllRequest$Outbound = {
   'idempotency-key'?: string | undefined;
   TriggerEventToAllRequestDto: components.TriggerEventToAllRequestDto$Outbound;
@@ -62,34 +45,11 @@ export const EventsControllerBroadcastEventToAllRequest$outboundSchema: z.ZodTyp
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EventsControllerBroadcastEventToAllRequest$ {
-  /** @deprecated use `EventsControllerBroadcastEventToAllRequest$inboundSchema` instead. */
-  export const inboundSchema = EventsControllerBroadcastEventToAllRequest$inboundSchema;
-  /** @deprecated use `EventsControllerBroadcastEventToAllRequest$outboundSchema` instead. */
-  export const outboundSchema = EventsControllerBroadcastEventToAllRequest$outboundSchema;
-  /** @deprecated use `EventsControllerBroadcastEventToAllRequest$Outbound` instead. */
-  export type Outbound = EventsControllerBroadcastEventToAllRequest$Outbound;
-}
-
 export function eventsControllerBroadcastEventToAllRequestToJSON(
   eventsControllerBroadcastEventToAllRequest: EventsControllerBroadcastEventToAllRequest
 ): string {
   return JSON.stringify(
     EventsControllerBroadcastEventToAllRequest$outboundSchema.parse(eventsControllerBroadcastEventToAllRequest)
-  );
-}
-
-export function eventsControllerBroadcastEventToAllRequestFromJSON(
-  jsonString: string
-): SafeParseResult<EventsControllerBroadcastEventToAllRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EventsControllerBroadcastEventToAllRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EventsControllerBroadcastEventToAllRequest' from JSON`
   );
 }
 
@@ -109,50 +69,6 @@ export const EventsControllerBroadcastEventToAllResponse$inboundSchema: z.ZodTyp
       Result: 'result',
     });
   });
-
-/** @internal */
-export type EventsControllerBroadcastEventToAllResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.TriggerEventResponseDto$Outbound;
-};
-
-/** @internal */
-export const EventsControllerBroadcastEventToAllResponse$outboundSchema: z.ZodType<
-  EventsControllerBroadcastEventToAllResponse$Outbound,
-  z.ZodTypeDef,
-  EventsControllerBroadcastEventToAllResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.TriggerEventResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EventsControllerBroadcastEventToAllResponse$ {
-  /** @deprecated use `EventsControllerBroadcastEventToAllResponse$inboundSchema` instead. */
-  export const inboundSchema = EventsControllerBroadcastEventToAllResponse$inboundSchema;
-  /** @deprecated use `EventsControllerBroadcastEventToAllResponse$outboundSchema` instead. */
-  export const outboundSchema = EventsControllerBroadcastEventToAllResponse$outboundSchema;
-  /** @deprecated use `EventsControllerBroadcastEventToAllResponse$Outbound` instead. */
-  export type Outbound = EventsControllerBroadcastEventToAllResponse$Outbound;
-}
-
-export function eventsControllerBroadcastEventToAllResponseToJSON(
-  eventsControllerBroadcastEventToAllResponse: EventsControllerBroadcastEventToAllResponse
-): string {
-  return JSON.stringify(
-    EventsControllerBroadcastEventToAllResponse$outboundSchema.parse(eventsControllerBroadcastEventToAllResponse)
-  );
-}
 
 export function eventsControllerBroadcastEventToAllResponseFromJSON(
   jsonString: string

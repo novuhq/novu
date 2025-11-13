@@ -50,51 +50,6 @@ export const SubscriberPreferenceChannels$inboundSchema: z.ZodType<
     });
   });
 
-/** @internal */
-export type SubscriberPreferenceChannels$Outbound = {
-  email?: boolean | undefined;
-  sms?: boolean | undefined;
-  in_app?: boolean | undefined;
-  chat?: boolean | undefined;
-  push?: boolean | undefined;
-};
-
-/** @internal */
-export const SubscriberPreferenceChannels$outboundSchema: z.ZodType<
-  SubscriberPreferenceChannels$Outbound,
-  z.ZodTypeDef,
-  SubscriberPreferenceChannels
-> = z
-  .object({
-    email: z.boolean().optional(),
-    sms: z.boolean().optional(),
-    inApp: z.boolean().optional(),
-    chat: z.boolean().optional(),
-    push: z.boolean().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      inApp: 'in_app',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriberPreferenceChannels$ {
-  /** @deprecated use `SubscriberPreferenceChannels$inboundSchema` instead. */
-  export const inboundSchema = SubscriberPreferenceChannels$inboundSchema;
-  /** @deprecated use `SubscriberPreferenceChannels$outboundSchema` instead. */
-  export const outboundSchema = SubscriberPreferenceChannels$outboundSchema;
-  /** @deprecated use `SubscriberPreferenceChannels$Outbound` instead. */
-  export type Outbound = SubscriberPreferenceChannels$Outbound;
-}
-
-export function subscriberPreferenceChannelsToJSON(subscriberPreferenceChannels: SubscriberPreferenceChannels): string {
-  return JSON.stringify(SubscriberPreferenceChannels$outboundSchema.parse(subscriberPreferenceChannels));
-}
-
 export function subscriberPreferenceChannelsFromJSON(
   jsonString: string
 ): SafeParseResult<SubscriberPreferenceChannels, SDKValidationError> {

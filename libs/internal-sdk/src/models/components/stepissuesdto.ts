@@ -6,18 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  StepContentIssueDto,
-  StepContentIssueDto$inboundSchema,
-  StepContentIssueDto$Outbound,
-  StepContentIssueDto$outboundSchema,
-} from './stepcontentissuedto.js';
-import {
-  StepIntegrationIssue,
-  StepIntegrationIssue$inboundSchema,
-  StepIntegrationIssue$Outbound,
-  StepIntegrationIssue$outboundSchema,
-} from './stepintegrationissue.js';
+import { StepContentIssueDto, StepContentIssueDto$inboundSchema } from './stepcontentissuedto.js';
+import { StepIntegrationIssue, StepIntegrationIssue$inboundSchema } from './stepintegrationissue.js';
 
 export type StepIssuesDto = {
   /**
@@ -35,35 +25,6 @@ export const StepIssuesDto$inboundSchema: z.ZodType<StepIssuesDto, z.ZodTypeDef,
   controls: z.record(z.array(StepContentIssueDto$inboundSchema)).optional(),
   integration: z.record(z.array(StepIntegrationIssue$inboundSchema)).optional(),
 });
-
-/** @internal */
-export type StepIssuesDto$Outbound = {
-  controls?: { [k: string]: Array<StepContentIssueDto$Outbound> } | undefined;
-  integration?: { [k: string]: Array<StepIntegrationIssue$Outbound> } | undefined;
-};
-
-/** @internal */
-export const StepIssuesDto$outboundSchema: z.ZodType<StepIssuesDto$Outbound, z.ZodTypeDef, StepIssuesDto> = z.object({
-  controls: z.record(z.array(StepContentIssueDto$outboundSchema)).optional(),
-  integration: z.record(z.array(StepIntegrationIssue$outboundSchema)).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepIssuesDto$ {
-  /** @deprecated use `StepIssuesDto$inboundSchema` instead. */
-  export const inboundSchema = StepIssuesDto$inboundSchema;
-  /** @deprecated use `StepIssuesDto$outboundSchema` instead. */
-  export const outboundSchema = StepIssuesDto$outboundSchema;
-  /** @deprecated use `StepIssuesDto$Outbound` instead. */
-  export type Outbound = StepIssuesDto$Outbound;
-}
-
-export function stepIssuesDtoToJSON(stepIssuesDto: StepIssuesDto): string {
-  return JSON.stringify(StepIssuesDto$outboundSchema.parse(stepIssuesDto));
-}
 
 export function stepIssuesDtoFromJSON(jsonString: string): SafeParseResult<StepIssuesDto, SDKValidationError> {
   return safeParse(

@@ -28,23 +28,6 @@ export type ContextsControllerDeleteContextResponse = {
 };
 
 /** @internal */
-export const ContextsControllerDeleteContextRequest$inboundSchema: z.ZodType<
-  ContextsControllerDeleteContextRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    type: z.string(),
-    id: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type ContextsControllerDeleteContextRequest$Outbound = {
   type: string;
   id: string;
@@ -68,34 +51,11 @@ export const ContextsControllerDeleteContextRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ContextsControllerDeleteContextRequest$ {
-  /** @deprecated use `ContextsControllerDeleteContextRequest$inboundSchema` instead. */
-  export const inboundSchema = ContextsControllerDeleteContextRequest$inboundSchema;
-  /** @deprecated use `ContextsControllerDeleteContextRequest$outboundSchema` instead. */
-  export const outboundSchema = ContextsControllerDeleteContextRequest$outboundSchema;
-  /** @deprecated use `ContextsControllerDeleteContextRequest$Outbound` instead. */
-  export type Outbound = ContextsControllerDeleteContextRequest$Outbound;
-}
-
 export function contextsControllerDeleteContextRequestToJSON(
   contextsControllerDeleteContextRequest: ContextsControllerDeleteContextRequest
 ): string {
   return JSON.stringify(
     ContextsControllerDeleteContextRequest$outboundSchema.parse(contextsControllerDeleteContextRequest)
-  );
-}
-
-export function contextsControllerDeleteContextRequestFromJSON(
-  jsonString: string
-): SafeParseResult<ContextsControllerDeleteContextRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ContextsControllerDeleteContextRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ContextsControllerDeleteContextRequest' from JSON`
   );
 }
 
@@ -113,47 +73,6 @@ export const ContextsControllerDeleteContextResponse$inboundSchema: z.ZodType<
       Headers: 'headers',
     });
   });
-
-/** @internal */
-export type ContextsControllerDeleteContextResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-};
-
-/** @internal */
-export const ContextsControllerDeleteContextResponse$outboundSchema: z.ZodType<
-  ContextsControllerDeleteContextResponse$Outbound,
-  z.ZodTypeDef,
-  ContextsControllerDeleteContextResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ContextsControllerDeleteContextResponse$ {
-  /** @deprecated use `ContextsControllerDeleteContextResponse$inboundSchema` instead. */
-  export const inboundSchema = ContextsControllerDeleteContextResponse$inboundSchema;
-  /** @deprecated use `ContextsControllerDeleteContextResponse$outboundSchema` instead. */
-  export const outboundSchema = ContextsControllerDeleteContextResponse$outboundSchema;
-  /** @deprecated use `ContextsControllerDeleteContextResponse$Outbound` instead. */
-  export type Outbound = ContextsControllerDeleteContextResponse$Outbound;
-}
-
-export function contextsControllerDeleteContextResponseToJSON(
-  contextsControllerDeleteContextResponse: ContextsControllerDeleteContextResponse
-): string {
-  return JSON.stringify(
-    ContextsControllerDeleteContextResponse$outboundSchema.parse(contextsControllerDeleteContextResponse)
-  );
-}
 
 export function contextsControllerDeleteContextResponseFromJSON(
   jsonString: string

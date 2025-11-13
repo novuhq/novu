@@ -9,20 +9,14 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   SubscriberPreferenceChannels,
   SubscriberPreferenceChannels$inboundSchema,
-  SubscriberPreferenceChannels$Outbound,
-  SubscriberPreferenceChannels$outboundSchema,
 } from './subscriberpreferencechannels.js';
 import {
   SubscriberPreferenceOverrideDto,
   SubscriberPreferenceOverrideDto$inboundSchema,
-  SubscriberPreferenceOverrideDto$Outbound,
-  SubscriberPreferenceOverrideDto$outboundSchema,
 } from './subscriberpreferenceoverridedto.js';
 import {
   SubscriberPreferencesWorkflowInfoDto,
   SubscriberPreferencesWorkflowInfoDto$inboundSchema,
-  SubscriberPreferencesWorkflowInfoDto$Outbound,
-  SubscriberPreferencesWorkflowInfoDto$outboundSchema,
 } from './subscriberpreferencesworkflowinfodto.js';
 
 export type SubscriberWorkflowPreferenceDto = {
@@ -55,45 +49,6 @@ export const SubscriberWorkflowPreferenceDto$inboundSchema: z.ZodType<
   overrides: z.array(SubscriberPreferenceOverrideDto$inboundSchema),
   workflow: SubscriberPreferencesWorkflowInfoDto$inboundSchema,
 });
-
-/** @internal */
-export type SubscriberWorkflowPreferenceDto$Outbound = {
-  enabled: boolean;
-  channels: SubscriberPreferenceChannels$Outbound;
-  overrides: Array<SubscriberPreferenceOverrideDto$Outbound>;
-  workflow: SubscriberPreferencesWorkflowInfoDto$Outbound;
-};
-
-/** @internal */
-export const SubscriberWorkflowPreferenceDto$outboundSchema: z.ZodType<
-  SubscriberWorkflowPreferenceDto$Outbound,
-  z.ZodTypeDef,
-  SubscriberWorkflowPreferenceDto
-> = z.object({
-  enabled: z.boolean(),
-  channels: SubscriberPreferenceChannels$outboundSchema,
-  overrides: z.array(SubscriberPreferenceOverrideDto$outboundSchema),
-  workflow: SubscriberPreferencesWorkflowInfoDto$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriberWorkflowPreferenceDto$ {
-  /** @deprecated use `SubscriberWorkflowPreferenceDto$inboundSchema` instead. */
-  export const inboundSchema = SubscriberWorkflowPreferenceDto$inboundSchema;
-  /** @deprecated use `SubscriberWorkflowPreferenceDto$outboundSchema` instead. */
-  export const outboundSchema = SubscriberWorkflowPreferenceDto$outboundSchema;
-  /** @deprecated use `SubscriberWorkflowPreferenceDto$Outbound` instead. */
-  export type Outbound = SubscriberWorkflowPreferenceDto$Outbound;
-}
-
-export function subscriberWorkflowPreferenceDtoToJSON(
-  subscriberWorkflowPreferenceDto: SubscriberWorkflowPreferenceDto
-): string {
-  return JSON.stringify(SubscriberWorkflowPreferenceDto$outboundSchema.parse(subscriberWorkflowPreferenceDto));
-}
 
 export function subscriberWorkflowPreferenceDtoFromJSON(
   jsonString: string

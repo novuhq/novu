@@ -131,9 +131,9 @@ export class GenerateSlackOauthUrl {
 
       const data = JSON.parse(payload);
 
-      // Validate timestamp (24 hours expiry)
-      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-      if (Date.now() - data.timestamp > TWENTY_FOUR_HOURS) {
+      // Validate timestamp (5 minutes expiry)
+      const FIVE_MINUTES = 5 * 60 * 1000;
+      if (Date.now() - data.timestamp > FIVE_MINUTES) {
         throw new Error('OAuth state expired');
       }
 

@@ -3,18 +3,10 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type BridgeConfigurationDto = {
   url?: string | undefined;
 };
-
-/** @internal */
-export const BridgeConfigurationDto$inboundSchema: z.ZodType<BridgeConfigurationDto, z.ZodTypeDef, unknown> = z.object({
-  url: z.string().optional(),
-});
 
 /** @internal */
 export type BridgeConfigurationDto$Outbound = {
@@ -30,29 +22,6 @@ export const BridgeConfigurationDto$outboundSchema: z.ZodType<
   url: z.string().optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace BridgeConfigurationDto$ {
-  /** @deprecated use `BridgeConfigurationDto$inboundSchema` instead. */
-  export const inboundSchema = BridgeConfigurationDto$inboundSchema;
-  /** @deprecated use `BridgeConfigurationDto$outboundSchema` instead. */
-  export const outboundSchema = BridgeConfigurationDto$outboundSchema;
-  /** @deprecated use `BridgeConfigurationDto$Outbound` instead. */
-  export type Outbound = BridgeConfigurationDto$Outbound;
-}
-
 export function bridgeConfigurationDtoToJSON(bridgeConfigurationDto: BridgeConfigurationDto): string {
   return JSON.stringify(BridgeConfigurationDto$outboundSchema.parse(bridgeConfigurationDto));
-}
-
-export function bridgeConfigurationDtoFromJSON(
-  jsonString: string
-): SafeParseResult<BridgeConfigurationDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => BridgeConfigurationDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'BridgeConfigurationDto' from JSON`
-  );
 }

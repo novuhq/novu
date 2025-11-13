@@ -19,34 +19,6 @@ export const ChatRenderOutput$inboundSchema: z.ZodType<ChatRenderOutput, z.ZodTy
   body: z.string(),
 });
 
-/** @internal */
-export type ChatRenderOutput$Outbound = {
-  body: string;
-};
-
-/** @internal */
-export const ChatRenderOutput$outboundSchema: z.ZodType<ChatRenderOutput$Outbound, z.ZodTypeDef, ChatRenderOutput> =
-  z.object({
-    body: z.string(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChatRenderOutput$ {
-  /** @deprecated use `ChatRenderOutput$inboundSchema` instead. */
-  export const inboundSchema = ChatRenderOutput$inboundSchema;
-  /** @deprecated use `ChatRenderOutput$outboundSchema` instead. */
-  export const outboundSchema = ChatRenderOutput$outboundSchema;
-  /** @deprecated use `ChatRenderOutput$Outbound` instead. */
-  export type Outbound = ChatRenderOutput$Outbound;
-}
-
-export function chatRenderOutputToJSON(chatRenderOutput: ChatRenderOutput): string {
-  return JSON.stringify(ChatRenderOutput$outboundSchema.parse(chatRenderOutput));
-}
-
 export function chatRenderOutputFromJSON(jsonString: string): SafeParseResult<ChatRenderOutput, SDKValidationError> {
   return safeParse(
     jsonString,

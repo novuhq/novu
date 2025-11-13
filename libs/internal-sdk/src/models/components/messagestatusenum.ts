@@ -21,18 +21,3 @@ export type MessageStatusEnum = ClosedEnum<typeof MessageStatusEnum>;
 /** @internal */
 export const MessageStatusEnum$inboundSchema: z.ZodNativeEnum<typeof MessageStatusEnum> =
   z.nativeEnum(MessageStatusEnum);
-
-/** @internal */
-export const MessageStatusEnum$outboundSchema: z.ZodNativeEnum<typeof MessageStatusEnum> =
-  MessageStatusEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessageStatusEnum$ {
-  /** @deprecated use `MessageStatusEnum$inboundSchema` instead. */
-  export const inboundSchema = MessageStatusEnum$inboundSchema;
-  /** @deprecated use `MessageStatusEnum$outboundSchema` instead. */
-  export const outboundSchema = MessageStatusEnum$outboundSchema;
-}

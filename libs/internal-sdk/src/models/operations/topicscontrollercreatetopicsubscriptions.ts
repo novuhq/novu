@@ -27,24 +27,6 @@ export type TopicsControllerCreateTopicSubscriptionsResponse = {
 };
 
 /** @internal */
-export const TopicsControllerCreateTopicSubscriptionsRequest$inboundSchema: z.ZodType<
-  TopicsControllerCreateTopicSubscriptionsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    topicKey: z.string(),
-    'idempotency-key': z.string().optional(),
-    CreateTopicSubscriptionsRequestDto: components.CreateTopicSubscriptionsRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      CreateTopicSubscriptionsRequestDto: 'createTopicSubscriptionsRequestDto',
-    });
-  });
-
-/** @internal */
 export type TopicsControllerCreateTopicSubscriptionsRequest$Outbound = {
   topicKey: string;
   'idempotency-key'?: string | undefined;
@@ -69,19 +51,6 @@ export const TopicsControllerCreateTopicSubscriptionsRequest$outboundSchema: z.Z
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerCreateTopicSubscriptionsRequest$ {
-  /** @deprecated use `TopicsControllerCreateTopicSubscriptionsRequest$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerCreateTopicSubscriptionsRequest$inboundSchema;
-  /** @deprecated use `TopicsControllerCreateTopicSubscriptionsRequest$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerCreateTopicSubscriptionsRequest$outboundSchema;
-  /** @deprecated use `TopicsControllerCreateTopicSubscriptionsRequest$Outbound` instead. */
-  export type Outbound = TopicsControllerCreateTopicSubscriptionsRequest$Outbound;
-}
-
 export function topicsControllerCreateTopicSubscriptionsRequestToJSON(
   topicsControllerCreateTopicSubscriptionsRequest: TopicsControllerCreateTopicSubscriptionsRequest
 ): string {
@@ -89,16 +58,6 @@ export function topicsControllerCreateTopicSubscriptionsRequestToJSON(
     TopicsControllerCreateTopicSubscriptionsRequest$outboundSchema.parse(
       topicsControllerCreateTopicSubscriptionsRequest
     )
-  );
-}
-
-export function topicsControllerCreateTopicSubscriptionsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TopicsControllerCreateTopicSubscriptionsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TopicsControllerCreateTopicSubscriptionsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TopicsControllerCreateTopicSubscriptionsRequest' from JSON`
   );
 }
 
@@ -118,52 +77,6 @@ export const TopicsControllerCreateTopicSubscriptionsResponse$inboundSchema: z.Z
       Result: 'result',
     });
   });
-
-/** @internal */
-export type TopicsControllerCreateTopicSubscriptionsResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.CreateTopicSubscriptionsResponseDto$Outbound;
-};
-
-/** @internal */
-export const TopicsControllerCreateTopicSubscriptionsResponse$outboundSchema: z.ZodType<
-  TopicsControllerCreateTopicSubscriptionsResponse$Outbound,
-  z.ZodTypeDef,
-  TopicsControllerCreateTopicSubscriptionsResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.CreateTopicSubscriptionsResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerCreateTopicSubscriptionsResponse$ {
-  /** @deprecated use `TopicsControllerCreateTopicSubscriptionsResponse$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerCreateTopicSubscriptionsResponse$inboundSchema;
-  /** @deprecated use `TopicsControllerCreateTopicSubscriptionsResponse$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerCreateTopicSubscriptionsResponse$outboundSchema;
-  /** @deprecated use `TopicsControllerCreateTopicSubscriptionsResponse$Outbound` instead. */
-  export type Outbound = TopicsControllerCreateTopicSubscriptionsResponse$Outbound;
-}
-
-export function topicsControllerCreateTopicSubscriptionsResponseToJSON(
-  topicsControllerCreateTopicSubscriptionsResponse: TopicsControllerCreateTopicSubscriptionsResponse
-): string {
-  return JSON.stringify(
-    TopicsControllerCreateTopicSubscriptionsResponse$outboundSchema.parse(
-      topicsControllerCreateTopicSubscriptionsResponse
-    )
-  );
-}
 
 export function topicsControllerCreateTopicSubscriptionsResponseFromJSON(
   jsonString: string

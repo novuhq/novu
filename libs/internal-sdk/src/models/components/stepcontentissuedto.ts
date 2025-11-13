@@ -6,11 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ContentIssueEnum,
-  ContentIssueEnum$inboundSchema,
-  ContentIssueEnum$outboundSchema,
-} from './contentissueenum.js';
+import { ContentIssueEnum, ContentIssueEnum$inboundSchema } from './contentissueenum.js';
 
 export type StepContentIssueDto = {
   /**
@@ -33,41 +29,6 @@ export const StepContentIssueDto$inboundSchema: z.ZodType<StepContentIssueDto, z
   variableName: z.string().optional(),
   message: z.string(),
 });
-
-/** @internal */
-export type StepContentIssueDto$Outbound = {
-  issueType: string;
-  variableName?: string | undefined;
-  message: string;
-};
-
-/** @internal */
-export const StepContentIssueDto$outboundSchema: z.ZodType<
-  StepContentIssueDto$Outbound,
-  z.ZodTypeDef,
-  StepContentIssueDto
-> = z.object({
-  issueType: ContentIssueEnum$outboundSchema,
-  variableName: z.string().optional(),
-  message: z.string(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepContentIssueDto$ {
-  /** @deprecated use `StepContentIssueDto$inboundSchema` instead. */
-  export const inboundSchema = StepContentIssueDto$inboundSchema;
-  /** @deprecated use `StepContentIssueDto$outboundSchema` instead. */
-  export const outboundSchema = StepContentIssueDto$outboundSchema;
-  /** @deprecated use `StepContentIssueDto$Outbound` instead. */
-  export type Outbound = StepContentIssueDto$Outbound;
-}
-
-export function stepContentIssueDtoToJSON(stepContentIssueDto: StepContentIssueDto): string {
-  return JSON.stringify(StepContentIssueDto$outboundSchema.parse(stepContentIssueDto));
-}
 
 export function stepContentIssueDtoFromJSON(
   jsonString: string

@@ -28,7 +28,6 @@ export const PushControlDto$inboundSchema: z.ZodType<PushControlDto, z.ZodTypeDe
   subject: z.string().optional(),
   body: z.string().optional(),
 });
-
 /** @internal */
 export type PushControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -45,23 +44,9 @@ export const PushControlDto$outboundSchema: z.ZodType<PushControlDto$Outbound, z
   }
 );
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PushControlDto$ {
-  /** @deprecated use `PushControlDto$inboundSchema` instead. */
-  export const inboundSchema = PushControlDto$inboundSchema;
-  /** @deprecated use `PushControlDto$outboundSchema` instead. */
-  export const outboundSchema = PushControlDto$outboundSchema;
-  /** @deprecated use `PushControlDto$Outbound` instead. */
-  export type Outbound = PushControlDto$Outbound;
-}
-
 export function pushControlDtoToJSON(pushControlDto: PushControlDto): string {
   return JSON.stringify(PushControlDto$outboundSchema.parse(pushControlDto));
 }
-
 export function pushControlDtoFromJSON(jsonString: string): SafeParseResult<PushControlDto, SDKValidationError> {
   return safeParse(
     jsonString,
