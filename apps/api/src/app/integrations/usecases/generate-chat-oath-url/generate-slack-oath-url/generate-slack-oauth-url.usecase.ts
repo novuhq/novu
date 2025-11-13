@@ -16,18 +16,18 @@ export type StateData = {
   timestamp: number;
 };
 
+export const SLACK_DEFAULT_OAUTH_SCOPES = [
+  'chat:write',
+  'chat:write.public',
+  'channels:read',
+  'groups:read',
+  'users:read',
+  'users:read.email',
+] as const;
+
 @Injectable()
 export class GenerateSlackOauthUrl {
   private readonly SLACK_OAUTH_URL = 'https://slack.com/oauth/v2/authorize?';
-
-  private readonly SLACK_OAUTH_SCOPES = [
-    'chat:write',
-    'chat:write.public',
-    'channels:read',
-    'groups:read',
-    'users:read',
-    'users:read.email',
-  ] as const;
 
   constructor(
     private environmentRepository: EnvironmentRepository,
@@ -47,11 +47,17 @@ export class GenerateSlackOauthUrl {
       command.connectionIdentifier
     );
 
-    return this.getOAuthUrl(clientId!, secureState);
+    return this.getOAuthUrl(clientId!, secureState, command.scope);
   }
 
   private validateSubscriberIdOrContext(command: GenerateSlackOauthUrlCommand): void {
-    const { subscriberId, context } = command;
+    const { subscriberId, context, scope } = command;
+
+    if (scope?.includes('incoming-webhook')) {
+      if (!subscriberId) {
+        throw new BadRequestException('subscriberId is required for incoming webhook');
+      }
+    }
 
     if (!subscriberId && !context) {
       throw new BadRequestException('Either subscriberId or context must be provided');
@@ -76,11 +82,11 @@ export class GenerateSlackOauthUrl {
     return;
   }
 
-  private async getOAuthUrl(clientId: string, secureState: string): Promise<string> {
+  private async getOAuthUrl(clientId: string, secureState: string, scope?: string[]): Promise<string> {
     const oauthParams = new URLSearchParams({
       state: secureState,
       client_id: clientId,
-      scope: this.SLACK_OAUTH_SCOPES.join(','),
+      scope: scope?.join(',') ?? SLACK_DEFAULT_OAUTH_SCOPES.join(','),
       redirect_uri: GenerateSlackOauthUrl.buildRedirectUri(),
     });
 
