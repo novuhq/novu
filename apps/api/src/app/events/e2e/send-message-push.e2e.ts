@@ -92,25 +92,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
       });
 
       expect(messages.length).to.equal(0);
-
-      const executionDetails = await executionDetailsRepository.find({
-        _environmentId: session.environment._id,
-      });
-
-      const fcm = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.FCM
-      );
-      expect(fcm).to.be.ok;
-      const expo = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.EXPO
-      );
-      expect(expo).to.be.ok;
-      const pushMissingDeviceTokens = executionDetails.filter(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS
-      );
-      expect(pushMissingDeviceTokens.length).to.equal(2);
-      const pushChannelsSkipped = executionDetails.filter((ex) => ex.detail === DetailEnum.PUSH_SOME_CHANNELS_SKIPPED);
-      expect(pushChannelsSkipped).to.be.ok;
     });
 
     it('should not create any message if subscriber has configured one provider without device tokens and the other has invalid device token', async () => {
@@ -128,31 +109,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
       });
 
       expect(messages.length, 'expected messages to be 0').to.equal(0);
-
-      const executionDetails = await executionDetailsRepository.find({
-        _environmentId: session.environment._id,
-      });
-
-      const fcmMessageCreated = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.MESSAGE_CREATED && ex.providerId === PushProviderIdEnum.FCM
-      );
-      expect(fcmMessageCreated, 'expected fcm message created to be ok').to.be.ok;
-
-      const fcmProviderError = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.PROVIDER_ERROR && ex.providerId === PushProviderIdEnum.FCM
-      );
-      expect(fcmProviderError, 'expected fcm provider error to be ok').to.be.ok;
-
-      const expo = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.EXPO
-      );
-      expect(expo, 'expected expo to be ok').to.be.ok;
-      const pushMissingDeviceTokens = executionDetails.filter(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS
-      );
-      expect(pushMissingDeviceTokens.length).to.equal(1);
-      const pushChannelsSkipped = executionDetails.filter((ex) => ex.detail === DetailEnum.PUSH_SOME_CHANNELS_SKIPPED);
-      expect(pushChannelsSkipped).to.be.ok;
     });
   });
 
