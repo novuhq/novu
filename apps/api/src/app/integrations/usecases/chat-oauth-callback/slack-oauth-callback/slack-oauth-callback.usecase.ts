@@ -79,6 +79,10 @@ export class SlackOauthCallback {
       );
     }
 
+    if (credentials.redirectUrl) {
+      return { type: ResponseTypeEnum.URL, result: credentials.redirectUrl };
+    }
+
     return {
       type: ResponseTypeEnum.HTML,
       result: this.SCRIPT_CLOSE_TAB,

@@ -481,7 +481,7 @@ export const messagebirdConfig: IConfigCredential[] = [
   ...smsConfigBase,
 ];
 
-export const slackConfig: IConfigCredential[] = [
+export const slackConfigLegacy: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
     displayName: 'Application Id',
@@ -511,6 +511,34 @@ export const slackConfig: IConfigCredential[] = [
     key: CredentialsKeyEnum.Hmac,
     displayName: 'HMAC',
     type: 'switch',
+    required: false,
+  },
+];
+
+export const slackConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application Id',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
+    type: 'string',
     required: false,
   },
 ];
@@ -1333,5 +1361,5 @@ export const ISendProProviderConfig: IConfigCredential[] = [
     description: 'The sender of sms',
     type: 'text',
     required: false,
-  }
-  ];
+  },
+];
