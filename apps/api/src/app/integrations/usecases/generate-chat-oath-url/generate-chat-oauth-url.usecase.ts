@@ -26,6 +26,7 @@ export class GenerateChatOauthUrl {
             subscriberId: command.subscriberId,
             integration,
             context: command.context,
+            scope: command.scope,
           })
         );
 
