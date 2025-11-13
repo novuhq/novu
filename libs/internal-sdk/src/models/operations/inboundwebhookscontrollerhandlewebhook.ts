@@ -4,6 +4,9 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
+import { safeParse } from '../../lib/schemas.js';
+import { Result as SafeParseResult } from '../../types/fp.js';
+import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type InboundWebhooksControllerHandleWebhookRequest = {
   /**
@@ -23,6 +26,25 @@ export type InboundWebhooksControllerHandleWebhookRequest = {
    */
   requestBody?: any | undefined;
 };
+
+/** @internal */
+export const InboundWebhooksControllerHandleWebhookRequest$inboundSchema: z.ZodType<
+  InboundWebhooksControllerHandleWebhookRequest,
+  z.ZodTypeDef,
+  unknown
+> = z
+  .object({
+    environmentId: z.string(),
+    integrationId: z.string(),
+    'idempotency-key': z.string().optional(),
+    RequestBody: z.any().optional(),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      'idempotency-key': 'idempotencyKey',
+      RequestBody: 'requestBody',
+    });
+  });
 
 /** @internal */
 export type InboundWebhooksControllerHandleWebhookRequest$Outbound = {
@@ -51,10 +73,33 @@ export const InboundWebhooksControllerHandleWebhookRequest$outboundSchema: z.Zod
     });
   });
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace InboundWebhooksControllerHandleWebhookRequest$ {
+  /** @deprecated use `InboundWebhooksControllerHandleWebhookRequest$inboundSchema` instead. */
+  export const inboundSchema = InboundWebhooksControllerHandleWebhookRequest$inboundSchema;
+  /** @deprecated use `InboundWebhooksControllerHandleWebhookRequest$outboundSchema` instead. */
+  export const outboundSchema = InboundWebhooksControllerHandleWebhookRequest$outboundSchema;
+  /** @deprecated use `InboundWebhooksControllerHandleWebhookRequest$Outbound` instead. */
+  export type Outbound = InboundWebhooksControllerHandleWebhookRequest$Outbound;
+}
+
 export function inboundWebhooksControllerHandleWebhookRequestToJSON(
   inboundWebhooksControllerHandleWebhookRequest: InboundWebhooksControllerHandleWebhookRequest
 ): string {
   return JSON.stringify(
     InboundWebhooksControllerHandleWebhookRequest$outboundSchema.parse(inboundWebhooksControllerHandleWebhookRequest)
+  );
+}
+
+export function inboundWebhooksControllerHandleWebhookRequestFromJSON(
+  jsonString: string
+): SafeParseResult<InboundWebhooksControllerHandleWebhookRequest, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => InboundWebhooksControllerHandleWebhookRequest$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'InboundWebhooksControllerHandleWebhookRequest' from JSON`
   );
 }

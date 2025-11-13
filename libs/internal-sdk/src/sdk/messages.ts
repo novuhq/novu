@@ -49,7 +49,7 @@ export class Messages extends ClientSDK {
    */
   async deleteByTransactionId(
     transactionId: string,
-    channel?: operations.MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel | undefined,
+    channel?: operations.Channel | undefined,
     idempotencyKey?: string | undefined,
     options?: RequestOptions
   ): Promise<operations.MessagesControllerDeleteMessagesByTransactionIdResponse | undefined> {

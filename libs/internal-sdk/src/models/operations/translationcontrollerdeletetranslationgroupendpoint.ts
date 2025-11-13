@@ -4,7 +4,10 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
+import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
+import { Result as SafeParseResult } from '../../types/fp.js';
+import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 /**
  * Resource type
@@ -34,7 +37,38 @@ export type TranslationControllerDeleteTranslationGroupEndpointRequest = {
 };
 
 /** @internal */
-export const ResourceType$outboundSchema: z.ZodNativeEnum<typeof ResourceType> = z.nativeEnum(ResourceType);
+export const ResourceType$inboundSchema: z.ZodNativeEnum<typeof ResourceType> = z.nativeEnum(ResourceType);
+
+/** @internal */
+export const ResourceType$outboundSchema: z.ZodNativeEnum<typeof ResourceType> = ResourceType$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace ResourceType$ {
+  /** @deprecated use `ResourceType$inboundSchema` instead. */
+  export const inboundSchema = ResourceType$inboundSchema;
+  /** @deprecated use `ResourceType$outboundSchema` instead. */
+  export const outboundSchema = ResourceType$outboundSchema;
+}
+
+/** @internal */
+export const TranslationControllerDeleteTranslationGroupEndpointRequest$inboundSchema: z.ZodType<
+  TranslationControllerDeleteTranslationGroupEndpointRequest,
+  z.ZodTypeDef,
+  unknown
+> = z
+  .object({
+    resourceType: ResourceType$inboundSchema,
+    resourceId: z.string(),
+    'idempotency-key': z.string().optional(),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      'idempotency-key': 'idempotencyKey',
+    });
+  });
 
 /** @internal */
 export type TranslationControllerDeleteTranslationGroupEndpointRequest$Outbound = {
@@ -60,6 +94,19 @@ export const TranslationControllerDeleteTranslationGroupEndpointRequest$outbound
     });
   });
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace TranslationControllerDeleteTranslationGroupEndpointRequest$ {
+  /** @deprecated use `TranslationControllerDeleteTranslationGroupEndpointRequest$inboundSchema` instead. */
+  export const inboundSchema = TranslationControllerDeleteTranslationGroupEndpointRequest$inboundSchema;
+  /** @deprecated use `TranslationControllerDeleteTranslationGroupEndpointRequest$outboundSchema` instead. */
+  export const outboundSchema = TranslationControllerDeleteTranslationGroupEndpointRequest$outboundSchema;
+  /** @deprecated use `TranslationControllerDeleteTranslationGroupEndpointRequest$Outbound` instead. */
+  export type Outbound = TranslationControllerDeleteTranslationGroupEndpointRequest$Outbound;
+}
+
 export function translationControllerDeleteTranslationGroupEndpointRequestToJSON(
   translationControllerDeleteTranslationGroupEndpointRequest: TranslationControllerDeleteTranslationGroupEndpointRequest
 ): string {
@@ -67,5 +114,15 @@ export function translationControllerDeleteTranslationGroupEndpointRequestToJSON
     TranslationControllerDeleteTranslationGroupEndpointRequest$outboundSchema.parse(
       translationControllerDeleteTranslationGroupEndpointRequest
     )
+  );
+}
+
+export function translationControllerDeleteTranslationGroupEndpointRequestFromJSON(
+  jsonString: string
+): SafeParseResult<TranslationControllerDeleteTranslationGroupEndpointRequest, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => TranslationControllerDeleteTranslationGroupEndpointRequest$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'TranslationControllerDeleteTranslationGroupEndpointRequest' from JSON`
   );
 }

@@ -12,7 +12,7 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 /**
  * The channel of the message to be deleted
  */
-export const MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel = {
+export const Channel = {
   InApp: 'in_app',
   Email: 'email',
   Sms: 'sms',
@@ -22,15 +22,13 @@ export const MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel = 
 /**
  * The channel of the message to be deleted
  */
-export type MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel = ClosedEnum<
-  typeof MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel
->;
+export type Channel = ClosedEnum<typeof Channel>;
 
 export type MessagesControllerDeleteMessagesByTransactionIdRequest = {
   /**
    * The channel of the message to be deleted
    */
-  channel?: MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel | undefined;
+  channel?: Channel | undefined;
   transactionId: string;
   /**
    * A header for idempotency purposes
@@ -43,9 +41,38 @@ export type MessagesControllerDeleteMessagesByTransactionIdResponse = {
 };
 
 /** @internal */
-export const MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel$outboundSchema: z.ZodNativeEnum<
-  typeof MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel
-> = z.nativeEnum(MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel);
+export const Channel$inboundSchema: z.ZodNativeEnum<typeof Channel> = z.nativeEnum(Channel);
+
+/** @internal */
+export const Channel$outboundSchema: z.ZodNativeEnum<typeof Channel> = Channel$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Channel$ {
+  /** @deprecated use `Channel$inboundSchema` instead. */
+  export const inboundSchema = Channel$inboundSchema;
+  /** @deprecated use `Channel$outboundSchema` instead. */
+  export const outboundSchema = Channel$outboundSchema;
+}
+
+/** @internal */
+export const MessagesControllerDeleteMessagesByTransactionIdRequest$inboundSchema: z.ZodType<
+  MessagesControllerDeleteMessagesByTransactionIdRequest,
+  z.ZodTypeDef,
+  unknown
+> = z
+  .object({
+    channel: Channel$inboundSchema.optional(),
+    transactionId: z.string(),
+    'idempotency-key': z.string().optional(),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      'idempotency-key': 'idempotencyKey',
+    });
+  });
 
 /** @internal */
 export type MessagesControllerDeleteMessagesByTransactionIdRequest$Outbound = {
@@ -61,7 +88,7 @@ export const MessagesControllerDeleteMessagesByTransactionIdRequest$outboundSche
   MessagesControllerDeleteMessagesByTransactionIdRequest
 > = z
   .object({
-    channel: MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel$outboundSchema.optional(),
+    channel: Channel$outboundSchema.optional(),
     transactionId: z.string(),
     idempotencyKey: z.string().optional(),
   })
@@ -71,6 +98,19 @@ export const MessagesControllerDeleteMessagesByTransactionIdRequest$outboundSche
     });
   });
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace MessagesControllerDeleteMessagesByTransactionIdRequest$ {
+  /** @deprecated use `MessagesControllerDeleteMessagesByTransactionIdRequest$inboundSchema` instead. */
+  export const inboundSchema = MessagesControllerDeleteMessagesByTransactionIdRequest$inboundSchema;
+  /** @deprecated use `MessagesControllerDeleteMessagesByTransactionIdRequest$outboundSchema` instead. */
+  export const outboundSchema = MessagesControllerDeleteMessagesByTransactionIdRequest$outboundSchema;
+  /** @deprecated use `MessagesControllerDeleteMessagesByTransactionIdRequest$Outbound` instead. */
+  export type Outbound = MessagesControllerDeleteMessagesByTransactionIdRequest$Outbound;
+}
+
 export function messagesControllerDeleteMessagesByTransactionIdRequestToJSON(
   messagesControllerDeleteMessagesByTransactionIdRequest: MessagesControllerDeleteMessagesByTransactionIdRequest
 ): string {
@@ -78,6 +118,16 @@ export function messagesControllerDeleteMessagesByTransactionIdRequestToJSON(
     MessagesControllerDeleteMessagesByTransactionIdRequest$outboundSchema.parse(
       messagesControllerDeleteMessagesByTransactionIdRequest
     )
+  );
+}
+
+export function messagesControllerDeleteMessagesByTransactionIdRequestFromJSON(
+  jsonString: string
+): SafeParseResult<MessagesControllerDeleteMessagesByTransactionIdRequest, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => MessagesControllerDeleteMessagesByTransactionIdRequest$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'MessagesControllerDeleteMessagesByTransactionIdRequest' from JSON`
   );
 }
 
@@ -95,6 +145,49 @@ export const MessagesControllerDeleteMessagesByTransactionIdResponse$inboundSche
       Headers: 'headers',
     });
   });
+
+/** @internal */
+export type MessagesControllerDeleteMessagesByTransactionIdResponse$Outbound = {
+  Headers: { [k: string]: Array<string> };
+};
+
+/** @internal */
+export const MessagesControllerDeleteMessagesByTransactionIdResponse$outboundSchema: z.ZodType<
+  MessagesControllerDeleteMessagesByTransactionIdResponse$Outbound,
+  z.ZodTypeDef,
+  MessagesControllerDeleteMessagesByTransactionIdResponse
+> = z
+  .object({
+    headers: z.record(z.array(z.string())),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      headers: 'Headers',
+    });
+  });
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace MessagesControllerDeleteMessagesByTransactionIdResponse$ {
+  /** @deprecated use `MessagesControllerDeleteMessagesByTransactionIdResponse$inboundSchema` instead. */
+  export const inboundSchema = MessagesControllerDeleteMessagesByTransactionIdResponse$inboundSchema;
+  /** @deprecated use `MessagesControllerDeleteMessagesByTransactionIdResponse$outboundSchema` instead. */
+  export const outboundSchema = MessagesControllerDeleteMessagesByTransactionIdResponse$outboundSchema;
+  /** @deprecated use `MessagesControllerDeleteMessagesByTransactionIdResponse$Outbound` instead. */
+  export type Outbound = MessagesControllerDeleteMessagesByTransactionIdResponse$Outbound;
+}
+
+export function messagesControllerDeleteMessagesByTransactionIdResponseToJSON(
+  messagesControllerDeleteMessagesByTransactionIdResponse: MessagesControllerDeleteMessagesByTransactionIdResponse
+): string {
+  return JSON.stringify(
+    MessagesControllerDeleteMessagesByTransactionIdResponse$outboundSchema.parse(
+      messagesControllerDeleteMessagesByTransactionIdResponse
+    )
+  );
+}
 
 export function messagesControllerDeleteMessagesByTransactionIdResponseFromJSON(
   jsonString: string

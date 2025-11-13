@@ -32,7 +32,38 @@ export type SubscribersControllerGetSubscriberPreferencesResponse = {
 };
 
 /** @internal */
-export const Criticality$outboundSchema: z.ZodNativeEnum<typeof Criticality> = z.nativeEnum(Criticality);
+export const Criticality$inboundSchema: z.ZodNativeEnum<typeof Criticality> = z.nativeEnum(Criticality);
+
+/** @internal */
+export const Criticality$outboundSchema: z.ZodNativeEnum<typeof Criticality> = Criticality$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Criticality$ {
+  /** @deprecated use `Criticality$inboundSchema` instead. */
+  export const inboundSchema = Criticality$inboundSchema;
+  /** @deprecated use `Criticality$outboundSchema` instead. */
+  export const outboundSchema = Criticality$outboundSchema;
+}
+
+/** @internal */
+export const SubscribersControllerGetSubscriberPreferencesRequest$inboundSchema: z.ZodType<
+  SubscribersControllerGetSubscriberPreferencesRequest,
+  z.ZodTypeDef,
+  unknown
+> = z
+  .object({
+    subscriberId: z.string(),
+    criticality: Criticality$inboundSchema.default('nonCritical'),
+    'idempotency-key': z.string().optional(),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      'idempotency-key': 'idempotencyKey',
+    });
+  });
 
 /** @internal */
 export type SubscribersControllerGetSubscriberPreferencesRequest$Outbound = {
@@ -58,6 +89,19 @@ export const SubscribersControllerGetSubscriberPreferencesRequest$outboundSchema
     });
   });
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace SubscribersControllerGetSubscriberPreferencesRequest$ {
+  /** @deprecated use `SubscribersControllerGetSubscriberPreferencesRequest$inboundSchema` instead. */
+  export const inboundSchema = SubscribersControllerGetSubscriberPreferencesRequest$inboundSchema;
+  /** @deprecated use `SubscribersControllerGetSubscriberPreferencesRequest$outboundSchema` instead. */
+  export const outboundSchema = SubscribersControllerGetSubscriberPreferencesRequest$outboundSchema;
+  /** @deprecated use `SubscribersControllerGetSubscriberPreferencesRequest$Outbound` instead. */
+  export type Outbound = SubscribersControllerGetSubscriberPreferencesRequest$Outbound;
+}
+
 export function subscribersControllerGetSubscriberPreferencesRequestToJSON(
   subscribersControllerGetSubscriberPreferencesRequest: SubscribersControllerGetSubscriberPreferencesRequest
 ): string {
@@ -65,6 +109,16 @@ export function subscribersControllerGetSubscriberPreferencesRequestToJSON(
     SubscribersControllerGetSubscriberPreferencesRequest$outboundSchema.parse(
       subscribersControllerGetSubscriberPreferencesRequest
     )
+  );
+}
+
+export function subscribersControllerGetSubscriberPreferencesRequestFromJSON(
+  jsonString: string
+): SafeParseResult<SubscribersControllerGetSubscriberPreferencesRequest, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => SubscribersControllerGetSubscriberPreferencesRequest$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'SubscribersControllerGetSubscriberPreferencesRequest' from JSON`
   );
 }
 
@@ -84,6 +138,52 @@ export const SubscribersControllerGetSubscriberPreferencesResponse$inboundSchema
       Result: 'result',
     });
   });
+
+/** @internal */
+export type SubscribersControllerGetSubscriberPreferencesResponse$Outbound = {
+  Headers: { [k: string]: Array<string> };
+  Result: components.GetSubscriberPreferencesDto$Outbound;
+};
+
+/** @internal */
+export const SubscribersControllerGetSubscriberPreferencesResponse$outboundSchema: z.ZodType<
+  SubscribersControllerGetSubscriberPreferencesResponse$Outbound,
+  z.ZodTypeDef,
+  SubscribersControllerGetSubscriberPreferencesResponse
+> = z
+  .object({
+    headers: z.record(z.array(z.string())),
+    result: components.GetSubscriberPreferencesDto$outboundSchema,
+  })
+  .transform((v) => {
+    return remap$(v, {
+      headers: 'Headers',
+      result: 'Result',
+    });
+  });
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace SubscribersControllerGetSubscriberPreferencesResponse$ {
+  /** @deprecated use `SubscribersControllerGetSubscriberPreferencesResponse$inboundSchema` instead. */
+  export const inboundSchema = SubscribersControllerGetSubscriberPreferencesResponse$inboundSchema;
+  /** @deprecated use `SubscribersControllerGetSubscriberPreferencesResponse$outboundSchema` instead. */
+  export const outboundSchema = SubscribersControllerGetSubscriberPreferencesResponse$outboundSchema;
+  /** @deprecated use `SubscribersControllerGetSubscriberPreferencesResponse$Outbound` instead. */
+  export type Outbound = SubscribersControllerGetSubscriberPreferencesResponse$Outbound;
+}
+
+export function subscribersControllerGetSubscriberPreferencesResponseToJSON(
+  subscribersControllerGetSubscriberPreferencesResponse: SubscribersControllerGetSubscriberPreferencesResponse
+): string {
+  return JSON.stringify(
+    SubscribersControllerGetSubscriberPreferencesResponse$outboundSchema.parse(
+      subscribersControllerGetSubscriberPreferencesResponse
+    )
+  );
+}
 
 export function subscribersControllerGetSubscriberPreferencesResponseFromJSON(
   jsonString: string

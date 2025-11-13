@@ -21,7 +21,6 @@ generation:
   sdkHooksConfigAccess: true
   schemas:
     allOfMergeStrategy: shallowMerge
-  requestBodyFieldName: ""
   tests:
     generateTests: true
     generateNewTests: false
@@ -34,8 +33,6 @@ typescript:
     devDependencies: {}
     peerDependencies: {}
   additionalPackageJSON: {}
-  additionalScripts: {}
-  alwaysIncludeInboundAndOutbound: false
   author: Novu
   baseErrorName: NovuError
   clientServerStatusCodesAsErrors: true
@@ -45,7 +42,6 @@ typescript:
   enableMCPServer: false
   enableReactQuery: true
   enumFormat: union
-  exportZodModelNamespace: false
   flattenGlobalSecurity: true
   flatteningOrder: body-first
   generateExamples: true
@@ -68,7 +64,6 @@ typescript:
   responseFormat: flat
   sseFlatResponse: false
   templateVersion: v2
-  unionStrategy: left-to-right
   usageSDKInitImports: []
   useIndexModules: true
   zodVersion: v3

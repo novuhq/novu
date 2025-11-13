@@ -4,8 +4,16 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { PushControlDto, PushControlDto$Outbound, PushControlDto$outboundSchema } from './pushcontroldto.js';
-import { StepTypeEnum, StepTypeEnum$outboundSchema } from './steptypeenum.js';
+import { safeParse } from '../../lib/schemas.js';
+import { Result as SafeParseResult } from '../../types/fp.js';
+import { SDKValidationError } from '../errors/sdkvalidationerror.js';
+import {
+  PushControlDto,
+  PushControlDto$inboundSchema,
+  PushControlDto$Outbound,
+  PushControlDto$outboundSchema,
+} from './pushcontroldto.js';
+import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
 
 /**
  * Control values for the Push step.
@@ -40,6 +48,13 @@ export type PushStepUpsertDto = {
 };
 
 /** @internal */
+export const PushStepUpsertDtoControlValues$inboundSchema: z.ZodType<
+  PushStepUpsertDtoControlValues,
+  z.ZodTypeDef,
+  unknown
+> = z.union([PushControlDto$inboundSchema, z.record(z.any())]);
+
+/** @internal */
 export type PushStepUpsertDtoControlValues$Outbound = PushControlDto$Outbound | { [k: string]: any };
 
 /** @internal */
@@ -49,11 +64,49 @@ export const PushStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   PushStepUpsertDtoControlValues
 > = z.union([PushControlDto$outboundSchema, z.record(z.any())]);
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace PushStepUpsertDtoControlValues$ {
+  /** @deprecated use `PushStepUpsertDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = PushStepUpsertDtoControlValues$inboundSchema;
+  /** @deprecated use `PushStepUpsertDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema = PushStepUpsertDtoControlValues$outboundSchema;
+  /** @deprecated use `PushStepUpsertDtoControlValues$Outbound` instead. */
+  export type Outbound = PushStepUpsertDtoControlValues$Outbound;
+}
+
 export function pushStepUpsertDtoControlValuesToJSON(
   pushStepUpsertDtoControlValues: PushStepUpsertDtoControlValues
 ): string {
   return JSON.stringify(PushStepUpsertDtoControlValues$outboundSchema.parse(pushStepUpsertDtoControlValues));
 }
+
+export function pushStepUpsertDtoControlValuesFromJSON(
+  jsonString: string
+): SafeParseResult<PushStepUpsertDtoControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => PushStepUpsertDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PushStepUpsertDtoControlValues' from JSON`
+  );
+}
+
+/** @internal */
+export const PushStepUpsertDto$inboundSchema: z.ZodType<PushStepUpsertDto, z.ZodTypeDef, unknown> = z
+  .object({
+    _id: z.string().optional(),
+    stepId: z.string().optional(),
+    name: z.string(),
+    type: StepTypeEnum$inboundSchema,
+    controlValues: z.union([PushControlDto$inboundSchema, z.record(z.any())]).optional(),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      _id: 'id',
+    });
+  });
 
 /** @internal */
 export type PushStepUpsertDto$Outbound = {
@@ -80,6 +133,27 @@ export const PushStepUpsertDto$outboundSchema: z.ZodType<PushStepUpsertDto$Outbo
       });
     });
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace PushStepUpsertDto$ {
+  /** @deprecated use `PushStepUpsertDto$inboundSchema` instead. */
+  export const inboundSchema = PushStepUpsertDto$inboundSchema;
+  /** @deprecated use `PushStepUpsertDto$outboundSchema` instead. */
+  export const outboundSchema = PushStepUpsertDto$outboundSchema;
+  /** @deprecated use `PushStepUpsertDto$Outbound` instead. */
+  export type Outbound = PushStepUpsertDto$Outbound;
+}
+
 export function pushStepUpsertDtoToJSON(pushStepUpsertDto: PushStepUpsertDto): string {
   return JSON.stringify(PushStepUpsertDto$outboundSchema.parse(pushStepUpsertDto));
+}
+
+export function pushStepUpsertDtoFromJSON(jsonString: string): SafeParseResult<PushStepUpsertDto, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => PushStepUpsertDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PushStepUpsertDto' from JSON`
+  );
 }

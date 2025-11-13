@@ -4,7 +4,10 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
+import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
+import { Result as SafeParseResult } from '../../types/fp.js';
+import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 /**
  * Resource type
@@ -40,9 +43,43 @@ export type TranslationControllerDeleteTranslationEndpointRequest = {
 };
 
 /** @internal */
-export const TranslationControllerDeleteTranslationEndpointPathParamResourceType$outboundSchema: z.ZodNativeEnum<
+export const TranslationControllerDeleteTranslationEndpointPathParamResourceType$inboundSchema: z.ZodNativeEnum<
   typeof TranslationControllerDeleteTranslationEndpointPathParamResourceType
 > = z.nativeEnum(TranslationControllerDeleteTranslationEndpointPathParamResourceType);
+
+/** @internal */
+export const TranslationControllerDeleteTranslationEndpointPathParamResourceType$outboundSchema: z.ZodNativeEnum<
+  typeof TranslationControllerDeleteTranslationEndpointPathParamResourceType
+> = TranslationControllerDeleteTranslationEndpointPathParamResourceType$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace TranslationControllerDeleteTranslationEndpointPathParamResourceType$ {
+  /** @deprecated use `TranslationControllerDeleteTranslationEndpointPathParamResourceType$inboundSchema` instead. */
+  export const inboundSchema = TranslationControllerDeleteTranslationEndpointPathParamResourceType$inboundSchema;
+  /** @deprecated use `TranslationControllerDeleteTranslationEndpointPathParamResourceType$outboundSchema` instead. */
+  export const outboundSchema = TranslationControllerDeleteTranslationEndpointPathParamResourceType$outboundSchema;
+}
+
+/** @internal */
+export const TranslationControllerDeleteTranslationEndpointRequest$inboundSchema: z.ZodType<
+  TranslationControllerDeleteTranslationEndpointRequest,
+  z.ZodTypeDef,
+  unknown
+> = z
+  .object({
+    resourceType: TranslationControllerDeleteTranslationEndpointPathParamResourceType$inboundSchema,
+    resourceId: z.string(),
+    locale: z.string(),
+    'idempotency-key': z.string().optional(),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      'idempotency-key': 'idempotencyKey',
+    });
+  });
 
 /** @internal */
 export type TranslationControllerDeleteTranslationEndpointRequest$Outbound = {
@@ -70,6 +107,19 @@ export const TranslationControllerDeleteTranslationEndpointRequest$outboundSchem
     });
   });
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace TranslationControllerDeleteTranslationEndpointRequest$ {
+  /** @deprecated use `TranslationControllerDeleteTranslationEndpointRequest$inboundSchema` instead. */
+  export const inboundSchema = TranslationControllerDeleteTranslationEndpointRequest$inboundSchema;
+  /** @deprecated use `TranslationControllerDeleteTranslationEndpointRequest$outboundSchema` instead. */
+  export const outboundSchema = TranslationControllerDeleteTranslationEndpointRequest$outboundSchema;
+  /** @deprecated use `TranslationControllerDeleteTranslationEndpointRequest$Outbound` instead. */
+  export type Outbound = TranslationControllerDeleteTranslationEndpointRequest$Outbound;
+}
+
 export function translationControllerDeleteTranslationEndpointRequestToJSON(
   translationControllerDeleteTranslationEndpointRequest: TranslationControllerDeleteTranslationEndpointRequest
 ): string {
@@ -77,5 +127,15 @@ export function translationControllerDeleteTranslationEndpointRequestToJSON(
     TranslationControllerDeleteTranslationEndpointRequest$outboundSchema.parse(
       translationControllerDeleteTranslationEndpointRequest
     )
+  );
+}
+
+export function translationControllerDeleteTranslationEndpointRequestFromJSON(
+  jsonString: string
+): SafeParseResult<TranslationControllerDeleteTranslationEndpointRequest, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => TranslationControllerDeleteTranslationEndpointRequest$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'TranslationControllerDeleteTranslationEndpointRequest' from JSON`
   );
 }

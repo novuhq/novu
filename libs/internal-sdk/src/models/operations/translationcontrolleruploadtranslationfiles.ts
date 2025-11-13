@@ -4,7 +4,10 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
+import { safeParse } from '../../lib/schemas.js';
+import { Result as SafeParseResult } from '../../types/fp.js';
 import * as components from '../components/index.js';
+import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type TranslationControllerUploadTranslationFilesRequest = {
   /**
@@ -16,6 +19,23 @@ export type TranslationControllerUploadTranslationFilesRequest = {
    */
   uploadTranslationsRequestDto: components.UploadTranslationsRequestDto;
 };
+
+/** @internal */
+export const TranslationControllerUploadTranslationFilesRequest$inboundSchema: z.ZodType<
+  TranslationControllerUploadTranslationFilesRequest,
+  z.ZodTypeDef,
+  unknown
+> = z
+  .object({
+    'idempotency-key': z.string().optional(),
+    UploadTranslationsRequestDto: components.UploadTranslationsRequestDto$inboundSchema,
+  })
+  .transform((v) => {
+    return remap$(v, {
+      'idempotency-key': 'idempotencyKey',
+      UploadTranslationsRequestDto: 'uploadTranslationsRequestDto',
+    });
+  });
 
 /** @internal */
 export type TranslationControllerUploadTranslationFilesRequest$Outbound = {
@@ -40,6 +60,19 @@ export const TranslationControllerUploadTranslationFilesRequest$outboundSchema: 
     });
   });
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace TranslationControllerUploadTranslationFilesRequest$ {
+  /** @deprecated use `TranslationControllerUploadTranslationFilesRequest$inboundSchema` instead. */
+  export const inboundSchema = TranslationControllerUploadTranslationFilesRequest$inboundSchema;
+  /** @deprecated use `TranslationControllerUploadTranslationFilesRequest$outboundSchema` instead. */
+  export const outboundSchema = TranslationControllerUploadTranslationFilesRequest$outboundSchema;
+  /** @deprecated use `TranslationControllerUploadTranslationFilesRequest$Outbound` instead. */
+  export type Outbound = TranslationControllerUploadTranslationFilesRequest$Outbound;
+}
+
 export function translationControllerUploadTranslationFilesRequestToJSON(
   translationControllerUploadTranslationFilesRequest: TranslationControllerUploadTranslationFilesRequest
 ): string {
@@ -47,5 +80,15 @@ export function translationControllerUploadTranslationFilesRequestToJSON(
     TranslationControllerUploadTranslationFilesRequest$outboundSchema.parse(
       translationControllerUploadTranslationFilesRequest
     )
+  );
+}
+
+export function translationControllerUploadTranslationFilesRequestFromJSON(
+  jsonString: string
+): SafeParseResult<TranslationControllerUploadTranslationFilesRequest, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => TranslationControllerUploadTranslationFilesRequest$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'TranslationControllerUploadTranslationFilesRequest' from JSON`
   );
 }
