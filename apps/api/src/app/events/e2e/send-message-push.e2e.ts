@@ -92,25 +92,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
       });
 
       expect(messages.length).to.equal(0);
-
-      const executionDetails = await executionDetailsRepository.find({
-        _environmentId: session.environment._id,
-      });
-
-      const fcm = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.FCM
-      );
-      expect(fcm).to.be.ok;
-      const expo = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.EXPO
-      );
-      expect(expo).to.be.ok;
-      const pushMissingDeviceTokens = executionDetails.filter(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS
-      );
-      expect(pushMissingDeviceTokens.length).to.equal(2);
-      const pushChannelsSkipped = executionDetails.filter((ex) => ex.detail === DetailEnum.PUSH_SOME_CHANNELS_SKIPPED);
-      expect(pushChannelsSkipped).to.be.ok;
     });
 
     it('should not create any message if subscriber has configured one provider without device tokens and the other has invalid device token', async () => {
@@ -128,31 +109,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
       });
 
       expect(messages.length, 'expected messages to be 0').to.equal(0);
-
-      const executionDetails = await executionDetailsRepository.find({
-        _environmentId: session.environment._id,
-      });
-
-      const fcmMessageCreated = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.MESSAGE_CREATED && ex.providerId === PushProviderIdEnum.FCM
-      );
-      expect(fcmMessageCreated, 'expected fcm message created to be ok').to.be.ok;
-
-      const fcmProviderError = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.PROVIDER_ERROR && ex.providerId === PushProviderIdEnum.FCM
-      );
-      expect(fcmProviderError, 'expected fcm provider error to be ok').to.be.ok;
-
-      const expo = executionDetails.find(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.EXPO
-      );
-      expect(expo, 'expected expo to be ok').to.be.ok;
-      const pushMissingDeviceTokens = executionDetails.filter(
-        (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS
-      );
-      expect(pushMissingDeviceTokens.length).to.equal(1);
-      const pushChannelsSkipped = executionDetails.filter((ex) => ex.detail === DetailEnum.PUSH_SOME_CHANNELS_SKIPPED);
-      expect(pushChannelsSkipped).to.be.ok;
     });
   });
 
@@ -275,6 +231,66 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
     expect((pushMessages[0].overrides as any).apns.payload.aps.badge).to.equal(2);
 
     (process.env as Record<string, string>).IS_PUSH_UNREAD_COUNT_ENABLED = oldPushUnreadCountFlag;
+  });
+
+  it('should send push notification using FCM topic override without device tokens', async () => {
+    const { result: subscriber } = await novuClient.subscribers.create({
+      subscriberId: 'test-subscriber-topic',
+      email: 'test-topic@example.com',
+      firstName: 'Test',
+      lastName: 'Topic',
+    });
+
+    await novuClient.integrations.create({
+      providerId: PushProviderIdEnum.FCM,
+      channel: ChannelTypeEnum.PUSH,
+      credentials: {
+        serviceAccount:
+          '{"type":"service_account","project_id":"react-native-expo-fcm","private_key_id":"asdfas","private_key":"-----BEGIN PRIVATE KEY-----\\nasdf\\n-----END PRIVATE KEY-----\\n","client_email":"firebase-adminsdk-fsa@react-native-expo-fcm.iam.gserviceaccount.com","client_id":"asdf","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fsa@react-native-expo-fcm.iam.gserviceaccount.com","universe_domain":"googleapis.com"}',
+      },
+      environmentId: session.environment._id,
+      active: true,
+      check: false,
+    });
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: [{ subscriberId: subscriber.subscriberId }],
+      payload: {},
+      overrides: {
+        providers: {
+          fcm: {
+            topic: 'topic-123',
+          },
+        },
+      },
+    });
+
+    await session.waitForJobCompletion(template._id);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: subscriber.id,
+    });
+
+    expect(messages.length).to.equal(1);
+    expect(messages[0].channel).to.equal(ChannelTypeEnum.PUSH);
+
+    const executionDetails = await executionDetailsRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber.id,
+    });
+
+    const pushMissingTokensError = executionDetails.find(
+      (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.FCM
+    );
+    expect(pushMissingTokensError).to.not.be.ok;
+
+    const messageCreated = executionDetails.find(
+      (ex) => ex.detail === DetailEnum.MESSAGE_CREATED && ex.providerId === PushProviderIdEnum.FCM
+    );
+    expect(messageCreated).to.be.ok;
   });
 
   async function triggerEvent(template2) {

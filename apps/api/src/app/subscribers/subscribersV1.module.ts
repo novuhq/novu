@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 import { AuthModule } from '../auth/auth.module';
-
+import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
 import { PreferencesModule } from '../preferences';
 import { SharedModule } from '../shared/shared.module';
@@ -16,6 +16,7 @@ import { USE_CASES } from './usecases';
     TerminusModule,
     forwardRef(() => WidgetsModule),
     PreferencesModule,
+    ChannelEndpointsModule,
     OutboundWebhooksModule.forRoot(),
   ],
   controllers: [SubscribersV1Controller],
