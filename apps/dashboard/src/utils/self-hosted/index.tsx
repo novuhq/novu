@@ -27,6 +27,14 @@ export {
 
   export { useAuth, useOrganization, useUser };
 
+export const useClerk = () => {
+  return {
+    setActive: async () => {
+      console.warn('Clerk.setActive is not available in self-hosted mode');
+    },
+  };
+};
+
 export const useOrganizationList = () => {
   const { organization, isLoaded } = useOrganization() as {
     organization: IOrganizationEntity;

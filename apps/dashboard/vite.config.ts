@@ -13,18 +13,30 @@ export default defineConfig(({ mode }) => {
 
   const isSelfHosted = env.VITE_SELF_HOSTED === 'true';
 
-  // Plugin to exclude cloud-specific files in self-hosted builds
+  // Plugin to redirect direct region-context imports to self-hosted version
+  // This ensures we use the simpler self-hosted version instead of bundling Clerk-dependent cloud code
   const excludeCloudFilesPlugin = (): Plugin => ({
     name: 'exclude-cloud-files',
     enforce: 'pre',
     resolveId(source, importer) {
       if (!isSelfHosted) return null;
       
-      // Redirect cloud region context imports to self-hosted version
-      if (source === './region-context' || source === './region-context.tsx') {
-        if (importer && importer.includes('context/region/index')) {
-          return this.resolve('./region-context.self-hosted.tsx', importer, { skipSelf: true });
+      // Redirect direct imports of region-context.tsx to the self-hosted version
+      // The alias handles @/context/region imports, but direct relative imports need this plugin
+      if (
+        importer &&
+        (source === './region-context' ||
+          source === './region-context.tsx' ||
+          source.endsWith('/region-context') ||
+          source.endsWith('/region-context.tsx'))
+      ) {
+        // Don't redirect if already importing the self-hosted version
+        if (source.includes('region-context.self-hosted')) {
+          return null;
         }
+        
+        const selfHostedPath = source.replace(/region-context(\.tsx)?$/, 'region-context.self-hosted.tsx');
+        return this.resolve(selfHostedPath, importer, { skipSelf: true });
       }
       return null;
     },
