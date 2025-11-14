@@ -46,6 +46,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integration-response.dto';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
 import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
+import { GenerateChatOAuthUrlResponseDto } from './dtos/generate-chat-oauth-url-response.dto';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
@@ -405,6 +406,7 @@ export class IntegrationsController {
   }
 
   @Post('/chat/oauth')
+  @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
   @ApiOperation({
     summary: 'Generate chat OAuth URL',
     description: `Generate an OAuth URL for chat integrations like Slack. 
@@ -412,7 +414,6 @@ export class IntegrationsController {
     through their chat workspace. The authorization process creates either a workspace connection 
     for broader access or an incoming webhook endpoint for direct message delivery.`,
   })
-  @ApiResponse(String)
   @ApiExcludeEndpoint()
   @SdkMethodName('generateChatOAuthUrl')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
@@ -421,10 +422,10 @@ export class IntegrationsController {
   async getChatOAuthUrl(
     @UserSession() user: UserSessionData,
     @Body() body: GenerateChatOauthUrlRequestDto
-  ): Promise<string> {
+  ): Promise<GenerateChatOAuthUrlResponseDto> {
     await this.checkFeatureEnabled(user);
 
-    return await this.generateChatOauthUrlUsecase.execute(
+    const url = await this.generateChatOauthUrlUsecase.execute(
       GenerateChatOauthUrlCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -435,6 +436,8 @@ export class IntegrationsController {
         scope: body.scope,
       })
     );
+
+    return { url };
   }
 
   @Get('/chat/oauth/callback')
