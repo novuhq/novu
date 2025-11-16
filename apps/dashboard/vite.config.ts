@@ -2,7 +2,7 @@ import { sentryVitePlugin } from '@sentry/vite-plugin';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import tailwindcss from 'tailwindcss';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, Plugin } from 'vite';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
@@ -13,8 +13,38 @@ export default defineConfig(({ mode }) => {
 
   const isSelfHosted = env.VITE_SELF_HOSTED === 'true';
 
+  // Plugin to redirect direct region-context imports to self-hosted version
+  // This ensures we use the simpler self-hosted version instead of bundling Clerk-dependent cloud code
+  const excludeCloudFilesPlugin = (): Plugin => ({
+    name: 'exclude-cloud-files',
+    enforce: 'pre',
+    resolveId(source, importer) {
+      if (!isSelfHosted) return null;
+      
+      // Redirect direct imports of region-context.tsx to the self-hosted version
+      // The alias handles @/context/region imports, but direct relative imports need this plugin
+      if (
+        importer &&
+        (source === './region-context' ||
+          source === './region-context.tsx' ||
+          source.endsWith('/region-context') ||
+          source.endsWith('/region-context.tsx'))
+      ) {
+        // Don't redirect if already importing the self-hosted version
+        if (source.includes('region-context.self-hosted')) {
+          return null;
+        }
+        
+        const selfHostedPath = source.replace(/region-context(\.tsx)?$/, 'region-context.self-hosted.tsx');
+        return this.resolve(selfHostedPath, importer, { skipSelf: true });
+      }
+      return null;
+    },
+  });
+
   return {
     plugins: [
+      excludeCloudFilesPlugin(),
       ViteEjsPlugin((viteConfig) => ({
         // viteConfig is the current Vite resolved config
         env: viteConfig.env,
@@ -50,7 +80,12 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        ...(isSelfHosted ? { '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx') } : {}),
+        ...(isSelfHosted
+          ? {
+              '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx'),
+              '@/context/region': path.resolve(__dirname, './src/context/region/index.self-hosted.ts'),
+            }
+          : {}),
         // Explicitly map prettier imports to browser-compatible versions
         'prettier/standalone': path.resolve(__dirname, './node_modules/prettier/standalone.js'),
         'prettier/plugins/html': path.resolve(__dirname, './node_modules/prettier/plugins/html.js'),

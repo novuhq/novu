@@ -37,6 +37,7 @@ export const ProviderId = {
   Pushpad: 'pushpad',
   PushWebhook: 'push-webhook',
   PusherBeams: 'pusher-beams',
+  Appio: 'appio',
 } as const;
 /**
  * The ID of the chat or push provider.

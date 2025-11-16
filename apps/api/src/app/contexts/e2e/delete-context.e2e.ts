@@ -8,8 +8,7 @@ describe('Delete Context - /contexts/:type/:id (DELETE) #novu-v2', () => {
   const contextRepository = new ContextRepository();
 
   before(() => {
-    // @ts-expect-error process.env is not typed
-    process.env.IS_CONTEXT_ENABLED = 'true';
+    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
   });
 
   beforeEach(async () => {
@@ -18,8 +17,7 @@ describe('Delete Context - /contexts/:type/:id (DELETE) #novu-v2', () => {
   });
 
   after(() => {
-    // @ts-expect-error process.env is not typed
-    delete process.env.IS_CONTEXT_ENABLED;
+    delete (process.env as Record<string, string>).IS_CONTEXT_ENABLED;
   });
 
   it('should delete newly created context', async () => {

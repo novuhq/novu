@@ -1,9 +1,8 @@
-import { BaseCommand } from '@novu/application-generic';
-import { ChannelEndpointByType, ChannelEndpointType, ENDPOINT_TYPES, ResourceKey } from '@novu/shared';
+import { BaseCommand, IsValidContextPayload } from '@novu/application-generic';
+import { ChannelEndpointByType, ChannelEndpointType, ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
 import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { IsValidChannelEndpoint } from '../../validators/channel-endpoint.validator';
-import { IsResourceKey } from '../../../shared/validators/resource-key.validator';
 
 // @ts-expect-error - Override with more specific typing for type safety
 export class CreateChannelEndpointCommand<
@@ -22,8 +21,12 @@ export class CreateChannelEndpointCommand<
   connectionIdentifier?: string;
 
   @IsDefined()
-  @IsResourceKey()
-  resource: ResourceKey;
+  @IsString()
+  subscriberId: string;
+
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 
   @IsDefined()
   @IsEnum(Object.values(ENDPOINT_TYPES))
@@ -39,7 +42,8 @@ export class CreateChannelEndpointCommand<
     identifier?: string;
     integrationIdentifier: string;
     connectionIdentifier?: string;
-    resource: ResourceKey;
+    subscriberId: string;
+    context?: ContextPayload;
     type: T;
     endpoint: ChannelEndpointByType[T];
   }): CreateChannelEndpointCommand<T> {

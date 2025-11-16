@@ -1,17 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { makeResourceKey, RESOURCE, ResourceKey } from '@novu/shared';
-import { IsDefined, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { IsResourceKey } from '../../shared/validators/resource-key.validator';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
+import { IsArray, IsDefined, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
+import { SLACK_DEFAULT_OAUTH_SCOPES } from '../usecases/generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 
 export class GenerateChatOauthUrlRequestDto {
   @ApiProperty({
     type: String,
-    description: 'Resource to link the integration to',
-    example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
+    description: 'The subscriber ID to link the integration to',
+    example: 'subscriber-123',
   })
-  @IsDefined()
-  @IsResourceKey()
-  resource: ResourceKey;
+  @IsOptional()
+  @IsString()
+  subscriberId?: string;
 
   @ApiProperty({
     type: String,
@@ -31,4 +33,27 @@ export class GenerateChatOauthUrlRequestDto {
   @IsString()
   @IsOptional()
   connectionIdentifier?: string;
+
+  @ApiContextPayload()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
+
+  @ApiProperty({
+    type: [String],
+    description: `OAuth scopes to request during authorization. These define the permissions your chat integration will have. If not specified, default scopes will be used: ${SLACK_DEFAULT_OAUTH_SCOPES.join(', ')}. Note: The generated OAuth URL expires after 5 minutes.`,
+    example: [
+      'chat:write',
+      'chat:write.public',
+      'channels:read',
+      'groups:read',
+      'users:read',
+      'users:read.email',
+      'incoming-webhook',
+    ],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  scope?: string[];
 }

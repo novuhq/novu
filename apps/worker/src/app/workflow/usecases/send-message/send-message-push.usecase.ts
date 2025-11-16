@@ -172,7 +172,7 @@ export class SendMessagePush extends SendMessageBase {
       const { deviceTokens } = channel.credentials || {};
 
       const isChannelMissingDeviceTokens = await this.isChannelMissingDeviceTokens(channel);
-      if (isChannelMissingDeviceTokens) {
+      if (isChannelMissingDeviceTokens && !deviceTokens && !uniqueOverrideChannels?.length) {
         await this.createExecutionDetails.execute(
           CreateExecutionDetailsCommand.create({
             ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -205,7 +205,7 @@ export class SendMessagePush extends SendMessageBase {
 
       const noDeviceTokensAndNoOverrides = !deviceTokens && !uniqueOverrideChannels?.length;
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
-      if (noDeviceTokensAndNoOverrides || !integration || isChannelMissingDeviceTokens) {
+      if (noDeviceTokensAndNoOverrides || !integration) {
         continue;
       }
 

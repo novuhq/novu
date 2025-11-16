@@ -14,7 +14,7 @@ export class BuildTotalInteractionsChart {
 
   @InstrumentUsecase()
   async execute(command: BuildTotalInteractionsChartCommand): Promise<TotalInteractionsDataPointDto> {
-    const { environmentId, organizationId, startDate, endDate } = command;
+    const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
     // Calculate previous period dates
     const periodDuration = endDate.getTime() - startDate.getTime();
@@ -27,7 +27,8 @@ export class BuildTotalInteractionsChart {
       startDate,
       endDate,
       previousStartDate,
-      previousEndDate
+      previousEndDate,
+      workflowIds
     );
 
     return {

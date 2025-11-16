@@ -119,6 +119,7 @@ export class SubscriberJobBound {
         phone: subscriber?.phone,
         avatar: subscriber?.avatar,
         locale: subscriber?.locale,
+        timezone: subscriber?.timezone,
         data: subscriber?.data,
         channels: subscriber?.channels,
         activeWorkerName: process.env.ACTIVE_WORKER,
@@ -343,6 +344,7 @@ export class SubscriberJobBound {
         entity_type: 'request',
         entity_id: command.requestId,
         workflow_run_identifier: command.identifier,
+        workflow_id: command.templateId,
       };
 
       await this.traceLogRepository.createRequest([traceData]);

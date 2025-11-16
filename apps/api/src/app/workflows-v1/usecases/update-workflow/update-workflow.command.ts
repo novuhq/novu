@@ -15,7 +15,6 @@ import {
   ResourceTypeEnum,
   RuntimeIssue,
   SeverityLevelEnum,
-  WorkflowStatusEnum,
 } from '@novu/shared';
 import { Exclude, Type } from 'class-transformer';
 import {
@@ -127,10 +126,6 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @ValidateNested({ each: true })
   @Type(() => Array<ContentIssue>)
   issues?: Record<string, RuntimeIssue[]>;
-
-  @IsEnum(WorkflowStatusEnum)
-  @IsOptional()
-  status?: WorkflowStatusEnum;
 
   @IsOptional()
   @IsString()

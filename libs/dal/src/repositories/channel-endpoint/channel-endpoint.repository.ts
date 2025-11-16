@@ -11,4 +11,14 @@ export class ChannelEndpointRepository extends BaseRepository<
   constructor() {
     super(ChannelEndpoint, ChannelEndpointEntity);
   }
+
+  buildContextExactMatchQuery(contextKeys?: string[]) {
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return { contextKeys: [] };
+    }
+
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
+  }
 }

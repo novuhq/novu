@@ -29,15 +29,15 @@ export type PatchSubscriberRequestDto = {
    */
   avatar?: string | null | undefined;
   /**
-   * Timezone of the subscriber
-   */
-  timezone?: string | null | undefined;
-  /**
    * Locale of the subscriber
    */
   locale?: string | null | undefined;
   /**
-   * Additional custom data for the subscriber
+   * Timezone of the subscriber
+   */
+  timezone?: string | null | undefined;
+  /**
+   * Additional custom data associated with the subscriber
    */
   data?: { [k: string]: any } | null | undefined;
 };
@@ -50,8 +50,8 @@ export const PatchSubscriberRequestDto$inboundSchema: z.ZodType<PatchSubscriberR
     email: z.nullable(z.string()).optional(),
     phone: z.nullable(z.string()).optional(),
     avatar: z.nullable(z.string()).optional(),
-    timezone: z.nullable(z.string()).optional(),
     locale: z.nullable(z.string()).optional(),
+    timezone: z.nullable(z.string()).optional(),
     data: z.nullable(z.record(z.any())).optional(),
   });
 
@@ -62,8 +62,8 @@ export type PatchSubscriberRequestDto$Outbound = {
   email?: string | null | undefined;
   phone?: string | null | undefined;
   avatar?: string | null | undefined;
-  timezone?: string | null | undefined;
   locale?: string | null | undefined;
+  timezone?: string | null | undefined;
   data?: { [k: string]: any } | null | undefined;
 };
 
@@ -78,8 +78,8 @@ export const PatchSubscriberRequestDto$outboundSchema: z.ZodType<
   email: z.nullable(z.string()).optional(),
   phone: z.nullable(z.string()).optional(),
   avatar: z.nullable(z.string()).optional(),
-  timezone: z.nullable(z.string()).optional(),
   locale: z.nullable(z.string()).optional(),
+  timezone: z.nullable(z.string()).optional(),
   data: z.nullable(z.record(z.any())).optional(),
 });
 

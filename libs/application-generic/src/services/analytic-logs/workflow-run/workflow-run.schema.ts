@@ -31,12 +31,9 @@ const schemaDefinition = {
   user_id: { type: CHNullable(CHString()) },
   subscriber_id: { type: CHString() },
   external_subscriber_id: { type: CHNullable(CHString()) },
-  context_keys: { type: CHArray(CHString(), []) }, // Array of context keys (type:identifier)
 
   // Execution metadata
   status: { type: CHLowCardinality(CHString()) }, // processing, error, completed
-  delivery_lifecycle_status: { type: CHLowCardinality(CHString('')) },
-  delivery_lifecycle_detail: { type: CHString('') },
   trigger_identifier: { type: CHString() }, // The event identifier that triggered the workflow
 
   // Correlation and grouping
@@ -58,8 +55,12 @@ const schemaDefinition = {
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
 
+  delivery_lifecycle_status: { type: CHString('') },
+  delivery_lifecycle_detail: { type: CHString('') },
   severity: { type: CHLowCardinality(CHString(SeverityLevelEnum.NONE)) }, // severity of the workflow run
   critical: { type: CHBoolean(false) }, // critical flag of the workflow run
+
+  context_keys: { type: CHArray(CHString(), []) }, // Array of context keys (type:identifier)
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = ['organization_id', 'workflow_run_id'];

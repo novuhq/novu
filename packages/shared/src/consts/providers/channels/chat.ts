@@ -5,7 +5,7 @@ import {
   getstreamConfig,
   grafanaOnCallConfig,
   rocketChatConfig,
-  slackConfig,
+  slackConfigLegacy,
   whatsAppBusinessConfig,
 } from '../credentials';
 import { IConfigCredential, IProviderConfig } from '../provider.interface';
@@ -23,7 +23,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.Slack,
     displayName: 'Slack',
     channel: ChannelTypeEnum.CHAT,
-    credentials: slackConfig,
+    credentials: slackConfigLegacy,
     docReference: `https://docs.novu.co/platform/integrations/chat/slack${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
   },

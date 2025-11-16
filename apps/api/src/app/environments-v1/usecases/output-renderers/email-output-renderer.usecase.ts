@@ -384,7 +384,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organization?: OrganizationEntity;
   }): Promise<string> {
     if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
-      const escapedPayloadForJson = this.deepEscapePayloadStrings(payload);
+      const unescapedPayload = this.deepUnescapeTranslationStrings(payload) as FullPayloadForRender;
+      const escapedPayloadForJson = this.deepEscapePayloadStrings(unescapedPayload);
       const liquifiedMaily = wrapMailyInLiquid(this.enhanceContentVariable(body));
       const transformedMaily = await this.transformMailyContent(liquifiedMaily, escapedPayloadForJson);
       const translatedMaily = await this.processMailyTranslations({
@@ -401,7 +402,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
       return await mailyRender(parsedMaily, { noHtmlWrappingTags });
     } else {
-      // For simple text body, apply translations directly
       const processedHtml = await this.processTextTranslations({
         text: body,
         variables: payload,
@@ -426,9 +426,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale?: string,
     organization?: OrganizationEntity
   ): Promise<string> {
-    return this.processStringTranslations({
+    const unescapedVariables = this.deepUnescapeTranslationStrings(variables) as FullPayloadForRender;
+
+    const translatedSubject = await this.processStringTranslations({
       content: subject,
-      variables,
+      variables: unescapedVariables,
       environmentId,
       organizationId,
       resourceId: workflowId,
@@ -436,6 +438,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       locale,
       organization,
     });
+
+    return this.unescapeJsonString(translatedSubject);
   }
 
   private async processMailyTranslations({
@@ -491,9 +495,10 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale?: string;
     organization?: OrganizationEntity;
   }): Promise<string> {
+    const unescapedVariables = this.deepUnescapeTranslationStrings(variables) as FullPayloadForRender;
     const translatedText = await this.processStringTranslations({
       content: text,
-      variables,
+      variables: unescapedVariables,
       environmentId,
       organizationId,
       resourceId,
@@ -502,7 +507,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organization,
     });
 
-    return await this.liquidEngine.parseAndRender(translatedText, variables);
+    const unescapedTranslatedText = this.unescapeJsonString(translatedText);
+
+    return await this.liquidEngine.parseAndRender(unescapedTranslatedText, unescapedVariables);
   }
 
   private async parseMailyContentByLiquid(
@@ -830,6 +837,45 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       .replace(/\n/g, '\\n') // Escape newlines
       .replace(/\r/g, '\\r') // Escape carriage returns
       .replace(/\t/g, '\\t'); // Escape tabs
+  }
+
+  private unescapeJsonString(str: string): string {
+    return str
+      .replace(/\\t/g, '\t')
+      .replace(/\\r/g, '\r')
+      .replace(/\\n/g, '\n')
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'")
+      .replace(/\\\\/g, '\\');
+  }
+
+  private deepUnescapeTranslationStrings(obj: unknown): unknown {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      return this.unescapeJsonString(obj);
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.deepUnescapeTranslationStrings(item));
+    }
+
+    if (typeof obj === 'object') {
+      const unescapedObj: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        unescapedObj[key] = this.deepUnescapeTranslationStrings(value);
+      }
+
+      return unescapedObj;
+    }
+
+    return obj;
   }
 
   private cleanupRenderedHtml(html: string): string {

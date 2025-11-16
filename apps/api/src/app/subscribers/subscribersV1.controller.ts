@@ -776,12 +776,17 @@ export class SubscribersV1Controller {
     );
   }
 
+  /**
+   * @deprecated Use the new channel management approach.
+   * @see channel-endpoints and channel-connections modules
+   */
   @ExternalApiAccessible()
   @Get('/:subscriberId/credentials/:providerId/oauth/callback')
   @ApiExcludeEndpoint()
   @ApiOperation({
     summary: 'Handle slack oauth redirect',
     description: `Handle slack oauth redirect by its unique key identifier **subscriberId** and providerId **providerId**.`,
+    deprecated: true,
   })
   @ApiResponse(String, 200, false, false, {
     status: 200,
@@ -831,11 +836,16 @@ export class SubscribersV1Controller {
     res.redirect(callbackResult.resultString); // Return the URL to redirect to
   }
 
+  /**
+   * @deprecated Use the new channel management approach.
+   * @see channel-endpoints and channel-connections modules
+   */
   @ExternalApiAccessible()
   @ApiExcludeEndpoint()
   @Get('/:subscriberId/credentials/:providerId/oauth')
   @ApiOperation({
     summary: 'Handle chat oauth',
+    deprecated: true,
   })
   @SdkGroupName('Subscribers.Authentication')
   @SdkMethodName('chatAccessOauth')

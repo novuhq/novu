@@ -4,18 +4,16 @@ import { expect } from 'chai';
 
 describe('Update global preferences - /inbox/preferences (PATCH) #novu-v2', () => {
   let session: UserSession;
-  const isSubscribersScheduleEnabled = process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED;
+  const isSubscribersScheduleEnabled = (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    // @ts-expect-error
-    process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
+    (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
   });
 
   afterEach(() => {
-    // @ts-expect-error
-    process.env.IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
+    (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
   });
 
   it('should throw error when made unauthorized call', async () => {

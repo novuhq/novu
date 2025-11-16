@@ -1,7 +1,7 @@
-import { ResourceKey } from '@novu/shared';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { IsResourceKey } from '../../../shared/validators/resource-key.validator';
 
 export class GenerateChatOauthUrlCommand extends EnvironmentCommand {
   @IsNotEmpty()
@@ -12,7 +12,16 @@ export class GenerateChatOauthUrlCommand extends EnvironmentCommand {
   @IsString()
   readonly connectionIdentifier?: string;
 
-  @IsNotEmpty()
-  @IsResourceKey()
-  readonly resource: ResourceKey;
+  @IsOptional()
+  @IsString()
+  readonly subscriberId?: string;
+
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  readonly context?: ContextPayload;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  readonly scope?: string[];
 }

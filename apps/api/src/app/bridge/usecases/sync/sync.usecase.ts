@@ -270,7 +270,6 @@ export class Sync {
       data: this.castToAnyNotSupportedParam(workflow)?.data,
       tags: this.getWorkflowTags(workflow),
       active: workflowActive,
-      status: computeWorkflowStatus(workflowActive, steps),
       defaultPreferences: this.getWorkflowPreferences(workflow),
     };
   }

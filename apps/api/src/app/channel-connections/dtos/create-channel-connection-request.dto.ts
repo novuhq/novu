@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { makeResourceKey, RESOURCE, ResourceKey } from '@novu/shared';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { IsResourceKey } from '../../shared/validators/resource-key.validator';
+import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
 import { AuthDto, WorkspaceDto } from './shared.dto';
 
 export class CreateChannelConnectionRequestDto {
@@ -16,14 +17,19 @@ export class CreateChannelConnectionRequestDto {
   @IsString()
   identifier?: string;
 
-  @ApiProperty({
-    description: 'The resource of the channel connection',
+  @ApiPropertyOptional({
+    description: 'The subscriber ID to link the channel connection to',
     type: String,
-    example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
+    example: 'subscriber-123',
   })
-  @IsDefined()
-  @IsResourceKey()
-  resource: ResourceKey;
+  @IsOptional()
+  @IsString()
+  subscriberId?: string;
+
+  @ApiContextPayload()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 
   @ApiProperty({
     description: 'The identifier of the integration to use for this channel connection.',

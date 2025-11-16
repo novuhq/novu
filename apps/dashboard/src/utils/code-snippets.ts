@@ -29,7 +29,7 @@ const safeParsePayload = (payload: string) => {
 };
 
 export const createNodeJsSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
-  const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env['${SECRET_KEY_ENV_KEY}']`;
+  const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env.${SECRET_KEY_ENV_KEY}`;
   let serverConfig = '';
 
   if (IS_EU) {
@@ -60,9 +60,9 @@ novu.trigger(${JSON.stringify(
 
 export const createCurlSnippet = ({ identifier, to, payload, secretKey = SECRET_KEY_ENV_KEY }: CodeSnippet) => {
   return `curl -X POST '${API_HOSTNAME}/v1/events/trigger' \\
--H 'Authorization: ApiKey ${secretKey}' \\
--H 'Content-Type: application/json' \\
--d '${JSON.stringify(
+  -H 'Authorization: ApiKey ${secretKey}' \\
+  -H 'Content-Type: application/json' \\
+  -d '${JSON.stringify(
     {
       name: identifier,
       to,
@@ -70,8 +70,7 @@ export const createCurlSnippet = ({ identifier, to, payload, secretKey = SECRET_
     },
     null,
     2
-  )}'
-  `;
+  )}'`;
 };
 
 export const createTriggerRequestBody = ({
@@ -172,27 +171,16 @@ export const generatePostmanCollection = ({
 };
 
 export const createFrameworkSnippet = ({ identifier, to, payload }: CodeSnippet) => {
-  return `import { workflow } from '@novu/framework';
+  return `import { Novu } from '@novu/api';
 
-const commentWorkflow = workflow('${identifier}', async (event) => {
-  const inAppResponse = await event.step.inApp('notify-user', async () => ({
-    body: renderReactComponent(event.payload.postId)
-  }));
-  
-  const { events } = await event.step.digest('1 week');
-  
-  await event.step.email('weekly-comments', async (inputs) => {
-    return {
-      subject: \`Weekly post comments (\${events.length + 1})\`,
-      body: renderReactEmail(inputs, events)
-    };
-  }, { skip: () => inAppResponse.seen });
-}, { payloadSchema: z.object({ postId: z.string() }) }
-);
+const novu = new Novu({ 
+  secretKey: process.env.${SECRET_KEY_ENV_KEY}
+});
 
-// Use the same familiar syntax to send a notification
-commentWorkflow.trigger(${JSON.stringify(
+// Trigger your workflow
+novu.trigger(${JSON.stringify(
     {
+      workflowId: identifier,
       to,
       payload: safeParsePayload(payload),
     },
@@ -201,22 +189,28 @@ commentWorkflow.trigger(${JSON.stringify(
   )
     .replace(/"([^"]+)":/g, '$1:')
     .replace(/"/g, "'")});
-  `;
+`;
 };
 
-const transformJsonToPhpArray = (data: Record<string, unknown>, indentLevel = 4) => {
+const transformJsonToPhpArray = (data: Record<string, unknown>, indentLevel = 4): string => {
+  indentLevel = Math.max(0, indentLevel);
+
+  if (Object.keys(data).length === 0) {
+    return '[]';
+  }
+
   const entries = Object.entries(data);
   const indent = ' '.repeat(indentLevel);
+  const baseIndent = ' '.repeat(Math.max(0, indentLevel - 4));
 
-  const obj = entries
+  const items = entries
     .map(([key, value]) => {
-      return `
-${indent}'${key}' => ${JSON.stringify(value)},`;
+      const formattedValue = JSON.stringify(value).replace(/"/g, "'");
+      return `${indent}'${key}' => ${formattedValue}`;
     })
-    .join('')
-    .replace(/"/g, "'");
+    .join(',\n');
 
-  return `${obj}${Object.keys(data).length > 0 ? `\n${new Array(indentLevel - 4).fill(' ').join('')}` : ''}`;
+  return `[\n${items}\n${baseIndent}]`;
 };
 
 export const createPhpSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
@@ -233,61 +227,91 @@ export const createPhpSnippet = ({ identifier, to, payload, secretKey }: CodeSni
     ->setServerURL('${API_HOSTNAME}')`;
   }
 
-  return `use novu;
+  const subscriberId = typeof to === 'string' ? to : (to as Record<string, unknown>).subscriberId || 'subscriber-id';
+
+  return `<?php
+declare(strict_types=1);
+
+require 'vendor/autoload.php';
+
+use novu;
 use novu\\Models\\Components;
 
-// Load environment variables from .env file
-require 'vendor/autoload.php';
-$dotenv = Dotenv\\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-// Get API key from environment variable
-$apiKey = ${renderedSecretKey};
-
 $sdk = novu\\Novu::builder()${serverConfig}
-    ->setSecurity($apiKey)
+    ->setSecurity(${renderedSecretKey})
     ->build();
 
 $request = new Components\\TriggerEventRequestDto(
     workflowId: '${identifier}',
-    to: new Components\\SubscriberPayloadDto(
-        subscriberId: '${(to as { subscriberId: string }).subscriberId}',
-    ),
-    payload: [${transformJsonToPhpArray(safeParsePayload(payload), 8)}]
+    to: '${subscriberId}',
+    payload: ${transformJsonToPhpArray(safeParsePayload(payload), 8)}
 );
 
-$response = $sdk->events->trigger($request);`;
+$response = $sdk->trigger(triggerEventRequestDto: $request);`;
 };
 
 export const createPythonSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
-  const renderedSecretKey = secretKey ? `'${secretKey}'` : `os.environ['${SECRET_KEY_ENV_KEY}']`;
+  const renderedSecretKey = secretKey ? `"${secretKey}"` : `os.getenv("${SECRET_KEY_ENV_KEY}")`;
+  const needsOsImport = !secretKey;
   let serverConfig = '';
 
   if (IS_EU) {
     serverConfig = `,\n    server_idx=1`;
   } else if (IS_SELF_HOSTED) {
-    serverConfig = `,\n    server_url='${API_HOSTNAME}'`;
+    serverConfig = `,\n    server_url="${API_HOSTNAME}"`;
   }
 
-  return `import novu_py
+  const subscriberId = typeof to === 'string' ? to : (to as Record<string, unknown>).subscriberId || 'subscriber-id';
+
+  // Format payload with proper Python indentation
+  const formattedPayload = JSON.stringify(safeParsePayload(payload), null, 4)
+    .split('\n')
+    .map((line, index) => (index === 0 ? line : `        ${line}`))
+    .join('\n');
+
+  const osImport = needsOsImport ? 'import os\n' : '';
+
+  return `${osImport}import novu_py
 from novu_py import Novu
-import os
 
 with Novu(
-    secret_key=${renderedSecretKey}${serverConfig}
+    secret_key=${renderedSecretKey}${serverConfig},
 ) as novu:
-
     res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
         workflow_id="${identifier}",
-        to="${(to as { subscriberId: string }).subscriberId}",
-        payload={
-            ${JSON.stringify(safeParsePayload(payload), null, 12).slice(1, -1).trim()}
-        }
+        to="${subscriberId}",
+        payload=${formattedPayload},
     ))`;
+};
+
+const convertJsonToGoMap = (data: Record<string, unknown>, indentLevel = 2): string => {
+  if (Object.keys(data).length === 0) {
+    return 'map[string]any{}';
+  }
+
+  const indent = '\t'.repeat(indentLevel);
+  const baseIndent = '\t'.repeat(indentLevel - 1);
+
+  const entries = Object.entries(data)
+    .map(([key, value]) => {
+      let formattedValue: string;
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        formattedValue = convertJsonToGoMap(value as Record<string, unknown>, indentLevel + 1);
+      } else if (typeof value === 'string') {
+        formattedValue = `"${value}"`;
+      } else {
+        formattedValue = JSON.stringify(value);
+      }
+      return `${indent}"${key}": ${formattedValue}`;
+    })
+    .join(',\n');
+
+  return `map[string]any{\n${entries},\n${baseIndent}}`;
 };
 
 export const createGoSnippet = ({ identifier, to, payload, secretKey }: CodeSnippet) => {
   const renderedSecretKey = secretKey ? `"${secretKey}"` : `os.Getenv("${SECRET_KEY_ENV_KEY}")`;
+  const needsOsImport = !secretKey;
   let serverConfig = '';
 
   if (IS_EU) {
@@ -296,14 +320,18 @@ export const createGoSnippet = ({ identifier, to, payload, secretKey }: CodeSnip
     serverConfig = `\n		novugo.WithServerURL("${API_HOSTNAME}"),`;
   }
 
+  const subscriberId = typeof to === 'string' ? to : (to as Record<string, unknown>).subscriberId || 'subscriber-id';
+
+  const formattedPayload = convertJsonToGoMap(safeParsePayload(payload), 2);
+  const osImport = needsOsImport ? '\n	"os"' : '';
+
   return `package main
 
 import (
 	"context"
 	novugo "github.com/novuhq/novu-go"
 	"github.com/novuhq/novu-go/models/components"
-	"log"
-	"os"
+	"log"${osImport}
 )
 
 func main() {
@@ -315,16 +343,16 @@ func main() {
 
 	res, err := s.Trigger(ctx, components.TriggerEventRequestDto{
 		WorkflowID: "${identifier}",
-		Payload: ${JSON.stringify(safeParsePayload(payload))},
-		To: components.CreateToSubscriberPayloadDto(
-			components.SubscriberPayloadDto{
-				SubscriberID: "${(to as { subscriberId: string }).subscriberId}",
-			},
+		Payload: ${formattedPayload},
+		To: components.CreateToStr(
+			"${subscriberId}",
 		),
-	})
+	}, nil)
 	if err != nil {
-		log.Fatal("novu error:", err)
+		log.Fatal(err)
 	}
-	log.Printf("Response: %+v\\n", res)
+	if res.TriggerEventResponseDto != nil {
+		// handle response
+	}
 }`;
 };

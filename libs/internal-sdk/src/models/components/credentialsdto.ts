@@ -3,6 +3,7 @@
  */
 
 import * as z from 'zod/v3';
+import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
@@ -54,6 +55,7 @@ export type CredentialsDto = {
   accessKey?: string | undefined;
   appSid?: string | undefined;
   senderId?: string | undefined;
+  appIOBaseUrl?: string | undefined;
 };
 
 /** @internal */
@@ -91,52 +93,59 @@ export function tlsOptionsFromJSON(jsonString: string): SafeParseResult<TlsOptio
 }
 
 /** @internal */
-export const CredentialsDto$inboundSchema: z.ZodType<CredentialsDto, z.ZodTypeDef, unknown> = z.object({
-  apiKey: z.string().optional(),
-  user: z.string().optional(),
-  secretKey: z.string().optional(),
-  domain: z.string().optional(),
-  password: z.string().optional(),
-  host: z.string().optional(),
-  port: z.string().optional(),
-  secure: z.boolean().optional(),
-  region: z.string().optional(),
-  accountSid: z.string().optional(),
-  messageProfileId: z.string().optional(),
-  token: z.string().optional(),
-  from: z.string().optional(),
-  senderName: z.string().optional(),
-  projectName: z.string().optional(),
-  applicationId: z.string().optional(),
-  clientId: z.string().optional(),
-  requireTls: z.boolean().optional(),
-  ignoreTls: z.boolean().optional(),
-  tlsOptions: z.lazy(() => TlsOptions$inboundSchema).optional(),
-  baseUrl: z.string().optional(),
-  webhookUrl: z.string().optional(),
-  redirectUrl: z.string().optional(),
-  hmac: z.boolean().optional(),
-  serviceAccount: z.string().optional(),
-  ipPoolName: z.string().optional(),
-  apiKeyRequestHeader: z.string().optional(),
-  secretKeyRequestHeader: z.string().optional(),
-  idPath: z.string().optional(),
-  datePath: z.string().optional(),
-  apiToken: z.string().optional(),
-  authenticateByToken: z.boolean().optional(),
-  authenticationTokenKey: z.string().optional(),
-  instanceId: z.string().optional(),
-  alertUid: z.string().optional(),
-  title: z.string().optional(),
-  imageUrl: z.string().optional(),
-  state: z.string().optional(),
-  externalLink: z.string().optional(),
-  channelId: z.string().optional(),
-  phoneNumberIdentification: z.string().optional(),
-  accessKey: z.string().optional(),
-  appSid: z.string().optional(),
-  senderId: z.string().optional(),
-});
+export const CredentialsDto$inboundSchema: z.ZodType<CredentialsDto, z.ZodTypeDef, unknown> = z
+  .object({
+    apiKey: z.string().optional(),
+    user: z.string().optional(),
+    secretKey: z.string().optional(),
+    domain: z.string().optional(),
+    password: z.string().optional(),
+    host: z.string().optional(),
+    port: z.string().optional(),
+    secure: z.boolean().optional(),
+    region: z.string().optional(),
+    accountSid: z.string().optional(),
+    messageProfileId: z.string().optional(),
+    token: z.string().optional(),
+    from: z.string().optional(),
+    senderName: z.string().optional(),
+    projectName: z.string().optional(),
+    applicationId: z.string().optional(),
+    clientId: z.string().optional(),
+    requireTls: z.boolean().optional(),
+    ignoreTls: z.boolean().optional(),
+    tlsOptions: z.lazy(() => TlsOptions$inboundSchema).optional(),
+    baseUrl: z.string().optional(),
+    webhookUrl: z.string().optional(),
+    redirectUrl: z.string().optional(),
+    hmac: z.boolean().optional(),
+    serviceAccount: z.string().optional(),
+    ipPoolName: z.string().optional(),
+    apiKeyRequestHeader: z.string().optional(),
+    secretKeyRequestHeader: z.string().optional(),
+    idPath: z.string().optional(),
+    datePath: z.string().optional(),
+    apiToken: z.string().optional(),
+    authenticateByToken: z.boolean().optional(),
+    authenticationTokenKey: z.string().optional(),
+    instanceId: z.string().optional(),
+    alertUid: z.string().optional(),
+    title: z.string().optional(),
+    imageUrl: z.string().optional(),
+    state: z.string().optional(),
+    externalLink: z.string().optional(),
+    channelId: z.string().optional(),
+    phoneNumberIdentification: z.string().optional(),
+    accessKey: z.string().optional(),
+    appSid: z.string().optional(),
+    senderId: z.string().optional(),
+    AppIOBaseUrl: z.string().optional(),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      AppIOBaseUrl: 'appIOBaseUrl',
+    });
+  });
 
 /** @internal */
 export type CredentialsDto$Outbound = {
@@ -184,11 +193,12 @@ export type CredentialsDto$Outbound = {
   accessKey?: string | undefined;
   appSid?: string | undefined;
   senderId?: string | undefined;
+  AppIOBaseUrl?: string | undefined;
 };
 
 /** @internal */
-export const CredentialsDto$outboundSchema: z.ZodType<CredentialsDto$Outbound, z.ZodTypeDef, CredentialsDto> = z.object(
-  {
+export const CredentialsDto$outboundSchema: z.ZodType<CredentialsDto$Outbound, z.ZodTypeDef, CredentialsDto> = z
+  .object({
     apiKey: z.string().optional(),
     user: z.string().optional(),
     secretKey: z.string().optional(),
@@ -233,8 +243,13 @@ export const CredentialsDto$outboundSchema: z.ZodType<CredentialsDto$Outbound, z
     accessKey: z.string().optional(),
     appSid: z.string().optional(),
     senderId: z.string().optional(),
-  }
-);
+    appIOBaseUrl: z.string().optional(),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      appIOBaseUrl: 'AppIOBaseUrl',
+    });
+  });
 
 /**
  * @internal

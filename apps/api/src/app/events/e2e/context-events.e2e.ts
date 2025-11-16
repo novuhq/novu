@@ -30,8 +30,7 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
 
   before(() => {
     // Enable the context feature flag
-    // @ts-expect-error process.env is not typed
-    process.env.IS_CONTEXT_ENABLED = 'true';
+    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
   });
 
   beforeEach(async () => {
@@ -73,8 +72,7 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
 
   after(() => {
     // Clean up the feature flag
-    // @ts-expect-error process.env is not typed
-    delete process.env.IS_CONTEXT_ENABLED;
+    delete (process.env as Record<string, string>).IS_CONTEXT_ENABLED;
   });
 
   afterEach(async () => {

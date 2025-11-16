@@ -198,7 +198,6 @@ export class UpsertWorkflowUseCase {
       defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
       tags: workflowDto.tags,
       active: workflowActive,
-      status: computeWorkflowStatus(workflowActive, steps),
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
       isTranslationEnabled: workflowDto.isTranslationEnabled,

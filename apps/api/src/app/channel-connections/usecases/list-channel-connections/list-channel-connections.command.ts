@@ -1,7 +1,7 @@
 import { CursorBasedPaginatedCommand } from '@novu/application-generic';
 import { ChannelConnectionEntity } from '@novu/dal';
-import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst, ResourceKey } from '@novu/shared';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class ListChannelConnectionsCommand extends CursorBasedPaginatedCommand<
   ChannelConnectionEntity,
@@ -9,7 +9,7 @@ export class ListChannelConnectionsCommand extends CursorBasedPaginatedCommand<
 > {
   @IsOptional()
   @IsString()
-  resource?: ResourceKey;
+  subscriberId?: string;
 
   @IsEnum(ChannelTypeEnum)
   @IsOptional()
@@ -22,4 +22,9 @@ export class ListChannelConnectionsCommand extends CursorBasedPaginatedCommand<
   @IsOptional()
   @IsString()
   integrationIdentifier?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 }

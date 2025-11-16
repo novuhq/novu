@@ -100,6 +100,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
+      deleted: { $exists: false },
     };
 
     if (query.feedId === null) {
@@ -262,6 +263,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
+      deleted: { $exists: false },
     };
 
     const severityCondition: Array<MessageQuery> = [];
@@ -288,24 +290,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       query.read = { $in: [true, false] };
     }
 
-    const archivedCondition: Array<MessageQuery> = [];
     if (typeof archived === 'boolean') {
       if (!archived) {
-        archivedCondition.push({ archived: { $exists: false } }, { archived: false });
+        query.archived = false;
       } else {
         query.archived = true;
       }
     } else {
-      archivedCondition.push({ archived: { $exists: false } }, { archived: { $in: [true, false] } });
+      query.archived = { $in: [true, false] };
     }
 
     // combine all $or conditions properly
     const orConditions: Array<MessageQuery> = [];
     if (severityCondition.length > 0) {
       orConditions.push({ $or: severityCondition });
-    }
-    if (archivedCondition.length > 0) {
-      orConditions.push({ $or: archivedCondition });
     }
 
     if (orConditions.length > 0) {
@@ -746,7 +744,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (isFromArchived) {
       if (!from.archived) {
-        query.$or = [{ archived: { $exists: false } }, { archived: false }];
+        query.archived = false;
       } else {
         query.archived = true;
       }
@@ -854,7 +852,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (shouldMarkAsSeen) {
       // First, update all matching documents with the main update
-      await this.update(idQuery, { $set: updatePayload });
+      await this.update(
+        idQuery,
+        { $set: updatePayload },
+        {
+          writeConcern: { w: 1 },
+        }
+      );
 
       // Then, set firstSeenDate only for documents that don't already have it
       await this.update(
@@ -864,6 +868,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         },
         {
           $set: { firstSeenDate: new Date() },
+        },
+        {
+          writeConcern: { w: 1 },
         }
       );
     } else {
@@ -871,7 +878,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       await this.update(idQuery, { $set: updatePayload });
     }
 
-    return this.find(idQuery);
+    return this.find(idQuery, undefined, { limit: 100 });
   }
 
   async updateActionStatus({

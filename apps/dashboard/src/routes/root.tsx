@@ -67,8 +67,8 @@ const RootRouteInternal = () => {
         <ClerkProvider>
           <SegmentProvider>
             <AuthProvider>
-              <IdentityProvider>
-                <RegionProvider>
+              <RegionProvider>
+                <IdentityProvider>
                   <HelmetProvider>
                     <TooltipProvider delayDuration={100}>
                       <EscapeKeyManagerProvider>
@@ -76,8 +76,8 @@ const RootRouteInternal = () => {
                       </EscapeKeyManagerProvider>
                     </TooltipProvider>
                   </HelmetProvider>
-                </RegionProvider>
-              </IdentityProvider>
+                </IdentityProvider>
+              </RegionProvider>
             </AuthProvider>
           </SegmentProvider>
         </ClerkProvider>

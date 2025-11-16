@@ -2,9 +2,11 @@ import { useOrganization } from '@clerk/clerk-react';
 import { ChannelTypeEnum, FeatureFlagsKeysEnum, SeverityLevelEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/primitives/badge';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useDebouncedForm } from '@/hooks/use-debounced-form';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ActivityFiltersData } from '@/types/activity';
@@ -16,6 +18,7 @@ import { IS_SELF_HOSTED } from '../../config';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
+import { Form, FormField, FormItem, FormRoot } from '../primitives/form/form';
 import { CHANNEL_OPTIONS } from './constants';
 
 type Fields =
@@ -70,6 +73,14 @@ export function ActivityFilters({
   const { subscription } = useFetchSubscription();
   const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED, false);
 
+  const form = useForm<ActivityFiltersData>({
+    values: filters,
+    defaultValues: filters,
+  });
+  const { watch, setValue } = form;
+
+  useDebouncedForm(watch, onFiltersChange, 400);
+
   const maxActivityFeedRetentionOptions = useMemo(() => {
     const missingSubscription = !subscription && !IS_SELF_HOSTED;
 
@@ -86,115 +97,187 @@ export function ActivityFilters({
     }));
   }, [organization, subscription]);
 
+  const handleReset = () => {
+    if (onReset) {
+      onReset();
+    }
+  };
+
   return (
-    <div className={cn('flex items-center gap-2 pb-2.5', className)}>
-      {!hide.includes('dateRange') && (
-        <FacetedFormFilter
-          size="small"
-          type="single"
-          hideClear
-          hideSearch
-          hideTitle
-          title="Time period"
-          options={maxActivityFeedRetentionOptions}
-          selected={[filters.dateRange]}
-          onSelect={(values) => onFiltersChange({ ...filters, dateRange: values[0] })}
-          icon={CalendarIcon}
-        />
-      )}
+    <Form {...form}>
+      <FormRoot className={cn('flex items-center gap-2 pb-2.5', className)}>
+        {!hide.includes('dateRange') && (
+          <FormField
+            control={form.control}
+            name="dateRange"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  size="small"
+                  type="single"
+                  hideClear
+                  hideSearch
+                  hideTitle
+                  title="Time period"
+                  options={maxActivityFeedRetentionOptions}
+                  selected={[field.value]}
+                  onSelect={(values) => setValue('dateRange', values[0])}
+                  icon={CalendarIcon}
+                />
+              </FormItem>
+            )}
+          />
+        )}
 
-      {!hide.includes('workflows') && (
-        <FacetedFormFilter
-          size="small"
-          type="multi"
-          title="Workflows"
-          options={
-            workflowTemplates?.workflows?.map((workflow) => ({
-              label: workflow.name,
-              value: workflow._id,
-            })) || []
-          }
-          selected={filters.workflows}
-          onSelect={(values) => onFiltersChange({ ...filters, workflows: values })}
-        />
-      )}
+        {!hide.includes('workflows') && (
+          <FormField
+            control={form.control}
+            name="workflows"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  size="small"
+                  type="multi"
+                  title="Workflows"
+                  options={
+                    workflowTemplates?.workflows?.map((workflow) => ({
+                      label: workflow.name,
+                      value: workflow._id,
+                    })) || []
+                  }
+                  selected={field.value}
+                  onSelect={(values) => setValue('workflows', values)}
+                />
+              </FormItem>
+            )}
+          />
+        )}
 
-      {!hide.includes('channels') && (
-        <FacetedFormFilter
-          size="small"
-          type="multi"
-          title="Channels"
-          hideSearch
-          options={CHANNEL_OPTIONS}
-          selected={filters.channels}
-          onSelect={(values) => onFiltersChange({ ...filters, channels: values as ChannelTypeEnum[] })}
-        />
-      )}
+        {!hide.includes('channels') && (
+          <FormField
+            control={form.control}
+            name="channels"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  size="small"
+                  type="multi"
+                  title="Channels"
+                  hideSearch
+                  options={CHANNEL_OPTIONS}
+                  selected={field.value}
+                  onSelect={(values) => setValue('channels', values as ChannelTypeEnum[])}
+                />
+              </FormItem>
+            )}
+          />
+        )}
 
-      {!hide.includes('transactionId') && (
-        <FacetedFormFilter
-          type="text"
-          size="small"
-          title="Transaction ID"
-          value={filters.transactionId}
-          onChange={(value) => onFiltersChange({ ...filters, transactionId: value })}
-          placeholder="Search by full Transaction ID"
-        />
-      )}
+        {!hide.includes('transactionId') && (
+          <FormField
+            control={form.control}
+            name="transactionId"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  type="text"
+                  size="small"
+                  title="Transaction ID"
+                  value={field.value}
+                  onChange={(value) => setValue('transactionId', value)}
+                  placeholder="Search by full Transaction ID"
+                />
+              </FormItem>
+            )}
+          />
+        )}
 
-      {!hide.includes('subscriberId') && (
-        <FacetedFormFilter
-          type="text"
-          size="small"
-          title="Subscriber ID"
-          value={filters.subscriberId}
-          onChange={(value) => onFiltersChange({ ...filters, subscriberId: value })}
-          placeholder="Search by full Subscriber ID"
-        />
-      )}
+        {!hide.includes('subscriberId') && (
+          <FormField
+            control={form.control}
+            name="subscriberId"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  type="text"
+                  size="small"
+                  title="Subscriber ID"
+                  value={field.value}
+                  onChange={(value) => setValue('subscriberId', value)}
+                  placeholder="Search by full Subscriber ID"
+                />
+              </FormItem>
+            )}
+          />
+        )}
 
-      {!hide.includes('topicKey') && (
-        <FacetedFormFilter
-          type="text"
-          size="small"
-          title="Topic Key"
-          value={filters.topicKey}
-          onChange={(value) => onFiltersChange({ ...filters, topicKey: value })}
-          placeholder="Search by full Topic Key"
-        />
-      )}
+        {!hide.includes('topicKey') && (
+          <FormField
+            control={form.control}
+            name="topicKey"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  type="text"
+                  size="small"
+                  title="Topic Key"
+                  value={field.value}
+                  onChange={(value) => setValue('topicKey', value)}
+                  placeholder="Search by full Topic Key"
+                />
+              </FormItem>
+            )}
+          />
+        )}
 
-      {!hide.includes('severity') && (
-        <FacetedFormFilter
-          size="small"
-          type="multi"
-          title="Severity"
-          hideSearch
-          options={Object.values(SeverityLevelEnum).map((severity) => ({
-            label: capitalize(severity),
-            value: severity,
-          }))}
-          selected={filters.severity}
-          onSelect={(values) => onFiltersChange({ ...filters, severity: values as SeverityLevelEnum[] })}
-        />
-      )}
+        {!hide.includes('severity') && (
+          <FormField
+            control={form.control}
+            name="severity"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  size="small"
+                  type="multi"
+                  title="Severity"
+                  hideSearch
+                  options={Object.values(SeverityLevelEnum).map((severity) => ({
+                    label: capitalize(severity),
+                    value: severity,
+                  }))}
+                  selected={field.value}
+                  onSelect={(values) => setValue('severity', values as SeverityLevelEnum[])}
+                />
+              </FormItem>
+            )}
+          />
+        )}
 
-      {!hide.includes('contextKeys') && isContextEnabled && (
-        <FacetedFormFilter
-          type="text"
-          size="small"
-          title="Context"
-          value={filters.contextKeys}
-          onChange={(value) => onFiltersChange({ ...filters, contextKeys: value })}
-          placeholder="e.g., tenant:org-123, region:us-east-1"
-        />
-      )}
+        {!hide.includes('contextKeys') && isContextEnabled && (
+          <FormField
+            control={form.control}
+            name="contextKeys"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  type="text"
+                  size="small"
+                  title="Context"
+                  value={field.value}
+                  onChange={(value) => setValue('contextKeys', value)}
+                  placeholder="e.g., tenant:org-123, region:us-east-1"
+                />
+              </FormItem>
+            )}
+          />
+        )}
 
-      {showReset && (
-        <Button variant="secondary" mode="ghost" size="2xs" onClick={onReset}>
-          Reset
-        </Button>
-      )}
-    </div>
+        {showReset && (
+          <Button variant="secondary" mode="ghost" size="2xs" onClick={handleReset}>
+            Reset
+          </Button>
+        )}
+      </FormRoot>
+    </Form>
   );
 }

@@ -69,6 +69,14 @@ export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
       };
     }
 
+    const region = process.env.NOVU_REGION;
+    if (region) {
+      mappedContext.region = {
+        key: region,
+        awsRegion: region,
+      };
+    }
+
     /*
      * LaunchDarkly requires at least one context kind in multi-kind contexts
      * Add a fallback global context to prevent "A multi-kind context must contain at least one kind" error
