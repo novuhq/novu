@@ -28,10 +28,14 @@ on:
         default: staging
         options:
           - staging
-          - staging-apse1
+          - staging-sg
           - production-us
           - production-eu
-          - production-apse1
+          - production-sg
+          - production-au
+          - production-uk
+          - production-jp
+          - production-kr
           - production-us-and-eu
 
       deploy_api:
@@ -89,7 +93,7 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
             envs+=("\"staging-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "staging-apse1" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "staging-uk" ]; then
             envs+=("\"staging-apse1\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then
@@ -98,8 +102,20 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" == "production-eu" ]; then
             envs+=("\"prod-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-apse1" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "production-sg" ]; then
             envs+=("\"prod-apse1\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-au" ]; then
+            envs+=("\"prod-apse2\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-uk" ]; then
+            envs+=("\"prod-ew2\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-jp" ]; then
+            envs+=("\"prod-apne1\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-kr" ]; then
+            envs+=("\"prod-apne2\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-us-and-eu" ]; then
             envs+=("\"prod-us\"")

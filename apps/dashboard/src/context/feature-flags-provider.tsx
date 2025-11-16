@@ -1,6 +1,16 @@
+import { IS_ENTERPRISE, IS_SELF_HOSTED, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
 import { AsyncProviderConfig, asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { lazy, Suspense } from 'react';
-import { IS_ENTERPRISE, IS_SELF_HOSTED, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
+import { getRegionConfig } from './region/region-config';
+import { detectRegionFromURL } from './region/region-utils';
+
+function getAwsRegion(): string {
+  const currentRegion = detectRegionFromURL();
+  const regionConfig = getRegionConfig(currentRegion);
+  return regionConfig?.awsRegion || '';
+}
+
+const awsRegion = getAwsRegion();
 
 const LD_CONFIG: AsyncProviderConfig = {
   clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
@@ -8,8 +18,14 @@ const LD_CONFIG: AsyncProviderConfig = {
     useCamelCaseFlagKeys: false,
   },
   context: {
-    kind: 'user',
-    anonymous: true,
+    kind: 'multi',
+    user: {
+      anonymous: true,
+    },
+    region: {
+      key: awsRegion || 'unknown',
+      awsRegion: awsRegion,
+    },
   },
   options: {
     bootstrap: 'localStorage',

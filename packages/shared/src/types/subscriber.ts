@@ -64,13 +64,14 @@ export type SubscriberId = string;
 export type SubscriberCustomData = CustomDataType;
 
 export interface ISubscriberPayload {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  avatar?: string;
-  locale?: string;
-  data?: SubscriberCustomData;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  avatar?: string | null;
+  locale?: string | null;
+  timezone?: string | null;
+  data?: SubscriberCustomData | null;
   /**
    * @deprecated: use channelEndpoint instead
    */

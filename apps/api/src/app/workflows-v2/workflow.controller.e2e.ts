@@ -7,7 +7,6 @@ import {
   EmailStepUpsertDto,
   InAppStepResponseDto,
   InAppStepUpsertDto,
-  JSONSchemaDto,
   ListWorkflowResponse,
   ResourceOriginEnum,
   StepTypeEnum,
@@ -31,6 +30,7 @@ import {
 import { UserSession } from '@novu/testing';
 import chai, { expect } from 'chai';
 import chaiSubset from 'chai-subset';
+import { JSONSchemaDto } from '../shared/dtos/json-schema.dto';
 import { buildSlug } from '../shared/helpers/build-slug';
 import {
   expectSdkExceptionGeneric,

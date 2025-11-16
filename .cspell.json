@@ -770,7 +770,9 @@
     "BLKTM",
     "Novuand",
     "kobalte",
-    "jsonrepair"
+    "jsonrepair",
+    "xoxb",
+    "fanout"
   ],
   "flagWords": [],
   "patterns": [

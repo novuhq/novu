@@ -1,6 +1,5 @@
 import type { PopoverContentProps } from '@radix-ui/react-popover';
 import { KeyboardEventHandler, useMemo, useRef, useState } from 'react';
-import { RiCornerDownLeftLine } from 'react-icons/ri';
 
 import { Button } from '@/components/primitives/button';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
@@ -28,14 +27,10 @@ export const NumbersPicker = <T extends string | number>({
 }) => {
   const inputRef = useRef<HTMLDivElement>(null);
   const [isPopoverOpened, setIsPopoverOpened] = useState(false);
-  const [internalSelectedNumbers, setInternalSelectedNumbers] = useState(numbers);
 
   const onNumberClick = (day: T) => {
-    if (internalSelectedNumbers.includes(day)) {
-      setInternalSelectedNumbers(internalSelectedNumbers.filter((d) => d !== day));
-    } else {
-      setInternalSelectedNumbers([...internalSelectedNumbers, day]);
-    }
+    const newNumbers = numbers.includes(day) ? numbers.filter((d) => d !== day) : [...numbers, day];
+    onNumbersChange(newNumbers);
   };
 
   const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (e) => {
@@ -96,50 +91,25 @@ export const NumbersPicker = <T extends string | number>({
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent
-          className="max-w-full p-0"
+          className="max-w-full p-3"
           side="bottom"
           align="end"
           onEscapeKeyDown={onClose}
           onInteractOutside={onInteractOutside}
         >
-          <div className="flex flex-col">
-            <div className="grid max-w-full grid-cols-7 gap-2 p-3">
-              {Array.from({ length }, (_, i) => (zeroBased ? i : i + 1)).map((day) => (
-                <Button
-                  key={day}
-                  size="sm"
-                  variant="secondary"
-                  mode={internalSelectedNumbers.includes(day as T) ? 'filled' : 'ghost'}
-                  className="size-8 [&_span]:transition-none"
-                  onClick={() => onNumberClick(day as T)}
-                >
-                  {day}
-                </Button>
-              ))}
-            </div>
-            <div className="flex items-center justify-end gap-2 border-t border-t-neutral-100 p-3">
+          <div className="grid max-w-full grid-cols-7 gap-2">
+            {Array.from({ length }, (_, i) => (zeroBased ? i : i + 1)).map((day) => (
               <Button
-                size="2xs"
+                key={day}
+                size="sm"
                 variant="secondary"
-                mode="outline"
-                onClick={() => {
-                  setInternalSelectedNumbers(numbers);
-                  onClose();
-                }}
+                mode={numbers.includes(day as T) ? 'filled' : 'ghost'}
+                className="size-8 [&_span]:transition-none"
+                onClick={() => onNumberClick(day as T)}
               >
-                Cancel
+                {day}
               </Button>
-              <Button
-                size="2xs"
-                variant="primary"
-                onClick={() => {
-                  onNumbersChange(internalSelectedNumbers);
-                  onClose();
-                }}
-              >
-                Apply <RiCornerDownLeftLine className="size-4" />
-              </Button>
-            </div>
+            ))}
           </div>
         </PopoverContent>
       </PopoverPortal>

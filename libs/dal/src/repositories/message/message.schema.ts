@@ -161,19 +161,19 @@ const messageSchema = new Schema<MessageDBModel>(
  * todo: all the pre hooks should be removed after all the soft deletes are removed task nv-5688
  */
 messageSchema.pre('find', function filterDeletedFind() {
-  this.where({ deleted: { $ne: true } });
+  this.where({ deleted: { $exists: false } });
 });
 messageSchema.pre('findOne', function filterDeletedFindOne() {
-  this.where({ deleted: { $ne: true } });
+  this.where({ deleted: { $exists: false } });
 });
 messageSchema.pre('findOneAndUpdate', function filterDeletedFindOneAndUpdate() {
-  this.where({ deleted: { $ne: true } });
+  this.where({ deleted: { $exists: false } });
 });
 messageSchema.pre('countDocuments', function filterDeletedCountDocuments() {
-  this.where({ deleted: { $ne: true } });
+  this.where({ deleted: { $exists: false } });
 });
 messageSchema.pre('count', function filterDeletedCount() {
-  this.where({ deleted: { $ne: true } });
+  this.where({ deleted: { $exists: false } });
 });
 
 messageSchema.virtual('subscriber', {

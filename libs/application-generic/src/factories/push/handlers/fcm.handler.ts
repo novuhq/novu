@@ -28,6 +28,10 @@ export class FCMHandler extends BasePushHandler {
       secretKey: config.private_key,
     });
   }
+
+  isTokenInvalid(errorMessage: string): boolean {
+    return this.provider.isTokenInvalid(errorMessage);
+  }
 }
 
 interface IFcmConfig {

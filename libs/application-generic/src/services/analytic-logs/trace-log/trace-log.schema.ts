@@ -101,6 +101,7 @@ export type EventType =
   | 'step_filter_failed'
   | 'subscriber_integration_missing'
   | 'subscriber_channel_missing'
+  | 'subscriber_context_channel_missing'
   | 'subscriber_validation_failed'
   | 'topic_not_found'
   | 'provider_error'

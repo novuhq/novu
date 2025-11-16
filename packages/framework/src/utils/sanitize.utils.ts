@@ -8,6 +8,8 @@ import sanitizeTypes, { IOptions } from 'sanitize-html';
  *
  * @see https://www.npmjs.com/package/sanitize-html#default-options
  */
+const SAFE_IMG_ATTRIBUTES = ['src', 'alt', 'width', 'height', 'loading', 'srcset', 'sizes', 'crossorigin', 'usemap', 'ismap', 'class', 'id', 'style', 'title', 'dir', 'lang'];
+
 const sanitizeOptions: IOptions = {
   /**
    * Additional tags to allow.
@@ -22,8 +24,27 @@ const sanitizeOptions: IOptions = {
     'meta',
     'title',
   ]),
-  // Setting this to false to allow all attributes.
   allowedAttributes: false,
+  /**
+   * Transform img tags to strip dangerous event handler attributes (onerror, onload, etc.)
+   * while keeping all other attributes permissive for other tags.
+   */
+  transformTags: {
+    img: (tagName, attribs) => {
+      const safeAttribs: Record<string, string> = {};
+
+      for (const [key, value] of Object.entries(attribs)) {
+        if (SAFE_IMG_ATTRIBUTES.includes(key.toLowerCase())) {
+          safeAttribs[key] = value;
+        }
+      }
+
+      return {
+        tagName,
+        attribs: safeAttribs,
+      };
+    },
+  },
   /**
    * Required to disable console warnings when allowing style tags.
    *

@@ -43,6 +43,7 @@ export enum DetailEnum {
   SUBSCRIBER_MISSING_EMAIL_ADDRESS = 'Subscriber missing email address',
   SUBSCRIBER_MISSING_PHONE_NUMBER = 'Subscriber missing phone number',
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
+  SUBSCRIBER_CONTEXT_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel with the given context',
   MESSAGE_SENT = 'Message sent',
   PROVIDER_ERROR = 'Unexpected provider error',
   START_DIGESTING = 'Start digesting',

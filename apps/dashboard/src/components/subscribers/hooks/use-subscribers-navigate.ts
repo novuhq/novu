@@ -23,7 +23,7 @@ export const useSubscribersNavigate = () => {
       navigate(
         `${buildRoute(ROUTES.EDIT_SUBSCRIBER, {
           environmentSlug: currentEnvironment?.slug ?? '',
-          subscriberId,
+          subscriberId: encodeURIComponent(subscriberId),
         })}${location.search}`
       );
     },
