@@ -235,10 +235,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
               },
             }),
             ...(query.subscriberId && {
-              subscriberId: {
-                $regex: regExpEscape(query.subscriberId),
-                $options: 'i',
-              },
+              subscriberId: query.subscriberId,
             }),
             ...(query.name && {
               $expr: {
