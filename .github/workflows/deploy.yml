@@ -37,6 +37,7 @@ on:
           - production-jp
           - production-kr
           - production-us-and-eu
+          - production-sg-au-uk-jp-kr
 
       deploy_api:
         description: "Deploy API"
@@ -120,6 +121,13 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" == "production-us-and-eu" ]; then
             envs+=("\"prod-us\"")
             envs+=("\"prod-eu\"")
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "production-sg-au-uk-jp-kr" ]; then
+            envs+=("\"prod-apse1\"")
+            envs+=("\"prod-apse2\"")
+            envs+=("\"prod-ew2\"")
+            envs+=("\"prod-apne1\"")
+            envs+=("\"prod-apne2\"")
           fi
 
           # Collect selected services
