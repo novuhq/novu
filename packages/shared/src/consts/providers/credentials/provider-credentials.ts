@@ -1266,6 +1266,16 @@ export const whatsAppBusinessConfig: IConfigCredential[] = [
   },
 ];
 
+export const telegramConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Telegram Bot Token',
+    description: 'Your Telegram Bot Token',
+    type: 'string',
+    required: true,
+  }
+];
+
 export const mobishastraConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.BaseUrl,

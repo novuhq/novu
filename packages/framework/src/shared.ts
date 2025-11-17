@@ -175,6 +175,7 @@ export enum ChatProviderIdEnum {
   RocketChat = 'rocket-chat',
   WhatsAppBusiness = 'whatsapp-business',
   ChatWebhook = 'chat-webhook',
+  Telegram = 'telegram',
 }
 
 export enum PushProviderIdEnum {

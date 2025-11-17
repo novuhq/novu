@@ -8,6 +8,7 @@ import {
   rocketChatConfig,
   slackConfigLegacy,
   whatsAppBusinessConfig,
+  telegramConfig
 } from '../credentials';
 import { IConfigCredential, IProviderConfig } from '../provider.interface';
 
@@ -108,5 +109,13 @@ export const chatProviders: IProviderConfig[] = [
     docReference: `https://docs.novu.co/channels-and-providers/chat/chat-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'chat-webhook.svg', dark: 'chat-webhook.svg' },
     betaVersion: true,
+  },
+  {
+    id: ChatProviderIdEnum.Telegram,
+    displayName: 'Telegram',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: telegramConfig,
+    docReference: `https://core.telegram.org/bots/api`,
+    logoFileName: { light: 'telegram.svg', dark: 'telegram.svg' },
   },
 ];

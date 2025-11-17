@@ -14,5 +14,6 @@ export const chatProviderSchemas = {
   ryver: genericProviderSchemas,
   slack: slackProviderSchemas,
   'whatsapp-business': genericProviderSchemas,
+  telegram: genericProviderSchemas,
   zulip: genericProviderSchemas,
 } as const satisfies Record<ChatProviderIdEnum, { output: JsonSchema }>;
