@@ -1,7 +1,7 @@
 import type { InboxService } from '../api';
 import type { SubscriptionsCache } from '../cache/subscriptions-cache';
 import type { NovuEventEmitter } from '../event-emitter';
-import type { Result, SubscriptionPreferenceResponse } from '../types';
+import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import { TopicSubscription } from './subscription';
 import { SubscriptionPreference } from './subscription-preference';
@@ -10,30 +10,8 @@ import type {
   DeleteSubscriptionArgs,
   GetSubscriptionArgs,
   ListSubscriptionsArgs,
-  PreferenceFilter,
   UpdateSubscriptionPreferenceArgs,
 } from './types';
-
-export const getPreferenceByFilter = (filter: PreferenceFilter, preferences: Array<SubscriptionPreferenceResponse>) => {
-  if (typeof filter === 'string') {
-    return preferences.find((pref) => pref.workflow.id === filter || pref.workflow.identifier === filter);
-  } else if ('workflowId' in filter) {
-    return preferences.find(
-      (pref) => pref.workflow.id === filter.workflowId || pref.workflow.identifier === filter.workflowId
-    );
-  }
-
-  const tags = filter.filter.tags ?? [];
-  const workflowIds = filter.filter.workflowIds ?? [];
-  const filteredPreferences = preferences.filter((pref) => {
-    return (
-      workflowIds.includes(pref.workflow.id) ||
-      workflowIds.includes(pref.workflow.identifier) ||
-      tags.some((tag) => pref.workflow.tags?.includes(tag))
-    );
-  });
-  return filteredPreferences;
-};
 
 export const listSubscriptions = async ({
   emitter,
