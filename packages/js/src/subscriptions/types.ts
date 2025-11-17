@@ -1,14 +1,21 @@
 import type { RulesLogic } from 'json-logic-js';
-import type { Subscription } from './subscription';
+import type { TopicSubscription } from './subscription';
+import { SubscriptionPreference } from './subscription-preference';
 
 export type WorkflowIdentifierOrId = string;
 
 export type WorkflowFilter = {
+  label?: string;
   workflowId: WorkflowIdentifierOrId;
 };
 
 export type WorkflowGroupFilter = {
-  filter: { workflowIds?: Array<WorkflowIdentifierOrId>; tags?: string[] };
+  label: string;
+  filter:
+    | { workflowIds?: Array<WorkflowIdentifierOrId>; tags?: string[] }
+    | ((args: {
+        preferences: Array<SubscriptionPreference>;
+      }) => Array<{ label: string; preference: SubscriptionPreference }>);
 };
 
 export type PreferenceFilter = WorkflowIdentifierOrId | WorkflowFilter | WorkflowGroupFilter;
@@ -31,33 +38,32 @@ export type ListSubscriptionsArgs = {
 export type GetSubscriptionArgs = {
   topicKey: string;
   identifier?: string;
-  filters: Array<PreferenceFilter>;
 };
 
 export type CreateSubscriptionArgs = {
   topicKey: string;
   identifier?: string;
-  preferences: Array<SubscriptionPreferences>;
+  filters: Array<PreferenceFilter>;
 };
 
-export type BaseUpdateSubscriptionArgs = {
-  subscriptionId: string;
-  preferences: Array<SubscriptionPreferences>;
+export type BaseSubscriptionPreferenceArgs = {
+  workflowId: string;
+  value: boolean | RulesLogic;
 };
 
-export type InstanceUpdateSubscriptionArgs = {
-  subscription: Subscription;
-  preferences: Array<SubscriptionPreferences>;
+export type InstanceSubscriptionPreferenceArgs = {
+  preference: SubscriptionPreference;
+  value: boolean | RulesLogic;
 };
 
-export type UpdateSubscriptionArgs = BaseUpdateSubscriptionArgs | InstanceUpdateSubscriptionArgs;
+export type UpdateSubscriptionPreferenceArgs = BaseSubscriptionPreferenceArgs | InstanceSubscriptionPreferenceArgs;
 
 export type BaseDeleteSubscriptionArgs = {
   subscriptionId: string;
 };
 
 export type InstanceDeleteSubscriptionArgs = {
-  subscription: Subscription;
+  subscription: TopicSubscription;
 };
 
 export type DeleteSubscriptionArgs = BaseDeleteSubscriptionArgs | InstanceDeleteSubscriptionArgs;

@@ -1,4 +1,5 @@
-import { SubscriptionPreferences } from '../subscriptions/types';
+import type { RulesLogic } from 'json-logic-js';
+import type { PreferenceFilter } from '../subscriptions/types';
 import type {
   ActionTypeEnum,
   ChannelPreference,
@@ -8,12 +9,13 @@ import type {
   NotificationFilter,
   PreferencesResponse,
   Session,
-  SeverityLevelEnum,
   Subscriber,
+  SubscriptionPreferenceResponse,
   SubscriptionResponse,
   WeeklySchedule,
   WorkflowCriticalityEnum,
 } from '../types';
+import { SeverityLevelEnum } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
 
 export type InboxServiceOptions = HttpClientOptions;
@@ -343,28 +345,44 @@ export class InboxService {
   createSubscription({
     topicKey,
     identifier,
-    preferences,
+    filters,
   }: {
     topicKey: string;
-    identifier: string;
-    preferences: Array<SubscriptionPreferences>;
+    identifier?: string;
+    filters: Array<PreferenceFilter>;
   }): Promise<SubscriptionResponse> {
     return this.#httpClient.post(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`, {
       identifier,
-      preferences,
+      filters,
     });
   }
 
-  updateSubscription({
+  updateSubscriptionPreference({
     subscriptionId,
-    preferences,
+    workflowId,
+    enabled,
+    condition,
   }: {
     subscriptionId: string;
-    preferences: Array<SubscriptionPreferences>;
-  }): Promise<SubscriptionResponse> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/${subscriptionId}`, {
-      preferences,
+    workflowId: string;
+    enabled?: boolean;
+    condition?: RulesLogic;
+  }): Promise<SubscriptionPreferenceResponse> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/${subscriptionId}/preferences/${workflowId}`, {
+      enabled,
+      condition,
     });
+  }
+
+  bulkUpdateSubscriptionPreferences(
+    preferences: Array<{
+      subscriptionId: string;
+      workflowId: string;
+      enabled?: boolean;
+      condition?: RulesLogic;
+    }>
+  ): Promise<SubscriptionPreferenceResponse[]> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/preferences/bulk`, { preferences });
   }
 
   deleteSubscription(subscriptionId: string): Promise<void> {

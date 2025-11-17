@@ -239,6 +239,7 @@ export type IPreferenceOverride = {
 };
 
 export type SubscriptionPreferenceResponse = {
+  subscriptionId: string;
   enabled: boolean;
   condition?: RulesLogic;
   workflow: Workflow;

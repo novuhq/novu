@@ -11,9 +11,8 @@ export type {
   WorkflowIdentifierOrId,
 } from './subscriptions';
 export {
-  Subscription,
   SubscriptionPreference,
-  SubscriptionPreferenceGroup,
+  TopicSubscription,
 } from './subscriptions';
 export {
   ChannelPreference,

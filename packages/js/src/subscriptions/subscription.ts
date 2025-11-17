@@ -1,123 +1,81 @@
+import { SubscriptionsCache } from 'src/cache/subscriptions-cache';
 import type { InboxService } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
 import type { Result, SubscriptionResponse } from '../types';
 import { NovuError } from '../utils/errors';
-import { getPreferenceByFilter } from './helpers';
-import { SubscriptionPreference, SubscriptionPreferenceGroup } from './subscription-preference';
-import type { PreferenceFilter, SubscriptionPreferences, WorkflowGroupFilter } from './types';
+import { bulkUpdateSubscriptionPreference, deleteSubscription, updateSubscriptionPreference } from './helpers';
+import { SubscriptionPreference } from './subscription-preference';
+import type {
+  BaseSubscriptionPreferenceArgs,
+  InstanceSubscriptionPreferenceArgs,
+  UpdateSubscriptionPreferenceArgs,
+} from './types';
 
-export class Subscription {
+export class TopicSubscription {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
+  #cache: SubscriptionsCache;
+  #useCache: boolean;
   #isStale: boolean = false;
 
   readonly id: string;
   readonly identifier: string;
   readonly topicKey: string;
-  readonly filters: Array<PreferenceFilter>;
-  readonly preferences: Array<SubscriptionPreference | SubscriptionPreferenceGroup>;
+  readonly preferences: Array<SubscriptionPreference>;
 
   constructor(
-    subscription: SubscriptionResponse & { topicKey: string; filters: Array<PreferenceFilter> },
+    subscription: SubscriptionResponse & { topicKey: string },
     emitter: NovuEventEmitter,
-    inboxService: InboxService
+    inboxService: InboxService,
+    cache: SubscriptionsCache,
+    useCache: boolean
   ) {
     this.#emitter = emitter;
     this.#inboxService = inboxService;
-
+    this.#cache = cache;
+    this.#useCache = useCache;
     this.id = subscription.id;
     this.identifier = subscription.identifier;
     this.topicKey = subscription.topicKey;
-    this.filters = subscription.filters;
-
-    const preferences: Array<SubscriptionPreference | SubscriptionPreferenceGroup> = [];
-    subscription.filters.forEach((filter, index) => {
-      const preferencesByFilter = getPreferenceByFilter(filter, subscription.preferences);
-      if (preferencesByFilter && !Array.isArray(preferencesByFilter)) {
-        preferences.push(
-          new SubscriptionPreference(
-            {
-              enabled: preferencesByFilter.enabled,
-              workflow: preferencesByFilter.workflow,
-              condition: preferencesByFilter.condition,
-            },
-            filter,
-            index,
-            this,
-            this.#emitter,
-            this.#inboxService
-          )
-        );
-      } else if (preferencesByFilter && Array.isArray(preferencesByFilter)) {
-        const groupPreferences = preferencesByFilter.map(
-          (pref) =>
-            new SubscriptionPreference(
-              {
-                enabled: pref.enabled,
-                workflow: pref.workflow,
-                condition: pref.condition,
-              },
-              filter,
-              index,
-              this,
-              this.#emitter,
-              this.#inboxService
-            )
-        );
-
-        preferences.push(
-          new SubscriptionPreferenceGroup(
-            groupPreferences,
-            filter as WorkflowGroupFilter,
-            index,
-            this,
-            this.#emitter,
-            this.#inboxService
-          )
-        );
-      }
-    });
-
-    this.preferences = preferences;
+    this.preferences = subscription.preferences.map(
+      (pref) => new SubscriptionPreference({ ...pref }, this.#emitter, this.#inboxService, this.#cache, this.#useCache)
+    );
   }
 
-  async update(args: { preferences: Array<SubscriptionPreferences> }): Result<Subscription> {
+  async updatePreference(args: BaseSubscriptionPreferenceArgs): Result<SubscriptionPreference>;
+  async updatePreference(args: InstanceSubscriptionPreferenceArgs): Result<SubscriptionPreference>;
+  async updatePreference(args: UpdateSubscriptionPreferenceArgs): Result<SubscriptionPreference> {
     if (this.#isStale) {
       return {
         error: new NovuError('Cannot update a deleted subscription', new Error('Subscription is stale')),
       };
     }
 
-    try {
-      this.#emitter.emit('subscription.update.pending', {
-        args: { subscription: this, preferences: args.preferences },
-        data: this,
-      });
+    return updateSubscriptionPreference({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      cache: this.#cache,
+      useCache: this.#useCache,
+      args: { ...args, subscriptionId: this.id },
+    });
+  }
 
-      const response = await this.#inboxService.updateSubscription({
-        subscriptionId: this.id,
-        preferences: args.preferences,
-      });
-
-      const updatedSubscription = new Subscription(
-        { ...response, topicKey: this.topicKey, filters: this.filters },
-        this.#emitter,
-        this.#inboxService
-      );
-      this.#emitter.emit('subscription.update.resolved', {
-        args: { subscription: this, preferences: args.preferences },
-        data: updatedSubscription,
-      });
-
-      return { data: updatedSubscription };
-    } catch (error) {
-      this.#emitter.emit('subscription.update.resolved', {
-        args: { subscription: this, preferences: args.preferences },
-        error,
-      });
-
-      return { error: new NovuError('Failed to update subscription', error) };
+  async bulkUpdate(args: Array<BaseSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>;
+  async bulkUpdate(args: Array<InstanceSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>;
+  async bulkUpdate(args: Array<UpdateSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]> {
+    if (this.#isStale) {
+      return {
+        error: new NovuError('Cannot bulk update a deleted subscription', new Error('Subscription is stale')),
+      };
     }
+
+    return bulkUpdateSubscriptionPreference({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      cache: this.#cache,
+      useCache: this.#useCache,
+      args: args.map((arg) => ({ ...arg, subscriptionId: this.id })),
+    });
   }
 
   async delete(): Result<void> {
@@ -127,27 +85,10 @@ export class Subscription {
       };
     }
 
-    try {
-      this.#emitter.emit('subscription.delete.pending', {
-        args: { subscription: this },
-      });
-
-      await this.#inboxService.deleteSubscription(this.id);
-
-      this.#isStale = true;
-
-      this.#emitter.emit('subscription.delete.resolved', {
-        args: { subscription: this },
-      });
-
-      return { data: undefined };
-    } catch (error) {
-      this.#emitter.emit('subscription.delete.resolved', {
-        args: { subscription: this },
-        error,
-      });
-
-      return { error: new NovuError('Failed to delete subscription', error) };
-    }
+    return deleteSubscription({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      args: { subscription: this },
+    });
   }
 }

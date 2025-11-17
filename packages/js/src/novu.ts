@@ -14,6 +14,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
   #inboxService: InboxService;
+  #options: NovuOptions;
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
@@ -39,11 +40,16 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     return this.#session.context;
   }
 
+  public get options() {
+    return this.#options;
+  }
+
   public get contextKey() {
     return buildContextKey(this.#session.context);
   }
 
   constructor(options: NovuOptions) {
+    this.#options = options;
     this.#inboxService = new InboxService({
       apiUrl: options.apiUrl || options.backendUrl,
       userAgent: options.__userAgent,

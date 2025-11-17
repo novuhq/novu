@@ -1,3 +1,4 @@
+import { SubscriptionPreference } from 'src/subscriptions';
 import type {
   ArchivedArgs,
   CompleteArgs,
@@ -19,13 +20,13 @@ import { Preference } from '../preferences/preference';
 import { Schedule } from '../preferences/schedule';
 import { ListPreferencesArgs, UpdatePreferenceArgs, UpdateScheduleArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
-import type { Subscription } from '../subscriptions/subscription';
+import type { TopicSubscription } from '../subscriptions/subscription';
 import type {
   CreateSubscriptionArgs,
   DeleteSubscriptionArgs,
   GetSubscriptionArgs,
   ListSubscriptionsArgs,
-  UpdateSubscriptionArgs,
+  UpdateSubscriptionPreferenceArgs,
 } from '../subscriptions/types';
 import { Session, WebSocketEvent } from '../types';
 
@@ -92,10 +93,20 @@ type PreferenceUpdateEvents = BaseEvents<'preference.update', UpdatePreferenceAr
 type PreferencesBulkUpdateEvents = BaseEvents<'preferences.bulk_update', Array<UpdatePreferenceArgs>, Preference[]>;
 type PreferenceScheduleGetEvents = BaseEvents<'preference.schedule.get', undefined, Schedule>;
 type PreferenceScheduleUpdateEvents = BaseEvents<'preference.schedule.update', UpdateScheduleArgs, Schedule>;
-type SubscriptionsFetchEvents = BaseEvents<'subscriptions.list', ListSubscriptionsArgs, Subscription[]>;
-type SubscriptionGetEvents = BaseEvents<'subscription.get', GetSubscriptionArgs, Subscription | null>;
-type SubscriptionCreateEvents = BaseEvents<'subscription.create', CreateSubscriptionArgs, Subscription>;
-type SubscriptionUpdateEvents = BaseEvents<'subscription.update', UpdateSubscriptionArgs, Subscription>;
+type SubscriptionsFetchEvents = BaseEvents<'subscriptions.list', ListSubscriptionsArgs, TopicSubscription[]>;
+type SubscriptionGetEvents = BaseEvents<'subscription.get', GetSubscriptionArgs, TopicSubscription | null>;
+type SubscriptionCreateEvents = BaseEvents<'subscription.create', CreateSubscriptionArgs, TopicSubscription>;
+type SubscriptionUpdateEvents = BaseEvents<'subscription.update', void, TopicSubscription>;
+type SubscriptionPreferenceUpdateEvents = BaseEvents<
+  'subscription.preference.update',
+  UpdateSubscriptionPreferenceArgs,
+  SubscriptionPreference
+>;
+type SubscriptionPreferencesBulkUpdateEvents = BaseEvents<
+  'subscription.preferences.bulk_update',
+  Array<UpdateSubscriptionPreferenceArgs & { subscriptionId: string }>,
+  SubscriptionPreference[]
+>;
 type SubscriptionDeleteEvents = BaseEvents<'subscription.delete', DeleteSubscriptionArgs, void>;
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
@@ -135,9 +146,11 @@ export type Events = SessionInitializeEvents &
   } & SubscriptionsFetchEvents &
   SubscriptionGetEvents &
   SubscriptionCreateEvents &
+  SubscriptionPreferenceUpdateEvents &
   SubscriptionUpdateEvents &
+  SubscriptionPreferencesBulkUpdateEvents &
   SubscriptionDeleteEvents & {
-    'subscriptions.list.updated': { data: Subscription[] };
+    'subscriptions.list.updated': { data: TopicSubscription[] };
   } & SocketConnectEvents &
   SocketEvents &
   NotificationReadEvents &
@@ -178,7 +191,9 @@ export type PreferenceScheduleEvents = keyof (PreferenceScheduleGetEvents & Pref
 export type SubscriptionEvents = keyof (SubscriptionsFetchEvents &
   SubscriptionGetEvents &
   SubscriptionCreateEvents &
+  SubscriptionPreferenceUpdateEvents &
   SubscriptionUpdateEvents &
+  SubscriptionPreferencesBulkUpdateEvents &
   SubscriptionDeleteEvents);
 
 export type EventHandler<T = unknown> = (event: T) => void;

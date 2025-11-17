@@ -3,14 +3,15 @@ import type { SubscriptionsCache } from '../cache/subscriptions-cache';
 import type { NovuEventEmitter } from '../event-emitter';
 import type { Result, SubscriptionPreferenceResponse } from '../types';
 import { NovuError } from '../utils/errors';
-import { Subscription } from './subscription';
+import { TopicSubscription } from './subscription';
+import { SubscriptionPreference } from './subscription-preference';
 import type {
   CreateSubscriptionArgs,
   DeleteSubscriptionArgs,
   GetSubscriptionArgs,
   ListSubscriptionsArgs,
   PreferenceFilter,
-  UpdateSubscriptionArgs,
+  UpdateSubscriptionPreferenceArgs,
 } from './types';
 
 export const getPreferenceByFilter = (filter: PreferenceFilter, preferences: Array<SubscriptionPreferenceResponse>) => {
@@ -46,7 +47,7 @@ export const listSubscriptions = async ({
   cache: SubscriptionsCache;
   useCache: boolean;
   args: ListSubscriptionsArgs;
-}): Result<Subscription[]> => {
+}): Result<TopicSubscription[]> => {
   try {
     let data = useCache ? cache.getAll(args) : undefined;
     emitter.emit('subscriptions.list.pending', { args, data });
@@ -54,9 +55,7 @@ export const listSubscriptions = async ({
     if (!data) {
       const response = await apiService.fetchSubscriptions(args.topicKey);
       data = response.map((el) => {
-        const filters = el.preferences.map((pref) => pref.workflow.identifier || pref.workflow.id);
-
-        return new Subscription({ ...el, topicKey: args.topicKey, filters }, emitter, apiService);
+        return new TopicSubscription({ ...el, topicKey: args.topicKey }, emitter, apiService, cache, useCache);
       });
 
       if (useCache) {
@@ -87,7 +86,7 @@ export const getSubscription = async ({
   cache: SubscriptionsCache;
   useCache: boolean;
   args: GetSubscriptionArgs;
-}): Result<Subscription | null> => {
+}): Result<TopicSubscription | null> => {
   try {
     let data = useCache ? cache.get(args) : undefined;
     emitter.emit('subscription.get.pending', { args, data });
@@ -100,7 +99,7 @@ export const getSubscription = async ({
         return { data: null };
       }
 
-      data = new Subscription({ ...response, topicKey: args.topicKey, filters: args.filters }, emitter, apiService);
+      data = new TopicSubscription({ ...response, topicKey: args.topicKey }, emitter, apiService, cache, useCache);
 
       if (useCache) {
         cache.setOne(args, data);
@@ -130,25 +129,23 @@ export const createSubscription = async ({
   cache: SubscriptionsCache;
   useCache: boolean;
   args: CreateSubscriptionArgs;
-}): Result<Subscription> => {
+}): Result<TopicSubscription> => {
   try {
     emitter.emit('subscription.create.pending', { args });
 
     const response = await apiService.createSubscription({
       topicKey: args.topicKey,
       identifier: args.identifier ?? '',
-      preferences: args.preferences,
+      filters: args.filters,
     });
 
-    const filters: PreferenceFilter[] = response.preferences.map(
-      (pref) => pref.workflow.identifier || pref.workflow.id
+    const subscription = new TopicSubscription(
+      { ...response, topicKey: args.topicKey },
+      emitter,
+      apiService,
+      cache,
+      useCache
     );
-
-    const subscription = new Subscription({ ...response, topicKey: args.topicKey, filters }, emitter, apiService);
-
-    if (useCache) {
-      cache.invalidate({ topicKey: args.topicKey });
-    }
 
     emitter.emit('subscription.create.resolved', { args, data: subscription });
 
@@ -160,7 +157,7 @@ export const createSubscription = async ({
   }
 };
 
-export const updateSubscription = async ({
+export const updateSubscriptionPreference = async ({
   emitter,
   apiService,
   cache,
@@ -171,71 +168,118 @@ export const updateSubscription = async ({
   apiService: InboxService;
   cache: SubscriptionsCache;
   useCache: boolean;
-  args: UpdateSubscriptionArgs;
-}): Result<Subscription> => {
-  const subscriptionId = 'subscriptionId' in args ? args.subscriptionId : args.subscription.id;
-  const subscription = 'subscription' in args ? args.subscription : undefined;
-  const topicKey = subscription?.topicKey;
+  args: UpdateSubscriptionPreferenceArgs & { subscriptionId: string };
+}): Result<SubscriptionPreference> => {
+  const workflowId = 'workflowId' in args ? args.workflowId : args.preference?.workflow?.id;
 
   try {
-    emitter.emit('subscription.update.pending', {
+    emitter.emit('subscription.preference.update.pending', {
       args,
-      data: subscription,
+      data:
+        'preference' in args
+          ? new SubscriptionPreference(
+              {
+                ...args.preference,
+                ...(typeof args.value === 'boolean' ? { enabled: args.value } : { condition: args.value }),
+              },
+              emitter,
+              apiService,
+              cache,
+              useCache
+            )
+          : undefined,
     });
 
-    const response = await apiService.updateSubscription({
-      subscriptionId,
-      preferences: args.preferences,
+    const response = await apiService.updateSubscriptionPreference({
+      subscriptionId: args.subscriptionId,
+      workflowId,
+      ...(typeof args.value === 'boolean' ? { enabled: args.value } : { condition: args.value }),
     });
 
-    const filters: PreferenceFilter[] = response.preferences.map(
-      (pref) => pref.workflow.identifier || pref.workflow.id
-    );
+    const updatedSubscription = new SubscriptionPreference({ ...response }, emitter, apiService, cache, useCache);
 
-    const updatedSubscription = new Subscription(
-      { ...response, topicKey: topicKey || '', filters },
-      emitter,
-      apiService
-    );
-
-    if (useCache && topicKey) {
-      cache.invalidate({ topicKey });
-    }
-
-    emitter.emit('subscription.update.resolved', { args, data: updatedSubscription });
+    emitter.emit('subscription.preference.update.resolved', { args, data: updatedSubscription });
 
     return { data: updatedSubscription };
   } catch (error) {
-    emitter.emit('subscription.update.resolved', { args, error });
+    emitter.emit('subscription.preference.update.resolved', { args, error });
 
     return { error: new NovuError('Failed to update subscription', error) };
+  }
+};
+
+export const bulkUpdateSubscriptionPreference = async ({
+  emitter,
+  apiService,
+  cache,
+  useCache,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  cache: SubscriptionsCache;
+  useCache: boolean;
+  args: Array<UpdateSubscriptionPreferenceArgs & { subscriptionId: string }>;
+}): Result<SubscriptionPreference[]> => {
+  try {
+    const optimisticallyUpdatedPreferences = args
+      .map((arg) =>
+        'preference' in arg
+          ? new SubscriptionPreference(
+              {
+                ...arg.preference,
+                ...(typeof arg.value === 'boolean' ? { enabled: arg.value } : { condition: arg.value }),
+              },
+              emitter,
+              apiService,
+              cache,
+              useCache
+            )
+          : undefined
+      )
+      .filter((el) => el !== undefined);
+
+    emitter.emit('subscription.preferences.bulk_update.pending', {
+      args,
+      data: optimisticallyUpdatedPreferences,
+    });
+
+    const preferencesToUpdate = args.map((arg) => ({
+      subscriptionId: arg.subscriptionId,
+      workflowId:
+        'workflowId' in arg
+          ? arg.workflowId
+          : (arg.preference?.workflow?.id ?? arg.preference?.workflow?.identifier ?? ''),
+      ...(typeof arg.value === 'boolean' ? { enabled: arg.value } : { condition: arg.value }),
+    }));
+    const response = await apiService.bulkUpdateSubscriptionPreferences(preferencesToUpdate);
+
+    const preferences = response.map((el) => new SubscriptionPreference(el, emitter, apiService, cache, useCache));
+    emitter.emit('subscription.preferences.bulk_update.resolved', { args, data: preferences });
+
+    return { data: preferences };
+  } catch (error) {
+    emitter.emit('subscription.preferences.bulk_update.resolved', { args, error });
+
+    return { error: new NovuError('Failed to bulk update subscription preferences', error) };
   }
 };
 
 export const deleteSubscription = async ({
   emitter,
   apiService,
-  cache,
-  useCache,
   args,
 }: {
   emitter: NovuEventEmitter;
   apiService: InboxService;
-  cache: SubscriptionsCache;
-  useCache: boolean;
   args: DeleteSubscriptionArgs;
 }): Result<void> => {
   const subscriptionId = 'subscriptionId' in args ? args.subscriptionId : args.subscription.id;
-  const topicKey = 'subscription' in args ? args.subscription.topicKey : undefined;
 
   try {
     emitter.emit('subscription.delete.pending', { args });
 
     await apiService.deleteSubscription(subscriptionId);
-
-    if (useCache && topicKey) {
-      cache.invalidate({ topicKey });
-    }
 
     emitter.emit('subscription.delete.resolved', { args });
 

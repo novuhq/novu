@@ -1,105 +1,50 @@
-import { RulesLogic } from 'json-logic-js';
+import type { RulesLogic } from 'json-logic-js';
+import { InboxService } from '../api';
+import { SubscriptionsCache } from '../cache';
+import { NovuEventEmitter } from '../event-emitter';
 import type { Result, SubscriptionPreferenceResponse, Workflow } from '../types';
-import type { Subscription } from './subscription';
-import { PreferenceFilter, SubscriptionPreferences, WorkflowGroupFilter } from './types';
+import { updateSubscriptionPreference } from './helpers';
 
 export class SubscriptionPreference {
-  subscription: Subscription;
-  #value: boolean | RulesLogic;
+  #emitter: NovuEventEmitter;
+  #inboxService: InboxService;
+  #cache: SubscriptionsCache;
+  #useCache: boolean;
 
-  readonly filter: PreferenceFilter;
+  readonly subscriptionId: string;
   readonly workflow: Workflow;
-
-  get value(): boolean | RulesLogic {
-    return this.#value;
-  }
+  readonly enabled: boolean;
+  readonly condition?: RulesLogic;
 
   constructor(
     preference: SubscriptionPreferenceResponse,
-    filter: PreferenceFilter,
-    _index: number,
-    subscription: Subscription,
-    _emitter: unknown,
-    _inboxService: unknown
+    emitter: NovuEventEmitter,
+    inboxService: InboxService,
+    cache: SubscriptionsCache,
+    useCache: boolean
   ) {
-    this.subscription = subscription;
-    this.filter = filter;
-
-    this.#value = preference.condition ?? preference.enabled;
+    this.#emitter = emitter;
+    this.#inboxService = inboxService;
+    this.#cache = cache;
+    this.#useCache = useCache;
+    this.enabled = preference.enabled;
+    this.condition = preference.condition ?? undefined;
     this.workflow = preference.workflow;
+    this.subscriptionId = preference.subscriptionId;
   }
 
-  toPreference(): SubscriptionPreferences {
-    return {
-      workflowId: this.workflow.identifier || this.workflow.id,
-      value: this.#value,
-    };
-  }
-
-  async update(args: { value: boolean | RulesLogic }): Result<Subscription> {
-    this.#value = args.value;
-
-    const allPreferences = this.subscription.preferences.map((pref) => {
-      if (pref instanceof SubscriptionPreferenceGroup) {
-        return pref.toPreference();
-      }
-
-      return pref.toPreference();
+  async update(args: { value: boolean | RulesLogic }): Result<SubscriptionPreference> {
+    return updateSubscriptionPreference({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      cache: this.#cache,
+      useCache: this.#useCache,
+      args: {
+        subscriptionId: this.subscriptionId,
+        workflowId: this.workflow?.id,
+        value: args.value,
+        preference: this,
+      },
     });
-
-    return this.subscription.update({ preferences: allPreferences });
-  }
-}
-
-export class SubscriptionPreferenceGroup {
-  subscription: Subscription;
-
-  readonly group: Array<SubscriptionPreference>;
-  readonly filter: WorkflowGroupFilter;
-
-  constructor(
-    group: Array<SubscriptionPreference>,
-    filter: WorkflowGroupFilter,
-    _index: number,
-    subscription: Subscription,
-    _emitter: unknown,
-    _inboxService: unknown
-  ) {
-    this.subscription = subscription;
-    this.filter = filter;
-    this.group = group;
-  }
-
-  toPreference(): SubscriptionPreferences {
-    return {
-      group: this.group.map((pref) => ({
-        workflowId: pref.workflow.identifier || pref.workflow.id,
-        value: pref.value,
-      })),
-    };
-  }
-
-  async update(args: { group: Array<{ workflowId: string; value: boolean | RulesLogic }> }): Result<Subscription> {
-    const updates = new Map(args.group.map((item) => [item.workflowId, item.value]));
-
-    const allPreferences = this.subscription.preferences.map((pref) => {
-      if (pref instanceof SubscriptionPreferenceGroup && pref === this) {
-        return {
-          group: this.group.map((p) => {
-            const workflowId = p.workflow.identifier || p.workflow.id;
-            const updatedValue = updates.get(workflowId);
-
-            return {
-              workflowId,
-              value: updatedValue !== undefined ? updatedValue : p.value,
-            };
-          }),
-        };
-      }
-
-      return pref.toPreference();
-    });
-
-    return this.subscription.update({ preferences: allPreferences });
   }
 }
