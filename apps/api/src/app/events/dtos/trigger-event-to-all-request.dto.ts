@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
-
+import { ApiContextPayload } from '../../shared/framework/swagger';
 import { SubscriberPayloadDto, TenantPayloadDto, TriggerOverrides } from './trigger-event-request.dto';
 
 export class TriggerEventToAllRequestDto {
@@ -87,4 +88,9 @@ export class TriggerEventToAllRequestDto {
   @ValidateNested()
   @Type(() => TenantPayloadDto)
   tenant?: TriggerTenantContext;
+
+  @ApiContextPayload()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 }
