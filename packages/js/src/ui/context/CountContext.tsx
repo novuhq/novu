@@ -1,4 +1,4 @@
-import { Accessor, createContext, createMemo, createSignal, onMount, ParentProps, useContext } from 'solid-js';
+import { Accessor, createContext, createEffect, createMemo, createSignal, ParentProps, useContext } from 'solid-js';
 import { Notification, NotificationFilter, SeverityLevelEnum } from '../../types';
 import { checkNotificationDataFilter, checkNotificationTagFilter } from '../../utils/notification-utils';
 import { getTagsFromTab } from '../helpers';
@@ -19,7 +19,7 @@ type CountContextValue = {
 const CountContext = createContext<CountContextValue>(undefined);
 
 export const CountProvider = (props: ParentProps) => {
-  const novu = useNovu();
+  const novuAccessor = useNovu();
   const { isOpened, tabs, filter, limit, activeTab } = useInboxContext();
   const [unreadCount, setUnreadCount] = createSignal<{ total: number; severity: Record<string, number> }>({
     total: 0,
@@ -45,7 +45,7 @@ export const CountProvider = (props: ParentProps) => {
       data: tab.filter?.data,
       severity: tab.filter?.severity,
     }));
-    const { data } = await novu.notifications.count({ filters });
+    const { data } = await novuAccessor().notifications.count({ filters });
     if (!data) {
       return;
     }
@@ -64,7 +64,9 @@ export const CountProvider = (props: ParentProps) => {
     setUnreadCounts(newMap);
   };
 
-  onMount(() => {
+  createEffect(() => {
+    // read the novu instance to trigger the effect
+    novuAccessor();
     updateTabCounts();
   });
 
@@ -94,7 +96,7 @@ export const CountProvider = (props: ParentProps) => {
     data?: NotificationFilter['data'],
     severity?: NotificationFilter['severity']
   ) => {
-    const notificationsCache = novu.notifications.cache;
+    const notificationsCache = novuAccessor().notifications.cache;
     const limitValue = limit();
     // Use the global filter() as a base and override with specific tab's tags and data for cache operations
     const tabSpecificFilterForCache = { ...filter(), tags, data, severity, after: undefined, limit: limitValue };
@@ -168,13 +170,13 @@ export const CountProvider = (props: ParentProps) => {
 
             if (!processedFilters.has(filterKey)) {
               processedFilters.add(filterKey);
-            updateNewNotificationCountsOrCache(
-              tab.label,
-              notification,
-              tabTags,
-              tabDataFilterCriteria,
-              tabSeverityFilterCriteria
-            );
+              updateNewNotificationCountsOrCache(
+                tab.label,
+                notification,
+                tabTags,
+                tabDataFilterCriteria,
+                tabSeverityFilterCriteria
+              );
             }
           }
         }

@@ -1,7 +1,11 @@
 import { createSignal } from 'solid-js';
 
-export const defaultLocalization = {
+export const commonLocalization = {
   locale: 'en-US',
+} as const;
+
+export const defaultInboxLocalization = {
+  ...commonLocalization,
   'inbox.filters.dropdownOptions.unread': 'Unread only',
   'inbox.filters.dropdownOptions.default': 'Unread & read',
   'inbox.filters.dropdownOptions.archived': 'Archived',
@@ -62,6 +66,24 @@ export const defaultLocalization = {
   'snooze.options.customTime': 'Custom time...',
   'snooze.options.inOneDay': 'Tomorrow',
   'snooze.options.inOneWeek': 'Next week',
+} as const;
+
+export const defaultSubscriptionLocalization = {
+  ...commonLocalization,
+  'subscription.subscribe': 'Subscribe',
+  'subscription.unsubscribe': 'Unsubscribe',
+  'subscription.preferences.header': 'Manage subscription',
+  'subscription.preferences.headerInfo':
+    'Manage which updates you’d like to receive. Note: Workflow and global settings control delivery and take precedence when disabled.',
+  'subscription.preferences.notSubscribed.header': 'You’re not subscribed.',
+  'subscription.preferences.notSubscribed.description': 'Subscribe to receive updates on new activity.',
+  'subscription.preferences.empty.header': 'You’re subscribed.',
+  'subscription.preferences.empty.description': 'Nothing to manage right now.',
+} as const;
+
+export const defaultLocalization = {
+  ...defaultInboxLocalization,
+  ...defaultSubscriptionLocalization,
 } as const;
 
 export const [dynamicLocalization, setDynamicLocalization] = createSignal<Record<string, string>>({});

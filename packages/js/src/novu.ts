@@ -107,6 +107,16 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     };
   }
 
+  private clearCache(): void {
+    this.notifications.cache.clearAll();
+    this.preferences.cache.clearAll();
+    this.preferences.scheduleCache.clearAll();
+    this.subscriptions.cache.clearAll();
+  }
+
+  /**
+   * @deprecated
+   */
   public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash?: string }): Promise<void> {
     await this.#session.initialize({
       applicationIdentifier: this.#session.applicationIdentifier || '',
@@ -118,7 +128,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
 
     // Clear cache and reconnect socket with new token
-    this.notifications.cache.clearAll();
+    this.clearCache();
 
     // Disconnect and reconnect socket to use new JWT token
     const disconnectResult = await this.socket.disconnect();
@@ -127,6 +137,9 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     }
   }
 
+  /**
+   * @deprecated
+   */
   public async changeContext(options: { context: Context; contextHash?: string }): Promise<void> {
     const currentSubscriber = this.#session.subscriber;
     if (!currentSubscriber) {
@@ -143,7 +156,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
 
     // Clear cache and reconnect socket with new token
-    this.notifications.cache.clearAll();
+    this.clearCache();
 
     // Disconnect and reconnect socket to use new JWT token
     const disconnectResult = await this.socket.disconnect();

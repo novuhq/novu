@@ -1,6 +1,7 @@
-import { Schedule } from 'src/preferences';
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
+import { Schedule } from '../preferences';
+import { SubscriptionPreference, TopicSubscription } from '../subscriptions';
 import {
   type NotificationFilter,
   type NovuOptions,
@@ -8,8 +9,8 @@ import {
   type UnreadCount,
   WorkflowCriticalityEnum,
 } from '../types';
-import { appearanceKeys } from './config';
-import { Localization } from './context/LocalizationContext';
+import { commonAppearanceKeys, inboxAppearanceKeys, subscriptionAppearanceKeys } from './config';
+import { AllLocalization } from './context/LocalizationContext';
 
 export type NotificationClickHandler = (notification: Notification) => void;
 export type NotificationActionClickHandler = (notification: Notification) => void;
@@ -58,7 +59,12 @@ export type Variables = {
   colorSeverityLow?: string;
 };
 
-export type AppearanceCallback = {
+export type CommonIconKey = 'cogs' | 'check' | 'arrowDown' | 'nodeTree';
+export type CommonAppearanceKey = (typeof commonAppearanceKeys)[number];
+export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
+
+// INBOX APPEARANCE
+export type InboxAppearanceCallback = {
   // Bell
   bellDot: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
   bellIcon: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
@@ -202,26 +208,23 @@ export type AppearanceCallback = {
   notificationSnoozedUntil__icon: (context: { notification: Notification }) => string;
   notificationDot: (context: { notification: Notification }) => string;
 };
-export type AppearanceCallbackKeys = keyof AppearanceCallback;
-export type AppearanceCallbackFunction<K extends AppearanceCallbackKeys> = AppearanceCallback[K];
-export type AppearanceKey = (typeof appearanceKeys)[number];
-export type Elements = Partial<
-  {
-    // regular appearance keys with static styles
-    [K in Exclude<AppearanceKey, AppearanceCallbackKeys>]: ElementStyles;
+export type InboxAppearanceCallbackKeys = keyof InboxAppearanceCallback;
+export type InboxAppearanceCallbackFunction<K extends InboxAppearanceCallbackKeys> = InboxAppearanceCallback[K];
+export type InboxAppearanceKey = (typeof inboxAppearanceKeys)[number];
+export type InboxElements = Partial<
+  { [K in CommonAppearanceKey]: ElementStyles } & {
+    [K in Exclude<InboxAppearanceKey, InboxAppearanceCallbackKeys> | CommonAppearanceKey]: ElementStyles;
   } & {
-    // callback keys that can be either static styles or callback functions
-    [K in Extract<AppearanceKey, AppearanceCallbackKeys>]: ElementStyles | AppearanceCallbackFunction<K>;
+    [K in Extract<InboxAppearanceKey, InboxAppearanceCallbackKeys>]: ElementStyles | InboxAppearanceCallbackFunction<K>;
   }
 >;
-
-export type IconKey =
+export type InboxIconKey =
+  | CommonIconKey
   | 'bell'
   | 'clock'
   | 'arrowDropDown'
   | 'dots'
   | 'markAsRead'
-  | 'cogs'
   | 'trash'
   | 'markAsArchived'
   | 'markAsArchivedRead'
@@ -236,32 +239,144 @@ export type IconKey =
   | 'email'
   | 'push'
   | 'chat'
-  | 'check'
-  | 'arrowDown'
   | 'routeFill'
   | 'info'
-  | 'nodeTree'
   | 'calendarSchedule'
   | 'copy';
-
-export type IconRenderer = (el: HTMLDivElement, props: { class?: string }) => () => void;
-
-export type IconOverrides = {
-  [key in IconKey]?: IconRenderer;
+export type InboxIconOverrides = {
+  [key in InboxIconKey]?: IconRenderer;
 };
-
-export type Theme = {
+export type InboxTheme = {
   variables?: Variables;
-  elements?: Elements;
+  elements?: InboxElements;
   animations?: boolean;
-  icons?: IconOverrides;
+  icons?: InboxIconOverrides;
 };
-export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
+export type InboxAppearance = InboxTheme & { baseTheme?: InboxTheme | InboxTheme[] };
+
+// SUBSCRIPTION APPEARANCE
+export type SubscriptionAppearanceCallback = {
+  // Subscription
+  subscriptionContainer: (context: { subscription?: TopicSubscription }) => string;
+  // Subscription Button
+  subscriptionButton__button: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionButtonContainer: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionButtonIcon: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionButtonLabel: (context: { subscription?: TopicSubscription }) => string;
+  // Subscription Popover
+  subscription__popoverTriggerContainer: (context: { subscription?: TopicSubscription }) => string;
+  subscription__popoverTrigger: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionTriggerIcon: (context: { subscription?: TopicSubscription }) => string;
+  subscription__popoverContent: (context: { subscription?: TopicSubscription }) => string;
+  // Subscription Preferences
+  subscriptionPreferencesContainer: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionPreferencesHeaderContainer: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionPreferencesHeader: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionPreferencesInfoIcon: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionPreferencesContent: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionPreferencesGroupsContainer: (context: { subscription?: TopicSubscription }) => string;
+  // Subscription Preferences Fallback
+  subscriptionPreferencesFallback: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionPreferencesFallbackTexts: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionPreferencesFallbackHeader: (context: { subscription?: TopicSubscription }) => string;
+  subscriptionPreferencesFallbackDescription: (context: { subscription?: TopicSubscription }) => string;
+  // Subscription Preference Row
+  subscriptionPreferenceRow: (context: { preference: { label: string; preference: SubscriptionPreference } }) => string;
+  subscriptionPreferenceLabel: (context: {
+    preference: { label: string; preference: SubscriptionPreference };
+  }) => string;
+  // Subscription Preference Group Row
+  subscriptionPreferenceGroupContainer: (context: {
+    group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference }> };
+  }) => string;
+  subscriptionPreferenceGroupHeader: (context: {
+    group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference }> };
+  }) => string;
+  subscriptionPreferenceGroupLabelContainer: (context: {
+    group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference }> };
+  }) => string;
+  subscriptionPreferenceGroupLabelIcon: (context: {
+    group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference }> };
+  }) => string;
+  subscriptionPreferenceGroupLabel: (context: {
+    group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference }> };
+  }) => string;
+  subscriptionPreferenceGroupActionsContainer: (context: {
+    group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference }> };
+  }) => string;
+  subscriptionPreferenceGroupActionsContainerRight__icon: (context: {
+    group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference }> };
+  }) => string;
+  subscriptionPreferenceGroupBody: (context: {
+    group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference }> };
+  }) => string;
+  subscriptionPreferenceGroupWorkflowRow: (context: {
+    preference: { label: string; preference: SubscriptionPreference };
+  }) => string;
+  subscriptionPreferenceGroupWorkflowLabel: (context: {
+    preference: { label: string; preference: SubscriptionPreference };
+  }) => string;
+};
+export type SubscriptionAppearanceCallbackKeys = keyof SubscriptionAppearanceCallback;
+export type SubscriptionAppearanceCallbackFunction<K extends SubscriptionAppearanceCallbackKeys> =
+  SubscriptionAppearanceCallback[K];
+export type SubscriptionAppearanceKey = (typeof subscriptionAppearanceKeys)[number];
+export type SubscriptionElements = Partial<
+  { [K in CommonAppearanceKey]: ElementStyles } & {
+    [K in Exclude<SubscriptionAppearanceKey, SubscriptionAppearanceCallbackKeys>]: ElementStyles;
+  } & {
+    [K in Extract<SubscriptionAppearanceKey, SubscriptionAppearanceCallbackKeys>]:
+      | ElementStyles
+      | SubscriptionAppearanceCallbackFunction<K>;
+  }
+>;
+export type SubscriptionIconKey = CommonIconKey | 'bellCross' | 'bellPlus' | 'loader';
+export type SubscriptionIconOverrides = {
+  [key in SubscriptionIconKey]?: IconRenderer;
+};
+export type SubscriptionTheme = {
+  variables?: Variables;
+  elements?: SubscriptionElements;
+  animations?: boolean;
+  icons?: SubscriptionIconOverrides;
+};
+export type SubscriptionAppearance = SubscriptionTheme & { baseTheme?: SubscriptionTheme | SubscriptionTheme[] };
+
+// ALL APPEARANCE
+export type AllAppearanceCallbackKeys = InboxAppearanceCallbackKeys | SubscriptionAppearanceCallbackKeys;
+export type AllAppearanceCallbackFunction<K extends AllAppearanceCallbackKeys> = K extends InboxAppearanceCallbackKeys
+  ? InboxAppearanceCallbackFunction<K>
+  : K extends SubscriptionAppearanceCallbackKeys
+    ? SubscriptionAppearanceCallbackFunction<K>
+    : never;
+export type AllAppearanceKey = CommonAppearanceKey | InboxAppearanceKey | SubscriptionAppearanceKey;
+export type AllElements = Partial<
+  {
+    [K in CommonAppearanceKey]: ElementStyles;
+  } & {
+    // regular appearance keys with static styles
+    [K in Exclude<AllAppearanceKey, AllAppearanceCallbackKeys>]: ElementStyles;
+  } & {
+    // callback keys that can be either static styles or callback functions
+    [K in Extract<AllAppearanceKey, AllAppearanceCallbackKeys>]: ElementStyles | AllAppearanceCallbackFunction<K>;
+  }
+>;
+export type AllIconKey = CommonIconKey | InboxIconKey | SubscriptionIconKey;
+export type AllIconOverrides = {
+  [key in AllIconKey]?: IconRenderer;
+};
+export type AllTheme = {
+  variables?: Variables;
+  elements?: AllElements;
+  animations?: boolean;
+  icons?: AllIconOverrides;
+};
+export type AllAppearance = AllTheme & { baseTheme?: AllTheme | AllTheme[] };
 
 export type BaseNovuProviderProps = {
   container?: Node | string | null;
-  appearance?: Appearance;
-  localization?: Localization;
+  appearance?: AllAppearance;
+  localization?: AllLocalization;
   options: NovuOptions;
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
@@ -298,4 +413,11 @@ export type PreferenceGroups = Array<{
   filter: PreferenceGroupFilter;
 }>;
 
-export { Localization, LocalizationKey } from './context/LocalizationContext';
+export {
+  AllLocalization,
+  AllLocalizationKey,
+  InboxLocalization,
+  InboxLocalizationKey,
+  SubscriptionLocalization,
+  SubscriptionLocalizationKey,
+} from './context/LocalizationContext';

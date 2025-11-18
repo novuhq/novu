@@ -4,3 +4,4 @@ export * from './Inbox';
 export * from './InboxContent';
 export * from './Notifications';
 export * from './Preferences';
+export * from './subscription/Subscription';

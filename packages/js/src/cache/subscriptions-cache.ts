@@ -269,7 +269,7 @@ export class SubscriptionsCache {
     }
   }
 
-  clear(): void {
+  clearAll(): void {
     this.#cache.clear();
     this.#itemCache.clear();
   }

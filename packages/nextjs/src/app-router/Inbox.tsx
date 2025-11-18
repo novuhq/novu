@@ -6,13 +6,10 @@ import { useRouter } from 'next/navigation';
 
 export function Inbox(props: InboxProps) {
   const router = useRouter();
-  const { subscriber: subscriberProp, subscriberId: subscriberIdProp, ...restProps } = props;
-  const subscriber = buildSubscriber({ subscriberId: subscriberIdProp, subscriber: subscriberProp });
 
   const inboxProps = {
-    ...restProps,
+    ...props,
     applicationIdentifier: props.applicationIdentifier!,
-    subscriber,
     routerPush: router.push,
   };
 

@@ -31,6 +31,8 @@ export function Bell() {}
 
 export function NovuProvider(props: NovuProviderProps) {}
 
+export function Subscription() {}
+
 export function useNovu() {
   return null;
 }
@@ -89,18 +91,33 @@ export type {
 export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
-  Appearance,
-  AppearanceKey,
+  AllLocalization,
+  AllLocalizationKey,
   ElementStyles,
-  Elements,
-  Localization,
-  LocalizationKey,
+  InboxAppearance,
+  InboxAppearanceCallback,
+  InboxAppearanceCallbackFunction,
+  InboxAppearanceCallbackKeys,
+  InboxAppearanceKey,
+  InboxElements,
+  InboxLocalization,
+  InboxLocalizationKey,
+  InboxTheme,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
   PreferenceGroups,
   PreferencesFilter,
   RouterPush,
+  SubscriptionAppearance,
+  SubscriptionAppearanceCallback,
+  SubscriptionAppearanceCallbackFunction,
+  SubscriptionAppearanceCallbackKeys,
+  SubscriptionAppearanceKey,
+  SubscriptionElements,
+  SubscriptionLocalization,
+  SubscriptionLocalizationKey,
+  SubscriptionTheme,
   Tab,
   Variables,
 } from '@novu/js/ui';

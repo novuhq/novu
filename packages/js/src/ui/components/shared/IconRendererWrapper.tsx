@@ -1,10 +1,10 @@
 import { type JSX, Show } from 'solid-js';
 import { useAppearance } from '../../context';
-import type { IconKey } from '../../types';
+import type { AllIconKey } from '../../types';
 import { ExternalElementRenderer } from '../ExternalElementRenderer';
 
 type IconRendererWrapperProps = {
-  iconKey: IconKey;
+  iconKey: AllIconKey;
   fallback: JSX.Element;
   class?: string;
 };
@@ -21,7 +21,7 @@ export const IconRendererWrapper = (props: IconRendererWrapperProps) => {
 };
 
 type IconRendererProps = {
-  iconKey: IconKey;
+  iconKey: AllIconKey;
   class?: string;
   fallback: (props?: JSX.HTMLAttributes<SVGSVGElement>) => JSX.Element;
 };

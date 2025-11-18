@@ -1,7 +1,7 @@
 import { ClassName, cn, useStyle } from '../../helpers';
-import type { AppearanceKey } from '../../types';
+import type { AllAppearanceKey } from '../../types';
 
-type SkeletonTextProps = { appearanceKey: AppearanceKey; class?: ClassName };
+type SkeletonTextProps = { appearanceKey: AllAppearanceKey; class?: ClassName };
 export const SkeletonText = (props: SkeletonTextProps) => {
   const style = useStyle();
 
@@ -18,7 +18,7 @@ export const SkeletonText = (props: SkeletonTextProps) => {
   );
 };
 
-type SkeletonAvatarProps = { appearanceKey: AppearanceKey; class?: ClassName };
+type SkeletonAvatarProps = { appearanceKey: AllAppearanceKey; class?: ClassName };
 export const SkeletonAvatar = (props: SkeletonAvatarProps) => {
   const style = useStyle();
 
@@ -35,7 +35,7 @@ export const SkeletonAvatar = (props: SkeletonAvatarProps) => {
   );
 };
 
-type SkeletonSwitchProps = { appearanceKey: AppearanceKey; thumbAppearanceKey: AppearanceKey; class?: ClassName };
+type SkeletonSwitchProps = { appearanceKey: AllAppearanceKey; thumbAppearanceKey: AllAppearanceKey; class?: ClassName };
 
 export const SkeletonSwitch = (props: SkeletonSwitchProps) => {
   const style = useStyle();

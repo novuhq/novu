@@ -1,6 +1,6 @@
-import type { Theme } from '../types';
+import type { InboxTheme } from '../types';
 
-export const dark: Theme = {
+export const dark: InboxTheme = {
   variables: {
     colorNeutral: 'white',
     colorBackground: '#1A1A1A',

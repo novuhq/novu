@@ -1,6 +1,6 @@
-import { dark } from '@novu/nextjs/themes';
-import { useState, useEffect } from 'react';
 import { Inbox } from '@novu/nextjs';
+import { dark } from '@novu/nextjs/themes';
+import { useEffect, useState } from 'react';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
 

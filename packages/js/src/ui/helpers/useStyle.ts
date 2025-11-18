@@ -1,7 +1,7 @@
 import { createMemo, createSignal, onMount } from 'solid-js';
 import { appearanceKeys } from '../config';
 import { useAppearance } from '../context';
-import type { AppearanceKey, Elements, IconKey } from '../types';
+import type { AllAppearanceKey, AllElements, AllIconKey } from '../types';
 import { cn, publicFacingTwMerge } from './utils';
 
 export const useStyle = () => {
@@ -20,17 +20,17 @@ export const useStyle = () => {
         iconKey,
         context,
       }: {
-        key: AppearanceKey;
+        key: AllAppearanceKey;
         className?: string;
-        iconKey?: IconKey;
+        iconKey?: AllIconKey;
         context?: any;
       }) => {
         const appearanceKeyParts = key.split('__');
-        let finalAppearanceKeys: (keyof Elements)[] = [];
+        let finalAppearanceKeys: (keyof AllElements)[] = [];
         for (let i = 0; i < appearanceKeyParts.length; i += 1) {
           const accumulated = appearanceKeyParts.slice(i).join('__');
-          if (appearanceKeys.includes(accumulated as keyof Elements)) {
-            finalAppearanceKeys.push(accumulated as keyof Elements);
+          if (appearanceKeys.includes(accumulated as keyof AllElements)) {
+            finalAppearanceKeys.push(accumulated as keyof AllElements);
           }
         }
 
@@ -43,7 +43,7 @@ export const useStyle = () => {
         // Remove duplicates
         finalAppearanceKeys = Array.from(
           new Set([...finalAppearanceKeys, ...appearanceKeysInClasses])
-        ) as (keyof Elements)[];
+        ) as (keyof AllElements)[];
 
         // Sort appearance keys by the number of `__` occurrences
         finalAppearanceKeys.sort((a, b) => {

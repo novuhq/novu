@@ -18,6 +18,7 @@ const LINKS: LinkType[] = [
   { href: '/hooks', label: 'Hooks' },
   { href: '/custom-subject-body', label: 'Custom Subject Body' },
   { href: '/custom-icons', label: 'Custom Icons' },
+  { href: '/subscription', label: 'Subscription' },
 ];
 
 const NavLink = ({ href, label }: LinkType) => {

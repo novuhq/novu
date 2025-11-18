@@ -2,7 +2,7 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { cn, useStyle } from '../../helpers';
-import type { AppearanceKey } from '../../types';
+import type { AllAppearanceKey } from '../../types';
 
 export const buttonVariants = cva(
   cn(
@@ -23,9 +23,10 @@ export const buttonVariants = cva(
         none: '',
         iconSm: 'nt-p-1 nt-rounded-md after:nt-rounded-md before:nt-rounded-md focus-visible:nt-rounded-md',
         icon: 'nt-p-2.5 nt-rounded-xl before:nt-rounded-xl after:nt-rounded-xl focus-visible:nt-rounded-xl',
-        default: 'nt-px-2 nt-py-1 nt-rounded-lg focus-visible:nt-rounded-lg before:nt-rounded-lg after:nt-rounded-lg',
+        default:
+          'nt-h-6 nt-px-2 nt-py-1 nt-rounded-md focus-visible:nt-rounded-md before:nt-rounded-md after:nt-rounded-md',
         sm: 'nt-px-1 nt-py-px nt-rounded-md nt-text-xs nt-px-1 before:nt-rounded-md focus-visible:nt-rounded-md after:nt-rounded-md',
-        lg: 'nt-px-8 nt-py-2 nt-text-base before:nt-rounded-lg after:nt-rounded-lg focus-visible:nt-rounded-lg',
+        lg: 'nt-px-8 nt-py-2 nt-text-base before:nt-rounded-md after:nt-rounded-md focus-visible:nt-rounded-md',
       },
     },
     defaultVariants: {
@@ -36,7 +37,7 @@ export const buttonVariants = cva(
 );
 
 type ButtonProps = JSX.IntrinsicElements['button'] & {
-  appearanceKey?: AppearanceKey;
+  appearanceKey?: AllAppearanceKey;
   context?: Record<string, unknown>;
 } & VariantProps<typeof buttonVariants>;
 export const Button = (props: ButtonProps) => {

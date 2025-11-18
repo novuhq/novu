@@ -9,6 +9,7 @@ export {
   PreferenceLevel,
   Preferences,
   SeverityLevelEnum,
+  Subscription,
   useCounts,
   useNotifications,
   useNovu,

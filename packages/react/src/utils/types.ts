@@ -1,9 +1,11 @@
 import type { Context, DefaultSchedule, Subscriber, UnreadCount } from '@novu/js';
 import type {
-  IconKey,
+  AllIconKey,
+  AllTheme,
+  InboxIconKey,
+  InboxLocalization,
   InboxProps,
-  Theme as JsTheme,
-  Localization,
+  InboxTheme,
   Notification,
   NotificationActionClickHandler,
   NotificationClickHandler,
@@ -11,6 +13,8 @@ import type {
   PreferencesFilter,
   PreferencesSort,
   RouterPush,
+  SubscriptionIconKey,
+  SubscriptionTheme,
   Tab,
 } from '@novu/js/ui';
 import type { ReactNode } from 'react';
@@ -26,16 +30,40 @@ export type BellRenderer = (unreadCount: UnreadCount) => React.ReactNode;
 export type ReactIconRendererProps = { class?: string };
 export type ReactIconRenderer = (props: ReactIconRendererProps) => ReactNode;
 
-export type ReactIconOverrides = {
-  [key in IconKey]?: ReactIconRenderer;
+export type ReactInboxIconOverrides = {
+  [key in InboxIconKey]?: ReactIconRenderer;
 };
 
-export type ReactTheme = Omit<JsTheme, 'icons'> & {
-  icons?: ReactIconOverrides;
+export type ReactInboxTheme = Omit<InboxTheme, 'icons'> & {
+  icons?: ReactInboxIconOverrides;
 };
 
-export type ReactAppearance = ReactTheme & {
-  baseTheme?: JsTheme | JsTheme[];
+export type ReactSubscriptionIconOverrides = {
+  [key in SubscriptionIconKey]?: ReactIconRenderer;
+};
+
+export type ReactSubscriptionTheme = Omit<SubscriptionTheme, 'icons'> & {
+  icons?: ReactSubscriptionIconOverrides;
+};
+
+export type ReactAllIconOverrides = {
+  [key in AllIconKey]?: ReactIconRenderer;
+};
+
+export type ReactAllTheme = Omit<AllTheme, 'icons'> & {
+  icons?: ReactAllIconOverrides;
+};
+
+export type ReactInboxAppearance = ReactInboxTheme & {
+  baseTheme?: InboxTheme | InboxTheme[];
+};
+
+export type ReactSubscriptionAppearance = ReactSubscriptionTheme & {
+  baseTheme?: ReactSubscriptionTheme | ReactSubscriptionTheme[];
+};
+
+export type ReactAllAppearance = ReactAllTheme & {
+  baseTheme?: ReactAllTheme | ReactAllTheme[];
 };
 
 export type DefaultInboxProps = {
@@ -59,8 +87,8 @@ type StandardBaseProps = {
   contextHash?: string;
   backendUrl?: string;
   socketUrl?: string;
-  appearance?: ReactAppearance;
-  localization?: Localization;
+  appearance?: ReactInboxAppearance;
+  localization?: InboxLocalization;
   tabs?: Array<Tab>;
   preferencesFilter?: PreferencesFilter;
   preferenceGroups?: PreferenceGroups;
@@ -89,7 +117,11 @@ type StandardBaseProps = {
     }
 );
 
-export type BaseProps = StandardBaseProps;
+type InboxBaseProps = Omit<StandardBaseProps, 'appearance'> & {
+  appearance?: ReactInboxAppearance;
+};
+
+export type BaseProps = InboxBaseProps;
 
 export type NotificationRendererProps = {
   renderNotification: NotificationsRenderer;
