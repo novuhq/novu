@@ -69,9 +69,48 @@ export type SubscribersControllerListSubscriberTopicsResponse = {
 };
 
 /** @internal */
-export const SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$outboundSchema: z.ZodNativeEnum<
+export const SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema: z.ZodNativeEnum<
   typeof SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
 > = z.nativeEnum(SubscribersControllerListSubscriberTopicsQueryParamOrderDirection);
+
+/** @internal */
+export const SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$outboundSchema: z.ZodNativeEnum<
+  typeof SubscribersControllerListSubscriberTopicsQueryParamOrderDirection
+> = SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$ {
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema` instead. */
+  export const inboundSchema = SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema;
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$outboundSchema` instead. */
+  export const outboundSchema = SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$outboundSchema;
+}
+
+/** @internal */
+export const SubscribersControllerListSubscriberTopicsRequest$inboundSchema: z.ZodType<
+  SubscribersControllerListSubscriberTopicsRequest,
+  z.ZodTypeDef,
+  unknown
+> = z
+  .object({
+    subscriberId: z.string(),
+    after: z.string().optional(),
+    before: z.string().optional(),
+    limit: z.number().optional(),
+    orderDirection: SubscribersControllerListSubscriberTopicsQueryParamOrderDirection$inboundSchema.optional(),
+    orderBy: z.string().optional(),
+    includeCursor: z.boolean().optional(),
+    key: z.string().optional(),
+    'idempotency-key': z.string().optional(),
+  })
+  .transform((v) => {
+    return remap$(v, {
+      'idempotency-key': 'idempotencyKey',
+    });
+  });
 
 /** @internal */
 export type SubscribersControllerListSubscriberTopicsRequest$Outbound = {
@@ -109,6 +148,19 @@ export const SubscribersControllerListSubscriberTopicsRequest$outboundSchema: z.
     });
   });
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace SubscribersControllerListSubscriberTopicsRequest$ {
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsRequest$inboundSchema` instead. */
+  export const inboundSchema = SubscribersControllerListSubscriberTopicsRequest$inboundSchema;
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsRequest$outboundSchema` instead. */
+  export const outboundSchema = SubscribersControllerListSubscriberTopicsRequest$outboundSchema;
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsRequest$Outbound` instead. */
+  export type Outbound = SubscribersControllerListSubscriberTopicsRequest$Outbound;
+}
+
 export function subscribersControllerListSubscriberTopicsRequestToJSON(
   subscribersControllerListSubscriberTopicsRequest: SubscribersControllerListSubscriberTopicsRequest
 ): string {
@@ -116,6 +168,16 @@ export function subscribersControllerListSubscriberTopicsRequestToJSON(
     SubscribersControllerListSubscriberTopicsRequest$outboundSchema.parse(
       subscribersControllerListSubscriberTopicsRequest
     )
+  );
+}
+
+export function subscribersControllerListSubscriberTopicsRequestFromJSON(
+  jsonString: string
+): SafeParseResult<SubscribersControllerListSubscriberTopicsRequest, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => SubscribersControllerListSubscriberTopicsRequest$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'SubscribersControllerListSubscriberTopicsRequest' from JSON`
   );
 }
 
@@ -135,6 +197,52 @@ export const SubscribersControllerListSubscriberTopicsResponse$inboundSchema: z.
       Result: 'result',
     });
   });
+
+/** @internal */
+export type SubscribersControllerListSubscriberTopicsResponse$Outbound = {
+  Headers: { [k: string]: Array<string> };
+  Result: components.ListTopicSubscriptionsResponseDto$Outbound;
+};
+
+/** @internal */
+export const SubscribersControllerListSubscriberTopicsResponse$outboundSchema: z.ZodType<
+  SubscribersControllerListSubscriberTopicsResponse$Outbound,
+  z.ZodTypeDef,
+  SubscribersControllerListSubscriberTopicsResponse
+> = z
+  .object({
+    headers: z.record(z.array(z.string())),
+    result: components.ListTopicSubscriptionsResponseDto$outboundSchema,
+  })
+  .transform((v) => {
+    return remap$(v, {
+      headers: 'Headers',
+      result: 'Result',
+    });
+  });
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace SubscribersControllerListSubscriberTopicsResponse$ {
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsResponse$inboundSchema` instead. */
+  export const inboundSchema = SubscribersControllerListSubscriberTopicsResponse$inboundSchema;
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsResponse$outboundSchema` instead. */
+  export const outboundSchema = SubscribersControllerListSubscriberTopicsResponse$outboundSchema;
+  /** @deprecated use `SubscribersControllerListSubscriberTopicsResponse$Outbound` instead. */
+  export type Outbound = SubscribersControllerListSubscriberTopicsResponse$Outbound;
+}
+
+export function subscribersControllerListSubscriberTopicsResponseToJSON(
+  subscribersControllerListSubscriberTopicsResponse: SubscribersControllerListSubscriberTopicsResponse
+): string {
+  return JSON.stringify(
+    SubscribersControllerListSubscriberTopicsResponse$outboundSchema.parse(
+      subscribersControllerListSubscriberTopicsResponse
+    )
+  );
+}
 
 export function subscribersControllerListSubscriberTopicsResponseFromJSON(
   jsonString: string

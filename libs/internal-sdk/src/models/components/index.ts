@@ -251,6 +251,7 @@ export * from './updatesubscriberchannelrequestdto.js';
 export * from './updatesubscriberonlineflagrequestdto.js';
 export * from './updatetopicrequestdto.js';
 export * from './updateworkflowdto.js';
+export * from './uploadtranslationsrequestdto.js';
 export * from './uploadtranslationsresponsedto.js';
 export * from './webhookresultdto.js';
 export * from './workflowcreationsourceenum.js';

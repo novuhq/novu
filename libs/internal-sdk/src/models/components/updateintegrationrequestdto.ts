@@ -4,8 +4,21 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { CredentialsDto, CredentialsDto$Outbound, CredentialsDto$outboundSchema } from './credentialsdto.js';
-import { StepFilterDto, StepFilterDto$Outbound, StepFilterDto$outboundSchema } from './stepfilterdto.js';
+import { safeParse } from '../../lib/schemas.js';
+import { Result as SafeParseResult } from '../../types/fp.js';
+import { SDKValidationError } from '../errors/sdkvalidationerror.js';
+import {
+  CredentialsDto,
+  CredentialsDto$inboundSchema,
+  CredentialsDto$Outbound,
+  CredentialsDto$outboundSchema,
+} from './credentialsdto.js';
+import {
+  StepFilterDto,
+  StepFilterDto$inboundSchema,
+  StepFilterDto$Outbound,
+  StepFilterDto$outboundSchema,
+} from './stepfilterdto.js';
 
 /**
  * Configurations for the integration
@@ -30,6 +43,13 @@ export type UpdateIntegrationRequestDto = {
 };
 
 /** @internal */
+export const UpdateIntegrationRequestDtoConfigurations$inboundSchema: z.ZodType<
+  UpdateIntegrationRequestDtoConfigurations,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
 export type UpdateIntegrationRequestDtoConfigurations$Outbound = {};
 
 /** @internal */
@@ -39,6 +59,19 @@ export const UpdateIntegrationRequestDtoConfigurations$outboundSchema: z.ZodType
   UpdateIntegrationRequestDtoConfigurations
 > = z.object({});
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace UpdateIntegrationRequestDtoConfigurations$ {
+  /** @deprecated use `UpdateIntegrationRequestDtoConfigurations$inboundSchema` instead. */
+  export const inboundSchema = UpdateIntegrationRequestDtoConfigurations$inboundSchema;
+  /** @deprecated use `UpdateIntegrationRequestDtoConfigurations$outboundSchema` instead. */
+  export const outboundSchema = UpdateIntegrationRequestDtoConfigurations$outboundSchema;
+  /** @deprecated use `UpdateIntegrationRequestDtoConfigurations$Outbound` instead. */
+  export type Outbound = UpdateIntegrationRequestDtoConfigurations$Outbound;
+}
+
 export function updateIntegrationRequestDtoConfigurationsToJSON(
   updateIntegrationRequestDtoConfigurations: UpdateIntegrationRequestDtoConfigurations
 ): string {
@@ -46,6 +79,35 @@ export function updateIntegrationRequestDtoConfigurationsToJSON(
     UpdateIntegrationRequestDtoConfigurations$outboundSchema.parse(updateIntegrationRequestDtoConfigurations)
   );
 }
+
+export function updateIntegrationRequestDtoConfigurationsFromJSON(
+  jsonString: string
+): SafeParseResult<UpdateIntegrationRequestDtoConfigurations, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => UpdateIntegrationRequestDtoConfigurations$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'UpdateIntegrationRequestDtoConfigurations' from JSON`
+  );
+}
+
+/** @internal */
+export const UpdateIntegrationRequestDto$inboundSchema: z.ZodType<UpdateIntegrationRequestDto, z.ZodTypeDef, unknown> =
+  z
+    .object({
+      name: z.string().optional(),
+      identifier: z.string().optional(),
+      _environmentId: z.string().optional(),
+      active: z.boolean().optional(),
+      credentials: CredentialsDto$inboundSchema.optional(),
+      check: z.boolean().optional(),
+      conditions: z.array(StepFilterDto$inboundSchema).optional(),
+      configurations: z.lazy(() => UpdateIntegrationRequestDtoConfigurations$inboundSchema).optional(),
+    })
+    .transform((v) => {
+      return remap$(v, {
+        _environmentId: 'environmentId',
+      });
+    });
 
 /** @internal */
 export type UpdateIntegrationRequestDto$Outbound = {
@@ -81,6 +143,29 @@ export const UpdateIntegrationRequestDto$outboundSchema: z.ZodType<
     });
   });
 
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace UpdateIntegrationRequestDto$ {
+  /** @deprecated use `UpdateIntegrationRequestDto$inboundSchema` instead. */
+  export const inboundSchema = UpdateIntegrationRequestDto$inboundSchema;
+  /** @deprecated use `UpdateIntegrationRequestDto$outboundSchema` instead. */
+  export const outboundSchema = UpdateIntegrationRequestDto$outboundSchema;
+  /** @deprecated use `UpdateIntegrationRequestDto$Outbound` instead. */
+  export type Outbound = UpdateIntegrationRequestDto$Outbound;
+}
+
 export function updateIntegrationRequestDtoToJSON(updateIntegrationRequestDto: UpdateIntegrationRequestDto): string {
   return JSON.stringify(UpdateIntegrationRequestDto$outboundSchema.parse(updateIntegrationRequestDto));
+}
+
+export function updateIntegrationRequestDtoFromJSON(
+  jsonString: string
+): SafeParseResult<UpdateIntegrationRequestDto, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => UpdateIntegrationRequestDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'UpdateIntegrationRequestDto' from JSON`
+  );
 }

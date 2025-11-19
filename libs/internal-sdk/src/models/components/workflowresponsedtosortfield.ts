@@ -14,5 +14,20 @@ export const WorkflowResponseDtoSortField = {
 export type WorkflowResponseDtoSortField = ClosedEnum<typeof WorkflowResponseDtoSortField>;
 
 /** @internal */
-export const WorkflowResponseDtoSortField$outboundSchema: z.ZodNativeEnum<typeof WorkflowResponseDtoSortField> =
+export const WorkflowResponseDtoSortField$inboundSchema: z.ZodNativeEnum<typeof WorkflowResponseDtoSortField> =
   z.nativeEnum(WorkflowResponseDtoSortField);
+
+/** @internal */
+export const WorkflowResponseDtoSortField$outboundSchema: z.ZodNativeEnum<typeof WorkflowResponseDtoSortField> =
+  WorkflowResponseDtoSortField$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace WorkflowResponseDtoSortField$ {
+  /** @deprecated use `WorkflowResponseDtoSortField$inboundSchema` instead. */
+  export const inboundSchema = WorkflowResponseDtoSortField$inboundSchema;
+  /** @deprecated use `WorkflowResponseDtoSortField$outboundSchema` instead. */
+  export const outboundSchema = WorkflowResponseDtoSortField$outboundSchema;
+}

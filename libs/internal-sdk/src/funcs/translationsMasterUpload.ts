@@ -3,8 +3,7 @@
  */
 
 import { NovuCore } from '../core.js';
-import { appendForm, encodeSimple } from '../lib/encodings.js';
-import { getContentTypeFromFileName, readableStreamToArrayBuffer } from '../lib/files.js';
+import { encodeSimple } from '../lib/encodings.js';
 import * as M from '../lib/matchers.js';
 import { compactMap } from '../lib/primitives.js';
 import { safeParse } from '../lib/schemas.js';
@@ -24,9 +23,7 @@ import { ResponseValidationError } from '../models/errors/responsevalidationerro
 import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
 import * as operations from '../models/operations/index.js';
 import { APICall, APIPromise } from '../types/async.js';
-import { isBlobLike } from '../types/blobs.js';
 import { Result } from '../types/fp.js';
-import { isReadableStream } from '../types/streams.js';
 
 /**
  * Upload master translations JSON file
@@ -36,7 +33,6 @@ import { isReadableStream } from '../types/streams.js';
  */
 export function translationsMasterUpload(
   client: NovuCore,
-  requestBody: operations.TranslationControllerUploadMasterJsonEndpointRequestBody,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): APIPromise<
@@ -52,12 +48,11 @@ export function translationsMasterUpload(
     | SDKValidationError
   >
 > {
-  return new APIPromise($do(client, requestBody, idempotencyKey, options));
+  return new APIPromise($do(client, idempotencyKey, options));
 }
 
 async function $do(
   client: NovuCore,
-  requestBody: operations.TranslationControllerUploadMasterJsonEndpointRequestBody,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
 ): Promise<
@@ -77,7 +72,6 @@ async function $do(
   ]
 > {
   const input: operations.TranslationControllerUploadMasterJsonEndpointRequest = {
-    requestBody: requestBody,
     idempotencyKey: idempotencyKey,
   };
 
@@ -90,24 +84,7 @@ async function $do(
     return [parsed, { status: 'invalid' }];
   }
   const payload = parsed.value;
-  const body = new FormData();
-
-  if (isBlobLike(payload.RequestBody.file)) {
-    appendForm(body, 'file', payload.RequestBody.file);
-  } else if (isReadableStream(payload.RequestBody.file.content)) {
-    const buffer = await readableStreamToArrayBuffer(payload.RequestBody.file.content);
-    const contentType = getContentTypeFromFileName(payload.RequestBody.file.fileName) || 'application/octet-stream';
-    const blob = new Blob([buffer], { type: contentType });
-    appendForm(body, 'file', blob, payload.RequestBody.file.fileName);
-  } else {
-    const contentType = getContentTypeFromFileName(payload.RequestBody.file.fileName) || 'application/octet-stream';
-    appendForm(
-      body,
-      'file',
-      new Blob([payload.RequestBody.file.content], { type: contentType }),
-      payload.RequestBody.file.fileName
-    );
-  }
+  const body = null;
 
   const path = pathToFunc('/v2/translations/master-json/upload')();
 

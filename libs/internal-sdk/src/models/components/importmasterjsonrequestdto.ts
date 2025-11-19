@@ -3,6 +3,14 @@
  */
 
 import * as z from 'zod/v3';
+import { safeParse } from '../../lib/schemas.js';
+import { Result as SafeParseResult } from '../../types/fp.js';
+import { SDKValidationError } from '../errors/sdkvalidationerror.js';
+
+/**
+ * Master JSON object containing all translations organized by workflow identifier
+ */
+export type MasterJson = {};
 
 export type ImportMasterJsonRequestDto = {
   /**
@@ -12,13 +20,54 @@ export type ImportMasterJsonRequestDto = {
   /**
    * Master JSON object containing all translations organized by workflow identifier
    */
-  masterJson: { [k: string]: any };
+  masterJson: MasterJson;
 };
+
+/** @internal */
+export const MasterJson$inboundSchema: z.ZodType<MasterJson, z.ZodTypeDef, unknown> = z.object({});
+
+/** @internal */
+export type MasterJson$Outbound = {};
+
+/** @internal */
+export const MasterJson$outboundSchema: z.ZodType<MasterJson$Outbound, z.ZodTypeDef, MasterJson> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace MasterJson$ {
+  /** @deprecated use `MasterJson$inboundSchema` instead. */
+  export const inboundSchema = MasterJson$inboundSchema;
+  /** @deprecated use `MasterJson$outboundSchema` instead. */
+  export const outboundSchema = MasterJson$outboundSchema;
+  /** @deprecated use `MasterJson$Outbound` instead. */
+  export type Outbound = MasterJson$Outbound;
+}
+
+export function masterJsonToJSON(masterJson: MasterJson): string {
+  return JSON.stringify(MasterJson$outboundSchema.parse(masterJson));
+}
+
+export function masterJsonFromJSON(jsonString: string): SafeParseResult<MasterJson, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => MasterJson$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'MasterJson' from JSON`
+  );
+}
+
+/** @internal */
+export const ImportMasterJsonRequestDto$inboundSchema: z.ZodType<ImportMasterJsonRequestDto, z.ZodTypeDef, unknown> =
+  z.object({
+    locale: z.string(),
+    masterJson: z.lazy(() => MasterJson$inboundSchema),
+  });
 
 /** @internal */
 export type ImportMasterJsonRequestDto$Outbound = {
   locale: string;
-  masterJson: { [k: string]: any };
+  masterJson: MasterJson$Outbound;
 };
 
 /** @internal */
@@ -28,9 +77,32 @@ export const ImportMasterJsonRequestDto$outboundSchema: z.ZodType<
   ImportMasterJsonRequestDto
 > = z.object({
   locale: z.string(),
-  masterJson: z.record(z.any()),
+  masterJson: z.lazy(() => MasterJson$outboundSchema),
 });
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace ImportMasterJsonRequestDto$ {
+  /** @deprecated use `ImportMasterJsonRequestDto$inboundSchema` instead. */
+  export const inboundSchema = ImportMasterJsonRequestDto$inboundSchema;
+  /** @deprecated use `ImportMasterJsonRequestDto$outboundSchema` instead. */
+  export const outboundSchema = ImportMasterJsonRequestDto$outboundSchema;
+  /** @deprecated use `ImportMasterJsonRequestDto$Outbound` instead. */
+  export type Outbound = ImportMasterJsonRequestDto$Outbound;
+}
 
 export function importMasterJsonRequestDtoToJSON(importMasterJsonRequestDto: ImportMasterJsonRequestDto): string {
   return JSON.stringify(ImportMasterJsonRequestDto$outboundSchema.parse(importMasterJsonRequestDto));
+}
+
+export function importMasterJsonRequestDtoFromJSON(
+  jsonString: string
+): SafeParseResult<ImportMasterJsonRequestDto, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => ImportMasterJsonRequestDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ImportMasterJsonRequestDto' from JSON`
+  );
 }
