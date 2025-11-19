@@ -1,4 +1,5 @@
-import { TriggerOverrides, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload, TriggerOverrides, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 import { IsDefined, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -32,4 +33,8 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
   requestId: string;
+
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 }

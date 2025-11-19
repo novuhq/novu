@@ -47,6 +47,7 @@ export class ProcessBulkTrigger {
             to: event.to,
             actor: event.actor,
             tenant: event.tenant,
+            context: event.context,
             transactionId: event.transactionId,
             addressingType: AddressingTypeEnum.MULTICAST,
             requestCategory: TriggerRequestCategoryEnum.BULK,
