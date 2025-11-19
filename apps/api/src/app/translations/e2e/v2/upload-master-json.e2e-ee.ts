@@ -50,26 +50,30 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
       },
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/master-json/upload')
-      .attach('file', Buffer.from(JSON.stringify(masterJson)), 'en_US.json')
-      .expect(200);
+    const response = await novuClient.translations.master.upload({
+      file: {
+        fileName: 'en_US.json',
+        content: Buffer.from(JSON.stringify(masterJson)),
+      },
+    });
 
-    expect(body.data.success).to.be.true;
-    expect(body.data.message).to.include('1 resource');
+    expect(response.success).to.be.true;
+    expect(response.message).to.include('1 resource');
 
     // Test new response structure
-    expect(body.data.successful).to.be.an('array');
-    expect(body.data.successful).to.have.lengthOf(1);
-    expect(body.data.successful).to.include(workflowId);
-    expect(body.data.failed).to.be.undefined; // No failures
+    expect(response.successful).to.be.an('array');
+    expect(response.successful).to.have.lengthOf(1);
+    expect(response.successful).to.include(workflowId);
+    expect(response.failed).to.be.undefined; // No failures
 
     // Verify translation was created (basic integration test)
-    const { body: translation } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(200);
+    const translation = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'en_US',
+    });
 
-    expect(translation.data.content).to.deep.equal(masterJson.workflows[workflowId]);
+    expect(translation.content).to.deep.equal(masterJson.workflows[workflowId]);
   });
 
   it('should handle mixed success and failure in uploaded file', async () => {
@@ -85,23 +89,24 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
       },
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/master-json/upload')
-      .field('locale', 'en_US')
-      .attach('file', Buffer.from(JSON.stringify(masterJson)), 'en_US.json')
-      .expect(200);
+    const response = await novuClient.translations.master.upload({
+      file: {
+        fileName: 'en_US.json',
+        content: Buffer.from(JSON.stringify(masterJson)),
+      },
+    });
 
-    expect(body.data.success).to.be.true;
-    expect(body.data.message).to.include('Partial import completed');
+    expect(response.success).to.be.true;
+    expect(response.message).to.include('Partial import completed');
 
     // Test enhanced response structure for mixed results
-    expect(body.data.successful).to.be.an('array');
-    expect(body.data.successful).to.have.lengthOf(1);
-    expect(body.data.successful).to.include(workflowId);
+    expect(response.successful).to.be.an('array');
+    expect(response.successful).to.have.lengthOf(1);
+    expect(response.successful).to.include(workflowId);
 
-    expect(body.data.failed).to.be.an('array');
-    expect(body.data.failed).to.have.lengthOf(1);
-    expect(body.data.failed).to.include(nonExistentWorkflowId);
+    expect(response.failed).to.be.an('array');
+    expect(response.failed).to.have.lengthOf(1);
+    expect(response.failed).to.include(nonExistentWorkflowId);
   });
 
   it('should validate file requirements', async () => {
@@ -137,27 +142,34 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
     const invalidFilenames = ['invalid-filename.json', 'en_US-master.json', 'en_US.txt', 'notlocale.json', 'en.json'];
 
     for (const filename of invalidFilenames) {
-      await session.testAgent
-        .post('/v2/translations/master-json/upload')
-        .field('locale', 'en_US')
-        .attach('file', Buffer.from(JSON.stringify(masterJson)), filename)
-        .expect(400);
+      try {
+        await novuClient.translations.master.upload({
+          file: {
+            fileName: filename,
+            content: Buffer.from(JSON.stringify(masterJson)),
+          },
+        });
+        expect.fail(`Should have thrown an error for filename: ${filename}`);
+      } catch (error: any) {
+        expect(error.statusCode).to.equal(400);
+      }
     }
 
     // Test valid filename patterns
     const validFilenames = ['en_US.json', 'fr_FR.json', 'zh_CN.json'];
 
     for (const filename of validFilenames) {
-      const { body } = await session.testAgent
-        .post('/v2/translations/master-json/upload')
-        .field('locale', 'en_US')
-        .attach('file', Buffer.from(JSON.stringify(masterJson)), filename)
-        .expect(200);
+      const response = await novuClient.translations.master.upload({
+        file: {
+          fileName: filename,
+          content: Buffer.from(JSON.stringify(masterJson)),
+        },
+      });
 
       // Verify response structure for valid uploads
-      expect(body.data.success).to.be.true;
-      expect(body.data.successful).to.be.an('array');
-      expect(body.data.successful).to.include(workflowId);
+      expect(response.success).to.be.true;
+      expect(response.successful).to.be.an('array');
+      expect(response.successful).to.include(workflowId);
     }
   });
 
@@ -173,56 +185,78 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
 
     // Test formatted JSON (with indentation)
     const formattedJson = JSON.stringify(masterJson, null, 2);
-    const { body: formattedResponse } = await session.testAgent
-      .post('/v2/translations/master-json/upload')
-      .field('locale', 'en_US')
-      .attach('file', Buffer.from(formattedJson, 'utf8'), 'en_US.json')
-      .expect(200);
+    const formattedResponse = await novuClient.translations.master.upload({
+      file: {
+        fileName: 'en_US.json',
+        content: Buffer.from(formattedJson, 'utf8'),
+      },
+    });
 
-    expect(formattedResponse.data.success).to.be.true;
-    expect(formattedResponse.data.successful).to.include(workflowId);
+    expect(formattedResponse.success).to.be.true;
+    expect(formattedResponse.successful).to.include(workflowId);
 
     // Test compressed JSON
     const compressedJson = JSON.stringify(masterJson);
-    const { body: compressedResponse } = await session.testAgent
-      .post('/v2/translations/master-json/upload')
-      .field('locale', 'fr_FR')
-      .attach('file', Buffer.from(compressedJson, 'utf8'), 'fr_FR.json')
-      .expect(200);
+    const compressedResponse = await novuClient.translations.master.upload({
+      file: {
+        fileName: 'fr_FR.json',
+        content: Buffer.from(compressedJson, 'utf8'),
+      },
+    });
 
-    expect(compressedResponse.data.success).to.be.true;
-    expect(compressedResponse.data.successful).to.include(workflowId);
+    expect(compressedResponse.success).to.be.true;
+    expect(compressedResponse.successful).to.include(workflowId);
 
     // Verify Unicode and liquid variables are preserved
-    const { body: translation } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(200);
+    const translation = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'en_US',
+    });
 
-    expect(translation.data.content['unicode.test']).to.equal('Hello 👋 世界 🌍');
-    expect(translation.data.content['liquid.test']).to.equal('Hello {{payload.name | upcase}}');
+    expect(translation.content['unicode.test']).to.equal('Hello 👋 世界 🌍');
+    expect(translation.content['liquid.test']).to.equal('Hello {{payload.name | upcase}}');
   });
 
   it('should reject invalid JSON files', async () => {
     // Test invalid JSON content
-    await session.testAgent
-      .post('/v2/translations/master-json/upload')
-      .field('locale', 'en_US')
-      .attach('file', Buffer.from('invalid json content'), 'en_US.json')
-      .expect(400);
+    try {
+      await novuClient.translations.master.upload({
+        file: {
+          fileName: 'en_US.json',
+          content: Buffer.from('invalid json content'),
+        },
+      });
+      expect.fail('Should have thrown an error for invalid JSON');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(400);
+    }
 
     // Test empty file
-    await session.testAgent
-      .post('/v2/translations/master-json/upload')
-      .field('locale', 'en_US')
-      .attach('file', Buffer.from(''), 'en_US.json')
-      .expect(400);
+    try {
+      await novuClient.translations.master.upload({
+        file: {
+          fileName: 'en_US.json',
+          content: Buffer.from(''),
+        },
+      });
+      expect.fail('Should have thrown an error for empty file');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(400);
+    }
 
     // Test non-JSON file
-    await session.testAgent
-      .post('/v2/translations/master-json/upload')
-      .field('locale', 'en_US')
-      .attach('file', Buffer.from('<xml>not json</xml>'), 'en_US.json')
-      .expect(400);
+    try {
+      await novuClient.translations.master.upload({
+        file: {
+          fileName: 'en_US.json',
+          content: Buffer.from('<xml>not json</xml>'),
+        },
+      });
+      expect.fail('Should have thrown an error for non-JSON file');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(400);
+    }
   });
 
   it('should handle empty workflows object in uploaded file', async () => {
@@ -230,15 +264,16 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
       workflows: {},
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/master-json/upload')
-      .field('locale', 'en_US')
-      .attach('file', Buffer.from(JSON.stringify(masterJson)), 'en_US.json')
-      .expect(200);
+    const response = await novuClient.translations.master.upload({
+      file: {
+        fileName: 'en_US.json',
+        content: Buffer.from(JSON.stringify(masterJson)),
+      },
+    });
 
-    expect(body.data.success).to.be.false;
-    expect(body.data.message).to.include('No supported resources found');
-    expect(body.data.successful).to.be.undefined;
-    expect(body.data.failed).to.be.undefined;
+    expect(response.success).to.be.false;
+    expect(response.message).to.include('No supported resources found');
+    expect(response.successful).to.be.undefined;
+    expect(response.failed).to.be.undefined;
   });
 });
