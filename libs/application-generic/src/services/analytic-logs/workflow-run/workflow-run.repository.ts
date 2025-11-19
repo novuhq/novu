@@ -501,8 +501,12 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     environmentId: string,
     organizationId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    workflowIds?: string[]
   ): Promise<Array<{ workflow_name: string; count: string }>> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? 'AND workflow_id IN {workflowIds:Array(String)}' : '';
+
     const query = `
       SELECT 
         workflow_name,
@@ -513,17 +517,22 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {startDate:DateTime64(3)}
         AND created_at <= {endDate:DateTime64(3)}
+        ${workflowFilter}
       GROUP BY workflow_name
       ORDER BY count DESC
       LIMIT 5
     `;
 
-    const params = {
+    const params: Record<string, unknown> = {
       environmentId,
       organizationId,
       startDate: LogRepository.formatDateTime64(startDate),
       endDate: LogRepository.formatDateTime64(endDate),
     };
+
+    if (workflowIds && workflowIds.length > 0) {
+      params.workflowIds = workflowIds;
+    }
 
     const result = await this.clickhouseService.query<{
       workflow_name: string;
@@ -542,8 +551,12 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     startDate: Date,
     endDate: Date,
     previousStartDate: Date,
-    previousEndDate: Date
+    previousEndDate: Date,
+    workflowIds?: string[]
   ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? 'AND workflow_id IN {workflowIds:Array(String)}' : '';
+
     // Query for current period
     const currentPeriodQuery = `
       SELECT count(DISTINCT external_subscriber_id) as count
@@ -553,6 +566,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {startDate:DateTime64(3)}
         AND created_at <= {endDate:DateTime64(3)}
+        ${workflowFilter}
     `;
 
     // Query for previous period
@@ -564,12 +578,17 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {previousStartDate:DateTime64(3)}
         AND created_at <= {previousEndDate:DateTime64(3)}
+        ${workflowFilter}
     `;
 
-    const baseParams = {
+    const baseParams: Record<string, unknown> = {
       environmentId,
       organizationId,
     };
+
+    if (workflowIds && workflowIds.length > 0) {
+      baseParams.workflowIds = workflowIds;
+    }
 
     const [currentResult, previousResult] = await Promise.all([
       this.clickhouseService.query<{ count: string }>({
@@ -605,8 +624,12 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     startDate: Date,
     endDate: Date,
     previousStartDate: Date,
-    previousEndDate: Date
+    previousEndDate: Date,
+    workflowIds?: string[]
   ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? 'AND workflow_id IN {workflowIds:Array(String)}' : '';
+
     // Query for current period
     const currentPeriodQuery = `
       SELECT count(*) as count
@@ -616,6 +639,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {startDate:DateTime64(3)}
         AND created_at <= {endDate:DateTime64(3)}
+        ${workflowFilter}
     `;
 
     // Query for previous period
@@ -627,12 +651,17 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {previousStartDate:DateTime64(3)}
         AND created_at <= {previousEndDate:DateTime64(3)}
+        ${workflowFilter}
     `;
 
-    const baseParams = {
+    const baseParams: Record<string, unknown> = {
       environmentId,
       organizationId,
     };
+
+    if (workflowIds && workflowIds.length > 0) {
+      baseParams.workflowIds = workflowIds;
+    }
 
     const [currentResult, previousResult] = await Promise.all([
       this.clickhouseService.query<{ count: string }>({
@@ -666,8 +695,12 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     environmentId: string,
     organizationId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    workflowIds?: string[]
   ): Promise<Array<{ date: string; status: string; count: string }>> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? 'AND workflow_id IN {workflowIds:Array(String)}' : '';
+
     const query = `
       SELECT 
         toDate(created_at) as date,
@@ -679,16 +712,21 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {startDate:DateTime64(3)}
         AND created_at <= {endDate:DateTime64(3)}
+        ${workflowFilter}
       GROUP BY date, status
       ORDER BY date, status
     `;
 
-    const params = {
+    const params: Record<string, unknown> = {
       environmentId,
       organizationId,
       startDate: LogRepository.formatDateTime64(startDate),
       endDate: LogRepository.formatDateTime64(endDate),
     };
+
+    if (workflowIds && workflowIds.length > 0) {
+      params.workflowIds = workflowIds;
+    }
 
     const result = await this.clickhouseService.query<{
       date: string;
@@ -706,8 +744,12 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     environmentId: string,
     organizationId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    workflowIds?: string[]
   ): Promise<Array<{ date: string; count: string }>> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? 'AND workflow_id IN {workflowIds:Array(String)}' : '';
+
     const query = `
       SELECT 
         toDate(created_at) as date,
@@ -718,16 +760,21 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {startDate:DateTime64(3)}
         AND created_at <= {endDate:DateTime64(3)}
+        ${workflowFilter}
       GROUP BY date
       ORDER BY date
     `;
 
-    const params = {
+    const params: Record<string, unknown> = {
       environmentId,
       organizationId,
       startDate: LogRepository.formatDateTime64(startDate),
       endDate: LogRepository.formatDateTime64(endDate),
     };
+
+    if (workflowIds && workflowIds.length > 0) {
+      params.workflowIds = workflowIds;
+    }
 
     const result = await this.clickhouseService.query<{
       date: string;

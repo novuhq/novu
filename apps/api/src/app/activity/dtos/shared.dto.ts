@@ -76,7 +76,10 @@ export class GetWorkflowRunResponseBaseDto {
   @IsBoolean()
   critical: boolean;
 
-  @ApiPropertyOptional({ description: 'Contexts (keys) in which the workflow run was executed', type: [String] })
+  @ApiPropertyOptional({
+    description: 'Context (single or multi) in which the workflow run was executed',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

@@ -30,9 +30,15 @@ const channelConnectionSchema = new Schema<ChannelConnectionDBModel>(
       type: Schema.Types.String,
       required: true,
     },
-    resource: {
+    subscriberId: {
       type: Schema.Types.String,
+      required: false,
+      default: null,
+    },
+    contextKeys: {
+      type: [Schema.Types.String],
       required: true,
+      default: [],
     },
     workspace: {
       type: Schema.Types.Mixed,

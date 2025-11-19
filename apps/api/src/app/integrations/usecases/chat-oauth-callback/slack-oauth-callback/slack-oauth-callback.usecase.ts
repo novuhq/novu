@@ -11,10 +11,12 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
+import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import {
   GenerateSlackOauthUrl,
   StateData,
@@ -31,7 +33,8 @@ export class SlackOauthCallback {
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
     private getNovuProviderCredentials: GetNovuProviderCredentials,
-    private createChannelConnection: CreateChannelConnection
+    private createChannelConnection: CreateChannelConnection,
+    private createChannelEndpoint: CreateChannelEndpoint
   ) {}
 
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -40,28 +43,74 @@ export class SlackOauthCallback {
     const credentials = await this.getIntegrationCredentials(integration);
 
     const authData = await this.exchangeCodeForAuthData(command.providerCode, credentials);
+    const isIncomingWebhook = authData.incoming_webhook;
 
-    await this.createChannelConnection.execute(
-      CreateChannelConnectionCommand.create({
-        identifier: stateData.identifier,
-        organizationId: stateData.organizationId,
-        environmentId: stateData.environmentId,
-        integrationIdentifier: integration.identifier,
-        resource: stateData.resource,
-        auth: {
-          accessToken: authData.access_token,
-        },
-        workspace: {
-          id: authData.team.id,
-          name: authData.team.name,
-        },
-      })
-    );
+    if (isIncomingWebhook) {
+      /*
+       * Incoming webhooks are handled differently from workspace connections:
+       *
+       * - Incoming webhook: Creates a stateless endpoint tied to a specific subscriber
+       *   using only the webhook URL. This provides direct message delivery.
+       *
+       * - Workspace connection: Uses access_token for broader workspace access
+       *   and is not tied to a specific subscriber.
+       *
+       * While authData contains both access_token and channel_id, we intentionally
+       * use only the webhook URL to maintain clear separation of concerns.
+       */
+      await this.createIncomingWebhookEndpoint(stateData, integration, authData);
+    } else {
+      await this.createChannelConnection.execute(
+        CreateChannelConnectionCommand.create({
+          identifier: stateData.identifier,
+          organizationId: stateData.organizationId,
+          environmentId: stateData.environmentId,
+          integrationIdentifier: integration.identifier,
+          subscriberId: stateData.subscriberId,
+          context: stateData.context,
+          auth: {
+            accessToken: authData.access_token,
+          },
+          workspace: {
+            id: authData.team.id,
+            name: authData.team.name,
+          },
+        })
+      );
+    }
+
+    if (credentials.redirectUrl) {
+      return { type: ResponseTypeEnum.URL, result: credentials.redirectUrl };
+    }
 
     return {
       type: ResponseTypeEnum.HTML,
       result: this.SCRIPT_CLOSE_TAB,
     };
+  }
+
+  private async createIncomingWebhookEndpoint(
+    stateData: StateData,
+    integration: IntegrationEntity,
+    authData: any
+  ): Promise<void> {
+    if (!stateData.subscriberId) {
+      throw new BadRequestException('subscriberId is required for incoming webhook');
+    }
+
+    await this.createChannelEndpoint.execute(
+      CreateChannelEndpointCommand.create({
+        organizationId: stateData.organizationId,
+        environmentId: stateData.environmentId,
+        context: stateData.context,
+        integrationIdentifier: integration.identifier,
+        subscriberId: stateData.subscriberId,
+        type: ENDPOINT_TYPES.WEBHOOK,
+        endpoint: {
+          url: authData.incoming_webhook.url,
+        },
+      })
+    );
   }
 
   private async getIntegration(stateData: StateData): Promise<IntegrationEntity> {

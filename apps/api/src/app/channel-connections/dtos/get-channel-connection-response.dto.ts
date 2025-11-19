@@ -31,6 +31,20 @@ export class GetChannelConnectionResponseDto {
   })
   integrationIdentifier: string | null;
 
+  @ApiProperty({
+    description: 'The subscriber ID to which the channel connection is linked',
+    type: String,
+    example: 'subscriber-123',
+  })
+  subscriberId: string | null;
+
+  @ApiProperty({
+    description: 'The context of the channel connection',
+    type: [String],
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  contextKeys: string[];
+
   @ApiProperty({ type: WorkspaceDto })
   workspace: WorkspaceDto;
 

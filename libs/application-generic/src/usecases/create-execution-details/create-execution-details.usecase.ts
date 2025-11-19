@@ -49,6 +49,7 @@ const mapDetailToEventType = {
   [DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS]: 'subscriber_missing_email_address',
   [DetailEnum.SUBSCRIBER_MISSING_PHONE_NUMBER]: 'subscriber_missing_phone_number',
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL]: 'subscriber_channel_missing',
+  [DetailEnum.SUBSCRIBER_CONTEXT_NO_ACTIVE_CHANNEL]: 'subscriber_context_channel_missing',
   [DetailEnum.SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION]: 'subscriber_validation_failed',
 
   // Provider events
@@ -181,6 +182,7 @@ export class CreateExecutionDetails {
       entity_id: command.jobId,
       step_run_type: command.channel as StepType,
       workflow_run_identifier: command.workflowRunIdentifier,
+      workflow_id: command.notificationTemplateId,
     };
 
     await this.traceLogRepository.createStepRun([traceData]);

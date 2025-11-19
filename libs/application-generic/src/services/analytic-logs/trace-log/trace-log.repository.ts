@@ -102,8 +102,12 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     environmentId: string,
     organizationId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    workflowIds?: string[]
   ): Promise<Array<{ date: string; event_type: string; count: string }>> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? `AND traces.workflow_id IN {workflowIds:Array(String)}` : '';
+
     const query = `
       SELECT 
         toDate(traces.created_at) as date,
@@ -117,16 +121,21 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
         AND traces.created_at >= {startDate:DateTime64(3)}
         AND traces.created_at <= {endDate:DateTime64(3)}
         AND traces.event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+        ${workflowFilter}
       GROUP BY date, traces.event_type
       ORDER BY date, traces.event_type
     `;
 
-    const params = {
+    const params: Record<string, unknown> = {
       environmentId,
       organizationId,
       startDate: LogRepository.formatDateTime64(startDate),
       endDate: LogRepository.formatDateTime64(endDate),
     };
+
+    if (workflowIds && workflowIds.length > 0) {
+      params.workflowIds = workflowIds;
+    }
 
     const result = await this.clickhouseService.query<{
       date: string;
@@ -146,8 +155,12 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     startDate: Date,
     endDate: Date,
     previousStartDate: Date,
-    previousEndDate: Date
+    previousEndDate: Date,
+    workflowIds?: string[]
   ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? `AND workflow_id IN {workflowIds:Array(String)}` : '';
+
     const currentQuery = `
       SELECT count(*) as count
       FROM traces
@@ -158,6 +171,7 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
         AND created_at <= {endDate:DateTime64(3)}
         AND entity_type = 'step_run'
         AND event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+        ${workflowFilter}
     `;
 
     const previousQuery = `
@@ -170,21 +184,27 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
         AND created_at <= {previousEndDate:DateTime64(3)}
         AND entity_type = 'step_run'
         AND event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+        ${workflowFilter}
     `;
 
-    const currentParams = {
+    const currentParams: Record<string, unknown> = {
       environmentId,
       organizationId,
       startDate: LogRepository.formatDateTime64(startDate),
       endDate: LogRepository.formatDateTime64(endDate),
     };
 
-    const previousParams = {
+    const previousParams: Record<string, unknown> = {
       environmentId,
       organizationId,
       previousStartDate: LogRepository.formatDateTime64(previousStartDate),
       previousEndDate: LogRepository.formatDateTime64(previousEndDate),
     };
+
+    if (workflowIds && workflowIds.length > 0) {
+      currentParams.workflowIds = workflowIds;
+      previousParams.workflowIds = workflowIds;
+    }
 
     const [currentResult, previousResult] = await Promise.all([
       this.clickhouseService.query<{ count: string }>({
@@ -290,6 +310,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Subscriber integration missing';
     case 'subscriber_channel_missing':
       return 'Subscriber channel missing';
+    case 'subscriber_context_channel_missing':
+      return 'Subscriber does not have a configured channel with the given context';
     case 'subscriber_validation_failed':
       return 'Subscriber validation failed';
     case 'subscriber_missing_email_address':

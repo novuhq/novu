@@ -50,6 +50,7 @@ export class MessageInteractionService {
                 raw_data: trace.raw_data,
                 status: trace.status,
                 workflow_run_identifier: trace.workflow_run_identifier,
+                workflow_id: trace.workflow_id,
               }) satisfies Omit<Trace, 'id' | 'expires_at' | 'entity_type'>
           )
         );

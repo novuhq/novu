@@ -23,6 +23,7 @@ const schemaDefinition = {
   step_run_id: { type: CHString() }, // Maps to JobEntity._id
   step_id: { type: CHString() }, // Maps to messageTemplate._id
   workflow_run_id: { type: CHNullable(CHString()) }, // Maps to NotificationEntity._id
+  workflow_id: { type: CHString('') }, // Maps to NotificationTemplateEntity._id
 
   // Context
   organization_id: { type: CHString() },

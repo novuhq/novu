@@ -50,6 +50,20 @@ export class GetChannelEndpointResponseDto {
   connectionIdentifier: string | null;
 
   @ApiProperty({
+    description: 'The subscriber ID to which the channel endpoint is linked',
+    type: String,
+    example: 'subscriber-123',
+  })
+  subscriberId: string | null;
+
+  @ApiProperty({
+    description: 'The context of the channel connection',
+    type: [String],
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  contextKeys: string[];
+
+  @ApiProperty({
     description: 'Type of channel endpoint',
     enum: Object.values(ENDPOINT_TYPES),
     example: ENDPOINT_TYPES.SLACK_CHANNEL,

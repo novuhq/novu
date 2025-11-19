@@ -21,8 +21,8 @@ export class ListChannelConnections {
       _organizationId: command.user.organizationId,
     };
 
-    if (command.resource) {
-      filter.resource = command.resource;
+    if (command.subscriberId) {
+      filter.subscriberId = command.subscriberId;
     }
 
     if (command.channel) {
@@ -35,6 +35,11 @@ export class ListChannelConnections {
 
     if (command.integrationIdentifier) {
       filter.integrationIdentifier = command.integrationIdentifier;
+    }
+
+    if (command.contextKeys !== undefined) {
+      const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(command.contextKeys);
+      filter.contextKeys = contextQuery.contextKeys;
     }
 
     let channelConnection: ChannelConnectionEntity | null = null;

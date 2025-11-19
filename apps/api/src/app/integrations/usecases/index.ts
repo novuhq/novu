@@ -2,11 +2,11 @@ import {
   CalculateLimitNovuIntegration,
   ConditionsFilter,
   GetDecryptedIntegrations,
-  GetNovuProviderCredentials,
   NormalizeVariables,
   SelectIntegration,
 } from '@novu/application-generic';
 import { CreateChannelConnection } from '../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { CreateChannelEndpoint } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { AutoConfigureIntegration } from './auto-configure-integration/auto-configure-integration.usecase';
 import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.usecase';
 import { SlackOauthCallback } from './chat-oauth-callback/slack-oauth-callback/slack-oauth-callback.usecase';
@@ -47,4 +47,5 @@ export const USE_CASES = [
   SlackOauthCallback,
   ChatOauthCallback,
   CreateChannelConnection,
+  CreateChannelEndpoint,
 ];

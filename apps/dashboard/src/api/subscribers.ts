@@ -70,7 +70,7 @@ export const deleteSubscriber = async ({
   environment: IEnvironment;
   subscriberId: string;
 }) => {
-  const response = await delV2<RemoveSubscriberResponseDto>(`/subscribers/${subscriberId}`, {
+  const response = await delV2<RemoveSubscriberResponseDto>(`/subscribers/${encodeURIComponent(subscriberId)}`, {
     environment,
   });
   return response;
@@ -83,7 +83,7 @@ export const getSubscriber = async ({
   environment: IEnvironment;
   subscriberId: string;
 }) => {
-  const { data } = await getV2<{ data: SubscriberResponseDto }>(`/subscribers/${subscriberId}`, {
+  const { data } = await getV2<{ data: SubscriberResponseDto }>(`/subscribers/${encodeURIComponent(subscriberId)}`, {
     environment,
   });
 
@@ -99,7 +99,7 @@ export const patchSubscriber = async ({
   subscriberId: string;
   subscriber: Partial<PatchSubscriberRequestDto>;
 }) => {
-  const { data } = await patchV2<{ data: SubscriberResponseDto }>(`/subscribers/${subscriberId}`, {
+  const { data } = await patchV2<{ data: SubscriberResponseDto }>(`/subscribers/${encodeURIComponent(subscriberId)}`, {
     environment,
     body: subscriber,
   });
@@ -114,9 +114,12 @@ export const getSubscriberPreferences = async ({
   environment: IEnvironment;
   subscriberId: string;
 }) => {
-  const { data } = await getV2<{ data: GetSubscriberPreferencesDto }>(`/subscribers/${subscriberId}/preferences`, {
-    environment,
-  });
+  const { data } = await getV2<{ data: GetSubscriberPreferencesDto }>(
+    `/subscribers/${encodeURIComponent(subscriberId)}/preferences`,
+    {
+      environment,
+    }
+  );
 
   return data;
 };
@@ -130,10 +133,13 @@ export const patchSubscriberPreferences = async ({
   subscriberId: string;
   preferences: Partial<PatchSubscriberPreferencesDto>;
 }) => {
-  const { data } = await patchV2<{ data: GetSubscriberPreferencesDto }>(`/subscribers/${subscriberId}/preferences`, {
-    environment,
-    body: preferences,
-  });
+  const { data } = await patchV2<{ data: GetSubscriberPreferencesDto }>(
+    `/subscribers/${encodeURIComponent(subscriberId)}/preferences`,
+    {
+      environment,
+      body: preferences,
+    }
+  );
 
   return data;
 };
@@ -187,9 +193,12 @@ export const getSubscriberSubscriptions = async ({
     ...(includeCursor && { includeCursor: includeCursor.toString() }),
   });
 
-  const response = await getV2<ListTopicSubscriptionsResponse>(`/subscribers/${subscriberId}/subscriptions?${params}`, {
-    environment,
-  });
+  const response = await getV2<ListTopicSubscriptionsResponse>(
+    `/subscribers/${encodeURIComponent(subscriberId)}/subscriptions?${params}`,
+    {
+      environment,
+    }
+  );
 
   return response;
 };

@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateChange, CreateChangeCommand, InvalidateCacheService } from '@novu/application-generic';
+import { CreateChange, CreateChangeCommand, InvalidateCacheService, NotificationStep } from '@novu/application-generic';
 import { ChangeRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
 
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
 
@@ -42,6 +43,7 @@ export class ChangeTemplateActiveStatus {
         $set: {
           active: command.active,
           draft: !command.active,
+          status: computeWorkflowStatus(command.active, foundTemplate.steps),
         },
       }
     );

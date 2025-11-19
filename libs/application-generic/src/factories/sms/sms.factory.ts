@@ -16,6 +16,7 @@ import {
   GupshupSmsHandler,
   IMediaHandler,
   InfobipSmsHandler,
+  ISendProSmsHandler,
   ISendSmsHandler,
   KannelSmsHandler,
   MaqsamHandler,
@@ -77,6 +78,7 @@ export class SmsFactory implements ISmsFactory {
     new UnifonicHandler(),
     new SmsmodeHandler(),
     new BulkSmsHandler(),
+    new ISendProSmsHandler()
   ];
 
   getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {

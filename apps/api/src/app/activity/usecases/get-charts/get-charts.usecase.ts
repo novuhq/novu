@@ -132,6 +132,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -146,6 +147,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -160,6 +162,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -174,6 +177,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -188,6 +192,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -202,6 +207,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -216,6 +222,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -230,6 +237,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -261,6 +269,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -275,6 +284,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });
@@ -289,6 +299,7 @@ export class GetCharts {
             organizationId,
             startDate,
             endDate,
+            workflowIds,
           })
         ),
       });

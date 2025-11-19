@@ -163,6 +163,7 @@ export class CancelDelayed {
         step_run_type: this.mapStepTypeEnumToStepType(job.type) || undefined,
         workflow_run_identifier: job.identifier || '',
         _notificationId: job._notificationId,
+        workflow_id: job._templateId,
       }));
 
       await this.messageInteractionService.trace(
