@@ -161,7 +161,6 @@ export const Monday$inboundSchema: z.ZodType<Monday, z.ZodTypeDef, unknown> = z.
   isEnabled: z.boolean(),
   hours: z.array(TimeRangeDto$inboundSchema).optional(),
 });
-
 /** @internal */
 export type Monday$Outbound = {
   isEnabled: boolean;
@@ -174,23 +173,9 @@ export const Monday$outboundSchema: z.ZodType<Monday$Outbound, z.ZodTypeDef, Mon
   hours: z.array(TimeRangeDto$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Monday$ {
-  /** @deprecated use `Monday$inboundSchema` instead. */
-  export const inboundSchema = Monday$inboundSchema;
-  /** @deprecated use `Monday$outboundSchema` instead. */
-  export const outboundSchema = Monday$outboundSchema;
-  /** @deprecated use `Monday$Outbound` instead. */
-  export type Outbound = Monday$Outbound;
-}
-
 export function mondayToJSON(monday: Monday): string {
   return JSON.stringify(Monday$outboundSchema.parse(monday));
 }
-
 export function mondayFromJSON(jsonString: string): SafeParseResult<Monday, SDKValidationError> {
   return safeParse(jsonString, (x) => Monday$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Monday' from JSON`);
 }
@@ -200,7 +185,6 @@ export const Tuesday$inboundSchema: z.ZodType<Tuesday, z.ZodTypeDef, unknown> = 
   isEnabled: z.boolean(),
   hours: z.array(TimeRangeDto$inboundSchema).optional(),
 });
-
 /** @internal */
 export type Tuesday$Outbound = {
   isEnabled: boolean;
@@ -213,23 +197,9 @@ export const Tuesday$outboundSchema: z.ZodType<Tuesday$Outbound, z.ZodTypeDef, T
   hours: z.array(TimeRangeDto$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Tuesday$ {
-  /** @deprecated use `Tuesday$inboundSchema` instead. */
-  export const inboundSchema = Tuesday$inboundSchema;
-  /** @deprecated use `Tuesday$outboundSchema` instead. */
-  export const outboundSchema = Tuesday$outboundSchema;
-  /** @deprecated use `Tuesday$Outbound` instead. */
-  export type Outbound = Tuesday$Outbound;
-}
-
 export function tuesdayToJSON(tuesday: Tuesday): string {
   return JSON.stringify(Tuesday$outboundSchema.parse(tuesday));
 }
-
 export function tuesdayFromJSON(jsonString: string): SafeParseResult<Tuesday, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -243,7 +213,6 @@ export const Wednesday$inboundSchema: z.ZodType<Wednesday, z.ZodTypeDef, unknown
   isEnabled: z.boolean(),
   hours: z.array(TimeRangeDto$inboundSchema).optional(),
 });
-
 /** @internal */
 export type Wednesday$Outbound = {
   isEnabled: boolean;
@@ -256,23 +225,9 @@ export const Wednesday$outboundSchema: z.ZodType<Wednesday$Outbound, z.ZodTypeDe
   hours: z.array(TimeRangeDto$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Wednesday$ {
-  /** @deprecated use `Wednesday$inboundSchema` instead. */
-  export const inboundSchema = Wednesday$inboundSchema;
-  /** @deprecated use `Wednesday$outboundSchema` instead. */
-  export const outboundSchema = Wednesday$outboundSchema;
-  /** @deprecated use `Wednesday$Outbound` instead. */
-  export type Outbound = Wednesday$Outbound;
-}
-
 export function wednesdayToJSON(wednesday: Wednesday): string {
   return JSON.stringify(Wednesday$outboundSchema.parse(wednesday));
 }
-
 export function wednesdayFromJSON(jsonString: string): SafeParseResult<Wednesday, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -286,7 +241,6 @@ export const Thursday$inboundSchema: z.ZodType<Thursday, z.ZodTypeDef, unknown> 
   isEnabled: z.boolean(),
   hours: z.array(TimeRangeDto$inboundSchema).optional(),
 });
-
 /** @internal */
 export type Thursday$Outbound = {
   isEnabled: boolean;
@@ -299,23 +253,9 @@ export const Thursday$outboundSchema: z.ZodType<Thursday$Outbound, z.ZodTypeDef,
   hours: z.array(TimeRangeDto$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Thursday$ {
-  /** @deprecated use `Thursday$inboundSchema` instead. */
-  export const inboundSchema = Thursday$inboundSchema;
-  /** @deprecated use `Thursday$outboundSchema` instead. */
-  export const outboundSchema = Thursday$outboundSchema;
-  /** @deprecated use `Thursday$Outbound` instead. */
-  export type Outbound = Thursday$Outbound;
-}
-
 export function thursdayToJSON(thursday: Thursday): string {
   return JSON.stringify(Thursday$outboundSchema.parse(thursday));
 }
-
 export function thursdayFromJSON(jsonString: string): SafeParseResult<Thursday, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -329,7 +269,6 @@ export const Friday$inboundSchema: z.ZodType<Friday, z.ZodTypeDef, unknown> = z.
   isEnabled: z.boolean(),
   hours: z.array(TimeRangeDto$inboundSchema).optional(),
 });
-
 /** @internal */
 export type Friday$Outbound = {
   isEnabled: boolean;
@@ -342,23 +281,9 @@ export const Friday$outboundSchema: z.ZodType<Friday$Outbound, z.ZodTypeDef, Fri
   hours: z.array(TimeRangeDto$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Friday$ {
-  /** @deprecated use `Friday$inboundSchema` instead. */
-  export const inboundSchema = Friday$inboundSchema;
-  /** @deprecated use `Friday$outboundSchema` instead. */
-  export const outboundSchema = Friday$outboundSchema;
-  /** @deprecated use `Friday$Outbound` instead. */
-  export type Outbound = Friday$Outbound;
-}
-
 export function fridayToJSON(friday: Friday): string {
   return JSON.stringify(Friday$outboundSchema.parse(friday));
 }
-
 export function fridayFromJSON(jsonString: string): SafeParseResult<Friday, SDKValidationError> {
   return safeParse(jsonString, (x) => Friday$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Friday' from JSON`);
 }
@@ -368,7 +293,6 @@ export const Saturday$inboundSchema: z.ZodType<Saturday, z.ZodTypeDef, unknown> 
   isEnabled: z.boolean(),
   hours: z.array(TimeRangeDto$inboundSchema).optional(),
 });
-
 /** @internal */
 export type Saturday$Outbound = {
   isEnabled: boolean;
@@ -381,23 +305,9 @@ export const Saturday$outboundSchema: z.ZodType<Saturday$Outbound, z.ZodTypeDef,
   hours: z.array(TimeRangeDto$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Saturday$ {
-  /** @deprecated use `Saturday$inboundSchema` instead. */
-  export const inboundSchema = Saturday$inboundSchema;
-  /** @deprecated use `Saturday$outboundSchema` instead. */
-  export const outboundSchema = Saturday$outboundSchema;
-  /** @deprecated use `Saturday$Outbound` instead. */
-  export type Outbound = Saturday$Outbound;
-}
-
 export function saturdayToJSON(saturday: Saturday): string {
   return JSON.stringify(Saturday$outboundSchema.parse(saturday));
 }
-
 export function saturdayFromJSON(jsonString: string): SafeParseResult<Saturday, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -411,7 +321,6 @@ export const Sunday$inboundSchema: z.ZodType<Sunday, z.ZodTypeDef, unknown> = z.
   isEnabled: z.boolean(),
   hours: z.array(TimeRangeDto$inboundSchema).optional(),
 });
-
 /** @internal */
 export type Sunday$Outbound = {
   isEnabled: boolean;
@@ -424,23 +333,9 @@ export const Sunday$outboundSchema: z.ZodType<Sunday$Outbound, z.ZodTypeDef, Sun
   hours: z.array(TimeRangeDto$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Sunday$ {
-  /** @deprecated use `Sunday$inboundSchema` instead. */
-  export const inboundSchema = Sunday$inboundSchema;
-  /** @deprecated use `Sunday$outboundSchema` instead. */
-  export const outboundSchema = Sunday$outboundSchema;
-  /** @deprecated use `Sunday$Outbound` instead. */
-  export type Outbound = Sunday$Outbound;
-}
-
 export function sundayToJSON(sunday: Sunday): string {
   return JSON.stringify(Sunday$outboundSchema.parse(sunday));
 }
-
 export function sundayFromJSON(jsonString: string): SafeParseResult<Sunday, SDKValidationError> {
   return safeParse(jsonString, (x) => Sunday$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Sunday' from JSON`);
 }
@@ -455,7 +350,6 @@ export const WeeklySchedule$inboundSchema: z.ZodType<WeeklySchedule, z.ZodTypeDe
   saturday: z.lazy(() => Saturday$inboundSchema).optional(),
   sunday: z.lazy(() => Sunday$inboundSchema).optional(),
 });
-
 /** @internal */
 export type WeeklySchedule$Outbound = {
   monday?: Monday$Outbound | undefined;
@@ -480,23 +374,9 @@ export const WeeklySchedule$outboundSchema: z.ZodType<WeeklySchedule$Outbound, z
   }
 );
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WeeklySchedule$ {
-  /** @deprecated use `WeeklySchedule$inboundSchema` instead. */
-  export const inboundSchema = WeeklySchedule$inboundSchema;
-  /** @deprecated use `WeeklySchedule$outboundSchema` instead. */
-  export const outboundSchema = WeeklySchedule$outboundSchema;
-  /** @deprecated use `WeeklySchedule$Outbound` instead. */
-  export type Outbound = WeeklySchedule$Outbound;
-}
-
 export function weeklyScheduleToJSON(weeklySchedule: WeeklySchedule): string {
   return JSON.stringify(WeeklySchedule$outboundSchema.parse(weeklySchedule));
 }
-
 export function weeklyScheduleFromJSON(jsonString: string): SafeParseResult<WeeklySchedule, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -510,7 +390,6 @@ export const ScheduleDto$inboundSchema: z.ZodType<ScheduleDto, z.ZodTypeDef, unk
   isEnabled: z.boolean(),
   weeklySchedule: z.lazy(() => WeeklySchedule$inboundSchema).optional(),
 });
-
 /** @internal */
 export type ScheduleDto$Outbound = {
   isEnabled: boolean;
@@ -523,23 +402,9 @@ export const ScheduleDto$outboundSchema: z.ZodType<ScheduleDto$Outbound, z.ZodTy
   weeklySchedule: z.lazy(() => WeeklySchedule$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ScheduleDto$ {
-  /** @deprecated use `ScheduleDto$inboundSchema` instead. */
-  export const inboundSchema = ScheduleDto$inboundSchema;
-  /** @deprecated use `ScheduleDto$outboundSchema` instead. */
-  export const outboundSchema = ScheduleDto$outboundSchema;
-  /** @deprecated use `ScheduleDto$Outbound` instead. */
-  export type Outbound = ScheduleDto$Outbound;
-}
-
 export function scheduleDtoToJSON(scheduleDto: ScheduleDto): string {
   return JSON.stringify(ScheduleDto$outboundSchema.parse(scheduleDto));
 }
-
 export function scheduleDtoFromJSON(jsonString: string): SafeParseResult<ScheduleDto, SDKValidationError> {
   return safeParse(
     jsonString,

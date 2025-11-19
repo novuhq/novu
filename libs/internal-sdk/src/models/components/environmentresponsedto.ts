@@ -8,7 +8,7 @@ import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { ApiKeyDto, ApiKeyDto$inboundSchema, ApiKeyDto$Outbound, ApiKeyDto$outboundSchema } from './apikeydto.js';
+import { ApiKeyDto, ApiKeyDto$inboundSchema } from './apikeydto.js';
 
 /**
  * Type of the environment
@@ -62,21 +62,6 @@ export const EnvironmentResponseDtoType$inboundSchema: z.ZodNativeEnum<typeof En
   z.nativeEnum(EnvironmentResponseDtoType);
 
 /** @internal */
-export const EnvironmentResponseDtoType$outboundSchema: z.ZodNativeEnum<typeof EnvironmentResponseDtoType> =
-  EnvironmentResponseDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EnvironmentResponseDtoType$ {
-  /** @deprecated use `EnvironmentResponseDtoType$inboundSchema` instead. */
-  export const inboundSchema = EnvironmentResponseDtoType$inboundSchema;
-  /** @deprecated use `EnvironmentResponseDtoType$outboundSchema` instead. */
-  export const outboundSchema = EnvironmentResponseDtoType$outboundSchema;
-}
-
-/** @internal */
 export const EnvironmentResponseDto$inboundSchema: z.ZodType<EnvironmentResponseDto, z.ZodTypeDef, unknown> = z
   .object({
     _id: z.string(),
@@ -95,59 +80,6 @@ export const EnvironmentResponseDto$inboundSchema: z.ZodType<EnvironmentResponse
       _parentId: 'parentId',
     });
   });
-
-/** @internal */
-export type EnvironmentResponseDto$Outbound = {
-  _id: string;
-  name: string;
-  _organizationId: string;
-  identifier: string;
-  type?: string | null | undefined;
-  apiKeys?: Array<ApiKeyDto$Outbound> | undefined;
-  _parentId?: string | undefined;
-  slug?: string | undefined;
-};
-
-/** @internal */
-export const EnvironmentResponseDto$outboundSchema: z.ZodType<
-  EnvironmentResponseDto$Outbound,
-  z.ZodTypeDef,
-  EnvironmentResponseDto
-> = z
-  .object({
-    id: z.string(),
-    name: z.string(),
-    organizationId: z.string(),
-    identifier: z.string(),
-    type: z.nullable(EnvironmentResponseDtoType$outboundSchema).optional(),
-    apiKeys: z.array(ApiKeyDto$outboundSchema).optional(),
-    parentId: z.string().optional(),
-    slug: z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-      organizationId: '_organizationId',
-      parentId: '_parentId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EnvironmentResponseDto$ {
-  /** @deprecated use `EnvironmentResponseDto$inboundSchema` instead. */
-  export const inboundSchema = EnvironmentResponseDto$inboundSchema;
-  /** @deprecated use `EnvironmentResponseDto$outboundSchema` instead. */
-  export const outboundSchema = EnvironmentResponseDto$outboundSchema;
-  /** @deprecated use `EnvironmentResponseDto$Outbound` instead. */
-  export type Outbound = EnvironmentResponseDto$Outbound;
-}
-
-export function environmentResponseDtoToJSON(environmentResponseDto: EnvironmentResponseDto): string {
-  return JSON.stringify(EnvironmentResponseDto$outboundSchema.parse(environmentResponseDto));
-}
 
 export function environmentResponseDtoFromJSON(
   jsonString: string

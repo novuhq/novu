@@ -17,20 +17,5 @@ export const LayoutCreationSourceEnum = {
 export type LayoutCreationSourceEnum = ClosedEnum<typeof LayoutCreationSourceEnum>;
 
 /** @internal */
-export const LayoutCreationSourceEnum$inboundSchema: z.ZodNativeEnum<typeof LayoutCreationSourceEnum> =
-  z.nativeEnum(LayoutCreationSourceEnum);
-
-/** @internal */
 export const LayoutCreationSourceEnum$outboundSchema: z.ZodNativeEnum<typeof LayoutCreationSourceEnum> =
-  LayoutCreationSourceEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutCreationSourceEnum$ {
-  /** @deprecated use `LayoutCreationSourceEnum$inboundSchema` instead. */
-  export const inboundSchema = LayoutCreationSourceEnum$inboundSchema;
-  /** @deprecated use `LayoutCreationSourceEnum$outboundSchema` instead. */
-  export const outboundSchema = LayoutCreationSourceEnum$outboundSchema;
-}
+  z.nativeEnum(LayoutCreationSourceEnum);

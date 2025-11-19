@@ -26,22 +26,6 @@ export type TopicsControllerDeleteTopicResponse = {
 };
 
 /** @internal */
-export const TopicsControllerDeleteTopicRequest$inboundSchema: z.ZodType<
-  TopicsControllerDeleteTopicRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    topicKey: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type TopicsControllerDeleteTopicRequest$Outbound = {
   topicKey: string;
   'idempotency-key'?: string | undefined;
@@ -63,33 +47,10 @@ export const TopicsControllerDeleteTopicRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerDeleteTopicRequest$ {
-  /** @deprecated use `TopicsControllerDeleteTopicRequest$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerDeleteTopicRequest$inboundSchema;
-  /** @deprecated use `TopicsControllerDeleteTopicRequest$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerDeleteTopicRequest$outboundSchema;
-  /** @deprecated use `TopicsControllerDeleteTopicRequest$Outbound` instead. */
-  export type Outbound = TopicsControllerDeleteTopicRequest$Outbound;
-}
-
 export function topicsControllerDeleteTopicRequestToJSON(
   topicsControllerDeleteTopicRequest: TopicsControllerDeleteTopicRequest
 ): string {
   return JSON.stringify(TopicsControllerDeleteTopicRequest$outboundSchema.parse(topicsControllerDeleteTopicRequest));
-}
-
-export function topicsControllerDeleteTopicRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TopicsControllerDeleteTopicRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TopicsControllerDeleteTopicRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TopicsControllerDeleteTopicRequest' from JSON`
-  );
 }
 
 /** @internal */
@@ -108,48 +69,6 @@ export const TopicsControllerDeleteTopicResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type TopicsControllerDeleteTopicResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.DeleteTopicResponseDto$Outbound;
-};
-
-/** @internal */
-export const TopicsControllerDeleteTopicResponse$outboundSchema: z.ZodType<
-  TopicsControllerDeleteTopicResponse$Outbound,
-  z.ZodTypeDef,
-  TopicsControllerDeleteTopicResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.DeleteTopicResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerDeleteTopicResponse$ {
-  /** @deprecated use `TopicsControllerDeleteTopicResponse$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerDeleteTopicResponse$inboundSchema;
-  /** @deprecated use `TopicsControllerDeleteTopicResponse$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerDeleteTopicResponse$outboundSchema;
-  /** @deprecated use `TopicsControllerDeleteTopicResponse$Outbound` instead. */
-  export type Outbound = TopicsControllerDeleteTopicResponse$Outbound;
-}
-
-export function topicsControllerDeleteTopicResponseToJSON(
-  topicsControllerDeleteTopicResponse: TopicsControllerDeleteTopicResponse
-): string {
-  return JSON.stringify(TopicsControllerDeleteTopicResponse$outboundSchema.parse(topicsControllerDeleteTopicResponse));
-}
 
 export function topicsControllerDeleteTopicResponseFromJSON(
   jsonString: string

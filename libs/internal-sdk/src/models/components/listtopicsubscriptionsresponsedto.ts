@@ -9,8 +9,6 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   TopicSubscriptionResponseDto,
   TopicSubscriptionResponseDto$inboundSchema,
-  TopicSubscriptionResponseDto$Outbound,
-  TopicSubscriptionResponseDto$outboundSchema,
 } from './topicsubscriptionresponsedto.js';
 
 export type ListTopicSubscriptionsResponseDto = {
@@ -48,47 +46,6 @@ export const ListTopicSubscriptionsResponseDto$inboundSchema: z.ZodType<
   totalCount: z.number(),
   totalCountCapped: z.boolean(),
 });
-
-/** @internal */
-export type ListTopicSubscriptionsResponseDto$Outbound = {
-  data: Array<TopicSubscriptionResponseDto$Outbound>;
-  next: string | null;
-  previous: string | null;
-  totalCount: number;
-  totalCountCapped: boolean;
-};
-
-/** @internal */
-export const ListTopicSubscriptionsResponseDto$outboundSchema: z.ZodType<
-  ListTopicSubscriptionsResponseDto$Outbound,
-  z.ZodTypeDef,
-  ListTopicSubscriptionsResponseDto
-> = z.object({
-  data: z.array(TopicSubscriptionResponseDto$outboundSchema),
-  next: z.nullable(z.string()),
-  previous: z.nullable(z.string()),
-  totalCount: z.number(),
-  totalCountCapped: z.boolean(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ListTopicSubscriptionsResponseDto$ {
-  /** @deprecated use `ListTopicSubscriptionsResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ListTopicSubscriptionsResponseDto$inboundSchema;
-  /** @deprecated use `ListTopicSubscriptionsResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ListTopicSubscriptionsResponseDto$outboundSchema;
-  /** @deprecated use `ListTopicSubscriptionsResponseDto$Outbound` instead. */
-  export type Outbound = ListTopicSubscriptionsResponseDto$Outbound;
-}
-
-export function listTopicSubscriptionsResponseDtoToJSON(
-  listTopicSubscriptionsResponseDto: ListTopicSubscriptionsResponseDto
-): string {
-  return JSON.stringify(ListTopicSubscriptionsResponseDto$outboundSchema.parse(listTopicSubscriptionsResponseDto));
-}
 
 export function listTopicSubscriptionsResponseDtoFromJSON(
   jsonString: string

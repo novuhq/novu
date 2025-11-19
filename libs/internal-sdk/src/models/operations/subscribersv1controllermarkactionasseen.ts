@@ -26,26 +26,6 @@ export type SubscribersV1ControllerMarkActionAsSeenResponse = {
 };
 
 /** @internal */
-export const SubscribersV1ControllerMarkActionAsSeenRequest$inboundSchema: z.ZodType<
-  SubscribersV1ControllerMarkActionAsSeenRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    messageId: z.string(),
-    type: z.string(),
-    subscriberId: z.string(),
-    'idempotency-key': z.string().optional(),
-    MarkMessageActionAsSeenDto: components.MarkMessageActionAsSeenDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      MarkMessageActionAsSeenDto: 'markMessageActionAsSeenDto',
-    });
-  });
-
-/** @internal */
 export type SubscribersV1ControllerMarkActionAsSeenRequest$Outbound = {
   messageId: string;
   type: string;
@@ -74,34 +54,11 @@ export const SubscribersV1ControllerMarkActionAsSeenRequest$outboundSchema: z.Zo
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerMarkActionAsSeenRequest$ {
-  /** @deprecated use `SubscribersV1ControllerMarkActionAsSeenRequest$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerMarkActionAsSeenRequest$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerMarkActionAsSeenRequest$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerMarkActionAsSeenRequest$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerMarkActionAsSeenRequest$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerMarkActionAsSeenRequest$Outbound;
-}
-
 export function subscribersV1ControllerMarkActionAsSeenRequestToJSON(
   subscribersV1ControllerMarkActionAsSeenRequest: SubscribersV1ControllerMarkActionAsSeenRequest
 ): string {
   return JSON.stringify(
     SubscribersV1ControllerMarkActionAsSeenRequest$outboundSchema.parse(subscribersV1ControllerMarkActionAsSeenRequest)
-  );
-}
-
-export function subscribersV1ControllerMarkActionAsSeenRequestFromJSON(
-  jsonString: string
-): SafeParseResult<SubscribersV1ControllerMarkActionAsSeenRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscribersV1ControllerMarkActionAsSeenRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscribersV1ControllerMarkActionAsSeenRequest' from JSON`
   );
 }
 
@@ -121,52 +78,6 @@ export const SubscribersV1ControllerMarkActionAsSeenResponse$inboundSchema: z.Zo
       Result: 'result',
     });
   });
-
-/** @internal */
-export type SubscribersV1ControllerMarkActionAsSeenResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.MessageResponseDto$Outbound;
-};
-
-/** @internal */
-export const SubscribersV1ControllerMarkActionAsSeenResponse$outboundSchema: z.ZodType<
-  SubscribersV1ControllerMarkActionAsSeenResponse$Outbound,
-  z.ZodTypeDef,
-  SubscribersV1ControllerMarkActionAsSeenResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.MessageResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerMarkActionAsSeenResponse$ {
-  /** @deprecated use `SubscribersV1ControllerMarkActionAsSeenResponse$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerMarkActionAsSeenResponse$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerMarkActionAsSeenResponse$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerMarkActionAsSeenResponse$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerMarkActionAsSeenResponse$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerMarkActionAsSeenResponse$Outbound;
-}
-
-export function subscribersV1ControllerMarkActionAsSeenResponseToJSON(
-  subscribersV1ControllerMarkActionAsSeenResponse: SubscribersV1ControllerMarkActionAsSeenResponse
-): string {
-  return JSON.stringify(
-    SubscribersV1ControllerMarkActionAsSeenResponse$outboundSchema.parse(
-      subscribersV1ControllerMarkActionAsSeenResponse
-    )
-  );
-}
 
 export function subscribersV1ControllerMarkActionAsSeenResponseFromJSON(
   jsonString: string

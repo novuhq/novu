@@ -21,18 +21,3 @@ export type PreferenceOverrideSourceEnum = ClosedEnum<typeof PreferenceOverrideS
 /** @internal */
 export const PreferenceOverrideSourceEnum$inboundSchema: z.ZodNativeEnum<typeof PreferenceOverrideSourceEnum> =
   z.nativeEnum(PreferenceOverrideSourceEnum);
-
-/** @internal */
-export const PreferenceOverrideSourceEnum$outboundSchema: z.ZodNativeEnum<typeof PreferenceOverrideSourceEnum> =
-  PreferenceOverrideSourceEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PreferenceOverrideSourceEnum$ {
-  /** @deprecated use `PreferenceOverrideSourceEnum$inboundSchema` instead. */
-  export const inboundSchema = PreferenceOverrideSourceEnum$inboundSchema;
-  /** @deprecated use `PreferenceOverrideSourceEnum$outboundSchema` instead. */
-  export const outboundSchema = PreferenceOverrideSourceEnum$outboundSchema;
-}

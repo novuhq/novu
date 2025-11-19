@@ -6,12 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  TopicResponseDto,
-  TopicResponseDto$inboundSchema,
-  TopicResponseDto$Outbound,
-  TopicResponseDto$outboundSchema,
-} from './topicresponsedto.js';
+import { TopicResponseDto, TopicResponseDto$inboundSchema } from './topicresponsedto.js';
 
 export type ListTopicsResponseDto = {
   /**
@@ -44,45 +39,6 @@ export const ListTopicsResponseDto$inboundSchema: z.ZodType<ListTopicsResponseDt
   totalCount: z.number(),
   totalCountCapped: z.boolean(),
 });
-
-/** @internal */
-export type ListTopicsResponseDto$Outbound = {
-  data: Array<TopicResponseDto$Outbound>;
-  next: string | null;
-  previous: string | null;
-  totalCount: number;
-  totalCountCapped: boolean;
-};
-
-/** @internal */
-export const ListTopicsResponseDto$outboundSchema: z.ZodType<
-  ListTopicsResponseDto$Outbound,
-  z.ZodTypeDef,
-  ListTopicsResponseDto
-> = z.object({
-  data: z.array(TopicResponseDto$outboundSchema),
-  next: z.nullable(z.string()),
-  previous: z.nullable(z.string()),
-  totalCount: z.number(),
-  totalCountCapped: z.boolean(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ListTopicsResponseDto$ {
-  /** @deprecated use `ListTopicsResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ListTopicsResponseDto$inboundSchema;
-  /** @deprecated use `ListTopicsResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ListTopicsResponseDto$outboundSchema;
-  /** @deprecated use `ListTopicsResponseDto$Outbound` instead. */
-  export type Outbound = ListTopicsResponseDto$Outbound;
-}
-
-export function listTopicsResponseDtoToJSON(listTopicsResponseDto: ListTopicsResponseDto): string {
-  return JSON.stringify(ListTopicsResponseDto$outboundSchema.parse(listTopicsResponseDto));
-}
 
 export function listTopicsResponseDtoFromJSON(
   jsonString: string

@@ -4,16 +4,8 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  DelayControlDto,
-  DelayControlDto$inboundSchema,
-  DelayControlDto$Outbound,
-  DelayControlDto$outboundSchema,
-} from './delaycontroldto.js';
-import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
+import { DelayControlDto, DelayControlDto$Outbound, DelayControlDto$outboundSchema } from './delaycontroldto.js';
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from './steptypeenum.js';
 
 /**
  * Control values for the Delay step.
@@ -48,13 +40,6 @@ export type DelayStepUpsertDto = {
 };
 
 /** @internal */
-export const DelayStepUpsertDtoControlValues$inboundSchema: z.ZodType<
-  DelayStepUpsertDtoControlValues,
-  z.ZodTypeDef,
-  unknown
-> = z.union([DelayControlDto$inboundSchema, z.record(z.any())]);
-
-/** @internal */
 export type DelayStepUpsertDtoControlValues$Outbound = DelayControlDto$Outbound | { [k: string]: any };
 
 /** @internal */
@@ -64,49 +49,11 @@ export const DelayStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   DelayStepUpsertDtoControlValues
 > = z.union([DelayControlDto$outboundSchema, z.record(z.any())]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayStepUpsertDtoControlValues$ {
-  /** @deprecated use `DelayStepUpsertDtoControlValues$inboundSchema` instead. */
-  export const inboundSchema = DelayStepUpsertDtoControlValues$inboundSchema;
-  /** @deprecated use `DelayStepUpsertDtoControlValues$outboundSchema` instead. */
-  export const outboundSchema = DelayStepUpsertDtoControlValues$outboundSchema;
-  /** @deprecated use `DelayStepUpsertDtoControlValues$Outbound` instead. */
-  export type Outbound = DelayStepUpsertDtoControlValues$Outbound;
-}
-
 export function delayStepUpsertDtoControlValuesToJSON(
   delayStepUpsertDtoControlValues: DelayStepUpsertDtoControlValues
 ): string {
   return JSON.stringify(DelayStepUpsertDtoControlValues$outboundSchema.parse(delayStepUpsertDtoControlValues));
 }
-
-export function delayStepUpsertDtoControlValuesFromJSON(
-  jsonString: string
-): SafeParseResult<DelayStepUpsertDtoControlValues, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DelayStepUpsertDtoControlValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DelayStepUpsertDtoControlValues' from JSON`
-  );
-}
-
-/** @internal */
-export const DelayStepUpsertDto$inboundSchema: z.ZodType<DelayStepUpsertDto, z.ZodTypeDef, unknown> = z
-  .object({
-    _id: z.string().optional(),
-    stepId: z.string().optional(),
-    name: z.string(),
-    type: StepTypeEnum$inboundSchema,
-    controlValues: z.union([DelayControlDto$inboundSchema, z.record(z.any())]).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      _id: 'id',
-    });
-  });
 
 /** @internal */
 export type DelayStepUpsertDto$Outbound = {
@@ -136,29 +83,6 @@ export const DelayStepUpsertDto$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayStepUpsertDto$ {
-  /** @deprecated use `DelayStepUpsertDto$inboundSchema` instead. */
-  export const inboundSchema = DelayStepUpsertDto$inboundSchema;
-  /** @deprecated use `DelayStepUpsertDto$outboundSchema` instead. */
-  export const outboundSchema = DelayStepUpsertDto$outboundSchema;
-  /** @deprecated use `DelayStepUpsertDto$Outbound` instead. */
-  export type Outbound = DelayStepUpsertDto$Outbound;
-}
-
 export function delayStepUpsertDtoToJSON(delayStepUpsertDto: DelayStepUpsertDto): string {
   return JSON.stringify(DelayStepUpsertDto$outboundSchema.parse(delayStepUpsertDto));
-}
-
-export function delayStepUpsertDtoFromJSON(
-  jsonString: string
-): SafeParseResult<DelayStepUpsertDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DelayStepUpsertDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DelayStepUpsertDto' from JSON`
-  );
 }

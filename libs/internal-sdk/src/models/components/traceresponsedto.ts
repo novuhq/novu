@@ -94,29 +94,6 @@ export type TraceResponseDto = {
 /** @internal */
 export const Message$inboundSchema: z.ZodType<Message, z.ZodTypeDef, unknown> = z.object({});
 
-/** @internal */
-export type Message$Outbound = {};
-
-/** @internal */
-export const Message$outboundSchema: z.ZodType<Message$Outbound, z.ZodTypeDef, Message> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Message$ {
-  /** @deprecated use `Message$inboundSchema` instead. */
-  export const inboundSchema = Message$inboundSchema;
-  /** @deprecated use `Message$outboundSchema` instead. */
-  export const outboundSchema = Message$outboundSchema;
-  /** @deprecated use `Message$Outbound` instead. */
-  export type Outbound = Message$Outbound;
-}
-
-export function messageToJSON(message: Message): string {
-  return JSON.stringify(Message$outboundSchema.parse(message));
-}
-
 export function messageFromJSON(jsonString: string): SafeParseResult<Message, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -127,29 +104,6 @@ export function messageFromJSON(jsonString: string): SafeParseResult<Message, SD
 
 /** @internal */
 export const RawData$inboundSchema: z.ZodType<RawData, z.ZodTypeDef, unknown> = z.object({});
-
-/** @internal */
-export type RawData$Outbound = {};
-
-/** @internal */
-export const RawData$outboundSchema: z.ZodType<RawData$Outbound, z.ZodTypeDef, RawData> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace RawData$ {
-  /** @deprecated use `RawData$inboundSchema` instead. */
-  export const inboundSchema = RawData$inboundSchema;
-  /** @deprecated use `RawData$outboundSchema` instead. */
-  export const outboundSchema = RawData$outboundSchema;
-  /** @deprecated use `RawData$Outbound` instead. */
-  export type Outbound = RawData$Outbound;
-}
-
-export function rawDataToJSON(rawData: RawData): string {
-  return JSON.stringify(RawData$outboundSchema.parse(rawData));
-}
 
 export function rawDataFromJSON(jsonString: string): SafeParseResult<RawData, SDKValidationError> {
   return safeParse(
@@ -162,62 +116,12 @@ export function rawDataFromJSON(jsonString: string): SafeParseResult<RawData, SD
 /** @internal */
 export const UserId$inboundSchema: z.ZodType<UserId, z.ZodTypeDef, unknown> = z.object({});
 
-/** @internal */
-export type UserId$Outbound = {};
-
-/** @internal */
-export const UserId$outboundSchema: z.ZodType<UserId$Outbound, z.ZodTypeDef, UserId> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UserId$ {
-  /** @deprecated use `UserId$inboundSchema` instead. */
-  export const inboundSchema = UserId$inboundSchema;
-  /** @deprecated use `UserId$outboundSchema` instead. */
-  export const outboundSchema = UserId$outboundSchema;
-  /** @deprecated use `UserId$Outbound` instead. */
-  export type Outbound = UserId$Outbound;
-}
-
-export function userIdToJSON(userId: UserId): string {
-  return JSON.stringify(UserId$outboundSchema.parse(userId));
-}
-
 export function userIdFromJSON(jsonString: string): SafeParseResult<UserId, SDKValidationError> {
   return safeParse(jsonString, (x) => UserId$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'UserId' from JSON`);
 }
 
 /** @internal */
 export const ExternalSubscriberId$inboundSchema: z.ZodType<ExternalSubscriberId, z.ZodTypeDef, unknown> = z.object({});
-
-/** @internal */
-export type ExternalSubscriberId$Outbound = {};
-
-/** @internal */
-export const ExternalSubscriberId$outboundSchema: z.ZodType<
-  ExternalSubscriberId$Outbound,
-  z.ZodTypeDef,
-  ExternalSubscriberId
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ExternalSubscriberId$ {
-  /** @deprecated use `ExternalSubscriberId$inboundSchema` instead. */
-  export const inboundSchema = ExternalSubscriberId$inboundSchema;
-  /** @deprecated use `ExternalSubscriberId$outboundSchema` instead. */
-  export const outboundSchema = ExternalSubscriberId$outboundSchema;
-  /** @deprecated use `ExternalSubscriberId$Outbound` instead. */
-  export type Outbound = ExternalSubscriberId$Outbound;
-}
-
-export function externalSubscriberIdToJSON(externalSubscriberId: ExternalSubscriberId): string {
-  return JSON.stringify(ExternalSubscriberId$outboundSchema.parse(externalSubscriberId));
-}
 
 export function externalSubscriberIdFromJSON(
   jsonString: string
@@ -231,29 +135,6 @@ export function externalSubscriberIdFromJSON(
 
 /** @internal */
 export const SubscriberId$inboundSchema: z.ZodType<SubscriberId, z.ZodTypeDef, unknown> = z.object({});
-
-/** @internal */
-export type SubscriberId$Outbound = {};
-
-/** @internal */
-export const SubscriberId$outboundSchema: z.ZodType<SubscriberId$Outbound, z.ZodTypeDef, SubscriberId> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriberId$ {
-  /** @deprecated use `SubscriberId$inboundSchema` instead. */
-  export const inboundSchema = SubscriberId$inboundSchema;
-  /** @deprecated use `SubscriberId$outboundSchema` instead. */
-  export const outboundSchema = SubscriberId$outboundSchema;
-  /** @deprecated use `SubscriberId$Outbound` instead. */
-  export type Outbound = SubscriberId$Outbound;
-}
-
-export function subscriberIdToJSON(subscriberId: SubscriberId): string {
-  return JSON.stringify(SubscriberId$outboundSchema.parse(subscriberId));
-}
 
 export function subscriberIdFromJSON(jsonString: string): SafeParseResult<SubscriberId, SDKValidationError> {
   return safeParse(
@@ -280,60 +161,6 @@ export const TraceResponseDto$inboundSchema: z.ZodType<TraceResponseDto, z.ZodTy
   externalSubscriberId: z.nullable(z.lazy(() => ExternalSubscriberId$inboundSchema)).optional(),
   subscriberId: z.nullable(z.lazy(() => SubscriberId$inboundSchema)).optional(),
 });
-
-/** @internal */
-export type TraceResponseDto$Outbound = {
-  id: string;
-  createdAt: string;
-  eventType: string;
-  title: string;
-  message?: Message$Outbound | null | undefined;
-  rawData?: RawData$Outbound | null | undefined;
-  status: string;
-  entityType: string;
-  entityId: string;
-  organizationId: string;
-  environmentId: string;
-  userId?: UserId$Outbound | null | undefined;
-  externalSubscriberId?: ExternalSubscriberId$Outbound | null | undefined;
-  subscriberId?: SubscriberId$Outbound | null | undefined;
-};
-
-/** @internal */
-export const TraceResponseDto$outboundSchema: z.ZodType<TraceResponseDto$Outbound, z.ZodTypeDef, TraceResponseDto> =
-  z.object({
-    id: z.string(),
-    createdAt: z.string(),
-    eventType: z.string(),
-    title: z.string(),
-    message: z.nullable(z.lazy(() => Message$outboundSchema)).optional(),
-    rawData: z.nullable(z.lazy(() => RawData$outboundSchema)).optional(),
-    status: z.string(),
-    entityType: z.string(),
-    entityId: z.string(),
-    organizationId: z.string(),
-    environmentId: z.string(),
-    userId: z.nullable(z.lazy(() => UserId$outboundSchema)).optional(),
-    externalSubscriberId: z.nullable(z.lazy(() => ExternalSubscriberId$outboundSchema)).optional(),
-    subscriberId: z.nullable(z.lazy(() => SubscriberId$outboundSchema)).optional(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TraceResponseDto$ {
-  /** @deprecated use `TraceResponseDto$inboundSchema` instead. */
-  export const inboundSchema = TraceResponseDto$inboundSchema;
-  /** @deprecated use `TraceResponseDto$outboundSchema` instead. */
-  export const outboundSchema = TraceResponseDto$outboundSchema;
-  /** @deprecated use `TraceResponseDto$Outbound` instead. */
-  export type Outbound = TraceResponseDto$Outbound;
-}
-
-export function traceResponseDtoToJSON(traceResponseDto: TraceResponseDto): string {
-  return JSON.stringify(TraceResponseDto$outboundSchema.parse(traceResponseDto));
-}
 
 export function traceResponseDtoFromJSON(jsonString: string): SafeParseResult<TraceResponseDto, SDKValidationError> {
   return safeParse(

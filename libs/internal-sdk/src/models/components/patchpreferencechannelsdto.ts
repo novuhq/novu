@@ -4,9 +4,6 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type PatchPreferenceChannelsDto = {
   /**
@@ -30,21 +27,6 @@ export type PatchPreferenceChannelsDto = {
    */
   chat?: boolean | undefined;
 };
-
-/** @internal */
-export const PatchPreferenceChannelsDto$inboundSchema: z.ZodType<PatchPreferenceChannelsDto, z.ZodTypeDef, unknown> = z
-  .object({
-    email: z.boolean().optional(),
-    sms: z.boolean().optional(),
-    in_app: z.boolean().optional(),
-    push: z.boolean().optional(),
-    chat: z.boolean().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      in_app: 'inApp',
-    });
-  });
 
 /** @internal */
 export type PatchPreferenceChannelsDto$Outbound = {
@@ -74,29 +56,6 @@ export const PatchPreferenceChannelsDto$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PatchPreferenceChannelsDto$ {
-  /** @deprecated use `PatchPreferenceChannelsDto$inboundSchema` instead. */
-  export const inboundSchema = PatchPreferenceChannelsDto$inboundSchema;
-  /** @deprecated use `PatchPreferenceChannelsDto$outboundSchema` instead. */
-  export const outboundSchema = PatchPreferenceChannelsDto$outboundSchema;
-  /** @deprecated use `PatchPreferenceChannelsDto$Outbound` instead. */
-  export type Outbound = PatchPreferenceChannelsDto$Outbound;
-}
-
 export function patchPreferenceChannelsDtoToJSON(patchPreferenceChannelsDto: PatchPreferenceChannelsDto): string {
   return JSON.stringify(PatchPreferenceChannelsDto$outboundSchema.parse(patchPreferenceChannelsDto));
-}
-
-export function patchPreferenceChannelsDtoFromJSON(
-  jsonString: string
-): SafeParseResult<PatchPreferenceChannelsDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => PatchPreferenceChannelsDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PatchPreferenceChannelsDto' from JSON`
-  );
 }

@@ -35,59 +35,11 @@ export const DeleteMessageResponseDtoStatus$inboundSchema: z.ZodNativeEnum<typeo
   z.nativeEnum(DeleteMessageResponseDtoStatus);
 
 /** @internal */
-export const DeleteMessageResponseDtoStatus$outboundSchema: z.ZodNativeEnum<typeof DeleteMessageResponseDtoStatus> =
-  DeleteMessageResponseDtoStatus$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DeleteMessageResponseDtoStatus$ {
-  /** @deprecated use `DeleteMessageResponseDtoStatus$inboundSchema` instead. */
-  export const inboundSchema = DeleteMessageResponseDtoStatus$inboundSchema;
-  /** @deprecated use `DeleteMessageResponseDtoStatus$outboundSchema` instead. */
-  export const outboundSchema = DeleteMessageResponseDtoStatus$outboundSchema;
-}
-
-/** @internal */
 export const DeleteMessageResponseDto$inboundSchema: z.ZodType<DeleteMessageResponseDto, z.ZodTypeDef, unknown> =
   z.object({
     acknowledged: z.boolean(),
     status: DeleteMessageResponseDtoStatus$inboundSchema,
   });
-
-/** @internal */
-export type DeleteMessageResponseDto$Outbound = {
-  acknowledged: boolean;
-  status: string;
-};
-
-/** @internal */
-export const DeleteMessageResponseDto$outboundSchema: z.ZodType<
-  DeleteMessageResponseDto$Outbound,
-  z.ZodTypeDef,
-  DeleteMessageResponseDto
-> = z.object({
-  acknowledged: z.boolean(),
-  status: DeleteMessageResponseDtoStatus$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DeleteMessageResponseDto$ {
-  /** @deprecated use `DeleteMessageResponseDto$inboundSchema` instead. */
-  export const inboundSchema = DeleteMessageResponseDto$inboundSchema;
-  /** @deprecated use `DeleteMessageResponseDto$outboundSchema` instead. */
-  export const outboundSchema = DeleteMessageResponseDto$outboundSchema;
-  /** @deprecated use `DeleteMessageResponseDto$Outbound` instead. */
-  export type Outbound = DeleteMessageResponseDto$Outbound;
-}
-
-export function deleteMessageResponseDtoToJSON(deleteMessageResponseDto: DeleteMessageResponseDto): string {
-  return JSON.stringify(DeleteMessageResponseDto$outboundSchema.parse(deleteMessageResponseDto));
-}
 
 export function deleteMessageResponseDtoFromJSON(
   jsonString: string

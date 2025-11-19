@@ -24,36 +24,6 @@ export const WorkflowInfoDto$inboundSchema: z.ZodType<WorkflowInfoDto, z.ZodType
   workflowId: z.string(),
 });
 
-/** @internal */
-export type WorkflowInfoDto$Outbound = {
-  name: string;
-  workflowId: string;
-};
-
-/** @internal */
-export const WorkflowInfoDto$outboundSchema: z.ZodType<WorkflowInfoDto$Outbound, z.ZodTypeDef, WorkflowInfoDto> =
-  z.object({
-    name: z.string(),
-    workflowId: z.string(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowInfoDto$ {
-  /** @deprecated use `WorkflowInfoDto$inboundSchema` instead. */
-  export const inboundSchema = WorkflowInfoDto$inboundSchema;
-  /** @deprecated use `WorkflowInfoDto$outboundSchema` instead. */
-  export const outboundSchema = WorkflowInfoDto$outboundSchema;
-  /** @deprecated use `WorkflowInfoDto$Outbound` instead. */
-  export type Outbound = WorkflowInfoDto$Outbound;
-}
-
-export function workflowInfoDtoToJSON(workflowInfoDto: WorkflowInfoDto): string {
-  return JSON.stringify(WorkflowInfoDto$outboundSchema.parse(workflowInfoDto));
-}
-
 export function workflowInfoDtoFromJSON(jsonString: string): SafeParseResult<WorkflowInfoDto, SDKValidationError> {
   return safeParse(
     jsonString,

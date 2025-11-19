@@ -3,18 +3,13 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   BridgeConfigurationDto,
-  BridgeConfigurationDto$inboundSchema,
   BridgeConfigurationDto$Outbound,
   BridgeConfigurationDto$outboundSchema,
 } from './bridgeconfigurationdto.js';
 import {
   InBoundParseDomainDto,
-  InBoundParseDomainDto$inboundSchema,
   InBoundParseDomainDto$Outbound,
   InBoundParseDomainDto$outboundSchema,
 } from './inboundparsedomaindto.js';
@@ -27,17 +22,6 @@ export type UpdateEnvironmentRequestDto = {
   dns?: InBoundParseDomainDto | undefined;
   bridge?: BridgeConfigurationDto | undefined;
 };
-
-/** @internal */
-export const UpdateEnvironmentRequestDto$inboundSchema: z.ZodType<UpdateEnvironmentRequestDto, z.ZodTypeDef, unknown> =
-  z.object({
-    name: z.string().optional(),
-    identifier: z.string().optional(),
-    parentId: z.string().optional(),
-    color: z.string().optional(),
-    dns: InBoundParseDomainDto$inboundSchema.optional(),
-    bridge: BridgeConfigurationDto$inboundSchema.optional(),
-  });
 
 /** @internal */
 export type UpdateEnvironmentRequestDto$Outbound = {
@@ -63,29 +47,6 @@ export const UpdateEnvironmentRequestDto$outboundSchema: z.ZodType<
   bridge: BridgeConfigurationDto$outboundSchema.optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UpdateEnvironmentRequestDto$ {
-  /** @deprecated use `UpdateEnvironmentRequestDto$inboundSchema` instead. */
-  export const inboundSchema = UpdateEnvironmentRequestDto$inboundSchema;
-  /** @deprecated use `UpdateEnvironmentRequestDto$outboundSchema` instead. */
-  export const outboundSchema = UpdateEnvironmentRequestDto$outboundSchema;
-  /** @deprecated use `UpdateEnvironmentRequestDto$Outbound` instead. */
-  export type Outbound = UpdateEnvironmentRequestDto$Outbound;
-}
-
 export function updateEnvironmentRequestDtoToJSON(updateEnvironmentRequestDto: UpdateEnvironmentRequestDto): string {
   return JSON.stringify(UpdateEnvironmentRequestDto$outboundSchema.parse(updateEnvironmentRequestDto));
-}
-
-export function updateEnvironmentRequestDtoFromJSON(
-  jsonString: string
-): SafeParseResult<UpdateEnvironmentRequestDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => UpdateEnvironmentRequestDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'UpdateEnvironmentRequestDto' from JSON`
-  );
 }

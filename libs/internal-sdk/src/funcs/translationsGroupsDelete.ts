@@ -33,7 +33,7 @@ import { Result } from '../types/fp.js';
  */
 export function translationsGroupsDelete(
   client: NovuCore,
-  resourceType: operations.ResourceType,
+  resourceType: operations.TranslationControllerDeleteTranslationGroupEndpointPathParamResourceType,
   resourceId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions
@@ -55,7 +55,7 @@ export function translationsGroupsDelete(
 
 async function $do(
   client: NovuCore,
-  resourceType: operations.ResourceType,
+  resourceType: operations.TranslationControllerDeleteTranslationGroupEndpointPathParamResourceType,
   resourceId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions

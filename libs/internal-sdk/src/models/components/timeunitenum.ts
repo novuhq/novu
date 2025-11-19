@@ -23,17 +23,3 @@ export type TimeUnitEnum = ClosedEnum<typeof TimeUnitEnum>;
 
 /** @internal */
 export const TimeUnitEnum$inboundSchema: z.ZodNativeEnum<typeof TimeUnitEnum> = z.nativeEnum(TimeUnitEnum);
-
-/** @internal */
-export const TimeUnitEnum$outboundSchema: z.ZodNativeEnum<typeof TimeUnitEnum> = TimeUnitEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TimeUnitEnum$ {
-  /** @deprecated use `TimeUnitEnum$inboundSchema` instead. */
-  export const inboundSchema = TimeUnitEnum$inboundSchema;
-  /** @deprecated use `TimeUnitEnum$outboundSchema` instead. */
-  export const outboundSchema = TimeUnitEnum$outboundSchema;
-}

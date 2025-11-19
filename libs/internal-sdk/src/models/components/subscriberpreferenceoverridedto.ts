@@ -6,11 +6,10 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { ChannelTypeEnum, ChannelTypeEnum$inboundSchema, ChannelTypeEnum$outboundSchema } from './channeltypeenum.js';
+import { ChannelTypeEnum, ChannelTypeEnum$inboundSchema } from './channeltypeenum.js';
 import {
   PreferenceOverrideSourceEnum,
   PreferenceOverrideSourceEnum$inboundSchema,
-  PreferenceOverrideSourceEnum$outboundSchema,
 } from './preferenceoverridesourceenum.js';
 
 export type SubscriberPreferenceOverrideDto = {
@@ -33,41 +32,6 @@ export const SubscriberPreferenceOverrideDto$inboundSchema: z.ZodType<
   channel: ChannelTypeEnum$inboundSchema,
   source: PreferenceOverrideSourceEnum$inboundSchema,
 });
-
-/** @internal */
-export type SubscriberPreferenceOverrideDto$Outbound = {
-  channel: string;
-  source: string;
-};
-
-/** @internal */
-export const SubscriberPreferenceOverrideDto$outboundSchema: z.ZodType<
-  SubscriberPreferenceOverrideDto$Outbound,
-  z.ZodTypeDef,
-  SubscriberPreferenceOverrideDto
-> = z.object({
-  channel: ChannelTypeEnum$outboundSchema,
-  source: PreferenceOverrideSourceEnum$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriberPreferenceOverrideDto$ {
-  /** @deprecated use `SubscriberPreferenceOverrideDto$inboundSchema` instead. */
-  export const inboundSchema = SubscriberPreferenceOverrideDto$inboundSchema;
-  /** @deprecated use `SubscriberPreferenceOverrideDto$outboundSchema` instead. */
-  export const outboundSchema = SubscriberPreferenceOverrideDto$outboundSchema;
-  /** @deprecated use `SubscriberPreferenceOverrideDto$Outbound` instead. */
-  export type Outbound = SubscriberPreferenceOverrideDto$Outbound;
-}
-
-export function subscriberPreferenceOverrideDtoToJSON(
-  subscriberPreferenceOverrideDto: SubscriberPreferenceOverrideDto
-): string {
-  return JSON.stringify(SubscriberPreferenceOverrideDto$outboundSchema.parse(subscriberPreferenceOverrideDto));
-}
 
 export function subscriberPreferenceOverrideDtoFromJSON(
   jsonString: string

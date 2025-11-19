@@ -29,7 +29,6 @@ export const ActionDto$inboundSchema: z.ZodType<ActionDto, z.ZodTypeDef, unknown
   label: z.string().optional(),
   redirect: RedirectDto$inboundSchema.optional(),
 });
-
 /** @internal */
 export type ActionDto$Outbound = {
   label?: string | undefined;
@@ -42,23 +41,9 @@ export const ActionDto$outboundSchema: z.ZodType<ActionDto$Outbound, z.ZodTypeDe
   redirect: RedirectDto$outboundSchema.optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActionDto$ {
-  /** @deprecated use `ActionDto$inboundSchema` instead. */
-  export const inboundSchema = ActionDto$inboundSchema;
-  /** @deprecated use `ActionDto$outboundSchema` instead. */
-  export const outboundSchema = ActionDto$outboundSchema;
-  /** @deprecated use `ActionDto$Outbound` instead. */
-  export type Outbound = ActionDto$Outbound;
-}
-
 export function actionDtoToJSON(actionDto: ActionDto): string {
   return JSON.stringify(ActionDto$outboundSchema.parse(actionDto));
 }
-
 export function actionDtoFromJSON(jsonString: string): SafeParseResult<ActionDto, SDKValidationError> {
   return safeParse(
     jsonString,

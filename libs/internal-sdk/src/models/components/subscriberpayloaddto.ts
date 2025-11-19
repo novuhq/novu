@@ -3,12 +3,8 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   SubscriberChannelDto,
-  SubscriberChannelDto$inboundSchema,
   SubscriberChannelDto$Outbound,
   SubscriberChannelDto$outboundSchema,
 } from './subscriberchanneldto.js';
@@ -57,20 +53,6 @@ export type SubscriberPayloadDto = {
 };
 
 /** @internal */
-export const SubscriberPayloadDto$inboundSchema: z.ZodType<SubscriberPayloadDto, z.ZodTypeDef, unknown> = z.object({
-  firstName: z.nullable(z.string()).optional(),
-  lastName: z.nullable(z.string()).optional(),
-  email: z.nullable(z.string()).optional(),
-  phone: z.nullable(z.string()).optional(),
-  avatar: z.nullable(z.string()).optional(),
-  locale: z.nullable(z.string()).optional(),
-  timezone: z.nullable(z.string()).optional(),
-  data: z.nullable(z.record(z.any())).optional(),
-  subscriberId: z.string(),
-  channels: z.array(SubscriberChannelDto$inboundSchema).optional(),
-});
-
-/** @internal */
 export type SubscriberPayloadDto$Outbound = {
   firstName?: string | null | undefined;
   lastName?: string | null | undefined;
@@ -102,29 +84,6 @@ export const SubscriberPayloadDto$outboundSchema: z.ZodType<
   channels: z.array(SubscriberChannelDto$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriberPayloadDto$ {
-  /** @deprecated use `SubscriberPayloadDto$inboundSchema` instead. */
-  export const inboundSchema = SubscriberPayloadDto$inboundSchema;
-  /** @deprecated use `SubscriberPayloadDto$outboundSchema` instead. */
-  export const outboundSchema = SubscriberPayloadDto$outboundSchema;
-  /** @deprecated use `SubscriberPayloadDto$Outbound` instead. */
-  export type Outbound = SubscriberPayloadDto$Outbound;
-}
-
 export function subscriberPayloadDtoToJSON(subscriberPayloadDto: SubscriberPayloadDto): string {
   return JSON.stringify(SubscriberPayloadDto$outboundSchema.parse(subscriberPayloadDto));
-}
-
-export function subscriberPayloadDtoFromJSON(
-  jsonString: string
-): SafeParseResult<SubscriberPayloadDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscriberPayloadDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscriberPayloadDto' from JSON`
-  );
 }

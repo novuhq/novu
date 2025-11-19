@@ -7,18 +7,8 @@ import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  SubscriberDto,
-  SubscriberDto$inboundSchema,
-  SubscriberDto$Outbound,
-  SubscriberDto$outboundSchema,
-} from './subscriberdto.js';
-import {
-  TopicResponseDto,
-  TopicResponseDto$inboundSchema,
-  TopicResponseDto$Outbound,
-  TopicResponseDto$outboundSchema,
-} from './topicresponsedto.js';
+import { SubscriberDto, SubscriberDto$inboundSchema } from './subscriberdto.js';
+import { TopicResponseDto, TopicResponseDto$inboundSchema } from './topicresponsedto.js';
 
 export type TopicSubscriptionResponseDto = {
   /**
@@ -56,49 +46,6 @@ export const TopicSubscriptionResponseDto$inboundSchema: z.ZodType<
       _id: 'id',
     });
   });
-
-/** @internal */
-export type TopicSubscriptionResponseDto$Outbound = {
-  _id: string;
-  createdAt: string;
-  topic: TopicResponseDto$Outbound;
-  subscriber: SubscriberDto$Outbound;
-};
-
-/** @internal */
-export const TopicSubscriptionResponseDto$outboundSchema: z.ZodType<
-  TopicSubscriptionResponseDto$Outbound,
-  z.ZodTypeDef,
-  TopicSubscriptionResponseDto
-> = z
-  .object({
-    id: z.string(),
-    createdAt: z.string(),
-    topic: TopicResponseDto$outboundSchema,
-    subscriber: SubscriberDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicSubscriptionResponseDto$ {
-  /** @deprecated use `TopicSubscriptionResponseDto$inboundSchema` instead. */
-  export const inboundSchema = TopicSubscriptionResponseDto$inboundSchema;
-  /** @deprecated use `TopicSubscriptionResponseDto$outboundSchema` instead. */
-  export const outboundSchema = TopicSubscriptionResponseDto$outboundSchema;
-  /** @deprecated use `TopicSubscriptionResponseDto$Outbound` instead. */
-  export type Outbound = TopicSubscriptionResponseDto$Outbound;
-}
-
-export function topicSubscriptionResponseDtoToJSON(topicSubscriptionResponseDto: TopicSubscriptionResponseDto): string {
-  return JSON.stringify(TopicSubscriptionResponseDto$outboundSchema.parse(topicSubscriptionResponseDto));
-}
 
 export function topicSubscriptionResponseDtoFromJSON(
   jsonString: string

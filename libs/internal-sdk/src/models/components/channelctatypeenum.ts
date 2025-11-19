@@ -19,18 +19,3 @@ export type ChannelCTATypeEnum = ClosedEnum<typeof ChannelCTATypeEnum>;
 /** @internal */
 export const ChannelCTATypeEnum$inboundSchema: z.ZodNativeEnum<typeof ChannelCTATypeEnum> =
   z.nativeEnum(ChannelCTATypeEnum);
-
-/** @internal */
-export const ChannelCTATypeEnum$outboundSchema: z.ZodNativeEnum<typeof ChannelCTATypeEnum> =
-  ChannelCTATypeEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChannelCTATypeEnum$ {
-  /** @deprecated use `ChannelCTATypeEnum$inboundSchema` instead. */
-  export const inboundSchema = ChannelCTATypeEnum$inboundSchema;
-  /** @deprecated use `ChannelCTATypeEnum$outboundSchema` instead. */
-  export const outboundSchema = ChannelCTATypeEnum$outboundSchema;
-}

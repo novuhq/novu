@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  LayoutControlValuesDto,
-  LayoutControlValuesDto$inboundSchema,
-  LayoutControlValuesDto$Outbound,
-  LayoutControlValuesDto$outboundSchema,
-} from './layoutcontrolvaluesdto.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { LayoutControlValuesDto, LayoutControlValuesDto$inboundSchema } from './layoutcontrolvaluesdto.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type LayoutControlsDto = {
   /**
@@ -35,38 +30,6 @@ export const LayoutControlsDto$inboundSchema: z.ZodType<LayoutControlsDto, z.Zod
   uiSchema: UiSchema$inboundSchema.optional(),
   values: LayoutControlValuesDto$inboundSchema,
 });
-
-/** @internal */
-export type LayoutControlsDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-  values: LayoutControlValuesDto$Outbound;
-};
-
-/** @internal */
-export const LayoutControlsDto$outboundSchema: z.ZodType<LayoutControlsDto$Outbound, z.ZodTypeDef, LayoutControlsDto> =
-  z.object({
-    dataSchema: z.record(z.any()).optional(),
-    uiSchema: UiSchema$outboundSchema.optional(),
-    values: LayoutControlValuesDto$outboundSchema,
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutControlsDto$ {
-  /** @deprecated use `LayoutControlsDto$inboundSchema` instead. */
-  export const inboundSchema = LayoutControlsDto$inboundSchema;
-  /** @deprecated use `LayoutControlsDto$outboundSchema` instead. */
-  export const outboundSchema = LayoutControlsDto$outboundSchema;
-  /** @deprecated use `LayoutControlsDto$Outbound` instead. */
-  export type Outbound = LayoutControlsDto$Outbound;
-}
-
-export function layoutControlsDtoToJSON(layoutControlsDto: LayoutControlsDto): string {
-  return JSON.stringify(LayoutControlsDto$outboundSchema.parse(layoutControlsDto));
-}
 
 export function layoutControlsDtoFromJSON(jsonString: string): SafeParseResult<LayoutControlsDto, SDKValidationError> {
   return safeParse(

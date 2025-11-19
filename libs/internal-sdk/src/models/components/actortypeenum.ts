@@ -21,17 +21,3 @@ export type ActorTypeEnum = ClosedEnum<typeof ActorTypeEnum>;
 
 /** @internal */
 export const ActorTypeEnum$inboundSchema: z.ZodNativeEnum<typeof ActorTypeEnum> = z.nativeEnum(ActorTypeEnum);
-
-/** @internal */
-export const ActorTypeEnum$outboundSchema: z.ZodNativeEnum<typeof ActorTypeEnum> = ActorTypeEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActorTypeEnum$ {
-  /** @deprecated use `ActorTypeEnum$inboundSchema` instead. */
-  export const inboundSchema = ActorTypeEnum$inboundSchema;
-  /** @deprecated use `ActorTypeEnum$outboundSchema` instead. */
-  export const outboundSchema = ActorTypeEnum$outboundSchema;
-}

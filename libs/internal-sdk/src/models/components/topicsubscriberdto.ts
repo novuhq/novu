@@ -54,56 +54,6 @@ export const TopicSubscriberDto$inboundSchema: z.ZodType<TopicSubscriberDto, z.Z
     });
   });
 
-/** @internal */
-export type TopicSubscriberDto$Outbound = {
-  _organizationId: string;
-  _environmentId: string;
-  _subscriberId: string;
-  _topicId: string;
-  topicKey: string;
-  externalSubscriberId: string;
-};
-
-/** @internal */
-export const TopicSubscriberDto$outboundSchema: z.ZodType<
-  TopicSubscriberDto$Outbound,
-  z.ZodTypeDef,
-  TopicSubscriberDto
-> = z
-  .object({
-    organizationId: z.string(),
-    environmentId: z.string(),
-    subscriberId: z.string(),
-    topicId: z.string(),
-    topicKey: z.string(),
-    externalSubscriberId: z.string(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      organizationId: '_organizationId',
-      environmentId: '_environmentId',
-      subscriberId: '_subscriberId',
-      topicId: '_topicId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicSubscriberDto$ {
-  /** @deprecated use `TopicSubscriberDto$inboundSchema` instead. */
-  export const inboundSchema = TopicSubscriberDto$inboundSchema;
-  /** @deprecated use `TopicSubscriberDto$outboundSchema` instead. */
-  export const outboundSchema = TopicSubscriberDto$outboundSchema;
-  /** @deprecated use `TopicSubscriberDto$Outbound` instead. */
-  export type Outbound = TopicSubscriberDto$Outbound;
-}
-
-export function topicSubscriberDtoToJSON(topicSubscriberDto: TopicSubscriberDto): string {
-  return JSON.stringify(TopicSubscriberDto$outboundSchema.parse(topicSubscriberDto));
-}
-
 export function topicSubscriberDtoFromJSON(
   jsonString: string
 ): SafeParseResult<TopicSubscriberDto, SDKValidationError> {

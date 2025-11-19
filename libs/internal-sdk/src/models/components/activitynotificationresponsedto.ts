@@ -10,33 +10,18 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   ActivityNotificationJobResponseDto,
   ActivityNotificationJobResponseDto$inboundSchema,
-  ActivityNotificationJobResponseDto$Outbound,
-  ActivityNotificationJobResponseDto$outboundSchema,
 } from './activitynotificationjobresponsedto.js';
 import {
   ActivityNotificationSubscriberResponseDto,
   ActivityNotificationSubscriberResponseDto$inboundSchema,
-  ActivityNotificationSubscriberResponseDto$Outbound,
-  ActivityNotificationSubscriberResponseDto$outboundSchema,
 } from './activitynotificationsubscriberresponsedto.js';
 import {
   ActivityNotificationTemplateResponseDto,
   ActivityNotificationTemplateResponseDto$inboundSchema,
-  ActivityNotificationTemplateResponseDto$Outbound,
-  ActivityNotificationTemplateResponseDto$outboundSchema,
 } from './activitynotificationtemplateresponsedto.js';
-import {
-  ActivityTopicDto,
-  ActivityTopicDto$inboundSchema,
-  ActivityTopicDto$Outbound,
-  ActivityTopicDto$outboundSchema,
-} from './activitytopicdto.js';
-import {
-  SeverityLevelEnum,
-  SeverityLevelEnum$inboundSchema,
-  SeverityLevelEnum$outboundSchema,
-} from './severitylevelenum.js';
-import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
+import { ActivityTopicDto, ActivityTopicDto$inboundSchema } from './activitytopicdto.js';
+import { SeverityLevelEnum, SeverityLevelEnum$inboundSchema } from './severitylevelenum.js';
+import { StepTypeEnum, StepTypeEnum$inboundSchema } from './steptypeenum.js';
 
 export type ActivityNotificationResponseDto = {
   /**
@@ -117,7 +102,7 @@ export type ActivityNotificationResponseDto = {
    */
   critical?: boolean | undefined;
   /**
-   * Contexts (keys) in which the notification was sent
+   * Context (single or multi) in which the notification was sent
    */
   contextKeys?: Array<string> | undefined;
 };
@@ -161,90 +146,6 @@ export const ActivityNotificationResponseDto$inboundSchema: z.ZodType<
       _digestedNotificationId: 'digestedNotificationId',
     });
   });
-
-/** @internal */
-export type ActivityNotificationResponseDto$Outbound = {
-  _id?: string | undefined;
-  _environmentId: string;
-  _organizationId: string;
-  _subscriberId: string;
-  transactionId: string;
-  _templateId?: string | undefined;
-  _digestedNotificationId?: string | undefined;
-  createdAt?: string | undefined;
-  updatedAt?: string | undefined;
-  channels?: Array<string> | undefined;
-  subscriber?: ActivityNotificationSubscriberResponseDto$Outbound | undefined;
-  template?: ActivityNotificationTemplateResponseDto$Outbound | undefined;
-  jobs?: Array<ActivityNotificationJobResponseDto$Outbound> | undefined;
-  payload?: { [k: string]: any } | undefined;
-  tags?: Array<string> | undefined;
-  controls?: { [k: string]: any } | undefined;
-  to?: { [k: string]: any } | undefined;
-  topics?: Array<ActivityTopicDto$Outbound> | undefined;
-  severity?: string | undefined;
-  critical?: boolean | undefined;
-  contextKeys?: Array<string> | undefined;
-};
-
-/** @internal */
-export const ActivityNotificationResponseDto$outboundSchema: z.ZodType<
-  ActivityNotificationResponseDto$Outbound,
-  z.ZodTypeDef,
-  ActivityNotificationResponseDto
-> = z
-  .object({
-    id: z.string().optional(),
-    environmentId: z.string(),
-    organizationId: z.string(),
-    subscriberId: z.string(),
-    transactionId: z.string(),
-    templateId: z.string().optional(),
-    digestedNotificationId: z.string().optional(),
-    createdAt: z.string().optional(),
-    updatedAt: z.string().optional(),
-    channels: z.array(StepTypeEnum$outboundSchema).optional(),
-    subscriber: ActivityNotificationSubscriberResponseDto$outboundSchema.optional(),
-    template: ActivityNotificationTemplateResponseDto$outboundSchema.optional(),
-    jobs: z.array(ActivityNotificationJobResponseDto$outboundSchema).optional(),
-    payload: z.record(z.any()).optional(),
-    tags: z.array(z.string()).optional(),
-    controls: z.record(z.any()).optional(),
-    to: z.record(z.any()).optional(),
-    topics: z.array(ActivityTopicDto$outboundSchema).optional(),
-    severity: SeverityLevelEnum$outboundSchema.optional(),
-    critical: z.boolean().optional(),
-    contextKeys: z.array(z.string()).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-      environmentId: '_environmentId',
-      organizationId: '_organizationId',
-      subscriberId: '_subscriberId',
-      templateId: '_templateId',
-      digestedNotificationId: '_digestedNotificationId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityNotificationResponseDto$ {
-  /** @deprecated use `ActivityNotificationResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ActivityNotificationResponseDto$inboundSchema;
-  /** @deprecated use `ActivityNotificationResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ActivityNotificationResponseDto$outboundSchema;
-  /** @deprecated use `ActivityNotificationResponseDto$Outbound` instead. */
-  export type Outbound = ActivityNotificationResponseDto$Outbound;
-}
-
-export function activityNotificationResponseDtoToJSON(
-  activityNotificationResponseDto: ActivityNotificationResponseDto
-): string {
-  return JSON.stringify(ActivityNotificationResponseDto$outboundSchema.parse(activityNotificationResponseDto));
-}
 
 export function activityNotificationResponseDtoFromJSON(
   jsonString: string

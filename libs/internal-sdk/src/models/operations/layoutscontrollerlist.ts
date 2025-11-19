@@ -42,26 +42,6 @@ export type LayoutsControllerListResponse = {
 };
 
 /** @internal */
-export const LayoutsControllerListRequest$inboundSchema: z.ZodType<
-  LayoutsControllerListRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    orderDirection: components.DirectionEnum$inboundSchema.optional(),
-    orderBy: components.LayoutResponseDtoSortField$inboundSchema.optional(),
-    query: z.string().optional(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type LayoutsControllerListRequest$Outbound = {
   limit?: number | undefined;
   offset?: number | undefined;
@@ -91,31 +71,8 @@ export const LayoutsControllerListRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutsControllerListRequest$ {
-  /** @deprecated use `LayoutsControllerListRequest$inboundSchema` instead. */
-  export const inboundSchema = LayoutsControllerListRequest$inboundSchema;
-  /** @deprecated use `LayoutsControllerListRequest$outboundSchema` instead. */
-  export const outboundSchema = LayoutsControllerListRequest$outboundSchema;
-  /** @deprecated use `LayoutsControllerListRequest$Outbound` instead. */
-  export type Outbound = LayoutsControllerListRequest$Outbound;
-}
-
 export function layoutsControllerListRequestToJSON(layoutsControllerListRequest: LayoutsControllerListRequest): string {
   return JSON.stringify(LayoutsControllerListRequest$outboundSchema.parse(layoutsControllerListRequest));
-}
-
-export function layoutsControllerListRequestFromJSON(
-  jsonString: string
-): SafeParseResult<LayoutsControllerListRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => LayoutsControllerListRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'LayoutsControllerListRequest' from JSON`
-  );
 }
 
 /** @internal */
@@ -134,48 +91,6 @@ export const LayoutsControllerListResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type LayoutsControllerListResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.ListLayoutResponseDto$Outbound;
-};
-
-/** @internal */
-export const LayoutsControllerListResponse$outboundSchema: z.ZodType<
-  LayoutsControllerListResponse$Outbound,
-  z.ZodTypeDef,
-  LayoutsControllerListResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.ListLayoutResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutsControllerListResponse$ {
-  /** @deprecated use `LayoutsControllerListResponse$inboundSchema` instead. */
-  export const inboundSchema = LayoutsControllerListResponse$inboundSchema;
-  /** @deprecated use `LayoutsControllerListResponse$outboundSchema` instead. */
-  export const outboundSchema = LayoutsControllerListResponse$outboundSchema;
-  /** @deprecated use `LayoutsControllerListResponse$Outbound` instead. */
-  export type Outbound = LayoutsControllerListResponse$Outbound;
-}
-
-export function layoutsControllerListResponseToJSON(
-  layoutsControllerListResponse: LayoutsControllerListResponse
-): string {
-  return JSON.stringify(LayoutsControllerListResponse$outboundSchema.parse(layoutsControllerListResponse));
-}
 
 export function layoutsControllerListResponseFromJSON(
   jsonString: string

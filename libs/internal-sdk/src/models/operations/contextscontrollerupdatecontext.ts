@@ -31,25 +31,6 @@ export type ContextsControllerUpdateContextResponse = {
 };
 
 /** @internal */
-export const ContextsControllerUpdateContextRequest$inboundSchema: z.ZodType<
-  ContextsControllerUpdateContextRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    type: z.string(),
-    id: z.string(),
-    'idempotency-key': z.string().optional(),
-    UpdateContextRequestDto: components.UpdateContextRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      UpdateContextRequestDto: 'updateContextRequestDto',
-    });
-  });
-
-/** @internal */
 export type ContextsControllerUpdateContextRequest$Outbound = {
   type: string;
   id: string;
@@ -76,34 +57,11 @@ export const ContextsControllerUpdateContextRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ContextsControllerUpdateContextRequest$ {
-  /** @deprecated use `ContextsControllerUpdateContextRequest$inboundSchema` instead. */
-  export const inboundSchema = ContextsControllerUpdateContextRequest$inboundSchema;
-  /** @deprecated use `ContextsControllerUpdateContextRequest$outboundSchema` instead. */
-  export const outboundSchema = ContextsControllerUpdateContextRequest$outboundSchema;
-  /** @deprecated use `ContextsControllerUpdateContextRequest$Outbound` instead. */
-  export type Outbound = ContextsControllerUpdateContextRequest$Outbound;
-}
-
 export function contextsControllerUpdateContextRequestToJSON(
   contextsControllerUpdateContextRequest: ContextsControllerUpdateContextRequest
 ): string {
   return JSON.stringify(
     ContextsControllerUpdateContextRequest$outboundSchema.parse(contextsControllerUpdateContextRequest)
-  );
-}
-
-export function contextsControllerUpdateContextRequestFromJSON(
-  jsonString: string
-): SafeParseResult<ContextsControllerUpdateContextRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ContextsControllerUpdateContextRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ContextsControllerUpdateContextRequest' from JSON`
   );
 }
 
@@ -123,50 +81,6 @@ export const ContextsControllerUpdateContextResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type ContextsControllerUpdateContextResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.GetContextResponseDto$Outbound;
-};
-
-/** @internal */
-export const ContextsControllerUpdateContextResponse$outboundSchema: z.ZodType<
-  ContextsControllerUpdateContextResponse$Outbound,
-  z.ZodTypeDef,
-  ContextsControllerUpdateContextResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.GetContextResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ContextsControllerUpdateContextResponse$ {
-  /** @deprecated use `ContextsControllerUpdateContextResponse$inboundSchema` instead. */
-  export const inboundSchema = ContextsControllerUpdateContextResponse$inboundSchema;
-  /** @deprecated use `ContextsControllerUpdateContextResponse$outboundSchema` instead. */
-  export const outboundSchema = ContextsControllerUpdateContextResponse$outboundSchema;
-  /** @deprecated use `ContextsControllerUpdateContextResponse$Outbound` instead. */
-  export type Outbound = ContextsControllerUpdateContextResponse$Outbound;
-}
-
-export function contextsControllerUpdateContextResponseToJSON(
-  contextsControllerUpdateContextResponse: ContextsControllerUpdateContextResponse
-): string {
-  return JSON.stringify(
-    ContextsControllerUpdateContextResponse$outboundSchema.parse(contextsControllerUpdateContextResponse)
-  );
-}
 
 export function contextsControllerUpdateContextResponseFromJSON(
   jsonString: string

@@ -27,57 +27,11 @@ export type RuntimeIssueDto = {
 export const IssueType$inboundSchema: z.ZodNativeEnum<typeof IssueType> = z.nativeEnum(IssueType);
 
 /** @internal */
-export const IssueType$outboundSchema: z.ZodNativeEnum<typeof IssueType> = IssueType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace IssueType$ {
-  /** @deprecated use `IssueType$inboundSchema` instead. */
-  export const inboundSchema = IssueType$inboundSchema;
-  /** @deprecated use `IssueType$outboundSchema` instead. */
-  export const outboundSchema = IssueType$outboundSchema;
-}
-
-/** @internal */
 export const RuntimeIssueDto$inboundSchema: z.ZodType<RuntimeIssueDto, z.ZodTypeDef, unknown> = z.object({
   issueType: IssueType$inboundSchema,
   variableName: z.string().optional(),
   message: z.string(),
 });
-
-/** @internal */
-export type RuntimeIssueDto$Outbound = {
-  issueType: string;
-  variableName?: string | undefined;
-  message: string;
-};
-
-/** @internal */
-export const RuntimeIssueDto$outboundSchema: z.ZodType<RuntimeIssueDto$Outbound, z.ZodTypeDef, RuntimeIssueDto> =
-  z.object({
-    issueType: IssueType$outboundSchema,
-    variableName: z.string().optional(),
-    message: z.string(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace RuntimeIssueDto$ {
-  /** @deprecated use `RuntimeIssueDto$inboundSchema` instead. */
-  export const inboundSchema = RuntimeIssueDto$inboundSchema;
-  /** @deprecated use `RuntimeIssueDto$outboundSchema` instead. */
-  export const outboundSchema = RuntimeIssueDto$outboundSchema;
-  /** @deprecated use `RuntimeIssueDto$Outbound` instead. */
-  export type Outbound = RuntimeIssueDto$Outbound;
-}
-
-export function runtimeIssueDtoToJSON(runtimeIssueDto: RuntimeIssueDto): string {
-  return JSON.stringify(RuntimeIssueDto$outboundSchema.parse(runtimeIssueDto));
-}
 
 export function runtimeIssueDtoFromJSON(jsonString: string): SafeParseResult<RuntimeIssueDto, SDKValidationError> {
   return safeParse(

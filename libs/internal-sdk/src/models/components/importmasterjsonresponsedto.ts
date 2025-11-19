@@ -35,43 +35,6 @@ export const ImportMasterJsonResponseDto$inboundSchema: z.ZodType<ImportMasterJs
     failed: z.array(z.string()).optional(),
   });
 
-/** @internal */
-export type ImportMasterJsonResponseDto$Outbound = {
-  success: boolean;
-  message: string;
-  successful?: Array<string> | undefined;
-  failed?: Array<string> | undefined;
-};
-
-/** @internal */
-export const ImportMasterJsonResponseDto$outboundSchema: z.ZodType<
-  ImportMasterJsonResponseDto$Outbound,
-  z.ZodTypeDef,
-  ImportMasterJsonResponseDto
-> = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  successful: z.array(z.string()).optional(),
-  failed: z.array(z.string()).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ImportMasterJsonResponseDto$ {
-  /** @deprecated use `ImportMasterJsonResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ImportMasterJsonResponseDto$inboundSchema;
-  /** @deprecated use `ImportMasterJsonResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ImportMasterJsonResponseDto$outboundSchema;
-  /** @deprecated use `ImportMasterJsonResponseDto$Outbound` instead. */
-  export type Outbound = ImportMasterJsonResponseDto$Outbound;
-}
-
-export function importMasterJsonResponseDtoToJSON(importMasterJsonResponseDto: ImportMasterJsonResponseDto): string {
-  return JSON.stringify(ImportMasterJsonResponseDto$outboundSchema.parse(importMasterJsonResponseDto));
-}
-
 export function importMasterJsonResponseDtoFromJSON(
   jsonString: string
 ): SafeParseResult<ImportMasterJsonResponseDto, SDKValidationError> {

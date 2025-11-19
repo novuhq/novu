@@ -27,24 +27,6 @@ export type TopicsControllerUpdateTopicResponse = {
 };
 
 /** @internal */
-export const TopicsControllerUpdateTopicRequest$inboundSchema: z.ZodType<
-  TopicsControllerUpdateTopicRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    topicKey: z.string(),
-    'idempotency-key': z.string().optional(),
-    UpdateTopicRequestDto: components.UpdateTopicRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      UpdateTopicRequestDto: 'updateTopicRequestDto',
-    });
-  });
-
-/** @internal */
 export type TopicsControllerUpdateTopicRequest$Outbound = {
   topicKey: string;
   'idempotency-key'?: string | undefined;
@@ -69,33 +51,10 @@ export const TopicsControllerUpdateTopicRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerUpdateTopicRequest$ {
-  /** @deprecated use `TopicsControllerUpdateTopicRequest$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerUpdateTopicRequest$inboundSchema;
-  /** @deprecated use `TopicsControllerUpdateTopicRequest$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerUpdateTopicRequest$outboundSchema;
-  /** @deprecated use `TopicsControllerUpdateTopicRequest$Outbound` instead. */
-  export type Outbound = TopicsControllerUpdateTopicRequest$Outbound;
-}
-
 export function topicsControllerUpdateTopicRequestToJSON(
   topicsControllerUpdateTopicRequest: TopicsControllerUpdateTopicRequest
 ): string {
   return JSON.stringify(TopicsControllerUpdateTopicRequest$outboundSchema.parse(topicsControllerUpdateTopicRequest));
-}
-
-export function topicsControllerUpdateTopicRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TopicsControllerUpdateTopicRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TopicsControllerUpdateTopicRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TopicsControllerUpdateTopicRequest' from JSON`
-  );
 }
 
 /** @internal */
@@ -114,48 +73,6 @@ export const TopicsControllerUpdateTopicResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type TopicsControllerUpdateTopicResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.TopicResponseDto$Outbound;
-};
-
-/** @internal */
-export const TopicsControllerUpdateTopicResponse$outboundSchema: z.ZodType<
-  TopicsControllerUpdateTopicResponse$Outbound,
-  z.ZodTypeDef,
-  TopicsControllerUpdateTopicResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.TopicResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerUpdateTopicResponse$ {
-  /** @deprecated use `TopicsControllerUpdateTopicResponse$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerUpdateTopicResponse$inboundSchema;
-  /** @deprecated use `TopicsControllerUpdateTopicResponse$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerUpdateTopicResponse$outboundSchema;
-  /** @deprecated use `TopicsControllerUpdateTopicResponse$Outbound` instead. */
-  export type Outbound = TopicsControllerUpdateTopicResponse$Outbound;
-}
-
-export function topicsControllerUpdateTopicResponseToJSON(
-  topicsControllerUpdateTopicResponse: TopicsControllerUpdateTopicResponse
-): string {
-  return JSON.stringify(TopicsControllerUpdateTopicResponse$outboundSchema.parse(topicsControllerUpdateTopicResponse));
-}
 
 export function topicsControllerUpdateTopicResponseFromJSON(
   jsonString: string

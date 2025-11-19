@@ -3,9 +3,6 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type DeleteTopicSubscriptionsRequestDto = {
   /**
@@ -13,15 +10,6 @@ export type DeleteTopicSubscriptionsRequestDto = {
    */
   subscriberIds: Array<string>;
 };
-
-/** @internal */
-export const DeleteTopicSubscriptionsRequestDto$inboundSchema: z.ZodType<
-  DeleteTopicSubscriptionsRequestDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  subscriberIds: z.array(z.string()),
-});
 
 /** @internal */
 export type DeleteTopicSubscriptionsRequestDto$Outbound = {
@@ -37,31 +25,8 @@ export const DeleteTopicSubscriptionsRequestDto$outboundSchema: z.ZodType<
   subscriberIds: z.array(z.string()),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DeleteTopicSubscriptionsRequestDto$ {
-  /** @deprecated use `DeleteTopicSubscriptionsRequestDto$inboundSchema` instead. */
-  export const inboundSchema = DeleteTopicSubscriptionsRequestDto$inboundSchema;
-  /** @deprecated use `DeleteTopicSubscriptionsRequestDto$outboundSchema` instead. */
-  export const outboundSchema = DeleteTopicSubscriptionsRequestDto$outboundSchema;
-  /** @deprecated use `DeleteTopicSubscriptionsRequestDto$Outbound` instead. */
-  export type Outbound = DeleteTopicSubscriptionsRequestDto$Outbound;
-}
-
 export function deleteTopicSubscriptionsRequestDtoToJSON(
   deleteTopicSubscriptionsRequestDto: DeleteTopicSubscriptionsRequestDto
 ): string {
   return JSON.stringify(DeleteTopicSubscriptionsRequestDto$outboundSchema.parse(deleteTopicSubscriptionsRequestDto));
-}
-
-export function deleteTopicSubscriptionsRequestDtoFromJSON(
-  jsonString: string
-): SafeParseResult<DeleteTopicSubscriptionsRequestDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DeleteTopicSubscriptionsRequestDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DeleteTopicSubscriptionsRequestDto' from JSON`
-  );
 }
