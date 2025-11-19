@@ -14,13 +14,14 @@ export class BuildActiveSubscribersTrendChart {
 
   @InstrumentUsecase()
   async execute(command: BuildActiveSubscribersTrendChartCommand): Promise<ActiveSubscribersTrendDataPointDto[]> {
-    const { environmentId, organizationId, startDate, endDate } = command;
+    const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
     const activeSubscribers = await this.workflowRunRepository.getActiveSubscribersTrendData(
       environmentId,
       organizationId,
       startDate,
-      endDate
+      endDate,
+      workflowIds
     );
 
     const chartDataMap = new Map<string, number>();

@@ -191,6 +191,7 @@ export class EventsController {
         transactionId,
         overrides: body.overrides || {},
         actor: body.actor,
+        context: body.context,
         requestId: req._nvRequestId,
       })
     );

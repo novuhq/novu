@@ -1,5 +1,5 @@
 import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiCodeSSlashLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
 import { Link, useMatch, useNavigate } from 'react-router-dom';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -19,7 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ToastClose, ToastIcon } from '../primitives/sonner';
 import { showErrorToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
-import { getInitialPayload } from './steps/utils/preview-context-storage.utils';
+import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
 import { WorkflowActivity } from './workflow-activity';
 import { WorkflowCanvas } from './workflow-canvas';
@@ -35,6 +35,11 @@ export const WorkflowTabs = () => {
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 
+  const userId = currentUser?._id;
+  const userFirstName = currentUser?.firstName;
+  const userLastName = currentUser?.lastName;
+  const userEmail = currentUser?.email;
+
   // API key management
   const has = useHasPermission();
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
@@ -44,6 +49,48 @@ export const WorkflowTabs = () => {
     workflow?.origin === ResourceOriginEnum.EXTERNAL ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
     currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+
+  // Memoize subscriber data and payload for integration instructions
+  // Use the most recently tested subscriber for this workflow, fallback to current user
+  const subscriberData = useMemo(() => {
+    if (!workflow?.workflowId || !currentEnvironment?._id) {
+      return { subscriberId: 'subscriber-id' };
+    }
+
+    const userFields = userId
+      ? {
+          _id: userId,
+          firstName: userFirstName ?? undefined,
+          lastName: userLastName ?? undefined,
+          email: userEmail ?? undefined,
+        }
+      : undefined;
+
+    const initialSubscriber = getInitialSubscriber(workflow.workflowId, currentEnvironment._id, userFields);
+
+    const data: Record<string, string> = {
+      subscriberId: initialSubscriber?.subscriberId ?? 'subscriber-id',
+    };
+
+    if (initialSubscriber?.firstName) {
+      data.firstName = initialSubscriber.firstName;
+    }
+    if (initialSubscriber?.lastName) {
+      data.lastName = initialSubscriber.lastName;
+    }
+    if (initialSubscriber?.email) {
+      data.email = initialSubscriber.email;
+    }
+
+    return data;
+  }, [workflow?.workflowId, currentEnvironment?._id, userId, userFirstName, userLastName, userEmail]);
+
+  const integrationPayload = useMemo(() => {
+    if (!workflow?.workflowId || !currentEnvironment?._id) {
+      return {};
+    }
+    return getInitialPayload(workflow.workflowId, currentEnvironment._id, workflow, isPayloadSchemaEnabled);
+  }, [workflow, currentEnvironment?._id, isPayloadSchemaEnabled]);
 
   const handleIntegrateWorkflowClick = () => {
     setIsIntegrateDrawerOpen(true);
@@ -56,18 +103,10 @@ export const WorkflowTabs = () => {
     }
 
     try {
-      const payload = getInitialPayload(workflow.workflowId, currentEnvironment._id, workflow, isPayloadSchemaEnabled);
-      const subscriberData = {
-        subscriberId: currentUser._id,
-        firstName: currentUser.firstName ?? undefined,
-        lastName: currentUser.lastName ?? undefined,
-        email: currentUser.email ?? undefined,
-      };
-
       const postmanCollection = generatePostmanCollection({
         workflowId: workflow.workflowId,
         to: subscriberData,
-        payload,
+        payload: integrationPayload,
         apiKey,
       });
 
@@ -91,7 +130,7 @@ export const WorkflowTabs = () => {
     } catch {
       showErrorToast('Failed to copy Postman collection', 'Postman Error');
     }
-  }, [workflow, currentUser, currentEnvironment?._id, apiKey, isPayloadSchemaEnabled]);
+  }, [workflow, currentUser, currentEnvironment?._id, apiKey, subscriberData, integrationPayload]);
 
   const handleCopyCurl = useCallback(async () => {
     if (!workflow?.workflowId || !currentUser || !currentEnvironment?._id) {
@@ -100,18 +139,10 @@ export const WorkflowTabs = () => {
     }
 
     try {
-      const payload = getInitialPayload(workflow.workflowId, currentEnvironment._id, workflow, isPayloadSchemaEnabled);
-      const subscriberData = {
-        subscriberId: currentUser._id,
-        firstName: currentUser.firstName ?? undefined,
-        lastName: currentUser.lastName ?? undefined,
-        email: currentUser.email ?? undefined,
-      };
-
       const curlCommand = generateTriggerCurlCommand({
         workflowId: workflow.workflowId,
         to: subscriberData,
-        payload: JSON.stringify(payload),
+        payload: JSON.stringify(integrationPayload),
         apiKey: apiKey,
       });
 
@@ -131,7 +162,7 @@ export const WorkflowTabs = () => {
     } catch {
       showErrorToast('Failed to copy cURL command', 'Copy Error');
     }
-  }, [workflow, currentUser, currentEnvironment?._id, apiKey, isPayloadSchemaEnabled]);
+  }, [workflow, currentUser, currentEnvironment?._id, apiKey, subscriberData, integrationPayload]);
 
   const handleFireAndForget = useCallback(async () => {
     if (!workflow || !currentUser || !currentEnvironment?._id) {
@@ -140,25 +171,12 @@ export const WorkflowTabs = () => {
     }
 
     try {
-      const payload = getInitialPayload(
-        workflow.workflowId ?? '',
-        currentEnvironment._id,
-        workflow,
-        isPayloadSchemaEnabled
-      );
-      const subscriberData = {
-        subscriberId: currentUser._id,
-        firstName: currentUser.firstName ?? undefined,
-        lastName: currentUser.lastName ?? undefined,
-        email: currentUser.email ?? undefined,
-      };
-
       const {
         data: { transactionId },
       } = await triggerWorkflow({
         name: workflow.workflowId ?? '',
         to: subscriberData,
-        payload: payload,
+        payload: integrationPayload,
       });
 
       if (!transactionId) {
@@ -233,11 +251,10 @@ export const WorkflowTabs = () => {
                   mode="ghost"
                   size="xs"
                   onClick={() => {
-                    const activityUrl =
-                      buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
-                        environmentSlug: currentEnvironment?.slug ?? '',
-                        workflowSlug: workflow?.slug ?? '',
-                      }) + `?transactionId=${transactionId}`;
+                    const activityUrl = `${buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
+                      environmentSlug: currentEnvironment?.slug ?? '',
+                      workflowSlug: workflow?.slug ?? '',
+                    })}?transactionId=${transactionId}`;
                     navigate(activityUrl);
                     close();
                   }}
@@ -263,7 +280,16 @@ export const WorkflowTabs = () => {
         'Failed to trigger workflow'
       );
     }
-  }, [workflow, currentUser, currentEnvironment, triggerWorkflow, navigate, isPayloadSchemaEnabled]);
+  }, [
+    workflow,
+    currentUser,
+    currentEnvironment?._id,
+    currentEnvironment?.slug,
+    triggerWorkflow,
+    navigate,
+    subscriberData,
+    integrationPayload,
+  ]);
 
   // Determine current tab based on URL
   const currentTab = activityMatch ? 'activity' : 'workflow';
@@ -365,8 +391,8 @@ export const WorkflowTabs = () => {
         isOpen={isIntegrateDrawerOpen}
         onClose={() => setIsIntegrateDrawerOpen(false)}
         workflow={workflow}
-        to={{}}
-        payload="{}"
+        to={subscriberData}
+        payload={JSON.stringify(integrationPayload, null, 2)}
       />
     </div>
   );

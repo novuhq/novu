@@ -14,13 +14,14 @@ export class BuildWorkflowByVolumeChart {
 
   @InstrumentUsecase()
   async execute(command: BuildWorkflowByVolumeChartCommand): Promise<WorkflowVolumeDataPointDto[]> {
-    const { environmentId, organizationId, startDate, endDate } = command;
+    const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
     const workflowRuns = await this.workflowRunRepository.getWorkflowVolumeData(
       environmentId,
       organizationId,
       startDate,
-      endDate
+      endDate,
+      workflowIds
     );
 
     const chartData: WorkflowVolumeDataPointDto[] = workflowRuns.map((workflowRun) => ({

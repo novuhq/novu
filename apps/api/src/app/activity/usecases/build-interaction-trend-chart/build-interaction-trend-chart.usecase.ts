@@ -14,13 +14,14 @@ export class BuildInteractionTrendChart {
 
   @InstrumentUsecase()
   async execute(command: BuildInteractionTrendChartCommand): Promise<InteractionTrendDataPointDto[]> {
-    const { environmentId, organizationId, startDate, endDate } = command;
+    const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
     const traces = await this.traceLogRepository.getInteractionTrendData(
       environmentId,
       organizationId,
       startDate,
-      endDate
+      endDate,
+      workflowIds
     );
 
     const chartDataMap = new Map<string, Map<string, number>>();

@@ -20,6 +20,7 @@ export class TriggerEventToAll {
         overrides: command.overrides || {},
         actor: command.actor,
         tenant: command.tenant,
+        context: command.context,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
         bridgeUrl: command.bridgeUrl,
         requestId: command.requestId,

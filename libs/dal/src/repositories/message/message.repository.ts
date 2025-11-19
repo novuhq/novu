@@ -852,7 +852,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (shouldMarkAsSeen) {
       // First, update all matching documents with the main update
-      await this.update(idQuery, { $set: updatePayload });
+      await this.update(
+        idQuery,
+        { $set: updatePayload },
+        {
+          writeConcern: { w: 1 },
+        }
+      );
 
       // Then, set firstSeenDate only for documents that don't already have it
       await this.update(
@@ -862,6 +868,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         },
         {
           $set: { firstSeenDate: new Date() },
+        },
+        {
+          writeConcern: { w: 1 },
         }
       );
     } else {
@@ -869,7 +878,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       await this.update(idQuery, { $set: updatePayload });
     }
 
-    return this.find(idQuery);
+    return this.find(idQuery, undefined, { limit: 100 });
   }
 
   async updateActionStatus({

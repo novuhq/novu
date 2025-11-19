@@ -7,6 +7,7 @@ import {
 } from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
+  ChannelEndpointRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
   ContextRepository,
@@ -26,6 +27,7 @@ const PROVIDERS = [ChannelFactory, CompileTemplate, GetNovuProviderCredentials, 
     CommunityOrganizationRepository,
     CommunityUserRepository,
     ChannelConnectionRepository,
+    ChannelEndpointRepository,
     ContextRepository,
     ...PROVIDERS,
   ],

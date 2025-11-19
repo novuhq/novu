@@ -14,13 +14,14 @@ export class BuildDeliveryTrendChart {
 
   @InstrumentUsecase()
   async execute(command: BuildDeliveryTrendChartCommand): Promise<ChartDataPointDto[]> {
-    const { environmentId, organizationId, startDate, endDate } = command;
+    const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
     const stepRuns = await this.stepRunRepository.getDeliveryTrendData(
       environmentId,
       organizationId,
       startDate,
-      endDate
+      endDate,
+      workflowIds
     );
 
     const chartDataMap = new Map<string, Map<string, number>>();

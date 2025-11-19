@@ -37,6 +37,6 @@ const DAL_MODELS = [
 @Module({
   controllers: [ChannelEndpointsController],
   providers: [...USE_CASES, ...DAL_MODELS, featureFlagsService],
-  exports: [...USE_CASES],
+  exports: [...USE_CASES, ...DAL_MODELS],
 })
 export class ChannelEndpointsModule {}

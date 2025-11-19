@@ -71,7 +71,7 @@ export class ChannelConnectionsController {
     description: `Retrieve all channel connections for a resource.`,
   })
   @ApiResponse(ListChannelConnectionsResponseDto, 200)
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   @ExternalApiAccessible()
   async listChannelConnections(
     @UserSession() user: UserSessionData,
@@ -88,7 +88,8 @@ export class ChannelConnectionsController {
         orderDirection: query.orderDirection,
         orderBy: query.orderBy || 'createdAt',
         includeCursor: query.includeCursor,
-        resource: query.resource,
+        subscriberId: query.subscriberId,
+        contextKeys: query.contextKeys,
         channel: query.channel,
         providerId: query.providerId,
         integrationIdentifier: query.integrationIdentifier,
@@ -110,7 +111,7 @@ export class ChannelConnectionsController {
     description: `Create a new channel connection for a resource for given integration. Only one channel connection is allowed per resource and integration.`,
   })
   @ApiResponse(GetChannelConnectionResponseDto, 201)
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
   async createChannelConnection(
     @UserSession() user: UserSessionData,
@@ -124,7 +125,8 @@ export class ChannelConnectionsController {
         organizationId: user.organizationId,
         identifier: body.identifier,
         integrationIdentifier: body.integrationIdentifier,
-        resource: body.resource,
+        subscriberId: body.subscriberId,
+        context: body.context,
         workspace: body.workspace,
         auth: body.auth,
       })
@@ -140,7 +142,7 @@ export class ChannelConnectionsController {
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel connection', type: String })
   @ApiResponse(GetChannelConnectionResponseDto, 200)
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_READ)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   @ExternalApiAccessible()
   async getChannelConnectionByIdentifier(
     @UserSession() user: UserSessionData,
@@ -166,7 +168,7 @@ export class ChannelConnectionsController {
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel connection', type: String })
   @ApiResponse(GetChannelConnectionResponseDto, 200)
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
   async updateChannelConnection(
     @UserSession() user: UserSessionData,
@@ -195,7 +197,7 @@ export class ChannelConnectionsController {
     description: `Delete a specific channel connection by its unique identifier.`,
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel connection', type: String })
-  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
   async deleteChannelConnection(
     @UserSession() user: UserSessionData,

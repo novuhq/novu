@@ -14,13 +14,14 @@ export class BuildProviderByVolumeChart {
 
   @InstrumentUsecase()
   async execute(command: BuildProviderByVolumeChartCommand): Promise<ProviderVolumeDataPointDto[]> {
-    const { environmentId, organizationId, startDate, endDate } = command;
+    const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
     const providerData = await this.stepRunRepository.getProviderVolumeData(
       environmentId,
       organizationId,
       startDate,
-      endDate
+      endDate,
+      workflowIds
     );
 
     return providerData.map((dataPoint) => ({

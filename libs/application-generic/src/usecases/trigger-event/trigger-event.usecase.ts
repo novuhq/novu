@@ -55,10 +55,29 @@ export class TriggerEvent {
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
-    await this.createWorkflowTrace(command, 'workflow_execution_started', 'success', 'Workflow execution started');
+    let storedWorkflow: NotificationTemplateEntity | null = null;
 
     try {
-      const mappedCommand = await this.getMappedCommand(command);
+      if (!command.bridgeWorkflow) {
+        storedWorkflow = await this.getAndUpdateWorkflowById({
+          environmentId: command.environmentId,
+          triggerIdentifier: command.identifier,
+          payload: command.payload,
+          organizationId: command.organizationId,
+          userId: command.userId,
+        });
+      }
+
+      const mappedCommand = await this.getMappedCommand(command, storedWorkflow?._id);
+
+      await this.createWorkflowTrace({
+        command,
+        eventType: 'workflow_execution_started',
+        status: 'success',
+        message: 'Workflow execution started',
+        workflowId: storedWorkflow?._id,
+      });
+
       const { environmentId, identifier, organizationId, userId } = mappedCommand;
 
       const environment = await this.environmentRepository.findOne({
@@ -87,25 +106,15 @@ export class TriggerEvent {
         },
       });
 
-      let storedWorkflow: NotificationTemplateEntity | null = null;
-      if (!command.bridgeWorkflow) {
-        storedWorkflow = await this.getAndUpdateWorkflowById({
-          environmentId: mappedCommand.environmentId,
-          triggerIdentifier: mappedCommand.identifier,
-          payload: mappedCommand.payload,
-          organizationId: mappedCommand.organizationId,
-          userId: mappedCommand.userId,
-        });
-      }
-
       if (!storedWorkflow && !command.bridgeWorkflow) {
-        await this.createWorkflowTrace(
+        await this.createWorkflowTrace({
           command,
-          'workflow_template_not_found',
-          'error',
-          'Notification template could not be found',
-          { identifier: mappedCommand.identifier }
-        );
+          eventType: 'workflow_template_not_found',
+          status: 'error',
+          message: 'Notification template could not be found',
+          rawData: { identifier: mappedCommand.identifier },
+          workflowId: storedWorkflow?._id,
+        });
         throw new BadRequestException('Notification template could not be found');
       }
 
@@ -120,13 +129,14 @@ export class TriggerEvent {
         );
 
         if (!tenantProcessed) {
-          await this.createWorkflowTrace(
+          await this.createWorkflowTrace({
             command,
-            'workflow_tenant_processing_failed',
-            'warning',
-            'Tenant processing failed',
-            { tenantIdentifier: mappedCommand.tenant.identifier }
-          );
+            eventType: 'workflow_tenant_processing_failed',
+            status: 'warning',
+            message: 'Tenant processing failed',
+            rawData: { tenantIdentifier: mappedCommand.tenant.identifier },
+            workflowId: storedWorkflow?._id,
+          });
           Logger.warn(
             `Tenant with identifier ${JSON.stringify(
               mappedCommand.tenant.identifier
@@ -147,13 +157,14 @@ export class TriggerEvent {
             this.buildCommand(environmentId, organizationId, mappedCommand.actor)
           );
         } catch (error: any) {
-          await this.createWorkflowTrace(
+          await this.createWorkflowTrace({
             command,
-            'workflow_actor_processing_failed',
-            'error',
-            'Actor processing failed',
-            { error: error.message, stack: error.stack }
-          );
+            eventType: 'workflow_actor_processing_failed',
+            status: 'error',
+            message: 'Actor processing failed',
+            rawData: { error: error.message, stack: error.stack },
+            workflowId: storedWorkflow?._id,
+          });
           throw error;
         }
       }
@@ -196,13 +207,14 @@ export class TriggerEvent {
       }
     } catch (e) {
       const error = e as Error;
-      await this.createWorkflowTrace(
+      await this.createWorkflowTrace({
         command,
-        'workflow_execution_failed',
-        'error',
-        `Workflow execution failed: ${error.message}`,
-        { error: error.message, stack: error.stack }
-      );
+        eventType: 'workflow_execution_failed',
+        status: 'error',
+        message: `Workflow execution failed: ${error.message}`,
+        rawData: { error: error.message, stack: error.stack },
+        workflowId: storedWorkflow?._id,
+      });
 
       Logger.error(
         {
@@ -219,7 +231,7 @@ export class TriggerEvent {
     }
   }
 
-  private async getMappedCommand(command: TriggerEventCommand) {
+  private async getMappedCommand(command: TriggerEventCommand, workflowId: string) {
     const isContextEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
       defaultValue: false,
@@ -232,17 +244,20 @@ export class TriggerEvent {
       ...command,
       tenant: this.mapTenant(command.tenant),
       actor: this.mapActor(command.actor),
-      ...(isContextEnabled && { contextKeys: await this.resolveContextKeys(command) }),
+      ...(isContextEnabled && { contextKeys: await this.resolveContextKeys(command, workflowId) }),
     };
   }
 
-  private async createWorkflowTrace(
-    command: TriggerEventCommand,
-    eventType: EventType,
-    status: 'success' | 'error' | 'warning' = 'success',
-    message?: string,
-    rawData?: any
-  ): Promise<void> {
+  private async createWorkflowTrace(params: {
+    command: TriggerEventCommand;
+    eventType: EventType;
+    status?: 'success' | 'error' | 'warning';
+    message?: string;
+    rawData?: any;
+    workflowId?: string;
+  }): Promise<void> {
+    const { command, eventType, status = 'success', message, rawData, workflowId } = params;
+
     if (!command.requestId) {
       return;
     }
@@ -263,6 +278,7 @@ export class TriggerEvent {
         entity_type: 'request',
         entity_id: command.requestId,
         workflow_run_identifier: command.identifier,
+        workflow_id: workflowId || '',
       };
 
       await this.traceLogRepository.createRequest([traceData]);
@@ -374,7 +390,7 @@ export class TriggerEvent {
     return subscriber;
   }
 
-  private async resolveContextKeys(command: TriggerEventCommand): Promise<string[]> {
+  private async resolveContextKeys(command: TriggerEventCommand, workflowId: string): Promise<string[]> {
     if (!command.context) {
       return [];
     }
@@ -386,14 +402,21 @@ export class TriggerEvent {
         command.context
       );
 
-      this.createWorkflowTrace(command, 'workflow_context_resolution_completed', 'success', 'Context resolved', {
-        context: contexts.map((context) => ({
-          id: context.id,
-          type: context.type,
-          data: context.data,
-          createdAt: context.createdAt,
-          updatedAt: context.updatedAt,
-        })),
+      this.createWorkflowTrace({
+        command,
+        eventType: 'workflow_context_resolution_completed',
+        status: 'success',
+        message: 'Context resolved',
+        rawData: {
+          context: contexts.map((context) => ({
+            id: context.id,
+            type: context.type,
+            data: context.data,
+            createdAt: context.createdAt,
+            updatedAt: context.updatedAt,
+          })),
+        },
+        workflowId,
       });
 
       return contexts.map((context) => context.key);
@@ -410,8 +433,13 @@ export class TriggerEvent {
       );
 
       if (error instanceof BadRequestException) {
-        this.createWorkflowTrace(command, 'workflow_context_resolution_failed', 'error', 'Context resolution failed', {
-          context: command.context,
+        this.createWorkflowTrace({
+          command,
+          eventType: 'workflow_context_resolution_failed',
+          status: 'error',
+          message: 'Context resolution failed',
+          rawData: { context: command.context },
+          workflowId,
         });
       }
       throw new BadRequestException(

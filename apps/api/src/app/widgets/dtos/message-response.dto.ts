@@ -361,7 +361,7 @@ export class MessageResponseDto implements IMessage {
 
   @ApiPropertyOptional({
     type: [String],
-    description: 'Context keys associated with the message (format: "type:id")',
+    description: 'Context (single or multi) in which the message was sent',
     example: ['tenant:org-123', 'region:us-east-1'],
   })
   contextKeys?: string[];

@@ -1,14 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  ChannelTypeEnum,
-  makeResourceKey,
-  ProvidersIdEnum,
-  ProvidersIdEnumConst,
-  RESOURCE,
-  ResourceKey,
-} from '@novu/shared';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { IsResourceKey } from '../../shared/validators/resource-key.validator';
+import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
+import { Transform } from 'class-transformer';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
 import { GetChannelEndpointResponseDto } from './get-channel-endpoint-response.dto';
 
@@ -17,13 +10,35 @@ export class ListChannelEndpointsQueryDto extends CursorPaginationQueryDto<
   'createdAt' | 'updatedAt'
 > {
   @ApiPropertyOptional({
-    description: 'Resource to filter results.',
+    description: 'The subscriber ID to filter results by',
     type: String,
-    example: makeResourceKey(RESOURCE.SUBSCRIBER, 'user123'),
+    example: 'subscriber-123',
   })
   @IsOptional()
-  @IsResourceKey()
-  resource?: ResourceKey;
+  @IsString()
+  subscriberId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by exact context keys, order insensitive (format: "type:id")',
+    type: String,
+    isArray: true,
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    // No parameter = no filter
+    if (value === undefined) return undefined;
+
+    // Empty string = filter for records with no (default) context
+    if (value === '') return [];
+
+    // Normalize to array and remove empty strings
+    const array = Array.isArray(value) ? value : [value];
+    return array.filter((v) => v !== '');
+  })
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 
   @ApiPropertyOptional({
     description: 'Channel type to filter results.',
