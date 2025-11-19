@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  DigestControlDto,
-  DigestControlDto$inboundSchema,
-  DigestControlDto$Outbound,
-  DigestControlDto$outboundSchema,
-} from './digestcontroldto.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { DigestControlDto, DigestControlDto$inboundSchema } from './digestcontroldto.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type DigestControlsMetadataResponseDto = {
   /**
@@ -39,43 +34,6 @@ export const DigestControlsMetadataResponseDto$inboundSchema: z.ZodType<
   uiSchema: UiSchema$inboundSchema.optional(),
   values: DigestControlDto$inboundSchema,
 });
-
-/** @internal */
-export type DigestControlsMetadataResponseDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-  values: DigestControlDto$Outbound;
-};
-
-/** @internal */
-export const DigestControlsMetadataResponseDto$outboundSchema: z.ZodType<
-  DigestControlsMetadataResponseDto$Outbound,
-  z.ZodTypeDef,
-  DigestControlsMetadataResponseDto
-> = z.object({
-  dataSchema: z.record(z.any()).optional(),
-  uiSchema: UiSchema$outboundSchema.optional(),
-  values: DigestControlDto$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestControlsMetadataResponseDto$ {
-  /** @deprecated use `DigestControlsMetadataResponseDto$inboundSchema` instead. */
-  export const inboundSchema = DigestControlsMetadataResponseDto$inboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDto$outboundSchema` instead. */
-  export const outboundSchema = DigestControlsMetadataResponseDto$outboundSchema;
-  /** @deprecated use `DigestControlsMetadataResponseDto$Outbound` instead. */
-  export type Outbound = DigestControlsMetadataResponseDto$Outbound;
-}
-
-export function digestControlsMetadataResponseDtoToJSON(
-  digestControlsMetadataResponseDto: DigestControlsMetadataResponseDto
-): string {
-  return JSON.stringify(DigestControlsMetadataResponseDto$outboundSchema.parse(digestControlsMetadataResponseDto));
-}
 
 export function digestControlsMetadataResponseDtoFromJSON(
   jsonString: string

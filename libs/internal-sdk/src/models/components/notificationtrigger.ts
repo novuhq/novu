@@ -10,8 +10,6 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   NotificationTriggerVariable,
   NotificationTriggerVariable$inboundSchema,
-  NotificationTriggerVariable$Outbound,
-  NotificationTriggerVariable$outboundSchema,
 } from './notificationtriggervariable.js';
 
 export const NotificationTriggerType = {
@@ -31,64 +29,12 @@ export const NotificationTriggerType$inboundSchema: z.ZodNativeEnum<typeof Notif
   z.nativeEnum(NotificationTriggerType);
 
 /** @internal */
-export const NotificationTriggerType$outboundSchema: z.ZodNativeEnum<typeof NotificationTriggerType> =
-  NotificationTriggerType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace NotificationTriggerType$ {
-  /** @deprecated use `NotificationTriggerType$inboundSchema` instead. */
-  export const inboundSchema = NotificationTriggerType$inboundSchema;
-  /** @deprecated use `NotificationTriggerType$outboundSchema` instead. */
-  export const outboundSchema = NotificationTriggerType$outboundSchema;
-}
-
-/** @internal */
 export const NotificationTrigger$inboundSchema: z.ZodType<NotificationTrigger, z.ZodTypeDef, unknown> = z.object({
   type: NotificationTriggerType$inboundSchema,
   identifier: z.string(),
   variables: z.array(NotificationTriggerVariable$inboundSchema),
   subscriberVariables: z.array(NotificationTriggerVariable$inboundSchema).optional(),
 });
-
-/** @internal */
-export type NotificationTrigger$Outbound = {
-  type: string;
-  identifier: string;
-  variables: Array<NotificationTriggerVariable$Outbound>;
-  subscriberVariables?: Array<NotificationTriggerVariable$Outbound> | undefined;
-};
-
-/** @internal */
-export const NotificationTrigger$outboundSchema: z.ZodType<
-  NotificationTrigger$Outbound,
-  z.ZodTypeDef,
-  NotificationTrigger
-> = z.object({
-  type: NotificationTriggerType$outboundSchema,
-  identifier: z.string(),
-  variables: z.array(NotificationTriggerVariable$outboundSchema),
-  subscriberVariables: z.array(NotificationTriggerVariable$outboundSchema).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace NotificationTrigger$ {
-  /** @deprecated use `NotificationTrigger$inboundSchema` instead. */
-  export const inboundSchema = NotificationTrigger$inboundSchema;
-  /** @deprecated use `NotificationTrigger$outboundSchema` instead. */
-  export const outboundSchema = NotificationTrigger$outboundSchema;
-  /** @deprecated use `NotificationTrigger$Outbound` instead. */
-  export type Outbound = NotificationTrigger$Outbound;
-}
-
-export function notificationTriggerToJSON(notificationTrigger: NotificationTrigger): string {
-  return JSON.stringify(NotificationTrigger$outboundSchema.parse(notificationTrigger));
-}
 
 export function notificationTriggerFromJSON(
   jsonString: string

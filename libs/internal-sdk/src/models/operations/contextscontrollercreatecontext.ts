@@ -23,23 +23,6 @@ export type ContextsControllerCreateContextResponse = {
 };
 
 /** @internal */
-export const ContextsControllerCreateContextRequest$inboundSchema: z.ZodType<
-  ContextsControllerCreateContextRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    'idempotency-key': z.string().optional(),
-    CreateContextRequestDto: components.CreateContextRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      CreateContextRequestDto: 'createContextRequestDto',
-    });
-  });
-
-/** @internal */
 export type ContextsControllerCreateContextRequest$Outbound = {
   'idempotency-key'?: string | undefined;
   CreateContextRequestDto: components.CreateContextRequestDto$Outbound;
@@ -62,34 +45,11 @@ export const ContextsControllerCreateContextRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ContextsControllerCreateContextRequest$ {
-  /** @deprecated use `ContextsControllerCreateContextRequest$inboundSchema` instead. */
-  export const inboundSchema = ContextsControllerCreateContextRequest$inboundSchema;
-  /** @deprecated use `ContextsControllerCreateContextRequest$outboundSchema` instead. */
-  export const outboundSchema = ContextsControllerCreateContextRequest$outboundSchema;
-  /** @deprecated use `ContextsControllerCreateContextRequest$Outbound` instead. */
-  export type Outbound = ContextsControllerCreateContextRequest$Outbound;
-}
-
 export function contextsControllerCreateContextRequestToJSON(
   contextsControllerCreateContextRequest: ContextsControllerCreateContextRequest
 ): string {
   return JSON.stringify(
     ContextsControllerCreateContextRequest$outboundSchema.parse(contextsControllerCreateContextRequest)
-  );
-}
-
-export function contextsControllerCreateContextRequestFromJSON(
-  jsonString: string
-): SafeParseResult<ContextsControllerCreateContextRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ContextsControllerCreateContextRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ContextsControllerCreateContextRequest' from JSON`
   );
 }
 
@@ -109,50 +69,6 @@ export const ContextsControllerCreateContextResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type ContextsControllerCreateContextResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.GetContextResponseDto$Outbound;
-};
-
-/** @internal */
-export const ContextsControllerCreateContextResponse$outboundSchema: z.ZodType<
-  ContextsControllerCreateContextResponse$Outbound,
-  z.ZodTypeDef,
-  ContextsControllerCreateContextResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.GetContextResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ContextsControllerCreateContextResponse$ {
-  /** @deprecated use `ContextsControllerCreateContextResponse$inboundSchema` instead. */
-  export const inboundSchema = ContextsControllerCreateContextResponse$inboundSchema;
-  /** @deprecated use `ContextsControllerCreateContextResponse$outboundSchema` instead. */
-  export const outboundSchema = ContextsControllerCreateContextResponse$outboundSchema;
-  /** @deprecated use `ContextsControllerCreateContextResponse$Outbound` instead. */
-  export type Outbound = ContextsControllerCreateContextResponse$Outbound;
-}
-
-export function contextsControllerCreateContextResponseToJSON(
-  contextsControllerCreateContextResponse: ContextsControllerCreateContextResponse
-): string {
-  return JSON.stringify(
-    ContextsControllerCreateContextResponse$outboundSchema.parse(contextsControllerCreateContextResponse)
-  );
-}
 
 export function contextsControllerCreateContextResponseFromJSON(
   jsonString: string

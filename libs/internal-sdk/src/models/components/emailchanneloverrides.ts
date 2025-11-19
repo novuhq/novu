@@ -3,9 +3,6 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type EmailChannelOverrides = {
   /**
@@ -13,11 +10,6 @@ export type EmailChannelOverrides = {
    */
   layoutId?: string | null | undefined;
 };
-
-/** @internal */
-export const EmailChannelOverrides$inboundSchema: z.ZodType<EmailChannelOverrides, z.ZodTypeDef, unknown> = z.object({
-  layoutId: z.nullable(z.string()).optional(),
-});
 
 /** @internal */
 export type EmailChannelOverrides$Outbound = {
@@ -33,29 +25,6 @@ export const EmailChannelOverrides$outboundSchema: z.ZodType<
   layoutId: z.nullable(z.string()).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailChannelOverrides$ {
-  /** @deprecated use `EmailChannelOverrides$inboundSchema` instead. */
-  export const inboundSchema = EmailChannelOverrides$inboundSchema;
-  /** @deprecated use `EmailChannelOverrides$outboundSchema` instead. */
-  export const outboundSchema = EmailChannelOverrides$outboundSchema;
-  /** @deprecated use `EmailChannelOverrides$Outbound` instead. */
-  export type Outbound = EmailChannelOverrides$Outbound;
-}
-
 export function emailChannelOverridesToJSON(emailChannelOverrides: EmailChannelOverrides): string {
   return JSON.stringify(EmailChannelOverrides$outboundSchema.parse(emailChannelOverrides));
-}
-
-export function emailChannelOverridesFromJSON(
-  jsonString: string
-): SafeParseResult<EmailChannelOverrides, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EmailChannelOverrides$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EmailChannelOverrides' from JSON`
-  );
 }

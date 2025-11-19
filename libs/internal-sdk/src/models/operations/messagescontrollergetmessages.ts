@@ -17,7 +17,7 @@ export type MessagesControllerGetMessagesRequest = {
   subscriberId?: string | undefined;
   transactionId?: Array<string> | undefined;
   /**
-   * Filter by exact context keys (format: "type:id")
+   * Filter by exact context keys, order insensitive (format: "type:id")
    */
   contextKeys?: Array<string> | undefined;
   page?: number | undefined;
@@ -32,27 +32,6 @@ export type MessagesControllerGetMessagesResponse = {
   headers: { [k: string]: Array<string> };
   result: components.MessagesResponseDto;
 };
-
-/** @internal */
-export const MessagesControllerGetMessagesRequest$inboundSchema: z.ZodType<
-  MessagesControllerGetMessagesRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    channel: components.ChannelTypeEnum$inboundSchema.optional(),
-    subscriberId: z.string().optional(),
-    transactionId: z.array(z.string()).optional(),
-    contextKeys: z.array(z.string()).optional(),
-    page: z.number().default(0),
-    limit: z.number().default(10),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
 
 /** @internal */
 export type MessagesControllerGetMessagesRequest$Outbound = {
@@ -86,34 +65,11 @@ export const MessagesControllerGetMessagesRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessagesControllerGetMessagesRequest$ {
-  /** @deprecated use `MessagesControllerGetMessagesRequest$inboundSchema` instead. */
-  export const inboundSchema = MessagesControllerGetMessagesRequest$inboundSchema;
-  /** @deprecated use `MessagesControllerGetMessagesRequest$outboundSchema` instead. */
-  export const outboundSchema = MessagesControllerGetMessagesRequest$outboundSchema;
-  /** @deprecated use `MessagesControllerGetMessagesRequest$Outbound` instead. */
-  export type Outbound = MessagesControllerGetMessagesRequest$Outbound;
-}
-
 export function messagesControllerGetMessagesRequestToJSON(
   messagesControllerGetMessagesRequest: MessagesControllerGetMessagesRequest
 ): string {
   return JSON.stringify(
     MessagesControllerGetMessagesRequest$outboundSchema.parse(messagesControllerGetMessagesRequest)
-  );
-}
-
-export function messagesControllerGetMessagesRequestFromJSON(
-  jsonString: string
-): SafeParseResult<MessagesControllerGetMessagesRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => MessagesControllerGetMessagesRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'MessagesControllerGetMessagesRequest' from JSON`
   );
 }
 
@@ -133,50 +89,6 @@ export const MessagesControllerGetMessagesResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type MessagesControllerGetMessagesResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.MessagesResponseDto$Outbound;
-};
-
-/** @internal */
-export const MessagesControllerGetMessagesResponse$outboundSchema: z.ZodType<
-  MessagesControllerGetMessagesResponse$Outbound,
-  z.ZodTypeDef,
-  MessagesControllerGetMessagesResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.MessagesResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessagesControllerGetMessagesResponse$ {
-  /** @deprecated use `MessagesControllerGetMessagesResponse$inboundSchema` instead. */
-  export const inboundSchema = MessagesControllerGetMessagesResponse$inboundSchema;
-  /** @deprecated use `MessagesControllerGetMessagesResponse$outboundSchema` instead. */
-  export const outboundSchema = MessagesControllerGetMessagesResponse$outboundSchema;
-  /** @deprecated use `MessagesControllerGetMessagesResponse$Outbound` instead. */
-  export type Outbound = MessagesControllerGetMessagesResponse$Outbound;
-}
-
-export function messagesControllerGetMessagesResponseToJSON(
-  messagesControllerGetMessagesResponse: MessagesControllerGetMessagesResponse
-): string {
-  return JSON.stringify(
-    MessagesControllerGetMessagesResponse$outboundSchema.parse(messagesControllerGetMessagesResponse)
-  );
-}
 
 export function messagesControllerGetMessagesResponseFromJSON(
   jsonString: string

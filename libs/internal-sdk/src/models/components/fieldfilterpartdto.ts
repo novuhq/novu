@@ -41,37 +41,13 @@ export type FieldFilterPartDto = {
 
 /** @internal */
 export const Operator$inboundSchema: z.ZodNativeEnum<typeof Operator> = z.nativeEnum(Operator);
-
 /** @internal */
 export const Operator$outboundSchema: z.ZodNativeEnum<typeof Operator> = Operator$inboundSchema;
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Operator$ {
-  /** @deprecated use `Operator$inboundSchema` instead. */
-  export const inboundSchema = Operator$inboundSchema;
-  /** @deprecated use `Operator$outboundSchema` instead. */
-  export const outboundSchema = Operator$outboundSchema;
-}
-
 /** @internal */
 export const On$inboundSchema: z.ZodNativeEnum<typeof On> = z.nativeEnum(On);
-
 /** @internal */
 export const On$outboundSchema: z.ZodNativeEnum<typeof On> = On$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace On$ {
-  /** @deprecated use `On$inboundSchema` instead. */
-  export const inboundSchema = On$inboundSchema;
-  /** @deprecated use `On$outboundSchema` instead. */
-  export const outboundSchema = On$outboundSchema;
-}
 
 /** @internal */
 export const FieldFilterPartDto$inboundSchema: z.ZodType<FieldFilterPartDto, z.ZodTypeDef, unknown> = z.object({
@@ -80,7 +56,6 @@ export const FieldFilterPartDto$inboundSchema: z.ZodType<FieldFilterPartDto, z.Z
   operator: Operator$inboundSchema,
   on: On$inboundSchema,
 });
-
 /** @internal */
 export type FieldFilterPartDto$Outbound = {
   field: string;
@@ -101,23 +76,9 @@ export const FieldFilterPartDto$outboundSchema: z.ZodType<
   on: On$outboundSchema,
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace FieldFilterPartDto$ {
-  /** @deprecated use `FieldFilterPartDto$inboundSchema` instead. */
-  export const inboundSchema = FieldFilterPartDto$inboundSchema;
-  /** @deprecated use `FieldFilterPartDto$outboundSchema` instead. */
-  export const outboundSchema = FieldFilterPartDto$outboundSchema;
-  /** @deprecated use `FieldFilterPartDto$Outbound` instead. */
-  export type Outbound = FieldFilterPartDto$Outbound;
-}
-
 export function fieldFilterPartDtoToJSON(fieldFilterPartDto: FieldFilterPartDto): string {
   return JSON.stringify(FieldFilterPartDto$outboundSchema.parse(fieldFilterPartDto));
 }
-
 export function fieldFilterPartDtoFromJSON(
   jsonString: string
 ): SafeParseResult<FieldFilterPartDto, SDKValidationError> {

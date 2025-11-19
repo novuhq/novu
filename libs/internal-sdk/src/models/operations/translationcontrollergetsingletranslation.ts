@@ -4,10 +4,7 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 /**
  * Resource type
@@ -41,41 +38,8 @@ export type TranslationControllerGetSingleTranslationRequest = {
 };
 
 /** @internal */
-export const PathParamResourceType$inboundSchema: z.ZodNativeEnum<typeof PathParamResourceType> =
-  z.nativeEnum(PathParamResourceType);
-
-/** @internal */
 export const PathParamResourceType$outboundSchema: z.ZodNativeEnum<typeof PathParamResourceType> =
-  PathParamResourceType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PathParamResourceType$ {
-  /** @deprecated use `PathParamResourceType$inboundSchema` instead. */
-  export const inboundSchema = PathParamResourceType$inboundSchema;
-  /** @deprecated use `PathParamResourceType$outboundSchema` instead. */
-  export const outboundSchema = PathParamResourceType$outboundSchema;
-}
-
-/** @internal */
-export const TranslationControllerGetSingleTranslationRequest$inboundSchema: z.ZodType<
-  TranslationControllerGetSingleTranslationRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    resourceType: PathParamResourceType$inboundSchema,
-    resourceId: z.string(),
-    locale: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
+  z.nativeEnum(PathParamResourceType);
 
 /** @internal */
 export type TranslationControllerGetSingleTranslationRequest$Outbound = {
@@ -103,19 +67,6 @@ export const TranslationControllerGetSingleTranslationRequest$outboundSchema: z.
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TranslationControllerGetSingleTranslationRequest$ {
-  /** @deprecated use `TranslationControllerGetSingleTranslationRequest$inboundSchema` instead. */
-  export const inboundSchema = TranslationControllerGetSingleTranslationRequest$inboundSchema;
-  /** @deprecated use `TranslationControllerGetSingleTranslationRequest$outboundSchema` instead. */
-  export const outboundSchema = TranslationControllerGetSingleTranslationRequest$outboundSchema;
-  /** @deprecated use `TranslationControllerGetSingleTranslationRequest$Outbound` instead. */
-  export type Outbound = TranslationControllerGetSingleTranslationRequest$Outbound;
-}
-
 export function translationControllerGetSingleTranslationRequestToJSON(
   translationControllerGetSingleTranslationRequest: TranslationControllerGetSingleTranslationRequest
 ): string {
@@ -123,15 +74,5 @@ export function translationControllerGetSingleTranslationRequestToJSON(
     TranslationControllerGetSingleTranslationRequest$outboundSchema.parse(
       translationControllerGetSingleTranslationRequest
     )
-  );
-}
-
-export function translationControllerGetSingleTranslationRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TranslationControllerGetSingleTranslationRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TranslationControllerGetSingleTranslationRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TranslationControllerGetSingleTranslationRequest' from JSON`
   );
 }

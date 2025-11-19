@@ -7,6 +7,7 @@ import { translationsMasterRetrieve } from '../funcs/translationsMasterRetrieve.
 import { translationsMasterUpload } from '../funcs/translationsMasterUpload.js';
 import { ClientSDK, RequestOptions } from '../lib/sdks.js';
 import * as components from '../models/components/index.js';
+import * as operations from '../models/operations/index.js';
 import { unwrapAsync } from '../types/fp.js';
 
 export class Master extends ClientSDK {
@@ -45,9 +46,10 @@ export class Master extends ClientSDK {
    * Upload a master JSON file containing translations for multiple workflows. Locale is automatically detected from filename (e.g., en_US.json)
    */
   async upload(
+    requestBody: operations.TranslationControllerUploadMasterJsonEndpointRequestBody,
     idempotencyKey?: string | undefined,
     options?: RequestOptions
   ): Promise<components.ImportMasterJsonResponseDto> {
-    return unwrapAsync(translationsMasterUpload(this, idempotencyKey, options));
+    return unwrapAsync(translationsMasterUpload(this, requestBody, idempotencyKey, options));
   }
 }

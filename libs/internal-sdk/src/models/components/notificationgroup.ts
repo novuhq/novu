@@ -34,51 +34,6 @@ export const NotificationGroup$inboundSchema: z.ZodType<NotificationGroup, z.Zod
     });
   });
 
-/** @internal */
-export type NotificationGroup$Outbound = {
-  _id?: string | undefined;
-  name: string;
-  _environmentId: string;
-  _organizationId: string;
-  _parentId?: string | undefined;
-};
-
-/** @internal */
-export const NotificationGroup$outboundSchema: z.ZodType<NotificationGroup$Outbound, z.ZodTypeDef, NotificationGroup> =
-  z
-    .object({
-      id: z.string().optional(),
-      name: z.string(),
-      environmentId: z.string(),
-      organizationId: z.string(),
-      parentId: z.string().optional(),
-    })
-    .transform((v) => {
-      return remap$(v, {
-        id: '_id',
-        environmentId: '_environmentId',
-        organizationId: '_organizationId',
-        parentId: '_parentId',
-      });
-    });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace NotificationGroup$ {
-  /** @deprecated use `NotificationGroup$inboundSchema` instead. */
-  export const inboundSchema = NotificationGroup$inboundSchema;
-  /** @deprecated use `NotificationGroup$outboundSchema` instead. */
-  export const outboundSchema = NotificationGroup$outboundSchema;
-  /** @deprecated use `NotificationGroup$Outbound` instead. */
-  export type Outbound = NotificationGroup$Outbound;
-}
-
-export function notificationGroupToJSON(notificationGroup: NotificationGroup): string {
-  return JSON.stringify(NotificationGroup$outboundSchema.parse(notificationGroup));
-}
-
 export function notificationGroupFromJSON(jsonString: string): SafeParseResult<NotificationGroup, SDKValidationError> {
   return safeParse(
     jsonString,

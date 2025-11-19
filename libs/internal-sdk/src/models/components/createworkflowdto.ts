@@ -4,79 +4,54 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   ChatStepUpsertDto,
-  ChatStepUpsertDto$inboundSchema,
   ChatStepUpsertDto$Outbound,
   ChatStepUpsertDto$outboundSchema,
 } from './chatstepupsertdto.js';
 import {
   CustomStepUpsertDto,
-  CustomStepUpsertDto$inboundSchema,
   CustomStepUpsertDto$Outbound,
   CustomStepUpsertDto$outboundSchema,
 } from './customstepupsertdto.js';
 import {
   DelayStepUpsertDto,
-  DelayStepUpsertDto$inboundSchema,
   DelayStepUpsertDto$Outbound,
   DelayStepUpsertDto$outboundSchema,
 } from './delaystepupsertdto.js';
 import {
   DigestStepUpsertDto,
-  DigestStepUpsertDto$inboundSchema,
   DigestStepUpsertDto$Outbound,
   DigestStepUpsertDto$outboundSchema,
 } from './digeststepupsertdto.js';
 import {
   EmailStepUpsertDto,
-  EmailStepUpsertDto$inboundSchema,
   EmailStepUpsertDto$Outbound,
   EmailStepUpsertDto$outboundSchema,
 } from './emailstepupsertdto.js';
 import {
   InAppStepUpsertDto,
-  InAppStepUpsertDto$inboundSchema,
   InAppStepUpsertDto$Outbound,
   InAppStepUpsertDto$outboundSchema,
 } from './inappstepupsertdto.js';
 import {
   PreferencesRequestDto,
-  PreferencesRequestDto$inboundSchema,
   PreferencesRequestDto$Outbound,
   PreferencesRequestDto$outboundSchema,
 } from './preferencesrequestdto.js';
 import {
   PushStepUpsertDto,
-  PushStepUpsertDto$inboundSchema,
   PushStepUpsertDto$Outbound,
   PushStepUpsertDto$outboundSchema,
 } from './pushstepupsertdto.js';
-import {
-  SeverityLevelEnum,
-  SeverityLevelEnum$inboundSchema,
-  SeverityLevelEnum$outboundSchema,
-} from './severitylevelenum.js';
-import {
-  SmsStepUpsertDto,
-  SmsStepUpsertDto$inboundSchema,
-  SmsStepUpsertDto$Outbound,
-  SmsStepUpsertDto$outboundSchema,
-} from './smsstepupsertdto.js';
+import { SeverityLevelEnum, SeverityLevelEnum$outboundSchema } from './severitylevelenum.js';
+import { SmsStepUpsertDto, SmsStepUpsertDto$Outbound, SmsStepUpsertDto$outboundSchema } from './smsstepupsertdto.js';
 import {
   ThrottleStepUpsertDto,
-  ThrottleStepUpsertDto$inboundSchema,
   ThrottleStepUpsertDto$Outbound,
   ThrottleStepUpsertDto$outboundSchema,
 } from './throttlestepupsertdto.js';
-import {
-  WorkflowCreationSourceEnum,
-  WorkflowCreationSourceEnum$inboundSchema,
-  WorkflowCreationSourceEnum$outboundSchema,
-} from './workflowcreationsourceenum.js';
+import { WorkflowCreationSourceEnum, WorkflowCreationSourceEnum$outboundSchema } from './workflowcreationsourceenum.js';
 
 export type Steps =
   | (InAppStepUpsertDto & { type: 'in_app' })
@@ -151,51 +126,6 @@ export type CreateWorkflowDto = {
 };
 
 /** @internal */
-export const Steps$inboundSchema: z.ZodType<Steps, z.ZodTypeDef, unknown> = z.union([
-  InAppStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('in_app') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-  EmailStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('email') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-  SmsStepUpsertDto$inboundSchema.and(z.object({ type: z.literal('sms') }).transform((v) => ({ type: v.type }))),
-  PushStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('push') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-  ChatStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('chat') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-  DelayStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('delay') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-  DigestStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('digest') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-  ThrottleStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('throttle') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-  CustomStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('custom') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-]);
-
-/** @internal */
 export type Steps$Outbound =
   | (InAppStepUpsertDto$Outbound & { type: 'in_app' })
   | (EmailStepUpsertDto$Outbound & { type: 'email' })
@@ -236,96 +166,9 @@ export const Steps$outboundSchema: z.ZodType<Steps$Outbound, z.ZodTypeDef, Steps
   ),
 ]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Steps$ {
-  /** @deprecated use `Steps$inboundSchema` instead. */
-  export const inboundSchema = Steps$inboundSchema;
-  /** @deprecated use `Steps$outboundSchema` instead. */
-  export const outboundSchema = Steps$outboundSchema;
-  /** @deprecated use `Steps$Outbound` instead. */
-  export type Outbound = Steps$Outbound;
-}
-
 export function stepsToJSON(steps: Steps): string {
   return JSON.stringify(Steps$outboundSchema.parse(steps));
 }
-
-export function stepsFromJSON(jsonString: string): SafeParseResult<Steps, SDKValidationError> {
-  return safeParse(jsonString, (x) => Steps$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Steps' from JSON`);
-}
-
-/** @internal */
-export const CreateWorkflowDto$inboundSchema: z.ZodType<CreateWorkflowDto, z.ZodTypeDef, unknown> = z
-  .object({
-    name: z.string(),
-    description: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    active: z.boolean().default(false),
-    validatePayload: z.boolean().optional(),
-    payloadSchema: z.nullable(z.record(z.any())).optional(),
-    isTranslationEnabled: z.boolean().default(false),
-    workflowId: z.string(),
-    steps: z.array(
-      z.union([
-        InAppStepUpsertDto$inboundSchema.and(
-          z.object({ type: z.literal('in_app') }).transform((v) => ({
-            type: v.type,
-          }))
-        ),
-        EmailStepUpsertDto$inboundSchema.and(
-          z.object({ type: z.literal('email') }).transform((v) => ({
-            type: v.type,
-          }))
-        ),
-        SmsStepUpsertDto$inboundSchema.and(
-          z.object({ type: z.literal('sms') }).transform((v) => ({
-            type: v.type,
-          }))
-        ),
-        PushStepUpsertDto$inboundSchema.and(
-          z.object({ type: z.literal('push') }).transform((v) => ({
-            type: v.type,
-          }))
-        ),
-        ChatStepUpsertDto$inboundSchema.and(
-          z.object({ type: z.literal('chat') }).transform((v) => ({
-            type: v.type,
-          }))
-        ),
-        DelayStepUpsertDto$inboundSchema.and(
-          z.object({ type: z.literal('delay') }).transform((v) => ({
-            type: v.type,
-          }))
-        ),
-        DigestStepUpsertDto$inboundSchema.and(
-          z.object({ type: z.literal('digest') }).transform((v) => ({
-            type: v.type,
-          }))
-        ),
-        ThrottleStepUpsertDto$inboundSchema.and(
-          z.object({ type: z.literal('throttle') }).transform((v) => ({
-            type: v.type,
-          }))
-        ),
-        CustomStepUpsertDto$inboundSchema.and(
-          z.object({ type: z.literal('custom') }).transform((v) => ({
-            type: v.type,
-          }))
-        ),
-      ])
-    ),
-    __source: WorkflowCreationSourceEnum$inboundSchema.default('editor'),
-    preferences: PreferencesRequestDto$inboundSchema.optional(),
-    severity: SeverityLevelEnum$inboundSchema.optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      __source: 'source',
-    });
-  });
 
 /** @internal */
 export type CreateWorkflowDto$Outbound = {
@@ -424,27 +267,6 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<CreateWorkflowDto$Outbo
       });
     });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CreateWorkflowDto$ {
-  /** @deprecated use `CreateWorkflowDto$inboundSchema` instead. */
-  export const inboundSchema = CreateWorkflowDto$inboundSchema;
-  /** @deprecated use `CreateWorkflowDto$outboundSchema` instead. */
-  export const outboundSchema = CreateWorkflowDto$outboundSchema;
-  /** @deprecated use `CreateWorkflowDto$Outbound` instead. */
-  export type Outbound = CreateWorkflowDto$Outbound;
-}
-
 export function createWorkflowDtoToJSON(createWorkflowDto: CreateWorkflowDto): string {
   return JSON.stringify(CreateWorkflowDto$outboundSchema.parse(createWorkflowDto));
-}
-
-export function createWorkflowDtoFromJSON(jsonString: string): SafeParseResult<CreateWorkflowDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => CreateWorkflowDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'CreateWorkflowDto' from JSON`
-  );
 }

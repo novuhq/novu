@@ -4,10 +4,7 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export const QueryParamStatuses = {
   Processing: 'processing',
@@ -44,67 +41,11 @@ export type ActivityControllerGetWorkflowRunsRequest = {
 };
 
 /** @internal */
-export const QueryParamStatuses$inboundSchema: z.ZodNativeEnum<typeof QueryParamStatuses> =
+export const QueryParamStatuses$outboundSchema: z.ZodNativeEnum<typeof QueryParamStatuses> =
   z.nativeEnum(QueryParamStatuses);
 
 /** @internal */
-export const QueryParamStatuses$outboundSchema: z.ZodNativeEnum<typeof QueryParamStatuses> =
-  QueryParamStatuses$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace QueryParamStatuses$ {
-  /** @deprecated use `QueryParamStatuses$inboundSchema` instead. */
-  export const inboundSchema = QueryParamStatuses$inboundSchema;
-  /** @deprecated use `QueryParamStatuses$outboundSchema` instead. */
-  export const outboundSchema = QueryParamStatuses$outboundSchema;
-}
-
-/** @internal */
-export const Severity$inboundSchema: z.ZodNativeEnum<typeof Severity> = z.nativeEnum(Severity);
-
-/** @internal */
-export const Severity$outboundSchema: z.ZodNativeEnum<typeof Severity> = Severity$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Severity$ {
-  /** @deprecated use `Severity$inboundSchema` instead. */
-  export const inboundSchema = Severity$inboundSchema;
-  /** @deprecated use `Severity$outboundSchema` instead. */
-  export const outboundSchema = Severity$outboundSchema;
-}
-
-/** @internal */
-export const ActivityControllerGetWorkflowRunsRequest$inboundSchema: z.ZodType<
-  ActivityControllerGetWorkflowRunsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    limit: z.number().default(10),
-    cursor: z.string().optional(),
-    workflowIds: z.array(z.string()).optional(),
-    subscriberIds: z.array(z.string()).optional(),
-    transactionIds: z.array(z.string()).optional(),
-    statuses: z.array(QueryParamStatuses$inboundSchema).optional(),
-    channels: z.array(z.string()).optional(),
-    topicKey: z.string().optional(),
-    createdGte: z.string().optional(),
-    createdLte: z.string().optional(),
-    severity: z.array(Severity$inboundSchema).optional(),
-    contextKeys: z.array(z.string()).optional(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
+export const Severity$outboundSchema: z.ZodNativeEnum<typeof Severity> = z.nativeEnum(Severity);
 
 /** @internal */
 export type ActivityControllerGetWorkflowRunsRequest$Outbound = {
@@ -150,33 +91,10 @@ export const ActivityControllerGetWorkflowRunsRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityControllerGetWorkflowRunsRequest$ {
-  /** @deprecated use `ActivityControllerGetWorkflowRunsRequest$inboundSchema` instead. */
-  export const inboundSchema = ActivityControllerGetWorkflowRunsRequest$inboundSchema;
-  /** @deprecated use `ActivityControllerGetWorkflowRunsRequest$outboundSchema` instead. */
-  export const outboundSchema = ActivityControllerGetWorkflowRunsRequest$outboundSchema;
-  /** @deprecated use `ActivityControllerGetWorkflowRunsRequest$Outbound` instead. */
-  export type Outbound = ActivityControllerGetWorkflowRunsRequest$Outbound;
-}
-
 export function activityControllerGetWorkflowRunsRequestToJSON(
   activityControllerGetWorkflowRunsRequest: ActivityControllerGetWorkflowRunsRequest
 ): string {
   return JSON.stringify(
     ActivityControllerGetWorkflowRunsRequest$outboundSchema.parse(activityControllerGetWorkflowRunsRequest)
-  );
-}
-
-export function activityControllerGetWorkflowRunsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<ActivityControllerGetWorkflowRunsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ActivityControllerGetWorkflowRunsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ActivityControllerGetWorkflowRunsRequest' from JSON`
   );
 }

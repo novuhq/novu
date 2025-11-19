@@ -7,134 +7,23 @@ import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
-/**
- * All translations for given locale organized by workflow identifier
- */
-export type Workflows = {};
-
-/**
- * All translations for given locale organized by layout identifier
- */
-export type Layouts = {};
-
 export type GetMasterJsonResponseDto = {
   /**
    * All translations for given locale organized by workflow identifier
    */
-  workflows: Workflows;
+  workflows: { [k: string]: any };
   /**
    * All translations for given locale organized by layout identifier
    */
-  layouts: Layouts;
+  layouts: { [k: string]: any };
 };
-
-/** @internal */
-export const Workflows$inboundSchema: z.ZodType<Workflows, z.ZodTypeDef, unknown> = z.object({});
-
-/** @internal */
-export type Workflows$Outbound = {};
-
-/** @internal */
-export const Workflows$outboundSchema: z.ZodType<Workflows$Outbound, z.ZodTypeDef, Workflows> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Workflows$ {
-  /** @deprecated use `Workflows$inboundSchema` instead. */
-  export const inboundSchema = Workflows$inboundSchema;
-  /** @deprecated use `Workflows$outboundSchema` instead. */
-  export const outboundSchema = Workflows$outboundSchema;
-  /** @deprecated use `Workflows$Outbound` instead. */
-  export type Outbound = Workflows$Outbound;
-}
-
-export function workflowsToJSON(workflows: Workflows): string {
-  return JSON.stringify(Workflows$outboundSchema.parse(workflows));
-}
-
-export function workflowsFromJSON(jsonString: string): SafeParseResult<Workflows, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Workflows$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Workflows' from JSON`
-  );
-}
-
-/** @internal */
-export const Layouts$inboundSchema: z.ZodType<Layouts, z.ZodTypeDef, unknown> = z.object({});
-
-/** @internal */
-export type Layouts$Outbound = {};
-
-/** @internal */
-export const Layouts$outboundSchema: z.ZodType<Layouts$Outbound, z.ZodTypeDef, Layouts> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Layouts$ {
-  /** @deprecated use `Layouts$inboundSchema` instead. */
-  export const inboundSchema = Layouts$inboundSchema;
-  /** @deprecated use `Layouts$outboundSchema` instead. */
-  export const outboundSchema = Layouts$outboundSchema;
-  /** @deprecated use `Layouts$Outbound` instead. */
-  export type Outbound = Layouts$Outbound;
-}
-
-export function layoutsToJSON(layouts: Layouts): string {
-  return JSON.stringify(Layouts$outboundSchema.parse(layouts));
-}
-
-export function layoutsFromJSON(jsonString: string): SafeParseResult<Layouts, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Layouts$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Layouts' from JSON`
-  );
-}
 
 /** @internal */
 export const GetMasterJsonResponseDto$inboundSchema: z.ZodType<GetMasterJsonResponseDto, z.ZodTypeDef, unknown> =
   z.object({
-    workflows: z.lazy(() => Workflows$inboundSchema),
-    layouts: z.lazy(() => Layouts$inboundSchema),
+    workflows: z.record(z.any()),
+    layouts: z.record(z.any()),
   });
-
-/** @internal */
-export type GetMasterJsonResponseDto$Outbound = {
-  workflows: Workflows$Outbound;
-  layouts: Layouts$Outbound;
-};
-
-/** @internal */
-export const GetMasterJsonResponseDto$outboundSchema: z.ZodType<
-  GetMasterJsonResponseDto$Outbound,
-  z.ZodTypeDef,
-  GetMasterJsonResponseDto
-> = z.object({
-  workflows: z.lazy(() => Workflows$outboundSchema),
-  layouts: z.lazy(() => Layouts$outboundSchema),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetMasterJsonResponseDto$ {
-  /** @deprecated use `GetMasterJsonResponseDto$inboundSchema` instead. */
-  export const inboundSchema = GetMasterJsonResponseDto$inboundSchema;
-  /** @deprecated use `GetMasterJsonResponseDto$outboundSchema` instead. */
-  export const outboundSchema = GetMasterJsonResponseDto$outboundSchema;
-  /** @deprecated use `GetMasterJsonResponseDto$Outbound` instead. */
-  export type Outbound = GetMasterJsonResponseDto$Outbound;
-}
-
-export function getMasterJsonResponseDtoToJSON(getMasterJsonResponseDto: GetMasterJsonResponseDto): string {
-  return JSON.stringify(GetMasterJsonResponseDto$outboundSchema.parse(getMasterJsonResponseDto));
-}
 
 export function getMasterJsonResponseDtoFromJSON(
   jsonString: string

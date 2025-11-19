@@ -7,12 +7,7 @@ import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  WorkflowRunStepsDetailsDto,
-  WorkflowRunStepsDetailsDto$inboundSchema,
-  WorkflowRunStepsDetailsDto$Outbound,
-  WorkflowRunStepsDetailsDto$outboundSchema,
-} from './workflowrunstepsdetailsdto.js';
+import { WorkflowRunStepsDetailsDto, WorkflowRunStepsDetailsDto$inboundSchema } from './workflowrunstepsdetailsdto.js';
 
 /**
  * Workflow run status
@@ -121,7 +116,7 @@ export type GetWorkflowRunsDto = {
    */
   critical: boolean;
   /**
-   * Contexts (keys) in which the workflow run was executed
+   * Context (single or multi) in which the workflow run was executed
    */
   contextKeys?: Array<string> | undefined;
   /**
@@ -135,55 +130,11 @@ export const GetWorkflowRunsDtoStatus$inboundSchema: z.ZodNativeEnum<typeof GetW
   z.nativeEnum(GetWorkflowRunsDtoStatus);
 
 /** @internal */
-export const GetWorkflowRunsDtoStatus$outboundSchema: z.ZodNativeEnum<typeof GetWorkflowRunsDtoStatus> =
-  GetWorkflowRunsDtoStatus$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetWorkflowRunsDtoStatus$ {
-  /** @deprecated use `GetWorkflowRunsDtoStatus$inboundSchema` instead. */
-  export const inboundSchema = GetWorkflowRunsDtoStatus$inboundSchema;
-  /** @deprecated use `GetWorkflowRunsDtoStatus$outboundSchema` instead. */
-  export const outboundSchema = GetWorkflowRunsDtoStatus$outboundSchema;
-}
-
-/** @internal */
 export const DeliveryLifecycleStatus$inboundSchema: z.ZodNativeEnum<typeof DeliveryLifecycleStatus> =
   z.nativeEnum(DeliveryLifecycleStatus);
 
 /** @internal */
-export const DeliveryLifecycleStatus$outboundSchema: z.ZodNativeEnum<typeof DeliveryLifecycleStatus> =
-  DeliveryLifecycleStatus$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DeliveryLifecycleStatus$ {
-  /** @deprecated use `DeliveryLifecycleStatus$inboundSchema` instead. */
-  export const inboundSchema = DeliveryLifecycleStatus$inboundSchema;
-  /** @deprecated use `DeliveryLifecycleStatus$outboundSchema` instead. */
-  export const outboundSchema = DeliveryLifecycleStatus$outboundSchema;
-}
-
-/** @internal */
 export const Severity$inboundSchema: z.ZodNativeEnum<typeof Severity> = z.nativeEnum(Severity);
-
-/** @internal */
-export const Severity$outboundSchema: z.ZodNativeEnum<typeof Severity> = Severity$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Severity$ {
-  /** @deprecated use `Severity$inboundSchema` instead. */
-  export const inboundSchema = Severity$inboundSchema;
-  /** @deprecated use `Severity$outboundSchema` instead. */
-  export const outboundSchema = Severity$outboundSchema;
-}
 
 /** @internal */
 export const GetWorkflowRunsDto$inboundSchema: z.ZodType<GetWorkflowRunsDto, z.ZodTypeDef, unknown> = z.object({
@@ -205,69 +156,6 @@ export const GetWorkflowRunsDto$inboundSchema: z.ZodType<GetWorkflowRunsDto, z.Z
   contextKeys: z.array(z.string()).optional(),
   steps: z.array(WorkflowRunStepsDetailsDto$inboundSchema),
 });
-
-/** @internal */
-export type GetWorkflowRunsDto$Outbound = {
-  id: string;
-  workflowId: string;
-  workflowName: string;
-  organizationId: string;
-  environmentId: string;
-  internalSubscriberId: string;
-  subscriberId?: string | undefined;
-  status: string;
-  deliveryLifecycleStatus: string;
-  triggerIdentifier: string;
-  transactionId: string;
-  createdAt: string;
-  updatedAt: string;
-  severity: string;
-  critical: boolean;
-  contextKeys?: Array<string> | undefined;
-  steps: Array<WorkflowRunStepsDetailsDto$Outbound>;
-};
-
-/** @internal */
-export const GetWorkflowRunsDto$outboundSchema: z.ZodType<
-  GetWorkflowRunsDto$Outbound,
-  z.ZodTypeDef,
-  GetWorkflowRunsDto
-> = z.object({
-  id: z.string(),
-  workflowId: z.string(),
-  workflowName: z.string(),
-  organizationId: z.string(),
-  environmentId: z.string(),
-  internalSubscriberId: z.string(),
-  subscriberId: z.string().optional(),
-  status: GetWorkflowRunsDtoStatus$outboundSchema,
-  deliveryLifecycleStatus: DeliveryLifecycleStatus$outboundSchema,
-  triggerIdentifier: z.string(),
-  transactionId: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  severity: Severity$outboundSchema,
-  critical: z.boolean(),
-  contextKeys: z.array(z.string()).optional(),
-  steps: z.array(WorkflowRunStepsDetailsDto$outboundSchema),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetWorkflowRunsDto$ {
-  /** @deprecated use `GetWorkflowRunsDto$inboundSchema` instead. */
-  export const inboundSchema = GetWorkflowRunsDto$inboundSchema;
-  /** @deprecated use `GetWorkflowRunsDto$outboundSchema` instead. */
-  export const outboundSchema = GetWorkflowRunsDto$outboundSchema;
-  /** @deprecated use `GetWorkflowRunsDto$Outbound` instead. */
-  export type Outbound = GetWorkflowRunsDto$Outbound;
-}
-
-export function getWorkflowRunsDtoToJSON(getWorkflowRunsDto: GetWorkflowRunsDto): string {
-  return JSON.stringify(GetWorkflowRunsDto$outboundSchema.parse(getWorkflowRunsDto));
-}
 
 export function getWorkflowRunsDtoFromJSON(
   jsonString: string

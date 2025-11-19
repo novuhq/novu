@@ -46,47 +46,6 @@ export const TopicResponseDto$inboundSchema: z.ZodType<TopicResponseDto, z.ZodTy
     });
   });
 
-/** @internal */
-export type TopicResponseDto$Outbound = {
-  _id: string;
-  key: string;
-  name?: string | undefined;
-  createdAt?: string | undefined;
-  updatedAt?: string | undefined;
-};
-
-/** @internal */
-export const TopicResponseDto$outboundSchema: z.ZodType<TopicResponseDto$Outbound, z.ZodTypeDef, TopicResponseDto> = z
-  .object({
-    id: z.string(),
-    key: z.string(),
-    name: z.string().optional(),
-    createdAt: z.string().optional(),
-    updatedAt: z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicResponseDto$ {
-  /** @deprecated use `TopicResponseDto$inboundSchema` instead. */
-  export const inboundSchema = TopicResponseDto$inboundSchema;
-  /** @deprecated use `TopicResponseDto$outboundSchema` instead. */
-  export const outboundSchema = TopicResponseDto$outboundSchema;
-  /** @deprecated use `TopicResponseDto$Outbound` instead. */
-  export type Outbound = TopicResponseDto$Outbound;
-}
-
-export function topicResponseDtoToJSON(topicResponseDto: TopicResponseDto): string {
-  return JSON.stringify(TopicResponseDto$outboundSchema.parse(topicResponseDto));
-}
-
 export function topicResponseDtoFromJSON(jsonString: string): SafeParseResult<TopicResponseDto, SDKValidationError> {
   return safeParse(
     jsonString,

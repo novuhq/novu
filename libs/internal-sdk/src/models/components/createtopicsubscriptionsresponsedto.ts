@@ -6,19 +6,9 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { MetaDto, MetaDto$inboundSchema, MetaDto$Outbound, MetaDto$outboundSchema } from './metadto.js';
-import {
-  SubscriptionDto,
-  SubscriptionDto$inboundSchema,
-  SubscriptionDto$Outbound,
-  SubscriptionDto$outboundSchema,
-} from './subscriptiondto.js';
-import {
-  SubscriptionErrorDto,
-  SubscriptionErrorDto$inboundSchema,
-  SubscriptionErrorDto$Outbound,
-  SubscriptionErrorDto$outboundSchema,
-} from './subscriptionerrordto.js';
+import { MetaDto, MetaDto$inboundSchema } from './metadto.js';
+import { SubscriptionDto, SubscriptionDto$inboundSchema } from './subscriptiondto.js';
+import { SubscriptionErrorDto, SubscriptionErrorDto$inboundSchema } from './subscriptionerrordto.js';
 
 export type CreateTopicSubscriptionsResponseDto = {
   /**
@@ -45,43 +35,6 @@ export const CreateTopicSubscriptionsResponseDto$inboundSchema: z.ZodType<
   meta: MetaDto$inboundSchema,
   errors: z.array(SubscriptionErrorDto$inboundSchema).optional(),
 });
-
-/** @internal */
-export type CreateTopicSubscriptionsResponseDto$Outbound = {
-  data: Array<SubscriptionDto$Outbound>;
-  meta: MetaDto$Outbound;
-  errors?: Array<SubscriptionErrorDto$Outbound> | undefined;
-};
-
-/** @internal */
-export const CreateTopicSubscriptionsResponseDto$outboundSchema: z.ZodType<
-  CreateTopicSubscriptionsResponseDto$Outbound,
-  z.ZodTypeDef,
-  CreateTopicSubscriptionsResponseDto
-> = z.object({
-  data: z.array(SubscriptionDto$outboundSchema),
-  meta: MetaDto$outboundSchema,
-  errors: z.array(SubscriptionErrorDto$outboundSchema).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CreateTopicSubscriptionsResponseDto$ {
-  /** @deprecated use `CreateTopicSubscriptionsResponseDto$inboundSchema` instead. */
-  export const inboundSchema = CreateTopicSubscriptionsResponseDto$inboundSchema;
-  /** @deprecated use `CreateTopicSubscriptionsResponseDto$outboundSchema` instead. */
-  export const outboundSchema = CreateTopicSubscriptionsResponseDto$outboundSchema;
-  /** @deprecated use `CreateTopicSubscriptionsResponseDto$Outbound` instead. */
-  export type Outbound = CreateTopicSubscriptionsResponseDto$Outbound;
-}
-
-export function createTopicSubscriptionsResponseDtoToJSON(
-  createTopicSubscriptionsResponseDto: CreateTopicSubscriptionsResponseDto
-): string {
-  return JSON.stringify(CreateTopicSubscriptionsResponseDto$outboundSchema.parse(createTopicSubscriptionsResponseDto));
-}
 
 export function createTopicSubscriptionsResponseDtoFromJSON(
   jsonString: string

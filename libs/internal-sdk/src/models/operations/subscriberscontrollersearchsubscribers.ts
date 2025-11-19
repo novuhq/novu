@@ -75,48 +75,8 @@ export type SubscribersControllerSearchSubscribersResponse = {
 };
 
 /** @internal */
-export const QueryParamOrderDirection$inboundSchema: z.ZodNativeEnum<typeof QueryParamOrderDirection> =
-  z.nativeEnum(QueryParamOrderDirection);
-
-/** @internal */
 export const QueryParamOrderDirection$outboundSchema: z.ZodNativeEnum<typeof QueryParamOrderDirection> =
-  QueryParamOrderDirection$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace QueryParamOrderDirection$ {
-  /** @deprecated use `QueryParamOrderDirection$inboundSchema` instead. */
-  export const inboundSchema = QueryParamOrderDirection$inboundSchema;
-  /** @deprecated use `QueryParamOrderDirection$outboundSchema` instead. */
-  export const outboundSchema = QueryParamOrderDirection$outboundSchema;
-}
-
-/** @internal */
-export const SubscribersControllerSearchSubscribersRequest$inboundSchema: z.ZodType<
-  SubscribersControllerSearchSubscribersRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    after: z.string().optional(),
-    before: z.string().optional(),
-    limit: z.number().optional(),
-    orderDirection: QueryParamOrderDirection$inboundSchema.optional(),
-    orderBy: z.string().optional(),
-    includeCursor: z.boolean().optional(),
-    email: z.string().optional(),
-    name: z.string().optional(),
-    phone: z.string().optional(),
-    subscriberId: z.string().optional(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
+  z.nativeEnum(QueryParamOrderDirection);
 
 /** @internal */
 export type SubscribersControllerSearchSubscribersRequest$Outbound = {
@@ -158,34 +118,11 @@ export const SubscribersControllerSearchSubscribersRequest$outboundSchema: z.Zod
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersControllerSearchSubscribersRequest$ {
-  /** @deprecated use `SubscribersControllerSearchSubscribersRequest$inboundSchema` instead. */
-  export const inboundSchema = SubscribersControllerSearchSubscribersRequest$inboundSchema;
-  /** @deprecated use `SubscribersControllerSearchSubscribersRequest$outboundSchema` instead. */
-  export const outboundSchema = SubscribersControllerSearchSubscribersRequest$outboundSchema;
-  /** @deprecated use `SubscribersControllerSearchSubscribersRequest$Outbound` instead. */
-  export type Outbound = SubscribersControllerSearchSubscribersRequest$Outbound;
-}
-
 export function subscribersControllerSearchSubscribersRequestToJSON(
   subscribersControllerSearchSubscribersRequest: SubscribersControllerSearchSubscribersRequest
 ): string {
   return JSON.stringify(
     SubscribersControllerSearchSubscribersRequest$outboundSchema.parse(subscribersControllerSearchSubscribersRequest)
-  );
-}
-
-export function subscribersControllerSearchSubscribersRequestFromJSON(
-  jsonString: string
-): SafeParseResult<SubscribersControllerSearchSubscribersRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscribersControllerSearchSubscribersRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscribersControllerSearchSubscribersRequest' from JSON`
   );
 }
 
@@ -205,50 +142,6 @@ export const SubscribersControllerSearchSubscribersResponse$inboundSchema: z.Zod
       Result: 'result',
     });
   });
-
-/** @internal */
-export type SubscribersControllerSearchSubscribersResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.ListSubscribersResponseDto$Outbound;
-};
-
-/** @internal */
-export const SubscribersControllerSearchSubscribersResponse$outboundSchema: z.ZodType<
-  SubscribersControllerSearchSubscribersResponse$Outbound,
-  z.ZodTypeDef,
-  SubscribersControllerSearchSubscribersResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.ListSubscribersResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersControllerSearchSubscribersResponse$ {
-  /** @deprecated use `SubscribersControllerSearchSubscribersResponse$inboundSchema` instead. */
-  export const inboundSchema = SubscribersControllerSearchSubscribersResponse$inboundSchema;
-  /** @deprecated use `SubscribersControllerSearchSubscribersResponse$outboundSchema` instead. */
-  export const outboundSchema = SubscribersControllerSearchSubscribersResponse$outboundSchema;
-  /** @deprecated use `SubscribersControllerSearchSubscribersResponse$Outbound` instead. */
-  export type Outbound = SubscribersControllerSearchSubscribersResponse$Outbound;
-}
-
-export function subscribersControllerSearchSubscribersResponseToJSON(
-  subscribersControllerSearchSubscribersResponse: SubscribersControllerSearchSubscribersResponse
-): string {
-  return JSON.stringify(
-    SubscribersControllerSearchSubscribersResponse$outboundSchema.parse(subscribersControllerSearchSubscribersResponse)
-  );
-}
 
 export function subscribersControllerSearchSubscribersResponseFromJSON(
   jsonString: string

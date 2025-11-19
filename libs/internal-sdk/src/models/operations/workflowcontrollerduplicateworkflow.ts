@@ -24,24 +24,6 @@ export type WorkflowControllerDuplicateWorkflowResponse = {
 };
 
 /** @internal */
-export const WorkflowControllerDuplicateWorkflowRequest$inboundSchema: z.ZodType<
-  WorkflowControllerDuplicateWorkflowRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    workflowId: z.string(),
-    'idempotency-key': z.string().optional(),
-    DuplicateWorkflowDto: components.DuplicateWorkflowDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      DuplicateWorkflowDto: 'duplicateWorkflowDto',
-    });
-  });
-
-/** @internal */
 export type WorkflowControllerDuplicateWorkflowRequest$Outbound = {
   workflowId: string;
   'idempotency-key'?: string | undefined;
@@ -66,34 +48,11 @@ export const WorkflowControllerDuplicateWorkflowRequest$outboundSchema: z.ZodTyp
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerDuplicateWorkflowRequest$ {
-  /** @deprecated use `WorkflowControllerDuplicateWorkflowRequest$inboundSchema` instead. */
-  export const inboundSchema = WorkflowControllerDuplicateWorkflowRequest$inboundSchema;
-  /** @deprecated use `WorkflowControllerDuplicateWorkflowRequest$outboundSchema` instead. */
-  export const outboundSchema = WorkflowControllerDuplicateWorkflowRequest$outboundSchema;
-  /** @deprecated use `WorkflowControllerDuplicateWorkflowRequest$Outbound` instead. */
-  export type Outbound = WorkflowControllerDuplicateWorkflowRequest$Outbound;
-}
-
 export function workflowControllerDuplicateWorkflowRequestToJSON(
   workflowControllerDuplicateWorkflowRequest: WorkflowControllerDuplicateWorkflowRequest
 ): string {
   return JSON.stringify(
     WorkflowControllerDuplicateWorkflowRequest$outboundSchema.parse(workflowControllerDuplicateWorkflowRequest)
-  );
-}
-
-export function workflowControllerDuplicateWorkflowRequestFromJSON(
-  jsonString: string
-): SafeParseResult<WorkflowControllerDuplicateWorkflowRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => WorkflowControllerDuplicateWorkflowRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'WorkflowControllerDuplicateWorkflowRequest' from JSON`
   );
 }
 
@@ -113,50 +72,6 @@ export const WorkflowControllerDuplicateWorkflowResponse$inboundSchema: z.ZodTyp
       Result: 'result',
     });
   });
-
-/** @internal */
-export type WorkflowControllerDuplicateWorkflowResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.WorkflowResponseDto$Outbound;
-};
-
-/** @internal */
-export const WorkflowControllerDuplicateWorkflowResponse$outboundSchema: z.ZodType<
-  WorkflowControllerDuplicateWorkflowResponse$Outbound,
-  z.ZodTypeDef,
-  WorkflowControllerDuplicateWorkflowResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.WorkflowResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerDuplicateWorkflowResponse$ {
-  /** @deprecated use `WorkflowControllerDuplicateWorkflowResponse$inboundSchema` instead. */
-  export const inboundSchema = WorkflowControllerDuplicateWorkflowResponse$inboundSchema;
-  /** @deprecated use `WorkflowControllerDuplicateWorkflowResponse$outboundSchema` instead. */
-  export const outboundSchema = WorkflowControllerDuplicateWorkflowResponse$outboundSchema;
-  /** @deprecated use `WorkflowControllerDuplicateWorkflowResponse$Outbound` instead. */
-  export type Outbound = WorkflowControllerDuplicateWorkflowResponse$Outbound;
-}
-
-export function workflowControllerDuplicateWorkflowResponseToJSON(
-  workflowControllerDuplicateWorkflowResponse: WorkflowControllerDuplicateWorkflowResponse
-): string {
-  return JSON.stringify(
-    WorkflowControllerDuplicateWorkflowResponse$outboundSchema.parse(workflowControllerDuplicateWorkflowResponse)
-  );
-}
 
 export function workflowControllerDuplicateWorkflowResponseFromJSON(
   jsonString: string

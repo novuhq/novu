@@ -51,21 +51,6 @@ export const WorkflowRunStepsDetailsDtoStatus$inboundSchema: z.ZodNativeEnum<typ
   z.nativeEnum(WorkflowRunStepsDetailsDtoStatus);
 
 /** @internal */
-export const WorkflowRunStepsDetailsDtoStatus$outboundSchema: z.ZodNativeEnum<typeof WorkflowRunStepsDetailsDtoStatus> =
-  WorkflowRunStepsDetailsDtoStatus$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowRunStepsDetailsDtoStatus$ {
-  /** @deprecated use `WorkflowRunStepsDetailsDtoStatus$inboundSchema` instead. */
-  export const inboundSchema = WorkflowRunStepsDetailsDtoStatus$inboundSchema;
-  /** @deprecated use `WorkflowRunStepsDetailsDtoStatus$outboundSchema` instead. */
-  export const outboundSchema = WorkflowRunStepsDetailsDtoStatus$outboundSchema;
-}
-
-/** @internal */
 export const WorkflowRunStepsDetailsDto$inboundSchema: z.ZodType<WorkflowRunStepsDetailsDto, z.ZodTypeDef, unknown> =
   z.object({
     id: z.string(),
@@ -73,43 +58,6 @@ export const WorkflowRunStepsDetailsDto$inboundSchema: z.ZodType<WorkflowRunStep
     stepType: z.string(),
     status: WorkflowRunStepsDetailsDtoStatus$inboundSchema,
   });
-
-/** @internal */
-export type WorkflowRunStepsDetailsDto$Outbound = {
-  id: string;
-  stepRunId: string;
-  stepType: string;
-  status: string;
-};
-
-/** @internal */
-export const WorkflowRunStepsDetailsDto$outboundSchema: z.ZodType<
-  WorkflowRunStepsDetailsDto$Outbound,
-  z.ZodTypeDef,
-  WorkflowRunStepsDetailsDto
-> = z.object({
-  id: z.string(),
-  stepRunId: z.string(),
-  stepType: z.string(),
-  status: WorkflowRunStepsDetailsDtoStatus$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowRunStepsDetailsDto$ {
-  /** @deprecated use `WorkflowRunStepsDetailsDto$inboundSchema` instead. */
-  export const inboundSchema = WorkflowRunStepsDetailsDto$inboundSchema;
-  /** @deprecated use `WorkflowRunStepsDetailsDto$outboundSchema` instead. */
-  export const outboundSchema = WorkflowRunStepsDetailsDto$outboundSchema;
-  /** @deprecated use `WorkflowRunStepsDetailsDto$Outbound` instead. */
-  export type Outbound = WorkflowRunStepsDetailsDto$Outbound;
-}
-
-export function workflowRunStepsDetailsDtoToJSON(workflowRunStepsDetailsDto: WorkflowRunStepsDetailsDto): string {
-  return JSON.stringify(WorkflowRunStepsDetailsDto$outboundSchema.parse(workflowRunStepsDetailsDto));
-}
 
 export function workflowRunStepsDetailsDtoFromJSON(
   jsonString: string

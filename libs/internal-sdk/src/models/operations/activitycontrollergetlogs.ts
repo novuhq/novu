@@ -4,9 +4,6 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type ActivityControllerGetLogsRequest = {
   /**
@@ -40,27 +37,6 @@ export type ActivityControllerGetLogsRequest = {
 };
 
 /** @internal */
-export const ActivityControllerGetLogsRequest$inboundSchema: z.ZodType<
-  ActivityControllerGetLogsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    page: z.number().optional(),
-    limit: z.number().optional(),
-    statusCodes: z.array(z.number()).optional(),
-    urlPattern: z.string().optional(),
-    transactionId: z.string().optional(),
-    createdGte: z.number().optional(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type ActivityControllerGetLogsRequest$Outbound = {
   page?: number | undefined;
   limit?: number | undefined;
@@ -92,31 +68,8 @@ export const ActivityControllerGetLogsRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityControllerGetLogsRequest$ {
-  /** @deprecated use `ActivityControllerGetLogsRequest$inboundSchema` instead. */
-  export const inboundSchema = ActivityControllerGetLogsRequest$inboundSchema;
-  /** @deprecated use `ActivityControllerGetLogsRequest$outboundSchema` instead. */
-  export const outboundSchema = ActivityControllerGetLogsRequest$outboundSchema;
-  /** @deprecated use `ActivityControllerGetLogsRequest$Outbound` instead. */
-  export type Outbound = ActivityControllerGetLogsRequest$Outbound;
-}
-
 export function activityControllerGetLogsRequestToJSON(
   activityControllerGetLogsRequest: ActivityControllerGetLogsRequest
 ): string {
   return JSON.stringify(ActivityControllerGetLogsRequest$outboundSchema.parse(activityControllerGetLogsRequest));
-}
-
-export function activityControllerGetLogsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<ActivityControllerGetLogsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ActivityControllerGetLogsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ActivityControllerGetLogsRequest' from JSON`
-  );
 }

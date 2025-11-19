@@ -4,22 +4,9 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  CredentialsDto,
-  CredentialsDto$inboundSchema,
-  CredentialsDto$Outbound,
-  CredentialsDto$outboundSchema,
-} from './credentialsdto.js';
-import {
-  StepFilterDto,
-  StepFilterDto$inboundSchema,
-  StepFilterDto$Outbound,
-  StepFilterDto$outboundSchema,
-} from './stepfilterdto.js';
+import { CredentialsDto, CredentialsDto$Outbound, CredentialsDto$outboundSchema } from './credentialsdto.js';
+import { StepFilterDto, StepFilterDto$Outbound, StepFilterDto$outboundSchema } from './stepfilterdto.js';
 
 /**
  * The channel type for the integration
@@ -85,28 +72,9 @@ export type CreateIntegrationRequestDto = {
 };
 
 /** @internal */
-export const CreateIntegrationRequestDtoChannel$inboundSchema: z.ZodNativeEnum<
-  typeof CreateIntegrationRequestDtoChannel
-> = z.nativeEnum(CreateIntegrationRequestDtoChannel);
-
-/** @internal */
 export const CreateIntegrationRequestDtoChannel$outboundSchema: z.ZodNativeEnum<
   typeof CreateIntegrationRequestDtoChannel
-> = CreateIntegrationRequestDtoChannel$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CreateIntegrationRequestDtoChannel$ {
-  /** @deprecated use `CreateIntegrationRequestDtoChannel$inboundSchema` instead. */
-  export const inboundSchema = CreateIntegrationRequestDtoChannel$inboundSchema;
-  /** @deprecated use `CreateIntegrationRequestDtoChannel$outboundSchema` instead. */
-  export const outboundSchema = CreateIntegrationRequestDtoChannel$outboundSchema;
-}
-
-/** @internal */
-export const Configurations$inboundSchema: z.ZodType<Configurations, z.ZodTypeDef, unknown> = z.object({});
+> = z.nativeEnum(CreateIntegrationRequestDtoChannel);
 
 /** @internal */
 export type Configurations$Outbound = {};
@@ -116,51 +84,9 @@ export const Configurations$outboundSchema: z.ZodType<Configurations$Outbound, z
   {}
 );
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Configurations$ {
-  /** @deprecated use `Configurations$inboundSchema` instead. */
-  export const inboundSchema = Configurations$inboundSchema;
-  /** @deprecated use `Configurations$outboundSchema` instead. */
-  export const outboundSchema = Configurations$outboundSchema;
-  /** @deprecated use `Configurations$Outbound` instead. */
-  export type Outbound = Configurations$Outbound;
-}
-
 export function configurationsToJSON(configurations: Configurations): string {
   return JSON.stringify(Configurations$outboundSchema.parse(configurations));
 }
-
-export function configurationsFromJSON(jsonString: string): SafeParseResult<Configurations, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Configurations$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Configurations' from JSON`
-  );
-}
-
-/** @internal */
-export const CreateIntegrationRequestDto$inboundSchema: z.ZodType<CreateIntegrationRequestDto, z.ZodTypeDef, unknown> =
-  z
-    .object({
-      name: z.string().optional(),
-      identifier: z.string().optional(),
-      _environmentId: z.string().optional(),
-      providerId: z.string(),
-      channel: CreateIntegrationRequestDtoChannel$inboundSchema,
-      credentials: CredentialsDto$inboundSchema.optional(),
-      active: z.boolean().optional(),
-      check: z.boolean().optional(),
-      conditions: z.array(StepFilterDto$inboundSchema).optional(),
-      configurations: z.lazy(() => Configurations$inboundSchema).optional(),
-    })
-    .transform((v) => {
-      return remap$(v, {
-        _environmentId: 'environmentId',
-      });
-    });
 
 /** @internal */
 export type CreateIntegrationRequestDto$Outbound = {
@@ -200,29 +126,6 @@ export const CreateIntegrationRequestDto$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CreateIntegrationRequestDto$ {
-  /** @deprecated use `CreateIntegrationRequestDto$inboundSchema` instead. */
-  export const inboundSchema = CreateIntegrationRequestDto$inboundSchema;
-  /** @deprecated use `CreateIntegrationRequestDto$outboundSchema` instead. */
-  export const outboundSchema = CreateIntegrationRequestDto$outboundSchema;
-  /** @deprecated use `CreateIntegrationRequestDto$Outbound` instead. */
-  export type Outbound = CreateIntegrationRequestDto$Outbound;
-}
-
 export function createIntegrationRequestDtoToJSON(createIntegrationRequestDto: CreateIntegrationRequestDto): string {
   return JSON.stringify(CreateIntegrationRequestDto$outboundSchema.parse(createIntegrationRequestDto));
-}
-
-export function createIntegrationRequestDtoFromJSON(
-  jsonString: string
-): SafeParseResult<CreateIntegrationRequestDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => CreateIntegrationRequestDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'CreateIntegrationRequestDto' from JSON`
-  );
 }

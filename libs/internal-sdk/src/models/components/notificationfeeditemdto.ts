@@ -8,20 +8,10 @@ import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ActorFeedItemDto,
-  ActorFeedItemDto$inboundSchema,
-  ActorFeedItemDto$Outbound,
-  ActorFeedItemDto$outboundSchema,
-} from './actorfeeditemdto.js';
-import { ChannelTypeEnum, ChannelTypeEnum$inboundSchema, ChannelTypeEnum$outboundSchema } from './channeltypeenum.js';
-import { MessageCTA, MessageCTA$inboundSchema, MessageCTA$Outbound, MessageCTA$outboundSchema } from './messagecta.js';
-import {
-  SubscriberFeedResponseDto,
-  SubscriberFeedResponseDto$inboundSchema,
-  SubscriberFeedResponseDto$Outbound,
-  SubscriberFeedResponseDto$outboundSchema,
-} from './subscriberfeedresponsedto.js';
+import { ActorFeedItemDto, ActorFeedItemDto$inboundSchema } from './actorfeeditemdto.js';
+import { ChannelTypeEnum, ChannelTypeEnum$inboundSchema } from './channeltypeenum.js';
+import { MessageCTA, MessageCTA$inboundSchema } from './messagecta.js';
+import { SubscriberFeedResponseDto, SubscriberFeedResponseDto$inboundSchema } from './subscriberfeedresponsedto.js';
 
 /**
  * Current status of the notification.
@@ -156,21 +146,6 @@ export const NotificationFeedItemDtoStatus$inboundSchema: z.ZodNativeEnum<typeof
   z.nativeEnum(NotificationFeedItemDtoStatus);
 
 /** @internal */
-export const NotificationFeedItemDtoStatus$outboundSchema: z.ZodNativeEnum<typeof NotificationFeedItemDtoStatus> =
-  NotificationFeedItemDtoStatus$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace NotificationFeedItemDtoStatus$ {
-  /** @deprecated use `NotificationFeedItemDtoStatus$inboundSchema` instead. */
-  export const inboundSchema = NotificationFeedItemDtoStatus$inboundSchema;
-  /** @deprecated use `NotificationFeedItemDtoStatus$outboundSchema` instead. */
-  export const outboundSchema = NotificationFeedItemDtoStatus$outboundSchema;
-}
-
-/** @internal */
 export const NotificationFeedItemDto$inboundSchema: z.ZodType<NotificationFeedItemDto, z.ZodTypeDef, unknown> = z
   .object({
     _id: z.string(),
@@ -229,105 +204,6 @@ export const NotificationFeedItemDto$inboundSchema: z.ZodType<NotificationFeedIt
       _jobId: 'jobId',
     });
   });
-
-/** @internal */
-export type NotificationFeedItemDto$Outbound = {
-  _id: string;
-  _templateId: string;
-  _environmentId: string;
-  _messageTemplateId?: string | undefined;
-  _organizationId: string;
-  _notificationId: string;
-  _subscriberId: string;
-  _feedId?: string | null | undefined;
-  _jobId: string;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-  actor?: ActorFeedItemDto$Outbound | undefined;
-  subscriber?: SubscriberFeedResponseDto$Outbound | undefined;
-  transactionId: string;
-  templateIdentifier?: string | null | undefined;
-  providerId?: string | null | undefined;
-  content: string;
-  subject?: string | null | undefined;
-  channel: string;
-  read: boolean;
-  seen: boolean;
-  deviceTokens?: Array<string> | null | undefined;
-  cta: MessageCTA$Outbound;
-  status: string;
-  payload?: { [k: string]: any } | undefined;
-  data?: { [k: string]: any } | null | undefined;
-  overrides?: { [k: string]: any } | undefined;
-  tags?: Array<string> | null | undefined;
-};
-
-/** @internal */
-export const NotificationFeedItemDto$outboundSchema: z.ZodType<
-  NotificationFeedItemDto$Outbound,
-  z.ZodTypeDef,
-  NotificationFeedItemDto
-> = z
-  .object({
-    id: z.string(),
-    templateId: z.string(),
-    environmentId: z.string(),
-    messageTemplateId: z.string().optional(),
-    organizationId: z.string(),
-    notificationId: z.string(),
-    subscriberId: z.string(),
-    feedId: z.nullable(z.string()).optional(),
-    jobId: z.string(),
-    createdAt: z.nullable(z.date().transform((v) => v.toISOString())).optional(),
-    updatedAt: z.nullable(z.date().transform((v) => v.toISOString())).optional(),
-    actor: ActorFeedItemDto$outboundSchema.optional(),
-    subscriber: SubscriberFeedResponseDto$outboundSchema.optional(),
-    transactionId: z.string(),
-    templateIdentifier: z.nullable(z.string()).optional(),
-    providerId: z.nullable(z.string()).optional(),
-    content: z.string(),
-    subject: z.nullable(z.string()).optional(),
-    channel: ChannelTypeEnum$outboundSchema,
-    read: z.boolean(),
-    seen: z.boolean(),
-    deviceTokens: z.nullable(z.array(z.string())).optional(),
-    cta: MessageCTA$outboundSchema,
-    status: NotificationFeedItemDtoStatus$outboundSchema,
-    payload: z.record(z.any()).optional(),
-    data: z.nullable(z.record(z.any())).optional(),
-    overrides: z.record(z.any()).optional(),
-    tags: z.nullable(z.array(z.string())).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-      templateId: '_templateId',
-      environmentId: '_environmentId',
-      messageTemplateId: '_messageTemplateId',
-      organizationId: '_organizationId',
-      notificationId: '_notificationId',
-      subscriberId: '_subscriberId',
-      feedId: '_feedId',
-      jobId: '_jobId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace NotificationFeedItemDto$ {
-  /** @deprecated use `NotificationFeedItemDto$inboundSchema` instead. */
-  export const inboundSchema = NotificationFeedItemDto$inboundSchema;
-  /** @deprecated use `NotificationFeedItemDto$outboundSchema` instead. */
-  export const outboundSchema = NotificationFeedItemDto$outboundSchema;
-  /** @deprecated use `NotificationFeedItemDto$Outbound` instead. */
-  export type Outbound = NotificationFeedItemDto$Outbound;
-}
-
-export function notificationFeedItemDtoToJSON(notificationFeedItemDto: NotificationFeedItemDto): string {
-  return JSON.stringify(NotificationFeedItemDto$outboundSchema.parse(notificationFeedItemDto));
-}
 
 export function notificationFeedItemDtoFromJSON(
   jsonString: string

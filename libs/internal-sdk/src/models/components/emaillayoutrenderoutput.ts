@@ -20,37 +20,6 @@ export const EmailLayoutRenderOutput$inboundSchema: z.ZodType<EmailLayoutRenderO
     body: z.string(),
   });
 
-/** @internal */
-export type EmailLayoutRenderOutput$Outbound = {
-  body: string;
-};
-
-/** @internal */
-export const EmailLayoutRenderOutput$outboundSchema: z.ZodType<
-  EmailLayoutRenderOutput$Outbound,
-  z.ZodTypeDef,
-  EmailLayoutRenderOutput
-> = z.object({
-  body: z.string(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailLayoutRenderOutput$ {
-  /** @deprecated use `EmailLayoutRenderOutput$inboundSchema` instead. */
-  export const inboundSchema = EmailLayoutRenderOutput$inboundSchema;
-  /** @deprecated use `EmailLayoutRenderOutput$outboundSchema` instead. */
-  export const outboundSchema = EmailLayoutRenderOutput$outboundSchema;
-  /** @deprecated use `EmailLayoutRenderOutput$Outbound` instead. */
-  export type Outbound = EmailLayoutRenderOutput$Outbound;
-}
-
-export function emailLayoutRenderOutputToJSON(emailLayoutRenderOutput: EmailLayoutRenderOutput): string {
-  return JSON.stringify(EmailLayoutRenderOutput$outboundSchema.parse(emailLayoutRenderOutput));
-}
-
 export function emailLayoutRenderOutputFromJSON(
   jsonString: string
 ): SafeParseResult<EmailLayoutRenderOutput, SDKValidationError> {

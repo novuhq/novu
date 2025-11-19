@@ -22,22 +22,6 @@ export type EventsControllerCancelResponse = {
 };
 
 /** @internal */
-export const EventsControllerCancelRequest$inboundSchema: z.ZodType<
-  EventsControllerCancelRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    transactionId: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type EventsControllerCancelRequest$Outbound = {
   transactionId: string;
   'idempotency-key'?: string | undefined;
@@ -59,33 +43,10 @@ export const EventsControllerCancelRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EventsControllerCancelRequest$ {
-  /** @deprecated use `EventsControllerCancelRequest$inboundSchema` instead. */
-  export const inboundSchema = EventsControllerCancelRequest$inboundSchema;
-  /** @deprecated use `EventsControllerCancelRequest$outboundSchema` instead. */
-  export const outboundSchema = EventsControllerCancelRequest$outboundSchema;
-  /** @deprecated use `EventsControllerCancelRequest$Outbound` instead. */
-  export type Outbound = EventsControllerCancelRequest$Outbound;
-}
-
 export function eventsControllerCancelRequestToJSON(
   eventsControllerCancelRequest: EventsControllerCancelRequest
 ): string {
   return JSON.stringify(EventsControllerCancelRequest$outboundSchema.parse(eventsControllerCancelRequest));
-}
-
-export function eventsControllerCancelRequestFromJSON(
-  jsonString: string
-): SafeParseResult<EventsControllerCancelRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EventsControllerCancelRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EventsControllerCancelRequest' from JSON`
-  );
 }
 
 /** @internal */
@@ -104,48 +65,6 @@ export const EventsControllerCancelResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type EventsControllerCancelResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: boolean;
-};
-
-/** @internal */
-export const EventsControllerCancelResponse$outboundSchema: z.ZodType<
-  EventsControllerCancelResponse$Outbound,
-  z.ZodTypeDef,
-  EventsControllerCancelResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: z.boolean(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EventsControllerCancelResponse$ {
-  /** @deprecated use `EventsControllerCancelResponse$inboundSchema` instead. */
-  export const inboundSchema = EventsControllerCancelResponse$inboundSchema;
-  /** @deprecated use `EventsControllerCancelResponse$outboundSchema` instead. */
-  export const outboundSchema = EventsControllerCancelResponse$outboundSchema;
-  /** @deprecated use `EventsControllerCancelResponse$Outbound` instead. */
-  export type Outbound = EventsControllerCancelResponse$Outbound;
-}
-
-export function eventsControllerCancelResponseToJSON(
-  eventsControllerCancelResponse: EventsControllerCancelResponse
-): string {
-  return JSON.stringify(EventsControllerCancelResponse$outboundSchema.parse(eventsControllerCancelResponse));
-}
 
 export function eventsControllerCancelResponseFromJSON(
   jsonString: string

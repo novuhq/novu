@@ -22,21 +22,6 @@ export type IntegrationsControllerGetActiveIntegrationsResponse = {
 };
 
 /** @internal */
-export const IntegrationsControllerGetActiveIntegrationsRequest$inboundSchema: z.ZodType<
-  IntegrationsControllerGetActiveIntegrationsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type IntegrationsControllerGetActiveIntegrationsRequest$Outbound = {
   'idempotency-key'?: string | undefined;
 };
@@ -56,19 +41,6 @@ export const IntegrationsControllerGetActiveIntegrationsRequest$outboundSchema: 
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace IntegrationsControllerGetActiveIntegrationsRequest$ {
-  /** @deprecated use `IntegrationsControllerGetActiveIntegrationsRequest$inboundSchema` instead. */
-  export const inboundSchema = IntegrationsControllerGetActiveIntegrationsRequest$inboundSchema;
-  /** @deprecated use `IntegrationsControllerGetActiveIntegrationsRequest$outboundSchema` instead. */
-  export const outboundSchema = IntegrationsControllerGetActiveIntegrationsRequest$outboundSchema;
-  /** @deprecated use `IntegrationsControllerGetActiveIntegrationsRequest$Outbound` instead. */
-  export type Outbound = IntegrationsControllerGetActiveIntegrationsRequest$Outbound;
-}
-
 export function integrationsControllerGetActiveIntegrationsRequestToJSON(
   integrationsControllerGetActiveIntegrationsRequest: IntegrationsControllerGetActiveIntegrationsRequest
 ): string {
@@ -76,16 +48,6 @@ export function integrationsControllerGetActiveIntegrationsRequestToJSON(
     IntegrationsControllerGetActiveIntegrationsRequest$outboundSchema.parse(
       integrationsControllerGetActiveIntegrationsRequest
     )
-  );
-}
-
-export function integrationsControllerGetActiveIntegrationsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<IntegrationsControllerGetActiveIntegrationsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => IntegrationsControllerGetActiveIntegrationsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'IntegrationsControllerGetActiveIntegrationsRequest' from JSON`
   );
 }
 
@@ -105,52 +67,6 @@ export const IntegrationsControllerGetActiveIntegrationsResponse$inboundSchema: 
       Result: 'result',
     });
   });
-
-/** @internal */
-export type IntegrationsControllerGetActiveIntegrationsResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: Array<components.IntegrationResponseDto$Outbound>;
-};
-
-/** @internal */
-export const IntegrationsControllerGetActiveIntegrationsResponse$outboundSchema: z.ZodType<
-  IntegrationsControllerGetActiveIntegrationsResponse$Outbound,
-  z.ZodTypeDef,
-  IntegrationsControllerGetActiveIntegrationsResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: z.array(components.IntegrationResponseDto$outboundSchema),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace IntegrationsControllerGetActiveIntegrationsResponse$ {
-  /** @deprecated use `IntegrationsControllerGetActiveIntegrationsResponse$inboundSchema` instead. */
-  export const inboundSchema = IntegrationsControllerGetActiveIntegrationsResponse$inboundSchema;
-  /** @deprecated use `IntegrationsControllerGetActiveIntegrationsResponse$outboundSchema` instead. */
-  export const outboundSchema = IntegrationsControllerGetActiveIntegrationsResponse$outboundSchema;
-  /** @deprecated use `IntegrationsControllerGetActiveIntegrationsResponse$Outbound` instead. */
-  export type Outbound = IntegrationsControllerGetActiveIntegrationsResponse$Outbound;
-}
-
-export function integrationsControllerGetActiveIntegrationsResponseToJSON(
-  integrationsControllerGetActiveIntegrationsResponse: IntegrationsControllerGetActiveIntegrationsResponse
-): string {
-  return JSON.stringify(
-    IntegrationsControllerGetActiveIntegrationsResponse$outboundSchema.parse(
-      integrationsControllerGetActiveIntegrationsResponse
-    )
-  );
-}
 
 export function integrationsControllerGetActiveIntegrationsResponseFromJSON(
   jsonString: string

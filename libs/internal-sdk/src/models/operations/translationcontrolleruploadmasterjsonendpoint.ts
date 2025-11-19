@@ -4,35 +4,77 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
+import { blobLikeSchema } from '../../types/blobs.js';
+
+export type FileT = {
+  fileName: string;
+  content: ReadableStream<Uint8Array> | Blob | ArrayBuffer | Uint8Array;
+};
+
+export type TranslationControllerUploadMasterJsonEndpointRequestBody = {
+  /**
+   * Master JSON file with locale as filename (e.g., en_US.json)
+   */
+  file: FileT | Blob;
+};
 
 export type TranslationControllerUploadMasterJsonEndpointRequest = {
   /**
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
+  requestBody: TranslationControllerUploadMasterJsonEndpointRequestBody;
 };
 
 /** @internal */
-export const TranslationControllerUploadMasterJsonEndpointRequest$inboundSchema: z.ZodType<
-  TranslationControllerUploadMasterJsonEndpointRequest,
+export type FileT$Outbound = {
+  fileName: string;
+  content: ReadableStream<Uint8Array> | Blob | ArrayBuffer | Uint8Array;
+};
+
+/** @internal */
+export const FileT$outboundSchema: z.ZodType<FileT$Outbound, z.ZodTypeDef, FileT> = z.object({
+  fileName: z.string(),
+  content: z.union([
+    z.instanceof(ReadableStream<Uint8Array>),
+    z.instanceof(Blob),
+    z.instanceof(ArrayBuffer),
+    z.instanceof(Uint8Array),
+  ]),
+});
+
+export function fileToJSON(fileT: FileT): string {
+  return JSON.stringify(FileT$outboundSchema.parse(fileT));
+}
+
+/** @internal */
+export type TranslationControllerUploadMasterJsonEndpointRequestBody$Outbound = {
+  file: FileT$Outbound | Blob;
+};
+
+/** @internal */
+export const TranslationControllerUploadMasterJsonEndpointRequestBody$outboundSchema: z.ZodType<
+  TranslationControllerUploadMasterJsonEndpointRequestBody$Outbound,
   z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
+  TranslationControllerUploadMasterJsonEndpointRequestBody
+> = z.object({
+  file: z.lazy(() => FileT$outboundSchema).or(blobLikeSchema),
+});
+
+export function translationControllerUploadMasterJsonEndpointRequestBodyToJSON(
+  translationControllerUploadMasterJsonEndpointRequestBody: TranslationControllerUploadMasterJsonEndpointRequestBody
+): string {
+  return JSON.stringify(
+    TranslationControllerUploadMasterJsonEndpointRequestBody$outboundSchema.parse(
+      translationControllerUploadMasterJsonEndpointRequestBody
+    )
+  );
+}
 
 /** @internal */
 export type TranslationControllerUploadMasterJsonEndpointRequest$Outbound = {
   'idempotency-key'?: string | undefined;
+  RequestBody: TranslationControllerUploadMasterJsonEndpointRequestBody$Outbound;
 };
 
 /** @internal */
@@ -43,25 +85,14 @@ export const TranslationControllerUploadMasterJsonEndpointRequest$outboundSchema
 > = z
   .object({
     idempotencyKey: z.string().optional(),
+    requestBody: z.lazy(() => TranslationControllerUploadMasterJsonEndpointRequestBody$outboundSchema),
   })
   .transform((v) => {
     return remap$(v, {
       idempotencyKey: 'idempotency-key',
+      requestBody: 'RequestBody',
     });
   });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TranslationControllerUploadMasterJsonEndpointRequest$ {
-  /** @deprecated use `TranslationControllerUploadMasterJsonEndpointRequest$inboundSchema` instead. */
-  export const inboundSchema = TranslationControllerUploadMasterJsonEndpointRequest$inboundSchema;
-  /** @deprecated use `TranslationControllerUploadMasterJsonEndpointRequest$outboundSchema` instead. */
-  export const outboundSchema = TranslationControllerUploadMasterJsonEndpointRequest$outboundSchema;
-  /** @deprecated use `TranslationControllerUploadMasterJsonEndpointRequest$Outbound` instead. */
-  export type Outbound = TranslationControllerUploadMasterJsonEndpointRequest$Outbound;
-}
 
 export function translationControllerUploadMasterJsonEndpointRequestToJSON(
   translationControllerUploadMasterJsonEndpointRequest: TranslationControllerUploadMasterJsonEndpointRequest
@@ -70,15 +101,5 @@ export function translationControllerUploadMasterJsonEndpointRequestToJSON(
     TranslationControllerUploadMasterJsonEndpointRequest$outboundSchema.parse(
       translationControllerUploadMasterJsonEndpointRequest
     )
-  );
-}
-
-export function translationControllerUploadMasterJsonEndpointRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TranslationControllerUploadMasterJsonEndpointRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TranslationControllerUploadMasterJsonEndpointRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TranslationControllerUploadMasterJsonEndpointRequest' from JSON`
   );
 }

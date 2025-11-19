@@ -3,9 +3,6 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type DuplicateWorkflowDto = {
   /**
@@ -27,14 +24,6 @@ export type DuplicateWorkflowDto = {
 };
 
 /** @internal */
-export const DuplicateWorkflowDto$inboundSchema: z.ZodType<DuplicateWorkflowDto, z.ZodTypeDef, unknown> = z.object({
-  name: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  description: z.string().optional(),
-  isTranslationEnabled: z.boolean().default(false),
-});
-
-/** @internal */
 export type DuplicateWorkflowDto$Outbound = {
   name?: string | undefined;
   tags?: Array<string> | undefined;
@@ -54,29 +43,6 @@ export const DuplicateWorkflowDto$outboundSchema: z.ZodType<
   isTranslationEnabled: z.boolean().default(false),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DuplicateWorkflowDto$ {
-  /** @deprecated use `DuplicateWorkflowDto$inboundSchema` instead. */
-  export const inboundSchema = DuplicateWorkflowDto$inboundSchema;
-  /** @deprecated use `DuplicateWorkflowDto$outboundSchema` instead. */
-  export const outboundSchema = DuplicateWorkflowDto$outboundSchema;
-  /** @deprecated use `DuplicateWorkflowDto$Outbound` instead. */
-  export type Outbound = DuplicateWorkflowDto$Outbound;
-}
-
 export function duplicateWorkflowDtoToJSON(duplicateWorkflowDto: DuplicateWorkflowDto): string {
   return JSON.stringify(DuplicateWorkflowDto$outboundSchema.parse(duplicateWorkflowDto));
-}
-
-export function duplicateWorkflowDtoFromJSON(
-  jsonString: string
-): SafeParseResult<DuplicateWorkflowDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DuplicateWorkflowDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DuplicateWorkflowDto' from JSON`
-  );
 }

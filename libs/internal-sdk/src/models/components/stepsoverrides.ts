@@ -3,9 +3,6 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type StepsOverrides = {
   /**
@@ -17,12 +14,6 @@ export type StepsOverrides = {
    */
   layoutId?: string | null | undefined;
 };
-
-/** @internal */
-export const StepsOverrides$inboundSchema: z.ZodType<StepsOverrides, z.ZodTypeDef, unknown> = z.object({
-  providers: z.record(z.record(z.any())).optional(),
-  layoutId: z.nullable(z.string()).optional(),
-});
 
 /** @internal */
 export type StepsOverrides$Outbound = {
@@ -38,27 +29,6 @@ export const StepsOverrides$outboundSchema: z.ZodType<StepsOverrides$Outbound, z
   }
 );
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepsOverrides$ {
-  /** @deprecated use `StepsOverrides$inboundSchema` instead. */
-  export const inboundSchema = StepsOverrides$inboundSchema;
-  /** @deprecated use `StepsOverrides$outboundSchema` instead. */
-  export const outboundSchema = StepsOverrides$outboundSchema;
-  /** @deprecated use `StepsOverrides$Outbound` instead. */
-  export type Outbound = StepsOverrides$Outbound;
-}
-
 export function stepsOverridesToJSON(stepsOverrides: StepsOverrides): string {
   return JSON.stringify(StepsOverrides$outboundSchema.parse(stepsOverrides));
-}
-
-export function stepsOverridesFromJSON(jsonString: string): SafeParseResult<StepsOverrides, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => StepsOverrides$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'StepsOverrides' from JSON`
-  );
 }

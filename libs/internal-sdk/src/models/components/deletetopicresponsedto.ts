@@ -19,37 +19,6 @@ export const DeleteTopicResponseDto$inboundSchema: z.ZodType<DeleteTopicResponse
   acknowledged: z.boolean(),
 });
 
-/** @internal */
-export type DeleteTopicResponseDto$Outbound = {
-  acknowledged: boolean;
-};
-
-/** @internal */
-export const DeleteTopicResponseDto$outboundSchema: z.ZodType<
-  DeleteTopicResponseDto$Outbound,
-  z.ZodTypeDef,
-  DeleteTopicResponseDto
-> = z.object({
-  acknowledged: z.boolean(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DeleteTopicResponseDto$ {
-  /** @deprecated use `DeleteTopicResponseDto$inboundSchema` instead. */
-  export const inboundSchema = DeleteTopicResponseDto$inboundSchema;
-  /** @deprecated use `DeleteTopicResponseDto$outboundSchema` instead. */
-  export const outboundSchema = DeleteTopicResponseDto$outboundSchema;
-  /** @deprecated use `DeleteTopicResponseDto$Outbound` instead. */
-  export type Outbound = DeleteTopicResponseDto$Outbound;
-}
-
-export function deleteTopicResponseDtoToJSON(deleteTopicResponseDto: DeleteTopicResponseDto): string {
-  return JSON.stringify(DeleteTopicResponseDto$outboundSchema.parse(deleteTopicResponseDto));
-}
-
 export function deleteTopicResponseDtoFromJSON(
   jsonString: string
 ): SafeParseResult<DeleteTopicResponseDto, SDKValidationError> {

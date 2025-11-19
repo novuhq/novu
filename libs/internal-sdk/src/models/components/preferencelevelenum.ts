@@ -20,18 +20,3 @@ export type PreferenceLevelEnum = ClosedEnum<typeof PreferenceLevelEnum>;
 /** @internal */
 export const PreferenceLevelEnum$inboundSchema: z.ZodNativeEnum<typeof PreferenceLevelEnum> =
   z.nativeEnum(PreferenceLevelEnum);
-
-/** @internal */
-export const PreferenceLevelEnum$outboundSchema: z.ZodNativeEnum<typeof PreferenceLevelEnum> =
-  PreferenceLevelEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PreferenceLevelEnum$ {
-  /** @deprecated use `PreferenceLevelEnum$inboundSchema` instead. */
-  export const inboundSchema = PreferenceLevelEnum$inboundSchema;
-  /** @deprecated use `PreferenceLevelEnum$outboundSchema` instead. */
-  export const outboundSchema = PreferenceLevelEnum$outboundSchema;
-}

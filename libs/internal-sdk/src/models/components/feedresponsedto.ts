@@ -6,12 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  NotificationFeedItemDto,
-  NotificationFeedItemDto$inboundSchema,
-  NotificationFeedItemDto$Outbound,
-  NotificationFeedItemDto$outboundSchema,
-} from './notificationfeeditemdto.js';
+import { NotificationFeedItemDto, NotificationFeedItemDto$inboundSchema } from './notificationfeeditemdto.js';
 
 export type FeedResponseDto = {
   /**
@@ -44,42 +39,6 @@ export const FeedResponseDto$inboundSchema: z.ZodType<FeedResponseDto, z.ZodType
   pageSize: z.number(),
   page: z.number(),
 });
-
-/** @internal */
-export type FeedResponseDto$Outbound = {
-  totalCount?: number | undefined;
-  hasMore: boolean;
-  data: Array<NotificationFeedItemDto$Outbound>;
-  pageSize: number;
-  page: number;
-};
-
-/** @internal */
-export const FeedResponseDto$outboundSchema: z.ZodType<FeedResponseDto$Outbound, z.ZodTypeDef, FeedResponseDto> =
-  z.object({
-    totalCount: z.number().optional(),
-    hasMore: z.boolean(),
-    data: z.array(NotificationFeedItemDto$outboundSchema),
-    pageSize: z.number(),
-    page: z.number(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace FeedResponseDto$ {
-  /** @deprecated use `FeedResponseDto$inboundSchema` instead. */
-  export const inboundSchema = FeedResponseDto$inboundSchema;
-  /** @deprecated use `FeedResponseDto$outboundSchema` instead. */
-  export const outboundSchema = FeedResponseDto$outboundSchema;
-  /** @deprecated use `FeedResponseDto$Outbound` instead. */
-  export type Outbound = FeedResponseDto$Outbound;
-}
-
-export function feedResponseDtoToJSON(feedResponseDto: FeedResponseDto): string {
-  return JSON.stringify(FeedResponseDto$outboundSchema.parse(feedResponseDto));
-}
 
 export function feedResponseDtoFromJSON(jsonString: string): SafeParseResult<FeedResponseDto, SDKValidationError> {
   return safeParse(
