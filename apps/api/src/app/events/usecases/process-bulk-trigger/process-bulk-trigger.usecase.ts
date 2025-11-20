@@ -81,7 +81,7 @@ export class ProcessBulkTrigger {
       );
     };
 
-    const BATCH_SIZE = 10;
+    const BATCH_SIZE = 25;
     const results: TriggerEventResponseDto[] = [];
 
     for (let i = 0; i < command.events.length; i += BATCH_SIZE) {
