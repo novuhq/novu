@@ -380,16 +380,19 @@ export class ParseEventRequest {
       requestId,
     };
 
-    await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
-    this.logger.info(
-      { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
-      'Event dispatched to [Workflow] Queue'
-    );
+    if (!command.skipQueueInsertion) {
+      await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
+      this.logger.info(
+        { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
+        'Event dispatched to [Workflow] Queue'
+      );
+    }
 
     return {
       acknowledged: true,
       status: TriggerEventStatusEnum.PROCESSED,
       transactionId,
+      jobData: command.skipQueueInsertion ? jobData : undefined,
     };
   }
 

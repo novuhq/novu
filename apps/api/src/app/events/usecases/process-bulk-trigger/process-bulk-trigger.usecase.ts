@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { IWorkflowBulkJobDto, WorkflowQueueService } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { AddressingTypeEnum, TriggerEventStatusEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { TriggerEventResponseDto } from '../../dtos';
@@ -10,7 +11,8 @@ import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
 export class ProcessBulkTrigger {
   constructor(
     private parseEventRequest: ParseEventRequest,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private workflowQueueService: WorkflowQueueService
   ) {}
 
   async execute(command: ProcessBulkTriggerCommand) {
@@ -54,6 +56,7 @@ export class ProcessBulkTrigger {
             bridgeUrl: event.bridgeUrl,
             requestId: command.requestId,
             workflow,
+            skipQueueInsertion: true,
           })
         )) as unknown as TriggerEventResponseDto;
 
@@ -75,6 +78,21 @@ export class ProcessBulkTrigger {
     });
 
     const results = await Promise.all(eventPromises);
+
+    const jobsToQueue: IWorkflowBulkJobDto[] = results
+      .filter(
+        (result): result is TriggerEventResponseDto & { jobData: NonNullable<typeof result.jobData> } =>
+          result.status === TriggerEventStatusEnum.PROCESSED && result.jobData !== undefined
+      )
+      .map((result) => ({
+        name: result.jobData.transactionId,
+        data: result.jobData,
+        groupId: result.jobData.organizationId,
+      }));
+
+    if (jobsToQueue.length > 0) {
+      await this.workflowQueueService.addBulk(jobsToQueue);
+    }
 
     return results;
   }
