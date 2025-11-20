@@ -1,10 +1,13 @@
 import { HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
+  CloudflareSchedulerService,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  FeatureFlagsService,
   PinoLogger,
+  SchedulerJobType,
   StandardQueueService,
 } from '@novu/application-generic';
 import {
@@ -18,9 +21,11 @@ import {
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  CloudflareSchedulerMode,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   FeatureNameEnum,
+  FeatureFlagsKeysEnum,
   getFeatureForTierAsNumber,
   JobStatusEnum,
 } from '@novu/shared';
@@ -43,7 +48,9 @@ export class SnoozeNotification {
     private organizationRepository: CommunityOrganizationRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private markNotificationAs: MarkNotificationAs,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private cloudflareSchedulerService: CloudflareSchedulerService,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   public async execute(command: SnoozeNotificationCommand): Promise<InboxNotification> {
@@ -92,14 +99,100 @@ export class SnoozeNotification {
   }
 
   public async enqueueJob(job: JobEntity, delay: number) {
-    this.logger.info({ jobId: job._id, delay }, 'Adding snooze job to Standard Queue');
+    this.logger.info({ jobId: job._id, delay }, 'Processing snooze job scheduling');
 
+    const organization = await this.getOrganization(job._organizationId);
+    if (!organization) {
+      this.logger.warn({ organizationId: job._organizationId }, 'Organization not found, falling back to BullMQ');
+      await this.addToBullMQ(job, delay, false);
+
+      return;
+    }
+
+    const schedulerMode = await this.featureFlagsService.getFlag<string>({
+      key: FeatureFlagsKeysEnum.CF_SCHEDULER_MODE,
+      defaultValue: CloudflareSchedulerMode.OFF,
+      organization: { _id: job._organizationId, apiServiceLevel: organization.apiServiceLevel },
+      environment: { _id: job._environmentId },
+    });
+
+    const hasDelay = delay > 0;
+    const shouldUseCFScheduler = schedulerMode !== CloudflareSchedulerMode.OFF && hasDelay;
+
+    this.logger.debug(
+      {
+        jobId: job._id,
+        schedulerMode,
+        hasDelay,
+        shouldUseCFScheduler,
+        delay,
+      },
+      'CF Scheduler mode evaluation for snooze job'
+    );
+
+    if (shouldUseCFScheduler) {
+      await this.handleCFSchedulerMode(job, delay, schedulerMode as CloudflareSchedulerMode);
+    } else {
+      await this.addToBullMQ(job, delay, false);
+    }
+  }
+
+  private async handleCFSchedulerMode(job: JobEntity, delay: number, mode: CloudflareSchedulerMode) {
+    const schedulerRequest = {
+      jobId: job._id,
+      type: SchedulerJobType.SNOOZE,
+      delayMs: delay,
+      data: {
+        _environmentId: job._environmentId,
+        _id: job._id,
+        _organizationId: job._organizationId,
+        _userId: job._userId,
+      },
+      metadata: {
+        mode,
+        workflowId: job._templateId,
+        subscriberId: job._subscriberId,
+        stepId: job.step?.stepId,
+      },
+    };
+
+    switch (mode) {
+      case CloudflareSchedulerMode.SHADOW:
+        this.logger.info({ jobId: job._id }, 'Shadow mode: BullMQ will process, CF Scheduler for validation');
+        await this.cloudflareSchedulerService.scheduleJob(schedulerRequest);
+        await this.addToBullMQ(job, delay, false); // No flag - this is the real one
+        break;
+
+      case CloudflareSchedulerMode.LIVE:
+        this.logger.info({ jobId: job._id }, 'Live mode: CF Scheduler will process, BullMQ is shadow');
+        await this.cloudflareSchedulerService.scheduleJob(schedulerRequest);
+        await this.addToBullMQ(job, delay, true); // skipProcessing: true - this is shadow
+        break;
+
+      case CloudflareSchedulerMode.COMPLETE:
+        this.logger.info({ jobId: job._id }, 'Complete mode: Adding snooze job only to CF Scheduler');
+        await this.cloudflareSchedulerService.scheduleJob(schedulerRequest);
+        break;
+
+      default:
+        this.logger.warn({ mode }, 'Unknown CF Scheduler mode for snooze, falling back to BullMQ');
+        await this.addToBullMQ(job, delay, false);
+    }
+  }
+
+  private async addToBullMQ(job: JobEntity, delay: number, skipProcessing: boolean) {
     const jobData = {
       _environmentId: job._environmentId,
       _id: job._id,
       _organizationId: job._organizationId,
       _userId: job._userId,
+      ...(skipProcessing && { skipProcessing: true }),
     };
+
+    this.logger.info(
+      { jobId: job._id, delay, skipProcessing },
+      skipProcessing ? 'Adding snooze job to BullMQ with skipProcessing flag' : 'Adding snooze job to BullMQ'
+    );
 
     await this.standardQueueService.add({
       name: job._id,
