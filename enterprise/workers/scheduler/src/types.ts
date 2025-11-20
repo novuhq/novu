@@ -1,26 +1,44 @@
-export type ScheduledTask = {
+export enum JobStepType {
+	DELAY = 'delay',
+	DIGEST = 'digest',
+	THROTTLE = 'throttle',
+	SNOOZE = 'snooze',
+	SCHEDULED = 'scheduled',
+}
+
+export type ScheduledJob = {
 	id: string;
-	payload: unknown;
+	type: JobStepType;
 	scheduledFor: number;
 	createdAt: number;
+
+	data: {
+		_environmentId: string;
+		_id: string;
+		_organizationId: string;
+		_userId: string;
+	};
+
+	metadata?: {
+		workflowId?: string;
+		subscriberId?: string;
+		stepId?: string;
+	};
 };
 
-export type ScheduleTaskRequest = {
-	taskId: string;
-	payload: unknown;
+export type ScheduleJobRequest = {
+	jobId: string;
+	type: JobStepType;
 	delayMs: number;
+	data: {
+		_environmentId: string;
+		_id: string;
+		_organizationId: string;
+		_userId: string;
+	};
+	metadata?: {
+		workflowId?: string;
+		subscriberId?: string;
+		stepId?: string;
+	};
 };
-
-export type ScheduleRecurringTaskRequest = {
-	taskId: string;
-	payload: unknown;
-	intervalMs: number;
-};
-
-export type RecurringTask = {
-	payload: unknown;
-	intervalMs: number;
-	lastRun: number | null;
-};
-
-export type RecurringTasksMap = Record<string, RecurringTask>;

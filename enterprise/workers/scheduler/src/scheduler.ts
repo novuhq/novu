@@ -1,13 +1,7 @@
-import type {
-	ScheduledTask,
-	ScheduleTaskRequest,
-	ScheduleRecurringTaskRequest,
-	RecurringTasksMap,
-} from './types';
+import type { ScheduledJob, ScheduleJobRequest } from './types';
 import { verifyM2MToken } from './auth';
 
-const TASKS_STORAGE_KEY = 'scheduled_tasks';
-const RECURRING_TASKS_STORAGE_KEY = 'recurring_tasks';
+const SCHEDULED_JOBS_KEY = 'scheduled_jobs';
 
 export class Scheduler implements DurableObject {
 	constructor(private state: DurableObjectState, private env: Env) {}
@@ -39,28 +33,15 @@ export class Scheduler implements DurableObject {
 			const url = new URL(request.url);
 
 			if (request.method === 'POST' && url.pathname === '/schedule') {
-				const body = await request.json<ScheduleTaskRequest>();
-				this.validateScheduleTaskRequest(body);
-				await this.scheduleTask(body);
+				const body = await request.json<ScheduleJobRequest>();
+				this.validateScheduleJobRequest(body);
+				await this.scheduleJob(body);
 				return Response.json({ success: true });
-			}
-
-			if (request.method === 'POST' && url.pathname === '/schedule/recurring') {
-				const body = await request.json<ScheduleRecurringTaskRequest>();
-				this.validateScheduleRecurringTaskRequest(body);
-				await this.scheduleRecurringTask(body);
-				return Response.json({ success: true });
-			}
-
-			if (request.method === 'DELETE' && url.pathname.startsWith('/cancel/recurring/')) {
-				const taskId = url.pathname.replace('/cancel/recurring/', '');
-				const cancelled = await this.cancelRecurringTask(taskId);
-				return Response.json({ success: cancelled });
 			}
 
 			if (request.method === 'DELETE' && url.pathname.startsWith('/cancel/')) {
-				const taskId = url.pathname.replace('/cancel/', '');
-				const cancelled = await this.cancelTask(taskId);
+				const jobId = url.pathname.replace('/cancel/', '');
+				const cancelled = await this.cancelJob(jobId);
 				return Response.json({ success: cancelled });
 			}
 
@@ -79,121 +60,75 @@ export class Scheduler implements DurableObject {
 		await this.handleAlarm();
 	}
 
-	private validateScheduleTaskRequest(body: unknown): asserts body is ScheduleTaskRequest {
-		const req = body as Partial<ScheduleTaskRequest>;
-		if (!req.taskId || typeof req.taskId !== 'string') {
-			throw new Error('taskId is required and must be a string');
+	private validateScheduleJobRequest(body: unknown): asserts body is ScheduleJobRequest {
+		const req = body as Partial<ScheduleJobRequest>;
+		if (!req.jobId || typeof req.jobId !== 'string') {
+			throw new Error('jobId is required and must be a string');
 		}
 		if (typeof req.delayMs !== 'number' || req.delayMs < 0) {
 			throw new Error('delayMs must be a positive number');
 		}
+		if (!req.type || typeof req.type !== 'string') {
+			throw new Error('type is required and must be a valid JobStepType');
+		}
+		if (!req.data || typeof req.data !== 'object') {
+			throw new Error('data is required and must be an object');
+		}
+		if (!req.data._environmentId || !req.data._id || !req.data._organizationId || !req.data._userId) {
+			throw new Error('data must include _environmentId, _id, _organizationId, and _userId');
+		}
 	}
 
-	private validateScheduleRecurringTaskRequest(body: unknown): asserts body is ScheduleRecurringTaskRequest {
-		const req = body as Partial<ScheduleRecurringTaskRequest>;
-		if (!req.taskId || typeof req.taskId !== 'string') {
-			throw new Error('taskId is required and must be a string');
-		}
-		if (typeof req.intervalMs !== 'number' || req.intervalMs < 1000) {
-			throw new Error('intervalMs must be a number >= 1000ms');
-		}
-	}
-
-	private async scheduleTask(request: ScheduleTaskRequest): Promise<void> {
+	private async scheduleJob(request: ScheduleJobRequest): Promise<void> {
 		const scheduledFor = Date.now() + request.delayMs;
-		const task: ScheduledTask = {
-			id: request.taskId,
-			payload: request.payload,
+		const job: ScheduledJob = {
+			id: request.jobId,
+			type: request.type,
 			scheduledFor,
 			createdAt: Date.now(),
+			data: request.data,
+			metadata: request.metadata,
 		};
 
-		const tasks = await this.getScheduledTasks();
-		tasks.push(task);
-		await this.saveScheduledTasks(tasks);
+		const jobs = await this.getScheduledJobs();
+		jobs.push(job);
+		await this.saveScheduledJobs(jobs);
 
 		await this.updateAlarmIfNeeded(scheduledFor);
 	}
 
-	private async scheduleRecurringTask(request: ScheduleRecurringTaskRequest): Promise<void> {
-		const recurringTasks = await this.getRecurringTasks();
-		const now = Date.now();
-		
-		recurringTasks[request.taskId] = {
-			payload: request.payload,
-			intervalMs: request.intervalMs,
-			lastRun: now,
-		};
+	private async cancelJob(jobId: string): Promise<boolean> {
+		const jobs = await this.getScheduledJobs();
+		const filtered = jobs.filter((job) => job.id !== jobId);
 
-		await this.saveRecurringTasks(recurringTasks);
-
-		const nextRun = now + request.intervalMs;
-		await this.updateAlarmIfNeeded(nextRun);
-	}
-
-	private async cancelTask(taskId: string): Promise<boolean> {
-		const tasks = await this.getScheduledTasks();
-		const filtered = tasks.filter((task) => task.id !== taskId);
-
-		if (tasks.length === filtered.length) {
+		if (jobs.length === filtered.length) {
 			return false;
 		}
 
-		await this.saveScheduledTasks(filtered);
+		await this.saveScheduledJobs(filtered);
 		await this.recalculateAlarm();
-		
-		return true;
-	}
 
-	private async cancelRecurringTask(taskId: string): Promise<boolean> {
-		const recurringTasks = await this.getRecurringTasks();
-
-		if (!recurringTasks[taskId]) {
-			return false;
-		}
-
-		delete recurringTasks[taskId];
-		await this.saveRecurringTasks(recurringTasks);
-		await this.recalculateAlarm();
-		
 		return true;
 	}
 
 	private async handleAlarm(): Promise<void> {
 		const now = Date.now();
-		const tasks = await this.getScheduledTasks();
-		const recurringTasks = await this.getRecurringTasks();
+		const jobs = await this.getScheduledJobs();
 
-		const tasksToExecute: ScheduledTask[] = [];
-		const remainingTasks: ScheduledTask[] = [];
+		const jobsToExecute: ScheduledJob[] = [];
+		const remainingJobs: ScheduledJob[] = [];
 
-		for (const task of tasks) {
-			if (task.scheduledFor <= now) {
-				tasksToExecute.push(task);
+		for (const job of jobs) {
+			if (job.scheduledFor <= now) {
+				jobsToExecute.push(job);
 			} else {
-				remainingTasks.push(task);
+				remainingJobs.push(job);
 			}
 		}
 
-		for (const [taskId, recurringTask] of Object.entries(recurringTasks)) {
-			const nextRun = (recurringTask.lastRun || now) + recurringTask.intervalMs;
+		await this.saveScheduledJobs(remainingJobs);
 
-			if (nextRun <= now) {
-				tasksToExecute.push({
-					id: taskId,
-					payload: recurringTask.payload,
-					scheduledFor: nextRun,
-					createdAt: recurringTask.lastRun || now,
-				});
-
-				recurringTask.lastRun = now;
-			}
-		}
-
-		await this.saveScheduledTasks(remainingTasks);
-		await this.saveRecurringTasks(recurringTasks);
-
-		await Promise.allSettled(tasksToExecute.map((task) => this.executeTask(task)));
+		await Promise.allSettled(jobsToExecute.map((job) => this.executeJob(job)));
 
 		await this.recalculateAlarm();
 	}
@@ -206,63 +141,57 @@ export class Scheduler implements DurableObject {
 	}
 
 	private async recalculateAlarm(): Promise<void> {
-		const tasks = await this.getScheduledTasks();
-		const recurringTasks = await this.getRecurringTasks();
+		const jobs = await this.getScheduledJobs();
 		const now = Date.now();
-		let nextAlarm: number | null = null;
 
-		for (const task of tasks) {
-			if (task.scheduledFor > now && (nextAlarm === null || task.scheduledFor < nextAlarm)) {
-				nextAlarm = task.scheduledFor;
-			}
-		}
+		const nextJob = jobs
+			.filter((job) => job.scheduledFor > now)
+			.sort((a, b) => a.scheduledFor - b.scheduledFor)[0];
 
-		for (const recurringTask of Object.values(recurringTasks)) {
-			const nextRun = (recurringTask.lastRun || now) + recurringTask.intervalMs;
-			if (nextAlarm === null || nextRun < nextAlarm) {
-				nextAlarm = nextRun;
-			}
-		}
-
-		if (nextAlarm !== null) {
-			await this.state.storage.setAlarm(nextAlarm);
+		if (nextJob) {
+			await this.state.storage.setAlarm(nextJob.scheduledFor);
 		} else {
 			await this.state.storage.deleteAlarm();
 		}
 	}
 
-	private async executeTask(task: ScheduledTask): Promise<void> {
+	private async executeJob(job: ScheduledJob): Promise<void> {
 		try {
-			await this.onTaskExecute(task);
+			await this.onJobExecute(job);
 		} catch (error) {
-			console.error(`Failed to execute task ${task.id}:`, error);
-			await this.onTaskError(task, error);
+			console.error(`Failed to execute job ${job.id}:`, error);
+			await this.onJobError(job, error);
 		}
 	}
 
-	protected async onTaskExecute(task: ScheduledTask): Promise<void> {
-		console.log(`Executing task ${task.id}`, task.payload);
+	protected async onJobExecute(job: ScheduledJob): Promise<void> {
+		console.log(`[Scheduler] Alarm fired for job ${job.id}`, {
+			type: job.type,
+			scheduledFor: new Date(job.scheduledFor).toISOString(),
+			actualTime: new Date().toISOString(),
+			delay: Date.now() - job.scheduledFor,
+			data: job.data,
+			metadata: job.metadata,
+		});
+		// TODO: Call Worker API to enqueue job to BullMQ StandardQueue with delay=0
+		// await fetch(`${this.env.WORKER_API_URL}/jobs/enqueue`, { ... })
 	}
 
-	protected async onTaskError(task: ScheduledTask, error: unknown): Promise<void> {
-		console.error(`Task ${task.id} failed:`, error);
+	protected async onJobError(job: ScheduledJob, error: unknown): Promise<void> {
+		console.error(`[Scheduler] Job ${job.id} execution failed:`, {
+			jobId: job.id,
+			type: job.type,
+			error: error instanceof Error ? error.message : String(error),
+			data: job.data,
+		});
 	}
 
-	private async getScheduledTasks(): Promise<ScheduledTask[]> {
-		const stored = await this.state.storage.get<ScheduledTask[]>(TASKS_STORAGE_KEY);
+	private async getScheduledJobs(): Promise<ScheduledJob[]> {
+		const stored = await this.state.storage.get<ScheduledJob[]>(SCHEDULED_JOBS_KEY);
 		return stored || [];
 	}
 
-	private async saveScheduledTasks(tasks: ScheduledTask[]): Promise<void> {
-		await this.state.storage.put(TASKS_STORAGE_KEY, tasks);
-	}
-
-	private async getRecurringTasks(): Promise<RecurringTasksMap> {
-		const stored = await this.state.storage.get<RecurringTasksMap>(RECURRING_TASKS_STORAGE_KEY);
-		return stored || {};
-	}
-
-	private async saveRecurringTasks(tasks: RecurringTasksMap): Promise<void> {
-		await this.state.storage.put(RECURRING_TASKS_STORAGE_KEY, tasks);
+	private async saveScheduledJobs(jobs: ScheduledJob[]): Promise<void> {
+		await this.state.storage.put(SCHEDULED_JOBS_KEY, jobs);
 	}
 }
