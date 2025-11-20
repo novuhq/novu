@@ -35,7 +35,6 @@ import {
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
 } from '@novu/shared';
-import { addBreadcrumb } from '@sentry/node';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { toMerged } from 'es-toolkit';
@@ -317,9 +316,8 @@ export class ParseEventRequest {
     transactionId: string;
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
   }) {
-    const commandArgs = {
-      ...command,
-    };
+    // biome-ignore lint/correctness/noUnusedVariables: eliminate from queue
+    const { workflow, ...commandArgs } = command;
 
     const isDryRun = await this.featureFlagService.getFlag({
       environment: { _id: command.environmentId },
