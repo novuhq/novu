@@ -73,6 +73,9 @@ export enum FeatureFlagsKeysEnum {
   IS_EXPIRED_TOKENS_REMOVAL_ENABLED = 'IS_EXPIRED_TOKENS_REMOVAL_ENABLED',
   IS_ANALYTICS_WORKFLOW_FILTER_ENABLED = 'IS_ANALYTICS_WORKFLOW_FILTER_ENABLED',
 
+  // String flags
+  CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"
+
   // Numeric flags
   MAX_WORKFLOW_LIMIT_NUMBER = 'MAX_WORKFLOW_LIMIT_NUMBER',
   MAX_LAYOUT_LIMIT_NUMBER = 'MAX_LAYOUT_LIMIT_NUMBER',
@@ -84,6 +87,13 @@ export enum FeatureFlagsKeysEnum {
   IS_ANALYTICS_PAGE_ENABLED = 'IS_ANALYTICS_PAGE_ENABLED',
 }
 
+export enum CloudflareSchedulerMode {
+  OFF = 'off',
+  SHADOW = 'shadow',
+  LIVE = 'live',
+  COMPLETE = 'complete',
+}
+
 export type FeatureFlags = {
-  [key in FeatureFlagsKeysEnum]: boolean | number | undefined;
+  [key in FeatureFlagsKeysEnum]: boolean | number | string | undefined;
 };
