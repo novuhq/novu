@@ -15,7 +15,7 @@ export class Scheduler implements DurableObject {
 	async fetch(request: Request): Promise<Response> {
 		const authHeader = request.headers.get('Authorization');
 		
-		if (!authHeader || !this.env.CLERK_MACHINE_SECRET_KEY) {
+		if (!authHeader || !this.env.API_KEY) {
 			if (request.body && request.method === 'POST') {
 				try {
 					await request.text();

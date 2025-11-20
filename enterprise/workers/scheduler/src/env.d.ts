@@ -1,6 +1,6 @@
 declare global {
 	interface Env {
-		CLERK_MACHINE_SECRET_KEY: string;
+		API_KEY: string;
 	}
 }
 

@@ -46,8 +46,8 @@
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
 	 * 
-	 * For Clerk M2M authentication, set:
-	 * wrangler secret put CLERK_MACHINE_SECRET_KEY
+	 * For API key authentication, set:
+	 * wrangler secret put API_KEY
 	 */
 	/**
 	 * Static Assets

@@ -7,7 +7,7 @@ declare namespace Cloudflare {
 		durableNamespaces: "Scheduler";
 	}
 	interface Env {
-		CLERK_MACHINE_SECRET_KEY: string;
+		API_KEY: string;
 		SCHEDULER: DurableObjectNamespace<import("./src/index").Scheduler>;
 	}
 }
