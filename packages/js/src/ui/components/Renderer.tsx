@@ -26,6 +26,8 @@ import type {
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
 import { Subscription } from './subscription/Subscription';
+import { SubscriptionButtonWrapper as SubscriptionButton } from './subscription/SubscriptionButtonWrapper';
+import { SubscriptionPreferencesWrapper as SubscriptionPreferences } from './subscription/SubscriptionPreferencesWrapper';
 
 export const novuComponents = {
   Inbox,
@@ -56,7 +58,11 @@ export const novuComponents = {
     return <InboxContent {...propsWithoutRenderNotification} hideNav={true} initialPage={InboxPage.Preferences} />;
   },
   Subscription,
+  SubscriptionButton,
+  SubscriptionPreferences,
 };
+
+const SUBSCRIPTION_COMPONENTS = ['Subscription', 'SubscriptionButton', 'SubscriptionPreferences'];
 
 export type NovuComponent = { name: NovuComponentName; props?: any };
 
@@ -160,7 +166,7 @@ export const Renderer = (props: RendererProps) => {
                         </CountProvider>
                       }
                     >
-                      <Match when={novuComponent().name === 'Subscription'}>
+                      <Match when={SUBSCRIPTION_COMPONENTS.includes(novuComponent().name)}>
                         <Portal
                           mount={node}
                           ref={(el) => {

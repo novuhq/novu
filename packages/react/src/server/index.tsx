@@ -29,9 +29,17 @@ export function Preferences() {}
 
 export function Bell() {}
 
-export function NovuProvider(props: NovuProviderProps) {}
+export function NovuProvider(props: NovuProviderProps) {
+  return <>{props.children}</>;
+}
 
-export function Subscription() {}
+export function Subscription() {
+  return <ShadowRootDetector />;
+}
+
+export function SubscriptionButton() {}
+
+export function SubscriptionPreferences() {}
 
 export function useNovu() {
   return null;

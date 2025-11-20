@@ -10,6 +10,8 @@ export {
   Preferences,
   SeverityLevelEnum,
   Subscription,
+  SubscriptionButton,
+  SubscriptionPreferences,
   useCounts,
   useNotifications,
   useNovu,

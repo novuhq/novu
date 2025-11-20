@@ -7,7 +7,6 @@ import { withRenderer } from '../Renderer';
 import { DefaultSubscription, DefaultSubscriptionProps } from './DefaultSubscription';
 
 type BaseSubscriptionProps = {
-  // TODO: update to subscription localization
   localization?: SubscriptionLocalization;
   appearance?: ReactSubscriptionAppearance;
 } & Pick<NovuUIOptions, 'container'>;
@@ -22,7 +21,7 @@ type SubscriptionPropsWithoutChildren = {
 } & DefaultSubscriptionProps &
   BaseSubscriptionProps;
 
-type SubscriptionProps = SubscriptionPropsWithChildren | SubscriptionPropsWithoutChildren;
+export type SubscriptionProps = SubscriptionPropsWithChildren | SubscriptionPropsWithoutChildren;
 
 const SubscriptionInternal = withRenderer<SubscriptionProps>((props) => {
   const { container, localization, appearance, ...defaultSubscriptionProps } = props;
@@ -37,10 +36,23 @@ const SubscriptionInternal = withRenderer<SubscriptionProps>((props) => {
     };
   }, [localization, appearance, container, novu.options]);
 
-  if (isSubscriptionPropsWithChildren(props)) {
+  if (isWithChildrenProps(props)) {
+    const clonedChildren = React.Children.map(props.children, (child) => {
+      if (React.isValidElement(child)) {
+        return React.cloneElement(child, {
+          ...child.props,
+          topic: defaultSubscriptionProps.topic,
+          identifier: defaultSubscriptionProps.identifier,
+          preferences: defaultSubscriptionProps.preferences,
+        });
+      }
+
+      return child;
+    });
+
     return (
       <NovuUI options={options} novu={novu}>
-        {props.children}
+        {clonedChildren}
       </NovuUI>
     );
   }
@@ -52,10 +64,12 @@ const SubscriptionInternal = withRenderer<SubscriptionProps>((props) => {
   );
 });
 
+SubscriptionInternal.displayName = 'SubscriptionInternal';
+
 export const Subscription = React.memo((props: SubscriptionProps) => {
   return <SubscriptionInternal {...props} />;
 });
 
-function isSubscriptionPropsWithChildren(props: SubscriptionProps): props is SubscriptionPropsWithChildren {
+function isWithChildrenProps(props: SubscriptionProps): props is SubscriptionPropsWithChildren {
   return 'children' in props;
 }

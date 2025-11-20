@@ -1,5 +1,11 @@
 export type { Notification } from '../notifications';
-export type { InboxPage, InboxProps, SubscriptionProps } from './components';
+export type {
+  InboxPage,
+  InboxProps,
+  SubscriptionButtonWrapperProps,
+  SubscriptionPreferencesWrapperProps,
+  SubscriptionProps,
+} from './components';
 export type { BaseNovuUIOptions, NovuUIOptions } from './novuUI';
 export { NovuUI } from './novuUI';
 export type {

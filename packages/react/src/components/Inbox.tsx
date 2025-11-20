@@ -232,6 +232,8 @@ const InboxChild = withRenderer(
   })
 );
 
+InboxChild.displayName = 'InboxChild';
+
 function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
   return 'children' in props;
 }

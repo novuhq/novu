@@ -17,7 +17,7 @@ import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallba
 
 export const SubscriptionPreferences = (props: {
   loading?: boolean;
-  subscription: TopicSubscription;
+  subscription?: TopicSubscription | null;
   preferences: Array<WorkflowIdentifierOrId | WorkflowFilter | GroupPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
   onSubscribeClick: () => void;
@@ -89,7 +89,7 @@ export const SubscriptionPreferences = (props: {
     // Register the names as localizable
     setDynamicLocalization((prev) => ({
       ...prev,
-      ...props.subscription.preferences.reduce<Record<string, string>>((acc, preference) => {
+      ...props.subscription?.preferences.reduce<Record<string, string>>((acc, preference) => {
         if (preference.workflow?.identifier && preference.workflow?.name) {
           acc[preference.workflow.identifier] = preference.workflow.name;
         }
@@ -104,7 +104,7 @@ export const SubscriptionPreferences = (props: {
       class={style({
         key: 'subscriptionPreferencesContainer',
         className: cn(
-          'nt-h-full nt-flex nt-flex-col [&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8',
+          'nt-w-full nt-h-full nt-flex nt-flex-col [&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8 nt-overflow-x-hidden',
           {
             '[&_.nv-preferencesContainer]:nt-pb-12 [&_.nv-notificationList]:nt-pb-12': isDevelopmentMode(),
             '[&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8': !isDevelopmentMode(),
@@ -121,7 +121,7 @@ export const SubscriptionPreferences = (props: {
           <ExternalElementRenderer
             render={(el) => {
               if (props.renderPreferences) {
-                return props.renderPreferences(el, props.subscription, props.loading);
+                return props.renderPreferences(el, props.subscription ?? undefined, props.loading);
               }
 
               return () => {};
@@ -171,17 +171,20 @@ export const SubscriptionPreferences = (props: {
         <div
           class={style({
             key: 'subscriptionPreferencesContent',
-            className: 'nt-min-h-[140px]',
+            // the height is set here to ensure that the content is not jumping when the preferences are loaded or when the empty state is shown
+            className: 'nt-min-h-[272px]',
             context: { subscription: props.subscription ?? undefined } satisfies Parameters<
               SubscriptionAppearanceCallback['subscriptionPreferencesContent']
             >[0],
           })}
         >
           <Show
-            when={props.subscription?.preferences?.length && props.subscription?.preferences?.length > 0}
+            when={
+              !props.loading && props.subscription?.preferences?.length && props.subscription?.preferences?.length > 0
+            }
             fallback={
               <SubscriptionPreferencesFallback
-                subscription={props.subscription}
+                subscription={props.subscription ?? undefined}
                 loading={props.loading}
                 onSubscribeClick={props.onSubscribeClick}
               />
@@ -213,7 +216,7 @@ export const SubscriptionPreferences = (props: {
                           group: Array<{ label: string; preference: SubscriptionPreference }>;
                         }
                       }
-                      subscription={props.subscription}
+                      subscription={props.subscription as TopicSubscription}
                     />
                   </Show>
                 )}

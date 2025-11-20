@@ -122,6 +122,7 @@ export const SubscriptionButton = (props: SubscriptionButtonProps) => {
               SubscriptionAppearanceCallback['subscriptionButtonLabel']
             >[0],
           })}
+          data-localization={props.subscription ? 'subscription.unsubscribe' : 'subscription.subscribe'}
         >
           {props.subscription ? t('subscription.unsubscribe') : t('subscription.subscribe')}
         </span>

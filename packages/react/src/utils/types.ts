@@ -59,7 +59,7 @@ export type ReactInboxAppearance = ReactInboxTheme & {
 };
 
 export type ReactSubscriptionAppearance = ReactSubscriptionTheme & {
-  baseTheme?: ReactSubscriptionTheme | ReactSubscriptionTheme[];
+  baseTheme?: SubscriptionTheme | SubscriptionTheme[];
 };
 
 export type ReactAllAppearance = ReactAllTheme & {

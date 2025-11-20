@@ -32,24 +32,19 @@ const NavLink = ({ href, label }: LinkType) => {
     <Link
       href={href}
       className={cn(
-        'relative px-4 py-2 text-sm font-medium transition-colors rounded-md',
+        'flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors rounded-md',
         'hover:bg-accent hover:text-accent-foreground',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-muted-foreground'
       )}
     >
-      {label}
-      {isActive && (
-        <span
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
-          aria-hidden="true"
-        />
-      )}
+      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" aria-hidden="true" />}
+      <span className={cn('flex-1', !isActive && 'ml-4')}>{label}</span>
     </Link>
   );
 };
 
-export default function Header() {
+export default function SideNav() {
   const groupedLinks = LINKS.reduce(
     (acc, link) => {
       const category = link.category || 'Other';
@@ -63,21 +58,19 @@ export default function Header() {
   );
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col gap-6 py-6">
-          {Object.entries(groupedLinks).map(([category, links]) => (
-            <div key={category} className="flex flex-col gap-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4">{category}</h3>
-              <div className="flex flex-wrap gap-2">
-                {links.map((link) => (
-                  <NavLink key={link.href} {...link} />
-                ))}
-              </div>
+    <aside className="w-64 border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-y-auto">
+      <nav className="p-4 space-y-6">
+        {Object.entries(groupedLinks).map(([category, links]) => (
+          <div key={category} className="space-y-2">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">{category}</h3>
+            <div className="space-y-1">
+              {links.map((link) => (
+                <NavLink key={link.href} {...link} />
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
-    </nav>
+          </div>
+        ))}
+      </nav>
+    </aside>
   );
 }

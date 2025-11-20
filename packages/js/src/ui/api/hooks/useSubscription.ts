@@ -23,40 +23,28 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
   });
 
   const create = async (args: CreateSubscriptionArgs) => {
-    try {
-      setLoading(true);
-      const response = await novuAccessor().subscriptions.create(args);
+    setLoading(true);
+    const response = await novuAccessor().subscriptions.create(args);
 
-      if (response.data) {
-        mutate(response.data);
-      }
-
-      return response;
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      throw error;
-    } finally {
-      setLoading(false);
+    if (response.data) {
+      mutate(response.data);
     }
+
+    setLoading(false);
+    return response;
   };
 
   const remove = async (args: DeleteSubscriptionArgs) => {
-    try {
-      setLoading(true);
-      const response =
-        'subscription' in args
-          ? await novuAccessor().subscriptions.delete({ subscription: args.subscription })
-          : await novuAccessor().subscriptions.delete({ subscriptionId: args.subscriptionId });
+    setLoading(true);
+    const response =
+      'subscription' in args
+        ? await novuAccessor().subscriptions.delete({ subscription: args.subscription })
+        : await novuAccessor().subscriptions.delete({ subscriptionId: args.subscriptionId });
 
-      mutate(null);
+    mutate(null);
+    setLoading(false);
 
-      return response;
-    } catch (error) {
-      console.error('Error deleting subscription:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+    return response;
   };
 
   onMount(() => {
@@ -66,17 +54,43 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
       }
 
       mutate(data);
+      setLoading(false);
     };
 
     const currentNovu = novuAccessor();
+    const cleanupCreatePending = currentNovu.on('subscription.create.pending', ({ args }) => {
+      if (!args || args.topicKey !== options.topicKey || args.identifier !== options.identifier) {
+        return;
+      }
+      setLoading(true);
+    });
     const cleanupCreate = currentNovu.on('subscription.create.resolved', listener);
     const cleanupUpdate = currentNovu.on('subscription.update.resolved', listener);
+    const cleanupDeletePending = currentNovu.on('subscription.delete.pending', ({ args }) => {
+      const subscriptionId = subscription()?.id;
+      const subscriptionIdentifier = subscription()?.identifier;
+      if (
+        !args ||
+        ('subscriptionId' in args &&
+          args.subscriptionId !== subscriptionId &&
+          args.subscriptionId !== subscriptionIdentifier) ||
+        ('subscription' in args &&
+          args.subscription.id !== subscriptionId &&
+          args.subscription.identifier !== subscriptionIdentifier)
+      ) {
+        return;
+      }
+      setLoading(true);
+    });
     const cleanupDelete = currentNovu.on('subscription.delete.resolved', () => {
       mutate(null);
+      setLoading(false);
     });
 
     onCleanup(() => {
+      cleanupCreatePending();
       cleanupCreate();
+      cleanupDeletePending();
       cleanupUpdate();
       cleanupDelete();
     });

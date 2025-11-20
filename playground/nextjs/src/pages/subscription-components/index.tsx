@@ -1,10 +1,10 @@
-import { NovuProvider, Subscription } from '@novu/nextjs';
+import { NovuProvider, Subscription, SubscriptionButton, SubscriptionPreferences } from '@novu/nextjs';
 import { subscriptionDarkTheme } from '@novu/nextjs/themes';
 import { useState } from 'react';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
 
-export default function SubscriptionPage() {
+export default function SubscriptionComponentsPage() {
   const [isDark, setIsDark] = useState(false);
 
   const toggleDarkTheme = () => {
@@ -15,7 +15,7 @@ export default function SubscriptionPage() {
   return (
     <>
       <Title title="Subscription Component" />
-      <div className="flex flex-col gap-2 items-center">
+      <div className="h-[600px] w-96 flex flex-col gap-2">
         <button onClick={toggleDarkTheme}>Toggle Dark Theme</button>
         <NovuProvider {...novuConfig}>
           <Subscription
@@ -29,7 +29,22 @@ export default function SubscriptionPage() {
             appearance={{
               baseTheme: isDark ? subscriptionDarkTheme : undefined,
             }}
-          />
+          >
+            <SubscriptionButton
+              onClick={({ subscription }) => console.log('clicked', subscription)}
+              onDeleteError={() => console.log('remove error')}
+              onDeleteSuccess={() => console.log('remove success')}
+              onCreateError={() => console.log('create error')}
+              onCreateSuccess={() => console.log('create success')}
+            />
+            <SubscriptionPreferences
+              onClick={({ subscription }) => console.log('clicked', subscription)}
+              onDeleteError={() => console.log('remove error')}
+              onDeleteSuccess={() => console.log('remove success')}
+              onCreateError={() => console.log('create error')}
+              onCreateSuccess={() => console.log('create success')}
+            />
+          </Subscription>
         </NovuProvider>
       </div>
     </>
