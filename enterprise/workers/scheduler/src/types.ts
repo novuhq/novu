@@ -1,4 +1,4 @@
-export enum JobStepType {
+export enum SchedulerJobType {
 	DELAY = 'delay',
 	DIGEST = 'digest',
 	THROTTLE = 'throttle',
@@ -8,7 +8,7 @@ export enum JobStepType {
 
 export type ScheduledJob = {
 	id: string;
-	type: JobStepType;
+	type: SchedulerJobType;
 	scheduledFor: number;
 	createdAt: number;
 
@@ -20,6 +20,7 @@ export type ScheduledJob = {
 	};
 
 	metadata?: {
+		mode?: string;
 		workflowId?: string;
 		subscriberId?: string;
 		stepId?: string;
@@ -28,7 +29,7 @@ export type ScheduledJob = {
 
 export type ScheduleJobRequest = {
 	jobId: string;
-	type: JobStepType;
+	type: SchedulerJobType;
 	delayMs: number;
 	data: {
 		_environmentId: string;
@@ -37,6 +38,7 @@ export type ScheduleJobRequest = {
 		_userId: string;
 	};
 	metadata?: {
+		mode?: string;
 		workflowId?: string;
 		subscriberId?: string;
 		stepId?: string;

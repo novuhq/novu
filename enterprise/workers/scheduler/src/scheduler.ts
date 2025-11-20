@@ -167,14 +167,32 @@ export class Scheduler implements DurableObject {
 	protected async onJobExecute(job: ScheduledJob): Promise<void> {
 		console.log(`[Scheduler] Alarm fired for job ${job.id}`, {
 			type: job.type,
+			mode: job.metadata?.mode,
 			scheduledFor: new Date(job.scheduledFor).toISOString(),
 			actualTime: new Date().toISOString(),
-			delay: Date.now() - job.scheduledFor,
+			alarmDriftMs: Date.now() - job.scheduledFor,
 			data: job.data,
 			metadata: job.metadata,
 		});
-		// TODO: Call Worker API to enqueue job to BullMQ StandardQueue with delay=0
-		// await fetch(`${this.env.WORKER_API_URL}/jobs/enqueue`, { ... })
+		// TODO: Call API to enqueue job to BullMQ StandardQueue with delay=0
+		// If mode === 'shadow', add skipProcessing: true to job data
+		// If mode === 'live' or 'complete', add job data without skipProcessing flag
+		// await fetch(`${this.env.API_URL}/v1/internal/scheduler/enqueue`, {
+		//   method: 'POST',
+		//   headers: {
+		//     'Content-Type': 'application/json',
+		//     'Authorization': `Bearer ${this.env.API_KEY}`
+		//   },
+		//   body: JSON.stringify({
+		//     name: job.id,
+		//     data: {
+		//       ...job.data,
+		//       ...(job.metadata?.mode === 'shadow' && { skipProcessing: true })
+		//     },
+		//     groupId: job.data._organizationId,
+		//     options: { delay: 0 }
+		//   })
+		// });
 	}
 
 	protected async onJobError(job: ScheduledJob, error: unknown): Promise<void> {
