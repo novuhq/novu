@@ -190,13 +190,6 @@ export class ParseEventRequest {
         };
       }
 
-      addBreadcrumb({
-        message: 'Sending trigger',
-        data: {
-          triggerIdentifier: command.identifier,
-        },
-      });
-
       // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
       if (command.payload && Array.isArray(command.payload.attachments)) {
         this.modifyAttachments(command);
