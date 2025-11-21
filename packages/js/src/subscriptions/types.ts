@@ -11,14 +11,21 @@ export type WorkflowFilter = {
 
 export type WorkflowGroupFilter = {
   label: string;
-  filter:
-    | { workflowIds?: Array<WorkflowIdentifierOrId>; tags?: string[] }
-    | ((args: {
-        preferences: Array<SubscriptionPreference>;
-      }) => Array<{ label: string; preference: SubscriptionPreference }>);
+  filter: { workflowIds?: Array<WorkflowIdentifierOrId>; tags?: string[] };
 };
 
-export type PreferenceFilter = WorkflowIdentifierOrId | WorkflowFilter | WorkflowGroupFilter;
+export type WorkflowGroupFilterFunction = {
+  label: string;
+  filter: (args: {
+    preferences: Array<SubscriptionPreference>;
+  }) => Array<{ label: string; preference: SubscriptionPreference }>;
+};
+
+export type PreferenceFilter =
+  | WorkflowIdentifierOrId
+  | WorkflowFilter
+  | WorkflowGroupFilter
+  | WorkflowGroupFilterFunction;
 
 export type SubscriptionWorkflowPreference = {
   workflowId: WorkflowIdentifierOrId;
@@ -43,7 +50,7 @@ export type GetSubscriptionArgs = {
 export type CreateSubscriptionArgs = {
   topicKey: string;
   identifier?: string;
-  filters: Array<PreferenceFilter>;
+  filters: Array<WorkflowIdentifierOrId | WorkflowFilter | WorkflowGroupFilter>;
 };
 
 export type BaseSubscriptionPreferenceArgs = {
