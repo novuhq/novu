@@ -63,70 +63,13 @@ export const TimedConfigWeekDays$inboundSchema: z.ZodNativeEnum<typeof TimedConf
   z.nativeEnum(TimedConfigWeekDays);
 
 /** @internal */
-export const TimedConfigWeekDays$outboundSchema: z.ZodNativeEnum<typeof TimedConfigWeekDays> =
-  TimedConfigWeekDays$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TimedConfigWeekDays$ {
-  /** @deprecated use `TimedConfigWeekDays$inboundSchema` instead. */
-  export const inboundSchema = TimedConfigWeekDays$inboundSchema;
-  /** @deprecated use `TimedConfigWeekDays$outboundSchema` instead. */
-  export const outboundSchema = TimedConfigWeekDays$outboundSchema;
-}
-
-/** @internal */
 export const Ordinal$inboundSchema: z.ZodNativeEnum<typeof Ordinal> = z.nativeEnum(Ordinal);
-
-/** @internal */
-export const Ordinal$outboundSchema: z.ZodNativeEnum<typeof Ordinal> = Ordinal$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Ordinal$ {
-  /** @deprecated use `Ordinal$inboundSchema` instead. */
-  export const inboundSchema = Ordinal$inboundSchema;
-  /** @deprecated use `Ordinal$outboundSchema` instead. */
-  export const outboundSchema = Ordinal$outboundSchema;
-}
 
 /** @internal */
 export const OrdinalValue$inboundSchema: z.ZodNativeEnum<typeof OrdinalValue> = z.nativeEnum(OrdinalValue);
 
 /** @internal */
-export const OrdinalValue$outboundSchema: z.ZodNativeEnum<typeof OrdinalValue> = OrdinalValue$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace OrdinalValue$ {
-  /** @deprecated use `OrdinalValue$inboundSchema` instead. */
-  export const inboundSchema = OrdinalValue$inboundSchema;
-  /** @deprecated use `OrdinalValue$outboundSchema` instead. */
-  export const outboundSchema = OrdinalValue$outboundSchema;
-}
-
-/** @internal */
 export const MonthlyType$inboundSchema: z.ZodNativeEnum<typeof MonthlyType> = z.nativeEnum(MonthlyType);
-
-/** @internal */
-export const MonthlyType$outboundSchema: z.ZodNativeEnum<typeof MonthlyType> = MonthlyType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MonthlyType$ {
-  /** @deprecated use `MonthlyType$inboundSchema` instead. */
-  export const inboundSchema = MonthlyType$inboundSchema;
-  /** @deprecated use `MonthlyType$outboundSchema` instead. */
-  export const outboundSchema = MonthlyType$outboundSchema;
-}
 
 /** @internal */
 export const TimedConfig$inboundSchema: z.ZodType<TimedConfig, z.ZodTypeDef, unknown> = z.object({
@@ -137,43 +80,6 @@ export const TimedConfig$inboundSchema: z.ZodType<TimedConfig, z.ZodTypeDef, unk
   ordinalValue: OrdinalValue$inboundSchema.optional(),
   monthlyType: MonthlyType$inboundSchema.optional(),
 });
-
-/** @internal */
-export type TimedConfig$Outbound = {
-  atTime?: string | undefined;
-  weekDays?: Array<string> | undefined;
-  monthDays?: Array<string> | undefined;
-  ordinal?: string | undefined;
-  ordinalValue?: string | undefined;
-  monthlyType?: string | undefined;
-};
-
-/** @internal */
-export const TimedConfig$outboundSchema: z.ZodType<TimedConfig$Outbound, z.ZodTypeDef, TimedConfig> = z.object({
-  atTime: z.string().optional(),
-  weekDays: z.array(TimedConfigWeekDays$outboundSchema).optional(),
-  monthDays: z.array(z.string()).optional(),
-  ordinal: Ordinal$outboundSchema.optional(),
-  ordinalValue: OrdinalValue$outboundSchema.optional(),
-  monthlyType: MonthlyType$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TimedConfig$ {
-  /** @deprecated use `TimedConfig$inboundSchema` instead. */
-  export const inboundSchema = TimedConfig$inboundSchema;
-  /** @deprecated use `TimedConfig$outboundSchema` instead. */
-  export const outboundSchema = TimedConfig$outboundSchema;
-  /** @deprecated use `TimedConfig$Outbound` instead. */
-  export type Outbound = TimedConfig$Outbound;
-}
-
-export function timedConfigToJSON(timedConfig: TimedConfig): string {
-  return JSON.stringify(TimedConfig$outboundSchema.parse(timedConfig));
-}
 
 export function timedConfigFromJSON(jsonString: string): SafeParseResult<TimedConfig, SDKValidationError> {
   return safeParse(

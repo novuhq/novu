@@ -3,73 +3,49 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   ChatStepUpsertDto,
-  ChatStepUpsertDto$inboundSchema,
   ChatStepUpsertDto$Outbound,
   ChatStepUpsertDto$outboundSchema,
 } from './chatstepupsertdto.js';
 import {
   CustomStepUpsertDto,
-  CustomStepUpsertDto$inboundSchema,
   CustomStepUpsertDto$Outbound,
   CustomStepUpsertDto$outboundSchema,
 } from './customstepupsertdto.js';
 import {
   DelayStepUpsertDto,
-  DelayStepUpsertDto$inboundSchema,
   DelayStepUpsertDto$Outbound,
   DelayStepUpsertDto$outboundSchema,
 } from './delaystepupsertdto.js';
 import {
   DigestStepUpsertDto,
-  DigestStepUpsertDto$inboundSchema,
   DigestStepUpsertDto$Outbound,
   DigestStepUpsertDto$outboundSchema,
 } from './digeststepupsertdto.js';
 import {
   EmailStepUpsertDto,
-  EmailStepUpsertDto$inboundSchema,
   EmailStepUpsertDto$Outbound,
   EmailStepUpsertDto$outboundSchema,
 } from './emailstepupsertdto.js';
 import {
   InAppStepUpsertDto,
-  InAppStepUpsertDto$inboundSchema,
   InAppStepUpsertDto$Outbound,
   InAppStepUpsertDto$outboundSchema,
 } from './inappstepupsertdto.js';
 import {
   PreferencesRequestDto,
-  PreferencesRequestDto$inboundSchema,
   PreferencesRequestDto$Outbound,
   PreferencesRequestDto$outboundSchema,
 } from './preferencesrequestdto.js';
 import {
   PushStepUpsertDto,
-  PushStepUpsertDto$inboundSchema,
   PushStepUpsertDto$Outbound,
   PushStepUpsertDto$outboundSchema,
 } from './pushstepupsertdto.js';
-import {
-  ResourceOriginEnum,
-  ResourceOriginEnum$inboundSchema,
-  ResourceOriginEnum$outboundSchema,
-} from './resourceoriginenum.js';
-import {
-  SeverityLevelEnum,
-  SeverityLevelEnum$inboundSchema,
-  SeverityLevelEnum$outboundSchema,
-} from './severitylevelenum.js';
-import {
-  SmsStepUpsertDto,
-  SmsStepUpsertDto$inboundSchema,
-  SmsStepUpsertDto$Outbound,
-  SmsStepUpsertDto$outboundSchema,
-} from './smsstepupsertdto.js';
+import { ResourceOriginEnum, ResourceOriginEnum$outboundSchema } from './resourceoriginenum.js';
+import { SeverityLevelEnum, SeverityLevelEnum$outboundSchema } from './severitylevelenum.js';
+import { SmsStepUpsertDto, SmsStepUpsertDto$Outbound, SmsStepUpsertDto$outboundSchema } from './smsstepupsertdto.js';
 
 export type UpdateWorkflowDtoSteps =
   | (InAppStepUpsertDto & { type: 'in_app' })
@@ -142,30 +118,6 @@ export type UpdateWorkflowDto = {
 };
 
 /** @internal */
-export const UpdateWorkflowDtoSteps$inboundSchema: z.ZodType<UpdateWorkflowDtoSteps, z.ZodTypeDef, unknown> = z.union([
-  InAppStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('in_app') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-  EmailStepUpsertDto$inboundSchema.and(z.object({ type: z.literal('email') }).transform((v) => ({ type: v.type }))),
-  SmsStepUpsertDto$inboundSchema.and(z.object({ type: z.literal('sms') }).transform((v) => ({ type: v.type }))),
-  PushStepUpsertDto$inboundSchema.and(z.object({ type: z.literal('push') }).transform((v) => ({ type: v.type }))),
-  ChatStepUpsertDto$inboundSchema.and(z.object({ type: z.literal('chat') }).transform((v) => ({ type: v.type }))),
-  DelayStepUpsertDto$inboundSchema.and(z.object({ type: z.literal('delay') }).transform((v) => ({ type: v.type }))),
-  DigestStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('digest') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-  CustomStepUpsertDto$inboundSchema.and(
-    z.object({ type: z.literal('custom') }).transform((v) => ({
-      type: v.type,
-    }))
-  ),
-]);
-
-/** @internal */
 export type UpdateWorkflowDtoSteps$Outbound =
   | (InAppStepUpsertDto$Outbound & { type: 'in_app' })
   | (EmailStepUpsertDto$Outbound & { type: 'email' })
@@ -204,91 +156,9 @@ export const UpdateWorkflowDtoSteps$outboundSchema: z.ZodType<
   ),
 ]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UpdateWorkflowDtoSteps$ {
-  /** @deprecated use `UpdateWorkflowDtoSteps$inboundSchema` instead. */
-  export const inboundSchema = UpdateWorkflowDtoSteps$inboundSchema;
-  /** @deprecated use `UpdateWorkflowDtoSteps$outboundSchema` instead. */
-  export const outboundSchema = UpdateWorkflowDtoSteps$outboundSchema;
-  /** @deprecated use `UpdateWorkflowDtoSteps$Outbound` instead. */
-  export type Outbound = UpdateWorkflowDtoSteps$Outbound;
-}
-
 export function updateWorkflowDtoStepsToJSON(updateWorkflowDtoSteps: UpdateWorkflowDtoSteps): string {
   return JSON.stringify(UpdateWorkflowDtoSteps$outboundSchema.parse(updateWorkflowDtoSteps));
 }
-
-export function updateWorkflowDtoStepsFromJSON(
-  jsonString: string
-): SafeParseResult<UpdateWorkflowDtoSteps, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => UpdateWorkflowDtoSteps$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'UpdateWorkflowDtoSteps' from JSON`
-  );
-}
-
-/** @internal */
-export const UpdateWorkflowDto$inboundSchema: z.ZodType<UpdateWorkflowDto, z.ZodTypeDef, unknown> = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  active: z.boolean().default(false),
-  validatePayload: z.boolean().optional(),
-  payloadSchema: z.nullable(z.record(z.any())).optional(),
-  isTranslationEnabled: z.boolean().default(false),
-  workflowId: z.string().optional(),
-  steps: z.array(
-    z.union([
-      InAppStepUpsertDto$inboundSchema.and(
-        z.object({ type: z.literal('in_app') }).transform((v) => ({
-          type: v.type,
-        }))
-      ),
-      EmailStepUpsertDto$inboundSchema.and(
-        z.object({ type: z.literal('email') }).transform((v) => ({
-          type: v.type,
-        }))
-      ),
-      SmsStepUpsertDto$inboundSchema.and(
-        z.object({ type: z.literal('sms') }).transform((v) => ({
-          type: v.type,
-        }))
-      ),
-      PushStepUpsertDto$inboundSchema.and(
-        z.object({ type: z.literal('push') }).transform((v) => ({
-          type: v.type,
-        }))
-      ),
-      ChatStepUpsertDto$inboundSchema.and(
-        z.object({ type: z.literal('chat') }).transform((v) => ({
-          type: v.type,
-        }))
-      ),
-      DelayStepUpsertDto$inboundSchema.and(
-        z.object({ type: z.literal('delay') }).transform((v) => ({
-          type: v.type,
-        }))
-      ),
-      DigestStepUpsertDto$inboundSchema.and(
-        z.object({ type: z.literal('digest') }).transform((v) => ({
-          type: v.type,
-        }))
-      ),
-      CustomStepUpsertDto$inboundSchema.and(
-        z.object({ type: z.literal('custom') }).transform((v) => ({
-          type: v.type,
-        }))
-      ),
-    ])
-  ),
-  preferences: PreferencesRequestDto$inboundSchema,
-  origin: ResourceOriginEnum$inboundSchema,
-  severity: SeverityLevelEnum$inboundSchema.optional(),
-});
 
 /** @internal */
 export type UpdateWorkflowDto$Outbound = {
@@ -375,27 +245,6 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<UpdateWorkflowDto$Outbo
     severity: SeverityLevelEnum$outboundSchema.optional(),
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UpdateWorkflowDto$ {
-  /** @deprecated use `UpdateWorkflowDto$inboundSchema` instead. */
-  export const inboundSchema = UpdateWorkflowDto$inboundSchema;
-  /** @deprecated use `UpdateWorkflowDto$outboundSchema` instead. */
-  export const outboundSchema = UpdateWorkflowDto$outboundSchema;
-  /** @deprecated use `UpdateWorkflowDto$Outbound` instead. */
-  export type Outbound = UpdateWorkflowDto$Outbound;
-}
-
 export function updateWorkflowDtoToJSON(updateWorkflowDto: UpdateWorkflowDto): string {
   return JSON.stringify(UpdateWorkflowDto$outboundSchema.parse(updateWorkflowDto));
-}
-
-export function updateWorkflowDtoFromJSON(jsonString: string): SafeParseResult<UpdateWorkflowDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => UpdateWorkflowDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'UpdateWorkflowDto' from JSON`
-  );
 }

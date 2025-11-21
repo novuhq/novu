@@ -54,17 +54,3 @@ export type UiComponentEnum = ClosedEnum<typeof UiComponentEnum>;
 
 /** @internal */
 export const UiComponentEnum$inboundSchema: z.ZodNativeEnum<typeof UiComponentEnum> = z.nativeEnum(UiComponentEnum);
-
-/** @internal */
-export const UiComponentEnum$outboundSchema: z.ZodNativeEnum<typeof UiComponentEnum> = UiComponentEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UiComponentEnum$ {
-  /** @deprecated use `UiComponentEnum$inboundSchema` instead. */
-  export const inboundSchema = UiComponentEnum$inboundSchema;
-  /** @deprecated use `UiComponentEnum$outboundSchema` instead. */
-  export const outboundSchema = UiComponentEnum$outboundSchema;
-}

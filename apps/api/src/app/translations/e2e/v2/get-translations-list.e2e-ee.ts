@@ -150,7 +150,7 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
 
     // Create all translations
     for (const translation of translations) {
-      await session.testAgent.post('/v2/translations').send(translation).expect(200);
+      await novuClient.translations.create(translation);
     }
   });
 
@@ -291,15 +291,12 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
     });
 
     // Add translation for the new workflow
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflow4.workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: { 'advanced.welcome': 'Advanced Welcome' },
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflow4.workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: { 'advanced.welcome': 'Advanced Welcome' },
+    });
 
     // Search for "onboarding" should now return 2 results
     const { body } = await session.testAgent.get('/v2/translations/list?query=onboarding&limit=1&offset=0').expect(200);

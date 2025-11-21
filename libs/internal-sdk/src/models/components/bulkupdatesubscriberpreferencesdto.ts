@@ -3,12 +3,8 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   BulkUpdateSubscriberPreferenceItemDto,
-  BulkUpdateSubscriberPreferenceItemDto$inboundSchema,
   BulkUpdateSubscriberPreferenceItemDto$Outbound,
   BulkUpdateSubscriberPreferenceItemDto$outboundSchema,
 } from './bulkupdatesubscriberpreferenceitemdto.js';
@@ -19,15 +15,6 @@ export type BulkUpdateSubscriberPreferencesDto = {
    */
   preferences: Array<BulkUpdateSubscriberPreferenceItemDto>;
 };
-
-/** @internal */
-export const BulkUpdateSubscriberPreferencesDto$inboundSchema: z.ZodType<
-  BulkUpdateSubscriberPreferencesDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  preferences: z.array(BulkUpdateSubscriberPreferenceItemDto$inboundSchema),
-});
 
 /** @internal */
 export type BulkUpdateSubscriberPreferencesDto$Outbound = {
@@ -43,31 +30,8 @@ export const BulkUpdateSubscriberPreferencesDto$outboundSchema: z.ZodType<
   preferences: z.array(BulkUpdateSubscriberPreferenceItemDto$outboundSchema),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace BulkUpdateSubscriberPreferencesDto$ {
-  /** @deprecated use `BulkUpdateSubscriberPreferencesDto$inboundSchema` instead. */
-  export const inboundSchema = BulkUpdateSubscriberPreferencesDto$inboundSchema;
-  /** @deprecated use `BulkUpdateSubscriberPreferencesDto$outboundSchema` instead. */
-  export const outboundSchema = BulkUpdateSubscriberPreferencesDto$outboundSchema;
-  /** @deprecated use `BulkUpdateSubscriberPreferencesDto$Outbound` instead. */
-  export type Outbound = BulkUpdateSubscriberPreferencesDto$Outbound;
-}
-
 export function bulkUpdateSubscriberPreferencesDtoToJSON(
   bulkUpdateSubscriberPreferencesDto: BulkUpdateSubscriberPreferencesDto
 ): string {
   return JSON.stringify(BulkUpdateSubscriberPreferencesDto$outboundSchema.parse(bulkUpdateSubscriberPreferencesDto));
-}
-
-export function bulkUpdateSubscriberPreferencesDtoFromJSON(
-  jsonString: string
-): SafeParseResult<BulkUpdateSubscriberPreferencesDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => BulkUpdateSubscriberPreferencesDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'BulkUpdateSubscriberPreferencesDto' from JSON`
-  );
 }

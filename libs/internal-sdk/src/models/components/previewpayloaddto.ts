@@ -47,7 +47,6 @@ export const Two$inboundSchema: z.ZodType<Two, z.ZodTypeDef, unknown> = z.object
   id: z.string(),
   data: z.record(z.any()).optional(),
 });
-
 /** @internal */
 export type Two$Outbound = {
   id: string;
@@ -60,23 +59,9 @@ export const Two$outboundSchema: z.ZodType<Two$Outbound, z.ZodTypeDef, Two> = z.
   data: z.record(z.any()).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Two$ {
-  /** @deprecated use `Two$inboundSchema` instead. */
-  export const inboundSchema = Two$inboundSchema;
-  /** @deprecated use `Two$outboundSchema` instead. */
-  export const outboundSchema = Two$outboundSchema;
-  /** @deprecated use `Two$Outbound` instead. */
-  export type Outbound = Two$Outbound;
-}
-
 export function twoToJSON(two: Two): string {
   return JSON.stringify(Two$outboundSchema.parse(two));
 }
-
 export function twoFromJSON(jsonString: string): SafeParseResult<Two, SDKValidationError> {
   return safeParse(jsonString, (x) => Two$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Two' from JSON`);
 }
@@ -86,7 +71,6 @@ export const Context$inboundSchema: z.ZodType<Context, z.ZodTypeDef, unknown> = 
   z.lazy(() => Two$inboundSchema),
   z.string(),
 ]);
-
 /** @internal */
 export type Context$Outbound = Two$Outbound | string;
 
@@ -96,23 +80,9 @@ export const Context$outboundSchema: z.ZodType<Context$Outbound, z.ZodTypeDef, C
   z.string(),
 ]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Context$ {
-  /** @deprecated use `Context$inboundSchema` instead. */
-  export const inboundSchema = Context$inboundSchema;
-  /** @deprecated use `Context$outboundSchema` instead. */
-  export const outboundSchema = Context$outboundSchema;
-  /** @deprecated use `Context$Outbound` instead. */
-  export type Outbound = Context$Outbound;
-}
-
 export function contextToJSON(context: Context): string {
   return JSON.stringify(Context$outboundSchema.parse(context));
 }
-
 export function contextFromJSON(jsonString: string): SafeParseResult<Context, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -128,7 +98,6 @@ export const PreviewPayloadDto$inboundSchema: z.ZodType<PreviewPayloadDto, z.Zod
   steps: z.record(z.any()).optional(),
   context: z.record(z.union([z.lazy(() => Two$inboundSchema), z.string()])).optional(),
 });
-
 /** @internal */
 export type PreviewPayloadDto$Outbound = {
   subscriber?: SubscriberResponseDtoOptional$Outbound | undefined;
@@ -146,23 +115,9 @@ export const PreviewPayloadDto$outboundSchema: z.ZodType<PreviewPayloadDto$Outbo
     context: z.record(z.union([z.lazy(() => Two$outboundSchema), z.string()])).optional(),
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PreviewPayloadDto$ {
-  /** @deprecated use `PreviewPayloadDto$inboundSchema` instead. */
-  export const inboundSchema = PreviewPayloadDto$inboundSchema;
-  /** @deprecated use `PreviewPayloadDto$outboundSchema` instead. */
-  export const outboundSchema = PreviewPayloadDto$outboundSchema;
-  /** @deprecated use `PreviewPayloadDto$Outbound` instead. */
-  export type Outbound = PreviewPayloadDto$Outbound;
-}
-
 export function previewPayloadDtoToJSON(previewPayloadDto: PreviewPayloadDto): string {
   return JSON.stringify(PreviewPayloadDto$outboundSchema.parse(previewPayloadDto));
 }
-
 export function previewPayloadDtoFromJSON(jsonString: string): SafeParseResult<PreviewPayloadDto, SDKValidationError> {
   return safeParse(
     jsonString,

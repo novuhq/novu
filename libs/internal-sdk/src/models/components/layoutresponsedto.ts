@@ -7,22 +7,9 @@ import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  LayoutControlsDto,
-  LayoutControlsDto$inboundSchema,
-  LayoutControlsDto$Outbound,
-  LayoutControlsDto$outboundSchema,
-} from './layoutcontrolsdto.js';
-import {
-  ResourceOriginEnum,
-  ResourceOriginEnum$inboundSchema,
-  ResourceOriginEnum$outboundSchema,
-} from './resourceoriginenum.js';
-import {
-  ResourceTypeEnum,
-  ResourceTypeEnum$inboundSchema,
-  ResourceTypeEnum$outboundSchema,
-} from './resourcetypeenum.js';
+import { LayoutControlsDto, LayoutControlsDto$inboundSchema } from './layoutcontrolsdto.js';
+import { ResourceOriginEnum, ResourceOriginEnum$inboundSchema } from './resourceoriginenum.js';
+import { ResourceTypeEnum, ResourceTypeEnum$inboundSchema } from './resourcetypeenum.js';
 
 /**
  * User who last updated the layout
@@ -115,45 +102,6 @@ export const UpdatedBy$inboundSchema: z.ZodType<UpdatedBy, z.ZodTypeDef, unknown
     });
   });
 
-/** @internal */
-export type UpdatedBy$Outbound = {
-  _id: string;
-  firstName?: string | null | undefined;
-  lastName?: string | null | undefined;
-  externalId?: string | null | undefined;
-};
-
-/** @internal */
-export const UpdatedBy$outboundSchema: z.ZodType<UpdatedBy$Outbound, z.ZodTypeDef, UpdatedBy> = z
-  .object({
-    id: z.string(),
-    firstName: z.nullable(z.string()).optional(),
-    lastName: z.nullable(z.string()).optional(),
-    externalId: z.nullable(z.string()).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UpdatedBy$ {
-  /** @deprecated use `UpdatedBy$inboundSchema` instead. */
-  export const inboundSchema = UpdatedBy$inboundSchema;
-  /** @deprecated use `UpdatedBy$outboundSchema` instead. */
-  export const outboundSchema = UpdatedBy$outboundSchema;
-  /** @deprecated use `UpdatedBy$Outbound` instead. */
-  export type Outbound = UpdatedBy$Outbound;
-}
-
-export function updatedByToJSON(updatedBy: UpdatedBy): string {
-  return JSON.stringify(UpdatedBy$outboundSchema.parse(updatedBy));
-}
-
 export function updatedByFromJSON(jsonString: string): SafeParseResult<UpdatedBy, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -184,64 +132,6 @@ export const LayoutResponseDto$inboundSchema: z.ZodType<LayoutResponseDto, z.Zod
       _id: 'id',
     });
   });
-
-/** @internal */
-export type LayoutResponseDto$Outbound = {
-  _id: string;
-  layoutId: string;
-  slug: string;
-  name: string;
-  isDefault: boolean;
-  isTranslationEnabled: boolean;
-  updatedAt: string;
-  updatedBy?: UpdatedBy$Outbound | null | undefined;
-  createdAt: string;
-  origin: string;
-  type: string;
-  variables?: { [k: string]: any } | null | undefined;
-  controls: LayoutControlsDto$Outbound;
-};
-
-/** @internal */
-export const LayoutResponseDto$outboundSchema: z.ZodType<LayoutResponseDto$Outbound, z.ZodTypeDef, LayoutResponseDto> =
-  z
-    .object({
-      id: z.string(),
-      layoutId: z.string(),
-      slug: z.string(),
-      name: z.string(),
-      isDefault: z.boolean(),
-      isTranslationEnabled: z.boolean(),
-      updatedAt: z.string(),
-      updatedBy: z.nullable(z.lazy(() => UpdatedBy$outboundSchema)).optional(),
-      createdAt: z.string(),
-      origin: ResourceOriginEnum$outboundSchema,
-      type: ResourceTypeEnum$outboundSchema,
-      variables: z.nullable(z.record(z.any())).optional(),
-      controls: LayoutControlsDto$outboundSchema,
-    })
-    .transform((v) => {
-      return remap$(v, {
-        id: '_id',
-      });
-    });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutResponseDto$ {
-  /** @deprecated use `LayoutResponseDto$inboundSchema` instead. */
-  export const inboundSchema = LayoutResponseDto$inboundSchema;
-  /** @deprecated use `LayoutResponseDto$outboundSchema` instead. */
-  export const outboundSchema = LayoutResponseDto$outboundSchema;
-  /** @deprecated use `LayoutResponseDto$Outbound` instead. */
-  export type Outbound = LayoutResponseDto$Outbound;
-}
-
-export function layoutResponseDtoToJSON(layoutResponseDto: LayoutResponseDto): string {
-  return JSON.stringify(LayoutResponseDto$outboundSchema.parse(layoutResponseDto));
-}
 
 export function layoutResponseDtoFromJSON(jsonString: string): SafeParseResult<LayoutResponseDto, SDKValidationError> {
   return safeParse(

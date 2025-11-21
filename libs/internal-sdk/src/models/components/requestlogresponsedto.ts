@@ -90,31 +90,6 @@ export type RequestLogResponseDto = {
 /** @internal */
 export const TransactionId$inboundSchema: z.ZodType<TransactionId, z.ZodTypeDef, unknown> = z.object({});
 
-/** @internal */
-export type TransactionId$Outbound = {};
-
-/** @internal */
-export const TransactionId$outboundSchema: z.ZodType<TransactionId$Outbound, z.ZodTypeDef, TransactionId> = z.object(
-  {}
-);
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TransactionId$ {
-  /** @deprecated use `TransactionId$inboundSchema` instead. */
-  export const inboundSchema = TransactionId$inboundSchema;
-  /** @deprecated use `TransactionId$outboundSchema` instead. */
-  export const outboundSchema = TransactionId$outboundSchema;
-  /** @deprecated use `TransactionId$Outbound` instead. */
-  export type Outbound = TransactionId$Outbound;
-}
-
-export function transactionIdToJSON(transactionId: TransactionId): string {
-  return JSON.stringify(TransactionId$outboundSchema.parse(transactionId));
-}
-
 export function transactionIdFromJSON(jsonString: string): SafeParseResult<TransactionId, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -144,71 +119,6 @@ export const RequestLogResponseDto$inboundSchema: z.ZodType<RequestLogResponseDt
   authType: z.string(),
   durationMs: z.number(),
 });
-
-/** @internal */
-export type RequestLogResponseDto$Outbound = {
-  id: string;
-  createdAt: string;
-  url: string;
-  urlPattern: string;
-  method: string;
-  statusCode: number;
-  path: string;
-  hostname: string;
-  transactionId?: TransactionId$Outbound | null | undefined;
-  ip: string;
-  userAgent: string;
-  requestBody: string;
-  responseBody: string;
-  userId: string;
-  organizationId: string;
-  environmentId: string;
-  authType: string;
-  durationMs: number;
-};
-
-/** @internal */
-export const RequestLogResponseDto$outboundSchema: z.ZodType<
-  RequestLogResponseDto$Outbound,
-  z.ZodTypeDef,
-  RequestLogResponseDto
-> = z.object({
-  id: z.string(),
-  createdAt: z.string(),
-  url: z.string(),
-  urlPattern: z.string(),
-  method: z.string(),
-  statusCode: z.number(),
-  path: z.string(),
-  hostname: z.string(),
-  transactionId: z.nullable(z.lazy(() => TransactionId$outboundSchema)).optional(),
-  ip: z.string(),
-  userAgent: z.string(),
-  requestBody: z.string(),
-  responseBody: z.string(),
-  userId: z.string(),
-  organizationId: z.string(),
-  environmentId: z.string(),
-  authType: z.string(),
-  durationMs: z.number(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace RequestLogResponseDto$ {
-  /** @deprecated use `RequestLogResponseDto$inboundSchema` instead. */
-  export const inboundSchema = RequestLogResponseDto$inboundSchema;
-  /** @deprecated use `RequestLogResponseDto$outboundSchema` instead. */
-  export const outboundSchema = RequestLogResponseDto$outboundSchema;
-  /** @deprecated use `RequestLogResponseDto$Outbound` instead. */
-  export type Outbound = RequestLogResponseDto$Outbound;
-}
-
-export function requestLogResponseDtoToJSON(requestLogResponseDto: RequestLogResponseDto): string {
-  return JSON.stringify(RequestLogResponseDto$outboundSchema.parse(requestLogResponseDto));
-}
 
 export function requestLogResponseDtoFromJSON(
   jsonString: string

@@ -7,7 +7,7 @@ import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { StepRunDto, StepRunDto$inboundSchema, StepRunDto$Outbound, StepRunDto$outboundSchema } from './steprundto.js';
+import { StepRunDto, StepRunDto$inboundSchema } from './steprundto.js';
 
 /**
  * Workflow run status
@@ -123,7 +123,7 @@ export type GetWorkflowRunResponseDto = {
    */
   critical: boolean;
   /**
-   * Contexts (keys) in which the workflow run was executed
+   * Context (single or multi) in which the workflow run was executed
    */
   contextKeys?: Array<string> | undefined;
   /**
@@ -141,40 +141,9 @@ export const GetWorkflowRunResponseDtoStatus$inboundSchema: z.ZodNativeEnum<type
   z.nativeEnum(GetWorkflowRunResponseDtoStatus);
 
 /** @internal */
-export const GetWorkflowRunResponseDtoStatus$outboundSchema: z.ZodNativeEnum<typeof GetWorkflowRunResponseDtoStatus> =
-  GetWorkflowRunResponseDtoStatus$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetWorkflowRunResponseDtoStatus$ {
-  /** @deprecated use `GetWorkflowRunResponseDtoStatus$inboundSchema` instead. */
-  export const inboundSchema = GetWorkflowRunResponseDtoStatus$inboundSchema;
-  /** @deprecated use `GetWorkflowRunResponseDtoStatus$outboundSchema` instead. */
-  export const outboundSchema = GetWorkflowRunResponseDtoStatus$outboundSchema;
-}
-
-/** @internal */
 export const GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema: z.ZodNativeEnum<
   typeof GetWorkflowRunResponseDtoDeliveryLifecycleStatus
 > = z.nativeEnum(GetWorkflowRunResponseDtoDeliveryLifecycleStatus);
-
-/** @internal */
-export const GetWorkflowRunResponseDtoDeliveryLifecycleStatus$outboundSchema: z.ZodNativeEnum<
-  typeof GetWorkflowRunResponseDtoDeliveryLifecycleStatus
-> = GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetWorkflowRunResponseDtoDeliveryLifecycleStatus$ {
-  /** @deprecated use `GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema` instead. */
-  export const inboundSchema = GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema;
-  /** @deprecated use `GetWorkflowRunResponseDtoDeliveryLifecycleStatus$outboundSchema` instead. */
-  export const outboundSchema = GetWorkflowRunResponseDtoDeliveryLifecycleStatus$outboundSchema;
-}
 
 /** @internal */
 export const GetWorkflowRunResponseDtoSeverity$inboundSchema: z.ZodNativeEnum<
@@ -182,46 +151,7 @@ export const GetWorkflowRunResponseDtoSeverity$inboundSchema: z.ZodNativeEnum<
 > = z.nativeEnum(GetWorkflowRunResponseDtoSeverity);
 
 /** @internal */
-export const GetWorkflowRunResponseDtoSeverity$outboundSchema: z.ZodNativeEnum<
-  typeof GetWorkflowRunResponseDtoSeverity
-> = GetWorkflowRunResponseDtoSeverity$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetWorkflowRunResponseDtoSeverity$ {
-  /** @deprecated use `GetWorkflowRunResponseDtoSeverity$inboundSchema` instead. */
-  export const inboundSchema = GetWorkflowRunResponseDtoSeverity$inboundSchema;
-  /** @deprecated use `GetWorkflowRunResponseDtoSeverity$outboundSchema` instead. */
-  export const outboundSchema = GetWorkflowRunResponseDtoSeverity$outboundSchema;
-}
-
-/** @internal */
 export const Payload$inboundSchema: z.ZodType<Payload, z.ZodTypeDef, unknown> = z.object({});
-
-/** @internal */
-export type Payload$Outbound = {};
-
-/** @internal */
-export const Payload$outboundSchema: z.ZodType<Payload$Outbound, z.ZodTypeDef, Payload> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Payload$ {
-  /** @deprecated use `Payload$inboundSchema` instead. */
-  export const inboundSchema = Payload$inboundSchema;
-  /** @deprecated use `Payload$outboundSchema` instead. */
-  export const outboundSchema = Payload$outboundSchema;
-  /** @deprecated use `Payload$Outbound` instead. */
-  export type Outbound = Payload$Outbound;
-}
-
-export function payloadToJSON(payload: Payload): string {
-  return JSON.stringify(Payload$outboundSchema.parse(payload));
-}
 
 export function payloadFromJSON(jsonString: string): SafeParseResult<Payload, SDKValidationError> {
   return safeParse(
@@ -253,71 +183,6 @@ export const GetWorkflowRunResponseDto$inboundSchema: z.ZodType<GetWorkflowRunRe
     steps: z.array(StepRunDto$inboundSchema),
     payload: z.lazy(() => Payload$inboundSchema),
   });
-
-/** @internal */
-export type GetWorkflowRunResponseDto$Outbound = {
-  id: string;
-  workflowId: string;
-  workflowName: string;
-  organizationId: string;
-  environmentId: string;
-  internalSubscriberId: string;
-  subscriberId?: string | undefined;
-  status: string;
-  deliveryLifecycleStatus: string;
-  triggerIdentifier: string;
-  transactionId: string;
-  createdAt: string;
-  updatedAt: string;
-  severity: string;
-  critical: boolean;
-  contextKeys?: Array<string> | undefined;
-  steps: Array<StepRunDto$Outbound>;
-  payload: Payload$Outbound;
-};
-
-/** @internal */
-export const GetWorkflowRunResponseDto$outboundSchema: z.ZodType<
-  GetWorkflowRunResponseDto$Outbound,
-  z.ZodTypeDef,
-  GetWorkflowRunResponseDto
-> = z.object({
-  id: z.string(),
-  workflowId: z.string(),
-  workflowName: z.string(),
-  organizationId: z.string(),
-  environmentId: z.string(),
-  internalSubscriberId: z.string(),
-  subscriberId: z.string().optional(),
-  status: GetWorkflowRunResponseDtoStatus$outboundSchema,
-  deliveryLifecycleStatus: GetWorkflowRunResponseDtoDeliveryLifecycleStatus$outboundSchema,
-  triggerIdentifier: z.string(),
-  transactionId: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  severity: GetWorkflowRunResponseDtoSeverity$outboundSchema,
-  critical: z.boolean(),
-  contextKeys: z.array(z.string()).optional(),
-  steps: z.array(StepRunDto$outboundSchema),
-  payload: z.lazy(() => Payload$outboundSchema),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetWorkflowRunResponseDto$ {
-  /** @deprecated use `GetWorkflowRunResponseDto$inboundSchema` instead. */
-  export const inboundSchema = GetWorkflowRunResponseDto$inboundSchema;
-  /** @deprecated use `GetWorkflowRunResponseDto$outboundSchema` instead. */
-  export const outboundSchema = GetWorkflowRunResponseDto$outboundSchema;
-  /** @deprecated use `GetWorkflowRunResponseDto$Outbound` instead. */
-  export type Outbound = GetWorkflowRunResponseDto$Outbound;
-}
-
-export function getWorkflowRunResponseDtoToJSON(getWorkflowRunResponseDto: GetWorkflowRunResponseDto): string {
-  return JSON.stringify(GetWorkflowRunResponseDto$outboundSchema.parse(getWorkflowRunResponseDto));
-}
 
 export function getWorkflowRunResponseDtoFromJSON(
   jsonString: string

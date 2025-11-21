@@ -6,12 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  MessageResponseDto,
-  MessageResponseDto$inboundSchema,
-  MessageResponseDto$Outbound,
-  MessageResponseDto$outboundSchema,
-} from './messageresponsedto.js';
+import { MessageResponseDto, MessageResponseDto$inboundSchema } from './messageresponsedto.js';
 
 export type MessagesResponseDto = {
   /**
@@ -44,45 +39,6 @@ export const MessagesResponseDto$inboundSchema: z.ZodType<MessagesResponseDto, z
   pageSize: z.number(),
   page: z.number(),
 });
-
-/** @internal */
-export type MessagesResponseDto$Outbound = {
-  totalCount?: number | undefined;
-  hasMore: boolean;
-  data: Array<MessageResponseDto$Outbound>;
-  pageSize: number;
-  page: number;
-};
-
-/** @internal */
-export const MessagesResponseDto$outboundSchema: z.ZodType<
-  MessagesResponseDto$Outbound,
-  z.ZodTypeDef,
-  MessagesResponseDto
-> = z.object({
-  totalCount: z.number().optional(),
-  hasMore: z.boolean(),
-  data: z.array(MessageResponseDto$outboundSchema),
-  pageSize: z.number(),
-  page: z.number(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessagesResponseDto$ {
-  /** @deprecated use `MessagesResponseDto$inboundSchema` instead. */
-  export const inboundSchema = MessagesResponseDto$inboundSchema;
-  /** @deprecated use `MessagesResponseDto$outboundSchema` instead. */
-  export const outboundSchema = MessagesResponseDto$outboundSchema;
-  /** @deprecated use `MessagesResponseDto$Outbound` instead. */
-  export type Outbound = MessagesResponseDto$Outbound;
-}
-
-export function messagesResponseDtoToJSON(messagesResponseDto: MessagesResponseDto): string {
-  return JSON.stringify(MessagesResponseDto$outboundSchema.parse(messagesResponseDto));
-}
 
 export function messagesResponseDtoFromJSON(
   jsonString: string

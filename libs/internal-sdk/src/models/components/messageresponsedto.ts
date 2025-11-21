@@ -7,31 +7,17 @@ import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { ChannelTypeEnum, ChannelTypeEnum$inboundSchema, ChannelTypeEnum$outboundSchema } from './channeltypeenum.js';
-import { EmailBlock, EmailBlock$inboundSchema, EmailBlock$Outbound, EmailBlock$outboundSchema } from './emailblock.js';
-import { MessageCTA, MessageCTA$inboundSchema, MessageCTA$Outbound, MessageCTA$outboundSchema } from './messagecta.js';
-import {
-  MessageStatusEnum,
-  MessageStatusEnum$inboundSchema,
-  MessageStatusEnum$outboundSchema,
-} from './messagestatusenum.js';
-import {
-  SubscriberResponseDto,
-  SubscriberResponseDto$inboundSchema,
-  SubscriberResponseDto$Outbound,
-  SubscriberResponseDto$outboundSchema,
-} from './subscriberresponsedto.js';
-import {
-  WorkflowResponse,
-  WorkflowResponse$inboundSchema,
-  WorkflowResponse$Outbound,
-  WorkflowResponse$outboundSchema,
-} from './workflowresponse.js';
+import { ChannelTypeEnum, ChannelTypeEnum$inboundSchema } from './channeltypeenum.js';
+import { EmailBlock, EmailBlock$inboundSchema } from './emailblock.js';
+import { MessageCTA, MessageCTA$inboundSchema } from './messagecta.js';
+import { MessageStatusEnum, MessageStatusEnum$inboundSchema } from './messagestatusenum.js';
+import { SubscriberResponseDto, SubscriberResponseDto$inboundSchema } from './subscriberresponsedto.js';
+import { WorkflowResponse, WorkflowResponse$inboundSchema } from './workflowresponse.js';
 
 /**
  * Content of the message, can be an email block or a string
  */
-export type MessageResponseDtoContent = Array<EmailBlock> | string;
+export type Content = Array<EmailBlock> | string;
 
 /**
  * The payload that was used to send the notification trigger
@@ -181,82 +167,28 @@ export type MessageResponseDto = {
    */
   overrides?: MessageResponseDtoOverrides | undefined;
   /**
-   * Context keys associated with the message (format: "type:id")
+   * Context (single or multi) in which the message was sent
    */
   contextKeys?: Array<string> | undefined;
 };
 
 /** @internal */
-export const MessageResponseDtoContent$inboundSchema: z.ZodType<MessageResponseDtoContent, z.ZodTypeDef, unknown> =
-  z.union([z.array(EmailBlock$inboundSchema), z.string()]);
+export const Content$inboundSchema: z.ZodType<Content, z.ZodTypeDef, unknown> = z.union([
+  z.array(EmailBlock$inboundSchema),
+  z.string(),
+]);
 
-/** @internal */
-export type MessageResponseDtoContent$Outbound = Array<EmailBlock$Outbound> | string;
-
-/** @internal */
-export const MessageResponseDtoContent$outboundSchema: z.ZodType<
-  MessageResponseDtoContent$Outbound,
-  z.ZodTypeDef,
-  MessageResponseDtoContent
-> = z.union([z.array(EmailBlock$outboundSchema), z.string()]);
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessageResponseDtoContent$ {
-  /** @deprecated use `MessageResponseDtoContent$inboundSchema` instead. */
-  export const inboundSchema = MessageResponseDtoContent$inboundSchema;
-  /** @deprecated use `MessageResponseDtoContent$outboundSchema` instead. */
-  export const outboundSchema = MessageResponseDtoContent$outboundSchema;
-  /** @deprecated use `MessageResponseDtoContent$Outbound` instead. */
-  export type Outbound = MessageResponseDtoContent$Outbound;
-}
-
-export function messageResponseDtoContentToJSON(messageResponseDtoContent: MessageResponseDtoContent): string {
-  return JSON.stringify(MessageResponseDtoContent$outboundSchema.parse(messageResponseDtoContent));
-}
-
-export function messageResponseDtoContentFromJSON(
-  jsonString: string
-): SafeParseResult<MessageResponseDtoContent, SDKValidationError> {
+export function contentFromJSON(jsonString: string): SafeParseResult<Content, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => MessageResponseDtoContent$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'MessageResponseDtoContent' from JSON`
+    (x) => Content$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Content' from JSON`
   );
 }
 
 /** @internal */
 export const MessageResponseDtoPayload$inboundSchema: z.ZodType<MessageResponseDtoPayload, z.ZodTypeDef, unknown> =
   z.object({});
-
-/** @internal */
-export type MessageResponseDtoPayload$Outbound = {};
-
-/** @internal */
-export const MessageResponseDtoPayload$outboundSchema: z.ZodType<
-  MessageResponseDtoPayload$Outbound,
-  z.ZodTypeDef,
-  MessageResponseDtoPayload
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessageResponseDtoPayload$ {
-  /** @deprecated use `MessageResponseDtoPayload$inboundSchema` instead. */
-  export const inboundSchema = MessageResponseDtoPayload$inboundSchema;
-  /** @deprecated use `MessageResponseDtoPayload$outboundSchema` instead. */
-  export const outboundSchema = MessageResponseDtoPayload$outboundSchema;
-  /** @deprecated use `MessageResponseDtoPayload$Outbound` instead. */
-  export type Outbound = MessageResponseDtoPayload$Outbound;
-}
-
-export function messageResponseDtoPayloadToJSON(messageResponseDtoPayload: MessageResponseDtoPayload): string {
-  return JSON.stringify(MessageResponseDtoPayload$outboundSchema.parse(messageResponseDtoPayload));
-}
 
 export function messageResponseDtoPayloadFromJSON(
   jsonString: string
@@ -271,33 +203,6 @@ export function messageResponseDtoPayloadFromJSON(
 /** @internal */
 export const MessageResponseDtoOverrides$inboundSchema: z.ZodType<MessageResponseDtoOverrides, z.ZodTypeDef, unknown> =
   z.object({});
-
-/** @internal */
-export type MessageResponseDtoOverrides$Outbound = {};
-
-/** @internal */
-export const MessageResponseDtoOverrides$outboundSchema: z.ZodType<
-  MessageResponseDtoOverrides$Outbound,
-  z.ZodTypeDef,
-  MessageResponseDtoOverrides
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessageResponseDtoOverrides$ {
-  /** @deprecated use `MessageResponseDtoOverrides$inboundSchema` instead. */
-  export const inboundSchema = MessageResponseDtoOverrides$inboundSchema;
-  /** @deprecated use `MessageResponseDtoOverrides$outboundSchema` instead. */
-  export const outboundSchema = MessageResponseDtoOverrides$outboundSchema;
-  /** @deprecated use `MessageResponseDtoOverrides$Outbound` instead. */
-  export type Outbound = MessageResponseDtoOverrides$Outbound;
-}
-
-export function messageResponseDtoOverridesToJSON(messageResponseDtoOverrides: MessageResponseDtoOverrides): string {
-  return JSON.stringify(MessageResponseDtoOverrides$outboundSchema.parse(messageResponseDtoOverrides));
-}
 
 export function messageResponseDtoOverridesFromJSON(
   jsonString: string
@@ -360,118 +265,6 @@ export const MessageResponseDto$inboundSchema: z.ZodType<MessageResponseDto, z.Z
       _feedId: 'feedId',
     });
   });
-
-/** @internal */
-export type MessageResponseDto$Outbound = {
-  _id?: string | undefined;
-  _templateId?: string | null | undefined;
-  _environmentId: string;
-  _messageTemplateId?: string | null | undefined;
-  _organizationId: string;
-  _notificationId: string;
-  _subscriberId: string;
-  subscriber?: SubscriberResponseDto$Outbound | undefined;
-  template?: WorkflowResponse$Outbound | undefined;
-  templateIdentifier?: string | undefined;
-  createdAt: string;
-  deliveredAt?: Array<string> | undefined;
-  lastSeenDate?: string | undefined;
-  lastReadDate?: string | undefined;
-  content?: Array<EmailBlock$Outbound> | string | null | undefined;
-  transactionId: string;
-  subject?: string | undefined;
-  channel: string;
-  read: boolean;
-  seen: boolean;
-  snoozedUntil?: string | undefined;
-  email?: string | undefined;
-  phone?: string | undefined;
-  directWebhookUrl?: string | undefined;
-  providerId?: string | undefined;
-  deviceTokens?: Array<string> | undefined;
-  title?: string | undefined;
-  cta: MessageCTA$Outbound;
-  _feedId?: string | null | undefined;
-  status: string;
-  errorId?: string | undefined;
-  errorText?: string | undefined;
-  payload?: MessageResponseDtoPayload$Outbound | undefined;
-  overrides?: MessageResponseDtoOverrides$Outbound | undefined;
-  contextKeys?: Array<string> | undefined;
-};
-
-/** @internal */
-export const MessageResponseDto$outboundSchema: z.ZodType<
-  MessageResponseDto$Outbound,
-  z.ZodTypeDef,
-  MessageResponseDto
-> = z
-  .object({
-    id: z.string().optional(),
-    templateId: z.nullable(z.string()).optional(),
-    environmentId: z.string(),
-    messageTemplateId: z.nullable(z.string()).optional(),
-    organizationId: z.string(),
-    notificationId: z.string(),
-    subscriberId: z.string(),
-    subscriber: SubscriberResponseDto$outboundSchema.optional(),
-    template: WorkflowResponse$outboundSchema.optional(),
-    templateIdentifier: z.string().optional(),
-    createdAt: z.string(),
-    deliveredAt: z.array(z.string()).optional(),
-    lastSeenDate: z.string().optional(),
-    lastReadDate: z.string().optional(),
-    content: z.nullable(z.union([z.array(EmailBlock$outboundSchema), z.string()])).optional(),
-    transactionId: z.string(),
-    subject: z.string().optional(),
-    channel: ChannelTypeEnum$outboundSchema,
-    read: z.boolean(),
-    seen: z.boolean(),
-    snoozedUntil: z.string().optional(),
-    email: z.string().optional(),
-    phone: z.string().optional(),
-    directWebhookUrl: z.string().optional(),
-    providerId: z.string().optional(),
-    deviceTokens: z.array(z.string()).optional(),
-    title: z.string().optional(),
-    cta: MessageCTA$outboundSchema,
-    feedId: z.nullable(z.string()).optional(),
-    status: MessageStatusEnum$outboundSchema,
-    errorId: z.string().optional(),
-    errorText: z.string().optional(),
-    payload: z.lazy(() => MessageResponseDtoPayload$outboundSchema).optional(),
-    overrides: z.lazy(() => MessageResponseDtoOverrides$outboundSchema).optional(),
-    contextKeys: z.array(z.string()).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-      templateId: '_templateId',
-      environmentId: '_environmentId',
-      messageTemplateId: '_messageTemplateId',
-      organizationId: '_organizationId',
-      notificationId: '_notificationId',
-      subscriberId: '_subscriberId',
-      feedId: '_feedId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessageResponseDto$ {
-  /** @deprecated use `MessageResponseDto$inboundSchema` instead. */
-  export const inboundSchema = MessageResponseDto$inboundSchema;
-  /** @deprecated use `MessageResponseDto$outboundSchema` instead. */
-  export const outboundSchema = MessageResponseDto$outboundSchema;
-  /** @deprecated use `MessageResponseDto$Outbound` instead. */
-  export type Outbound = MessageResponseDto$Outbound;
-}
-
-export function messageResponseDtoToJSON(messageResponseDto: MessageResponseDto): string {
-  return JSON.stringify(MessageResponseDto$outboundSchema.parse(messageResponseDto));
-}
 
 export function messageResponseDtoFromJSON(
   jsonString: string

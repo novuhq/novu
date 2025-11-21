@@ -25,39 +25,6 @@ export const RemoveSubscriberResponseDto$inboundSchema: z.ZodType<RemoveSubscrib
     status: z.string(),
   });
 
-/** @internal */
-export type RemoveSubscriberResponseDto$Outbound = {
-  acknowledged: boolean;
-  status: string;
-};
-
-/** @internal */
-export const RemoveSubscriberResponseDto$outboundSchema: z.ZodType<
-  RemoveSubscriberResponseDto$Outbound,
-  z.ZodTypeDef,
-  RemoveSubscriberResponseDto
-> = z.object({
-  acknowledged: z.boolean(),
-  status: z.string(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace RemoveSubscriberResponseDto$ {
-  /** @deprecated use `RemoveSubscriberResponseDto$inboundSchema` instead. */
-  export const inboundSchema = RemoveSubscriberResponseDto$inboundSchema;
-  /** @deprecated use `RemoveSubscriberResponseDto$outboundSchema` instead. */
-  export const outboundSchema = RemoveSubscriberResponseDto$outboundSchema;
-  /** @deprecated use `RemoveSubscriberResponseDto$Outbound` instead. */
-  export type Outbound = RemoveSubscriberResponseDto$Outbound;
-}
-
-export function removeSubscriberResponseDtoToJSON(removeSubscriberResponseDto: RemoveSubscriberResponseDto): string {
-  return JSON.stringify(RemoveSubscriberResponseDto$outboundSchema.parse(removeSubscriberResponseDto));
-}
-
 export function removeSubscriberResponseDtoFromJSON(
   jsonString: string
 ): SafeParseResult<RemoveSubscriberResponseDto, SDKValidationError> {

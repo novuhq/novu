@@ -27,24 +27,6 @@ export type WorkflowControllerPatchWorkflowResponse = {
 };
 
 /** @internal */
-export const WorkflowControllerPatchWorkflowRequest$inboundSchema: z.ZodType<
-  WorkflowControllerPatchWorkflowRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    workflowId: z.string(),
-    'idempotency-key': z.string().optional(),
-    PatchWorkflowDto: components.PatchWorkflowDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      PatchWorkflowDto: 'patchWorkflowDto',
-    });
-  });
-
-/** @internal */
 export type WorkflowControllerPatchWorkflowRequest$Outbound = {
   workflowId: string;
   'idempotency-key'?: string | undefined;
@@ -69,34 +51,11 @@ export const WorkflowControllerPatchWorkflowRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerPatchWorkflowRequest$ {
-  /** @deprecated use `WorkflowControllerPatchWorkflowRequest$inboundSchema` instead. */
-  export const inboundSchema = WorkflowControllerPatchWorkflowRequest$inboundSchema;
-  /** @deprecated use `WorkflowControllerPatchWorkflowRequest$outboundSchema` instead. */
-  export const outboundSchema = WorkflowControllerPatchWorkflowRequest$outboundSchema;
-  /** @deprecated use `WorkflowControllerPatchWorkflowRequest$Outbound` instead. */
-  export type Outbound = WorkflowControllerPatchWorkflowRequest$Outbound;
-}
-
 export function workflowControllerPatchWorkflowRequestToJSON(
   workflowControllerPatchWorkflowRequest: WorkflowControllerPatchWorkflowRequest
 ): string {
   return JSON.stringify(
     WorkflowControllerPatchWorkflowRequest$outboundSchema.parse(workflowControllerPatchWorkflowRequest)
-  );
-}
-
-export function workflowControllerPatchWorkflowRequestFromJSON(
-  jsonString: string
-): SafeParseResult<WorkflowControllerPatchWorkflowRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => WorkflowControllerPatchWorkflowRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'WorkflowControllerPatchWorkflowRequest' from JSON`
   );
 }
 
@@ -116,50 +75,6 @@ export const WorkflowControllerPatchWorkflowResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type WorkflowControllerPatchWorkflowResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.WorkflowResponseDto$Outbound;
-};
-
-/** @internal */
-export const WorkflowControllerPatchWorkflowResponse$outboundSchema: z.ZodType<
-  WorkflowControllerPatchWorkflowResponse$Outbound,
-  z.ZodTypeDef,
-  WorkflowControllerPatchWorkflowResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.WorkflowResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerPatchWorkflowResponse$ {
-  /** @deprecated use `WorkflowControllerPatchWorkflowResponse$inboundSchema` instead. */
-  export const inboundSchema = WorkflowControllerPatchWorkflowResponse$inboundSchema;
-  /** @deprecated use `WorkflowControllerPatchWorkflowResponse$outboundSchema` instead. */
-  export const outboundSchema = WorkflowControllerPatchWorkflowResponse$outboundSchema;
-  /** @deprecated use `WorkflowControllerPatchWorkflowResponse$Outbound` instead. */
-  export type Outbound = WorkflowControllerPatchWorkflowResponse$Outbound;
-}
-
-export function workflowControllerPatchWorkflowResponseToJSON(
-  workflowControllerPatchWorkflowResponse: WorkflowControllerPatchWorkflowResponse
-): string {
-  return JSON.stringify(
-    WorkflowControllerPatchWorkflowResponse$outboundSchema.parse(workflowControllerPatchWorkflowResponse)
-  );
-}
 
 export function workflowControllerPatchWorkflowResponseFromJSON(
   jsonString: string

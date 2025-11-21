@@ -24,24 +24,6 @@ export type SubscribersV1ControllerMarkMessagesAsResponse = {
 };
 
 /** @internal */
-export const SubscribersV1ControllerMarkMessagesAsRequest$inboundSchema: z.ZodType<
-  SubscribersV1ControllerMarkMessagesAsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    subscriberId: z.string(),
-    'idempotency-key': z.string().optional(),
-    MessageMarkAsRequestDto: components.MessageMarkAsRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      MessageMarkAsRequestDto: 'messageMarkAsRequestDto',
-    });
-  });
-
-/** @internal */
 export type SubscribersV1ControllerMarkMessagesAsRequest$Outbound = {
   subscriberId: string;
   'idempotency-key'?: string | undefined;
@@ -66,34 +48,11 @@ export const SubscribersV1ControllerMarkMessagesAsRequest$outboundSchema: z.ZodT
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerMarkMessagesAsRequest$ {
-  /** @deprecated use `SubscribersV1ControllerMarkMessagesAsRequest$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerMarkMessagesAsRequest$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerMarkMessagesAsRequest$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerMarkMessagesAsRequest$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerMarkMessagesAsRequest$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerMarkMessagesAsRequest$Outbound;
-}
-
 export function subscribersV1ControllerMarkMessagesAsRequestToJSON(
   subscribersV1ControllerMarkMessagesAsRequest: SubscribersV1ControllerMarkMessagesAsRequest
 ): string {
   return JSON.stringify(
     SubscribersV1ControllerMarkMessagesAsRequest$outboundSchema.parse(subscribersV1ControllerMarkMessagesAsRequest)
-  );
-}
-
-export function subscribersV1ControllerMarkMessagesAsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<SubscribersV1ControllerMarkMessagesAsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscribersV1ControllerMarkMessagesAsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscribersV1ControllerMarkMessagesAsRequest' from JSON`
   );
 }
 
@@ -113,50 +72,6 @@ export const SubscribersV1ControllerMarkMessagesAsResponse$inboundSchema: z.ZodT
       Result: 'result',
     });
   });
-
-/** @internal */
-export type SubscribersV1ControllerMarkMessagesAsResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: Array<components.MessageResponseDto$Outbound>;
-};
-
-/** @internal */
-export const SubscribersV1ControllerMarkMessagesAsResponse$outboundSchema: z.ZodType<
-  SubscribersV1ControllerMarkMessagesAsResponse$Outbound,
-  z.ZodTypeDef,
-  SubscribersV1ControllerMarkMessagesAsResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: z.array(components.MessageResponseDto$outboundSchema),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerMarkMessagesAsResponse$ {
-  /** @deprecated use `SubscribersV1ControllerMarkMessagesAsResponse$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerMarkMessagesAsResponse$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerMarkMessagesAsResponse$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerMarkMessagesAsResponse$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerMarkMessagesAsResponse$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerMarkMessagesAsResponse$Outbound;
-}
-
-export function subscribersV1ControllerMarkMessagesAsResponseToJSON(
-  subscribersV1ControllerMarkMessagesAsResponse: SubscribersV1ControllerMarkMessagesAsResponse
-): string {
-  return JSON.stringify(
-    SubscribersV1ControllerMarkMessagesAsResponse$outboundSchema.parse(subscribersV1ControllerMarkMessagesAsResponse)
-  );
-}
 
 export function subscribersV1ControllerMarkMessagesAsResponseFromJSON(
   jsonString: string

@@ -23,7 +23,6 @@ export const SmsControlDto$inboundSchema: z.ZodType<SmsControlDto, z.ZodTypeDef,
   skip: z.record(z.any()).optional(),
   body: z.string().optional(),
 });
-
 /** @internal */
 export type SmsControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -36,23 +35,9 @@ export const SmsControlDto$outboundSchema: z.ZodType<SmsControlDto$Outbound, z.Z
   body: z.string().optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsControlDto$ {
-  /** @deprecated use `SmsControlDto$inboundSchema` instead. */
-  export const inboundSchema = SmsControlDto$inboundSchema;
-  /** @deprecated use `SmsControlDto$outboundSchema` instead. */
-  export const outboundSchema = SmsControlDto$outboundSchema;
-  /** @deprecated use `SmsControlDto$Outbound` instead. */
-  export type Outbound = SmsControlDto$Outbound;
-}
-
 export function smsControlDtoToJSON(smsControlDto: SmsControlDto): string {
   return JSON.stringify(SmsControlDto$outboundSchema.parse(smsControlDto));
 }
-
 export function smsControlDtoFromJSON(jsonString: string): SafeParseResult<SmsControlDto, SDKValidationError> {
   return safeParse(
     jsonString,

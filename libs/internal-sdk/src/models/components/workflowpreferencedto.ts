@@ -23,7 +23,6 @@ export const WorkflowPreferenceDto$inboundSchema: z.ZodType<WorkflowPreferenceDt
   enabled: z.boolean().default(true),
   readOnly: z.boolean().default(false),
 });
-
 /** @internal */
 export type WorkflowPreferenceDto$Outbound = {
   enabled: boolean;
@@ -40,23 +39,9 @@ export const WorkflowPreferenceDto$outboundSchema: z.ZodType<
   readOnly: z.boolean().default(false),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowPreferenceDto$ {
-  /** @deprecated use `WorkflowPreferenceDto$inboundSchema` instead. */
-  export const inboundSchema = WorkflowPreferenceDto$inboundSchema;
-  /** @deprecated use `WorkflowPreferenceDto$outboundSchema` instead. */
-  export const outboundSchema = WorkflowPreferenceDto$outboundSchema;
-  /** @deprecated use `WorkflowPreferenceDto$Outbound` instead. */
-  export type Outbound = WorkflowPreferenceDto$Outbound;
-}
-
 export function workflowPreferenceDtoToJSON(workflowPreferenceDto: WorkflowPreferenceDto): string {
   return JSON.stringify(WorkflowPreferenceDto$outboundSchema.parse(workflowPreferenceDto));
 }
-
 export function workflowPreferenceDtoFromJSON(
   jsonString: string
 ): SafeParseResult<WorkflowPreferenceDto, SDKValidationError> {

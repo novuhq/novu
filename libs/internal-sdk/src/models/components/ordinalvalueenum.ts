@@ -27,17 +27,3 @@ export type OrdinalValueEnum = ClosedEnum<typeof OrdinalValueEnum>;
 
 /** @internal */
 export const OrdinalValueEnum$inboundSchema: z.ZodNativeEnum<typeof OrdinalValueEnum> = z.nativeEnum(OrdinalValueEnum);
-
-/** @internal */
-export const OrdinalValueEnum$outboundSchema: z.ZodNativeEnum<typeof OrdinalValueEnum> = OrdinalValueEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace OrdinalValueEnum$ {
-  /** @deprecated use `OrdinalValueEnum$inboundSchema` instead. */
-  export const inboundSchema = OrdinalValueEnum$inboundSchema;
-  /** @deprecated use `OrdinalValueEnum$outboundSchema` instead. */
-  export const outboundSchema = OrdinalValueEnum$outboundSchema;
-}

@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ThrottleControlDto,
-  ThrottleControlDto$inboundSchema,
-  ThrottleControlDto$Outbound,
-  ThrottleControlDto$outboundSchema,
-} from './throttlecontroldto.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { ThrottleControlDto, ThrottleControlDto$inboundSchema } from './throttlecontroldto.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type ThrottleControlsMetadataResponseDto = {
   /**
@@ -39,43 +34,6 @@ export const ThrottleControlsMetadataResponseDto$inboundSchema: z.ZodType<
   uiSchema: UiSchema$inboundSchema.optional(),
   values: ThrottleControlDto$inboundSchema,
 });
-
-/** @internal */
-export type ThrottleControlsMetadataResponseDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-  values: ThrottleControlDto$Outbound;
-};
-
-/** @internal */
-export const ThrottleControlsMetadataResponseDto$outboundSchema: z.ZodType<
-  ThrottleControlsMetadataResponseDto$Outbound,
-  z.ZodTypeDef,
-  ThrottleControlsMetadataResponseDto
-> = z.object({
-  dataSchema: z.record(z.any()).optional(),
-  uiSchema: UiSchema$outboundSchema.optional(),
-  values: ThrottleControlDto$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ThrottleControlsMetadataResponseDto$ {
-  /** @deprecated use `ThrottleControlsMetadataResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ThrottleControlsMetadataResponseDto$inboundSchema;
-  /** @deprecated use `ThrottleControlsMetadataResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ThrottleControlsMetadataResponseDto$outboundSchema;
-  /** @deprecated use `ThrottleControlsMetadataResponseDto$Outbound` instead. */
-  export type Outbound = ThrottleControlsMetadataResponseDto$Outbound;
-}
-
-export function throttleControlsMetadataResponseDtoToJSON(
-  throttleControlsMetadataResponseDto: ThrottleControlsMetadataResponseDto
-): string {
-  return JSON.stringify(ThrottleControlsMetadataResponseDto$outboundSchema.parse(throttleControlsMetadataResponseDto));
-}
 
 export function throttleControlsMetadataResponseDtoFromJSON(
   jsonString: string

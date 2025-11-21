@@ -3,10 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 /**
  * Message action status
@@ -37,30 +34,8 @@ export type MarkMessageActionAsSeenDto = {
 };
 
 /** @internal */
-export const MarkMessageActionAsSeenDtoStatus$inboundSchema: z.ZodNativeEnum<typeof MarkMessageActionAsSeenDtoStatus> =
-  z.nativeEnum(MarkMessageActionAsSeenDtoStatus);
-
-/** @internal */
 export const MarkMessageActionAsSeenDtoStatus$outboundSchema: z.ZodNativeEnum<typeof MarkMessageActionAsSeenDtoStatus> =
-  MarkMessageActionAsSeenDtoStatus$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MarkMessageActionAsSeenDtoStatus$ {
-  /** @deprecated use `MarkMessageActionAsSeenDtoStatus$inboundSchema` instead. */
-  export const inboundSchema = MarkMessageActionAsSeenDtoStatus$inboundSchema;
-  /** @deprecated use `MarkMessageActionAsSeenDtoStatus$outboundSchema` instead. */
-  export const outboundSchema = MarkMessageActionAsSeenDtoStatus$outboundSchema;
-}
-
-/** @internal */
-export const MarkMessageActionAsSeenDtoPayload$inboundSchema: z.ZodType<
-  MarkMessageActionAsSeenDtoPayload,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
+  z.nativeEnum(MarkMessageActionAsSeenDtoStatus);
 
 /** @internal */
 export type MarkMessageActionAsSeenDtoPayload$Outbound = {};
@@ -72,41 +47,11 @@ export const MarkMessageActionAsSeenDtoPayload$outboundSchema: z.ZodType<
   MarkMessageActionAsSeenDtoPayload
 > = z.object({});
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MarkMessageActionAsSeenDtoPayload$ {
-  /** @deprecated use `MarkMessageActionAsSeenDtoPayload$inboundSchema` instead. */
-  export const inboundSchema = MarkMessageActionAsSeenDtoPayload$inboundSchema;
-  /** @deprecated use `MarkMessageActionAsSeenDtoPayload$outboundSchema` instead. */
-  export const outboundSchema = MarkMessageActionAsSeenDtoPayload$outboundSchema;
-  /** @deprecated use `MarkMessageActionAsSeenDtoPayload$Outbound` instead. */
-  export type Outbound = MarkMessageActionAsSeenDtoPayload$Outbound;
-}
-
 export function markMessageActionAsSeenDtoPayloadToJSON(
   markMessageActionAsSeenDtoPayload: MarkMessageActionAsSeenDtoPayload
 ): string {
   return JSON.stringify(MarkMessageActionAsSeenDtoPayload$outboundSchema.parse(markMessageActionAsSeenDtoPayload));
 }
-
-export function markMessageActionAsSeenDtoPayloadFromJSON(
-  jsonString: string
-): SafeParseResult<MarkMessageActionAsSeenDtoPayload, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => MarkMessageActionAsSeenDtoPayload$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'MarkMessageActionAsSeenDtoPayload' from JSON`
-  );
-}
-
-/** @internal */
-export const MarkMessageActionAsSeenDto$inboundSchema: z.ZodType<MarkMessageActionAsSeenDto, z.ZodTypeDef, unknown> =
-  z.object({
-    status: MarkMessageActionAsSeenDtoStatus$inboundSchema,
-    payload: z.lazy(() => MarkMessageActionAsSeenDtoPayload$inboundSchema).optional(),
-  });
 
 /** @internal */
 export type MarkMessageActionAsSeenDto$Outbound = {
@@ -124,29 +69,6 @@ export const MarkMessageActionAsSeenDto$outboundSchema: z.ZodType<
   payload: z.lazy(() => MarkMessageActionAsSeenDtoPayload$outboundSchema).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MarkMessageActionAsSeenDto$ {
-  /** @deprecated use `MarkMessageActionAsSeenDto$inboundSchema` instead. */
-  export const inboundSchema = MarkMessageActionAsSeenDto$inboundSchema;
-  /** @deprecated use `MarkMessageActionAsSeenDto$outboundSchema` instead. */
-  export const outboundSchema = MarkMessageActionAsSeenDto$outboundSchema;
-  /** @deprecated use `MarkMessageActionAsSeenDto$Outbound` instead. */
-  export type Outbound = MarkMessageActionAsSeenDto$Outbound;
-}
-
 export function markMessageActionAsSeenDtoToJSON(markMessageActionAsSeenDto: MarkMessageActionAsSeenDto): string {
   return JSON.stringify(MarkMessageActionAsSeenDto$outboundSchema.parse(markMessageActionAsSeenDto));
-}
-
-export function markMessageActionAsSeenDtoFromJSON(
-  jsonString: string
-): SafeParseResult<MarkMessageActionAsSeenDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => MarkMessageActionAsSeenDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'MarkMessageActionAsSeenDto' from JSON`
-  );
 }

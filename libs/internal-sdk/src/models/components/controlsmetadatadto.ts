@@ -6,7 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type ControlsMetadataDto = {
   /**
@@ -24,39 +24,6 @@ export const ControlsMetadataDto$inboundSchema: z.ZodType<ControlsMetadataDto, z
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
 });
-
-/** @internal */
-export type ControlsMetadataDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-};
-
-/** @internal */
-export const ControlsMetadataDto$outboundSchema: z.ZodType<
-  ControlsMetadataDto$Outbound,
-  z.ZodTypeDef,
-  ControlsMetadataDto
-> = z.object({
-  dataSchema: z.record(z.any()).optional(),
-  uiSchema: UiSchema$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlsMetadataDto$ {
-  /** @deprecated use `ControlsMetadataDto$inboundSchema` instead. */
-  export const inboundSchema = ControlsMetadataDto$inboundSchema;
-  /** @deprecated use `ControlsMetadataDto$outboundSchema` instead. */
-  export const outboundSchema = ControlsMetadataDto$outboundSchema;
-  /** @deprecated use `ControlsMetadataDto$Outbound` instead. */
-  export type Outbound = ControlsMetadataDto$Outbound;
-}
-
-export function controlsMetadataDtoToJSON(controlsMetadataDto: ControlsMetadataDto): string {
-  return JSON.stringify(ControlsMetadataDto$outboundSchema.parse(controlsMetadataDto));
-}
 
 export function controlsMetadataDtoFromJSON(
   jsonString: string

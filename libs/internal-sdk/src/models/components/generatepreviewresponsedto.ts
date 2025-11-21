@@ -7,48 +7,13 @@ import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ChatRenderOutput,
-  ChatRenderOutput$inboundSchema,
-  ChatRenderOutput$Outbound,
-  ChatRenderOutput$outboundSchema,
-} from './chatrenderoutput.js';
-import {
-  DigestRegularOutput,
-  DigestRegularOutput$inboundSchema,
-  DigestRegularOutput$Outbound,
-  DigestRegularOutput$outboundSchema,
-} from './digestregularoutput.js';
-import {
-  EmailRenderOutput,
-  EmailRenderOutput$inboundSchema,
-  EmailRenderOutput$Outbound,
-  EmailRenderOutput$outboundSchema,
-} from './emailrenderoutput.js';
-import {
-  InAppRenderOutput,
-  InAppRenderOutput$inboundSchema,
-  InAppRenderOutput$Outbound,
-  InAppRenderOutput$outboundSchema,
-} from './inapprenderoutput.js';
-import {
-  PreviewPayloadDto,
-  PreviewPayloadDto$inboundSchema,
-  PreviewPayloadDto$Outbound,
-  PreviewPayloadDto$outboundSchema,
-} from './previewpayloaddto.js';
-import {
-  PushRenderOutput,
-  PushRenderOutput$inboundSchema,
-  PushRenderOutput$Outbound,
-  PushRenderOutput$outboundSchema,
-} from './pushrenderoutput.js';
-import {
-  SmsRenderOutput,
-  SmsRenderOutput$inboundSchema,
-  SmsRenderOutput$Outbound,
-  SmsRenderOutput$outboundSchema,
-} from './smsrenderoutput.js';
+import { ChatRenderOutput, ChatRenderOutput$inboundSchema } from './chatrenderoutput.js';
+import { DigestRegularOutput, DigestRegularOutput$inboundSchema } from './digestregularoutput.js';
+import { EmailRenderOutput, EmailRenderOutput$inboundSchema } from './emailrenderoutput.js';
+import { InAppRenderOutput, InAppRenderOutput$inboundSchema } from './inapprenderoutput.js';
+import { PreviewPayloadDto, PreviewPayloadDto$inboundSchema } from './previewpayloaddto.js';
+import { PushRenderOutput, PushRenderOutput$inboundSchema } from './pushrenderoutput.js';
+import { SmsRenderOutput, SmsRenderOutput$inboundSchema } from './smsrenderoutput.js';
 
 export const GeneratePreviewResponseDtoResult9Type = {
   Digest: 'digest',
@@ -165,55 +130,10 @@ export const GeneratePreviewResponseDtoResult9Type$inboundSchema: z.ZodNativeEnu
 > = z.nativeEnum(GeneratePreviewResponseDtoResult9Type);
 
 /** @internal */
-export const GeneratePreviewResponseDtoResult9Type$outboundSchema: z.ZodNativeEnum<
-  typeof GeneratePreviewResponseDtoResult9Type
-> = GeneratePreviewResponseDtoResult9Type$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDtoResult9Type$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResult9Type$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDtoResult9Type$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult9Type$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDtoResult9Type$outboundSchema;
-}
-
-/** @internal */
 export const Nine$inboundSchema: z.ZodType<Nine, z.ZodTypeDef, unknown> = z.object({
   type: GeneratePreviewResponseDtoResult9Type$inboundSchema.optional(),
   preview: DigestRegularOutput$inboundSchema.optional(),
 });
-
-/** @internal */
-export type Nine$Outbound = {
-  type?: string | undefined;
-  preview?: DigestRegularOutput$Outbound | undefined;
-};
-
-/** @internal */
-export const Nine$outboundSchema: z.ZodType<Nine$Outbound, z.ZodTypeDef, Nine> = z.object({
-  type: GeneratePreviewResponseDtoResult9Type$outboundSchema.optional(),
-  preview: DigestRegularOutput$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Nine$ {
-  /** @deprecated use `Nine$inboundSchema` instead. */
-  export const inboundSchema = Nine$inboundSchema;
-  /** @deprecated use `Nine$outboundSchema` instead. */
-  export const outboundSchema = Nine$outboundSchema;
-  /** @deprecated use `Nine$Outbound` instead. */
-  export type Outbound = Nine$Outbound;
-}
-
-export function nineToJSON(nine: Nine): string {
-  return JSON.stringify(Nine$outboundSchema.parse(nine));
-}
 
 export function nineFromJSON(jsonString: string): SafeParseResult<Nine, SDKValidationError> {
   return safeParse(jsonString, (x) => Nine$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Nine' from JSON`);
@@ -225,55 +145,10 @@ export const GeneratePreviewResponseDtoResult8Type$inboundSchema: z.ZodNativeEnu
 > = z.nativeEnum(GeneratePreviewResponseDtoResult8Type);
 
 /** @internal */
-export const GeneratePreviewResponseDtoResult8Type$outboundSchema: z.ZodNativeEnum<
-  typeof GeneratePreviewResponseDtoResult8Type
-> = GeneratePreviewResponseDtoResult8Type$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDtoResult8Type$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResult8Type$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDtoResult8Type$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult8Type$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDtoResult8Type$outboundSchema;
-}
-
-/** @internal */
 export const Eight$inboundSchema: z.ZodType<Eight, z.ZodTypeDef, unknown> = z.object({
   type: GeneratePreviewResponseDtoResult8Type$inboundSchema.optional(),
   preview: DigestRegularOutput$inboundSchema.optional(),
 });
-
-/** @internal */
-export type Eight$Outbound = {
-  type?: string | undefined;
-  preview?: DigestRegularOutput$Outbound | undefined;
-};
-
-/** @internal */
-export const Eight$outboundSchema: z.ZodType<Eight$Outbound, z.ZodTypeDef, Eight> = z.object({
-  type: GeneratePreviewResponseDtoResult8Type$outboundSchema.optional(),
-  preview: DigestRegularOutput$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Eight$ {
-  /** @deprecated use `Eight$inboundSchema` instead. */
-  export const inboundSchema = Eight$inboundSchema;
-  /** @deprecated use `Eight$outboundSchema` instead. */
-  export const outboundSchema = Eight$outboundSchema;
-  /** @deprecated use `Eight$Outbound` instead. */
-  export type Outbound = Eight$Outbound;
-}
-
-export function eightToJSON(eight: Eight): string {
-  return JSON.stringify(Eight$outboundSchema.parse(eight));
-}
 
 export function eightFromJSON(jsonString: string): SafeParseResult<Eight, SDKValidationError> {
   return safeParse(jsonString, (x) => Eight$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Eight' from JSON`);
@@ -285,55 +160,10 @@ export const GeneratePreviewResponseDtoResult7Type$inboundSchema: z.ZodNativeEnu
 > = z.nativeEnum(GeneratePreviewResponseDtoResult7Type);
 
 /** @internal */
-export const GeneratePreviewResponseDtoResult7Type$outboundSchema: z.ZodNativeEnum<
-  typeof GeneratePreviewResponseDtoResult7Type
-> = GeneratePreviewResponseDtoResult7Type$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDtoResult7Type$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResult7Type$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDtoResult7Type$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult7Type$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDtoResult7Type$outboundSchema;
-}
-
-/** @internal */
 export const Seven$inboundSchema: z.ZodType<Seven, z.ZodTypeDef, unknown> = z.object({
   type: GeneratePreviewResponseDtoResult7Type$inboundSchema.optional(),
   preview: ChatRenderOutput$inboundSchema.optional(),
 });
-
-/** @internal */
-export type Seven$Outbound = {
-  type?: string | undefined;
-  preview?: ChatRenderOutput$Outbound | undefined;
-};
-
-/** @internal */
-export const Seven$outboundSchema: z.ZodType<Seven$Outbound, z.ZodTypeDef, Seven> = z.object({
-  type: GeneratePreviewResponseDtoResult7Type$outboundSchema.optional(),
-  preview: ChatRenderOutput$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Seven$ {
-  /** @deprecated use `Seven$inboundSchema` instead. */
-  export const inboundSchema = Seven$inboundSchema;
-  /** @deprecated use `Seven$outboundSchema` instead. */
-  export const outboundSchema = Seven$outboundSchema;
-  /** @deprecated use `Seven$Outbound` instead. */
-  export type Outbound = Seven$Outbound;
-}
-
-export function sevenToJSON(seven: Seven): string {
-  return JSON.stringify(Seven$outboundSchema.parse(seven));
-}
 
 export function sevenFromJSON(jsonString: string): SafeParseResult<Seven, SDKValidationError> {
   return safeParse(jsonString, (x) => Seven$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Seven' from JSON`);
@@ -345,55 +175,10 @@ export const GeneratePreviewResponseDtoResult6Type$inboundSchema: z.ZodNativeEnu
 > = z.nativeEnum(GeneratePreviewResponseDtoResult6Type);
 
 /** @internal */
-export const GeneratePreviewResponseDtoResult6Type$outboundSchema: z.ZodNativeEnum<
-  typeof GeneratePreviewResponseDtoResult6Type
-> = GeneratePreviewResponseDtoResult6Type$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDtoResult6Type$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResult6Type$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDtoResult6Type$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult6Type$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDtoResult6Type$outboundSchema;
-}
-
-/** @internal */
 export const Six$inboundSchema: z.ZodType<Six, z.ZodTypeDef, unknown> = z.object({
   type: GeneratePreviewResponseDtoResult6Type$inboundSchema.optional(),
   preview: PushRenderOutput$inboundSchema.optional(),
 });
-
-/** @internal */
-export type Six$Outbound = {
-  type?: string | undefined;
-  preview?: PushRenderOutput$Outbound | undefined;
-};
-
-/** @internal */
-export const Six$outboundSchema: z.ZodType<Six$Outbound, z.ZodTypeDef, Six> = z.object({
-  type: GeneratePreviewResponseDtoResult6Type$outboundSchema.optional(),
-  preview: PushRenderOutput$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Six$ {
-  /** @deprecated use `Six$inboundSchema` instead. */
-  export const inboundSchema = Six$inboundSchema;
-  /** @deprecated use `Six$outboundSchema` instead. */
-  export const outboundSchema = Six$outboundSchema;
-  /** @deprecated use `Six$Outbound` instead. */
-  export type Outbound = Six$Outbound;
-}
-
-export function sixToJSON(six: Six): string {
-  return JSON.stringify(Six$outboundSchema.parse(six));
-}
 
 export function sixFromJSON(jsonString: string): SafeParseResult<Six, SDKValidationError> {
   return safeParse(jsonString, (x) => Six$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Six' from JSON`);
@@ -405,55 +190,10 @@ export const GeneratePreviewResponseDtoResult5Type$inboundSchema: z.ZodNativeEnu
 > = z.nativeEnum(GeneratePreviewResponseDtoResult5Type);
 
 /** @internal */
-export const GeneratePreviewResponseDtoResult5Type$outboundSchema: z.ZodNativeEnum<
-  typeof GeneratePreviewResponseDtoResult5Type
-> = GeneratePreviewResponseDtoResult5Type$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDtoResult5Type$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResult5Type$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDtoResult5Type$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult5Type$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDtoResult5Type$outboundSchema;
-}
-
-/** @internal */
 export const Result5$inboundSchema: z.ZodType<Result5, z.ZodTypeDef, unknown> = z.object({
   type: GeneratePreviewResponseDtoResult5Type$inboundSchema.optional(),
   preview: SmsRenderOutput$inboundSchema.optional(),
 });
-
-/** @internal */
-export type Result5$Outbound = {
-  type?: string | undefined;
-  preview?: SmsRenderOutput$Outbound | undefined;
-};
-
-/** @internal */
-export const Result5$outboundSchema: z.ZodType<Result5$Outbound, z.ZodTypeDef, Result5> = z.object({
-  type: GeneratePreviewResponseDtoResult5Type$outboundSchema.optional(),
-  preview: SmsRenderOutput$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Result5$ {
-  /** @deprecated use `Result5$inboundSchema` instead. */
-  export const inboundSchema = Result5$inboundSchema;
-  /** @deprecated use `Result5$outboundSchema` instead. */
-  export const outboundSchema = Result5$outboundSchema;
-  /** @deprecated use `Result5$Outbound` instead. */
-  export type Outbound = Result5$Outbound;
-}
-
-export function result5ToJSON(result5: Result5): string {
-  return JSON.stringify(Result5$outboundSchema.parse(result5));
-}
 
 export function result5FromJSON(jsonString: string): SafeParseResult<Result5, SDKValidationError> {
   return safeParse(
@@ -469,55 +209,10 @@ export const GeneratePreviewResponseDtoResult4Type$inboundSchema: z.ZodNativeEnu
 > = z.nativeEnum(GeneratePreviewResponseDtoResult4Type);
 
 /** @internal */
-export const GeneratePreviewResponseDtoResult4Type$outboundSchema: z.ZodNativeEnum<
-  typeof GeneratePreviewResponseDtoResult4Type
-> = GeneratePreviewResponseDtoResult4Type$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDtoResult4Type$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResult4Type$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDtoResult4Type$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult4Type$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDtoResult4Type$outboundSchema;
-}
-
-/** @internal */
 export const Result4$inboundSchema: z.ZodType<Result4, z.ZodTypeDef, unknown> = z.object({
   type: GeneratePreviewResponseDtoResult4Type$inboundSchema.optional(),
   preview: InAppRenderOutput$inboundSchema.optional(),
 });
-
-/** @internal */
-export type Result4$Outbound = {
-  type?: string | undefined;
-  preview?: InAppRenderOutput$Outbound | undefined;
-};
-
-/** @internal */
-export const Result4$outboundSchema: z.ZodType<Result4$Outbound, z.ZodTypeDef, Result4> = z.object({
-  type: GeneratePreviewResponseDtoResult4Type$outboundSchema.optional(),
-  preview: InAppRenderOutput$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Result4$ {
-  /** @deprecated use `Result4$inboundSchema` instead. */
-  export const inboundSchema = Result4$inboundSchema;
-  /** @deprecated use `Result4$outboundSchema` instead. */
-  export const outboundSchema = Result4$outboundSchema;
-  /** @deprecated use `Result4$Outbound` instead. */
-  export type Outbound = Result4$Outbound;
-}
-
-export function result4ToJSON(result4: Result4): string {
-  return JSON.stringify(Result4$outboundSchema.parse(result4));
-}
 
 export function result4FromJSON(jsonString: string): SafeParseResult<Result4, SDKValidationError> {
   return safeParse(
@@ -533,55 +228,10 @@ export const GeneratePreviewResponseDtoResult3Type$inboundSchema: z.ZodNativeEnu
 > = z.nativeEnum(GeneratePreviewResponseDtoResult3Type);
 
 /** @internal */
-export const GeneratePreviewResponseDtoResult3Type$outboundSchema: z.ZodNativeEnum<
-  typeof GeneratePreviewResponseDtoResult3Type
-> = GeneratePreviewResponseDtoResult3Type$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDtoResult3Type$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResult3Type$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDtoResult3Type$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult3Type$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDtoResult3Type$outboundSchema;
-}
-
-/** @internal */
 export const Three$inboundSchema: z.ZodType<Three, z.ZodTypeDef, unknown> = z.object({
   type: GeneratePreviewResponseDtoResult3Type$inboundSchema.optional(),
   preview: EmailRenderOutput$inboundSchema.optional(),
 });
-
-/** @internal */
-export type Three$Outbound = {
-  type?: string | undefined;
-  preview?: EmailRenderOutput$Outbound | undefined;
-};
-
-/** @internal */
-export const Three$outboundSchema: z.ZodType<Three$Outbound, z.ZodTypeDef, Three> = z.object({
-  type: GeneratePreviewResponseDtoResult3Type$outboundSchema.optional(),
-  preview: EmailRenderOutput$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Three$ {
-  /** @deprecated use `Three$inboundSchema` instead. */
-  export const inboundSchema = Three$inboundSchema;
-  /** @deprecated use `Three$outboundSchema` instead. */
-  export const outboundSchema = Three$outboundSchema;
-  /** @deprecated use `Three$Outbound` instead. */
-  export type Outbound = Three$Outbound;
-}
-
-export function threeToJSON(three: Three): string {
-  return JSON.stringify(Three$outboundSchema.parse(three));
-}
 
 export function threeFromJSON(jsonString: string): SafeParseResult<Three, SDKValidationError> {
   return safeParse(jsonString, (x) => Three$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Three' from JSON`);
@@ -593,55 +243,10 @@ export const GeneratePreviewResponseDtoResultType$inboundSchema: z.ZodNativeEnum
 > = z.nativeEnum(GeneratePreviewResponseDtoResultType);
 
 /** @internal */
-export const GeneratePreviewResponseDtoResultType$outboundSchema: z.ZodNativeEnum<
-  typeof GeneratePreviewResponseDtoResultType
-> = GeneratePreviewResponseDtoResultType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDtoResultType$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResultType$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDtoResultType$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResultType$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDtoResultType$outboundSchema;
-}
-
-/** @internal */
 export const Result2$inboundSchema: z.ZodType<Result2, z.ZodTypeDef, unknown> = z.object({
   type: GeneratePreviewResponseDtoResultType$inboundSchema.optional(),
   preview: EmailRenderOutput$inboundSchema.optional(),
 });
-
-/** @internal */
-export type Result2$Outbound = {
-  type?: string | undefined;
-  preview?: EmailRenderOutput$Outbound | undefined;
-};
-
-/** @internal */
-export const Result2$outboundSchema: z.ZodType<Result2$Outbound, z.ZodTypeDef, Result2> = z.object({
-  type: GeneratePreviewResponseDtoResultType$outboundSchema.optional(),
-  preview: EmailRenderOutput$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Result2$ {
-  /** @deprecated use `Result2$inboundSchema` instead. */
-  export const inboundSchema = Result2$inboundSchema;
-  /** @deprecated use `Result2$outboundSchema` instead. */
-  export const outboundSchema = Result2$outboundSchema;
-  /** @deprecated use `Result2$Outbound` instead. */
-  export type Outbound = Result2$Outbound;
-}
-
-export function result2ToJSON(result2: Result2): string {
-  return JSON.stringify(Result2$outboundSchema.parse(result2));
-}
 
 export function result2FromJSON(jsonString: string): SafeParseResult<Result2, SDKValidationError> {
   return safeParse(
@@ -667,54 +272,6 @@ export const GeneratePreviewResponseDtoResult$inboundSchema: z.ZodType<
   z.lazy(() => Eight$inboundSchema),
   z.lazy(() => Nine$inboundSchema),
 ]);
-
-/** @internal */
-export type GeneratePreviewResponseDtoResult$Outbound =
-  | { [k: string]: any }
-  | Result2$Outbound
-  | Three$Outbound
-  | Result4$Outbound
-  | Result5$Outbound
-  | Six$Outbound
-  | Seven$Outbound
-  | Eight$Outbound
-  | Nine$Outbound;
-
-/** @internal */
-export const GeneratePreviewResponseDtoResult$outboundSchema: z.ZodType<
-  GeneratePreviewResponseDtoResult$Outbound,
-  z.ZodTypeDef,
-  GeneratePreviewResponseDtoResult
-> = z.union([
-  z.record(z.any()),
-  z.lazy(() => Result2$outboundSchema),
-  z.lazy(() => Three$outboundSchema),
-  z.lazy(() => Result4$outboundSchema),
-  z.lazy(() => Result5$outboundSchema),
-  z.lazy(() => Six$outboundSchema),
-  z.lazy(() => Seven$outboundSchema),
-  z.lazy(() => Eight$outboundSchema),
-  z.lazy(() => Nine$outboundSchema),
-]);
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDtoResult$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResult$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDtoResult$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDtoResult$outboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult$Outbound` instead. */
-  export type Outbound = GeneratePreviewResponseDtoResult$Outbound;
-}
-
-export function generatePreviewResponseDtoResultToJSON(
-  generatePreviewResponseDtoResult: GeneratePreviewResponseDtoResult
-): string {
-  return JSON.stringify(GeneratePreviewResponseDtoResult$outboundSchema.parse(generatePreviewResponseDtoResult));
-}
 
 export function generatePreviewResponseDtoResultFromJSON(
   jsonString: string
@@ -743,60 +300,6 @@ export const GeneratePreviewResponseDto$inboundSchema: z.ZodType<GeneratePreview
       z.lazy(() => Nine$inboundSchema),
     ]),
   });
-
-/** @internal */
-export type GeneratePreviewResponseDto$Outbound = {
-  previewPayloadExample: PreviewPayloadDto$Outbound;
-  schema?: { [k: string]: any } | null | undefined;
-  result:
-    | { [k: string]: any }
-    | Result2$Outbound
-    | Three$Outbound
-    | Result4$Outbound
-    | Result5$Outbound
-    | Six$Outbound
-    | Seven$Outbound
-    | Eight$Outbound
-    | Nine$Outbound;
-};
-
-/** @internal */
-export const GeneratePreviewResponseDto$outboundSchema: z.ZodType<
-  GeneratePreviewResponseDto$Outbound,
-  z.ZodTypeDef,
-  GeneratePreviewResponseDto
-> = z.object({
-  previewPayloadExample: PreviewPayloadDto$outboundSchema,
-  schema: z.nullable(z.record(z.any())).optional(),
-  result: z.union([
-    z.record(z.any()),
-    z.lazy(() => Result2$outboundSchema),
-    z.lazy(() => Three$outboundSchema),
-    z.lazy(() => Result4$outboundSchema),
-    z.lazy(() => Result5$outboundSchema),
-    z.lazy(() => Six$outboundSchema),
-    z.lazy(() => Seven$outboundSchema),
-    z.lazy(() => Eight$outboundSchema),
-    z.lazy(() => Nine$outboundSchema),
-  ]),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GeneratePreviewResponseDto$ {
-  /** @deprecated use `GeneratePreviewResponseDto$inboundSchema` instead. */
-  export const inboundSchema = GeneratePreviewResponseDto$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDto$outboundSchema` instead. */
-  export const outboundSchema = GeneratePreviewResponseDto$outboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDto$Outbound` instead. */
-  export type Outbound = GeneratePreviewResponseDto$Outbound;
-}
-
-export function generatePreviewResponseDtoToJSON(generatePreviewResponseDto: GeneratePreviewResponseDto): string {
-  return JSON.stringify(GeneratePreviewResponseDto$outboundSchema.parse(generatePreviewResponseDto));
-}
 
 export function generatePreviewResponseDtoFromJSON(
   jsonString: string

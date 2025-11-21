@@ -35,21 +35,9 @@ export type StepFilterDto = {
 /** @internal */
 export const StepFilterDtoValue$inboundSchema: z.ZodNativeEnum<typeof StepFilterDtoValue> =
   z.nativeEnum(StepFilterDtoValue);
-
 /** @internal */
 export const StepFilterDtoValue$outboundSchema: z.ZodNativeEnum<typeof StepFilterDtoValue> =
   StepFilterDtoValue$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepFilterDtoValue$ {
-  /** @deprecated use `StepFilterDtoValue$inboundSchema` instead. */
-  export const inboundSchema = StepFilterDtoValue$inboundSchema;
-  /** @deprecated use `StepFilterDtoValue$outboundSchema` instead. */
-  export const outboundSchema = StepFilterDtoValue$outboundSchema;
-}
 
 /** @internal */
 export const StepFilterDto$inboundSchema: z.ZodType<StepFilterDto, z.ZodTypeDef, unknown> = z.object({
@@ -58,7 +46,6 @@ export const StepFilterDto$inboundSchema: z.ZodType<StepFilterDto, z.ZodTypeDef,
   value: StepFilterDtoValue$inboundSchema,
   children: z.array(FieldFilterPartDto$inboundSchema),
 });
-
 /** @internal */
 export type StepFilterDto$Outbound = {
   isNegated: boolean;
@@ -75,23 +62,9 @@ export const StepFilterDto$outboundSchema: z.ZodType<StepFilterDto$Outbound, z.Z
   children: z.array(FieldFilterPartDto$outboundSchema),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepFilterDto$ {
-  /** @deprecated use `StepFilterDto$inboundSchema` instead. */
-  export const inboundSchema = StepFilterDto$inboundSchema;
-  /** @deprecated use `StepFilterDto$outboundSchema` instead. */
-  export const outboundSchema = StepFilterDto$outboundSchema;
-  /** @deprecated use `StepFilterDto$Outbound` instead. */
-  export type Outbound = StepFilterDto$Outbound;
-}
-
 export function stepFilterDtoToJSON(stepFilterDto: StepFilterDto): string {
   return JSON.stringify(StepFilterDto$outboundSchema.parse(stepFilterDto));
 }
-
 export function stepFilterDtoFromJSON(jsonString: string): SafeParseResult<StepFilterDto, SDKValidationError> {
   return safeParse(
     jsonString,

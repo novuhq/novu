@@ -74,22 +74,20 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
 
     // Create translations
     for (const translation of translations) {
-      await session.testAgent.post('/v2/translations').send(translation).expect(200);
+      await novuClient.translations.create(translation);
     }
 
     // Get the translation group
-    const { body } = await session.testAgent
-      .get(`/v2/translations/group/${LocalizationResourceEnum.WORKFLOW}/${workflowId}`)
-      .expect(200);
+    const response = await novuClient.translations.groups.retrieve(LocalizationResourceEnum.WORKFLOW, workflowId);
 
-    expect(body.data.resourceId).to.equal(workflowId);
-    expect(body.data.resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);
-    expect(body.data.resourceName).to.equal('Test Workflow for Translation Group');
-    expect(body.data.locales).to.be.an('array');
-    expect(body.data.locales).to.have.lengthOf(3);
-    expect(body.data.locales).to.include.members(['en_US', 'es_ES', 'fr_FR']);
-    expect(body.data.createdAt).to.be.a('string');
-    expect(body.data.updatedAt).to.be.a('string');
+    expect(response.resourceId).to.equal(workflowId);
+    expect(response.resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);
+    expect(response.resourceName).to.equal('Test Workflow for Translation Group');
+    expect(response.locales).to.be.an('array');
+    expect(response.locales).to.have.lengthOf(3);
+    expect(response.locales).to.include.members(['en_US', 'es_ES', 'fr_FR']);
+    expect(response.createdAt).to.be.a('string');
+    expect(response.updatedAt).to.be.a('string');
   });
 
   it('should include outdatedLocales when present', async () => {
@@ -98,7 +96,7 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
       .patch('/v1/organizations/settings')
       .send({
         defaultLocale: 'en_US',
-        targetLocales: ['es_ES', 'fr_FR', 'de_DE'], // Configure target locales
+        targetLocales: ['es_ES', 'fr_FR', 'de_DE'],
       })
       .expect(200);
 
@@ -128,36 +126,31 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
      * fr_FR and de_DE are configured as targets but missing = outdated
      */
     for (const translation of translations) {
-      await session.testAgent.post('/v2/translations').send(translation).expect(200);
+      await novuClient.translations.create(translation);
     }
 
     // Update the default locale (en_US) to add new keys, making es_ES out of sync
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: {
-          'welcome.title': 'Welcome Updated',
-          'welcome.message': 'Hello there, updated!',
-          'new.key': 'New content', // This key is missing in es_ES
-        },
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: {
+        'welcome.title': 'Welcome Updated',
+        'welcome.message': 'Hello there, updated!',
+        'new.key': 'New content',
+      },
+    });
 
     // Get the translation group
-    const { body } = await session.testAgent
-      .get(`/v2/translations/group/${LocalizationResourceEnum.WORKFLOW}/${workflowId}`)
-      .expect(200);
+    const response = await novuClient.translations.groups.retrieve(LocalizationResourceEnum.WORKFLOW, workflowId);
 
-    expect(body.data.resourceId).to.equal(workflowId);
-    expect(body.data.locales).to.include.members(['en_US', 'es_ES']);
+    expect(response.resourceId).to.equal(workflowId);
+    expect(response.locales).to.include.members(['en_US', 'es_ES']);
 
     // Should include outdatedLocales: es_ES (out of sync), fr_FR (missing), de_DE (missing)
-    expect(body.data.outdatedLocales).to.be.an('array');
-    expect(body.data.outdatedLocales).to.have.lengthOf(3);
-    expect(body.data.outdatedLocales).to.include.members(['es_ES', 'fr_FR', 'de_DE']);
+    expect(response.outdatedLocales).to.be.an('array');
+    expect(response.outdatedLocales).to.have.lengthOf(3);
+    expect(response.outdatedLocales).to.include.members(['es_ES', 'fr_FR', 'de_DE']);
   });
 
   it('should not include outdatedLocales when no target locales are configured', async () => {
@@ -166,55 +159,49 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
       .patch('/v1/organizations/settings')
       .send({
         defaultLocale: 'en_US',
-        // No targetLocales specified
       })
       .expect(200);
 
     // Create some translations
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: {
-          'welcome.title': 'Welcome',
-          'welcome.message': 'Hello there!',
-        },
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: {
+        'welcome.title': 'Welcome',
+        'welcome.message': 'Hello there!',
+      },
+    });
 
     // Even if we have other locales not in target list
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'es_ES',
-        content: {
-          'welcome.title': 'Bienvenido',
-        },
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'es_ES',
+      content: {
+        'welcome.title': 'Bienvenido',
+      },
+    });
 
     // Get the translation group
-    const { body } = await session.testAgent
-      .get(`/v2/translations/group/${LocalizationResourceEnum.WORKFLOW}/${workflowId}`)
-      .expect(200);
+    const response = await novuClient.translations.groups.retrieve(LocalizationResourceEnum.WORKFLOW, workflowId);
 
-    expect(body.data.resourceId).to.equal(workflowId);
-    expect(body.data.locales).to.include.members(['en_US', 'es_ES']);
+    expect(response.resourceId).to.equal(workflowId);
+    expect(response.locales).to.include.members(['en_US', 'es_ES']);
 
     // Should not include outdatedLocales since no target locales are configured
-    expect(body.data).to.not.have.property('outdatedLocales');
+    expect(response).to.not.have.property('outdatedLocales');
   });
 
   it('should return 404 for non-existent translation group', async () => {
     const fakeWorkflowId = '507f1f77bcf86cd799439011';
 
-    await session.testAgent
-      .get(`/v2/translations/group/${LocalizationResourceEnum.WORKFLOW}/${fakeWorkflowId}`)
-      .expect(404);
+    try {
+      await novuClient.translations.groups.retrieve(LocalizationResourceEnum.WORKFLOW, fakeWorkflowId);
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 
   it('should return 404 for workflow without translations', async () => {
@@ -224,7 +211,7 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
       workflowId: `workflow-no-translations-${Date.now()}`,
       source: WorkflowCreationSourceEnum.EDITOR,
       active: true,
-      isTranslationEnabled: false, // This prevents automatic translation group creation
+      isTranslationEnabled: false,
       steps: [
         {
           name: 'No Translation Step',
@@ -236,40 +223,41 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
       ],
     });
 
-    await session.testAgent
-      .get(`/v2/translations/group/${LocalizationResourceEnum.WORKFLOW}/${workflowWithoutTranslations.workflowId}`)
-      .expect(404);
+    try {
+      await novuClient.translations.groups.retrieve(
+        LocalizationResourceEnum.WORKFLOW,
+        workflowWithoutTranslations.workflowId
+      );
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 
   it('should return consistent structure with list endpoint', async () => {
     // Create translation
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: { 'test.key': 'Test value' },
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: { 'test.key': 'Test value' },
+    });
 
     // Get single group
-    const { body: singleGroup } = await session.testAgent
-      .get(`/v2/translations/group/${LocalizationResourceEnum.WORKFLOW}/${workflowId}`)
-      .expect(200);
+    const singleGroup = await novuClient.translations.groups.retrieve(LocalizationResourceEnum.WORKFLOW, workflowId);
 
-    // Get list and find the same group
+    // Get list and find the same group (using testAgent as list endpoint is @ApiExcludeEndpoint)
     const { body: listResponse } = await session.testAgent.get('/v2/translations/list').expect(200);
 
     const groupFromList = listResponse.data.find((group: any) => group.resourceId === workflowId);
 
     // Both should have the same structure
-    expect(singleGroup.data).to.have.property('resourceId');
-    expect(singleGroup.data).to.have.property('resourceType');
-    expect(singleGroup.data).to.have.property('resourceName');
-    expect(singleGroup.data).to.have.property('locales');
-    expect(singleGroup.data).to.have.property('createdAt');
-    expect(singleGroup.data).to.have.property('updatedAt');
+    expect(singleGroup).to.have.property('resourceId');
+    expect(singleGroup).to.have.property('resourceType');
+    expect(singleGroup).to.have.property('resourceName');
+    expect(singleGroup).to.have.property('locales');
+    expect(singleGroup).to.have.property('createdAt');
+    expect(singleGroup).to.have.property('updatedAt');
 
     expect(groupFromList).to.have.property('resourceId');
     expect(groupFromList).to.have.property('resourceType');
@@ -279,9 +267,9 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
     expect(groupFromList).to.have.property('updatedAt');
 
     // Values should match
-    expect(singleGroup.data.resourceId).to.equal(groupFromList.resourceId);
-    expect(singleGroup.data.resourceType).to.equal(groupFromList.resourceType);
-    expect(singleGroup.data.resourceName).to.equal(groupFromList.resourceName);
-    expect(singleGroup.data.locales).to.deep.equal(groupFromList.locales);
+    expect(singleGroup.resourceId).to.equal(groupFromList.resourceId);
+    expect(singleGroup.resourceType).to.equal(groupFromList.resourceType);
+    expect(singleGroup.resourceName).to.equal(groupFromList.resourceName);
+    expect(singleGroup.locales).to.deep.equal(groupFromList.locales);
   });
 });

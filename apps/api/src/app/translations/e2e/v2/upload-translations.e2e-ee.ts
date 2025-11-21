@@ -57,24 +57,30 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
       'button.submit': 'Submit',
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/upload')
-      .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-      .attach('files', Buffer.from(JSON.stringify(translationContent)), 'en_US.json')
-      .expect(200);
+    const response = await novuClient.translations.upload({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      files: [
+        {
+          fileName: 'en_US.json',
+          content: Buffer.from(JSON.stringify(translationContent)),
+        },
+      ],
+    });
 
-    expect(body.data.totalFiles).to.equal(1);
-    expect(body.data.successfulUploads).to.equal(1);
-    expect(body.data.failedUploads).to.equal(0);
-    expect(body.data.errors).to.be.an('array').that.is.empty;
+    expect(response.totalFiles).to.equal(1);
+    expect(response.successfulUploads).to.equal(1);
+    expect(response.failedUploads).to.equal(0);
+    expect(response.errors).to.be.an('array').that.is.empty;
 
     // Verify the translation was created
-    const { body: translation } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(200);
+    const translation = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'en_US',
+    });
 
-    expect(translation.data.content).to.deep.equal(translationContent);
+    expect(translation.content).to.deep.equal(translationContent);
   });
 
   it('should upload multiple translation files', async () => {
@@ -88,34 +94,42 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
       'welcome.message': '¡Hola!',
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/upload')
-      .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-      .attach('files', Buffer.from(JSON.stringify(enContent)), 'en_US.json')
-      .attach('files', Buffer.from(JSON.stringify(esContent)), 'es_ES.json')
-      .expect(200);
+    const response = await novuClient.translations.upload({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      files: [
+        {
+          fileName: 'en_US.json',
+          content: Buffer.from(JSON.stringify(enContent)),
+        },
+        {
+          fileName: 'es_ES.json',
+          content: Buffer.from(JSON.stringify(esContent)),
+        },
+      ],
+    });
 
-    expect(body.data.totalFiles).to.equal(2);
-    expect(body.data.successfulUploads).to.equal(2);
-    expect(body.data.failedUploads).to.equal(0);
-    expect(body.data.errors).to.be.an('array').that.is.empty;
+    expect(response.totalFiles).to.equal(2);
+    expect(response.successfulUploads).to.equal(2);
+    expect(response.failedUploads).to.equal(0);
+    expect(response.errors).to.be.an('array').that.is.empty;
 
     // Verify both translations were created
-    const { body: translationGroup } = await session.testAgent
-      .get(`/v2/translations/group/${LocalizationResourceEnum.WORKFLOW}/${workflowId}`)
-      .expect(200);
+    const translationGroup = await novuClient.translations.groups.retrieve(
+      LocalizationResourceEnum.WORKFLOW,
+      workflowId
+    );
 
     /*
      * The locales should include configured locales plus any uploaded locales
      * Configured: en_US (default), es_ES, fr_FR, de_DE, it_IT (targets)
      */
-    expect(translationGroup.data.locales).to.have.lengthOf(5);
-    expect(translationGroup.data.locales).to.include('en_US');
-    expect(translationGroup.data.locales).to.include('es_ES');
-    expect(translationGroup.data.locales).to.include('fr_FR');
-    expect(translationGroup.data.locales).to.include('de_DE');
-    expect(translationGroup.data.locales).to.include('it_IT');
+    expect(translationGroup.locales).to.have.lengthOf(5);
+    expect(translationGroup.locales).to.include('en_US');
+    expect(translationGroup.locales).to.include('es_ES');
+    expect(translationGroup.locales).to.include('fr_FR');
+    expect(translationGroup.locales).to.include('de_DE');
+    expect(translationGroup.locales).to.include('it_IT');
   });
 
   it('should update existing translation when uploading same locale', async () => {
@@ -123,29 +137,39 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const updatedContent = { key1: 'updated value', key2: 'new value' };
 
     // Upload initial translation
-    await session.testAgent
-      .post('/v2/translations/upload')
-      .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-      .attach('files', Buffer.from(JSON.stringify(originalContent)), 'en_US.json')
-      .expect(200);
+    await novuClient.translations.upload({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      files: [
+        {
+          fileName: 'en_US.json',
+          content: Buffer.from(JSON.stringify(originalContent)),
+        },
+      ],
+    });
 
     // Upload updated translation
-    const { body } = await session.testAgent
-      .post('/v2/translations/upload')
-      .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-      .attach('files', Buffer.from(JSON.stringify(updatedContent)), 'en_US.json')
-      .expect(200);
+    const response = await novuClient.translations.upload({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      files: [
+        {
+          fileName: 'en_US.json',
+          content: Buffer.from(JSON.stringify(updatedContent)),
+        },
+      ],
+    });
 
-    expect(body.data.successfulUploads).to.equal(1);
+    expect(response.successfulUploads).to.equal(1);
 
     // Verify the content was updated
-    const { body: translation } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(200);
+    const translation = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'en_US',
+    });
 
-    expect(translation.data.content).to.deep.equal(updatedContent);
+    expect(translation.content).to.deep.equal(updatedContent);
   });
 
   it('should handle different filename patterns', async () => {
@@ -159,85 +183,133 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     ];
 
     for (const testCase of testCases) {
-      const { body } = await session.testAgent
-        .post('/v2/translations/upload')
-        .field('resourceId', workflowId)
-        .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-        .attach('files', Buffer.from(JSON.stringify(content)), testCase.filename)
-        .expect(200);
+      const response = await novuClient.translations.upload({
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        files: [
+          {
+            fileName: testCase.filename,
+            content: Buffer.from(JSON.stringify(content)),
+          },
+        ],
+      });
 
-      expect(body.data.successfulUploads).to.equal(1);
+      expect(response.successfulUploads).to.equal(1);
 
       // Verify the locale was extracted correctly
-      const { body: translation } = await session.testAgent
-        .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/${testCase.expectedLocale}`)
-        .expect(200);
+      const translation = await novuClient.translations.retrieve({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: workflowId,
+        locale: testCase.expectedLocale,
+      });
 
-      expect(translation.data.locale).to.equal(testCase.expectedLocale);
+      expect(translation.locale).to.equal(testCase.expectedLocale);
     }
   });
 
   it('should reject invalid JSON files', async () => {
-    const { body } = await session.testAgent
-      .post('/v2/translations/upload')
-      .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-      .attach('files', Buffer.from('invalid json content'), 'en_US.json')
-      .expect(400);
-
-    expect(body.message).to.include('No valid translation files were found');
+    try {
+      await novuClient.translations.upload({
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        files: [
+          {
+            fileName: 'en_US.json',
+            content: Buffer.from('invalid json content'),
+          },
+        ],
+      });
+      expect.fail('Should have thrown an error');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(400);
+      expect(error.message).to.include('No valid translation files were found');
+    }
   });
 
   it('should reject files with invalid locale patterns', async () => {
     const content = { key: 'value' };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/upload')
-      .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-      .attach('files', Buffer.from(JSON.stringify(content)), 'invalid-filename.json')
-      .expect(400);
-
-    expect(body.message).to.include('invalid names or formats');
-    expect(body.errors).to.be.an('array').that.is.not.empty;
-    expect(body.errors[0]).to.include('invalid-filename.json');
+    try {
+      await novuClient.translations.upload({
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        files: [
+          {
+            fileName: 'invalid-filename.json',
+            content: Buffer.from(JSON.stringify(content)),
+          },
+        ],
+      });
+      expect.fail('Should have thrown an error');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(400);
+      expect(error.message).to.include('invalid names or formats');
+      const errorBody = typeof error.body === 'string' ? JSON.parse(error.body) : error.body;
+      expect(errorBody.errors).to.be.an('array').that.is.not.empty;
+      expect(errorBody.errors[0]).to.include('invalid-filename.json');
+    }
   });
 
   it('should reject uploads with invalid filename patterns', async () => {
     const validContent = { key: 'value' };
 
     // This test should fail at validation level because invalid-name.json has invalid locale pattern
-    const { body } = await session.testAgent
-      .post('/v2/translations/upload')
-      .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-      .attach('files', Buffer.from(JSON.stringify(validContent)), 'en_US.json')
-      .attach('files', Buffer.from('invalid json'), 'es_ES.json')
-      .attach('files', Buffer.from(JSON.stringify(validContent)), 'invalid-name.json')
-      .expect(400);
-
-    expect(body.message).to.include('invalid names or formats');
-    expect(body.errors).to.be.an('array').that.is.not.empty;
-    expect(body.errors[0]).to.include('invalid-name.json');
+    try {
+      await novuClient.translations.upload({
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        files: [
+          {
+            fileName: 'en_US.json',
+            content: Buffer.from(JSON.stringify(validContent)),
+          },
+          {
+            fileName: 'es_ES.json',
+            content: Buffer.from('invalid json'),
+          },
+          {
+            fileName: 'invalid-name.json',
+            content: Buffer.from(JSON.stringify(validContent)),
+          },
+        ],
+      });
+      expect.fail('Should have thrown an error');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(400);
+      expect(error.message).to.include('invalid names or formats');
+      const errorBody = typeof error.body === 'string' ? JSON.parse(error.body) : error.body;
+      expect(errorBody.errors).to.be.an('array').that.is.not.empty;
+      expect(errorBody.errors[0]).to.include('invalid-name.json');
+    }
   });
 
   it('should handle mixed success and failure uploads with valid filenames', async () => {
     const validContent = { key: 'value' };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/upload')
-      .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-      .attach('files', Buffer.from(JSON.stringify(validContent)), 'en_US.json')
-      .attach('files', Buffer.from('invalid json'), 'es_ES.json')
-      .attach('files', Buffer.from(JSON.stringify(validContent)), 'fr_FR.json')
-      .expect(200);
+    const response = await novuClient.translations.upload({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      files: [
+        {
+          fileName: 'en_US.json',
+          content: Buffer.from(JSON.stringify(validContent)),
+        },
+        {
+          fileName: 'es_ES.json',
+          content: Buffer.from('invalid json'),
+        },
+        {
+          fileName: 'fr_FR.json',
+          content: Buffer.from(JSON.stringify(validContent)),
+        },
+      ],
+    });
 
-    expect(body.data.totalFiles).to.equal(3);
-    expect(body.data.successfulUploads).to.equal(2);
-    expect(body.data.failedUploads).to.equal(1);
-    expect(body.data.errors).to.have.lengthOf(1);
-    expect(body.data.errors[0]).to.include("Failed to process file 'es_ES.json'");
+    expect(response.totalFiles).to.equal(3);
+    expect(response.successfulUploads).to.equal(2);
+    expect(response.failedUploads).to.equal(1);
+    expect(response.errors).to.have.lengthOf(1);
+    expect(response.errors[0]).to.include("Failed to process file 'es_ES.json'");
   });
 
   it('should reject uploads for locales not configured in organization settings', async () => {
@@ -247,15 +319,23 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
      * Try to upload a locale that is not in the configured locales
      * Configured locales are: en_US (default), es_ES, fr_FR, de_DE, it_IT
      */
-    const { body } = await session.testAgent
-      .post('/v2/translations/upload')
-      .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
-      .attach('files', Buffer.from(JSON.stringify(validContent)), 'ja_JP.json') // Japanese not configured
-      .expect(400);
-
-    expect(body.message).to.include('The following locales are not configured for your organization: ja_JP');
-    expect(body.message).to.include('Please add these locales in your translation settings');
-    expect(body.message).to.include('configured locales: en_US, es_ES, fr_FR, de_DE, it_IT');
+    try {
+      await novuClient.translations.upload({
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        files: [
+          {
+            fileName: 'ja_JP.json', // Japanese not configured
+            content: Buffer.from(JSON.stringify(validContent)),
+          },
+        ],
+      });
+      expect.fail('Should have thrown an error');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(400);
+      expect(error.message).to.include('The following locales are not configured for your organization: ja_JP');
+      expect(error.message).to.include('Please add these locales in your translation settings');
+      expect(error.message).to.include('configured locales: en_US, es_ES, fr_FR, de_DE, it_IT');
+    }
   });
 });

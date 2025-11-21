@@ -6,17 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  EmailBlockStyles,
-  EmailBlockStyles$inboundSchema,
-  EmailBlockStyles$Outbound,
-  EmailBlockStyles$outboundSchema,
-} from './emailblockstyles.js';
-import {
-  EmailBlockTypeEnum,
-  EmailBlockTypeEnum$inboundSchema,
-  EmailBlockTypeEnum$outboundSchema,
-} from './emailblocktypeenum.js';
+import { EmailBlockStyles, EmailBlockStyles$inboundSchema } from './emailblockstyles.js';
+import { EmailBlockTypeEnum, EmailBlockTypeEnum$inboundSchema } from './emailblocktypeenum.js';
 
 export type EmailBlock = {
   /**
@@ -44,39 +35,6 @@ export const EmailBlock$inboundSchema: z.ZodType<EmailBlock, z.ZodTypeDef, unkno
   url: z.string().optional(),
   styles: EmailBlockStyles$inboundSchema.optional(),
 });
-
-/** @internal */
-export type EmailBlock$Outbound = {
-  type: string;
-  content: string;
-  url?: string | undefined;
-  styles?: EmailBlockStyles$Outbound | undefined;
-};
-
-/** @internal */
-export const EmailBlock$outboundSchema: z.ZodType<EmailBlock$Outbound, z.ZodTypeDef, EmailBlock> = z.object({
-  type: EmailBlockTypeEnum$outboundSchema,
-  content: z.string(),
-  url: z.string().optional(),
-  styles: EmailBlockStyles$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailBlock$ {
-  /** @deprecated use `EmailBlock$inboundSchema` instead. */
-  export const inboundSchema = EmailBlock$inboundSchema;
-  /** @deprecated use `EmailBlock$outboundSchema` instead. */
-  export const outboundSchema = EmailBlock$outboundSchema;
-  /** @deprecated use `EmailBlock$Outbound` instead. */
-  export type Outbound = EmailBlock$Outbound;
-}
-
-export function emailBlockToJSON(emailBlock: EmailBlock): string {
-  return JSON.stringify(EmailBlock$outboundSchema.parse(emailBlock));
-}
 
 export function emailBlockFromJSON(jsonString: string): SafeParseResult<EmailBlock, SDKValidationError> {
   return safeParse(

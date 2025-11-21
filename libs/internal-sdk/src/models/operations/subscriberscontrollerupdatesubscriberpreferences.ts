@@ -24,24 +24,6 @@ export type SubscribersControllerUpdateSubscriberPreferencesResponse = {
 };
 
 /** @internal */
-export const SubscribersControllerUpdateSubscriberPreferencesRequest$inboundSchema: z.ZodType<
-  SubscribersControllerUpdateSubscriberPreferencesRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    subscriberId: z.string(),
-    'idempotency-key': z.string().optional(),
-    PatchSubscriberPreferencesDto: components.PatchSubscriberPreferencesDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      PatchSubscriberPreferencesDto: 'patchSubscriberPreferencesDto',
-    });
-  });
-
-/** @internal */
 export type SubscribersControllerUpdateSubscriberPreferencesRequest$Outbound = {
   subscriberId: string;
   'idempotency-key'?: string | undefined;
@@ -66,19 +48,6 @@ export const SubscribersControllerUpdateSubscriberPreferencesRequest$outboundSch
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersControllerUpdateSubscriberPreferencesRequest$ {
-  /** @deprecated use `SubscribersControllerUpdateSubscriberPreferencesRequest$inboundSchema` instead. */
-  export const inboundSchema = SubscribersControllerUpdateSubscriberPreferencesRequest$inboundSchema;
-  /** @deprecated use `SubscribersControllerUpdateSubscriberPreferencesRequest$outboundSchema` instead. */
-  export const outboundSchema = SubscribersControllerUpdateSubscriberPreferencesRequest$outboundSchema;
-  /** @deprecated use `SubscribersControllerUpdateSubscriberPreferencesRequest$Outbound` instead. */
-  export type Outbound = SubscribersControllerUpdateSubscriberPreferencesRequest$Outbound;
-}
-
 export function subscribersControllerUpdateSubscriberPreferencesRequestToJSON(
   subscribersControllerUpdateSubscriberPreferencesRequest: SubscribersControllerUpdateSubscriberPreferencesRequest
 ): string {
@@ -86,16 +55,6 @@ export function subscribersControllerUpdateSubscriberPreferencesRequestToJSON(
     SubscribersControllerUpdateSubscriberPreferencesRequest$outboundSchema.parse(
       subscribersControllerUpdateSubscriberPreferencesRequest
     )
-  );
-}
-
-export function subscribersControllerUpdateSubscriberPreferencesRequestFromJSON(
-  jsonString: string
-): SafeParseResult<SubscribersControllerUpdateSubscriberPreferencesRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscribersControllerUpdateSubscriberPreferencesRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscribersControllerUpdateSubscriberPreferencesRequest' from JSON`
   );
 }
 
@@ -115,52 +74,6 @@ export const SubscribersControllerUpdateSubscriberPreferencesResponse$inboundSch
       Result: 'result',
     });
   });
-
-/** @internal */
-export type SubscribersControllerUpdateSubscriberPreferencesResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.GetSubscriberPreferencesDto$Outbound;
-};
-
-/** @internal */
-export const SubscribersControllerUpdateSubscriberPreferencesResponse$outboundSchema: z.ZodType<
-  SubscribersControllerUpdateSubscriberPreferencesResponse$Outbound,
-  z.ZodTypeDef,
-  SubscribersControllerUpdateSubscriberPreferencesResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.GetSubscriberPreferencesDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersControllerUpdateSubscriberPreferencesResponse$ {
-  /** @deprecated use `SubscribersControllerUpdateSubscriberPreferencesResponse$inboundSchema` instead. */
-  export const inboundSchema = SubscribersControllerUpdateSubscriberPreferencesResponse$inboundSchema;
-  /** @deprecated use `SubscribersControllerUpdateSubscriberPreferencesResponse$outboundSchema` instead. */
-  export const outboundSchema = SubscribersControllerUpdateSubscriberPreferencesResponse$outboundSchema;
-  /** @deprecated use `SubscribersControllerUpdateSubscriberPreferencesResponse$Outbound` instead. */
-  export type Outbound = SubscribersControllerUpdateSubscriberPreferencesResponse$Outbound;
-}
-
-export function subscribersControllerUpdateSubscriberPreferencesResponseToJSON(
-  subscribersControllerUpdateSubscriberPreferencesResponse: SubscribersControllerUpdateSubscriberPreferencesResponse
-): string {
-  return JSON.stringify(
-    SubscribersControllerUpdateSubscriberPreferencesResponse$outboundSchema.parse(
-      subscribersControllerUpdateSubscriberPreferencesResponse
-    )
-  );
-}
 
 export function subscribersControllerUpdateSubscriberPreferencesResponseFromJSON(
   jsonString: string

@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  DelayControlDto,
-  DelayControlDto$inboundSchema,
-  DelayControlDto$Outbound,
-  DelayControlDto$outboundSchema,
-} from './delaycontroldto.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { DelayControlDto, DelayControlDto$inboundSchema } from './delaycontroldto.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type DelayControlsMetadataResponseDto = {
   /**
@@ -39,43 +34,6 @@ export const DelayControlsMetadataResponseDto$inboundSchema: z.ZodType<
   uiSchema: UiSchema$inboundSchema.optional(),
   values: DelayControlDto$inboundSchema,
 });
-
-/** @internal */
-export type DelayControlsMetadataResponseDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-  values: DelayControlDto$Outbound;
-};
-
-/** @internal */
-export const DelayControlsMetadataResponseDto$outboundSchema: z.ZodType<
-  DelayControlsMetadataResponseDto$Outbound,
-  z.ZodTypeDef,
-  DelayControlsMetadataResponseDto
-> = z.object({
-  dataSchema: z.record(z.any()).optional(),
-  uiSchema: UiSchema$outboundSchema.optional(),
-  values: DelayControlDto$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayControlsMetadataResponseDto$ {
-  /** @deprecated use `DelayControlsMetadataResponseDto$inboundSchema` instead. */
-  export const inboundSchema = DelayControlsMetadataResponseDto$inboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDto$outboundSchema` instead. */
-  export const outboundSchema = DelayControlsMetadataResponseDto$outboundSchema;
-  /** @deprecated use `DelayControlsMetadataResponseDto$Outbound` instead. */
-  export type Outbound = DelayControlsMetadataResponseDto$Outbound;
-}
-
-export function delayControlsMetadataResponseDtoToJSON(
-  delayControlsMetadataResponseDto: DelayControlsMetadataResponseDto
-): string {
-  return JSON.stringify(DelayControlsMetadataResponseDto$outboundSchema.parse(delayControlsMetadataResponseDto));
-}
 
 export function delayControlsMetadataResponseDtoFromJSON(
   jsonString: string

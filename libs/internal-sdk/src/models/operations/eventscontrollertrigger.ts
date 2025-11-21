@@ -23,23 +23,6 @@ export type EventsControllerTriggerResponse = {
 };
 
 /** @internal */
-export const EventsControllerTriggerRequest$inboundSchema: z.ZodType<
-  EventsControllerTriggerRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    'idempotency-key': z.string().optional(),
-    TriggerEventRequestDto: components.TriggerEventRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      TriggerEventRequestDto: 'triggerEventRequestDto',
-    });
-  });
-
-/** @internal */
 export type EventsControllerTriggerRequest$Outbound = {
   'idempotency-key'?: string | undefined;
   TriggerEventRequestDto: components.TriggerEventRequestDto$Outbound;
@@ -62,33 +45,10 @@ export const EventsControllerTriggerRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EventsControllerTriggerRequest$ {
-  /** @deprecated use `EventsControllerTriggerRequest$inboundSchema` instead. */
-  export const inboundSchema = EventsControllerTriggerRequest$inboundSchema;
-  /** @deprecated use `EventsControllerTriggerRequest$outboundSchema` instead. */
-  export const outboundSchema = EventsControllerTriggerRequest$outboundSchema;
-  /** @deprecated use `EventsControllerTriggerRequest$Outbound` instead. */
-  export type Outbound = EventsControllerTriggerRequest$Outbound;
-}
-
 export function eventsControllerTriggerRequestToJSON(
   eventsControllerTriggerRequest: EventsControllerTriggerRequest
 ): string {
   return JSON.stringify(EventsControllerTriggerRequest$outboundSchema.parse(eventsControllerTriggerRequest));
-}
-
-export function eventsControllerTriggerRequestFromJSON(
-  jsonString: string
-): SafeParseResult<EventsControllerTriggerRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EventsControllerTriggerRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EventsControllerTriggerRequest' from JSON`
-  );
 }
 
 /** @internal */
@@ -107,48 +67,6 @@ export const EventsControllerTriggerResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type EventsControllerTriggerResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.TriggerEventResponseDto$Outbound;
-};
-
-/** @internal */
-export const EventsControllerTriggerResponse$outboundSchema: z.ZodType<
-  EventsControllerTriggerResponse$Outbound,
-  z.ZodTypeDef,
-  EventsControllerTriggerResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.TriggerEventResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EventsControllerTriggerResponse$ {
-  /** @deprecated use `EventsControllerTriggerResponse$inboundSchema` instead. */
-  export const inboundSchema = EventsControllerTriggerResponse$inboundSchema;
-  /** @deprecated use `EventsControllerTriggerResponse$outboundSchema` instead. */
-  export const outboundSchema = EventsControllerTriggerResponse$outboundSchema;
-  /** @deprecated use `EventsControllerTriggerResponse$Outbound` instead. */
-  export type Outbound = EventsControllerTriggerResponse$Outbound;
-}
-
-export function eventsControllerTriggerResponseToJSON(
-  eventsControllerTriggerResponse: EventsControllerTriggerResponse
-): string {
-  return JSON.stringify(EventsControllerTriggerResponse$outboundSchema.parse(eventsControllerTriggerResponse));
-}
 
 export function eventsControllerTriggerResponseFromJSON(
   jsonString: string

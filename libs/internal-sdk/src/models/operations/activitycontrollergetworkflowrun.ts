@@ -4,9 +4,6 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type ActivityControllerGetWorkflowRunRequest = {
   workflowRunId: string;
@@ -15,22 +12,6 @@ export type ActivityControllerGetWorkflowRunRequest = {
    */
   idempotencyKey?: string | undefined;
 };
-
-/** @internal */
-export const ActivityControllerGetWorkflowRunRequest$inboundSchema: z.ZodType<
-  ActivityControllerGetWorkflowRunRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    workflowRunId: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
 
 /** @internal */
 export type ActivityControllerGetWorkflowRunRequest$Outbound = {
@@ -54,33 +35,10 @@ export const ActivityControllerGetWorkflowRunRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityControllerGetWorkflowRunRequest$ {
-  /** @deprecated use `ActivityControllerGetWorkflowRunRequest$inboundSchema` instead. */
-  export const inboundSchema = ActivityControllerGetWorkflowRunRequest$inboundSchema;
-  /** @deprecated use `ActivityControllerGetWorkflowRunRequest$outboundSchema` instead. */
-  export const outboundSchema = ActivityControllerGetWorkflowRunRequest$outboundSchema;
-  /** @deprecated use `ActivityControllerGetWorkflowRunRequest$Outbound` instead. */
-  export type Outbound = ActivityControllerGetWorkflowRunRequest$Outbound;
-}
-
 export function activityControllerGetWorkflowRunRequestToJSON(
   activityControllerGetWorkflowRunRequest: ActivityControllerGetWorkflowRunRequest
 ): string {
   return JSON.stringify(
     ActivityControllerGetWorkflowRunRequest$outboundSchema.parse(activityControllerGetWorkflowRunRequest)
-  );
-}
-
-export function activityControllerGetWorkflowRunRequestFromJSON(
-  jsonString: string
-): SafeParseResult<ActivityControllerGetWorkflowRunRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ActivityControllerGetWorkflowRunRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ActivityControllerGetWorkflowRunRequest' from JSON`
   );
 }

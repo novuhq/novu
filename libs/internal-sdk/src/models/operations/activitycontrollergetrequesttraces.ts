@@ -4,9 +4,6 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type ActivityControllerGetRequestTracesRequest = {
   requestId: string;
@@ -15,22 +12,6 @@ export type ActivityControllerGetRequestTracesRequest = {
    */
   idempotencyKey?: string | undefined;
 };
-
-/** @internal */
-export const ActivityControllerGetRequestTracesRequest$inboundSchema: z.ZodType<
-  ActivityControllerGetRequestTracesRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    requestId: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
 
 /** @internal */
 export type ActivityControllerGetRequestTracesRequest$Outbound = {
@@ -54,33 +35,10 @@ export const ActivityControllerGetRequestTracesRequest$outboundSchema: z.ZodType
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityControllerGetRequestTracesRequest$ {
-  /** @deprecated use `ActivityControllerGetRequestTracesRequest$inboundSchema` instead. */
-  export const inboundSchema = ActivityControllerGetRequestTracesRequest$inboundSchema;
-  /** @deprecated use `ActivityControllerGetRequestTracesRequest$outboundSchema` instead. */
-  export const outboundSchema = ActivityControllerGetRequestTracesRequest$outboundSchema;
-  /** @deprecated use `ActivityControllerGetRequestTracesRequest$Outbound` instead. */
-  export type Outbound = ActivityControllerGetRequestTracesRequest$Outbound;
-}
-
 export function activityControllerGetRequestTracesRequestToJSON(
   activityControllerGetRequestTracesRequest: ActivityControllerGetRequestTracesRequest
 ): string {
   return JSON.stringify(
     ActivityControllerGetRequestTracesRequest$outboundSchema.parse(activityControllerGetRequestTracesRequest)
-  );
-}
-
-export function activityControllerGetRequestTracesRequestFromJSON(
-  jsonString: string
-): SafeParseResult<ActivityControllerGetRequestTracesRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ActivityControllerGetRequestTracesRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ActivityControllerGetRequestTracesRequest' from JSON`
   );
 }

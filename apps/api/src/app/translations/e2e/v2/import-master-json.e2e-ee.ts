@@ -75,37 +75,38 @@ describe('Import master JSON - /v2/translations/master-json (POST) #novu-v2', as
       },
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/master-json')
-      .send({
-        locale: 'en_US',
-        masterJson,
-      })
-      .expect(200);
+    const response = await novuClient.translations.master.import({
+      locale: 'en_US',
+      masterJson,
+    });
 
-    expect(body.data.success).to.be.true;
-    expect(body.data.message).to.include('2 resource'); // Both valid workflows
+    expect(response.success).to.be.true;
+    expect(response.message).to.include('2 resource');
 
     // Test new response structure
-    expect(body.data.successful).to.be.an('array');
-    expect(body.data.successful).to.have.lengthOf(2);
-    expect(body.data.successful).to.include(workflowId1);
-    expect(body.data.successful).to.include(workflowId2);
-    expect(body.data.failed).to.be.undefined; // No failures
+    expect(response.successful).to.be.an('array');
+    expect(response.successful).to.have.lengthOf(2);
+    expect(response.successful).to.include(workflowId1);
+    expect(response.successful).to.include(workflowId2);
+    expect(response.failed).to.be.undefined;
 
     // Verify translation was created for workflow1
-    const { body: translation1 } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId1}/en_US`)
-      .expect(200);
+    const translation1 = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId1,
+      locale: 'en_US',
+    });
 
-    expect(translation1.data.content).to.deep.equal(masterJson.workflows[workflowId1]);
+    expect(translation1.content).to.deep.equal(masterJson.workflows[workflowId1]);
 
     // Verify translation was created for workflow2 (even though translations disabled)
-    const { body: translation2 } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId2}/en_US`)
-      .expect(200);
+    const translation2 = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId2,
+      locale: 'en_US',
+    });
 
-    expect(translation2.data.content).to.deep.equal(masterJson.workflows[workflowId2]);
+    expect(translation2.content).to.deep.equal(masterJson.workflows[workflowId2]);
   });
 
   it('should gracefully skip missing workflows but import valid ones', async () => {
@@ -121,32 +122,31 @@ describe('Import master JSON - /v2/translations/master-json (POST) #novu-v2', as
       },
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/master-json')
-      .send({
-        locale: 'en_US',
-        masterJson,
-      })
-      .expect(200);
+    const response = await novuClient.translations.master.import({
+      locale: 'en_US',
+      masterJson,
+    });
 
-    expect(body.data.success).to.be.true;
-    expect(body.data.message).to.include('Partial import completed');
+    expect(response.success).to.be.true;
+    expect(response.message).to.include('Partial import completed');
 
     // Test enhanced response structure for partial success
-    expect(body.data.successful).to.be.an('array');
-    expect(body.data.successful).to.have.lengthOf(1);
-    expect(body.data.successful).to.include(workflowId1);
+    expect(response.successful).to.be.an('array');
+    expect(response.successful).to.have.lengthOf(1);
+    expect(response.successful).to.include(workflowId1);
 
-    expect(body.data.failed).to.be.an('array');
-    expect(body.data.failed).to.have.lengthOf(1);
-    expect(body.data.failed).to.include(nonExistentWorkflowId);
+    expect(response.failed).to.be.an('array');
+    expect(response.failed).to.have.lengthOf(1);
+    expect(response.failed).to.include(nonExistentWorkflowId);
 
     // Verify valid translation was created
-    const { body: translation1 } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId1}/en_US`)
-      .expect(200);
+    const translation1 = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId1,
+      locale: 'en_US',
+    });
 
-    expect(translation1.data.content).to.deep.equal(masterJson.workflows[workflowId1]);
+    expect(translation1.content).to.deep.equal(masterJson.workflows[workflowId1]);
   });
 
   it('should handle complete failure gracefully', async () => {
@@ -163,39 +163,33 @@ describe('Import master JSON - /v2/translations/master-json (POST) #novu-v2', as
       },
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/master-json')
-      .send({
-        locale: 'en_US',
-        masterJson,
-      })
-      .expect(200);
+    const response = await novuClient.translations.master.import({
+      locale: 'en_US',
+      masterJson,
+    });
 
-    expect(body.data.success).to.be.false;
-    expect(body.data.message).to.include('Failed to import any resources');
+    expect(response.success).to.be.false;
+    expect(response.message).to.include('Failed to import any resources');
 
     // Test response structure for complete failure
-    expect(body.data.successful).to.be.undefined; // No successes
-    expect(body.data.failed).to.be.an('array');
-    expect(body.data.failed).to.have.lengthOf(2);
-    expect(body.data.failed).to.include(nonExistentWorkflowId1);
-    expect(body.data.failed).to.include(nonExistentWorkflowId2);
+    expect(response.successful).to.be.undefined;
+    expect(response.failed).to.be.an('array');
+    expect(response.failed).to.have.lengthOf(2);
+    expect(response.failed).to.include(nonExistentWorkflowId1);
+    expect(response.failed).to.include(nonExistentWorkflowId2);
   });
 
   it('should update existing translations correctly', async () => {
     // Create initial translation
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId1,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: {
-          'old.key': 'Old value',
-          'existing.key': 'Will be updated',
-        },
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId1,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: {
+        'old.key': 'Old value',
+        'existing.key': 'Will be updated',
+      },
+    });
 
     const masterJson = {
       workflows: {
@@ -206,25 +200,24 @@ describe('Import master JSON - /v2/translations/master-json (POST) #novu-v2', as
       },
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/master-json')
-      .send({
-        locale: 'en_US',
-        masterJson,
-      })
-      .expect(200);
+    const response = await novuClient.translations.master.import({
+      locale: 'en_US',
+      masterJson,
+    });
 
-    expect(body.data.success).to.be.true;
-    expect(body.data.successful).to.include(workflowId1);
-    expect(body.data.failed).to.be.undefined;
+    expect(response.success).to.be.true;
+    expect(response.successful).to.include(workflowId1);
+    expect(response.failed).to.be.undefined;
 
     // Verify translation was updated (replaces entire content)
-    const { body: translation } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId1}/en_US`)
-      .expect(200);
+    const translation = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId1,
+      locale: 'en_US',
+    });
 
-    expect(translation.data.content).to.deep.equal(masterJson.workflows[workflowId1]);
-    expect(translation.data.content).to.not.have.property('old.key');
+    expect(translation.content).to.deep.equal(masterJson.workflows[workflowId1]);
+    expect(translation.content).to.not.have.property('old.key');
   });
 
   it('should handle empty master JSON gracefully', async () => {
@@ -232,17 +225,14 @@ describe('Import master JSON - /v2/translations/master-json (POST) #novu-v2', as
       workflows: {},
     };
 
-    const { body } = await session.testAgent
-      .post('/v2/translations/master-json')
-      .send({
-        locale: 'en_US',
-        masterJson,
-      })
-      .expect(200);
+    const response = await novuClient.translations.master.import({
+      locale: 'en_US',
+      masterJson,
+    });
 
-    expect(body.data.success).to.be.false;
-    expect(body.data.message).to.include('No supported resources found');
-    expect(body.data.successful).to.be.undefined;
-    expect(body.data.failed).to.be.undefined;
+    expect(response.success).to.be.false;
+    expect(response.message).to.include('No supported resources found');
+    expect(response.successful).to.be.undefined;
+    expect(response.failed).to.be.undefined;
   });
 });

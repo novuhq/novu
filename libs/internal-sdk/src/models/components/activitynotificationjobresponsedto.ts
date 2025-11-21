@@ -11,22 +11,13 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   ActivityNotificationExecutionDetailResponseDto,
   ActivityNotificationExecutionDetailResponseDto$inboundSchema,
-  ActivityNotificationExecutionDetailResponseDto$Outbound,
-  ActivityNotificationExecutionDetailResponseDto$outboundSchema,
 } from './activitynotificationexecutiondetailresponsedto.js';
 import {
   ActivityNotificationStepResponseDto,
   ActivityNotificationStepResponseDto$inboundSchema,
-  ActivityNotificationStepResponseDto$Outbound,
-  ActivityNotificationStepResponseDto$outboundSchema,
 } from './activitynotificationstepresponsedto.js';
-import {
-  DigestMetadataDto,
-  DigestMetadataDto$inboundSchema,
-  DigestMetadataDto$Outbound,
-  DigestMetadataDto$outboundSchema,
-} from './digestmetadatadto.js';
-import { ProvidersIdEnum, ProvidersIdEnum$inboundSchema, ProvidersIdEnum$outboundSchema } from './providersidenum.js';
+import { DigestMetadataDto, DigestMetadataDto$inboundSchema } from './digestmetadatadto.js';
+import { ProvidersIdEnum, ProvidersIdEnum$inboundSchema } from './providersidenum.js';
 
 /**
  * Type of the job
@@ -106,58 +97,11 @@ export const ActivityNotificationJobResponseDtoType$inboundSchema: z.ZodNativeEn
 > = z.nativeEnum(ActivityNotificationJobResponseDtoType);
 
 /** @internal */
-export const ActivityNotificationJobResponseDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof ActivityNotificationJobResponseDtoType
-> = ActivityNotificationJobResponseDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityNotificationJobResponseDtoType$ {
-  /** @deprecated use `ActivityNotificationJobResponseDtoType$inboundSchema` instead. */
-  export const inboundSchema = ActivityNotificationJobResponseDtoType$inboundSchema;
-  /** @deprecated use `ActivityNotificationJobResponseDtoType$outboundSchema` instead. */
-  export const outboundSchema = ActivityNotificationJobResponseDtoType$outboundSchema;
-}
-
-/** @internal */
 export const ActivityNotificationJobResponseDtoPayload$inboundSchema: z.ZodType<
   ActivityNotificationJobResponseDtoPayload,
   z.ZodTypeDef,
   unknown
 > = z.object({});
-
-/** @internal */
-export type ActivityNotificationJobResponseDtoPayload$Outbound = {};
-
-/** @internal */
-export const ActivityNotificationJobResponseDtoPayload$outboundSchema: z.ZodType<
-  ActivityNotificationJobResponseDtoPayload$Outbound,
-  z.ZodTypeDef,
-  ActivityNotificationJobResponseDtoPayload
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityNotificationJobResponseDtoPayload$ {
-  /** @deprecated use `ActivityNotificationJobResponseDtoPayload$inboundSchema` instead. */
-  export const inboundSchema = ActivityNotificationJobResponseDtoPayload$inboundSchema;
-  /** @deprecated use `ActivityNotificationJobResponseDtoPayload$outboundSchema` instead. */
-  export const outboundSchema = ActivityNotificationJobResponseDtoPayload$outboundSchema;
-  /** @deprecated use `ActivityNotificationJobResponseDtoPayload$Outbound` instead. */
-  export type Outbound = ActivityNotificationJobResponseDtoPayload$Outbound;
-}
-
-export function activityNotificationJobResponseDtoPayloadToJSON(
-  activityNotificationJobResponseDtoPayload: ActivityNotificationJobResponseDtoPayload
-): string {
-  return JSON.stringify(
-    ActivityNotificationJobResponseDtoPayload$outboundSchema.parse(activityNotificationJobResponseDtoPayload)
-  );
-}
 
 export function activityNotificationJobResponseDtoPayloadFromJSON(
   jsonString: string
@@ -193,65 +137,6 @@ export const ActivityNotificationJobResponseDto$inboundSchema: z.ZodType<
       _id: 'id',
     });
   });
-
-/** @internal */
-export type ActivityNotificationJobResponseDto$Outbound = {
-  _id: string;
-  type: string;
-  digest?: DigestMetadataDto$Outbound | undefined;
-  executionDetails: Array<ActivityNotificationExecutionDetailResponseDto$Outbound>;
-  step: ActivityNotificationStepResponseDto$Outbound;
-  overrides?: { [k: string]: any } | undefined;
-  payload?: ActivityNotificationJobResponseDtoPayload$Outbound | undefined;
-  providerId: string;
-  status: string;
-  updatedAt?: string | undefined;
-  scheduleExtensionsCount?: number | undefined;
-};
-
-/** @internal */
-export const ActivityNotificationJobResponseDto$outboundSchema: z.ZodType<
-  ActivityNotificationJobResponseDto$Outbound,
-  z.ZodTypeDef,
-  ActivityNotificationJobResponseDto
-> = z
-  .object({
-    id: z.string(),
-    type: ActivityNotificationJobResponseDtoType$outboundSchema,
-    digest: DigestMetadataDto$outboundSchema.optional(),
-    executionDetails: z.array(ActivityNotificationExecutionDetailResponseDto$outboundSchema),
-    step: ActivityNotificationStepResponseDto$outboundSchema,
-    overrides: z.record(z.any()).optional(),
-    payload: z.lazy(() => ActivityNotificationJobResponseDtoPayload$outboundSchema).optional(),
-    providerId: ProvidersIdEnum$outboundSchema,
-    status: z.string(),
-    updatedAt: z.string().optional(),
-    scheduleExtensionsCount: z.number().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityNotificationJobResponseDto$ {
-  /** @deprecated use `ActivityNotificationJobResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ActivityNotificationJobResponseDto$inboundSchema;
-  /** @deprecated use `ActivityNotificationJobResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ActivityNotificationJobResponseDto$outboundSchema;
-  /** @deprecated use `ActivityNotificationJobResponseDto$Outbound` instead. */
-  export type Outbound = ActivityNotificationJobResponseDto$Outbound;
-}
-
-export function activityNotificationJobResponseDtoToJSON(
-  activityNotificationJobResponseDto: ActivityNotificationJobResponseDto
-): string {
-  return JSON.stringify(ActivityNotificationJobResponseDto$outboundSchema.parse(activityNotificationJobResponseDto));
-}
 
 export function activityNotificationJobResponseDtoFromJSON(
   jsonString: string

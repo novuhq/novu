@@ -9,14 +9,10 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   SubscriberGlobalPreferenceDto,
   SubscriberGlobalPreferenceDto$inboundSchema,
-  SubscriberGlobalPreferenceDto$Outbound,
-  SubscriberGlobalPreferenceDto$outboundSchema,
 } from './subscriberglobalpreferencedto.js';
 import {
   SubscriberWorkflowPreferenceDto,
   SubscriberWorkflowPreferenceDto$inboundSchema,
-  SubscriberWorkflowPreferenceDto$Outbound,
-  SubscriberWorkflowPreferenceDto$outboundSchema,
 } from './subscriberworkflowpreferencedto.js';
 
 export type GetSubscriberPreferencesDto = {
@@ -36,39 +32,6 @@ export const GetSubscriberPreferencesDto$inboundSchema: z.ZodType<GetSubscriberP
     global: SubscriberGlobalPreferenceDto$inboundSchema,
     workflows: z.array(SubscriberWorkflowPreferenceDto$inboundSchema),
   });
-
-/** @internal */
-export type GetSubscriberPreferencesDto$Outbound = {
-  global: SubscriberGlobalPreferenceDto$Outbound;
-  workflows: Array<SubscriberWorkflowPreferenceDto$Outbound>;
-};
-
-/** @internal */
-export const GetSubscriberPreferencesDto$outboundSchema: z.ZodType<
-  GetSubscriberPreferencesDto$Outbound,
-  z.ZodTypeDef,
-  GetSubscriberPreferencesDto
-> = z.object({
-  global: SubscriberGlobalPreferenceDto$outboundSchema,
-  workflows: z.array(SubscriberWorkflowPreferenceDto$outboundSchema),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetSubscriberPreferencesDto$ {
-  /** @deprecated use `GetSubscriberPreferencesDto$inboundSchema` instead. */
-  export const inboundSchema = GetSubscriberPreferencesDto$inboundSchema;
-  /** @deprecated use `GetSubscriberPreferencesDto$outboundSchema` instead. */
-  export const outboundSchema = GetSubscriberPreferencesDto$outboundSchema;
-  /** @deprecated use `GetSubscriberPreferencesDto$Outbound` instead. */
-  export type Outbound = GetSubscriberPreferencesDto$Outbound;
-}
-
-export function getSubscriberPreferencesDtoToJSON(getSubscriberPreferencesDto: GetSubscriberPreferencesDto): string {
-  return JSON.stringify(GetSubscriberPreferencesDto$outboundSchema.parse(getSubscriberPreferencesDto));
-}
 
 export function getSubscriberPreferencesDtoFromJSON(
   jsonString: string

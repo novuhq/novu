@@ -6,24 +6,9 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  CreatedSubscriberDto,
-  CreatedSubscriberDto$inboundSchema,
-  CreatedSubscriberDto$Outbound,
-  CreatedSubscriberDto$outboundSchema,
-} from './createdsubscriberdto.js';
-import {
-  FailedOperationDto,
-  FailedOperationDto$inboundSchema,
-  FailedOperationDto$Outbound,
-  FailedOperationDto$outboundSchema,
-} from './failedoperationdto.js';
-import {
-  UpdatedSubscriberDto,
-  UpdatedSubscriberDto$inboundSchema,
-  UpdatedSubscriberDto$Outbound,
-  UpdatedSubscriberDto$outboundSchema,
-} from './updatedsubscriberdto.js';
+import { CreatedSubscriberDto, CreatedSubscriberDto$inboundSchema } from './createdsubscriberdto.js';
+import { FailedOperationDto, FailedOperationDto$inboundSchema } from './failedoperationdto.js';
+import { UpdatedSubscriberDto, UpdatedSubscriberDto$inboundSchema } from './updatedsubscriberdto.js';
 
 export type BulkCreateSubscriberResponseDto = {
   /**
@@ -50,43 +35,6 @@ export const BulkCreateSubscriberResponseDto$inboundSchema: z.ZodType<
   created: z.array(CreatedSubscriberDto$inboundSchema),
   failed: z.array(FailedOperationDto$inboundSchema),
 });
-
-/** @internal */
-export type BulkCreateSubscriberResponseDto$Outbound = {
-  updated: Array<UpdatedSubscriberDto$Outbound>;
-  created: Array<CreatedSubscriberDto$Outbound>;
-  failed: Array<FailedOperationDto$Outbound>;
-};
-
-/** @internal */
-export const BulkCreateSubscriberResponseDto$outboundSchema: z.ZodType<
-  BulkCreateSubscriberResponseDto$Outbound,
-  z.ZodTypeDef,
-  BulkCreateSubscriberResponseDto
-> = z.object({
-  updated: z.array(UpdatedSubscriberDto$outboundSchema),
-  created: z.array(CreatedSubscriberDto$outboundSchema),
-  failed: z.array(FailedOperationDto$outboundSchema),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace BulkCreateSubscriberResponseDto$ {
-  /** @deprecated use `BulkCreateSubscriberResponseDto$inboundSchema` instead. */
-  export const inboundSchema = BulkCreateSubscriberResponseDto$inboundSchema;
-  /** @deprecated use `BulkCreateSubscriberResponseDto$outboundSchema` instead. */
-  export const outboundSchema = BulkCreateSubscriberResponseDto$outboundSchema;
-  /** @deprecated use `BulkCreateSubscriberResponseDto$Outbound` instead. */
-  export type Outbound = BulkCreateSubscriberResponseDto$Outbound;
-}
-
-export function bulkCreateSubscriberResponseDtoToJSON(
-  bulkCreateSubscriberResponseDto: BulkCreateSubscriberResponseDto
-): string {
-  return JSON.stringify(BulkCreateSubscriberResponseDto$outboundSchema.parse(bulkCreateSubscriberResponseDto));
-}
 
 export function bulkCreateSubscriberResponseDtoFromJSON(
   jsonString: string
