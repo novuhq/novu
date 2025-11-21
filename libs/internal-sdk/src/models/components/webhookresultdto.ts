@@ -6,7 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { EventBody, EventBody$inboundSchema, EventBody$Outbound, EventBody$outboundSchema } from './eventbody.js';
+import { EventBody, EventBody$inboundSchema } from './eventbody.js';
 
 export type WebhookResultDto = {
   /**
@@ -24,36 +24,6 @@ export const WebhookResultDto$inboundSchema: z.ZodType<WebhookResultDto, z.ZodTy
   id: z.string(),
   event: EventBody$inboundSchema,
 });
-
-/** @internal */
-export type WebhookResultDto$Outbound = {
-  id: string;
-  event: EventBody$Outbound;
-};
-
-/** @internal */
-export const WebhookResultDto$outboundSchema: z.ZodType<WebhookResultDto$Outbound, z.ZodTypeDef, WebhookResultDto> =
-  z.object({
-    id: z.string(),
-    event: EventBody$outboundSchema,
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WebhookResultDto$ {
-  /** @deprecated use `WebhookResultDto$inboundSchema` instead. */
-  export const inboundSchema = WebhookResultDto$inboundSchema;
-  /** @deprecated use `WebhookResultDto$outboundSchema` instead. */
-  export const outboundSchema = WebhookResultDto$outboundSchema;
-  /** @deprecated use `WebhookResultDto$Outbound` instead. */
-  export type Outbound = WebhookResultDto$Outbound;
-}
-
-export function webhookResultDtoToJSON(webhookResultDto: WebhookResultDto): string {
-  return JSON.stringify(WebhookResultDto$outboundSchema.parse(webhookResultDto));
-}
 
 export function webhookResultDtoFromJSON(jsonString: string): SafeParseResult<WebhookResultDto, SDKValidationError> {
   return safeParse(

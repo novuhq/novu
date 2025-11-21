@@ -34,38 +34,8 @@ export const DelayRegularMetadataUnit$inboundSchema: z.ZodNativeEnum<typeof Dela
   z.nativeEnum(DelayRegularMetadataUnit);
 
 /** @internal */
-export const DelayRegularMetadataUnit$outboundSchema: z.ZodNativeEnum<typeof DelayRegularMetadataUnit> =
-  DelayRegularMetadataUnit$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayRegularMetadataUnit$ {
-  /** @deprecated use `DelayRegularMetadataUnit$inboundSchema` instead. */
-  export const inboundSchema = DelayRegularMetadataUnit$inboundSchema;
-  /** @deprecated use `DelayRegularMetadataUnit$outboundSchema` instead. */
-  export const outboundSchema = DelayRegularMetadataUnit$outboundSchema;
-}
-
-/** @internal */
 export const DelayRegularMetadataType$inboundSchema: z.ZodNativeEnum<typeof DelayRegularMetadataType> =
   z.nativeEnum(DelayRegularMetadataType);
-
-/** @internal */
-export const DelayRegularMetadataType$outboundSchema: z.ZodNativeEnum<typeof DelayRegularMetadataType> =
-  DelayRegularMetadataType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayRegularMetadataType$ {
-  /** @deprecated use `DelayRegularMetadataType$inboundSchema` instead. */
-  export const inboundSchema = DelayRegularMetadataType$inboundSchema;
-  /** @deprecated use `DelayRegularMetadataType$outboundSchema` instead. */
-  export const outboundSchema = DelayRegularMetadataType$outboundSchema;
-}
 
 /** @internal */
 export const DelayRegularMetadata$inboundSchema: z.ZodType<DelayRegularMetadata, z.ZodTypeDef, unknown> = z.object({
@@ -73,41 +43,6 @@ export const DelayRegularMetadata$inboundSchema: z.ZodType<DelayRegularMetadata,
   unit: DelayRegularMetadataUnit$inboundSchema.optional(),
   type: DelayRegularMetadataType$inboundSchema,
 });
-
-/** @internal */
-export type DelayRegularMetadata$Outbound = {
-  amount?: number | undefined;
-  unit?: string | undefined;
-  type: string;
-};
-
-/** @internal */
-export const DelayRegularMetadata$outboundSchema: z.ZodType<
-  DelayRegularMetadata$Outbound,
-  z.ZodTypeDef,
-  DelayRegularMetadata
-> = z.object({
-  amount: z.number().optional(),
-  unit: DelayRegularMetadataUnit$outboundSchema.optional(),
-  type: DelayRegularMetadataType$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayRegularMetadata$ {
-  /** @deprecated use `DelayRegularMetadata$inboundSchema` instead. */
-  export const inboundSchema = DelayRegularMetadata$inboundSchema;
-  /** @deprecated use `DelayRegularMetadata$outboundSchema` instead. */
-  export const outboundSchema = DelayRegularMetadata$outboundSchema;
-  /** @deprecated use `DelayRegularMetadata$Outbound` instead. */
-  export type Outbound = DelayRegularMetadata$Outbound;
-}
-
-export function delayRegularMetadataToJSON(delayRegularMetadata: DelayRegularMetadata): string {
-  return JSON.stringify(DelayRegularMetadata$outboundSchema.parse(delayRegularMetadata));
-}
 
 export function delayRegularMetadataFromJSON(
   jsonString: string

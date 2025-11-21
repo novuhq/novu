@@ -24,36 +24,6 @@ export const PushRenderOutput$inboundSchema: z.ZodType<PushRenderOutput, z.ZodTy
   body: z.string(),
 });
 
-/** @internal */
-export type PushRenderOutput$Outbound = {
-  subject: string;
-  body: string;
-};
-
-/** @internal */
-export const PushRenderOutput$outboundSchema: z.ZodType<PushRenderOutput$Outbound, z.ZodTypeDef, PushRenderOutput> =
-  z.object({
-    subject: z.string(),
-    body: z.string(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PushRenderOutput$ {
-  /** @deprecated use `PushRenderOutput$inboundSchema` instead. */
-  export const inboundSchema = PushRenderOutput$inboundSchema;
-  /** @deprecated use `PushRenderOutput$outboundSchema` instead. */
-  export const outboundSchema = PushRenderOutput$outboundSchema;
-  /** @deprecated use `PushRenderOutput$Outbound` instead. */
-  export type Outbound = PushRenderOutput$Outbound;
-}
-
-export function pushRenderOutputToJSON(pushRenderOutput: PushRenderOutput): string {
-  return JSON.stringify(PushRenderOutput$outboundSchema.parse(pushRenderOutput));
-}
-
 export function pushRenderOutputFromJSON(jsonString: string): SafeParseResult<PushRenderOutput, SDKValidationError> {
   return safeParse(
     jsonString,

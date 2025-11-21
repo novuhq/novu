@@ -22,21 +22,6 @@ export type EnvironmentsControllerV1ListMyEnvironmentsResponse = {
 };
 
 /** @internal */
-export const EnvironmentsControllerV1ListMyEnvironmentsRequest$inboundSchema: z.ZodType<
-  EnvironmentsControllerV1ListMyEnvironmentsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type EnvironmentsControllerV1ListMyEnvironmentsRequest$Outbound = {
   'idempotency-key'?: string | undefined;
 };
@@ -56,19 +41,6 @@ export const EnvironmentsControllerV1ListMyEnvironmentsRequest$outboundSchema: z
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EnvironmentsControllerV1ListMyEnvironmentsRequest$ {
-  /** @deprecated use `EnvironmentsControllerV1ListMyEnvironmentsRequest$inboundSchema` instead. */
-  export const inboundSchema = EnvironmentsControllerV1ListMyEnvironmentsRequest$inboundSchema;
-  /** @deprecated use `EnvironmentsControllerV1ListMyEnvironmentsRequest$outboundSchema` instead. */
-  export const outboundSchema = EnvironmentsControllerV1ListMyEnvironmentsRequest$outboundSchema;
-  /** @deprecated use `EnvironmentsControllerV1ListMyEnvironmentsRequest$Outbound` instead. */
-  export type Outbound = EnvironmentsControllerV1ListMyEnvironmentsRequest$Outbound;
-}
-
 export function environmentsControllerV1ListMyEnvironmentsRequestToJSON(
   environmentsControllerV1ListMyEnvironmentsRequest: EnvironmentsControllerV1ListMyEnvironmentsRequest
 ): string {
@@ -76,16 +48,6 @@ export function environmentsControllerV1ListMyEnvironmentsRequestToJSON(
     EnvironmentsControllerV1ListMyEnvironmentsRequest$outboundSchema.parse(
       environmentsControllerV1ListMyEnvironmentsRequest
     )
-  );
-}
-
-export function environmentsControllerV1ListMyEnvironmentsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<EnvironmentsControllerV1ListMyEnvironmentsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EnvironmentsControllerV1ListMyEnvironmentsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EnvironmentsControllerV1ListMyEnvironmentsRequest' from JSON`
   );
 }
 
@@ -105,52 +67,6 @@ export const EnvironmentsControllerV1ListMyEnvironmentsResponse$inboundSchema: z
       Result: 'result',
     });
   });
-
-/** @internal */
-export type EnvironmentsControllerV1ListMyEnvironmentsResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: Array<components.EnvironmentResponseDto$Outbound>;
-};
-
-/** @internal */
-export const EnvironmentsControllerV1ListMyEnvironmentsResponse$outboundSchema: z.ZodType<
-  EnvironmentsControllerV1ListMyEnvironmentsResponse$Outbound,
-  z.ZodTypeDef,
-  EnvironmentsControllerV1ListMyEnvironmentsResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: z.array(components.EnvironmentResponseDto$outboundSchema),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EnvironmentsControllerV1ListMyEnvironmentsResponse$ {
-  /** @deprecated use `EnvironmentsControllerV1ListMyEnvironmentsResponse$inboundSchema` instead. */
-  export const inboundSchema = EnvironmentsControllerV1ListMyEnvironmentsResponse$inboundSchema;
-  /** @deprecated use `EnvironmentsControllerV1ListMyEnvironmentsResponse$outboundSchema` instead. */
-  export const outboundSchema = EnvironmentsControllerV1ListMyEnvironmentsResponse$outboundSchema;
-  /** @deprecated use `EnvironmentsControllerV1ListMyEnvironmentsResponse$Outbound` instead. */
-  export type Outbound = EnvironmentsControllerV1ListMyEnvironmentsResponse$Outbound;
-}
-
-export function environmentsControllerV1ListMyEnvironmentsResponseToJSON(
-  environmentsControllerV1ListMyEnvironmentsResponse: EnvironmentsControllerV1ListMyEnvironmentsResponse
-): string {
-  return JSON.stringify(
-    EnvironmentsControllerV1ListMyEnvironmentsResponse$outboundSchema.parse(
-      environmentsControllerV1ListMyEnvironmentsResponse
-    )
-  );
-}
 
 export function environmentsControllerV1ListMyEnvironmentsResponseFromJSON(
   jsonString: string

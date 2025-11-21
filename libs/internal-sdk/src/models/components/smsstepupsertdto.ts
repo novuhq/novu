@@ -4,16 +4,8 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  SmsControlDto,
-  SmsControlDto$inboundSchema,
-  SmsControlDto$Outbound,
-  SmsControlDto$outboundSchema,
-} from './smscontroldto.js';
-import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
+import { SmsControlDto, SmsControlDto$Outbound, SmsControlDto$outboundSchema } from './smscontroldto.js';
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from './steptypeenum.js';
 
 /**
  * Control values for the SMS step.
@@ -48,13 +40,6 @@ export type SmsStepUpsertDto = {
 };
 
 /** @internal */
-export const SmsStepUpsertDtoControlValues$inboundSchema: z.ZodType<
-  SmsStepUpsertDtoControlValues,
-  z.ZodTypeDef,
-  unknown
-> = z.union([SmsControlDto$inboundSchema, z.record(z.any())]);
-
-/** @internal */
 export type SmsStepUpsertDtoControlValues$Outbound =
   | SmsControlDto$Outbound
   | {
@@ -68,49 +53,11 @@ export const SmsStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   SmsStepUpsertDtoControlValues
 > = z.union([SmsControlDto$outboundSchema, z.record(z.any())]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsStepUpsertDtoControlValues$ {
-  /** @deprecated use `SmsStepUpsertDtoControlValues$inboundSchema` instead. */
-  export const inboundSchema = SmsStepUpsertDtoControlValues$inboundSchema;
-  /** @deprecated use `SmsStepUpsertDtoControlValues$outboundSchema` instead. */
-  export const outboundSchema = SmsStepUpsertDtoControlValues$outboundSchema;
-  /** @deprecated use `SmsStepUpsertDtoControlValues$Outbound` instead. */
-  export type Outbound = SmsStepUpsertDtoControlValues$Outbound;
-}
-
 export function smsStepUpsertDtoControlValuesToJSON(
   smsStepUpsertDtoControlValues: SmsStepUpsertDtoControlValues
 ): string {
   return JSON.stringify(SmsStepUpsertDtoControlValues$outboundSchema.parse(smsStepUpsertDtoControlValues));
 }
-
-export function smsStepUpsertDtoControlValuesFromJSON(
-  jsonString: string
-): SafeParseResult<SmsStepUpsertDtoControlValues, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SmsStepUpsertDtoControlValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SmsStepUpsertDtoControlValues' from JSON`
-  );
-}
-
-/** @internal */
-export const SmsStepUpsertDto$inboundSchema: z.ZodType<SmsStepUpsertDto, z.ZodTypeDef, unknown> = z
-  .object({
-    _id: z.string().optional(),
-    stepId: z.string().optional(),
-    name: z.string(),
-    type: StepTypeEnum$inboundSchema,
-    controlValues: z.union([SmsControlDto$inboundSchema, z.record(z.any())]).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      _id: 'id',
-    });
-  });
 
 /** @internal */
 export type SmsStepUpsertDto$Outbound = {
@@ -136,27 +83,6 @@ export const SmsStepUpsertDto$outboundSchema: z.ZodType<SmsStepUpsertDto$Outboun
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsStepUpsertDto$ {
-  /** @deprecated use `SmsStepUpsertDto$inboundSchema` instead. */
-  export const inboundSchema = SmsStepUpsertDto$inboundSchema;
-  /** @deprecated use `SmsStepUpsertDto$outboundSchema` instead. */
-  export const outboundSchema = SmsStepUpsertDto$outboundSchema;
-  /** @deprecated use `SmsStepUpsertDto$Outbound` instead. */
-  export type Outbound = SmsStepUpsertDto$Outbound;
-}
-
 export function smsStepUpsertDtoToJSON(smsStepUpsertDto: SmsStepUpsertDto): string {
   return JSON.stringify(SmsStepUpsertDto$outboundSchema.parse(smsStepUpsertDto));
-}
-
-export function smsStepUpsertDtoFromJSON(jsonString: string): SafeParseResult<SmsStepUpsertDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SmsStepUpsertDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SmsStepUpsertDto' from JSON`
-  );
 }

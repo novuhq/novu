@@ -6,12 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  GetContextResponseDto,
-  GetContextResponseDto$inboundSchema,
-  GetContextResponseDto$Outbound,
-  GetContextResponseDto$outboundSchema,
-} from './getcontextresponsedto.js';
+import { GetContextResponseDto, GetContextResponseDto$inboundSchema } from './getcontextresponsedto.js';
 
 export type ListContextsResponseDto = {
   /**
@@ -45,45 +40,6 @@ export const ListContextsResponseDto$inboundSchema: z.ZodType<ListContextsRespon
     totalCount: z.number(),
     totalCountCapped: z.boolean(),
   });
-
-/** @internal */
-export type ListContextsResponseDto$Outbound = {
-  data: Array<GetContextResponseDto$Outbound>;
-  next: string | null;
-  previous: string | null;
-  totalCount: number;
-  totalCountCapped: boolean;
-};
-
-/** @internal */
-export const ListContextsResponseDto$outboundSchema: z.ZodType<
-  ListContextsResponseDto$Outbound,
-  z.ZodTypeDef,
-  ListContextsResponseDto
-> = z.object({
-  data: z.array(GetContextResponseDto$outboundSchema),
-  next: z.nullable(z.string()),
-  previous: z.nullable(z.string()),
-  totalCount: z.number(),
-  totalCountCapped: z.boolean(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ListContextsResponseDto$ {
-  /** @deprecated use `ListContextsResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ListContextsResponseDto$inboundSchema;
-  /** @deprecated use `ListContextsResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ListContextsResponseDto$outboundSchema;
-  /** @deprecated use `ListContextsResponseDto$Outbound` instead. */
-  export type Outbound = ListContextsResponseDto$Outbound;
-}
-
-export function listContextsResponseDtoToJSON(listContextsResponseDto: ListContextsResponseDto): string {
-  return JSON.stringify(ListContextsResponseDto$outboundSchema.parse(listContextsResponseDto));
-}
 
 export function listContextsResponseDtoFromJSON(
   jsonString: string

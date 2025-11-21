@@ -8,24 +8,9 @@ import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ConfigurationsDto,
-  ConfigurationsDto$inboundSchema,
-  ConfigurationsDto$Outbound,
-  ConfigurationsDto$outboundSchema,
-} from './configurationsdto.js';
-import {
-  CredentialsDto,
-  CredentialsDto$inboundSchema,
-  CredentialsDto$Outbound,
-  CredentialsDto$outboundSchema,
-} from './credentialsdto.js';
-import {
-  StepFilterDto,
-  StepFilterDto$inboundSchema,
-  StepFilterDto$Outbound,
-  StepFilterDto$outboundSchema,
-} from './stepfilterdto.js';
+import { ConfigurationsDto, ConfigurationsDto$inboundSchema } from './configurationsdto.js';
+import { CredentialsDto, CredentialsDto$inboundSchema } from './credentialsdto.js';
+import { StepFilterDto, StepFilterDto$inboundSchema } from './stepfilterdto.js';
 
 /**
  * The channel type for the integration, which defines how the integration communicates (e.g., email, SMS).
@@ -109,20 +94,6 @@ export type IntegrationResponseDto = {
 export const Channel$inboundSchema: z.ZodNativeEnum<typeof Channel> = z.nativeEnum(Channel);
 
 /** @internal */
-export const Channel$outboundSchema: z.ZodNativeEnum<typeof Channel> = Channel$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Channel$ {
-  /** @deprecated use `Channel$inboundSchema` instead. */
-  export const inboundSchema = Channel$inboundSchema;
-  /** @deprecated use `Channel$outboundSchema` instead. */
-  export const outboundSchema = Channel$outboundSchema;
-}
-
-/** @internal */
 export const IntegrationResponseDto$inboundSchema: z.ZodType<IntegrationResponseDto, z.ZodTypeDef, unknown> = z
   .object({
     _id: z.string().optional(),
@@ -148,73 +119,6 @@ export const IntegrationResponseDto$inboundSchema: z.ZodType<IntegrationResponse
       _organizationId: 'organizationId',
     });
   });
-
-/** @internal */
-export type IntegrationResponseDto$Outbound = {
-  _id?: string | undefined;
-  _environmentId: string;
-  _organizationId: string;
-  name: string;
-  identifier: string;
-  providerId: string;
-  channel: string;
-  credentials: CredentialsDto$Outbound;
-  configurations?: ConfigurationsDto$Outbound | undefined;
-  active: boolean;
-  deleted: boolean;
-  deletedAt?: string | undefined;
-  deletedBy?: string | undefined;
-  primary: boolean;
-  conditions?: Array<StepFilterDto$Outbound> | undefined;
-};
-
-/** @internal */
-export const IntegrationResponseDto$outboundSchema: z.ZodType<
-  IntegrationResponseDto$Outbound,
-  z.ZodTypeDef,
-  IntegrationResponseDto
-> = z
-  .object({
-    id: z.string().optional(),
-    environmentId: z.string(),
-    organizationId: z.string(),
-    name: z.string(),
-    identifier: z.string(),
-    providerId: z.string(),
-    channel: Channel$outboundSchema,
-    credentials: CredentialsDto$outboundSchema,
-    configurations: ConfigurationsDto$outboundSchema.optional(),
-    active: z.boolean(),
-    deleted: z.boolean(),
-    deletedAt: z.string().optional(),
-    deletedBy: z.string().optional(),
-    primary: z.boolean(),
-    conditions: z.array(StepFilterDto$outboundSchema).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-      environmentId: '_environmentId',
-      organizationId: '_organizationId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace IntegrationResponseDto$ {
-  /** @deprecated use `IntegrationResponseDto$inboundSchema` instead. */
-  export const inboundSchema = IntegrationResponseDto$inboundSchema;
-  /** @deprecated use `IntegrationResponseDto$outboundSchema` instead. */
-  export const outboundSchema = IntegrationResponseDto$outboundSchema;
-  /** @deprecated use `IntegrationResponseDto$Outbound` instead. */
-  export type Outbound = IntegrationResponseDto$Outbound;
-}
-
-export function integrationResponseDtoToJSON(integrationResponseDto: IntegrationResponseDto): string {
-  return JSON.stringify(IntegrationResponseDto$outboundSchema.parse(integrationResponseDto));
-}
 
 export function integrationResponseDtoFromJSON(
   jsonString: string

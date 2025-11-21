@@ -181,7 +181,14 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
   private hashRequestBody(body: object): string {
     const hash = createHash('blake2s256');
-    hash.update(Buffer.from(JSON.stringify(body)));
+
+    try {
+      hash.update(Buffer.from(JSON.stringify(body)));
+    } catch (error) {
+      // For multipart/form-data or other non-serializable bodies,
+      // create a hash from the object's string representation
+      hash.update(Buffer.from(String(body)));
+    }
 
     return hash.digest('hex');
   }

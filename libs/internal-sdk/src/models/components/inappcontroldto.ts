@@ -65,7 +65,6 @@ export const InAppControlDto$inboundSchema: z.ZodType<InAppControlDto, z.ZodType
   disableOutputSanitization: z.boolean().default(false),
   data: z.record(z.any()).optional(),
 });
-
 /** @internal */
 export type InAppControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -93,23 +92,9 @@ export const InAppControlDto$outboundSchema: z.ZodType<InAppControlDto$Outbound,
     data: z.record(z.any()).optional(),
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppControlDto$ {
-  /** @deprecated use `InAppControlDto$inboundSchema` instead. */
-  export const inboundSchema = InAppControlDto$inboundSchema;
-  /** @deprecated use `InAppControlDto$outboundSchema` instead. */
-  export const outboundSchema = InAppControlDto$outboundSchema;
-  /** @deprecated use `InAppControlDto$Outbound` instead. */
-  export type Outbound = InAppControlDto$Outbound;
-}
-
 export function inAppControlDtoToJSON(inAppControlDto: InAppControlDto): string {
   return JSON.stringify(InAppControlDto$outboundSchema.parse(inAppControlDto));
 }
-
 export function inAppControlDtoFromJSON(jsonString: string): SafeParseResult<InAppControlDto, SDKValidationError> {
   return safeParse(
     jsonString,

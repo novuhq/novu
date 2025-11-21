@@ -67,40 +67,16 @@ export type ThrottleControlDto = {
 /** @internal */
 export const ThrottleControlDtoType$inboundSchema: z.ZodNativeEnum<typeof ThrottleControlDtoType> =
   z.nativeEnum(ThrottleControlDtoType);
-
 /** @internal */
 export const ThrottleControlDtoType$outboundSchema: z.ZodNativeEnum<typeof ThrottleControlDtoType> =
   ThrottleControlDtoType$inboundSchema;
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ThrottleControlDtoType$ {
-  /** @deprecated use `ThrottleControlDtoType$inboundSchema` instead. */
-  export const inboundSchema = ThrottleControlDtoType$inboundSchema;
-  /** @deprecated use `ThrottleControlDtoType$outboundSchema` instead. */
-  export const outboundSchema = ThrottleControlDtoType$outboundSchema;
-}
-
 /** @internal */
 export const ThrottleControlDtoUnit$inboundSchema: z.ZodNativeEnum<typeof ThrottleControlDtoUnit> =
   z.nativeEnum(ThrottleControlDtoUnit);
-
 /** @internal */
 export const ThrottleControlDtoUnit$outboundSchema: z.ZodNativeEnum<typeof ThrottleControlDtoUnit> =
   ThrottleControlDtoUnit$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ThrottleControlDtoUnit$ {
-  /** @deprecated use `ThrottleControlDtoUnit$inboundSchema` instead. */
-  export const inboundSchema = ThrottleControlDtoUnit$inboundSchema;
-  /** @deprecated use `ThrottleControlDtoUnit$outboundSchema` instead. */
-  export const outboundSchema = ThrottleControlDtoUnit$outboundSchema;
-}
 
 /** @internal */
 export const ThrottleControlDto$inboundSchema: z.ZodType<ThrottleControlDto, z.ZodTypeDef, unknown> = z.object({
@@ -112,7 +88,6 @@ export const ThrottleControlDto$inboundSchema: z.ZodType<ThrottleControlDto, z.Z
   threshold: z.number().default(1),
   throttleKey: z.string().optional(),
 });
-
 /** @internal */
 export type ThrottleControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -139,23 +114,9 @@ export const ThrottleControlDto$outboundSchema: z.ZodType<
   throttleKey: z.string().optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ThrottleControlDto$ {
-  /** @deprecated use `ThrottleControlDto$inboundSchema` instead. */
-  export const inboundSchema = ThrottleControlDto$inboundSchema;
-  /** @deprecated use `ThrottleControlDto$outboundSchema` instead. */
-  export const outboundSchema = ThrottleControlDto$outboundSchema;
-  /** @deprecated use `ThrottleControlDto$Outbound` instead. */
-  export type Outbound = ThrottleControlDto$Outbound;
-}
-
 export function throttleControlDtoToJSON(throttleControlDto: ThrottleControlDto): string {
   return JSON.stringify(ThrottleControlDto$outboundSchema.parse(throttleControlDto));
 }
-
 export function throttleControlDtoFromJSON(
   jsonString: string
 ): SafeParseResult<ThrottleControlDto, SDKValidationError> {

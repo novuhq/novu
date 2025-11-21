@@ -7,11 +7,7 @@ import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ExecutionDetailsStatusEnum,
-  ExecutionDetailsStatusEnum$inboundSchema,
-  ExecutionDetailsStatusEnum$outboundSchema,
-} from './executiondetailsstatusenum.js';
+import { ExecutionDetailsStatusEnum, ExecutionDetailsStatusEnum$inboundSchema } from './executiondetailsstatusenum.js';
 
 /**
  * Raw data of the execution
@@ -48,29 +44,6 @@ export type StepExecutionDetailDto = {
 /** @internal */
 export const Raw$inboundSchema: z.ZodType<Raw, z.ZodTypeDef, unknown> = z.object({});
 
-/** @internal */
-export type Raw$Outbound = {};
-
-/** @internal */
-export const Raw$outboundSchema: z.ZodType<Raw$Outbound, z.ZodTypeDef, Raw> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Raw$ {
-  /** @deprecated use `Raw$inboundSchema` instead. */
-  export const inboundSchema = Raw$inboundSchema;
-  /** @deprecated use `Raw$outboundSchema` instead. */
-  export const outboundSchema = Raw$outboundSchema;
-  /** @deprecated use `Raw$Outbound` instead. */
-  export type Outbound = Raw$Outbound;
-}
-
-export function rawToJSON(raw: Raw): string {
-  return JSON.stringify(Raw$outboundSchema.parse(raw));
-}
-
 export function rawFromJSON(jsonString: string): SafeParseResult<Raw, SDKValidationError> {
   return safeParse(jsonString, (x) => Raw$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Raw' from JSON`);
 }
@@ -90,53 +63,6 @@ export const StepExecutionDetailDto$inboundSchema: z.ZodType<StepExecutionDetail
       _id: 'id',
     });
   });
-
-/** @internal */
-export type StepExecutionDetailDto$Outbound = {
-  _id: string;
-  createdAt?: string | undefined;
-  status: string;
-  detail: string;
-  providerId?: string | undefined;
-  raw?: Raw$Outbound | null | undefined;
-};
-
-/** @internal */
-export const StepExecutionDetailDto$outboundSchema: z.ZodType<
-  StepExecutionDetailDto$Outbound,
-  z.ZodTypeDef,
-  StepExecutionDetailDto
-> = z
-  .object({
-    id: z.string(),
-    createdAt: z.string().optional(),
-    status: ExecutionDetailsStatusEnum$outboundSchema,
-    detail: z.string(),
-    providerId: z.string().optional(),
-    raw: z.nullable(z.lazy(() => Raw$outboundSchema)).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace StepExecutionDetailDto$ {
-  /** @deprecated use `StepExecutionDetailDto$inboundSchema` instead. */
-  export const inboundSchema = StepExecutionDetailDto$inboundSchema;
-  /** @deprecated use `StepExecutionDetailDto$outboundSchema` instead. */
-  export const outboundSchema = StepExecutionDetailDto$outboundSchema;
-  /** @deprecated use `StepExecutionDetailDto$Outbound` instead. */
-  export type Outbound = StepExecutionDetailDto$Outbound;
-}
-
-export function stepExecutionDetailDtoToJSON(stepExecutionDetailDto: StepExecutionDetailDto): string {
-  return JSON.stringify(StepExecutionDetailDto$outboundSchema.parse(stepExecutionDetailDto));
-}
 
 export function stepExecutionDetailDtoFromJSON(
   jsonString: string

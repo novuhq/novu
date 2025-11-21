@@ -6,12 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  LayoutResponseDto,
-  LayoutResponseDto$inboundSchema,
-  LayoutResponseDto$Outbound,
-  LayoutResponseDto$outboundSchema,
-} from './layoutresponsedto.js';
+import { LayoutResponseDto, LayoutResponseDto$inboundSchema } from './layoutresponsedto.js';
 
 export type ListLayoutResponseDto = {
   /**
@@ -29,39 +24,6 @@ export const ListLayoutResponseDto$inboundSchema: z.ZodType<ListLayoutResponseDt
   layouts: z.array(LayoutResponseDto$inboundSchema),
   totalCount: z.number(),
 });
-
-/** @internal */
-export type ListLayoutResponseDto$Outbound = {
-  layouts: Array<LayoutResponseDto$Outbound>;
-  totalCount: number;
-};
-
-/** @internal */
-export const ListLayoutResponseDto$outboundSchema: z.ZodType<
-  ListLayoutResponseDto$Outbound,
-  z.ZodTypeDef,
-  ListLayoutResponseDto
-> = z.object({
-  layouts: z.array(LayoutResponseDto$outboundSchema),
-  totalCount: z.number(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ListLayoutResponseDto$ {
-  /** @deprecated use `ListLayoutResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ListLayoutResponseDto$inboundSchema;
-  /** @deprecated use `ListLayoutResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ListLayoutResponseDto$outboundSchema;
-  /** @deprecated use `ListLayoutResponseDto$Outbound` instead. */
-  export type Outbound = ListLayoutResponseDto$Outbound;
-}
-
-export function listLayoutResponseDtoToJSON(listLayoutResponseDto: ListLayoutResponseDto): string {
-  return JSON.stringify(ListLayoutResponseDto$outboundSchema.parse(listLayoutResponseDto));
-}
 
 export function listLayoutResponseDtoFromJSON(
   jsonString: string

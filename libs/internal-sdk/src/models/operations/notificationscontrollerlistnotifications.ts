@@ -53,7 +53,7 @@ export type NotificationsControllerListNotificationsRequest = {
    */
   topicKey?: string | undefined;
   /**
-   * Filter by exact context keys (format: "type:id")
+   * Filter by exact context keys, order insensitive (format: "type:id")
    */
   contextKeys?: Array<string> | undefined;
   /**
@@ -74,34 +74,6 @@ export type NotificationsControllerListNotificationsResponse = {
   headers: { [k: string]: Array<string> };
   result: components.ActivitiesResponseDto;
 };
-
-/** @internal */
-export const NotificationsControllerListNotificationsRequest$inboundSchema: z.ZodType<
-  NotificationsControllerListNotificationsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    channels: z.array(components.ChannelTypeEnum$inboundSchema).optional(),
-    templates: z.array(z.string()).optional(),
-    emails: z.array(z.string()).optional(),
-    search: z.string().optional(),
-    subscriberIds: z.array(z.string()).optional(),
-    severity: z.array(z.string()).optional(),
-    page: z.number().default(0),
-    limit: z.number().default(10),
-    transactionId: z.string().optional(),
-    topicKey: z.string().optional(),
-    contextKeys: z.array(z.string()).optional(),
-    after: z.string().optional(),
-    before: z.string().optional(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
 
 /** @internal */
 export type NotificationsControllerListNotificationsRequest$Outbound = {
@@ -149,19 +121,6 @@ export const NotificationsControllerListNotificationsRequest$outboundSchema: z.Z
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace NotificationsControllerListNotificationsRequest$ {
-  /** @deprecated use `NotificationsControllerListNotificationsRequest$inboundSchema` instead. */
-  export const inboundSchema = NotificationsControllerListNotificationsRequest$inboundSchema;
-  /** @deprecated use `NotificationsControllerListNotificationsRequest$outboundSchema` instead. */
-  export const outboundSchema = NotificationsControllerListNotificationsRequest$outboundSchema;
-  /** @deprecated use `NotificationsControllerListNotificationsRequest$Outbound` instead. */
-  export type Outbound = NotificationsControllerListNotificationsRequest$Outbound;
-}
-
 export function notificationsControllerListNotificationsRequestToJSON(
   notificationsControllerListNotificationsRequest: NotificationsControllerListNotificationsRequest
 ): string {
@@ -169,16 +128,6 @@ export function notificationsControllerListNotificationsRequestToJSON(
     NotificationsControllerListNotificationsRequest$outboundSchema.parse(
       notificationsControllerListNotificationsRequest
     )
-  );
-}
-
-export function notificationsControllerListNotificationsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<NotificationsControllerListNotificationsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => NotificationsControllerListNotificationsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'NotificationsControllerListNotificationsRequest' from JSON`
   );
 }
 
@@ -198,52 +147,6 @@ export const NotificationsControllerListNotificationsResponse$inboundSchema: z.Z
       Result: 'result',
     });
   });
-
-/** @internal */
-export type NotificationsControllerListNotificationsResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.ActivitiesResponseDto$Outbound;
-};
-
-/** @internal */
-export const NotificationsControllerListNotificationsResponse$outboundSchema: z.ZodType<
-  NotificationsControllerListNotificationsResponse$Outbound,
-  z.ZodTypeDef,
-  NotificationsControllerListNotificationsResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.ActivitiesResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace NotificationsControllerListNotificationsResponse$ {
-  /** @deprecated use `NotificationsControllerListNotificationsResponse$inboundSchema` instead. */
-  export const inboundSchema = NotificationsControllerListNotificationsResponse$inboundSchema;
-  /** @deprecated use `NotificationsControllerListNotificationsResponse$outboundSchema` instead. */
-  export const outboundSchema = NotificationsControllerListNotificationsResponse$outboundSchema;
-  /** @deprecated use `NotificationsControllerListNotificationsResponse$Outbound` instead. */
-  export type Outbound = NotificationsControllerListNotificationsResponse$Outbound;
-}
-
-export function notificationsControllerListNotificationsResponseToJSON(
-  notificationsControllerListNotificationsResponse: NotificationsControllerListNotificationsResponse
-): string {
-  return JSON.stringify(
-    NotificationsControllerListNotificationsResponse$outboundSchema.parse(
-      notificationsControllerListNotificationsResponse
-    )
-  );
-}
 
 export function notificationsControllerListNotificationsResponseFromJSON(
   jsonString: string

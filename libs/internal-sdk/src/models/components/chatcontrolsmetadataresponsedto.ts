@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ChatControlDto,
-  ChatControlDto$inboundSchema,
-  ChatControlDto$Outbound,
-  ChatControlDto$outboundSchema,
-} from './chatcontroldto.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { ChatControlDto, ChatControlDto$inboundSchema } from './chatcontroldto.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type ChatControlsMetadataResponseDto = {
   /**
@@ -39,43 +34,6 @@ export const ChatControlsMetadataResponseDto$inboundSchema: z.ZodType<
   uiSchema: UiSchema$inboundSchema.optional(),
   values: ChatControlDto$inboundSchema,
 });
-
-/** @internal */
-export type ChatControlsMetadataResponseDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-  values: ChatControlDto$Outbound;
-};
-
-/** @internal */
-export const ChatControlsMetadataResponseDto$outboundSchema: z.ZodType<
-  ChatControlsMetadataResponseDto$Outbound,
-  z.ZodTypeDef,
-  ChatControlsMetadataResponseDto
-> = z.object({
-  dataSchema: z.record(z.any()).optional(),
-  uiSchema: UiSchema$outboundSchema.optional(),
-  values: ChatControlDto$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChatControlsMetadataResponseDto$ {
-  /** @deprecated use `ChatControlsMetadataResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ChatControlsMetadataResponseDto$inboundSchema;
-  /** @deprecated use `ChatControlsMetadataResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ChatControlsMetadataResponseDto$outboundSchema;
-  /** @deprecated use `ChatControlsMetadataResponseDto$Outbound` instead. */
-  export type Outbound = ChatControlsMetadataResponseDto$Outbound;
-}
-
-export function chatControlsMetadataResponseDtoToJSON(
-  chatControlsMetadataResponseDto: ChatControlsMetadataResponseDto
-): string {
-  return JSON.stringify(ChatControlsMetadataResponseDto$outboundSchema.parse(chatControlsMetadataResponseDto));
-}
 
 export function chatControlsMetadataResponseDtoFromJSON(
   jsonString: string

@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { ActionDto, ActionDto$inboundSchema, ActionDto$Outbound, ActionDto$outboundSchema } from './actiondto.js';
-import {
-  RedirectDto,
-  RedirectDto$inboundSchema,
-  RedirectDto$Outbound,
-  RedirectDto$outboundSchema,
-} from './redirectdto.js';
+import { ActionDto, ActionDto$inboundSchema } from './actiondto.js';
+import { RedirectDto, RedirectDto$inboundSchema } from './redirectdto.js';
 
 export type InAppRenderOutput = {
   /**
@@ -55,46 +50,6 @@ export const InAppRenderOutput$inboundSchema: z.ZodType<InAppRenderOutput, z.Zod
   data: z.record(z.any()).optional(),
   redirect: RedirectDto$inboundSchema.optional(),
 });
-
-/** @internal */
-export type InAppRenderOutput$Outbound = {
-  subject?: string | undefined;
-  body: string;
-  avatar?: string | undefined;
-  primaryAction?: ActionDto$Outbound | undefined;
-  secondaryAction?: ActionDto$Outbound | undefined;
-  data?: { [k: string]: any } | undefined;
-  redirect?: RedirectDto$Outbound | undefined;
-};
-
-/** @internal */
-export const InAppRenderOutput$outboundSchema: z.ZodType<InAppRenderOutput$Outbound, z.ZodTypeDef, InAppRenderOutput> =
-  z.object({
-    subject: z.string().optional(),
-    body: z.string(),
-    avatar: z.string().optional(),
-    primaryAction: ActionDto$outboundSchema.optional(),
-    secondaryAction: ActionDto$outboundSchema.optional(),
-    data: z.record(z.any()).optional(),
-    redirect: RedirectDto$outboundSchema.optional(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppRenderOutput$ {
-  /** @deprecated use `InAppRenderOutput$inboundSchema` instead. */
-  export const inboundSchema = InAppRenderOutput$inboundSchema;
-  /** @deprecated use `InAppRenderOutput$outboundSchema` instead. */
-  export const outboundSchema = InAppRenderOutput$outboundSchema;
-  /** @deprecated use `InAppRenderOutput$Outbound` instead. */
-  export type Outbound = InAppRenderOutput$Outbound;
-}
-
-export function inAppRenderOutputToJSON(inAppRenderOutput: InAppRenderOutput): string {
-  return JSON.stringify(InAppRenderOutput$outboundSchema.parse(inAppRenderOutput));
-}
 
 export function inAppRenderOutputFromJSON(jsonString: string): SafeParseResult<InAppRenderOutput, SDKValidationError> {
   return safeParse(

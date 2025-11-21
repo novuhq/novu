@@ -23,7 +23,6 @@ export const TimeRangeDto$inboundSchema: z.ZodType<TimeRangeDto, z.ZodTypeDef, u
   start: z.string(),
   end: z.string(),
 });
-
 /** @internal */
 export type TimeRangeDto$Outbound = {
   start: string;
@@ -36,23 +35,9 @@ export const TimeRangeDto$outboundSchema: z.ZodType<TimeRangeDto$Outbound, z.Zod
   end: z.string(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TimeRangeDto$ {
-  /** @deprecated use `TimeRangeDto$inboundSchema` instead. */
-  export const inboundSchema = TimeRangeDto$inboundSchema;
-  /** @deprecated use `TimeRangeDto$outboundSchema` instead. */
-  export const outboundSchema = TimeRangeDto$outboundSchema;
-  /** @deprecated use `TimeRangeDto$Outbound` instead. */
-  export type Outbound = TimeRangeDto$Outbound;
-}
-
 export function timeRangeDtoToJSON(timeRangeDto: TimeRangeDto): string {
   return JSON.stringify(TimeRangeDto$outboundSchema.parse(timeRangeDto));
 }
-
 export function timeRangeDtoFromJSON(jsonString: string): SafeParseResult<TimeRangeDto, SDKValidationError> {
   return safeParse(
     jsonString,

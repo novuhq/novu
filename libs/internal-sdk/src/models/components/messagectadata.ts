@@ -19,35 +19,6 @@ export const MessageCTAData$inboundSchema: z.ZodType<MessageCTAData, z.ZodTypeDe
   url: z.string().optional(),
 });
 
-/** @internal */
-export type MessageCTAData$Outbound = {
-  url?: string | undefined;
-};
-
-/** @internal */
-export const MessageCTAData$outboundSchema: z.ZodType<MessageCTAData$Outbound, z.ZodTypeDef, MessageCTAData> = z.object(
-  {
-    url: z.string().optional(),
-  }
-);
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessageCTAData$ {
-  /** @deprecated use `MessageCTAData$inboundSchema` instead. */
-  export const inboundSchema = MessageCTAData$inboundSchema;
-  /** @deprecated use `MessageCTAData$outboundSchema` instead. */
-  export const outboundSchema = MessageCTAData$outboundSchema;
-  /** @deprecated use `MessageCTAData$Outbound` instead. */
-  export type Outbound = MessageCTAData$Outbound;
-}
-
-export function messageCTADataToJSON(messageCTAData: MessageCTAData): string {
-  return JSON.stringify(MessageCTAData$outboundSchema.parse(messageCTAData));
-}
-
 export function messageCTADataFromJSON(jsonString: string): SafeParseResult<MessageCTAData, SDKValidationError> {
   return safeParse(
     jsonString,

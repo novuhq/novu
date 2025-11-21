@@ -20,18 +20,3 @@ export type EmailBlockTypeEnum = ClosedEnum<typeof EmailBlockTypeEnum>;
 /** @internal */
 export const EmailBlockTypeEnum$inboundSchema: z.ZodNativeEnum<typeof EmailBlockTypeEnum> =
   z.nativeEnum(EmailBlockTypeEnum);
-
-/** @internal */
-export const EmailBlockTypeEnum$outboundSchema: z.ZodNativeEnum<typeof EmailBlockTypeEnum> =
-  EmailBlockTypeEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailBlockTypeEnum$ {
-  /** @deprecated use `EmailBlockTypeEnum$inboundSchema` instead. */
-  export const inboundSchema = EmailBlockTypeEnum$inboundSchema;
-  /** @deprecated use `EmailBlockTypeEnum$outboundSchema` instead. */
-  export const outboundSchema = EmailBlockTypeEnum$outboundSchema;
-}

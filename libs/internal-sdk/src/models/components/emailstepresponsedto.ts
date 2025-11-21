@@ -11,21 +11,10 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   EmailControlsMetadataResponseDto,
   EmailControlsMetadataResponseDto$inboundSchema,
-  EmailControlsMetadataResponseDto$Outbound,
-  EmailControlsMetadataResponseDto$outboundSchema,
 } from './emailcontrolsmetadataresponsedto.js';
-import {
-  ResourceOriginEnum,
-  ResourceOriginEnum$inboundSchema,
-  ResourceOriginEnum$outboundSchema,
-} from './resourceoriginenum.js';
-import {
-  StepIssuesDto,
-  StepIssuesDto$inboundSchema,
-  StepIssuesDto$Outbound,
-  StepIssuesDto$outboundSchema,
-} from './stepissuesdto.js';
-import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
+import { ResourceOriginEnum, ResourceOriginEnum$inboundSchema } from './resourceoriginenum.js';
+import { StepIssuesDto, StepIssuesDto$inboundSchema } from './stepissuesdto.js';
+import { StepTypeEnum, StepTypeEnum$inboundSchema } from './steptypeenum.js';
 
 /**
  * Type of editor to use for the body.
@@ -126,21 +115,6 @@ export const EmailStepResponseDtoEditorType$inboundSchema: z.ZodNativeEnum<typeo
   z.nativeEnum(EmailStepResponseDtoEditorType);
 
 /** @internal */
-export const EmailStepResponseDtoEditorType$outboundSchema: z.ZodNativeEnum<typeof EmailStepResponseDtoEditorType> =
-  EmailStepResponseDtoEditorType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailStepResponseDtoEditorType$ {
-  /** @deprecated use `EmailStepResponseDtoEditorType$inboundSchema` instead. */
-  export const inboundSchema = EmailStepResponseDtoEditorType$inboundSchema;
-  /** @deprecated use `EmailStepResponseDtoEditorType$outboundSchema` instead. */
-  export const outboundSchema = EmailStepResponseDtoEditorType$outboundSchema;
-}
-
-/** @internal */
 export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
   EmailStepResponseDtoControlValues,
   z.ZodTypeDef,
@@ -159,60 +133,6 @@ export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
   'additionalProperties',
   true
 );
-
-/** @internal */
-export type EmailStepResponseDtoControlValues$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  subject: string;
-  body: string;
-  editorType: string;
-  disableOutputSanitization: boolean;
-  layoutId?: string | null | undefined;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const EmailStepResponseDtoControlValues$outboundSchema: z.ZodType<
-  EmailStepResponseDtoControlValues$Outbound,
-  z.ZodTypeDef,
-  EmailStepResponseDtoControlValues
-> = z
-  .object({
-    skip: z.record(z.any()).optional(),
-    subject: z.string(),
-    body: z.string().default(''),
-    editorType: EmailStepResponseDtoEditorType$outboundSchema.default('block'),
-    disableOutputSanitization: z.boolean().default(false),
-    layoutId: z.nullable(z.string()).optional(),
-    additionalProperties: z.record(z.any()).optional(),
-  })
-  .transform((v) => {
-    return {
-      ...v.additionalProperties,
-      ...remap$(v, {
-        additionalProperties: null,
-      }),
-    };
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailStepResponseDtoControlValues$ {
-  /** @deprecated use `EmailStepResponseDtoControlValues$inboundSchema` instead. */
-  export const inboundSchema = EmailStepResponseDtoControlValues$inboundSchema;
-  /** @deprecated use `EmailStepResponseDtoControlValues$outboundSchema` instead. */
-  export const outboundSchema = EmailStepResponseDtoControlValues$outboundSchema;
-  /** @deprecated use `EmailStepResponseDtoControlValues$Outbound` instead. */
-  export type Outbound = EmailStepResponseDtoControlValues$Outbound;
-}
-
-export function emailStepResponseDtoControlValuesToJSON(
-  emailStepResponseDtoControlValues: EmailStepResponseDtoControlValues
-): string {
-  return JSON.stringify(EmailStepResponseDtoControlValues$outboundSchema.parse(emailStepResponseDtoControlValues));
-}
 
 export function emailStepResponseDtoControlValuesFromJSON(
   jsonString: string
@@ -245,65 +165,6 @@ export const EmailStepResponseDto$inboundSchema: z.ZodType<EmailStepResponseDto,
       _id: 'id',
     });
   });
-
-/** @internal */
-export type EmailStepResponseDto$Outbound = {
-  controls: EmailControlsMetadataResponseDto$Outbound;
-  controlValues?: EmailStepResponseDtoControlValues$Outbound | undefined;
-  variables: { [k: string]: any };
-  stepId: string;
-  _id: string;
-  name: string;
-  slug: string;
-  type: string;
-  origin: string;
-  workflowId: string;
-  workflowDatabaseId: string;
-  issues?: StepIssuesDto$Outbound | undefined;
-};
-
-/** @internal */
-export const EmailStepResponseDto$outboundSchema: z.ZodType<
-  EmailStepResponseDto$Outbound,
-  z.ZodTypeDef,
-  EmailStepResponseDto
-> = z
-  .object({
-    controls: EmailControlsMetadataResponseDto$outboundSchema,
-    controlValues: z.lazy(() => EmailStepResponseDtoControlValues$outboundSchema).optional(),
-    variables: z.record(z.any()),
-    stepId: z.string(),
-    id: z.string(),
-    name: z.string(),
-    slug: z.string(),
-    type: StepTypeEnum$outboundSchema,
-    origin: ResourceOriginEnum$outboundSchema,
-    workflowId: z.string(),
-    workflowDatabaseId: z.string(),
-    issues: StepIssuesDto$outboundSchema.optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailStepResponseDto$ {
-  /** @deprecated use `EmailStepResponseDto$inboundSchema` instead. */
-  export const inboundSchema = EmailStepResponseDto$inboundSchema;
-  /** @deprecated use `EmailStepResponseDto$outboundSchema` instead. */
-  export const outboundSchema = EmailStepResponseDto$outboundSchema;
-  /** @deprecated use `EmailStepResponseDto$Outbound` instead. */
-  export type Outbound = EmailStepResponseDto$Outbound;
-}
-
-export function emailStepResponseDtoToJSON(emailStepResponseDto: EmailStepResponseDto): string {
-  return JSON.stringify(EmailStepResponseDto$outboundSchema.parse(emailStepResponseDto));
-}
 
 export function emailStepResponseDtoFromJSON(
   jsonString: string

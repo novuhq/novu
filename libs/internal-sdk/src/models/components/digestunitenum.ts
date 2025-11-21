@@ -23,17 +23,3 @@ export type DigestUnitEnum = ClosedEnum<typeof DigestUnitEnum>;
 
 /** @internal */
 export const DigestUnitEnum$inboundSchema: z.ZodNativeEnum<typeof DigestUnitEnum> = z.nativeEnum(DigestUnitEnum);
-
-/** @internal */
-export const DigestUnitEnum$outboundSchema: z.ZodNativeEnum<typeof DigestUnitEnum> = DigestUnitEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestUnitEnum$ {
-  /** @deprecated use `DigestUnitEnum$inboundSchema` instead. */
-  export const inboundSchema = DigestUnitEnum$inboundSchema;
-  /** @deprecated use `DigestUnitEnum$outboundSchema` instead. */
-  export const outboundSchema = DigestUnitEnum$outboundSchema;
-}

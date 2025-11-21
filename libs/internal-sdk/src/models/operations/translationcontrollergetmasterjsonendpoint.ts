@@ -4,9 +4,6 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type TranslationControllerGetMasterJsonEndpointRequest = {
   /**
@@ -18,22 +15,6 @@ export type TranslationControllerGetMasterJsonEndpointRequest = {
    */
   idempotencyKey?: string | undefined;
 };
-
-/** @internal */
-export const TranslationControllerGetMasterJsonEndpointRequest$inboundSchema: z.ZodType<
-  TranslationControllerGetMasterJsonEndpointRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    locale: z.string().optional(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
 
 /** @internal */
 export type TranslationControllerGetMasterJsonEndpointRequest$Outbound = {
@@ -57,19 +38,6 @@ export const TranslationControllerGetMasterJsonEndpointRequest$outboundSchema: z
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TranslationControllerGetMasterJsonEndpointRequest$ {
-  /** @deprecated use `TranslationControllerGetMasterJsonEndpointRequest$inboundSchema` instead. */
-  export const inboundSchema = TranslationControllerGetMasterJsonEndpointRequest$inboundSchema;
-  /** @deprecated use `TranslationControllerGetMasterJsonEndpointRequest$outboundSchema` instead. */
-  export const outboundSchema = TranslationControllerGetMasterJsonEndpointRequest$outboundSchema;
-  /** @deprecated use `TranslationControllerGetMasterJsonEndpointRequest$Outbound` instead. */
-  export type Outbound = TranslationControllerGetMasterJsonEndpointRequest$Outbound;
-}
-
 export function translationControllerGetMasterJsonEndpointRequestToJSON(
   translationControllerGetMasterJsonEndpointRequest: TranslationControllerGetMasterJsonEndpointRequest
 ): string {
@@ -77,15 +45,5 @@ export function translationControllerGetMasterJsonEndpointRequestToJSON(
     TranslationControllerGetMasterJsonEndpointRequest$outboundSchema.parse(
       translationControllerGetMasterJsonEndpointRequest
     )
-  );
-}
-
-export function translationControllerGetMasterJsonEndpointRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TranslationControllerGetMasterJsonEndpointRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TranslationControllerGetMasterJsonEndpointRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TranslationControllerGetMasterJsonEndpointRequest' from JSON`
   );
 }

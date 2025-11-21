@@ -3,20 +3,12 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   ChannelCredentials,
-  ChannelCredentials$inboundSchema,
   ChannelCredentials$Outbound,
   ChannelCredentials$outboundSchema,
 } from './channelcredentials.js';
-import {
-  ChatOrPushProviderEnum,
-  ChatOrPushProviderEnum$inboundSchema,
-  ChatOrPushProviderEnum$outboundSchema,
-} from './chatorpushproviderenum.js';
+import { ChatOrPushProviderEnum, ChatOrPushProviderEnum$outboundSchema } from './chatorpushproviderenum.js';
 
 export type UpdateSubscriberChannelRequestDto = {
   /**
@@ -32,17 +24,6 @@ export type UpdateSubscriberChannelRequestDto = {
    */
   credentials: ChannelCredentials;
 };
-
-/** @internal */
-export const UpdateSubscriberChannelRequestDto$inboundSchema: z.ZodType<
-  UpdateSubscriberChannelRequestDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  providerId: ChatOrPushProviderEnum$inboundSchema,
-  integrationIdentifier: z.string().optional(),
-  credentials: ChannelCredentials$inboundSchema,
-});
 
 /** @internal */
 export type UpdateSubscriberChannelRequestDto$Outbound = {
@@ -62,31 +43,8 @@ export const UpdateSubscriberChannelRequestDto$outboundSchema: z.ZodType<
   credentials: ChannelCredentials$outboundSchema,
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UpdateSubscriberChannelRequestDto$ {
-  /** @deprecated use `UpdateSubscriberChannelRequestDto$inboundSchema` instead. */
-  export const inboundSchema = UpdateSubscriberChannelRequestDto$inboundSchema;
-  /** @deprecated use `UpdateSubscriberChannelRequestDto$outboundSchema` instead. */
-  export const outboundSchema = UpdateSubscriberChannelRequestDto$outboundSchema;
-  /** @deprecated use `UpdateSubscriberChannelRequestDto$Outbound` instead. */
-  export type Outbound = UpdateSubscriberChannelRequestDto$Outbound;
-}
-
 export function updateSubscriberChannelRequestDtoToJSON(
   updateSubscriberChannelRequestDto: UpdateSubscriberChannelRequestDto
 ): string {
   return JSON.stringify(UpdateSubscriberChannelRequestDto$outboundSchema.parse(updateSubscriberChannelRequestDto));
-}
-
-export function updateSubscriberChannelRequestDtoFromJSON(
-  jsonString: string
-): SafeParseResult<UpdateSubscriberChannelRequestDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => UpdateSubscriberChannelRequestDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'UpdateSubscriberChannelRequestDto' from JSON`
-  );
 }

@@ -24,24 +24,6 @@ export type IntegrationsControllerUpdateIntegrationByIdResponse = {
 };
 
 /** @internal */
-export const IntegrationsControllerUpdateIntegrationByIdRequest$inboundSchema: z.ZodType<
-  IntegrationsControllerUpdateIntegrationByIdRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    integrationId: z.string(),
-    'idempotency-key': z.string().optional(),
-    UpdateIntegrationRequestDto: components.UpdateIntegrationRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      UpdateIntegrationRequestDto: 'updateIntegrationRequestDto',
-    });
-  });
-
-/** @internal */
 export type IntegrationsControllerUpdateIntegrationByIdRequest$Outbound = {
   integrationId: string;
   'idempotency-key'?: string | undefined;
@@ -66,19 +48,6 @@ export const IntegrationsControllerUpdateIntegrationByIdRequest$outboundSchema: 
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace IntegrationsControllerUpdateIntegrationByIdRequest$ {
-  /** @deprecated use `IntegrationsControllerUpdateIntegrationByIdRequest$inboundSchema` instead. */
-  export const inboundSchema = IntegrationsControllerUpdateIntegrationByIdRequest$inboundSchema;
-  /** @deprecated use `IntegrationsControllerUpdateIntegrationByIdRequest$outboundSchema` instead. */
-  export const outboundSchema = IntegrationsControllerUpdateIntegrationByIdRequest$outboundSchema;
-  /** @deprecated use `IntegrationsControllerUpdateIntegrationByIdRequest$Outbound` instead. */
-  export type Outbound = IntegrationsControllerUpdateIntegrationByIdRequest$Outbound;
-}
-
 export function integrationsControllerUpdateIntegrationByIdRequestToJSON(
   integrationsControllerUpdateIntegrationByIdRequest: IntegrationsControllerUpdateIntegrationByIdRequest
 ): string {
@@ -86,16 +55,6 @@ export function integrationsControllerUpdateIntegrationByIdRequestToJSON(
     IntegrationsControllerUpdateIntegrationByIdRequest$outboundSchema.parse(
       integrationsControllerUpdateIntegrationByIdRequest
     )
-  );
-}
-
-export function integrationsControllerUpdateIntegrationByIdRequestFromJSON(
-  jsonString: string
-): SafeParseResult<IntegrationsControllerUpdateIntegrationByIdRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => IntegrationsControllerUpdateIntegrationByIdRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'IntegrationsControllerUpdateIntegrationByIdRequest' from JSON`
   );
 }
 
@@ -115,52 +74,6 @@ export const IntegrationsControllerUpdateIntegrationByIdResponse$inboundSchema: 
       Result: 'result',
     });
   });
-
-/** @internal */
-export type IntegrationsControllerUpdateIntegrationByIdResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.IntegrationResponseDto$Outbound;
-};
-
-/** @internal */
-export const IntegrationsControllerUpdateIntegrationByIdResponse$outboundSchema: z.ZodType<
-  IntegrationsControllerUpdateIntegrationByIdResponse$Outbound,
-  z.ZodTypeDef,
-  IntegrationsControllerUpdateIntegrationByIdResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.IntegrationResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace IntegrationsControllerUpdateIntegrationByIdResponse$ {
-  /** @deprecated use `IntegrationsControllerUpdateIntegrationByIdResponse$inboundSchema` instead. */
-  export const inboundSchema = IntegrationsControllerUpdateIntegrationByIdResponse$inboundSchema;
-  /** @deprecated use `IntegrationsControllerUpdateIntegrationByIdResponse$outboundSchema` instead. */
-  export const outboundSchema = IntegrationsControllerUpdateIntegrationByIdResponse$outboundSchema;
-  /** @deprecated use `IntegrationsControllerUpdateIntegrationByIdResponse$Outbound` instead. */
-  export type Outbound = IntegrationsControllerUpdateIntegrationByIdResponse$Outbound;
-}
-
-export function integrationsControllerUpdateIntegrationByIdResponseToJSON(
-  integrationsControllerUpdateIntegrationByIdResponse: IntegrationsControllerUpdateIntegrationByIdResponse
-): string {
-  return JSON.stringify(
-    IntegrationsControllerUpdateIntegrationByIdResponse$outboundSchema.parse(
-      integrationsControllerUpdateIntegrationByIdResponse
-    )
-  );
-}
 
 export function integrationsControllerUpdateIntegrationByIdResponseFromJSON(
   jsonString: string

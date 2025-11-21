@@ -4,10 +4,7 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export const ReportType = {
   DeliveryTrend: 'delivery-trend',
@@ -49,62 +46,10 @@ export type ActivityControllerGetChartsRequest = {
 };
 
 /** @internal */
-export const ReportType$inboundSchema: z.ZodNativeEnum<typeof ReportType> = z.nativeEnum(ReportType);
+export const ReportType$outboundSchema: z.ZodNativeEnum<typeof ReportType> = z.nativeEnum(ReportType);
 
 /** @internal */
-export const ReportType$outboundSchema: z.ZodNativeEnum<typeof ReportType> = ReportType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ReportType$ {
-  /** @deprecated use `ReportType$inboundSchema` instead. */
-  export const inboundSchema = ReportType$inboundSchema;
-  /** @deprecated use `ReportType$outboundSchema` instead. */
-  export const outboundSchema = ReportType$outboundSchema;
-}
-
-/** @internal */
-export const Statuses$inboundSchema: z.ZodNativeEnum<typeof Statuses> = z.nativeEnum(Statuses);
-
-/** @internal */
-export const Statuses$outboundSchema: z.ZodNativeEnum<typeof Statuses> = Statuses$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Statuses$ {
-  /** @deprecated use `Statuses$inboundSchema` instead. */
-  export const inboundSchema = Statuses$inboundSchema;
-  /** @deprecated use `Statuses$outboundSchema` instead. */
-  export const outboundSchema = Statuses$outboundSchema;
-}
-
-/** @internal */
-export const ActivityControllerGetChartsRequest$inboundSchema: z.ZodType<
-  ActivityControllerGetChartsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    createdAtGte: z.string().optional(),
-    createdAtLte: z.string().optional(),
-    reportType: z.array(ReportType$inboundSchema),
-    workflowIds: z.array(z.string()).optional(),
-    subscriberIds: z.array(z.string()).optional(),
-    transactionIds: z.array(z.string()).optional(),
-    statuses: z.array(Statuses$inboundSchema).optional(),
-    channels: z.array(z.string()).optional(),
-    topicKey: z.string().optional(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
+export const Statuses$outboundSchema: z.ZodNativeEnum<typeof Statuses> = z.nativeEnum(Statuses);
 
 /** @internal */
 export type ActivityControllerGetChartsRequest$Outbound = {
@@ -144,31 +89,8 @@ export const ActivityControllerGetChartsRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityControllerGetChartsRequest$ {
-  /** @deprecated use `ActivityControllerGetChartsRequest$inboundSchema` instead. */
-  export const inboundSchema = ActivityControllerGetChartsRequest$inboundSchema;
-  /** @deprecated use `ActivityControllerGetChartsRequest$outboundSchema` instead. */
-  export const outboundSchema = ActivityControllerGetChartsRequest$outboundSchema;
-  /** @deprecated use `ActivityControllerGetChartsRequest$Outbound` instead. */
-  export type Outbound = ActivityControllerGetChartsRequest$Outbound;
-}
-
 export function activityControllerGetChartsRequestToJSON(
   activityControllerGetChartsRequest: ActivityControllerGetChartsRequest
 ): string {
   return JSON.stringify(ActivityControllerGetChartsRequest$outboundSchema.parse(activityControllerGetChartsRequest));
-}
-
-export function activityControllerGetChartsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<ActivityControllerGetChartsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ActivityControllerGetChartsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ActivityControllerGetChartsRequest' from JSON`
-  );
 }

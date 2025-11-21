@@ -8,12 +8,13 @@ import { translationsUpload } from '../funcs/translationsUpload.js';
 import { combineSignals } from '../lib/primitives.js';
 import { RequestOptions } from '../lib/sdks.js';
 import * as components from '../models/components/index.js';
+import * as operations from '../models/operations/index.js';
 import { unwrapAsync } from '../types/fp.js';
 import { useNovuContext } from './_context.js';
 import { MutationHookOptions } from './_types.js';
 
 export type TranslationsUploadMutationVariables = {
-  uploadTranslationsRequestDto: components.UploadTranslationsRequestDto;
+  requestBody: operations.TranslationControllerUploadTranslationFilesRequestBody;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
@@ -50,7 +51,7 @@ export function buildTranslationsUploadMutation(
   return {
     mutationKey: mutationKeyTranslationsUpload(),
     mutationFn: function translationsUploadMutationFn({
-      uploadTranslationsRequestDto,
+      requestBody,
       idempotencyKey,
       options,
     }): Promise<TranslationsUploadMutationData> {
@@ -63,7 +64,7 @@ export function buildTranslationsUploadMutation(
           signal: combineSignals(hookOptions?.fetchOptions?.signal, options?.fetchOptions?.signal),
         },
       };
-      return unwrapAsync(translationsUpload(client$, uploadTranslationsRequestDto, idempotencyKey, mergedOptions));
+      return unwrapAsync(translationsUpload(client$, requestBody, idempotencyKey, mergedOptions));
     },
   };
 }

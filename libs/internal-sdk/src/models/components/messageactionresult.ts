@@ -6,7 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { ButtonTypeEnum, ButtonTypeEnum$inboundSchema, ButtonTypeEnum$outboundSchema } from './buttontypeenum.js';
+import { ButtonTypeEnum, ButtonTypeEnum$inboundSchema } from './buttontypeenum.js';
 
 /**
  * Payload of the action result
@@ -28,33 +28,6 @@ export type MessageActionResult = {
 export const MessageActionResultPayload$inboundSchema: z.ZodType<MessageActionResultPayload, z.ZodTypeDef, unknown> =
   z.object({});
 
-/** @internal */
-export type MessageActionResultPayload$Outbound = {};
-
-/** @internal */
-export const MessageActionResultPayload$outboundSchema: z.ZodType<
-  MessageActionResultPayload$Outbound,
-  z.ZodTypeDef,
-  MessageActionResultPayload
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessageActionResultPayload$ {
-  /** @deprecated use `MessageActionResultPayload$inboundSchema` instead. */
-  export const inboundSchema = MessageActionResultPayload$inboundSchema;
-  /** @deprecated use `MessageActionResultPayload$outboundSchema` instead. */
-  export const outboundSchema = MessageActionResultPayload$outboundSchema;
-  /** @deprecated use `MessageActionResultPayload$Outbound` instead. */
-  export type Outbound = MessageActionResultPayload$Outbound;
-}
-
-export function messageActionResultPayloadToJSON(messageActionResultPayload: MessageActionResultPayload): string {
-  return JSON.stringify(MessageActionResultPayload$outboundSchema.parse(messageActionResultPayload));
-}
-
 export function messageActionResultPayloadFromJSON(
   jsonString: string
 ): SafeParseResult<MessageActionResultPayload, SDKValidationError> {
@@ -70,39 +43,6 @@ export const MessageActionResult$inboundSchema: z.ZodType<MessageActionResult, z
   payload: z.lazy(() => MessageActionResultPayload$inboundSchema).optional(),
   type: ButtonTypeEnum$inboundSchema.optional(),
 });
-
-/** @internal */
-export type MessageActionResult$Outbound = {
-  payload?: MessageActionResultPayload$Outbound | undefined;
-  type?: string | undefined;
-};
-
-/** @internal */
-export const MessageActionResult$outboundSchema: z.ZodType<
-  MessageActionResult$Outbound,
-  z.ZodTypeDef,
-  MessageActionResult
-> = z.object({
-  payload: z.lazy(() => MessageActionResultPayload$outboundSchema).optional(),
-  type: ButtonTypeEnum$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace MessageActionResult$ {
-  /** @deprecated use `MessageActionResult$inboundSchema` instead. */
-  export const inboundSchema = MessageActionResult$inboundSchema;
-  /** @deprecated use `MessageActionResult$outboundSchema` instead. */
-  export const outboundSchema = MessageActionResult$outboundSchema;
-  /** @deprecated use `MessageActionResult$Outbound` instead. */
-  export type Outbound = MessageActionResult$Outbound;
-}
-
-export function messageActionResultToJSON(messageActionResult: MessageActionResult): string {
-  return JSON.stringify(MessageActionResult$outboundSchema.parse(messageActionResult));
-}
 
 export function messageActionResultFromJSON(
   jsonString: string

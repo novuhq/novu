@@ -21,17 +21,3 @@ export type ContentIssueEnum = ClosedEnum<typeof ContentIssueEnum>;
 
 /** @internal */
 export const ContentIssueEnum$inboundSchema: z.ZodNativeEnum<typeof ContentIssueEnum> = z.nativeEnum(ContentIssueEnum);
-
-/** @internal */
-export const ContentIssueEnum$outboundSchema: z.ZodNativeEnum<typeof ContentIssueEnum> = ContentIssueEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ContentIssueEnum$ {
-  /** @deprecated use `ContentIssueEnum$inboundSchema` instead. */
-  export const inboundSchema = ContentIssueEnum$inboundSchema;
-  /** @deprecated use `ContentIssueEnum$outboundSchema` instead. */
-  export const outboundSchema = ContentIssueEnum$outboundSchema;
-}

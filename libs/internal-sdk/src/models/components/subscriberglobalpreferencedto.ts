@@ -6,17 +6,10 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ScheduleDto,
-  ScheduleDto$inboundSchema,
-  ScheduleDto$Outbound,
-  ScheduleDto$outboundSchema,
-} from './scheduledto.js';
+import { ScheduleDto, ScheduleDto$inboundSchema } from './scheduledto.js';
 import {
   SubscriberPreferenceChannels,
   SubscriberPreferenceChannels$inboundSchema,
-  SubscriberPreferenceChannels$Outbound,
-  SubscriberPreferenceChannels$outboundSchema,
 } from './subscriberpreferencechannels.js';
 
 export type SubscriberGlobalPreferenceDto = {
@@ -44,43 +37,6 @@ export const SubscriberGlobalPreferenceDto$inboundSchema: z.ZodType<
   channels: SubscriberPreferenceChannels$inboundSchema,
   schedule: ScheduleDto$inboundSchema.optional(),
 });
-
-/** @internal */
-export type SubscriberGlobalPreferenceDto$Outbound = {
-  enabled: boolean;
-  channels: SubscriberPreferenceChannels$Outbound;
-  schedule?: ScheduleDto$Outbound | undefined;
-};
-
-/** @internal */
-export const SubscriberGlobalPreferenceDto$outboundSchema: z.ZodType<
-  SubscriberGlobalPreferenceDto$Outbound,
-  z.ZodTypeDef,
-  SubscriberGlobalPreferenceDto
-> = z.object({
-  enabled: z.boolean(),
-  channels: SubscriberPreferenceChannels$outboundSchema,
-  schedule: ScheduleDto$outboundSchema.optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriberGlobalPreferenceDto$ {
-  /** @deprecated use `SubscriberGlobalPreferenceDto$inboundSchema` instead. */
-  export const inboundSchema = SubscriberGlobalPreferenceDto$inboundSchema;
-  /** @deprecated use `SubscriberGlobalPreferenceDto$outboundSchema` instead. */
-  export const outboundSchema = SubscriberGlobalPreferenceDto$outboundSchema;
-  /** @deprecated use `SubscriberGlobalPreferenceDto$Outbound` instead. */
-  export type Outbound = SubscriberGlobalPreferenceDto$Outbound;
-}
-
-export function subscriberGlobalPreferenceDtoToJSON(
-  subscriberGlobalPreferenceDto: SubscriberGlobalPreferenceDto
-): string {
-  return JSON.stringify(SubscriberGlobalPreferenceDto$outboundSchema.parse(subscriberGlobalPreferenceDto));
-}
 
 export function subscriberGlobalPreferenceDtoFromJSON(
   jsonString: string

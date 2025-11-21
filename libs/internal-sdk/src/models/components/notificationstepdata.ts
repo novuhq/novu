@@ -7,48 +7,13 @@ import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  DelayRegularMetadata,
-  DelayRegularMetadata$inboundSchema,
-  DelayRegularMetadata$Outbound,
-  DelayRegularMetadata$outboundSchema,
-} from './delayregularmetadata.js';
-import {
-  DelayScheduledMetadata,
-  DelayScheduledMetadata$inboundSchema,
-  DelayScheduledMetadata$Outbound,
-  DelayScheduledMetadata$outboundSchema,
-} from './delayscheduledmetadata.js';
-import {
-  DigestRegularMetadata,
-  DigestRegularMetadata$inboundSchema,
-  DigestRegularMetadata$Outbound,
-  DigestRegularMetadata$outboundSchema,
-} from './digestregularmetadata.js';
-import {
-  DigestTimedMetadata,
-  DigestTimedMetadata$inboundSchema,
-  DigestTimedMetadata$Outbound,
-  DigestTimedMetadata$outboundSchema,
-} from './digesttimedmetadata.js';
-import {
-  MessageTemplate,
-  MessageTemplate$inboundSchema,
-  MessageTemplate$Outbound,
-  MessageTemplate$outboundSchema,
-} from './messagetemplate.js';
-import {
-  ReplyCallback,
-  ReplyCallback$inboundSchema,
-  ReplyCallback$Outbound,
-  ReplyCallback$outboundSchema,
-} from './replycallback.js';
-import {
-  StepFilterDto,
-  StepFilterDto$inboundSchema,
-  StepFilterDto$Outbound,
-  StepFilterDto$outboundSchema,
-} from './stepfilterdto.js';
+import { DelayRegularMetadata, DelayRegularMetadata$inboundSchema } from './delayregularmetadata.js';
+import { DelayScheduledMetadata, DelayScheduledMetadata$inboundSchema } from './delayscheduledmetadata.js';
+import { DigestRegularMetadata, DigestRegularMetadata$inboundSchema } from './digestregularmetadata.js';
+import { DigestTimedMetadata, DigestTimedMetadata$inboundSchema } from './digesttimedmetadata.js';
+import { MessageTemplate, MessageTemplate$inboundSchema } from './messagetemplate.js';
+import { ReplyCallback, ReplyCallback$inboundSchema } from './replycallback.js';
+import { StepFilterDto, StepFilterDto$inboundSchema } from './stepfilterdto.js';
 
 /**
  * Metadata associated with the workflow step. Can vary based on the type of step.
@@ -118,42 +83,6 @@ export const NotificationStepDataMetadata$inboundSchema: z.ZodType<
   DelayRegularMetadata$inboundSchema,
 ]);
 
-/** @internal */
-export type NotificationStepDataMetadata$Outbound =
-  | DelayScheduledMetadata$Outbound
-  | DigestRegularMetadata$Outbound
-  | DigestTimedMetadata$Outbound
-  | DelayRegularMetadata$Outbound;
-
-/** @internal */
-export const NotificationStepDataMetadata$outboundSchema: z.ZodType<
-  NotificationStepDataMetadata$Outbound,
-  z.ZodTypeDef,
-  NotificationStepDataMetadata
-> = z.union([
-  DelayScheduledMetadata$outboundSchema,
-  DigestRegularMetadata$outboundSchema,
-  DigestTimedMetadata$outboundSchema,
-  DelayRegularMetadata$outboundSchema,
-]);
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace NotificationStepDataMetadata$ {
-  /** @deprecated use `NotificationStepDataMetadata$inboundSchema` instead. */
-  export const inboundSchema = NotificationStepDataMetadata$inboundSchema;
-  /** @deprecated use `NotificationStepDataMetadata$outboundSchema` instead. */
-  export const outboundSchema = NotificationStepDataMetadata$outboundSchema;
-  /** @deprecated use `NotificationStepDataMetadata$Outbound` instead. */
-  export type Outbound = NotificationStepDataMetadata$Outbound;
-}
-
-export function notificationStepDataMetadataToJSON(notificationStepDataMetadata: NotificationStepDataMetadata): string {
-  return JSON.stringify(NotificationStepDataMetadata$outboundSchema.parse(notificationStepDataMetadata));
-}
-
 export function notificationStepDataMetadataFromJSON(
   jsonString: string
 ): SafeParseResult<NotificationStepDataMetadata, SDKValidationError> {
@@ -193,77 +122,6 @@ export const NotificationStepData$inboundSchema: z.ZodType<NotificationStepData,
       _parentId: 'parentId',
     });
   });
-
-/** @internal */
-export type NotificationStepData$Outbound = {
-  _id?: string | undefined;
-  uuid?: string | undefined;
-  name?: string | undefined;
-  _templateId?: string | undefined;
-  active?: boolean | undefined;
-  shouldStopOnFail?: boolean | undefined;
-  template?: MessageTemplate$Outbound | undefined;
-  filters?: Array<StepFilterDto$Outbound> | undefined;
-  _parentId?: string | undefined;
-  metadata?:
-    | DelayScheduledMetadata$Outbound
-    | DigestRegularMetadata$Outbound
-    | DigestTimedMetadata$Outbound
-    | DelayRegularMetadata$Outbound
-    | undefined;
-  replyCallback?: ReplyCallback$Outbound | undefined;
-};
-
-/** @internal */
-export const NotificationStepData$outboundSchema: z.ZodType<
-  NotificationStepData$Outbound,
-  z.ZodTypeDef,
-  NotificationStepData
-> = z
-  .object({
-    id: z.string().optional(),
-    uuid: z.string().optional(),
-    name: z.string().optional(),
-    templateId: z.string().optional(),
-    active: z.boolean().optional(),
-    shouldStopOnFail: z.boolean().optional(),
-    template: MessageTemplate$outboundSchema.optional(),
-    filters: z.array(StepFilterDto$outboundSchema).optional(),
-    parentId: z.string().optional(),
-    metadata: z
-      .union([
-        DelayScheduledMetadata$outboundSchema,
-        DigestRegularMetadata$outboundSchema,
-        DigestTimedMetadata$outboundSchema,
-        DelayRegularMetadata$outboundSchema,
-      ])
-      .optional(),
-    replyCallback: ReplyCallback$outboundSchema.optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-      templateId: '_templateId',
-      parentId: '_parentId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace NotificationStepData$ {
-  /** @deprecated use `NotificationStepData$inboundSchema` instead. */
-  export const inboundSchema = NotificationStepData$inboundSchema;
-  /** @deprecated use `NotificationStepData$outboundSchema` instead. */
-  export const outboundSchema = NotificationStepData$outboundSchema;
-  /** @deprecated use `NotificationStepData$Outbound` instead. */
-  export type Outbound = NotificationStepData$Outbound;
-}
-
-export function notificationStepDataToJSON(notificationStepData: NotificationStepData): string {
-  return JSON.stringify(NotificationStepData$outboundSchema.parse(notificationStepData));
-}
 
 export function notificationStepDataFromJSON(
   jsonString: string

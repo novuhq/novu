@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  SmsControlDto,
-  SmsControlDto$inboundSchema,
-  SmsControlDto$Outbound,
-  SmsControlDto$outboundSchema,
-} from './smscontroldto.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { SmsControlDto, SmsControlDto$inboundSchema } from './smscontroldto.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type SmsControlsMetadataResponseDto = {
   /**
@@ -39,43 +34,6 @@ export const SmsControlsMetadataResponseDto$inboundSchema: z.ZodType<
   uiSchema: UiSchema$inboundSchema.optional(),
   values: SmsControlDto$inboundSchema,
 });
-
-/** @internal */
-export type SmsControlsMetadataResponseDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-  values: SmsControlDto$Outbound;
-};
-
-/** @internal */
-export const SmsControlsMetadataResponseDto$outboundSchema: z.ZodType<
-  SmsControlsMetadataResponseDto$Outbound,
-  z.ZodTypeDef,
-  SmsControlsMetadataResponseDto
-> = z.object({
-  dataSchema: z.record(z.any()).optional(),
-  uiSchema: UiSchema$outboundSchema.optional(),
-  values: SmsControlDto$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsControlsMetadataResponseDto$ {
-  /** @deprecated use `SmsControlsMetadataResponseDto$inboundSchema` instead. */
-  export const inboundSchema = SmsControlsMetadataResponseDto$inboundSchema;
-  /** @deprecated use `SmsControlsMetadataResponseDto$outboundSchema` instead. */
-  export const outboundSchema = SmsControlsMetadataResponseDto$outboundSchema;
-  /** @deprecated use `SmsControlsMetadataResponseDto$Outbound` instead. */
-  export type Outbound = SmsControlsMetadataResponseDto$Outbound;
-}
-
-export function smsControlsMetadataResponseDtoToJSON(
-  smsControlsMetadataResponseDto: SmsControlsMetadataResponseDto
-): string {
-  return JSON.stringify(SmsControlsMetadataResponseDto$outboundSchema.parse(smsControlsMetadataResponseDto));
-}
 
 export function smsControlsMetadataResponseDtoFromJSON(
   jsonString: string

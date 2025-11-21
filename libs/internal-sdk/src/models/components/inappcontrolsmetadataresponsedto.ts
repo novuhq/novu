@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  InAppControlDto,
-  InAppControlDto$inboundSchema,
-  InAppControlDto$Outbound,
-  InAppControlDto$outboundSchema,
-} from './inappcontroldto.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { InAppControlDto, InAppControlDto$inboundSchema } from './inappcontroldto.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type InAppControlsMetadataResponseDto = {
   /**
@@ -39,43 +34,6 @@ export const InAppControlsMetadataResponseDto$inboundSchema: z.ZodType<
   uiSchema: UiSchema$inboundSchema.optional(),
   values: InAppControlDto$inboundSchema,
 });
-
-/** @internal */
-export type InAppControlsMetadataResponseDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-  values: InAppControlDto$Outbound;
-};
-
-/** @internal */
-export const InAppControlsMetadataResponseDto$outboundSchema: z.ZodType<
-  InAppControlsMetadataResponseDto$Outbound,
-  z.ZodTypeDef,
-  InAppControlsMetadataResponseDto
-> = z.object({
-  dataSchema: z.record(z.any()).optional(),
-  uiSchema: UiSchema$outboundSchema.optional(),
-  values: InAppControlDto$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppControlsMetadataResponseDto$ {
-  /** @deprecated use `InAppControlsMetadataResponseDto$inboundSchema` instead. */
-  export const inboundSchema = InAppControlsMetadataResponseDto$inboundSchema;
-  /** @deprecated use `InAppControlsMetadataResponseDto$outboundSchema` instead. */
-  export const outboundSchema = InAppControlsMetadataResponseDto$outboundSchema;
-  /** @deprecated use `InAppControlsMetadataResponseDto$Outbound` instead. */
-  export type Outbound = InAppControlsMetadataResponseDto$Outbound;
-}
-
-export function inAppControlsMetadataResponseDtoToJSON(
-  inAppControlsMetadataResponseDto: InAppControlsMetadataResponseDto
-): string {
-  return JSON.stringify(InAppControlsMetadataResponseDto$outboundSchema.parse(inAppControlsMetadataResponseDto));
-}
 
 export function inAppControlsMetadataResponseDtoFromJSON(
   jsonString: string

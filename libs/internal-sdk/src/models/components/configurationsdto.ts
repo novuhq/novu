@@ -18,36 +18,6 @@ export const ConfigurationsDto$inboundSchema: z.ZodType<ConfigurationsDto, z.Zod
   inboundWebhookSigningKey: z.string().optional(),
 });
 
-/** @internal */
-export type ConfigurationsDto$Outbound = {
-  inboundWebhookEnabled?: boolean | undefined;
-  inboundWebhookSigningKey?: string | undefined;
-};
-
-/** @internal */
-export const ConfigurationsDto$outboundSchema: z.ZodType<ConfigurationsDto$Outbound, z.ZodTypeDef, ConfigurationsDto> =
-  z.object({
-    inboundWebhookEnabled: z.boolean().optional(),
-    inboundWebhookSigningKey: z.string().optional(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ConfigurationsDto$ {
-  /** @deprecated use `ConfigurationsDto$inboundSchema` instead. */
-  export const inboundSchema = ConfigurationsDto$inboundSchema;
-  /** @deprecated use `ConfigurationsDto$outboundSchema` instead. */
-  export const outboundSchema = ConfigurationsDto$outboundSchema;
-  /** @deprecated use `ConfigurationsDto$Outbound` instead. */
-  export type Outbound = ConfigurationsDto$Outbound;
-}
-
-export function configurationsDtoToJSON(configurationsDto: ConfigurationsDto): string {
-  return JSON.stringify(ConfigurationsDto$outboundSchema.parse(configurationsDto));
-}
-
 export function configurationsDtoFromJSON(jsonString: string): SafeParseResult<ConfigurationsDto, SDKValidationError> {
   return safeParse(
     jsonString,

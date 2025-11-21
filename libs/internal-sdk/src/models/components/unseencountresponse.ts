@@ -16,37 +16,6 @@ export const UnseenCountResponse$inboundSchema: z.ZodType<UnseenCountResponse, z
   count: z.number(),
 });
 
-/** @internal */
-export type UnseenCountResponse$Outbound = {
-  count: number;
-};
-
-/** @internal */
-export const UnseenCountResponse$outboundSchema: z.ZodType<
-  UnseenCountResponse$Outbound,
-  z.ZodTypeDef,
-  UnseenCountResponse
-> = z.object({
-  count: z.number(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UnseenCountResponse$ {
-  /** @deprecated use `UnseenCountResponse$inboundSchema` instead. */
-  export const inboundSchema = UnseenCountResponse$inboundSchema;
-  /** @deprecated use `UnseenCountResponse$outboundSchema` instead. */
-  export const outboundSchema = UnseenCountResponse$outboundSchema;
-  /** @deprecated use `UnseenCountResponse$Outbound` instead. */
-  export type Outbound = UnseenCountResponse$Outbound;
-}
-
-export function unseenCountResponseToJSON(unseenCountResponse: UnseenCountResponse): string {
-  return JSON.stringify(UnseenCountResponse$outboundSchema.parse(unseenCountResponse));
-}
-
 export function unseenCountResponseFromJSON(
   jsonString: string
 ): SafeParseResult<UnseenCountResponse, SDKValidationError> {
