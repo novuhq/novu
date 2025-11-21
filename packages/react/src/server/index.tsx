@@ -41,8 +41,6 @@ export function SubscriptionButton() {}
 
 export function SubscriptionPreferences() {}
 
-export function Subscription() {}
-
 export function useNovu() {
   return null;
 }
