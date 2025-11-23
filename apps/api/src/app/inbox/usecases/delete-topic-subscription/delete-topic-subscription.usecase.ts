@@ -16,6 +16,7 @@ export class DeleteTopicSubscription {
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      _subscriberId: command.subscriberId,
       _id: command.subscriptionId,
     });
 

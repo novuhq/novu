@@ -20,6 +20,7 @@ export class GetTopicSubscription {
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      _subscriberId: command.subscriberId,
       topicKey: command.topicKey,
       _id: command.subscriptionId,
     });
