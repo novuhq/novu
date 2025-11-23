@@ -22,7 +22,8 @@ export class GetWorkflowByIdsUseCase {
       workflowEntity = await this.notificationTemplateRepository.findByTriggerIdentifier(
         command.environmentId,
         command.workflowIdOrInternalId,
-        command.session
+        command.session,
+        true
       );
     }
 
