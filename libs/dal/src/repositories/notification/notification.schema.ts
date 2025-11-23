@@ -106,19 +106,6 @@ notificationSchema.virtual('jobs', {
 });
 
 /*
- *
- * Path: libs/dal/src/repositories/notification/notification.repository.ts
- *    Context: findBySubscriberId()
- *        Query: find({_environmentId: environmentId,
- *                    _subscriberId: subscriberId,});
- *
- */
-notificationSchema.index({
-  _subscriberId: 1,
-  _environmentId: 1,
-});
-
-/*
  * Path: libs/dal/src/repositories/notification/notification.repository.ts
  *    Context: getFeed()
  *        Query: find({
@@ -176,6 +163,19 @@ notificationSchema.index({
   _environmentId: 1,
   createdAt: -1,
 });
+
+notificationSchema.index({
+  _environmentId: 1,
+  _templateId: 1,
+  createdAt: -1,
+});
+
+notificationSchema.index({
+  _environmentId: 1,
+  _subscriberId: 1,
+  createdAt: -1,
+});
+
 /*
  * There was no point indexing old records,
  * we are not searching anything more than a month back
