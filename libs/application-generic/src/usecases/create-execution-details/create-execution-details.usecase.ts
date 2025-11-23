@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { Instrument } from '../../instrumentation';
 import { FeatureFlagsService, LogRepository, StepType } from '../../services';
 import { EntityType, EventType, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
@@ -132,6 +133,7 @@ export class CreateExecutionDetails {
     private featureFlagsService: FeatureFlagsService
   ) {}
 
+  @Instrument()
   async execute(command: CreateExecutionDetailsCommand): Promise<void> {
     const isClickhouseOnlyEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_EXECUTION_DETAILS_CLICKHOUSE_ONLY_ENABLED,
