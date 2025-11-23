@@ -152,10 +152,6 @@ preferencesSchema.index({
   deleted: 1,
 });
 
-_environmentId_1__organizationId_1__templateId_1_type_1_deleted_1;
-_environmentId_1__organizationId_1__subscriberId_1_type_1_deleted_1;
-_environmentId_1__organizationId_1__subscriberId_1__templateId_1_type_1_deleted_1;
-
 export const Preferences =
   (mongoose.models.Preferences as mongoose.Model<PreferencesDBModel>) ||
   mongoose.model<PreferencesDBModel>('Preferences', preferencesSchema);
