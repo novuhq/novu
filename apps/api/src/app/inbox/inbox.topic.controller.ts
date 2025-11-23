@@ -110,7 +110,7 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/topics/:topicKey/subscription/:subscriptionId')
+  @Patch('/topics/:topicKey/subscription/:subscriptionId')
   async updateTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
