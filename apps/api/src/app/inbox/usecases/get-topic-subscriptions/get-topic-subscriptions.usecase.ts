@@ -13,6 +13,25 @@ import { TopicSubscriptionDetailsDto } from '../../dtos/get-topic-subscriptions-
 import { mapTopicSubscriptionToDto } from '../../utils/topic-subscription-mapper';
 import { GetTopicSubscriptionsCommand } from './get-topic-subscriptions.command';
 
+export type SelectedWorkflowFields = Pick<
+  NotificationTemplateEntity,
+  '_id' | 'triggers' | 'name' | 'critical' | 'tags' | 'data' | 'severity'
+>;
+
+/**
+ * MongoDB projection object for SelectedWorkflowFields.
+ * This ensures the projection is always aligned with the type definition.
+ */
+export const SELECTED_WORKFLOW_FIELDS_PROJECTION: Record<keyof SelectedWorkflowFields, 1> = {
+  _id: 1,
+  triggers: 1,
+  name: 1,
+  critical: 1,
+  tags: 1,
+  data: 1,
+  severity: 1,
+} as const;
+
 @Injectable()
 export class GetTopicSubscriptions {
   constructor(
@@ -48,7 +67,7 @@ export class GetTopicSubscriptions {
       subscriptionPreferencesMap.set(subscription, preferences);
     }
 
-    const workflowsMap = await this.buildWorkflowsMap(subscriptionPreferencesMap, subscriptions);
+    const workflowsMap = await this.findWorkflows(subscriptionPreferencesMap, subscriptions);
 
     const result: TopicSubscriptionDetailsDto[] = [];
 
@@ -59,7 +78,7 @@ export class GetTopicSubscriptions {
 
       const workflows = preferenceWorkflowIds
         .map((id) => workflowsMap.get(id))
-        .filter((workflow): workflow is NotificationTemplateEntity => workflow !== undefined);
+        .filter((workflow): workflow is SelectedWorkflowFields => workflow !== undefined);
 
       result.push(mapTopicSubscriptionToDto(subscription, preferencesEntities, workflows));
     }
@@ -67,10 +86,10 @@ export class GetTopicSubscriptions {
     return result;
   }
 
-  private async buildWorkflowsMap(
+  private async findWorkflows(
     subscriptionPreferencesMap: Map<TopicSubscribersEntity, PreferencesEntity[]>,
     subscriptions: TopicSubscribersEntity[]
-  ): Promise<Map<string, NotificationTemplateEntity>> {
+  ): Promise<Map<string, SelectedWorkflowFields>> {
     const uniqueWorkflowIds = new Set(
       Array.from(subscriptionPreferencesMap.values())
         .flat()
@@ -78,14 +97,17 @@ export class GetTopicSubscriptions {
         .filter((id): id is string => id !== undefined)
     );
 
-    const workflowsMap = new Map<string, NotificationTemplateEntity>();
+    const workflowsMap = new Map<string, SelectedWorkflowFields>();
 
     if (uniqueWorkflowIds.size > 0 && subscriptions.length > 0) {
-      const workflows = await this.notificationTemplateRepository.find({
-        _id: { $in: Array.from(uniqueWorkflowIds) },
-        _environmentId: subscriptions[0]._environmentId,
-        _organizationId: subscriptions[0]._organizationId,
-      });
+      const workflows: SelectedWorkflowFields[] = await this.notificationTemplateRepository.find(
+        {
+          _id: { $in: Array.from(uniqueWorkflowIds) },
+          _environmentId: subscriptions[0]._environmentId,
+          _organizationId: subscriptions[0]._organizationId,
+        },
+        SELECTED_WORKFLOW_FIELDS_PROJECTION
+      );
 
       for (const workflow of workflows) {
         workflowsMap.set(workflow._id, workflow);

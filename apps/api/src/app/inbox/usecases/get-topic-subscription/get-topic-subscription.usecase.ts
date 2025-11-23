@@ -4,6 +4,7 @@ import { NotificationTemplateRepository, PreferencesRepository, TopicSubscribers
 import { PreferencesTypeEnum } from '@novu/shared';
 import { TopicSubscriptionDetailsDto } from '../../dtos/get-topic-subscriptions-response.dto';
 import { mapTopicSubscriptionToDto } from '../../utils/topic-subscription-mapper';
+import { SELECTED_WORKFLOW_FIELDS_PROJECTION } from '../get-topic-subscriptions/get-topic-subscriptions.usecase';
 import { GetTopicSubscriptionCommand } from './get-topic-subscription.command';
 
 @Injectable()
@@ -43,11 +44,14 @@ export class GetTopicSubscription {
 
     const workflowEntities =
       preferencesWorkflowIds.length > 0
-        ? await this.notificationTemplateRepository.find({
-            _id: { $in: preferencesWorkflowIds },
-            _environmentId: subscription._environmentId,
-            _organizationId: subscription._organizationId,
-          })
+        ? await this.notificationTemplateRepository.find(
+            {
+              _id: { $in: preferencesWorkflowIds },
+              _environmentId: subscription._environmentId,
+              _organizationId: subscription._organizationId,
+            },
+            SELECTED_WORKFLOW_FIELDS_PROJECTION
+          )
         : [];
 
     return mapTopicSubscriptionToDto(subscription, preferencesEntities, workflowEntities);
