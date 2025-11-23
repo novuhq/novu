@@ -614,7 +614,7 @@ describe('Topic Trigger Event #novu-v2', () => {
       }
     });
 
-    it.only('should test subscription fallback to workflow preference', async () => {
+    it('should test subscription fallback to workflow preference', async () => {
       const tag = 'alert';
       const topicKey = `topic-key-dynamic-pref-${Date.now()}`;
       const subscriber = await subscriberService.createSubscriber();

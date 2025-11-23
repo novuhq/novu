@@ -68,19 +68,14 @@ export class TopicSubscribersRepository extends BaseRepository<
 
   async createSubscriptions(subscriptions: CreateTopicSubscribersEntity[]): Promise<BulkAddTopicSubscribersResult> {
     const bulkUpsertWriteOps = subscriptions.map((subscription) => {
-      const { _subscriberId, _topicId, _environmentId, preferencesHash } = subscription;
+      const { _subscriberId, _topicId, _environmentId, identifier } = subscription;
 
       const filter: Partial<CreateTopicSubscribersEntity> = {
         _environmentId,
         _subscriberId,
         _topicId,
+        identifier,
       };
-
-      if (preferencesHash) {
-        filter.preferencesHash = preferencesHash;
-      } else {
-        filter.preferencesHash = null as unknown as undefined;
-      }
 
       return {
         updateOne: {
@@ -142,19 +137,13 @@ export class TopicSubscribersRepository extends BaseRepository<
     const updatedSubscribers: TopicSubscribersEntity[] = [];
     if (updatedSubscriptionsInput.length > 0) {
       for (const subscription of updatedSubscriptionsInput) {
-        const { _subscriberId, _topicId, _environmentId, _organizationId, preferencesHash } = subscription;
+        const { _subscriberId, _topicId, _environmentId, _organizationId } = subscription;
 
         const filter: Partial<CreateTopicSubscribersEntity> = {
           _organizationId,
           _subscriberId,
           _topicId,
         };
-
-        if (preferencesHash) {
-          filter.preferencesHash = preferencesHash;
-        } else {
-          filter.preferencesHash = null as unknown as undefined;
-        }
 
         const found = await this.findOne({ ...filter, _environmentId });
         if (found) {
@@ -181,7 +170,7 @@ export class TopicSubscribersRepository extends BaseRepository<
       excludeSubscribers: string[];
     };
     batchSize?: number;
-  }): AsyncGenerator<{ _id: string; subscriberId: string; _topicId: string; preferencesHash: string }, void, unknown> {
+  }): AsyncGenerator<{ _id: string; subscriberId: string; _topicId: string }, void, unknown> {
     const { _organizationId, _environmentId, topicIds, excludeSubscribers } = query;
     const mappedTopicIds = topicIds.map((id) => this.convertStringToObjectId(id));
 
@@ -199,7 +188,6 @@ export class TopicSubscribersRepository extends BaseRepository<
           _id: '$_id',
           subscriberId: '$externalSubscriberId',
           _topicId: '$_topicId',
-          preferencesHash: '$preferencesHash',
         },
       },
     ];

@@ -98,7 +98,6 @@ export class TriggerMulticast extends TriggerBase {
         const externalSubscriberId = subscription.subscriberId;
         const subscriptionId = subscription._id.toString();
         const topicId = subscription._topicId.toString();
-        const preferencesHash = subscription.preferencesHash;
 
         if (actor && actor.subscriberId === externalSubscriberId) {
           continue;
@@ -109,8 +108,7 @@ export class TriggerMulticast extends TriggerBase {
         const shouldIncludeSubscription = await this.evaluateSubscriptionPreferences(
           command,
           externalSubscriberId,
-          subscriptionId,
-          preferencesHash
+          subscriptionId
         );
 
         if (!shouldIncludeSubscription) {
@@ -199,15 +197,9 @@ export class TriggerMulticast extends TriggerBase {
   private async evaluateSubscriptionPreferences(
     command: TriggerMulticastCommand,
     externalSubscriberId: string,
-    subscriptionId: string,
-    preferencesHash: string
+    subscriptionId: string
   ): Promise<boolean> {
     try {
-      // If no preferences hash, meaning no condition is set, so we allow the subscription to pass through
-      if (!preferencesHash) {
-        return true;
-      }
-
       const subscriptionPreferences = await this.preferencesRepository.find({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,

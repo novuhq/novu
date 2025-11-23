@@ -1,7 +1,6 @@
 export * from './base62';
 export * from './bridge';
 export * from './buildBridgeEndpointUrl';
-export * from './create-deterministic-hash';
 export * from './deepmerge';
 export * from './digest';
 export * from './duration-utils';
@@ -16,5 +15,6 @@ export * from './object';
 export * from './sanitize-control-values';
 export * from './subscriber';
 export * from './subscribers.utils';
+export * from './subscription';
 export * from './timestamp-hex';
 export * from './variants';

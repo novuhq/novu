@@ -42,10 +42,6 @@ const topicSubscribersSchema = new Schema<TopicSubscribersDBModel>(
       type: Schema.Types.String,
       required: true,
     },
-    preferencesHash: {
-      type: Schema.Types.String,
-      required: false,
-    },
   },
   schemaOptions
 );
@@ -62,15 +58,6 @@ topicSubscribersSchema.index(
   {
     _environmentId: 1,
     identifier: 1,
-  },
-  { unique: true }
-);
-
-topicSubscribersSchema.index(
-  {
-    _subscriberId: 1,
-    _topicId: 1,
-    preferencesHash: 1,
   },
   { unique: true }
 );

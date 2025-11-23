@@ -20,7 +20,6 @@ export class TopicSubscribersEntity {
   externalSubscriberId: ExternalSubscriberId;
   name?: string;
   identifier: string;
-  preferencesHash?: string;
   createdAt?: string;
   updatedAt?: string;
 }

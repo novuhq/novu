@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { createDeterministicHash, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
   BaseRepository,
   NotificationTemplateEntity,
@@ -70,12 +70,8 @@ export class UpdateSubscriptionUsecase {
     }
 
     const updateData: Partial<TopicSubscribersEntity> = {};
-    let preferencesHash: string | undefined;
 
     if (command.preferences !== undefined) {
-      preferencesHash = createDeterministicHash(command.preferences);
-      updateData.preferencesHash = preferencesHash;
-
       await this.updatePreferencesForSubscription(command, subscription, workflows);
     }
 

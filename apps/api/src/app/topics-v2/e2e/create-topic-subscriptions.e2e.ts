@@ -302,11 +302,7 @@ describe('Create topic subscriptions - /v2/topics/:topicKey/subscriptions (POST)
       externalSubscriberId: subscriber1.subscriberId,
     });
 
-    expect(subscriptions.length).to.equal(2);
-
-    const hashes = subscriptions.map((s) => s.preferencesHash).filter((h) => h !== undefined);
-    expect(hashes.length).to.equal(2);
-    expect(new Set(hashes).size).to.equal(2);
+    expect(subscriptions.length, 'expect subscriptions.length to be 2').to.equal(2);
 
     await novuClient.topics.subscriptions.create(
       {
@@ -324,7 +320,7 @@ describe('Create topic subscriptions - /v2/topics/:topicKey/subscriptions (POST)
       topicKey,
       externalSubscriberId: subscriber1.subscriberId,
     });
-    expect(subscriptionsAfterDuplicate.length).to.equal(2);
+    expect(subscriptionsAfterDuplicate.length, 'expect subscriptionsAfterDuplicate.length to be 2').to.equal(2);
   });
 
   it('should enforce subscription limit of 10 per subscriber per topic', async () => {

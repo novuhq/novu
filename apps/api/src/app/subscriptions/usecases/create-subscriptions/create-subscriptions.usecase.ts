@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { createDeterministicHash, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { buildDefaultSubscriptionIdentifier, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
   BaseRepository,
   CreateTopicSubscribersEntity,
@@ -83,14 +83,17 @@ export class CreateSubscriptionsUsecase {
       };
     }
 
-    const preferencesHash = createDeterministicHash(command.preferences);
-
+    const subscribersToFind = foundSubscribers.map((sub) => ({
+      _subscriberId: sub._id.toString(),
+      identifier:
+        command.subscriptions.find((s) => s.subscriberId === sub.subscriberId)?.identifier ||
+        buildDefaultSubscriptionIdentifier(command.topicKey, sub.subscriberId),
+    }));
     const existingSubscriptions = await this.topicSubscribersRepository.find({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _topicId: topic._id,
-      _subscriberId: { $in: foundSubscribers.map((sub) => sub._id) },
-      ...(preferencesHash ? { preferencesHash } : { preferencesHash: null }),
+      identifier: { $in: subscribersToFind.map((sub) => sub.identifier) },
     });
 
     const existingSubscriberIds = existingSubscriptions.map((sub) => sub._subscriberId.toString());
@@ -137,12 +140,7 @@ export class CreateSubscriptionsUsecase {
     }
 
     if (subscribersToCreate.length > 0) {
-      const subscriptionsToCreate = this.buildSubscriptionEntity(
-        topic,
-        subscribersToCreate,
-        preferencesHash,
-        command.subscriptions
-      );
+      const subscriptionsToCreate = this.buildSubscriptionEntity(topic, subscribersToCreate, command.subscriptions);
       const newSubscriptions = await this.topicSubscribersRepository.createSubscriptions(subscriptionsToCreate);
 
       for (const subscription of newSubscriptions.created) {
@@ -324,7 +322,6 @@ export class CreateSubscriptionsUsecase {
   private buildSubscriptionEntity(
     topic: TopicEntity,
     subscribers: SubscriberEntity[],
-    preferencesHash: string | undefined,
     subscriptions: Array<{ identifier?: string; subscriberId: string; name?: string }>
   ): CreateTopicSubscribersEntity[] {
     return subscribers.map((subscriber) => {
@@ -336,8 +333,7 @@ export class CreateSubscriptionsUsecase {
         _topicId: topic._id,
         topicKey: topic.key,
         externalSubscriberId: subscriber.subscriberId,
-        preferencesHash,
-        identifier: subscription?.identifier || `tk=${topic.key}:si=${subscriber.subscriberId}`,
+        identifier: subscription?.identifier || buildDefaultSubscriptionIdentifier(topic.key, subscriber.subscriberId),
         name: subscription?.name,
       };
     });

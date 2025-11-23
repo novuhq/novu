@@ -307,11 +307,3 @@ afterEach(async function () {
 
   sinon.restore();
 });
-
-process.on('unhandledRejection', (error: unknown) => {
-  logE2EFailure(error);
-});
-
-process.on('uncaughtException', (error: unknown) => {
-  logE2EFailure(error);
-});
