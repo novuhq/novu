@@ -559,6 +559,13 @@ export const msTeamsConfig: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.TenantId,
+    displayName: 'Tenant ID',
+    description: 'Azure Bot Tenant ID',
+    type: 'string',
+    required: true,
+  },
+  {
     key: CredentialsKeyEnum.RedirectUrl,
     displayName: 'Redirect URL',
     description: 'Redirect after Teams OAuth flow finished (default behaviour will close the tab)',
