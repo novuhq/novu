@@ -18,8 +18,4 @@ export class TriggerBroadcastCommand extends TriggerEventBroadcastCommand {
   @IsArray()
   @IsString({ each: true })
   contextKeys?: string[];
-
-  @IsDefined()
-  @IsString()
-  environmentName: string;
 }
