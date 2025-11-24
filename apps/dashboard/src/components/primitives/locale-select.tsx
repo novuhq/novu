@@ -1,6 +1,6 @@
 import { getAllLocales, getCommonLocales, getLocaleByIso } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowDownSLine, RiCheckLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiCheckLine, RiErrorWarningFill } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
 import { FlagCircle, StackedFlagCircles } from '../flag-circle';
 import TruncatedText from '../truncated-text';
@@ -90,6 +90,8 @@ function SingleSelectTrigger({ value, placeholder }: { value?: string; placehold
           <TruncatedText>
             {currentLocale.langIso} - {currentLocale.langName}
           </TruncatedText>
+        ) : value ? (
+          <TruncatedText>{value}</TruncatedText>
         ) : (
           <span className="text-neutral-400">{placeholder}</span>
         )}
@@ -102,19 +104,28 @@ function SingleSelectTrigger({ value, placeholder }: { value?: string; placehold
 function MultiSelectTrigger({ value, placeholder }: { value?: string[]; placeholder: string }) {
   const allLocales = getAllLocales();
   const selectedLocales = value ? allLocales.filter((locale) => value.includes(locale.langIso)) : [];
+  const customLocales = value ? value.filter((val) => !allLocales.some((locale) => locale.langIso === val)) : [];
+  const totalSelectedCount = selectedLocales.length + customLocales.length;
 
-  if (selectedLocales.length === 0) {
+  if (totalSelectedCount === 0) {
     return <span className="text-xs font-normal text-neutral-400">{placeholder}</span>;
   }
 
-  if (selectedLocales.length <= 4) {
+  if (totalSelectedCount <= 4) {
     return (
       <div className="flex items-center gap-1.5 overflow-hidden">
         {selectedLocales.map((locale, index) => (
           <div key={locale.langIso} className="flex shrink-0 items-center gap-1">
             <FlagCircle locale={locale.langIso} size="sm" />
             <span className="text-xs font-normal text-neutral-950">{locale.langIso}</span>
-            {index < selectedLocales.length - 1 && <span className="text-neutral-400">•</span>}
+            {index < totalSelectedCount - 1 && <span className="text-neutral-400">•</span>}
+          </div>
+        ))}
+        {customLocales.map((locale, index) => (
+          <div key={locale} className="flex shrink-0 items-center gap-1">
+            <FlagCircle locale={locale} size="sm" />
+            <span className="text-xs font-normal text-neutral-950">{locale}</span>
+            {selectedLocales.length + index < totalSelectedCount - 1 && <span className="text-neutral-400">•</span>}
           </div>
         ))}
       </div>
@@ -123,8 +134,12 @@ function MultiSelectTrigger({ value, placeholder }: { value?: string[]; placehol
 
   return (
     <div className="flex items-center gap-1.5">
-      <StackedFlagCircles locales={selectedLocales.map((locale) => locale.langIso)} maxVisible={10} size="md" />
-      <span className="text-xs font-normal text-neutral-950">{selectedLocales.length} locales selected</span>
+      <StackedFlagCircles
+        locales={[...selectedLocales.map((locale) => locale.langIso), ...customLocales]}
+        maxVisible={10}
+        size="md"
+      />
+      <span className="text-xs font-normal text-neutral-950">{totalSelectedCount} locales selected</span>
     </div>
   );
 }
@@ -209,6 +224,8 @@ export function LocaleSelect(props: LocaleSelectProps) {
     }
   };
 
+  const showCimodeWarning = !multiSelect && value === 'cimode';
+
   return (
     <div ref={containerRef} className="relative">
       <Button
@@ -230,6 +247,16 @@ export function LocaleSelect(props: LocaleSelectProps) {
           className={cn('ml-auto size-4 opacity-50', disabled || readOnly ? 'hidden' : 'opacity-100')}
         />
       </Button>
+
+      {showCimodeWarning && (
+        <div className="mt-2 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5">
+          <RiErrorWarningFill className="mt-0.5 size-4 shrink-0 text-amber-600" />
+          <p className="text-xs text-amber-900">
+            <span className="font-medium">cimode</span> will return translation keys without translating them. This
+            locale is used for debugging purposes.
+          </p>
+        </div>
+      )}
 
       {isOpen && (
         <div
