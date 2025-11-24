@@ -6,10 +6,7 @@ import {
   GroupPreferenceFilterDto,
   WorkflowPreferenceRequestDto,
 } from '../shared/dtos/subscriptions/create-subscriptions.dto';
-import {
-  CreateSubscriptionsResponseDto,
-  SubscriptionResponseDto,
-} from '../shared/dtos/subscriptions/create-subscriptions-response.dto';
+import { SubscriptionResponseDto } from '../shared/dtos/subscriptions/create-subscriptions-response.dto';
 import { UpdateSubscriptionRequestDto } from '../shared/dtos/subscriptions/update-subscription.dto';
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
@@ -85,7 +82,7 @@ export class InboxTopicController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionRequestDto
-  ): Promise<CreateSubscriptionsResponseDto> {
+  ): Promise<SubscriptionResponseDto> {
     const result = await this.createSubscriptionsUsecase.execute(
       CreateSubscriptionsCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -104,11 +101,16 @@ export class InboxTopicController {
       })
     );
 
-    if (result.meta.failed > 0 && result.meta.successful === 0) {
-      throw new BadRequestException(result);
+    if (result.errors && result.errors.length > 0) {
+      throw new BadRequestException(result.errors[0].message);
     }
 
-    return result;
+    if (result.meta.failed > 0 || result.data.length === 0) {
+      throw new BadRequestException('Failed to create subscription');
+    }
+
+    // inbox only supports one subscription per topic per subscriber
+    return result.data[0];
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
