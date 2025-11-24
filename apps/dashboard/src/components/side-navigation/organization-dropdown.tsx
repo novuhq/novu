@@ -1,4 +1,5 @@
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
@@ -9,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { useRegion } from '@/context/region';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
@@ -17,6 +19,7 @@ export const OrganizationDropdown = () => {
   const { orgId } = useAuth();
   const clerk = useClerk();
   const { selectedRegion } = useRegion();
+  const isRegionSelectorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_REGION_SELECTOR_ENABLED, false);
   const { userMemberships, isLoaded } = useOrganizationList({
     userMemberships: {
       infinite: true,
@@ -127,9 +130,13 @@ export const OrganizationDropdown = () => {
               ?.filter((membership) => {
                 if (membership.organization.id === orgId) return false;
 
-                const orgRegion = membership.organization.publicMetadata?.region as string | undefined;
+                if (isRegionSelectorEnabled) {
+                  const orgRegion = membership.organization.publicMetadata?.region as string | undefined;
 
-                return !orgRegion || orgRegion === selectedRegion;
+                  return !orgRegion || orgRegion === selectedRegion;
+                }
+
+                return true;
               })
               .map((membership) => (
                 <DropdownMenuItem
