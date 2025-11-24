@@ -150,7 +150,7 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/preferences/subscriptions/:subscriptionIdOrIdentifier/workflows/:workflowIdOrIdentifier')
+  @Patch('/preferences/:subscriptionIdOrIdentifier/:workflowIdOrIdentifier')
   async updateSubscriptionWorkflowPreference(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
