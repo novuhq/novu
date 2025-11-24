@@ -48,6 +48,9 @@ import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environ
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
+import { UpdateApiKeyCommand } from './usecases/update-api-key/update-api-key.command';
+import { UpdateApiKeyRequestDto } from './dtos/update-api-key-request.dto';
+import { UpdateApiKey } from './usecases/update-api-key/update-api-key.usecase';
 
 /**
  * @deprecated use EnvironmentsControllerV2
@@ -63,6 +66,7 @@ export class EnvironmentsControllerV1 {
     private updateEnvironmentUsecase: UpdateEnvironment,
     private getApiKeysUsecase: GetApiKeys,
     private regenerateApiKeysUsecase: RegenerateApiKeys,
+    private updateApiKeyUsecase: UpdateApiKey,
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private deleteEnvironmentUsecase: DeleteEnvironment,
@@ -207,6 +211,24 @@ export class EnvironmentsControllerV1 {
     });
 
     return await this.regenerateApiKeysUsecase.execute(command);
+  }
+
+  @Post('/api-keys/update')
+  @ApiResponse(ApiKey, 201, true)
+  @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
+  async updateOrganizationApiKeys(
+    @UserSession() user: UserSessionData,
+    @Body() payload: UpdateApiKeyRequestDto
+  ): Promise<ApiKey[]> {
+    const command = UpdateApiKeyCommand.create({
+      userId: user._id,
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+      apiKey: payload.apiKey,
+    });
+
+    return await this.updateApiKeyUsecase.execute(command);
   }
 
   @Delete('/:environmentId')

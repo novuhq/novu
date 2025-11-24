@@ -7,6 +7,7 @@ import { GetEnvironment } from './get-environment';
 import { GetMyEnvironments } from './get-my-environments/get-my-environments.usecase';
 import { RegenerateApiKeys } from './regenerate-api-keys/regenerate-api-keys.usecase';
 import { UpdateEnvironment } from './update-environment/update-environment.usecase';
+import { UpdateApiKey } from './update-api-key/update-api-key.usecase';
 
 export const USE_CASES = [
   GetMxRecord,
@@ -15,6 +16,7 @@ export const USE_CASES = [
   GenerateUniqueApiKey,
   GetApiKeys,
   RegenerateApiKeys,
+  UpdateApiKey,
   GetEnvironment,
   GetMyEnvironments,
   DeleteEnvironment,
