@@ -1,4 +1,6 @@
 import {
+  CreateMsTeamsChannelEndpointDto,
+  CreateMsTeamsUserEndpointDto,
   CreatePhoneEndpointDto,
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
@@ -9,4 +11,6 @@ export type CreateChannelEndpointRequest =
   | CreateSlackChannelEndpointDto
   | CreateSlackUserEndpointDto
   | CreateWebhookEndpointDto
-  | CreatePhoneEndpointDto;
+  | CreatePhoneEndpointDto
+  | CreateMsTeamsChannelEndpointDto
+  | CreateMsTeamsUserEndpointDto;

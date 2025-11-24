@@ -37,6 +37,8 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateChannelEndpointRequest } from './dtos/create-channel-endpoint-request.dto';
 import {
+  CreateMsTeamsChannelEndpointDto,
+  CreateMsTeamsUserEndpointDto,
   CreatePhoneEndpointDto,
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
@@ -44,6 +46,8 @@ import {
 } from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
 import {
+  MsTeamsChannelEndpointDto,
+  MsTeamsUserEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
@@ -72,10 +76,14 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreateSlackUserEndpointDto,
   CreateWebhookEndpointDto,
   CreatePhoneEndpointDto,
+  CreateMsTeamsChannelEndpointDto,
+  CreateMsTeamsUserEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
-  PhoneEndpointDto
+  PhoneEndpointDto,
+  MsTeamsChannelEndpointDto,
+  MsTeamsUserEndpointDto
 )
 @ApiExcludeController()
 @ExternalApiAccessible()
@@ -184,6 +192,8 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreateSlackUserEndpointDto) },
         { $ref: getSchemaPath(CreateWebhookEndpointDto) },
         { $ref: getSchemaPath(CreatePhoneEndpointDto) },
+        { $ref: getSchemaPath(CreateMsTeamsChannelEndpointDto) },
+        { $ref: getSchemaPath(CreateMsTeamsUserEndpointDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -192,6 +202,8 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.SLACK_USER]: getSchemaPath(CreateSlackUserEndpointDto),
           [ENDPOINT_TYPES.WEBHOOK]: getSchemaPath(CreateWebhookEndpointDto),
           [ENDPOINT_TYPES.PHONE]: getSchemaPath(CreatePhoneEndpointDto),
+          [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: getSchemaPath(CreateMsTeamsChannelEndpointDto),
+          [ENDPOINT_TYPES.MS_TEAMS_USER]: getSchemaPath(CreateMsTeamsUserEndpointDto),
         },
       },
     },
