@@ -773,7 +773,8 @@
     "kobalte",
     "jsonrepair",
     "xoxb",
-    "fanout"
+    "fanout",
+    "adminconsent"
   ],
   "flagWords": [],
   "patterns": [
