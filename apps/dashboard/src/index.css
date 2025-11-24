@@ -420,3 +420,12 @@
 .mly-editor .mly-prose .footer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
   font-size: 14px;
 }
+
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}

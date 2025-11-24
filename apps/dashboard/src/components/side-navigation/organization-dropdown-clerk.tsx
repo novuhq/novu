@@ -11,18 +11,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useRegion } from '@/context/region';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
-const SCROLL_THRESHOLD = 50;
-const PAGE_SIZE = 8;
+const SCROLL_THRESHOLD = 100;
+const PAGE_SIZE = 10;
 
 function getOrganizationInitials(name: string) {
   return name
-    .split(' ')
+    .trim()
+    .split(/\s+/)
     .map((word) => word[0])
     .join('')
     .toUpperCase()
@@ -124,6 +126,8 @@ export function OrganizationDropdown() {
       setIsOpen(false);
     } catch (error) {
       console.error('Failed to switch organization:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      showErrorToast(`Unable to switch organizations. ${errorMessage}`, 'Organization Switch Failed');
     } finally {
       setIsSwitching(false);
       setSwitchingToId(null);
@@ -173,75 +177,63 @@ export function OrganizationDropdown() {
   const filteredMemberships = userMemberships?.data?.filter(filterMemberships) || [];
 
   return (
-    <>
-      <style>
-        {`
-          @keyframes shimmer {
-            from { transform: translateX(-100%); }
-            to { transform: translateX(100%); }
-          }
-        `}
-      </style>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <button
+          className={cn(
+            'group relative flex w-full items-center gap-2 rounded-lg px-1.5 py-1.5 transition-all duration-300',
+            'hover:bg-background hover:shadow-sm',
+            'before:absolute before:bottom-0 before:left-0 before:h-0 before:w-full before:border-b before:border-neutral-alpha-100 before:transition-all before:duration-300 before:content-[""]',
+            'hover:before:border-transparent',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-background focus-visible:shadow-sm focus-visible:before:border-transparent'
+          )}
+        >
+          <OrganizationAvatar imageUrl={currentOrganization.imageUrl} name={currentOrganization.name} showShimmer />
+          <span className="text-sm font-medium text-foreground-950">{currentOrganization.name}</span>
+          <RiArrowDownSLine className="ml-auto size-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus:opacity-100" />
+        </button>
+      </DropdownMenuTrigger>
 
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <button
-            className={cn(
-              'group relative flex w-full items-center gap-2 rounded-lg px-1.5 py-1.5 transition-all duration-300',
-              'hover:bg-background hover:shadow-sm',
-              'before:absolute before:bottom-0 before:left-0 before:h-0 before:w-full before:border-b before:border-neutral-alpha-100 before:transition-all before:duration-300 before:content-[""]',
-              'hover:before:border-transparent',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-background focus-visible:shadow-sm focus-visible:before:border-transparent'
-            )}
-          >
-            <OrganizationAvatar imageUrl={currentOrganization.imageUrl} name={currentOrganization.name} showShimmer />
-            <span className="text-sm font-medium text-foreground-950">{currentOrganization.name}</span>
-            <RiArrowDownSLine className="ml-auto size-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus:opacity-100" />
-          </button>
-        </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-64 p-0" align="start">
+        <div
+          ref={scrollContainerRef}
+          className="max-h-[200px] overflow-y-auto"
+          role="group"
+          aria-label="List of all organization memberships"
+          onScroll={handleScroll}
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredMemberships.map((membership) => (
+              <OrganizationListItem
+                key={membership.id}
+                membership={membership}
+                onSwitch={handleOrganizationSwitch}
+                isSwitching={isSwitching}
+                switchingToId={switchingToId}
+              />
+            ))}
+          </AnimatePresence>
 
-        <DropdownMenuContent className="w-64 p-0" align="start">
-          <div
-            ref={scrollContainerRef}
-            className="max-h-[200px] overflow-y-auto"
-            role="group"
-            aria-label="List of all organization memberships"
-            onScroll={handleScroll}
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredMemberships.map((membership) => (
-                <OrganizationListItem
-                  key={membership.id}
-                  membership={membership}
-                  onSwitch={handleOrganizationSwitch}
-                  isSwitching={isSwitching}
-                  switchingToId={switchingToId}
-                />
-              ))}
-            </AnimatePresence>
+          {userMemberships?.isFetching && (
+            <div className="flex items-center justify-center py-2">
+              <RiLoader4Line className="size-4 animate-spin text-foreground-600" />
+            </div>
+          )}
+        </div>
 
-            {userMemberships?.isFetching && (
-              <div className="flex items-center justify-center py-2">
-                <RiLoader4Line className="size-4 animate-spin text-foreground-600" />
-              </div>
-            )}
-          </div>
-
-          <DropdownMenuItem
-            className={cn(
-              'flex cursor-pointer items-center gap-2 rounded-none border-t border-neutral-alpha-200 px-3 py-1.5 text-sm transition-shadow focus:bg-accent hover:bg-accent',
-              isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
-            )}
-            onSelect={() => {
-              window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
-            }}
-          >
-            <RiAddCircleLine className="size-4" />
-            <span className="text-foreground-950">Create organization</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+        <DropdownMenuItem
+          className={cn(
+            'flex cursor-pointer items-center gap-2 rounded-none border-t border-neutral-alpha-200 px-3 py-1.5 text-sm transition-shadow focus:bg-accent hover:bg-accent',
+            isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
+          )}
+          onSelect={() => {
+            window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
+          }}
+        >
+          <RiAddCircleLine className="size-4" />
+          <span className="text-foreground-950">Create organization</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
-
