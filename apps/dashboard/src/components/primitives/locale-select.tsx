@@ -6,6 +6,7 @@ import { FlagCircle, StackedFlagCircles } from '../flag-circle';
 import TruncatedText from '../truncated-text';
 import { Button, ButtonProps } from './button';
 import { Input } from './input';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 type BaseLocaleSelectProps = {
   disabled?: boolean;
@@ -227,44 +228,35 @@ export function LocaleSelect(props: LocaleSelectProps) {
   const showCimodeWarning = !multiSelect && value === 'cimode';
 
   return (
-    <div ref={containerRef} className="relative">
-      <Button
-        variant="secondary"
-        mode="outline"
-        className={cn('flex h-8 w-full items-center justify-between gap-1 rounded-lg px-3 focus:z-10', className)}
-        disabled={disabled || readOnly}
-        onClick={handleToggle}
-        type="button"
-        {...rest}
-      >
-        {multiSelect ? (
-          <MultiSelectTrigger value={value as string[]} placeholder={placeholder} />
-        ) : (
-          <SingleSelectTrigger value={value as string} placeholder={placeholder} />
-        )}
-
-        <RiArrowDownSLine
-          className={cn('ml-auto size-4 opacity-50', disabled || readOnly ? 'hidden' : 'opacity-100')}
-        />
-      </Button>
-
-      {showCimodeWarning && (
-        <div className="mt-2 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5">
-          <RiErrorWarningFill className="mt-0.5 size-4 shrink-0 text-amber-600" />
-          <p className="text-xs text-amber-900">
-            <span className="font-medium">cimode</span> will return translation keys without translating them. This
-            locale is used for debugging purposes.
-          </p>
-        </div>
-      )}
-
-      {isOpen && (
-        <div
-          className={cn(
-            'border-border bg-background absolute z-[9999] mt-1 w-full min-w-[320px] rounded-lg border shadow-lg',
-            dropdownPosition === 'right' ? 'right-0' : 'left-0'
-          )}
+    <div className="flex items-center gap-1.5">
+      <div ref={containerRef} className="relative flex-1">
+        <Button
+          variant="secondary"
+          mode="outline"
+          className={cn('flex h-8 w-full items-center justify-between gap-1 rounded-lg px-3 focus:z-10', className)}
+          disabled={disabled || readOnly}
+          onClick={handleToggle}
+          type="button"
+          {...rest}
         >
+          {multiSelect ? (
+            <MultiSelectTrigger value={value as string[]} placeholder={placeholder} />
+          ) : (
+            <SingleSelectTrigger value={value as string} placeholder={placeholder} />
+          )}
+
+          <RiArrowDownSLine
+            className={cn('ml-auto size-4 opacity-50', disabled || readOnly ? 'hidden' : 'opacity-100')}
+          />
+        </Button>
+
+        {isOpen && (
+          <div
+            className={cn(
+              'border-border bg-background absolute z-[9999] mt-1 w-full min-w-[320px] rounded-lg border shadow-lg',
+              dropdownPosition === 'right' ? 'right-0' : 'left-0'
+            )}
+          >
           <div className="border-border border-b p-2">
             <Input
               ref={inputRef}
@@ -318,6 +310,21 @@ export function LocaleSelect(props: LocaleSelectProps) {
             )}
           </div>
         </div>
+      )}
+      </div>
+
+      {showCimodeWarning && (
+        <Tooltip>
+          <TooltipTrigger type="button">
+            <RiErrorWarningFill className="size-4 shrink-0 text-amber-600" />
+          </TooltipTrigger>
+          <TooltipContent className="max-w-[260px]">
+            <p className="text-xs">
+              <span className="font-medium">cimode</span> will return translation keys without translating them. This
+              locale is used for debugging purposes.
+            </p>
+          </TooltipContent>
+        </Tooltip>
       )}
     </div>
   );
