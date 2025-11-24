@@ -64,8 +64,4 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
 
   controls?: StatelessControls;
-
-  @IsDefined()
-  @IsString()
-  environmentName: string;
 }

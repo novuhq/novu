@@ -139,10 +139,14 @@ export class RunJob {
         environment: { _id: job._environmentId },
       });
 
-      const notification = await this.notificationRepository.findOne({
-        _id: job._notificationId,
-        _environmentId: job._environmentId,
-      });
+      const notification: Pick<NotificationEntity, '_id' | 'critical' | 'severity' | 'tags'> | null =
+        await this.notificationRepository.findOne(
+          {
+            _id: job._notificationId,
+            _environmentId: job._environmentId,
+          },
+          '_id critical tags severity'
+        );
 
       if (!notification) {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
@@ -171,7 +175,10 @@ export class RunJob {
           ? !isWithinSchedule(schedule, new Date(), timezone)
           : false;
 
-        if (isOutsideSubscriberSchedule && (await this.shouldExtendToSubscriberSchedule(job, notification))) {
+        if (
+          isOutsideSubscriberSchedule &&
+          (await this.shouldExtendToSubscriberSchedule(job, notification.critical ?? false))
+        ) {
           this.logger.info(
             {
               jobId: job._id,
@@ -188,7 +195,7 @@ export class RunJob {
           }
         }
 
-        if (isOutsideSubscriberSchedule && !this.shouldSkipScheduleCheck(job, notification)) {
+        if (isOutsideSubscriberSchedule && !this.shouldSkipScheduleCheck(job, notification.critical)) {
           this.logger.info(
             {
               jobId: job._id,
@@ -649,7 +656,7 @@ export class RunJob {
     job: JobEntity,
     workflowStatus: WorkflowRunStatusEnum
   ): Promise<void> {
-    this.logger.info({ nv: { job } }, 'Conditionally updating delivery lifecycle');
+    this.logger.debug({ nv: { job } }, 'Conditionally updating delivery lifecycle');
 
     if (
       job.type === StepTypeEnum.TRIGGER ||
@@ -701,7 +708,7 @@ export class RunJob {
     });
   }
 
-  private shouldSkipScheduleCheck(job: JobEntity, notification: NotificationEntity): boolean {
+  private shouldSkipScheduleCheck(job: JobEntity, critical: boolean | undefined): boolean {
     // always deliver in-app messages or critical messages
     // let trigger,digest and delay finish their execution
     if (
@@ -709,7 +716,7 @@ export class RunJob {
       job.type === StepTypeEnum.IN_APP ||
       job.type === StepTypeEnum.DELAY ||
       job.type === StepTypeEnum.DIGEST ||
-      notification.critical
+      critical
     ) {
       return true;
     }
@@ -717,9 +724,9 @@ export class RunJob {
     return false;
   }
 
-  private async shouldExtendToSubscriberSchedule(job: JobEntity, notification: NotificationEntity): Promise<boolean> {
+  private async shouldExtendToSubscriberSchedule(job: JobEntity, critical: boolean): Promise<boolean> {
     // should only extend to schedule for delay and digest when the workflow is not critical
-    if ((job.type === StepTypeEnum.DELAY || job.type === StepTypeEnum.DIGEST) && !notification.critical) {
+    if ((job.type === StepTypeEnum.DELAY || job.type === StepTypeEnum.DIGEST) && !critical) {
       const bridgeResponse = await this.executeBridgeJob.execute(
         ExecuteBridgeJobCommand.create({
           environmentId: job._environmentId,

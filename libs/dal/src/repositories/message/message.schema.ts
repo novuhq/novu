@@ -312,6 +312,7 @@ messageSchema.index({
  *     createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
  *   }
  */
+
 messageSchema.index({
   _environmentId: 1,
   providerId: 1,
@@ -333,6 +334,49 @@ messageSchema.index({ _environmentId: 1, _jobId: 1, deleted: 1 });
  * process-unsnooze-job.usecase.ts
  */
 messageSchema.index({ _notificationId: 1, snoozedUntil: 1 });
+
+messageSchema.index({
+  _subscriberId: 1,
+  _environmentId: 1,
+  channel: 1,
+  seen: 1,
+  read: 1,
+  archived: 1,
+  snoozedUntil: 1,
+  severity: 1,
+  createdAt: -1,
+});
+
+messageSchema.index({
+  _subscriberId: 1,
+  _environmentId: 1,
+  channel: 1,
+  read: 1,
+  seen: 1,
+  tags: 1,
+  archived: 1,
+  snoozedUntil: 1,
+  createdAt: -1,
+  _id: -1,
+});
+
+messageSchema.index({
+  identifier: 1,
+  _environmentId: 1,
+  _organizationId: 1,
+});
+
+messageSchema.index({
+  _subscriberId: 1,
+  _environmentId: 1,
+  channel: 1,
+  seen: 1,
+  read: 1,
+  archived: 1,
+  deleted: 1,
+  createdAt: -1,
+  _id: -1,
+});
 
 export const Message =
   (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||

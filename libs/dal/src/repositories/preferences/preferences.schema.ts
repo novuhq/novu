@@ -77,7 +77,12 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
   { ...schemaOptions, minimize: false }
 );
 
-preferencesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+preferencesSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  deletedBy: true,
+  overrideMethods: 'all',
+  use$neOperator: false,
+});
 
 // Subscriber Global Preferences
 // Ensures one global preference per subscriber (SUBSCRIBER_GLOBAL type)
@@ -134,15 +139,8 @@ preferencesSchema.index(
   }
 );
 
-// Subscription Subscriber Workflow Preferences
 // Ensures one workflow preference per subscriber per template per topic subscription (SUBSCRIPTION_SUBSCRIBER_WORKFLOW type)
-// Partial filter ensures this only applies to SUBSCRIPTION_SUBSCRIBER_WORKFLOW type,
-// preventing conflicts with other preference types
-// This single index optimizes all queries for SUBSCRIPTION_SUBSCRIBER_WORKFLOW:
-// - Pattern 1 (find all preferences for a topic subscription): uses prefix _environmentId, _subscriberId, _topicSubscriptionId
-//   Used in: get-topic-subscription.usecase.ts, get-topic-subscriptions.usecase.ts, delete-topic-subscription.usecase.ts
-// - Pattern 2 (find/upsert specific preference): uses full index with _templateId
-//   Used in: get-preferences.usecase.ts, upsert-preferences.usecase.ts
+// Only for this type (via partial filter).
 preferencesSchema.index(
   {
     _environmentId: 1,
@@ -158,6 +156,31 @@ preferencesSchema.index(
     },
   }
 );
+
+preferencesSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _subscriberId: 1,
+  _templateId: 1,
+  type: 1,
+  deleted: 1,
+});
+
+preferencesSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _subscriberId: 1,
+  type: 1,
+  deleted: 1,
+});
+
+preferencesSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _templateId: 1,
+  type: 1,
+  deleted: 1,
+});
 
 export const Preferences =
   (mongoose.models.Preferences as mongoose.Model<PreferencesDBModel>) ||

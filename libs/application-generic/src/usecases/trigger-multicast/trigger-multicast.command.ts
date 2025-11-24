@@ -18,8 +18,4 @@ export class TriggerMulticastCommand extends TriggerEventMulticastCommand {
   @IsArray()
   @IsString({ each: true })
   contextKeys?: string[];
-
-  @IsDefined()
-  @IsString()
-  environmentName: string;
 }

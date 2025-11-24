@@ -1,27 +1,48 @@
 import { Accessor, createContext, createMemo, ParentProps, useContext } from 'solid-js';
-import { defaultLocalization, dynamicLocalization } from '../config/defaultLocalization';
+import {
+  defaultInboxLocalization,
+  defaultLocalization,
+  defaultSubscriptionLocalization,
+  dynamicLocalization,
+} from '../config/defaultLocalization';
 
-export type LocalizationKey = keyof typeof defaultLocalization;
+export type InboxLocalizationKey = keyof typeof defaultInboxLocalization;
+export type SubscriptionLocalizationKey = keyof typeof defaultSubscriptionLocalization;
+export type AllLocalizationKey = InboxLocalizationKey | SubscriptionLocalizationKey;
 
 export type StringLocalizationKey = {
-  [K in LocalizationKey]: (typeof defaultLocalization)[K] extends string ? K : never;
-}[LocalizationKey];
+  [K in AllLocalizationKey]: (typeof defaultLocalization)[K] extends string ? K : never;
+}[AllLocalizationKey];
 
-export type Localization = {
-  [K in LocalizationKey]?: (typeof defaultLocalization)[K] extends (...args: infer P) => any
+export type AllLocalization = {
+  [K in AllLocalizationKey]?: (typeof defaultLocalization)[K] extends (...args: infer P) => any
     ? ((...args: P) => ReturnType<(typeof defaultLocalization)[K]>) | string
     : string;
 } & {
   dynamic?: Record<string, string>;
 };
+export type InboxLocalization = {
+  [K in InboxLocalizationKey]?: (typeof defaultInboxLocalization)[K] extends (...args: infer P) => any
+    ? ((...args: P) => ReturnType<(typeof defaultInboxLocalization)[K]>) | string
+    : string;
+} & {
+  dynamic?: Record<string, string>;
+};
+export type SubscriptionLocalization = {
+  [K in SubscriptionLocalizationKey]?: (typeof defaultSubscriptionLocalization)[K] extends (...args: infer P) => any
+    ? ((...args: P) => ReturnType<(typeof defaultSubscriptionLocalization)[K]>) | string
+    : string;
+} & {
+  dynamic?: Record<string, string>;
+};
 
-export type TranslateFunctionArg<K extends LocalizationKey> = K extends keyof typeof defaultLocalization
+type TranslateFunctionArg<K extends AllLocalizationKey> = K extends keyof typeof defaultLocalization
   ? (typeof defaultLocalization)[K] extends (arg: infer A) => any
     ? A
     : undefined
   : undefined;
 
-export type TranslateFunction = <K extends LocalizationKey>(
+type TranslateFunction = <K extends AllLocalizationKey>(
   key: K,
   ...args: TranslateFunctionArg<K> extends undefined
     ? [undefined?] // No arguments needed if TranslateFunctionArg<K> is undefined
@@ -35,7 +56,7 @@ type LocalizationContextType = {
 
 const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
 
-type LocalizationProviderProps = ParentProps & { localization?: Localization };
+type LocalizationProviderProps = ParentProps & { localization?: AllLocalization };
 
 export const LocalizationProvider = (props: LocalizationProviderProps) => {
   const localization = createMemo<Record<string, string | Function>>(() => {

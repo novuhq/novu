@@ -8,7 +8,7 @@ import {
   Push as DefaultPush,
   Sms as DefaultSms,
 } from '../../../icons';
-import { AppearanceCallback, AppearanceKey, IconKey } from '../../../types';
+import { AllAppearanceKey, AllIconKey, InboxAppearanceCallback } from '../../../types';
 import { Switch, SwitchState } from '../../primitives/Switch';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
@@ -42,7 +42,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
         className:
           'nt-flex nt-justify-between nt-items-center nt-gap-2 data-[disabled=true]:nt-text-foreground-alpha-600',
         context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-          AppearanceCallback['channelContainer']
+          InboxAppearanceCallback['channelContainer']
         >[0],
       })}
     >
@@ -51,7 +51,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
           key: 'channelLabelContainer',
           className: 'nt-flex nt-items-center nt-gap-2 nt-text-foreground',
           context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-            AppearanceCallback['channelLabelContainer']
+            InboxAppearanceCallback['channelLabelContainer']
           >[0],
         })}
       >
@@ -60,7 +60,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
             key: 'channelIconContainer',
             className: 'nt-p-1 nt-rounded-md nt-bg-neutral-alpha-25 nt-text-foreground-alpha-300',
             context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-              AppearanceCallback['channelIconContainer']
+              InboxAppearanceCallback['channelIconContainer']
             >[0],
           })}
         >
@@ -77,7 +77,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
             key: 'channelLabel',
             className: 'nt-text-sm nt-font-semibold',
             context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-              AppearanceCallback['channelLabel']
+              InboxAppearanceCallback['channelLabel']
             >[0],
           })}
         >
@@ -89,7 +89,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
           key: 'channelSwitchContainer',
           className: 'nt-flex nt-items-center',
           context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-            AppearanceCallback['channelSwitchContainer']
+            InboxAppearanceCallback['channelSwitchContainer']
           >[0],
         })}
       >
@@ -104,7 +104,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
 };
 
 type ChannelIconProps = JSX.IntrinsicElements['svg'] & {
-  appearanceKey: AppearanceKey;
+  appearanceKey: AllAppearanceKey;
   channel: ChannelType;
   preference?: Preference;
   preferenceGroup?: { name: string; preferences: Preference[] };
@@ -112,7 +112,7 @@ type ChannelIconProps = JSX.IntrinsicElements['svg'] & {
 const ChannelIcon = (props: ChannelIconProps) => {
   const style = useStyle();
 
-  const iconMap: Record<ChannelType, { key: IconKey; component: JSX.Element }> = {
+  const iconMap: Record<ChannelType, { key: AllIconKey; component: JSX.Element }> = {
     [ChannelType.IN_APP]: {
       key: 'inApp',
       component: (
@@ -122,7 +122,7 @@ const ChannelIcon = (props: ChannelIconProps) => {
             className: props.class,
             iconKey: 'inApp',
             context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-              AppearanceCallback['channel__icon']
+              InboxAppearanceCallback['channel__icon']
             >[0],
           })}
         />
@@ -137,7 +137,7 @@ const ChannelIcon = (props: ChannelIconProps) => {
             className: props.class,
             iconKey: 'email',
             context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-              AppearanceCallback['channel__icon']
+              InboxAppearanceCallback['channel__icon']
             >[0],
           })}
         />
@@ -152,7 +152,7 @@ const ChannelIcon = (props: ChannelIconProps) => {
             className: props.class,
             iconKey: 'push',
             context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-              AppearanceCallback['channel__icon']
+              InboxAppearanceCallback['channel__icon']
             >[0],
           })}
         />
@@ -167,7 +167,7 @@ const ChannelIcon = (props: ChannelIconProps) => {
             className: props.class,
             iconKey: 'sms',
             context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-              AppearanceCallback['channel__icon']
+              InboxAppearanceCallback['channel__icon']
             >[0],
           })}
         />
@@ -182,7 +182,7 @@ const ChannelIcon = (props: ChannelIconProps) => {
             className: props.class,
             iconKey: 'chat',
             context: { preference: props.preference, preferenceGroup: props.preferenceGroup } satisfies Parameters<
-              AppearanceCallback['channel__icon']
+              InboxAppearanceCallback['channel__icon']
             >[0],
           })}
         />
@@ -204,7 +204,7 @@ const ChannelIcon = (props: ChannelIconProps) => {
         key: props.appearanceKey,
         className: props.class,
         iconKey: iconData.key,
-        context: { preference: props.preference } satisfies Parameters<AppearanceCallback['channel__icon']>[0],
+        context: { preference: props.preference } satisfies Parameters<InboxAppearanceCallback['channel__icon']>[0],
       })}
     />
   );

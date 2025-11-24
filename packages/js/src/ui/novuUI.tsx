@@ -1,12 +1,13 @@
 import { Accessor, ComponentProps, createSignal, Setter } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
+import { Novu } from '../novu';
 import type { NovuOptions } from '../types';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
 import { generateRandomString } from './helpers';
 import type {
-  Appearance,
+  AllAppearance,
+  AllLocalization,
   BaseNovuProviderProps,
-  Localization,
   NovuProviderProps,
   PreferenceGroups,
   PreferencesFilter,
@@ -40,7 +41,8 @@ export class NovuUI {
   #setPreferenceGroups: Setter<PreferenceGroups | undefined>;
   #preferencesSort: Accessor<PreferencesSort | undefined>;
   #setPreferencesSort: Setter<PreferencesSort | undefined>;
-  #predefinedNovu;
+  #novu: Accessor<Novu | undefined>;
+  #setNovu: Setter<Novu | undefined>;
   id: string;
 
   constructor(props: NovuProviderProps) {
@@ -55,6 +57,7 @@ export class NovuUI {
     const [preferencesSort, setPreferencesSort] = createSignal(props.preferencesSort);
     const [routerPush, setRouterPush] = createSignal(props.routerPush);
     const [container, setContainer] = createSignal(this.#getContainerElement(props.container));
+    const [novu, setNovu] = createSignal(props.novu);
     this.#mountedElements = mountedElements;
     this.#setMountedElements = setMountedElements;
     this.#appearance = appearance;
@@ -67,7 +70,8 @@ export class NovuUI {
     this.#setTabs = setTabs;
     this.#routerPush = routerPush;
     this.#setRouterPush = setRouterPush;
-    this.#predefinedNovu = props.novu;
+    this.#novu = novu;
+    this.#setNovu = setNovu;
     this.#preferencesFilter = preferencesFilter;
     this.#setPreferencesFilter = setPreferencesFilter;
     this.#preferenceGroups = preferenceGroups;
@@ -116,7 +120,7 @@ export class NovuUI {
           preferenceGroups={this.#preferenceGroups()}
           preferencesSort={this.#preferencesSort()}
           routerPush={this.#routerPush()}
-          novu={this.#predefinedNovu}
+          novu={this.#novu}
           container={this.#container()}
         />
       ),
@@ -168,11 +172,15 @@ export class NovuUI {
     });
   }
 
-  updateAppearance(appearance?: Appearance) {
+  updateNovu(novu: Novu) {
+    this.#setNovu(novu);
+  }
+
+  updateAppearance(appearance?: AllAppearance) {
     this.#setAppearance(appearance);
   }
 
-  updateLocalization(localization?: Localization) {
+  updateLocalization(localization?: AllLocalization) {
     this.#setLocalization(localization);
   }
 

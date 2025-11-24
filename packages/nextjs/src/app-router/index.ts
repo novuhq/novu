@@ -10,6 +10,9 @@ export {
   PreferenceLevel,
   Preferences,
   SeverityLevelEnum,
+  SubscriptionButton,
+  SubscriptionPreferences,
   WorkflowCriticalityEnum,
 } from '@novu/react';
 export { Inbox } from './Inbox';
+export { Subscription } from './Subscription';

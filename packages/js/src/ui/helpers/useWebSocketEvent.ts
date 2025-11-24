@@ -1,8 +1,7 @@
-import { onCleanup, onMount } from 'solid-js';
+import { createEffect, onCleanup } from 'solid-js';
 import type { EventHandler, Events, SocketEventNames } from '../../event-emitter';
 import { useNovu } from '../context';
 import { requestLock } from './browser';
-import { useBrowserTabsChannel } from './useBrowserTabsChannel';
 
 export const useWebSocketEvent = <E extends SocketEventNames>({
   event: webSocketEvent,
@@ -11,23 +10,32 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   event: E;
   eventHandler: (args: Events[E]) => void;
 }) => {
-  const novu = useNovu();
-  const channelName = `nv_ws_connection:a=${novu.applicationIdentifier}:s=${novu.subscriberId}:c=${novu.contextKey}:e=${webSocketEvent}`;
+  const novuAccessor = useNovu();
 
-  const { postMessage } = useBrowserTabsChannel({ channelName, onMessage });
+  createEffect(() => {
+    const currentNovu = novuAccessor();
+    const channelName = `nv_ws_connection:a=${currentNovu.applicationIdentifier}:s=${currentNovu.subscriberId}:c=${currentNovu.contextKey}:e=${webSocketEvent}`;
 
-  const updateReadCount: EventHandler<Events[E]> = (data) => {
-    onMessage(data);
-    postMessage(data);
-  };
+    const tabsChannel = new BroadcastChannel(channelName);
+    const listener = (event: MessageEvent<Events[E]>) => {
+      onMessage(event.data);
+    };
 
-  onMount(() => {
-    let cleanup: () => void;
+    tabsChannel.addEventListener('message', listener);
+
+    const updateReadCount: EventHandler<Events[E]> = (data) => {
+      onMessage(data);
+      tabsChannel.postMessage(data);
+    };
+
+    let cleanup: (() => void) | undefined;
     const resolveLock = requestLock(channelName, () => {
-      cleanup = novu.on(webSocketEvent, updateReadCount);
+      cleanup = currentNovu.on(webSocketEvent, updateReadCount);
     });
 
     onCleanup(() => {
+      tabsChannel.removeEventListener('message', listener);
+      tabsChannel.close();
       if (cleanup) {
         cleanup();
       }

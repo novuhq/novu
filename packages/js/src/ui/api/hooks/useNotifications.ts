@@ -1,4 +1,4 @@
-import { Accessor, createEffect, onCleanup, onMount } from 'solid-js';
+import { Accessor, createEffect, onCleanup } from 'solid-js';
 import { ListNotificationsArgs, ListNotificationsResponse } from '../../../notifications';
 import type { NotificationFilter } from '../../../types';
 import { isSameFilter } from '../../../utils/notification-utils';
@@ -10,21 +10,22 @@ type UseNotificationsInfiniteScrollProps = {
 };
 
 export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteScrollProps) => {
-  const novu = useNovu();
+  const novuAccessor = useNovu();
   let filter = { ...props.options() };
 
   const [data, { initialLoading, setEl, end, mutate, reset }] = createInfiniteScroll(
     async (after) => {
-      const { data } = await novu.notifications.list({ ...(props.options() || {}), after });
+      const { data } = await novuAccessor().notifications.list({ ...(props.options() || {}), after });
 
       return { data: data?.notifications ?? [], hasMore: data?.hasMore ?? false };
     },
     {
       paginationField: 'id',
+      dependency: novuAccessor,
     }
   );
 
-  onMount(() => {
+  createEffect(() => {
     const listener = ({ data }: { data: ListNotificationsResponse }) => {
       if (!data || !isSameFilter(filter, data.filter)) {
         return;
@@ -33,7 +34,7 @@ export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteSc
       mutate({ data: data.notifications, hasMore: data.hasMore });
     };
 
-    const cleanup = novu.on('notifications.list.updated', listener);
+    const cleanup = novuAccessor().on('notifications.list.updated', listener);
 
     onCleanup(() => cleanup());
   });
@@ -44,13 +45,13 @@ export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteSc
       return;
     }
 
-    novu.notifications.clearCache();
+    novuAccessor().notifications.clearCache();
     await reset();
     filter = newFilter;
   });
 
   const refetch = async ({ filter }: { filter?: NotificationFilter }) => {
-    novu.notifications.clearCache({ filter });
+    novuAccessor().notifications.clearCache({ filter });
     await reset();
   };
 

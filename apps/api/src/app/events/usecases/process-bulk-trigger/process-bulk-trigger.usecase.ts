@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { IWorkflowBulkJobDto, WorkflowQueueService } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { AddressingTypeEnum, TriggerEventStatusEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { TriggerEventResponseDto } from '../../dtos';
@@ -10,7 +11,8 @@ import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
 export class ProcessBulkTrigger {
   constructor(
     private parseEventRequest: ParseEventRequest,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private workflowQueueService: WorkflowQueueService
   ) {}
 
   async execute(command: ProcessBulkTriggerCommand) {
@@ -32,49 +34,76 @@ export class ProcessBulkTrigger {
       }
     }
 
-    const eventPromises = command.events.map(async (event) => {
-      try {
-        const workflow = workflowMap.get(event.name);
+    const processBatch = async (batch: typeof command.events) => {
+      return Promise.all(
+        batch.map(async (event) => {
+          try {
+            const workflow = workflowMap.get(event.name);
 
-        const result = (await this.parseEventRequest.execute(
-          ParseEventRequestMulticastCommand.create({
-            userId: command.userId,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            identifier: event.name,
-            payload: event.payload,
-            overrides: event.overrides || {},
-            to: event.to,
-            actor: event.actor,
-            tenant: event.tenant,
-            context: event.context,
-            transactionId: event.transactionId,
-            addressingType: AddressingTypeEnum.MULTICAST,
-            requestCategory: TriggerRequestCategoryEnum.BULK,
-            bridgeUrl: event.bridgeUrl,
-            requestId: command.requestId,
-            workflow,
-          })
-        )) as unknown as TriggerEventResponseDto;
+            const result = (await this.parseEventRequest.execute(
+              ParseEventRequestMulticastCommand.create({
+                userId: command.userId,
+                environmentId: command.environmentId,
+                organizationId: command.organizationId,
+                identifier: event.name,
+                payload: event.payload,
+                overrides: event.overrides || {},
+                to: event.to,
+                actor: event.actor,
+                tenant: event.tenant,
+                context: event.context,
+                transactionId: event.transactionId,
+                addressingType: AddressingTypeEnum.MULTICAST,
+                requestCategory: TriggerRequestCategoryEnum.BULK,
+                bridgeUrl: event.bridgeUrl,
+                requestId: command.requestId,
+                workflow,
+                skipQueueInsertion: true,
+              })
+            )) as unknown as TriggerEventResponseDto;
 
-        return result;
-      } catch (e) {
-        let error: string[];
-        if (e.response?.message) {
-          error = Array.isArray(e.response?.message) ? e.response?.message : [e.response?.message];
-        } else {
-          error = [e.message];
-        }
+            return result;
+          } catch (e) {
+            let error: string[];
+            if (e.response?.message) {
+              error = Array.isArray(e.response?.message) ? e.response?.message : [e.response?.message];
+            } else {
+              error = [e.message];
+            }
 
-        return {
-          acknowledged: true,
-          status: TriggerEventStatusEnum.ERROR,
-          error,
-        } as TriggerEventResponseDto;
-      }
-    });
+            return {
+              acknowledged: true,
+              status: TriggerEventStatusEnum.ERROR,
+              error,
+            } as TriggerEventResponseDto;
+          }
+        })
+      );
+    };
 
-    const results = await Promise.all(eventPromises);
+    const BATCH_SIZE = 5;
+    const results: TriggerEventResponseDto[] = [];
+
+    for (let i = 0; i < command.events.length; i += BATCH_SIZE) {
+      const batch = command.events.slice(i, i + BATCH_SIZE);
+      const batchResults = await processBatch(batch);
+      results.push(...batchResults);
+    }
+
+    const jobsToQueue: IWorkflowBulkJobDto[] = results
+      .filter(
+        (result): result is TriggerEventResponseDto & { jobData: NonNullable<typeof result.jobData> } =>
+          result.status === TriggerEventStatusEnum.PROCESSED && result.jobData !== undefined
+      )
+      .map((result) => ({
+        name: result.jobData.transactionId,
+        data: result.jobData,
+        groupId: result.jobData.organizationId,
+      }));
+
+    if (jobsToQueue.length > 0) {
+      await this.workflowQueueService.addBulk(jobsToQueue);
+    }
 
     return results;
   }

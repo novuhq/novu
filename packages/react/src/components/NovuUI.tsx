@@ -6,16 +6,16 @@ import { NovuUIProvider } from '../context/NovuUIContext';
 import { useRenderer } from '../context/RendererContext';
 import { useDataRef } from '../hooks/internal/useDataRef';
 import { adaptAppearanceForJs } from '../utils/appearance';
-import type { ReactAppearance } from '../utils/types';
+import type { ReactInboxAppearance, ReactSubscriptionAppearance } from '../utils/types';
 import { ShadowRootDetector } from './ShadowRootDetector';
 
-type NovuUIProps = Omit<JsNovuUIOptions, 'appearance'> & {
-  appearance?: ReactAppearance;
+export type NovuUIOptions = Omit<JsNovuUIOptions, 'appearance'> & {
+  appearance?: ReactInboxAppearance | ReactSubscriptionAppearance;
 };
 
-type RendererProps = React.PropsWithChildren<{
-  options: NovuUIProps;
-  novu?: Novu;
+type NovuUIProps = React.PropsWithChildren<{
+  options: NovuUIOptions;
+  novu: Novu;
 }>;
 
 const findParentShadowRoot = (child?: HTMLDivElement | null): Node | null => {
@@ -44,7 +44,7 @@ const findParentShadowRoot = (child?: HTMLDivElement | null): Node | null => {
   return null;
 };
 
-export const NovuUI = ({ options, novu, children }: RendererProps) => {
+export const NovuUI = ({ options, novu, children }: NovuUIProps) => {
   const shadowRootDetector = useRef<HTMLDivElement>(null);
   const { mountElement } = useRenderer();
 
@@ -89,6 +89,7 @@ export const NovuUI = ({ options, novu, children }: RendererProps) => {
     novuUI.updateTabs(options.tabs);
     novuUI.updateOptions(options.options);
     novuUI.updateRouterPush(options.routerPush);
+    novuUI.updateNovu(novu);
   }, [
     shadowRootDetector,
     novuUI,
@@ -97,6 +98,7 @@ export const NovuUI = ({ options, novu, children }: RendererProps) => {
     options.tabs,
     options.options,
     options.routerPush,
+    novu,
   ]);
 
   return (

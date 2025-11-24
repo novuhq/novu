@@ -1,17 +1,30 @@
+import { cva, VariantProps } from 'class-variance-authority';
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { useAppearance, useFocusManager } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
-import type { AppearanceKey } from '../../../types';
+import type { AllAppearanceKey } from '../../../types';
 import { Portal } from '../Portal';
 import { usePopover } from './PopoverRoot';
 
-export const popoverContentVariants = () =>
+export const popoverContentVariants = cva(
   cn(
-    'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background',
+    'nt-rounded-xl nt-bg-background',
     'nt-shadow-popover nt-animate-in nt-slide-in-from-top-2 nt-fade-in nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden nt-border nt-border-border nt-z-10'
-  );
+  ),
+  {
+    variants: {
+      size: {
+        inbox: 'nt-w-[400px] nt-h-[600px]',
+        subscription: 'nt-w-[400px] nt-h-auto',
+      },
+    },
+    defaultVariants: {
+      size: 'inbox',
+    },
+  }
+);
 
-const PopoverContentBody = (props: PopoverContentProps) => {
+const PopoverContentBody = (props: PopoverContentProps & VariantProps<typeof popoverContentVariants>) => {
   const { open, setFloating, floating, floatingStyles } = usePopover();
   const { setActive, removeActive } = useFocusManager();
   const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'style']);
@@ -31,7 +44,8 @@ const PopoverContentBody = (props: PopoverContentProps) => {
       ref={setFloating}
       class={style({
         key: local.appearanceKey || 'popoverContent',
-        className: cn(popoverContentVariants(), local.class),
+        className: cn(popoverContentVariants({ size: props.size }), local.class),
+        context: props.context,
       })}
       style={floatingStyles()}
       data-open={open()}
@@ -40,7 +54,11 @@ const PopoverContentBody = (props: PopoverContentProps) => {
   );
 };
 
-type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey; portal?: boolean };
+type PopoverContentProps = JSX.IntrinsicElements['div'] & {
+  appearanceKey?: AllAppearanceKey;
+  portal?: boolean;
+  context?: Record<string, unknown>;
+} & VariantProps<typeof popoverContentVariants>;
 export const PopoverContent = (props: PopoverContentProps) => {
   const { open, onClose, reference, floating } = usePopover();
   const { active } = useFocusManager();
