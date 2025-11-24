@@ -1,6 +1,6 @@
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
-import { useState } from 'react';
-import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
+import { useCallback, useRef, useState } from 'react';
+import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -19,11 +19,13 @@ export const OrganizationDropdown = () => {
   const { userMemberships, isLoaded } = useOrganizationList({
     userMemberships: {
       infinite: true,
+      pageSize: 8,
     },
   });
 
   const [isOpen, setIsOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleOrganizationSwitch = async (organizationId: string) => {
     if (organizationId === orgId || isSwitching) return;
@@ -38,6 +40,18 @@ export const OrganizationDropdown = () => {
       setIsSwitching(false);
     }
   };
+
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container || !userMemberships?.hasNextPage || userMemberships?.isFetching) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const scrollThreshold = 50;
+
+    if (scrollHeight - scrollTop - clientHeight < scrollThreshold) {
+      userMemberships.fetchNext?.();
+    }
+  }, [userMemberships]);
 
   if (!isLoaded || !currentOrganization) {
     return (
@@ -93,24 +107,12 @@ export const OrganizationDropdown = () => {
 
       <DropdownMenuContent className="w-64 px-0 py-0" align="start">
         <div className="flex flex-col">
-          <div className="py-0.5 [&_.organization-name]:text-sm">
-            <div className="flex items-center gap-2 py-1.5 px-2">
-              <Avatar className="size-6 rounded-full">
-                <AvatarImage src={currentOrganization.imageUrl} alt={currentOrganization.name} />
-                <AvatarFallback className="bg-primary-base text-static-white text-xs">
-                  {getOrganizationInitials(currentOrganization.name)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-[14px] font-medium text-foreground-950">{currentOrganization.name}</span>
-            </div>
-
-            <DropdownMenuSeparator className="my-0" />
-          </div>
-
           <div
-            className="max-h-[300px] overflow-y-auto py-0 [&_.organization-name]:text-sm"
+            ref={scrollContainerRef}
+            className="max-h-[200px] overflow-y-auto py-0 [&_.organization-name]:text-sm"
             role="group"
             aria-label="List of all organization memberships"
+            onScroll={handleScroll}
           >
             {userMemberships?.data
               ?.filter((membership) => membership.organization.id !== orgId)
@@ -139,12 +141,18 @@ export const OrganizationDropdown = () => {
                   <RiArrowRightSLine className="size-4 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                 </DropdownMenuItem>
               ))}
+
+            {userMemberships?.isFetching && (
+              <div className="flex items-center justify-center py-2">
+                <RiLoader4Line className="size-4 animate-spin text-foreground-600" />
+              </div>
+            )}
           </div>
 
           <DropdownMenuItem
             className={cn(
               'flex cursor-pointer items-center gap-0 rounded-none py-1 text-sm border-t border-neutral-alpha-200',
-              'px-3',
+              'px-3 py-1.5',
               'focus:bg-accent hover:bg-accent'
             )}
             onSelect={() => {
