@@ -82,7 +82,7 @@ export class InboxTopicController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionRequestDto
-  ): Promise<SubscriptionResponseDto> {
+  ): Promise<TopicSubscriptionDetailsResponseDto> {
     const result = await this.createSubscriptionsUsecase.execute(
       CreateSubscriptionsCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -109,8 +109,14 @@ export class InboxTopicController {
       throw new BadRequestException('Failed to create subscription');
     }
 
-    // inbox only supports one subscription per topic per subscriber
-    return result.data[0];
+    const subscription = result.data[0];
+
+    return {
+      id: subscription._id,
+      identifier: subscription.identifier,
+      name: subscription.name,
+      preferences: subscription.preferences,
+    };
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
