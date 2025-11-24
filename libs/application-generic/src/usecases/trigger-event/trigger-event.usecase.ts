@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   ContextRepository,
+  EnvironmentEntity,
   EnvironmentRepository,
   JobEntity,
   JobRepository,
@@ -79,14 +80,6 @@ export class TriggerEvent {
       });
 
       const { environmentId, identifier, organizationId, userId } = mappedCommand;
-
-      const environment = await this.environmentRepository.findOne({
-        _id: environmentId,
-      });
-
-      if (!environment) {
-        throw new BadRequestException('Environment not found');
-      }
 
       this.logger.assign({
         transactionId: mappedCommand.transactionId,
@@ -175,7 +168,6 @@ export class TriggerEvent {
             TriggerMulticastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              environmentName: environment.name,
               template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -186,7 +178,6 @@ export class TriggerEvent {
             TriggerBroadcastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              environmentName: environment.name,
               template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -198,7 +189,6 @@ export class TriggerEvent {
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
-              environmentName: environment.name,
               template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
