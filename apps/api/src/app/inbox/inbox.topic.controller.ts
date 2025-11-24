@@ -6,7 +6,6 @@ import {
   GroupPreferenceFilterDto,
   WorkflowPreferenceRequestDto,
 } from '../shared/dtos/subscriptions/create-subscriptions.dto';
-import { SubscriptionResponseDto } from '../shared/dtos/subscriptions/create-subscriptions-response.dto';
 import { UpdateSubscriptionRequestDto } from '../shared/dtos/subscriptions/update-subscription.dto';
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
@@ -82,7 +81,7 @@ export class InboxTopicController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionRequestDto
-  ): Promise<SubscriptionResponseDto> {
+  ): Promise<TopicSubscriptionDetailsResponseDto> {
     const result = await this.createSubscriptionsUsecase.execute(
       CreateSubscriptionsCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -109,8 +108,14 @@ export class InboxTopicController {
       throw new BadRequestException('Failed to create subscription');
     }
 
-    // inbox only supports one subscription per topic per subscriber
-    return result.data[0];
+    const subscription = result.data[0];
+
+    return {
+      id: subscription._id,
+      identifier: subscription.identifier,
+      name: subscription.name,
+      preferences: subscription.preferences,
+    };
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -120,8 +125,8 @@ export class InboxTopicController {
     @Param('topicKey') topicKey: string,
     @Param('subscriptionId') subscriptionId: string,
     @Body() body: UpdateSubscriptionRequestDto
-  ): Promise<SubscriptionResponseDto> {
-    return await this.updateSubscriptionUsecase.execute(
+  ): Promise<TopicSubscriptionDetailsResponseDto> {
+    const subscription = await this.updateSubscriptionUsecase.execute(
       UpdateSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
@@ -132,6 +137,13 @@ export class InboxTopicController {
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
       })
     );
+
+    return {
+      id: subscription._id,
+      identifier: subscription.identifier,
+      name: subscription.name,
+      preferences: subscription.preferences,
+    };
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
