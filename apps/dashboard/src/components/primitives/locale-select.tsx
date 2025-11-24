@@ -316,7 +316,7 @@ export function LocaleSelect(props: LocaleSelectProps) {
       {showCimodeWarning && (
         <Tooltip>
           <TooltipTrigger type="button">
-            <RiErrorWarningFill className="size-4 shrink-0 text-amber-600" />
+            <RiErrorWarningFill className="size-4 shrink-0 text-warning" />
           </TooltipTrigger>
           <TooltipContent className="max-w-[260px]">
             <p className="text-xs">
