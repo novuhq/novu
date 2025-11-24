@@ -27,9 +27,8 @@ export class DeleteTopicSubscription {
     await this.topicSubscribersRepository.withTransaction(async () => {
       await this.preferencesRepository.delete({
         _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _topicSubscriptionId: subscription._id,
         _subscriberId: subscription._subscriberId,
+        _topicSubscriptionId: subscription._id,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
       });
 

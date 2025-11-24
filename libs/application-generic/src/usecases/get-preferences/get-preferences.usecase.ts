@@ -164,8 +164,8 @@ export class GetPreferences {
       const workflowQuery = {
         ...baseQuery,
         _subscriberId: command.subscriberId,
-        _templateId: command.templateId,
         ...(command.topicSubscriptionId && { _topicSubscriptionId: command.topicSubscriptionId }),
+        _templateId: command.templateId,
         type: command.topicSubscriptionId
           ? PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW
           : PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,

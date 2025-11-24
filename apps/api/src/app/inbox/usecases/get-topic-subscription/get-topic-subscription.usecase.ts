@@ -33,9 +33,8 @@ export class GetTopicSubscription {
 
     const preferencesEntities = await this.preferencesRepository.find({
       _environmentId: subscription._environmentId,
-      _organizationId: subscription._organizationId,
-      _topicSubscriptionId: subscription._id,
       _subscriberId: subscription._subscriberId,
+      _topicSubscriptionId: subscription._id,
       type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
     });
 

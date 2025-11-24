@@ -206,11 +206,11 @@ export class UpsertPreferences {
 
   private async getPreference(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
     return await this.preferencesRepository.findOne({
-      _subscriberId: command._subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _templateId: command.templateId,
+      _subscriberId: command._subscriberId,
       _topicSubscriptionId: command.topicSubscriptionId,
+      _templateId: command.templateId,
       type: command.type,
     });
   }
