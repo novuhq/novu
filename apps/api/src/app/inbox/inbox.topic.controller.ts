@@ -80,7 +80,7 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/topics/:topicKey/subscription')
+  @Post('/topics/:topicKey/subscriptions')
   async createTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
@@ -112,7 +112,7 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/topics/:topicKey/subscription/:subscriptionId')
+  @Patch('/topics/:topicKey/subscriptions/:subscriptionId')
   async updateTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
@@ -133,7 +133,7 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Delete('/subscription/:subscriptionId')
+  @Delete('/subscriptions/:subscriptionId')
   async deleteTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('subscriptionId') subscriptionId: string

@@ -145,7 +145,7 @@ async function createSubscription({
   body: CreateTopicSubscriptionRequestDto;
 }) {
   return await session.testAgent
-    .post(`/v1/inbox/topics/${topicKey}/subscription`)
+    .post(`/v1/inbox/topics/${topicKey}/subscriptions`)
     .send(body)
     .set('Authorization', `Bearer ${session.subscriberToken}`);
 }
