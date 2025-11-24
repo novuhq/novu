@@ -80,7 +80,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     environmentId: string,
     identifier: string,
     session?: ClientSession | null,
-    skipUpdatedBy: boolean = false
+    includeUpdatedBy: boolean = true
   ) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -89,7 +89,7 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     const query = this.MongooseModel.findOne(requestQuery, undefined, { session }).populate('steps.template');
 
-    if (!skipUpdatedBy) {
+    if (includeUpdatedBy) {
       query.populate('updatedBy');
     }
 
@@ -113,7 +113,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntities(query);
   }
 
-  async findById(id: string, environmentId: string, session?: ClientSession | null) {
+  async findById(id: string, environmentId: string, session?: ClientSession | null, includeUpdatedBy: boolean = true) {
     const query = this.MongooseModel.findOne(
       {
         _id: id,
@@ -124,110 +124,129 @@ export class NotificationTemplateRepository extends BaseRepository<
     )
       .populate('steps.template')
       .populate('steps.variants.template')
-      .populate('updatedBy');
 
-    const item = await query;
-
-    return this.mapEntity(item);
-  }
-
-  async findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date) {
-    const requestQuery: NotificationTemplateQuery = {
-      _environmentId: environmentId,
-      'triggers.identifier': triggerIdentifier,
-    };
-
-    const item = await this.MongooseModel.findOneAndUpdate(
-      requestQuery,
-      {
-        $set: {
-          lastTriggeredAt,
-        },
-      },
-      {
-        timestamps: false,
-      }
-    ).populate('steps.template');
-
-    return this.mapEntity(item);
-  }
-
-  async updatePublishFields(workflowId: string, environmentId: string, userId: string, session?: ClientSession | null) {
-    const requestQuery: NotificationTemplateQuery = {
-      _id: workflowId,
-      _environmentId: environmentId,
-    };
-
-    const item = await this.MongooseModel.findOneAndUpdate(
-      requestQuery,
-      {
-        $set: {
-          lastPublishedAt: new Date(),
-          _lastPublishedBy: userId,
-        },
-      },
-      { session, new: true }
-    );
-
-    return this.mapEntity(item);
-  }
-
-  async findBlueprintById(id: string) {
-    if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
-
-    const requestQuery: NotificationTemplateQuery = {
-      isBlueprint: true,
-      _organizationId: this.blueprintOrganizationId,
-      _id: id,
-    };
-
-    const item = await this.MongooseModel.findOne(requestQuery)
-      .populate('steps.template')
-      .populate('notificationGroup')
-      .lean();
-
-    return this.mapEntity(item);
-  }
-
-  async findBlueprintByTriggerIdentifier(identifier: string) {
-    if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
-
-    const requestQuery: NotificationTemplateQuery = {
-      isBlueprint: true,
-      _organizationId: this.blueprintOrganizationId,
-      triggers: { $elemMatch: { identifier } },
-    };
-
-    const item = await this.MongooseModel.findOne(requestQuery)
-      .populate('steps.template')
-      .populate('notificationGroup')
-      .lean();
-
-    return this.mapEntity(item);
-  }
-
-  async findBlueprintTemplates(organizationId: string, environmentId: string): Promise<NotificationTemplateEntity[]> {
-    const _organizationId = organizationId;
-
-    if (!_organizationId) throw new DalException('Blueprint environment id was not found');
-
-    const templates = await this.MongooseModel.find({
-      isBlueprint: true,
-      _environmentId: environmentId,
-      _organizationId,
-    })
-      .populate('steps.template')
-      .populate('notificationGroup')
-      .lean();
-
-    if (!templates) {
-      return [];
+    if (includeUpdatedBy) { 
+      query.populate('updatedBy');
     }
 
-    return this.mapEntities(templates);
-  }
+      const item = await query;
 
-  async findAllGroupedByCategory(): Promise<{ name: string; blueprints: NotificationTemplateEntity[] }[]> {
+      return this.mapEntity(item);
+    }
+
+    async;
+    findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date)
+    {
+      const requestQuery: NotificationTemplateQuery = {
+        _environmentId: environmentId,
+        'triggers.identifier': triggerIdentifier,
+      };
+
+      const item = await this.MongooseModel.findOneAndUpdate(
+        requestQuery,
+        {
+          $set: {
+            lastTriggeredAt,
+          },
+        },
+        {
+          timestamps: false,
+        }
+      ).populate('steps.template');
+
+      return this.mapEntity(item);
+    }
+
+    async;
+    updatePublishFields(workflowId: string, environmentId: string, userId: string, session?: ClientSession | null)
+    {
+      const requestQuery: NotificationTemplateQuery = {
+        _id: workflowId,
+        _environmentId: environmentId,
+      };
+
+      const item = await this.MongooseModel.findOneAndUpdate(
+        requestQuery,
+        {
+          $set: {
+            lastPublishedAt: new Date(),
+            _lastPublishedBy: userId,
+          },
+        },
+        { session, new: true }
+      );
+
+      return this.mapEntity(item);
+    }
+
+    async;
+    findBlueprintById(id: string)
+    {
+      if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
+
+      const requestQuery: NotificationTemplateQuery = {
+        isBlueprint: true,
+        _organizationId: this.blueprintOrganizationId,
+        _id: id,
+      };
+
+      const item = await this.MongooseModel.findOne(requestQuery)
+        .populate('steps.template')
+        .populate('notificationGroup')
+        .lean();
+
+      return this.mapEntity(item);
+    }
+
+    async;
+    findBlueprintByTriggerIdentifier(identifier: string)
+    {
+      if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
+
+      const requestQuery: NotificationTemplateQuery = {
+        isBlueprint: true,
+        _organizationId: this.blueprintOrganizationId,
+        triggers: { $elemMatch: { identifier } },
+      };
+
+      const item = await this.MongooseModel.findOne(requestQuery)
+        .populate('steps.template')
+        .populate('notificationGroup')
+        .lean();
+
+      return this.mapEntity(item);
+    }
+
+    async;
+    findBlueprintTemplates(organizationId: string, environmentId: string)
+    : Promise<NotificationTemplateEntity[]>
+    {
+      const _organizationId = organizationId;
+
+      if (!_organizationId) throw new DalException('Blueprint environment id was not found');
+
+      const templates = await this.MongooseModel.find({
+        isBlueprint: true,
+        _environmentId: environmentId,
+        _organizationId,
+      })
+        .populate('steps.template')
+        .populate('notificationGroup')
+        .lean();
+
+      if (!templates) {
+        return [];
+      }
+
+      return this.mapEntities(templates);
+    }
+
+    async;
+    findAllGroupedByCategory();
+    : Promise<
+    name: string;
+    blueprints: NotificationTemplateEntity[]
+    []> {
     const organizationId = this.blueprintOrganizationId;
 
     if (!organizationId) {
