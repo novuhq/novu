@@ -70,7 +70,12 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
   { ...schemaOptions, minimize: false }
 );
 
-preferencesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+preferencesSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  deletedBy: true,
+  overrideMethods: 'all',
+  use$neOperator: false,
+});
 
 // Subscriber Global Preferences
 // Ensures one global preference per subscriber (SUBSCRIBER_GLOBAL type)
