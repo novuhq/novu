@@ -12,9 +12,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { IS_SELF_HOSTED } from '@/config';
 import { useRegion } from '@/context/region';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
+import { OrganizationSwitcher as SelfHostedOrganizationSwitcher } from '@/utils/self-hosted/organization-switcher';
 import { cn } from '@/utils/ui';
 
 const SCROLL_THRESHOLD = 50;
@@ -95,6 +97,14 @@ function OrganizationListItem({ membership, onSwitch, isSwitching, switchingToId
 }
 
 export const OrganizationDropdown = () => {
+  if (IS_SELF_HOSTED) {
+    return <SelfHostedOrganizationSwitcher />;
+  }
+
+  return <ClerkOrganizationDropdown />;
+};
+
+function ClerkOrganizationDropdown() {
   const { organization: currentOrganization } = useOrganization();
   const { orgId } = useAuth();
   const clerk = useClerk();
@@ -243,4 +253,4 @@ export const OrganizationDropdown = () => {
       </DropdownMenu>
     </>
   );
-};
+}
