@@ -4,7 +4,6 @@ import { useRegion } from '@/context/region';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
-import { Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { REGIONS } from './region-config';
 
@@ -55,10 +54,7 @@ export function RegionSelector() {
   return (
     <Select value={selectedRegion} onValueChange={setSelectedRegion}>
       <SelectTrigger className={triggerClassName}>
-        <div className="flex items-center gap-1.5">
-          <Globe size={12} className="text-muted-foreground" />
-          <SelectValue placeholder="Select Region" />
-        </div>
+        <SelectValue placeholder="Select Region" />
       </SelectTrigger>
       <SelectContent>
         {REGION_OPTIONS.map((option) => (
