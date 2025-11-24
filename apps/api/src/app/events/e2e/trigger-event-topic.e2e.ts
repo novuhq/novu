@@ -667,7 +667,6 @@ describe('Topic Trigger Event #novu-v2', () => {
         to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: topicKey }],
         payload: { text: 'test message' },
       });
-
       await session.waitForJobCompletion(newWorkflow._id);
       const messagesAfterFirstTrigger = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -684,7 +683,6 @@ describe('Topic Trigger Event #novu-v2', () => {
         type: PreferencesTypeEnum.USER_WORKFLOW,
       });
       if (!workflowPreference) throw new Error('Workflow preference should exist');
-
       const disabledPreferences = {
         all: { enabled: false },
         channels: {
@@ -695,7 +693,6 @@ describe('Topic Trigger Event #novu-v2', () => {
           [ChannelTypeEnum.PUSH]: { enabled: false },
         },
       };
-
       await preferencesRepository.update(
         {
           _id: workflowPreference._id,
@@ -709,14 +706,13 @@ describe('Topic Trigger Event #novu-v2', () => {
         to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: topicKey }],
         payload: { text: 'test message 2' },
       });
-
+      await session.waitForJobCompletion(newWorkflow._id);
       const messagesAfterDisabledWorkflow = await messageRepository.find({
         _environmentId: session.environment._id,
         _templateId: newWorkflow._id,
         _subscriberId: subscriber._id,
       });
-
-      expect(messagesAfterDisabledWorkflow.length).to.equal(1);
+      expect(messagesAfterDisabledWorkflow.length, 'Should have 1 message after disabled workflow').to.equal(1);
 
       // Test: Update subscription to create explicit preference and verify it overrides workflow defaults
       await novuClient.topics.subscriptions.update({
@@ -731,32 +727,32 @@ describe('Topic Trigger Event #novu-v2', () => {
           ],
         },
       });
-
       const preferencesAfterUpdate = await preferencesRepository.find({
         _environmentId: session.environment._id,
         _topicSubscriptionId: topicSubscription._id,
       });
-
-      expect(preferencesAfterUpdate.length).to.equal(2);
+      expect(preferencesAfterUpdate.length, 'Should have 2 preferences after update').to.equal(2);
 
       // Re-enable workflow preferences to allow final trigger to succeed
-      const enabledPreferences = {
-        all: { enabled: true },
-        channels: {
-          [ChannelTypeEnum.EMAIL]: { enabled: true },
-          [ChannelTypeEnum.SMS]: { enabled: true },
-          [ChannelTypeEnum.IN_APP]: { enabled: true },
-          [ChannelTypeEnum.CHAT]: { enabled: true },
-          [ChannelTypeEnum.PUSH]: { enabled: true },
-        },
-      };
-
       await preferencesRepository.update(
         {
           _id: workflowPreference._id,
           _environmentId: session.environment._id,
         },
-        { $set: { preferences: enabledPreferences } }
+        {
+          $set: {
+            preferences: {
+              all: { enabled: true },
+              channels: {
+                [ChannelTypeEnum.EMAIL]: { enabled: true },
+                [ChannelTypeEnum.SMS]: { enabled: true },
+                [ChannelTypeEnum.IN_APP]: { enabled: true },
+                [ChannelTypeEnum.CHAT]: { enabled: true },
+                [ChannelTypeEnum.PUSH]: { enabled: true },
+              },
+            },
+          },
+        }
       );
 
       await novuClient.trigger({
@@ -764,16 +760,14 @@ describe('Topic Trigger Event #novu-v2', () => {
         to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: topicKey }],
         payload: { text: 'test message 3' },
       });
-
       await session.waitForJobCompletion(newWorkflow._id);
-
       const messagesAfterFinalTrigger = await messageRepository.find({
         _environmentId: session.environment._id,
         _templateId: newWorkflow._id,
         _subscriberId: subscriber._id,
       });
 
-      expect(messagesAfterFinalTrigger.length).to.equal(2);
+      expect(messagesAfterFinalTrigger.length, 'Should have 2 messages after final trigger').to.equal(2);
     });
   });
 

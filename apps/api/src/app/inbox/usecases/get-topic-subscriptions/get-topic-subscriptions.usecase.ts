@@ -44,7 +44,7 @@ export class GetTopicSubscriptions {
   async execute(command: GetTopicSubscriptionsCommand): Promise<TopicSubscriptionDetailsDto[]> {
     const subscriptions = await this.topicSubscribersRepository.find({
       _environmentId: command.environmentId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       topicKey: command.topicKey,
     });
 

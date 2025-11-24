@@ -55,6 +55,7 @@ export class InboxTopicController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         topicKey,
+        _subscriberId: subscriberSession._id,
       })
     );
   }
@@ -73,6 +74,7 @@ export class InboxTopicController {
         subscriberId: subscriberSession.subscriberId,
         topicKey,
         subscriptionId,
+        _subscriberId: subscriberSession._id,
       })
     );
   }
@@ -142,6 +144,7 @@ export class InboxTopicController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         subscriptionId,
+        _subscriberId: subscriberSession._id,
       })
     );
   }

@@ -5,4 +5,8 @@ export class GetTopicSubscriptionsCommand extends EnvironmentWithSubscriber {
   @IsString()
   @IsDefined()
   topicKey: string;
+
+  @IsString()
+  @IsDefined()
+  _subscriberId: string;
 }

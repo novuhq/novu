@@ -9,4 +9,8 @@ export class GetTopicSubscriptionCommand extends EnvironmentWithSubscriber {
   @IsString()
   @IsDefined()
   subscriptionId: string;
+
+  @IsString()
+  @IsDefined()
+  _subscriberId: string;
 }
