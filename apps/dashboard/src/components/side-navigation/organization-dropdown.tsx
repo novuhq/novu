@@ -6,9 +6,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
+import { useRegion } from '@/context/region';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
@@ -16,6 +16,7 @@ export const OrganizationDropdown = () => {
   const { organization: currentOrganization } = useOrganization();
   const { orgId } = useAuth();
   const clerk = useClerk();
+  const { selectedRegion } = useRegion();
   const { userMemberships, isLoaded } = useOrganizationList({
     userMemberships: {
       infinite: true,
@@ -84,13 +85,21 @@ export const OrganizationDropdown = () => {
           )}
         >
           <span className="flex items-center gap-2 py-1.5">
-            <span className="size-6 rounded-full">
+            <span className="relative size-6 rounded-full overflow-hidden">
               <Avatar className="size-6 rounded-full">
                 <AvatarImage src={currentOrganization.imageUrl} alt={currentOrganization.name} />
                 <AvatarFallback className="bg-primary-base text-static-white text-[14px] text-foreground-950 text-base">
                   {getOrganizationInitials(currentOrganization.name)}
                 </AvatarFallback>
               </Avatar>
+              <span
+                className={cn(
+                  'absolute inset-0 -translate-x-full rotate-12',
+                  'bg-gradient-to-r from-transparent via-white/30 to-transparent',
+                  'group-hover:animate-[shimmer_0.8s_ease-in-out]',
+                  'pointer-events-none'
+                )}
+              />
             </span>
             <span className="flex flex-col">
               <span className="text-[14px] font-medium text-foreground-950">{currentOrganization.name}</span>
@@ -115,7 +124,13 @@ export const OrganizationDropdown = () => {
             onScroll={handleScroll}
           >
             {userMemberships?.data
-              ?.filter((membership) => membership.organization.id !== orgId)
+              ?.filter((membership) => {
+                if (membership.organization.id === orgId) return false;
+
+                const orgRegion = membership.organization.publicMetadata?.region as string | undefined;
+
+                return !orgRegion || orgRegion === selectedRegion;
+              })
               .map((membership) => (
                 <DropdownMenuItem
                   key={membership.id}
@@ -169,3 +184,19 @@ export const OrganizationDropdown = () => {
     </DropdownMenu>
   );
 };
+
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+`;
+if (typeof document !== 'undefined' && !document.getElementById('shimmer-style')) {
+  style.id = 'shimmer-style';
+  document.head.appendChild(style);
+}
