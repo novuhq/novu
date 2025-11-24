@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 
 export class TopicDto {
   @ApiProperty({
@@ -88,7 +89,9 @@ export class SubscriptionDto {
     description: 'The identifier of the subscription',
     example: 'tk=product-updates:si=subscriber-123',
   })
-  identifier: string;
+  @IsOptional()
+  @IsString()
+  identifier?: string;
 
   @ApiProperty({
     description: 'The topic information',

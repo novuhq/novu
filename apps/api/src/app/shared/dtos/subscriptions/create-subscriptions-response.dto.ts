@@ -143,7 +143,8 @@ export class SubscriptionResponseDto {
     example: 'tk=product-updates:si=subscriber-123',
   })
   @IsString()
-  identifier: string;
+  @IsOptional()
+  identifier?: string;
 
   @ApiPropertyOptional({
     description: 'The name of the subscription',

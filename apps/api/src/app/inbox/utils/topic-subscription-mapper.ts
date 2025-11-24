@@ -2,14 +2,14 @@ import { PreferencesEntity, TopicSubscribersEntity } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
 import { RulesLogic } from 'json-logic-js';
 import { SubscriptionPreferenceDto } from '../../shared/dtos/subscriptions/create-subscriptions-response.dto';
-import { TopicSubscriptionDetailsDto } from '../dtos/get-topic-subscriptions-response.dto';
+import { TopicSubscriptionDetailsResponseDto } from '../dtos/get-topic-subscriptions-response.dto';
 import { SelectedWorkflowFields } from '../usecases/get-topic-subscriptions/get-topic-subscriptions.usecase';
 
 export function mapTopicSubscriptionToDto(
   subscription: TopicSubscribersEntity,
   preferencesEntities: PreferencesEntity[],
   workflowEntities: SelectedWorkflowFields[]
-): TopicSubscriptionDetailsDto {
+): TopicSubscriptionDetailsResponseDto {
   const preferences: SubscriptionPreferenceDto[] = preferencesEntities
     .map((pref) => {
       const workflowId = pref._templateId?.toString();

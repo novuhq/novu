@@ -9,7 +9,7 @@ import {
   TopicSubscribersRepository,
 } from '@novu/dal';
 import { PreferencesTypeEnum } from '@novu/shared';
-import { TopicSubscriptionDetailsDto } from '../../dtos/get-topic-subscriptions-response.dto';
+import { TopicSubscriptionDetailsResponseDto } from '../../dtos/get-topic-subscriptions-response.dto';
 import { mapTopicSubscriptionToDto } from '../../utils/topic-subscription-mapper';
 import { GetTopicSubscriptionsCommand } from './get-topic-subscriptions.command';
 
@@ -41,7 +41,7 @@ export class GetTopicSubscriptions {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetTopicSubscriptionsCommand): Promise<TopicSubscriptionDetailsDto[]> {
+  async execute(command: GetTopicSubscriptionsCommand): Promise<TopicSubscriptionDetailsResponseDto[]> {
     const subscriptions = await this.topicSubscribersRepository.find({
       _environmentId: command.environmentId,
       _subscriberId: command._subscriberId,
@@ -53,7 +53,7 @@ export class GetTopicSubscriptions {
 
   private async buildSubscriptionsResponse(
     subscriptions: TopicSubscribersEntity[]
-  ): Promise<TopicSubscriptionDetailsDto[]> {
+  ): Promise<TopicSubscriptionDetailsResponseDto[]> {
     const subscriptionPreferencesMap = new Map<TopicSubscribersEntity, PreferencesEntity[]>();
 
     for (const subscription of subscriptions) {
@@ -68,7 +68,7 @@ export class GetTopicSubscriptions {
 
     const workflowsMap = await this.findWorkflows(subscriptionPreferencesMap, subscriptions);
 
-    const result: TopicSubscriptionDetailsDto[] = [];
+    const result: TopicSubscriptionDetailsResponseDto[] = [];
 
     for (const [subscription, preferencesEntities] of subscriptionPreferencesMap) {
       const preferenceWorkflowIds = preferencesEntities

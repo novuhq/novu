@@ -14,7 +14,7 @@ import { SubscriberSession } from '../shared/framework/user.decorator';
 import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subscriptions/usecases/create-subscriptions';
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
 import { CreateTopicSubscriptionRequestDto } from './dtos/create-topic-subscription-request.dto';
-import { TopicSubscriptionDetailsDto } from './dtos/get-topic-subscriptions-response.dto';
+import { TopicSubscriptionDetailsResponseDto } from './dtos/get-topic-subscriptions-response.dto';
 import { UpdateSubscriptionPreferencesRequestDto } from './dtos/update-subscription-preferences-request.dto';
 import { DeleteTopicSubscriptionCommand } from './usecases/delete-topic-subscription/delete-topic-subscription.command';
 import { DeleteTopicSubscription } from './usecases/delete-topic-subscription/delete-topic-subscription.usecase';
@@ -45,7 +45,7 @@ export class InboxTopicController {
   async getTopicSubscriptions(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string
-  ): Promise<TopicSubscriptionDetailsDto[]> {
+  ): Promise<TopicSubscriptionDetailsResponseDto[]> {
     return await this.getTopicSubscriptionsUsecase.execute(
       GetTopicSubscriptionsCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -63,7 +63,7 @@ export class InboxTopicController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
     @Param('subscriptionId') subscriptionId: string
-  ): Promise<TopicSubscriptionDetailsDto> {
+  ): Promise<TopicSubscriptionDetailsResponseDto> {
     return await this.getTopicSubscriptionUsecase.execute(
       GetTopicSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository, PreferencesRepository, TopicSubscribersRepository } from '@novu/dal';
 import { PreferencesTypeEnum } from '@novu/shared';
-import { TopicSubscriptionDetailsDto } from '../../dtos/get-topic-subscriptions-response.dto';
+import { TopicSubscriptionDetailsResponseDto } from '../../dtos/get-topic-subscriptions-response.dto';
 import { mapTopicSubscriptionToDto } from '../../utils/topic-subscription-mapper';
 import { SELECTED_WORKFLOW_FIELDS_PROJECTION } from '../get-topic-subscriptions/get-topic-subscriptions.usecase';
 import { GetTopicSubscriptionCommand } from './get-topic-subscription.command';
@@ -16,7 +16,7 @@ export class GetTopicSubscription {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetTopicSubscriptionCommand): Promise<TopicSubscriptionDetailsDto> {
+  async execute(command: GetTopicSubscriptionCommand): Promise<TopicSubscriptionDetailsResponseDto> {
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,

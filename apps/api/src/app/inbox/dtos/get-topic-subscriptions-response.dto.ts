@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { SubscriptionPreferenceDto } from '../../shared/dtos/subscriptions/create-subscriptions-response.dto';
 
-export class TopicSubscriptionDetailsDto {
+export class TopicSubscriptionDetailsResponseDto {
   @ApiProperty({
     description: 'The unique identifier of the subscription',
     example: '64f5e95d3d7946d80d0cb679',
@@ -16,7 +16,7 @@ export class TopicSubscriptionDetailsDto {
     example: 'subscription-identifier',
   })
   @IsString()
-  identifier: string;
+  identifier?: string;
 
   @ApiPropertyOptional({
     description: 'The name of the subscription',
