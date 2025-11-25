@@ -103,15 +103,7 @@ export class CreateNovuIntegrations {
       defaultValue: false,
     });
 
-    // We need a publicly distributed Slack app in marketplace to enable this feature
-    const isDisabled = true;
-
-    if (
-      !areNovuSlackCredentialsSet() ||
-      command.name !== EnvironmentEnum.DEVELOPMENT ||
-      !isSlackTeamsEnabled ||
-      isDisabled
-    ) {
+    if (!areNovuSlackCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT || !isSlackTeamsEnabled) {
       return;
     }
 
