@@ -16,37 +16,6 @@ export const GetEnvironmentTagsDto$inboundSchema: z.ZodType<GetEnvironmentTagsDt
   name: z.string(),
 });
 
-/** @internal */
-export type GetEnvironmentTagsDto$Outbound = {
-  name: string;
-};
-
-/** @internal */
-export const GetEnvironmentTagsDto$outboundSchema: z.ZodType<
-  GetEnvironmentTagsDto$Outbound,
-  z.ZodTypeDef,
-  GetEnvironmentTagsDto
-> = z.object({
-  name: z.string(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetEnvironmentTagsDto$ {
-  /** @deprecated use `GetEnvironmentTagsDto$inboundSchema` instead. */
-  export const inboundSchema = GetEnvironmentTagsDto$inboundSchema;
-  /** @deprecated use `GetEnvironmentTagsDto$outboundSchema` instead. */
-  export const outboundSchema = GetEnvironmentTagsDto$outboundSchema;
-  /** @deprecated use `GetEnvironmentTagsDto$Outbound` instead. */
-  export type Outbound = GetEnvironmentTagsDto$Outbound;
-}
-
-export function getEnvironmentTagsDtoToJSON(getEnvironmentTagsDto: GetEnvironmentTagsDto): string {
-  return JSON.stringify(GetEnvironmentTagsDto$outboundSchema.parse(getEnvironmentTagsDto));
-}
-
 export function getEnvironmentTagsDtoFromJSON(
   jsonString: string
 ): SafeParseResult<GetEnvironmentTagsDto, SDKValidationError> {

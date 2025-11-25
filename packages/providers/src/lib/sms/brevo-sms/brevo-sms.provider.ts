@@ -50,6 +50,10 @@ export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
 
     const body: { messageId: string } = await response.json();
 
+    if (!body.messageId) {
+      throw new Error(`Failed: ${JSON.stringify(body)}`);
+    }
+
     return {
       id: body.messageId,
       date: new Date().toISOString(),

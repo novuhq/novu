@@ -6,12 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  WorkflowInfoDto,
-  WorkflowInfoDto$inboundSchema,
-  WorkflowInfoDto$Outbound,
-  WorkflowInfoDto$outboundSchema,
-} from './workflowinfodto.js';
+import { WorkflowInfoDto, WorkflowInfoDto$inboundSchema } from './workflowinfodto.js';
 
 export type GetLayoutUsageResponseDto = {
   /**
@@ -25,37 +20,6 @@ export const GetLayoutUsageResponseDto$inboundSchema: z.ZodType<GetLayoutUsageRe
   z.object({
     workflows: z.array(WorkflowInfoDto$inboundSchema),
   });
-
-/** @internal */
-export type GetLayoutUsageResponseDto$Outbound = {
-  workflows: Array<WorkflowInfoDto$Outbound>;
-};
-
-/** @internal */
-export const GetLayoutUsageResponseDto$outboundSchema: z.ZodType<
-  GetLayoutUsageResponseDto$Outbound,
-  z.ZodTypeDef,
-  GetLayoutUsageResponseDto
-> = z.object({
-  workflows: z.array(WorkflowInfoDto$outboundSchema),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetLayoutUsageResponseDto$ {
-  /** @deprecated use `GetLayoutUsageResponseDto$inboundSchema` instead. */
-  export const inboundSchema = GetLayoutUsageResponseDto$inboundSchema;
-  /** @deprecated use `GetLayoutUsageResponseDto$outboundSchema` instead. */
-  export const outboundSchema = GetLayoutUsageResponseDto$outboundSchema;
-  /** @deprecated use `GetLayoutUsageResponseDto$Outbound` instead. */
-  export type Outbound = GetLayoutUsageResponseDto$Outbound;
-}
-
-export function getLayoutUsageResponseDtoToJSON(getLayoutUsageResponseDto: GetLayoutUsageResponseDto): string {
-  return JSON.stringify(GetLayoutUsageResponseDto$outboundSchema.parse(getLayoutUsageResponseDto));
-}
 
 export function getLayoutUsageResponseDtoFromJSON(
   jsonString: string

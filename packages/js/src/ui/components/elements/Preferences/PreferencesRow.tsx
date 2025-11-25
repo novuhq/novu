@@ -1,12 +1,11 @@
 import { createMemo, createSignal, Index, JSXElement, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-
-import { RouteFill } from 'src/ui/icons/RouteFill';
 import { ChannelPreference, ChannelType, Preference } from '../../../../types';
 import { StringLocalizationKey, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Cogs, ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
-import { AppearanceCallback, AppearanceKey, IconKey } from '../../../types';
+import { RouteFill } from '../../../icons/RouteFill';
+import { AllAppearanceKey, AllIconKey, InboxAppearanceCallback } from '../../../types';
 import { Collapsible } from '../../primitives/Collapsible';
 import { SwitchState } from '../../primitives/Switch';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
@@ -14,13 +13,13 @@ import { ChannelRow, getLabel } from './ChannelRow';
 
 type IconComponentType = (props?: JSX.HTMLAttributes<SVGSVGElement>) => JSXElement;
 
-const iconKeyToComponentMap: { [key in IconKey]?: IconComponentType } = {
+const iconKeyToComponentMap: { [key in AllIconKey]?: IconComponentType } = {
   cogs: Cogs,
   routeFill: RouteFill,
 };
 
 export const PreferencesRow = (props: {
-  iconKey: IconKey;
+  iconKey: AllIconKey;
   preference: Preference;
   onChange: (workflowIdentifier?: string) => (channels: ChannelPreference) => void;
 }) => {
@@ -45,7 +44,7 @@ export const PreferencesRow = (props: {
           className: 'nt-p-1 nt-bg-neutral-alpha-25 nt-rounded-lg nt-border nt-border-neutral-alpha-50',
           context: {
             preference: props.preference,
-          } satisfies Parameters<AppearanceCallback['workflowContainer']>[0],
+          } satisfies Parameters<InboxAppearanceCallback['workflowContainer']>[0],
         })}
         data-open={isOpenChannels()}
       >
@@ -55,7 +54,7 @@ export const PreferencesRow = (props: {
             className:
               'nt-flex nt-justify-between nt-p-1 nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center nt-overflow-hidden',
             context: { preference: props.preference } satisfies Parameters<
-              AppearanceCallback['workflowLabelContainer']
+              InboxAppearanceCallback['workflowLabelContainer']
             >[0],
           })}
           onClick={() => {
@@ -67,7 +66,7 @@ export const PreferencesRow = (props: {
               key: 'workflowLabelHeader',
               className: 'nt-overflow-hidden',
               context: { preference: props.preference } satisfies Parameters<
-                AppearanceCallback['workflowLabelHeader']
+                InboxAppearanceCallback['workflowLabelHeader']
               >[0],
             })}
           >
@@ -76,7 +75,7 @@ export const PreferencesRow = (props: {
                 key: 'workflowLabelHeaderContainer',
                 className: 'nt-flex nt-items-center nt-gap-1',
                 context: { preference: props.preference } satisfies Parameters<
-                  AppearanceCallback['workflowLabelHeaderContainer']
+                  InboxAppearanceCallback['workflowLabelHeaderContainer']
                 >[0],
               })}
             >
@@ -87,7 +86,7 @@ export const PreferencesRow = (props: {
                   className: 'nt-text-foreground-alpha-600 nt-size-3.5',
                   iconKey: 'cogs',
                   context: { preference: props.preference } satisfies Parameters<
-                    AppearanceCallback['workflowLabelIcon']
+                    InboxAppearanceCallback['workflowLabelIcon']
                   >[0],
                 })}
                 fallback={
@@ -98,7 +97,7 @@ export const PreferencesRow = (props: {
                       className: 'nt-text-foreground-alpha-600 nt-size-3.5',
                       iconKey: 'cogs',
                       context: { preference: props.preference } satisfies Parameters<
-                        AppearanceCallback['workflowLabelIcon']
+                        InboxAppearanceCallback['workflowLabelIcon']
                       >[0],
                     }),
                   })
@@ -109,7 +108,7 @@ export const PreferencesRow = (props: {
                   key: 'workflowLabel',
                   className: 'nt-text-sm nt-font-semibold nt-truncate nt-text-start',
                   context: { preference: props.preference } satisfies Parameters<
-                    AppearanceCallback['workflowLabel']
+                    InboxAppearanceCallback['workflowLabel']
                   >[0],
                 })}
                 data-localization={props.preference?.workflow?.identifier ?? 'preferences.global'}
@@ -133,7 +132,7 @@ export const PreferencesRow = (props: {
               className:
                 'nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180',
               context: { preference: props.preference } satisfies Parameters<
-                AppearanceCallback['workflowContainerRight__icon']
+                InboxAppearanceCallback['workflowContainerRight__icon']
               >[0],
             })}
             data-open={isOpenChannels()}
@@ -145,7 +144,7 @@ export const PreferencesRow = (props: {
                 className: 'nt-text-foreground-alpha-600 nt-size-4',
                 iconKey: 'arrowDropDown',
                 context: { preference: props.preference } satisfies Parameters<
-                  AppearanceCallback['workflowArrow__icon']
+                  InboxAppearanceCallback['workflowArrow__icon']
                 >[0],
               })}
               fallback={
@@ -155,7 +154,7 @@ export const PreferencesRow = (props: {
                     className: 'nt-text-foreground-alpha-600 nt-size-4',
                     iconKey: 'arrowDropDown',
                     context: { preference: props.preference } satisfies Parameters<
-                      AppearanceCallback['workflowArrow__icon']
+                      InboxAppearanceCallback['workflowArrow__icon']
                     >[0],
                   })}
                 />
@@ -170,7 +169,7 @@ export const PreferencesRow = (props: {
               className:
                 'nt-flex nt-bg-background nt-border nt-border-neutral-alpha-200 nt-rounded-lg nt-p-2 nt-flex-col nt-gap-1 nt-overflow-hidden',
               context: { preference: props.preference } satisfies Parameters<
-                AppearanceCallback['channelsContainer']
+                InboxAppearanceCallback['channelsContainer']
               >[0],
             })}
           >
@@ -193,7 +192,7 @@ export const PreferencesRow = (props: {
 
 type WorkflowDescriptionProps = JSX.IntrinsicElements['div'] & {
   channels: ChannelPreference;
-  appearanceKey: AppearanceKey;
+  appearanceKey: AllAppearanceKey;
   preference: Preference;
 };
 
@@ -212,7 +211,7 @@ const WorkflowDescription = (props: WorkflowDescriptionProps) => {
             class={style({
               key: 'channelName',
               className: 'data-[disabled=true]:nt-text-foreground-alpha-400',
-              context: { preference: props.preference } satisfies Parameters<AppearanceCallback['channelName']>[0],
+              context: { preference: props.preference } satisfies Parameters<InboxAppearanceCallback['channelName']>[0],
             })}
             data-disabled={isDisabled}
           >

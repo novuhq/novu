@@ -2,21 +2,21 @@ import { createMemo, Show } from 'solid-js';
 import { SeverityLevelEnum } from '../../../../types';
 import { cn, useStyle } from '../../../helpers';
 import { Bell as DefaultBell } from '../../../icons';
-import { AppearanceCallback, AppearanceKey } from '../../../types';
+import { AllAppearanceKey, InboxAppearanceCallback } from '../../../types';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 type DefaultBellContainerProps = {
   unreadCount: { total: number; severity: Record<string, number> };
 };
 
-const SEVERITY_GLOW_KEYS: Record<SeverityLevelEnum, AppearanceKey> = {
+const SEVERITY_GLOW_KEYS: Record<SeverityLevelEnum, AllAppearanceKey> = {
   [SeverityLevelEnum.NONE]: 'bellSeverityGlow',
   [SeverityLevelEnum.HIGH]: 'severityGlowHigh__bellSeverityGlow',
   [SeverityLevelEnum.MEDIUM]: 'severityGlowMedium__bellSeverityGlow',
   [SeverityLevelEnum.LOW]: 'severityGlowLow__bellSeverityGlow',
 };
 
-const SEVERITY_TO_CONTAINER_KEYS: Record<SeverityLevelEnum, AppearanceKey> = {
+const SEVERITY_TO_CONTAINER_KEYS: Record<SeverityLevelEnum, AllAppearanceKey> = {
   [SeverityLevelEnum.NONE]: 'bellContainer',
   [SeverityLevelEnum.HIGH]: 'severityHigh__bellContainer',
   [SeverityLevelEnum.MEDIUM]: 'severityMedium__bellContainer',
@@ -55,7 +55,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
               severity() === SeverityLevelEnum.LOW,
           }
         ),
-        context: { unreadCount: unreadCount() } satisfies Parameters<AppearanceCallback['bellContainer']>[0],
+        context: { unreadCount: unreadCount() } satisfies Parameters<InboxAppearanceCallback['bellContainer']>[0],
       })}
     >
       <div
@@ -71,7 +71,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
               'nt-bg-severity-low-alpha-100 before:nt-bg-severity-low-alpha-200': severity() === SeverityLevelEnum.LOW,
             }
           ),
-          context: { unreadCount: unreadCount() } satisfies Parameters<AppearanceCallback['bellContainer']>[0],
+          context: { unreadCount: unreadCount() } satisfies Parameters<InboxAppearanceCallback['bellContainer']>[0],
         })}
       />
 
@@ -80,14 +80,14 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
         class={style({
           key: 'bellIcon',
           className: 'nt-size-4',
-          context: { unreadCount: unreadCount() } satisfies Parameters<AppearanceCallback['bellIcon']>[0],
+          context: { unreadCount: unreadCount() } satisfies Parameters<InboxAppearanceCallback['bellIcon']>[0],
         })}
         fallback={
           <DefaultBell
             class={style({
               key: 'bellIcon',
               className: 'nt-size-4',
-              context: { unreadCount: unreadCount() } satisfies Parameters<AppearanceCallback['bellIcon']>[0],
+              context: { unreadCount: unreadCount() } satisfies Parameters<InboxAppearanceCallback['bellIcon']>[0],
             })}
           />
         }
@@ -98,7 +98,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
             key: 'bellDot',
             className:
               'nt-absolute nt-top-0 nt-right-0 nt-block nt-size-2 nt-transform nt-bg-counter nt-rounded-full nt-border nt-border-background',
-            context: { unreadCount: unreadCount() } satisfies Parameters<AppearanceCallback['bellDot']>[0],
+            context: { unreadCount: unreadCount() } satisfies Parameters<InboxAppearanceCallback['bellDot']>[0],
           })}
         />
       </Show>

@@ -7,13 +7,9 @@ import { safeParse } from '../../lib/schemas.js';
 import { ClosedEnum } from '../../types/enums.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { MonthlyTypeEnum, MonthlyTypeEnum$inboundSchema, MonthlyTypeEnum$outboundSchema } from './monthlytypeenum.js';
-import { OrdinalEnum, OrdinalEnum$inboundSchema, OrdinalEnum$outboundSchema } from './ordinalenum.js';
-import {
-  OrdinalValueEnum,
-  OrdinalValueEnum$inboundSchema,
-  OrdinalValueEnum$outboundSchema,
-} from './ordinalvalueenum.js';
+import { MonthlyTypeEnum, MonthlyTypeEnum$inboundSchema } from './monthlytypeenum.js';
+import { OrdinalEnum, OrdinalEnum$inboundSchema } from './ordinalenum.js';
+import { OrdinalValueEnum, OrdinalValueEnum$inboundSchema } from './ordinalvalueenum.js';
 
 export const WeekDays = {
   Monday: 'monday',
@@ -65,20 +61,6 @@ export type DigestTimedConfigDto = {
 export const WeekDays$inboundSchema: z.ZodNativeEnum<typeof WeekDays> = z.nativeEnum(WeekDays);
 
 /** @internal */
-export const WeekDays$outboundSchema: z.ZodNativeEnum<typeof WeekDays> = WeekDays$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WeekDays$ {
-  /** @deprecated use `WeekDays$inboundSchema` instead. */
-  export const inboundSchema = WeekDays$inboundSchema;
-  /** @deprecated use `WeekDays$outboundSchema` instead. */
-  export const outboundSchema = WeekDays$outboundSchema;
-}
-
-/** @internal */
 export const DigestTimedConfigDto$inboundSchema: z.ZodType<DigestTimedConfigDto, z.ZodTypeDef, unknown> = z.object({
   atTime: z.string().optional(),
   weekDays: z.array(WeekDays$inboundSchema).optional(),
@@ -89,51 +71,6 @@ export const DigestTimedConfigDto$inboundSchema: z.ZodType<DigestTimedConfigDto,
   cronExpression: z.string().optional(),
   untilDate: z.string().optional(),
 });
-
-/** @internal */
-export type DigestTimedConfigDto$Outbound = {
-  atTime?: string | undefined;
-  weekDays?: Array<string> | undefined;
-  monthDays?: Array<number> | undefined;
-  ordinal?: string | undefined;
-  ordinalValue?: string | undefined;
-  monthlyType?: string | undefined;
-  cronExpression?: string | undefined;
-  untilDate?: string | undefined;
-};
-
-/** @internal */
-export const DigestTimedConfigDto$outboundSchema: z.ZodType<
-  DigestTimedConfigDto$Outbound,
-  z.ZodTypeDef,
-  DigestTimedConfigDto
-> = z.object({
-  atTime: z.string().optional(),
-  weekDays: z.array(WeekDays$outboundSchema).optional(),
-  monthDays: z.array(z.number()).optional(),
-  ordinal: OrdinalEnum$outboundSchema.optional(),
-  ordinalValue: OrdinalValueEnum$outboundSchema.optional(),
-  monthlyType: MonthlyTypeEnum$outboundSchema.optional(),
-  cronExpression: z.string().optional(),
-  untilDate: z.string().optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestTimedConfigDto$ {
-  /** @deprecated use `DigestTimedConfigDto$inboundSchema` instead. */
-  export const inboundSchema = DigestTimedConfigDto$inboundSchema;
-  /** @deprecated use `DigestTimedConfigDto$outboundSchema` instead. */
-  export const outboundSchema = DigestTimedConfigDto$outboundSchema;
-  /** @deprecated use `DigestTimedConfigDto$Outbound` instead. */
-  export type Outbound = DigestTimedConfigDto$Outbound;
-}
-
-export function digestTimedConfigDtoToJSON(digestTimedConfigDto: DigestTimedConfigDto): string {
-  return JSON.stringify(DigestTimedConfigDto$outboundSchema.parse(digestTimedConfigDto));
-}
 
 export function digestTimedConfigDtoFromJSON(
   jsonString: string

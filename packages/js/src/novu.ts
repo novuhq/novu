@@ -4,6 +4,7 @@ import { NovuEventEmitter } from './event-emitter';
 import { Notifications } from './notifications';
 import { Preferences } from './preferences';
 import { Session } from './session';
+import { Subscriptions } from './subscriptions';
 import type { Context, NovuOptions, Subscriber } from './types';
 import { buildContextKey, buildSubscriber } from './ui/internal';
 import { createSocket } from './ws';
@@ -13,9 +14,11 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
   #inboxService: InboxService;
+  #options: NovuOptions;
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
+  public readonly subscriptions: Subscriptions;
   public readonly socket: BaseSocketInterface;
 
   public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
@@ -37,11 +40,16 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     return this.#session.context;
   }
 
+  public get options() {
+    return this.#options;
+  }
+
   public get contextKey() {
     return buildContextKey(this.#session.context);
   }
 
   constructor(options: NovuOptions) {
+    this.#options = options;
     this.#inboxService = new InboxService({
       apiUrl: options.apiUrl || options.backendUrl,
       userAgent: options.__userAgent,
@@ -71,6 +79,11 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
+    this.subscriptions = new Subscriptions({
+      useCache: options.useCache ?? true,
+      inboxServiceInstance: this.#inboxService,
+      eventEmitterInstance: this.#emitter,
+    });
     this.socket = createSocket({
       socketUrl: options.socketUrl,
       eventEmitterInstance: this.#emitter,
@@ -94,6 +107,16 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     };
   }
 
+  private clearCache(): void {
+    this.notifications.cache.clearAll();
+    this.preferences.cache.clearAll();
+    this.preferences.scheduleCache.clearAll();
+    this.subscriptions.cache.clearAll();
+  }
+
+  /**
+   * @deprecated
+   */
   public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash?: string }): Promise<void> {
     await this.#session.initialize({
       applicationIdentifier: this.#session.applicationIdentifier || '',
@@ -105,7 +128,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
 
     // Clear cache and reconnect socket with new token
-    this.notifications.cache.clearAll();
+    this.clearCache();
 
     // Disconnect and reconnect socket to use new JWT token
     const disconnectResult = await this.socket.disconnect();
@@ -114,6 +137,9 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     }
   }
 
+  /**
+   * @deprecated
+   */
   public async changeContext(options: { context: Context; contextHash?: string }): Promise<void> {
     const currentSubscriber = this.#session.subscriber;
     if (!currentSubscriber) {
@@ -130,7 +156,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
 
     // Clear cache and reconnect socket with new token
-    this.notifications.cache.clearAll();
+    this.clearCache();
 
     // Disconnect and reconnect socket to use new JWT token
     const disconnectResult = await this.socket.disconnect();

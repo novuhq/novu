@@ -4,16 +4,8 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  EmailControlDto,
-  EmailControlDto$inboundSchema,
-  EmailControlDto$Outbound,
-  EmailControlDto$outboundSchema,
-} from './emailcontroldto.js';
-import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
+import { EmailControlDto, EmailControlDto$Outbound, EmailControlDto$outboundSchema } from './emailcontroldto.js';
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from './steptypeenum.js';
 
 /**
  * Control values for the Email step.
@@ -48,13 +40,6 @@ export type EmailStepUpsertDto = {
 };
 
 /** @internal */
-export const EmailStepUpsertDtoControlValues$inboundSchema: z.ZodType<
-  EmailStepUpsertDtoControlValues,
-  z.ZodTypeDef,
-  unknown
-> = z.union([EmailControlDto$inboundSchema, z.record(z.any())]);
-
-/** @internal */
 export type EmailStepUpsertDtoControlValues$Outbound = EmailControlDto$Outbound | { [k: string]: any };
 
 /** @internal */
@@ -64,49 +49,11 @@ export const EmailStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   EmailStepUpsertDtoControlValues
 > = z.union([EmailControlDto$outboundSchema, z.record(z.any())]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailStepUpsertDtoControlValues$ {
-  /** @deprecated use `EmailStepUpsertDtoControlValues$inboundSchema` instead. */
-  export const inboundSchema = EmailStepUpsertDtoControlValues$inboundSchema;
-  /** @deprecated use `EmailStepUpsertDtoControlValues$outboundSchema` instead. */
-  export const outboundSchema = EmailStepUpsertDtoControlValues$outboundSchema;
-  /** @deprecated use `EmailStepUpsertDtoControlValues$Outbound` instead. */
-  export type Outbound = EmailStepUpsertDtoControlValues$Outbound;
-}
-
 export function emailStepUpsertDtoControlValuesToJSON(
   emailStepUpsertDtoControlValues: EmailStepUpsertDtoControlValues
 ): string {
   return JSON.stringify(EmailStepUpsertDtoControlValues$outboundSchema.parse(emailStepUpsertDtoControlValues));
 }
-
-export function emailStepUpsertDtoControlValuesFromJSON(
-  jsonString: string
-): SafeParseResult<EmailStepUpsertDtoControlValues, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EmailStepUpsertDtoControlValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EmailStepUpsertDtoControlValues' from JSON`
-  );
-}
-
-/** @internal */
-export const EmailStepUpsertDto$inboundSchema: z.ZodType<EmailStepUpsertDto, z.ZodTypeDef, unknown> = z
-  .object({
-    _id: z.string().optional(),
-    stepId: z.string().optional(),
-    name: z.string(),
-    type: StepTypeEnum$inboundSchema,
-    controlValues: z.union([EmailControlDto$inboundSchema, z.record(z.any())]).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      _id: 'id',
-    });
-  });
 
 /** @internal */
 export type EmailStepUpsertDto$Outbound = {
@@ -136,29 +83,6 @@ export const EmailStepUpsertDto$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailStepUpsertDto$ {
-  /** @deprecated use `EmailStepUpsertDto$inboundSchema` instead. */
-  export const inboundSchema = EmailStepUpsertDto$inboundSchema;
-  /** @deprecated use `EmailStepUpsertDto$outboundSchema` instead. */
-  export const outboundSchema = EmailStepUpsertDto$outboundSchema;
-  /** @deprecated use `EmailStepUpsertDto$Outbound` instead. */
-  export type Outbound = EmailStepUpsertDto$Outbound;
-}
-
 export function emailStepUpsertDtoToJSON(emailStepUpsertDto: EmailStepUpsertDto): string {
   return JSON.stringify(EmailStepUpsertDto$outboundSchema.parse(emailStepUpsertDto));
-}
-
-export function emailStepUpsertDtoFromJSON(
-  jsonString: string
-): SafeParseResult<EmailStepUpsertDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EmailStepUpsertDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EmailStepUpsertDto' from JSON`
-  );
 }

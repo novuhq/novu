@@ -24,24 +24,6 @@ export type SubscribersControllerPatchSubscriberResponse = {
 };
 
 /** @internal */
-export const SubscribersControllerPatchSubscriberRequest$inboundSchema: z.ZodType<
-  SubscribersControllerPatchSubscriberRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    subscriberId: z.string(),
-    'idempotency-key': z.string().optional(),
-    PatchSubscriberRequestDto: components.PatchSubscriberRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      PatchSubscriberRequestDto: 'patchSubscriberRequestDto',
-    });
-  });
-
-/** @internal */
 export type SubscribersControllerPatchSubscriberRequest$Outbound = {
   subscriberId: string;
   'idempotency-key'?: string | undefined;
@@ -66,34 +48,11 @@ export const SubscribersControllerPatchSubscriberRequest$outboundSchema: z.ZodTy
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersControllerPatchSubscriberRequest$ {
-  /** @deprecated use `SubscribersControllerPatchSubscriberRequest$inboundSchema` instead. */
-  export const inboundSchema = SubscribersControllerPatchSubscriberRequest$inboundSchema;
-  /** @deprecated use `SubscribersControllerPatchSubscriberRequest$outboundSchema` instead. */
-  export const outboundSchema = SubscribersControllerPatchSubscriberRequest$outboundSchema;
-  /** @deprecated use `SubscribersControllerPatchSubscriberRequest$Outbound` instead. */
-  export type Outbound = SubscribersControllerPatchSubscriberRequest$Outbound;
-}
-
 export function subscribersControllerPatchSubscriberRequestToJSON(
   subscribersControllerPatchSubscriberRequest: SubscribersControllerPatchSubscriberRequest
 ): string {
   return JSON.stringify(
     SubscribersControllerPatchSubscriberRequest$outboundSchema.parse(subscribersControllerPatchSubscriberRequest)
-  );
-}
-
-export function subscribersControllerPatchSubscriberRequestFromJSON(
-  jsonString: string
-): SafeParseResult<SubscribersControllerPatchSubscriberRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscribersControllerPatchSubscriberRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscribersControllerPatchSubscriberRequest' from JSON`
   );
 }
 
@@ -113,50 +72,6 @@ export const SubscribersControllerPatchSubscriberResponse$inboundSchema: z.ZodTy
       Result: 'result',
     });
   });
-
-/** @internal */
-export type SubscribersControllerPatchSubscriberResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.SubscriberResponseDto$Outbound;
-};
-
-/** @internal */
-export const SubscribersControllerPatchSubscriberResponse$outboundSchema: z.ZodType<
-  SubscribersControllerPatchSubscriberResponse$Outbound,
-  z.ZodTypeDef,
-  SubscribersControllerPatchSubscriberResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.SubscriberResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersControllerPatchSubscriberResponse$ {
-  /** @deprecated use `SubscribersControllerPatchSubscriberResponse$inboundSchema` instead. */
-  export const inboundSchema = SubscribersControllerPatchSubscriberResponse$inboundSchema;
-  /** @deprecated use `SubscribersControllerPatchSubscriberResponse$outboundSchema` instead. */
-  export const outboundSchema = SubscribersControllerPatchSubscriberResponse$outboundSchema;
-  /** @deprecated use `SubscribersControllerPatchSubscriberResponse$Outbound` instead. */
-  export type Outbound = SubscribersControllerPatchSubscriberResponse$Outbound;
-}
-
-export function subscribersControllerPatchSubscriberResponseToJSON(
-  subscribersControllerPatchSubscriberResponse: SubscribersControllerPatchSubscriberResponse
-): string {
-  return JSON.stringify(
-    SubscribersControllerPatchSubscriberResponse$outboundSchema.parse(subscribersControllerPatchSubscriberResponse)
-  );
-}
 
 export function subscribersControllerPatchSubscriberResponseFromJSON(
   jsonString: string

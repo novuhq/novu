@@ -21,22 +21,6 @@ export type WorkflowControllerRemoveWorkflowResponse = {
 };
 
 /** @internal */
-export const WorkflowControllerRemoveWorkflowRequest$inboundSchema: z.ZodType<
-  WorkflowControllerRemoveWorkflowRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    workflowId: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type WorkflowControllerRemoveWorkflowRequest$Outbound = {
   workflowId: string;
   'idempotency-key'?: string | undefined;
@@ -58,34 +42,11 @@ export const WorkflowControllerRemoveWorkflowRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerRemoveWorkflowRequest$ {
-  /** @deprecated use `WorkflowControllerRemoveWorkflowRequest$inboundSchema` instead. */
-  export const inboundSchema = WorkflowControllerRemoveWorkflowRequest$inboundSchema;
-  /** @deprecated use `WorkflowControllerRemoveWorkflowRequest$outboundSchema` instead. */
-  export const outboundSchema = WorkflowControllerRemoveWorkflowRequest$outboundSchema;
-  /** @deprecated use `WorkflowControllerRemoveWorkflowRequest$Outbound` instead. */
-  export type Outbound = WorkflowControllerRemoveWorkflowRequest$Outbound;
-}
-
 export function workflowControllerRemoveWorkflowRequestToJSON(
   workflowControllerRemoveWorkflowRequest: WorkflowControllerRemoveWorkflowRequest
 ): string {
   return JSON.stringify(
     WorkflowControllerRemoveWorkflowRequest$outboundSchema.parse(workflowControllerRemoveWorkflowRequest)
-  );
-}
-
-export function workflowControllerRemoveWorkflowRequestFromJSON(
-  jsonString: string
-): SafeParseResult<WorkflowControllerRemoveWorkflowRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => WorkflowControllerRemoveWorkflowRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'WorkflowControllerRemoveWorkflowRequest' from JSON`
   );
 }
 
@@ -103,47 +64,6 @@ export const WorkflowControllerRemoveWorkflowResponse$inboundSchema: z.ZodType<
       Headers: 'headers',
     });
   });
-
-/** @internal */
-export type WorkflowControllerRemoveWorkflowResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-};
-
-/** @internal */
-export const WorkflowControllerRemoveWorkflowResponse$outboundSchema: z.ZodType<
-  WorkflowControllerRemoveWorkflowResponse$Outbound,
-  z.ZodTypeDef,
-  WorkflowControllerRemoveWorkflowResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerRemoveWorkflowResponse$ {
-  /** @deprecated use `WorkflowControllerRemoveWorkflowResponse$inboundSchema` instead. */
-  export const inboundSchema = WorkflowControllerRemoveWorkflowResponse$inboundSchema;
-  /** @deprecated use `WorkflowControllerRemoveWorkflowResponse$outboundSchema` instead. */
-  export const outboundSchema = WorkflowControllerRemoveWorkflowResponse$outboundSchema;
-  /** @deprecated use `WorkflowControllerRemoveWorkflowResponse$Outbound` instead. */
-  export type Outbound = WorkflowControllerRemoveWorkflowResponse$Outbound;
-}
-
-export function workflowControllerRemoveWorkflowResponseToJSON(
-  workflowControllerRemoveWorkflowResponse: WorkflowControllerRemoveWorkflowResponse
-): string {
-  return JSON.stringify(
-    WorkflowControllerRemoveWorkflowResponse$outboundSchema.parse(workflowControllerRemoveWorkflowResponse)
-  );
-}
 
 export function workflowControllerRemoveWorkflowResponseFromJSON(
   jsonString: string

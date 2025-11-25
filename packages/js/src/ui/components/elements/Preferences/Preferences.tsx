@@ -1,11 +1,11 @@
 import { createEffect, createMemo, Show } from 'solid-js';
-import { AppearanceCallback } from 'src/ui/types';
 import { Preference } from '../../../../preferences/preference';
 import { ChannelPreference, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
 import { setDynamicLocalization } from '../../../config';
 import { useInboxContext, useNovu } from '../../../context';
 import { useStyle } from '../../../helpers';
+import { InboxAppearanceCallback } from '../../../types';
 import { DefaultPreferences } from './DefaultPreferences';
 import { GroupedPreferences } from './GroupedPreferences';
 import { PreferencesListSkeleton } from './PreferencesListSkeleton';
@@ -14,7 +14,7 @@ import { ScheduleRow } from './ScheduleRow';
 
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
-  const novu = useNovu();
+  const novuAccessor = useNovu();
   const style = useStyle();
   const { preferencesFilter, preferenceGroups, preferencesSort } = useInboxContext();
 
@@ -56,7 +56,7 @@ export const Preferences = () => {
   };
 
   const bulkUpdatePreferences = (preferences: Preference[]) => async (channels: ChannelPreference) => {
-    await novu.preferences.bulkUpdate(
+    await novuAccessor().preferences.bulkUpdate(
       preferences.map((el) => {
         const oldChannels = Object.keys(el.channels);
         const channelsToUpdate = Object.keys(channels)
@@ -122,7 +122,7 @@ export const Preferences = () => {
         className:
           'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-2 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
         context: { preferences: preferences(), groups: groupedPreferences() } satisfies Parameters<
-          AppearanceCallback['preferencesContainer']
+          InboxAppearanceCallback['preferencesContainer']
         >[0],
       })}
     >

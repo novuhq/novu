@@ -1,10 +1,18 @@
 import { BaseCommand } from '@novu/application-generic';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class ChatOauthCallbackCommand extends BaseCommand {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  readonly providerCode: string;
+  readonly providerCode?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly tenant?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly adminConsent?: string;
 
   @IsNotEmpty()
   @IsString()

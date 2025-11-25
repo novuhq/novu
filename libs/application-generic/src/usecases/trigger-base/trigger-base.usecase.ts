@@ -40,7 +40,6 @@ export type BaseTriggerCommand = {
   actor?: SubscriberEntity | undefined;
   contextKeys?: string[];
   tenant: ITenantDefine | null;
-  environmentName: string;
   requestCategory?: TriggerRequestCategoryEnum;
   controls?: StatelessControls;
   bridgeUrl?: string;

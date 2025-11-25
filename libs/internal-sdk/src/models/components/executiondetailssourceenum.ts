@@ -22,18 +22,3 @@ export type ExecutionDetailsSourceEnum = ClosedEnum<typeof ExecutionDetailsSourc
 /** @internal */
 export const ExecutionDetailsSourceEnum$inboundSchema: z.ZodNativeEnum<typeof ExecutionDetailsSourceEnum> =
   z.nativeEnum(ExecutionDetailsSourceEnum);
-
-/** @internal */
-export const ExecutionDetailsSourceEnum$outboundSchema: z.ZodNativeEnum<typeof ExecutionDetailsSourceEnum> =
-  ExecutionDetailsSourceEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ExecutionDetailsSourceEnum$ {
-  /** @deprecated use `ExecutionDetailsSourceEnum$inboundSchema` instead. */
-  export const inboundSchema = ExecutionDetailsSourceEnum$inboundSchema;
-  /** @deprecated use `ExecutionDetailsSourceEnum$outboundSchema` instead. */
-  export const outboundSchema = ExecutionDetailsSourceEnum$outboundSchema;
-}

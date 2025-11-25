@@ -3,9 +3,6 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type CreateSubscriberRequestDto = {
   /**
@@ -47,20 +44,6 @@ export type CreateSubscriberRequestDto = {
 };
 
 /** @internal */
-export const CreateSubscriberRequestDto$inboundSchema: z.ZodType<CreateSubscriberRequestDto, z.ZodTypeDef, unknown> =
-  z.object({
-    firstName: z.nullable(z.string()).optional(),
-    lastName: z.nullable(z.string()).optional(),
-    email: z.nullable(z.string()).optional(),
-    phone: z.nullable(z.string()).optional(),
-    avatar: z.nullable(z.string()).optional(),
-    locale: z.nullable(z.string()).optional(),
-    timezone: z.nullable(z.string()).optional(),
-    data: z.nullable(z.record(z.any())).optional(),
-    subscriberId: z.string(),
-  });
-
-/** @internal */
 export type CreateSubscriberRequestDto$Outbound = {
   firstName?: string | null | undefined;
   lastName?: string | null | undefined;
@@ -90,29 +73,6 @@ export const CreateSubscriberRequestDto$outboundSchema: z.ZodType<
   subscriberId: z.string(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CreateSubscriberRequestDto$ {
-  /** @deprecated use `CreateSubscriberRequestDto$inboundSchema` instead. */
-  export const inboundSchema = CreateSubscriberRequestDto$inboundSchema;
-  /** @deprecated use `CreateSubscriberRequestDto$outboundSchema` instead. */
-  export const outboundSchema = CreateSubscriberRequestDto$outboundSchema;
-  /** @deprecated use `CreateSubscriberRequestDto$Outbound` instead. */
-  export type Outbound = CreateSubscriberRequestDto$Outbound;
-}
-
 export function createSubscriberRequestDtoToJSON(createSubscriberRequestDto: CreateSubscriberRequestDto): string {
   return JSON.stringify(CreateSubscriberRequestDto$outboundSchema.parse(createSubscriberRequestDto));
-}
-
-export function createSubscriberRequestDtoFromJSON(
-  jsonString: string
-): SafeParseResult<CreateSubscriberRequestDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => CreateSubscriberRequestDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'CreateSubscriberRequestDto' from JSON`
-  );
 }

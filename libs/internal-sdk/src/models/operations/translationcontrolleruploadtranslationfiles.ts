@@ -4,43 +4,104 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import * as components from '../components/index.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
+import { ClosedEnum } from '../../types/enums.js';
+
+/**
+ * The resource type to associate localizations with
+ */
+export const ResourceType = {
+  Workflow: 'workflow',
+  Layout: 'layout',
+} as const;
+/**
+ * The resource type to associate localizations with
+ */
+export type ResourceType = ClosedEnum<typeof ResourceType>;
+
+export type Files = {
+  fileName: string;
+  content: ReadableStream<Uint8Array> | Blob | ArrayBuffer | Uint8Array;
+};
+
+export type TranslationControllerUploadTranslationFilesRequestBody = {
+  /**
+   * The resource ID to associate localizations with. Accepts identifier or slug format
+   */
+  resourceId: string;
+  /**
+   * The resource type to associate localizations with
+   */
+  resourceType: ResourceType;
+  /**
+   * One or more JSON translation files. Filenames must match locale format (e.g., en_US.json, fr_FR.json)
+   */
+  files: Array<Files>;
+};
 
 export type TranslationControllerUploadTranslationFilesRequest = {
   /**
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
-  /**
-   * Translation files upload body details
-   */
-  uploadTranslationsRequestDto: components.UploadTranslationsRequestDto;
+  requestBody: TranslationControllerUploadTranslationFilesRequestBody;
 };
 
 /** @internal */
-export const TranslationControllerUploadTranslationFilesRequest$inboundSchema: z.ZodType<
-  TranslationControllerUploadTranslationFilesRequest,
+export const ResourceType$outboundSchema: z.ZodNativeEnum<typeof ResourceType> = z.nativeEnum(ResourceType);
+
+/** @internal */
+export type Files$Outbound = {
+  fileName: string;
+  content: ReadableStream<Uint8Array> | Blob | ArrayBuffer | Uint8Array;
+};
+
+/** @internal */
+export const Files$outboundSchema: z.ZodType<Files$Outbound, z.ZodTypeDef, Files> = z.object({
+  fileName: z.string(),
+  content: z.union([
+    z.instanceof(ReadableStream<Uint8Array>),
+    z.instanceof(Blob),
+    z.instanceof(ArrayBuffer),
+    z.instanceof(Uint8Array),
+  ]),
+});
+
+export function filesToJSON(files: Files): string {
+  return JSON.stringify(Files$outboundSchema.parse(files));
+}
+
+/** @internal */
+export type TranslationControllerUploadTranslationFilesRequestBody$Outbound = {
+  resourceId: string;
+  resourceType: string;
+  files: Array<Files$Outbound>;
+};
+
+/** @internal */
+export const TranslationControllerUploadTranslationFilesRequestBody$outboundSchema: z.ZodType<
+  TranslationControllerUploadTranslationFilesRequestBody$Outbound,
   z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    'idempotency-key': z.string().optional(),
-    UploadTranslationsRequestDto: components.UploadTranslationsRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      UploadTranslationsRequestDto: 'uploadTranslationsRequestDto',
-    });
-  });
+  TranslationControllerUploadTranslationFilesRequestBody
+> = z.object({
+  resourceId: z.string(),
+  resourceType: ResourceType$outboundSchema,
+  files: z.array(z.lazy(() => Files$outboundSchema)),
+});
+
+export function translationControllerUploadTranslationFilesRequestBodyToJSON(
+  translationControllerUploadTranslationFilesRequestBody: TranslationControllerUploadTranslationFilesRequestBody
+): string {
+  return JSON.stringify(
+    TranslationControllerUploadTranslationFilesRequestBody$outboundSchema.parse(
+      translationControllerUploadTranslationFilesRequestBody
+    )
+  );
+}
 
 /** @internal */
 export type TranslationControllerUploadTranslationFilesRequest$Outbound = {
   'idempotency-key'?: string | undefined;
-  UploadTranslationsRequestDto: components.UploadTranslationsRequestDto$Outbound;
+  RequestBody: TranslationControllerUploadTranslationFilesRequestBody$Outbound;
 };
 
 /** @internal */
@@ -51,27 +112,14 @@ export const TranslationControllerUploadTranslationFilesRequest$outboundSchema: 
 > = z
   .object({
     idempotencyKey: z.string().optional(),
-    uploadTranslationsRequestDto: components.UploadTranslationsRequestDto$outboundSchema,
+    requestBody: z.lazy(() => TranslationControllerUploadTranslationFilesRequestBody$outboundSchema),
   })
   .transform((v) => {
     return remap$(v, {
       idempotencyKey: 'idempotency-key',
-      uploadTranslationsRequestDto: 'UploadTranslationsRequestDto',
+      requestBody: 'RequestBody',
     });
   });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TranslationControllerUploadTranslationFilesRequest$ {
-  /** @deprecated use `TranslationControllerUploadTranslationFilesRequest$inboundSchema` instead. */
-  export const inboundSchema = TranslationControllerUploadTranslationFilesRequest$inboundSchema;
-  /** @deprecated use `TranslationControllerUploadTranslationFilesRequest$outboundSchema` instead. */
-  export const outboundSchema = TranslationControllerUploadTranslationFilesRequest$outboundSchema;
-  /** @deprecated use `TranslationControllerUploadTranslationFilesRequest$Outbound` instead. */
-  export type Outbound = TranslationControllerUploadTranslationFilesRequest$Outbound;
-}
 
 export function translationControllerUploadTranslationFilesRequestToJSON(
   translationControllerUploadTranslationFilesRequest: TranslationControllerUploadTranslationFilesRequest
@@ -80,15 +128,5 @@ export function translationControllerUploadTranslationFilesRequestToJSON(
     TranslationControllerUploadTranslationFilesRequest$outboundSchema.parse(
       translationControllerUploadTranslationFilesRequest
     )
-  );
-}
-
-export function translationControllerUploadTranslationFilesRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TranslationControllerUploadTranslationFilesRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TranslationControllerUploadTranslationFilesRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TranslationControllerUploadTranslationFilesRequest' from JSON`
   );
 }

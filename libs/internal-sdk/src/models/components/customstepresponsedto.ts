@@ -10,21 +10,10 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   CustomControlsMetadataResponseDto,
   CustomControlsMetadataResponseDto$inboundSchema,
-  CustomControlsMetadataResponseDto$Outbound,
-  CustomControlsMetadataResponseDto$outboundSchema,
 } from './customcontrolsmetadataresponsedto.js';
-import {
-  ResourceOriginEnum,
-  ResourceOriginEnum$inboundSchema,
-  ResourceOriginEnum$outboundSchema,
-} from './resourceoriginenum.js';
-import {
-  StepIssuesDto,
-  StepIssuesDto$inboundSchema,
-  StepIssuesDto$Outbound,
-  StepIssuesDto$outboundSchema,
-} from './stepissuesdto.js';
-import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
+import { ResourceOriginEnum, ResourceOriginEnum$inboundSchema } from './resourceoriginenum.js';
+import { StepIssuesDto, StepIssuesDto$inboundSchema } from './stepissuesdto.js';
+import { StepTypeEnum, StepTypeEnum$inboundSchema } from './steptypeenum.js';
 
 /**
  * Control values for the custom step
@@ -103,50 +92,6 @@ export const CustomStepResponseDtoControlValues$inboundSchema: z.ZodType<
   true
 );
 
-/** @internal */
-export type CustomStepResponseDtoControlValues$Outbound = {
-  custom?: { [k: string]: any } | undefined;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const CustomStepResponseDtoControlValues$outboundSchema: z.ZodType<
-  CustomStepResponseDtoControlValues$Outbound,
-  z.ZodTypeDef,
-  CustomStepResponseDtoControlValues
-> = z
-  .object({
-    custom: z.record(z.any()).optional(),
-    additionalProperties: z.record(z.any()).optional(),
-  })
-  .transform((v) => {
-    return {
-      ...v.additionalProperties,
-      ...remap$(v, {
-        additionalProperties: null,
-      }),
-    };
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CustomStepResponseDtoControlValues$ {
-  /** @deprecated use `CustomStepResponseDtoControlValues$inboundSchema` instead. */
-  export const inboundSchema = CustomStepResponseDtoControlValues$inboundSchema;
-  /** @deprecated use `CustomStepResponseDtoControlValues$outboundSchema` instead. */
-  export const outboundSchema = CustomStepResponseDtoControlValues$outboundSchema;
-  /** @deprecated use `CustomStepResponseDtoControlValues$Outbound` instead. */
-  export type Outbound = CustomStepResponseDtoControlValues$Outbound;
-}
-
-export function customStepResponseDtoControlValuesToJSON(
-  customStepResponseDtoControlValues: CustomStepResponseDtoControlValues
-): string {
-  return JSON.stringify(CustomStepResponseDtoControlValues$outboundSchema.parse(customStepResponseDtoControlValues));
-}
-
 export function customStepResponseDtoControlValuesFromJSON(
   jsonString: string
 ): SafeParseResult<CustomStepResponseDtoControlValues, SDKValidationError> {
@@ -178,65 +123,6 @@ export const CustomStepResponseDto$inboundSchema: z.ZodType<CustomStepResponseDt
       _id: 'id',
     });
   });
-
-/** @internal */
-export type CustomStepResponseDto$Outbound = {
-  controls: CustomControlsMetadataResponseDto$Outbound;
-  controlValues?: CustomStepResponseDtoControlValues$Outbound | undefined;
-  variables: { [k: string]: any };
-  stepId: string;
-  _id: string;
-  name: string;
-  slug: string;
-  type: string;
-  origin: string;
-  workflowId: string;
-  workflowDatabaseId: string;
-  issues?: StepIssuesDto$Outbound | undefined;
-};
-
-/** @internal */
-export const CustomStepResponseDto$outboundSchema: z.ZodType<
-  CustomStepResponseDto$Outbound,
-  z.ZodTypeDef,
-  CustomStepResponseDto
-> = z
-  .object({
-    controls: CustomControlsMetadataResponseDto$outboundSchema,
-    controlValues: z.lazy(() => CustomStepResponseDtoControlValues$outboundSchema).optional(),
-    variables: z.record(z.any()),
-    stepId: z.string(),
-    id: z.string(),
-    name: z.string(),
-    slug: z.string(),
-    type: StepTypeEnum$outboundSchema,
-    origin: ResourceOriginEnum$outboundSchema,
-    workflowId: z.string(),
-    workflowDatabaseId: z.string(),
-    issues: StepIssuesDto$outboundSchema.optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CustomStepResponseDto$ {
-  /** @deprecated use `CustomStepResponseDto$inboundSchema` instead. */
-  export const inboundSchema = CustomStepResponseDto$inboundSchema;
-  /** @deprecated use `CustomStepResponseDto$outboundSchema` instead. */
-  export const outboundSchema = CustomStepResponseDto$outboundSchema;
-  /** @deprecated use `CustomStepResponseDto$Outbound` instead. */
-  export type Outbound = CustomStepResponseDto$Outbound;
-}
-
-export function customStepResponseDtoToJSON(customStepResponseDto: CustomStepResponseDto): string {
-  return JSON.stringify(CustomStepResponseDto$outboundSchema.parse(customStepResponseDto));
-}
 
 export function customStepResponseDtoFromJSON(
   jsonString: string

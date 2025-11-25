@@ -23,23 +23,6 @@ export type EnvironmentsControllerV1CreateEnvironmentResponse = {
 };
 
 /** @internal */
-export const EnvironmentsControllerV1CreateEnvironmentRequest$inboundSchema: z.ZodType<
-  EnvironmentsControllerV1CreateEnvironmentRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    'idempotency-key': z.string().optional(),
-    CreateEnvironmentRequestDto: components.CreateEnvironmentRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      CreateEnvironmentRequestDto: 'createEnvironmentRequestDto',
-    });
-  });
-
-/** @internal */
 export type EnvironmentsControllerV1CreateEnvironmentRequest$Outbound = {
   'idempotency-key'?: string | undefined;
   CreateEnvironmentRequestDto: components.CreateEnvironmentRequestDto$Outbound;
@@ -62,19 +45,6 @@ export const EnvironmentsControllerV1CreateEnvironmentRequest$outboundSchema: z.
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EnvironmentsControllerV1CreateEnvironmentRequest$ {
-  /** @deprecated use `EnvironmentsControllerV1CreateEnvironmentRequest$inboundSchema` instead. */
-  export const inboundSchema = EnvironmentsControllerV1CreateEnvironmentRequest$inboundSchema;
-  /** @deprecated use `EnvironmentsControllerV1CreateEnvironmentRequest$outboundSchema` instead. */
-  export const outboundSchema = EnvironmentsControllerV1CreateEnvironmentRequest$outboundSchema;
-  /** @deprecated use `EnvironmentsControllerV1CreateEnvironmentRequest$Outbound` instead. */
-  export type Outbound = EnvironmentsControllerV1CreateEnvironmentRequest$Outbound;
-}
-
 export function environmentsControllerV1CreateEnvironmentRequestToJSON(
   environmentsControllerV1CreateEnvironmentRequest: EnvironmentsControllerV1CreateEnvironmentRequest
 ): string {
@@ -82,16 +52,6 @@ export function environmentsControllerV1CreateEnvironmentRequestToJSON(
     EnvironmentsControllerV1CreateEnvironmentRequest$outboundSchema.parse(
       environmentsControllerV1CreateEnvironmentRequest
     )
-  );
-}
-
-export function environmentsControllerV1CreateEnvironmentRequestFromJSON(
-  jsonString: string
-): SafeParseResult<EnvironmentsControllerV1CreateEnvironmentRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EnvironmentsControllerV1CreateEnvironmentRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EnvironmentsControllerV1CreateEnvironmentRequest' from JSON`
   );
 }
 
@@ -111,52 +71,6 @@ export const EnvironmentsControllerV1CreateEnvironmentResponse$inboundSchema: z.
       Result: 'result',
     });
   });
-
-/** @internal */
-export type EnvironmentsControllerV1CreateEnvironmentResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.EnvironmentResponseDto$Outbound;
-};
-
-/** @internal */
-export const EnvironmentsControllerV1CreateEnvironmentResponse$outboundSchema: z.ZodType<
-  EnvironmentsControllerV1CreateEnvironmentResponse$Outbound,
-  z.ZodTypeDef,
-  EnvironmentsControllerV1CreateEnvironmentResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.EnvironmentResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EnvironmentsControllerV1CreateEnvironmentResponse$ {
-  /** @deprecated use `EnvironmentsControllerV1CreateEnvironmentResponse$inboundSchema` instead. */
-  export const inboundSchema = EnvironmentsControllerV1CreateEnvironmentResponse$inboundSchema;
-  /** @deprecated use `EnvironmentsControllerV1CreateEnvironmentResponse$outboundSchema` instead. */
-  export const outboundSchema = EnvironmentsControllerV1CreateEnvironmentResponse$outboundSchema;
-  /** @deprecated use `EnvironmentsControllerV1CreateEnvironmentResponse$Outbound` instead. */
-  export type Outbound = EnvironmentsControllerV1CreateEnvironmentResponse$Outbound;
-}
-
-export function environmentsControllerV1CreateEnvironmentResponseToJSON(
-  environmentsControllerV1CreateEnvironmentResponse: EnvironmentsControllerV1CreateEnvironmentResponse
-): string {
-  return JSON.stringify(
-    EnvironmentsControllerV1CreateEnvironmentResponse$outboundSchema.parse(
-      environmentsControllerV1CreateEnvironmentResponse
-    )
-  );
-}
 
 export function environmentsControllerV1CreateEnvironmentResponseFromJSON(
   jsonString: string

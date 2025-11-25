@@ -36,27 +36,14 @@ export type RedirectDto = {
 
 /** @internal */
 export const Target$inboundSchema: z.ZodNativeEnum<typeof Target> = z.nativeEnum(Target);
-
 /** @internal */
 export const Target$outboundSchema: z.ZodNativeEnum<typeof Target> = Target$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Target$ {
-  /** @deprecated use `Target$inboundSchema` instead. */
-  export const inboundSchema = Target$inboundSchema;
-  /** @deprecated use `Target$outboundSchema` instead. */
-  export const outboundSchema = Target$outboundSchema;
-}
 
 /** @internal */
 export const RedirectDto$inboundSchema: z.ZodType<RedirectDto, z.ZodTypeDef, unknown> = z.object({
   url: z.string().optional(),
   target: Target$inboundSchema.default('_self'),
 });
-
 /** @internal */
 export type RedirectDto$Outbound = {
   url?: string | undefined;
@@ -69,23 +56,9 @@ export const RedirectDto$outboundSchema: z.ZodType<RedirectDto$Outbound, z.ZodTy
   target: Target$outboundSchema.default('_self'),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace RedirectDto$ {
-  /** @deprecated use `RedirectDto$inboundSchema` instead. */
-  export const inboundSchema = RedirectDto$inboundSchema;
-  /** @deprecated use `RedirectDto$outboundSchema` instead. */
-  export const outboundSchema = RedirectDto$outboundSchema;
-  /** @deprecated use `RedirectDto$Outbound` instead. */
-  export type Outbound = RedirectDto$Outbound;
-}
-
 export function redirectDtoToJSON(redirectDto: RedirectDto): string {
   return JSON.stringify(RedirectDto$outboundSchema.parse(redirectDto));
 }
-
 export function redirectDtoFromJSON(jsonString: string): SafeParseResult<RedirectDto, SDKValidationError> {
   return safeParse(
     jsonString,

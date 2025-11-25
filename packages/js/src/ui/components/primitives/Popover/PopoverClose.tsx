@@ -1,12 +1,12 @@
 import { JSX, splitProps } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { useStyle } from '../../../helpers/useStyle';
-import { AppearanceKey } from '../../../types';
+import { AllAppearanceKey } from '../../../types';
 import { usePopover } from '.';
 
 type PopoverCloseProps = JSX.IntrinsicElements['button'] & {
   asChild?: (props: any) => JSX.Element;
-  appearanceKey?: AppearanceKey;
+  appearanceKey?: AllAppearanceKey;
 };
 export const PopoverClose = (props: PopoverCloseProps) => {
   const { onClose } = usePopover();

@@ -27,24 +27,6 @@ export type WorkflowControllerSyncResponse = {
 };
 
 /** @internal */
-export const WorkflowControllerSyncRequest$inboundSchema: z.ZodType<
-  WorkflowControllerSyncRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    workflowId: z.string(),
-    'idempotency-key': z.string().optional(),
-    SyncWorkflowDto: components.SyncWorkflowDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      SyncWorkflowDto: 'syncWorkflowDto',
-    });
-  });
-
-/** @internal */
 export type WorkflowControllerSyncRequest$Outbound = {
   workflowId: string;
   'idempotency-key'?: string | undefined;
@@ -69,33 +51,10 @@ export const WorkflowControllerSyncRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerSyncRequest$ {
-  /** @deprecated use `WorkflowControllerSyncRequest$inboundSchema` instead. */
-  export const inboundSchema = WorkflowControllerSyncRequest$inboundSchema;
-  /** @deprecated use `WorkflowControllerSyncRequest$outboundSchema` instead. */
-  export const outboundSchema = WorkflowControllerSyncRequest$outboundSchema;
-  /** @deprecated use `WorkflowControllerSyncRequest$Outbound` instead. */
-  export type Outbound = WorkflowControllerSyncRequest$Outbound;
-}
-
 export function workflowControllerSyncRequestToJSON(
   workflowControllerSyncRequest: WorkflowControllerSyncRequest
 ): string {
   return JSON.stringify(WorkflowControllerSyncRequest$outboundSchema.parse(workflowControllerSyncRequest));
-}
-
-export function workflowControllerSyncRequestFromJSON(
-  jsonString: string
-): SafeParseResult<WorkflowControllerSyncRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => WorkflowControllerSyncRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'WorkflowControllerSyncRequest' from JSON`
-  );
 }
 
 /** @internal */
@@ -114,48 +73,6 @@ export const WorkflowControllerSyncResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type WorkflowControllerSyncResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.WorkflowResponseDto$Outbound;
-};
-
-/** @internal */
-export const WorkflowControllerSyncResponse$outboundSchema: z.ZodType<
-  WorkflowControllerSyncResponse$Outbound,
-  z.ZodTypeDef,
-  WorkflowControllerSyncResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.WorkflowResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowControllerSyncResponse$ {
-  /** @deprecated use `WorkflowControllerSyncResponse$inboundSchema` instead. */
-  export const inboundSchema = WorkflowControllerSyncResponse$inboundSchema;
-  /** @deprecated use `WorkflowControllerSyncResponse$outboundSchema` instead. */
-  export const outboundSchema = WorkflowControllerSyncResponse$outboundSchema;
-  /** @deprecated use `WorkflowControllerSyncResponse$Outbound` instead. */
-  export type Outbound = WorkflowControllerSyncResponse$Outbound;
-}
-
-export function workflowControllerSyncResponseToJSON(
-  workflowControllerSyncResponse: WorkflowControllerSyncResponse
-): string {
-  return JSON.stringify(WorkflowControllerSyncResponse$outboundSchema.parse(workflowControllerSyncResponse));
-}
 
 export function workflowControllerSyncResponseFromJSON(
   jsonString: string

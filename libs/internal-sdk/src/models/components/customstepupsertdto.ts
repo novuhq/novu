@@ -4,16 +4,8 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  CustomControlDto,
-  CustomControlDto$inboundSchema,
-  CustomControlDto$Outbound,
-  CustomControlDto$outboundSchema,
-} from './customcontroldto.js';
-import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
+import { CustomControlDto, CustomControlDto$Outbound, CustomControlDto$outboundSchema } from './customcontroldto.js';
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from './steptypeenum.js';
 
 /**
  * Control values for the Custom step.
@@ -48,13 +40,6 @@ export type CustomStepUpsertDto = {
 };
 
 /** @internal */
-export const CustomStepUpsertDtoControlValues$inboundSchema: z.ZodType<
-  CustomStepUpsertDtoControlValues,
-  z.ZodTypeDef,
-  unknown
-> = z.union([CustomControlDto$inboundSchema, z.record(z.any())]);
-
-/** @internal */
 export type CustomStepUpsertDtoControlValues$Outbound = CustomControlDto$Outbound | { [k: string]: any };
 
 /** @internal */
@@ -64,49 +49,11 @@ export const CustomStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   CustomStepUpsertDtoControlValues
 > = z.union([CustomControlDto$outboundSchema, z.record(z.any())]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CustomStepUpsertDtoControlValues$ {
-  /** @deprecated use `CustomStepUpsertDtoControlValues$inboundSchema` instead. */
-  export const inboundSchema = CustomStepUpsertDtoControlValues$inboundSchema;
-  /** @deprecated use `CustomStepUpsertDtoControlValues$outboundSchema` instead. */
-  export const outboundSchema = CustomStepUpsertDtoControlValues$outboundSchema;
-  /** @deprecated use `CustomStepUpsertDtoControlValues$Outbound` instead. */
-  export type Outbound = CustomStepUpsertDtoControlValues$Outbound;
-}
-
 export function customStepUpsertDtoControlValuesToJSON(
   customStepUpsertDtoControlValues: CustomStepUpsertDtoControlValues
 ): string {
   return JSON.stringify(CustomStepUpsertDtoControlValues$outboundSchema.parse(customStepUpsertDtoControlValues));
 }
-
-export function customStepUpsertDtoControlValuesFromJSON(
-  jsonString: string
-): SafeParseResult<CustomStepUpsertDtoControlValues, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => CustomStepUpsertDtoControlValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'CustomStepUpsertDtoControlValues' from JSON`
-  );
-}
-
-/** @internal */
-export const CustomStepUpsertDto$inboundSchema: z.ZodType<CustomStepUpsertDto, z.ZodTypeDef, unknown> = z
-  .object({
-    _id: z.string().optional(),
-    stepId: z.string().optional(),
-    name: z.string(),
-    type: StepTypeEnum$inboundSchema,
-    controlValues: z.union([CustomControlDto$inboundSchema, z.record(z.any())]).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      _id: 'id',
-    });
-  });
 
 /** @internal */
 export type CustomStepUpsertDto$Outbound = {
@@ -136,29 +83,6 @@ export const CustomStepUpsertDto$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CustomStepUpsertDto$ {
-  /** @deprecated use `CustomStepUpsertDto$inboundSchema` instead. */
-  export const inboundSchema = CustomStepUpsertDto$inboundSchema;
-  /** @deprecated use `CustomStepUpsertDto$outboundSchema` instead. */
-  export const outboundSchema = CustomStepUpsertDto$outboundSchema;
-  /** @deprecated use `CustomStepUpsertDto$Outbound` instead. */
-  export type Outbound = CustomStepUpsertDto$Outbound;
-}
-
 export function customStepUpsertDtoToJSON(customStepUpsertDto: CustomStepUpsertDto): string {
   return JSON.stringify(CustomStepUpsertDto$outboundSchema.parse(customStepUpsertDto));
-}
-
-export function customStepUpsertDtoFromJSON(
-  jsonString: string
-): SafeParseResult<CustomStepUpsertDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => CustomStepUpsertDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'CustomStepUpsertDto' from JSON`
-  );
 }

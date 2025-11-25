@@ -36,43 +36,6 @@ export const ApiKeyDto$inboundSchema: z.ZodType<ApiKeyDto, z.ZodTypeDef, unknown
     });
   });
 
-/** @internal */
-export type ApiKeyDto$Outbound = {
-  key: string;
-  _userId: string;
-  hash?: string | undefined;
-};
-
-/** @internal */
-export const ApiKeyDto$outboundSchema: z.ZodType<ApiKeyDto$Outbound, z.ZodTypeDef, ApiKeyDto> = z
-  .object({
-    key: z.string(),
-    userId: z.string(),
-    hash: z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      userId: '_userId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ApiKeyDto$ {
-  /** @deprecated use `ApiKeyDto$inboundSchema` instead. */
-  export const inboundSchema = ApiKeyDto$inboundSchema;
-  /** @deprecated use `ApiKeyDto$outboundSchema` instead. */
-  export const outboundSchema = ApiKeyDto$outboundSchema;
-  /** @deprecated use `ApiKeyDto$Outbound` instead. */
-  export type Outbound = ApiKeyDto$Outbound;
-}
-
-export function apiKeyDtoToJSON(apiKeyDto: ApiKeyDto): string {
-  return JSON.stringify(ApiKeyDto$outboundSchema.parse(apiKeyDto));
-}
-
 export function apiKeyDtoFromJSON(jsonString: string): SafeParseResult<ApiKeyDto, SDKValidationError> {
   return safeParse(
     jsonString,

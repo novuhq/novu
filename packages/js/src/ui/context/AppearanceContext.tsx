@@ -12,13 +12,13 @@ import {
 import { createStore } from 'solid-js/store';
 import { defaultVariables } from '../config';
 import { NOVU_DEFAULT_CSS_ID, parseElements, parseVariables } from '../helpers';
-import type { Appearance, Elements, IconOverrides, Variables } from '../types';
+import type { AllAppearance, AllElements, AllIconOverrides, Variables } from '../types';
 
 type AppearanceContextType = {
   variables: Accessor<Variables>;
-  elements: Accessor<Elements>;
+  elements: Accessor<AllElements>;
   animations: Accessor<boolean>;
-  icons: Accessor<IconOverrides>;
+  icons: Accessor<AllIconOverrides>;
   appearanceKeyToCssInJsClass: Record<string, string>;
   id: Accessor<string>;
   container: Accessor<Node | null | undefined>;
@@ -26,7 +26,7 @@ type AppearanceContextType = {
 
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
 
-type AppearanceProviderProps = ParentProps & { appearance?: Appearance; container?: Node | null | undefined } & {
+type AppearanceProviderProps = ParentProps & { appearance?: AllAppearance; container?: Node | null | undefined } & {
   id: string;
 };
 
@@ -46,7 +46,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const animations = () => props.appearance?.animations ?? true;
   const icons = () => props.appearance?.icons || {};
   const allElements = createMemo(() => {
-    const baseElements = themes().reduce<Elements>((acc, obj) => ({ ...acc, ...(obj.elements || {}) }), {});
+    const baseElements = themes().reduce<AllElements>((acc, obj) => ({ ...acc, ...(obj.elements || {}) }), {});
 
     return { ...baseElements, ...(props.appearance?.elements || {}) };
   });

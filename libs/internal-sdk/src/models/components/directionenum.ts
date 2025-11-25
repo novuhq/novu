@@ -12,18 +12,4 @@ export const DirectionEnum = {
 export type DirectionEnum = ClosedEnum<typeof DirectionEnum>;
 
 /** @internal */
-export const DirectionEnum$inboundSchema: z.ZodNativeEnum<typeof DirectionEnum> = z.nativeEnum(DirectionEnum);
-
-/** @internal */
-export const DirectionEnum$outboundSchema: z.ZodNativeEnum<typeof DirectionEnum> = DirectionEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DirectionEnum$ {
-  /** @deprecated use `DirectionEnum$inboundSchema` instead. */
-  export const inboundSchema = DirectionEnum$inboundSchema;
-  /** @deprecated use `DirectionEnum$outboundSchema` instead. */
-  export const outboundSchema = DirectionEnum$outboundSchema;
-}
+export const DirectionEnum$outboundSchema: z.ZodNativeEnum<typeof DirectionEnum> = z.nativeEnum(DirectionEnum);

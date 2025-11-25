@@ -21,18 +21,6 @@ export type ResourceOriginEnum = ClosedEnum<typeof ResourceOriginEnum>;
 /** @internal */
 export const ResourceOriginEnum$inboundSchema: z.ZodNativeEnum<typeof ResourceOriginEnum> =
   z.nativeEnum(ResourceOriginEnum);
-
 /** @internal */
 export const ResourceOriginEnum$outboundSchema: z.ZodNativeEnum<typeof ResourceOriginEnum> =
   ResourceOriginEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ResourceOriginEnum$ {
-  /** @deprecated use `ResourceOriginEnum$inboundSchema` instead. */
-  export const inboundSchema = ResourceOriginEnum$inboundSchema;
-  /** @deprecated use `ResourceOriginEnum$outboundSchema` instead. */
-  export const outboundSchema = ResourceOriginEnum$outboundSchema;
-}

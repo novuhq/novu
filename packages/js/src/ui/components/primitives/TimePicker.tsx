@@ -1,7 +1,7 @@
 import { Component, createSignal, splitProps } from 'solid-js';
 import { useStyle } from '../../helpers';
 import { cn } from '../../helpers/utils';
-import { AppearanceKey } from '../../types';
+import { AllAppearanceKey } from '../../types';
 import { Input, inputVariants } from './Input';
 
 export interface TimeValue {
@@ -14,7 +14,7 @@ interface TimePickerProps {
   value?: TimeValue;
   onChange?: (value: TimeValue) => void;
   class?: string;
-  appearanceKey?: AppearanceKey;
+  appearanceKey?: AllAppearanceKey;
 }
 
 export const TimePicker: Component<TimePickerProps> = (props) => {

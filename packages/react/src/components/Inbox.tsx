@@ -96,7 +96,10 @@ const DefaultInbox = (props: DefaultInboxProps) => {
 
 export const Inbox = React.memo((props: InboxProps) => {
   const { subscriberId, ...propsWithoutSubscriberId } = props;
-  const subscriber = buildSubscriber({ subscriberId: props.subscriberId, subscriber: props.subscriber });
+  const subscriber = useMemo(
+    () => buildSubscriber({ subscriberId: props.subscriberId, subscriber: props.subscriber }),
+    [props.subscriberId, props.subscriber]
+  );
   const applicationIdentifier = props.applicationIdentifier ? props.applicationIdentifier : ''; // for keyless we provide an empty string, the api will generate a identifier
   const novu = useUnsafeNovu();
 
@@ -228,6 +231,8 @@ const InboxChild = withRenderer(
     );
   })
 );
+
+InboxChild.displayName = 'InboxChild';
 
 function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
   return 'children' in props;

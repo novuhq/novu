@@ -69,48 +69,9 @@ export type TopicsControllerListTopicSubscriptionsResponse = {
 };
 
 /** @internal */
-export const TopicsControllerListTopicSubscriptionsQueryParamOrderDirection$inboundSchema: z.ZodNativeEnum<
-  typeof TopicsControllerListTopicSubscriptionsQueryParamOrderDirection
-> = z.nativeEnum(TopicsControllerListTopicSubscriptionsQueryParamOrderDirection);
-
-/** @internal */
 export const TopicsControllerListTopicSubscriptionsQueryParamOrderDirection$outboundSchema: z.ZodNativeEnum<
   typeof TopicsControllerListTopicSubscriptionsQueryParamOrderDirection
-> = TopicsControllerListTopicSubscriptionsQueryParamOrderDirection$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerListTopicSubscriptionsQueryParamOrderDirection$ {
-  /** @deprecated use `TopicsControllerListTopicSubscriptionsQueryParamOrderDirection$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerListTopicSubscriptionsQueryParamOrderDirection$inboundSchema;
-  /** @deprecated use `TopicsControllerListTopicSubscriptionsQueryParamOrderDirection$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerListTopicSubscriptionsQueryParamOrderDirection$outboundSchema;
-}
-
-/** @internal */
-export const TopicsControllerListTopicSubscriptionsRequest$inboundSchema: z.ZodType<
-  TopicsControllerListTopicSubscriptionsRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    topicKey: z.string(),
-    after: z.string().optional(),
-    before: z.string().optional(),
-    limit: z.number().optional(),
-    orderDirection: TopicsControllerListTopicSubscriptionsQueryParamOrderDirection$inboundSchema.optional(),
-    orderBy: z.string().optional(),
-    includeCursor: z.boolean().optional(),
-    subscriberId: z.string().optional(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
+> = z.nativeEnum(TopicsControllerListTopicSubscriptionsQueryParamOrderDirection);
 
 /** @internal */
 export type TopicsControllerListTopicSubscriptionsRequest$Outbound = {
@@ -148,34 +109,11 @@ export const TopicsControllerListTopicSubscriptionsRequest$outboundSchema: z.Zod
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerListTopicSubscriptionsRequest$ {
-  /** @deprecated use `TopicsControllerListTopicSubscriptionsRequest$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerListTopicSubscriptionsRequest$inboundSchema;
-  /** @deprecated use `TopicsControllerListTopicSubscriptionsRequest$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerListTopicSubscriptionsRequest$outboundSchema;
-  /** @deprecated use `TopicsControllerListTopicSubscriptionsRequest$Outbound` instead. */
-  export type Outbound = TopicsControllerListTopicSubscriptionsRequest$Outbound;
-}
-
 export function topicsControllerListTopicSubscriptionsRequestToJSON(
   topicsControllerListTopicSubscriptionsRequest: TopicsControllerListTopicSubscriptionsRequest
 ): string {
   return JSON.stringify(
     TopicsControllerListTopicSubscriptionsRequest$outboundSchema.parse(topicsControllerListTopicSubscriptionsRequest)
-  );
-}
-
-export function topicsControllerListTopicSubscriptionsRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TopicsControllerListTopicSubscriptionsRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TopicsControllerListTopicSubscriptionsRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TopicsControllerListTopicSubscriptionsRequest' from JSON`
   );
 }
 
@@ -195,50 +133,6 @@ export const TopicsControllerListTopicSubscriptionsResponse$inboundSchema: z.Zod
       Result: 'result',
     });
   });
-
-/** @internal */
-export type TopicsControllerListTopicSubscriptionsResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.ListTopicSubscriptionsResponseDto$Outbound;
-};
-
-/** @internal */
-export const TopicsControllerListTopicSubscriptionsResponse$outboundSchema: z.ZodType<
-  TopicsControllerListTopicSubscriptionsResponse$Outbound,
-  z.ZodTypeDef,
-  TopicsControllerListTopicSubscriptionsResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.ListTopicSubscriptionsResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsControllerListTopicSubscriptionsResponse$ {
-  /** @deprecated use `TopicsControllerListTopicSubscriptionsResponse$inboundSchema` instead. */
-  export const inboundSchema = TopicsControllerListTopicSubscriptionsResponse$inboundSchema;
-  /** @deprecated use `TopicsControllerListTopicSubscriptionsResponse$outboundSchema` instead. */
-  export const outboundSchema = TopicsControllerListTopicSubscriptionsResponse$outboundSchema;
-  /** @deprecated use `TopicsControllerListTopicSubscriptionsResponse$Outbound` instead. */
-  export type Outbound = TopicsControllerListTopicSubscriptionsResponse$Outbound;
-}
-
-export function topicsControllerListTopicSubscriptionsResponseToJSON(
-  topicsControllerListTopicSubscriptionsResponse: TopicsControllerListTopicSubscriptionsResponse
-): string {
-  return JSON.stringify(
-    TopicsControllerListTopicSubscriptionsResponse$outboundSchema.parse(topicsControllerListTopicSubscriptionsResponse)
-  );
-}
 
 export function topicsControllerListTopicSubscriptionsResponseFromJSON(
   jsonString: string

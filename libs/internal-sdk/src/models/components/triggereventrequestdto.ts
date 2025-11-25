@@ -4,44 +4,20 @@
 
 import * as z from 'zod/v3';
 import { remap as remap$ } from '../../lib/primitives.js';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 import {
   EmailChannelOverrides,
-  EmailChannelOverrides$inboundSchema,
   EmailChannelOverrides$Outbound,
   EmailChannelOverrides$outboundSchema,
 } from './emailchanneloverrides.js';
-import {
-  SeverityLevelEnum,
-  SeverityLevelEnum$inboundSchema,
-  SeverityLevelEnum$outboundSchema,
-} from './severitylevelenum.js';
-import {
-  StepsOverrides,
-  StepsOverrides$inboundSchema,
-  StepsOverrides$Outbound,
-  StepsOverrides$outboundSchema,
-} from './stepsoverrides.js';
+import { SeverityLevelEnum, SeverityLevelEnum$outboundSchema } from './severitylevelenum.js';
+import { StepsOverrides, StepsOverrides$Outbound, StepsOverrides$outboundSchema } from './stepsoverrides.js';
 import {
   SubscriberPayloadDto,
-  SubscriberPayloadDto$inboundSchema,
   SubscriberPayloadDto$Outbound,
   SubscriberPayloadDto$outboundSchema,
 } from './subscriberpayloaddto.js';
-import {
-  TenantPayloadDto,
-  TenantPayloadDto$inboundSchema,
-  TenantPayloadDto$Outbound,
-  TenantPayloadDto$outboundSchema,
-} from './tenantpayloaddto.js';
-import {
-  TopicPayloadDto,
-  TopicPayloadDto$inboundSchema,
-  TopicPayloadDto$Outbound,
-  TopicPayloadDto$outboundSchema,
-} from './topicpayloaddto.js';
+import { TenantPayloadDto, TenantPayloadDto$Outbound, TenantPayloadDto$outboundSchema } from './tenantpayloaddto.js';
+import { TopicPayloadDto, TopicPayloadDto$Outbound, TopicPayloadDto$outboundSchema } from './topicpayloaddto.js';
 
 /**
  * Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.
@@ -191,11 +167,6 @@ export type TriggerEventRequestDto = {
 };
 
 /** @internal */
-export const Channels$inboundSchema: z.ZodType<Channels, z.ZodTypeDef, unknown> = z.object({
-  email: EmailChannelOverrides$inboundSchema.optional(),
-});
-
-/** @internal */
 export type Channels$Outbound = {
   email?: EmailChannelOverrides$Outbound | undefined;
 };
@@ -205,43 +176,9 @@ export const Channels$outboundSchema: z.ZodType<Channels$Outbound, z.ZodTypeDef,
   email: EmailChannelOverrides$outboundSchema.optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Channels$ {
-  /** @deprecated use `Channels$inboundSchema` instead. */
-  export const inboundSchema = Channels$inboundSchema;
-  /** @deprecated use `Channels$outboundSchema` instead. */
-  export const outboundSchema = Channels$outboundSchema;
-  /** @deprecated use `Channels$Outbound` instead. */
-  export type Outbound = Channels$Outbound;
-}
-
 export function channelsToJSON(channels: Channels): string {
   return JSON.stringify(Channels$outboundSchema.parse(channels));
 }
-
-export function channelsFromJSON(jsonString: string): SafeParseResult<Channels, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Channels$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Channels' from JSON`
-  );
-}
-
-/** @internal */
-export const Overrides$inboundSchema: z.ZodType<Overrides, z.ZodTypeDef, unknown> = z.object({
-  steps: z.record(StepsOverrides$inboundSchema).optional(),
-  channels: z.lazy(() => Channels$inboundSchema).optional(),
-  providers: z.record(z.record(z.any())).optional(),
-  email: z.record(z.any()).optional(),
-  push: z.record(z.any()).optional(),
-  sms: z.record(z.any()).optional(),
-  chat: z.record(z.any()).optional(),
-  layoutIdentifier: z.string().optional(),
-  severity: SeverityLevelEnum$inboundSchema.optional(),
-});
 
 /** @internal */
 export type Overrides$Outbound = {
@@ -269,37 +206,9 @@ export const Overrides$outboundSchema: z.ZodType<Overrides$Outbound, z.ZodTypeDe
   severity: SeverityLevelEnum$outboundSchema.optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Overrides$ {
-  /** @deprecated use `Overrides$inboundSchema` instead. */
-  export const inboundSchema = Overrides$inboundSchema;
-  /** @deprecated use `Overrides$outboundSchema` instead. */
-  export const outboundSchema = Overrides$outboundSchema;
-  /** @deprecated use `Overrides$Outbound` instead. */
-  export type Outbound = Overrides$Outbound;
-}
-
 export function overridesToJSON(overrides: Overrides): string {
   return JSON.stringify(Overrides$outboundSchema.parse(overrides));
 }
-
-export function overridesFromJSON(jsonString: string): SafeParseResult<Overrides, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Overrides$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Overrides' from JSON`
-  );
-}
-
-/** @internal */
-export const To1$inboundSchema: z.ZodType<To1, z.ZodTypeDef, unknown> = z.union([
-  TopicPayloadDto$inboundSchema,
-  SubscriberPayloadDto$inboundSchema,
-  z.string(),
-]);
 
 /** @internal */
 export type To1$Outbound = TopicPayloadDto$Outbound | SubscriberPayloadDto$Outbound | string;
@@ -311,34 +220,9 @@ export const To1$outboundSchema: z.ZodType<To1$Outbound, z.ZodTypeDef, To1> = z.
   z.string(),
 ]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace To1$ {
-  /** @deprecated use `To1$inboundSchema` instead. */
-  export const inboundSchema = To1$inboundSchema;
-  /** @deprecated use `To1$outboundSchema` instead. */
-  export const outboundSchema = To1$outboundSchema;
-  /** @deprecated use `To1$Outbound` instead. */
-  export type Outbound = To1$Outbound;
-}
-
 export function to1ToJSON(to1: To1): string {
   return JSON.stringify(To1$outboundSchema.parse(to1));
 }
-
-export function to1FromJSON(jsonString: string): SafeParseResult<To1, SDKValidationError> {
-  return safeParse(jsonString, (x) => To1$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'To1' from JSON`);
-}
-
-/** @internal */
-export const To$inboundSchema: z.ZodType<To, z.ZodTypeDef, unknown> = z.union([
-  TopicPayloadDto$inboundSchema,
-  SubscriberPayloadDto$inboundSchema,
-  z.array(z.union([TopicPayloadDto$inboundSchema, SubscriberPayloadDto$inboundSchema, z.string()])),
-  z.string(),
-]);
 
 /** @internal */
 export type To$Outbound =
@@ -355,32 +239,9 @@ export const To$outboundSchema: z.ZodType<To$Outbound, z.ZodTypeDef, To> = z.uni
   z.string(),
 ]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace To$ {
-  /** @deprecated use `To$inboundSchema` instead. */
-  export const inboundSchema = To$inboundSchema;
-  /** @deprecated use `To$outboundSchema` instead. */
-  export const outboundSchema = To$outboundSchema;
-  /** @deprecated use `To$Outbound` instead. */
-  export type Outbound = To$Outbound;
-}
-
 export function toToJSON(to: To): string {
   return JSON.stringify(To$outboundSchema.parse(to));
 }
-
-export function toFromJSON(jsonString: string): SafeParseResult<To, SDKValidationError> {
-  return safeParse(jsonString, (x) => To$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'To' from JSON`);
-}
-
-/** @internal */
-export const Actor$inboundSchema: z.ZodType<Actor, z.ZodTypeDef, unknown> = z.union([
-  SubscriberPayloadDto$inboundSchema,
-  z.string(),
-]);
 
 /** @internal */
 export type Actor$Outbound = SubscriberPayloadDto$Outbound | string;
@@ -391,32 +252,9 @@ export const Actor$outboundSchema: z.ZodType<Actor$Outbound, z.ZodTypeDef, Actor
   z.string(),
 ]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Actor$ {
-  /** @deprecated use `Actor$inboundSchema` instead. */
-  export const inboundSchema = Actor$inboundSchema;
-  /** @deprecated use `Actor$outboundSchema` instead. */
-  export const outboundSchema = Actor$outboundSchema;
-  /** @deprecated use `Actor$Outbound` instead. */
-  export type Outbound = Actor$Outbound;
-}
-
 export function actorToJSON(actor: Actor): string {
   return JSON.stringify(Actor$outboundSchema.parse(actor));
 }
-
-export function actorFromJSON(jsonString: string): SafeParseResult<Actor, SDKValidationError> {
-  return safeParse(jsonString, (x) => Actor$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Actor' from JSON`);
-}
-
-/** @internal */
-export const Tenant$inboundSchema: z.ZodType<Tenant, z.ZodTypeDef, unknown> = z.union([
-  z.string(),
-  TenantPayloadDto$inboundSchema,
-]);
 
 /** @internal */
 export type Tenant$Outbound = string | TenantPayloadDto$Outbound;
@@ -427,32 +265,9 @@ export const Tenant$outboundSchema: z.ZodType<Tenant$Outbound, z.ZodTypeDef, Ten
   TenantPayloadDto$outboundSchema,
 ]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Tenant$ {
-  /** @deprecated use `Tenant$inboundSchema` instead. */
-  export const inboundSchema = Tenant$inboundSchema;
-  /** @deprecated use `Tenant$outboundSchema` instead. */
-  export const outboundSchema = Tenant$outboundSchema;
-  /** @deprecated use `Tenant$Outbound` instead. */
-  export type Outbound = Tenant$Outbound;
-}
-
 export function tenantToJSON(tenant: Tenant): string {
   return JSON.stringify(Tenant$outboundSchema.parse(tenant));
 }
-
-export function tenantFromJSON(jsonString: string): SafeParseResult<Tenant, SDKValidationError> {
-  return safeParse(jsonString, (x) => Tenant$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Tenant' from JSON`);
-}
-
-/** @internal */
-export const Context2$inboundSchema: z.ZodType<Context2, z.ZodTypeDef, unknown> = z.object({
-  id: z.string(),
-  data: z.record(z.any()).optional(),
-});
 
 /** @internal */
 export type Context2$Outbound = {
@@ -466,37 +281,9 @@ export const Context2$outboundSchema: z.ZodType<Context2$Outbound, z.ZodTypeDef,
   data: z.record(z.any()).optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Context2$ {
-  /** @deprecated use `Context2$inboundSchema` instead. */
-  export const inboundSchema = Context2$inboundSchema;
-  /** @deprecated use `Context2$outboundSchema` instead. */
-  export const outboundSchema = Context2$outboundSchema;
-  /** @deprecated use `Context2$Outbound` instead. */
-  export type Outbound = Context2$Outbound;
-}
-
 export function context2ToJSON(context2: Context2): string {
   return JSON.stringify(Context2$outboundSchema.parse(context2));
 }
-
-export function context2FromJSON(jsonString: string): SafeParseResult<Context2, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Context2$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Context2' from JSON`
-  );
-}
-
-/** @internal */
-export const TriggerEventRequestDtoContext$inboundSchema: z.ZodType<
-  TriggerEventRequestDtoContext,
-  z.ZodTypeDef,
-  unknown
-> = z.union([z.lazy(() => Context2$inboundSchema), z.string()]);
 
 /** @internal */
 export type TriggerEventRequestDtoContext$Outbound = Context2$Outbound | string;
@@ -508,57 +295,11 @@ export const TriggerEventRequestDtoContext$outboundSchema: z.ZodType<
   TriggerEventRequestDtoContext
 > = z.union([z.lazy(() => Context2$outboundSchema), z.string()]);
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TriggerEventRequestDtoContext$ {
-  /** @deprecated use `TriggerEventRequestDtoContext$inboundSchema` instead. */
-  export const inboundSchema = TriggerEventRequestDtoContext$inboundSchema;
-  /** @deprecated use `TriggerEventRequestDtoContext$outboundSchema` instead. */
-  export const outboundSchema = TriggerEventRequestDtoContext$outboundSchema;
-  /** @deprecated use `TriggerEventRequestDtoContext$Outbound` instead. */
-  export type Outbound = TriggerEventRequestDtoContext$Outbound;
-}
-
 export function triggerEventRequestDtoContextToJSON(
   triggerEventRequestDtoContext: TriggerEventRequestDtoContext
 ): string {
   return JSON.stringify(TriggerEventRequestDtoContext$outboundSchema.parse(triggerEventRequestDtoContext));
 }
-
-export function triggerEventRequestDtoContextFromJSON(
-  jsonString: string
-): SafeParseResult<TriggerEventRequestDtoContext, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TriggerEventRequestDtoContext$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TriggerEventRequestDtoContext' from JSON`
-  );
-}
-
-/** @internal */
-export const TriggerEventRequestDto$inboundSchema: z.ZodType<TriggerEventRequestDto, z.ZodTypeDef, unknown> = z
-  .object({
-    name: z.string(),
-    payload: z.record(z.any()).optional(),
-    overrides: z.lazy(() => Overrides$inboundSchema).optional(),
-    to: z.union([
-      TopicPayloadDto$inboundSchema,
-      SubscriberPayloadDto$inboundSchema,
-      z.array(z.union([TopicPayloadDto$inboundSchema, SubscriberPayloadDto$inboundSchema, z.string()])),
-      z.string(),
-    ]),
-    transactionId: z.string().optional(),
-    actor: z.union([SubscriberPayloadDto$inboundSchema, z.string()]).optional(),
-    tenant: z.union([z.string(), TenantPayloadDto$inboundSchema]).optional(),
-    context: z.record(z.union([z.lazy(() => Context2$inboundSchema), z.string()])).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      name: 'workflowId',
-    });
-  });
 
 /** @internal */
 export type TriggerEventRequestDto$Outbound = {
@@ -603,29 +344,6 @@ export const TriggerEventRequestDto$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TriggerEventRequestDto$ {
-  /** @deprecated use `TriggerEventRequestDto$inboundSchema` instead. */
-  export const inboundSchema = TriggerEventRequestDto$inboundSchema;
-  /** @deprecated use `TriggerEventRequestDto$outboundSchema` instead. */
-  export const outboundSchema = TriggerEventRequestDto$outboundSchema;
-  /** @deprecated use `TriggerEventRequestDto$Outbound` instead. */
-  export type Outbound = TriggerEventRequestDto$Outbound;
-}
-
 export function triggerEventRequestDtoToJSON(triggerEventRequestDto: TriggerEventRequestDto): string {
   return JSON.stringify(TriggerEventRequestDto$outboundSchema.parse(triggerEventRequestDto));
-}
-
-export function triggerEventRequestDtoFromJSON(
-  jsonString: string
-): SafeParseResult<TriggerEventRequestDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TriggerEventRequestDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TriggerEventRequestDto' from JSON`
-  );
 }

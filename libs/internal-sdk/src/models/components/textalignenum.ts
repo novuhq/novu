@@ -20,17 +20,3 @@ export type TextAlignEnum = ClosedEnum<typeof TextAlignEnum>;
 
 /** @internal */
 export const TextAlignEnum$inboundSchema: z.ZodNativeEnum<typeof TextAlignEnum> = z.nativeEnum(TextAlignEnum);
-
-/** @internal */
-export const TextAlignEnum$outboundSchema: z.ZodNativeEnum<typeof TextAlignEnum> = TextAlignEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TextAlignEnum$ {
-  /** @deprecated use `TextAlignEnum$inboundSchema` instead. */
-  export const inboundSchema = TextAlignEnum$inboundSchema;
-  /** @deprecated use `TextAlignEnum$outboundSchema` instead. */
-  export const outboundSchema = TextAlignEnum$outboundSchema;
-}

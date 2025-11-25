@@ -31,24 +31,6 @@ export type SubscribersV1ControllerGetUnseenCountResponse = {
 };
 
 /** @internal */
-export const SubscribersV1ControllerGetUnseenCountRequest$inboundSchema: z.ZodType<
-  SubscribersV1ControllerGetUnseenCountRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    subscriberId: z.string(),
-    seen: z.boolean().default(false),
-    limit: z.number().default(100),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type SubscribersV1ControllerGetUnseenCountRequest$Outbound = {
   subscriberId: string;
   seen: boolean;
@@ -74,34 +56,11 @@ export const SubscribersV1ControllerGetUnseenCountRequest$outboundSchema: z.ZodT
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerGetUnseenCountRequest$ {
-  /** @deprecated use `SubscribersV1ControllerGetUnseenCountRequest$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerGetUnseenCountRequest$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerGetUnseenCountRequest$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerGetUnseenCountRequest$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerGetUnseenCountRequest$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerGetUnseenCountRequest$Outbound;
-}
-
 export function subscribersV1ControllerGetUnseenCountRequestToJSON(
   subscribersV1ControllerGetUnseenCountRequest: SubscribersV1ControllerGetUnseenCountRequest
 ): string {
   return JSON.stringify(
     SubscribersV1ControllerGetUnseenCountRequest$outboundSchema.parse(subscribersV1ControllerGetUnseenCountRequest)
-  );
-}
-
-export function subscribersV1ControllerGetUnseenCountRequestFromJSON(
-  jsonString: string
-): SafeParseResult<SubscribersV1ControllerGetUnseenCountRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscribersV1ControllerGetUnseenCountRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscribersV1ControllerGetUnseenCountRequest' from JSON`
   );
 }
 
@@ -121,50 +80,6 @@ export const SubscribersV1ControllerGetUnseenCountResponse$inboundSchema: z.ZodT
       Result: 'result',
     });
   });
-
-/** @internal */
-export type SubscribersV1ControllerGetUnseenCountResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.UnseenCountResponse$Outbound;
-};
-
-/** @internal */
-export const SubscribersV1ControllerGetUnseenCountResponse$outboundSchema: z.ZodType<
-  SubscribersV1ControllerGetUnseenCountResponse$Outbound,
-  z.ZodTypeDef,
-  SubscribersV1ControllerGetUnseenCountResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.UnseenCountResponse$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersV1ControllerGetUnseenCountResponse$ {
-  /** @deprecated use `SubscribersV1ControllerGetUnseenCountResponse$inboundSchema` instead. */
-  export const inboundSchema = SubscribersV1ControllerGetUnseenCountResponse$inboundSchema;
-  /** @deprecated use `SubscribersV1ControllerGetUnseenCountResponse$outboundSchema` instead. */
-  export const outboundSchema = SubscribersV1ControllerGetUnseenCountResponse$outboundSchema;
-  /** @deprecated use `SubscribersV1ControllerGetUnseenCountResponse$Outbound` instead. */
-  export type Outbound = SubscribersV1ControllerGetUnseenCountResponse$Outbound;
-}
-
-export function subscribersV1ControllerGetUnseenCountResponseToJSON(
-  subscribersV1ControllerGetUnseenCountResponse: SubscribersV1ControllerGetUnseenCountResponse
-): string {
-  return JSON.stringify(
-    SubscribersV1ControllerGetUnseenCountResponse$outboundSchema.parse(subscribersV1ControllerGetUnseenCountResponse)
-  );
-}
 
 export function subscribersV1ControllerGetUnseenCountResponseFromJSON(
   jsonString: string

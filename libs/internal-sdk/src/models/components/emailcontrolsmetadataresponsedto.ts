@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  EmailControlDto,
-  EmailControlDto$inboundSchema,
-  EmailControlDto$Outbound,
-  EmailControlDto$outboundSchema,
-} from './emailcontroldto.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { EmailControlDto, EmailControlDto$inboundSchema } from './emailcontroldto.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type EmailControlsMetadataResponseDto = {
   /**
@@ -39,43 +34,6 @@ export const EmailControlsMetadataResponseDto$inboundSchema: z.ZodType<
   uiSchema: UiSchema$inboundSchema.optional(),
   values: EmailControlDto$inboundSchema,
 });
-
-/** @internal */
-export type EmailControlsMetadataResponseDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-  values: EmailControlDto$Outbound;
-};
-
-/** @internal */
-export const EmailControlsMetadataResponseDto$outboundSchema: z.ZodType<
-  EmailControlsMetadataResponseDto$Outbound,
-  z.ZodTypeDef,
-  EmailControlsMetadataResponseDto
-> = z.object({
-  dataSchema: z.record(z.any()).optional(),
-  uiSchema: UiSchema$outboundSchema.optional(),
-  values: EmailControlDto$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailControlsMetadataResponseDto$ {
-  /** @deprecated use `EmailControlsMetadataResponseDto$inboundSchema` instead. */
-  export const inboundSchema = EmailControlsMetadataResponseDto$inboundSchema;
-  /** @deprecated use `EmailControlsMetadataResponseDto$outboundSchema` instead. */
-  export const outboundSchema = EmailControlsMetadataResponseDto$outboundSchema;
-  /** @deprecated use `EmailControlsMetadataResponseDto$Outbound` instead. */
-  export type Outbound = EmailControlsMetadataResponseDto$Outbound;
-}
-
-export function emailControlsMetadataResponseDtoToJSON(
-  emailControlsMetadataResponseDto: EmailControlsMetadataResponseDto
-): string {
-  return JSON.stringify(EmailControlsMetadataResponseDto$outboundSchema.parse(emailControlsMetadataResponseDto));
-}
 
 export function emailControlsMetadataResponseDtoFromJSON(
   jsonString: string

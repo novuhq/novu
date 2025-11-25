@@ -7,24 +7,13 @@ import { remap as remap$ } from '../../lib/primitives.js';
 import { collectExtraKeys as collectExtraKeys$, safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ResourceOriginEnum,
-  ResourceOriginEnum$inboundSchema,
-  ResourceOriginEnum$outboundSchema,
-} from './resourceoriginenum.js';
+import { ResourceOriginEnum, ResourceOriginEnum$inboundSchema } from './resourceoriginenum.js';
 import {
   SmsControlsMetadataResponseDto,
   SmsControlsMetadataResponseDto$inboundSchema,
-  SmsControlsMetadataResponseDto$Outbound,
-  SmsControlsMetadataResponseDto$outboundSchema,
 } from './smscontrolsmetadataresponsedto.js';
-import {
-  StepIssuesDto,
-  StepIssuesDto$inboundSchema,
-  StepIssuesDto$Outbound,
-  StepIssuesDto$outboundSchema,
-} from './stepissuesdto.js';
-import { StepTypeEnum, StepTypeEnum$inboundSchema, StepTypeEnum$outboundSchema } from './steptypeenum.js';
+import { StepIssuesDto, StepIssuesDto$inboundSchema } from './stepissuesdto.js';
+import { StepTypeEnum, StepTypeEnum$inboundSchema } from './steptypeenum.js';
 
 /**
  * Control values for the SMS step
@@ -108,52 +97,6 @@ export const SmsStepResponseDtoControlValues$inboundSchema: z.ZodType<
   true
 );
 
-/** @internal */
-export type SmsStepResponseDtoControlValues$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  body?: string | undefined;
-  [additionalProperties: string]: unknown;
-};
-
-/** @internal */
-export const SmsStepResponseDtoControlValues$outboundSchema: z.ZodType<
-  SmsStepResponseDtoControlValues$Outbound,
-  z.ZodTypeDef,
-  SmsStepResponseDtoControlValues
-> = z
-  .object({
-    skip: z.record(z.any()).optional(),
-    body: z.string().optional(),
-    additionalProperties: z.record(z.any()).optional(),
-  })
-  .transform((v) => {
-    return {
-      ...v.additionalProperties,
-      ...remap$(v, {
-        additionalProperties: null,
-      }),
-    };
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsStepResponseDtoControlValues$ {
-  /** @deprecated use `SmsStepResponseDtoControlValues$inboundSchema` instead. */
-  export const inboundSchema = SmsStepResponseDtoControlValues$inboundSchema;
-  /** @deprecated use `SmsStepResponseDtoControlValues$outboundSchema` instead. */
-  export const outboundSchema = SmsStepResponseDtoControlValues$outboundSchema;
-  /** @deprecated use `SmsStepResponseDtoControlValues$Outbound` instead. */
-  export type Outbound = SmsStepResponseDtoControlValues$Outbound;
-}
-
-export function smsStepResponseDtoControlValuesToJSON(
-  smsStepResponseDtoControlValues: SmsStepResponseDtoControlValues
-): string {
-  return JSON.stringify(SmsStepResponseDtoControlValues$outboundSchema.parse(smsStepResponseDtoControlValues));
-}
-
 export function smsStepResponseDtoControlValuesFromJSON(
   jsonString: string
 ): SafeParseResult<SmsStepResponseDtoControlValues, SDKValidationError> {
@@ -185,65 +128,6 @@ export const SmsStepResponseDto$inboundSchema: z.ZodType<SmsStepResponseDto, z.Z
       _id: 'id',
     });
   });
-
-/** @internal */
-export type SmsStepResponseDto$Outbound = {
-  controls: SmsControlsMetadataResponseDto$Outbound;
-  controlValues?: SmsStepResponseDtoControlValues$Outbound | undefined;
-  variables: { [k: string]: any };
-  stepId: string;
-  _id: string;
-  name: string;
-  slug: string;
-  type: string;
-  origin: string;
-  workflowId: string;
-  workflowDatabaseId: string;
-  issues?: StepIssuesDto$Outbound | undefined;
-};
-
-/** @internal */
-export const SmsStepResponseDto$outboundSchema: z.ZodType<
-  SmsStepResponseDto$Outbound,
-  z.ZodTypeDef,
-  SmsStepResponseDto
-> = z
-  .object({
-    controls: SmsControlsMetadataResponseDto$outboundSchema,
-    controlValues: z.lazy(() => SmsStepResponseDtoControlValues$outboundSchema).optional(),
-    variables: z.record(z.any()),
-    stepId: z.string(),
-    id: z.string(),
-    name: z.string(),
-    slug: z.string(),
-    type: StepTypeEnum$outboundSchema,
-    origin: ResourceOriginEnum$outboundSchema,
-    workflowId: z.string(),
-    workflowDatabaseId: z.string(),
-    issues: StepIssuesDto$outboundSchema.optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsStepResponseDto$ {
-  /** @deprecated use `SmsStepResponseDto$inboundSchema` instead. */
-  export const inboundSchema = SmsStepResponseDto$inboundSchema;
-  /** @deprecated use `SmsStepResponseDto$outboundSchema` instead. */
-  export const outboundSchema = SmsStepResponseDto$outboundSchema;
-  /** @deprecated use `SmsStepResponseDto$Outbound` instead. */
-  export type Outbound = SmsStepResponseDto$Outbound;
-}
-
-export function smsStepResponseDtoToJSON(smsStepResponseDto: SmsStepResponseDto): string {
-  return JSON.stringify(SmsStepResponseDto$outboundSchema.parse(smsStepResponseDto));
-}
 
 export function smsStepResponseDtoFromJSON(
   jsonString: string

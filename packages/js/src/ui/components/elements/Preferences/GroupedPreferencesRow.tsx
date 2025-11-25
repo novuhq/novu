@@ -1,5 +1,5 @@
 import { createMemo, createSignal, Index, Show } from 'solid-js';
-import { AppearanceCallback } from 'src/ui/types';
+import { InboxAppearanceCallback } from 'src/ui/types';
 import { ChannelPreference, ChannelType, Preference } from '../../../../types';
 import { useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
@@ -95,7 +95,7 @@ export const GroupedPreferencesRow = (props: {
           className: 'nt-bg-neutral-alpha-25 nt-rounded-lg nt-border nt-border-neutral-alpha-50',
           context: {
             preferenceGroup: props.group,
-          } satisfies Parameters<AppearanceCallback['preferencesGroupContainer']>[0],
+          } satisfies Parameters<InboxAppearanceCallback['preferencesGroupContainer']>[0],
         })}
         data-open={isOpened()}
       >
@@ -105,7 +105,7 @@ export const GroupedPreferencesRow = (props: {
             className:
               'nt-flex nt-justify-between nt-p-2 nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center nt-overflow-hidden',
             context: { preferenceGroup: props.group } satisfies Parameters<
-              AppearanceCallback['preferencesGroupHeader']
+              InboxAppearanceCallback['preferencesGroupHeader']
             >[0],
           })}
           onClick={() => {
@@ -117,7 +117,7 @@ export const GroupedPreferencesRow = (props: {
               key: 'preferencesGroupLabelContainer',
               className: 'nt-overflow-hidden nt-flex nt-items-center nt-gap-1',
               context: { preferenceGroup: props.group } satisfies Parameters<
-                AppearanceCallback['preferencesGroupLabelContainer']
+                InboxAppearanceCallback['preferencesGroupLabelContainer']
               >[0],
             })}
           >
@@ -127,7 +127,7 @@ export const GroupedPreferencesRow = (props: {
                 key: 'preferencesGroupLabelIcon',
                 className: 'nt-text-foreground-alpha-600 nt-size-3.5',
                 context: { preferenceGroup: props.group } satisfies Parameters<
-                  AppearanceCallback['preferencesGroupLabelIcon']
+                  InboxAppearanceCallback['preferencesGroupLabelIcon']
                 >[0],
               })}
               fallback={
@@ -136,7 +136,7 @@ export const GroupedPreferencesRow = (props: {
                     key: 'preferencesGroupLabelIcon',
                     className: 'nt-text-foreground-alpha-600 nt-size-3.5',
                     context: { preferenceGroup: props.group } satisfies Parameters<
-                      AppearanceCallback['preferencesGroupLabelIcon']
+                      InboxAppearanceCallback['preferencesGroupLabelIcon']
                     >[0],
                   })}
                 />
@@ -147,7 +147,7 @@ export const GroupedPreferencesRow = (props: {
                 key: 'preferencesGroupLabel',
                 className: 'nt-text-sm nt-font-semibold nt-truncate nt-text-start',
                 context: { preferenceGroup: props.group } satisfies Parameters<
-                  AppearanceCallback['preferencesGroupLabel']
+                  InboxAppearanceCallback['preferencesGroupLabel']
                 >[0],
               })}
               data-open={isOpened()}
@@ -160,7 +160,7 @@ export const GroupedPreferencesRow = (props: {
               key: 'preferencesGroupActionsContainer',
               className: 'nt-flex nt-items-center nt-gap-1',
               context: { preferenceGroup: props.group } satisfies Parameters<
-                AppearanceCallback['preferencesGroupActionsContainer']
+                InboxAppearanceCallback['preferencesGroupActionsContainer']
               >[0],
             })}
           >
@@ -171,7 +171,7 @@ export const GroupedPreferencesRow = (props: {
                 className:
                   'nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180',
                 context: { preferenceGroup: props.group } satisfies Parameters<
-                  AppearanceCallback['preferencesGroupActionsContainerRight__icon']
+                  InboxAppearanceCallback['preferencesGroupActionsContainerRight__icon']
                 >[0],
               })}
               data-open={isOpened()}
@@ -200,7 +200,7 @@ export const GroupedPreferencesRow = (props: {
               key: 'preferencesGroupBody',
               className: 'nt-flex nt-flex-col nt-gap-1 nt-overflow-hidden',
               context: { preferenceGroup: props.group } satisfies Parameters<
-                AppearanceCallback['preferencesGroupBody']
+                InboxAppearanceCallback['preferencesGroupBody']
               >[0],
             })}
           >
@@ -210,7 +210,7 @@ export const GroupedPreferencesRow = (props: {
                 className:
                   'nt-flex nt-bg-background nt-border-t nt-border-b nt-border-neutral-alpha-50 nt-p-2 nt-flex-col nt-gap-1 nt-overflow-hidden',
                 context: { preferenceGroup: props.group } satisfies Parameters<
-                  AppearanceCallback['preferencesGroupChannels']
+                  InboxAppearanceCallback['preferencesGroupChannels']
                 >[0],
               })}
             >
@@ -234,7 +234,7 @@ export const GroupedPreferencesRow = (props: {
                   className:
                     'nt-text-sm nt-text-start nt-text-foreground-alpha-400 nt-mt-1 nt-flex nt-items-center nt-gap-1',
                   context: { preferenceGroup: props.group } satisfies Parameters<
-                    AppearanceCallback['preferencesGroupInfo']
+                    InboxAppearanceCallback['preferencesGroupInfo']
                   >[0],
                 })}
                 data-localization="preferences.group.info"
@@ -245,7 +245,7 @@ export const GroupedPreferencesRow = (props: {
                     key: 'preferencesGroupInfoIcon',
                     className: 'nt-size-4',
                     context: { preferenceGroup: props.group } satisfies Parameters<
-                      AppearanceCallback['preferencesGroupInfoIcon']
+                      InboxAppearanceCallback['preferencesGroupInfoIcon']
                     >[0],
                   })}
                   fallback={
@@ -254,7 +254,7 @@ export const GroupedPreferencesRow = (props: {
                         key: 'preferencesGroupInfoIcon',
                         className: 'nt-size-4',
                         context: { preferenceGroup: props.group } satisfies Parameters<
-                          AppearanceCallback['preferencesGroupInfoIcon']
+                          InboxAppearanceCallback['preferencesGroupInfoIcon']
                         >[0],
                       })}
                     />
@@ -268,7 +268,7 @@ export const GroupedPreferencesRow = (props: {
                 key: 'preferencesGroupWorkflows',
                 className: 'nt-flex nt-p-2 nt-flex-col nt-gap-1 nt-overflow-hidden',
                 context: { preferenceGroup: props.group } satisfies Parameters<
-                  AppearanceCallback['preferencesGroupWorkflows']
+                  InboxAppearanceCallback['preferencesGroupWorkflows']
                 >[0],
               })}
             >

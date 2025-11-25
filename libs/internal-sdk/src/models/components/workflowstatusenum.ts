@@ -21,18 +21,6 @@ export type WorkflowStatusEnum = ClosedEnum<typeof WorkflowStatusEnum>;
 /** @internal */
 export const WorkflowStatusEnum$inboundSchema: z.ZodNativeEnum<typeof WorkflowStatusEnum> =
   z.nativeEnum(WorkflowStatusEnum);
-
 /** @internal */
 export const WorkflowStatusEnum$outboundSchema: z.ZodNativeEnum<typeof WorkflowStatusEnum> =
   WorkflowStatusEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace WorkflowStatusEnum$ {
-  /** @deprecated use `WorkflowStatusEnum$inboundSchema` instead. */
-  export const inboundSchema = WorkflowStatusEnum$inboundSchema;
-  /** @deprecated use `WorkflowStatusEnum$outboundSchema` instead. */
-  export const outboundSchema = WorkflowStatusEnum$outboundSchema;
-}

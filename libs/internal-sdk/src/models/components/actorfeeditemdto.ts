@@ -6,7 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { ActorTypeEnum, ActorTypeEnum$inboundSchema, ActorTypeEnum$outboundSchema } from './actortypeenum.js';
+import { ActorTypeEnum, ActorTypeEnum$inboundSchema } from './actortypeenum.js';
 
 export type ActorFeedItemDto = {
   /**
@@ -24,36 +24,6 @@ export const ActorFeedItemDto$inboundSchema: z.ZodType<ActorFeedItemDto, z.ZodTy
   data: z.nullable(z.string()),
   type: ActorTypeEnum$inboundSchema,
 });
-
-/** @internal */
-export type ActorFeedItemDto$Outbound = {
-  data: string | null;
-  type: string;
-};
-
-/** @internal */
-export const ActorFeedItemDto$outboundSchema: z.ZodType<ActorFeedItemDto$Outbound, z.ZodTypeDef, ActorFeedItemDto> =
-  z.object({
-    data: z.nullable(z.string()),
-    type: ActorTypeEnum$outboundSchema,
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActorFeedItemDto$ {
-  /** @deprecated use `ActorFeedItemDto$inboundSchema` instead. */
-  export const inboundSchema = ActorFeedItemDto$inboundSchema;
-  /** @deprecated use `ActorFeedItemDto$outboundSchema` instead. */
-  export const outboundSchema = ActorFeedItemDto$outboundSchema;
-  /** @deprecated use `ActorFeedItemDto$Outbound` instead. */
-  export type Outbound = ActorFeedItemDto$Outbound;
-}
-
-export function actorFeedItemDtoToJSON(actorFeedItemDto: ActorFeedItemDto): string {
-  return JSON.stringify(ActorFeedItemDto$outboundSchema.parse(actorFeedItemDto));
-}
 
 export function actorFeedItemDtoFromJSON(jsonString: string): SafeParseResult<ActorFeedItemDto, SDKValidationError> {
   return safeParse(

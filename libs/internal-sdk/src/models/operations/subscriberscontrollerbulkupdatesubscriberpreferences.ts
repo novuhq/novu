@@ -24,24 +24,6 @@ export type SubscribersControllerBulkUpdateSubscriberPreferencesResponse = {
 };
 
 /** @internal */
-export const SubscribersControllerBulkUpdateSubscriberPreferencesRequest$inboundSchema: z.ZodType<
-  SubscribersControllerBulkUpdateSubscriberPreferencesRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    subscriberId: z.string(),
-    'idempotency-key': z.string().optional(),
-    BulkUpdateSubscriberPreferencesDto: components.BulkUpdateSubscriberPreferencesDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      BulkUpdateSubscriberPreferencesDto: 'bulkUpdateSubscriberPreferencesDto',
-    });
-  });
-
-/** @internal */
 export type SubscribersControllerBulkUpdateSubscriberPreferencesRequest$Outbound = {
   subscriberId: string;
   'idempotency-key'?: string | undefined;
@@ -66,19 +48,6 @@ export const SubscribersControllerBulkUpdateSubscriberPreferencesRequest$outboun
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersControllerBulkUpdateSubscriberPreferencesRequest$ {
-  /** @deprecated use `SubscribersControllerBulkUpdateSubscriberPreferencesRequest$inboundSchema` instead. */
-  export const inboundSchema = SubscribersControllerBulkUpdateSubscriberPreferencesRequest$inboundSchema;
-  /** @deprecated use `SubscribersControllerBulkUpdateSubscriberPreferencesRequest$outboundSchema` instead. */
-  export const outboundSchema = SubscribersControllerBulkUpdateSubscriberPreferencesRequest$outboundSchema;
-  /** @deprecated use `SubscribersControllerBulkUpdateSubscriberPreferencesRequest$Outbound` instead. */
-  export type Outbound = SubscribersControllerBulkUpdateSubscriberPreferencesRequest$Outbound;
-}
-
 export function subscribersControllerBulkUpdateSubscriberPreferencesRequestToJSON(
   subscribersControllerBulkUpdateSubscriberPreferencesRequest: SubscribersControllerBulkUpdateSubscriberPreferencesRequest
 ): string {
@@ -86,16 +55,6 @@ export function subscribersControllerBulkUpdateSubscriberPreferencesRequestToJSO
     SubscribersControllerBulkUpdateSubscriberPreferencesRequest$outboundSchema.parse(
       subscribersControllerBulkUpdateSubscriberPreferencesRequest
     )
-  );
-}
-
-export function subscribersControllerBulkUpdateSubscriberPreferencesRequestFromJSON(
-  jsonString: string
-): SafeParseResult<SubscribersControllerBulkUpdateSubscriberPreferencesRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscribersControllerBulkUpdateSubscriberPreferencesRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscribersControllerBulkUpdateSubscriberPreferencesRequest' from JSON`
   );
 }
 
@@ -115,52 +74,6 @@ export const SubscribersControllerBulkUpdateSubscriberPreferencesResponse$inboun
       Result: 'result',
     });
   });
-
-/** @internal */
-export type SubscribersControllerBulkUpdateSubscriberPreferencesResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: Array<components.GetPreferencesResponseDto$Outbound>;
-};
-
-/** @internal */
-export const SubscribersControllerBulkUpdateSubscriberPreferencesResponse$outboundSchema: z.ZodType<
-  SubscribersControllerBulkUpdateSubscriberPreferencesResponse$Outbound,
-  z.ZodTypeDef,
-  SubscribersControllerBulkUpdateSubscriberPreferencesResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: z.array(components.GetPreferencesResponseDto$outboundSchema),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscribersControllerBulkUpdateSubscriberPreferencesResponse$ {
-  /** @deprecated use `SubscribersControllerBulkUpdateSubscriberPreferencesResponse$inboundSchema` instead. */
-  export const inboundSchema = SubscribersControllerBulkUpdateSubscriberPreferencesResponse$inboundSchema;
-  /** @deprecated use `SubscribersControllerBulkUpdateSubscriberPreferencesResponse$outboundSchema` instead. */
-  export const outboundSchema = SubscribersControllerBulkUpdateSubscriberPreferencesResponse$outboundSchema;
-  /** @deprecated use `SubscribersControllerBulkUpdateSubscriberPreferencesResponse$Outbound` instead. */
-  export type Outbound = SubscribersControllerBulkUpdateSubscriberPreferencesResponse$Outbound;
-}
-
-export function subscribersControllerBulkUpdateSubscriberPreferencesResponseToJSON(
-  subscribersControllerBulkUpdateSubscriberPreferencesResponse: SubscribersControllerBulkUpdateSubscriberPreferencesResponse
-): string {
-  return JSON.stringify(
-    SubscribersControllerBulkUpdateSubscriberPreferencesResponse$outboundSchema.parse(
-      subscribersControllerBulkUpdateSubscriberPreferencesResponse
-    )
-  );
-}
 
 export function subscribersControllerBulkUpdateSubscriberPreferencesResponseFromJSON(
   jsonString: string

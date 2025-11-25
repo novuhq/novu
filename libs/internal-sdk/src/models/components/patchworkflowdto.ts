@@ -3,9 +3,6 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
 export type PatchWorkflowDto = {
   /**
@@ -39,17 +36,6 @@ export type PatchWorkflowDto = {
 };
 
 /** @internal */
-export const PatchWorkflowDto$inboundSchema: z.ZodType<PatchWorkflowDto, z.ZodTypeDef, unknown> = z.object({
-  active: z.boolean().optional(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  payloadSchema: z.nullable(z.record(z.any())).optional(),
-  validatePayload: z.boolean().optional(),
-  isTranslationEnabled: z.boolean().optional(),
-});
-
-/** @internal */
 export type PatchWorkflowDto$Outbound = {
   active?: boolean | undefined;
   name?: string | undefined;
@@ -72,27 +58,6 @@ export const PatchWorkflowDto$outboundSchema: z.ZodType<PatchWorkflowDto$Outboun
     isTranslationEnabled: z.boolean().optional(),
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PatchWorkflowDto$ {
-  /** @deprecated use `PatchWorkflowDto$inboundSchema` instead. */
-  export const inboundSchema = PatchWorkflowDto$inboundSchema;
-  /** @deprecated use `PatchWorkflowDto$outboundSchema` instead. */
-  export const outboundSchema = PatchWorkflowDto$outboundSchema;
-  /** @deprecated use `PatchWorkflowDto$Outbound` instead. */
-  export type Outbound = PatchWorkflowDto$Outbound;
-}
-
 export function patchWorkflowDtoToJSON(patchWorkflowDto: PatchWorkflowDto): string {
   return JSON.stringify(PatchWorkflowDto$outboundSchema.parse(patchWorkflowDto));
-}
-
-export function patchWorkflowDtoFromJSON(jsonString: string): SafeParseResult<PatchWorkflowDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => PatchWorkflowDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PatchWorkflowDto' from JSON`
-  );
 }

@@ -1,4 +1,4 @@
-import { onCleanup, onMount } from 'solid-js';
+import { createEffect, onCleanup } from 'solid-js';
 import type { EventHandler, EventNames, Events } from '../../event-emitter';
 import { useNovu } from '../context';
 
@@ -9,10 +9,11 @@ export const useNovuEvent = <E extends EventNames>({
   event: E;
   eventHandler: EventHandler<Events[E]>;
 }) => {
-  const novu = useNovu();
+  const novuAccessor = useNovu();
 
-  onMount(() => {
-    const cleanup = novu.on(event, eventHandler);
+  createEffect(() => {
+    const currentNovu = novuAccessor();
+    const cleanup = currentNovu.on(event, eventHandler);
 
     onCleanup(() => {
       cleanup();

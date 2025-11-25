@@ -30,23 +30,6 @@ export type ContextsControllerGetContextResponse = {
 };
 
 /** @internal */
-export const ContextsControllerGetContextRequest$inboundSchema: z.ZodType<
-  ContextsControllerGetContextRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    type: z.string(),
-    id: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type ContextsControllerGetContextRequest$Outbound = {
   type: string;
   id: string;
@@ -70,33 +53,10 @@ export const ContextsControllerGetContextRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ContextsControllerGetContextRequest$ {
-  /** @deprecated use `ContextsControllerGetContextRequest$inboundSchema` instead. */
-  export const inboundSchema = ContextsControllerGetContextRequest$inboundSchema;
-  /** @deprecated use `ContextsControllerGetContextRequest$outboundSchema` instead. */
-  export const outboundSchema = ContextsControllerGetContextRequest$outboundSchema;
-  /** @deprecated use `ContextsControllerGetContextRequest$Outbound` instead. */
-  export type Outbound = ContextsControllerGetContextRequest$Outbound;
-}
-
 export function contextsControllerGetContextRequestToJSON(
   contextsControllerGetContextRequest: ContextsControllerGetContextRequest
 ): string {
   return JSON.stringify(ContextsControllerGetContextRequest$outboundSchema.parse(contextsControllerGetContextRequest));
-}
-
-export function contextsControllerGetContextRequestFromJSON(
-  jsonString: string
-): SafeParseResult<ContextsControllerGetContextRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ContextsControllerGetContextRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ContextsControllerGetContextRequest' from JSON`
-  );
 }
 
 /** @internal */
@@ -115,50 +75,6 @@ export const ContextsControllerGetContextResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type ContextsControllerGetContextResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.GetContextResponseDto$Outbound;
-};
-
-/** @internal */
-export const ContextsControllerGetContextResponse$outboundSchema: z.ZodType<
-  ContextsControllerGetContextResponse$Outbound,
-  z.ZodTypeDef,
-  ContextsControllerGetContextResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.GetContextResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ContextsControllerGetContextResponse$ {
-  /** @deprecated use `ContextsControllerGetContextResponse$inboundSchema` instead. */
-  export const inboundSchema = ContextsControllerGetContextResponse$inboundSchema;
-  /** @deprecated use `ContextsControllerGetContextResponse$outboundSchema` instead. */
-  export const outboundSchema = ContextsControllerGetContextResponse$outboundSchema;
-  /** @deprecated use `ContextsControllerGetContextResponse$Outbound` instead. */
-  export type Outbound = ContextsControllerGetContextResponse$Outbound;
-}
-
-export function contextsControllerGetContextResponseToJSON(
-  contextsControllerGetContextResponse: ContextsControllerGetContextResponse
-): string {
-  return JSON.stringify(
-    ContextsControllerGetContextResponse$outboundSchema.parse(contextsControllerGetContextResponse)
-  );
-}
 
 export function contextsControllerGetContextResponseFromJSON(
   jsonString: string

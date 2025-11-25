@@ -36,43 +36,6 @@ export const TopicDto$inboundSchema: z.ZodType<TopicDto, z.ZodTypeDef, unknown> 
     });
   });
 
-/** @internal */
-export type TopicDto$Outbound = {
-  _id: string;
-  key: string;
-  name?: string | undefined;
-};
-
-/** @internal */
-export const TopicDto$outboundSchema: z.ZodType<TopicDto$Outbound, z.ZodTypeDef, TopicDto> = z
-  .object({
-    id: z.string(),
-    key: z.string(),
-    name: z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicDto$ {
-  /** @deprecated use `TopicDto$inboundSchema` instead. */
-  export const inboundSchema = TopicDto$inboundSchema;
-  /** @deprecated use `TopicDto$outboundSchema` instead. */
-  export const outboundSchema = TopicDto$outboundSchema;
-  /** @deprecated use `TopicDto$Outbound` instead. */
-  export type Outbound = TopicDto$Outbound;
-}
-
-export function topicDtoToJSON(topicDto: TopicDto): string {
-  return JSON.stringify(TopicDto$outboundSchema.parse(topicDto));
-}
-
 export function topicDtoFromJSON(jsonString: string): SafeParseResult<TopicDto, SDKValidationError> {
   return safeParse(
     jsonString,

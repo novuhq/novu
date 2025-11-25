@@ -6,13 +6,8 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  CustomControlDto,
-  CustomControlDto$inboundSchema,
-  CustomControlDto$Outbound,
-  CustomControlDto$outboundSchema,
-} from './customcontroldto.js';
-import { UiSchema, UiSchema$inboundSchema, UiSchema$Outbound, UiSchema$outboundSchema } from './uischema.js';
+import { CustomControlDto, CustomControlDto$inboundSchema } from './customcontroldto.js';
+import { UiSchema, UiSchema$inboundSchema } from './uischema.js';
 
 export type CustomControlsMetadataResponseDto = {
   /**
@@ -39,43 +34,6 @@ export const CustomControlsMetadataResponseDto$inboundSchema: z.ZodType<
   uiSchema: UiSchema$inboundSchema.optional(),
   values: CustomControlDto$inboundSchema,
 });
-
-/** @internal */
-export type CustomControlsMetadataResponseDto$Outbound = {
-  dataSchema?: { [k: string]: any } | undefined;
-  uiSchema?: UiSchema$Outbound | undefined;
-  values: CustomControlDto$Outbound;
-};
-
-/** @internal */
-export const CustomControlsMetadataResponseDto$outboundSchema: z.ZodType<
-  CustomControlsMetadataResponseDto$Outbound,
-  z.ZodTypeDef,
-  CustomControlsMetadataResponseDto
-> = z.object({
-  dataSchema: z.record(z.any()).optional(),
-  uiSchema: UiSchema$outboundSchema.optional(),
-  values: CustomControlDto$outboundSchema,
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CustomControlsMetadataResponseDto$ {
-  /** @deprecated use `CustomControlsMetadataResponseDto$inboundSchema` instead. */
-  export const inboundSchema = CustomControlsMetadataResponseDto$inboundSchema;
-  /** @deprecated use `CustomControlsMetadataResponseDto$outboundSchema` instead. */
-  export const outboundSchema = CustomControlsMetadataResponseDto$outboundSchema;
-  /** @deprecated use `CustomControlsMetadataResponseDto$Outbound` instead. */
-  export type Outbound = CustomControlsMetadataResponseDto$Outbound;
-}
-
-export function customControlsMetadataResponseDtoToJSON(
-  customControlsMetadataResponseDto: CustomControlsMetadataResponseDto
-): string {
-  return JSON.stringify(CustomControlsMetadataResponseDto$outboundSchema.parse(customControlsMetadataResponseDto));
-}
 
 export function customControlsMetadataResponseDtoFromJSON(
   jsonString: string

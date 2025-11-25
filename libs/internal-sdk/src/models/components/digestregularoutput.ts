@@ -6,7 +6,7 @@ import * as z from 'zod/v3';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import { TimeUnitEnum, TimeUnitEnum$inboundSchema, TimeUnitEnum$outboundSchema } from './timeunitenum.js';
+import { TimeUnitEnum, TimeUnitEnum$inboundSchema } from './timeunitenum.js';
 
 /**
  * Look back window configuration
@@ -35,31 +35,6 @@ export type DigestRegularOutput = {
 /** @internal */
 export const LookBackWindow$inboundSchema: z.ZodType<LookBackWindow, z.ZodTypeDef, unknown> = z.object({});
 
-/** @internal */
-export type LookBackWindow$Outbound = {};
-
-/** @internal */
-export const LookBackWindow$outboundSchema: z.ZodType<LookBackWindow$Outbound, z.ZodTypeDef, LookBackWindow> = z.object(
-  {}
-);
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LookBackWindow$ {
-  /** @deprecated use `LookBackWindow$inboundSchema` instead. */
-  export const inboundSchema = LookBackWindow$inboundSchema;
-  /** @deprecated use `LookBackWindow$outboundSchema` instead. */
-  export const outboundSchema = LookBackWindow$outboundSchema;
-  /** @deprecated use `LookBackWindow$Outbound` instead. */
-  export type Outbound = LookBackWindow$Outbound;
-}
-
-export function lookBackWindowToJSON(lookBackWindow: LookBackWindow): string {
-  return JSON.stringify(LookBackWindow$outboundSchema.parse(lookBackWindow));
-}
-
 export function lookBackWindowFromJSON(jsonString: string): SafeParseResult<LookBackWindow, SDKValidationError> {
   return safeParse(
     jsonString,
@@ -75,43 +50,6 @@ export const DigestRegularOutput$inboundSchema: z.ZodType<DigestRegularOutput, z
   digestKey: z.string().optional(),
   lookBackWindow: z.lazy(() => LookBackWindow$inboundSchema).optional(),
 });
-
-/** @internal */
-export type DigestRegularOutput$Outbound = {
-  amount: number;
-  unit: string;
-  digestKey?: string | undefined;
-  lookBackWindow?: LookBackWindow$Outbound | undefined;
-};
-
-/** @internal */
-export const DigestRegularOutput$outboundSchema: z.ZodType<
-  DigestRegularOutput$Outbound,
-  z.ZodTypeDef,
-  DigestRegularOutput
-> = z.object({
-  amount: z.number(),
-  unit: TimeUnitEnum$outboundSchema,
-  digestKey: z.string().optional(),
-  lookBackWindow: z.lazy(() => LookBackWindow$outboundSchema).optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestRegularOutput$ {
-  /** @deprecated use `DigestRegularOutput$inboundSchema` instead. */
-  export const inboundSchema = DigestRegularOutput$inboundSchema;
-  /** @deprecated use `DigestRegularOutput$outboundSchema` instead. */
-  export const outboundSchema = DigestRegularOutput$outboundSchema;
-  /** @deprecated use `DigestRegularOutput$Outbound` instead. */
-  export type Outbound = DigestRegularOutput$Outbound;
-}
-
-export function digestRegularOutputToJSON(digestRegularOutput: DigestRegularOutput): string {
-  return JSON.stringify(DigestRegularOutput$outboundSchema.parse(digestRegularOutput));
-}
 
 export function digestRegularOutputFromJSON(
   jsonString: string

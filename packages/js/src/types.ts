@@ -1,3 +1,4 @@
+import type { RulesLogic } from 'json-logic-js';
 import { NovuError } from './utils/errors';
 
 export type { FiltersCountResponse, ListNotificationsResponse, Notification } from './notifications';
@@ -235,6 +236,20 @@ export enum PreferenceOverrideSourceEnum {
 export type IPreferenceOverride = {
   channel: ChannelType;
   source: PreferenceOverrideSourceEnum;
+};
+
+export type SubscriptionPreferenceResponse = {
+  subscriptionId: string;
+  enabled: boolean;
+  condition?: RulesLogic;
+  workflow: Workflow;
+};
+
+export type SubscriptionResponse = {
+  id: string;
+  identifier: string;
+  name?: string;
+  preferences: Array<SubscriptionPreferenceResponse>;
 };
 
 export type TODO = any;

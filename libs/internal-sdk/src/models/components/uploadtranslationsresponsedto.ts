@@ -38,45 +38,6 @@ export const UploadTranslationsResponseDto$inboundSchema: z.ZodType<
   errors: z.array(z.string()),
 });
 
-/** @internal */
-export type UploadTranslationsResponseDto$Outbound = {
-  totalFiles: number;
-  successfulUploads: number;
-  failedUploads: number;
-  errors: Array<string>;
-};
-
-/** @internal */
-export const UploadTranslationsResponseDto$outboundSchema: z.ZodType<
-  UploadTranslationsResponseDto$Outbound,
-  z.ZodTypeDef,
-  UploadTranslationsResponseDto
-> = z.object({
-  totalFiles: z.number(),
-  successfulUploads: z.number(),
-  failedUploads: z.number(),
-  errors: z.array(z.string()),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UploadTranslationsResponseDto$ {
-  /** @deprecated use `UploadTranslationsResponseDto$inboundSchema` instead. */
-  export const inboundSchema = UploadTranslationsResponseDto$inboundSchema;
-  /** @deprecated use `UploadTranslationsResponseDto$outboundSchema` instead. */
-  export const outboundSchema = UploadTranslationsResponseDto$outboundSchema;
-  /** @deprecated use `UploadTranslationsResponseDto$Outbound` instead. */
-  export type Outbound = UploadTranslationsResponseDto$Outbound;
-}
-
-export function uploadTranslationsResponseDtoToJSON(
-  uploadTranslationsResponseDto: UploadTranslationsResponseDto
-): string {
-  return JSON.stringify(UploadTranslationsResponseDto$outboundSchema.parse(uploadTranslationsResponseDto));
-}
-
 export function uploadTranslationsResponseDtoFromJSON(
   jsonString: string
 ): SafeParseResult<UploadTranslationsResponseDto, SDKValidationError> {

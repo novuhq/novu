@@ -7,12 +7,7 @@ import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  ChannelSettingsDto,
-  ChannelSettingsDto$inboundSchema,
-  ChannelSettingsDto$Outbound,
-  ChannelSettingsDto$outboundSchema,
-} from './channelsettingsdto.js';
+import { ChannelSettingsDto, ChannelSettingsDto$inboundSchema } from './channelsettingsdto.js';
 
 export type SubscriberResponseDto = {
   /**
@@ -131,84 +126,6 @@ export const SubscriberResponseDto$inboundSchema: z.ZodType<SubscriberResponseDt
       _environmentId: 'environmentId',
     });
   });
-
-/** @internal */
-export type SubscriberResponseDto$Outbound = {
-  _id?: string | undefined;
-  firstName?: string | null | undefined;
-  lastName?: string | null | undefined;
-  email?: string | null | undefined;
-  phone?: string | null | undefined;
-  avatar?: string | null | undefined;
-  locale?: string | null | undefined;
-  channels?: Array<ChannelSettingsDto$Outbound> | undefined;
-  topics?: Array<string> | undefined;
-  isOnline?: boolean | null | undefined;
-  lastOnlineAt?: string | null | undefined;
-  __v?: number | undefined;
-  data?: { [k: string]: any } | null | undefined;
-  timezone?: string | null | undefined;
-  subscriberId: string;
-  _organizationId: string;
-  _environmentId: string;
-  deleted: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-/** @internal */
-export const SubscriberResponseDto$outboundSchema: z.ZodType<
-  SubscriberResponseDto$Outbound,
-  z.ZodTypeDef,
-  SubscriberResponseDto
-> = z
-  .object({
-    id: z.string().optional(),
-    firstName: z.nullable(z.string()).optional(),
-    lastName: z.nullable(z.string()).optional(),
-    email: z.nullable(z.string()).optional(),
-    phone: z.nullable(z.string()).optional(),
-    avatar: z.nullable(z.string()).optional(),
-    locale: z.nullable(z.string()).optional(),
-    channels: z.array(ChannelSettingsDto$outboundSchema).optional(),
-    topics: z.array(z.string()).optional(),
-    isOnline: z.nullable(z.boolean()).optional(),
-    lastOnlineAt: z.nullable(z.string()).optional(),
-    v: z.number().optional(),
-    data: z.nullable(z.record(z.any())).optional(),
-    timezone: z.nullable(z.string()).optional(),
-    subscriberId: z.string(),
-    organizationId: z.string(),
-    environmentId: z.string(),
-    deleted: z.boolean(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-      v: '__v',
-      organizationId: '_organizationId',
-      environmentId: '_environmentId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SubscriberResponseDto$ {
-  /** @deprecated use `SubscriberResponseDto$inboundSchema` instead. */
-  export const inboundSchema = SubscriberResponseDto$inboundSchema;
-  /** @deprecated use `SubscriberResponseDto$outboundSchema` instead. */
-  export const outboundSchema = SubscriberResponseDto$outboundSchema;
-  /** @deprecated use `SubscriberResponseDto$Outbound` instead. */
-  export type Outbound = SubscriberResponseDto$Outbound;
-}
-
-export function subscriberResponseDtoToJSON(subscriberResponseDto: SubscriberResponseDto): string {
-  return JSON.stringify(SubscriberResponseDto$outboundSchema.parse(subscriberResponseDto));
-}
 
 export function subscriberResponseDtoFromJSON(
   jsonString: string

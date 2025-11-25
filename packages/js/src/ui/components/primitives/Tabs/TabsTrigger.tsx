@@ -1,6 +1,6 @@
 import { JSX, ParentProps, Ref, splitProps } from 'solid-js';
 import { cn, useStyle } from '../../../helpers';
-import type { AppearanceKey } from '../../../types';
+import type { AllAppearanceKey } from '../../../types';
 import { Button } from '../Button';
 import { useTabsContext } from './TabsRoot';
 
@@ -8,7 +8,7 @@ type TabsTriggerProps = JSX.IntrinsicElements['button'] &
   ParentProps & {
     value: string;
     class?: string;
-    appearanceKey?: AppearanceKey;
+    appearanceKey?: AllAppearanceKey;
     ref?: Ref<HTMLButtonElement>;
     onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent>;
   };

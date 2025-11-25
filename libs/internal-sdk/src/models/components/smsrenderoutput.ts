@@ -19,34 +19,6 @@ export const SmsRenderOutput$inboundSchema: z.ZodType<SmsRenderOutput, z.ZodType
   body: z.string(),
 });
 
-/** @internal */
-export type SmsRenderOutput$Outbound = {
-  body: string;
-};
-
-/** @internal */
-export const SmsRenderOutput$outboundSchema: z.ZodType<SmsRenderOutput$Outbound, z.ZodTypeDef, SmsRenderOutput> =
-  z.object({
-    body: z.string(),
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsRenderOutput$ {
-  /** @deprecated use `SmsRenderOutput$inboundSchema` instead. */
-  export const inboundSchema = SmsRenderOutput$inboundSchema;
-  /** @deprecated use `SmsRenderOutput$outboundSchema` instead. */
-  export const outboundSchema = SmsRenderOutput$outboundSchema;
-  /** @deprecated use `SmsRenderOutput$Outbound` instead. */
-  export type Outbound = SmsRenderOutput$Outbound;
-}
-
-export function smsRenderOutputToJSON(smsRenderOutput: SmsRenderOutput): string {
-  return JSON.stringify(SmsRenderOutput$outboundSchema.parse(smsRenderOutput));
-}
-
 export function smsRenderOutputFromJSON(jsonString: string): SafeParseResult<SmsRenderOutput, SDKValidationError> {
   return safeParse(
     jsonString,

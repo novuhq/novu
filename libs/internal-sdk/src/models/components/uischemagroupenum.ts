@@ -28,18 +28,3 @@ export type UiSchemaGroupEnum = ClosedEnum<typeof UiSchemaGroupEnum>;
 /** @internal */
 export const UiSchemaGroupEnum$inboundSchema: z.ZodNativeEnum<typeof UiSchemaGroupEnum> =
   z.nativeEnum(UiSchemaGroupEnum);
-
-/** @internal */
-export const UiSchemaGroupEnum$outboundSchema: z.ZodNativeEnum<typeof UiSchemaGroupEnum> =
-  UiSchemaGroupEnum$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UiSchemaGroupEnum$ {
-  /** @deprecated use `UiSchemaGroupEnum$inboundSchema` instead. */
-  export const inboundSchema = UiSchemaGroupEnum$inboundSchema;
-  /** @deprecated use `UiSchemaGroupEnum$outboundSchema` instead. */
-  export const outboundSchema = UiSchemaGroupEnum$outboundSchema;
-}

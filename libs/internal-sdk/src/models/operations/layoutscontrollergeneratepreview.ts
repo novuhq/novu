@@ -27,24 +27,6 @@ export type LayoutsControllerGeneratePreviewResponse = {
 };
 
 /** @internal */
-export const LayoutsControllerGeneratePreviewRequest$inboundSchema: z.ZodType<
-  LayoutsControllerGeneratePreviewRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    layoutId: z.string(),
-    'idempotency-key': z.string().optional(),
-    LayoutPreviewRequestDto: components.LayoutPreviewRequestDto$inboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-      LayoutPreviewRequestDto: 'layoutPreviewRequestDto',
-    });
-  });
-
-/** @internal */
 export type LayoutsControllerGeneratePreviewRequest$Outbound = {
   layoutId: string;
   'idempotency-key'?: string | undefined;
@@ -69,34 +51,11 @@ export const LayoutsControllerGeneratePreviewRequest$outboundSchema: z.ZodType<
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutsControllerGeneratePreviewRequest$ {
-  /** @deprecated use `LayoutsControllerGeneratePreviewRequest$inboundSchema` instead. */
-  export const inboundSchema = LayoutsControllerGeneratePreviewRequest$inboundSchema;
-  /** @deprecated use `LayoutsControllerGeneratePreviewRequest$outboundSchema` instead. */
-  export const outboundSchema = LayoutsControllerGeneratePreviewRequest$outboundSchema;
-  /** @deprecated use `LayoutsControllerGeneratePreviewRequest$Outbound` instead. */
-  export type Outbound = LayoutsControllerGeneratePreviewRequest$Outbound;
-}
-
 export function layoutsControllerGeneratePreviewRequestToJSON(
   layoutsControllerGeneratePreviewRequest: LayoutsControllerGeneratePreviewRequest
 ): string {
   return JSON.stringify(
     LayoutsControllerGeneratePreviewRequest$outboundSchema.parse(layoutsControllerGeneratePreviewRequest)
-  );
-}
-
-export function layoutsControllerGeneratePreviewRequestFromJSON(
-  jsonString: string
-): SafeParseResult<LayoutsControllerGeneratePreviewRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => LayoutsControllerGeneratePreviewRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'LayoutsControllerGeneratePreviewRequest' from JSON`
   );
 }
 
@@ -116,50 +75,6 @@ export const LayoutsControllerGeneratePreviewResponse$inboundSchema: z.ZodType<
       Result: 'result',
     });
   });
-
-/** @internal */
-export type LayoutsControllerGeneratePreviewResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.GenerateLayoutPreviewResponseDto$Outbound;
-};
-
-/** @internal */
-export const LayoutsControllerGeneratePreviewResponse$outboundSchema: z.ZodType<
-  LayoutsControllerGeneratePreviewResponse$Outbound,
-  z.ZodTypeDef,
-  LayoutsControllerGeneratePreviewResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.GenerateLayoutPreviewResponseDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutsControllerGeneratePreviewResponse$ {
-  /** @deprecated use `LayoutsControllerGeneratePreviewResponse$inboundSchema` instead. */
-  export const inboundSchema = LayoutsControllerGeneratePreviewResponse$inboundSchema;
-  /** @deprecated use `LayoutsControllerGeneratePreviewResponse$outboundSchema` instead. */
-  export const outboundSchema = LayoutsControllerGeneratePreviewResponse$outboundSchema;
-  /** @deprecated use `LayoutsControllerGeneratePreviewResponse$Outbound` instead. */
-  export type Outbound = LayoutsControllerGeneratePreviewResponse$Outbound;
-}
-
-export function layoutsControllerGeneratePreviewResponseToJSON(
-  layoutsControllerGeneratePreviewResponse: LayoutsControllerGeneratePreviewResponse
-): string {
-  return JSON.stringify(
-    LayoutsControllerGeneratePreviewResponse$outboundSchema.parse(layoutsControllerGeneratePreviewResponse)
-  );
-}
 
 export function layoutsControllerGeneratePreviewResponseFromJSON(
   jsonString: string

@@ -30,23 +30,6 @@ export type TopicsV1ControllerGetTopicSubscriberResponse = {
 };
 
 /** @internal */
-export const TopicsV1ControllerGetTopicSubscriberRequest$inboundSchema: z.ZodType<
-  TopicsV1ControllerGetTopicSubscriberRequest,
-  z.ZodTypeDef,
-  unknown
-> = z
-  .object({
-    topicKey: z.string(),
-    externalSubscriberId: z.string(),
-    'idempotency-key': z.string().optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      'idempotency-key': 'idempotencyKey',
-    });
-  });
-
-/** @internal */
 export type TopicsV1ControllerGetTopicSubscriberRequest$Outbound = {
   topicKey: string;
   externalSubscriberId: string;
@@ -70,34 +53,11 @@ export const TopicsV1ControllerGetTopicSubscriberRequest$outboundSchema: z.ZodTy
     });
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsV1ControllerGetTopicSubscriberRequest$ {
-  /** @deprecated use `TopicsV1ControllerGetTopicSubscriberRequest$inboundSchema` instead. */
-  export const inboundSchema = TopicsV1ControllerGetTopicSubscriberRequest$inboundSchema;
-  /** @deprecated use `TopicsV1ControllerGetTopicSubscriberRequest$outboundSchema` instead. */
-  export const outboundSchema = TopicsV1ControllerGetTopicSubscriberRequest$outboundSchema;
-  /** @deprecated use `TopicsV1ControllerGetTopicSubscriberRequest$Outbound` instead. */
-  export type Outbound = TopicsV1ControllerGetTopicSubscriberRequest$Outbound;
-}
-
 export function topicsV1ControllerGetTopicSubscriberRequestToJSON(
   topicsV1ControllerGetTopicSubscriberRequest: TopicsV1ControllerGetTopicSubscriberRequest
 ): string {
   return JSON.stringify(
     TopicsV1ControllerGetTopicSubscriberRequest$outboundSchema.parse(topicsV1ControllerGetTopicSubscriberRequest)
-  );
-}
-
-export function topicsV1ControllerGetTopicSubscriberRequestFromJSON(
-  jsonString: string
-): SafeParseResult<TopicsV1ControllerGetTopicSubscriberRequest, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => TopicsV1ControllerGetTopicSubscriberRequest$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'TopicsV1ControllerGetTopicSubscriberRequest' from JSON`
   );
 }
 
@@ -117,50 +77,6 @@ export const TopicsV1ControllerGetTopicSubscriberResponse$inboundSchema: z.ZodTy
       Result: 'result',
     });
   });
-
-/** @internal */
-export type TopicsV1ControllerGetTopicSubscriberResponse$Outbound = {
-  Headers: { [k: string]: Array<string> };
-  Result: components.TopicSubscriberDto$Outbound;
-};
-
-/** @internal */
-export const TopicsV1ControllerGetTopicSubscriberResponse$outboundSchema: z.ZodType<
-  TopicsV1ControllerGetTopicSubscriberResponse$Outbound,
-  z.ZodTypeDef,
-  TopicsV1ControllerGetTopicSubscriberResponse
-> = z
-  .object({
-    headers: z.record(z.array(z.string())),
-    result: components.TopicSubscriberDto$outboundSchema,
-  })
-  .transform((v) => {
-    return remap$(v, {
-      headers: 'Headers',
-      result: 'Result',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace TopicsV1ControllerGetTopicSubscriberResponse$ {
-  /** @deprecated use `TopicsV1ControllerGetTopicSubscriberResponse$inboundSchema` instead. */
-  export const inboundSchema = TopicsV1ControllerGetTopicSubscriberResponse$inboundSchema;
-  /** @deprecated use `TopicsV1ControllerGetTopicSubscriberResponse$outboundSchema` instead. */
-  export const outboundSchema = TopicsV1ControllerGetTopicSubscriberResponse$outboundSchema;
-  /** @deprecated use `TopicsV1ControllerGetTopicSubscriberResponse$Outbound` instead. */
-  export type Outbound = TopicsV1ControllerGetTopicSubscriberResponse$Outbound;
-}
-
-export function topicsV1ControllerGetTopicSubscriberResponseToJSON(
-  topicsV1ControllerGetTopicSubscriberResponse: TopicsV1ControllerGetTopicSubscriberResponse
-): string {
-  return JSON.stringify(
-    TopicsV1ControllerGetTopicSubscriberResponse$outboundSchema.parse(topicsV1ControllerGetTopicSubscriberResponse)
-  );
-}
 
 export function topicsV1ControllerGetTopicSubscriberResponseFromJSON(
   jsonString: string

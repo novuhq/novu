@@ -1,6 +1,6 @@
-import type { Theme } from '../types';
+import type { InboxTheme, SubscriptionTheme } from '../types';
 
-export const dark: Theme = {
+export const inboxDarkTheme: InboxTheme = {
   variables: {
     colorNeutral: 'white',
     colorBackground: '#1A1A1A',
@@ -25,4 +25,23 @@ export const dark: Theme = {
     severityGlowLow__bellSeverityGlow: 'nt-bg-severity-low-alpha-300 before:nt-bg-severity-low-alpha-300',
     bellSeverityGlow: 'nt-bg-severity-none-alpha-300 before:nt-bg-severity-none-alpha-300',
   },
+};
+
+/**
+ * @deprecated Use inboxDarkTheme instead
+ */
+export const dark = inboxDarkTheme;
+
+export const subscriptionDarkTheme: SubscriptionTheme = {
+  variables: {
+    colorNeutral: 'white',
+    colorBackground: '#1A1A1A',
+    colorForeground: '#EDEDEF',
+    colorSecondary: '#383838',
+    colorSecondaryForeground: '#EDEDEF',
+    colorShadow: 'black',
+    colorRing: '#E1E4EA',
+    colorStripes: '#FF8447',
+  },
+  elements: {},
 };

@@ -3,15 +3,7 @@
  */
 
 import * as z from 'zod/v3';
-import { safeParse } from '../../lib/schemas.js';
-import { Result as SafeParseResult } from '../../types/fp.js';
-import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  EmailControlsDto,
-  EmailControlsDto$inboundSchema,
-  EmailControlsDto$Outbound,
-  EmailControlsDto$outboundSchema,
-} from './emailcontrolsdto.js';
+import { EmailControlsDto, EmailControlsDto$Outbound, EmailControlsDto$outboundSchema } from './emailcontrolsdto.js';
 
 /**
  * Control values for the layout
@@ -39,11 +31,6 @@ export type UpdateLayoutDto = {
 };
 
 /** @internal */
-export const ControlValues$inboundSchema: z.ZodType<ControlValues, z.ZodTypeDef, unknown> = z.object({
-  email: EmailControlsDto$inboundSchema.optional(),
-});
-
-/** @internal */
 export type ControlValues$Outbound = {
   email?: EmailControlsDto$Outbound | undefined;
 };
@@ -53,37 +40,9 @@ export const ControlValues$outboundSchema: z.ZodType<ControlValues$Outbound, z.Z
   email: EmailControlsDto$outboundSchema.optional(),
 });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlValues$ {
-  /** @deprecated use `ControlValues$inboundSchema` instead. */
-  export const inboundSchema = ControlValues$inboundSchema;
-  /** @deprecated use `ControlValues$outboundSchema` instead. */
-  export const outboundSchema = ControlValues$outboundSchema;
-  /** @deprecated use `ControlValues$Outbound` instead. */
-  export type Outbound = ControlValues$Outbound;
-}
-
 export function controlValuesToJSON(controlValues: ControlValues): string {
   return JSON.stringify(ControlValues$outboundSchema.parse(controlValues));
 }
-
-export function controlValuesFromJSON(jsonString: string): SafeParseResult<ControlValues, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlValues' from JSON`
-  );
-}
-
-/** @internal */
-export const UpdateLayoutDto$inboundSchema: z.ZodType<UpdateLayoutDto, z.ZodTypeDef, unknown> = z.object({
-  name: z.string(),
-  isTranslationEnabled: z.boolean().default(false),
-  controlValues: z.nullable(z.lazy(() => ControlValues$inboundSchema)).optional(),
-});
 
 /** @internal */
 export type UpdateLayoutDto$Outbound = {
@@ -100,27 +59,6 @@ export const UpdateLayoutDto$outboundSchema: z.ZodType<UpdateLayoutDto$Outbound,
     controlValues: z.nullable(z.lazy(() => ControlValues$outboundSchema)).optional(),
   });
 
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace UpdateLayoutDto$ {
-  /** @deprecated use `UpdateLayoutDto$inboundSchema` instead. */
-  export const inboundSchema = UpdateLayoutDto$inboundSchema;
-  /** @deprecated use `UpdateLayoutDto$outboundSchema` instead. */
-  export const outboundSchema = UpdateLayoutDto$outboundSchema;
-  /** @deprecated use `UpdateLayoutDto$Outbound` instead. */
-  export type Outbound = UpdateLayoutDto$Outbound;
-}
-
 export function updateLayoutDtoToJSON(updateLayoutDto: UpdateLayoutDto): string {
   return JSON.stringify(UpdateLayoutDto$outboundSchema.parse(updateLayoutDto));
-}
-
-export function updateLayoutDtoFromJSON(jsonString: string): SafeParseResult<UpdateLayoutDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => UpdateLayoutDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'UpdateLayoutDto' from JSON`
-  );
 }

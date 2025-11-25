@@ -24,39 +24,6 @@ export const FailedOperationDto$inboundSchema: z.ZodType<FailedOperationDto, z.Z
   subscriberId: z.string().optional(),
 });
 
-/** @internal */
-export type FailedOperationDto$Outbound = {
-  message?: string | undefined;
-  subscriberId?: string | undefined;
-};
-
-/** @internal */
-export const FailedOperationDto$outboundSchema: z.ZodType<
-  FailedOperationDto$Outbound,
-  z.ZodTypeDef,
-  FailedOperationDto
-> = z.object({
-  message: z.string().optional(),
-  subscriberId: z.string().optional(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace FailedOperationDto$ {
-  /** @deprecated use `FailedOperationDto$inboundSchema` instead. */
-  export const inboundSchema = FailedOperationDto$inboundSchema;
-  /** @deprecated use `FailedOperationDto$outboundSchema` instead. */
-  export const outboundSchema = FailedOperationDto$outboundSchema;
-  /** @deprecated use `FailedOperationDto$Outbound` instead. */
-  export type Outbound = FailedOperationDto$Outbound;
-}
-
-export function failedOperationDtoToJSON(failedOperationDto: FailedOperationDto): string {
-  return JSON.stringify(FailedOperationDto$outboundSchema.parse(failedOperationDto));
-}
-
 export function failedOperationDtoFromJSON(
   jsonString: string
 ): SafeParseResult<FailedOperationDto, SDKValidationError> {

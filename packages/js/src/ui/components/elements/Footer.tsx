@@ -13,13 +13,13 @@ const commonAfter = 'after:nt-content-[""] after:nt-absolute after:nt-inset-0 af
 const devModeGradient = `${commonAfter} after:nt-bg-[linear-gradient(180deg,transparent,oklch(from_var(--nv-color-stripes)_l_c_h_/_0.07)_55%,transparent),linear-gradient(180deg,transparent,oklch(from_var(--nv-color-background)_l_c_h_/_0.9)_55%,transparent)]`;
 const prodModeGradient = `${commonAfter} after:nt-bg-[linear-gradient(180deg,transparent,oklch(from_var(--nv-color-background)_l_c_h_/_0.9)_55%,transparent)]`;
 
-export const Footer = () => {
+export const Footer = (props: { name?: string }) => {
   const { hideBranding, isDevelopmentMode, isKeyless } = useInboxContext();
-  const novu = useNovu();
+  const novuAccessor = useNovu();
 
   async function handleTriggerHelloWorld() {
     try {
-      await novu.notifications.triggerHelloWorldEvent();
+      await novuAccessor().notifications.triggerHelloWorldEvent();
       // TODO: maybe add some user feedback on success?
     } catch (error) {
       // Error is already logged by the service, but you could add UI feedback here
@@ -77,7 +77,7 @@ export const Footer = () => {
               target="_blank"
               class="nt-z-10 nt-flex nt-items-center nt-gap-1 nt-justify-center"
             >
-              <span class="nt-text-xs">Inbox by</span>
+              <span class="nt-text-xs">{props.name ? `${props.name} by` : 'Inbox by'}</span>
               <Novu class="nt-size-2.5" />
               <span class="nt-text-xs">Novu</span>
             </a>

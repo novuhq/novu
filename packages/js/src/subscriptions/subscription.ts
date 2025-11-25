@@ -1,0 +1,94 @@
+import { SubscriptionsCache } from 'src/cache/subscriptions-cache';
+import type { InboxService } from '../api';
+import type { NovuEventEmitter } from '../event-emitter';
+import type { Result, SubscriptionResponse } from '../types';
+import { NovuError } from '../utils/errors';
+import { bulkUpdateSubscriptionPreference, deleteSubscription, updateSubscriptionPreference } from './helpers';
+import { SubscriptionPreference } from './subscription-preference';
+import type {
+  BaseSubscriptionPreferenceArgs,
+  InstanceSubscriptionPreferenceArgs,
+  UpdateSubscriptionPreferenceArgs,
+} from './types';
+
+export class TopicSubscription {
+  #emitter: NovuEventEmitter;
+  #inboxService: InboxService;
+  #cache: SubscriptionsCache;
+  #useCache: boolean;
+  #isStale: boolean = false;
+
+  readonly id: string;
+  readonly identifier: string;
+  readonly topicKey: string;
+  readonly preferences: Array<SubscriptionPreference>;
+
+  constructor(
+    subscription: SubscriptionResponse & { topicKey: string },
+    emitter: NovuEventEmitter,
+    inboxService: InboxService,
+    cache: SubscriptionsCache,
+    useCache: boolean
+  ) {
+    this.#emitter = emitter;
+    this.#inboxService = inboxService;
+    this.#cache = cache;
+    this.#useCache = useCache;
+    this.id = subscription.id;
+    this.identifier = subscription.identifier;
+    this.topicKey = subscription.topicKey;
+    this.preferences = subscription.preferences.map(
+      (pref) => new SubscriptionPreference({ ...pref }, this.#emitter, this.#inboxService, this.#cache, this.#useCache)
+    );
+  }
+
+  async updatePreference(args: BaseSubscriptionPreferenceArgs): Result<SubscriptionPreference>;
+  async updatePreference(args: InstanceSubscriptionPreferenceArgs): Result<SubscriptionPreference>;
+  async updatePreference(args: UpdateSubscriptionPreferenceArgs): Result<SubscriptionPreference> {
+    if (this.#isStale) {
+      return {
+        error: new NovuError('Cannot update a deleted subscription', new Error('Subscription is stale')),
+      };
+    }
+
+    return updateSubscriptionPreference({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      cache: this.#cache,
+      useCache: this.#useCache,
+      args: { ...args, subscriptionId: this.id },
+    });
+  }
+
+  async bulkUpdate(args: Array<BaseSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>;
+  async bulkUpdate(args: Array<InstanceSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>;
+  async bulkUpdate(args: Array<UpdateSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]> {
+    if (this.#isStale) {
+      return {
+        error: new NovuError('Cannot bulk update a deleted subscription', new Error('Subscription is stale')),
+      };
+    }
+
+    return bulkUpdateSubscriptionPreference({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      cache: this.#cache,
+      useCache: this.#useCache,
+      args: args.map((arg) => ({ ...arg, subscriptionId: this.id })),
+    });
+  }
+
+  async delete(): Result<void> {
+    if (this.#isStale) {
+      return {
+        error: new NovuError('Cannot delete an already deleted subscription', new Error('Subscription is stale')),
+      };
+    }
+
+    return deleteSubscription({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      args: { subscription: this },
+    });
+  }
+}

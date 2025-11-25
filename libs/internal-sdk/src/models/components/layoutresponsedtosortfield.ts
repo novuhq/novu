@@ -13,20 +13,5 @@ export const LayoutResponseDtoSortField = {
 export type LayoutResponseDtoSortField = ClosedEnum<typeof LayoutResponseDtoSortField>;
 
 /** @internal */
-export const LayoutResponseDtoSortField$inboundSchema: z.ZodNativeEnum<typeof LayoutResponseDtoSortField> =
-  z.nativeEnum(LayoutResponseDtoSortField);
-
-/** @internal */
 export const LayoutResponseDtoSortField$outboundSchema: z.ZodNativeEnum<typeof LayoutResponseDtoSortField> =
-  LayoutResponseDtoSortField$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutResponseDtoSortField$ {
-  /** @deprecated use `LayoutResponseDtoSortField$inboundSchema` instead. */
-  export const inboundSchema = LayoutResponseDtoSortField$inboundSchema;
-  /** @deprecated use `LayoutResponseDtoSortField$outboundSchema` instead. */
-  export const outboundSchema = LayoutResponseDtoSortField$outboundSchema;
-}
+  z.nativeEnum(LayoutResponseDtoSortField);

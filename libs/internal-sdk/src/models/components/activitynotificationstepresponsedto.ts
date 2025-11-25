@@ -7,18 +7,8 @@ import { remap as remap$ } from '../../lib/primitives.js';
 import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
-import {
-  MessageTemplateDto,
-  MessageTemplateDto$inboundSchema,
-  MessageTemplateDto$Outbound,
-  MessageTemplateDto$outboundSchema,
-} from './messagetemplatedto.js';
-import {
-  StepFilterDto,
-  StepFilterDto$inboundSchema,
-  StepFilterDto$Outbound,
-  StepFilterDto$outboundSchema,
-} from './stepfilterdto.js';
+import { MessageTemplateDto, MessageTemplateDto$inboundSchema } from './messagetemplatedto.js';
+import { StepFilterDto, StepFilterDto$inboundSchema } from './stepfilterdto.js';
 
 /**
  * Reply callback settings
@@ -98,39 +88,6 @@ export const ActivityNotificationStepResponseDtoReplyCallback$inboundSchema: z.Z
   unknown
 > = z.object({});
 
-/** @internal */
-export type ActivityNotificationStepResponseDtoReplyCallback$Outbound = {};
-
-/** @internal */
-export const ActivityNotificationStepResponseDtoReplyCallback$outboundSchema: z.ZodType<
-  ActivityNotificationStepResponseDtoReplyCallback$Outbound,
-  z.ZodTypeDef,
-  ActivityNotificationStepResponseDtoReplyCallback
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityNotificationStepResponseDtoReplyCallback$ {
-  /** @deprecated use `ActivityNotificationStepResponseDtoReplyCallback$inboundSchema` instead. */
-  export const inboundSchema = ActivityNotificationStepResponseDtoReplyCallback$inboundSchema;
-  /** @deprecated use `ActivityNotificationStepResponseDtoReplyCallback$outboundSchema` instead. */
-  export const outboundSchema = ActivityNotificationStepResponseDtoReplyCallback$outboundSchema;
-  /** @deprecated use `ActivityNotificationStepResponseDtoReplyCallback$Outbound` instead. */
-  export type Outbound = ActivityNotificationStepResponseDtoReplyCallback$Outbound;
-}
-
-export function activityNotificationStepResponseDtoReplyCallbackToJSON(
-  activityNotificationStepResponseDtoReplyCallback: ActivityNotificationStepResponseDtoReplyCallback
-): string {
-  return JSON.stringify(
-    ActivityNotificationStepResponseDtoReplyCallback$outboundSchema.parse(
-      activityNotificationStepResponseDtoReplyCallback
-    )
-  );
-}
-
 export function activityNotificationStepResponseDtoReplyCallbackFromJSON(
   jsonString: string
 ): SafeParseResult<ActivityNotificationStepResponseDtoReplyCallback, SDKValidationError> {
@@ -143,30 +100,6 @@ export function activityNotificationStepResponseDtoReplyCallbackFromJSON(
 
 /** @internal */
 export const ControlVariables$inboundSchema: z.ZodType<ControlVariables, z.ZodTypeDef, unknown> = z.object({});
-
-/** @internal */
-export type ControlVariables$Outbound = {};
-
-/** @internal */
-export const ControlVariables$outboundSchema: z.ZodType<ControlVariables$Outbound, z.ZodTypeDef, ControlVariables> =
-  z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ControlVariables$ {
-  /** @deprecated use `ControlVariables$inboundSchema` instead. */
-  export const inboundSchema = ControlVariables$inboundSchema;
-  /** @deprecated use `ControlVariables$outboundSchema` instead. */
-  export const outboundSchema = ControlVariables$outboundSchema;
-  /** @deprecated use `ControlVariables$Outbound` instead. */
-  export type Outbound = ControlVariables$Outbound;
-}
-
-export function controlVariablesToJSON(controlVariables: ControlVariables): string {
-  return JSON.stringify(ControlVariables$outboundSchema.parse(controlVariables));
-}
 
 export function controlVariablesFromJSON(jsonString: string): SafeParseResult<ControlVariables, SDKValidationError> {
   return safeParse(
@@ -183,37 +116,6 @@ export const ActivityNotificationStepResponseDtoMetadata$inboundSchema: z.ZodTyp
   unknown
 > = z.object({});
 
-/** @internal */
-export type ActivityNotificationStepResponseDtoMetadata$Outbound = {};
-
-/** @internal */
-export const ActivityNotificationStepResponseDtoMetadata$outboundSchema: z.ZodType<
-  ActivityNotificationStepResponseDtoMetadata$Outbound,
-  z.ZodTypeDef,
-  ActivityNotificationStepResponseDtoMetadata
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityNotificationStepResponseDtoMetadata$ {
-  /** @deprecated use `ActivityNotificationStepResponseDtoMetadata$inboundSchema` instead. */
-  export const inboundSchema = ActivityNotificationStepResponseDtoMetadata$inboundSchema;
-  /** @deprecated use `ActivityNotificationStepResponseDtoMetadata$outboundSchema` instead. */
-  export const outboundSchema = ActivityNotificationStepResponseDtoMetadata$outboundSchema;
-  /** @deprecated use `ActivityNotificationStepResponseDtoMetadata$Outbound` instead. */
-  export type Outbound = ActivityNotificationStepResponseDtoMetadata$Outbound;
-}
-
-export function activityNotificationStepResponseDtoMetadataToJSON(
-  activityNotificationStepResponseDtoMetadata: ActivityNotificationStepResponseDtoMetadata
-): string {
-  return JSON.stringify(
-    ActivityNotificationStepResponseDtoMetadata$outboundSchema.parse(activityNotificationStepResponseDtoMetadata)
-  );
-}
-
 export function activityNotificationStepResponseDtoMetadataFromJSON(
   jsonString: string
 ): SafeParseResult<ActivityNotificationStepResponseDtoMetadata, SDKValidationError> {
@@ -226,29 +128,6 @@ export function activityNotificationStepResponseDtoMetadataFromJSON(
 
 /** @internal */
 export const Issues$inboundSchema: z.ZodType<Issues, z.ZodTypeDef, unknown> = z.object({});
-
-/** @internal */
-export type Issues$Outbound = {};
-
-/** @internal */
-export const Issues$outboundSchema: z.ZodType<Issues$Outbound, z.ZodTypeDef, Issues> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Issues$ {
-  /** @deprecated use `Issues$inboundSchema` instead. */
-  export const inboundSchema = Issues$inboundSchema;
-  /** @deprecated use `Issues$outboundSchema` instead. */
-  export const outboundSchema = Issues$outboundSchema;
-  /** @deprecated use `Issues$Outbound` instead. */
-  export type Outbound = Issues$Outbound;
-}
-
-export function issuesToJSON(issues: Issues): string {
-  return JSON.stringify(Issues$outboundSchema.parse(issues));
-}
 
 export function issuesFromJSON(jsonString: string): SafeParseResult<Issues, SDKValidationError> {
   return safeParse(jsonString, (x) => Issues$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Issues' from JSON`);
@@ -281,69 +160,6 @@ export const ActivityNotificationStepResponseDto$inboundSchema: z.ZodType<
       _parentId: 'parentId',
     });
   });
-
-/** @internal */
-export type ActivityNotificationStepResponseDto$Outbound = {
-  _id: string;
-  active: boolean;
-  replyCallback?: ActivityNotificationStepResponseDtoReplyCallback$Outbound | undefined;
-  controlVariables?: ControlVariables$Outbound | undefined;
-  metadata?: ActivityNotificationStepResponseDtoMetadata$Outbound | undefined;
-  issues?: Issues$Outbound | undefined;
-  filters: Array<StepFilterDto$Outbound>;
-  template?: MessageTemplateDto$Outbound | undefined;
-  variants?: Array<ActivityNotificationStepResponseDto$Outbound> | undefined;
-  _templateId: string;
-  name?: string | undefined;
-  _parentId?: string | null | undefined;
-};
-
-/** @internal */
-export const ActivityNotificationStepResponseDto$outboundSchema: z.ZodType<
-  ActivityNotificationStepResponseDto$Outbound,
-  z.ZodTypeDef,
-  ActivityNotificationStepResponseDto
-> = z
-  .object({
-    id: z.string(),
-    active: z.boolean(),
-    replyCallback: z.lazy(() => ActivityNotificationStepResponseDtoReplyCallback$outboundSchema).optional(),
-    controlVariables: z.lazy(() => ControlVariables$outboundSchema).optional(),
-    metadata: z.lazy(() => ActivityNotificationStepResponseDtoMetadata$outboundSchema).optional(),
-    issues: z.lazy(() => Issues$outboundSchema).optional(),
-    filters: z.array(StepFilterDto$outboundSchema),
-    template: MessageTemplateDto$outboundSchema.optional(),
-    variants: z.array(z.lazy(() => ActivityNotificationStepResponseDto$outboundSchema)).optional(),
-    templateId: z.string(),
-    name: z.string().optional(),
-    parentId: z.nullable(z.string()).optional(),
-  })
-  .transform((v) => {
-    return remap$(v, {
-      id: '_id',
-      templateId: '_templateId',
-      parentId: '_parentId',
-    });
-  });
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ActivityNotificationStepResponseDto$ {
-  /** @deprecated use `ActivityNotificationStepResponseDto$inboundSchema` instead. */
-  export const inboundSchema = ActivityNotificationStepResponseDto$inboundSchema;
-  /** @deprecated use `ActivityNotificationStepResponseDto$outboundSchema` instead. */
-  export const outboundSchema = ActivityNotificationStepResponseDto$outboundSchema;
-  /** @deprecated use `ActivityNotificationStepResponseDto$Outbound` instead. */
-  export type Outbound = ActivityNotificationStepResponseDto$Outbound;
-}
-
-export function activityNotificationStepResponseDtoToJSON(
-  activityNotificationStepResponseDto: ActivityNotificationStepResponseDto
-): string {
-  return JSON.stringify(ActivityNotificationStepResponseDto$outboundSchema.parse(activityNotificationStepResponseDto));
-}
 
 export function activityNotificationStepResponseDtoFromJSON(
   jsonString: string

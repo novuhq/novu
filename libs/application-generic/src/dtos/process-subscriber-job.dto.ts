@@ -13,7 +13,6 @@ import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.servic
 
 export interface IProcessSubscriberDataDto {
   environmentId: string;
-  environmentName: string;
   organizationId: string;
   userId: string;
   transactionId: string;

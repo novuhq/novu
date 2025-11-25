@@ -70,7 +70,12 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
   { ...schemaOptions, minimize: false }
 );
 
-preferencesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+preferencesSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  deletedBy: true,
+  overrideMethods: 'all',
+  use$neOperator: false,
+});
 
 // Subscriber Global Preferences
 // Ensures one global preference per subscriber (SUBSCRIBER_GLOBAL type)
@@ -126,6 +131,31 @@ preferencesSchema.index(
     },
   }
 );
+
+preferencesSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _subscriberId: 1,
+  _templateId: 1,
+  type: 1,
+  deleted: 1,
+});
+
+preferencesSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _subscriberId: 1,
+  type: 1,
+  deleted: 1,
+});
+
+preferencesSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _templateId: 1,
+  type: 1,
+  deleted: 1,
+});
 
 export const Preferences =
   (mongoose.models.Preferences as mongoose.Model<PreferencesDBModel>) ||
