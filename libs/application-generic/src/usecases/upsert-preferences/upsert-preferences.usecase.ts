@@ -31,6 +31,7 @@ type UpsertPreferencesCommand = Omit<
   environmentId: string;
   type: PreferencesTypeEnum;
   preferences: WorkflowPreferencesPartial;
+  topicSubscriptionId?: string;
 };
 
 @Injectable()
@@ -135,6 +136,20 @@ export class UpsertPreferences {
     return result as WorkflowPreferencesFull;
   }
 
+  @Instrument()
+  public async upsertTopicSubscriptionPreferences(command: UpsertSubscriberWorkflowPreferencesCommand) {
+    return this.upsert({
+      _subscriberId: command._subscriberId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      preferences: command.preferences,
+      templateId: command.templateId,
+      topicSubscriptionId: command.topicSubscriptionId,
+      type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      returnPreference: command.returnPreference,
+    });
+  }
+
   private async upsert(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
     const foundPreference = await this.getPreference(command);
 
@@ -152,6 +167,7 @@ export class UpsertPreferences {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _templateId: command.templateId,
+      _topicSubscriptionId: command.topicSubscriptionId,
       preferences: command.preferences,
       type: command.type,
       schedule: command.schedule,
@@ -188,20 +204,12 @@ export class UpsertPreferences {
     return undefined;
   }
 
-  private async deletePreferences(command: UpsertPreferencesCommand, preferencesId: string) {
-    return await this.preferencesRepository.delete({
-      _id: preferencesId,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      _templateId: command.templateId,
-    });
-  }
-
   private async getPreference(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
     return await this.preferencesRepository.findOne({
-      _subscriberId: command._subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      _subscriberId: command._subscriberId,
+      _topicSubscriptionId: command.topicSubscriptionId,
       _templateId: command.templateId,
       type: command.type,
     });

@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsDefined, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import { RulesLogic } from 'json-logic-js';
+import { WorkflowDto } from '../../../inbox/dtos/workflow.dto';
 
 export class TopicDto {
   @ApiProperty({
@@ -89,7 +92,45 @@ export class SubscriberDto {
   updatedAt?: string;
 }
 
-export class SubscriptionDto {
+export class SubscriptionPreferenceDto {
+  @ApiProperty({
+    description: 'The unique identifier of the subscription',
+    example: '64f5e95d3d7946d80d0cb679',
+  })
+  @IsString()
+  subscriptionId: string;
+
+  @ApiPropertyOptional({
+    type: () => WorkflowDto,
+    description: 'Workflow information if this is a template-level preference',
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => WorkflowDto)
+  workflow?: WorkflowDto;
+
+  @ApiProperty({
+    type: Boolean,
+    description: 'Whether the preference is enabled',
+    example: true,
+  })
+  @IsDefined()
+  enabled: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Optional condition using JSON Logic rules',
+    required: false,
+    type: 'object',
+    additionalProperties: true,
+    example: { and: [{ '===': [{ var: 'tier' }, 'premium'] }] },
+  })
+  @ValidateIf((o) => o.condition !== undefined)
+  @IsOptional()
+  condition?: RulesLogic;
+}
+
+export class SubscriptionResponseDto {
   @ApiProperty({
     description: 'The unique identifier of the subscription',
     example: '64f5e95d3d7946d80d0cb679',
@@ -98,17 +139,41 @@ export class SubscriptionDto {
   _id: string;
 
   @ApiProperty({
+    description: 'The identifier of the subscription',
+    example: 'tk=product-updates:si=subscriber-123',
+  })
+  @IsString()
+  @IsOptional()
+  identifier?: string;
+
+  @ApiPropertyOptional({
+    description: 'The name of the subscription',
+    example: 'My Subscription',
+  })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiProperty({
     description: 'The topic information',
-    type: TopicDto,
+    type: () => TopicDto,
   })
   topic: TopicDto;
 
   @ApiProperty({
     description: 'The subscriber information',
-    type: SubscriberDto,
+    type: () => SubscriberDto,
     nullable: true,
   })
   subscriber: SubscriberDto | null;
+
+  @ApiPropertyOptional({
+    description: 'The preferences for workflows in this subscription',
+    type: () => [SubscriptionPreferenceDto],
+  })
+  @IsArray()
+  @IsOptional()
+  preferences?: SubscriptionPreferenceDto[];
 
   @ApiProperty({
     description: 'The creation date of the subscription',
@@ -163,12 +228,12 @@ export class MetaDto {
   failed: number;
 }
 
-export class CreateTopicSubscriptionsResponseDto {
+export class CreateSubscriptionsResponseDto {
   @ApiProperty({
     description: 'The list of successfully created subscriptions',
-    type: [SubscriptionDto],
+    type: () => [SubscriptionResponseDto],
   })
-  data: SubscriptionDto[];
+  data: SubscriptionResponseDto[];
 
   @ApiProperty({
     description: 'Metadata about the operation',

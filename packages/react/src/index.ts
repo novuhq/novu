@@ -13,6 +13,7 @@ export type {
   NovuOptions,
   Preference,
   PreferencesResponse,
+  RulesLogic,
   SocketEventNames,
   UnreadCount,
   WebSocketEvent,
@@ -79,7 +80,15 @@ export type {
   UsePreferencesResult,
   UseScheduleProps as UsePreferencesProps,
 } from './hooks';
-export { useCounts, useNotifications, useNovu, usePreferences, useSchedule } from './hooks';
+export {
+  useCounts,
+  useNotifications,
+  useNovu,
+  usePreferences,
+  useSchedule,
+  useSubscription,
+  useSubscriptions,
+} from './hooks';
 
 export type {
   BaseProps,
