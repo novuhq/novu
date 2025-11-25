@@ -26,6 +26,7 @@ export class GetWorkflowWithPreferencesUseCase {
       organizationId: command.organizationId,
       userId: command.userId,
       session: command.session,
+      includeUpdatedBy: true,
     });
 
     const workflowPreferences = await this.getWorkflowPreferences(command, workflowEntity);
