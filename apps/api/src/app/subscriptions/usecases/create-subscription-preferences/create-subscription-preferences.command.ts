@@ -1,11 +1,14 @@
 import { NotificationTemplateEntity } from '@novu/dal';
-import { IsArray, IsDefined, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsDefined, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { GroupPreferenceFilterDto } from '../../../shared/dtos/subscriptions/create-subscriptions.dto';
 
 export class CreateSubscriptionPreferencesCommand extends EnvironmentWithUserCommand {
   @IsArray()
   @IsDefined()
+  @ValidateNested({ each: true })
+  @Type(() => GroupPreferenceFilterDto)
   preferences: GroupPreferenceFilterDto[];
 
   @IsDefined()
@@ -18,5 +21,7 @@ export class CreateSubscriptionPreferencesCommand extends EnvironmentWithUserCom
 
   @IsArray()
   @IsDefined()
+  @ValidateNested({ each: true })
+  @Type(() => NotificationTemplateEntity)
   workflows: NotificationTemplateEntity[];
 }

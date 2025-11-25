@@ -1,24 +1,44 @@
 import { EnvironmentEntity, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { PreferenceLevelEnum, Schedule } from '@novu/shared';
-import { IsBoolean, IsDefined, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsDefined,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 import { RulesLogic } from 'json-logic-js';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 class AllPreferences {
+  @IsOptional()
+  @IsBoolean()
   enabled?: boolean;
+
+  @IsOptional()
+  @IsObject()
   condition?: RulesLogic;
 }
 
 export class UpdatePreferencesCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @ValidateIf((object) => object.level === PreferenceLevelEnum.TEMPLATE)
+  @IsString()
   readonly workflowIdOrIdentifier?: string;
 
   @IsOptional()
   @ValidateIf((object) => object.level === PreferenceLevelEnum.TEMPLATE)
+  @IsString()
   readonly subscriptionIdOrIdentifier?: string;
 
-  all?: AllPreferences;
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AllPreferences)
+  readonly all?: AllPreferences;
 
   @IsOptional()
   @IsBoolean()

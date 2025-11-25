@@ -36,6 +36,8 @@ export class CreateTopicSubscriptionsRequestDto {
     ],
   })
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Object)
   @IsOptional()
   @ArrayMaxSize(100, { message: 'Cannot subscribe more than 100 subscriptions at once' })
   @ArrayMinSize(1, { message: 'At least one subscription is required' })
