@@ -402,7 +402,9 @@ export class ParseEventRequest {
   }) {
     return await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
-      command.triggerIdentifier
+      command.triggerIdentifier,
+      undefined,
+      true
     );
   }
 

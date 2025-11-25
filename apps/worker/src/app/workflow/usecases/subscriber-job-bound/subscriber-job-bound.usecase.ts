@@ -65,7 +65,6 @@ export class SubscriberJobBound {
       identifier,
       _subscriberSource,
       requestCategory,
-      environmentName,
       topics,
       contextKeys,
     } = command;
@@ -105,9 +104,9 @@ export class SubscriberJobBound {
       source: command.payload.__source || 'api',
       subscriberSource: _subscriberSource || null,
       requestCategory: requestCategory || null,
-      environmentName,
       statelessWorkflow: !!command.bridge?.url,
     });
+
     const subscriberProcessed = await this.createOrUpdateSubscriberUsecase.execute(
       CreateOrUpdateSubscriberCommand.create({
         environmentId,

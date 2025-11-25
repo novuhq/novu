@@ -76,15 +76,22 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntities(items);
   }
 
-  async findByTriggerIdentifier(environmentId: string, identifier: string, session?: ClientSession | null) {
+  async findByTriggerIdentifier(
+    environmentId: string,
+    identifier: string,
+    session?: ClientSession | null,
+    skipUpdatedBy: boolean = false
+  ) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       'triggers.identifier': identifier,
     };
 
-    const query = this.MongooseModel.findOne(requestQuery, undefined, { session })
-      .populate('steps.template')
-      .populate('updatedBy');
+    const query = this.MongooseModel.findOne(requestQuery, undefined, { session }).populate('steps.template');
+
+    if (!skipUpdatedBy) {
+      query.populate('updatedBy');
+    }
 
     const item = await query;
 

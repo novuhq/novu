@@ -9,12 +9,14 @@ import { CreateChannelConnection } from '../../channel-connections/usecases/crea
 import { CreateChannelEndpoint } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { AutoConfigureIntegration } from './auto-configure-integration/auto-configure-integration.usecase';
 import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.usecase';
+import { MsTeamsOauthCallback } from './chat-oauth-callback/msteams-oauth-callback/msteams-oauth-callback.usecase';
 import { SlackOauthCallback } from './chat-oauth-callback/slack-oauth-callback/slack-oauth-callback.usecase';
 import { CheckIntegration } from './check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
 import { CreateIntegration } from './create-integration/create-integration.usecase';
 import { CreateNovuIntegrations } from './create-novu-integrations/create-novu-integrations.usecase';
 import { GenerateChatOauthUrl } from './generate-chat-oath-url/generate-chat-oauth-url.usecase';
+import { GenerateMsTeamsOauthUrl } from './generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
 import { GenerateSlackOauthUrl } from './generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 import { GetActiveIntegrations } from './get-active-integration/get-active-integration.usecase';
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
@@ -44,7 +46,9 @@ export const USE_CASES = [
   NormalizeVariables,
   GenerateChatOauthUrl,
   GenerateSlackOauthUrl,
+  GenerateMsTeamsOauthUrl,
   SlackOauthCallback,
+  MsTeamsOauthCallback,
   ChatOauthCallback,
   CreateChannelConnection,
   CreateChannelEndpoint,
