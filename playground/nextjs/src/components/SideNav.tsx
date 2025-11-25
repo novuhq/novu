@@ -16,6 +16,7 @@ const LINKS: LinkType[] = [
   { href: '/preferences', label: 'Preferences', category: 'Components' },
   { href: '/subscription', label: 'Subscription', category: 'Components' },
   { href: '/subscription-components', label: 'Subscription Components', category: 'Components' },
+  { href: '/subscription-hooks', label: 'Subscription Hooks', category: 'Components' },
   { href: '/novu-theme', label: 'Novu Theme', category: 'Customization' },
   { href: '/custom-popover', label: 'Custom Popover', category: 'Customization' },
   { href: '/custom-subject-body', label: 'Custom Subject Body', category: 'Customization' },

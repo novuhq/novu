@@ -6,13 +6,21 @@ import {
   TriggerEventRequestDto,
   TriggerRecipientsTypeEnum,
 } from '@novu/api/models/components';
-import { MessageRepository, NotificationRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import {
+  MessageRepository,
+  NotificationRepository,
+  NotificationTemplateEntity,
+  PreferencesRepository,
+  SubscriberEntity,
+  TopicSubscribersRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   DigestTypeEnum,
   DigestUnitEnum,
   ExternalSubscriberId,
   IEmailBlock,
+  PreferencesTypeEnum,
   StepTypeEnum,
   TopicKey,
   TopicName,
@@ -33,6 +41,8 @@ describe('Topic Trigger Event #novu-v2', () => {
     let to: Array<TopicPayloadDto | SubscriberPayloadDto | string>;
     const notificationRepository = new NotificationRepository();
     const messageRepository = new MessageRepository();
+    const preferencesRepository = new PreferencesRepository();
+    const topicSubscribersRepository = new TopicSubscribersRepository();
     let novuClient: Novu;
 
     beforeEach(async () => {
@@ -342,6 +352,422 @@ describe('Topic Trigger Event #novu-v2', () => {
         expect(message?._subscriberId.toString()).to.be.eql(subscriber._id);
         expect(message?.phone).to.equal(subscriber.phone);
       }
+    });
+
+    it('should deliver only to subscriptions with passing conditions', async () => {
+      const conditionsTopicKey = `topic-key-conditions-${Date.now()}`;
+
+      const newSubscriber = await subscriberService.createSubscriber();
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [newSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              enabled: false,
+              condition: {
+                and: [
+                  {
+                    '==': [
+                      {
+                        var: 'payload.status',
+                      },
+                      'completed',
+                    ],
+                  },
+                  {
+                    '>': [
+                      {
+                        var: 'payload.price',
+                      },
+                      100,
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        } as any,
+        conditionsTopicKey
+      );
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [secondSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              enabled: false,
+              condition: {
+                '==': [
+                  {
+                    var: 'payload.status',
+                  },
+                  'failed',
+                ],
+              },
+            },
+          ],
+        } as any,
+        conditionsTopicKey
+      );
+
+      const toWithConditions = [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: conditionsTopicKey }];
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: toWithConditions,
+        payload: { status: 'completed', price: 150 },
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const passMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: newSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(passMessages.length, 'Passed Subscription Messages, expected to deliver the message').to.equal(1);
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: toWithConditions,
+        payload: { status: 'not-completed', price: 150 },
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const filteredSubscriptionMessage = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: newSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+      expect(
+        filteredSubscriptionMessage.length,
+        'Filtered Subscription Messages, expected to not deliver the message'
+      ).to.equal(1);
+
+      const secondSubscriberMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: secondSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(
+        secondSubscriberMessages.length,
+        'Second subscriber should not receive messages as condition did not match'
+      ).to.equal(0);
+
+      const booleanConditionTopicKey = `topic-key-boolean-conditions-${Date.now()}`;
+      const booleanTrueSubscriber = await subscriberService.createSubscriber();
+      const booleanFalseSubscriber = await subscriberService.createSubscriber();
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [booleanTrueSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              enabled: true,
+            },
+          ],
+        } as any,
+        booleanConditionTopicKey
+      );
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [booleanFalseSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              enabled: false,
+            },
+          ],
+        } as any,
+        booleanConditionTopicKey
+      );
+
+      const toWithBooleanConditions = [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: booleanConditionTopicKey }];
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: toWithBooleanConditions,
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const booleanTrueMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: booleanTrueSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(booleanTrueMessages.length, 'Enabled true - expected to deliver the message').to.equal(1);
+
+      const booleanFalseMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: booleanFalseSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(booleanFalseMessages.length, 'Enabled false - expected to not deliver the message').to.equal(0);
+    });
+
+    it('should filter subscriptions by tags and combined workflow filters', async () => {
+      const taggedTemplate = await session.createTemplate({
+        tags: ['important', 'promotional'],
+      });
+
+      await session.createTemplate({
+        tags: ['nonexistent-tag'],
+      });
+
+      const subscriberWithTagFilter = await subscriberService.createSubscriber();
+      const subscriberWithCombinedFilter = await subscriberService.createSubscriber();
+      const subscriberWithMisconfiguredTagFilter = await subscriberService.createSubscriber();
+
+      const testCases = [
+        {
+          name: 'tag filter',
+          topicKey: `topic-key-tag-filter-${Date.now()}`,
+          subscriber: subscriberWithTagFilter,
+          preferences: [
+            {
+              filter: { tags: ['important'] },
+              condition: { '==': [{ var: 'payload.status' }, 'active'] },
+            },
+          ],
+          triggerPayload: { status: 'active' },
+          expectedMessageCount: 1,
+          description: 'Tag filter should deliver when tag matches',
+        },
+        {
+          name: 'combined filter',
+          topicKey: `topic-key-combined-filter-${Date.now()}`,
+          subscriber: subscriberWithCombinedFilter,
+          preferences: [
+            {
+              filter: { workflowIds: [taggedTemplate._id], tags: ['promotional'] },
+              enabled: true,
+            },
+          ],
+          triggerPayload: {},
+          expectedMessageCount: 1,
+          description: 'Combined filter should deliver when both workflow ID and tag match',
+        },
+        {
+          name: 'misconfigured tag filter',
+          topicKey: `topic-key-misconfigured-tag-filter-${Date.now()}`,
+          subscriber: subscriberWithMisconfiguredTagFilter,
+          preferences: [
+            {
+              filter: { tags: ['nonexistent-tag'] },
+              condition: { '==': [{ var: 'payload.status' }, 'active'] },
+            },
+          ],
+          triggerPayload: { status: 'active' },
+          expectedMessageCount: 1,
+          description: 'Misconfigured tag filter should deliver, because we have global preferences.',
+        },
+      ];
+
+      for (const testCase of testCases) {
+        await novuClient.topics.subscriptions.create(
+          {
+            subscriberIds: [testCase.subscriber.subscriberId],
+            preferences: testCase.preferences,
+          } as any,
+          testCase.topicKey
+        );
+
+        await novuClient.trigger({
+          workflowId: taggedTemplate.triggers[0].identifier,
+          to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: testCase.topicKey }],
+          payload: testCase.triggerPayload,
+        });
+
+        await session.waitForJobCompletion(taggedTemplate._id);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: testCase.subscriber._id,
+          _templateId: taggedTemplate._id,
+          channel: ChannelTypeEnum.IN_APP,
+        });
+
+        expect(messages.length, testCase.description).to.equal(testCase.expectedMessageCount);
+      }
+    });
+
+    it('should test subscription fallback to workflow preference', async () => {
+      const tag = 'alert';
+      const topicKey = `topic-key-dynamic-pref-${Date.now()}`;
+      const subscriber = await subscriberService.createSubscriber();
+
+      // Setup: Create initial workflow and topic subscription with tag filter
+      const initialWorkflow = await session.createTemplate({ tags: [tag] });
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber.subscriberId],
+          preferences: [
+            {
+              filter: { tags: [tag] },
+              enabled: true,
+            },
+          ],
+        } as any,
+        topicKey
+      );
+
+      const topicSubscription = await topicSubscribersRepository.findOne({
+        _environmentId: session.environment._id,
+        topicKey: topicKey,
+        _subscriberId: subscriber._id,
+      });
+      if (!topicSubscription) throw new Error('Topic subscription not found');
+
+      // Verify preference was created for the initial workflow
+      const initialPreferences = await preferencesRepository.find({
+        _environmentId: session.environment._id,
+        _topicSubscriptionId: topicSubscription._id,
+      });
+
+      expect(initialPreferences.length).to.equal(1);
+      expect(initialPreferences[0]._templateId?.toString()).to.equal(initialWorkflow._id);
+
+      // Test: Create new workflow with same tag and verify fallback to workflow defaults (enabled)
+      const newWorkflow = await session.createTemplate({
+        tags: [tag],
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'Test content for <b>{{firstName}}</b>',
+          },
+        ],
+      });
+
+      await novuClient.trigger({
+        workflowId: newWorkflow.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: topicKey }],
+        payload: { text: 'test message' },
+      });
+      await session.waitForJobCompletion(newWorkflow._id);
+      const messagesAfterFirstTrigger = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: newWorkflow._id,
+        _subscriberId: subscriber._id,
+      });
+
+      expect(messagesAfterFirstTrigger.length).to.equal(1);
+
+      // Test: Disable workflow preferences and verify fallback respects disabled state
+      const workflowPreference = await preferencesRepository.findOne({
+        _templateId: newWorkflow._id,
+        _environmentId: session.environment._id,
+        type: PreferencesTypeEnum.USER_WORKFLOW,
+      });
+      if (!workflowPreference) throw new Error('Workflow preference should exist');
+      const disabledPreferences = {
+        all: { enabled: false },
+        channels: {
+          [ChannelTypeEnum.EMAIL]: { enabled: false },
+          [ChannelTypeEnum.SMS]: { enabled: false },
+          [ChannelTypeEnum.IN_APP]: { enabled: false },
+          [ChannelTypeEnum.CHAT]: { enabled: false },
+          [ChannelTypeEnum.PUSH]: { enabled: false },
+        },
+      };
+      await preferencesRepository.update(
+        {
+          _id: workflowPreference._id,
+          _environmentId: session.environment._id,
+        },
+        { $set: { preferences: disabledPreferences } }
+      );
+
+      await novuClient.trigger({
+        workflowId: newWorkflow.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: topicKey }],
+        payload: { text: 'test message 2' },
+      });
+      await session.waitForJobCompletion(newWorkflow._id);
+      const messagesAfterDisabledWorkflow = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: newWorkflow._id,
+        _subscriberId: subscriber._id,
+      });
+      expect(messagesAfterDisabledWorkflow.length, 'Should have 1 message after disabled workflow').to.equal(1);
+
+      // Test: Update subscription to create explicit preference and verify it overrides workflow defaults
+      await novuClient.topics.subscriptions.update({
+        topicKey,
+        subscriptionId: topicSubscription._id,
+        updateTopicSubscriptionRequestDto: {
+          preferences: [
+            {
+              filter: { tags: [tag] },
+              enabled: true,
+            },
+          ],
+        },
+      });
+      const preferencesAfterUpdate = await preferencesRepository.find({
+        _environmentId: session.environment._id,
+        _topicSubscriptionId: topicSubscription._id,
+      });
+      expect(preferencesAfterUpdate.length, 'Should have 2 preferences after update').to.equal(2);
+
+      // Re-enable workflow preferences to allow final trigger to succeed
+      await preferencesRepository.update(
+        {
+          _id: workflowPreference._id,
+          _environmentId: session.environment._id,
+        },
+        {
+          $set: {
+            preferences: {
+              all: { enabled: true },
+              channels: {
+                [ChannelTypeEnum.EMAIL]: { enabled: true },
+                [ChannelTypeEnum.SMS]: { enabled: true },
+                [ChannelTypeEnum.IN_APP]: { enabled: true },
+                [ChannelTypeEnum.CHAT]: { enabled: true },
+                [ChannelTypeEnum.PUSH]: { enabled: true },
+              },
+            },
+          },
+        }
+      );
+
+      await novuClient.trigger({
+        workflowId: newWorkflow.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: topicKey }],
+        payload: { text: 'test message 3' },
+      });
+      await session.waitForJobCompletion(newWorkflow._id);
+      const messagesAfterFinalTrigger = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: newWorkflow._id,
+        _subscriberId: subscriber._id,
+      });
+
+      expect(messagesAfterFinalTrigger.length, 'Should have 2 messages after final trigger').to.equal(2);
     });
   });
 

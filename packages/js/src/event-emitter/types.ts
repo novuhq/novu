@@ -150,7 +150,7 @@ export type Events = SessionInitializeEvents &
   SubscriptionUpdateEvents &
   SubscriptionPreferencesBulkUpdateEvents &
   SubscriptionDeleteEvents & {
-    'subscriptions.list.updated': { data: TopicSubscription[] };
+    'subscriptions.list.updated': { data: { topicKey: string; subscriptions: TopicSubscription[] } };
   } & SocketConnectEvents &
   SocketEvents &
   NotificationReadEvents &

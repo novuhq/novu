@@ -50,7 +50,11 @@ export class GetSubscriberTemplatePreference {
 
     const templateChannelPreference = command.template.preferenceSettings;
 
-    const subscriberWorkflowPreference = await this.getSubscriberWorkflowPreference(command, subscriber._id);
+    const subscriberWorkflowPreference = await this.getSubscriberWorkflowPreference(
+      command,
+      subscriber._id,
+      command.subscriptionId
+    );
     const workflowOverrideChannelPreference = workflowOverride?.preferenceSettings;
 
     const { channels, overrides } = overridePreferences(
@@ -81,7 +85,8 @@ export class GetSubscriberTemplatePreference {
   @Instrument()
   private async getSubscriberWorkflowPreference(
     command: GetSubscriberTemplatePreferenceCommand,
-    subscriberId: string
+    subscriberId: string,
+    subscriptionId?: string
   ): Promise<{
     channels: IPreferenceChannels;
     critical?: boolean;
@@ -93,6 +98,7 @@ export class GetSubscriberTemplatePreference {
       organizationId: command.organizationId,
       subscriberId,
       templateId: command.template._id,
+      topicSubscriptionId: subscriptionId,
     });
 
     const subscriberWorkflowChannels = GetPreferences.mapWorkflowPreferencesToChannelPreferences(
@@ -100,7 +106,7 @@ export class GetSubscriberTemplatePreference {
     );
     const subscriberPreferenceType = subscriberWorkflowPreference.type;
     const critical = subscriberWorkflowPreference.preferences?.all?.readOnly;
-    const enabled = true;
+    const enabled = subscriberWorkflowPreference.preferences?.all?.enabled ?? true;
 
     return {
       channels: subscriberWorkflowChannels,
