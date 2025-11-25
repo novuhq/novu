@@ -2,7 +2,7 @@ import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/
 import type { OrganizationMembershipResource } from '@clerk/types';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
@@ -75,17 +75,14 @@ function OrganizationListItem({ membership, onSwitch, isSwitching, switchingToId
       transition={{ duration: 0.15 }}
     >
       <DropdownMenuItem
-        className="group flex cursor-pointer items-center gap-2 rounded-sm border-0 px-2 py-1.5 text-sm focus:bg-accent"
+        className="group flex h-9 cursor-pointer items-center gap-2 rounded-sm border-0 px-2 text-sm focus:bg-accent"
         onClick={() => onSwitch(membership.organization.id)}
         disabled={isSwitching}
       >
         <OrganizationAvatar imageUrl={membership.organization.imageUrl} name={membership.organization.name} />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="flex-1 truncate text-foreground-950 max-w-[180px]">{membership.organization.name}</span>
-          </TooltipTrigger>
-          <TooltipContent>{membership.organization.name}</TooltipContent>
-        </Tooltip>
+
+        <span className="flex-1 truncate text-foreground-950 max-w-[180px]">{membership.organization.name}</span>
+
         {isCurrentlySwitching ? (
           <RiLoader4Line className="size-4 animate-spin text-foreground-600" />
         ) : (
@@ -115,6 +112,12 @@ export function OrganizationDropdown() {
       pageSize: PAGE_SIZE,
     },
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      userMemberships?.revalidate?.();
+    }
+  }, [isOpen]);
 
   const handleOrganizationSwitch = async (organizationId: string) => {
     if (organizationId === orgId || isSwitching) return;
@@ -183,7 +186,7 @@ export function OrganizationDropdown() {
           className={cn(
             'group relative flex w-full items-center gap-2 rounded-lg px-1.5 py-1.5 transition-all duration-300',
             'hover:bg-background hover:shadow-sm',
-            'before:absolute before:bottom-0 before:left-0 before:h-0 before:w-full before:border-b before:border-neutral-alpha-100 before:transition-all before:duration-300 before:content-[""]',
+            'before:absolute before:bottom-0 before:left-0 before:h-0 before:w-full before:border-b before:border-stroke-100 before:transition-all before:duration-300 before:content-[""]',
             'hover:before:border-transparent',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-background focus-visible:shadow-sm focus-visible:before:border-transparent'
           )}
@@ -223,15 +226,15 @@ export function OrganizationDropdown() {
 
         <DropdownMenuItem
           className={cn(
-            'flex cursor-pointer items-center gap-2 rounded-none border-t border-neutral-alpha-200 px-3 py-1.5 text-sm transition-shadow focus:bg-accent hover:bg-accent',
+            'flex h-9 cursor-pointer items-center gap-2 rounded-none border-t border-stroke-100 px-2 text-sm transition-shadow focus:bg-accent hover:bg-accent',
             isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
           )}
           onSelect={() => {
             window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
           }}
         >
-          <RiAddCircleLine className="size-4" />
-          <span className="text-foreground-950">Create organization</span>
+          <RiAddCircleLine className="size-4 text-text-sub" />
+          <span className="text-text-sub">Create organization</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
