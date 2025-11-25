@@ -404,7 +404,7 @@ export class ParseEventRequest {
       command.environmentId,
       command.triggerIdentifier,
       undefined,
-      true
+      false
     );
   }
 

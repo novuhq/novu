@@ -397,6 +397,20 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     case 'chat_some_channels_skipped':
       return 'Chat some channels skipped';
 
+    // MS Teams events
+    case 'msteams_bot_not_installed':
+      return 'MS Teams bot not installed';
+    case 'msteams_channel_not_found':
+      return 'MS Teams channel not found';
+    case 'msteams_user_not_found':
+      return 'MS Teams user not found';
+    case 'msteams_insufficient_permissions':
+      return 'MS Teams insufficient permissions';
+    case 'msteams_tenant_not_consented':
+      return 'MS Teams tenant not consented';
+    case 'msteams_invalid_credentials':
+      return 'MS Teams invalid credentials';
+
     // Push events
     case 'push_tokens_missing':
       return 'Push tokens missing';

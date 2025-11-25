@@ -1,5 +1,5 @@
 import { createEffect, createMemo, Index, Show } from 'solid-js';
-import { TopicSubscription, WorkflowFilter, WorkflowIdentifierOrId } from '../../../subscriptions';
+import { PreferenceFilter, TopicSubscription, WorkflowFilter, WorkflowIdentifierOrId } from '../../../subscriptions';
 import { SubscriptionPreference } from '../../../subscriptions/subscription-preference';
 import { setDynamicLocalization } from '../../config/defaultLocalization';
 import { useInboxContext, useLocalization } from '../../context';
@@ -10,7 +10,7 @@ import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { Footer } from '../elements';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRenderer } from '../shared/IconRendererWrapper';
-import { GroupPreference, SubscriptionPreferencesRenderer } from './Subscription';
+import { SubscriptionPreferencesRenderer } from './Subscription';
 import { SubscriptionPreferenceGroupRow } from './SubscriptionPreferenceGroupRow';
 import { SubscriptionPreferenceRow } from './SubscriptionPreferenceRow';
 import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallback';
@@ -18,7 +18,7 @@ import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallba
 export const SubscriptionPreferences = (props: {
   loading?: boolean;
   subscription?: TopicSubscription | null;
-  preferences: Array<WorkflowIdentifierOrId | WorkflowFilter | GroupPreference>;
+  preferences: Array<PreferenceFilter>;
   renderPreferences?: SubscriptionPreferencesRenderer;
   onSubscribeClick: () => void;
 }) => {

@@ -15,5 +15,6 @@ export * from './object';
 export * from './sanitize-control-values';
 export * from './subscriber';
 export * from './subscribers.utils';
+export * from './subscription';
 export * from './timestamp-hex';
 export * from './variants';

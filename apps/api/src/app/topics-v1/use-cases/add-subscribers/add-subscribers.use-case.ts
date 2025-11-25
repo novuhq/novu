@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { buildDefaultSubscriptionIdentifier } from '@novu/application-generic';
 import { CreateTopicSubscribersEntity, TopicEntity, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import { SubscriberDto } from '@novu/shared';
 import { SearchByExternalSubscriberIds, SearchByExternalSubscriberIdsCommand } from '../../../subscribers/usecases';
 import { ExternalSubscriberId } from '../../types';
-
 import { CreateTopicCommand, CreateTopicUseCase } from '../create-topic';
 import { AddSubscribersCommand } from './add-subscribers.command';
 
@@ -46,7 +46,7 @@ export class AddSubscribersUseCase {
 
     if (subscribersAvailableToAdd.length > 0) {
       const topicSubscribers = this.mapSubscribersToTopic(topic, subscribersAvailableToAdd);
-      await this.topicSubscribersRepository.addSubscribers(topicSubscribers);
+      await this.topicSubscribersRepository.createSubscriptions(topicSubscribers);
     }
 
     return {
@@ -98,6 +98,7 @@ export class AddSubscribersUseCase {
       _topicId: topic._id,
       topicKey: topic.key,
       externalSubscriberId: subscriber.subscriberId,
+      identifier: buildDefaultSubscriptionIdentifier(topic.key, subscriber.subscriberId),
     }));
   }
 }

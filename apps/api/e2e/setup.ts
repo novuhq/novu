@@ -5,6 +5,7 @@ import axios from 'axios';
 import chai from 'chai';
 import { Connection } from 'mongoose';
 import sinon from 'sinon';
+import { ZodError } from 'zod';
 import { bootstrap } from '../src/bootstrap';
 
 let databaseConnection: Connection;
@@ -166,6 +167,117 @@ async function waitForHealthCheck(): Promise<void> {
   }
 }
 
+function formatZodError(err: ZodError, level = 0): string {
+  let pre = '  '.repeat(level);
+  pre = level > 0 ? `│${pre}` : pre;
+  pre += ' '.repeat(level);
+
+  let message = '';
+  const append = (str: string) => {
+    message += `\n${pre}${str}`;
+  };
+
+  const len = err.issues.length;
+  const headline = len === 1 ? `${len} issue found` : `${len} issues found`;
+
+  if (len) {
+    append(`┌ ${headline}:`);
+  }
+
+  for (const issue of err.issues) {
+    let path = issue.path.join('.');
+    path = path ? `<root>.${path}` : '<root>';
+    append(`│ • [${path}]: ${issue.message} (${issue.code})`);
+    switch (issue.code) {
+      case 'invalid_literal':
+      case 'invalid_type': {
+        append(`│     Want: ${issue.expected}`);
+        append(`│      Got: ${issue.received}`);
+        break;
+      }
+      case 'unrecognized_keys': {
+        append(`│     Keys: ${issue.keys.join(', ')}`);
+        break;
+      }
+      case 'invalid_enum_value': {
+        append(`│     Allowed: ${issue.options.join(', ')}`);
+        append(`│         Got: ${issue.received}`);
+        break;
+      }
+      case 'invalid_union_discriminator': {
+        append(`│     Allowed: ${issue.options.join(', ')}`);
+        break;
+      }
+      case 'invalid_union': {
+        const unionLen = issue.unionErrors.length;
+        append(`│   ✖︎ Attemped to deserialize into one of ${unionLen} union members:`);
+        issue.unionErrors.forEach((unionErr, i) => {
+          append(`│   ✖︎ Member ${i + 1} of ${unionLen}`);
+          append(`${formatZodError(unionErr, level + 1)}`);
+        });
+      }
+    }
+  }
+
+  if (err.issues.length) {
+    append(`└─*`);
+  }
+
+  return message.slice(1);
+}
+
+function isResponseValidationError(error: unknown): error is {
+  name: string;
+  statusCode: number;
+  body: string;
+  rawResponse?: { url?: string };
+  pretty: () => string;
+} {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    error.name === 'ResponseValidationError' &&
+    'statusCode' in error &&
+    'pretty' in error &&
+    typeof (error as { pretty: unknown }).pretty === 'function'
+  );
+}
+
+/*
+ * poc for logging errors in e2e tests where the context is not available
+ * if it's adding unnecessary noise, we can remove it
+ */
+function logE2EFailure(error: unknown): void {
+  if (isResponseValidationError(error)) {
+    const url = error.rawResponse?.url ?? 'unknown URL';
+    console.error('\n[Response validation error]');
+    console.error(`Status: ${error.statusCode} ${url}`);
+    console.error(error.pretty());
+    if (error.body) {
+      // uncomment for more detailed error messages
+      // console.error(`Response body: ${error.body}`);
+    }
+
+    return;
+  }
+
+  const typedError = error as Error & { cause?: unknown };
+  if (typedError.cause instanceof ZodError) {
+    console.error('\n[Zod validation error]');
+    console.error(formatZodError(typedError.cause));
+
+    return;
+  }
+
+  if (error instanceof ZodError) {
+    console.error('\n[Zod validation error]');
+    console.error(formatZodError(error));
+
+    return;
+  }
+}
+
 before(async () => {
   /**
    * disable truncating for better error messages - https://www.chaijs.com/guide/styles/#configtruncatethreshold
@@ -188,6 +300,10 @@ after(async () => {
   await closeClickHouseConnection();
 });
 
-afterEach(async () => {
+afterEach(async function () {
+  if (this.currentTest?.state === 'failed' && this.currentTest.err) {
+    logE2EFailure(this.currentTest.err);
+  }
+
   sinon.restore();
 });

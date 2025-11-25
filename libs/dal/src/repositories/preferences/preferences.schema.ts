@@ -27,6 +27,10 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
     },
+    _topicSubscriptionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'TopicSubscribers',
+    },
     type: Schema.Types.String,
     preferences: {
       all: {
@@ -35,6 +39,9 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
         },
         readOnly: {
           type: Schema.Types.Boolean,
+        },
+        condition: {
+          type: Schema.Types.Mixed,
         },
       },
       channels: {
@@ -70,7 +77,12 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
   { ...schemaOptions, minimize: false }
 );
 
-preferencesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+preferencesSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  deletedBy: true,
+  overrideMethods: 'all',
+  use$neOperator: false,
+});
 
 // Subscriber Global Preferences
 // Ensures one global preference per subscriber (SUBSCRIBER_GLOBAL type)
@@ -123,6 +135,24 @@ preferencesSchema.index(
     unique: true,
     partialFilterExpression: {
       type: { $in: [PreferencesTypeEnum.USER_WORKFLOW, PreferencesTypeEnum.WORKFLOW_RESOURCE] },
+    },
+  }
+);
+
+// Ensures one workflow preference per subscriber per template per topic subscription (SUBSCRIPTION_SUBSCRIBER_WORKFLOW type)
+// Only for this type (via partial filter).
+preferencesSchema.index(
+  {
+    _environmentId: 1,
+    _subscriberId: 1,
+    _topicSubscriptionId: 1,
+    _templateId: 1,
+    type: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: {
+      type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
     },
   }
 );

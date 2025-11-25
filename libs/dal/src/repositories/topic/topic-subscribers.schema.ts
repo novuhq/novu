@@ -34,23 +34,37 @@ const topicSubscribersSchema = new Schema<TopicSubscribersDBModel>(
       required: true,
     },
     externalSubscriberId: Schema.Types.String,
+    name: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    identifier: {
+      type: Schema.Types.String,
+      required: false,
+    },
   },
   schemaOptions
 );
-
-topicSubscribersSchema.index({
-  _environmentId: 1,
-});
-
-topicSubscribersSchema.index({
-  _subscriberId: 1,
-});
 
 topicSubscribersSchema.index({
   _topicId: 1,
 });
 
 topicSubscribersSchema.index({
+  topicKey: 1,
+});
+
+topicSubscribersSchema.index(
+  {
+    _environmentId: 1,
+    identifier: 1,
+  },
+  { unique: true, sparse: true }
+);
+
+topicSubscribersSchema.index({
+  _subscriberId: 1,
+  _environmentId: 1,
   topicKey: 1,
 });
 

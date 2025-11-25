@@ -11,8 +11,13 @@ export type {
   WorkflowIdentifierOrId,
 } from './subscriptions';
 export {
+  CreateSubscriptionArgs,
+  DeleteSubscriptionArgs,
+  GetSubscriptionArgs,
+  ListSubscriptionsArgs,
   SubscriptionPreference,
   TopicSubscription,
+  UpdateSubscriptionPreferenceArgs,
 } from './subscriptions';
 export {
   ChannelPreference,
@@ -26,7 +31,6 @@ export {
   Notification,
   NotificationFilter,
   NotificationStatus,
-  NovuError,
   NovuOptions,
   Preference,
   PreferenceLevel,
@@ -41,6 +45,7 @@ export {
   WeeklySchedule,
   WorkflowCriticalityEnum,
 } from './types';
+export { NovuError } from './utils/errors';
 export {
   areSeveritiesEqual,
   areTagsEqual,

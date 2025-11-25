@@ -107,6 +107,14 @@ const mapDetailToEventType = {
   [DetailEnum.CHAT_MISSING_PHONE_NUMBER]: 'chat_phone_missing',
   [DetailEnum.CHAT_SOME_CHANNELS_SKIPPED]: 'chat_some_channels_skipped',
 
+  // MS Teams events
+  [DetailEnum.MSTEAMS_BOT_NOT_INSTALLED]: 'msteams_bot_not_installed',
+  [DetailEnum.MSTEAMS_CHANNEL_NOT_FOUND]: 'msteams_channel_not_found',
+  [DetailEnum.MSTEAMS_USER_NOT_FOUND]: 'msteams_user_not_found',
+  [DetailEnum.MSTEAMS_INSUFFICIENT_PERMISSIONS]: 'msteams_insufficient_permissions',
+  [DetailEnum.MSTEAMS_TENANT_NOT_CONSENTED]: 'msteams_tenant_not_consented',
+  [DetailEnum.MSTEAMS_INVALID_CREDENTIALS]: 'msteams_invalid_credentials',
+
   // Push events
   [DetailEnum.PUSH_MISSING_DEVICE_TOKENS]: 'push_tokens_missing',
   [DetailEnum.PUSH_SOME_CHANNELS_SKIPPED]: 'push_some_channels_skipped',

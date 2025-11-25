@@ -52,4 +52,5 @@ export interface ICredentials {
   AppIOBearerToken?: string;
   AppIOOriginalSignature?: string;
   servicePlanId?: string;
+  tenantId?: string;
 }
