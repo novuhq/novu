@@ -27,6 +27,8 @@ export type TriggerEventResponseDtoStatus = ClosedEnum<
   typeof TriggerEventResponseDtoStatus
 >;
 
+export type JobData = {};
+
 export type TriggerEventResponseDto = {
   /**
    * Indicates whether the trigger was acknowledged or not
@@ -44,12 +46,27 @@ export type TriggerEventResponseDto = {
    * The returned transaction ID of the trigger
    */
   transactionId?: string | undefined;
+  jobData?: JobData | undefined;
 };
 
 /** @internal */
 export const TriggerEventResponseDtoStatus$inboundSchema: z.ZodNativeEnum<
   typeof TriggerEventResponseDtoStatus
 > = z.nativeEnum(TriggerEventResponseDtoStatus);
+
+/** @internal */
+export const JobData$inboundSchema: z.ZodType<JobData, z.ZodTypeDef, unknown> =
+  z.object({});
+
+export function jobDataFromJSON(
+  jsonString: string,
+): SafeParseResult<JobData, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => JobData$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'JobData' from JSON`,
+  );
+}
 
 /** @internal */
 export const TriggerEventResponseDto$inboundSchema: z.ZodType<
@@ -61,6 +78,7 @@ export const TriggerEventResponseDto$inboundSchema: z.ZodType<
   status: TriggerEventResponseDtoStatus$inboundSchema,
   error: z.array(z.string()).optional(),
   transactionId: z.string().optional(),
+  jobData: z.lazy(() => JobData$inboundSchema).optional(),
 });
 
 export function triggerEventResponseDtoFromJSON(

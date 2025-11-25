@@ -3,33 +3,13 @@
  */
 
 import * as z from "zod/v3";
+import { Unrecognized, unrecognized } from "./unrecognized.js";
 
-declare const __brand: unique symbol;
-export type Unrecognized<T> = T & { [__brand]: "unrecognized" };
 export type ClosedEnum<T extends Readonly<Record<string, string | number>>> =
   T[keyof T];
 export type OpenEnum<T extends Readonly<Record<string, string | number>>> =
   | T[keyof T]
   | Unrecognized<T[keyof T] extends number ? number : string>;
-
-function unrecognized<T>(value: T): Unrecognized<T> {
-  unrecognizedCount++;
-  return value as Unrecognized<T>;
-}
-
-let unrecognizedCount = 0;
-let refCount = 0;
-export function unrecognizedCounter() {
-  refCount++;
-  const start = unrecognizedCount;
-  return {
-    count: () => {
-      const count = unrecognizedCount - start;
-      if (--refCount === 0) unrecognizedCount = 0;
-      return count;
-    },
-  };
-}
 
 export function inboundSchema<T extends Record<string, string>>(
   enumObj: T,

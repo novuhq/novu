@@ -45,7 +45,7 @@ describe('Update subscription workflow preferences - /inbox/preferences/:subscri
     expect(topicSubscription.preferences?.[0]?.enabled, 'Should have enabled the preference').to.equal(true);
     expect(topicSubscription.preferences?.[0]?.condition, 'Should have condition the preference').to.equal(true);
 
-    const subscriptionId = subscriptionResponse.body.data[0]._id;
+    const subscriptionId = subscriptionResponse.body.data.id;
 
     // Update using Subscription ID
     let response = await updateSubscriptionPreferences(session, subscriptionId, workflow._id, { enabled: false });
@@ -93,7 +93,7 @@ describe('Update subscription workflow preferences - /inbox/preferences/:subscri
       },
     });
     expect(subscription1Response.status).to.equal(201);
-    const subscription1Id = subscription1Response.body.data[0]._id;
+    const subscription1Id = subscription1Response.body.data.id;
 
     const subscription2Response = await createSubscription({
       session,
@@ -103,7 +103,7 @@ describe('Update subscription workflow preferences - /inbox/preferences/:subscri
       },
     });
     expect(subscription2Response.status).to.equal(201);
-    const subscription2Id = subscription2Response.body.data[0]._id;
+    const subscription2Id = subscription2Response.body.data.id;
 
     const update1 = await updateSubscriptionPreferences(session, subscription1Id, workflow._id, { enabled: true });
 

@@ -51,7 +51,7 @@ export type SubscriptionResponseDto = {
   /**
    * The identifier of the subscription
    */
-  identifier: string;
+  identifier?: string | undefined;
   /**
    * The name of the subscription
    */
@@ -113,7 +113,7 @@ export const SubscriptionResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   _id: z.string(),
-  identifier: z.string(),
+  identifier: z.string().optional(),
   name: z.string().optional(),
   topic: TopicDto$inboundSchema,
   subscriber: z.nullable(z.lazy(() => Subscriber$inboundSchema)),
