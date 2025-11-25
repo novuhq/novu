@@ -47,3 +47,31 @@ export class PhoneEndpointDto {
   @IsString()
   phoneNumber: string;
 }
+
+export class MsTeamsChannelEndpointDto {
+  @ApiProperty({
+    description: 'MS Teams team ID',
+    example: '19:abc123...@thread.tacv2',
+    type: String,
+  })
+  @IsString()
+  teamId: string;
+
+  @ApiProperty({
+    description: 'MS Teams channel ID',
+    example: '19:def456...@thread.tacv2',
+    type: String,
+  })
+  @IsString()
+  channelId: string;
+}
+
+export class MsTeamsUserEndpointDto {
+  @ApiProperty({
+    description: 'MS Teams user ID',
+    example: '29:1234567890abcdef',
+    type: String,
+  })
+  @IsString()
+  userId: string;
+}

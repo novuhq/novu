@@ -5,6 +5,8 @@ import { Type } from 'class-transformer';
 import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
 import {
+  MsTeamsChannelEndpointDto,
+  MsTeamsUserEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
@@ -133,4 +135,44 @@ export class CreatePhoneEndpointDto extends CreateChannelEndpointBaseDto {
   @ValidateNested()
   @Type(() => PhoneEndpointDto)
   endpoint: PhoneEndpointDto;
+}
+
+export class CreateMsTeamsChannelEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.MS_TEAMS_CHANNEL],
+    example: ENDPOINT_TYPES.MS_TEAMS_CHANNEL,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.MS_TEAMS_CHANNEL])
+  type: typeof ENDPOINT_TYPES.MS_TEAMS_CHANNEL;
+
+  @ApiProperty({
+    description: 'MS Teams channel endpoint data',
+    type: MsTeamsChannelEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => MsTeamsChannelEndpointDto)
+  endpoint: MsTeamsChannelEndpointDto;
+}
+
+export class CreateMsTeamsUserEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.MS_TEAMS_USER],
+    example: ENDPOINT_TYPES.MS_TEAMS_USER,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.MS_TEAMS_USER])
+  type: typeof ENDPOINT_TYPES.MS_TEAMS_USER;
+
+  @ApiProperty({
+    description: 'MS Teams user endpoint data',
+    type: MsTeamsUserEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => MsTeamsUserEndpointDto)
+  endpoint: MsTeamsUserEndpointDto;
 }
