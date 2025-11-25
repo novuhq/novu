@@ -123,130 +123,114 @@ export class NotificationTemplateRepository extends BaseRepository<
       { session }
     )
       .populate('steps.template')
-      .populate('steps.variants.template')
+      .populate('steps.variants.template');
 
-    if (includeUpdatedBy) { 
+    if (includeUpdatedBy) {
       query.populate('updatedBy');
     }
 
-      const item = await query;
+    const item = await query;
 
-      return this.mapEntity(item);
-    }
+    return this.mapEntity(item);
+  }
 
-    async;
-    findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date)
-    {
-      const requestQuery: NotificationTemplateQuery = {
-        _environmentId: environmentId,
-        'triggers.identifier': triggerIdentifier,
-      };
+  async findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date) {
+    const requestQuery: NotificationTemplateQuery = {
+      _environmentId: environmentId,
+      'triggers.identifier': triggerIdentifier,
+    };
 
-      const item = await this.MongooseModel.findOneAndUpdate(
-        requestQuery,
-        {
-          $set: {
-            lastTriggeredAt,
-          },
+    const item = await this.MongooseModel.findOneAndUpdate(
+      requestQuery,
+      {
+        $set: {
+          lastTriggeredAt,
         },
-        {
-          timestamps: false,
-        }
-      ).populate('steps.template');
-
-      return this.mapEntity(item);
-    }
-
-    async;
-    updatePublishFields(workflowId: string, environmentId: string, userId: string, session?: ClientSession | null)
-    {
-      const requestQuery: NotificationTemplateQuery = {
-        _id: workflowId,
-        _environmentId: environmentId,
-      };
-
-      const item = await this.MongooseModel.findOneAndUpdate(
-        requestQuery,
-        {
-          $set: {
-            lastPublishedAt: new Date(),
-            _lastPublishedBy: userId,
-          },
-        },
-        { session, new: true }
-      );
-
-      return this.mapEntity(item);
-    }
-
-    async;
-    findBlueprintById(id: string)
-    {
-      if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
-
-      const requestQuery: NotificationTemplateQuery = {
-        isBlueprint: true,
-        _organizationId: this.blueprintOrganizationId,
-        _id: id,
-      };
-
-      const item = await this.MongooseModel.findOne(requestQuery)
-        .populate('steps.template')
-        .populate('notificationGroup')
-        .lean();
-
-      return this.mapEntity(item);
-    }
-
-    async;
-    findBlueprintByTriggerIdentifier(identifier: string)
-    {
-      if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
-
-      const requestQuery: NotificationTemplateQuery = {
-        isBlueprint: true,
-        _organizationId: this.blueprintOrganizationId,
-        triggers: { $elemMatch: { identifier } },
-      };
-
-      const item = await this.MongooseModel.findOne(requestQuery)
-        .populate('steps.template')
-        .populate('notificationGroup')
-        .lean();
-
-      return this.mapEntity(item);
-    }
-
-    async;
-    findBlueprintTemplates(organizationId: string, environmentId: string)
-    : Promise<NotificationTemplateEntity[]>
-    {
-      const _organizationId = organizationId;
-
-      if (!_organizationId) throw new DalException('Blueprint environment id was not found');
-
-      const templates = await this.MongooseModel.find({
-        isBlueprint: true,
-        _environmentId: environmentId,
-        _organizationId,
-      })
-        .populate('steps.template')
-        .populate('notificationGroup')
-        .lean();
-
-      if (!templates) {
-        return [];
+      },
+      {
+        timestamps: false,
       }
+    ).populate('steps.template');
 
-      return this.mapEntities(templates);
+    return this.mapEntity(item);
+  }
+
+  async updatePublishFields(workflowId: string, environmentId: string, userId: string, session?: ClientSession | null) {
+    const requestQuery: NotificationTemplateQuery = {
+      _id: workflowId,
+      _environmentId: environmentId,
+    };
+
+    const item = await this.MongooseModel.findOneAndUpdate(
+      requestQuery,
+      {
+        $set: {
+          lastPublishedAt: new Date(),
+          _lastPublishedBy: userId,
+        },
+      },
+      { session, new: true }
+    );
+
+    return this.mapEntity(item);
+  }
+
+  async findBlueprintById(id: string) {
+    if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
+
+    const requestQuery: NotificationTemplateQuery = {
+      isBlueprint: true,
+      _organizationId: this.blueprintOrganizationId,
+      _id: id,
+    };
+
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
+
+    return this.mapEntity(item);
+  }
+
+  async findBlueprintByTriggerIdentifier(identifier: string) {
+    if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
+
+    const requestQuery: NotificationTemplateQuery = {
+      isBlueprint: true,
+      _organizationId: this.blueprintOrganizationId,
+      triggers: { $elemMatch: { identifier } },
+    };
+
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
+
+    return this.mapEntity(item);
+  }
+
+  async findBlueprintTemplates(organizationId: string, environmentId: string): Promise<NotificationTemplateEntity[]> {
+    const _organizationId = organizationId;
+
+    if (!_organizationId) throw new DalException('Blueprint environment id was not found');
+
+    const templates = await this.MongooseModel.find({
+      isBlueprint: true,
+      _environmentId: environmentId,
+      _organizationId,
+    })
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
+
+    if (!templates) {
+      return [];
     }
 
-    async;
-    findAllGroupedByCategory();
-    : Promise<
-    name: string;
-    blueprints: NotificationTemplateEntity[]
-    []> {
+    return this.mapEntities(templates);
+  }
+
+  async findAllGroupedByCategory(): Promise<{ name: string; blueprints: NotificationTemplateEntity[] }[]> {
     const organizationId = this.blueprintOrganizationId;
 
     if (!organizationId) {
@@ -443,7 +427,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     return process.env.BLUEPRINT_CREATOR;
   }
 
-  async estimatedDocumentCount(): Promise<any> {
+  async estimatedDocumentCount(): Promise<number> {
     return this.notificationTemplate.estimatedDocumentCount();
   }
 
@@ -456,6 +440,7 @@ export class NotificationTemplateRepository extends BaseRepository<
             $sum: {
               $cond: {
                 if: { $isArray: '$steps' },
+                // biome-ignore lint/suspicious/noThenProperty: MongoDB aggregation syntax requires 'then' property
                 then: { $size: '$steps' },
                 else: 0,
               },
