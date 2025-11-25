@@ -10,6 +10,10 @@ const getListCacheKey = (args: ListSubscriptionsArgs): string => {
   return `list:${args.topicKey}`;
 };
 
+const getTopicKeyFromListCacheKey = (key: string): string => {
+  return key.split(':')[1];
+};
+
 const getItemCacheKey = (args: { topicKey: string; identifier?: string }): string => {
   return `item:${args.topicKey}:${args.identifier}`;
 };
@@ -73,7 +77,7 @@ export class SubscriptionsCache {
       this.#cache.set(listKey, updatedSubscriptions);
 
       this.#emitter.emit('subscriptions.list.updated', {
-        data: updatedSubscriptions,
+        data: { topicKey: subscription.topicKey, subscriptions: updatedSubscriptions },
       });
     }
 
@@ -120,7 +124,7 @@ export class SubscriptionsCache {
         this.#cache.set(listKey, updatedSubscriptions);
 
         this.#emitter.emit('subscriptions.list.updated', {
-          data: updatedSubscriptions,
+          data: { topicKey: getTopicKeyFromListCacheKey(listKey), subscriptions: updatedSubscriptions },
         });
       }
     }
@@ -179,7 +183,7 @@ export class SubscriptionsCache {
       this.#cache.set(listKey, updatedSubscriptions);
 
       this.#emitter.emit('subscriptions.list.updated', {
-        data: updatedSubscriptions,
+        data: { topicKey: subscription.topicKey, subscriptions: updatedSubscriptions },
       });
     }
 
@@ -198,7 +202,7 @@ export class SubscriptionsCache {
           this.#cache.set(listKey, updatedSubscriptions);
 
           this.#emitter.emit('subscriptions.list.updated', {
-            data: updatedSubscriptions,
+            data: { topicKey: getTopicKeyFromListCacheKey(listKey), subscriptions: updatedSubscriptions },
           });
 
           this.#itemCache.remove(

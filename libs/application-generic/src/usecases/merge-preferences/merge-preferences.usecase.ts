@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: needed */
 
 import { PreferencesEntity } from '@novu/dal';
-import { DEFAULT_WORKFLOW_PREFERENCES, PreferencesTypeEnum, WorkflowPreferences } from '@novu/shared';
+import { PreferencesTypeEnum, WorkflowPreferences } from '@novu/shared';
 import { toMerged } from 'es-toolkit';
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';

@@ -7,6 +7,10 @@ import type {
   UsePreferencesResult,
   UseScheduleProps,
   UseScheduleResult,
+  UseSubscriptionProps,
+  UseSubscriptionResult,
+  UseSubscriptionsProps,
+  UseSubscriptionsResult,
 } from '../hooks';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
 import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
@@ -83,6 +87,24 @@ export function useSchedule(_: UseScheduleProps): UseScheduleResult {
   };
 }
 
+export function useSubscription(_: UseSubscriptionProps): UseSubscriptionResult {
+  return {
+    isLoading: false,
+    isFetching: false,
+    refetch: () => Promise.resolve(),
+    create: () => Promise.resolve({ data: undefined, error: undefined }),
+    remove: () => Promise.resolve({ data: undefined, error: undefined }),
+  };
+}
+
+export function useSubscriptions(_: UseSubscriptionsProps): UseSubscriptionsResult {
+  return {
+    isLoading: false,
+    isFetching: false,
+    refetch: () => Promise.resolve(),
+  };
+}
+
 export type {
   ChannelPreference,
   ChannelType,
@@ -95,6 +117,7 @@ export type {
   NovuError,
   NovuOptions,
   Preference,
+  RulesLogic,
 } from '@novu/js';
 export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 

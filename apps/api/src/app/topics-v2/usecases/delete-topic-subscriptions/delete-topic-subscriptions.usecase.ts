@@ -103,6 +103,7 @@ export class DeleteTopicSubscriptionsUsecase {
 
       subscriptionData.push({
         _id: subscription._id,
+        identifier: subscription.identifier,
         topic: {
           _id: topic._id,
           key: topic.key,
@@ -120,8 +121,8 @@ export class DeleteTopicSubscriptionsUsecase {
               updatedAt: subscriber.updatedAt,
             }
           : null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: subscription.createdAt ?? new Date().toISOString(),
+        updatedAt: subscription.updatedAt ?? new Date().toISOString(),
       });
     }
 

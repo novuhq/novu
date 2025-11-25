@@ -48,6 +48,7 @@ typescript:
   exportZodModelNamespace: false
   flattenGlobalSecurity: true
   flatteningOrder: body-first
+  forwardCompatibleEnumsByDefault: false
   generateExamples: true
   imports:
     option: openapi
@@ -59,6 +60,7 @@ typescript:
       webhooks: models/webhooks
   inputModelSuffix: input
   jsonpath: rfc9535
+  laxMode: strict
   maxMethodParams: 3
   methodArguments: require-security-and-request
   modelPropertyCasing: camel

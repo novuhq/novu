@@ -1,6 +1,7 @@
 import { ContextRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
+import type { AxiosResponse } from 'axios';
 import { expect } from 'chai';
 
 describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {

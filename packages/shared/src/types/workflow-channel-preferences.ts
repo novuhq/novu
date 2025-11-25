@@ -1,18 +1,20 @@
+import type { RulesLogic } from 'json-logic-js';
 import { ChannelTypeEnum } from './channel';
 import { DeepPartial } from './utils';
-
 /**
  * The preference type for a set of preferences.
  *
  * Each preference type is resolved in order of specificity,
- * with 1 being the most specific and 4 being the least specific.
+ * with 1 being the most specific and 5 being the least specific.
  *
- * 1. `SUBSCRIBER_WORKFLOW` - The subscriber's preference for a workflow.
- * 2. `SUBSCRIBER_GLOBAL` - The subscriber's global preference.
- * 3. `USER_WORKFLOW` - The user's preference for a workflow.
- * 4. `WORKFLOW_RESOURCE` - The Framework-defined preference for a workflow.
+ * 1. `SUBSCRIPTION_SUBSCRIBER_WORKFLOW` - The subscriber's preference for a workflow scoped to a subscription.
+ * 2. `SUBSCRIBER_WORKFLOW` - The subscriber's preference for a workflow.
+ * 3. `SUBSCRIBER_GLOBAL` - The subscriber's global preference.
+ * 4. `USER_WORKFLOW` - The user's preference for a workflow.
+ * 5. `WORKFLOW_RESOURCE` - The Framework-defined preference for a workflow.
  */
 export enum PreferencesTypeEnum {
+  SUBSCRIPTION_SUBSCRIBER_WORKFLOW = 'SUBSCRIPTION_SUBSCRIBER_WORKFLOW',
   SUBSCRIBER_WORKFLOW = 'SUBSCRIBER_WORKFLOW',
   SUBSCRIBER_GLOBAL = 'SUBSCRIBER_GLOBAL',
   USER_WORKFLOW = 'USER_WORKFLOW',
@@ -43,6 +45,15 @@ export type WorkflowPreference = {
    * @default false
    */
   readOnly: boolean;
+
+  /**
+   * A condition specifying if the preference is applicable.
+   *
+   * Uses JSON Logic rules to evaluate if the preference should be applied.
+   *
+   * If not provided, the `enabled` property will be used to determine if the preference is applicable.
+   */
+  condition?: RulesLogic;
 };
 
 /** A preference for a notification delivery channel. */

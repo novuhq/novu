@@ -17,5 +17,7 @@ export {
   useNovu,
   usePreferences,
   useSchedule,
+  useSubscription,
+  useSubscriptions,
   WorkflowCriticalityEnum,
 } from '@novu/react/server';

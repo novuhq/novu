@@ -2,7 +2,6 @@ import {
   ControlValuesEntity,
   ControlValuesRepository,
   NotificationTemplateEntity,
-  NotificationTemplateRepository,
   PreferencesEntity,
   PreferencesRepository,
 } from '@novu/dal';
