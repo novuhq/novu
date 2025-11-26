@@ -1,4 +1,4 @@
-import { IsArray, IsDefined, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class DeleteTopicSubscriptionsCommand extends EnvironmentWithUserCommand {
@@ -7,6 +7,10 @@ export class DeleteTopicSubscriptionsCommand extends EnvironmentWithUserCommand 
   topicKey: string;
 
   @IsArray()
-  @IsDefined()
-  subscriberIds: string[];
+  @IsOptional()
+  subscriberIds?: string[];
+
+  @IsArray()
+  @IsOptional()
+  subscriptions?: Array<{ identifier?: string; subscriberId?: string }>;
 }

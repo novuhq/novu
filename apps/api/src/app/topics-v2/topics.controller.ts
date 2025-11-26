@@ -338,7 +338,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         userId: user._id,
         topicKey,
-        subscriberIds: body.subscriberIds,
+        subscriptions: this.mapDeleteSubscriptions(body.subscriptions || body.subscriberIds || []),
       })
     );
 
@@ -396,6 +396,20 @@ export class TopicsController {
   private mapSubscriptions(
     subscriptions: Array<string | { identifier: string; subscriberId: string; name?: string }>
   ): Array<{ identifier?: string; subscriberId: string; name?: string }> {
+    return subscriptions.map((subscription) => {
+      if (typeof subscription === 'string') {
+        return {
+          subscriberId: subscription,
+        };
+      }
+
+      return subscription;
+    });
+  }
+
+  private mapDeleteSubscriptions(
+    subscriptions: Array<string | { identifier?: string }>
+  ): Array<{ identifier?: string; subscriberId?: string; name?: string }> {
     return subscriptions.map((subscription) => {
       if (typeof subscription === 'string') {
         return {
