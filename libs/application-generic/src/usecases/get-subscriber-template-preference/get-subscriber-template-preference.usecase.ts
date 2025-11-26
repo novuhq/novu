@@ -106,7 +106,7 @@ export class GetSubscriberTemplatePreference {
     );
     const subscriberPreferenceType = subscriberWorkflowPreference.type;
     const critical = subscriberWorkflowPreference.preferences?.all?.readOnly;
-    const enabled = subscriberWorkflowPreference.preferences?.all?.enabled ?? true;
+    const enabled = true;
 
     return {
       channels: subscriberWorkflowChannels,
