@@ -119,6 +119,12 @@ export function OrganizationDropdown() {
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen && isRegionSelectorEnabled && userMemberships?.hasNextPage && !userMemberships?.isFetching) {
+      userMemberships.fetchNext?.();
+    }
+  }, [isOpen, isRegionSelectorEnabled, userMemberships?.hasNextPage, userMemberships?.isFetching, userMemberships]);
+
   const handleOrganizationSwitch = async (organizationId: string) => {
     if (organizationId === orgId || isSwitching) return;
 
