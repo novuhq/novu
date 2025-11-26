@@ -1,11 +1,11 @@
+import { TranslationGroupDto } from '@novu/api/models/components';
 import { useCallback, useEffect, useState } from 'react';
-import { TranslationGroup } from '@/api/translations';
 
-export function useTranslationDrawerState(translationGroups?: TranslationGroup[]) {
-  const [selectedTranslationGroup, setSelectedTranslationGroup] = useState<TranslationGroup | null>(null);
+export function useTranslationDrawerState(translationGroups?: TranslationGroupDto[]) {
+  const [selectedTranslationGroup, setSelectedTranslationGroup] = useState<TranslationGroupDto | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const handleTranslationClick = useCallback((translationGroup: TranslationGroup) => {
+  const handleTranslationClick = useCallback((translationGroup: TranslationGroupDto) => {
     setSelectedTranslationGroup(translationGroup);
     setIsDrawerOpen(true);
   }, []);
