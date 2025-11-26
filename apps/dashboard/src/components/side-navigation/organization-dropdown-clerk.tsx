@@ -75,18 +75,18 @@ function OrganizationListItem({ membership, onSwitch, isSwitching, switchingToId
       transition={{ duration: 0.15 }}
     >
       <DropdownMenuItem
-        className="group flex h-9 cursor-pointer items-center gap-2 rounded-sm border-0 px-2 text-sm focus:bg-accent"
+        className="group flex h-9 cursor-pointer items-center justify-start gap-2 rounded-sm border-0 px-2 text-sm focus:bg-accent"
         onClick={() => onSwitch(membership.organization.id)}
         disabled={isSwitching}
       >
         <OrganizationAvatar imageUrl={membership.organization.imageUrl} name={membership.organization.name} />
 
-        <span className="flex-1 truncate text-foreground-950 max-w-[180px]">{membership.organization.name}</span>
+        <span className="min-w-0 flex-1 truncate text-left text-foreground-950">{membership.organization.name}</span>
 
         {isCurrentlySwitching ? (
-          <RiLoader4Line className="size-4 animate-spin text-foreground-600" />
+          <RiLoader4Line className="size-4 shrink-0 animate-spin text-foreground-600" />
         ) : (
-          <RiArrowRightSLine className="size-4 opacity-0 transition-opacity group-hover:opacity-100" />
+          <RiArrowRightSLine className="size-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
         )}
       </DropdownMenuItem>
     </motion.div>
@@ -192,7 +192,7 @@ export function OrganizationDropdown() {
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            'group relative flex w-full items-center gap-2 rounded-lg px-1.5 py-1.5 transition-all duration-300',
+            'group relative flex w-full items-center justify-start gap-2 rounded-lg px-1.5 py-1.5 transition-all duration-300',
             'hover:bg-background hover:shadow-sm',
             'before:absolute before:bottom-0 before:left-0 before:h-0 before:w-full before:border-b before:border-stroke-100 before:transition-all before:duration-300 before:content-[""]',
             'hover:before:border-transparent',
@@ -200,7 +200,7 @@ export function OrganizationDropdown() {
           )}
         >
           <OrganizationAvatar imageUrl={currentOrganization.imageUrl} name={currentOrganization.name} showShimmer />
-          <span className="min-w-0 flex-1 break-words text-sm font-medium text-foreground-950">
+          <span className="min-w-0 flex-1 break-words text-left text-sm font-medium text-foreground-950">
             {currentOrganization.name}
           </span>
           <RiArrowDownSLine className="ml-auto size-4 shrink-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus:opacity-100" />
