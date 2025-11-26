@@ -29,8 +29,6 @@ export class DeleteTopicSubscriptionsRequestDto {
     example: [{ identifier: 'subscriber-123-subscription-a' }, { identifier: 'subscriber-456-subscription-b' }],
   })
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => Object)
   @IsOptional()
   @ArrayMaxSize(100, { message: 'Cannot unsubscribe more than 100 subscriptions at once' })
   @ArrayMinSize(1, { message: 'At least one subscription is required' })

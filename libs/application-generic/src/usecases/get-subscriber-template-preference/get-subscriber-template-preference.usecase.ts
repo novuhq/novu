@@ -98,10 +98,6 @@ export class GetSubscriberTemplatePreference {
     const subscriberWorkflowChannels = GetPreferences.mapWorkflowPreferencesToChannelPreferences(
       subscriberWorkflowPreference.preferences
     );
-    console.log(
-      '@@@@@ subscriberWorkflowPreference',
-      JSON.stringify({ subscriberId, subscriberWorkflowPreference }, null, 2)
-    );
     const subscriberPreferenceType = subscriberWorkflowPreference.type;
     const critical = subscriberWorkflowPreference.preferences?.all?.readOnly;
     const enabled = subscriberWorkflowPreference.preferences?.all?.enabled ?? true;

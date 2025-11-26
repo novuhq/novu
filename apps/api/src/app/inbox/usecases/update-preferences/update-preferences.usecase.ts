@@ -15,6 +15,7 @@ import {
 } from '@novu/application-generic';
 import {
   BaseRepository,
+  NotificationTemplateEntity,
   PreferencesRepository,
   SubscriberEntity,
   SubscriberRepository,
@@ -56,20 +57,19 @@ export class UpdatePreferences {
 
   @InstrumentUsecase()
   async execute(command: UpdatePreferencesCommand): Promise<InboxPreference> {
-    console.log('@@@@@ command', JSON.stringify(command, null, 2));
     const subscriber =
       command.subscriber ??
       (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
-    const workflowId = await this.getWorkflowId(command);
+    const workflow = await this.getWorkflow(command);
     const subscriptionId = await this.getSubscriptionId(command);
 
     let newPreference: InboxPreference | null = null;
 
-    await this.updateSubscriberPreference(command, subscriber, workflowId, subscriptionId);
+    await this.updateSubscriberPreference(command, subscriber, workflow?._id, subscriptionId);
 
-    newPreference = await this.findPreference(command, subscriber, subscriptionId);
+    newPreference = await this.findPreference(command, subscriber, workflow, subscriptionId);
 
     await this.sendWebhookMessage.execute({
       eventType: WebhookEventEnum.PREFERENCE_UPDATED,
@@ -85,7 +85,7 @@ export class UpdatePreferences {
     return newPreference;
   }
 
-  private async getWorkflowId(command: UpdatePreferencesCommand) {
+  private async getWorkflow(command: UpdatePreferencesCommand): Promise<NotificationTemplateEntity | undefined> {
     if (command.level !== PreferenceLevelEnum.TEMPLATE || !command.workflowIdOrIdentifier) {
       return undefined;
     }
@@ -104,7 +104,7 @@ export class UpdatePreferences {
       throw new BadRequestException(`Critical workflow with id: ${command.workflowIdOrIdentifier} can not be updated`);
     }
 
-    return workflow._id;
+    return workflow;
   }
 
   private async getSubscriptionId(command: UpdatePreferencesCommand): Promise<string | undefined> {
@@ -168,19 +168,15 @@ export class UpdatePreferences {
   private async findPreference(
     command: UpdatePreferencesCommand,
     subscriber: SubscriberEntity,
+    workflow: NotificationTemplateEntity | undefined,
     subscriptionId?: string
   ): Promise<InboxPreference> {
-    if (command.subscriptionIdOrIdentifier && command.workflowIdOrIdentifier) {
-      const workflow =
-        command.workflow ??
-        (await this.getWorkflowByIdsUsecase.execute(
-          GetWorkflowByIdsCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            workflowIdOrInternalId: command.workflowIdOrIdentifier,
-          })
-        ));
-
+    if (
+      command.level === PreferenceLevelEnum.TEMPLATE &&
+      command.subscriptionIdOrIdentifier &&
+      command.workflowIdOrIdentifier &&
+      workflow
+    ) {
       const preferenceEntity = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
@@ -199,7 +195,7 @@ export class UpdatePreferences {
         channels,
         workflow: {
           id: workflow._id,
-          identifier: workflow.triggers[0].identifier,
+          identifier: workflow.triggers[0]?.identifier,
           name: workflow.name,
           critical: workflow.critical,
           tags: workflow.tags,
@@ -209,17 +205,7 @@ export class UpdatePreferences {
       };
     }
 
-    if (command.level === PreferenceLevelEnum.TEMPLATE && command.workflowIdOrIdentifier) {
-      const workflow =
-        command.workflow ??
-        (await this.getWorkflowByIdsUsecase.execute(
-          GetWorkflowByIdsCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            workflowIdOrInternalId: command.workflowIdOrIdentifier,
-          })
-        ));
-
+    if (command.level === PreferenceLevelEnum.TEMPLATE && command.workflowIdOrIdentifier && workflow) {
       const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
         GetSubscriberTemplatePreferenceCommand.create({
           organizationId: command.organizationId,
