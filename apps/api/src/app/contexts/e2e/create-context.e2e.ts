@@ -1,11 +1,16 @@
+import { Novu } from '@novu/api';
 import { ContextRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import axios from 'axios';
-import type { AxiosResponse } from 'axios';
 import { expect } from 'chai';
+import {
+  expectSdkExceptionGeneric,
+  expectSdkValidationExceptionGeneric,
+  initNovuClassSdk,
+} from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Create Context - /contexts (POST) #novu-v2', () => {
   let session: UserSession;
+  let novuClient: Novu;
   const contextRepository = new ContextRepository();
 
   before(() => {
@@ -15,6 +20,7 @@ describe('Create Context - /contexts (POST) #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
   });
 
   after(() => {
@@ -22,15 +28,16 @@ describe('Create Context - /contexts (POST) #novu-v2', () => {
   });
 
   it('should create a new context', async () => {
-    const response = await createContext({
-      session,
+    const response = await novuClient.contexts.create({
       type: 'tenant',
       id: 'create-test-org-acme',
       data: { tenantName: 'Acme Corp', region: 'us-east-1' },
     });
 
-    expect(response.status).to.equal(201);
-    expect(response.data).to.be.ok;
+    expect(response.result).to.be.ok;
+    expect(response.result.type).to.equal('tenant');
+    expect(response.result.id).to.equal('create-test-org-acme');
+    expect(response.result.data).to.deep.equal({ tenantName: 'Acme Corp', region: 'us-east-1' });
 
     const createdContext = await contextRepository.findOne({
       _organizationId: session.organization._id,
@@ -45,14 +52,14 @@ describe('Create Context - /contexts (POST) #novu-v2', () => {
   });
 
   it('should create a context without data', async () => {
-    const response = await createContext({
-      session,
+    const response = await novuClient.contexts.create({
       type: 'workspace',
       id: 'create-test-workspace-123',
     });
 
-    expect(response.status).to.equal(201);
-    expect(response.data).to.be.ok;
+    expect(response.result).to.be.ok;
+    expect(response.result.type).to.equal('workspace');
+    expect(response.result.id).to.equal('create-test-workspace-123');
 
     const createdContext = await contextRepository.findOne({
       _organizationId: session.organization._id,
@@ -67,110 +74,70 @@ describe('Create Context - /contexts (POST) #novu-v2', () => {
   });
 
   it('should throw error if a context already exists', async () => {
-    await createContext({
-      session,
+    await novuClient.contexts.create({
       type: 'tenant',
       id: 'create-test-duplicate',
       data: { tenantName: 'Acme Corp' },
     });
 
-    try {
-      await createContext({
-        session,
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.contexts.create({
         type: 'tenant',
         id: 'create-test-duplicate',
         data: { tenantName: 'Acme Corp Updated' },
-      });
+      })
+    );
 
-      throw new Error('Should not succeed');
-    } catch (e) {
-      expect(e.response.status).to.equal(409);
-      expect(e.response.data.message).to.contains(
-        `Context with type 'tenant' and id 'create-test-duplicate' already exists`
-      );
-    }
+    expect(error).to.be.ok;
+    expect(error?.statusCode).to.equal(409);
+    expect(error?.message).to.contain(`Context with type 'tenant' and id 'create-test-duplicate' already exists`);
   });
 
   it('should throw error if type is missing', async () => {
-    try {
-      await createContext({
-        session,
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.contexts.create({
+        type: '',
         id: 'org-acme',
-      });
+      })
+    );
 
-      throw new Error('Should not succeed');
-    } catch (e) {
-      expect(e.response.status).to.equal(422);
-    }
+    expect(error).to.be.ok;
+    expect(error?.statusCode).to.equal(422);
   });
 
   it('should throw error if id is missing', async () => {
-    try {
-      await createContext({
-        session,
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.contexts.create({
         type: 'tenant',
-      });
+        id: '',
+      })
+    );
 
-      throw new Error('Should not succeed');
-    } catch (e) {
-      expect(e.response.status).to.equal(422);
-    }
+    expect(error).to.be.ok;
+    expect(error?.statusCode).to.equal(422);
   });
 
   it('should throw error if type has invalid format', async () => {
-    try {
-      await createContext({
-        session,
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.contexts.create({
         type: 'Invalid_Type!',
         id: 'create-test-invalid-type',
-      });
+      })
+    );
 
-      throw new Error('Should not succeed');
-    } catch (e) {
-      expect(e.response.status).to.equal(422);
-    }
+    expect(error).to.be.ok;
+    expect(error?.statusCode).to.equal(422);
   });
 
   it('should throw error if id has invalid format', async () => {
-    try {
-      await createContext({
-        session,
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.contexts.create({
         type: 'tenant',
         id: 'Invalid ID!',
-      });
+      })
+    );
 
-      throw new Error('Should not succeed');
-    } catch (e) {
-      expect(e.response.status).to.equal(422);
-    }
+    expect(error).to.be.ok;
+    expect(error?.statusCode).to.equal(422);
   });
 });
-
-// biome-ignore lint/suspicious/noExportsInTest: helper function used by other tests
-export async function createContext({
-  session,
-  type,
-  id,
-  data,
-}: {
-  session;
-  type?: string;
-  id?: string;
-  data?: any;
-}): Promise<AxiosResponse> {
-  const axiosInstance = axios.create();
-
-  return await axiosInstance.post(
-    `${session.serverUrl}/v2/contexts`,
-    {
-      type,
-      id,
-      data,
-    },
-    {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    }
-  );
-}
