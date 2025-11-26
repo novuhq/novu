@@ -57,15 +57,8 @@ const channelEndpointSchema = new Schema<ChannelEndpointDBModel>(
   schemaOptions
 );
 
-channelEndpointSchema.index(
-  {
-    _environmentId: 1,
-    identifier: 1,
-  },
-  {
-    unique: true,
-  }
-);
+channelEndpointSchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
+channelEndpointSchema.index({ _environmentId: 1, subscriberId: 1, channel: 1 });
 
 export const ChannelEndpoint =
   (mongoose.models.ChannelEndpoint as mongoose.Model<ChannelEndpointDBModel>) ||
