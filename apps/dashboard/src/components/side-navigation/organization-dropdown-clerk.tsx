@@ -1,9 +1,3 @@
-import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
-import type { OrganizationMembershipResource } from '@clerk/types';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -12,11 +6,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useRegion } from '@/context/region';
+import { DEFAULT_REGION, getRegionCodeFromAws } from '@/context/region/region-config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
+import type { OrganizationMembershipResource } from '@clerk/types';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 
 const SCROLL_THRESHOLD = 100;
 const PAGE_SIZE = 10;
@@ -156,9 +156,11 @@ export function OrganizationDropdown() {
       if (membership.organization.id === orgId) return false;
 
       if (isRegionSelectorEnabled) {
-        const orgRegion = membership.organization.publicMetadata?.region as string | undefined;
+        const orgAwsRegion = membership.organization.publicMetadata?.region as string | undefined;
 
-        return !orgRegion || orgRegion === selectedRegion;
+        const orgRegionCode = orgAwsRegion ? getRegionCodeFromAws(orgAwsRegion) : DEFAULT_REGION;
+
+        return orgRegionCode === selectedRegion;
       }
 
       return true;
