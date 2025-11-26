@@ -413,7 +413,8 @@ export class InboxController {
   async updateWorkflowPreference(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
-    @Body() body: UpdatePreferencesRequestDto
+    @Body() body: UpdatePreferencesRequestDto,
+    @Query('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier?: string
   ): Promise<InboxPreference> {
     return await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
@@ -421,11 +422,17 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         level: PreferenceLevelEnum.TEMPLATE,
+        subscriptionIdOrIdentifier: subscriptionIdOrIdentifier,
+        all: {
+          ...(body.enabled !== undefined && { enabled: body.enabled }),
+          ...(body.condition !== undefined && { condition: body.condition }),
+        },
         chat: body.chat,
         email: body.email,
         in_app: body.in_app,
         push: body.push,
         sms: body.sms,
+        schedule: body.schedule,
         workflowIdOrIdentifier,
         includeInactiveChannels: false,
       })
@@ -434,7 +441,6 @@ export class InboxController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/notifications/seen')
-  @HttpCode(HttpStatus.NO_CONTENT)
   async markNotificationsAsSeen(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: MarkNotificationsAsSeenRequestDto
