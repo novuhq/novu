@@ -5,7 +5,7 @@ import { SubscriptionResponseDto } from '../../shared/dtos/subscriptions/create-
 import { CreateTopicSubscriptionRequestDto } from '../dtos/create-topic-subscription-request.dto';
 import { UpdatePreferencesRequestDto } from '../dtos/update-preferences-request.dto';
 
-describe('Update subscription workflow preferences - /inbox/preferences/:workflowIdOrIdentifier (PATCH) #novu-v2', () => {
+describe('Update subscription workflow preferences - /inbox/subscriptions/:subscriptionId/preferences/:workflowIdOrIdentifier (PATCH) #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -124,7 +124,7 @@ async function updateSubscriptionPreferences(
   body: UpdatePreferencesRequestDto
 ) {
   return await session.testAgent
-    .patch(`/v1/inbox/preferences/${workflowId}?subscriptionIdOrIdentifier=${subscriptionId}`)
+    .patch(`/v1/inbox/subscriptions/${subscriptionId}/preferences/${workflowId}`)
     .send(body)
     .set('Authorization', `Bearer ${session.subscriberToken}`);
 }

@@ -413,8 +413,7 @@ export class InboxController {
   async updateWorkflowPreference(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
-    @Body() body: UpdatePreferencesRequestDto,
-    @Query('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier?: string
+    @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
     return await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
@@ -422,7 +421,37 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         level: PreferenceLevelEnum.TEMPLATE,
-        subscriptionIdOrIdentifier: subscriptionIdOrIdentifier,
+        all: {
+          ...(body.enabled !== undefined && { enabled: body.enabled }),
+          ...(body.condition !== undefined && { condition: body.condition }),
+        },
+        chat: body.chat,
+        email: body.email,
+        in_app: body.in_app,
+        push: body.push,
+        sms: body.sms,
+        schedule: body.schedule,
+        workflowIdOrIdentifier,
+        includeInactiveChannels: false,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/subscriptions/:subscriptionIdOrIdentifier/preferences/:workflowIdOrIdentifier')
+  async updateSubscriptionWorkflowPreference(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
+    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
+    @Body() body: UpdatePreferencesRequestDto
+  ): Promise<InboxPreference> {
+    return await this.updatePreferencesUsecase.execute(
+      UpdatePreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        level: PreferenceLevelEnum.TEMPLATE,
+        subscriptionIdOrIdentifier,
         all: {
           ...(body.enabled !== undefined && { enabled: body.enabled }),
           ...(body.condition !== undefined && { condition: body.condition }),
