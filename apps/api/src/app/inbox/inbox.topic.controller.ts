@@ -13,8 +13,8 @@ import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subsc
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
 import { CreateTopicSubscriptionRequestDto } from './dtos/create-topic-subscription-request.dto';
 import { TopicSubscriptionDetailsResponseDto } from './dtos/get-topic-subscriptions-response.dto';
-import { DeleteTopicSubscriptionCommand } from './usecases/delete-topic-subscription/delete-topic-subscription.command';
-import { DeleteTopicSubscription } from './usecases/delete-topic-subscription/delete-topic-subscription.usecase';
+import { DeleteTopicSubscriptionCommand } from './usecases/delete-subscription/delete-subscription.command';
+import { DeleteTopicSubscription } from './usecases/delete-subscription/delete-subscription.usecase';
 import { GetTopicSubscriptionCommand } from './usecases/get-topic-subscription/get-topic-subscription.command';
 import { GetTopicSubscription } from './usecases/get-topic-subscription/get-topic-subscription.usecase';
 import { GetTopicSubscriptionsCommand } from './usecases/get-topic-subscriptions/get-topic-subscriptions.command';

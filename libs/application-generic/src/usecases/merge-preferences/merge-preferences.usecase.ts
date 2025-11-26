@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: needed */
 
 import { PreferencesEntity } from '@novu/dal';
-import { ChannelTypeEnum, PreferencesTypeEnum, WorkflowPreferences } from '@novu/shared';
+import { PreferencesTypeEnum, WorkflowPreferences } from '@novu/shared';
 import { toMerged } from 'es-toolkit';
 import { GetPreferencesResponseDto } from '../get-preferences';
 import { MergePreferencesCommand } from './merge-preferences.command';
@@ -22,41 +22,23 @@ import { MergePreferencesCommand } from './merge-preferences.command';
  * If the subscriber has no preferences, the workflow preferences are returned.
  */
 export class MergePreferences {
-  // biome-ignore lint/suspicious/noExplicitAny: needed for flexible preference type handling
-  private static normalize(preference: any): any {
+  /**
+   * Ensures that `all.enabled` defaults to `true` if undefined.
+   * Without this, if the `all` object is missing or `enabled` is undefined,
+   * the merge result could incorrectly resolve to `false`, while the intended fallback is `true`.
+   */
+  private static ensureDefaultAllEnabled(preference: PreferencesEntity | undefined): PreferencesEntity | undefined {
     if (!preference?.preferences) {
       return preference;
     }
 
     const normalized = { ...preference, preferences: { ...preference.preferences } };
-    const prefs = normalized.preferences;
 
-    if (!prefs.all) {
-      prefs.all = { enabled: true, readOnly: false };
-    } else {
-      prefs.all = {
-        ...prefs.all,
-        enabled: prefs.all.enabled ?? true,
-        readOnly: prefs.all.readOnly ?? false,
+    if (normalized.preferences.all && normalized.preferences.all.enabled === undefined) {
+      normalized.preferences.all = {
+        ...normalized.preferences.all,
+        enabled: true,
       };
-    }
-
-    if (!prefs.channels) {
-      prefs.channels = {};
-    } else {
-      prefs.channels = { ...prefs.channels };
-    }
-
-    const channels = Object.values(ChannelTypeEnum);
-    for (const channel of channels) {
-      if (!prefs.channels[channel]) {
-        prefs.channels[channel] = { enabled: true };
-      } else {
-        prefs.channels[channel] = {
-          ...prefs.channels[channel],
-          enabled: prefs.channels[channel].enabled ?? true,
-        };
-      }
     }
 
     return normalized;
@@ -79,15 +61,13 @@ export class MergePreferences {
       ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
     ];
 
-    const normalizedPreferencesList = preferencesList.map((preference) => MergePreferences.normalize(preference));
-
-    console.log('@@@@@ normalizedPreferencesList', JSON.stringify(normalizedPreferencesList, null, 2));
-    const mergedPreferences = preferencesList.reduce(
+    const normalizedPreferencesList = preferencesList.map((preference) =>
+      MergePreferences.ensureDefaultAllEnabled(preference)
+    );
+    const mergedPreferences = normalizedPreferencesList.reduce(
       (acc, preference) => toMerged(acc, preference),
       {}
     ) as PreferencesEntity & { preferences: WorkflowPreferences };
-
-    console.log('@@@@@ mergedPreferences', JSON.stringify(mergedPreferences, null, 2));
 
     // Build the source object
     const source = {

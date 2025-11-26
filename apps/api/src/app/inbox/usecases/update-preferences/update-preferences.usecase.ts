@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
+  GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   GetWorkflowByIdsCommand,
@@ -12,10 +13,18 @@ import {
   UpsertSubscriberGlobalPreferencesCommand,
   UpsertSubscriberWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-import { BaseRepository, SubscriberEntity, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
 import {
+  BaseRepository,
+  PreferencesRepository,
+  SubscriberEntity,
+  SubscriberRepository,
+  TopicSubscribersRepository,
+} from '@novu/dal';
+import {
+  buildWorkflowPreferences,
   IPreferenceChannels,
   PreferenceLevelEnum,
+  PreferencesTypeEnum,
   Schedule,
   SeverityLevelEnum,
   WebhookEventEnum,
@@ -41,11 +50,13 @@ export class UpdatePreferences {
     private upsertPreferences: UpsertPreferences,
     private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase,
     private sendWebhookMessage: SendWebhookMessage,
-    private topicSubscribersRepository: TopicSubscribersRepository
+    private topicSubscribersRepository: TopicSubscribersRepository,
+    private preferencesRepository: PreferencesRepository
   ) {}
 
   @InstrumentUsecase()
   async execute(command: UpdatePreferencesCommand): Promise<InboxPreference> {
+    console.log('@@@@@ command', JSON.stringify(command, null, 2));
     const subscriber =
       command.subscriber ??
       (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
@@ -159,6 +170,45 @@ export class UpdatePreferences {
     subscriber: SubscriberEntity,
     subscriptionId?: string
   ): Promise<InboxPreference> {
+    if (command.subscriptionIdOrIdentifier && command.workflowIdOrIdentifier) {
+      const workflow =
+        command.workflow ??
+        (await this.getWorkflowByIdsUsecase.execute(
+          GetWorkflowByIdsCommand.create({
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            workflowIdOrInternalId: command.workflowIdOrIdentifier,
+          })
+        ));
+
+      const preferenceEntity = await this.preferencesRepository.findOne({
+        _environmentId: command.environmentId,
+        _subscriberId: subscriber._id,
+        _templateId: workflow._id,
+        _topicSubscriptionId: subscriptionId,
+        type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      });
+
+      const builtPreferences = buildWorkflowPreferences(preferenceEntity?.preferences);
+      const channels = GetPreferences.mapWorkflowPreferencesToChannelPreferences(preferenceEntity?.preferences || {});
+
+      return {
+        level: PreferenceLevelEnum.TEMPLATE,
+        enabled: builtPreferences.all.enabled,
+        condition: builtPreferences.all.condition,
+        channels,
+        workflow: {
+          id: workflow._id,
+          identifier: workflow.triggers[0].identifier,
+          name: workflow.name,
+          critical: workflow.critical,
+          tags: workflow.tags,
+          data: workflow.data,
+          severity: workflow.severity ?? SeverityLevelEnum.NONE,
+        },
+      };
+    }
+
     if (command.level === PreferenceLevelEnum.TEMPLATE && command.workflowIdOrIdentifier) {
       const workflow =
         command.workflow ??
