@@ -46,8 +46,10 @@
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
 	 * 
-	 * For API key authentication, set:
-	 * wrangler secret put API_KEY
+	 * Required secrets for this worker:
+	 * wrangler secret put API_KEY              # For incoming auth (Worker → Scheduler)
+	 * wrangler secret put CALLBACK_API_URL     # Novu API URL for callbacks
+	 * wrangler secret put CALLBACK_API_KEY     # For outgoing auth (Scheduler → API)
 	 */
 	/**
 	 * Static Assets

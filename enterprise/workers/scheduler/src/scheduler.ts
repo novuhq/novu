@@ -174,25 +174,40 @@ export class Scheduler implements DurableObject {
 			data: job.data,
 			metadata: job.metadata,
 		});
-		// TODO: Call API to enqueue job to BullMQ StandardQueue with delay=0
-		// If mode === 'shadow', add skipProcessing: true to job data
-		// If mode === 'live' or 'complete', add job data without skipProcessing flag
-		// await fetch(`${this.env.API_URL}/v1/internal/scheduler/enqueue`, {
-		//   method: 'POST',
-		//   headers: {
-		//     'Content-Type': 'application/json',
-		//     'Authorization': `Bearer ${this.env.API_KEY}`
-		//   },
-		//   body: JSON.stringify({
-		//     name: job.id,
-		//     data: {
-		//       ...job.data,
-		//       ...(job.metadata?.mode === 'shadow' && { skipProcessing: true })
-		//     },
-		//     groupId: job.data._organizationId,
-		//     options: { delay: 0 }
-		//   })
-		// });
+
+		if (!this.env.CALLBACK_API_URL || !this.env.CALLBACK_API_KEY) {
+			console.error('CALLBACK_API_URL or CALLBACK_API_KEY not configured, skipping API call');
+			return;
+		}
+
+		const url = `${this.env.CALLBACK_API_URL}/internal/scheduler/callback`;
+
+		try {
+			const response = await fetch(url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${this.env.CALLBACK_API_KEY}`,
+				},
+				body: JSON.stringify({
+					jobId: job.id,
+					type: job.type,
+					data: job.data,
+					metadata: job.metadata,
+				}),
+			});
+
+			if (!response.ok) {
+				const errorText = await response.text();
+				throw new Error(`API returned ${response.status}: ${response.statusText}. ${errorText}`);
+			}
+
+			const result = await response.json();
+			console.log(`[Scheduler] Successfully called API for job ${job.id}`, result);
+		} catch (error) {
+			console.error(`[Scheduler] Failed to call API for job ${job.id}:`, error);
+			throw error;
+		}
 	}
 
 	protected async onJobError(job: ScheduledJob, error: unknown): Promise<void> {
