@@ -1,6 +1,5 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
-  "plugins": ["./biome-plugins/api-property-record-type.grit"],
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -277,6 +276,10 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.dto.ts"],
+      "plugins": ["./biome-plugins/api-property-record-type.grit"]
     }
   ],
   "assist": {
