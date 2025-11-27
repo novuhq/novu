@@ -6,6 +6,9 @@ export class DeleteTopicSubscriptionsCommand extends EnvironmentWithUserCommand 
   @IsDefined()
   topicKey: string;
 
+  /**
+   * @deprecated Use subscriptions instead
+   */
   @IsArray()
   @IsOptional()
   subscriberIds?: string[];

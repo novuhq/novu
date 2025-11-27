@@ -1,6 +1,5 @@
 import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsString } from 'class-validator';
 import { TopicSubscriberIdentifierDto } from '../../shared/dtos/subscriptions/create-subscriptions.dto';
 
 @ApiExtraModels(TopicSubscriberIdentifierDto)
