@@ -4,13 +4,17 @@ const { version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 function overrideConfig(config, env) {
-  const plugins = [
-    ...config.plugins,
+  // Remove ESLint plugin to avoid compilation errors with deprecated options
+  const plugins = config.plugins.filter(
+    (plugin) => plugin.constructor.name !== 'ESLintWebpackPlugin'
+  );
+
+  plugins.push(
     new DefinePlugin({
       'process.env.NOVU_VERSION': JSON.stringify(version),
-    }),
+    })
     /* new BundleAnalyzerPlugin() */
-  ];
+  );
 
   return {
     ...config,
