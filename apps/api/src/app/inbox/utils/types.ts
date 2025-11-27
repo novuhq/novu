@@ -7,7 +7,7 @@ import type {
   Schedule,
   SeverityLevelEnum,
 } from '@novu/shared';
-import { RulesLogic } from 'json-logic-js';
+import type { RulesLogic } from 'json-logic-js';
 
 export type Subscriber = {
   id: string;
