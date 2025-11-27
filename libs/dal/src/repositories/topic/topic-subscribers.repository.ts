@@ -109,11 +109,11 @@ export class TopicSubscribersRepository extends BaseRepository<
     for (const [index, _id] of Object.entries(upsertedIds)) {
       const numericIndex = parseInt(index, 10);
       createdOrFailedIndexes.push(numericIndex);
-      const subscriber = subscriptions[numericIndex];
-      if (subscriber) {
+      const subscription = subscriptions[numericIndex];
+      if (subscription) {
         createdSubscribers.push({
           _id: _id.toString(),
-          ...subscriber,
+          ...subscription,
         } as TopicSubscribersEntity);
       }
     }

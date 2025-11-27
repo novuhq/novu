@@ -79,37 +79,7 @@ export class CreateSubscriptionPreferencesUsecase {
       return [];
     }
 
-    const preferencesToCreate: Array<{
-      _environmentId: string;
-      _organizationId: string;
-      _subscriberId: string;
-      _templateId: string;
-      _topicSubscriptionId: string;
-      type: PreferencesTypeEnum;
-      preferences: WorkflowPreferences;
-      subscriptionId: string;
-      workflow: NotificationTemplateEntity;
-    }> = [];
-
-    for (const { subscription, subscriberId } of subscriptions) {
-      for (const workflow of command.workflows) {
-        const workflowPreferences = await this.getWorkflowPreferencesForBatch(command, workflow, subscriberId);
-
-        if (workflowPreferences) {
-          preferencesToCreate.push({
-            _environmentId: command.environmentId,
-            _organizationId: command.organizationId,
-            _subscriberId: subscription._subscriberId.toString(),
-            _templateId: workflow._id,
-            _topicSubscriptionId: subscription._id.toString(),
-            type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
-            preferences: workflowPreferences,
-            subscriptionId: subscription._id.toString(),
-            workflow,
-          });
-        }
-      }
-    }
+    const preferencesToCreate = await this.buildPreferencesToCreate(command, subscriptions);
 
     if (preferencesToCreate.length === 0) {
       return [];
@@ -153,6 +123,57 @@ export class CreateSubscriptionPreferencesUsecase {
       subscriptionId,
       preferences,
     }));
+  }
+
+  private async buildPreferencesToCreate(
+    command: Omit<CreateSubscriptionPreferencesCommand, 'subscriptionId' | '_subscriberId'>,
+    subscriptions: Array<{ subscription: TopicSubscribersEntity; subscriberId: string }>
+  ): Promise<
+    Array<{
+      _environmentId: string;
+      _organizationId: string;
+      _subscriberId: string;
+      _templateId: string;
+      _topicSubscriptionId: string;
+      type: PreferencesTypeEnum;
+      preferences: WorkflowPreferences;
+      subscriptionId: string;
+      workflow: NotificationTemplateEntity;
+    }>
+  > {
+    const preferencesToCreate: Array<{
+      _environmentId: string;
+      _organizationId: string;
+      _subscriberId: string;
+      _templateId: string;
+      _topicSubscriptionId: string;
+      type: PreferencesTypeEnum;
+      preferences: WorkflowPreferences;
+      subscriptionId: string;
+      workflow: NotificationTemplateEntity;
+    }> = [];
+
+    for (const { subscription, subscriberId } of subscriptions) {
+      for (const workflow of command.workflows) {
+        const workflowPreferences = await this.getWorkflowPreferencesForBatch(command, workflow, subscriberId);
+
+        if (workflowPreferences) {
+          preferencesToCreate.push({
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+            _subscriberId: subscription._subscriberId.toString(),
+            _templateId: workflow._id,
+            _topicSubscriptionId: subscription._id.toString(),
+            type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+            preferences: workflowPreferences,
+            subscriptionId: subscription._id.toString(),
+            workflow,
+          });
+        }
+      }
+    }
+
+    return preferencesToCreate;
   }
 
   private async getWorkflowPreferencesForBatch(
