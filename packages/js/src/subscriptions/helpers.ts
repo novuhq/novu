@@ -10,6 +10,7 @@ import type {
   DeleteSubscriptionArgs,
   GetSubscriptionArgs,
   ListSubscriptionsArgs,
+  UpdateSubscriptionArgs,
   UpdateSubscriptionPreferenceArgs,
 } from './types';
 
@@ -112,9 +113,11 @@ export const createSubscription = async ({
     emitter.emit('subscription.create.pending', { args });
 
     const response = await apiService.createSubscription({
-      topicKey: args.topicKey,
       identifier: args.identifier ?? '',
-      filters: args.filters,
+      name: args.name,
+      topicKey: args.topicKey,
+      topicName: args.topicName,
+      preferences: args.preferences,
     });
 
     const subscription = new TopicSubscription(
@@ -132,6 +135,46 @@ export const createSubscription = async ({
     emitter.emit('subscription.create.resolved', { args, error });
 
     return { error: new NovuError('Failed to create subscription', error) };
+  }
+};
+
+export const updateSubscription = async ({
+  emitter,
+  apiService,
+  cache,
+  useCache,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  cache: SubscriptionsCache;
+  useCache: boolean;
+  args: UpdateSubscriptionArgs;
+}): Result<TopicSubscription> => {
+  const subscriptionId = 'subscriptionId' in args ? args.subscriptionId : args.subscription.id;
+  const topicKey = 'topicKey' in args ? args.topicKey : args.subscription.topicKey;
+
+  try {
+    emitter.emit('subscription.update.pending', {
+      args,
+    });
+
+    const response = await apiService.updateSubscription({
+      topicKey,
+      subscriptionId,
+      name: args.name,
+      preferences: args.preferences,
+    });
+
+    const updatedSubscription = new TopicSubscription({ ...response, topicKey }, emitter, apiService, cache, useCache);
+
+    emitter.emit('subscription.update.resolved', { args, data: updatedSubscription });
+
+    return { data: updatedSubscription };
+  } catch (error) {
+    emitter.emit('subscription.update.resolved', { args, error });
+
+    return { error: new NovuError('Failed to update subscription', error) };
   }
 };
 
@@ -223,7 +266,7 @@ export const bulkUpdateSubscriptionPreference = async ({
     });
 
     const preferencesToUpdate = args.map((arg) => ({
-      subscriptionId: arg.subscriptionId,
+      subscriptionIdOrIdentifier: arg.subscriptionId,
       workflowId:
         'workflowId' in arg
           ? arg.workflowId
@@ -253,11 +296,11 @@ export const deleteSubscription = async ({
   args: DeleteSubscriptionArgs;
 }): Result<void> => {
   const subscriptionId = 'subscriptionId' in args ? args.subscriptionId : args.subscription.id;
-
+  const topicKey = 'topicKey' in args ? args.topicKey : args.subscription.topicKey;
   try {
     emitter.emit('subscription.delete.pending', { args });
 
-    await apiService.deleteSubscription(subscriptionId);
+    await apiService.deleteSubscription({ topicKey, subscriptionId });
 
     emitter.emit('subscription.delete.resolved', { args });
 

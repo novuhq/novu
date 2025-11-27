@@ -192,6 +192,7 @@ export class UpdatePreferences {
         level: PreferenceLevelEnum.TEMPLATE,
         enabled: builtPreferences.all.enabled,
         condition: builtPreferences.all.condition,
+        subscriptionId,
         channels,
         workflow: {
           id: workflow._id,

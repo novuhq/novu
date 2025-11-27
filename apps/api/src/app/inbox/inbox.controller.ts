@@ -397,7 +397,7 @@ export class InboxController {
   async bulkUpdateWorkflowPreferences(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: BulkUpdatePreferencesRequestDto
-  ): Promise<GetPreferencesResponseDto[]> {
+  ): Promise<InboxPreference[]> {
     return await this.bulkUpdatePreferencesUsecase.execute(
       BulkUpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,

@@ -1,12 +1,12 @@
-import type { TopicSubscription, WorkflowFilter, WorkflowIdentifierOrId } from '../../../subscriptions';
+import type { PreferenceFilter, TopicSubscription } from '../../../subscriptions';
 import { useSubscription } from '../../api/hooks/useSubscription';
-import { GroupPreference } from './Subscription';
+import { UIPreference } from './Subscription';
 import { SubscriptionButton } from './SubscriptionButton';
 
 export type SubscriptionButtonWrapperProps = {
-  topic: string;
+  topicKey: string;
   identifier: string;
-  preferences: Array<WorkflowIdentifierOrId | WorkflowFilter | GroupPreference>;
+  preferences: Array<UIPreference>;
   onClick?: (args: { subscription?: TopicSubscription }) => void;
   onDeleteError?: (error: unknown) => void;
   onDeleteSuccess?: () => void;
@@ -16,7 +16,7 @@ export type SubscriptionButtonWrapperProps = {
 
 export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps) => {
   const { subscription, loading, create, remove } = useSubscription({
-    topicKey: props.topic,
+    topicKey: props.topicKey,
     identifier: props.identifier,
   });
 
@@ -32,10 +32,18 @@ export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps)
       }
       props.onDeleteSuccess?.();
     } else {
+      const preferences: Array<PreferenceFilter> = props.preferences.map((preference) => {
+        if (typeof preference === 'object' && 'workflowId' in preference) {
+          return { workflowId: preference.workflowId, enabled: preference.enabled };
+        } else if (typeof preference === 'object' && 'filter' in preference) {
+          return { filter: preference.filter, enabled: preference.enabled };
+        }
+        return preference;
+      });
       const { data, error } = await create({
-        topicKey: props.topic,
+        topicKey: props.topicKey,
         identifier: props.identifier,
-        filters: props.preferences,
+        preferences,
       });
       if (data) {
         props.onCreateSuccess?.({ subscription: data });

@@ -1,5 +1,5 @@
 import { createEffect, createMemo, Index, Show } from 'solid-js';
-import { PreferenceFilter, TopicSubscription, WorkflowFilter, WorkflowIdentifierOrId } from '../../../subscriptions';
+import { TopicSubscription } from '../../../subscriptions';
 import { SubscriptionPreference } from '../../../subscriptions/subscription-preference';
 import { setDynamicLocalization } from '../../config/defaultLocalization';
 import { useInboxContext, useLocalization } from '../../context';
@@ -10,7 +10,7 @@ import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { Footer } from '../elements';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRenderer } from '../shared/IconRendererWrapper';
-import { SubscriptionPreferencesRenderer } from './Subscription';
+import { SubscriptionPreferencesRenderer, UIPreference } from './Subscription';
 import { SubscriptionPreferenceGroupRow } from './SubscriptionPreferenceGroupRow';
 import { SubscriptionPreferenceRow } from './SubscriptionPreferenceRow';
 import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallback';
@@ -18,7 +18,7 @@ import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallba
 export const SubscriptionPreferences = (props: {
   loading?: boolean;
   subscription?: TopicSubscription | null;
-  preferences: Array<PreferenceFilter>;
+  preferences: Array<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
   onSubscribeClick: () => void;
 }) => {
@@ -58,9 +58,7 @@ export const SubscriptionPreferences = (props: {
               preference: SubscriptionPreference;
             }> = [];
 
-            if (typeof preferenceFilter.filter === 'function') {
-              foundPreferences = preferenceFilter.filter({ preferences: subscriptionPreferences });
-            } else if (
+            if (
               typeof preferenceFilter.filter === 'object' &&
               ('workflowIds' in preferenceFilter.filter || 'tags' in preferenceFilter.filter)
             ) {

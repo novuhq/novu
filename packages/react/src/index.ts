@@ -82,12 +82,15 @@ export type {
 } from './hooks';
 export {
   useCounts,
+  useCreateSubscription,
+  useDeleteSubscription,
   useNotifications,
   useNovu,
   usePreferences,
   useSchedule,
   useSubscription,
   useSubscriptions,
+  useUpdateSubscription,
 } from './hooks';
 
 export type {

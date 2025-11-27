@@ -140,7 +140,7 @@ export class SubscriptionsCache {
         this.#itemCache.set(key, updatedSubscription);
 
         this.#emitter.emit('subscription.update.resolved', {
-          args: undefined,
+          args: { subscription: subscription },
           data: updatedSubscription,
         });
       }

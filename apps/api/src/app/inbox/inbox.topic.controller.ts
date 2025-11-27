@@ -141,9 +141,10 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Delete('/subscriptions/:subscriptionId')
+  @Delete('/topics/:topicKey/subscriptions/:subscriptionId')
   async deleteTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('topicKey') topicKey: string,
     @Param('subscriptionId') subscriptionId: string
   ): Promise<{ success: boolean }> {
     return await this.deleteTopicSubscriptionUsecase.execute(
@@ -151,6 +152,7 @@ export class InboxTopicController {
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
+        topicKey,
         subscriptionId,
         _subscriberId: subscriberSession._id,
       })

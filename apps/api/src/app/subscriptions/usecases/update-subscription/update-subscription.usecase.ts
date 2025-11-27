@@ -57,7 +57,9 @@ export class UpdateSubscriptionUsecase {
     }
 
     const subscription = await this.topicSubscribersRepository.findOne({
-      _id: command.subscriptionId,
+      ...(TopicSubscribersRepository.isInternalId(command.subscriptionId)
+        ? { _id: command.subscriptionId }
+        : { identifier: command.subscriptionId }),
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _topicId: topic._id,

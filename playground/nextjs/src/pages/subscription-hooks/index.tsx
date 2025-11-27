@@ -1,4 +1,4 @@
-import { NovuProvider, RulesLogic, useSubscription } from '@novu/nextjs/hooks';
+import { NovuProvider, RulesLogic, useCreateSubscription, useSubscription } from '@novu/nextjs/hooks';
 import { useCallback, useMemo } from 'react';
 import Title from '@/components/Title';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -35,11 +35,11 @@ const filters = [
 ];
 
 const SubscriptionHooks = () => {
-  const { subscription, isLoading, isFetching, create } = useSubscription({
+  const { subscription, isLoading, isFetching } = useSubscription({
     topicKey: 'test',
     identifier: 'test',
-    filters,
   });
+  const { create: createSubscription, isCreating } = useCreateSubscription();
 
   const preferencesWithLabels = useMemo(() => {
     if (!subscription) {
@@ -114,7 +114,7 @@ const SubscriptionHooks = () => {
   const handleCheckboxChange = useCallback(
     async (workflowId: string, checked: boolean) => {
       if (!subscription) {
-        await create();
+        await createSubscription({ topicKey: 'test', identifier: 'test', preferences: filters });
         return;
       }
 
@@ -126,7 +126,7 @@ const SubscriptionHooks = () => {
         await preference.update({ value: checked });
       }
     },
-    [subscription, create]
+    [subscription, createSubscription]
   );
 
   const handleDropdownChange = useCallback(
@@ -139,7 +139,7 @@ const SubscriptionHooks = () => {
       }
 
       if (!subscription) {
-        await create();
+        await createSubscription({ topicKey: 'test', identifier: 'test', preferences: filters });
         return;
       }
 
@@ -151,14 +151,14 @@ const SubscriptionHooks = () => {
         await preference.update({ value: rulesLogicValue as Parameters<typeof preference.update>[0]['value'] });
       }
     },
-    [subscription, create]
+    [subscription, createSubscription]
   );
 
   const handleCreateSubscription = useCallback(async () => {
     if (!subscription) {
-      await create();
+      await createSubscription({ topicKey: 'test', identifier: 'test', preferences: filters });
     }
-  }, [subscription, create]);
+  }, [subscription, createSubscription]);
 
   if (isLoading) {
     return (

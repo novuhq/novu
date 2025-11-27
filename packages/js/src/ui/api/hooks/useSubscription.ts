@@ -39,7 +39,7 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
     const response =
       'subscription' in args
         ? await novuAccessor().subscriptions.delete({ subscription: args.subscription })
-        : await novuAccessor().subscriptions.delete({ subscriptionId: args.subscriptionId });
+        : await novuAccessor().subscriptions.delete({ topicKey: args.topicKey, subscriptionId: args.subscriptionId });
 
     mutate(null);
     setLoading(false);

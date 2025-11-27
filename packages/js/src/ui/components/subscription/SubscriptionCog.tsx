@@ -1,12 +1,12 @@
 import { OffsetOptions, Placement } from '@floating-ui/dom';
 import { createMemo, Show } from 'solid-js';
 import { Motion, Presence } from 'solid-motionone';
-import { TopicSubscription, WorkflowFilter, WorkflowIdentifierOrId } from '../../../subscriptions';
+import { TopicSubscription } from '../../../subscriptions';
 import { useStyle } from '../../helpers/useStyle';
 import { Cogs } from '../../icons';
 import { SubscriptionAppearanceCallback } from '../../types';
 import { Button, Popover } from '../primitives';
-import { GroupPreference, SubscriptionPreferencesRenderer } from './Subscription';
+import { SubscriptionPreferencesRenderer, UIPreference } from './Subscription';
 import { SubscriptionPreferences } from './SubscriptionPreferences';
 
 const ANIMATION_CONFIG = {
@@ -22,7 +22,7 @@ export const SubscriptionCog = (props: {
   isOpen: boolean;
   placement: Placement;
   placementOffset?: OffsetOptions;
-  preferences: Array<WorkflowIdentifierOrId | WorkflowFilter | GroupPreference>;
+  preferences: Array<UIPreference>;
   onOpenChange?: (isOpen: boolean) => void;
   onSubscribeClick: () => void;
   renderPreferences?: SubscriptionPreferencesRenderer;

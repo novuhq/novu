@@ -42,7 +42,7 @@ export const SubscriptionPreferenceGroupRow = (props: {
       value: checked,
     }));
 
-    await props.subscription.bulkUpdate(updates);
+    await props.subscription.bulkUpdatePreferences(updates);
   };
 
   const handlePreferenceChange = (preference: SubscriptionPreference) => async (checked: boolean) => {

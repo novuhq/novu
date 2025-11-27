@@ -343,17 +343,40 @@ export class InboxService {
   }
 
   createSubscription({
-    topicKey,
     identifier,
-    filters,
+    name,
+    topicKey,
+    topicName,
+    preferences,
   }: {
-    topicKey: string;
     identifier?: string;
-    filters: Array<PreferenceFilter>;
+    name?: string;
+    topicKey: string;
+    topicName?: string;
+    preferences: Array<PreferenceFilter>;
   }): Promise<SubscriptionResponse> {
     return this.#httpClient.post(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`, {
       identifier,
-      filters,
+      name,
+      ...(topicName && { topic: { name: topicName } }),
+      preferences,
+    });
+  }
+
+  updateSubscription({
+    topicKey,
+    subscriptionId,
+    name,
+    preferences,
+  }: {
+    topicKey: string;
+    subscriptionId: string;
+    name?: string;
+    preferences?: Array<PreferenceFilter>;
+  }): Promise<SubscriptionResponse> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${subscriptionId}`, {
+      name,
+      preferences,
     });
   }
 
@@ -376,16 +399,16 @@ export class InboxService {
 
   bulkUpdateSubscriptionPreferences(
     preferences: Array<{
-      subscriptionId: string;
+      subscriptionIdOrIdentifier: string;
       workflowId: string;
       enabled?: boolean;
       condition?: RulesLogic;
     }>
   ): Promise<SubscriptionPreferenceResponse[]> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/preferences/bulk`, { preferences });
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/bulk`, { preferences });
   }
 
-  deleteSubscription(subscriptionId: string): Promise<void> {
-    return this.#httpClient.delete(`${INBOX_ROUTE}/subscriptions/${subscriptionId}`);
+  deleteSubscription({ topicKey, subscriptionId }: { topicKey: string; subscriptionId: string }): Promise<void> {
+    return this.#httpClient.delete(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${subscriptionId}`);
   }
 }

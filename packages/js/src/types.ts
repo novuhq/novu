@@ -218,6 +218,8 @@ export type Context = Partial<Record<string, ContextValue>>;
 export type PreferencesResponse = {
   level: PreferenceLevel;
   enabled: boolean;
+  condition?: RulesLogic;
+  subscriptionId?: string;
   channels: ChannelPreference;
   overrides?: IPreferenceOverride[];
   workflow?: Workflow;
@@ -238,10 +240,11 @@ export type IPreferenceOverride = {
   source: PreferenceOverrideSourceEnum;
 };
 
-export type SubscriptionPreferenceResponse = {
+export type SubscriptionPreferenceResponse = Omit<
+  PreferencesResponse,
+  'subscriptionId' | 'workflow' | 'schedule' | 'level' | 'channels'
+> & {
   subscriptionId: string;
-  enabled: boolean;
-  condition?: RulesLogic;
   workflow: Workflow;
 };
 

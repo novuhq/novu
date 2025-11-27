@@ -1,10 +1,5 @@
 import { OffsetOptions, Placement } from '@floating-ui/dom';
-import type {
-  TopicSubscription,
-  WorkflowFilter,
-  WorkflowGroupFilter,
-  WorkflowIdentifierOrId,
-} from '../../../subscriptions';
+import type { PreferenceFilter, TopicSubscription, WorkflowIdentifierOrId } from '../../../subscriptions';
 import { useSubscription } from '../../api/hooks/useSubscription';
 import { useInboxContext } from '../../context';
 import { cn } from '../../helpers';
@@ -19,17 +14,30 @@ export type SubscriptionPreferencesRenderer = (
   loading?: boolean
 ) => () => void;
 
+export type WorkflowPreference = {
+  label?: string;
+  workflowId: WorkflowIdentifierOrId;
+  enabled?: boolean;
+};
+
 export type GroupPreference = {
   label: string;
-} & WorkflowGroupFilter;
+  filter: {
+    workflowIds?: Array<WorkflowIdentifierOrId>;
+    tags?: string[];
+  };
+  enabled?: boolean;
+};
+
+export type UIPreference = WorkflowIdentifierOrId | WorkflowPreference | GroupPreference;
 
 export type SubscriptionProps = {
   open?: boolean;
   placement?: Placement;
   placementOffset?: OffsetOptions;
-  topic: string;
+  topicKey: string;
   identifier: string;
-  preferences: Array<WorkflowIdentifierOrId | WorkflowFilter | GroupPreference>;
+  preferences: Array<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
 };
 
@@ -39,7 +47,7 @@ export const Subscription = (props: SubscriptionProps) => {
   const isOpen = () => props?.open ?? isOpened();
 
   const { subscription, loading, create, remove } = useSubscription({
-    topicKey: props.topic,
+    topicKey: props.topicKey,
     identifier: props.identifier,
   });
 
@@ -48,7 +56,15 @@ export const Subscription = (props: SubscriptionProps) => {
     if (currentSubscription) {
       remove({ subscription: currentSubscription });
     } else {
-      create({ topicKey: props.topic, identifier: props.identifier, filters: props.preferences });
+      const preferences: Array<PreferenceFilter> = props.preferences.map((preference) => {
+        if (typeof preference === 'object' && 'workflowId' in preference) {
+          return { workflowId: preference.workflowId, enabled: preference.enabled };
+        } else if (typeof preference === 'object' && 'filter' in preference) {
+          return { filter: preference.filter, enabled: preference.enabled };
+        }
+        return preference;
+      });
+      create({ topicKey: props.topicKey, identifier: props.identifier, preferences: preferences });
     }
   };
 

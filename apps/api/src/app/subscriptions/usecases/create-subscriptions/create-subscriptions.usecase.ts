@@ -143,18 +143,15 @@ export class CreateSubscriptionsUsecase {
       const newSubscriptions = await this.topicSubscribersRepository.createSubscriptions(subscriptionsToCreate);
 
       const BATCH_SIZE = 50;
-      const subscriptionBatches: Array<{ subscription: TopicSubscribersEntity; subscriberId: string }>[] = _.chunk(
-        newSubscriptions.created,
-        BATCH_SIZE
-      );
+      const subscriptionBatches: TopicSubscribersEntity[][] = _.chunk(newSubscriptions.created, BATCH_SIZE);
       const preferencesArray: Array<{ subscriptionId: string; preferences: SubscriptionPreferenceDto[] }> = [];
 
       for (const batch of subscriptionBatches) {
         const batchPreferencesArray = await this.createPreferencesForSubscriptionsBatch(
           command,
-          batch.map(({ subscription, subscriberId }) => ({
-            subscription: subscription,
-            subscriberId: subscriberId,
+          batch.map((sub) => ({
+            subscription: sub,
+            subscriberId: sub._subscriberId,
           })),
           workflows
         );

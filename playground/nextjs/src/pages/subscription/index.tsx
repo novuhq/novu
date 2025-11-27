@@ -19,7 +19,7 @@ export default function SubscriptionPage() {
         <button onClick={toggleDarkTheme}>Toggle Dark Theme</button>
         <NovuProvider {...novuConfig}>
           <Subscription
-            topic="test"
+            topicKey="test"
             identifier="test"
             preferences={[
               { workflowId: 'test-workflow3' },

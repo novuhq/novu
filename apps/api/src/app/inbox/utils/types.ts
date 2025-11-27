@@ -70,6 +70,7 @@ export type NotificationFilter = {
 
 export type InboxPreference = {
   level: PreferenceLevelEnum;
+  subscriptionId?: string;
   enabled: boolean;
   condition?: RulesLogic;
   channels: IPreferenceChannels;

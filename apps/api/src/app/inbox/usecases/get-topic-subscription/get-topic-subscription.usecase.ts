@@ -22,7 +22,9 @@ export class GetTopicSubscription {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       topicKey: command.topicKey,
-      _id: command.subscriptionId,
+      ...(TopicSubscribersRepository.isInternalId(command.subscriptionId)
+        ? { _id: command.subscriptionId }
+        : { identifier: command.subscriptionId }),
     });
 
     if (!subscription) {
