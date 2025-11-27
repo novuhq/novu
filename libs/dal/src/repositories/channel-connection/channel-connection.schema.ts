@@ -52,6 +52,9 @@ const channelConnectionSchema = new Schema<ChannelConnectionDBModel>(
   schemaOptions
 );
 
+channelConnectionSchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
+channelConnectionSchema.index({ _environmentId: 1, subscriberId: 1, integrationIdentifier: 1 });
+
 export const ChannelConnection =
   (mongoose.models.ChannelConnection as mongoose.Model<ChannelConnectionDBModel>) ||
   mongoose.model<ChannelConnectionDBModel>('ChannelConnection', channelConnectionSchema);

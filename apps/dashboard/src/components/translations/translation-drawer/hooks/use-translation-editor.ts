@@ -1,7 +1,7 @@
+import { TranslationResponseDto } from '@novu/api/models/components';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Translation } from '@/api/translations';
 
-export function useTranslationEditor(selectedTranslation: Translation | undefined) {
+export function useTranslationEditor(selectedTranslation: TranslationResponseDto | undefined) {
   const [modifiedContentString, setModifiedContentString] = useState<string | null>(null);
   const [modifiedContent, setModifiedContent] = useState<Record<string, any> | null>(null);
   const [jsonError, setJsonError] = useState<string | null>(null);
