@@ -1042,13 +1042,17 @@ export class AddJob {
     const hasDelay = delay > 0;
     const shouldUseCFScheduler = schedulerMode !== CloudflareSchedulerMode.OFF && hasDelay;
 
-    this.logger.debug(
+    this.logger.info(
       {
         jobId: job._id,
         schedulerMode,
+        schedulerModeType: typeof schedulerMode,
         hasDelay,
         shouldUseCFScheduler,
         delay,
+        organizationId: job._organizationId,
+        apiServiceLevel: organization.apiServiceLevel,
+        environmentId: job._environmentId,
       },
       'CF Scheduler mode evaluation'
     );

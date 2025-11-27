@@ -180,7 +180,7 @@ export class Scheduler implements DurableObject {
 			return;
 		}
 
-		const url = `${this.env.CALLBACK_API_URL}/internal/scheduler/callback`;
+		const url = `${this.env.CALLBACK_API_URL}/v1/internal/scheduler/callback`;
 
 		try {
 			const response = await fetch(url, {
