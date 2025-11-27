@@ -470,6 +470,7 @@ export class InboxController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/notifications/seen')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async markNotificationsAsSeen(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: MarkNotificationsAsSeenRequestDto
