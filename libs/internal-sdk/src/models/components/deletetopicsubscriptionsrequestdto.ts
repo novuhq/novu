@@ -3,17 +3,59 @@
  */
 
 import * as z from "zod/v3";
+import {
+  TopicSubscriberIdentifierDto,
+  TopicSubscriberIdentifierDto$Outbound,
+  TopicSubscriberIdentifierDto$outboundSchema,
+} from "./topicsubscriberidentifierdto.js";
+
+export type DeleteTopicSubscriptionsRequestDtoSubscriptions =
+  | TopicSubscriberIdentifierDto
+  | string;
 
 export type DeleteTopicSubscriptionsRequestDto = {
   /**
-   * List of subscriber identifiers to unsubscribe from the topic (max: 100)
+   * List of subscriber identifiers to unsubscribe from the topic (max: 100). @deprecated Use the "subscriptions" property instead.
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
-  subscriberIds: Array<string>;
+  subscriberIds?: Array<string> | undefined;
+  /**
+   * List of subscriptions to unsubscribe from the topic (max: 100). Can be either a string array of subscriber IDs or an array of objects with identifier and subscriberId
+   */
+  subscriptions?: Array<TopicSubscriberIdentifierDto | string> | undefined;
 };
 
 /** @internal */
+export type DeleteTopicSubscriptionsRequestDtoSubscriptions$Outbound =
+  | TopicSubscriberIdentifierDto$Outbound
+  | string;
+
+/** @internal */
+export const DeleteTopicSubscriptionsRequestDtoSubscriptions$outboundSchema:
+  z.ZodType<
+    DeleteTopicSubscriptionsRequestDtoSubscriptions$Outbound,
+    z.ZodTypeDef,
+    DeleteTopicSubscriptionsRequestDtoSubscriptions
+  > = z.union([TopicSubscriberIdentifierDto$outboundSchema, z.string()]);
+
+export function deleteTopicSubscriptionsRequestDtoSubscriptionsToJSON(
+  deleteTopicSubscriptionsRequestDtoSubscriptions:
+    DeleteTopicSubscriptionsRequestDtoSubscriptions,
+): string {
+  return JSON.stringify(
+    DeleteTopicSubscriptionsRequestDtoSubscriptions$outboundSchema.parse(
+      deleteTopicSubscriptionsRequestDtoSubscriptions,
+    ),
+  );
+}
+
+/** @internal */
 export type DeleteTopicSubscriptionsRequestDto$Outbound = {
-  subscriberIds: Array<string>;
+  subscriberIds?: Array<string> | undefined;
+  subscriptions?:
+    | Array<TopicSubscriberIdentifierDto$Outbound | string>
+    | undefined;
 };
 
 /** @internal */
@@ -22,7 +64,10 @@ export const DeleteTopicSubscriptionsRequestDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DeleteTopicSubscriptionsRequestDto
 > = z.object({
-  subscriberIds: z.array(z.string()),
+  subscriberIds: z.array(z.string()).optional(),
+  subscriptions: z.array(
+    z.union([TopicSubscriberIdentifierDto$outboundSchema, z.string()]),
+  ).optional(),
 });
 
 export function deleteTopicSubscriptionsRequestDtoToJSON(
