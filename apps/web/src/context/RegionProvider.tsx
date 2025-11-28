@@ -2,7 +2,7 @@ import { createContext, type ReactNode, useContext, useEffect, useRef, useState 
 import { useOrganization } from '@clerk/clerk-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { apiHostnameManager } from '../utils/api-hostname-manager';
-import { DEFAULT_REGION } from './region-config';
+import { getDefaultRegion } from './region-config';
 import {
   detectRegionFromOrganization,
   getApiHostnameForRegion,
@@ -36,10 +36,10 @@ export function RegionProvider({ children }: RegionProviderProps) {
     : { organization: null, isLoaded: true };
 
   const [selectedRegion, setSelectedRegion] = useState<Region>(() => {
-    return DEFAULT_REGION;
+    return getDefaultRegion();
   });
 
-  const previousRegion = useRef<Region>(DEFAULT_REGION);
+  const previousRegion = useRef<Region>(getDefaultRegion());
 
   useEffect(() => {
     if (!IS_EE_AUTH_ENABLED) {
@@ -62,7 +62,7 @@ export function RegionProvider({ children }: RegionProviderProps) {
     apiHostnameManager.setApiHostname(apiHostname);
     apiHostnameManager.setWebSocketHostname(webSocketHostname);
 
-    if (previousRegion.current !== selectedRegion && previousRegion.current !== DEFAULT_REGION) {
+    if (previousRegion.current !== selectedRegion && previousRegion.current !== getDefaultRegion()) {
       queryClient.clear();
     }
 

@@ -60,23 +60,43 @@ function parseRegionsFromEnv(): RegionConfig[] {
   return regions;
 }
 
-export const REGIONS: RegionConfig[] = parseRegionsFromEnv();
+let cachedRegions: RegionConfig[] | null = null;
+let cachedRegionMap: Map<string, RegionConfig> | null = null;
+let cachedAwsRegionMap: Map<string, string> | null = null;
+let cachedDefaultRegion: string | null = null;
 
-export const REGION_MAP = new Map<string, RegionConfig>(REGIONS.map((region) => [region.code, region]));
+function initializeRegions() {
+  if (cachedRegions !== null) {
+    return;
+  }
 
-export const AWS_REGION_TO_CODE_MAP = new Map<string, string>(REGIONS.map((region) => [region.awsRegion, region.code]));
+  cachedRegions = parseRegionsFromEnv();
+  cachedRegionMap = new Map<string, RegionConfig>(cachedRegions.map((region) => [region.code, region]));
+  cachedAwsRegionMap = new Map<string, string>(cachedRegions.map((region) => [region.awsRegion, region.code]));
+  cachedDefaultRegion = cachedRegions[0]?.code || 'us';
 
-export const DEFAULT_REGION = REGIONS[0]?.code || 'us';
+  if (cachedRegions.length === 0) {
+    console.error('No regions configured! Please set REACT_APP_REGIONS environment variable.');
+  }
+}
 
-if (REGIONS.length === 0) {
-  console.error('No regions configured! Please set REACT_APP_REGIONS environment variable.');
+export function getRegions(): RegionConfig[] {
+  initializeRegions();
+  return cachedRegions!;
+}
+
+export function getDefaultRegion(): string {
+  initializeRegions();
+  return cachedDefaultRegion!;
 }
 
 export function getRegionConfig(code: string): RegionConfig | undefined {
-  return REGION_MAP.get(code.toLowerCase());
+  initializeRegions();
+  return cachedRegionMap!.get(code.toLowerCase());
 }
 
 export function getRegionCodeFromAws(awsRegion: string): string {
-  return AWS_REGION_TO_CODE_MAP.get(awsRegion) || DEFAULT_REGION;
+  initializeRegions();
+  return cachedAwsRegionMap!.get(awsRegion) || getDefaultRegion();
 }
 

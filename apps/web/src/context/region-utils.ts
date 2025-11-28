@@ -1,5 +1,5 @@
 import type { OrganizationResource } from '@clerk/types';
-import { DEFAULT_REGION, getRegionCodeFromAws, getRegionConfig } from './region-config';
+import { getDefaultRegion, getRegionCodeFromAws, getRegionConfig } from './region-config';
 
 export type Region = string;
 
@@ -15,7 +15,7 @@ export function getApiHostnameForRegion(region: Region): string {
     return config.apiHostname;
   }
 
-  const defaultConfig = getRegionConfig(DEFAULT_REGION);
+  const defaultConfig = getRegionConfig(getDefaultRegion());
   return defaultConfig?.apiHostname || '';
 }
 
@@ -25,20 +25,20 @@ export function getWebSocketHostnameForRegion(region: Region): string {
     return config.websocketHostname;
   }
 
-  const defaultConfig = getRegionConfig(DEFAULT_REGION);
+  const defaultConfig = getRegionConfig(getDefaultRegion());
   return defaultConfig?.websocketHostname || '';
 }
 
 export function detectRegionFromOrganization(organization: OrganizationResource | null | undefined): Region {
   if (!organization) {
-    return DEFAULT_REGION;
+    return getDefaultRegion();
   }
 
   const orgMetadata = organization.publicMetadata as OrganizationMetadata;
   const awsRegion = orgMetadata?.region;
 
   if (!awsRegion) {
-    return DEFAULT_REGION;
+    return getDefaultRegion();
   }
 
   const regionCode = getRegionCodeFromAws(awsRegion);
