@@ -1,4 +1,4 @@
-export type { RulesLogic } from 'json-logic-js';
+export type * from 'json-logic-js';
 export type { EventHandler, Events, SocketEventNames } from './event-emitter';
 export { Novu } from './novu';
 export type {

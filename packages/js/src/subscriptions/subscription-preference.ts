@@ -9,7 +9,7 @@ export class SubscriptionPreference {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
   #cache: SubscriptionsCache;
-  #useCache: boolean;
+  #useCache?: boolean;
 
   readonly subscriptionId: string;
   readonly workflow: Workflow;
@@ -21,7 +21,7 @@ export class SubscriptionPreference {
     emitter: NovuEventEmitter,
     inboxService: InboxService,
     cache: SubscriptionsCache,
-    useCache: boolean
+    useCache?: boolean
   ) {
     this.#emitter = emitter;
     this.#inboxService = inboxService;

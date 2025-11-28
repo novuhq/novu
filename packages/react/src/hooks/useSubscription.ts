@@ -41,10 +41,13 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
 
       setIsFetching(true);
 
-      const response = await novu.subscriptions.get({
-        topicKey,
-        identifier,
-      });
+      const response = await novu.subscriptions.get(
+        {
+          topicKey,
+          identifier,
+        },
+        { refetch: options?.refetch }
+      );
 
       if (response.error) {
         setError(response.error);

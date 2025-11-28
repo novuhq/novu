@@ -2,7 +2,7 @@ import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { SubscriptionsCache } from '../cache/subscriptions-cache';
 import { NovuEventEmitter } from '../event-emitter';
-import { Result } from '../types';
+import { Options, Result } from '../types';
 import {
   createSubscription,
   deleteSubscription,
@@ -49,25 +49,31 @@ export class Subscriptions extends BaseModule {
     this.#useCache = useCache;
   }
 
-  async list(args: ListSubscriptionsArgs): Result<TopicSubscription[]> {
+  async list(args: ListSubscriptionsArgs, options?: Options): Result<TopicSubscription[]> {
     return this.callWithSession(() =>
       listSubscriptions({
         emitter: this._emitter,
         apiService: this._inboxService,
         cache: this.cache,
-        useCache: this.#useCache,
+        options: {
+          ...options,
+          useCache: options?.useCache ?? this.#useCache,
+        },
         args,
       })
     );
   }
 
-  async get(args: GetSubscriptionArgs): Result<TopicSubscription | null> {
+  async get(args: GetSubscriptionArgs, options?: Options): Result<TopicSubscription | null> {
     return this.callWithSession(() =>
       getSubscription({
         emitter: this._emitter,
         apiService: this._inboxService,
         cache: this.cache,
-        useCache: this.#useCache,
+        options: {
+          ...options,
+          useCache: options?.useCache ?? this.#useCache,
+        },
         args,
       })
     );

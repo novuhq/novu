@@ -1,7 +1,7 @@
 import type { InboxService } from '../api';
 import type { SubscriptionsCache } from '../cache/subscriptions-cache';
 import type { NovuEventEmitter } from '../event-emitter';
-import type { Result } from '../types';
+import type { Options, Result } from '../types';
 import { NovuError } from '../utils/errors';
 import { TopicSubscription } from './subscription';
 import { SubscriptionPreference } from './subscription-preference';
@@ -18,20 +18,21 @@ export const listSubscriptions = async ({
   emitter,
   apiService,
   cache,
-  useCache,
+  options,
   args,
 }: {
   emitter: NovuEventEmitter;
   apiService: InboxService;
   cache: SubscriptionsCache;
-  useCache: boolean;
+  options: Options;
   args: ListSubscriptionsArgs;
 }): Result<TopicSubscription[]> => {
   try {
-    let data = useCache ? cache.getAll(args) : undefined;
+    const { useCache, refetch } = options;
+    let data = useCache && !refetch ? cache.getAll(args) : undefined;
     emitter.emit('subscriptions.list.pending', { args, data });
 
-    if (!data) {
+    if (!data || refetch) {
       const response = await apiService.fetchSubscriptions(args.topicKey);
       data = response.map((el) => {
         return new TopicSubscription({ ...el, topicKey: args.topicKey }, emitter, apiService, cache, useCache);
@@ -57,20 +58,21 @@ export const getSubscription = async ({
   emitter,
   apiService,
   cache,
-  useCache,
+  options,
   args,
 }: {
   emitter: NovuEventEmitter;
   apiService: InboxService;
   cache: SubscriptionsCache;
-  useCache: boolean;
+  options: Options;
   args: GetSubscriptionArgs;
 }): Result<TopicSubscription | null> => {
   try {
-    let data = useCache ? cache.get(args) : undefined;
+    const { useCache, refetch } = options;
+    let data = useCache && !refetch ? cache.get(args) : undefined;
     emitter.emit('subscription.get.pending', { args, data });
 
-    if (!data) {
+    if (!data || refetch) {
       const response = await apiService.getSubscription(args.topicKey, args.identifier ?? '');
       if (!response) {
         emitter.emit('subscription.get.resolved', { args, data: null });
@@ -148,7 +150,7 @@ export const updateSubscription = async ({
   emitter: NovuEventEmitter;
   apiService: InboxService;
   cache: SubscriptionsCache;
-  useCache: boolean;
+  useCache?: boolean;
   args: UpdateSubscriptionArgs;
 }): Result<TopicSubscription> => {
   const subscriptionId = 'subscriptionId' in args ? args.subscriptionId : args.subscription.id;
@@ -188,7 +190,7 @@ export const updateSubscriptionPreference = async ({
   emitter: NovuEventEmitter;
   apiService: InboxService;
   cache: SubscriptionsCache;
-  useCache: boolean;
+  useCache?: boolean;
   args: UpdateSubscriptionPreferenceArgs & { subscriptionId: string };
 }): Result<SubscriptionPreference> => {
   const workflowId = 'workflowId' in args ? args.workflowId : args.preference?.workflow?.id;
@@ -239,7 +241,7 @@ export const bulkUpdateSubscriptionPreference = async ({
   emitter: NovuEventEmitter;
   apiService: InboxService;
   cache: SubscriptionsCache;
-  useCache: boolean;
+  useCache?: boolean;
   args: Array<UpdateSubscriptionPreferenceArgs & { subscriptionId: string }>;
 }): Result<SubscriptionPreference[]> => {
   try {

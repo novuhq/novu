@@ -257,6 +257,11 @@ export type SubscriptionResponse = {
 
 export type TODO = any;
 
+export type Options = {
+  refetch?: boolean;
+  useCache?: boolean;
+};
+
 export type Result<D = undefined, E = NovuError> = Promise<{
   data?: D;
   error?: E;

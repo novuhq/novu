@@ -133,20 +133,7 @@ export function useSubscriptions(_: UseSubscriptionsProps): UseSubscriptionsResu
   };
 }
 
-export type {
-  ChannelPreference,
-  ChannelType,
-  FiltersCountResponse,
-  InboxNotification,
-  ListNotificationsResponse,
-  Notification,
-  NotificationFilter,
-  NotificationStatus,
-  NovuError,
-  NovuOptions,
-  Preference,
-  RulesLogic,
-} from '@novu/js';
+export type * from '@novu/js';
 export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {

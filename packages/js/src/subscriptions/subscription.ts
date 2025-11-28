@@ -23,7 +23,7 @@ export class TopicSubscription {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
   #cache: SubscriptionsCache;
-  #useCache: boolean;
+  #useCache?: boolean;
   #isStale: boolean = false;
 
   readonly id: string;
@@ -36,7 +36,7 @@ export class TopicSubscription {
     emitter: NovuEventEmitter,
     inboxService: InboxService,
     cache: SubscriptionsCache,
-    useCache: boolean
+    useCache?: boolean
   ) {
     this.#emitter = emitter;
     this.#inboxService = inboxService;
