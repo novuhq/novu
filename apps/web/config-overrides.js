@@ -1,20 +1,16 @@
-const { useBabelRc, override, overrideDevServer } = require('customize-cra');
+const { useBabelRc, override, overrideDevServer, removeInternalBabelPlugin } = require('customize-cra');
 const { DefinePlugin } = require('webpack');
 const { version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 function overrideConfig(config, env) {
-  // Remove ESLint plugin to avoid compilation errors with deprecated options
-  const plugins = config.plugins.filter(
-    (plugin) => plugin.constructor.name !== 'ESLintWebpackPlugin'
-  );
-
-  plugins.push(
+  const plugins = [
+    ...config.plugins,
     new DefinePlugin({
       'process.env.NOVU_VERSION': JSON.stringify(version),
-    })
+    }),
     /* new BundleAnalyzerPlugin() */
-  );
+  ];
 
   return {
     ...config,
