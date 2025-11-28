@@ -4,13 +4,19 @@ name: Deploy DEV WEB
 # events but only for the master branch
 on:
   workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: "Skip E2E tests"
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - next
       - main
     paths:
-      - 'apps/web/**'
-      - 'packages/shared/**'
+      - "apps/web/**"
+      - "packages/shared/**"
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -18,6 +24,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   test_web:
+    if: ${{ !inputs.skip_tests }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
       ee: true
@@ -25,7 +32,7 @@ jobs:
 
   deploy_web:
     needs: test_web
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') && (success() || inputs.skip_tests) }}
     uses: ./.github/workflows/reusable-web-deploy.yml
     with:
       environment: Development
@@ -44,4 +51,5 @@ jobs:
       clerk_publishable_key: pk_live_Y2xlcmsubm92dS1zdGFnaW5nLmNvJA
       clerk_is_ee_auth_enabled: true
       new_dashboard_url: https://dashboard.novu-staging.co
+      extra_env_variables: ${{ vars.STAGING_EXTRA_VARIABLES || '' }}
     secrets: inherit
