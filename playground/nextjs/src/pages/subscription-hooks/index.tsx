@@ -34,10 +34,10 @@ const filters = [
   { workflowId: 'test-workflow2', label: 'New project update is posted', condition: enabledRulesLogic },
 ];
 
-const SubscriptionHooks = () => {
+const SubscriptionHooks = ({ identifier, topicKey }: { identifier: string; topicKey: string }) => {
   const { subscription, isLoading, isFetching } = useSubscription({
-    topicKey: 'test',
-    identifier: 'test',
+    topicKey,
+    identifier,
   });
   const { create: createSubscription, isCreating } = useCreateSubscription();
 
@@ -114,7 +114,7 @@ const SubscriptionHooks = () => {
   const handleCheckboxChange = useCallback(
     async (workflowId: string, checked: boolean) => {
       if (!subscription) {
-        await createSubscription({ topicKey: 'test', identifier: 'test', preferences: filters });
+        await createSubscription({ topicKey, identifier, preferences: filters });
         return;
       }
 
@@ -139,7 +139,7 @@ const SubscriptionHooks = () => {
       }
 
       if (!subscription) {
-        await createSubscription({ topicKey: 'test', identifier: 'test', preferences: filters });
+        await createSubscription({ topicKey, identifier, preferences: filters });
         return;
       }
 
@@ -156,7 +156,7 @@ const SubscriptionHooks = () => {
 
   const handleCreateSubscription = useCallback(async () => {
     if (!subscription) {
-      await createSubscription({ topicKey: 'test', identifier: 'test', preferences: filters });
+      await createSubscription({ topicKey, identifier, preferences: filters });
     }
   }, [subscription, createSubscription]);
 
@@ -337,9 +337,10 @@ export default function SubscriptionComponentsPage() {
   return (
     <>
       <Title title="Subscription Hooks" />
-      <div className="h-[600px] w-full flex flex-col gap-2 items-center justify-center p-4">
+      <div className="h-[600px] w-full flex flex-col gap-8 items-center justify-center p-4">
         <NovuProvider {...novuConfig}>
-          <SubscriptionHooks />
+          <SubscriptionHooks identifier={`${novuConfig.subscriberId}-test-hooks-1`} topicKey="test-hooks-1" />
+          <SubscriptionHooks identifier={`${novuConfig.subscriberId}-test-hooks-2`} topicKey="test-hooks-2" />
         </NovuProvider>
       </div>
     </>
