@@ -110,7 +110,10 @@ jobs:
           # Append extra environment variables if provided
           if [ -n "${{ inputs.extra_env_variables }}" ]; then
             echo "Adding extra environment variables..."
-            echo "${{ inputs.extra_env_variables }}" >> .env
+            IFS='|' read -ra VARS <<< "${{ inputs.extra_env_variables }}"
+            for var in "${VARS[@]}"; do
+              echo "$var" >> .env
+            done
           fi
       - name: Envsetup
         working-directory: apps/web
