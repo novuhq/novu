@@ -1,10 +1,9 @@
+import { GetContextResponseDto } from '@novu/api/models/components';
 import { PermissionsEnum } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { ContextResponseDto } from '@/api/contexts';
 import { ConfirmationModal } from '@/components/confirmation-modal';
-import { Badge } from '@/components/primitives/badge';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
 import {
@@ -26,7 +25,7 @@ import { cn } from '@/utils/ui';
 import { useContextsNavigate } from './hooks/use-contexts-navigate';
 
 type ContextRowProps = {
-  context: ContextResponseDto;
+  context: GetContextResponseDto;
 };
 
 type ContextTableCellProps = ComponentProps<typeof TableCell>;

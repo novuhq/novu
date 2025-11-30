@@ -1,5 +1,6 @@
+import { GetContextResponseDto } from '@novu/api/models/components';
 import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ContextResponseDto, createContext } from '@/api/contexts';
+import { createContext } from '@/api/contexts';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
@@ -7,7 +8,7 @@ import { OmitEnvironmentFromParameters } from '@/utils/types';
 export type CreateContextParameters = OmitEnvironmentFromParameters<typeof createContext>;
 
 export const useCreateContext = (
-  options?: UseMutationOptions<ContextResponseDto, unknown, CreateContextParameters>
+  options?: UseMutationOptions<GetContextResponseDto, unknown, CreateContextParameters>
 ) => {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
