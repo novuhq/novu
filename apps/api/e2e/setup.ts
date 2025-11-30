@@ -244,6 +244,26 @@ function isResponseValidationError(error: unknown): error is {
   );
 }
 
+function isValidationErrorDto(error: unknown): error is Error & {
+  name: string;
+  statusCode: number;
+  path: string;
+  timestamp: string;
+  errors: Record<string, { messages: string[] }>;
+  body?: string;
+} {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    error.name === 'ValidationErrorDto' &&
+    'statusCode' in error &&
+    'errors' in error &&
+    'path' in error &&
+    typeof (error as { errors: unknown }).errors === 'object'
+  );
+}
+
 /*
  * poc for logging errors in e2e tests where the context is not available
  * if it's adding unnecessary noise, we can remove it
@@ -257,6 +277,24 @@ function logE2EFailure(error: unknown): void {
     if (error.body) {
       // uncomment for more detailed error messages
       // console.error(`Response body: ${error.body}`);
+    }
+
+    return;
+  }
+
+  if (isValidationErrorDto(error)) {
+    console.error('\n[Validation error]');
+    console.error(`Status: ${error.statusCode} ${error.path}`);
+    console.error(`Timestamp: ${error.timestamp}`);
+    console.error('Validation errors:');
+    for (const [field, fieldError] of Object.entries(error.errors)) {
+      console.error(`  ${field}:`);
+      for (const message of fieldError.messages) {
+        console.error(`    - ${message}`);
+      }
+    }
+    if (error.body) {
+      console.error(`\nFull response body: ${error.body}`);
     }
 
     return;
