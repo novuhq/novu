@@ -200,22 +200,24 @@ export const SubscriptionPreferences = (props: {
               <Index each={groupedPreferences()}>
                 {(preference) => (
                   <Show
-                    when={preference().group?.length}
+                    when={preference().group}
                     fallback={
                       <SubscriptionPreferenceRow
                         preference={preference() as { label: string; preference: SubscriptionPreference }}
                       />
                     }
                   >
-                    <SubscriptionPreferenceGroupRow
-                      group={
-                        preference() as {
-                          label: string;
-                          group: Array<{ label: string; preference: SubscriptionPreference }>;
+                    <Show when={preference().group?.length}>
+                      <SubscriptionPreferenceGroupRow
+                        group={
+                          preference() as {
+                            label: string;
+                            group: Array<{ label: string; preference: SubscriptionPreference }>;
+                          }
                         }
-                      }
-                      subscription={props.subscription as TopicSubscription}
-                    />
+                        subscription={props.subscription as TopicSubscription}
+                      />
+                    </Show>
                   </Show>
                 )}
               </Index>
