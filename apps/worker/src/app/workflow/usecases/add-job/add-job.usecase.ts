@@ -1162,33 +1162,33 @@ export class AddJob {
     untilDate: Date | null,
     timezone?: string
   ) {
-    const logMessage =
-      job.type === StepTypeEnum.DELAY
-        ? 'Delay is active, Creating execution details'
-        : job.type === StepTypeEnum.DIGEST
-          ? 'Digest is active, Creating execution details'
-          : 'Unexpected job type, Creating execution details';
+      const logMessage =
+        job.type === StepTypeEnum.DELAY
+          ? 'Delay is active, Creating execution details'
+          : job.type === StepTypeEnum.DIGEST
+            ? 'Digest is active, Creating execution details'
+            : 'Unexpected job type, Creating execution details';
 
-    this.logger.trace(logMessage);
+      this.logger.trace(logMessage);
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: false,
-        raw: JSON.stringify({
-          delay,
-          ...(untilDate && {
-            untilDate: timezone
-              ? formatInTimeZone(untilDate, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
-              : untilDate.toISOString(),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            delay,
+            ...(untilDate && {
+              untilDate: timezone
+                ? formatInTimeZone(untilDate, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
+                : untilDate.toISOString(),
+            }),
           }),
-        }),
-      })
-    );
+        })
+      );
   }
 
   private mapStepTypeToSchedulerJobType(stepType?: StepTypeEnum): SchedulerJobType {

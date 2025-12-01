@@ -36,7 +36,7 @@ export type ScheduleJobRequest = {
 		_id: string;
 		_organizationId: string;
 		_userId: string;
-	};
+};
 	metadata?: {
 		mode?: string;
 		workflowId?: string;

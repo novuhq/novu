@@ -107,7 +107,7 @@ export class Scheduler implements DurableObject {
 
 		await this.saveScheduledJobs(filtered);
 		await this.recalculateAlarm();
-
+		
 		return true;
 	}
 
