@@ -1,0 +1,8 @@
+{
+  "name": "@maily-to/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "publishConfig": {
+    "access": "public"
+  }
+}
