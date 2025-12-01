@@ -1,11 +1,17 @@
 import { UserButton, useOrganization } from '@clerk/clerk-react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { RiSignpostFill } from 'react-icons/ri';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useNewDashboardOptIn } from '@/hooks/use-new-dashboard-opt-in';
 import { ROUTES } from '../utils/routes';
 
 export function UserProfile() {
   const { organization } = useOrganization();
   const { optOut } = useNewDashboardOptIn();
+  const isLegacySelectorButtonVisible = useFeatureFlag(FeatureFlagsKeysEnum.IS_LEGACY_SELECTOR_BUTTON_VISIBLE);
+
+  const shouldShowLegacyButton =
+    organization && (organization.createdAt < new Date('2024-12-24') || isLegacySelectorButtonVisible);
 
   return (
     <UserButton
@@ -17,7 +23,7 @@ export function UserProfile() {
         },
       }}
     >
-      {organization && organization.createdAt < new Date('2024-12-24') && (
+      {shouldShowLegacyButton && (
         <UserButton.MenuItems>
           <UserButton.Action
             label="Go back to legacy V0 Dashboard"
