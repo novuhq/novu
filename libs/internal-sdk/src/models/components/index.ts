@@ -63,6 +63,7 @@ export * from "./delaystepresponsedto.js";
 export * from "./delaystepupsertdto.js";
 export * from "./deletemessageresponsedto.js";
 export * from "./deletetopicresponsedto.js";
+export * from "./deletetopicsubscriberidentifierdto.js";
 export * from "./deletetopicsubscriptionsrequestdto.js";
 export * from "./deletetopicsubscriptionsresponsedto.js";
 export * from "./digestcontroldto.js";
