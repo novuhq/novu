@@ -23,6 +23,8 @@ interface SubscriptionLookupResult {
   errors: SubscriptionsDeleteErrorDto[];
 }
 
+type ItemToDelete = { identifier?: string; subscriberId?: string };
+
 @Injectable()
 export class DeleteTopicSubscriptionsUsecase {
   constructor(
@@ -57,12 +59,11 @@ export class DeleteTopicSubscriptionsUsecase {
       };
     }
 
-    const subscriberIds = subscriptions.map((sub) => sub.subscriberId).filter((id) => id !== undefined);
-    const identifiers = subscriptions.map((sub) => sub.identifier).filter((id) => id !== undefined);
+    const itemsToDelete: ItemToDelete[] = subscriptions.filter(
+      (sub): sub is ItemToDelete => !!(sub.identifier || sub.subscriberId)
+    );
 
-    const useIdentifierLookup = identifiers.length > 0;
-
-    if (!useIdentifierLookup && subscriberIds.length === 0) {
+    if (itemsToDelete.length === 0) {
       return {
         data: [],
         meta: {
@@ -79,25 +80,16 @@ export class DeleteTopicSubscriptionsUsecase {
       };
     }
 
-    return this.deleteSubscriptions(command, topic, subscriptions, useIdentifierLookup, identifiers, subscriberIds);
+    return this.deleteSubscriptions(command, topic, subscriptions, itemsToDelete);
   }
 
   private async deleteSubscriptions(
     command: DeleteTopicSubscriptionsCommand,
     topic: TopicEntity,
     subscriptions: Array<{ identifier?: string; subscriberId?: string }>,
-    useIdentifierLookup: boolean,
-    identifiers: string[],
-    subscriberIds: string[]
+    itemsToDelete: ItemToDelete[]
   ): Promise<DeleteTopicSubscriptionsResponseDto> {
-    const lookupResult = await this.lookupSubscriptionsAndSubscribers(
-      command,
-      topic,
-      subscriptions,
-      useIdentifierLookup,
-      identifiers,
-      subscriberIds
-    );
+    const lookupResult = await this.lookupSubscriptionsAndSubscribers(command, topic, subscriptions, itemsToDelete);
 
     if (lookupResult.existingSubscriptions.length === 0) {
       return {
@@ -130,21 +122,63 @@ export class DeleteTopicSubscriptionsUsecase {
     command: DeleteTopicSubscriptionsCommand,
     topic: TopicEntity,
     subscriptions: Array<{ identifier?: string; subscriberId?: string }>,
-    useIdentifierLookup: boolean,
-    identifiers: string[],
-    subscriberIds: string[]
+    itemsToDelete: ItemToDelete[]
   ): Promise<SubscriptionLookupResult> {
-    if (useIdentifierLookup) {
-      return this.lookupByIdentifiers(command, topic, identifiers);
+    const identifiers = itemsToDelete.map((item) => item.identifier).filter((id): id is string => !!id);
+    const subscriberIds = itemsToDelete.map((item) => item.subscriberId).filter((id): id is string => !!id);
+
+    const hasIdentifiers = identifiers.length > 0;
+    const hasSubscriberIds = subscriberIds.length > 0;
+
+    if (hasIdentifiers && hasSubscriberIds) {
+      return this.lookupByBoth(command, topic, subscriptions, identifiers, subscriberIds, itemsToDelete);
     }
 
-    return this.lookupBySubscriberIds(command, topic, subscriptions, subscriberIds, identifiers);
+    if (hasIdentifiers) {
+      return this.lookupByIdentifiers(command, topic, identifiers, itemsToDelete);
+    }
+
+    return this.lookupBySubscriberIds(command, topic, subscriptions, subscriberIds);
+  }
+
+  private async lookupByBoth(
+    command: DeleteTopicSubscriptionsCommand,
+    topic: TopicEntity,
+    subscriptions: Array<{ identifier?: string; subscriberId?: string }>,
+    identifiers: string[],
+    subscriberIds: string[],
+    itemsToDelete: ItemToDelete[]
+  ): Promise<SubscriptionLookupResult> {
+    const identifierResult = await this.lookupByIdentifiers(command, topic, identifiers, itemsToDelete);
+    const subscriberIdResult = await this.lookupBySubscriberIds(command, topic, subscriptions, subscriberIds);
+
+    const allFoundSubscribers = [...identifierResult.foundSubscribers];
+    const subscriberIdSet = new Set(allFoundSubscribers.map((sub) => sub._id.toString()));
+
+    for (const subscriber of subscriberIdResult.foundSubscribers) {
+      if (!subscriberIdSet.has(subscriber._id.toString())) {
+        allFoundSubscribers.push(subscriber);
+      }
+    }
+
+    const allExistingSubscriptions = [
+      ...identifierResult.existingSubscriptions,
+      ...subscriberIdResult.existingSubscriptions,
+    ];
+    const allErrors = [...identifierResult.errors, ...subscriberIdResult.errors];
+
+    return {
+      foundSubscribers: allFoundSubscribers,
+      existingSubscriptions: allExistingSubscriptions,
+      errors: allErrors,
+    };
   }
 
   private async lookupByIdentifiers(
     command: DeleteTopicSubscriptionsCommand,
     topic: TopicEntity,
-    identifiers: string[]
+    identifiers: string[],
+    itemsToDelete: ItemToDelete[]
   ): Promise<SubscriptionLookupResult> {
     const errors: SubscriptionsDeleteErrorDto[] = [];
 
@@ -159,8 +193,9 @@ export class DeleteTopicSubscriptionsUsecase {
     const notFoundIdentifiers = identifiers.filter((id) => !existingIdentifiers.has(id));
 
     for (const identifier of notFoundIdentifiers) {
+      const item = itemsToDelete.find((item) => item.identifier === identifier);
       errors.push({
-        subscriberId: 'unknown',
+        subscriberId: item?.subscriberId || 'unknown',
         code: 'SUBSCRIPTION_NOT_FOUND',
         message: `Subscription with identifier '${identifier}' not found.`,
       });
@@ -183,8 +218,7 @@ export class DeleteTopicSubscriptionsUsecase {
     command: DeleteTopicSubscriptionsCommand,
     topic: TopicEntity,
     subscriptions: Array<{ identifier?: string; subscriberId?: string }>,
-    subscriberIds: string[],
-    identifiers: string[]
+    subscriberIds: string[]
   ): Promise<SubscriptionLookupResult> {
     const errors: SubscriptionsDeleteErrorDto[] = [];
 
@@ -209,24 +243,12 @@ export class DeleteTopicSubscriptionsUsecase {
       return { foundSubscribers, existingSubscriptions: [], errors };
     }
 
-    const subscriptionQuery: {
-      _environmentId: string;
-      _organizationId: string;
-      _topicId: string;
-      _subscriberId: { $in: string[] };
-      identifier?: { $in: string[] };
-    } = {
+    const existingSubscriptions = await this.topicSubscribersRepository.find({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _topicId: topic._id,
       _subscriberId: { $in: foundSubscribers.map((sub) => sub._id) },
-    };
-
-    if (identifiers.length > 0) {
-      subscriptionQuery.identifier = { $in: identifiers };
-    }
-
-    const existingSubscriptions = await this.topicSubscribersRepository.find(subscriptionQuery);
+    });
 
     this.validateSubscriptions(subscriptions, foundSubscribers, existingSubscriptions, errors);
 
