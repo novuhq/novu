@@ -9,4 +9,8 @@ export class UpsertSubscriberWorkflowPreferencesCommand extends UpsertSubscriber
   @IsBoolean()
   @IsOptional()
   readonly returnPreference?: boolean = true;
+
+  @IsMongoId()
+  @IsOptional()
+  readonly topicSubscriptionId?: string;
 }

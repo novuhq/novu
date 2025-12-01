@@ -1,10 +1,12 @@
+import { Novu } from '@novu/api';
 import { ContextRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import axios, { AxiosResponse } from 'axios';
 import { expect } from 'chai';
+import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Delete Context - /contexts/:type/:id (DELETE) #novu-v2', () => {
   let session: UserSession;
+  let novuClient: Novu;
   const contextRepository = new ContextRepository();
 
   before(() => {
@@ -14,6 +16,7 @@ describe('Delete Context - /contexts/:type/:id (DELETE) #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
   });
 
   after(() => {
@@ -39,13 +42,7 @@ describe('Delete Context - /contexts/:type/:id (DELETE) #novu-v2', () => {
 
     expect(existingContext).to.be.ok;
 
-    const response = await deleteContext({
-      session,
-      type: 'tenant',
-      id: 'delete-test-org-acme',
-    });
-
-    expect(response.status).to.equal(204);
+    await novuClient.contexts.delete('tenant', 'delete-test-org-acme');
 
     const deletedContext = await contextRepository.findOne({
       _environmentId: session.environment._id,
@@ -61,38 +58,12 @@ describe('Delete Context - /contexts/:type/:id (DELETE) #novu-v2', () => {
     const type = 'tenant';
     const id = 'non-existent-context';
 
-    try {
-      await deleteContext({
-        session,
-        type,
-        id,
-      });
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.contexts.delete(type, id));
 
-      throw new Error('Should not succeed');
-    } catch (e) {
-      expect(e.response.status).to.equal(404);
-      expect(e?.response?.data?.message || e?.message).to.contains(
-        `Context with id '${id}' and type '${type}' not found in environment ${session.environment._id}`
-      );
-    }
+    expect(error).to.be.ok;
+    expect(error?.statusCode).to.equal(404);
+    expect(error?.message).to.contain(
+      `Context with id '${id}' and type '${type}' not found in environment ${session.environment._id}`
+    );
   });
 });
-
-// biome-ignore lint/suspicious/noExportsInTest: helper function used by other tests
-export async function deleteContext({
-  session,
-  type,
-  id,
-}: {
-  session;
-  type?: string;
-  id?: string;
-}): Promise<AxiosResponse> {
-  const axiosInstance = axios.create();
-
-  return await axiosInstance.delete(`${session.serverUrl}/v2/contexts/${type}/${id}`, {
-    headers: {
-      authorization: `ApiKey ${session.apiKey}`,
-    },
-  });
-}

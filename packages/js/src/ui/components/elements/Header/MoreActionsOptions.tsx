@@ -4,13 +4,13 @@ import { useArchiveAll, useArchiveAllRead, useReadAll } from '../../../api';
 import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { MarkAsArchived, MarkAsArchivedRead, MarkAsRead } from '../../../icons';
-import { IconKey, IconOverrides } from '../../../types';
+import { AllIconKey, AllIconOverrides } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 type IconComponentType = (props?: SolidJSX.HTMLAttributes<SVGSVGElement>) => JSXElement;
 
-const iconKeyToComponentMap: { [key in keyof IconOverrides]?: IconComponentType } = {
+const iconKeyToComponentMap: { [key in keyof AllIconOverrides]?: IconComponentType } = {
   markAsRead: MarkAsRead,
   markAsArchived: MarkAsArchived,
   markAsArchivedRead: MarkAsArchivedRead,
@@ -46,7 +46,7 @@ export const MoreActionsOptions = () => {
 export const ActionsItem = (props: {
   localizationKey: StringLocalizationKey;
   onClick: () => void;
-  iconKey: IconKey;
+  iconKey: AllIconKey;
 }) => {
   const style = useStyle();
   const { t } = useLocalization();

@@ -18,7 +18,7 @@ export class GetPreferencesResponseDto {
   level: PreferenceLevelEnum;
 
   @ApiPropertyOptional({
-    type: WorkflowDto,
+    type: () => WorkflowDto,
     description: 'Workflow information if this is a template-level preference',
     nullable: true,
   })

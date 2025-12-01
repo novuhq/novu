@@ -104,6 +104,7 @@ export class GetPreferences {
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           templateId: command.templateId,
+          topicSubscriptionId: command.topicSubscriptionId,
         })
       );
     } catch (e) {
@@ -160,17 +161,18 @@ export class GetPreferences {
     ];
 
     if (command.subscriberId) {
+      const workflowQuery = {
+        ...baseQuery,
+        _subscriberId: command.subscriberId,
+        ...(command.topicSubscriptionId && { _topicSubscriptionId: command.topicSubscriptionId }),
+        _templateId: command.templateId,
+        type: command.topicSubscriptionId
+          ? PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW
+          : PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+      };
+
       queries.push(
-        this.preferencesRepository.findOne(
-          {
-            ...baseQuery,
-            _subscriberId: command.subscriberId,
-            _templateId: command.templateId,
-            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-          },
-          undefined,
-          queryOptions
-        ),
+        this.preferencesRepository.findOne(workflowQuery, undefined, queryOptions),
         this.preferencesRepository.findOne(
           {
             ...baseQuery,

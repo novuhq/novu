@@ -61,48 +61,42 @@ describe('Export master JSON - /v2/translations/master-json (GET) #novu-v2', asy
     workflowId2 = workflow2.workflowId;
 
     // Create translations for first workflow in multiple locales
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId1,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: {
-          'welcome.title': 'Welcome to our platform',
-          'welcome.message': 'Hello {{payload.name}}, welcome aboard!',
-        },
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId1,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: {
+        'welcome.title': 'Welcome to our platform',
+        'welcome.message': 'Hello {{payload.name}}, welcome aboard!',
+      },
+    });
 
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId1,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'es_ES',
-        content: {
-          'welcome.title': 'Bienvenido a nuestra plataforma',
-          'welcome.message': 'Hola {{payload.name}}, ¡bienvenido!',
-        },
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId1,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'es_ES',
+      content: {
+        'welcome.title': 'Bienvenido a nuestra plataforma',
+        'welcome.message': 'Hola {{payload.name}}, ¡bienvenido!',
+      },
+    });
   });
 
   it('should export master JSON with correct structure and content filtering', async () => {
-    const { body } = await session.testAgent.get('/v2/translations/master-json?locale=en_US').expect(200);
+    const response = await novuClient.translations.master.retrieve('en_US');
 
     // Verify response structure
-    expect(body.data).to.have.property('workflows');
-    expect(body.data.workflows).to.be.an('object');
+    expect(response).to.have.property('workflows');
+    expect(response.workflows).to.be.an('object');
 
     // Should include workflow with translations
-    expect(body.data.workflows).to.have.property(workflowId1);
+    expect(response.workflows).to.have.property(workflowId1);
 
     // Should not include workflow without translations
-    expect(body.data.workflows).to.not.have.property(workflowId2);
+    expect(response.workflows).to.not.have.property(workflowId2);
 
     // Verify content structure and liquid variables
-    expect(body.data.workflows[workflowId1]).to.deep.equal({
+    expect(response.workflows[workflowId1]).to.deep.equal({
       'welcome.title': 'Welcome to our platform',
       'welcome.message': 'Hello {{payload.name}}, welcome aboard!',
     });
@@ -110,29 +104,34 @@ describe('Export master JSON - /v2/translations/master-json (GET) #novu-v2', asy
 
   it('should filter by locale correctly', async () => {
     // Test Spanish locale
-    const { body: spanishBody } = await session.testAgent.get('/v2/translations/master-json?locale=es_ES').expect(200);
+    const spanishResponse = await novuClient.translations.master.retrieve('es_ES');
 
-    expect(spanishBody.data.workflows).to.have.property(workflowId1);
-    expect(spanishBody.data.workflows[workflowId1]).to.deep.equal({
+    expect(spanishResponse.workflows).to.have.property(workflowId1);
+    expect(spanishResponse.workflows[workflowId1]).to.deep.equal({
       'welcome.title': 'Bienvenido a nuestra plataforma',
       'welcome.message': 'Hola {{payload.name}}, ¡bienvenido!',
     });
 
     // Test non-existent locale
-    const { body: emptyBody } = await session.testAgent.get('/v2/translations/master-json?locale=de_DE').expect(200);
+    const emptyResponse = await novuClient.translations.master.retrieve('de_DE');
 
-    expect(emptyBody.data.workflows).to.be.an('object');
-    expect(Object.keys(emptyBody.data.workflows)).to.have.lengthOf(0);
+    expect(emptyResponse.workflows).to.be.an('object');
+    expect(Object.keys(emptyResponse.workflows)).to.have.lengthOf(0);
   });
 
   it('should work without locale parameter', async () => {
-    const { body } = await session.testAgent.get('/v2/translations/master-json').expect(200);
+    const response = await novuClient.translations.master.retrieve();
 
-    expect(body.data).to.have.property('workflows');
-    expect(body.data.workflows).to.be.an('object');
+    expect(response).to.have.property('workflows');
+    expect(response.workflows).to.be.an('object');
   });
 
   it('should validate locale format', async () => {
-    await session.testAgent.get('/v2/translations/master-json?locale=invalid-locale').expect(422);
+    try {
+      await novuClient.translations.master.retrieve('invalid-locale');
+      throw new Error('Should have thrown 422');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(422);
+    }
   });
 });

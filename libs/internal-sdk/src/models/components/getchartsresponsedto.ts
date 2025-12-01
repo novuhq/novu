@@ -10,91 +10,26 @@ import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 /**
  * Chart sections
  */
-export type GetChartsResponseDtoData = {};
+export type Data = {};
 
 export type GetChartsResponseDto = {
   /**
    * Chart sections
    */
-  data: GetChartsResponseDtoData;
+  data: Data;
 };
 
 /** @internal */
-export const GetChartsResponseDtoData$inboundSchema: z.ZodType<GetChartsResponseDtoData, z.ZodTypeDef, unknown> =
-  z.object({});
+export const Data$inboundSchema: z.ZodType<Data, z.ZodTypeDef, unknown> = z.object({});
 
-/** @internal */
-export type GetChartsResponseDtoData$Outbound = {};
-
-/** @internal */
-export const GetChartsResponseDtoData$outboundSchema: z.ZodType<
-  GetChartsResponseDtoData$Outbound,
-  z.ZodTypeDef,
-  GetChartsResponseDtoData
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetChartsResponseDtoData$ {
-  /** @deprecated use `GetChartsResponseDtoData$inboundSchema` instead. */
-  export const inboundSchema = GetChartsResponseDtoData$inboundSchema;
-  /** @deprecated use `GetChartsResponseDtoData$outboundSchema` instead. */
-  export const outboundSchema = GetChartsResponseDtoData$outboundSchema;
-  /** @deprecated use `GetChartsResponseDtoData$Outbound` instead. */
-  export type Outbound = GetChartsResponseDtoData$Outbound;
-}
-
-export function getChartsResponseDtoDataToJSON(getChartsResponseDtoData: GetChartsResponseDtoData): string {
-  return JSON.stringify(GetChartsResponseDtoData$outboundSchema.parse(getChartsResponseDtoData));
-}
-
-export function getChartsResponseDtoDataFromJSON(
-  jsonString: string
-): SafeParseResult<GetChartsResponseDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => GetChartsResponseDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'GetChartsResponseDtoData' from JSON`
-  );
+export function dataFromJSON(jsonString: string): SafeParseResult<Data, SDKValidationError> {
+  return safeParse(jsonString, (x) => Data$inboundSchema.parse(JSON.parse(x)), `Failed to parse 'Data' from JSON`);
 }
 
 /** @internal */
 export const GetChartsResponseDto$inboundSchema: z.ZodType<GetChartsResponseDto, z.ZodTypeDef, unknown> = z.object({
-  data: z.lazy(() => GetChartsResponseDtoData$inboundSchema),
+  data: z.lazy(() => Data$inboundSchema),
 });
-
-/** @internal */
-export type GetChartsResponseDto$Outbound = {
-  data: GetChartsResponseDtoData$Outbound;
-};
-
-/** @internal */
-export const GetChartsResponseDto$outboundSchema: z.ZodType<
-  GetChartsResponseDto$Outbound,
-  z.ZodTypeDef,
-  GetChartsResponseDto
-> = z.object({
-  data: z.lazy(() => GetChartsResponseDtoData$outboundSchema),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetChartsResponseDto$ {
-  /** @deprecated use `GetChartsResponseDto$inboundSchema` instead. */
-  export const inboundSchema = GetChartsResponseDto$inboundSchema;
-  /** @deprecated use `GetChartsResponseDto$outboundSchema` instead. */
-  export const outboundSchema = GetChartsResponseDto$outboundSchema;
-  /** @deprecated use `GetChartsResponseDto$Outbound` instead. */
-  export type Outbound = GetChartsResponseDto$Outbound;
-}
-
-export function getChartsResponseDtoToJSON(getChartsResponseDto: GetChartsResponseDto): string {
-  return JSON.stringify(GetChartsResponseDto$outboundSchema.parse(getChartsResponseDto));
-}
 
 export function getChartsResponseDtoFromJSON(
   jsonString: string

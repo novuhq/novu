@@ -1,10 +1,12 @@
+import { Novu } from '@novu/api';
 import { ContextRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import axios from 'axios';
 import { expect } from 'chai';
+import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Get Context - /contexts/:type/:id (GET) #novu-v2', () => {
   let session: UserSession;
+  let novuClient: Novu;
   const contextRepository = new ContextRepository();
 
   before(() => {
@@ -14,6 +16,7 @@ describe('Get Context - /contexts/:type/:id (GET) #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
   });
 
   afterEach(async () => {
@@ -36,13 +39,13 @@ describe('Get Context - /contexts/:type/:id (GET) #novu-v2', () => {
       data: { tenantName: 'Acme Corp', region: 'us-east-1' },
     });
 
-    const getContextResult = await getContext({ session, type: 'tenant', id: 'get-test-org-acme' });
+    const response = await novuClient.contexts.retrieve('tenant', 'get-test-org-acme');
 
-    expect(getContextResult.data.type).to.equal('tenant');
-    expect(getContextResult.data.id).to.equal('get-test-org-acme');
-    expect(getContextResult.data.data).to.deep.equal({ tenantName: 'Acme Corp', region: 'us-east-1' });
-    expect(getContextResult.data.createdAt).to.be.ok;
-    expect(getContextResult.data.updatedAt).to.be.ok;
+    expect(response.result.type).to.equal('tenant');
+    expect(response.result.id).to.equal('get-test-org-acme');
+    expect(response.result.data).to.deep.equal({ tenantName: 'Acme Corp', region: 'us-east-1' });
+    expect(response.result.createdAt).to.be.ok;
+    expect(response.result.updatedAt).to.be.ok;
   });
 
   it('should get a context with empty data', async () => {
@@ -55,38 +58,23 @@ describe('Get Context - /contexts/:type/:id (GET) #novu-v2', () => {
       data: {},
     });
 
-    const getContextResult = await getContext({ session, type: 'workspace', id: 'get-test-workspace-123' });
+    const response = await novuClient.contexts.retrieve('workspace', 'get-test-workspace-123');
 
-    expect(getContextResult.data.type).to.equal('workspace');
-    expect(getContextResult.data.id).to.equal('get-test-workspace-123');
-    expect(getContextResult.data.data).to.deep.equal({});
+    expect(response.result.type).to.equal('workspace');
+    expect(response.result.id).to.equal('get-test-workspace-123');
+    expect(response.result.data).to.deep.equal({});
   });
 
   it('should throw exception if context does not exist', async () => {
     const incorrectType = 'tenant';
     const incorrectId = 'non-existent';
 
-    try {
-      await getContext({ session, type: incorrectType, id: incorrectId });
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.contexts.retrieve(incorrectType, incorrectId));
 
-      throw new Error('Should not succeed');
-    } catch (e) {
-      expect(e.response.status).to.equal(404);
-      expect(e?.response?.data?.message || e?.message).to.contains(
-        `Context with id '${incorrectId}' and type '${incorrectType}' not found in environment ${session.environment._id}`
-      );
-    }
+    expect(error).to.be.ok;
+    expect(error?.statusCode).to.equal(404);
+    expect(error?.message).to.contain(
+      `Context with id '${incorrectId}' and type '${incorrectType}' not found in environment ${session.environment._id}`
+    );
   });
 });
-
-async function getContext({ session, type, id }: { session; type: string; id: string }) {
-  const axiosInstance = axios.create();
-
-  return (
-    await axiosInstance.get(`${session.serverUrl}/v2/contexts/${type}/${id}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    })
-  ).data;
-}

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   AnalyticsService,
   buildSubscriberKey,
@@ -379,7 +379,10 @@ export class SendMessage {
 
     const result = this.stepPreferred(subscriberPreference, job);
 
-    const preferenceDetailFromPreferenceType: Record<PreferencesTypeEnum, DetailEnum> = {
+    const preferenceDetailFromPreferenceType: Record<
+      Exclude<PreferencesTypeEnum, PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW>,
+      DetailEnum
+    > = {
       [PreferencesTypeEnum.WORKFLOW_RESOURCE]: DetailEnum.STEP_FILTERED_BY_WORKFLOW_RESOURCE_PREFERENCES,
       [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_WORKFLOW_PREFERENCES,
       [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES,
@@ -398,6 +401,17 @@ export class SendMessage {
           isRetry: false,
           raw: JSON.stringify(subscriberPreference),
         })
+      );
+
+      Logger.log(
+        {
+          reason,
+          subscriberId: job.subscriberId,
+          templateId: job._templateId,
+          transactionId: job.transactionId,
+          channel: job.type,
+        },
+        'Skipped step by preference'
       );
     }
 

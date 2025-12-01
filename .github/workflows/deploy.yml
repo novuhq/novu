@@ -94,7 +94,7 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
             envs+=("\"staging-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "staging-uk" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "staging-sg" ]; then
             envs+=("\"staging-apse1\"")
           fi
           if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then

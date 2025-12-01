@@ -10,7 +10,7 @@ import {
   useContext,
 } from 'solid-js';
 import { cn, useStyle } from '../../../helpers';
-import type { AppearanceKey } from '../../../types';
+import type { AllAppearanceKey } from '../../../types';
 import { useKeyboardNavigation } from './useKeyboardNavigation';
 
 type TabsRootProps = Omit<JSX.IntrinsicElements['div'], 'onChange'> &
@@ -18,7 +18,7 @@ type TabsRootProps = Omit<JSX.IntrinsicElements['div'], 'onChange'> &
     defaultValue?: string;
     value?: string;
     class?: string;
-    appearanceKey?: AppearanceKey;
+    appearanceKey?: AllAppearanceKey;
     onChange?: (value: string) => void;
   };
 

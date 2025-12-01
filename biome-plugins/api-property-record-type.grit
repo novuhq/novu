@@ -1,0 +1,15 @@
+// Plugin to detect Record<string, ...> types in DTO files
+// Reminds developers to verify proper OpenAPI configuration for SDK generation
+// File filtering is configured in biome.json overrides
+
+engine biome(1.0)
+language js(typescript)
+
+// Match any Record<string, ...> type usage
+`Record<string, $_>` where {
+  register_diagnostic(
+    span = $match,
+    severity = "warn",
+    message = "Verify @ApiProperty includes type: 'object' and additionalProperties: true for proper SDK generation"
+  )
+}

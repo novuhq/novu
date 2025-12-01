@@ -3,7 +3,7 @@ import { JSX } from 'solid-js/jsx-runtime';
 import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Clock, Check as DefaultCheck, MarkAsArchived, MarkAsUnread, Unread } from '../../../icons';
-import { IconKey, NotificationStatus } from '../../../types';
+import { AllIconKey, NotificationStatus } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 import { notificationStatusOptionsLocalizationKeys } from './constants';
@@ -29,7 +29,7 @@ const cases = [
     iconKey: 'markAsArchived',
     icon: MarkAsArchived,
   },
-] satisfies { status: NotificationStatus; iconKey: IconKey; icon: () => JSX.Element }[];
+] satisfies { status: NotificationStatus; iconKey: AllIconKey; icon: () => JSX.Element }[];
 
 export const StatusOptions = (props: {
   setStatus: (status: NotificationStatus) => void;
@@ -63,7 +63,7 @@ export const StatusItem = (props: {
   onClick: () => void;
   isSelected?: boolean;
   icon: () => JSX.Element;
-  iconKey: IconKey;
+  iconKey: AllIconKey;
 }) => {
   const style = useStyle();
   const { t } = useLocalization();

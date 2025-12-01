@@ -45,46 +45,66 @@ describe('Get single translation - /v2/translations/:resourceType/:resourceId/:l
     };
 
     // Create translation first
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: translationContent,
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: translationContent,
+    });
 
     // Get the translation
-    const { body } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(200);
+    const response = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'en_US',
+    });
 
-    expect(body.data.resourceId).to.equal(workflowId);
-    expect(body.data.resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);
-    expect(body.data.locale).to.equal('en_US');
-    expect(body.data.content).to.deep.equal(translationContent);
-    expect(body.data.createdAt).to.be.a('string');
-    expect(body.data.updatedAt).to.be.a('string');
+    expect(response.resourceId).to.equal(workflowId);
+    expect(response.resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);
+    expect(response.locale).to.equal('en_US');
+    expect(response.content).to.deep.equal(translationContent);
+    expect(response.createdAt).to.be.a('string');
+    expect(response.updatedAt).to.be.a('string');
   });
 
   it('should return 404 for non-existent translation', async () => {
-    await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/fr_FR`)
-      .expect(404);
+    try {
+      await novuClient.translations.retrieve({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: workflowId,
+        locale: 'fr_FR',
+      });
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 
   it('should return 404 for non-existent workflow', async () => {
     const fakeWorkflowId = '507f1f77bcf86cd799439011';
 
-    await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${fakeWorkflowId}/en_US`)
-      .expect(404);
+    try {
+      await novuClient.translations.retrieve({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: fakeWorkflowId,
+        locale: 'en_US',
+      });
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 
   it('should validate locale format in URL parameter', async () => {
-    await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/invalid-locale-123`)
-      .expect(400);
+    try {
+      await novuClient.translations.retrieve({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: workflowId,
+        locale: 'invalid-locale-123',
+      });
+      throw new Error('Should have thrown 400');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(400);
+    }
   });
 });

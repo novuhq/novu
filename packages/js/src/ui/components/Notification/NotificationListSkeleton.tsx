@@ -100,7 +100,7 @@ export const NotificationListSkeleton = (props: NotificationListSkeletonProps) =
 
 function KeylessEmptyState() {
   const style = useStyle();
-  const novu = useNovu();
+  const novuAccessor = useNovu();
 
   return (
     <div
@@ -159,7 +159,7 @@ function KeylessEmptyState() {
               className:
                 'nt-h-8 nt-px-4 nt-flex nt-items-center nt-justify-center nt-gap-2 nt-bg-neutral-900 nt-text-white nt-shadow-sm nt-text-[12px] nt-font-medium',
             })}
-            onClick={() => novu.notifications.triggerHelloWorldEvent()}
+            onClick={() => novuAccessor().notifications.triggerHelloWorldEvent()}
           >
             <Bell
               class={style({

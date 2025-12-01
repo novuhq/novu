@@ -2,7 +2,8 @@
 
 import { TenantRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { expect } from 'chai';
 
 function assertValidationMessages(e: AxiosError<any, any>, field: string, msg1: string) {

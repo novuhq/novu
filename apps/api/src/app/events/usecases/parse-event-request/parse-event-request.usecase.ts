@@ -35,7 +35,6 @@ import {
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
 } from '@novu/shared';
-import { addBreadcrumb } from '@sentry/node';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { toMerged } from 'es-toolkit';
@@ -190,13 +189,6 @@ export class ParseEventRequest {
         };
       }
 
-      addBreadcrumb({
-        message: 'Sending trigger',
-        data: {
-          triggerIdentifier: command.identifier,
-        },
-      });
-
       // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
       if (command.payload && Array.isArray(command.payload.attachments)) {
         this.modifyAttachments(command);
@@ -324,9 +316,8 @@ export class ParseEventRequest {
     transactionId: string;
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
   }) {
-    const commandArgs = {
-      ...command,
-    };
+    // biome-ignore lint/correctness/noUnusedVariables: eliminate from queue
+    const { workflow, ...commandArgs } = command;
 
     const isDryRun = await this.featureFlagService.getFlag({
       environment: { _id: command.environmentId },
@@ -380,16 +371,19 @@ export class ParseEventRequest {
       requestId,
     };
 
-    await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
-    this.logger.info(
-      { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
-      'Event dispatched to [Workflow] Queue'
-    );
+    if (!command.skipQueueInsertion) {
+      await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
+      this.logger.info(
+        { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
+        'Event dispatched to [Workflow] Queue'
+      );
+    }
 
     return {
       acknowledged: true,
       status: TriggerEventStatusEnum.PROCESSED,
       transactionId,
+      jobData: command.skipQueueInsertion ? jobData : undefined,
     };
   }
 
@@ -408,7 +402,9 @@ export class ParseEventRequest {
   }) {
     return await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
-      command.triggerIdentifier
+      command.triggerIdentifier,
+      undefined,
+      false
     );
   }
 

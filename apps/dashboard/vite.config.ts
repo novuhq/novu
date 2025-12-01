@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
     enforce: 'pre',
     resolveId(source, importer) {
       if (!isSelfHosted) return null;
-      
+
       // Redirect direct imports of region-context.tsx to the self-hosted version
       // The alias handles @/context/region imports, but direct relative imports need this plugin
       if (
@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
         if (source.includes('region-context.self-hosted')) {
           return null;
         }
-        
+
         const selfHostedPath = source.replace(/region-context(\.tsx)?$/, 'region-context.self-hosted.tsx');
         return this.resolve(selfHostedPath, importer, { skipSelf: true });
       }
@@ -84,6 +84,10 @@ export default defineConfig(({ mode }) => {
           ? {
               '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx'),
               '@/context/region': path.resolve(__dirname, './src/context/region/index.self-hosted.ts'),
+              '@/components/side-navigation/organization-dropdown-clerk': path.resolve(
+                __dirname,
+                './src/utils/self-hosted/organization-switcher.tsx'
+              ),
             }
           : {}),
         // Explicitly map prettier imports to browser-compatible versions

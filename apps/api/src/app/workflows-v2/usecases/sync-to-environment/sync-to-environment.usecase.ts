@@ -217,6 +217,7 @@ export class SyncToEnvironmentUseCase {
       tags: sourceWorkflow.tags,
       description: sourceWorkflow.description,
       __source: WorkflowCreationSourceEnum.DASHBOARD,
+      severity: sourceWorkflow.severity,
       steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps),
       preferences: this.mapPreferences(preferences),
     };
@@ -237,6 +238,7 @@ export class SyncToEnvironmentUseCase {
       active: sourceWorkflow.active,
       tags: sourceWorkflow.tags,
       description: sourceWorkflow.description,
+      severity: sourceWorkflow.severity,
       steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps, existingTargetEnvWorkflow?.steps),
       preferences: this.mapPreferences(preferencesToClone),
     };

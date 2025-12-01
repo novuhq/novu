@@ -1,14 +1,14 @@
-import { onCleanup, onMount } from 'solid-js';
+import { createEffect, onCleanup } from 'solid-js';
 import { NotificationVisibilityTracker } from '../../notifications/visibility-tracker';
 import { useNovu } from '../context';
 
 export function useNotificationVisibility() {
-  const novu = useNovu();
+  const novuAccessor = useNovu();
   let tracker: NotificationVisibilityTracker | null = null;
 
-  onMount(() => {
+  createEffect(() => {
     // Initialize the visibility tracker with the inbox service
-    tracker = new NotificationVisibilityTracker(novu.notifications.inboxService);
+    tracker = new NotificationVisibilityTracker(novuAccessor().notifications.inboxService);
 
     onCleanup(() => {
       if (tracker) {

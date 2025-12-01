@@ -63,6 +63,9 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
+
+  @IsOptional()
+  skipQueueInsertion?: boolean;
 }
 
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {

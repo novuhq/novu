@@ -2,6 +2,7 @@ import { Novu } from '@novu/api';
 import { LocalizationResourceEnum } from '@novu/dal';
 import { ApiServiceLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Delete translation group - /v2/translations/:resourceType/:resourceId (DELETE) #novu-v2', async () => {
@@ -61,26 +62,36 @@ describe('Delete translation group - /v2/translations/:resourceType/:resourceId 
 
     // Create multiple translations
     for (const translation of translations) {
-      await session.testAgent.post('/v2/translations').send(translation).expect(200);
+      await novuClient.translations.create(translation);
     }
 
     // Delete the entire translation group
-    await session.testAgent.delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}`).expect(204);
+    await novuClient.translations.groups.delete(LocalizationResourceEnum.WORKFLOW, workflowId);
 
     // Verify all translations are deleted
     for (const translation of translations) {
-      await session.testAgent
-        .get(`/v2/translations/${translation.resourceType}/${translation.resourceId}/${translation.locale}`)
-        .expect(404);
+      try {
+        await novuClient.translations.retrieve({
+          resourceType: translation.resourceType,
+          resourceId: translation.resourceId,
+          locale: translation.locale,
+        });
+        throw new Error('Should have thrown 404');
+      } catch (error: any) {
+        expect(error.statusCode).to.equal(404);
+      }
     }
   });
 
   it('should return 404 when trying to delete non-existent translation group', async () => {
     const fakeWorkflowId = '507f1f77bcf86cd799439011';
 
-    await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${fakeWorkflowId}`)
-      .expect(404);
+    try {
+      await novuClient.translations.groups.delete(LocalizationResourceEnum.WORKFLOW, fakeWorkflowId);
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 
   it('should return 404 when trying to delete non-existent translation group for workflow without translations enabled', async () => {
@@ -102,8 +113,14 @@ describe('Delete translation group - /v2/translations/:resourceType/:resourceId 
       ],
     });
 
-    await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowWithoutTranslations.workflowId}`)
-      .expect(404);
+    try {
+      await novuClient.translations.groups.delete(
+        LocalizationResourceEnum.WORKFLOW,
+        workflowWithoutTranslations.workflowId
+      );
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 });

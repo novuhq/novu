@@ -208,12 +208,13 @@ subscriberSchema.index(
   { name: 'unique_subscriber_per_environment', unique: true, partialFilterExpression: { deleted: false } }
 );
 
-subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+subscriberSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  deletedBy: true,
+  overrideMethods: 'all',
+  use$neOperator: false,
+});
 
 export const Subscriber =
   (mongoose.models.Subscriber as mongoose.Model<SubscriberDBModel>) ||
   mongoose.model<SubscriberDBModel>('Subscriber', subscriberSchema);
-
-function index(fields: IndexDefinition<SubscriberEntity>, options?: IndexOptions) {
-  subscriberSchema.index(fields, options);
-}

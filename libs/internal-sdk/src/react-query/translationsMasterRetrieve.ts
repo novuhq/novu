@@ -7,21 +7,26 @@ import {
   QueryClient,
   QueryFunctionContext,
   QueryKey,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import { NovuCore } from '../core.js';
-import { translationsMasterRetrieve } from '../funcs/translationsMasterRetrieve.js';
-import { combineSignals } from '../lib/primitives.js';
-import { RequestOptions } from '../lib/sdks.js';
-import * as components from '../models/components/index.js';
-import { unwrapAsync } from '../types/fp.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import { NovuCore } from "../core.js";
+import { translationsMasterRetrieve } from "../funcs/translationsMasterRetrieve.js";
+import { combineSignals } from "../lib/primitives.js";
+import { RequestOptions } from "../lib/sdks.js";
+import * as components from "../models/components/index.js";
+import { unwrapAsync } from "../types/fp.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 
-export type TranslationsMasterRetrieveQueryData = components.GetMasterJsonResponseDto;
+export type TranslationsMasterRetrieveQueryData =
+  components.GetMasterJsonResponseDto;
 
 /**
  * Retrieve master translations JSON
@@ -32,11 +37,16 @@ export type TranslationsMasterRetrieveQueryData = components.GetMasterJsonRespon
 export function useTranslationsMasterRetrieve(
   locale?: string | undefined,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<TranslationsMasterRetrieveQueryData>
+  options?: QueryHookOptions<TranslationsMasterRetrieveQueryData>,
 ): UseQueryResult<TranslationsMasterRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTranslationsMasterRetrieveQuery(client, locale, idempotencyKey, options),
+    ...buildTranslationsMasterRetrieveQuery(
+      client,
+      locale,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -50,11 +60,16 @@ export function useTranslationsMasterRetrieve(
 export function useTranslationsMasterRetrieveSuspense(
   locale?: string | undefined,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<TranslationsMasterRetrieveQueryData>
+  options?: SuspenseQueryHookOptions<TranslationsMasterRetrieveQueryData>,
 ): UseSuspenseQueryResult<TranslationsMasterRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTranslationsMasterRetrieveQuery(client, locale, idempotencyKey, options),
+    ...buildTranslationsMasterRetrieveQuery(
+      client,
+      locale,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -63,10 +78,14 @@ export function prefetchTranslationsMasterRetrieve(
   queryClient: QueryClient,
   client$: NovuCore,
   locale?: string | undefined,
-  idempotencyKey?: string | undefined
+  idempotencyKey?: string | undefined,
 ): Promise<void> {
   return queryClient.prefetchQuery({
-    ...buildTranslationsMasterRetrieveQuery(client$, locale, idempotencyKey),
+    ...buildTranslationsMasterRetrieveQuery(
+      client$,
+      locale,
+      idempotencyKey,
+    ),
   });
 }
 
@@ -78,7 +97,7 @@ export function setTranslationsMasterRetrieveData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: TranslationsMasterRetrieveQueryData
+  data: TranslationsMasterRetrieveQueryData,
 ): TranslationsMasterRetrieveQueryData | undefined {
   const key = queryKeyTranslationsMasterRetrieve(...queryKeyBase);
 
@@ -88,28 +107,26 @@ export function setTranslationsMasterRetrieveData(
 export function invalidateTranslationsMasterRetrieve(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        locale?: string | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      locale?: string | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'master', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "master", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllTranslationsMasterRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'master', 'retrieve'],
+    queryKey: ["@novu/api", "master", "retrieve"],
   });
 }
 
@@ -117,28 +134,39 @@ export function buildTranslationsMasterRetrieveQuery(
   client$: NovuCore,
   locale?: string | undefined,
   idempotencyKey?: string | undefined,
-  options?: RequestOptions
+  options?: RequestOptions,
 ): {
   queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<TranslationsMasterRetrieveQueryData>;
+  queryFn: (
+    context: QueryFunctionContext,
+  ) => Promise<TranslationsMasterRetrieveQueryData>;
 } {
   return {
     queryKey: queryKeyTranslationsMasterRetrieve({ locale, idempotencyKey }),
-    queryFn: async function translationsMasterRetrieveQueryFn(ctx): Promise<TranslationsMasterRetrieveQueryData> {
+    queryFn: async function translationsMasterRetrieveQueryFn(
+      ctx,
+    ): Promise<TranslationsMasterRetrieveQueryData> {
       const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
       const mergedOptions = {
         ...options,
         fetchOptions: { ...options?.fetchOptions, signal: sig },
       };
 
-      return unwrapAsync(translationsMasterRetrieve(client$, locale, idempotencyKey, mergedOptions));
+      return unwrapAsync(translationsMasterRetrieve(
+        client$,
+        locale,
+        idempotencyKey,
+        mergedOptions,
+      ));
     },
   };
 }
 
-export function queryKeyTranslationsMasterRetrieve(parameters: {
-  locale?: string | undefined;
-  idempotencyKey?: string | undefined;
-}): QueryKey {
-  return ['@novu/api', 'master', 'retrieve', parameters];
+export function queryKeyTranslationsMasterRetrieve(
+  parameters: {
+    locale?: string | undefined;
+    idempotencyKey?: string | undefined;
+  },
+): QueryKey {
+  return ["@novu/api", "master", "retrieve", parameters];
 }

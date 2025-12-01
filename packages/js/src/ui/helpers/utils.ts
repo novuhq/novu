@@ -1,6 +1,6 @@
 import clsx, { ClassValue } from 'clsx';
 import { type ClassNameValue, extendTailwindMerge } from 'tailwind-merge';
-import type { CSSProperties, Elements, Tab, Variables } from '../types';
+import type { AllElements, CSSProperties, Tab, Variables } from '../types';
 
 const twMerge = extendTailwindMerge({
   prefix: 'nt-',
@@ -219,12 +219,12 @@ export const parseVariables = (variables: Required<Variables>, id: string) => {
   return rules;
 };
 
-export const parseElements = (elements: Elements) => {
+export const parseElements = (elements: AllElements) => {
   const elementsStyleData: { key: string; rule: string; className: string }[] = [];
   const generatedClassNames = new Set<string>();
   for (const key in elements) {
     if (elements.hasOwnProperty(key)) {
-      const value = elements[key as keyof Elements];
+      const value = elements[key as keyof AllElements];
       if (typeof value === 'object') {
         // means it is css in js object
         const cssString = cssObjectToString(value);

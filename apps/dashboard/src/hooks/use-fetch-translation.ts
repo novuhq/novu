@@ -1,5 +1,6 @@
+import { TranslationResponseDto } from '@novu/api/models/components';
 import { useQuery } from '@tanstack/react-query';
-import { getTranslation, Translation } from '@/api/translations';
+import { getTranslation } from '@/api/translations';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
@@ -10,7 +11,7 @@ type FetchTranslationParams = {
   locale: string;
 };
 
-export type TranslationWithPlaceholder = Translation & {
+export type TranslationWithPlaceholder = TranslationResponseDto & {
   isPlaceholder?: boolean;
 };
 

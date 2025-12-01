@@ -167,7 +167,9 @@ export class BridgeController {
   ) {
     const workflowExist = await this.notificationTemplateRepository.findByTriggerIdentifier(
       user.environmentId,
-      workflowId
+      workflowId,
+      undefined,
+      false
     );
     if (!workflowExist) {
       throw new NotFoundException('Workflow not found');

@@ -13,6 +13,7 @@ export type {
   NovuOptions,
   Preference,
   PreferencesResponse,
+  RulesLogic,
   SocketEventNames,
   UnreadCount,
   WebSocketEvent,
@@ -20,26 +21,57 @@ export type {
 export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
-  Appearance,
-  AppearanceCallback,
-  AppearanceCallbackFunction,
-  AppearanceCallbackKeys,
-  AppearanceKey,
+  AllLocalization,
+  AllLocalizationKey,
   ElementStyles,
-  Elements,
-  Localization,
-  LocalizationKey,
+  InboxAppearance,
+  InboxAppearanceCallback,
+  InboxAppearanceCallbackFunction,
+  InboxAppearanceCallbackKeys,
+  InboxAppearanceKey,
+  InboxElements,
+  InboxLocalization,
+  InboxLocalizationKey,
+  InboxTheme,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
   PreferenceGroups,
   PreferencesFilter,
   RouterPush,
+  SubscriptionAppearance,
+  SubscriptionAppearanceCallback,
+  SubscriptionAppearanceCallbackFunction,
+  SubscriptionAppearanceCallbackKeys,
+  SubscriptionAppearanceKey,
+  SubscriptionElements,
+  SubscriptionLocalization,
+  SubscriptionLocalizationKey,
+  SubscriptionTheme,
   Tab,
   Variables,
 } from '@novu/js/ui';
-export type { BellProps, InboxContentProps, InboxProps, NotificationProps, NovuProviderProps } from './components';
-export { Bell, Inbox, InboxContent, Notifications, NovuProvider, Preferences } from './components';
+export type {
+  BellProps,
+  InboxContentProps,
+  InboxProps,
+  NotificationProps,
+  NovuProviderProps,
+  SubscriptionButtonProps,
+  SubscriptionPreferencesProps,
+  SubscriptionProps,
+} from './components';
+export {
+  Bell,
+  Inbox,
+  InboxContent,
+  Notifications,
+  NovuProvider,
+  Preferences,
+  Subscription,
+  SubscriptionButton,
+  SubscriptionPreferences,
+} from './components';
 export type {
   UseCountsProps,
   UseCountsResult,
@@ -48,7 +80,15 @@ export type {
   UsePreferencesResult,
   UseScheduleProps as UsePreferencesProps,
 } from './hooks';
-export { useCounts, useNotifications, useNovu, usePreferences, useSchedule } from './hooks';
+export {
+  useCounts,
+  useNotifications,
+  useNovu,
+  usePreferences,
+  useSchedule,
+  useSubscription,
+  useSubscriptions,
+} from './hooks';
 
 export type {
   BaseProps,
@@ -59,6 +99,10 @@ export type {
   NoRendererProps,
   NotificationRendererProps,
   NotificationsRenderer,
+  ReactInboxAppearance,
+  ReactInboxTheme,
+  ReactSubscriptionAppearance,
+  ReactSubscriptionTheme,
   SubjectBodyRendererProps,
   SubjectRenderer,
   WithChildrenProps,

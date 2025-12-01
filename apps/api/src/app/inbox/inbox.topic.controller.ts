@@ -1,0 +1,222 @@
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiExcludeController } from '@nestjs/swagger';
+import { PreferenceLevelEnum } from '@novu/shared';
+import {
+  GroupPreferenceFilterDto,
+  WorkflowPreferenceRequestDto,
+} from '../shared/dtos/subscriptions/create-subscriptions.dto';
+import { UpdateSubscriptionRequestDto } from '../shared/dtos/subscriptions/update-subscription.dto';
+import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
+import { ApiCommonResponses } from '../shared/framework/response.decorator';
+import { SubscriberSession } from '../shared/framework/user.decorator';
+import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subscriptions/usecases/create-subscriptions';
+import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
+import { CreateTopicSubscriptionRequestDto } from './dtos/create-topic-subscription-request.dto';
+import { TopicSubscriptionDetailsResponseDto } from './dtos/get-topic-subscriptions-response.dto';
+import { UpdateSubscriptionPreferencesRequestDto } from './dtos/update-subscription-preferences-request.dto';
+import { DeleteTopicSubscriptionCommand } from './usecases/delete-topic-subscription/delete-topic-subscription.command';
+import { DeleteTopicSubscription } from './usecases/delete-topic-subscription/delete-topic-subscription.usecase';
+import { GetTopicSubscriptionCommand } from './usecases/get-topic-subscription/get-topic-subscription.command';
+import { GetTopicSubscription } from './usecases/get-topic-subscription/get-topic-subscription.usecase';
+import { GetTopicSubscriptionsCommand } from './usecases/get-topic-subscriptions/get-topic-subscriptions.command';
+import { GetTopicSubscriptions } from './usecases/get-topic-subscriptions/get-topic-subscriptions.usecase';
+import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
+import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
+import { InboxPreference } from './utils/types';
+
+@ApiCommonResponses()
+@Controller('/inbox')
+@ApiExcludeController()
+@ExcludeFromIdempotency()
+export class InboxTopicController {
+  constructor(
+    private getTopicSubscriptionsUsecase: GetTopicSubscriptions,
+    private getTopicSubscriptionUsecase: GetTopicSubscription,
+    private createSubscriptionsUsecase: CreateSubscriptionsUsecase,
+    private updateSubscriptionUsecase: UpdateSubscriptionUsecase,
+    private deleteTopicSubscriptionUsecase: DeleteTopicSubscription,
+    private updatePreferencesUsecase: UpdatePreferences
+  ) {}
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/topics/:topicKey/subscriptions')
+  async getTopicSubscriptions(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('topicKey') topicKey: string
+  ): Promise<TopicSubscriptionDetailsResponseDto[]> {
+    return await this.getTopicSubscriptionsUsecase.execute(
+      GetTopicSubscriptionsCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        topicKey,
+        _subscriberId: subscriberSession._id,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/topics/:topicKey/subscriptions/:subscriptionId')
+  async getTopicSubscription(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('topicKey') topicKey: string,
+    @Param('subscriptionId') subscriptionId: string
+  ): Promise<TopicSubscriptionDetailsResponseDto> {
+    return await this.getTopicSubscriptionUsecase.execute(
+      GetTopicSubscriptionCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        topicKey,
+        subscriptionId,
+        _subscriberId: subscriberSession._id,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/topics/:topicKey/subscriptions')
+  async createTopicSubscription(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('topicKey') topicKey: string,
+    @Body() body: CreateTopicSubscriptionRequestDto
+  ): Promise<TopicSubscriptionDetailsResponseDto> {
+    const result = await this.createSubscriptionsUsecase.execute(
+      CreateSubscriptionsCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        userId: subscriberSession._id,
+        topicKey,
+        subscriptions: [
+          {
+            subscriberId: subscriberSession.subscriberId,
+            identifier: body.identifier,
+            name: body.name,
+          },
+        ],
+        name: body.topic?.name,
+        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+      })
+    );
+
+    if (result.errors && result.errors.length > 0) {
+      throw new BadRequestException(result.errors[0].message);
+    }
+
+    if (result.meta.failed > 0 || result.data.length === 0) {
+      throw new BadRequestException('Failed to create subscription');
+    }
+
+    const subscription = result.data[0];
+
+    return {
+      id: subscription._id,
+      identifier: subscription.identifier,
+      name: subscription.name,
+      preferences: subscription.preferences,
+    };
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/topics/:topicKey/subscriptions/:subscriptionId')
+  async updateTopicSubscription(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('topicKey') topicKey: string,
+    @Param('subscriptionId') subscriptionId: string,
+    @Body() body: UpdateSubscriptionRequestDto
+  ): Promise<TopicSubscriptionDetailsResponseDto> {
+    const subscription = await this.updateSubscriptionUsecase.execute(
+      UpdateSubscriptionCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        userId: subscriberSession._id,
+        topicKey,
+        subscriptionId,
+        name: body.name,
+        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+      })
+    );
+
+    return {
+      id: subscription._id,
+      identifier: subscription.identifier,
+      name: subscription.name,
+      preferences: subscription.preferences,
+    };
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Delete('/subscriptions/:subscriptionId')
+  async deleteTopicSubscription(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('subscriptionId') subscriptionId: string
+  ): Promise<{ success: boolean }> {
+    return await this.deleteTopicSubscriptionUsecase.execute(
+      DeleteTopicSubscriptionCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        subscriptionId,
+        _subscriberId: subscriberSession._id,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/preferences/:subscriptionIdOrIdentifier/:workflowIdOrIdentifier')
+  async updateSubscriptionWorkflowPreference(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
+    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
+    @Body() body: UpdateSubscriptionPreferencesRequestDto
+  ): Promise<InboxPreference> {
+    return await this.updatePreferencesUsecase.execute(
+      UpdatePreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        level: PreferenceLevelEnum.TEMPLATE,
+        workflowIdOrIdentifier,
+        subscriptionIdOrIdentifier,
+        includeInactiveChannels: false,
+        all: {
+          enabled: body.enabled,
+          condition: body.condition,
+        },
+      })
+    );
+  }
+
+  private convertPreferencesToGroupFilters(
+    preferences: Array<string | WorkflowPreferenceRequestDto | GroupPreferenceFilterDto>
+  ): Array<GroupPreferenceFilterDto> {
+    return preferences.map((preference) => {
+      if (typeof preference === 'string') {
+        return {
+          filter: {
+            workflowIds: [preference],
+          },
+        };
+      }
+
+      if (this.isGroupPreferenceFilter(preference)) {
+        return preference;
+      }
+
+      return {
+        filter: {
+          workflowIds: [preference.workflowId],
+        },
+        condition: preference.condition,
+        enabled: preference.enabled,
+      };
+    });
+  }
+
+  private isGroupPreferenceFilter(
+    preference: WorkflowPreferenceRequestDto | GroupPreferenceFilterDto
+  ): preference is GroupPreferenceFilterDto {
+    return 'filter' in preference;
+  }
+}

@@ -8,7 +8,7 @@ import { MarkAsArchived as DefaultMarkAsArchived } from '../../icons/MarkAsArchi
 import { MarkAsRead as DefaultMarkAsRead } from '../../icons/MarkAsRead';
 import { MarkAsUnread as DefaultMarkAsUnread } from '../../icons/MarkAsUnread';
 import { Unsnooze as DefaultUnsnooze } from '../../icons/Unsnooze';
-import { LocalizationKey, NotificationStatus } from '../../types';
+import { AllLocalizationKey, NotificationStatus } from '../../types';
 import { Button, Dropdown, dropdownItemVariants, Popover } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
@@ -41,14 +41,14 @@ export const SNOOZE_PRESETS = [
     },
   },
 ] satisfies {
-  key: Extract<LocalizationKey, `snooze.options.${string}`>;
+  key: Extract<AllLocalizationKey, `snooze.options.${string}`>;
   hours: number;
   getDate: () => Date;
 }[];
 
 export const formatSnoozeOption = (
   preset: (typeof SNOOZE_PRESETS)[number],
-  t: (key: LocalizationKey) => string,
+  t: (key: AllLocalizationKey) => string,
   locale: string
 ): { label: string; time: string } => {
   const date = preset.getDate();

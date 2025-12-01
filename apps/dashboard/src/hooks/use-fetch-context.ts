@@ -1,6 +1,7 @@
+import { GetContextResponseDto } from '@novu/api/models/components';
 import { ContextId, ContextType } from '@novu/shared';
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { type ContextResponseDto, getContext } from '@/api/contexts';
+import { getContext } from '@/api/contexts';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
@@ -11,7 +12,7 @@ interface UseFetchContextParams {
 
 export function useFetchContext(
   { type, id }: UseFetchContextParams,
-  options: Omit<UseQueryOptions<ContextResponseDto, Error>, 'queryKey' | 'queryFn'> = {}
+  options: Omit<UseQueryOptions<GetContextResponseDto, Error>, 'queryKey' | 'queryFn'> = {}
 ) {
   const { currentEnvironment } = useEnvironment();
 

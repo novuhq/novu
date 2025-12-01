@@ -46,50 +46,79 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
     };
 
     // Create translation first
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: translationContent,
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: translationContent,
+    });
 
     // Verify translation exists
-    await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(200);
+    await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'en_US',
+    });
 
     // Delete the translation
-    await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(204);
+    await novuClient.translations.delete({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'en_US',
+    });
 
     // Verify translation no longer exists
-    await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(404);
+    try {
+      await novuClient.translations.retrieve({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: workflowId,
+        locale: 'en_US',
+      });
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 
   it('should return 404 when trying to delete non-existent translation', async () => {
-    await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/fr_FR`)
-      .expect(404);
+    try {
+      await novuClient.translations.delete({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: workflowId,
+        locale: 'fr_FR',
+      });
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 
   it('should return 404 when trying to delete translation for non-existent workflow', async () => {
     const fakeWorkflowId = '507f1f77bcf86cd799439011';
 
-    await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${fakeWorkflowId}/en_US`)
-      .expect(404);
+    try {
+      await novuClient.translations.delete({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: fakeWorkflowId,
+        locale: 'en_US',
+      });
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 
   it('should validate locale format in URL parameter', async () => {
-    await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/invalid-locale-123`)
-      .expect(400);
+    try {
+      await novuClient.translations.delete({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: workflowId,
+        locale: 'invalid-locale-123',
+      });
+      throw new Error('Should have thrown 400');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(400);
+    }
   });
 
   it('should handle underscores in locale and normalize them', async () => {
@@ -98,25 +127,31 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
     };
 
     // Create translation with underscore format
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: translationContent,
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: translationContent,
+    });
 
     // Delete with dash format (should be normalized to underscore)
-    await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en-US`)
-      .expect(204);
+    await novuClient.translations.delete({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'en-US',
+    });
 
     // Verify translation no longer exists
-    await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(404);
+    try {
+      await novuClient.translations.retrieve({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: workflowId,
+        locale: 'en_US',
+      });
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 
   it('should delete only the specified locale, leaving others intact', async () => {
@@ -131,41 +166,46 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
     };
 
     // Create translations in multiple locales
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'en_US',
-        content: englishContent,
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'en_US',
+      content: englishContent,
+    });
 
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'fr_FR',
-        content: frenchContent,
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'fr_FR',
+      content: frenchContent,
+    });
 
     // Delete only the English translation
-    await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(204);
+    await novuClient.translations.delete({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'en_US',
+    });
 
     // Verify English translation is gone
-    await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
-      .expect(404);
+    try {
+      await novuClient.translations.retrieve({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: workflowId,
+        locale: 'en_US',
+      });
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
 
     // Verify French translation still exists
-    const { body } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/fr_FR`)
-      .expect(200);
-    expect(body.data.content).to.deep.equal(frenchContent);
+    const response = await novuClient.translations.retrieve({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'fr_FR',
+    });
+    expect(response.content).to.deep.equal(frenchContent);
   });
 
   it('should work with complex locale codes', async () => {
@@ -174,24 +214,30 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
     };
 
     // Create translation with complex locale
-    await session.testAgent
-      .post('/v2/translations')
-      .send({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'zh_CN',
-        content: translationContent,
-      })
-      .expect(200);
+    await novuClient.translations.create({
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale: 'zh_CN',
+      content: translationContent,
+    });
 
     // Delete the translation
-    await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_CN`)
-      .expect(204);
+    await novuClient.translations.delete({
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      resourceId: workflowId,
+      locale: 'zh_CN',
+    });
 
     // Verify translation no longer exists
-    await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_CN`)
-      .expect(404);
+    try {
+      await novuClient.translations.retrieve({
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        resourceId: workflowId,
+        locale: 'zh_CN',
+      });
+      throw new Error('Should have thrown 404');
+    } catch (error: any) {
+      expect(error.statusCode).to.equal(404);
+    }
   });
 });

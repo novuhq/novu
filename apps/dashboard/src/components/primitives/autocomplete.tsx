@@ -70,6 +70,7 @@ export function Autocomplete<T extends AutocompleteItem>({
   // Form submission handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (open && hasResults && highlightedIndex >= 0) {
       // Select highlighted item
@@ -141,9 +142,12 @@ export function Autocomplete<T extends AutocompleteItem>({
         setOpen(false);
         break;
       case 'Enter':
+        e.preventDefault();
         if (highlightedIndex >= 0) {
-          e.preventDefault();
           handleSelectItem(items[highlightedIndex]);
+        } else if (items.length > 0) {
+          // If no item is highlighted but there are results, select the first item
+          handleSelectItem(items[0]);
         }
         break;
     }

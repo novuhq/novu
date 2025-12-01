@@ -6,6 +6,7 @@ import {
   createProviderSelectedMessage,
   DetailEnum,
   GetNovuProviderCredentials,
+  Instrument,
   SelectIntegration,
   SelectIntegrationCommand,
   SelectVariant,
@@ -64,6 +65,7 @@ export abstract class SendMessageBase extends SendMessageType {
     return merge({}, bridgeProviderData, workflowGlobalProviderOverrides, triggerOverrides);
   }
 
+  @Instrument()
   protected async getIntegration(params: {
     id?: string;
     providerId?: ProvidersIdEnum;
@@ -130,6 +132,7 @@ export abstract class SendMessageBase extends SendMessageType {
     };
   }
 
+  @Instrument()
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
     const providerDisplayName = providers.find((el) => el.id === integration?.providerId)?.displayName || 'Unknown';
 
@@ -152,6 +155,7 @@ export abstract class SendMessageBase extends SendMessageType {
     );
   }
 
+  @Instrument()
   protected async processVariants(command: SendMessageChannelCommand): Promise<MessageTemplateEntity> {
     const { messageTemplate, conditions } = await this.selectVariant.execute(
       SelectVariantCommand.create({
@@ -181,6 +185,7 @@ export abstract class SendMessageBase extends SendMessageType {
     return messageTemplate;
   }
 
+  @Instrument()
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {

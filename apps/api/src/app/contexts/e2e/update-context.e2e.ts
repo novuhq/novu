@@ -1,10 +1,16 @@
+import { Novu } from '@novu/api';
 import { ContextRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import axios, { AxiosResponse } from 'axios';
 import { expect } from 'chai';
+import {
+  expectSdkExceptionGeneric,
+  expectSdkZodError,
+  initNovuClassSdk,
+} from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {
   let session: UserSession;
+  let novuClient: Novu;
   const contextRepository = new ContextRepository();
 
   before(() => {
@@ -14,6 +20,7 @@ describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
   });
 
   afterEach(async () => {
@@ -36,14 +43,15 @@ describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {
       data: { tenantName: 'Acme Corp', region: 'us-east-1' },
     });
 
-    const response = await updateContext({
-      session,
+    const response = await novuClient.contexts.update({
       type: 'tenant',
       id: 'update-test-org-1',
-      data: { tenantName: 'Acme Corporation', region: 'us-west-2', settings: { theme: 'dark' } },
+      updateContextRequestDto: {
+        data: { tenantName: 'Acme Corporation', region: 'us-west-2', settings: { theme: 'dark' } },
+      },
     });
 
-    expect(response?.status).to.equal(200);
+    expect(response.result).to.be.ok;
 
     const updatedContext = await contextRepository.findOne({
       _environmentId: session.environment._id,
@@ -69,14 +77,15 @@ describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {
       data: { tenantName: 'Acme Corp', region: 'us-east-1', oldField: 'value' },
     });
 
-    const response = await updateContext({
-      session,
+    const response = await novuClient.contexts.update({
       type: 'tenant',
       id: 'update-test-org-2',
-      data: { newField: 'newValue' },
+      updateContextRequestDto: {
+        data: { newField: 'newValue' },
+      },
     });
 
-    expect(response?.status).to.equal(200);
+    expect(response.result).to.be.ok;
 
     const updatedContext = await contextRepository.findOne({
       _environmentId: session.environment._id,
@@ -99,14 +108,15 @@ describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {
       data: { tenantName: 'Acme Corp', region: 'us-east-1' },
     });
 
-    const response = await updateContext({
-      session,
+    const response = await novuClient.contexts.update({
       type: 'tenant',
       id: 'update-test-org-3',
-      data: {},
+      updateContextRequestDto: {
+        data: {},
+      },
     });
 
-    expect(response?.status).to.equal(200);
+    expect(response.result).to.be.ok;
 
     const updatedContext = await contextRepository.findOne({
       _environmentId: session.environment._id,
@@ -119,21 +129,19 @@ describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {
   });
 
   it('should throw exception if context does not exist', async () => {
-    try {
-      await updateContext({
-        session,
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.contexts.update({
         type: 'tenant',
         id: 'non-existent',
-        data: { test: 'value' },
-      });
+        updateContextRequestDto: {
+          data: { test: 'value' },
+        },
+      })
+    );
 
-      throw new Error('Should not succeed');
-    } catch (e) {
-      expect(e.response.status).to.equal(404);
-      expect(e?.response?.data?.message || e?.message).to.contains(
-        `Context with type 'tenant' and id 'non-existent' not found`
-      );
-    }
+    expect(error).to.be.ok;
+    expect(error?.statusCode).to.equal(404);
+    expect(error?.message).to.contain(`Context with type 'tenant' and id 'non-existent' not found`);
   });
 
   it('should throw error if data is missing', async () => {
@@ -146,43 +154,15 @@ describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {
       data: { tenantName: 'Acme Corp' },
     });
 
-    try {
-      await updateContext({
-        session,
+    const { error } = await expectSdkZodError(() =>
+      novuClient.contexts.update({
         type: 'tenant',
         id: 'update-test-org-4',
-      });
+        updateContextRequestDto: {} as any,
+      })
+    );
 
-      throw new Error('Should not succeed');
-    } catch (e) {
-      expect(e.response.status).to.equal(422);
-    }
+    expect(error).to.be.ok;
+    expect(error?.name).to.equal('SDKValidationError');
   });
 });
-
-// biome-ignore lint/suspicious/noExportsInTest: helper function used by other tests
-export async function updateContext({
-  session,
-  type,
-  id,
-  data,
-}: {
-  session;
-  type?: string;
-  id?: string;
-  data?: any;
-}): Promise<AxiosResponse> {
-  const axiosInstance = axios.create();
-
-  return await axiosInstance.patch(
-    `${session.serverUrl}/v2/contexts/${type}/${id}`,
-    {
-      data,
-    },
-    {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    }
-  );
-}

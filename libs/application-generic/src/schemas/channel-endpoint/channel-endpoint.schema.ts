@@ -31,6 +31,25 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     validate: (endpoint: Record<string, unknown>) =>
       typeof endpoint.phoneNumber === 'string' && Object.keys(endpoint).length === 1,
   },
+  [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: {
+    description: 'MS Teams Channel Endpoint',
+    properties: {
+      teamId: { type: 'string' as const },
+      channelId: { type: 'string' as const },
+    },
+    required: ['teamId', 'channelId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.teamId === 'string' &&
+      typeof endpoint.channelId === 'string' &&
+      Object.keys(endpoint).length === 2,
+  },
+  [ENDPOINT_TYPES.MS_TEAMS_USER]: {
+    description: 'MS Teams User Endpoint',
+    properties: { userId: { type: 'string' as const } },
+    required: ['userId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
+  },
 } as const;
 
 // Generate API property examples automatically

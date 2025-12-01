@@ -4,7 +4,7 @@ import { Preference } from '../../../../preferences/preference';
 import { useLocalization } from '../../../../ui/context/LocalizationContext';
 import { cn } from '../../../../ui/helpers';
 import { useStyle } from '../../../../ui/helpers/useStyle';
-import { AppearanceCallback } from '../../../../ui/types';
+import { InboxAppearanceCallback } from '../../../../ui/types';
 import { TimeSelect } from '../../primitives';
 import { Switch } from '../../primitives/Switch';
 import { DayScheduleCopy } from './DayScheduleCopy';
@@ -22,7 +22,7 @@ const ScheduleTableHeader = (props: ScheduleTableHeaderProps) => {
       class={style({
         key: 'scheduleTableHeader',
         className: 'nt-flex nt-gap-3',
-        context: { schedule: props.schedule } satisfies Parameters<AppearanceCallback['scheduleTableHeader']>[0],
+        context: { schedule: props.schedule } satisfies Parameters<InboxAppearanceCallback['scheduleTableHeader']>[0],
       })}
     >
       {props.children}
@@ -44,7 +44,7 @@ const ScheduleTableHeaderColumn = (props: ScheduleTableHeaderColumnProps) => {
       class={style({
         key: 'scheduleHeaderColumn',
         className: cn('nt-text-sm nt-truncate nt-text-start', props.class),
-        context: { schedule: props.schedule } satisfies Parameters<AppearanceCallback['scheduleHeaderColumn']>[0],
+        context: { schedule: props.schedule } satisfies Parameters<InboxAppearanceCallback['scheduleHeaderColumn']>[0],
       })}
       data-localization={props.dataLocalization}
     >
@@ -65,7 +65,7 @@ const ScheduleTableBody = (props: ScheduleTableBodyProps) => {
       class={style({
         key: 'scheduleTableBody',
         className: 'nt-flex nt-flex-col nt-gap-1',
-        context: { schedule: props.schedule } satisfies Parameters<AppearanceCallback['scheduleTableBody']>[0],
+        context: { schedule: props.schedule } satisfies Parameters<InboxAppearanceCallback['scheduleTableBody']>[0],
       })}
     >
       {props.children}
@@ -85,7 +85,7 @@ const ScheduleTableRow = (props: ScheduleTableRowProps) => {
       class={style({
         key: 'scheduleBodyRow',
         className: 'nt-flex nt-gap-3',
-        context: { schedule: props.schedule } satisfies Parameters<AppearanceCallback['scheduleBodyRow']>[0],
+        context: { schedule: props.schedule } satisfies Parameters<InboxAppearanceCallback['scheduleBodyRow']>[0],
       })}
     >
       {props.children}
@@ -105,7 +105,7 @@ const ScheduleBodyColumn = (props: ScheduleTableCellProps) => {
       class={style({
         key: 'scheduleBodyColumn',
         className: cn('nt-text-sm', props.class),
-        context: { schedule: props.schedule } satisfies Parameters<AppearanceCallback['scheduleBodyColumn']>[0],
+        context: { schedule: props.schedule } satisfies Parameters<InboxAppearanceCallback['scheduleBodyColumn']>[0],
       })}
     >
       {props.children}
@@ -128,7 +128,7 @@ export const ScheduleTable = (props: ScheduleTableProps) => {
       class={style({
         key: 'scheduleTable',
         className: 'nt-flex nt-flex-col nt-gap-1',
-        context: { schedule: schedule() } satisfies Parameters<AppearanceCallback['scheduleTable']>[0],
+        context: { schedule: schedule() } satisfies Parameters<InboxAppearanceCallback['scheduleTable']>[0],
       })}
     >
       <ScheduleTableHeader schedule={schedule()}>

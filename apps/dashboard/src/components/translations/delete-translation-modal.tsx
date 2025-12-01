@@ -1,8 +1,8 @@
-import { TranslationGroup } from '@/api/translations';
+import { TranslationGroupDto } from '@novu/api/models/components';
 import { ConfirmationModal } from '../confirmation-modal';
 
 type DeleteTranslationGroupDialogProps = {
-  translationGroup: TranslationGroup;
+  translationGroup: TranslationGroupDto;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;

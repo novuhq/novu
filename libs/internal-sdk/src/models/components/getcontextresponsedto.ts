@@ -7,104 +7,37 @@ import { safeParse } from '../../lib/schemas.js';
 import { Result as SafeParseResult } from '../../types/fp.js';
 import { SDKValidationError } from '../errors/sdkvalidationerror.js';
 
-export type GetContextResponseDtoData = {};
-
 export type GetContextResponseDto = {
+  /**
+   * Context type (e.g., tenant, app, workspace)
+   */
   type: string;
+  /**
+   * Unique identifier for this context
+   */
   id: string;
-  data: GetContextResponseDtoData;
+  /**
+   * Custom data associated with this context
+   */
+  data: { [k: string]: any };
+  /**
+   * Creation timestamp
+   */
   createdAt: string;
+  /**
+   * Last update timestamp
+   */
   updatedAt: string;
 };
-
-/** @internal */
-export const GetContextResponseDtoData$inboundSchema: z.ZodType<GetContextResponseDtoData, z.ZodTypeDef, unknown> =
-  z.object({});
-
-/** @internal */
-export type GetContextResponseDtoData$Outbound = {};
-
-/** @internal */
-export const GetContextResponseDtoData$outboundSchema: z.ZodType<
-  GetContextResponseDtoData$Outbound,
-  z.ZodTypeDef,
-  GetContextResponseDtoData
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetContextResponseDtoData$ {
-  /** @deprecated use `GetContextResponseDtoData$inboundSchema` instead. */
-  export const inboundSchema = GetContextResponseDtoData$inboundSchema;
-  /** @deprecated use `GetContextResponseDtoData$outboundSchema` instead. */
-  export const outboundSchema = GetContextResponseDtoData$outboundSchema;
-  /** @deprecated use `GetContextResponseDtoData$Outbound` instead. */
-  export type Outbound = GetContextResponseDtoData$Outbound;
-}
-
-export function getContextResponseDtoDataToJSON(getContextResponseDtoData: GetContextResponseDtoData): string {
-  return JSON.stringify(GetContextResponseDtoData$outboundSchema.parse(getContextResponseDtoData));
-}
-
-export function getContextResponseDtoDataFromJSON(
-  jsonString: string
-): SafeParseResult<GetContextResponseDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => GetContextResponseDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'GetContextResponseDtoData' from JSON`
-  );
-}
 
 /** @internal */
 export const GetContextResponseDto$inboundSchema: z.ZodType<GetContextResponseDto, z.ZodTypeDef, unknown> = z.object({
   type: z.string(),
   id: z.string(),
-  data: z.lazy(() => GetContextResponseDtoData$inboundSchema),
+  data: z.record(z.any()),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
-
-/** @internal */
-export type GetContextResponseDto$Outbound = {
-  type: string;
-  id: string;
-  data: GetContextResponseDtoData$Outbound;
-  createdAt: string;
-  updatedAt: string;
-};
-
-/** @internal */
-export const GetContextResponseDto$outboundSchema: z.ZodType<
-  GetContextResponseDto$Outbound,
-  z.ZodTypeDef,
-  GetContextResponseDto
-> = z.object({
-  type: z.string(),
-  id: z.string(),
-  data: z.lazy(() => GetContextResponseDtoData$outboundSchema),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace GetContextResponseDto$ {
-  /** @deprecated use `GetContextResponseDto$inboundSchema` instead. */
-  export const inboundSchema = GetContextResponseDto$inboundSchema;
-  /** @deprecated use `GetContextResponseDto$outboundSchema` instead. */
-  export const outboundSchema = GetContextResponseDto$outboundSchema;
-  /** @deprecated use `GetContextResponseDto$Outbound` instead. */
-  export type Outbound = GetContextResponseDto$Outbound;
-}
-
-export function getContextResponseDtoToJSON(getContextResponseDto: GetContextResponseDto): string {
-  return JSON.stringify(GetContextResponseDto$outboundSchema.parse(getContextResponseDto));
-}
 
 export function getContextResponseDtoFromJSON(
   jsonString: string

@@ -276,6 +276,10 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.dto.ts"],
+      "plugins": ["./biome-plugins/api-property-record-type.grit"]
     }
   ],
   "assist": {
