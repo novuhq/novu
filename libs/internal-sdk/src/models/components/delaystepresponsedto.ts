@@ -20,7 +20,6 @@ import {
   ResourceOriginEnum$inboundSchema,
 } from "./resourceoriginenum.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
-import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 
 /**
  * Type of the delay. Currently only 'regular' is supported by the schema.
@@ -113,7 +112,7 @@ export type DelayStepResponseDto = {
   /**
    * Type of the step
    */
-  type: StepTypeEnum;
+  type: "delay";
   /**
    * Origin of the layout
    */
@@ -183,7 +182,7 @@ export const DelayStepResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
-  type: StepTypeEnum$inboundSchema,
+  type: z.literal("delay"),
   origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),

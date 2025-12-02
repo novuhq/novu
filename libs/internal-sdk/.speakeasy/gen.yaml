@@ -39,7 +39,7 @@ typescript:
   author: Novu
   baseErrorName: NovuError
   clientServerStatusCodesAsErrors: true
-  constFieldsAlwaysOptional: true
+  constFieldsAlwaysOptional: false
   defaultErrorName: SDKError
   enableCustomCodeRegions: false
   enableMCPServer: false
@@ -71,6 +71,7 @@ typescript:
   multipartArrayFormat: legacy
   outputModelSuffix: output
   packageName: '@novu/api'
+  preApplyUnionDiscriminators: true
   responseFormat: flat
   sseFlatResponse: false
   templateVersion: v2

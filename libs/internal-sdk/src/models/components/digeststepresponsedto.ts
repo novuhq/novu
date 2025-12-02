@@ -24,7 +24,6 @@ import {
   ResourceOriginEnum$inboundSchema,
 } from "./resourceoriginenum.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
-import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 
 /**
  * The type of digest strategy. Determines which fields are applicable.
@@ -125,7 +124,7 @@ export type DigestStepResponseDto = {
   /**
    * Type of the step
    */
-  type: StepTypeEnum;
+  type: "digest";
   /**
    * Origin of the layout
    */
@@ -198,7 +197,7 @@ export const DigestStepResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
-  type: StepTypeEnum$inboundSchema,
+  type: z.literal("digest"),
   origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),

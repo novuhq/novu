@@ -109,15 +109,15 @@ export type LastPublishedBy = {
 };
 
 export type WorkflowResponseDtoSteps =
-  | (InAppStepResponseDto & { type: "in_app" })
-  | (EmailStepResponseDto & { type: "email" })
-  | (SmsStepResponseDto & { type: "sms" })
-  | (PushStepResponseDto & { type: "push" })
-  | (ChatStepResponseDto & { type: "chat" })
-  | (DelayStepResponseDto & { type: "delay" })
-  | (DigestStepResponseDto & { type: "digest" })
-  | (CustomStepResponseDto & { type: "custom" })
-  | (ThrottleStepResponseDto & { type: "throttle" });
+  | InAppStepResponseDto
+  | EmailStepResponseDto
+  | SmsStepResponseDto
+  | PushStepResponseDto
+  | ChatStepResponseDto
+  | DelayStepResponseDto
+  | DigestStepResponseDto
+  | CustomStepResponseDto
+  | ThrottleStepResponseDto;
 
 export type WorkflowResponseDto = {
   /**
@@ -184,15 +184,15 @@ export type WorkflowResponseDto = {
    * Steps of the workflow
    */
   steps: Array<
-    | (InAppStepResponseDto & { type: "in_app" })
-    | (EmailStepResponseDto & { type: "email" })
-    | (SmsStepResponseDto & { type: "sms" })
-    | (PushStepResponseDto & { type: "push" })
-    | (ChatStepResponseDto & { type: "chat" })
-    | (DelayStepResponseDto & { type: "delay" })
-    | (DigestStepResponseDto & { type: "digest" })
-    | (CustomStepResponseDto & { type: "custom" })
-    | (ThrottleStepResponseDto & { type: "throttle" })
+    | InAppStepResponseDto
+    | EmailStepResponseDto
+    | SmsStepResponseDto
+    | PushStepResponseDto
+    | ChatStepResponseDto
+    | DelayStepResponseDto
+    | DigestStepResponseDto
+    | CustomStepResponseDto
+    | ThrottleStepResponseDto
   >;
   /**
    * Origin of the layout
@@ -282,27 +282,15 @@ export const WorkflowResponseDtoSteps$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.union([
-  InAppStepResponseDto$inboundSchema.and(
-    z.object({ type: z.literal("in_app") }),
-  ),
-  EmailStepResponseDto$inboundSchema.and(
-    z.object({ type: z.literal("email") }),
-  ),
-  SmsStepResponseDto$inboundSchema.and(z.object({ type: z.literal("sms") })),
-  PushStepResponseDto$inboundSchema.and(z.object({ type: z.literal("push") })),
-  ChatStepResponseDto$inboundSchema.and(z.object({ type: z.literal("chat") })),
-  DelayStepResponseDto$inboundSchema.and(
-    z.object({ type: z.literal("delay") }),
-  ),
-  DigestStepResponseDto$inboundSchema.and(
-    z.object({ type: z.literal("digest") }),
-  ),
-  CustomStepResponseDto$inboundSchema.and(
-    z.object({ type: z.literal("custom") }),
-  ),
-  ThrottleStepResponseDto$inboundSchema.and(
-    z.object({ type: z.literal("throttle") }),
-  ),
+  InAppStepResponseDto$inboundSchema,
+  EmailStepResponseDto$inboundSchema,
+  SmsStepResponseDto$inboundSchema,
+  PushStepResponseDto$inboundSchema,
+  ChatStepResponseDto$inboundSchema,
+  DelayStepResponseDto$inboundSchema,
+  DigestStepResponseDto$inboundSchema,
+  CustomStepResponseDto$inboundSchema,
+  ThrottleStepResponseDto$inboundSchema,
 ]);
 
 export function workflowResponseDtoStepsFromJSON(
@@ -341,33 +329,15 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
     .optional(),
   steps: z.array(
     z.union([
-      InAppStepResponseDto$inboundSchema.and(
-        z.object({ type: z.literal("in_app") }),
-      ),
-      EmailStepResponseDto$inboundSchema.and(
-        z.object({ type: z.literal("email") }),
-      ),
-      SmsStepResponseDto$inboundSchema.and(
-        z.object({ type: z.literal("sms") }),
-      ),
-      PushStepResponseDto$inboundSchema.and(
-        z.object({ type: z.literal("push") }),
-      ),
-      ChatStepResponseDto$inboundSchema.and(
-        z.object({ type: z.literal("chat") }),
-      ),
-      DelayStepResponseDto$inboundSchema.and(
-        z.object({ type: z.literal("delay") }),
-      ),
-      DigestStepResponseDto$inboundSchema.and(
-        z.object({ type: z.literal("digest") }),
-      ),
-      CustomStepResponseDto$inboundSchema.and(
-        z.object({ type: z.literal("custom") }),
-      ),
-      ThrottleStepResponseDto$inboundSchema.and(
-        z.object({ type: z.literal("throttle") }),
-      ),
+      InAppStepResponseDto$inboundSchema,
+      EmailStepResponseDto$inboundSchema,
+      SmsStepResponseDto$inboundSchema,
+      PushStepResponseDto$inboundSchema,
+      ChatStepResponseDto$inboundSchema,
+      DelayStepResponseDto$inboundSchema,
+      DigestStepResponseDto$inboundSchema,
+      CustomStepResponseDto$inboundSchema,
+      ThrottleStepResponseDto$inboundSchema,
     ]),
   ),
   origin: ResourceOriginEnum$inboundSchema,

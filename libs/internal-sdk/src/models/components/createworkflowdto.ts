@@ -64,15 +64,15 @@ import {
 } from "./workflowcreationsourceenum.js";
 
 export type Steps =
-  | (InAppStepUpsertDto & { type: "in_app" })
-  | (EmailStepUpsertDto & { type: "email" })
-  | (SmsStepUpsertDto & { type: "sms" })
-  | (PushStepUpsertDto & { type: "push" })
-  | (ChatStepUpsertDto & { type: "chat" })
-  | (DelayStepUpsertDto & { type: "delay" })
-  | (DigestStepUpsertDto & { type: "digest" })
-  | (ThrottleStepUpsertDto & { type: "throttle" })
-  | (CustomStepUpsertDto & { type: "custom" });
+  | InAppStepUpsertDto
+  | EmailStepUpsertDto
+  | SmsStepUpsertDto
+  | PushStepUpsertDto
+  | ChatStepUpsertDto
+  | DelayStepUpsertDto
+  | DigestStepUpsertDto
+  | ThrottleStepUpsertDto
+  | CustomStepUpsertDto;
 
 export type CreateWorkflowDto = {
   /**
@@ -111,15 +111,15 @@ export type CreateWorkflowDto = {
    * Steps of the workflow
    */
   steps: Array<
-    | (InAppStepUpsertDto & { type: "in_app" })
-    | (EmailStepUpsertDto & { type: "email" })
-    | (SmsStepUpsertDto & { type: "sms" })
-    | (PushStepUpsertDto & { type: "push" })
-    | (ChatStepUpsertDto & { type: "chat" })
-    | (DelayStepUpsertDto & { type: "delay" })
-    | (DigestStepUpsertDto & { type: "digest" })
-    | (ThrottleStepUpsertDto & { type: "throttle" })
-    | (CustomStepUpsertDto & { type: "custom" })
+    | InAppStepUpsertDto
+    | EmailStepUpsertDto
+    | SmsStepUpsertDto
+    | PushStepUpsertDto
+    | ChatStepUpsertDto
+    | DelayStepUpsertDto
+    | DigestStepUpsertDto
+    | ThrottleStepUpsertDto
+    | CustomStepUpsertDto
   >;
   /**
    * Source of workflow creation
@@ -137,15 +137,15 @@ export type CreateWorkflowDto = {
 
 /** @internal */
 export type Steps$Outbound =
-  | (InAppStepUpsertDto$Outbound & { type: "in_app" })
-  | (EmailStepUpsertDto$Outbound & { type: "email" })
-  | (SmsStepUpsertDto$Outbound & { type: "sms" })
-  | (PushStepUpsertDto$Outbound & { type: "push" })
-  | (ChatStepUpsertDto$Outbound & { type: "chat" })
-  | (DelayStepUpsertDto$Outbound & { type: "delay" })
-  | (DigestStepUpsertDto$Outbound & { type: "digest" })
-  | (ThrottleStepUpsertDto$Outbound & { type: "throttle" })
-  | (CustomStepUpsertDto$Outbound & { type: "custom" });
+  | InAppStepUpsertDto$Outbound
+  | EmailStepUpsertDto$Outbound
+  | SmsStepUpsertDto$Outbound
+  | PushStepUpsertDto$Outbound
+  | ChatStepUpsertDto$Outbound
+  | DelayStepUpsertDto$Outbound
+  | DigestStepUpsertDto$Outbound
+  | ThrottleStepUpsertDto$Outbound
+  | CustomStepUpsertDto$Outbound;
 
 /** @internal */
 export const Steps$outboundSchema: z.ZodType<
@@ -153,23 +153,15 @@ export const Steps$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   Steps
 > = z.union([
-  InAppStepUpsertDto$outboundSchema.and(
-    z.object({ type: z.literal("in_app") }),
-  ),
-  EmailStepUpsertDto$outboundSchema.and(z.object({ type: z.literal("email") })),
-  SmsStepUpsertDto$outboundSchema.and(z.object({ type: z.literal("sms") })),
-  PushStepUpsertDto$outboundSchema.and(z.object({ type: z.literal("push") })),
-  ChatStepUpsertDto$outboundSchema.and(z.object({ type: z.literal("chat") })),
-  DelayStepUpsertDto$outboundSchema.and(z.object({ type: z.literal("delay") })),
-  DigestStepUpsertDto$outboundSchema.and(
-    z.object({ type: z.literal("digest") }),
-  ),
-  ThrottleStepUpsertDto$outboundSchema.and(
-    z.object({ type: z.literal("throttle") }),
-  ),
-  CustomStepUpsertDto$outboundSchema.and(
-    z.object({ type: z.literal("custom") }),
-  ),
+  InAppStepUpsertDto$outboundSchema,
+  EmailStepUpsertDto$outboundSchema,
+  SmsStepUpsertDto$outboundSchema,
+  PushStepUpsertDto$outboundSchema,
+  ChatStepUpsertDto$outboundSchema,
+  DelayStepUpsertDto$outboundSchema,
+  DigestStepUpsertDto$outboundSchema,
+  ThrottleStepUpsertDto$outboundSchema,
+  CustomStepUpsertDto$outboundSchema,
 ]);
 
 export function stepsToJSON(steps: Steps): string {
@@ -187,15 +179,15 @@ export type CreateWorkflowDto$Outbound = {
   isTranslationEnabled: boolean;
   workflowId: string;
   steps: Array<
-    | (InAppStepUpsertDto$Outbound & { type: "in_app" })
-    | (EmailStepUpsertDto$Outbound & { type: "email" })
-    | (SmsStepUpsertDto$Outbound & { type: "sms" })
-    | (PushStepUpsertDto$Outbound & { type: "push" })
-    | (ChatStepUpsertDto$Outbound & { type: "chat" })
-    | (DelayStepUpsertDto$Outbound & { type: "delay" })
-    | (DigestStepUpsertDto$Outbound & { type: "digest" })
-    | (ThrottleStepUpsertDto$Outbound & { type: "throttle" })
-    | (CustomStepUpsertDto$Outbound & { type: "custom" })
+    | InAppStepUpsertDto$Outbound
+    | EmailStepUpsertDto$Outbound
+    | SmsStepUpsertDto$Outbound
+    | PushStepUpsertDto$Outbound
+    | ChatStepUpsertDto$Outbound
+    | DelayStepUpsertDto$Outbound
+    | DigestStepUpsertDto$Outbound
+    | ThrottleStepUpsertDto$Outbound
+    | CustomStepUpsertDto$Outbound
   >;
   __source: string;
   preferences?: PreferencesRequestDto$Outbound | undefined;
@@ -218,31 +210,15 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
   workflowId: z.string(),
   steps: z.array(
     z.union([
-      InAppStepUpsertDto$outboundSchema.and(
-        z.object({ type: z.literal("in_app") }),
-      ),
-      EmailStepUpsertDto$outboundSchema.and(
-        z.object({ type: z.literal("email") }),
-      ),
-      SmsStepUpsertDto$outboundSchema.and(z.object({ type: z.literal("sms") })),
-      PushStepUpsertDto$outboundSchema.and(
-        z.object({ type: z.literal("push") }),
-      ),
-      ChatStepUpsertDto$outboundSchema.and(
-        z.object({ type: z.literal("chat") }),
-      ),
-      DelayStepUpsertDto$outboundSchema.and(
-        z.object({ type: z.literal("delay") }),
-      ),
-      DigestStepUpsertDto$outboundSchema.and(
-        z.object({ type: z.literal("digest") }),
-      ),
-      ThrottleStepUpsertDto$outboundSchema.and(
-        z.object({ type: z.literal("throttle") }),
-      ),
-      CustomStepUpsertDto$outboundSchema.and(
-        z.object({ type: z.literal("custom") }),
-      ),
+      InAppStepUpsertDto$outboundSchema,
+      EmailStepUpsertDto$outboundSchema,
+      SmsStepUpsertDto$outboundSchema,
+      PushStepUpsertDto$outboundSchema,
+      ChatStepUpsertDto$outboundSchema,
+      DelayStepUpsertDto$outboundSchema,
+      DigestStepUpsertDto$outboundSchema,
+      ThrottleStepUpsertDto$outboundSchema,
+      CustomStepUpsertDto$outboundSchema,
     ]),
   ),
   source: WorkflowCreationSourceEnum$outboundSchema.default("editor"),

@@ -203,7 +203,6 @@ export * from "./steplistresponsedto.js";
 export * from "./stepresponsedto.js";
 export * from "./steprundto.js";
 export * from "./stepsoverrides.js";
-export * from "./steptypeenum.js";
 export * from "./subscriberchanneldto.js";
 export * from "./subscriberdto.js";
 export * from "./subscriberfeedresponsedto.js";
