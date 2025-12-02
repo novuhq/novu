@@ -1,3 +1,4 @@
+/* cspell:ignore Pilcrow */
 import { Editor, useEditorState } from '@tiptap/react';
 import {
   FootprintsIcon,

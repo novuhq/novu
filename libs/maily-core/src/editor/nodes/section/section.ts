@@ -1,3 +1,4 @@
+/* cspell:ignore cellspacing */
 import { mergeAttributes, Node } from '@tiptap/core';
 import { updateAttributes } from '@/editor/utils/update-attribute';
 

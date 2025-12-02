@@ -1,3 +1,4 @@
+/* cspell:ignore Lowlight lowlight */
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { TextSelection } from '@tiptap/pm/state';
 import { NodeViewContent, NodeViewProps, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';

@@ -1,3 +1,4 @@
+/* cspell:ignore Pilcrow */
 import { ChevronDownIcon, PilcrowIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/editor/utils/classname';

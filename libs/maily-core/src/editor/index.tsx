@@ -21,7 +21,7 @@ import { DEFAULT_PLACEHOLDER_URL, MailyContextType, MailyProvider } from './prov
 import { cn } from './utils/classname';
 import { replaceDeprecatedNode } from './utils/replace-deprecated';
 
-type ParitialMailContextType = Partial<MailyContextType>;
+type PartialMailyContextType = Partial<MailyContextType>;
 
 export type EditorProps = {
   contentHtml?: string;
@@ -43,7 +43,7 @@ export type EditorProps = {
     description?: (editor: TiptapEditor) => React.ReactNode;
   };
   editable?: boolean;
-} & ParitialMailContextType;
+} & PartialMailyContextType;
 
 export function Editor(props: EditorProps) {
   const {

@@ -1,3 +1,4 @@
+/* cspell:ignore Dropcursor dropcursor */
 import { AnyExtension, Extension } from '@tiptap/core';
 import Document from '@tiptap/extension-document';
 import Dropcursor from '@tiptap/extension-dropcursor';

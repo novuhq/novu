@@ -1,3 +1,4 @@
+/* cspell:ignore nums */
 import { ChevronUp } from 'lucide-react';
 import { useId } from 'react';
 import { cn } from '@/editor/utils/classname';

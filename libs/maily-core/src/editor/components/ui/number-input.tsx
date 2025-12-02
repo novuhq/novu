@@ -1,3 +1,4 @@
+/* cspell:ignore nums */
 import { type LucideIcon } from 'lucide-react';
 import { forwardRef } from 'react';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/editor/utils/constants';

@@ -23,7 +23,7 @@ export interface BubbleMenuItem {
   className?: string;
   iconClassName?: string;
   nameClassName?: string;
-  disbabled?: boolean;
+  disabled?: boolean;
 
   tooltip?: string;
 }

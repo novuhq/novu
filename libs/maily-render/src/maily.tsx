@@ -1,3 +1,4 @@
+/* cspell:ignore uderline */
 /**
  * biome-ignore-all lint/correctness/noUnusedPrivateClassMembers: used
  * biome-ignore-all lint/correctness/useUniqueElementIds: safe to use

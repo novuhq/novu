@@ -1,3 +1,4 @@
+/* cspell:ignore prosemirror */
 /**
  * This plugin is a modified version of the package
  * LINK: https://www.npmjs.com/package/echo-drag-handle-plugin.
