@@ -16,8 +16,16 @@ export function startCountingUnrecognized() {
   refCount++;
   const start = globalCount;
   return {
-    end: () => {
+    /**
+     * Ends counting and returns the delta.
+     * @param delta - If provided, only this amount is added to the parent counter
+     *   (used for nested unions where we only want to record the winning option's count).
+     *   If not provided, records all counts since start().
+     */
+    end: (delta?: number) => {
       const count = globalCount - start;
+      // Reset globalCount back to start, then add only the specified delta
+      globalCount = start + (delta ?? count);
       if (--refCount === 0) globalCount = 0;
       return count;
     },

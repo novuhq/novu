@@ -27,7 +27,6 @@ import {
   SeverityLevelEnum,
   SeverityLevelEnum$inboundSchema,
 } from "./severitylevelenum.js";
-import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 
 export type ActivityNotificationResponseDto = {
   /**
@@ -66,7 +65,7 @@ export type ActivityNotificationResponseDto = {
    * Last updated time of the notification
    */
   updatedAt?: string | undefined;
-  channels?: Array<StepTypeEnum> | undefined;
+  channels?: Array<string> | undefined;
   /**
    * Subscriber of the notification
    */
@@ -128,7 +127,7 @@ export const ActivityNotificationResponseDto$inboundSchema: z.ZodType<
   _digestedNotificationId: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
-  channels: z.array(StepTypeEnum$inboundSchema).optional(),
+  channels: z.array(z.string()).optional(),
   subscriber: ActivityNotificationSubscriberResponseDto$inboundSchema
     .optional(),
   template: ActivityNotificationTemplateResponseDto$inboundSchema.optional(),
