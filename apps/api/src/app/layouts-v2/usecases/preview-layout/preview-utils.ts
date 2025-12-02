@@ -1,4 +1,4 @@
-import { JSONContent as MailyJSONContent } from '@maily-to/render';
+import { JSONContent as MailyJSONContent } from '@novu/maily-render';
 import { LAYOUT_CONTENT_VARIABLE, LAYOUT_PREVIEW_CONTENT_PLACEHOLDER } from '@novu/shared';
 
 import { replaceMailyNodesByCondition } from '../../../shared/helpers/maily-utils';

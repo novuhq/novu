@@ -1,4 +1,3 @@
-import { JSONContent as MailyJSONContent, render as mailyRender } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
@@ -20,6 +19,7 @@ import {
   OrganizationEntity,
 } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
+import { JSONContent as MailyJSONContent, render as mailyRender } from '@novu/maily-render';
 import {
   ControlValuesLevelEnum,
   EmailRenderOutput,

@@ -1,4 +1,4 @@
-import '@maily-to/core/style.css';
+import '@novu/maily-core/style.css';
 import { PermissionsEnum } from '@novu/shared';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

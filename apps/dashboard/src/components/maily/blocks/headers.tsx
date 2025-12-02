@@ -1,4 +1,4 @@
-import { BlockItem } from '@maily-to/core/blocks';
+import { BlockItem } from '@novu/maily-core/blocks';
 import { EmailHeader } from '@/components/icons/email-header';
 import { EmailHeaderCenteredLogoWithBorder } from '@/components/icons/email-header-centered-logo-with-border';
 import { EmailHeaderLogoWithCoverImage } from '@/components/icons/email-header-logo-with-cover-image';

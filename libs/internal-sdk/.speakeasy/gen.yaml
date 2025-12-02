@@ -26,6 +26,23 @@ generation:
     generateTests: true
     generateNewTests: false
     skipResponseBodyAssertions: false
+postman:
+  version: 1.0.0
+  baseErrorName: NovuError
+  collectionName: Novu API
+  defaultErrorName: NovuDefaultError
+  imports:
+    option: openapi
+    paths:
+      callbacks: callbacks
+      errors: errors
+      operations: operations
+      shared: shared
+      webhooks: webhooks
+  inferUnionDiscriminators: true
+  inputModelSuffix: input
+  outputModelSuffix: output
+  packageName: novu/api
 typescript:
   version: 0.1.21
   acceptHeaderEnum: true

@@ -11,6 +11,7 @@ export function CursorPaginationRequestDto(defaultLimit = 10, maxLimit = 100): C
       required: false,
       default: defaultLimit,
       maximum: maxLimit,
+      example: 10,
     })
     @IsOptional()
     @Type(() => Number)
@@ -26,7 +27,10 @@ export function CursorPaginationRequestDto(defaultLimit = 10, maxLimit = 100): C
     })
     after?: string;
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({
+      type: Number,
+      example: 0,
+    })
     @IsOptional()
     @Type(() => Number)
     @IsInt()

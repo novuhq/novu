@@ -17,7 +17,7 @@ import {
   section,
   spacer,
   text,
-} from '@maily-to/core/blocks';
+} from '@novu/maily-core/blocks';
 import {
   ButtonExtension,
   getSlashCommandSuggestions,
@@ -37,7 +37,7 @@ import {
   Variable,
   VariableExtension,
   Variables,
-} from '@maily-to/core/extensions';
+} from '@novu/maily-core/extensions';
 import {
   LAYOUT_CONTENT_VARIABLE,
   StepResponseDto,

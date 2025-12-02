@@ -1,4 +1,4 @@
-import { BlockItem } from '@maily-to/core/blocks';
+import { BlockItem } from '@novu/maily-core/blocks';
 import { StepResponseDto } from '@novu/shared';
 import { RiShadowLine } from 'react-icons/ri';
 import { Badge } from '@/components/primitives/badge';
