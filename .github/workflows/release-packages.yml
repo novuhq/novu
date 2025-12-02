@@ -113,7 +113,6 @@ jobs:
           fi
 
       - name: Create Pull Request
-        if: ${{ !github.event.inputs.nightly }}
         id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
