@@ -3,61 +3,17 @@
  */
 
 import * as z from "zod/v3";
-import {
-  DeleteTopicSubscriberIdentifierDto,
-  DeleteTopicSubscriberIdentifierDto$Outbound,
-  DeleteTopicSubscriberIdentifierDto$outboundSchema,
-} from "./deletetopicsubscriberidentifierdto.js";
-
-export type DeleteTopicSubscriptionsRequestDtoSubscriptions =
-  | string
-  | DeleteTopicSubscriberIdentifierDto;
 
 export type DeleteTopicSubscriptionsRequestDto = {
   /**
-   * List of subscriber identifiers to unsubscribe from the topic (max: 100). @deprecated Use the "subscriptions" property instead.
-   *
-   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   * List of subscriber identifiers to unsubscribe from the topic (max: 100)
    */
-  subscriberIds?: Array<string> | undefined;
-  /**
-   * List of subscriptions to unsubscribe from the topic (max: 100). Can be either a string array of subscriber IDs or an array of objects with identifier and/or subscriberId. If only subscriberId is provided, all subscriptions for that subscriber within the topic will be deleted.
-   */
-  subscriptions?:
-    | Array<string | DeleteTopicSubscriberIdentifierDto>
-    | undefined;
+  subscriberIds: Array<string>;
 };
 
 /** @internal */
-export type DeleteTopicSubscriptionsRequestDtoSubscriptions$Outbound =
-  | string
-  | DeleteTopicSubscriberIdentifierDto$Outbound;
-
-/** @internal */
-export const DeleteTopicSubscriptionsRequestDtoSubscriptions$outboundSchema:
-  z.ZodType<
-    DeleteTopicSubscriptionsRequestDtoSubscriptions$Outbound,
-    z.ZodTypeDef,
-    DeleteTopicSubscriptionsRequestDtoSubscriptions
-  > = z.union([z.string(), DeleteTopicSubscriberIdentifierDto$outboundSchema]);
-
-export function deleteTopicSubscriptionsRequestDtoSubscriptionsToJSON(
-  deleteTopicSubscriptionsRequestDtoSubscriptions:
-    DeleteTopicSubscriptionsRequestDtoSubscriptions,
-): string {
-  return JSON.stringify(
-    DeleteTopicSubscriptionsRequestDtoSubscriptions$outboundSchema.parse(
-      deleteTopicSubscriptionsRequestDtoSubscriptions,
-    ),
-  );
-}
-
-/** @internal */
 export type DeleteTopicSubscriptionsRequestDto$Outbound = {
-  subscriberIds?: Array<string> | undefined;
-  subscriptions?:
-    | Array<string | DeleteTopicSubscriberIdentifierDto$Outbound>
-    | undefined;
+  subscriberIds: Array<string>;
 };
 
 /** @internal */
@@ -66,10 +22,7 @@ export const DeleteTopicSubscriptionsRequestDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DeleteTopicSubscriptionsRequestDto
 > = z.object({
-  subscriberIds: z.array(z.string()).optional(),
-  subscriptions: z.array(
-    z.union([z.string(), DeleteTopicSubscriberIdentifierDto$outboundSchema]),
-  ).optional(),
+  subscriberIds: z.array(z.string()),
 });
 
 export function deleteTopicSubscriptionsRequestDtoToJSON(

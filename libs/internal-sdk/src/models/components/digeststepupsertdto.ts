@@ -9,6 +9,7 @@ import {
   DigestControlDto$Outbound,
   DigestControlDto$outboundSchema,
 } from "./digestcontroldto.js";
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the Digest step.
@@ -33,7 +34,7 @@ export type DigestStepUpsertDto = {
   /**
    * Type of the step
    */
-  type: "digest";
+  type: StepTypeEnum;
   /**
    * Control values for the Digest step.
    */
@@ -67,7 +68,7 @@ export type DigestStepUpsertDto$Outbound = {
   _id?: string | undefined;
   stepId?: string | undefined;
   name: string;
-  type: "digest";
+  type: string;
   controlValues?: DigestControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
@@ -80,7 +81,7 @@ export const DigestStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   stepId: z.string().optional(),
   name: z.string(),
-  type: z.literal("digest"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.union([DigestControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {

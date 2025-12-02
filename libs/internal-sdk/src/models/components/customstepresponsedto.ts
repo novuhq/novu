@@ -19,6 +19,7 @@ import {
   ResourceOriginEnum$inboundSchema,
 } from "./resourceoriginenum.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
+import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the custom step
@@ -63,7 +64,7 @@ export type CustomStepResponseDto = {
   /**
    * Type of the step
    */
-  type: "custom";
+  type: StepTypeEnum;
   /**
    * Origin of the layout
    */
@@ -120,7 +121,7 @@ export const CustomStepResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
-  type: z.literal("custom"),
+  type: StepTypeEnum$inboundSchema,
   origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),

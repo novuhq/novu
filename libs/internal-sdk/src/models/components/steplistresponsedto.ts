@@ -7,6 +7,7 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
+import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 
 export type StepListResponseDto = {
   /**
@@ -16,7 +17,7 @@ export type StepListResponseDto = {
   /**
    * Type of the step
    */
-  type: string;
+  type: StepTypeEnum;
   /**
    * Issues associated with the step
    */
@@ -30,7 +31,7 @@ export const StepListResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   slug: z.string(),
-  type: z.string(),
+  type: StepTypeEnum$inboundSchema,
   issues: StepIssuesDto$inboundSchema.optional(),
 });
 

@@ -16,6 +16,7 @@ import {
   ResourceOriginEnum$inboundSchema,
 } from "./resourceoriginenum.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
+import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 import {
   ThrottleControlsMetadataResponseDto,
   ThrottleControlsMetadataResponseDto$inboundSchema,
@@ -117,7 +118,7 @@ export type ThrottleStepResponseDto = {
   /**
    * Type of the step
    */
-  type: "throttle";
+  type: StepTypeEnum;
   /**
    * Origin of the layout
    */
@@ -191,7 +192,7 @@ export const ThrottleStepResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
-  type: z.literal("throttle"),
+  type: StepTypeEnum$inboundSchema,
   origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),

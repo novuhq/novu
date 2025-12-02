@@ -9,6 +9,7 @@ import {
   InAppControlDto$Outbound,
   InAppControlDto$outboundSchema,
 } from "./inappcontroldto.js";
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the In-App step.
@@ -33,7 +34,7 @@ export type InAppStepUpsertDto = {
   /**
    * Type of the step
    */
-  type: "in_app";
+  type: StepTypeEnum;
   /**
    * Control values for the In-App step.
    */
@@ -67,7 +68,7 @@ export type InAppStepUpsertDto$Outbound = {
   _id?: string | undefined;
   stepId?: string | undefined;
   name: string;
-  type: "in_app";
+  type: string;
   controlValues?: InAppControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
@@ -80,7 +81,7 @@ export const InAppStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   stepId: z.string().optional(),
   name: z.string(),
-  type: z.literal("in_app"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.union([InAppControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {

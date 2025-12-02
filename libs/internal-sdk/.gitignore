@@ -29,7 +29,6 @@
 /esm
 /dist
 /.tsbuildinfo
-/tsconfig.tsbuildinfo
 /.tshy
 /.tshy-*
 /__tests__

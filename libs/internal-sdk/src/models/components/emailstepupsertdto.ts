@@ -9,6 +9,7 @@ import {
   EmailControlDto$Outbound,
   EmailControlDto$outboundSchema,
 } from "./emailcontroldto.js";
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the Email step.
@@ -33,7 +34,7 @@ export type EmailStepUpsertDto = {
   /**
    * Type of the step
    */
-  type: "email";
+  type: StepTypeEnum;
   /**
    * Control values for the Email step.
    */
@@ -67,7 +68,7 @@ export type EmailStepUpsertDto$Outbound = {
   _id?: string | undefined;
   stepId?: string | undefined;
   name: string;
-  type: "email";
+  type: string;
   controlValues?: EmailControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
@@ -80,7 +81,7 @@ export const EmailStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   stepId: z.string().optional(),
   name: z.string(),
-  type: z.literal("email"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.union([EmailControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {

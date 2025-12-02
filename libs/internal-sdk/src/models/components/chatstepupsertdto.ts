@@ -9,6 +9,7 @@ import {
   ChatControlDto$Outbound,
   ChatControlDto$outboundSchema,
 } from "./chatcontroldto.js";
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the Chat step.
@@ -33,7 +34,7 @@ export type ChatStepUpsertDto = {
   /**
    * Type of the step
    */
-  type: "chat";
+  type: StepTypeEnum;
   /**
    * Control values for the Chat step.
    */
@@ -67,7 +68,7 @@ export type ChatStepUpsertDto$Outbound = {
   _id?: string | undefined;
   stepId?: string | undefined;
   name: string;
-  type: "chat";
+  type: string;
   controlValues?: ChatControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
@@ -80,7 +81,7 @@ export const ChatStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   stepId: z.string().optional(),
   name: z.string(),
-  type: z.literal("chat"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.union([ChatControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {

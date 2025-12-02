@@ -15,6 +15,7 @@ import {
   StepListResponseDto,
   StepListResponseDto$inboundSchema,
 } from "./steplistresponsedto.js";
+import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 import {
   WorkflowStatusEnum,
   WorkflowStatusEnum$inboundSchema,
@@ -120,7 +121,7 @@ export type WorkflowListResponseDto = {
   /**
    * Overview of step types in the workflow
    */
-  stepTypeOverviews: Array<string>;
+  stepTypeOverviews: Array<StepTypeEnum>;
   /**
    * Is translation enabled for the workflow
    */
@@ -207,7 +208,7 @@ export const WorkflowListResponseDto$inboundSchema: z.ZodType<
   status: WorkflowStatusEnum$inboundSchema,
   origin: ResourceOriginEnum$inboundSchema,
   lastTriggeredAt: z.nullable(z.string()).optional(),
-  stepTypeOverviews: z.array(z.string()),
+  stepTypeOverviews: z.array(StepTypeEnum$inboundSchema),
   isTranslationEnabled: z.boolean().optional(),
   steps: z.array(StepListResponseDto$inboundSchema),
 }).transform((v) => {

@@ -9,6 +9,7 @@ import {
   PushControlDto$Outbound,
   PushControlDto$outboundSchema,
 } from "./pushcontroldto.js";
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the Push step.
@@ -33,7 +34,7 @@ export type PushStepUpsertDto = {
   /**
    * Type of the step
    */
-  type: "push";
+  type: StepTypeEnum;
   /**
    * Control values for the Push step.
    */
@@ -67,7 +68,7 @@ export type PushStepUpsertDto$Outbound = {
   _id?: string | undefined;
   stepId?: string | undefined;
   name: string;
-  type: "push";
+  type: string;
   controlValues?: PushControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
@@ -80,7 +81,7 @@ export const PushStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   stepId: z.string().optional(),
   name: z.string(),
-  type: z.literal("push"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.union([PushControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {

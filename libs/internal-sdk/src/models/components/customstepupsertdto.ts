@@ -9,6 +9,7 @@ import {
   CustomControlDto$Outbound,
   CustomControlDto$outboundSchema,
 } from "./customcontroldto.js";
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the Custom step.
@@ -33,7 +34,7 @@ export type CustomStepUpsertDto = {
   /**
    * Type of the step
    */
-  type: "custom";
+  type: StepTypeEnum;
   /**
    * Control values for the Custom step.
    */
@@ -67,7 +68,7 @@ export type CustomStepUpsertDto$Outbound = {
   _id?: string | undefined;
   stepId?: string | undefined;
   name: string;
-  type: "custom";
+  type: string;
   controlValues?: CustomControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
@@ -80,7 +81,7 @@ export const CustomStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   stepId: z.string().optional(),
   name: z.string(),
-  type: z.literal("custom"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.union([CustomControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {

@@ -9,6 +9,7 @@ import {
   DelayControlDto$Outbound,
   DelayControlDto$outboundSchema,
 } from "./delaycontroldto.js";
+import { StepTypeEnum, StepTypeEnum$outboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the Delay step.
@@ -33,7 +34,7 @@ export type DelayStepUpsertDto = {
   /**
    * Type of the step
    */
-  type: "delay";
+  type: StepTypeEnum;
   /**
    * Control values for the Delay step.
    */
@@ -67,7 +68,7 @@ export type DelayStepUpsertDto$Outbound = {
   _id?: string | undefined;
   stepId?: string | undefined;
   name: string;
-  type: "delay";
+  type: string;
   controlValues?: DelayControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
@@ -80,7 +81,7 @@ export const DelayStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   stepId: z.string().optional(),
   name: z.string(),
-  type: z.literal("delay"),
+  type: StepTypeEnum$outboundSchema,
   controlValues: z.union([DelayControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {
