@@ -1345,7 +1345,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       expect(previewResponseDto.previewPayloadExample).to.have.property('payload');
       expect(previewResponseDto.previewPayloadExample).to.have.property('subscriber');
       expect(previewResponseDto.previewPayloadExample.payload).to.have.property('subject');
-      expect(previewResponseDto.previewPayloadExample.payload.subject.test).to.have.property('payload');
+      expect(previewResponseDto.previewPayloadExample.payload?.subject.test).to.have.property('payload');
     });
 
     async function createWorkflowAndPreview(type: StepTypeEnum, description: string) {
