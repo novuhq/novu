@@ -129,7 +129,6 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   StorageModule,
   WorkflowOverridesModule,
   RateLimitingModule,
-  WidgetsModule,
   TracingModule.register(packageJson.name, packageJson.version),
   BridgeModule,
   PreferencesModule,
