@@ -35,7 +35,7 @@
     "@hookform/resolvers": "^3.10.0",
     "@inkeep/cxkit-react": "^0.5.96",
     "@lezer/highlight": "^1.2.1",
-    "@maily-to/core": "workspace:*",
+    "@novu/maily-core": "workspace:*",
     "@novu/api": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/js": "workspace:*",

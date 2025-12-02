@@ -1,5 +1,5 @@
 {
-  "name": "@maily-to/render",
+  "name": "@novu/maily-render",
   "version": "0.1.3-novu.8-render",
   "private": true,
   "description": "A transformer that converts Maily content into HTML email templates.",
@@ -26,6 +26,7 @@
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
     "build": "tsup",
+    "lint": "biome lint .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "test:watch": "vitest",
@@ -48,7 +49,7 @@
   "devDependencies": {
     "@antfu/utils": "^0.7.10",
     "@babel/preset-react": "^7.25.9",
-    "@maily-to/tsconfig": "workspace:*",
+    "@novu/maily-tsconfig": "workspace:*",
     "@tiptap/core": "^2.9.1",
     "@types/react": "*",
     "@types/react-dom": "*",

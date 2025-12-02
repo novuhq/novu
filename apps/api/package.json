@@ -42,7 +42,7 @@
     "@aws-sdk/client-secrets-manager": "^3.716.0",
     "@godaddy/terminus": "^4.12.1",
     "@google-cloud/storage": "^6.2.3",
-    "@maily-to/render": "workspace:*",
+    "@novu/maily-render": "workspace:*",
     "@nestjs/axios": "3.0.3",
     "clickhouse-migrations": "^1.1.1",
     "@nestjs/common": "10.4.18",

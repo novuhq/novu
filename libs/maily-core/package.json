@@ -1,5 +1,5 @@
 {
-  "name": "@maily-to/core",
+  "name": "@novu/maily-core",
   "type": "module",
   "version": "0.2.7-novu.19-core",
   "description": "Powerful editor for creating beautiful, pre-designed, mobile-ready emails.",
@@ -127,8 +127,10 @@
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
     "build": "tsup",
+    "lint": "biome lint .",
     "check": "biome check .",
-    "check:fix": "biome check --write ."
+    "check:fix": "biome check --write .",
+    "test": "echo 'skip test in the ci'"
   },
   "repository": {
     "type": "git",
@@ -191,8 +193,8 @@
     "@types/uuid": "^10.0.0",
     "postcss": "^8.4.47",
     "postcss-replace": "^2.0.1",
-    "@maily-to/tailwind-config": "workspace:*",
-    "@maily-to/tsconfig": "workspace:*",
+    "@novu/maily-tailwind-config": "workspace:*",
+    "@novu/maily-tsconfig": "workspace:*",
     "tsup": "^8.1.0",
     "typescript": "5.6.2",
     "vite": "^5.4.9",

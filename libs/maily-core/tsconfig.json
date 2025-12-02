@@ -1,5 +1,5 @@
 {
-  "extends": "@maily-to/tsconfig/react-library.json",
+  "extends": "@novu/maily-tsconfig/react-library.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {

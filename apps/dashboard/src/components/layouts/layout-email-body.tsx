@@ -1,4 +1,4 @@
-import { Variable } from '@maily-to/core/extensions';
+import { Variable } from '@novu/maily-core/extensions';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Editor } from '@tiptap/core';
 import { EditorView } from '@uiw/react-codemirror';

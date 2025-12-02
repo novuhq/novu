@@ -1,4 +1,4 @@
-import { Variable } from '@maily-to/core/extensions';
+import { Variable } from '@novu/maily-core/extensions';
 import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
 import { VariableFrom } from '@/components/maily/types';

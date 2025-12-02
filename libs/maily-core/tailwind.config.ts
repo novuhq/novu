@@ -1,4 +1,4 @@
-import sharedConfig from '@maily-to/tailwind-config/tailwind.config';
+import sharedConfig from '@novu/maily-tailwind-config/tailwind.config';
 import type { Config } from 'tailwindcss';
 
 const config: Pick<Config, 'prefix' | 'presets' | 'corePlugins' | 'theme' | 'plugins'> = {

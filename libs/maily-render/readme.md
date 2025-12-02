@@ -1,7 +1,7 @@
 <div align="center"><img height="150" src="https://maily.to/brand/icon.svg" /></div>
 <br>
 
-<div align="center"><strong>@maily-to/render</strong></div>
+<div align="center"><strong>@novu/maily-render</strong></div>
 <div align="center">Transform <a href="https://maily.to">Maily</a> content into HTML email templates.</div>
 <br />
 
@@ -18,10 +18,10 @@
 
 ## Install
 
-Install `@maily-to/render` from your command line.
+Install `@novu/maily-render` from your command line.
 
 ```sh
-pnpm add @maily-to/render
+pnpm add @novu/maily-render
 ```
 
 <br>
@@ -31,7 +31,7 @@ pnpm add @maily-to/render
 Convert React components into a HTML string.
 
 ```ts
-import { render } from '@maily-to/render';
+import { render } from '@novu/maily-render';
 
 const html = await render({
   type: 'doc',
@@ -54,7 +54,7 @@ const html = await render({
 You can replace variables in the content.
 
 ```ts
-import { Maily } from '@maily-to/render';
+import { Maily } from '@novu/maily-render';
 
 const maily = new Maily({
   type: 'doc',
