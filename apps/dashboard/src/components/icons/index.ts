@@ -1,5 +1,6 @@
 export * from './arrow-right';
 export * from './inbox-arrow-down';
+export * from './novu-icon';
 export * from './inbox-bell';
 export * from './inbox-ellipsis';
 export * from './inbox-settings';

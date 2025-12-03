@@ -13,6 +13,7 @@ import {
   RiStore3Line,
 } from 'react-icons/ri';
 import { usePlainChat } from '@/hooks/use-plain-chat';
+import { NovuIcon } from '@/components/icons';
 
 const DOCS_BASE_URL = 'https://docs.novu.co';
 const UTM_SUFFIX = '?utm_campaign=support_drawer';
@@ -65,17 +66,6 @@ const gettingStarted: SuggestionItem[] = [
     url: docsUrl('/integrations/overview'),
   },
 ];
-
-function NovuIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0ZM8.78 12.12H7.22V7.15L5.12 10.52H4.66L2.56 7.15V12.12H1V3.88H2.56L4.89 7.6L7.22 3.88H8.78V12.12ZM13.44 12.12H11.88V7.15L9.78 10.52H9.32L7.22 7.15V12.12H5.66V3.88H7.22L9.55 7.6L11.88 3.88H13.44V12.12Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
 
 type SuggestionCardProps = {
   item: SuggestionItem;
