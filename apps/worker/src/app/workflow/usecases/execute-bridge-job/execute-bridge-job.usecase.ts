@@ -61,18 +61,25 @@ export class ExecuteBridgeJob {
 
     const isStateful = !command.job.step.bridgeUrl;
 
-    let workflow: NotificationTemplateEntity | null = command.workflow || null;
-    if (!workflow && isStateful) {
-      workflow = await this.notificationTemplateRepository.findOne(
-        {
-          _id: command.job._templateId,
-          _environmentId: command.environmentId,
-          type: {
-            $in: [ResourceTypeEnum.ECHO, ResourceTypeEnum.BRIDGE],
+    let workflow: NotificationTemplateEntity | null = null;
+    if (isStateful) {
+      if (
+        command.workflow &&
+        (command.workflow.type === ResourceTypeEnum.ECHO || command.workflow.type === ResourceTypeEnum.BRIDGE)
+      ) {
+        workflow = command.workflow;
+      } else {
+        workflow = await this.notificationTemplateRepository.findOne(
+          {
+            _id: command.job._templateId,
+            _environmentId: command.environmentId,
+            type: {
+              $in: [ResourceTypeEnum.ECHO, ResourceTypeEnum.BRIDGE],
+            },
           },
-        },
-        '_id triggers type origin'
-      );
+          '_id triggers type origin'
+        );
+      }
     }
 
     if (!workflow && isStateful) {
