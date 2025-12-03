@@ -230,17 +230,27 @@ export function VariableEditor({
       return null;
     };
 
-    return autocompletion({
-      override: [dynamicCompletionSource],
-      closeOnBlur: true,
-      defaultKeymap: true,
-      activateOnTyping: true,
-      optionClass: (completion) => {
-        if (completion.type === 'new-variable') return 'cm-new-variable-option';
-        if (completion.type === 'new-translation-key') return 'cm-new-translation-option';
-        return '';
-      },
-    });
+    return [
+      autocompletion({
+        override: [dynamicCompletionSource],
+        closeOnBlur: true,
+        defaultKeymap: true,
+        activateOnTyping: true,
+        optionClass: (completion) => {
+          const classes = [];
+          if (completion.type === 'new-variable') classes.push('cm-new-variable-option');
+          if (completion.type === 'new-translation-key') classes.push('cm-new-translation-option');
+          return classes.join(' ');
+        },
+      }),
+      // Add native browser tooltips for long labels
+      EditorView.updateListener.of(() => {
+        document.querySelectorAll('li[role="option"]:not([title])').forEach((item) => {
+          const label = item.querySelector('.cm-completionLabel');
+          if (label?.textContent) item.setAttribute('title', label.textContent);
+        });
+      }),
+    ];
   }, []);
 
   const variablePluginExtension = useMemo(() => {
@@ -259,7 +269,7 @@ export function VariableEditor({
 
     // For props that rarely change, we can check them dynamically
     const baseExtensions = [...(callbacksRef.current.multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
-    const allExtensions = [...baseExtensions, autocompletionExtension];
+    const allExtensions = [...baseExtensions, ...autocompletionExtension];
 
     // Add external extensions (including translation plugin) BEFORE variable plugin
     // This ensures translation patterns are processed first
