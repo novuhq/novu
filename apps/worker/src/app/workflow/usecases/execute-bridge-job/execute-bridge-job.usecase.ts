@@ -61,8 +61,8 @@ export class ExecuteBridgeJob {
 
     const isStateful = !command.job.step.bridgeUrl;
 
-    let workflow: NotificationTemplateEntity | null = null;
-    if (isStateful) {
+    let workflow: NotificationTemplateEntity | null = command.workflow || null;
+    if (!workflow && isStateful) {
       workflow = await this.notificationTemplateRepository.findOne(
         {
           _id: command.job._templateId,
