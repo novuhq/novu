@@ -3,6 +3,7 @@ import { CustomDataType, IPaginationWithQueryParams, WorkflowPreferences } from 
 import { API_ROOT } from '../config';
 import { getToken } from '../components/providers/AuthProvider';
 import { getEnvironmentId, clearEnvironmentId } from '../components/providers/EnvironmentProvider';
+import { apiHostnameManager } from '../utils/api-hostname-manager';
 
 interface IOptions {
   absoluteUrl: boolean;
@@ -36,40 +37,45 @@ export const api = {
       });
   },
   getFullResponse(url: string, params?: { [key: string]: string | string[] | number }) {
+    const baseUrl = apiHostnameManager.getApiHostname();
     return axios
-      .get(`${API_ROOT}${url}`, { params })
+      .get(`${baseUrl}${url}`, { params })
       .then((response) => response.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
   put(url: string, payload) {
+    const baseUrl = apiHostnameManager.getApiHostname();
     return axios
-      .put(`${API_ROOT}${url}`, payload)
+      .put(`${baseUrl}${url}`, payload)
       .then((response) => response.data?.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
   post(url: string, payload, params?: CustomDataType) {
+    const baseUrl = apiHostnameManager.getApiHostname();
     return axios
-      .post(`${API_ROOT}${url}`, payload, { params })
+      .post(`${baseUrl}${url}`, payload, { params })
       .then((response) => response.data?.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
   patch(url: string, payload, params?: CustomDataType) {
+    const baseUrl = apiHostnameManager.getApiHostname();
     return axios
-      .patch(`${API_ROOT}${url}`, payload, { params })
+      .patch(`${baseUrl}${url}`, payload, { params })
       .then((response) => response.data?.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
   delete(url: string, payload = {}) {
+    const baseUrl = apiHostnameManager.getApiHostname();
     return axios
-      .delete(`${API_ROOT}${url}`, payload)
+      .delete(`${baseUrl}${url}`, payload)
       .then((response) => response.data?.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
@@ -78,12 +84,13 @@ export const api = {
 };
 
 function buildUrl(url: string, absoluteUrl: boolean) {
-  return absoluteUrl ? url : `${API_ROOT}${url}`;
+  const baseUrl = apiHostnameManager.getApiHostname();
+  return absoluteUrl ? url : `${baseUrl}${url}`;
 }
 
 // WIP: The static API client needs to be replaced by a dynamic API client where api keys are injected.
 export function buildApiHttpClient({
-  baseURL = API_ROOT || 'https://api.novu.co',
+  baseURL = apiHostnameManager.getApiHostname() || API_ROOT || 'https://api.novu.co',
   secretKey,
   environmentId = getEnvironmentId(),
 }: {

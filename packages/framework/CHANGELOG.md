@@ -1,3 +1,18 @@
+## 2.9.0 (2025-12-02)
+
+### 🚀 Features
+
+- **api,framework:** translations - support liquid filters & nesting fixes NV-6870 ([#9575](https://github.com/novuhq/novu/pull/9575))
+
+### 🩹 Fixes
+
+- **worker:** sanitize img tags to prevent xss fixes NV-6883 ([#9483](https://github.com/novuhq/novu/pull/9483))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Dima Grossman @scopsy
+
 ## 2.6.6 (2025-02-25)
 
 ### 🚀 Features
