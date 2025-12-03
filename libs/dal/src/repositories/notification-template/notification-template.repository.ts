@@ -87,7 +87,10 @@ export class NotificationTemplateRepository extends BaseRepository<
       'triggers.identifier': identifier,
     };
 
-    const query = this.MongooseModel.findOne(requestQuery, undefined, { session }).populate('steps.template');
+    const query = this.MongooseModel.findOne(requestQuery, undefined, {
+      session,
+      readPreference: 'secondaryPreferred',
+    }).populate('steps.template');
 
     if (includeUpdatedBy) {
       query.populate('updatedBy');
