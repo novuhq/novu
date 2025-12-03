@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   AnalyticsService,
   buildSubscriberKey,
@@ -401,6 +401,17 @@ export class SendMessage {
           isRetry: false,
           raw: JSON.stringify(subscriberPreference),
         })
+      );
+
+      Logger.log(
+        {
+          reason,
+          subscriberId: job.subscriberId,
+          templateId: job._templateId,
+          transactionId: job.transactionId,
+          channel: job.type,
+        },
+        'Skipped step by preference'
       );
     }
 

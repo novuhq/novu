@@ -80,16 +80,19 @@ export class NotificationTemplateRepository extends BaseRepository<
     environmentId: string,
     identifier: string,
     session?: ClientSession | null,
-    skipUpdatedBy: boolean = false
+    includeUpdatedBy: boolean = true
   ) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       'triggers.identifier': identifier,
     };
 
-    const query = this.MongooseModel.findOne(requestQuery, undefined, { session }).populate('steps.template');
+    const query = this.MongooseModel.findOne(requestQuery, undefined, {
+      session,
+      readPreference: 'secondaryPreferred',
+    }).populate('steps.template');
 
-    if (!skipUpdatedBy) {
+    if (includeUpdatedBy) {
       query.populate('updatedBy');
     }
 
@@ -113,7 +116,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntities(query);
   }
 
-  async findById(id: string, environmentId: string, session?: ClientSession | null) {
+  async findById(id: string, environmentId: string, session?: ClientSession | null, includeUpdatedBy: boolean = true) {
     const query = this.MongooseModel.findOne(
       {
         _id: id,
@@ -123,22 +126,29 @@ export class NotificationTemplateRepository extends BaseRepository<
       { session }
     )
       .populate('steps.template')
-      .populate('steps.variants.template')
-      .populate('updatedBy');
+      .populate('steps.variants.template');
+
+    if (includeUpdatedBy) {
+      query.populate('updatedBy');
+    }
 
     const item = await query;
 
     return this.mapEntity(item);
   }
 
-  async findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date) {
-    const requestQuery: NotificationTemplateQuery = {
-      _environmentId: environmentId,
-      'triggers.identifier': triggerIdentifier,
-    };
-
-    const item = await this.MongooseModel.findOneAndUpdate(
-      requestQuery,
+  async updateLastTriggeredAt(
+    environmentId: string,
+    triggerIdentifier: string,
+    lastTriggeredAt: Date,
+    previousLastTriggeredAt: Date | null
+  ) {
+    const updateResult = await this.MongooseModel.updateOne(
+      {
+        _environmentId: environmentId,
+        'triggers.identifier': triggerIdentifier,
+        $or: [{ lastTriggeredAt: null }, { lastTriggeredAt: previousLastTriggeredAt }],
+      },
       {
         $set: {
           lastTriggeredAt,
@@ -146,10 +156,11 @@ export class NotificationTemplateRepository extends BaseRepository<
       },
       {
         timestamps: false,
+        writeConcern: { w: 1 },
       }
-    ).populate('steps.template');
+    );
 
-    return this.mapEntity(item);
+    return updateResult.modifiedCount > 0;
   }
 
   async updatePublishFields(workflowId: string, environmentId: string, userId: string, session?: ClientSession | null) {
@@ -424,7 +435,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     return process.env.BLUEPRINT_CREATOR;
   }
 
-  async estimatedDocumentCount(): Promise<any> {
+  async estimatedDocumentCount(): Promise<number> {
     return this.notificationTemplate.estimatedDocumentCount();
   }
 
@@ -437,6 +448,7 @@ export class NotificationTemplateRepository extends BaseRepository<
             $sum: {
               $cond: {
                 if: { $isArray: '$steps' },
+                // biome-ignore lint/suspicious/noThenProperty: MongoDB aggregation syntax requires 'then' property
                 then: { $size: '$steps' },
                 else: 0,
               },

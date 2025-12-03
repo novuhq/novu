@@ -1,7 +1,7 @@
+import { GetContextResponseDto } from '@novu/api/models/components';
 import { ContextPayload } from '@novu/shared';
 import { JSONSchema7 } from 'json-schema';
 import { useCallback, useState } from 'react';
-import { type ContextResponseDto } from '@/api/contexts';
 import { useFetchContexts } from '@/hooks/use-fetch-contexts';
 import { Autocomplete } from './primitives/autocomplete';
 import { ACCORDION_STYLES } from './workflow-editor/steps/constants/preview-context.constants';
@@ -26,7 +26,7 @@ export function ContextSearchEditor({ value, onUpdate, schema, error }: ContextS
   const displayValue = value || {};
 
   const handleSelectContext = useCallback(
-    (selectedContext: ContextResponseDto) => {
+    (selectedContext: GetContextResponseDto) => {
       // Add the selected context to the existing context structure by its type
       const currentContext = value || {};
       const updatedContext = {

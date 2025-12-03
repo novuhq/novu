@@ -1,17 +1,19 @@
 import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
 import { NotificationCenter, NovuProvider } from '@novu/notification-center';
-import { API_ROOT, WS_URL } from '../../../config';
 import { useEnvironment } from '../../../hooks';
 import { inAppSandboxSubscriberId } from '../../../pages/quick-start/consts';
+import { apiHostnameManager } from '../../../utils/api-hostname-manager';
 
 export function SandboxNotificationCenter() {
   const { environment } = useEnvironment();
+  const backendUrl = apiHostnameManager.getApiHostname();
+  const socketUrl = apiHostnameManager.getWebSocketHostname();
 
   return (
     <NovuProvider
-      backendUrl={API_ROOT}
-      socketUrl={WS_URL}
+      backendUrl={backendUrl}
+      socketUrl={socketUrl}
       subscriberId={inAppSandboxSubscriberId}
       applicationIdentifier={environment?.identifier as string}
     >

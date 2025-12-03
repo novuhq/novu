@@ -1,11 +1,12 @@
+import { Novu } from '@novu/api';
 import { ContextRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import axios from 'axios';
-import type { AxiosResponse } from 'axios';
 import { expect } from 'chai';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('List Contexts - /contexts (GET) #novu-v2', () => {
   let session: UserSession;
+  let novuClient: Novu;
   const contextRepository = new ContextRepository();
 
   before(() => {
@@ -15,6 +16,7 @@ describe('List Contexts - /contexts (GET) #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
   });
 
   after(() => {
@@ -35,14 +37,13 @@ describe('List Contexts - /contexts (GET) #novu-v2', () => {
       await timeout(5);
     }
 
-    const response = await listContexts({ session });
+    const response = await novuClient.contexts.list({});
 
-    expect(response.status).to.equal(200);
-    expect(response.data.data).to.be.an('array');
-    expect(response.data.data.length).to.equal(5);
-    expect(response.data.data[0].id).to.equal('list-test-1-org-4');
-    expect(response.data.data[4].id).to.equal('list-test-1-org-0');
-    expect(response.data.totalCount).to.equal(5);
+    expect(response.result.data).to.be.an('array');
+    expect(response.result.data.length).to.equal(5);
+    expect(response.result.data[0].id).to.equal('list-test-1-org-4');
+    expect(response.result.data[4].id).to.equal('list-test-1-org-0');
+    expect(response.result.totalCount).to.equal(5);
   });
 
   it('should filter contexts by type', async () => {
@@ -73,11 +74,10 @@ describe('List Contexts - /contexts (GET) #novu-v2', () => {
       data: {},
     });
 
-    const response = await listContexts({ session, type: 'tenant' });
+    const response = await novuClient.contexts.list({ type: 'tenant' });
 
-    expect(response.status).to.equal(200);
-    expect(response.data.data.length).to.equal(2);
-    expect(response.data.data.every((ctx) => ctx.type === 'tenant')).to.be.true;
+    expect(response.result.data.length).to.equal(2);
+    expect(response.result.data.every((ctx) => ctx.type === 'tenant')).to.be.true;
   });
 
   it('should filter contexts by id', async () => {
@@ -108,11 +108,10 @@ describe('List Contexts - /contexts (GET) #novu-v2', () => {
       data: {},
     });
 
-    const response = await listContexts({ session, id: 'list-test-3-org-acme' });
+    const response = await novuClient.contexts.list({ id: 'list-test-3-org-acme' });
 
-    expect(response.status).to.equal(200);
-    expect(response.data.data.length).to.equal(2);
-    expect(response.data.data.every((ctx) => ctx.id === 'list-test-3-org-acme')).to.be.true;
+    expect(response.result.data.length).to.equal(2);
+    expect(response.result.data.every((ctx) => ctx.id === 'list-test-3-org-acme')).to.be.true;
   });
 
   it('should search contexts by key pattern', async () => {
@@ -143,10 +142,9 @@ describe('List Contexts - /contexts (GET) #novu-v2', () => {
       data: {},
     });
 
-    const response = await listContexts({ session, search: 'list-test-4.*acme' });
+    const response = await novuClient.contexts.list({ search: 'list-test-4.*acme' });
 
-    expect(response.status).to.equal(200);
-    expect(response.data.data.length).to.equal(2);
+    expect(response.result.data.length).to.equal(2);
   });
 
   it('should support cursor-based pagination with limit', async () => {
@@ -163,22 +161,22 @@ describe('List Contexts - /contexts (GET) #novu-v2', () => {
       await timeout(5);
     }
 
-    const page1 = await listContexts({ session, limit: 5 });
+    const page1 = await novuClient.contexts.list({ limit: 5 });
 
-    expect(page1.data.data.length).to.equal(5);
-    expect(page1.data.next).to.be.ok;
-    expect(page1.data.totalCount).to.equal(15);
+    expect(page1.result.data.length).to.equal(5);
+    expect(page1.result.next).to.be.ok;
+    expect(page1.result.totalCount).to.equal(15);
 
-    const page2 = await listContexts({ session, limit: 5, after: page1.data.next });
+    const page2 = await novuClient.contexts.list({ limit: 5, after: page1.result.next ?? undefined });
 
-    expect(page2.data.data.length).to.equal(5);
-    expect(page2.data.next).to.be.ok;
-    expect(page2.data.previous).to.be.ok;
+    expect(page2.result.data.length).to.equal(5);
+    expect(page2.result.next).to.be.ok;
+    expect(page2.result.previous).to.be.ok;
 
-    const page3 = await listContexts({ session, limit: 5, after: page2.data.next });
+    const page3 = await novuClient.contexts.list({ limit: 5, after: page2.result.next ?? undefined });
 
-    expect(page3.data.data.length).to.equal(5);
-    expect(page3.data.previous).to.be.ok;
+    expect(page3.result.data.length).to.equal(5);
+    expect(page3.result.previous).to.be.ok;
   });
 
   it('should support orderBy and orderDirection', async () => {
@@ -215,70 +213,27 @@ describe('List Contexts - /contexts (GET) #novu-v2', () => {
       data: {},
     });
 
-    const responseDesc = await listContexts({ session, orderBy: 'createdAt', orderDirection: 'DESC' });
+    const responseDesc = await novuClient.contexts.list({ orderBy: 'createdAt', orderDirection: 'DESC' });
 
-    expect(responseDesc.data.data[0].id).to.equal('list-test-6-org-3');
-    expect(responseDesc.data.data[2].id).to.equal('list-test-6-org-1');
+    expect(responseDesc.result.data[0].id).to.equal('list-test-6-org-3');
+    expect(responseDesc.result.data[2].id).to.equal('list-test-6-org-1');
 
-    const responseAsc = await listContexts({ session, orderBy: 'createdAt', orderDirection: 'ASC' });
+    const responseAsc = await novuClient.contexts.list({ orderBy: 'createdAt', orderDirection: 'ASC' });
 
-    expect(responseAsc.data.data[0].id).to.equal('list-test-6-org-1');
-    expect(responseAsc.data.data[2].id).to.equal('list-test-6-org-3');
+    expect(responseAsc.result.data[0].id).to.equal('list-test-6-org-1');
+    expect(responseAsc.result.data[2].id).to.equal('list-test-6-org-3');
   });
 
   it('should return empty list when no contexts exist', async () => {
-    const response = await listContexts({ session });
+    const response = await novuClient.contexts.list({});
 
-    expect(response.status).to.equal(200);
-    expect(response.data.data).to.be.an('array');
-    expect(response.data.data.length).to.equal(0);
-    expect(response.data.totalCount).to.equal(0);
+    expect(response.result.data).to.be.an('array');
+    expect(response.result.data.length).to.equal(0);
+    expect(response.result.totalCount).to.equal(0);
   });
 });
 
-async function listContexts({
-  session,
-  limit,
-  after,
-  before,
-  orderBy,
-  orderDirection,
-  type,
-  id,
-  search,
-}: {
-  session;
-  limit?: number;
-  after?: string;
-  before?: string;
-  orderBy?: string;
-  orderDirection?: string;
-  type?: string;
-  id?: string;
-  search?: string;
-}): Promise<AxiosResponse> {
-  const axiosInstance = axios.create();
-  const params = new URLSearchParams();
-
-  if (limit) params.append('limit', limit.toString());
-  if (after) params.append('after', after);
-  if (before) params.append('before', before);
-  if (orderBy) params.append('orderBy', orderBy);
-  if (orderDirection) params.append('orderDirection', orderDirection);
-  if (type) params.append('type', type);
-  if (id) params.append('id', id);
-  if (search) params.append('search', search);
-
-  const query = params.toString() ? `?${params.toString()}` : '';
-
-  return await axiosInstance.get(`${session.serverUrl}/v2/contexts${query}`, {
-    headers: {
-      authorization: `ApiKey ${session.apiKey}`,
-    },
-  });
-}
-
-function timeout(ms) {
+function timeout(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });

@@ -1,6 +1,6 @@
+import { TranslationResponseDto } from '@novu/api/models/components';
 import { UseMutationResult } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Translation } from '@/api/translations';
 import { UpdateTranslationValueParams } from '@/hooks/use-update-translation-value';
 import { LocalizationResourceEnum } from '@/types/translations';
 
@@ -92,10 +92,10 @@ const useAutoSave = (
 export const useTranslationEditor = (
   initialKey: string,
   initialValue: string,
-  translationData: Translation | null,
+  translationData: TranslationResponseDto | null,
   resourceId: string,
   resourceType: LocalizationResourceEnum,
-  updateTranslationValue: UseMutationResult<Translation, Error, UpdateTranslationValueParams, unknown>,
+  updateTranslationValue: UseMutationResult<TranslationResponseDto, Error, UpdateTranslationValueParams, unknown>,
   onReplaceKey?: (newKey: string) => void
 ) => {
   const [editKey, setEditKey] = useState(initialKey);

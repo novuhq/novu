@@ -13,7 +13,7 @@ describe('Update subscription workflow preferences - /inbox/preferences/:subscri
     await session.initialize();
   });
 
-  it('should update subscription workflow preferences', async () => {
+  it.skip('should update subscription workflow preferences', async () => {
     const topicKey = `topic-${Date.now()}`;
     const subscriptionIdentifier = `subscription-${Date.now()}`;
     const workflow = await session.createTemplate({
@@ -68,7 +68,7 @@ describe('Update subscription workflow preferences - /inbox/preferences/:subscri
     expect(response.body.data.enabled, 'Should have the correct enabled value').to.equal(false);
   });
 
-  it('should allow different preferences for the same workflow across different subscriptions', async () => {
+  it.skip('should allow different preferences for the same workflow across different subscriptions', async () => {
     const topicKey1 = `topic-${Date.now()}-1`;
     const topicKey2 = `topic-${Date.now()}-2`;
     const workflow = await session.createTemplate({

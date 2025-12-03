@@ -1,38 +1,16 @@
-import { ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/primitives/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
-import { openInNewTab } from '../url';
 import { NovuLogoBlackBg } from './icons';
 import { useOrganization } from './index';
 
-export function OrganizationSwitcher() {
+function OrganizationSwitcherComponent() {
   const { organization } = useOrganization() as { organization: { name: string } | undefined };
-  const [isOpen, setIsOpen] = useState(false);
-  const [buttonWidth, setButtonWidth] = useState(0);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (buttonRef.current) {
-      setButtonWidth(buttonRef.current.offsetWidth);
-    }
-  }, [isOpen]);
 
   if (!organization) return null;
 
   return (
     <div className="w-full [&:focus-visible]:shadow-none [&:focus]:shadow-none">
       <Button
-        ref={buttonRef}
         variant="secondary"
         size="sm"
         className="group h-9 w-full justify-between bg-white p-1.5 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-0 focus-visible:shadow-none"
@@ -45,6 +23,8 @@ export function OrganizationSwitcher() {
     </div>
   );
 }
+
+export { OrganizationSwitcherComponent as OrganizationSwitcher, OrganizationSwitcherComponent as OrganizationDropdown };
 
 const OrganizationAvatar = ({ shining = false }: { shining?: boolean }) => {
   return (

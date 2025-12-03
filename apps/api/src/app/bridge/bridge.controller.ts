@@ -169,7 +169,7 @@ export class BridgeController {
       user.environmentId,
       workflowId,
       undefined,
-      true
+      false
     );
     if (!workflowExist) {
       throw new NotFoundException('Workflow not found');

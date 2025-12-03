@@ -1,4 +1,4 @@
-const { useBabelRc, override, overrideDevServer } = require('customize-cra');
+const { useBabelRc, override, overrideDevServer, removeInternalBabelPlugin } = require('customize-cra');
 const { DefinePlugin } = require('webpack');
 const { version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;

@@ -680,7 +680,8 @@ export class Client {
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
     try {
-      const templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      let templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      templateString = this.preprocessFilterTranslationArgs(templateString);
       const parsedTemplate = this.templateEngine.parse(templateString);
       const discoveredWorkflow = this.getWorkflow(event.workflowId);
 
@@ -696,13 +697,14 @@ export class Client {
         subscriber: event.subscriber,
         context: event.context,
         steps: buildSteps(event.state),
-        t: {}, // Empty object so t.* properties are undefined and trigger default filters
       };
 
       const compiledString = await this.templateEngine.render(parsedTemplate, renderVariables);
+      // Post-process: convert [T:key] placeholders back to {{t.key}} markers
+      const withMarkers = this.postprocessTranslationMarkers(compiledString);
       // repair the string to fix invalid JSON, it could happen in the case when the control value
       // doesn't have escaped quotes like '"foo"' then compiled string '{"body":""foo""}' is not valid JSON and parse will fail
-      const repairedString = jsonrepair(compiledString);
+      const repairedString = jsonrepair(withMarkers);
       return JSON.parse(repairedString);
     } catch (error) {
       throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
@@ -710,11 +712,28 @@ export class Client {
   }
 
   /**
-   * Preprocesses translation patterns to preserve them when values are undefined.
-   * Transforms {{t.key}} to {{t.key | default: "{{t.key}}"}}
+   * Preprocesses standalone translation patterns.
+   * Transforms {{t.key}} to [T:key] placeholder (not Liquid syntax, passes through unchanged).
    */
   private preprocessTranslationPatterns(template: string): string {
-    return template.replace(/\{\{\s*t\.([\p{L}\p{N}_.-]+)\s*\}\}/gu, '{{ t.$1 | default: "{{t.$1}}" }}');
+    return template.replace(/\{\{\s*t\.([\p{L}\p{N}_.-]+)\s*\}\}/gu, '[T:$1]');
+  }
+
+  /**
+   * Preprocesses translation keys used as filter arguments.
+   * Transforms 't.key' to '[T:key]' placeholder (not Liquid syntax, passes through unchanged).
+   * Example: pluralize: 't.apple', 't.apples' → pluralize: '[T:apple]', '[T:apples]'
+   */
+  private preprocessFilterTranslationArgs(template: string): string {
+    return template.replace(/'t\.([\p{L}\p{N}_.-]+)'/gu, "'[T:$1]'");
+  }
+
+  /**
+   * Post-processes placeholders back to translation markers after Liquid render.
+   * Transforms [T:key] back to {{t.key}} for the translation service.
+   */
+  private postprocessTranslationMarkers(content: string): string {
+    return content.replace(/\[T:([\p{L}\p{N}_.-]+)\]/gu, '{{t.$1}}');
   }
 
   /**

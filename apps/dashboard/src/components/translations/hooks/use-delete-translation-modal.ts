@@ -1,12 +1,12 @@
+import { TranslationGroupDto } from '@novu/api/models/components';
 import { useCallback, useState } from 'react';
-import { TranslationGroup } from '@/api/translations';
 import { useDeleteTranslationGroup } from '@/hooks/use-delete-translation-group';
 
 export function useDeleteTranslationModal() {
-  const [deleteModalTranslation, setDeleteModalTranslation] = useState<TranslationGroup | null>(null);
+  const [deleteModalTranslation, setDeleteModalTranslation] = useState<TranslationGroupDto | null>(null);
   const { mutateAsync: deleteTranslationGroup, isPending: isDeletePending } = useDeleteTranslationGroup();
 
-  const handleDeleteClick = useCallback((translation: TranslationGroup) => {
+  const handleDeleteClick = useCallback((translation: TranslationGroupDto) => {
     setDeleteModalTranslation(translation);
   }, []);
 

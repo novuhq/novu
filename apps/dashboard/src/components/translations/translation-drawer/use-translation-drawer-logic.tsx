@@ -1,11 +1,11 @@
+import { TranslationGroupDto } from '@novu/api/models/components';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { TranslationGroup } from '@/api/translations';
 import { useFetchTranslation } from '@/hooks/use-fetch-translation';
 import { useSaveTranslation } from '@/hooks/use-save-translation';
 import { useTranslationEditor } from './hooks';
 
 export function useTranslationDrawerLogic(
-  translationGroup: TranslationGroup,
+  translationGroup: TranslationGroupDto,
   initialLocale?: string,
   onLocaleChange?: (locale: string) => void
 ) {

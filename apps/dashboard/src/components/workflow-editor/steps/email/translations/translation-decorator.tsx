@@ -1,4 +1,4 @@
-import { getInlineDecoratorSuggestionsReact, InlineDecoratorExtension } from '@maily-to/core/extensions';
+import { getInlineDecoratorSuggestionsReact, InlineDecoratorExtension } from '@novu/maily-core/extensions';
 import {
   TRANSLATION_DEFAULT_TEMPLATE,
   TRANSLATION_DELIMITER_CLOSE,
