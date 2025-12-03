@@ -1,5 +1,6 @@
-import { useState, cloneElement, isValidElement } from 'react';
+import { useState, cloneElement, isValidElement, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import {
   RiCloseFill,
   RiSearchLine,
@@ -11,6 +12,15 @@ import {
   RiCodeLine,
   RiNotification4Fill,
   RiStore3Line,
+  RiUserLine,
+  RiKey2Line,
+  RiSettings3Line,
+  RiBarChartBoxLine,
+  RiHistoryLine,
+  RiHashtag,
+  RiGlobalLine,
+  RiLayoutGridLine,
+  RiTranslate2,
 } from 'react-icons/ri';
 import { usePlainChat } from '@/hooks/use-plain-chat';
 import { NovuIcon } from '@/components/icons';
@@ -31,7 +41,7 @@ type SuggestionItem = {
   url: string;
 };
 
-const suggestions: SuggestionItem[] = [
+const DEFAULT_SUGGESTIONS: SuggestionItem[] = [
   {
     icon: RiRouteFill,
     title: 'Understand steps',
@@ -45,6 +55,220 @@ const suggestions: SuggestionItem[] = [
     url: docsUrl('/framework/controls#using-variables'),
   },
 ];
+
+type RouteContext =
+  | 'workflows'
+  | 'workflow-editor'
+  | 'subscribers'
+  | 'integrations'
+  | 'api-keys'
+  | 'activity'
+  | 'analytics'
+  | 'topics'
+  | 'webhooks'
+  | 'layouts'
+  | 'translations'
+  | 'settings'
+  | 'default';
+
+const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
+  workflows: [
+    {
+      icon: RiRouteFill,
+      title: 'Creating workflows',
+      description: 'Learn how to create and configure notification workflows.',
+      url: docsUrl('/platform/workflow/overview'),
+    },
+    {
+      icon: RiCodeLine,
+      title: 'Using variables',
+      description: 'Say hello with {{firstName}}. Personal, but scalable.',
+      url: docsUrl('/framework/controls#using-variables'),
+    },
+  ],
+  'workflow-editor': [
+    {
+      icon: RiRouteFill,
+      title: 'Understand steps',
+      description: 'What each step does—like Delay, Digest, Email, and when to use them.',
+      url: docsUrl('/platform/workflow/overview'),
+    },
+    {
+      icon: RiCodeLine,
+      title: 'Using variables',
+      description: 'Say hello with {{firstName}}. Personal, but scalable.',
+      url: docsUrl('/framework/controls#using-variables'),
+    },
+  ],
+  subscribers: [
+    {
+      icon: RiUserLine,
+      title: 'Managing subscribers',
+      description: 'Learn how to create, update, and manage your notification subscribers.',
+      url: docsUrl('/platform/subscribers'),
+    },
+    {
+      icon: RiSettings3Line,
+      title: 'Subscriber preferences',
+      description: 'Let users control what notifications they receive.',
+      url: docsUrl('/platform/preferences'),
+    },
+  ],
+  integrations: [
+    {
+      icon: RiStore3Line,
+      title: 'Connect providers',
+      description: 'Email, SMS, chat—whatever you need to reach users.',
+      url: docsUrl('/integrations/overview'),
+    },
+    {
+      icon: RiSettings3Line,
+      title: 'Provider configuration',
+      description: 'Set up and configure your notification providers.',
+      url: docsUrl('/integrations/overview'),
+    },
+  ],
+  'api-keys': [
+    {
+      icon: RiKey2Line,
+      title: 'API authentication',
+      description: 'Learn how to authenticate your API requests securely.',
+      url: docsUrl('/api-reference/overview'),
+    },
+    {
+      icon: RiCodeLine,
+      title: 'Quick start guide',
+      description: 'Get up and running with the Novu API in minutes.',
+      url: docsUrl('/quickstart/overview'),
+    },
+  ],
+  activity: [
+    {
+      icon: RiHistoryLine,
+      title: 'Activity feed',
+      description: 'Monitor and debug your notification delivery in real-time.',
+      url: docsUrl('/platform/activity-feed'),
+    },
+    {
+      icon: RiBarChartBoxLine,
+      title: 'Debugging notifications',
+      description: 'Troubleshoot failed or delayed notifications.',
+      url: docsUrl('/platform/activity-feed'),
+    },
+  ],
+  analytics: [
+    {
+      icon: RiBarChartBoxLine,
+      title: 'Understanding analytics',
+      description: 'Track delivery rates, engagement, and notification performance.',
+      url: docsUrl('/platform/analytics'),
+    },
+    {
+      icon: RiHistoryLine,
+      title: 'Activity monitoring',
+      description: 'Monitor notification activity and identify issues.',
+      url: docsUrl('/platform/activity-feed'),
+    },
+  ],
+  topics: [
+    {
+      icon: RiHashtag,
+      title: 'Working with topics',
+      description: 'Group subscribers and send bulk notifications efficiently.',
+      url: docsUrl('/platform/topics'),
+    },
+    {
+      icon: RiUserLine,
+      title: 'Topic subscriptions',
+      description: 'Manage who receives notifications for each topic.',
+      url: docsUrl('/platform/topics'),
+    },
+  ],
+  webhooks: [
+    {
+      icon: RiGlobalLine,
+      title: 'Webhook setup',
+      description: 'Receive real-time updates about notification events.',
+      url: docsUrl('/platform/webhooks'),
+    },
+    {
+      icon: RiCodeLine,
+      title: 'Webhook events',
+      description: 'Learn about the events you can subscribe to.',
+      url: docsUrl('/platform/webhooks'),
+    },
+  ],
+  layouts: [
+    {
+      icon: RiLayoutGridLine,
+      title: 'Creating layouts',
+      description: 'Design reusable templates for consistent notifications.',
+      url: docsUrl('/platform/layouts'),
+    },
+    {
+      icon: RiCodeLine,
+      title: 'Layout variables',
+      description: 'Use dynamic content in your notification layouts.',
+      url: docsUrl('/platform/layouts'),
+    },
+  ],
+  translations: [
+    {
+      icon: RiTranslate2,
+      title: 'Internationalization',
+      description: 'Send notifications in your users\' preferred language.',
+      url: docsUrl('/platform/translations'),
+    },
+    {
+      icon: RiSettings3Line,
+      title: 'Managing translations',
+      description: 'Upload and manage translation files for your content.',
+      url: docsUrl('/platform/translations'),
+    },
+  ],
+  settings: [
+    {
+      icon: RiSettings3Line,
+      title: 'Account settings',
+      description: 'Manage your account, team, and organization settings.',
+      url: docsUrl('/platform/account'),
+    },
+    {
+      icon: RiKey2Line,
+      title: 'Security & access',
+      description: 'Configure team permissions and security settings.',
+      url: docsUrl('/platform/account'),
+    },
+  ],
+  default: DEFAULT_SUGGESTIONS,
+};
+
+function getRouteContext(pathname: string): RouteContext {
+  if (/\/workflows\/[^/]+/.test(pathname)) return 'workflow-editor';
+  if (pathname.includes('/workflows')) return 'workflows';
+  if (pathname.includes('/subscribers')) return 'subscribers';
+  if (pathname.includes('/integrations')) return 'integrations';
+  if (pathname.includes('/api-keys')) return 'api-keys';
+  if (pathname.includes('/activity')) return 'activity';
+  if (pathname.includes('/analytics')) return 'analytics';
+  if (pathname.includes('/topics')) return 'topics';
+  if (pathname.includes('/webhooks')) return 'webhooks';
+  if (pathname.includes('/layouts')) return 'layouts';
+  if (pathname.includes('/translations')) return 'translations';
+  if (pathname.includes('/settings')) return 'settings';
+
+  return 'default';
+}
+
+function useContextualSuggestions(): SuggestionItem[] {
+  const location = useLocation();
+
+  return useMemo(() => {
+    const context = getRouteContext(location.pathname);
+
+    return CONTEXTUAL_SUGGESTIONS[context];
+  }, [location.pathname]);
+}
 
 const gettingStarted: SuggestionItem[] = [
   {
@@ -121,6 +345,7 @@ type SupportDrawerContentProps = {
 function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
   const [searchValue, setSearchValue] = useState('');
   const { showPlainLiveChat, isLiveChatVisible } = usePlainChat();
+  const suggestions = useContextualSuggestions();
 
   function handleSuggestionClick() {
     onClose();
