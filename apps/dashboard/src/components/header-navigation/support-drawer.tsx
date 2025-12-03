@@ -1,10 +1,8 @@
 import { cloneElement, isValidElement, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   RiBook2Line,
   RiBuildingLine,
   RiCalendarEventLine,
-  RiCloseFill,
   RiCodeLine,
   RiGlobalLine,
   RiHashtag,
@@ -23,6 +21,8 @@ import {
 } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
 import { NovuIcon } from '@/components/icons';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { usePlainChat } from '@/hooks/use-plain-chat';
 
 const DOCS_BASE_URL = 'https://docs.novu.co';
@@ -388,15 +388,14 @@ function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
     : gettingStarted;
 
   return (
-    <div className="bg-neutral-50 border-stroke-soft fixed inset-y-0 right-0 z-50 m-[10px] flex w-[350px] flex-col overflow-hidden rounded-xl border shadow-[0px_18px_88px_-4px_rgba(24,39,75,0.16)]">
+    <div className="flex h-full flex-col">
+      <VisuallyHidden>
+        <SheetTitle>Support</SheetTitle>
+        <SheetDescription>Get help and resources</SheetDescription>
+      </VisuallyHidden>
+
       <div className="flex items-center justify-between px-3 py-3.5">
         <span className="text-foreground-600 text-sm font-medium leading-5 tracking-[-0.084px]">Need a hand?</span>
-        <button
-          onClick={onClose}
-          className="hover:bg-neutral-100 flex size-4 items-center justify-center rounded transition-colors"
-        >
-          <RiCloseFill className="text-foreground-600 size-4" />
-        </button>
       </div>
 
       <div className="px-3 pb-2">
@@ -483,14 +482,11 @@ export function SupportDrawer({ children }: SupportDrawerProps) {
   return (
     <>
       {trigger}
-      {isOpen &&
-        createPortal(
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-            <SupportDrawerContent onClose={() => setIsOpen(false)} />
-          </>,
-          document.body
-        )}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent className="border-stroke-soft m-[10px] h-[calc(100%-20px)] w-[350px] rounded-xl border bg-neutral-50 p-0 shadow-[0px_18px_88px_-4px_rgba(24,39,75,0.16)] sm:max-w-[350px]">
+          <SupportDrawerContent onClose={() => setIsOpen(false)} />
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
