@@ -357,12 +357,8 @@ function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
   }
 
   function handleAskQuestion() {
-    if (isLiveChatVisible) {
-      showPlainLiveChat();
-      onClose();
-    } else {
-      window.open(docsUrl(), '_blank');
-    }
+    onClose();
+    showPlainLiveChat();
   }
 
   function handleShareFeedback() {
