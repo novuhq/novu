@@ -1,34 +1,35 @@
-import { useState, cloneElement, isValidElement, useMemo } from 'react';
+import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation } from 'react-router-dom';
 import {
+  RiBook2Line,
+  RiBuildingLine,
+  RiCalendarEventLine,
   RiCloseFill,
-  RiSearchLine,
-  RiQuestionLine,
+  RiCodeLine,
+  RiGlobalLine,
+  RiHashtag,
+  RiKey2Line,
+  RiLayoutGridLine,
+  RiMailLine,
   RiMessage3Line,
   RiNewspaperLine,
-  RiCalendarEventLine,
-  RiRouteFill,
-  RiCodeLine,
   RiNotification4Fill,
-  RiStore3Line,
-  RiUserLine,
-  RiKey2Line,
+  RiRouteFill,
+  RiSearchLine,
   RiSettings3Line,
-  RiHashtag,
-  RiGlobalLine,
-  RiLayoutGridLine,
+  RiStore3Line,
   RiTranslate2,
-  RiMailLine,
-  RiBuildingLine,
+  RiUserLine,
 } from 'react-icons/ri';
-import { usePlainChat } from '@/hooks/use-plain-chat';
+import { useLocation } from 'react-router-dom';
 import { NovuIcon } from '@/components/icons';
+import { usePlainChat } from '@/hooks/use-plain-chat';
 
 const DOCS_BASE_URL = 'https://docs.novu.co';
 const UTM_SUFFIX = '?utm_campaign=support_drawer';
 const BOOK_DEMO_URL = `https://cal.com/team/novu/intro${UTM_SUFFIX}`;
 const CHANGELOG_URL = `https://go.novu.co/changelog${UTM_SUFFIX}`;
+const ROADMAP_URL = `https://roadmap.novu.co/roadmap${UTM_SUFFIX}`;
 
 // Hash fragments must come after query params in URLs
 // e.g. docsUrl('/framework/controls#using-variables') => https://docs.novu.co/framework/controls?utm_campaign=support_drawer#using-variables
@@ -140,7 +141,7 @@ const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
     {
       icon: RiCodeLine,
       title: 'REST API reference',
-      description: 'Learn how to authenticate and work with Novu\'s API endpoints.',
+      description: "Learn how to authenticate and work with Novu's API endpoints.",
       url: docsUrl('/api-reference/overview'),
     },
   ],
@@ -356,27 +357,17 @@ function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
     onClose();
   }
 
-  function handleAskQuestion() {
-    onClose();
-    showPlainLiveChat();
-  }
-
   function handleShareFeedback() {
     if (isLiveChatVisible) {
       showPlainLiveChat();
       onClose();
     } else {
-      window.open(docsUrl(), '_blank');
+      handleOpenExternalLink(docsUrl());
     }
   }
 
-  function handleWhatsNew() {
-    window.open(CHANGELOG_URL, '_blank');
-    onClose();
-  }
-
-  function handleBookDemo() {
-    window.open(BOOK_DEMO_URL, '_blank');
+  function handleOpenExternalLink(url: string) {
+    window.open(url, '_blank noopener noreferrer');
     onClose();
   }
 
@@ -456,16 +447,19 @@ function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
       </div>
 
       <div className="flex flex-col gap-0.5 p-1.5">
-        <FooterLink icon={RiQuestionLine} onClick={handleAskQuestion}>
-          Ask a question
+        <FooterLink icon={RiBook2Line} onClick={() => handleOpenExternalLink(docsUrl())}>
+          Documentation
         </FooterLink>
-        <FooterLink icon={RiMessage3Line} onClick={handleShareFeedback}>
-          Share feedback
-        </FooterLink>
-        <FooterLink icon={RiNewspaperLine} onClick={handleWhatsNew}>
+        <FooterLink icon={RiNewspaperLine} onClick={() => handleOpenExternalLink(CHANGELOG_URL)}>
           What's new
         </FooterLink>
-        <FooterLink icon={RiCalendarEventLine} onClick={handleBookDemo}>
+        <FooterLink icon={RiRouteFill} onClick={() => handleOpenExternalLink(ROADMAP_URL)}>
+          Roadmap
+        </FooterLink>
+        <FooterLink icon={RiMessage3Line} onClick={handleShareFeedback}>
+          Chat with us
+        </FooterLink>
+        <FooterLink icon={RiCalendarEventLine} onClick={() => handleOpenExternalLink(BOOK_DEMO_URL)}>
           <span>
             Book a demo <span className="text-foreground-400">(Yes, with a real human)</span>
           </span>
