@@ -15,12 +15,12 @@ import {
   RiUserLine,
   RiKey2Line,
   RiSettings3Line,
-  RiBarChartBoxLine,
-  RiHistoryLine,
   RiHashtag,
   RiGlobalLine,
   RiLayoutGridLine,
   RiTranslate2,
+  RiMailLine,
+  RiBuildingLine,
 } from 'react-icons/ri';
 import { usePlainChat } from '@/hooks/use-plain-chat';
 import { NovuIcon } from '@/components/icons';
@@ -30,8 +30,14 @@ const UTM_SUFFIX = '?utm_campaign=support_drawer';
 const BOOK_DEMO_URL = `https://cal.com/team/novu/intro${UTM_SUFFIX}`;
 const CHANGELOG_URL = `https://go.novu.co/changelog${UTM_SUFFIX}`;
 
+// Hash fragments must come after query params in URLs
+// e.g. docsUrl('/framework/controls#using-variables') => https://docs.novu.co/framework/controls?utm_campaign=support_drawer#using-variables
+// otherwise the page will scroll to the top of the page instead of the desired section
 function docsUrl(path = '') {
-  return `${DOCS_BASE_URL}${path}${UTM_SUFFIX}`;
+  const [basePath, hash] = path.split('#');
+  const url = `${DOCS_BASE_URL}${basePath}${UTM_SUFFIX}`;
+
+  return hash ? `${url}#${hash}` : url;
 }
 
 type SuggestionItem = {
@@ -44,24 +50,24 @@ type SuggestionItem = {
 const DEFAULT_SUGGESTIONS: SuggestionItem[] = [
   {
     icon: RiRouteFill,
-    title: 'Understand steps',
-    description: 'What each step does—like Delay, Digest, Email, and when to use them.',
-    url: docsUrl('/platform/workflow/overview'),
+    title: 'Understand Novu',
+    description: 'Learn what Novu is and how it simplifies notification delivery across channels.',
+    url: docsUrl('platform/what-is-novu'),
   },
   {
     icon: RiCodeLine,
-    title: 'Using variables',
-    description: 'Say hello with {{firstName}}. Personal, but scalable.',
-    url: docsUrl('/framework/controls#using-variables'),
+    title: 'Introduction to Inbox',
+    description: 'Build an in-app notification center that keeps your users engaged.',
+    url: docsUrl('/platform/inbox/overview'),
   },
 ];
 
 type RouteContext =
   | 'workflows'
-  | 'workflow-editor'
+  | 'workflowEditor'
   | 'subscribers'
   | 'integrations'
-  | 'api-keys'
+  | 'apiKeys'
   | 'activity'
   | 'analytics'
   | 'topics'
@@ -69,6 +75,8 @@ type RouteContext =
   | 'layouts'
   | 'translations'
   | 'settings'
+  | 'environments'
+  | 'contexts'
   | 'default';
 
 const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
@@ -86,11 +94,11 @@ const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
       url: docsUrl('/framework/controls#using-variables'),
     },
   ],
-  'workflow-editor': [
+  workflowEditor: [
     {
       icon: RiRouteFill,
-      title: 'Understand steps',
-      description: 'What each step does—like Delay, Digest, Email, and when to use them.',
+      title: 'Understand workflow editor',
+      description: 'What the workflow editor does—like Delay, Digest, Email, and when to use them.',
       url: docsUrl('/platform/workflow/overview'),
     },
     {
@@ -105,13 +113,13 @@ const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
       icon: RiUserLine,
       title: 'Managing subscribers',
       description: 'Learn how to create, update, and manage your notification subscribers.',
-      url: docsUrl('/platform/subscribers'),
+      url: docsUrl('/platform/concepts/subscribers'),
     },
     {
       icon: RiSettings3Line,
       title: 'Subscriber preferences',
       description: 'Let users control what notifications they receive.',
-      url: docsUrl('/platform/preferences'),
+      url: docsUrl('/platform/concepts/preferences'),
     },
   ],
   integrations: [
@@ -123,65 +131,33 @@ const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
     },
     {
       icon: RiSettings3Line,
-      title: 'Provider configuration',
-      description: 'Set up and configure your notification providers.',
-      url: docsUrl('/integrations/overview'),
+      title: 'Try demo providers',
+      description: 'Test notifications without configuring a provider.',
+      url: docsUrl('/platform/integrations/demo-providers'),
     },
   ],
-  'api-keys': [
-    {
-      icon: RiKey2Line,
-      title: 'API authentication',
-      description: 'Learn how to authenticate your API requests securely.',
-      url: docsUrl('/api-reference/overview'),
-    },
+  apiKeys: [
     {
       icon: RiCodeLine,
-      title: 'Quick start guide',
-      description: 'Get up and running with the Novu API in minutes.',
-      url: docsUrl('/quickstart/overview'),
+      title: 'REST API reference',
+      description: 'Learn how to authenticate and work with Novu\'s API endpoints.',
+      url: docsUrl('/api-reference/overview'),
     },
   ],
-  activity: [
-    {
-      icon: RiHistoryLine,
-      title: 'Activity feed',
-      description: 'Monitor and debug your notification delivery in real-time.',
-      url: docsUrl('/platform/activity-feed'),
-    },
-    {
-      icon: RiBarChartBoxLine,
-      title: 'Debugging notifications',
-      description: 'Troubleshoot failed or delayed notifications.',
-      url: docsUrl('/platform/activity-feed'),
-    },
-  ],
-  analytics: [
-    {
-      icon: RiBarChartBoxLine,
-      title: 'Understanding analytics',
-      description: 'Track delivery rates, engagement, and notification performance.',
-      url: docsUrl('/platform/analytics'),
-    },
-    {
-      icon: RiHistoryLine,
-      title: 'Activity monitoring',
-      description: 'Monitor notification activity and identify issues.',
-      url: docsUrl('/platform/activity-feed'),
-    },
-  ],
+  activity: DEFAULT_SUGGESTIONS,
+  analytics: DEFAULT_SUGGESTIONS,
   topics: [
     {
       icon: RiHashtag,
       title: 'Working with topics',
       description: 'Group subscribers and send bulk notifications efficiently.',
-      url: docsUrl('/platform/topics'),
+      url: docsUrl('/platform/concepts/topics'),
     },
     {
       icon: RiUserLine,
       title: 'Topic subscriptions',
       description: 'Manage who receives notifications for each topic.',
-      url: docsUrl('/platform/topics'),
+      url: docsUrl('/concepts/topics#dynamic-and-decoupled-grouping'),
     },
   ],
   webhooks: [
@@ -189,13 +165,13 @@ const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
       icon: RiGlobalLine,
       title: 'Webhook setup',
       description: 'Receive real-time updates about notification events.',
-      url: docsUrl('/platform/webhooks'),
+      url: docsUrl('/platform/additional-resources/webhooks'),
     },
     {
       icon: RiCodeLine,
       title: 'Webhook events',
       description: 'Learn about the events you can subscribe to.',
-      url: docsUrl('/platform/webhooks'),
+      url: docsUrl('/platform/additional-resources/webhooks#supported-event-types'),
     },
   ],
   layouts: [
@@ -203,58 +179,87 @@ const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
       icon: RiLayoutGridLine,
       title: 'Creating layouts',
       description: 'Design reusable templates for consistent notifications.',
-      url: docsUrl('/platform/layouts'),
+      url: docsUrl('/platform/workflow/layouts'),
     },
     {
-      icon: RiCodeLine,
-      title: 'Layout variables',
-      description: 'Use dynamic content in your notification layouts.',
-      url: docsUrl('/platform/layouts'),
+      icon: RiMailLine,
+      title: 'Using layouts in workflows',
+      description: 'Apply layouts to email steps for consistent branding across notifications.',
+      url: docsUrl('/platform/workflow/layouts#using-a-layout-in-workflow-email-step'),
     },
   ],
   translations: [
     {
       icon: RiTranslate2,
-      title: 'Internationalization',
-      description: 'Send notifications in your users\' preferred language.',
-      url: docsUrl('/platform/translations'),
+      title: 'Translations',
+      description: 'Learn how to translate your workflow step content into multiple languages',
+      url: docsUrl('/platform/workflow/translations'),
     },
     {
       icon: RiSettings3Line,
       title: 'Managing translations',
       description: 'Upload and manage translation files for your content.',
-      url: docsUrl('/platform/translations'),
+      url: docsUrl('/api-reference/translations/create-a-translation'),
     },
   ],
-  settings: [
+  environments: [
     {
       icon: RiSettings3Line,
-      title: 'Account settings',
-      description: 'Manage your account, team, and organization settings.',
-      url: docsUrl('/platform/account'),
+      title: 'Understanding environments',
+      description: 'Learn how Novu uses environments to separate development and production workflows.',
+      url: docsUrl('/platform/concepts/environments'),
     },
     {
       icon: RiKey2Line,
-      title: 'Security & access',
-      description: 'Configure team permissions and security settings.',
-      url: docsUrl('/platform/account'),
+      title: 'Environment credentials',
+      description: 'Understand Application Identifier and API Secret Key for each environment.',
+      url: docsUrl('/platform/concepts/environments#environment-credentials'),
+    },
+    {
+      icon: RiRouteFill,
+      title: 'Publishing changes',
+      description: 'Promote workflows, layouts, and translations from Development to other environments.',
+      url: docsUrl('/platform/concepts/environments#publishing-changes-to-other-environments'),
     },
   ],
+  contexts: [
+    {
+      icon: RiBuildingLine,
+      title: 'Understanding contexts',
+      description: 'Learn how to create, update, and delete contexts to manage reusable metadata.',
+      url: docsUrl('/platform/workflow/contexts/manage-contexts'),
+    },
+    {
+      icon: RiCodeLine,
+      title: 'Context object schema',
+      description: 'Learn about context types, IDs, and data formats for storing metadata.',
+      url: docsUrl('/platform/workflow/contexts/manage-contexts#context-object-schema'),
+    },
+    {
+      icon: RiSettings3Line,
+      title: 'Managing contexts',
+      description: 'Create, update, and delete contexts via dashboard or API.',
+      url: docsUrl('/platform/workflow/contexts/manage-contexts#create-a-context'),
+    },
+  ],
+  settings: DEFAULT_SUGGESTIONS,
   default: DEFAULT_SUGGESTIONS,
 };
 
 function getRouteContext(pathname: string): RouteContext {
-  if (/\/workflows\/[^/]+/.test(pathname)) return 'workflow-editor';
+  if (/\/workflows\/[^/]+/.test(pathname)) return 'workflowEditor';
   if (pathname.includes('/workflows')) return 'workflows';
   if (pathname.includes('/subscribers')) return 'subscribers';
   if (pathname.includes('/integrations')) return 'integrations';
-  if (pathname.includes('/api-keys')) return 'api-keys';
+  if (pathname.includes('/api-keys')) return 'apiKeys';
   if (pathname.includes('/activity')) return 'activity';
   if (pathname.includes('/analytics')) return 'analytics';
   if (pathname.includes('/topics')) return 'topics';
   if (pathname.includes('/webhooks')) return 'webhooks';
   if (pathname.includes('/layouts')) return 'layouts';
   if (pathname.includes('/translations')) return 'translations';
+  if (pathname.includes('/environments')) return 'environments';
+  if (pathname.includes('/contexts')) return 'contexts';
   if (pathname.includes('/settings')) return 'settings';
 
   return 'default';
