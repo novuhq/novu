@@ -15,15 +15,19 @@ import {
   RiRouteFill,
   RiSearchLine,
   RiSettings3Line,
+  RiSparklingLine,
   RiStore3Line,
   RiTranslate2,
   RiUserLine,
 } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
+import { useAiDrawer } from '@/components/ai-drawer';
 import { NovuIcon } from '@/components/icons';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { usePlainChat } from '@/hooks/use-plain-chat';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 const DOCS_BASE_URL = 'https://docs.novu.co';
 const UTM_SUFFIX = '?utm_campaign=support_drawer';
@@ -351,9 +355,20 @@ type SupportDrawerContentProps = {
 function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
   const [searchValue, setSearchValue] = useState('');
   const { showPlainLiveChat, isLiveChatVisible } = usePlainChat();
+  const { openAiDrawer } = useAiDrawer();
+  const track = useTelemetry();
   const suggestions = useContextualSuggestions();
+  const hasInkeep = !!import.meta.env.VITE_INKEEP_API_KEY;
 
   function handleSuggestionClick() {
+    onClose();
+  }
+
+  function handleAskAi() {
+    track(TelemetryEvent.SUPPORT_DRAWER_ASK_AI_CLICKED, {
+      query: searchValue,
+    });
+    openAiDrawer(searchValue);
     onClose();
   }
 
@@ -413,6 +428,30 @@ function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
 
       <div className="flex-1 overflow-auto px-3 py-3">
         <div className="flex flex-col gap-6">
+          {hasInkeep && searchValue.trim() && (
+            <div className="flex flex-col gap-2">
+              <span className="text-foreground-600 px-1 text-sm font-medium leading-5 tracking-[-0.084px]">
+                AI Assistant
+              </span>
+              <button
+                onClick={handleAskAi}
+                className="bg-background hover:bg-neutral-50 border-stroke-soft flex w-full items-center gap-2 rounded-xl border p-2 transition-colors"
+              >
+                <div className="border-stroke-soft flex shrink-0 items-center justify-center overflow-hidden rounded-lg border p-px">
+                  <div className="bg-neutral-alpha-50 flex size-[54px] items-center justify-center rounded-[7px]">
+                    <RiSparklingLine className="text-foreground-400 size-4" />
+                  </div>
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col items-start">
+                  <span className="text-foreground-950 text-sm font-medium leading-5 tracking-[-0.084px]">
+                    Ask AI: "{searchValue}"
+                  </span>
+                  <span className="text-foreground-400 text-xs leading-4">Get instant answers from Novu AI</span>
+                </div>
+              </button>
+            </div>
+          )}
+
           {filteredSuggestions.length > 0 && (
             <div className="flex flex-col gap-2">
               <span className="text-foreground-600 px-1 text-sm font-medium leading-5 tracking-[-0.084px]">

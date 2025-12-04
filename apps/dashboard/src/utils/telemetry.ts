@@ -83,4 +83,5 @@ export enum TelemetryEvent {
   COMMAND_PALETTE_OPENED = 'Command palette opened',
   COMMAND_PALETTE_COMMAND_SELECTED = 'Command palette command selected',
   INBOX_WORKFLOW_UPDATE_FAILED = 'Inbox workflow update failed - [Onboarding]',
+  SUPPORT_DRAWER_ASK_AI_CLICKED = 'Support drawer ask AI clicked',
 }
