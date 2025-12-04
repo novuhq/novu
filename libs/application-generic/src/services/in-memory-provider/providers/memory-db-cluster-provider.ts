@@ -91,18 +91,28 @@ export const getMemoryDbClusterProviderConfig = (): IMemoryDbClusterProviderConf
 export const getMemoryDbCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
   const { instances, password, username, tls } = getMemoryDbClusterProviderConfig();
 
+  const redisOptions: any = {
+    maxRetriesPerRequest: null,
+    tls,
+    connectTimeout: 10000,
+  };
+
+  // For Redis 6+ ACL authentication (AWS MemoryDB), both username and password must be provided
+  // If only password is provided, use legacy AUTH format
+  if (username && password) {
+    redisOptions.username = username;
+    redisOptions.password = password;
+    Logger.log(`Configuring MemoryDB with ACL authentication (username: ${username})`);
+  } else if (password) {
+    redisOptions.password = password;
+    Logger.log('Configuring MemoryDB with legacy password-only authentication');
+  }
+
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
-    redisOptions: {
-      maxRetriesPerRequest: null,
-      tls,
-      connectTimeout: 10000,
-
-      ...(password && { password }),
-      ...(username && { username }),
-    },
+    redisOptions,
     clusterRetryStrategy: (times: number) => {
       return Math.max(Math.min(Math.exp(times), 20000), 1000);
     },
