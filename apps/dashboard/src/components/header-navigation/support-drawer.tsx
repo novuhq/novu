@@ -1,13 +1,16 @@
 import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import {
+  RiArrowLeftLine,
   RiBook2Line,
   RiBuildingLine,
   RiCalendarEventLine,
   RiCodeLine,
+  RiExternalLinkLine,
   RiGlobalLine,
   RiHashtag,
   RiKey2Line,
   RiLayoutGridLine,
+  RiLoaderLine,
   RiMailLine,
   RiMessage3Line,
   RiNewspaperLine,
@@ -29,6 +32,9 @@ import { usePlainChat } from '@/hooks/use-plain-chat';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 
+const DRAWER_WIDTH_DEFAULT = 350;
+const DRAWER_WIDTH_EXPANDED = 700;
+
 const DOCS_BASE_URL = 'https://docs.novu.co';
 const UTM_SUFFIX = '?utm_campaign=support_drawer';
 const BOOK_DEMO_URL = `https://cal.com/team/novu/intro${UTM_SUFFIX}`;
@@ -43,6 +49,13 @@ function docsUrl(path = '') {
   const url = `${DOCS_BASE_URL}${basePath}${UTM_SUFFIX}`;
 
   return hash ? `${url}#${hash}` : url;
+}
+
+function toEmbedUrl(url: string) {
+  const [baseWithParams, hash] = url.split('#');
+  const embedUrl = `${baseWithParams}&full=true`;
+
+  return hash ? `${embedUrl}#${hash}` : embedUrl;
 }
 
 type SuggestionItem = {
@@ -303,19 +316,16 @@ const gettingStarted: SuggestionItem[] = [
 
 type SuggestionCardProps = {
   item: SuggestionItem;
-  onClick: () => void;
+  onOpenDocs: (url: string) => void;
 };
 
-function SuggestionCard({ item, onClick }: SuggestionCardProps) {
+function SuggestionCard({ item, onOpenDocs }: SuggestionCardProps) {
   const Icon = item.icon;
 
   return (
-    <a
-      href={item.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={onClick}
-      className="bg-background hover:bg-neutral-50 border-stroke-soft flex w-full items-center gap-2 rounded-xl border p-2 transition-colors"
+    <button
+      onClick={() => onOpenDocs(item.url)}
+      className="bg-background hover:bg-neutral-50 border-stroke-soft flex w-full items-center gap-2 rounded-xl border p-2 transition-colors text-left"
     >
       <div className="border-stroke-soft flex shrink-0 items-center justify-center overflow-hidden rounded-lg border p-px">
         <div className="bg-neutral-alpha-50 flex size-[54px] items-center justify-center rounded-[7px]">
@@ -326,7 +336,53 @@ function SuggestionCard({ item, onClick }: SuggestionCardProps) {
         <span className="text-foreground-950 text-sm font-medium leading-5 tracking-[-0.084px]">{item.title}</span>
         <span className="text-foreground-400 text-xs leading-4">{item.description}</span>
       </div>
-    </a>
+    </button>
+  );
+}
+
+type DocsIframeViewProps = {
+  url: string;
+  onBack: () => void;
+};
+
+function DocsIframeView({ url, onBack }: DocsIframeViewProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const embedUrl = toEmbedUrl(url);
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-1 px-3 py-3.5 pr-14">
+        <button
+          onClick={onBack}
+          className="hover:bg-neutral-100 -ml-1.5 flex size-5 items-center justify-center rounded transition-colors"
+        >
+          <RiArrowLeftLine className="text-foreground-600 size-3.5" />
+        </button>
+        <span className="text-foreground-600 flex-1 text-sm font-medium leading-5 tracking-[-0.084px]">
+          Documentation
+        </span>
+        <button
+          onClick={() => window.open(url, '_blank noopener noreferrer')}
+          className="hover:bg-neutral-100 flex size-5 items-center justify-center rounded transition-colors"
+          title="Open in new tab"
+        >
+          <RiExternalLinkLine className="text-foreground-600 size-3.5" />
+        </button>
+      </div>
+      <div className="relative flex-1 overflow-hidden rounded-b-xl">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-neutral-50">
+            <RiLoaderLine className="text-foreground-400 size-6 animate-spin" />
+          </div>
+        )}
+        <iframe
+          src={embedUrl}
+          className="h-full w-full border-0"
+          onLoad={() => setIsLoading(false)}
+          title="Documentation"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -350,9 +406,17 @@ function FooterLink({ icon: Icon, children, onClick }: FooterLinkProps) {
 
 type SupportDrawerContentProps = {
   onClose: () => void;
+  docsUrl: string | null;
+  onOpenDocs: (url: string) => void;
+  onCloseDocs: () => void;
 };
 
-function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
+function SupportDrawerContent({
+  onClose,
+  docsUrl: currentDocsUrl,
+  onOpenDocs,
+  onCloseDocs,
+}: SupportDrawerContentProps) {
   const [searchValue, setSearchValue] = useState('');
   const { showPlainLiveChat, isLiveChatVisible } = usePlainChat();
   const { openAiDrawer } = useAiDrawer();
@@ -360,9 +424,7 @@ function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
   const suggestions = useContextualSuggestions();
   const hasInkeep = !!import.meta.env.VITE_INKEEP_API_KEY;
 
-  function handleSuggestionClick() {
-    onClose();
-  }
+  const isViewingDocs = currentDocsUrl !== null;
 
   function handleAskAi() {
     track(TelemetryEvent.SUPPORT_DRAWER_ASK_AI_CLICKED, {
@@ -402,6 +464,10 @@ function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
       )
     : gettingStarted;
 
+  if (isViewingDocs) {
+    return <DocsIframeView url={currentDocsUrl} onBack={onCloseDocs} />;
+  }
+
   return (
     <div className="flex h-full flex-col">
       <VisuallyHidden>
@@ -435,7 +501,7 @@ function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
               </span>
               <div className="flex flex-col gap-2">
                 {filteredSuggestions.map((item) => (
-                  <SuggestionCard key={item.title} item={item} onClick={handleSuggestionClick} />
+                  <SuggestionCard key={item.title} item={item} onOpenDocs={onOpenDocs} />
                 ))}
               </div>
             </div>
@@ -448,7 +514,7 @@ function SupportDrawerContent({ onClose }: SupportDrawerContentProps) {
               </span>
               <div className="flex flex-col gap-2">
                 {filteredGettingStarted.map((item) => (
-                  <SuggestionCard key={item.title} item={item} onClick={handleSuggestionClick} />
+                  <SuggestionCard key={item.title} item={item} onOpenDocs={onOpenDocs} />
                 ))}
               </div>
             </div>
@@ -513,6 +579,25 @@ type SupportDrawerProps = {
 
 export function SupportDrawer({ children }: SupportDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [docsUrl, setDocsUrl] = useState<string | null>(null);
+
+  const isViewingDocs = docsUrl !== null;
+  const drawerWidth = isViewingDocs ? DRAWER_WIDTH_EXPANDED : DRAWER_WIDTH_DEFAULT;
+
+  function handleOpenChange(open: boolean) {
+    setIsOpen(open);
+    if (!open) {
+      setDocsUrl(null);
+    }
+  }
+
+  function handleOpenDocs(url: string) {
+    setDocsUrl(url);
+  }
+
+  function handleCloseDocs() {
+    setDocsUrl(null);
+  }
 
   const trigger = isValidElement(children)
     ? cloneElement(children, { onClick: () => setIsOpen(true) } as React.HTMLAttributes<HTMLElement>)
@@ -521,9 +606,17 @@ export function SupportDrawer({ children }: SupportDrawerProps) {
   return (
     <>
       {trigger}
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent className="border-stroke-soft m-[10px] h-[calc(100%-20px)] w-[350px] rounded-xl border bg-neutral-50 p-0 shadow-[0px_18px_88px_-4px_rgba(24,39,75,0.16)] sm:max-w-[350px]">
-          <SupportDrawerContent onClose={() => setIsOpen(false)} />
+      <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+        <SheetContent
+          className="border-stroke-soft m-[10px] h-[calc(100%-20px)] rounded-xl border bg-neutral-50 p-0 shadow-[0px_18px_88px_-4px_rgba(24,39,75,0.16)] transition-[width,max-width] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+          style={{ width: drawerWidth, maxWidth: drawerWidth }}
+        >
+          <SupportDrawerContent
+            onClose={() => handleOpenChange(false)}
+            docsUrl={docsUrl}
+            onOpenDocs={handleOpenDocs}
+            onCloseDocs={handleCloseDocs}
+          />
         </SheetContent>
       </Sheet>
     </>
