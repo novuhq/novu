@@ -7,11 +7,13 @@ import { createVariableExtension } from '@/components/primitives/variable-plugin
 import { DEFAULT_VARIABLE_PILL_HEIGHT } from '@/components/primitives/variable-plugin/variable-pill-widget';
 import { variablePillTheme } from '@/components/primitives/variable-plugin/variable-theme';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
+import { isPayloadVariable } from '@/components/variable/hooks/use-variable-validation';
 import {
   DIGEST_VARIABLES_ENUM,
   DIGEST_VARIABLES_FILTER_MAP,
   getDynamicDigestVariable,
 } from '@/components/variable/utils/digest-variables';
+import { getVariableErrorMessage } from '@/components/variable/utils/get-variable-error-message';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
@@ -254,12 +256,26 @@ export function VariableEditor({
   }, []);
 
   const variablePluginExtension = useMemo(() => {
+    const getVariableError = (variableName: string, isAllowed: boolean): string | undefined => {
+      if (isAllowed) return undefined;
+
+      const isPayload = isPayloadVariable(variableName);
+      return getVariableErrorMessage({
+        variableName,
+        isPayloadVariable: isPayload,
+        isAllowed: false,
+        isInSchema: false,
+        isPayloadSchemaEnabled: isPayload ? callbacksRef.current.isPayloadSchemaEnabled : undefined,
+      });
+    };
+
     return createVariableExtension({
       viewRef,
       lastCompletionRef,
       onSelect: (value: string, from: number, to: number) => callbacksRef.current.handleVariableSelect(value, from, to),
       isAllowedVariable: (variable: LiquidVariable) => callbacksRef.current.isAllowedVariable(variable),
       isDigestEventsVariable: (variableName: string) => callbacksRef.current.isDigestEventsVariable(variableName),
+      getVariableErrorMessage: getVariableError,
     });
   }, []);
 
