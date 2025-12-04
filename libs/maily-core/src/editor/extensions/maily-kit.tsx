@@ -70,7 +70,7 @@ export const MailyKit = Extension.create<MailyKitOptions>({
         },
         blockquote: {
           HTMLAttributes: {
-            class: 'mly-not-prose mly-border-l-4 mly-border-gray-300 mly-pl-4 mly-mt-4 mly-mb-4 mly-relative',
+            class: 'mly-relative',
           },
         },
         bulletList: {
@@ -99,8 +99,8 @@ export const MailyKit = Extension.create<MailyKitOptions>({
       Footer,
       Focus,
       Dropcursor.configure({
-        color: '#555',
-        width: 3,
+        color: '#C1DDFB',
+        width: 2,
         class: 'ProseMirror-dropcursor',
       }),
       HeadingExtension.configure({

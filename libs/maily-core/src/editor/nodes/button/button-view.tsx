@@ -1,5 +1,5 @@
 import { NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { CSSProperties, useMemo } from 'react';
+import { CSSProperties, useMemo, useState } from 'react';
 import { useMatchingProvider, useSuggestionProviders } from '@/editor/bubble-suggestions';
 import { AlignmentSwitch } from '@/editor/components/alignment-switch';
 import { BaseButton } from '@/editor/components/base-button';
@@ -40,10 +40,10 @@ export function ButtonView(props: NodeViewProps) {
     width,
   } = node.attrs as ButtonAttributes;
 
+  const [open, setOpen] = useState(false);
   // Use the new bubble suggestion system for rendering variables
   const providers = useSuggestionProviders(editor, ['variable', 'inlineDecorator']);
   const matchingProvider = useMatchingProvider(text, providers);
-
   const sizes = useMemo(
     () => ({
       small: {
@@ -77,7 +77,7 @@ export function ButtonView(props: NodeViewProps) {
         textAlign: alignment,
       }}
     >
-      <Popover open={props.selected && editor.isEditable}>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div>
             <button
@@ -117,6 +117,7 @@ export function ButtonView(props: NodeViewProps) {
 
                 const pos = getPos();
                 editor.commands.setNodeSelection(pos);
+                setOpen(true);
               }}
             >
               {matchingProvider ? matchingProvider.renderValue(text, editor, 'button-variable') : text}
