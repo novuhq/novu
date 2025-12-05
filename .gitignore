@@ -16,6 +16,7 @@ dist
 .nx-cache-affected-*.json
 output.json
 
+.idea
 .idea/workspace.xml
 .idea/usage.statistics.xml
 .idea/tasks.xml
