@@ -9,23 +9,23 @@ import {
 } from '@novu/shared';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
-import { API_ROOT, APP_ID, IS_EU_ENV, WS_URL } from '../../../config';
+import { APP_ID } from '../../../config';
 import { useEnvironment } from '../../../hooks';
 import { NotificationCenterBell } from './NotificationCenterBell';
 import { ROUTES } from '../../../constants/routes';
 import { useSegment } from '../../providers/SegmentProvider';
-
-const BACKEND_URL = IS_EU_ENV ? 'https://api.novu.co' : API_ROOT;
-const SOCKET_URL = IS_EU_ENV ? 'https://ws.novu.co' : WS_URL;
+import { apiHostnameManager } from '../../../utils/api-hostname-manager';
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
   const { environment } = useEnvironment();
+  const backendUrl = apiHostnameManager.getApiHostname();
+  const socketUrl = apiHostnameManager.getWebSocketHostname();
 
   return (
     <>
       <NovuProvider
-        backendUrl={BACKEND_URL}
-        socketUrl={SOCKET_URL}
+        backendUrl={backendUrl}
+        socketUrl={socketUrl}
         subscriberId={user?._id as string}
         applicationIdentifier={APP_ID || (environment?.identifier as string)}
       >

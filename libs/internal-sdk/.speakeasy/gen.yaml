@@ -26,6 +26,23 @@ generation:
     generateTests: true
     generateNewTests: false
     skipResponseBodyAssertions: false
+postman:
+  version: 1.0.0
+  baseErrorName: NovuError
+  collectionName: Novu API
+  defaultErrorName: NovuDefaultError
+  imports:
+    option: openapi
+    paths:
+      callbacks: callbacks
+      errors: errors
+      operations: operations
+      shared: shared
+      webhooks: webhooks
+  inferUnionDiscriminators: true
+  inputModelSuffix: input
+  outputModelSuffix: output
+  packageName: novu/api
 typescript:
   version: 0.1.21
   acceptHeaderEnum: true
@@ -39,7 +56,7 @@ typescript:
   author: Novu
   baseErrorName: NovuError
   clientServerStatusCodesAsErrors: true
-  constFieldsAlwaysOptional: true
+  constFieldsAlwaysOptional: false
   defaultErrorName: SDKError
   enableCustomCodeRegions: false
   enableMCPServer: false
@@ -50,6 +67,7 @@ typescript:
   flatteningOrder: body-first
   formStringArrayEncodeMode: encoded-string
   forwardCompatibleEnumsByDefault: false
+  forwardCompatibleUnionsByDefault: tagged-only
   generateExamples: true
   imports:
     option: openapi
@@ -67,8 +85,10 @@ typescript:
   methodArguments: require-security-and-request
   modelPropertyCasing: camel
   moduleFormat: commonjs
+  multipartArrayFormat: standard
   outputModelSuffix: output
   packageName: '@novu/api'
+  preApplyUnionDiscriminators: true
   responseFormat: flat
   sseFlatResponse: false
   templateVersion: v2

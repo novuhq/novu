@@ -63,16 +63,23 @@ export class ExecuteBridgeJob {
 
     let workflow: NotificationTemplateEntity | null = null;
     if (isStateful) {
-      workflow = await this.notificationTemplateRepository.findOne(
-        {
-          _id: command.job._templateId,
-          _environmentId: command.environmentId,
-          type: {
-            $in: [ResourceTypeEnum.ECHO, ResourceTypeEnum.BRIDGE],
+      if (
+        command.workflow &&
+        (command.workflow.type === ResourceTypeEnum.ECHO || command.workflow.type === ResourceTypeEnum.BRIDGE)
+      ) {
+        workflow = command.workflow;
+      } else {
+        workflow = await this.notificationTemplateRepository.findOne(
+          {
+            _id: command.job._templateId,
+            _environmentId: command.environmentId,
+            type: {
+              $in: [ResourceTypeEnum.ECHO, ResourceTypeEnum.BRIDGE],
+            },
           },
-        },
-        '_id triggers type origin'
-      );
+          '_id triggers type origin'
+        );
+      }
     }
 
     if (!workflow && isStateful) {

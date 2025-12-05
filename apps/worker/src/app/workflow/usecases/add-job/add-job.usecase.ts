@@ -28,7 +28,7 @@ import {
   TierRestrictionsValidateUsecase,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   castUnitToDigestUnitEnum,
@@ -515,13 +515,15 @@ export class AddJob {
 
   private async fetchBridgeData(
     command: AddJobCommand,
-    filterVariables: IFilterVariables
+    filterVariables: IFilterVariables,
+    workflow?: NotificationTemplateEntity
   ): Promise<ExecuteOutput | null> {
     const response = await this.executeBridgeJob.execute(
       ExecuteBridgeJobCommand.create({
         identifier: command.job.identifier,
         ...command,
         variables: filterVariables,
+        workflow,
       })
     );
 

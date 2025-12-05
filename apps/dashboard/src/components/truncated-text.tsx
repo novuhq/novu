@@ -18,35 +18,35 @@ export default function TruncatedText(props: TruncatedTextProps) {
   }, []);
 
   useLayoutEffect(() => {
-    const observer = new MutationObserver(checkTruncation);
-    if (textRef.current) observer.observe(textRef.current, { childList: true, subtree: true });
+    if (!textRef.current) return;
+
+    const element = textRef.current;
+    const mutationObserver = new MutationObserver(checkTruncation);
+    const resizeObserver = new ResizeObserver(checkTruncation);
+
+    mutationObserver.observe(element, { childList: true, subtree: true });
+    resizeObserver.observe(element);
 
     checkTruncation();
+
     window.addEventListener('resize', checkTruncation);
 
     return () => {
-      observer.disconnect();
+      mutationObserver.disconnect();
+      resizeObserver.disconnect();
       window.removeEventListener('resize', checkTruncation);
     };
-  }, [checkTruncation, children]);
+  }, [checkTruncation]);
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         {asChild ? (
-          <Slot
-            ref={textRef}
-            className={cn('truncate', { block: isTruncated, 'inline-flex': !isTruncated }, className)}
-            {...rest}
-          >
+          <Slot ref={textRef} className={cn('truncate block', className)} {...rest}>
             {children}
           </Slot>
         ) : (
-          <span
-            ref={textRef}
-            className={cn('truncate', { block: isTruncated, 'inline-flex': !isTruncated }, className)}
-            {...rest}
-          >
+          <span ref={textRef} className={cn('truncate block', className)} {...rest}>
             {children}
           </span>
         )}

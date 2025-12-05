@@ -10,6 +10,10 @@ sources:
         registry:
             location: registry.speakeasyapi.dev/novu/novu/json-development-internal
 targets:
+    internal-postman:
+        target: postman
+        source: internal-sdk-OAS
+        output: postman
     internal-sdk:
         target: typescript
         source: internal-sdk-OAS
@@ -17,3 +21,7 @@ targets:
             registry:
                 location: registry.speakeasyapi.dev/novu/novu/json-development-internal-typescript-code-samples
             blocking: false
+    postman:
+        target: postman
+        source: internal-sdk-OAS
+        output: postman
