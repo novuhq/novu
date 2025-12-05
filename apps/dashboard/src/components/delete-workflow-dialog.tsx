@@ -25,8 +25,9 @@ export const DeleteWorkflowDialog = ({
       title="Are you sure?"
       description={
         <>
-          You're about to delete the <TruncatedText className="max-w-[32ch] font-bold">{workflow.name}</TruncatedText>{' '}
-          workflow, this action is permanent. <br />
+          You're about to delete the{' '}
+          <TruncatedText className="max-w-[32ch] font-semibold">{workflow.name}</TruncatedText> workflow, this action is
+          permanent. <br />
           <br />
           You won't be able to trigger this workflow anymore.
         </>
