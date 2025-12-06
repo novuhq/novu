@@ -9,6 +9,7 @@ import {
 import {
   brazeEmailConfig,
   emailWebhookConfig,
+  gmsEmailConfig,
   infobipEmailConfig,
   mailerSendConfig,
   mailgunConfig,
@@ -185,5 +186,13 @@ export const emailProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: `https://docs.novu.co/channels/email/email-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'email_webhook.svg', dark: 'email_webhook.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.GmsEmail,
+    displayName: 'GMS Email',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: gmsEmailConfig,
+    docReference: 'https://developers.gms.net/',
+    logoFileName: { light: 'gms.svg', dark: 'gms.svg' },
   },
 ];

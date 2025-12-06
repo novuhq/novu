@@ -78,6 +78,7 @@ export enum EmailProviderIdEnum {
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
+  GmsEmail = 'gms-email',
 }
 
 export enum SmsProviderIdEnum {

@@ -3,6 +3,7 @@ import {
   BrazeEmailHandler,
   EmailJsHandler,
   EmailWebhookHandler,
+  GmsEmailHandler,
   InfobipEmailHandler,
   MailerSendHandler,
   MailgunHandler,
@@ -45,6 +46,7 @@ export class MailFactory implements IMailFactory {
     new EmailWebhookHandler(),
     new NovuEmailHandler(),
     new BrazeEmailHandler(),
+    new GmsEmailHandler(),
   ];
 
   getHandler(

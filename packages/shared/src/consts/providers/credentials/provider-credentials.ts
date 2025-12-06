@@ -1394,3 +1394,24 @@ export const ISendProProviderConfig: IConfigCredential[] = [
     required: false,
   },
 ];
+
+export const gmsEmailConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'From email address',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SenderName,
+    displayName: 'Sender name',
+    type: 'string',
+    required: true,
+  },
+];
