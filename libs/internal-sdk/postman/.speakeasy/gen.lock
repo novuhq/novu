@@ -1,12 +1,16 @@
 lockVersion: 2.0.0
 id: 47485c62-299d-4bb9-8ec5-e9e1c5ead062
 management:
-  docChecksum: fa3eff53084f164b6b7e56ec56a2f333
+  docChecksum: 99fec9cc96508797ed12dba3ccdc0574
   docVersion: 3.11.0
-  speakeasyVersion: 1.666.0
-  generationVersion: 2.768.0
+  speakeasyVersion: 1.669.1
+  generationVersion: 2.772.0
   releaseVersion: 1.0.0
-  configChecksum: 18cacd5014a0fe368de64546dc799392
+  configChecksum: bdafc2572ea6a47a45b313063192f51b
+persistentEdits:
+  generation_id: 60b2fb9b-0a7f-4395-8fdd-35ea0d3dc3f9
+  pristine_commit_hash: 36d4db26d1f52ae6b1007649102ce493f9a08d6f
+  pristine_tree_hash: 1734213d49f2d7adf154321028bce1fd5e9537c4
 features:
   postman:
     constsAndDefaults: 0.1.0
@@ -18,8 +22,11 @@ features:
     groups: 0.1.1
     nameOverrides: 0.1.0
     retries: 0.0.0
-generatedFiles:
-  - novu_api_postman_collection.json
+trackedFiles:
+  novu_api_postman_collection.json:
+    id: f80b59e13e5c
+    last_write_checksum: sha1:01c78f3219b53608f806cdeb1ed2f6e350ec8363
+    pristine_git_object: 7a8f6a9568285abd3b19a6791b6775f91bec5bc8
 examples:
   EventsController_trigger:
     speakeasy-default-events-controller-trigger:
@@ -130,6 +137,7 @@ examples:
           type: "tenant"
           id: "tenant-prod-123"
           search: "tenant"
+          limit: 10
       responses:
         "200":
           application/json: {"data": [], "next": "<value>", "previous": "<value>", "totalCount": 1187.63, "totalCountCapped": true}
@@ -377,6 +385,10 @@ examples:
           application/json: "Please wait some time, then try again."
   LayoutsController_list:
     speakeasy-default-layouts-controller-list:
+      parameters:
+        query:
+          limit: 10
+          offset: 0
       responses:
         "200":
           application/json: {"layouts": [{"_id": "<id>", "layoutId": "<id>", "slug": "<value>", "name": "<value>", "isDefault": false, "isTranslationEnabled": true, "updatedAt": "1735681034060", "createdAt": "1725690003700", "origin": "novu-cloud-v1", "type": "BRIDGE", "controls": {"values": {}}}], "totalCount": 2739.33}
@@ -518,6 +530,9 @@ examples:
           application/json: "Please wait some time, then try again."
   SubscribersController_searchSubscribers:
     speakeasy-default-subscribers-controller-search-subscribers:
+      parameters:
+        query:
+          limit: 10
       responses:
         "200":
           application/json: {"data": [{"channels": [{"providerId": "apns", "credentials": {"webhookUrl": "https://example.com/webhook", "channel": "general", "deviceTokens": ["token1", "token2", "token3"], "alertUid": "12345-abcde", "title": "Critical Alert", "imageUrl": "https://example.com/image.png", "state": "resolved", "externalUrl": "https://example.com/details"}, "_integrationId": "<id>"}], "subscriberId": "<id>", "_organizationId": "<id>", "_environmentId": "<id>", "deleted": false, "createdAt": "1721320696955", "updatedAt": "1735657113100"}], "next": "<value>", "previous": "<value>", "totalCount": 631.49, "totalCountCapped": true}
@@ -706,6 +721,8 @@ examples:
       parameters:
         path:
           subscriberId: "<id>"
+        query:
+          limit: 10
       responses:
         "200":
           application/json: {"data": [{"_id": "64da692e9a94fb2e6449ad08", "createdAt": "2021-01-01T00:00:00.000Z", "topic": {"_id": "64da692e9a94fb2e6449ad06", "key": "product-updates", "name": "Product Updates", "createdAt": "2023-08-15T00:00:00.000Z", "updatedAt": "2023-08-15T00:00:00.000Z"}, "subscriber": {"_id": "64da692e9a94fb2e6449ad07", "subscriberId": "user-123", "avatar": "https://example.com/avatar.png", "firstName": "John", "lastName": "Doe", "email": "john@example.com"}}], "next": "<value>", "previous": "<value>", "totalCount": 2140.37, "totalCountCapped": true}
@@ -860,6 +877,7 @@ examples:
         query:
           limit: 10
           payload: "btoa(JSON.stringify({ foo: 123 })) results in base64 encoded string like eyJmb28iOjEyM30="
+          page: 0
       responses:
         "200":
           application/json: {"totalCount": 5, "hasMore": true, "data": [], "pageSize": 2, "page": 1}
@@ -922,6 +940,9 @@ examples:
           application/json: "Please wait some time, then try again."
   TopicsController_listTopics:
     speakeasy-default-topics-controller-list-topics:
+      parameters:
+        query:
+          limit: 10
       responses:
         "200":
           application/json: {"data": [{"_id": "64da692e9a94fb2e6449ad06", "key": "product-updates", "name": "Product Updates", "createdAt": "2023-08-15T00:00:00.000Z", "updatedAt": "2023-08-15T00:00:00.000Z"}], "next": "<value>", "previous": "<value>", "totalCount": 2418.49, "totalCountCapped": true}
@@ -1025,6 +1046,8 @@ examples:
       parameters:
         path:
           topicKey: "<value>"
+        query:
+          limit: 10
       responses:
         "200":
           application/json: {"data": [], "next": "<value>", "previous": "<value>", "totalCount": 4830.71, "totalCountCapped": true}
@@ -1068,7 +1091,7 @@ examples:
         path:
           topicKey: "<value>"
       requestBody:
-        application/json: {"subscriberIds": ["subscriberId1", "subscriberId2"]}
+        application/json: {"subscriptions": [{"identifier": "subscriber-123-subscription-a", "subscriberId": "subscriber-123"}, {"subscriberId": "subscriber-456"}, {"identifier": "subscriber-789-subscription-b"}]}
       responses:
         "200":
           application/json: {"data": [], "meta": {"totalCount": 3, "successful": 2, "failed": 1}, "errors": [{"subscriberId": "invalid-subscriber-id", "code": "SUBSCRIBER_NOT_FOUND", "message": "Subscriber with ID invalid-subscriber-id could not be found"}]}
@@ -1217,6 +1240,10 @@ examples:
           application/json: "Please wait some time, then try again."
   WorkflowController_searchWorkflows:
     speakeasy-default-workflow-controller-search-workflows:
+      parameters:
+        query:
+          limit: 10
+          offset: 0
       responses:
         "200":
           application/json: {"workflows": [{"name": "<value>", "updatedAt": "1735636970594", "createdAt": "1705782861487", "_id": "<id>", "workflowId": "<id>", "slug": "<value>", "status": "ACTIVE", "origin": "external", "stepTypeOverviews": [], "steps": []}], "totalCount": 1320.19}
@@ -1639,3 +1666,5 @@ examples:
         "503":
           application/json: "Please wait some time, then try again."
 examplesVersion: 1.0.2
+generatedFiles:
+  - novu_api_postman_collection.json
