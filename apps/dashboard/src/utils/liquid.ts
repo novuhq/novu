@@ -1,3 +1,6 @@
+import { LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
+import { isAllowedAlias } from '@/components/maily/repeat-block-aliases';
+
 export type VariableMatch = {
   fullLiquidExpression: string;
   liquidVariable: string;
@@ -8,6 +11,36 @@ export type VariableMatch = {
 };
 
 export const VARIABLE_REGEX_STRING = '{{([^{}]+)}}';
+
+/**
+ * Checks if a variable is a namespace-only variable (invalid single-part variable).
+ * Based on the API parser logic: single-part variables are invalid unless they're:
+ * - Content variables (LAYOUT_CONTENT_VARIABLE)
+ * - Allowed aliases (e.g., "current" in repeat blocks)
+ * - Local variables (from loops, checked separately by callers)
+ */
+export function isNamespaceOnlyVariable(variableName: string): boolean {
+  const hasNoNamespace = variableName.split('.').length === 1;
+
+  if (!hasNoNamespace) {
+    return false;
+  }
+
+  // Content variables are valid single-part variables
+  if (variableName === LAYOUT_CONTENT_VARIABLE) {
+    return false;
+  }
+
+  // Allowed aliases (e.g., "current" in repeat blocks) are valid single-part variables
+  // Note: Actual validation of whether we're in a repeat block happens later
+  // where editor context is available (e.g., in variable-view.tsx)
+  if (isAllowedAlias(variableName)) {
+    return false;
+  }
+
+  // All other single-part variables are invalid (namespace-only)
+  return true;
+}
 
 const stripBrackets = (value: string): string => {
   return value.replace(/[{}]/g, '').trim();

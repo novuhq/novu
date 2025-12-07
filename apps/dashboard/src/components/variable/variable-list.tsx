@@ -201,7 +201,9 @@ const VariableListItem = ({
           <div className="flex size-3 items-center justify-center">
             <VariableIcon variableName={option.value} context={context} />
           </div>
-          <TruncatedText>{option.label}</TruncatedText>
+          <div className="min-w-0 flex-1">
+            <TruncatedText>{option.label}</TruncatedText>
+          </div>
           <CheckIcon className={cn('ml-auto size-4', selectedValue === option.value ? 'opacity-50' : 'opacity-0')} />
         </li>
       </TooltipTrigger>

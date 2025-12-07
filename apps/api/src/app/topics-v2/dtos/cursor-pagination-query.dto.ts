@@ -25,6 +25,7 @@ export class CursorPaginationQueryDto<T, K extends keyof T> {
   @ApiPropertyOptional({
     description: 'Limit the number of items to return (max 100)',
     type: Number,
+    example: 10,
   })
   @Transform(({ value }) => Number(value))
   @Max(100)

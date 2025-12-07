@@ -5,9 +5,10 @@ import { validateEnhancedDigestFilters } from './utils';
 type Props = PropsWithChildren<{
   issues?: ReturnType<typeof validateEnhancedDigestFilters>;
   isNotInSchema?: boolean;
+  errorMessage?: string;
 }>;
 
-export function VariableTooltip({ issues, isNotInSchema, children }: Props) {
+export function VariableTooltip({ issues, isNotInSchema, errorMessage, children }: Props) {
   const [isHovered, setIsHovered] = React.useState(false);
   const hasTooltip = !!issues || isNotInSchema;
 
@@ -26,7 +27,7 @@ export function VariableTooltip({ issues, isNotInSchema, children }: Props) {
                 {issues.name}: {issues.message}
               </span>
             )}
-            {!issues && isNotInSchema && <span className="text-error-base">Error: Variable missing from schema</span>}
+            {!issues && isNotInSchema && errorMessage && <span className="text-error-base">Error: {errorMessage}</span>}
           </div>
         </TooltipContent>
       </TooltipPortal>

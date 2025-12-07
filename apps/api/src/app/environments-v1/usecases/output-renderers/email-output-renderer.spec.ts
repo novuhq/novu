@@ -1,7 +1,7 @@
-import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { ModuleRef } from '@nestjs/core';
 import { CreateExecutionDetails, DetailEnum, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
+import { JSONContent as MailyJSONContent } from '@novu/maily-render';
 import {
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
