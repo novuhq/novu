@@ -78,8 +78,8 @@ function SupportDrawerContent({
                 max-width: 14px !important;
                 max-height: 14px !important;
               }
-              .ikp-ai-search-content {
-                padding-top: 8px;
+              .ikp-ai-search-results__tab-list {
+                margin-top: 8px;
               }
             `,
           },
