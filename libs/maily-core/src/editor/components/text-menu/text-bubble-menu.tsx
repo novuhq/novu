@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/correctness/useHookAtTopLevel: needs to be fixed */
 import { BubbleMenu, BubbleMenuProps } from '@tiptap/react';
 import { LucideIcon } from 'lucide-react';
+import { sticky } from 'tippy.js';
 import { ColumnExtension } from '@/editor/nodes/columns/column';
 import { ColumnsExtension } from '@/editor/nodes/columns/columns';
 import { RepeatExtension } from '@/editor/nodes/repeat/repeat';
@@ -67,23 +68,10 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
     },
     tippyOptions: {
       popperOptions: {
-        placement: 'top-start',
-        modifiers: [
-          {
-            name: 'preventOverflow',
-            options: {
-              boundary: 'viewport',
-              padding: 8,
-            },
-          },
-          {
-            name: 'flip',
-            options: {
-              fallbackPlacements: ['bottom-start', 'top-end', 'bottom-end'],
-            },
-          },
-        ],
+        modifiers: [{ name: 'flip', enabled: false }],
       },
+      plugins: [sticky],
+      sticky: 'popper',
       maxWidth: '100%',
     },
   };
