@@ -499,9 +499,10 @@ function SupportDrawerContent({
                 color: #99A0AE;
               }
               .ikp-ai-search-input-group svg {
-                width: 14px;
-                height: 14px;
-                flex-shrink: 0;
+                min-width: 14px !important;
+                min-height: 14px !important;
+                max-width: 14px !important;
+                max-height: 14px !important;
               }
             `,
           },
