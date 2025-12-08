@@ -46,6 +46,7 @@ export class DuplicateWorkflowUseCase {
       UpsertWorkflowCommand.create({
         workflowDto: duplicateWorkflowDto,
         user: command.user,
+        preserveWorkflowId: !!command.overrides.workflowId,
       })
     );
 
