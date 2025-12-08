@@ -11,7 +11,7 @@ type BridgeURLGetterSetter = { bridgeURL: string; setBridgeURL: (url: string) =>
 const StudioStateContext = React.createContext<(StudioState & BridgeURLGetterSetter) | undefined>(undefined);
 
 function computeBridgeURL(state: StudioState) {
-  return state.isLocalStudio ? state.tunnelBridgeURL || state.tunnelBridgeURL : state.storedBridgeURL;
+  return state.isLocalStudio ? state.tunnelBridgeURL || state.localBridgeURL : state.storedBridgeURL;
 }
 
 function convertToTestUser(currentUser?: IUserEntity | null) {
