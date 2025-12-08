@@ -33,7 +33,7 @@
     "@codemirror/lang-liquid": "^6.2.3",
     "@codemirror/language": "^6.11.1",
     "@hookform/resolvers": "^3.10.0",
-    "@inkeep/cxkit-react": "^0.5.96",
+    "@inkeep/cxkit-react": "^0.5.107",
     "@lezer/highlight": "^1.2.1",
     "@novu/maily-core": "workspace:*",
     "@novu/api": "workspace:*",
