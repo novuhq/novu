@@ -28,6 +28,8 @@ import { NovuIcon } from '@/components/icons';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { usePlainChat } from '@/hooks/use-plain-chat';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 const DRAWER_WIDTH_DEFAULT = 350;
 const DRAWER_WIDTH_EXPANDED = 700;
@@ -314,14 +316,18 @@ const gettingStarted: SuggestionItem[] = [
 type SuggestionCardProps = {
   item: SuggestionItem;
   onOpenDocs: (url: string) => void;
+  onTrack: (title: string) => void;
 };
 
-function SuggestionCard({ item, onOpenDocs }: SuggestionCardProps) {
+function SuggestionCard({ item, onOpenDocs, onTrack }: SuggestionCardProps) {
   const Icon = item.icon;
 
   return (
     <button
-      onClick={() => onOpenDocs(item.url)}
+      onClick={() => {
+        onTrack(item.title);
+        onOpenDocs(item.url);
+      }}
       className="bg-background hover:bg-neutral-50 border-stroke-soft flex w-full items-center gap-2 rounded-xl border p-2 transition-colors text-left"
     >
       <div className="border-stroke-soft flex shrink-0 items-center justify-center overflow-hidden rounded-lg border p-px">
@@ -340,9 +346,11 @@ function SuggestionCard({ item, onOpenDocs }: SuggestionCardProps) {
 type DocsIframeViewProps = {
   url: string;
   onBack: () => void;
+  onTrackBack: () => void;
+  onTrackExternal: () => void;
 };
 
-function DocsIframeView({ url, onBack }: DocsIframeViewProps) {
+function DocsIframeView({ url, onBack, onTrackBack, onTrackExternal }: DocsIframeViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const embedUrl = toEmbedUrl(url);
 
@@ -373,7 +381,10 @@ function DocsIframeView({ url, onBack }: DocsIframeViewProps) {
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-1 px-3 py-3.5 pr-14">
         <button
-          onClick={onBack}
+          onClick={() => {
+            onTrackBack();
+            onBack();
+          }}
           className="hover:bg-neutral-100 -ml-1.5 flex size-5 items-center justify-center rounded transition-colors"
         >
           <RiArrowLeftLine className="text-foreground-600 size-3.5" />
@@ -382,7 +393,10 @@ function DocsIframeView({ url, onBack }: DocsIframeViewProps) {
           Documentation
         </span>
         <button
-          onClick={() => window.open(url, '_blank noopener noreferrer')}
+          onClick={() => {
+            onTrackExternal();
+            window.open(url, '_blank noopener noreferrer');
+          }}
           className="hover:bg-neutral-100 flex size-5 items-center justify-center rounded transition-colors"
           title="Open in new tab"
         >
@@ -444,6 +458,7 @@ function SupportDrawerContent({
   onOpenDocs,
   onCloseDocs,
 }: SupportDrawerContentProps) {
+  const telemetry = useTelemetry();
   const { showPlainLiveChat, isLiveChatVisible } = usePlainChat();
   const suggestions = useContextualSuggestions();
   const searchFunctionsRef = useRef<any>(null);
@@ -489,6 +504,18 @@ function SupportDrawerContent({
     shouldAutoFocusInput: false,
   };
 
+  function handleTrackSuggestion(title: string) {
+    telemetry(TelemetryEvent.SUPPORT_DRAWER_SUGGESTION_CLICKED, { suggestionTitle: title });
+  }
+
+  function handleTrackDocsBack() {
+    telemetry(TelemetryEvent.SUPPORT_DRAWER_DOCS_BACK_CLICKED);
+  }
+
+  function handleTrackDocsExternal() {
+    telemetry(TelemetryEvent.SUPPORT_DRAWER_DOCS_EXTERNAL_CLICKED);
+  }
+
   function handleShareFeedback() {
     if (isLiveChatVisible) {
       showPlainLiveChat();
@@ -504,7 +531,14 @@ function SupportDrawerContent({
   }
 
   if (isViewingDocs) {
-    return <DocsIframeView url={currentDocsUrl} onBack={onCloseDocs} />;
+    return (
+      <DocsIframeView
+        url={currentDocsUrl}
+        onBack={onCloseDocs}
+        onTrackBack={handleTrackDocsBack}
+        onTrackExternal={handleTrackDocsExternal}
+      />
+    );
   }
 
   return (
@@ -538,7 +572,12 @@ function SupportDrawerContent({
                   </span>
                   <div className="flex flex-col gap-2">
                     {suggestions.map((item) => (
-                      <SuggestionCard key={item.title} item={item} onOpenDocs={onOpenDocs} />
+                      <SuggestionCard
+                        key={item.title}
+                        item={item}
+                        onOpenDocs={onOpenDocs}
+                        onTrack={handleTrackSuggestion}
+                      />
                     ))}
                   </div>
                 </div>
@@ -551,7 +590,12 @@ function SupportDrawerContent({
                   </span>
                   <div className="flex flex-col gap-2">
                     {gettingStarted.map((item) => (
-                      <SuggestionCard key={item.title} item={item} onOpenDocs={onOpenDocs} />
+                      <SuggestionCard
+                        key={item.title}
+                        item={item}
+                        onOpenDocs={onOpenDocs}
+                        onTrack={handleTrackSuggestion}
+                      />
                     ))}
                   </div>
                 </div>
@@ -562,19 +606,49 @@ function SupportDrawerContent({
       </div>
 
       <div className="flex flex-col gap-0.5 p-1.5">
-        <FooterLink icon={RiBook2Line} onClick={() => handleOpenExternalLink(docsUrl())}>
+        <FooterLink
+          icon={RiBook2Line}
+          onClick={() => {
+            telemetry(TelemetryEvent.SUPPORT_DRAWER_DOCUMENTATION_CLICKED);
+            handleOpenExternalLink(docsUrl());
+          }}
+        >
           Documentation
         </FooterLink>
-        <FooterLink icon={RiNewspaperLine} onClick={() => handleOpenExternalLink(CHANGELOG_URL)}>
+        <FooterLink
+          icon={RiNewspaperLine}
+          onClick={() => {
+            telemetry(TelemetryEvent.SUPPORT_DRAWER_CHANGELOG_CLICKED);
+            handleOpenExternalLink(CHANGELOG_URL);
+          }}
+        >
           What's new
         </FooterLink>
-        <FooterLink icon={RiRouteFill} onClick={() => handleOpenExternalLink(ROADMAP_URL)}>
+        <FooterLink
+          icon={RiRouteFill}
+          onClick={() => {
+            telemetry(TelemetryEvent.SUPPORT_DRAWER_ROADMAP_CLICKED);
+            handleOpenExternalLink(ROADMAP_URL);
+          }}
+        >
           Roadmap
         </FooterLink>
-        <FooterLink icon={RiMessage3Line} onClick={handleShareFeedback}>
+        <FooterLink
+          icon={RiMessage3Line}
+          onClick={() => {
+            telemetry(TelemetryEvent.SUPPORT_DRAWER_CHAT_CLICKED);
+            handleShareFeedback();
+          }}
+        >
           Chat with us
         </FooterLink>
-        <FooterLink icon={RiCalendarEventLine} onClick={() => handleOpenExternalLink(BOOK_DEMO_URL)}>
+        <FooterLink
+          icon={RiCalendarEventLine}
+          onClick={() => {
+            telemetry(TelemetryEvent.SUPPORT_DRAWER_BOOK_DEMO_CLICKED);
+            handleOpenExternalLink(BOOK_DEMO_URL);
+          }}
+        >
           <span>
             Book a demo <span className="text-foreground-400">(Yes, with a real human)</span>
           </span>
@@ -589,6 +663,7 @@ type SupportDrawerProps = {
 };
 
 export function SupportDrawer({ children }: SupportDrawerProps) {
+  const telemetry = useTelemetry();
   const [isOpen, setIsOpen] = useState(false);
   const [docsUrl, setDocsUrl] = useState<string | null>(null);
 
@@ -597,6 +672,9 @@ export function SupportDrawer({ children }: SupportDrawerProps) {
 
   function handleOpenChange(open: boolean) {
     setIsOpen(open);
+    if (open) {
+      telemetry(TelemetryEvent.SUPPORT_DRAWER_OPENED);
+    }
     if (!open) {
       setDocsUrl(null);
     }
