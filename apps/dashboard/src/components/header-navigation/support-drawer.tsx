@@ -1,6 +1,6 @@
 import { InkeepEmbeddedSearch, InkeepEmbeddedSearchProps } from '@inkeep/cxkit-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { cloneElement, isValidElement, useMemo, useRef, useState } from 'react';
+import { cloneElement, isValidElement, useEffect, useMemo, useRef, useState } from 'react';
 import {
   RiArrowLeftLine,
   RiBook2Line,
@@ -18,7 +18,6 @@ import {
   RiNewspaperLine,
   RiNotification4Fill,
   RiRouteFill,
-  RiSearchLine,
   RiSettings3Line,
   RiStore3Line,
   RiTranslate2,
@@ -347,6 +346,29 @@ function DocsIframeView({ url, onBack }: DocsIframeViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const embedUrl = toEmbedUrl(url);
 
+  useEffect(() => {
+    const ensurePrefetch = () => {
+      const existingPrefetch = document.querySelector('link[rel="dns-prefetch"][href="https://docs.novu.co"]');
+      const existingPreconnect = document.querySelector('link[rel="preconnect"][href="https://docs.novu.co"]');
+
+      if (!existingPrefetch) {
+        const prefetchLink = document.createElement('link');
+        prefetchLink.rel = 'dns-prefetch';
+        prefetchLink.href = 'https://docs.novu.co';
+        document.head.appendChild(prefetchLink);
+      }
+
+      if (!existingPreconnect) {
+        const preconnectLink = document.createElement('link');
+        preconnectLink.rel = 'preconnect';
+        preconnectLink.href = 'https://docs.novu.co';
+        document.head.appendChild(preconnectLink);
+      }
+    };
+
+    ensurePrefetch();
+  }, []);
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-1 px-3 py-3.5 pr-14">
@@ -368,11 +390,18 @@ function DocsIframeView({ url, onBack }: DocsIframeViewProps) {
         </button>
       </div>
       <div className="relative flex-1 overflow-hidden rounded-b-xl">
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-neutral-50">
-            <RiLoaderLine className="text-foreground-400 size-6 animate-spin" />
-          </div>
-        )}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+              className="absolute inset-0 flex items-center justify-center bg-neutral-50"
+            >
+              <RiLoaderLine className="text-foreground-400 size-6 animate-spin" />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <iframe
           src={embedUrl}
           className="h-full w-full border-0"
