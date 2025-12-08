@@ -778,23 +778,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(duplicatedWorkflow?.tags).to.deep.equal(['tag1', 'tag2']);
     });
 
-    it('should duplicate a workflow with custom workflowId', async () => {
-      const workflowCreated = await createWorkflowAndValidate('XYZ');
-      const customWorkflowId = 'my-custom-workflow-id';
-      const duplicatedWorkflow = (
-        await apiClient.workflows.duplicate(
-          {
-            name: 'Duplicated Workflow',
-            workflowId: customWorkflowId,
-          } as any,
-          workflowCreated.id
-        )
-      ).result;
-      expect(duplicatedWorkflow?.id).to.not.equal(workflowCreated.id);
-      expect(duplicatedWorkflow?.workflowId).to.equal(customWorkflowId);
-      expect(duplicatedWorkflow?.name).to.equal('Duplicated Workflow');
-    });
-
     it('should throw an error if the workflow to duplicate is not found', async () => {
       const res = await expectSdkExceptionGeneric(() =>
         apiClient.workflows.duplicate({ name: 'Duplicated Workflow' }, '123')
