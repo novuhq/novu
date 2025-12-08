@@ -331,7 +331,7 @@ function SuggestionCard({ item, onOpenDocs, onTrack }: SuggestionCardProps) {
     >
       <div className="border-stroke-soft flex shrink-0 items-center justify-center overflow-hidden rounded-lg border p-px">
         <div className="bg-neutral-alpha-50 group-hover:bg-white flex size-[54px] items-center justify-center rounded-[7px] transition-colors">
-          <Icon className="text-foreground-400 size-4" />
+          <Icon className="text-foreground-300 size-4" />
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
