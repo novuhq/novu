@@ -139,9 +139,9 @@ function SupportDrawerContent({
         <span className="text-foreground-600 text-sm font-medium leading-5 tracking-[-0.084px]">Need a hand?</span>
       </div>
 
-      <div className="px-3 pb-2">{hasInkeep ? <InkeepEmbeddedSearch {...inkeepConfig} /> : null}</div>
+      <div className="px-3 pb-4">{hasInkeep ? <InkeepEmbeddedSearch {...inkeepConfig} /> : null}</div>
 
-      <div className="flex-1 overflow-auto px-3 py-3">
+      <div className="flex-1 overflow-auto px-3 pt-1 pb-3">
         <AnimatePresence mode="wait">
           {!hasSearchQuery && (
             <motion.div
