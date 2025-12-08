@@ -61,6 +61,10 @@ export const useUpdateWorkflow = (
         queryKey: [QueryKeys.fetchWorkflowTestData, currentEnvironment?._id, workflowId],
       });
 
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchWorkflows],
+      });
+
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
