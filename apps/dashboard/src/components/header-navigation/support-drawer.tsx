@@ -478,18 +478,30 @@ function SupportDrawerContent({
             key: 'support-drawer-search',
             type: 'style',
             value: `
-              .ikp-search-bar-input {
+              .ikp-ai-search-input-group {
+                display: flex;
+                align-items: center;
+                height: 36px;
+                gap: 8px;
+                padding: 8px;
+                border: 1px solid #E1E4EA;
+                border-radius: 8px;
+                background: #FFFFFF;
+                box-shadow: 0px 1px 2px 0px rgba(10, 13, 20, 0.03);
+              }
+              .ikp-ai-search-input-group input {
                 font-size: 14px;
                 font-weight: 500;
                 line-height: 20px;
                 letter-spacing: -0.084px;
               }
-              .ikp-search-bar-wrapper {
-                border-radius: 8px;
-                border: 1px solid var(--stroke-soft, #E1E4EA);
-                background: var(--background, #fff);
-                box-shadow: 0px 1px 2px 0px rgba(10, 13, 20, 0.03);
-                padding: 8px;
+              .ikp-ai-search-input-group input::placeholder {
+                color: #99A0AE;
+              }
+              .ikp-ai-search-input-group svg {
+                width: 14px;
+                height: 14px;
+                flex-shrink: 0;
               }
             `,
           },
