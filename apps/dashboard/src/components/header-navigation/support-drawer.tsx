@@ -328,10 +328,10 @@ function SuggestionCard({ item, onOpenDocs, onTrack }: SuggestionCardProps) {
         onTrack(item.title);
         onOpenDocs(item.url);
       }}
-      className="bg-background hover:bg-neutral-50 border-stroke-soft flex w-full items-center gap-2 rounded-xl border p-2 transition-colors text-left"
+      className="bg-background hover:bg-neutral-50 border-stroke-soft group flex w-full items-center gap-2 rounded-xl border p-2 transition-colors text-left"
     >
       <div className="border-stroke-soft flex shrink-0 items-center justify-center overflow-hidden rounded-lg border p-px">
-        <div className="bg-neutral-alpha-50 flex size-[54px] items-center justify-center rounded-[7px]">
+        <div className="bg-neutral-alpha-50 group-hover:bg-white flex size-[54px] items-center justify-center rounded-[7px] transition-colors">
           <Icon className="text-foreground-400 size-4" />
         </div>
       </div>
