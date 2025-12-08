@@ -127,7 +127,10 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   }, [processBody, body]);
 
   return (
-    <div {...rest} className={cn(`mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)}>
+    <div
+      {...rest}
+      className={cn(`bg-background mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)}
+    >
       <div
         className={cn(`shadow-xs min-h-80 w-full overflow-auto p-0`)}
         ref={(node) => {

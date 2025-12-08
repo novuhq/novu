@@ -579,7 +579,7 @@ export class Maily {
               width: '100%',
               marginLeft: 'auto',
               marginRight: 'auto',
-              padding: '0.5rem',
+              padding: '1rem',
             }}
           >
             {jsxNodes}

@@ -146,6 +146,10 @@
   margin-top: var(--default-negative-margin);
 }
 
+.mly-editor .mly-prose :where([data-type="columns"], [data-type="section"], [data-type="repeat"], [data-type="show"]) + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
+}
+
 .mly-editor
   .mly-prose
   :where(img, .node-logo)

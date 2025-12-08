@@ -105,20 +105,20 @@ export function ContentMenu(props: ContentMenuProps) {
       pluginKey="ContentMenu"
       editor={editor}
       tippyOptions={{
-        offset: [2, 0],
+        offset: [0, 0],
         zIndex: 99,
       }}
       onNodeChange={handleNodeChange}
       className={cn(editor.isEditable ? 'mly-visible' : 'mly-hidden')}
     >
       <TooltipProvider>
-        <div ref={contentRef} className="mly-drag-handle mly-flex mly-items-center mly-pr-1.5">
+        <div ref={contentRef} className="mly-drag-handle mly-flex mly-items-center mly-gap-1 mly-pr-1.5">
           <Tooltip>
             <TooltipTrigger asChild>
               <BaseButton
                 variant="ghost"
                 size="icon"
-                className="!mly-size-5 mly-cursor-grab mly-text-gray-500 hover:mly-text-black"
+                className="!mly-size-5 mly-cursor-grab mly-text-gray-500 hover:mly-text-black mly-m-0"
                 onClick={handleAddNewNode}
                 type="button"
               >
@@ -134,7 +134,7 @@ export function ContentMenu(props: ContentMenuProps) {
                   <BaseButton
                     variant="ghost"
                     size="icon"
-                    className="mly-relative mly-z-[1] !mly-size-5 mly-cursor-grab mly-text-gray-500 hover:mly-text-black"
+                    className="mly-relative mly-z-[1] !mly-size-5 mly-cursor-grab mly-text-gray-500 hover:mly-text-black mly-m-0"
                     onClick={(e) => {
                       e.preventDefault();
                       setMenuOpen(true);

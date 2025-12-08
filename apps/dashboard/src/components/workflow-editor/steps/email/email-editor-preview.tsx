@@ -101,6 +101,7 @@ export const EmailEditorPreview = ({
                     <div className="w-full bg-neutral-50 py-8">
                       <EmailPreviewContentMobile className="mx-auto">
                         <EmailPreviewBodyMobile
+                          className="bg-background"
                           body={previewData.result.preview.body}
                           resourceOrigin={workflow?.origin ?? ResourceOriginEnum.NOVU_CLOUD}
                         />

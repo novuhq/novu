@@ -110,7 +110,11 @@ export function EmailCorePreview({
                         </div>
                         <div className={cn(isCustomHtmlEditor ? '' : 'w-full bg-neutral-50 py-8')}>
                           <EmailPreviewContentMobile className="mx-auto">
-                            <EmailPreviewBodyMobile body={emailPreviewContent.body} resourceOrigin={resourceOrigin} />
+                            <EmailPreviewBodyMobile
+                              className="bg-background"
+                              body={emailPreviewContent.body}
+                              resourceOrigin={resourceOrigin}
+                            />
                           </EmailPreviewContentMobile>
                         </div>
                       </TabsContent>
