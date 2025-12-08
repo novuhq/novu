@@ -199,7 +199,7 @@ export const createDefaultLayout = (organizationName: string) => ({
                   content: [
                     {
                       type: 'text',
-                      marks: [{ type: 'textStyle', attrs: { color: 'rgb(55, 65, 81)' } }],
+                      marks: [{ type: 'textStyle' }],
                       text: '1234 Example Street, DE 19801, United States',
                     },
                   ],
@@ -215,8 +215,8 @@ export const createDefaultLayout = (organizationName: string) => ({
               },
               content: [
                 {
-                  type: 'footer',
-                  attrs: { textAlign: 'right', 'maily-component': 'footer' },
+                  type: 'paragraph',
+                  attrs: { textAlign: 'right', showIfKey: null },
                   content: [
                     {
                       type: 'text',

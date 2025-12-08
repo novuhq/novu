@@ -160,14 +160,6 @@
   margin-top: var(--default-negative-margin);
 }
 
-.mly-editor .mly-prose :where([data-type="section"]) + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-top: var(--default-negative-margin);
-}
-
-.mly-editor .mly-prose :where([data-type="columns"]) + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-top: var(--default-negative-margin);
-}
-
 .mly-editor
   .mly-prose
   :where(.node-button, .node-linkCard):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {

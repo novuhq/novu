@@ -198,7 +198,7 @@ const DEFAULT_THEME: ThemeOptions = {
       fontSize: '14px',
       fontStyle: 'normal',
       fontWeight: 500,
-      lineHeight: '24px',
+      lineHeight: '20px',
     },
   },
 };
@@ -853,8 +853,11 @@ export class Maily {
         href={href}
         rel={rel}
         style={{
-          fontWeight: 500,
-          textDecoration: 'none',
+          fontSize: this.config.theme?.fontSize?.paragraph?.fontSize,
+          fontStyle: this.config.theme?.fontSize?.paragraph?.fontStyle,
+          fontWeight: this.config.theme?.fontSize?.paragraph?.fontWeight,
+          lineHeight: this.config.theme?.fontSize?.paragraph?.lineHeight,
+          textDecoration: 'underline',
           color: this.config.theme?.colors?.heading,
         }}
         target={target}
@@ -1298,9 +1301,6 @@ export class Maily {
       <Text
         style={{
           fontSize: this.config.theme?.fontSize?.footer?.fontSize,
-          fontStyle: this.config.theme?.fontSize?.footer?.fontStyle,
-          fontWeight: this.config.theme?.fontSize?.footer?.fontWeight,
-          lineHeight: this.config.theme?.fontSize?.footer?.lineHeight,
           color: this.config.theme?.colors?.footer,
           marginTop: '0px',
           marginBottom: shouldRemoveBottomMargin ? '0px' : DEFAULT_MARGIN,
