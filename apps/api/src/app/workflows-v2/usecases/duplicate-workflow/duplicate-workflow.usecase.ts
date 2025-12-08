@@ -70,6 +70,7 @@ export class DuplicateWorkflowUseCase {
     preferences: PreferencesEntity[]
   ): Promise<UpsertWorkflowDataCommand> {
     return {
+      workflowId: overrides.workflowId,
       name: overrides.name ?? `${originWorkflow.name} (Copy)`,
       description: overrides.description ?? originWorkflow.description,
       tags: overrides.tags ?? originWorkflow.tags,
