@@ -78,6 +78,11 @@ function SupportDrawerContent({
                 max-width: 14px !important;
                 max-height: 14px !important;
               }
+              [class*="ikp-embedded-search-results-container"],
+              [class*="SearchResults__Container"] {
+                max-height: 400px;
+                overflow-y: auto;
+              }
             `,
           },
         ],
