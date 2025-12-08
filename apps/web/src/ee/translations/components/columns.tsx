@@ -16,14 +16,13 @@ import {
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FlagMap } from '../icons/flags';
-
 import { useEnvironment } from '../../../hooks';
-import { ITranslation, useFetchLocales } from '../hooks';
 import { useEditTranslationFileContext } from '../context/useEditTranslationFileContext';
-import { ReuploadIcon, Star, Warning } from '../icons';
-import { DeleteTranslationModal } from './TranslationGroup/DeleteTranslationModal';
+import { ITranslation, useFetchLocales } from '../hooks';
 import { useGetDefaultLocale } from '../hooks/useGetDefaultLocale';
+import { ReuploadIcon, Star, Warning } from '../icons';
+import { FlagMap } from '../icons/flags';
+import { DeleteTranslationModal } from './TranslationGroup/DeleteTranslationModal';
 
 const LanguageCell = ({ row: { original }, isLoading }: IExtendedCellProps<ITranslation>) => {
   const { getLocale } = useFetchLocales();
@@ -59,13 +58,13 @@ const LanguageCell = ({ row: { original }, isLoading }: IExtendedCellProps<ITran
               </Text>
             </Group>
           }
-          disabled={fileName}
+          disabled={!!fileName}
           position="bottom"
         >
           <Indicator
             sx={{ cursor: 'pointer' }}
             offset={8}
-            disabled={fileName}
+            disabled={!!fileName}
             inline
             position="bottom-end"
             label={<Warning width={12} height={12} />}
