@@ -437,7 +437,7 @@ function FooterLink({ icon: Icon, children, onClick }: FooterLinkProps) {
   return (
     <button
       onClick={onClick}
-      className="hover:bg-neutral-50 flex h-7 w-full items-center gap-1.5 rounded-md px-2 transition-colors"
+      className="hover:bg-neutral-alpha-50 flex h-7 w-full items-center gap-1.5 rounded-md px-2 transition-colors"
     >
       <Icon className="text-foreground-600 size-4 shrink-0" />
       <span className="text-foreground-950 text-sm font-medium leading-5 tracking-[-0.28px]">{children}</span>
