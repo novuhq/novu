@@ -16,7 +16,6 @@ import {
   RiMailLine,
   RiMessage3Line,
   RiNewspaperLine,
-  RiNotification4Fill,
   RiRouteFill,
   RiSettings3Line,
   RiStore3Line,
@@ -24,7 +23,7 @@ import {
   RiUserLine,
 } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
-import { NovuIcon } from '@/components/icons';
+import { Bell, NovuIcon } from '@/components/icons';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { usePlainChat } from '@/hooks/use-plain-chat';
@@ -300,7 +299,7 @@ const gettingStarted: SuggestionItem[] = [
     url: docsUrl('/platform/overview'),
   },
   {
-    icon: RiNotification4Fill,
+    icon: Bell,
     title: '<Inbox/> Component',
     description: 'Triggers, delays, emails—mix them like a wizard.',
     url: docsUrl('/platform/inbox/overview'),
