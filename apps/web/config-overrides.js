@@ -4,8 +4,12 @@ const { version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 function overrideConfig(config, env) {
+  const filteredPlugins = config.plugins.filter((plugin) => {
+    return plugin.constructor.name !== 'ESLintWebpackPlugin';
+  });
+
   const plugins = [
-    ...config.plugins,
+    ...filteredPlugins,
     new DefinePlugin({
       'process.env.NOVU_VERSION': JSON.stringify(version),
     }),
@@ -17,7 +21,7 @@ function overrideConfig(config, env) {
     plugins,
     ignoreWarnings: [
       {
-        message: /Module not found: Error: Can't resolve \'@novu\/ee-.*\' .*/,
+        message: /Module not found: Error: Can't resolve '@novu\/ee-.*' .*/,
       },
     ],
   };

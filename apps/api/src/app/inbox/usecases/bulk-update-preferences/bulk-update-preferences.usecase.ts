@@ -99,6 +99,7 @@ export class BulkUpdatePreferences {
             subscriberId: command.subscriberId,
             environmentId: command.environmentId,
             level: PreferenceLevelEnum.TEMPLATE,
+            subscriptionIdOrIdentifier: preference.subscriptionIdOrIdentifier,
             chat: preference.chat,
             email: preference.email,
             in_app: preference.in_app,

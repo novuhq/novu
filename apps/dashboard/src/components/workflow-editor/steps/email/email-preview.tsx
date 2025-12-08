@@ -127,7 +127,10 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   }, [processBody, body]);
 
   return (
-    <div {...rest} className={cn(`mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)}>
+    <div
+      {...rest}
+      className={cn(`bg-background mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)}
+    >
       <div
         className={cn(`shadow-xs min-h-80 w-full overflow-auto p-0`)}
         ref={(node) => {
@@ -145,7 +148,7 @@ type EmailPreviewContentMobileProps = HTMLAttributes<HTMLDivElement>;
 export const EmailPreviewContentMobile = (props: EmailPreviewContentMobileProps) => {
   const { className, ...rest } = props;
 
-  return <div className={cn('bg-background max-w-sm', className)} {...rest} />;
+  return <div className={cn('max-w-sm', className)} {...rest} />;
 };
 
 type EmailPreviewBodyMobileProps = HTMLAttributes<HTMLDivElement> & {
@@ -221,27 +224,13 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
   return (
     <div className={cn('flex flex-col', className)} {...rest}>
       <div
-        className="mx-auto min-h-96 w-full overflow-auto px-4"
+        className="mx-auto min-h-96 w-full overflow-auto"
         ref={(node) => {
           refNode.current = node;
           attachShadow(node, body);
         }}
       />
       <NovuBranding resourceOrigin={resourceOrigin} />
-    </div>
-  );
-};
-
-type EmailPreviewSubjectMobileProps = HTMLAttributes<HTMLDivElement> & {
-  subject: string;
-};
-
-export const EmailPreviewSubjectMobile = (props: EmailPreviewSubjectMobileProps) => {
-  const { subject, className, ...rest } = props;
-
-  return (
-    <div className={cn('bg-neutral-50 p-4', className)} {...rest}>
-      <h3 className="line-clamp-2">{subject}</h3>
     </div>
   );
 };

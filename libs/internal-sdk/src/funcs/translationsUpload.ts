@@ -107,19 +107,19 @@ async function $do(
 
   for (const fileItem of payload.RequestBody.files) {
     if (isBlobLike(fileItem)) {
-      appendForm(body, "files[]", fileItem);
+      appendForm(body, "files", fileItem);
     } else if (isReadableStream(fileItem.content)) {
       const buffer = await readableStreamToArrayBuffer(fileItem.content);
       const contentType = getContentTypeFromFileName(fileItem.fileName)
         || "application/octet-stream";
       const blob = new Blob([buffer], { type: contentType });
-      appendForm(body, "files[]", blob, fileItem.fileName);
+      appendForm(body, "files", blob, fileItem.fileName);
     } else {
       const contentType = getContentTypeFromFileName(fileItem.fileName)
         || "application/octet-stream";
       appendForm(
         body,
-        "files[]",
+        "files",
         new Blob([fileItem.content], { type: contentType }),
         fileItem.fileName,
       );

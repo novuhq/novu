@@ -34,7 +34,7 @@ export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
     ...props,
     ...(appendTo ? { appendTo: appendTo.current } : {}),
     shouldShow: ({ editor }) => {
-      if (!editor.isEditable) {
+      if (!editor.isEditable || editor.view.dragging) {
         return false;
       }
 

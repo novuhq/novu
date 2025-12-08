@@ -1,8 +1,9 @@
 import { InputRule } from '@tiptap/core';
 import { HorizontalRule as TipTapHorizontalRule } from '@tiptap/extension-horizontal-rule';
 
-export const DEFAULT_HORIZONTAL_RULE_MARGIN_TOP = 32;
-export const DEFAULT_HORIZONTAL_RULE_MARGIN_BOTTOM = 32;
+const DEFAULT_MARGIN = 10;
+export const DEFAULT_HORIZONTAL_RULE_MARGIN_TOP = DEFAULT_MARGIN;
+export const DEFAULT_HORIZONTAL_RULE_MARGIN_BOTTOM = DEFAULT_MARGIN;
 
 export const HorizontalRule = TipTapHorizontalRule.extend({
   addAttributes() {

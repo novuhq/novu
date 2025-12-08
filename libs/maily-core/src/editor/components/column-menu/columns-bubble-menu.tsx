@@ -24,7 +24,13 @@ export function ColumnsBubbleMenu(props: EditorBubbleMenuProps) {
     ...props,
     ...(appendTo ? { appendTo: appendTo.current } : {}),
     shouldShow: ({ editor }) => {
-      if (isTextSelected(editor) || editor.isActive('section') || editor.isActive('repeat') || !editor.isEditable) {
+      if (
+        isTextSelected(editor) ||
+        editor.isActive('section') ||
+        editor.isActive('repeat') ||
+        !editor.isEditable ||
+        editor.view.dragging
+      ) {
         return false;
       }
 

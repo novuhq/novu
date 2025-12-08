@@ -9,7 +9,7 @@ import { DeepPartial } from "./utils";
  * 1. `SUBSCRIPTION_SUBSCRIBER_WORKFLOW` - The subscriber's preference for a workflow scoped to a subscription.
  * 2. `SUBSCRIBER_WORKFLOW` - The subscriber's preference for a workflow.
  * 3. `SUBSCRIBER_GLOBAL` - The subscriber's global preference.
- * 4. `USER_WORKFLOW` - The user's preference for a workflow.
+ * 4. `USER_WORKFLOW` - The user's preference for a workflow in the dashboard.
  * 5. `WORKFLOW_RESOURCE` - The Framework-defined preference for a workflow.
  */
 export enum PreferencesTypeEnum {

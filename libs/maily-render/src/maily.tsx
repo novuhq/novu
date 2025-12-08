@@ -56,19 +56,22 @@ type AllowedHeadings = (typeof allowedHeadings)[number];
 
 const headings: Record<AllowedHeadings, CSSProperties> = {
   h1: {
-    fontSize: '36px',
+    fontSize: '30px',
+    fontStyle: 'normal',
+    fontWeight: 600,
     lineHeight: '40px',
-    fontWeight: 800,
   },
   h2: {
-    fontSize: '30px',
-    lineHeight: '36px',
-    fontWeight: 700,
+    fontSize: '24px',
+    fontStyle: 'normal',
+    fontWeight: 600,
+    lineHeight: '30px',
   },
   h3: {
-    fontSize: '24px',
-    lineHeight: '38px',
+    fontSize: '18px',
+    fontStyle: 'normal',
     fontWeight: 600,
+    lineHeight: '26px',
   },
 };
 
@@ -98,11 +101,15 @@ export interface ThemeOptions {
   }>;
   fontSize?: Partial<{
     paragraph: Partial<{
-      size: string;
+      fontSize: string;
+      fontStyle: string;
+      fontWeight: number;
       lineHeight: string;
     }>;
     footer: Partial<{
-      size: string;
+      fontSize: string;
+      fontStyle: string;
+      fontWeight: number;
       lineHeight: string;
     }>;
   }>;
@@ -171,7 +178,7 @@ const DEFAULT_THEME: ThemeOptions = {
     paragraph: '#374151',
     horizontal: '#EAEAEA',
     footer: '#64748B',
-    blockquoteBorder: '#D1D5DB',
+    blockquoteBorder: '#374151',
     codeBackground: '#EFEFEF',
     codeText: '#111827',
     linkCardTitle: '#111827',
@@ -182,32 +189,38 @@ const DEFAULT_THEME: ThemeOptions = {
   },
   fontSize: {
     paragraph: {
-      size: '15px',
-      lineHeight: '26.25px',
+      fontSize: '14px',
+      fontStyle: 'normal',
+      fontWeight: 500,
+      lineHeight: '20px',
     },
     footer: {
-      size: '14px',
-      lineHeight: '24px',
+      fontSize: '14px',
+      fontStyle: 'normal',
+      fontWeight: 500,
+      lineHeight: '20px',
     },
   },
 };
 
 const CODE_FONT_FAMILY = 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+const DEFAULT_MARGIN = 10;
 export const DEFAULT_SECTION_BACKGROUND_COLOR = '#ffffff';
 export const DEFAULT_SECTION_ALIGN = 'left';
-export const DEFAULT_SECTION_BORDER_WIDTH = 1;
-export const DEFAULT_SECTION_BORDER_COLOR = '#000000';
+export const DEFAULT_SECTION_BORDER_RADIUS = 6;
+export const DEFAULT_SECTION_BORDER_WIDTH = 0;
+export const DEFAULT_SECTION_BORDER_COLOR = '#e2e2e2';
 export const DEFAULT_SECTION_BORDER_STYLE = 'solid';
 
 export const DEFAULT_SECTION_MARGIN_TOP = 0;
 export const DEFAULT_SECTION_MARGIN_RIGHT = 0;
-export const DEFAULT_SECTION_MARGIN_BOTTOM = 0;
+export const DEFAULT_SECTION_MARGIN_BOTTOM = 10;
 export const DEFAULT_SECTION_MARGIN_LEFT = 0;
 
-export const DEFAULT_SECTION_PADDING_TOP = 5;
-export const DEFAULT_SECTION_PADDING_RIGHT = 5;
-export const DEFAULT_SECTION_PADDING_BOTTOM = 5;
-export const DEFAULT_SECTION_PADDING_LEFT = 5;
+export const DEFAULT_SECTION_PADDING_TOP = 8;
+export const DEFAULT_SECTION_PADDING_RIGHT = 8;
+export const DEFAULT_SECTION_PADDING_BOTTOM = 8;
+export const DEFAULT_SECTION_PADDING_LEFT = 8;
 
 export const DEFAULT_COLUMNS_WIDTH = '100%';
 export const DEFAULT_COLUMNS_GAP = 8;
@@ -537,7 +550,7 @@ export class Maily {
       <Html {...htmlProps}>
         <Head>
           <Font
-            fallbackFontFamily="sans-serif"
+            fallbackFontFamily={['system-ui', 'sans-serif'] as any}
             fontFamily="Inter"
             fontStyle="normal"
             fontWeight={400}
@@ -566,7 +579,7 @@ export class Maily {
               width: '100%',
               marginLeft: 'auto',
               marginRight: 'auto',
-              padding: '0.5rem',
+              padding: '1rem',
             }}
           >
             {jsxNodes}
@@ -609,6 +622,8 @@ export class Maily {
     const isFirstShowElement = parent?.type === 'show' && !prev;
     const isLastShowElement = parent?.type === 'show' && !next;
 
+    const isParentBlockQuote = parent?.type === 'blockquote' && node.type !== 'blockquote';
+
     return {
       isNextSpacer,
       isPrevSpacer,
@@ -623,9 +638,19 @@ export class Maily {
       isLastShowElement,
 
       shouldRemoveTopMargin:
-        isPrevSpacer || isFirstSectionElement || isFirstColumnElement || isFirstRepeatElement || isFirstShowElement,
+        isPrevSpacer ||
+        isFirstSectionElement ||
+        isFirstColumnElement ||
+        isFirstRepeatElement ||
+        isFirstShowElement ||
+        isParentBlockQuote,
       shouldRemoveBottomMargin:
-        isNextSpacer || isLastSectionElement || isLastColumnElement || isLastRepeatElement || isLastShowElement,
+        isNextSpacer ||
+        isLastSectionElement ||
+        isLastColumnElement ||
+        isLastRepeatElement ||
+        isLastShowElement ||
+        isParentBlockQuote,
     };
   }
 
@@ -697,7 +722,9 @@ export class Maily {
       paddingRight = 0,
       paddingBottom = 0,
       paddingLeft = 0,
-      fontSize = this.config.theme?.fontSize?.paragraph?.size,
+      fontSize = this.config.theme?.fontSize?.paragraph?.fontSize,
+      fontStyle = this.config.theme?.fontSize?.paragraph?.fontStyle,
+      fontWeight = this.config.theme?.fontSize?.paragraph?.fontWeight,
       lineHeight = this.config.theme?.fontSize?.paragraph?.lineHeight,
       color = this.config.theme?.colors?.paragraph,
       display = 'block',
@@ -710,37 +737,40 @@ export class Maily {
       return <></>;
     }
 
-    const marginBottom = isParentListItem || shouldRemoveBottomMargin ? 0 : 20;
+    const marginBottom = isParentListItem || shouldRemoveBottomMargin ? 0 : DEFAULT_MARGIN;
+    const style: CSSProperties = {
+      textAlign,
+      ...antialiased,
+      display,
+      background,
+      border,
+      borderRadius,
+      paddingTop,
+      paddingRight,
+      paddingBottom,
+      paddingLeft,
+      fontSize,
+      fontStyle,
+      fontWeight,
+      lineHeight,
+      color,
+      margin: `0 0 ${marginBottom}px 0`,
+      // preserves the spacing between the html tags and paragraphs
+      overflow: 'hidden',
+    };
 
-    return (
-      <Text
-        style={{
-          textAlign,
-          ...antialiased,
-          display,
-          background,
-          border,
-          borderRadius,
-          paddingTop,
-          paddingRight,
-          paddingBottom,
-          paddingLeft,
-          fontSize,
-          lineHeight,
-          color,
-          margin: `0 0 ${marginBottom}px 0`,
-        }}
-      >
-        {node.content ? (
-          this.getMappedContent(node, {
+    if (node.content) {
+      return (
+        <Text style={style}>
+          {this.getMappedContent(node, {
             ...options,
             parent: node,
-          })
-        ) : (
-          <>&nbsp;</>
-        )}
-      </Text>
-    );
+          })}
+        </Text>
+      );
+    }
+
+    return <Text style={style}>&nbsp;</Text>;
   }
 
   private text(node: JSONContent, options?: NodeOptions): JSX.Element {
@@ -823,8 +853,11 @@ export class Maily {
         href={href}
         rel={rel}
         style={{
-          fontWeight: 500,
-          textDecoration: 'none',
+          fontSize: this.config.theme?.fontSize?.paragraph?.fontSize,
+          fontStyle: this.config.theme?.fontSize?.paragraph?.fontStyle,
+          fontWeight: this.config.theme?.fontSize?.paragraph?.fontWeight,
+          lineHeight: this.config.theme?.fontSize?.paragraph?.lineHeight,
+          textDecoration: 'underline',
           color: this.config.theme?.colors?.heading,
         }}
         target={target}
@@ -855,7 +888,7 @@ export class Maily {
     const level = `h${Number(attrs?.level) || 1}`;
     const alignment = attrs?.textAlign || 'left';
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(node, options);
-    const { fontSize, lineHeight, fontWeight } = headings[level as AllowedHeadings];
+    const { fontSize, fontStyle, fontWeight, lineHeight } = headings[level as AllowedHeadings];
 
     const show = this.shouldShow(node, options);
     if (!show) {
@@ -870,10 +903,11 @@ export class Maily {
           textAlign: alignment,
           color: this.config.theme?.colors?.heading,
           fontSize,
+          fontStyle,
           lineHeight,
           fontWeight,
         }}
-        mb={shouldRemoveBottomMargin ? 0 : 12}
+        mb={shouldRemoveBottomMargin ? 0 : DEFAULT_MARGIN}
         mt={0}
         mx={0}
       >
@@ -931,12 +965,11 @@ export class Maily {
   }
 
   private horizontalRule(node: JSONContent, __?: NodeOptions): JSX.Element {
-    const DEFAULT_MARGIN_Y = 32;
     const { attrs } = node;
     const {
-      marginTop = DEFAULT_MARGIN_Y,
+      marginTop = DEFAULT_MARGIN,
       marginRight = 0,
-      marginBottom = DEFAULT_MARGIN_Y,
+      marginBottom = DEFAULT_MARGIN,
       marginLeft = 0,
 
       paddingTop = 0,
@@ -968,8 +1001,13 @@ export class Maily {
       <Container>
         <ol
           style={{
+            fontSize: this.config.theme?.fontSize?.paragraph?.fontSize,
+            fontStyle: this.config.theme?.fontSize?.paragraph?.fontStyle,
+            fontWeight: this.config.theme?.fontSize?.paragraph?.fontWeight,
+            lineHeight: this.config.theme?.fontSize?.paragraph?.lineHeight,
+            color: this.config.theme?.colors?.paragraph,
             marginTop: '0px',
-            marginBottom: shouldRemoveBottomMargin ? '0' : '20px',
+            marginBottom: shouldRemoveBottomMargin ? '0' : DEFAULT_MARGIN,
             paddingLeft: '26px',
             listStyleType: 'decimal',
           }}
@@ -998,8 +1036,13 @@ export class Maily {
       >
         <ul
           style={{
+            fontSize: this.config.theme?.fontSize?.paragraph?.fontSize,
+            fontStyle: this.config.theme?.fontSize?.paragraph?.fontStyle,
+            fontWeight: this.config.theme?.fontSize?.paragraph?.fontWeight,
+            lineHeight: this.config.theme?.fontSize?.paragraph?.lineHeight,
+            color: this.config.theme?.colors?.paragraph,
             marginTop: '0px',
-            marginBottom: shouldRemoveBottomMargin ? '0' : '20px',
+            marginBottom: shouldRemoveBottomMargin ? '0' : DEFAULT_MARGIN,
             paddingLeft: '26px',
             listStyleType: 'disc',
           }}
@@ -1073,7 +1116,7 @@ export class Maily {
         style={{
           textAlign: alignment,
           maxWidth: '100%',
-          marginBottom: shouldRemoveBottomMargin ? '0px' : '20px',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : DEFAULT_MARGIN,
         }}
       >
         <Button
@@ -1146,7 +1189,7 @@ export class Maily {
       <Row
         style={{
           marginTop: '0px',
-          marginBottom: shouldRemoveBottomMargin ? '0px' : '32px',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : DEFAULT_MARGIN,
         }}
       >
         <Column align={alignment}>
@@ -1199,7 +1242,7 @@ export class Maily {
 
     const mainImage = (
       <Img
-        alt={alt || title || 'Image'}
+        alt={!src ? 'No image selected' : alt || title || 'Image'}
         src={src}
         style={{
           width: widthStyle, // Use the calculated width
@@ -1209,9 +1252,13 @@ export class Maily {
           border: 'none',
           textDecoration: 'none',
           display: 'block', // Prevent unwanted spacing
-          borderRadius,
+          borderRadius: !src ? '8px' : borderRadius,
+          padding: !src ? '8px' : 0,
+          fontSize: !src ? '14px' : 'initial',
+          lineHeight: !src ? '20px' : 'initial',
+          backgroundColor: !src ? '#f4f5f6' : 'initial',
         }}
-        title={title || alt || 'Image'}
+        title={!src ? 'No image selected' : title || alt || 'Image'}
       />
     );
 
@@ -1219,7 +1266,7 @@ export class Maily {
       <Row
         style={{
           marginTop: '0px',
-          marginBottom: shouldRemoveBottomMargin ? '0px' : '32px',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : DEFAULT_MARGIN,
         }}
       >
         <Column align={alignment}>
@@ -1253,11 +1300,10 @@ export class Maily {
     return (
       <Text
         style={{
-          fontSize: this.config.theme?.fontSize?.footer?.size,
-          lineHeight: this.config.theme?.fontSize?.footer?.lineHeight,
+          fontSize: this.config.theme?.fontSize?.footer?.fontSize,
           color: this.config.theme?.colors?.footer,
           marginTop: '0px',
-          marginBottom: shouldRemoveBottomMargin ? '0px' : '20px',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : DEFAULT_MARGIN,
           textAlign,
           ...antialiased,
         }}
@@ -1271,7 +1317,7 @@ export class Maily {
   }
 
   private blockquote(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { isPrevSpacer, shouldRemoveBottomMargin } = this.getMarginOverrideConditions(node, options);
+    const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(node, options);
 
     return (
       <blockquote
@@ -1282,8 +1328,8 @@ export class Maily {
           paddingLeft: '16px',
           marginLeft: '0px',
           marginRight: '0px',
-          marginTop: isPrevSpacer ? '0px' : '20px',
-          marginBottom: shouldRemoveBottomMargin ? '0px' : '20px',
+          marginTop: 0,
+          marginBottom: shouldRemoveBottomMargin ? '0px' : DEFAULT_MARGIN,
         }}
       >
         {this.getMappedContent(node, {
@@ -1329,7 +1375,7 @@ export class Maily {
           textDecoration: 'none',
           color: 'inherit',
           display: 'block',
-          marginBottom: shouldRemoveBottomMargin ? '0px' : '20px',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : DEFAULT_MARGIN,
         }}
         target="_blank"
       >
@@ -1464,7 +1510,7 @@ export class Maily {
   private section(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     const {
-      borderRadius = 0,
+      borderRadius = DEFAULT_SECTION_BORDER_RADIUS,
       background,
       backgroundColor = DEFAULT_SECTION_BACKGROUND_COLOR,
 
@@ -1486,6 +1532,8 @@ export class Maily {
       textAlign = 'initial',
     } = attrs || {};
 
+    const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(node, options);
+
     const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
       return <></>;
@@ -1496,7 +1544,7 @@ export class Maily {
         style={{
           marginTop,
           marginRight,
-          marginBottom,
+          marginBottom: shouldRemoveBottomMargin ? 0 : marginBottom,
           marginLeft,
         }}
       >
@@ -1530,7 +1578,8 @@ export class Maily {
 
   private columns(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
-
+    const { marginBottom = DEFAULT_SECTION_MARGIN_BOTTOM } = attrs || {};
+    const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(node, options);
     const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
       return <></>;
@@ -1543,6 +1592,7 @@ export class Maily {
         width={`${totalWidth}%`}
         style={{
           margin: 0,
+          marginBottom: shouldRemoveBottomMargin ? 0 : marginBottom,
           padding: 0,
           width: `${totalWidth}%`,
         }}
