@@ -19,7 +19,8 @@ export class VariablePluginView {
     private lastCompletionRef: MutableRefObject<{ from: number; to: number } | null>,
     private isAllowedVariable: IsAllowedVariable,
     private onSelect?: (value: string, from: number, to: number) => void,
-    private isDigestEventsVariable?: (variableName: string) => boolean
+    private isDigestEventsVariable?: (variableName: string) => boolean,
+    private getVariableErrorMessage?: (variableName: string, isAllowed: boolean) => string | undefined
   ) {
     this.decorations = this.createDecorations(view);
     viewRef.current = view;
@@ -68,6 +69,10 @@ export class VariablePluginView {
       // Check if the variable is allowed (in schema or in local context)
       const isAllowed = this.isAllowedVariable({ name }) || isVariableInLocalContext(content, name, start);
 
+      // Get error message if variable is not allowed
+      const errorMessage =
+        !isAllowed && this.getVariableErrorMessage ? this.getVariableErrorMessage(name, false) : undefined;
+
       if (name) {
         decorations.push(
           Decoration.replace({
@@ -79,7 +84,8 @@ export class VariablePluginView {
               filtersArray,
               this.onSelect,
               this.isDigestEventsVariable,
-              !isAllowed // Pass whether the variable is NOT in schema
+              !isAllowed,
+              errorMessage
             ),
             inclusive: false,
             side: -1,

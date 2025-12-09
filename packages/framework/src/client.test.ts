@@ -1229,6 +1229,127 @@ describe('Novu Client', () => {
       });
     });
 
+    it('should preserve translation keys used as filter arguments', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              count: { type: 'number' },
+            },
+            required: ['count'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        payload: { count: 5 },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        controls: {
+          body: "You have {{ payload.count | pluralize: 't.apple', 't.apples' }}",
+          subject: "{{ payload.count | pluralize: 't.itemSingular', 't.itemPlural' }} in your cart",
+        },
+        context: {},
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      // Translation keys used as filter arguments should be transformed to {{t.key}} format
+      expect(emailExecutionResult.outputs).toEqual({
+        body: 'You have 5 {{t.apples}}',
+        subject: '5 {{t.itemPlural}} in your cart',
+      });
+    });
+
+    it('should handle translation keys with mixed liquid expressions and filters', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              count: { type: 'number' },
+              name: { type: 'string' },
+            },
+            required: ['count', 'name'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        payload: { count: 1, name: 'Alice' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        controls: {
+          body: "Hello {{payload.name}}, you have {{ payload.count | pluralize: 't.item', 't.items' }}. {{t.footer}}",
+          subject: '{{t.greeting}} {{payload.name}}',
+        },
+        context: {},
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      // Mix of payload variables, translation filter args, and standalone translation keys
+      expect(emailExecutionResult.outputs).toEqual({
+        body: 'Hello Alice, you have 1 {{t.item}}. {{t.footer}}',
+        subject: '{{t.greeting}} Alice',
+      });
+    });
+
     it('should compile context variables correctly', async () => {
       const newWorkflow = workflow(
         'test-workflow',

@@ -1,4 +1,4 @@
-import { Variable } from '@maily-to/core/extensions';
+import { Variable } from '@novu/maily-core/extensions';
 import React, { useImperativeHandle, useMemo, useRef } from 'react';
 import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 import {

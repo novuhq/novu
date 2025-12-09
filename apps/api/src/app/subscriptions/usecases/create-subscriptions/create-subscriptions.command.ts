@@ -1,10 +1,11 @@
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { GroupPreferenceFilterDto } from '../../../shared/dtos/subscriptions/create-subscriptions.dto';
 
 export class TopicSubscriberIdentifier {
   @IsString()
-  @IsDefined()
+  @IsOptional()
   identifier?: string;
 
   @IsString()
@@ -25,6 +26,8 @@ export class CreateSubscriptionsCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @ArrayMinSize(1, { message: 'At least one subscription is required' })
   @ArrayMaxSize(100, { message: 'Cannot subscribe more than 100 subscriptions at once' })
+  @ValidateNested({ each: true })
+  @Type(() => TopicSubscriberIdentifier)
   subscriptions: TopicSubscriberIdentifier[];
 
   @IsString()

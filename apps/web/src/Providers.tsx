@@ -10,6 +10,7 @@ import { ClerkProvider } from './ee/clerk/providers/ClerkProvider';
 import { EnvironmentProvider } from './components/providers/EnvironmentProvider';
 import { SegmentProvider } from './components/providers/SegmentProvider';
 import { StudioStateProvider } from './studio/StudioStateProvider';
+import { RegionProvider } from './context/RegionProvider';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
@@ -32,17 +33,19 @@ const Providers: React.FC<PropsWithChildren> = ({ children }) => {
     <ThemeProvider shouldDisableGlobals>
       <NovuiProvider>
         <ClerkProvider>
-          <SegmentProvider>
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <EnvironmentProvider>
-                  <HelmetProvider>
-                    <StudioStateProvider>{children}</StudioStateProvider>
-                  </HelmetProvider>
-                </EnvironmentProvider>
-              </AuthProvider>
-            </QueryClientProvider>
-          </SegmentProvider>
+          <QueryClientProvider client={queryClient}>
+            <RegionProvider>
+              <SegmentProvider>
+                <AuthProvider>
+                  <EnvironmentProvider>
+                    <HelmetProvider>
+                      <StudioStateProvider>{children}</StudioStateProvider>
+                    </HelmetProvider>
+                  </EnvironmentProvider>
+                </AuthProvider>
+              </SegmentProvider>
+            </RegionProvider>
+          </QueryClientProvider>
         </ClerkProvider>
       </NovuiProvider>
     </ThemeProvider>

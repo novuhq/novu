@@ -19,7 +19,6 @@ import {
   ResourceOriginEnum$inboundSchema,
 } from "./resourceoriginenum.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
-import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the chat step
@@ -68,7 +67,7 @@ export type ChatStepResponseDto = {
   /**
    * Type of the step
    */
-  type: StepTypeEnum;
+  type: "chat";
   /**
    * Origin of the layout
    */
@@ -125,7 +124,7 @@ export const ChatStepResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
-  type: StepTypeEnum$inboundSchema,
+  type: z.literal("chat"),
   origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),

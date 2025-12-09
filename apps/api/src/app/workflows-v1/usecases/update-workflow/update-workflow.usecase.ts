@@ -168,7 +168,7 @@ export class UpdateWorkflow {
         updatePayload.validatePayload = command.validatePayload;
       }
 
-      if (command.active) {
+      if (command.active !== undefined) {
         updatePayload.status = computeWorkflowStatus(command.active, updatePayload.steps || existingTemplate.steps);
       }
 

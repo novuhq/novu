@@ -428,6 +428,10 @@ function createTranslationNamespaceCompletion(): Completion {
   };
 }
 
+/**
+ *
+ * This is invoked when you type "{{" and select the "t." variable/namespace.
+ */
 function applyTranslationNamespaceCompletion(
   view: EditorView,
   completion: Completion,
@@ -475,7 +479,7 @@ function applyRegularCompletion(
   const needsClosing = !afterCursor.startsWith('}}');
 
   const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
-  const finalCursorPos = from + wrappedValue.length;
+  const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);
 
   onVariableSelect?.(completion as CompletionOption);
 

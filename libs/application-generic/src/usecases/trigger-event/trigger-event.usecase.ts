@@ -306,6 +306,7 @@ export class TriggerEvent {
       activeWorkerName: getActiveWorker(),
     });
   }
+
   private async getAndUpdateWorkflowById(command: {
     triggerIdentifier: string;
     environmentId: string;
@@ -315,15 +316,15 @@ export class TriggerEvent {
   }) {
     const lastTriggeredAt = new Date();
 
-    const workflow = await this.notificationTemplateRepository.findByTriggerIdentifierAndUpdate(
+    const workflow = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
-      command.triggerIdentifier,
-      lastTriggeredAt
+      command.triggerIdentifier
     );
 
     if (workflow) {
-      // We only consider trigger when it's coming from the backend SDK
-      if (!command.payload?.__source) {
+      const isBackendSDK = !command.payload?.__source;
+
+      if (isBackendSDK) {
         if (!workflow.lastTriggeredAt) {
           this.analyticsService.track('Workflow Connected to Backend SDK - [API]', command.userId, {
             name: workflow.name,
@@ -333,9 +334,21 @@ export class TriggerEvent {
           });
         }
 
-        /**
-         * Update the entry to cache it with the new lastTriggeredAt
-         */
+        const shouldUpdate =
+          !workflow.lastTriggeredAt ||
+          new Date(workflow.lastTriggeredAt).getTime() < lastTriggeredAt.getTime() - 5 * 60 * 1000;
+
+        if (shouldUpdate) {
+          const previousLastTriggeredAt = workflow.lastTriggeredAt ? new Date(workflow.lastTriggeredAt) : null;
+
+          this.notificationTemplateRepository.updateLastTriggeredAt(
+            command.environmentId,
+            command.triggerIdentifier,
+            lastTriggeredAt,
+            previousLastTriggeredAt
+          );
+        }
+
         workflow.lastTriggeredAt = lastTriggeredAt.toISOString();
       }
     }

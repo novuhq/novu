@@ -16,10 +16,12 @@ import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclud
 import {
   buildWorkflowPreferencesFromPreferenceChannels,
   DEFAULT_WORKFLOW_PREFERENCES,
+  PermissionsEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { RequirePermissions } from '@novu/application-generic';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
@@ -78,6 +80,7 @@ export class WorkflowControllerV1 {
     description: `Workflows were previously named notification templates`,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   listWorkflows(
     @UserSession() user: UserSessionData,
     @Query() queryParams: WorkflowsRequestDto
@@ -101,6 +104,7 @@ export class WorkflowControllerV1 {
     description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async updateWorkflowById(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string,
@@ -139,6 +143,7 @@ export class WorkflowControllerV1 {
     description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   deleteWorkflowById(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string): Promise<boolean> {
     return this.deleteWorkflowByIdUsecase.execute(
       DeleteNotificationTemplateCommand.create({
@@ -158,6 +163,7 @@ export class WorkflowControllerV1 {
     description: 'Get the variables that can be used in the workflow',
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @SdkGroupName('Workflows.Variables')
   getWorkflowVariables(@UserSession() user: UserSessionData): Promise<VariablesResponseDto> {
     return this.getWorkflowVariablesUsecase.execute(
@@ -176,6 +182,7 @@ export class WorkflowControllerV1 {
     description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   getWorkflowById(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string
@@ -191,13 +198,14 @@ export class WorkflowControllerV1 {
   }
 
   @Post('')
-  @ExternalApiAccessible()
-  @UseGuards(RootEnvironmentGuard)
   @ApiResponse(WorkflowResponse, 201)
   @ApiOperation({
     summary: 'Create workflow',
     description: `Workflow was previously named notification template`,
   })
+  @ExternalApiAccessible()
+  @UseGuards(RootEnvironmentGuard)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   create(
     @UserSession() user: UserSessionData,
     @Query() query: CreateWorkflowQuery,
@@ -238,6 +246,7 @@ export class WorkflowControllerV1 {
     description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @SdkGroupName('Workflows.Status')
   updateActiveStatus(
     @UserSession() user: UserSessionData,

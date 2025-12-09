@@ -10,7 +10,6 @@ import {
   EmailPreviewContentMobile,
   EmailPreviewHeader,
   EmailPreviewSubject,
-  EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
 import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
 import { cn } from '@/utils/ui';
@@ -106,10 +105,16 @@ export function EmailCorePreview({
                   {emailPreviewContent ? (
                     <>
                       <TabsContent value="mobile">
-                        <div className="w-full bg-neutral-100">
+                        <div className="border-b px-2">
+                          <EmailPreviewSubject subject={emailPreviewContent.subject} />
+                        </div>
+                        <div className={cn(isCustomHtmlEditor ? '' : 'w-full bg-neutral-50 py-8')}>
                           <EmailPreviewContentMobile className="mx-auto">
-                            <EmailPreviewSubjectMobile subject={emailPreviewContent.subject} />
-                            <EmailPreviewBodyMobile body={emailPreviewContent.body} resourceOrigin={resourceOrigin} />
+                            <EmailPreviewBodyMobile
+                              className="bg-background"
+                              body={emailPreviewContent.body}
+                              resourceOrigin={resourceOrigin}
+                            />
                           </EmailPreviewContentMobile>
                         </div>
                       </TabsContent>

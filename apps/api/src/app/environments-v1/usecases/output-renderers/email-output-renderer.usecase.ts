@@ -1,4 +1,3 @@
-import { JSONContent as MailyJSONContent, render as mailyRender } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
@@ -20,6 +19,7 @@ import {
   OrganizationEntity,
 } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
+import { JSONContent as MailyJSONContent, render as mailyRender } from '@novu/maily-render';
 import {
   ControlValuesLevelEnum,
   EmailRenderOutput,
@@ -331,8 +331,20 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     const layoutControlValues = layoutControlsEntity.controls as LayoutControlType;
 
+    /**
+     * Preprocess layout body: transform 't.key' filter arguments to '{{t.key}}'
+     * so they can be resolved by the translation service.
+     *
+     * This preprocessing normally happens in the framework's client.ts (preprocessFilterTranslationArgs),
+     * but since layouts are fetched directly from the database and don't go through the framework,
+     * we need to apply the same transformation here.
+     *
+     * @see packages/framework/src/client.ts - preprocessFilterTranslationArgs
+     */
+    const layoutBody = (layoutControlValues.email?.body ?? '').replace(/'t\.([\p{L}\p{N}_.-]+)'/gu, "'{{t.$1}}'");
+
     return this.processBodyContent({
-      body: layoutControlValues.email?.body ?? '',
+      body: layoutBody,
       payload: {
         ...payload,
         [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(cleanedStepBodyHtml.replace(/\n/g, '')),

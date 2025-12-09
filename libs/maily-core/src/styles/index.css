@@ -1,0 +1,514 @@
+/* cspell:ignore selectednode gapcursor scrollbars */
+/** biome-ignore-all lint/suspicious/noDuplicateProperties: safe to use */
+:root {
+  --placeholder-color: #adb5bd;
+  --bg-color: #ffffff;
+
+  --variable-icon-size: 12px;
+  --variable-icon-gap: 4px;
+
+  --color-token-tag: #00c951;
+  --color-meta-string: #2b7fff;
+  --color-attribute: #ad46ff;
+  --color-tag: #313233;
+  --color-meta: #313233d6;
+  --paragraph-font-size: 14px;
+  --paragraph-font-style: normal;
+  --paragraph-font-weight: 500;
+  --paragraph-line-height: 20px;
+  --default-margin: 10px;
+  --default-negative-margin: -10px;
+}
+
+.mly-editor .mly-prose p:where([class~="text-sm"]):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
+}
+
+.mly-editor .mly-prose :where(h1, h2, h3):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: 0;
+  margin-bottom: var(--default-margin);
+}
+
+.mly-editor .mly-prose :where(h1):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 40px;
+}
+
+.mly-editor .mly-prose :where(h2):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 30px;
+}
+
+.mly-editor .mly-prose :where(h3):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 26px;
+}
+
+.mly-editor .mly-prose p:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
+  margin-bottom: var(--default-margin);
+}
+
+.mly-editor
+  .mly-prose
+  :where(h1, h2, h3, hr, table)
+  + p:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: 0;
+}
+
+.mly-editor .mly-prose :where(ol, ul):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: 0;
+  margin-bottom: var(--default-margin);
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
+}
+
+.mly-editor .mly-prose li:not(:last-child):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-bottom: var(--default-margin);
+}
+
+.mly-editor .mly-prose li > p:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin: 0;
+}
+
+.mly-editor .mly-prose :where(ul > li):not(:where([class~=mly-not-prose], [class~=mly-not-prose] *))::marker,
+.mly-editor .mly-prose :where(ol > li):not(:where([class~=mly-not-prose], [class~=mly-not-prose] *))::marker {
+  color: #374151;
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
+}
+
+.mly-editor .mly-prose :where(img, .node-logo):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: 0;
+  margin-bottom: var(--default-margin);
+}
+
+.mly-editor .mly-prose hr:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-block: var(--default-margin);
+}
+
+.mly-editor .mly-prose .footer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  display: block;
+  font-size: 13px;
+  margin-bottom: var(--default-margin);
+  color: rgb(100, 116, 139);
+}
+
+.mly-editor .mly-prose .spacer + *:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: 0;
+}
+
+.mly-editor .mly-prose p + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
+}
+
+.mly-editor .mly-prose :where(blockquote):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *))  {
+  margin-top: 0;
+  margin-bottom: var(--default-margin);
+  padding-left: 16px;
+  border-left: 4px solid #374151;
+  quotes: none;
+}
+
+.mly-editor .mly-prose blockquote:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) > p {
+  margin: 0;
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
+}
+
+.mly-editor .mly-prose blockquote + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
+}
+
+.mly-editor .mly-prose :where(h1, h2, h3) + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
+}
+
+.mly-editor .mly-prose :where(ol, ul) + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
+}
+
+.mly-editor .mly-prose :where([data-type="columns"], [data-type="section"], [data-type="repeat"], [data-type="show"]) + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
+}
+
+.mly-editor
+  .mly-prose
+  :where(img, .node-logo)
+  + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
+}
+
+.mly-editor
+  .mly-prose
+  :where(.node-button, .node-linkCard, footer)
+  + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
+}
+
+.mly-editor
+  .mly-prose
+  :where(.node-button, .node-linkCard):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: 0;
+  margin-bottom: var(--default-margin);
+}
+
+.mly-editor .mly-prose .node-image:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  line-height: 0;
+  margin-top: 0;
+  margin-bottom: var(--default-margin);
+  outline: none;
+}
+
+.mly-editor .mly-prose .node-image + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
+}
+
+/* Remove code ::before and ::after */
+.mly-editor .mly-prose code::before,
+.mly-editor .mly-prose code::after {
+  content: none;
+}
+
+/* Chrome, Safari and Opera */
+.mly-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.mly-no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.mly-editor .react-colorful__alpha {
+  border-radius: 0;
+}
+
+.mly-editor .react-colorful__saturation,
+.mly-editor .react-colorful__hue,
+.mly-editor .react-colorful__alpha {
+  border-radius: 8px;
+}
+
+.mly-editor .react-colorful__hue,
+.mly-editor .react-colorful__alpha {
+  height: 16px;
+}
+
+.mly-editor .react-colorful__pointer {
+  width: 16px;
+  height: 16px;
+}
+
+.mly-editable .ProseMirror-selectednode::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  border-radius: 6px;
+  background: rgba(35, 131, 226, 0.14);
+}
+
+.mly-prose {
+  strong {
+    color: currentColor;
+  }
+}
+
+.ProseMirror {
+  position: relative;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  white-space: break-spaces;
+  -webkit-font-variant-ligatures: none;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0; /* the above doesn't seem to work in Edge */
+
+  &:focus {
+    outline: none;
+  }
+
+  p:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+    margin-top: 0;
+  }
+
+  h1 {
+    --variable-icon-size: 28px;
+  }
+
+  h2 {
+    --variable-icon-size: 24px;
+  }
+
+  h3 {
+    --variable-icon-size: 20px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    --variable-icon-gap: 8px;
+  }
+
+  :where(.is-editor-empty:first-child, .is-empty):not(
+      :where([data-type="columns"], [data-type="section"], ul, li, ol)
+    )::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: var(--placeholder-color);
+    pointer-events: none;
+    height: 0;
+  }
+
+  .is-empty:where(.node-htmlCodeBlock):not([data-active-tab="preview"])::before,
+  .is-editor-empty:first-child:where(.node-htmlCodeBlock):not([data-active-tab="preview"])::before {
+    float: none !important;
+    position: absolute;
+    left: 9px;
+    top: 8px;
+  }
+
+  .is-empty:where(.node-htmlCodeBlock):not([data-active-tab="code"])::before,
+  .is-editor-empty:first-child:where(.node-htmlCodeBlock):not([data-active-tab="code"])::before {
+    content: "";
+  }
+
+  [data-type="columns"] .is-empty::before,
+  [data-type="section"] .is-empty::before {
+    --l-threshold: 0.66;
+    --diff: calc(var(--l-threshold) - l);
+    color: oklch(from var(--bg-color) clamp(0.05, max(min(var(--diff) * infinity, 1), 0), 0.95) c h) !important;
+    opacity: 0.6;
+  }
+
+  [data-type="columns"] {
+    display: flex;
+    margin: 0;
+    padding: 0;
+
+    &.has-focus [data-type="column"],
+    &:hover [data-type="column"] {
+      outline: 1.5px solid #e9ecef;
+      outline-style: dashed;
+    }
+
+    [data-type="column"].has-focus {
+      outline-style: solid;
+    }
+  }
+
+  [data-type="column"] {
+    display: table-cell;
+    flex-basis: 0;
+    flex-grow: 1;
+    overflow: auto;
+
+    & > *:first-child {
+      margin-top: 0;
+    }
+
+    & > *:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  [data-type="section"] {
+    margin: 0;
+    padding: 0;
+
+    [data-type="section-cell"] {
+      padding: 0;
+      & > *:first-child {
+        margin-top: 0;
+      }
+
+      & > *:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  [data-type="repeat"] {
+    [data-node-view-content] > div {
+      & > *:first-child {
+        margin-top: 0;
+      }
+
+      & > *:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .node-repeat.has-focus [data-repeat-indicator] {
+    opacity: 1;
+  }
+
+  [data-type="show"] {
+    [data-node-view-content] > div {
+      & > *:first-child {
+        margin-top: 0;
+      }
+
+      & > *:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .mly-image-drop-zone::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px dashed #00bcff;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .mly-image-drop-zone.mly-drag-over::after {
+    opacity: 1;
+  }
+
+  /* Remove margin before and after of Gap Cursor */
+  *:has(+ .ProseMirror-gapcursor) {
+    margin-bottom: 0 !important;
+  }
+
+  .ProseMirror-gapcursor {
+    &::after {
+      border: 1.5px solid gray;
+      width: 24px;
+    }
+
+    & + * {
+      margin-top: 0 !important;
+    }
+  }
+
+  pre {
+    code {
+      background: none;
+      color: inherit;
+    }
+
+    .hljs-comment,
+    .hljs-quote {
+      color: #616161;
+    }
+
+    .hljs-variable,
+    .hljs-template-variable,
+    .hljs-attribute,
+    .hljs-regexp,
+    .hljs-link,
+    .hljs-selector-id,
+    .hljs-selector-class {
+      color: var(--color-token-tag);
+    }
+
+    .hljs-tag {
+      color: var(--color-tag);
+    }
+
+    .hljs-name {
+      color: var(--color-token-tag);
+    }
+
+    .hljs-number,
+    .hljs-built_in,
+    .hljs-builtin-name,
+    .hljs-literal,
+    .hljs-type,
+    .hljs-params {
+      color: var(--color-meta-string);
+    }
+
+    .hljs-meta,
+    .hljs-keyword {
+      color: var(--color-meta);
+    }
+
+    .hljs-string,
+    .hljs-symbol,
+    .hljs-bullet {
+      color: var(--color-meta-string);
+    }
+
+    .hljs-title,
+    .hljs-section {
+      color: #faf594;
+    }
+
+    .hljs-emphasis {
+      font-style: italic;
+    }
+
+    .hljs-strong {
+      font-weight: 700;
+    }
+
+    .hljs-attr {
+      color: var(--color-attribute);
+    }
+
+    .hljs-selector-tag {
+      color: var(--color-meta-string);
+    }
+  }
+}
+
+/* Hide Number Count */
+.hide-number-controls {
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Firefox */
+  &[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+.hide-scrollbars {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes mly-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mly-drag-handle {
+  animation: mly-fade-in 250ms ease;
+}

@@ -41,6 +41,7 @@ import type {
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, resolveApiUrl, resolveSecretKey, sanitizeHtmlInObject } from './utils';
 import { createLiquidEngine } from './utils/liquid.utils';
+import { normalizeControlData } from './utils/normalize-controls.utils';
 import { deepMerge } from './utils/object.utils';
 import { validateData } from './validators';
 
@@ -680,7 +681,8 @@ export class Client {
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
     try {
-      const templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      let templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      templateString = this.preprocessFilterTranslationArgs(templateString);
       const parsedTemplate = this.templateEngine.parse(templateString);
       const discoveredWorkflow = this.getWorkflow(event.workflowId);
 
@@ -696,25 +698,46 @@ export class Client {
         subscriber: event.subscriber,
         context: event.context,
         steps: buildSteps(event.state),
-        t: {}, // Empty object so t.* properties are undefined and trigger default filters
       };
 
       const compiledString = await this.templateEngine.render(parsedTemplate, renderVariables);
+      // Post-process: convert [T:key] placeholders back to {{t.key}} markers
+      const withMarkers = this.postprocessTranslationMarkers(compiledString);
       // repair the string to fix invalid JSON, it could happen in the case when the control value
       // doesn't have escaped quotes like '"foo"' then compiled string '{"body":""foo""}' is not valid JSON and parse will fail
-      const repairedString = jsonrepair(compiledString);
-      return JSON.parse(repairedString);
+      const repairedString = jsonrepair(withMarkers);
+      const parsedControls = JSON.parse(repairedString);
+      // Normalize string values in the data field that contain invalid JSON (e.g., from Liquid template variables)
+      // This handles cases where Liquid outputs JavaScript object notation instead of valid JSON
+      return normalizeControlData(parsedControls);
     } catch (error) {
       throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
     }
   }
 
   /**
-   * Preprocesses translation patterns to preserve them when values are undefined.
-   * Transforms {{t.key}} to {{t.key | default: "{{t.key}}"}}
+   * Preprocesses standalone translation patterns.
+   * Transforms {{t.key}} to [T:key] placeholder (not Liquid syntax, passes through unchanged).
    */
   private preprocessTranslationPatterns(template: string): string {
-    return template.replace(/\{\{\s*t\.([\p{L}\p{N}_.-]+)\s*\}\}/gu, '{{ t.$1 | default: "{{t.$1}}" }}');
+    return template.replace(/\{\{\s*t\.([\p{L}\p{N}_.-]+)\s*\}\}/gu, '[T:$1]');
+  }
+
+  /**
+   * Preprocesses translation keys used as filter arguments.
+   * Transforms 't.key' to '[T:key]' placeholder (not Liquid syntax, passes through unchanged).
+   * Example: pluralize: 't.apple', 't.apples' → pluralize: '[T:apple]', '[T:apples]'
+   */
+  private preprocessFilterTranslationArgs(template: string): string {
+    return template.replace(/'t\.([\p{L}\p{N}_.-]+)'/gu, "'[T:$1]'");
+  }
+
+  /**
+   * Post-processes placeholders back to translation markers after Liquid render.
+   * Transforms [T:key] back to {{t.key}} for the translation service.
+   */
+  private postprocessTranslationMarkers(content: string): string {
+    return content.replace(/\[T:([\p{L}\p{N}_.-]+)\]/gu, '{{t.$1}}');
   }
 
   /**

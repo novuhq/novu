@@ -87,7 +87,10 @@ export class NotificationTemplateRepository extends BaseRepository<
       'triggers.identifier': identifier,
     };
 
-    const query = this.MongooseModel.findOne(requestQuery, undefined, { session }).populate('steps.template');
+    const query = this.MongooseModel.findOne(requestQuery, undefined, {
+      session,
+      readPreference: 'secondaryPreferred',
+    }).populate('steps.template');
 
     if (includeUpdatedBy) {
       query.populate('updatedBy');
@@ -134,14 +137,18 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(item);
   }
 
-  async findByTriggerIdentifierAndUpdate(environmentId: string, triggerIdentifier: string, lastTriggeredAt: Date) {
-    const requestQuery: NotificationTemplateQuery = {
-      _environmentId: environmentId,
-      'triggers.identifier': triggerIdentifier,
-    };
-
-    const item = await this.MongooseModel.findOneAndUpdate(
-      requestQuery,
+  async updateLastTriggeredAt(
+    environmentId: string,
+    triggerIdentifier: string,
+    lastTriggeredAt: Date,
+    previousLastTriggeredAt: Date | null
+  ) {
+    const updateResult = await this.MongooseModel.updateOne(
+      {
+        _environmentId: environmentId,
+        'triggers.identifier': triggerIdentifier,
+        $or: [{ lastTriggeredAt: null }, { lastTriggeredAt: previousLastTriggeredAt }],
+      },
       {
         $set: {
           lastTriggeredAt,
@@ -149,10 +156,11 @@ export class NotificationTemplateRepository extends BaseRepository<
       },
       {
         timestamps: false,
+        writeConcern: { w: 1 },
       }
-    ).populate('steps.template');
+    );
 
-    return this.mapEntity(item);
+    return updateResult.modifiedCount > 0;
   }
 
   async updatePublishFields(workflowId: string, environmentId: string, userId: string, session?: ClientSession | null) {

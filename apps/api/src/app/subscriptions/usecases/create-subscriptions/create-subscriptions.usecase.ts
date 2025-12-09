@@ -23,7 +23,6 @@ import {
   SubscriptionPreferenceDto,
   SubscriptionResponseDto,
 } from '../../../shared/dtos/subscriptions/create-subscriptions-response.dto';
-import { CreateSubscriptionPreferencesCommand } from '../create-subscription-preferences/create-subscription-preferences.command';
 import { CreateSubscriptionPreferencesUsecase } from '../create-subscription-preferences/create-subscription-preferences.usecase';
 import { CreateSubscriptionsCommand } from './create-subscriptions.command';
 
@@ -143,10 +142,20 @@ export class CreateSubscriptionsUsecase {
       const subscriptionsToCreate = this.buildSubscriptionEntity(topic, subscribersToCreate, command.subscriptions);
       const newSubscriptions = await this.topicSubscribersRepository.createSubscriptions(subscriptionsToCreate);
 
+      const BATCH_SIZE = 50;
+      const subscriptionBatches: TopicSubscribersEntity[][] = _.chunk(newSubscriptions.created, BATCH_SIZE);
+      const preferencesArray: Array<{ subscriptionId: string; preferences: SubscriptionPreferenceDto[] }> = [];
+
+      for (const batch of subscriptionBatches) {
+        const batchPreferencesArray = await this.createPreferencesForSubscriptionsBatch(command, batch, workflows);
+
+        preferencesArray.push(...batchPreferencesArray);
+      }
+
       for (const subscription of newSubscriptions.created) {
         const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
-
-        const preferences = await this.createPreferencesForSubscription(command, subscription, workflows);
+        const preferencesEntry = preferencesArray.find((entry) => entry.subscriptionId === subscription._id.toString());
+        const preferences = preferencesEntry?.preferences;
 
         subscriptionData.push({
           _id: subscription._id.toString(),
@@ -391,25 +400,24 @@ export class CreateSubscriptionsUsecase {
       .filter((pref): pref is NonNullable<typeof pref> => pref !== null);
   }
 
-  private async createPreferencesForSubscription(
+  private async createPreferencesForSubscriptionsBatch(
     command: CreateSubscriptionsCommand,
-    subscription: TopicSubscribersEntity,
+    subscriptions: TopicSubscribersEntity[] = [],
     workflows: NotificationTemplateEntity[]
-  ): Promise<SubscriptionPreferenceDto[] | undefined> {
+  ): Promise<Array<{ subscriptionId: string; preferences: SubscriptionPreferenceDto[] }>> {
     if (!command.preferences || command.preferences.length === 0) {
-      return undefined;
+      return [];
     }
 
-    return await this.createSubscriptionPreferencesUsecase.execute(
-      CreateSubscriptionPreferencesCommand.create({
+    return await this.createSubscriptionPreferencesUsecase.executeBatch(
+      {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
         preferences: command.preferences,
-        subscriptionId: subscription._id.toString(),
-        _subscriberId: subscription._subscriberId.toString(),
         workflows,
-      })
+      },
+      subscriptions
     );
   }
 

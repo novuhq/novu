@@ -15,7 +15,7 @@ export class UpdateSubscriptionRequestDto {
 
   @ApiProperty({
     description:
-      'The preferences of the topic. Can be a simple workflow ID string, workflow preference object, or group filter object',
+      'The preferences of the subscription. Can be a simple workflow ID string, workflow preference object, or group filter object',
     type: 'array',
     items: {
       oneOf: [

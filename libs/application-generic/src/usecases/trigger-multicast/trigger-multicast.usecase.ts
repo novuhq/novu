@@ -1,11 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  PreferencesRepository,
-  SubscriberRepository,
-  TopicEntity,
-  TopicRepository,
-  TopicSubscribersRepository,
-} from '@novu/dal';
+import { PreferencesRepository, TopicEntity, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import {
   ISubscribersDefine,
   ITopic,

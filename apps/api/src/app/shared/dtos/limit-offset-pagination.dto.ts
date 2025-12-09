@@ -22,6 +22,7 @@ export function LimitOffsetPaginationQueryDto<T, K extends keyof T>(
       description: 'Number of items to return per page',
       type: 'number',
       required: false,
+      example: 10,
     })
     @Transform(({ value }) => {
       // Convert to number, handle different input types
@@ -39,6 +40,7 @@ export function LimitOffsetPaginationQueryDto<T, K extends keyof T>(
       description: 'Number of items to skip before starting to return results',
       type: 'number',
       required: false,
+      example: 0,
     })
     @Transform(({ value }) => {
       // Convert to number, handle different input types

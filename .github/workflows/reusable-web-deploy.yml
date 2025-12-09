@@ -56,11 +56,15 @@ on:
       new_dashboard_url:
         required: false
         type: string
+      extra_env_variables:
+        required: false
+        type: string
+        description: "Multi-line string of additional env variables (e.g., for multi-region configs)"
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   reusable_web_deploy:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
     permissions:
@@ -77,7 +81,7 @@ jobs:
 
       - uses: ./.github/actions/setup-project
         with:
-          slim: 'true'
+          slim: "true"
           submodules: true
 
       - name: Create env file
@@ -103,6 +107,14 @@ jobs:
           echo REACT_APP_IS_EE_AUTH_ENABLED=${{ inputs.clerk_is_ee_auth_enabled }} >> .env
           echo REACT_APP_NEW_DASHBOARD_URL=${{ inputs.new_dashboard_url }} >> .env
           echo REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID=${{secrets.REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID}} >> .env
+          # Append extra environment variables if provided
+          if [ -n "${{ inputs.extra_env_variables }}" ]; then
+            echo "Adding extra environment variables..."
+            IFS='|' read -ra VARS <<< "${{ inputs.extra_env_variables }}"
+            for var in "${VARS[@]}"; do
+              echo "$var" >> .env
+            done
+          fi
       - name: Envsetup
         working-directory: apps/web
         run: npm run envsetup

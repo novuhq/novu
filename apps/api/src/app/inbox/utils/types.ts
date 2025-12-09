@@ -7,6 +7,7 @@ import type {
   Schedule,
   SeverityLevelEnum,
 } from '@novu/shared';
+import type { RulesLogic } from 'json-logic-js';
 
 export type Subscriber = {
   id: string;
@@ -70,6 +71,7 @@ export type NotificationFilter = {
 export type InboxPreference = {
   level: PreferenceLevelEnum;
   enabled: boolean;
+  condition?: RulesLogic;
   channels: IPreferenceChannels;
   workflow?: {
     id: string;

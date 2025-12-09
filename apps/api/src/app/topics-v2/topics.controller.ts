@@ -37,7 +37,10 @@ import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscri
 import { CreateTopicSubscriptionsRequestDto } from './dtos/create-topic-subscriptions.dto';
 import { CreateUpdateTopicRequestDto } from './dtos/create-update-topic.dto';
 import { DeleteTopicResponseDto } from './dtos/delete-topic-response.dto';
-import { DeleteTopicSubscriptionsRequestDto } from './dtos/delete-topic-subscriptions.dto';
+import {
+  DeleteTopicSubscriberIdentifierDto,
+  DeleteTopicSubscriptionsRequestDto,
+} from './dtos/delete-topic-subscriptions.dto';
 import { DeleteTopicSubscriptionsResponseDto } from './dtos/delete-topic-subscriptions-response.dto';
 import { ListTopicSubscriptionsQueryDto } from './dtos/list-topic-subscriptions-query.dto';
 import { ListTopicSubscriptionsResponseDto } from './dtos/list-topic-subscriptions-response.dto';
@@ -338,7 +341,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         userId: user._id,
         topicKey,
-        subscriberIds: body.subscriberIds,
+        subscriptions: this.mapDeleteSubscriptions(body.subscriptions || body.subscriberIds || []),
       })
     );
 
@@ -396,6 +399,20 @@ export class TopicsController {
   private mapSubscriptions(
     subscriptions: Array<string | { identifier: string; subscriberId: string; name?: string }>
   ): Array<{ identifier?: string; subscriberId: string; name?: string }> {
+    return subscriptions.map((subscription) => {
+      if (typeof subscription === 'string') {
+        return {
+          subscriberId: subscription,
+        };
+      }
+
+      return subscription;
+    });
+  }
+
+  private mapDeleteSubscriptions(
+    subscriptions: Array<string | DeleteTopicSubscriberIdentifierDto>
+  ): Array<{ identifier?: string; subscriberId?: string; name?: string }> {
     return subscriptions.map((subscription) => {
       if (typeof subscription === 'string') {
         return {
