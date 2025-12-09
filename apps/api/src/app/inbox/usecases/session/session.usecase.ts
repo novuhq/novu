@@ -404,7 +404,7 @@ export class Session {
     environmentId: string,
     organizationId: string,
     context?: ContextPayload
-  ): Promise<string[] | undefined> {
+  ): Promise<string[]> {
     if (!context) {
       return [];
     }
