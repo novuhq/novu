@@ -133,6 +133,9 @@ export const SubscriptionPreferenceGroupRow = (props: {
             checked={groupState().checked}
             indeterminate={groupState().indeterminate}
             onChange={handleGroupChange}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+            }}
           />
           <span
             class={style({
