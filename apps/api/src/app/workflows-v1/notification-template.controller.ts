@@ -15,10 +15,12 @@ import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   buildWorkflowPreferencesFromPreferenceChannels,
   DEFAULT_WORKFLOW_PREFERENCES,
+  PermissionsEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { RequirePermissions } from '@novu/application-generic';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
@@ -71,6 +73,7 @@ export class NotificationTemplateController {
     deprecated: true,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   getNotificationTemplates(
     @UserSession() user: UserSessionData,
     @Query() queryParams: WorkflowsRequestDto
@@ -95,6 +98,7 @@ export class NotificationTemplateController {
     deprecated: true,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async updateTemplateById(
     @UserSession() user: UserSessionData,
     @Param('templateId') templateId: string,
@@ -134,6 +138,7 @@ export class NotificationTemplateController {
     deprecated: true,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   deleteTemplateById(@UserSession() user: UserSessionData, @Param('templateId') templateId: string): Promise<boolean> {
     return this.deleteTemplateByIdUsecase.execute(
       DeleteNotificationTemplateCommand.create({
@@ -154,6 +159,7 @@ export class NotificationTemplateController {
     deprecated: true,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   getNotificationTemplateById(
     @UserSession() user: UserSessionData,
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string
@@ -169,14 +175,15 @@ export class NotificationTemplateController {
   }
 
   @Post('')
-  @ExternalApiAccessible()
-  @UseGuards(RootEnvironmentGuard)
   @ApiResponse(WorkflowResponse, 201)
   @ApiOperation({
     summary: 'Create Notification template',
     description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
     deprecated: true,
   })
+  @ExternalApiAccessible()
+  @UseGuards(RootEnvironmentGuard)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   create(
     @UserSession() user: UserSessionData,
     @Query() query: CreateWorkflowQuery,
@@ -218,6 +225,7 @@ export class NotificationTemplateController {
     deprecated: true,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   changeActiveStatus(
     @UserSession() user: UserSessionData,
     @Body() body: ChangeWorkflowStatusRequestDto,

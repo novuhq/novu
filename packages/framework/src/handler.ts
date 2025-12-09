@@ -90,6 +90,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     return {
       [HttpHeaderKeysEnum.CONTENT_TYPE]: 'application/json',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN]: '*',
+      [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK]: 'true',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_METHODS]: 'GET, POST',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_HEADERS]: '*',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_MAX_AGE]: '604800',

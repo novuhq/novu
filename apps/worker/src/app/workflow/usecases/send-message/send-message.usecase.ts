@@ -102,6 +102,7 @@ export class SendMessage {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
+        workflow: command.workflow,
       });
     }
     const isBridgeSkipped = bridgeResponse?.options?.skip;
@@ -329,10 +330,12 @@ export class SendMessage {
       return { result: true };
     }
 
-    const workflow = await this.getWorkflow({
-      _id: job._templateId,
-      environmentId: job._environmentId,
-    });
+    const workflow =
+      command.workflow ??
+      (await this.getWorkflow({
+        _id: job._templateId,
+        environmentId: job._environmentId,
+      }));
 
     const subscriber = await this.getSubscriberBySubscriberId({
       _environmentId: job._environmentId,

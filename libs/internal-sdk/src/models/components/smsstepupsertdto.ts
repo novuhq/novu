@@ -9,7 +9,6 @@ import {
   SmsControlDto$Outbound,
   SmsControlDto$outboundSchema,
 } from "./smscontroldto.js";
-import { StepTypeEnum, StepTypeEnum$outboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the SMS step.
@@ -34,7 +33,7 @@ export type SmsStepUpsertDto = {
   /**
    * Type of the step
    */
-  type: StepTypeEnum;
+  type: "sms";
   /**
    * Control values for the SMS step.
    */
@@ -68,7 +67,7 @@ export type SmsStepUpsertDto$Outbound = {
   _id?: string | undefined;
   stepId?: string | undefined;
   name: string;
-  type: string;
+  type: "sms";
   controlValues?: SmsControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
@@ -81,7 +80,7 @@ export const SmsStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   stepId: z.string().optional(),
   name: z.string(),
-  type: StepTypeEnum$outboundSchema,
+  type: z.literal("sms"),
   controlValues: z.union([SmsControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {

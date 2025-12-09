@@ -182,7 +182,7 @@ export const SideNavigation = () => {
                       to={buildRoute(ROUTES.ANALYTICS, { environmentSlug: currentEnvironment?.slug ?? '' })}
                     >
                       <RiLineChartLine className="size-4" />
-                      <span>Analytics</span>
+                      <span>Usage</span>
                     </NavigationLink>
                   </Protect>
                 )}

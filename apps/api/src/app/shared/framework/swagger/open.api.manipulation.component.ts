@@ -161,37 +161,12 @@ export function sortOpenAPIDocument(openApiDoc: OpenAPIObject): OpenAPIObject {
       return a.localeCompare(b);
     });
 
-    // Debugging function to extract operation details
-    const extractOperationDetails = (method: string, url: string, operation?: OperationObject) => {
-      if (!operation) return null;
-
-      return {
-        method: method.toUpperCase(),
-        url,
-        operationId: operation.operationId || 'N/A',
-        tags: operation.tags || [],
-        summary: operation.summary || 'N/A',
-      };
-    };
-
-    // Debugging array to collect all operations
-    const debugOperations: any[] = [];
-
     // Reconstruct paths with sorted keys and sorted methods within each path
     sortedPathKeys.forEach((pathKey) => {
       const pathItem = sortedDoc.paths[pathKey];
 
       // Define method order priority
       const methodPriority = ['post', 'put', 'patch', 'get', 'delete', 'options', 'head', 'trace'];
-
-      // Collect operations for debugging
-      methodPriority.forEach((method) => {
-        const operation = pathItem[method as keyof PathItemObject] as OperationObject | undefined;
-        const operationDetails = extractOperationDetails(method, pathKey, operation);
-        if (operationDetails) {
-          debugOperations.push(operationDetails);
-        }
-      });
 
       // Sort methods within the path item
       sortedPaths[pathKey] = {

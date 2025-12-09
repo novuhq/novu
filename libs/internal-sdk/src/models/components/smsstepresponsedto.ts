@@ -19,7 +19,6 @@ import {
   SmsControlsMetadataResponseDto$inboundSchema,
 } from "./smscontrolsmetadataresponsedto.js";
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
-import { StepTypeEnum, StepTypeEnum$inboundSchema } from "./steptypeenum.js";
 
 /**
  * Control values for the SMS step
@@ -68,7 +67,7 @@ export type SmsStepResponseDto = {
   /**
    * Type of the step
    */
-  type: StepTypeEnum;
+  type: "sms";
   /**
    * Origin of the layout
    */
@@ -125,7 +124,7 @@ export const SmsStepResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
-  type: StepTypeEnum$inboundSchema,
+  type: z.literal("sms"),
   origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),

@@ -17,8 +17,9 @@ export const VariablePill = React.forwardRef<
     from?: VariableFrom;
     isNotInSchema?: boolean;
     isPayloadSchemaEnabled?: boolean;
+    errorMessage?: string;
   }
->(({ variableName, filters, issues, className, onClick, isNotInSchema, isPayloadSchemaEnabled }, ref) => {
+>(({ variableName, filters, issues, className, onClick, isNotInSchema, isPayloadSchemaEnabled, errorMessage }, ref) => {
   const displayVariableName = useMemo(() => {
     if (!variableName) return '';
     const variableParts = variableName.split('.');
@@ -27,7 +28,11 @@ export const VariablePill = React.forwardRef<
   }, [variableName]);
 
   return (
-    <VariableTooltip issues={issues} isNotInSchema={isPayloadSchemaEnabled ? isNotInSchema : false}>
+    <VariableTooltip
+      issues={issues}
+      isNotInSchema={isPayloadSchemaEnabled ? isNotInSchema : false}
+      errorMessage={errorMessage}
+    >
       <span
         ref={ref}
         onClick={onClick}

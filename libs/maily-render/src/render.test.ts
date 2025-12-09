@@ -203,7 +203,7 @@ describe('render', () => {
         paragraph: 'rgb(0, 255, 0)',
       },
       fontSize: {
-        paragraph: { size: '18px' },
+        paragraph: { fontSize: '18px' },
       },
     };
 

@@ -1,4 +1,5 @@
 export * from './arrow-right';
+export * from './bell';
 export * from './inbox-arrow-down';
 export * from './inbox-bell';
 export * from './inbox-ellipsis';
@@ -6,5 +7,6 @@ export * from './inbox-settings';
 export * from './logo-circle';
 export * from './mail-3-fill';
 export * from './notification-5-fill';
+export * from './novu-icon';
 export * from './route-fill';
 export * from './sms';

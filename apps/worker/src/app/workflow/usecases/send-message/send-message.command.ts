@@ -1,5 +1,5 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import type { JobEntity, NotificationStepEntity } from '@novu/dal';
+import type { JobEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import type { SeverityLevelEnum, TriggerOverrides, WorkflowPreferences } from '@novu/shared';
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 
@@ -53,4 +53,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   contextKeys?: string[];
+
+  @IsOptional()
+  workflow?: NotificationTemplateEntity;
 }

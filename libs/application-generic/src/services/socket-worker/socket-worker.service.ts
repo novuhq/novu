@@ -131,7 +131,9 @@ export class SocketWorkerService {
           Authorization: `Bearer ${this.socketWorkerApiKey}`,
         },
         responseType: 'json',
-        timeout: 5000, // 5 second timeout
+        http2: true,
+        dnsCache: true,
+        timeout: 3000,
         retry: {
           limit: 2,
           methods: ['POST'],

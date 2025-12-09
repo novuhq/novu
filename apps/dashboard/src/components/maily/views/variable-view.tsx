@@ -145,8 +145,9 @@ export function NodeVariablePill(
           filters={parsedData.filtersArray}
           onClick={() => setIsOpen(true)}
           className="-mt-[2px]"
-          isNotInSchema={!validation.isInSchema}
+          isNotInSchema={validation.hasError || !validation.isInSchema}
           isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+          errorMessage={validation.errorMessage}
         />
       </EditVariablePopover>
       {children}
@@ -274,8 +275,9 @@ export function BubbleMenuVariablePill({
           onClick={canEdit ? handleVariableClick : undefined}
           className={className}
           from={from}
-          isNotInSchema={!validation.isInSchema}
+          isNotInSchema={validation.hasError || !validation.isInSchema}
           isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+          errorMessage={validation.errorMessage}
         />
       </EditVariablePopover>
       {children}

@@ -124,7 +124,12 @@ export type UpsertStepBody = StepCreateBody | UpdateStepBody;
 export type StepCreateBody = StepCreateDto;
 export type UpdateStepBody = StepUpdateDto;
 
-export type DuplicateWorkflowDto = Pick<CreateWorkflowDto, 'name' | 'tags' | 'description' | 'isTranslationEnabled'>;
+export type DuplicateWorkflowDto = Pick<
+  CreateWorkflowDto,
+  'name' | 'tags' | 'description' | 'isTranslationEnabled'
+> & {
+  workflowId?: string;
+};
 
 export function isStepCreateBody(step: UpsertStepBody): step is StepCreateDto {
   return step && typeof step === 'object' && !(step as UpdateStepBody)._id;

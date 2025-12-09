@@ -5,7 +5,7 @@ import {
   SendWebhookMessage,
   UpsertPreferences,
 } from '@novu/application-generic';
-import { SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
+import { PreferencesRepository, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
 import { PreferenceLevelEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -56,6 +56,7 @@ describe('UpdatePreferences', () => {
   let getWorkflowByIdsUsecase: sinon.SinonStubbedInstance<GetWorkflowByIdsUseCase>;
   let sendWebhookMessageMock: sinon.SinonStubbedInstance<SendWebhookMessage>;
   let topicSubscribersRepositoryMock: sinon.SinonStubbedInstance<TopicSubscribersRepository>;
+  let preferencesRepositoryMock: sinon.SinonStubbedInstance<PreferencesRepository>;
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
@@ -65,6 +66,7 @@ describe('UpdatePreferences', () => {
     getWorkflowByIdsUsecase = sinon.createStubInstance(GetWorkflowByIdsUseCase);
     sendWebhookMessageMock = sinon.createStubInstance(SendWebhookMessage);
     topicSubscribersRepositoryMock = sinon.createStubInstance(TopicSubscribersRepository);
+    preferencesRepositoryMock = sinon.createStubInstance(PreferencesRepository);
 
     updatePreferences = new UpdatePreferences(
       subscriberRepositoryMock as any,
@@ -74,7 +76,8 @@ describe('UpdatePreferences', () => {
       upsertPreferencesMock as any,
       getWorkflowByIdsUsecase as any,
       sendWebhookMessageMock as any,
-      topicSubscribersRepositoryMock as any
+      topicSubscribersRepositoryMock as any,
+      preferencesRepositoryMock as any
     );
   });
 

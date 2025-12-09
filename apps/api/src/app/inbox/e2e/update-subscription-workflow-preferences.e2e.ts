@@ -3,9 +3,9 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { SubscriptionResponseDto } from '../../shared/dtos/subscriptions/create-subscriptions-response.dto';
 import { CreateTopicSubscriptionRequestDto } from '../dtos/create-topic-subscription-request.dto';
-import { UpdateSubscriptionPreferencesRequestDto } from '../dtos/update-subscription-preferences-request.dto';
+import { UpdatePreferencesRequestDto } from '../dtos/update-preferences-request.dto';
 
-describe('Update subscription workflow preferences - /inbox/preferences/:subscriptionIdOrIdentifier/:workflowIdOrIdentifier (PATCH) #novu-v2', () => {
+describe('Update subscription workflow preferences - /inbox/subscriptions/:subscriptionId/preferences/:workflowIdOrIdentifier (PATCH) #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -13,7 +13,7 @@ describe('Update subscription workflow preferences - /inbox/preferences/:subscri
     await session.initialize();
   });
 
-  it.skip('should update subscription workflow preferences', async () => {
+  it('should update subscription workflow preferences', async () => {
     const topicKey = `topic-${Date.now()}`;
     const subscriptionIdentifier = `subscription-${Date.now()}`;
     const workflow = await session.createTemplate({
@@ -68,7 +68,7 @@ describe('Update subscription workflow preferences - /inbox/preferences/:subscri
     expect(response.body.data.enabled, 'Should have the correct enabled value').to.equal(false);
   });
 
-  it.skip('should allow different preferences for the same workflow across different subscriptions', async () => {
+  it('should allow different preferences for the same workflow across different subscriptions', async () => {
     const topicKey1 = `topic-${Date.now()}-1`;
     const topicKey2 = `topic-${Date.now()}-2`;
     const workflow = await session.createTemplate({
@@ -121,10 +121,10 @@ async function updateSubscriptionPreferences(
   session: UserSession,
   subscriptionId: string,
   workflowId: string,
-  body: UpdateSubscriptionPreferencesRequestDto
+  body: UpdatePreferencesRequestDto
 ) {
   return await session.testAgent
-    .patch(`/v1/inbox/preferences/${subscriptionId}/${workflowId}`)
+    .patch(`/v1/inbox/subscriptions/${subscriptionId}/preferences/${workflowId}`)
     .send(body)
     .set('Authorization', `Bearer ${session.subscriberToken}`);
 }

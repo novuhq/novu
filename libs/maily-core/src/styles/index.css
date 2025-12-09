@@ -12,32 +12,53 @@
   --color-attribute: #ad46ff;
   --color-tag: #313233;
   --color-meta: #313233d6;
+  --paragraph-font-size: 14px;
+  --paragraph-font-style: normal;
+  --paragraph-font-weight: 500;
+  --paragraph-line-height: 20px;
+  --default-margin: 10px;
+  --default-negative-margin: -10px;
 }
 
 .mly-editor .mly-prose p:where([class~="text-sm"]):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  font-size: 16px;
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
 }
 
 .mly-editor .mly-prose :where(h1, h2, h3):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
   margin-top: 0;
-  margin-bottom: 12px;
+  margin-bottom: var(--default-margin);
 }
 
 .mly-editor .mly-prose :where(h1):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  font-size: 36px;
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 40px;
 }
 
 .mly-editor .mly-prose :where(h2):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  font-size: 30px;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 30px;
 }
 
 .mly-editor .mly-prose :where(h3):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  font-size: 24px;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 26px;
 }
 
 .mly-editor .mly-prose p:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  font-size: 15px;
-  margin-bottom: 20px;
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
+  margin-bottom: var(--default-margin);
 }
 
 .mly-editor
@@ -49,30 +70,43 @@
 
 .mly-editor .mly-prose :where(ol, ul):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: var(--default-margin);
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
 }
 
 .mly-editor .mly-prose li:not(:last-child):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-bottom: 8px;
+  margin-bottom: var(--default-margin);
 }
 
 .mly-editor .mly-prose li > p:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
   margin: 0;
 }
 
+.mly-editor .mly-prose :where(ul > li):not(:where([class~=mly-not-prose], [class~=mly-not-prose] *))::marker,
+.mly-editor .mly-prose :where(ol > li):not(:where([class~=mly-not-prose], [class~=mly-not-prose] *))::marker {
+  color: #374151;
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
+}
+
 .mly-editor .mly-prose :where(img, .node-logo):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
   margin-top: 0;
-  margin-bottom: 32px;
+  margin-bottom: var(--default-margin);
 }
 
 .mly-editor .mly-prose hr:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-block: 32px;
+  margin-block: var(--default-margin);
 }
 
 .mly-editor .mly-prose .footer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
   display: block;
   font-size: 13px;
-  margin-bottom: 20px;
+  margin-bottom: var(--default-margin);
   color: rgb(100, 116, 139);
 }
 
@@ -81,51 +115,71 @@
 }
 
 .mly-editor .mly-prose p + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-top: -20px;
+  margin-top: var(--default-negative-margin);
+}
+
+.mly-editor .mly-prose :where(blockquote):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *))  {
+  margin-top: 0;
+  margin-bottom: var(--default-margin);
+  padding-left: 16px;
+  border-left: 4px solid #374151;
+  quotes: none;
+}
+
+.mly-editor .mly-prose blockquote:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) > p {
+  margin: 0;
+  font-size: var(--paragraph-font-size);
+  font-style: var(--paragraph-font-style);
+  font-weight: var(--paragraph-font-weight);
+  line-height: var(--paragraph-line-height);
 }
 
 .mly-editor .mly-prose blockquote + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-top: -16px;
+  margin-top: var(--default-negative-margin);
 }
 
 .mly-editor .mly-prose :where(h1, h2, h3) + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-top: -12px;
+  margin-top: var(--default-negative-margin);
 }
 
 .mly-editor .mly-prose :where(ol, ul) + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-top: -20px;
+  margin-top: var(--default-negative-margin);
+}
+
+.mly-editor .mly-prose :where([data-type="columns"], [data-type="section"], [data-type="repeat"], [data-type="show"]) + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
+  margin-top: var(--default-negative-margin);
 }
 
 .mly-editor
   .mly-prose
   :where(img, .node-logo)
   + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-top: -32px;
+  margin-top: var(--default-negative-margin);
 }
 
 .mly-editor
   .mly-prose
   :where(.node-button, .node-linkCard, footer)
   + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-top: -20px;
+  margin-top: var(--default-negative-margin);
 }
 
 .mly-editor
   .mly-prose
   :where(.node-button, .node-linkCard):not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: var(--default-margin);
 }
 
 .mly-editor .mly-prose .node-image:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
   line-height: 0;
   margin-top: 0;
-  margin-bottom: 32px;
+  margin-bottom: var(--default-margin);
   outline: none;
 }
 
 .mly-editor .mly-prose .node-image + .spacer:not(:where([class~="mly-not-prose"], [class~="mly-not-prose"] *)) {
-  margin-top: -32px;
+  margin-top: var(--default-negative-margin);
 }
 
 /* Remove code ::before and ::after */
@@ -444,4 +498,17 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+@keyframes mly-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mly-drag-handle {
+  animation: mly-fade-in 250ms ease;
 }

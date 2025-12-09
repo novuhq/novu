@@ -58,6 +58,7 @@ export class EEOrganizationController {
    * @deprecated - used in v1 legacy web
    */
   @Put('/branding')
+  @ExternalApiAccessible()
   @ApiResponse(OrganizationBrandingResponseDto)
   @ApiOperation({
     summary: 'Update organization branding details',
@@ -80,6 +81,7 @@ export class EEOrganizationController {
    * @deprecated - used in v1 legacy web
    */
   @Patch('/')
+  @ExternalApiAccessible()
   @ApiResponse(RenameOrganizationDto)
   @ApiOperation({
     summary: 'Rename organization name',
@@ -111,6 +113,7 @@ export class EEOrganizationController {
 
   @Patch('/settings')
   @ApiResponse(UpdateOrganizationSettingsDto)
+  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update organization settings',
   })

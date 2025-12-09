@@ -430,54 +430,14 @@ export const useCreateExtensions = ({
             }
 
             if (isNewVariable) {
-              const variableName = props.id;
-              onCreateNewVariable?.(variableName);
-
-              insertVariableToEditor({
-                query,
-                editor,
-                range,
-              });
-            } else {
-              // Calculate aliasFor before validation to properly handle "current." variables
-              const aliasFor = resolveRepeatBlockAlias(props.id, editor);
-              const isAllowed = parsedVariables.isAllowedVariable({
-                name: props.id,
-                aliasFor,
-              });
-
-              if (!isAllowed) {
-                return;
-              }
-
-              if (isNewVariable) {
-                const variableName = props.id.replace('current.payload.', '').replace('payload.', '');
-                onCreateNewVariable?.(variableName);
-
-                insertVariableToEditor({
-                  query,
-                  editor,
-                  range,
-                });
-              } else {
-                // Calculate aliasFor before validation to properly handle "current." variables
-                const aliasFor = resolveRepeatBlockAlias(props.id, editor);
-                const isAllowed = parsedVariables.isAllowedVariable({
-                  name: props.id,
-                  aliasFor,
-                });
-
-                if (!isAllowed) {
-                  return;
-                }
-
-                insertVariableToEditor({
-                  query,
-                  editor,
-                  range,
-                });
-              }
+              onCreateNewVariable?.(props.id);
             }
+
+            insertVariableToEditor({
+              query,
+              editor,
+              range,
+            });
           },
         },
         // variable pills inside buttons and bubble menus (repeat, showIf...)

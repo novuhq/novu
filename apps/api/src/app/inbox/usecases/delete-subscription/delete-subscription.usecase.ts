@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { PreferencesRepository, TopicSubscribersRepository } from '@novu/dal';
 import { PreferencesTypeEnum } from '@novu/shared';
-import { DeleteTopicSubscriptionCommand } from './delete-topic-subscription.command';
+import { DeleteTopicSubscriptionCommand } from './delete-subscription.command';
 
 @Injectable()
 export class DeleteTopicSubscription {

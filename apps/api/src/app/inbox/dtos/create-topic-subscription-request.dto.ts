@@ -43,7 +43,7 @@ export class CreateTopicSubscriptionRequestDto {
   @IsOptional()
   topic?: TopicIdentifierDto;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description:
       'The preferences of the topic. Can be a simple workflow ID string, workflow preference object, or group filter object',
     type: 'array',
