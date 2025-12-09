@@ -8,7 +8,7 @@ export class TriggerEventToAll {
   constructor(private parseEventRequest: ParseEventRequest) {}
 
   public async execute(command: TriggerEventToAllCommand) {
-    await this.parseEventRequest.execute(
+    const result = await this.parseEventRequest.execute(
       ParseEventRequestBroadcastCommand.create({
         userId: command.userId,
         environmentId: command.environmentId,
@@ -27,10 +27,6 @@ export class TriggerEventToAll {
       })
     );
 
-    return {
-      acknowledged: true,
-      status: TriggerEventStatusEnum.PROCESSED,
-      transactionId: command.transactionId,
-    };
+    return result;
   }
 }

@@ -37,6 +37,15 @@ export class TriggerEventResponseDto {
   @IsString()
   transactionId?: string;
 
+  @ApiProperty({
+    description: 'Link to the activity feed for this trigger event',
+    type: String,
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  activityFeedLink?: string;
+
   @IsOptional()
   jobData?: IWorkflowDataDto;
 }
