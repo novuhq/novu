@@ -10,7 +10,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserSessionData } from '@novu/shared';
+import { RequirePermissions } from '@novu/application-generic';
+import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
@@ -51,6 +52,7 @@ export class NotificationGroupsController {
     summary: 'Create workflow group',
     description: `workflow group was previously named notification group`,
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   createNotificationGroup(
     @UserSession() user: UserSessionData,
     @Body() body: CreateNotificationGroupRequestDto
@@ -72,6 +74,7 @@ export class NotificationGroupsController {
     summary: 'Get workflow groups',
     description: `workflow group was previously named notification group`,
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   listNotificationGroups(@UserSession() user: UserSessionData): Promise<NotificationGroupResponseDto[]> {
     return this.getNotificationGroupsUsecase.execute(
       GetNotificationGroupsCommand.create({
@@ -89,6 +92,7 @@ export class NotificationGroupsController {
     summary: 'Get workflow group',
     description: `workflow group was previously named notification group`,
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   getNotificationGroup(
     @UserSession() user: UserSessionData,
     @Param('id') id: string
@@ -110,6 +114,7 @@ export class NotificationGroupsController {
     summary: 'Update workflow group',
     description: `workflow group was previously named notification group`,
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   updateNotificationGroup(
     @UserSession() user: UserSessionData,
     @Param('id') id: string,
@@ -133,6 +138,7 @@ export class NotificationGroupsController {
     summary: 'Delete workflow group',
     description: `workflow group was previously named notification group`,
   })
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   deleteNotificationGroup(
     @UserSession() user: UserSessionData,
     @Param('id') id: string

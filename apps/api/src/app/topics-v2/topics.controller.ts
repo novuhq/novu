@@ -37,7 +37,10 @@ import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscri
 import { CreateTopicSubscriptionsRequestDto } from './dtos/create-topic-subscriptions.dto';
 import { CreateUpdateTopicRequestDto } from './dtos/create-update-topic.dto';
 import { DeleteTopicResponseDto } from './dtos/delete-topic-response.dto';
-import { DeleteTopicSubscriptionsRequestDto } from './dtos/delete-topic-subscriptions.dto';
+import {
+  DeleteTopicSubscriberIdentifierDto,
+  DeleteTopicSubscriptionsRequestDto,
+} from './dtos/delete-topic-subscriptions.dto';
 import { DeleteTopicSubscriptionsResponseDto } from './dtos/delete-topic-subscriptions-response.dto';
 import { ListTopicSubscriptionsQueryDto } from './dtos/list-topic-subscriptions-query.dto';
 import { ListTopicSubscriptionsResponseDto } from './dtos/list-topic-subscriptions-response.dto';
@@ -408,7 +411,7 @@ export class TopicsController {
   }
 
   private mapDeleteSubscriptions(
-    subscriptions: Array<string | { identifier?: string }>
+    subscriptions: Array<string | DeleteTopicSubscriberIdentifierDto>
   ): Array<{ identifier?: string; subscriberId?: string; name?: string }> {
     return subscriptions.map((subscription) => {
       if (typeof subscription === 'string') {

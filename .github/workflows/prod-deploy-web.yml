@@ -29,6 +29,7 @@ jobs:
       clerk_publishable_key: pk_live_Y2xlcmsuZXUuZGFzaGJvYXJkLm5vdnUuY28k
       clerk_is_ee_auth_enabled: true
       new_dashboard_url: https://eu.dashboard.novu.co
+      extra_env_variables: ${{ vars.EU_EXTRA_VARIABLES || '' }}
     secrets: inherit
 
   deploy_web_us:
@@ -50,4 +51,5 @@ jobs:
       clerk_publishable_key: pk_live_Y2xlcmsuZGFzaGJvYXJkLm5vdnUuY28k
       clerk_is_ee_auth_enabled: true
       new_dashboard_url: https://dashboard.novu.co
+      extra_env_variables: ${{ vars.US_EXTRA_VARIABLES || '' }}
     secrets: inherit

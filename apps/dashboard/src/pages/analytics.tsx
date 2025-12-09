@@ -104,11 +104,11 @@ export function AnalyticsPage() {
 
   return (
     <>
-      <PageMeta title="Analytics" />
+      <PageMeta title="Usage" />
       <DashboardLayout
         headerStartItems={
           <h1 className="text-foreground-950 flex items-center gap-1">
-            <span>Analytics</span>
+            <span>Usage</span>
             {isDevMockMode && (
               <Badge variant="filled" color="orange" className="text-xs">
                 DEV MOCK DATA
@@ -190,7 +190,7 @@ export function AnalyticsPage() {
           </div>
           {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
             <InlineToast
-              title="You're viewing analytics for the Development environment"
+              title="You're viewing usage for the Development environment"
               variant="tip"
               ctaLabel="Switch to production"
               onCtaClick={() => {

@@ -247,20 +247,6 @@ export class SubscriberJobBound {
   }
 
   @Instrument()
-  private async getProviderId(environmentId: string, channelType: ChannelTypeEnum): Promise<ProvidersIdEnum> {
-    const integration = await this.integrationRepository.findOne(
-      {
-        _environmentId: environmentId,
-        active: true,
-        channel: channelType,
-      },
-      'providerId'
-    );
-
-    return integration?.providerId as ProvidersIdEnum;
-  }
-
-  @Instrument()
   private async validateSubscriberIdProperty(
     command: SubscriberJobBoundCommand,
     subscriber: ISubscribersDefine
@@ -292,6 +278,7 @@ export class SubscriberJobBound {
     template: NotificationTemplateEntity
   ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
     const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
+    const channelTypesToFetch: ChannelTypeEnum[] = [];
 
     for (const step of template?.steps) {
       const type = step.template?.type;
@@ -299,16 +286,28 @@ export class SubscriberJobBound {
 
       const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
-      if (!channelType) continue;
-
-      if (providers[channelType] || !channelType) continue;
+      if (!channelType || providers[channelType]) continue;
 
       if (channelType === ChannelTypeEnum.IN_APP) {
         providers[channelType] = InAppProviderIdEnum.Novu;
       } else {
-        const provider = await this.getProviderId(environmentId, channelType);
-        if (provider) {
-          providers[channelType] = provider;
+        channelTypesToFetch.push(channelType);
+      }
+    }
+
+    if (channelTypesToFetch.length > 0) {
+      const integrations = await this.integrationRepository.find(
+        {
+          _environmentId: environmentId,
+          active: true,
+          channel: { $in: channelTypesToFetch },
+        },
+        'providerId channel'
+      );
+
+      for (const integration of integrations) {
+        if (!providers[integration.channel]) {
+          providers[integration.channel] = integration.providerId as ProvidersIdEnum;
         }
       }
     }

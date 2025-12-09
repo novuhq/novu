@@ -10,6 +10,7 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
     @ApiPropertyOptional({
       type: Number,
       required: false,
+      example: 0,
     })
     @Type(() => Number)
     @IsInt()
@@ -20,6 +21,7 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
       required: false,
       default: defaultLimit,
       maximum: maxLimit,
+      example: 10,
     })
     @Type(() => Number)
     @IsInt()

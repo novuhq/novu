@@ -1,6 +1,6 @@
-import { Editor as MailyEditor } from '@maily-to/core';
-import { BlockGroupItem } from '@maily-to/core/blocks';
-import { Variable } from '@maily-to/core/extensions';
+import { Editor as MailyEditor } from '@novu/maily-core';
+import { BlockGroupItem } from '@novu/maily-core/blocks';
+import { Variable } from '@novu/maily-core/extensions';
 import type { Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
 import { Editor as TiptapEditorReact } from '@tiptap/react';
 import { ForwardRefExoticComponent, HTMLAttributes, useCallback, useMemo } from 'react';
@@ -156,7 +156,6 @@ export const Maily = ({
               border-radius: 4px;
               box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.02);
               border-radius: 4px;
-              margin: 2px;
             }
           }
         `}

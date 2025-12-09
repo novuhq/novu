@@ -27,7 +27,9 @@
       "!.github",
       "!scripts",
       "!packages/framework/scripts",
-      "!packages/framework/src/jsonSchemaFaker.js"
+      "!packages/framework/src/jsonSchemaFaker.js",
+      "!libs/maily-tsconfig/*",
+      "!libs/maily-tailwind-config/*"
     ]
   },
   "formatter": {

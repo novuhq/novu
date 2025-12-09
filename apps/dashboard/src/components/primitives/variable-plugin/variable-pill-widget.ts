@@ -16,7 +16,8 @@ export class VariablePillWidget extends WidgetType {
     private filters: string[],
     private onSelect?: (value: string, from: number, to: number) => void,
     private isDigestEventsVariable?: (variableName: string) => boolean,
-    private isNotInSchema: boolean = false
+    private isNotInSchema: boolean = false,
+    private errorMessage?: string
   ) {
     super();
 
@@ -167,10 +168,10 @@ export class VariablePillWidget extends WidgetType {
             type: 'error',
           });
           this.tooltipElement.setAttribute('data-state', 'open');
-        } else if (this.isNotInSchema) {
+        } else if (this.isNotInSchema && this.errorMessage) {
           this.tooltipElement = this.renderTooltip({
             parent: span,
-            content: "Variable schema doesn't exist",
+            content: this.errorMessage,
             type: 'error',
           });
           this.tooltipElement.setAttribute('data-state', 'open');
@@ -338,7 +339,8 @@ export class VariablePillWidget extends WidgetType {
       other.fullVariableName === this.fullVariableName &&
       other.start === this.start &&
       other.end === this.end &&
-      other.isNotInSchema === this.isNotInSchema
+      other.isNotInSchema === this.isNotInSchema &&
+      other.errorMessage === this.errorMessage
     );
   }
 

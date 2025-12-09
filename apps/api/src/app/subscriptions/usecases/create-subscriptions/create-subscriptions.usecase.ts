@@ -147,14 +147,7 @@ export class CreateSubscriptionsUsecase {
       const preferencesArray: Array<{ subscriptionId: string; preferences: SubscriptionPreferenceDto[] }> = [];
 
       for (const batch of subscriptionBatches) {
-        const batchPreferencesArray = await this.createPreferencesForSubscriptionsBatch(
-          command,
-          batch.map((sub) => ({
-            subscription: sub,
-            subscriberId: sub._subscriberId,
-          })),
-          workflows
-        );
+        const batchPreferencesArray = await this.createPreferencesForSubscriptionsBatch(command, batch, workflows);
 
         preferencesArray.push(...batchPreferencesArray);
       }
@@ -409,7 +402,7 @@ export class CreateSubscriptionsUsecase {
 
   private async createPreferencesForSubscriptionsBatch(
     command: CreateSubscriptionsCommand,
-    subscriptions: Array<{ subscription: TopicSubscribersEntity; subscriberId: string }>,
+    subscriptions: TopicSubscribersEntity[] = [],
     workflows: NotificationTemplateEntity[]
   ): Promise<Array<{ subscriptionId: string; preferences: SubscriptionPreferenceDto[] }>> {
     if (!command.preferences || command.preferences.length === 0) {

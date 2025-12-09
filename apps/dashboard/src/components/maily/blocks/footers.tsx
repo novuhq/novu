@@ -1,4 +1,4 @@
-import { BlockItem } from '@maily-to/core/blocks';
+import { BlockItem } from '@novu/maily-core/blocks';
 import { EmailFooter } from '@/components/icons/email-footer';
 import { EmailFooterLogoWithTextStacked } from '@/components/icons/email-footer-logo-with-text-stacked';
 import { EmailFooterPlainText } from '@/components/icons/email-footer-plain-text';

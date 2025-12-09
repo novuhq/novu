@@ -71,7 +71,7 @@ export class CreateSubscriptionPreferencesUsecase {
   @InstrumentUsecase()
   async executeBatch(
     command: Omit<CreateSubscriptionPreferencesCommand, 'subscriptionId' | '_subscriberId'>,
-    subscriptions: Array<{ subscription: TopicSubscribersEntity; subscriberId: string }>
+    subscriptions: TopicSubscribersEntity[] = []
   ): Promise<Array<{ subscriptionId: string; preferences: SubscriptionPreferenceDto[] }>> {
     // Optimizes database round trips by batching all preference inserts into a single insertMany operation
     // instead of making individual database calls for each subscription-workflow combination
@@ -127,7 +127,7 @@ export class CreateSubscriptionPreferencesUsecase {
 
   private async buildPreferencesToCreate(
     command: Omit<CreateSubscriptionPreferencesCommand, 'subscriptionId' | '_subscriberId'>,
-    subscriptions: Array<{ subscription: TopicSubscribersEntity; subscriberId: string }>
+    subscriptions: TopicSubscribersEntity[] = []
   ): Promise<
     Array<{
       _environmentId: string;
@@ -153,9 +153,13 @@ export class CreateSubscriptionPreferencesUsecase {
       workflow: NotificationTemplateEntity;
     }> = [];
 
-    for (const { subscription, subscriberId } of subscriptions) {
+    for (const subscription of subscriptions) {
       for (const workflow of command.workflows) {
-        const workflowPreferences = await this.getWorkflowPreferencesForBatch(command, workflow, subscriberId);
+        const workflowPreferences = await this.getWorkflowPreferencesForBatch(
+          command,
+          workflow,
+          subscription._subscriberId.toString()
+        );
 
         if (workflowPreferences) {
           preferencesToCreate.push({
@@ -179,7 +183,7 @@ export class CreateSubscriptionPreferencesUsecase {
   private async getWorkflowPreferencesForBatch(
     command: Omit<CreateSubscriptionPreferencesCommand, 'subscriptionId' | '_subscriberId'>,
     workflow: NotificationTemplateEntity,
-    subscriberId: string
+    _subscriberId: string
   ): Promise<WorkflowPreferences | undefined> {
     const preferenceFilterDefinition = this.findPreferenceFilterDefinition(command, workflow);
     let enabled: boolean | undefined;
@@ -193,7 +197,7 @@ export class CreateSubscriptionPreferencesUsecase {
             environmentId: command.environmentId,
             organizationId: command.organizationId,
             templateId: workflow._id,
-            subscriberId,
+            subscriberId: _subscriberId,
           })
         )
       )?.preferences.all?.enabled;

@@ -17,7 +17,6 @@ import {
   EmailPreviewContentMobile,
   EmailPreviewHeader,
   EmailPreviewSubject,
-  EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
 import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
 import { cn } from '@/utils/ui';
@@ -96,10 +95,13 @@ export const EmailEditorPreview = ({
               {previewData?.result?.type == ChannelTypeEnum.EMAIL ? (
                 <>
                   <TabsContent value="mobile">
-                    <div className="w-full bg-neutral-100">
+                    <div className="border-b px-2">
+                      <EmailPreviewSubject subject={previewData.result.preview.subject} />
+                    </div>
+                    <div className="w-full bg-neutral-50 py-8">
                       <EmailPreviewContentMobile className="mx-auto">
-                        <EmailPreviewSubjectMobile subject={previewData.result.preview.subject} />
                         <EmailPreviewBodyMobile
+                          className="bg-background"
                           body={previewData.result.preview.body}
                           resourceOrigin={workflow?.origin ?? ResourceOriginEnum.NOVU_CLOUD}
                         />

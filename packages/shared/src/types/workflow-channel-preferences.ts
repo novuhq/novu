@@ -1,4 +1,3 @@
-import type { RulesLogic } from 'json-logic-js';
 import { ChannelTypeEnum } from './channel';
 import { DeepPartial } from './utils';
 /**
@@ -53,7 +52,7 @@ export type WorkflowPreference = {
    *
    * If not provided, the `enabled` property will be used to determine if the preference is applicable.
    */
-  condition?: RulesLogic;
+  condition?: any;
 };
 
 /** A preference for a notification delivery channel. */

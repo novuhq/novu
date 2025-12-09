@@ -7,6 +7,7 @@ import {
   DIGEST_VARIABLES_ENUM,
   getDynamicDigestVariable,
 } from '../components/variable/utils/digest-variables';
+import { isNamespaceOnlyVariable } from './liquid';
 
 export interface LiquidVariable {
   type?: 'variable' | 'digest' | 'new-variable' | 'local';
@@ -183,6 +184,11 @@ export function parseStepVariables(
   }
 
   function isAllowedVariable(variable: LiquidVariable): boolean {
+    // Check for namespace-only variables (invalid)
+    if (isNamespaceOnlyVariable(variable.name)) {
+      return false;
+    }
+
     if (isPayloadSchemaEnabled && variable.name.startsWith('payload.')) {
       return true;
     }
