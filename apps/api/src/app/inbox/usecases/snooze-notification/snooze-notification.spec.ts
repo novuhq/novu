@@ -1,8 +1,10 @@
 import { HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
+  CloudflareSchedulerService,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  FeatureFlagsService,
   PinoLogger,
   StandardQueueService,
 } from '@novu/application-generic';
@@ -48,6 +50,8 @@ describe('SnoozeNotification', () => {
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
   let markNotificationAsMock: sinon.SinonStubbedInstance<MarkNotificationAs>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
+  let cloudflareSchedulerServiceMock: sinon.SinonStubbedInstance<CloudflareSchedulerService>;
+  let featureFlagsServiceMock: sinon.SinonStubbedInstance<FeatureFlagsService>;
 
   const mockMessage: MessageEntity = {
     _id: validNotificationId,
@@ -96,6 +100,11 @@ describe('SnoozeNotification', () => {
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
     markNotificationAsMock = sinon.createStubInstance(MarkNotificationAs);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
+    cloudflareSchedulerServiceMock = sinon.createStubInstance(CloudflareSchedulerService);
+    featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
+
+    // Mock feature flag to return 'off' by default
+    featureFlagsServiceMock.getFlag.resolves('off');
 
     // Mock the MarkNotificationAsCommand.create method
     sinon.stub(MarkNotificationAsCommand, 'create').returns({
@@ -120,7 +129,9 @@ describe('SnoozeNotification', () => {
       organizationRepositoryMock as any,
       createExecutionDetailsMock as any,
       markNotificationAsMock as any,
-      analyticsServiceMock as any
+      analyticsServiceMock as any,
+      cloudflareSchedulerServiceMock as any,
+      featureFlagsServiceMock as any
     );
 
     sinon.stub(JobRepository, 'createObjectId').returns('new-job-id');
