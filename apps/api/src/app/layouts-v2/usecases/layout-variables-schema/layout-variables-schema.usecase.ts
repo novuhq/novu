@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsService, InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase } from '@novu/application-generic';
 import { JsonSchemaTypeEnum } from '@novu/dal';
-import { FeatureFlagsKeysEnum, LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
+import { LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
@@ -11,10 +11,7 @@ import { LayoutVariablesSchemaCommand } from './layout-variables-schema.command'
 
 @Injectable()
 export class LayoutVariablesSchemaUseCase {
-  constructor(
-    private readonly createVariablesObject: CreateVariablesObject,
-    private readonly featureFlagsService: FeatureFlagsService
-  ) {}
+  constructor(private readonly createVariablesObject: CreateVariablesObject) {}
 
   @InstrumentUsecase()
   async execute(command: LayoutVariablesSchemaCommand): Promise<JSONSchemaDto> {
@@ -28,13 +25,6 @@ export class LayoutVariablesSchemaUseCase {
       })
     );
 
-    const isContextEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      defaultValue: false,
-    });
-
     return {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {
@@ -42,7 +32,7 @@ export class LayoutVariablesSchemaUseCase {
         [LAYOUT_CONTENT_VARIABLE]: {
           type: JsonSchemaTypeEnum.STRING,
         },
-        ...(isContextEnabled ? { context: buildContextSchema(context) } : {}),
+        context: buildContextSchema(context),
       },
       additionalProperties: false,
     };

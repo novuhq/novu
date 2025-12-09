@@ -145,7 +145,6 @@ export const EmailBody = () => {
   const resourceId = workflow?.workflowId || '';
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const { saveForm } = useSaveForm();
   const track = useTelemetry();
 
@@ -298,7 +297,7 @@ export const EmailBody = () => {
               completionSources={translationCompletionSource}
               isPayloadSchemaEnabled={isPayloadSchemaEnabled}
               isTranslationEnabled={isTranslationEnabled}
-              isContextEnabled={isContextEnabled}
+              isContextEnabled={true}
               getSchemaPropertyByKey={getSchemaPropertyByKey}
               extensions={extensions}
               digestStepName={digestStepBeforeCurrent?.stepId}
@@ -342,7 +341,7 @@ export const EmailBody = () => {
             blocks={blocks}
             isPayloadSchemaEnabled={isPayloadSchemaEnabled}
             isTranslationEnabled={isTranslationEnabled}
-            isContextEnabled={isContextEnabled}
+            isContextEnabled={true}
             translationKeys={translationKeys}
             translationValueInput={ControlInput}
             addDigestVariables={!!digestStepBeforeCurrent?.stepId}

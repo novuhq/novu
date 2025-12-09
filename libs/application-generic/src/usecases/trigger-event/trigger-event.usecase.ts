@@ -11,7 +11,6 @@ import {
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
-  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITenantDefine,
   TriggerRecipientSubscriber,
@@ -20,7 +19,6 @@ import {
 import { addBreadcrumb } from '@sentry/node';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
-import { FeatureFlagsService } from '../../services';
 import type { EventType, Trace } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { AnalyticsService } from '../../services/analytics.service';
@@ -48,8 +46,7 @@ export class TriggerEvent {
     private triggerMulticast: TriggerMulticast,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
-    private contextRepository: ContextRepository,
-    private featureFlagsService: FeatureFlagsService
+    private contextRepository: ContextRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -222,19 +219,11 @@ export class TriggerEvent {
   }
 
   private async getMappedCommand(command: TriggerEventCommand, workflowId: string) {
-    const isContextEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      user: { _id: command.userId },
-    });
-
     return {
       ...command,
       tenant: this.mapTenant(command.tenant),
       actor: this.mapActor(command.actor),
-      ...(isContextEnabled && { contextKeys: await this.resolveContextKeys(command, workflowId) }),
+      contextKeys: await this.resolveContextKeys(command, workflowId),
     };
   }
 
