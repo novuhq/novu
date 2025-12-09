@@ -1,7 +1,9 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { useEffect } from 'react';
 import { PLAIN_SUPPORT_CHAT_APP_ID } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 // Add type declaration for Plain chat widget
 declare global {
@@ -17,6 +19,7 @@ let isPlainChatInitialized = false;
 
 export const usePlainChat = () => {
   const { currentUser } = useAuth();
+  const isContextualHelpEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXTUAL_HELP_DRAWER_ENABLED);
 
   const isLiveChatVisible = currentUser?.servicesHashes?.plain && PLAIN_SUPPORT_CHAT_APP_ID !== undefined;
 
@@ -34,18 +37,26 @@ export const usePlainChat = () => {
             externalId: currentUser?._id,
           },
           links: [
-            { icon: 'book', text: 'Documentation', url: 'https://docs.novu.co?utm_campaign=in_app_live_chat' },
-            {
-              icon: 'integration',
-              text: 'Roadmap',
-              url: 'https://roadmap.novu.co/roadmap?utm_campaign=in_app_live_chat',
-            },
-            { icon: 'link', text: 'Changelog', url: 'https://go.novu.co/changelog?utm_campaign=in_app_live_chat' },
             {
               icon: 'email',
               text: 'Contact Sales',
               url: 'https://cal.com/team/novu/intro?utm_campaign=in_app_live_chat',
             },
+            ...(!isContextualHelpEnabled
+              ? [
+                  { icon: 'book', text: 'Documentation', url: 'https://docs.novu.co?utm_campaign=in_app_live_chat' },
+                  {
+                    icon: 'integration',
+                    text: 'Roadmap',
+                    url: 'https://roadmap.novu.co/roadmap?utm_campaign=in_app_live_chat',
+                  },
+                  {
+                    icon: 'link',
+                    text: 'Changelog',
+                    url: 'https://go.novu.co/changelog?utm_campaign=in_app_live_chat',
+                  },
+                ]
+              : []),
           ],
           theme: 'light',
           style: {
@@ -131,7 +142,7 @@ export const usePlainChat = () => {
     }
 
     isPlainChatInitialized = true;
-  }, [isLiveChatVisible, currentUser]);
+  }, [isLiveChatVisible, currentUser, isContextualHelpEnabled]);
 
   const showPlainLiveChat = () => {
     if (isLiveChatVisible) {

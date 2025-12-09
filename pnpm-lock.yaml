@@ -589,8 +589,8 @@ importers:
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.53.2(react@18.3.1))
       '@inkeep/cxkit-react':
-        specifier: ^0.5.96
-        version: 0.5.96(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)
+        specifier: ^0.5.107
+        version: 0.5.107(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)
       '@lezer/highlight':
         specifier: ^1.2.1
         version: 1.2.1
@@ -8646,26 +8646,26 @@ packages:
     resolution: {integrity: sha512-Jj/FSBWLvt7KLVsx1fZOfIoO68AtTvi/sEv0HEOMUehssuM7/AJSLeRerQNHtBMULBKrgYIRRAU4Y3QiwUbyOg==}
     engines: {node: '>=10'}
 
-  '@inkeep/cxkit-color-mode@0.5.96':
-    resolution: {integrity: sha512-Z/W17xfnQgw0ZyGWCwq9RLBWZa7DSyOpbhdYtnNxmzI414dSZLMt8RWQRACn9KQ7S8TD/D0dr03fU2IUop1F5w==}
+  '@inkeep/cxkit-color-mode@0.5.107':
+    resolution: {integrity: sha512-ef/NbnAv02X3DFD0A9xC20dfAdn45FFKgjTbqLCbnHZmx3TBHrJtcmxyzvSLnL+Ju3OjwYj3ynWONsnH8Nu7eg==}
 
-  '@inkeep/cxkit-primitives@0.5.96':
-    resolution: {integrity: sha512-FK0ikjA8T7pKZV7Wh20nqzNfXicq3oTuhb83st+MxebDe5gOb/k23YLY60vHaVkqCkaC+VYkqyfR0GSoZzIuzg==}
+  '@inkeep/cxkit-primitives@0.5.107':
+    resolution: {integrity: sha512-V1ia5E1md323QS0JqMK1gG8oV2Htrcxkp+tO5H6P4KTCeQDXlrigZXXxwEEYxeeONaPOcW8B0ukq2J5F/ZNuQA==}
     peerDependencies:
       react: '>=17.0.0'
       react-dom: '>=17.0.0'
 
-  '@inkeep/cxkit-react@0.5.96':
-    resolution: {integrity: sha512-X7ixJw53OrowoQ9fZ48nzoKIro+g+NVyJkJLTnekLXkklW4tustMbdWeA1f7mQrThNvgEc11S5PbuxNcwJskHA==}
+  '@inkeep/cxkit-react@0.5.107':
+    resolution: {integrity: sha512-u/r9c/uglGgK872sH34rJEivHqeDmHFU4e7KkbIzZLsKT9jbeZDARl9bquw+io1q9InO0JfA53g9bTEDkMIMPA==}
 
-  '@inkeep/cxkit-styled@0.5.96':
-    resolution: {integrity: sha512-NLumV2BHutLLKlnhHRpMrCe1lxxvMht2a4JyjwNNDd4qx54jfYUpA2Cyqa+jHtxqb9CXreU1a/TxhCHu0WS9mw==}
+  '@inkeep/cxkit-styled@0.5.107':
+    resolution: {integrity: sha512-wEmnE2en4ijscv0QYvWY8sWkZoXmfNxXWuzSe2GhkaxMT1oVcausSTl6lwYMy+LFcD8BZf3C83P+5p2tOSc2vA==}
 
-  '@inkeep/cxkit-theme@0.5.96':
-    resolution: {integrity: sha512-shIZhv/4xM5WF2xSNieI40rbVA/5oBJDarldFSfmwEjbcHZY9fz5efZmi6sqHLlJeT6TMv10IknZ7VIKT8ekiw==}
+  '@inkeep/cxkit-theme@0.5.107':
+    resolution: {integrity: sha512-vF3Rtcdkg7LwK5tZWraAzk8BrjClbPrMse4k69L1trf0g1kWJmUcau0MWCXmfH3yAZRkNpT/qNyi4jKGk/dmew==}
 
-  '@inkeep/cxkit-types@0.5.96':
-    resolution: {integrity: sha512-ljOudxIY5JC4LLXyAi5hNUfJcQGirmBv4Okup0EczF4tosSDZFG6fzLYXOZ/wNvJ4vNq+TGsXu2yJuAvp9crMA==}
+  '@inkeep/cxkit-types@0.5.107':
+    resolution: {integrity: sha512-YJSTUMRJkWzPLQtk0c0waK8UVCgPX/G78DBdgvGXy5MjG4xDonrns4ZlLH9Xu/lt7iD1+MVGSaEl3XKNrSuphw==}
 
   '@internationalized/date@3.8.2':
     resolution: {integrity: sha512-/wENk7CbvLbkUvX1tu0mwq49CVkkWpkXubGel6birjRPyo6uQ4nQpnq5xZu823zRCwwn82zgHrvgF1vZyvmVgA==}
@@ -39770,13 +39770,13 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@inkeep/cxkit-color-mode@0.5.96': {}
+  '@inkeep/cxkit-color-mode@0.5.107': {}
 
-  '@inkeep/cxkit-primitives@0.5.96(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)':
+  '@inkeep/cxkit-primitives@0.5.107(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)':
     dependencies:
-      '@inkeep/cxkit-color-mode': 0.5.96
-      '@inkeep/cxkit-theme': 0.5.96
-      '@inkeep/cxkit-types': 0.5.96
+      '@inkeep/cxkit-color-mode': 0.5.107
+      '@inkeep/cxkit-theme': 0.5.107
+      '@inkeep/cxkit-types': 0.5.107
       '@radix-ui/number': 1.1.1
       '@radix-ui/primitive': 1.1.3
       '@radix-ui/react-avatar': 1.1.2(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -39833,9 +39833,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-react@0.5.96(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)':
+  '@inkeep/cxkit-react@0.5.107(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)':
     dependencies:
-      '@inkeep/cxkit-styled': 0.5.96(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)
+      '@inkeep/cxkit-styled': 0.5.107(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)
       '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@18.3.18)(react@18.3.1)
       lucide-react: 0.503.0(react@18.3.1)
     transitivePeerDependencies:
@@ -39847,9 +39847,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-styled@0.5.96(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)':
+  '@inkeep/cxkit-styled@0.5.107(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)':
     dependencies:
-      '@inkeep/cxkit-primitives': 0.5.96(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)
+      '@inkeep/cxkit-primitives': 0.5.107(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod@3.25.20)
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       merge-anything: 5.1.7
@@ -39863,11 +39863,11 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-theme@0.5.96':
+  '@inkeep/cxkit-theme@0.5.107':
     dependencies:
       colorjs.io: 0.5.2
 
-  '@inkeep/cxkit-types@0.5.96': {}
+  '@inkeep/cxkit-types@0.5.107': {}
 
   '@internationalized/date@3.8.2':
     dependencies:
