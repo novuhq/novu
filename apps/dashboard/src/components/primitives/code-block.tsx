@@ -3,7 +3,7 @@ import { langs, loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { createTheme } from '@uiw/codemirror-themes';
 import CodeMirror from '@uiw/react-codemirror';
 import { Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../utils/ui';
 import { CopyToClipboard } from './copy-to-clipboard';
 
@@ -146,10 +146,12 @@ export function CodeBlock({
   actionButtons,
 }: CodeBlockProps) {
   const [showSecrets, setShowSecrets] = useState(false);
+  const [showGradient, setShowGradient] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const hasSecrets = secretMask.length > 0;
 
-  const getMaskedCode = () => {
+  const maskedCode = useMemo(() => {
     if (!hasSecrets || showSecrets) return code;
 
     const lines = code.split('\n');
@@ -170,7 +172,49 @@ export function CodeBlock({
     }
 
     return lines.join('\n');
-  };
+  }, [code, hasSecrets, showSecrets, secretMask]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let resizeObserver: ResizeObserver | null = null;
+    let scrollElement: Element | null = null;
+
+    const checkScroll = () => {
+      if (!scrollElement) return;
+
+      const hasHorizontalScroll = scrollElement.scrollWidth > scrollElement.clientWidth;
+      const isScrolledToEnd =
+        Math.abs(scrollElement.scrollWidth - scrollElement.clientWidth - scrollElement.scrollLeft) < 1;
+
+      setShowGradient(hasHorizontalScroll && !isScrolledToEnd);
+    };
+
+    const setupListeners = () => {
+      scrollElement = container.querySelector('.cm-scroller');
+      if (scrollElement) {
+        scrollElement.addEventListener('scroll', checkScroll);
+        checkScroll();
+
+        resizeObserver = new ResizeObserver(checkScroll);
+        resizeObserver.observe(scrollElement);
+      }
+    };
+
+    const timeoutId = setTimeout(setupListeners, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (scrollElement) {
+        scrollElement.removeEventListener('scroll', checkScroll);
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maskedCode]);
 
   const showToolbar = hasSecrets || actionButtons === undefined;
 
@@ -185,10 +229,7 @@ export function CodeBlock({
     >
       {title && (
         <div
-          className={cn(
-            'flex items-center justify-between px-4 pt-2.5',
-            theme === 'light' ? 'bg-white' : 'bg-[#0d1117]'
-          )}
+          className={cn('flex items-center justify-between px-4 py-2', theme === 'light' ? 'bg-white' : 'bg-[#0d1117]')}
         >
           <span className={cn('text-xs font-medium', theme === 'light' ? 'text-neutral-700' : 'text-neutral-300')}>
             {title}
@@ -259,15 +300,26 @@ export function CodeBlock({
         </div>
       )}
 
-      <div className={cn('flex h-full flex-col overflow-hidden px-[5px] pb-[5px]', !title && 'pt-[5px]')}>
+      <div className={cn('flex h-full flex-col overflow-hidden px-[4px] pb-[4px]', !title && 'pt-[4px]')}>
         <div
+          ref={scrollContainerRef}
           className={cn(
-            'relative h-full overflow-y-auto rounded-lg border p-4',
+            'relative h-full overflow-y-auto rounded-lg border p-2.5',
             theme === 'light' ? 'border-neutral-200 bg-neutral-50' : 'border-neutral-800/50 bg-[#161b22]'
           )}
         >
+          {showGradient && (
+            <div
+              className={cn(
+                'pointer-events-none absolute right-2.5 top-2.5 bottom-2.5 z-10 w-8 rounded-r-lg',
+                theme === 'light'
+                  ? 'bg-gradient-to-l from-neutral-50 to-transparent'
+                  : 'bg-gradient-to-l from-[#161b22] to-transparent'
+              )}
+            />
+          )}
           <CodeMirror
-            value={getMaskedCode()}
+            value={maskedCode}
             theme={theme === 'dark' ? darkTheme : lightTheme}
             extensions={[languageMap[language]()]}
             basicSetup={{
