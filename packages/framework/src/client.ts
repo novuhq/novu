@@ -707,7 +707,7 @@ export class Client {
       // doesn't have escaped quotes like '"foo"' then compiled string '{"body":""foo""}' is not valid JSON and parse will fail
       const repairedString = jsonrepair(withMarkers);
       const parsedControls = JSON.parse(repairedString);
-      // Normalize string values that contain invalid JSON (e.g., from Liquid template variables)
+      // Normalize string values in the data field that contain invalid JSON (e.g., from Liquid template variables)
       // This handles cases where Liquid outputs JavaScript object notation instead of valid JSON
       return normalizeControlData(parsedControls);
     } catch (error) {
