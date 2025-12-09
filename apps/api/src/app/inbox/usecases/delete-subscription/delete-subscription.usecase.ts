@@ -29,13 +29,13 @@ export class DeleteTopicSubscription {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _topicId: topic._id,
-      ...(TopicSubscribersRepository.isInternalId(command.subscriptionId)
-        ? { _id: command.subscriptionId }
-        : { identifier: command.subscriptionId }),
+      ...(TopicSubscribersRepository.isInternalId(command.subscriptionIdOrIdentifier)
+        ? { _id: command.subscriptionIdOrIdentifier }
+        : { identifier: command.subscriptionIdOrIdentifier }),
     });
 
     if (!subscription) {
-      throw new NotFoundException(`Subscription with ID ${command.subscriptionId} not found`);
+      throw new NotFoundException(`Subscription with ID ${command.subscriptionIdOrIdentifier} not found`);
     }
 
     await this.topicSubscribersRepository.withTransaction(async () => {

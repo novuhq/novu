@@ -365,22 +365,26 @@ export class TopicsController {
     return typeSafeResult;
   }
 
-  @Patch('/:topicKey/subscriptions/:subscriptionId')
+  @Patch('/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('update')
   @ApiOperation({
     summary: 'Update a topic subscription',
-    description: `Update a subscription by its unique identifier **subscriptionId** for a topic. You can update the preferences and name associated with the subscription.`,
+    description: `Update a subscription by its unique identifier **subscriptionIdOrIdentifier** for a topic. You can update the preferences and name associated with the subscription.`,
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiParam({ name: 'subscriptionId', description: 'The unique identifier of the subscription', type: String })
+  @ApiParam({
+    name: 'subscriptionIdOrIdentifier',
+    description: 'The unique identifier of the subscription',
+    type: String,
+  })
   @ApiResponse(SubscriptionResponseDto, 200)
   @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
   async updateTopicSubscription(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionId') subscriptionId: string,
+    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
     @Body() body: UpdateTopicSubscriptionRequestDto
   ): Promise<SubscriptionResponseDto> {
     return await this.updateSubscriptionUsecase.execute(
@@ -389,7 +393,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         userId: user._id,
         topicKey,
-        subscriptionId,
+        subscriptionIdOrIdentifier,
         name: body.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
       })

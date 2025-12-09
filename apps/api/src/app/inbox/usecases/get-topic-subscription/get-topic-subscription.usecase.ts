@@ -22,14 +22,14 @@ export class GetTopicSubscription {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       topicKey: command.topicKey,
-      ...(TopicSubscribersRepository.isInternalId(command.subscriptionId)
-        ? { _id: command.subscriptionId }
-        : { identifier: command.subscriptionId }),
+      ...(TopicSubscribersRepository.isInternalId(command.subscriptionIdOrIdentifier)
+        ? { _id: command.subscriptionIdOrIdentifier }
+        : { identifier: command.subscriptionIdOrIdentifier }),
     });
 
     if (!subscription) {
       throw new NotFoundException(
-        `Subscription with ID ${command.subscriptionId} not found for topic ${command.topicKey}`
+        `Subscription with ID ${command.subscriptionIdOrIdentifier} not found for topic ${command.topicKey}`
       );
     }
 

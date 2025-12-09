@@ -8,7 +8,7 @@ export class DeleteTopicSubscriptionCommand extends EnvironmentWithSubscriber {
 
   @IsString()
   @IsDefined()
-  subscriptionId: string;
+  subscriptionIdOrIdentifier: string;
 
   @IsString()
   @IsDefined()
