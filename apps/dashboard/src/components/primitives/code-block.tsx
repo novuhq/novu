@@ -179,6 +179,7 @@ export function CodeBlock({
       className={cn(
         'flex w-full flex-col overflow-hidden rounded-xl border',
         theme === 'light' ? 'border-neutral-200 bg-white shadow-sm' : 'border-neutral-800/50 bg-[#0d1117] shadow-lg',
+        !title && 'group',
         className
       )}
     >
@@ -209,15 +210,21 @@ export function CodeBlock({
                   {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               )}
-              {actionButtons ?? <CopyToClipboard content={code} theme={theme} title="Copy code" />}
+              {actionButtons ?? (
+                <CopyToClipboard
+                  content={code}
+                  theme={theme}
+                  className={cn(
+                    'rounded-md p-1.5 transition-all duration-200 active:scale-95',
+                    theme === 'light'
+                      ? 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                      : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+                  )}
+                  title="Copy code"
+                />
+              )}
             </div>
           )}
-        </div>
-      )}
-
-      {title && (
-        <div className="w-full px-0.5">
-          <div className={cn('relative h-px w-full', theme === 'light' ? 'bg-neutral-200' : 'bg-neutral-800/50')} />
         </div>
       )}
 
@@ -226,6 +233,7 @@ export function CodeBlock({
           <div
             className={cn(
               'absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md',
+              'opacity-0 transition-opacity duration-200 group-hover:opacity-100',
               theme === 'light' ? 'bg-white/90' : 'bg-[#0d1117]/90',
               'backdrop-blur-sm border',
               theme === 'light' ? 'border-neutral-200' : 'border-neutral-800/50'
@@ -251,7 +259,7 @@ export function CodeBlock({
         </div>
       )}
 
-      <div className="flex h-full flex-col overflow-hidden px-[5px] pb-[5px]">
+      <div className={cn('flex h-full flex-col overflow-hidden px-[5px] pb-[5px]', !title && 'pt-[5px]')}>
         <div
           className={cn(
             'relative h-full overflow-y-auto rounded-lg border p-4',
