@@ -305,7 +305,7 @@ export function CodeBlock({
           ref={scrollContainerRef}
           className={cn(
             'relative h-full overflow-y-auto rounded-lg border p-2.5',
-            theme === 'light' ? 'border-neutral-200 bg-neutral-50' : 'border-neutral-800/50 bg-[#161b22]'
+            theme === 'light' ? 'border-neutral-200 bg-neutral-50' : 'border-neutral-600/50 bg-[#161b22]'
           )}
         >
           {showGradient && (
