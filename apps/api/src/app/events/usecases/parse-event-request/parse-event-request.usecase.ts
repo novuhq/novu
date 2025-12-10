@@ -95,7 +95,7 @@ export class ParseEventRequest {
         });
       }
 
-      const template =
+      const template: Pick<NotificationTemplateEntity, '_id' | 'active' | 'payloadSchema' | 'validatePayload'> | null =
         command.workflow ||
         (await this.getNotificationTemplateByTriggerIdentifier({
           environmentId: command.environmentId,
@@ -113,9 +113,6 @@ export class ParseEventRequest {
         });
         throw new UnprocessableEntityException('workflow_not_found');
       }
-
-      const reservedVariablesTypes = this.getReservedVariablesTypes(template);
-      this.validateTriggerContext(command, reservedVariablesTypes);
 
       if (template.validatePayload && template.payloadSchema) {
         try {
@@ -170,20 +167,6 @@ export class ParseEventRequest {
         return {
           acknowledged: true,
           status: TriggerEventStatusEnum.NOT_ACTIVE,
-        };
-      }
-
-      if (!template.steps?.length) {
-        return {
-          acknowledged: true,
-          status: TriggerEventStatusEnum.NO_WORKFLOW_STEPS,
-        };
-      }
-
-      if (!template.steps?.some((step) => step.active)) {
-        return {
-          acknowledged: true,
-          status: TriggerEventStatusEnum.NO_WORKFLOW_ACTIVE_STEPS,
         };
       }
 
@@ -389,11 +372,13 @@ export class ParseEventRequest {
     triggerIdentifier: string;
     environmentId: string;
   }) {
-    return await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.environmentId,
-      command.triggerIdentifier,
-      undefined,
-      false
+    return await this.notificationTemplateRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        'triggers.identifier': command.triggerIdentifier,
+      },
+      '_id active payloadSchema validatePayload steps.active',
+      { readPreference: 'secondaryPreferred' }
     );
   }
 
@@ -439,7 +424,7 @@ export class ParseEventRequest {
     });
   }
 
-  private getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {
+  private getReservedVariablesTypes(template: Pick<NotificationTemplateEntity, 'triggers'>): TriggerContextTypeEnum[] {
     const { reservedVariables } = template.triggers[0];
 
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
