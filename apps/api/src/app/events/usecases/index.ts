@@ -4,10 +4,4 @@ import { ProcessBulkTrigger } from './process-bulk-trigger';
 import { SendTestEmail } from './send-test-email';
 import { TriggerEventToAll } from './trigger-event-to-all';
 
-export const USE_CASES = [
-  CancelDelayed,
-  TriggerEventToAll,
-  ParseEventRequest,
-  ProcessBulkTrigger,
-  SendTestEmail,
-];
+export const USE_CASES = [CancelDelayed, TriggerEventToAll, ParseEventRequest, ProcessBulkTrigger, SendTestEmail];
