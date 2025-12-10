@@ -25,7 +25,7 @@ export const SubscriptionPreferenceRow = (props: {
     <div
       class={style({
         key: 'subscriptionPreferenceRow',
-        className: 'nt-flex nt-items-center nt-justify-between nt-p-2 nt-rounded-lg',
+        className: 'nt-flex nt-items-center nt-justify-between nt-p-2 nt-rounded-lg nt-gap-2',
         context: { preference: props.preference } satisfies Parameters<
           SubscriptionAppearanceCallback['subscriptionPreferenceRow']
         >[0],
@@ -34,12 +34,13 @@ export const SubscriptionPreferenceRow = (props: {
       <span
         class={style({
           key: 'subscriptionPreferenceLabel',
-          className: 'nt-text-sm nt-font-medium',
+          className: 'nt-text-sm nt-font-medium nt-truncate nt-text-start',
           context: { preference: props.preference } satisfies Parameters<
             SubscriptionAppearanceCallback['subscriptionPreferenceLabel']
           >[0],
         })}
         data-localization={preference().workflow.identifier as StringLocalizationKey}
+        title={t(preference().workflow.identifier as StringLocalizationKey) ?? props.preference.label}
       >
         {t(preference().workflow.identifier as StringLocalizationKey) ?? props.preference.label}
       </span>

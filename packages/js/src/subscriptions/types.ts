@@ -8,12 +8,14 @@ export type WorkflowFilter = {
   workflowId: WorkflowIdentifierOrId;
   enabled?: boolean;
   condition?: RulesLogic;
+  filter?: never;
 };
 
 export type WorkflowGroupFilter = {
   filter: { workflowIds?: Array<WorkflowIdentifierOrId>; tags?: string[] };
   enabled?: boolean;
   condition?: RulesLogic;
+  workflowId?: never;
 };
 
 export type PreferenceFilter = WorkflowIdentifierOrId | WorkflowFilter | WorkflowGroupFilter;

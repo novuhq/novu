@@ -5,7 +5,7 @@ import { SubscriptionPreferences } from './SubscriptionPreferences';
 
 export type SubscriptionPreferencesWrapperProps = {
   topicKey: string;
-  identifier: string;
+  identifier?: string;
   preferences: Array<UIPreference>;
   onClick?: (args: { subscription?: TopicSubscription }) => void;
   onDeleteError?: (error: unknown) => void;
@@ -33,9 +33,9 @@ export const SubscriptionPreferencesWrapper = (props: SubscriptionPreferencesWra
       props.onDeleteSuccess?.();
     } else {
       const preferences: Array<PreferenceFilter> = props.preferences.map((preference) => {
-        if (typeof preference === 'object' && 'workflowId' in preference) {
+        if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
           return { workflowId: preference.workflowId, enabled: preference.enabled };
-        } else if (typeof preference === 'object' && 'filter' in preference) {
+        } else if (typeof preference === 'object' && 'filter' in preference && preference.filter) {
           return { filter: preference.filter, enabled: preference.enabled };
         }
         return preference;

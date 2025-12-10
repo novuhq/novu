@@ -18,6 +18,7 @@ export type WorkflowPreference = {
   label?: string;
   workflowId: WorkflowIdentifierOrId;
   enabled?: boolean;
+  filter?: never;
 };
 
 export type GroupPreference = {
@@ -27,6 +28,7 @@ export type GroupPreference = {
     tags?: string[];
   };
   enabled?: boolean;
+  workflowId?: never;
 };
 
 export type UIPreference = WorkflowIdentifierOrId | WorkflowPreference | GroupPreference;
@@ -36,7 +38,7 @@ export type SubscriptionProps = {
   placement?: Placement;
   placementOffset?: OffsetOptions;
   topicKey: string;
-  identifier: string;
+  identifier?: string;
   preferences: Array<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
 };
@@ -57,9 +59,9 @@ export const Subscription = (props: SubscriptionProps) => {
       remove({ subscription: currentSubscription });
     } else {
       const preferences: Array<PreferenceFilter> = props.preferences.map((preference) => {
-        if (typeof preference === 'object' && 'workflowId' in preference) {
+        if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
           return { workflowId: preference.workflowId, enabled: preference.enabled };
-        } else if (typeof preference === 'object' && 'filter' in preference) {
+        } else if (typeof preference === 'object' && 'filter' in preference && preference.filter) {
           return { filter: preference.filter, enabled: preference.enabled };
         }
         return preference;
