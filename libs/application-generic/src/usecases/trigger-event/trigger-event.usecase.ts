@@ -79,6 +79,7 @@ export class TriggerEvent {
             template: storedWorkflow,
           })
         );
+
         command.payload = toMerged(defaultPayload, command.payload);
       }
 
