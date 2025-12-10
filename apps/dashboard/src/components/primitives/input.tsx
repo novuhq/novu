@@ -48,7 +48,7 @@ export const inputVariants = tv({
       // base
       'w-full bg-transparent bg-none text-paragraph-sm text-text-strong outline-none',
       'transition duration-200 ease-out',
-      // horizontal scroll with fade gradient - only affects text content
+      // horizontal scroll with fade gradient
       'overflow-x-auto scrollbar-thin',
       '[mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)]',
       '[mask-size:100%_100%]',
