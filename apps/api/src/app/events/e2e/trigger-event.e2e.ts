@@ -19,7 +19,6 @@ import {
 } from '@novu/dal';
 import {
   ActorTypeEnum,
-  ApiServiceLevelEnum,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   CreateWorkflowDto,
@@ -48,14 +47,8 @@ import { v4 as uuid } from 'uuid';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
 import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
-import { sleep } from './utils/sleep.util';
 
-const promiseTimeout = (ms: number): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-
-describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
+describe.only('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -1980,16 +1973,13 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         ],
       });
 
-      await session.testAgent
-        .post('/v1/events/trigger')
-        .send({
-          name: template.triggers[0].identifier,
-          to: newSubscriberIdInAppNotification,
-          payload: {
-            organizationName: 'Umbrella Corp',
-          },
-        })
-        .expect(201);
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: newSubscriberIdInAppNotification,
+        payload: {
+          organizationName: 'Umbrella Corp',
+        },
+      });
 
       await session.waitForJobCompletion(template._id);
 
