@@ -41,7 +41,6 @@ import { toMerged } from 'es-toolkit';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
-import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import {
   ParseEventRequestBroadcastCommand,
   ParseEventRequestCommand,
@@ -52,7 +51,6 @@ import {
 export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
     private tenantRepository: TenantRepository,
@@ -196,15 +194,6 @@ export class ParseEventRequest {
         // eslint-disable-next-line no-param-reassign
         command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
       }
-
-      const defaultPayload = this.verifyPayload.execute(
-        VerifyPayloadCommand.create({
-          payload: command.payload,
-          template,
-        })
-      );
-      // eslint-disable-next-line no-param-reassign
-      command.payload = toMerged(defaultPayload, command.payload);
 
       const result = await this.dispatchEventToWorkflowQueue({
         requestId,
