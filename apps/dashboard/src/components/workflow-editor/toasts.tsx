@@ -58,8 +58,6 @@ export const showSuccessToast = (toastId?: string | number) => {
 };
 
 export const showErrorToast = (toastId?: string | number, error?: unknown) => {
-  if (!toastId) return;
-
   const message = getErrorMessage(error);
 
   toast.custom(
@@ -70,7 +68,7 @@ export const showErrorToast = (toastId?: string | number, error?: unknown) => {
       </Toast>
     ),
     {
-      id: toastId,
+      ...(toastId && { id: toastId }),
       position: 'bottom-right',
       classNames: {
         toast: 'right-0',
