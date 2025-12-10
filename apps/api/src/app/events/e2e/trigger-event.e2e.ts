@@ -48,7 +48,7 @@ import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
 import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
 
-describe.only('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
+describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
