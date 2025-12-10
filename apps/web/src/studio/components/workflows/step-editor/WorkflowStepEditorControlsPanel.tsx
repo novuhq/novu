@@ -5,14 +5,12 @@ import { IconOutlineEditNote, IconOutlineTune, IconOutlineSave } from '@novu/nov
 import { css } from '@novu/novui/css';
 import { Container, Flex } from '@novu/novui/jsx';
 
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { When } from '../../../../components/utils/When';
 import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { PATHS } from '../../../../components/docs/docs.const';
 import { getSuggestionVariables, subscriberVariables } from '../../../utils';
-import { useFeatureFlag } from '../../../../hooks/useFeatureFlag';
 
 export type OnChangeType = 'step' | 'payload';
 
@@ -57,12 +55,9 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     onChange(type, data, id);
   }, TYPING_DEBOUNCE_TIME_MS);
 
-  const isAutocompleteEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTROLS_AUTOCOMPLETE_ENABLED);
-
-  // set variables to undefined when autocomplete flag is disabled to use plain text entry.
   const variables = useMemo(
-    () => (isAutocompleteEnabled ? [...(subscriberVariables || []), ...(payloadProperties || [])] : undefined),
-    [payloadProperties, isAutocompleteEnabled]
+    () => [...(subscriberVariables || []), ...(payloadProperties || [])],
+    [payloadProperties]
   );
 
   return (
