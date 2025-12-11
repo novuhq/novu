@@ -62,32 +62,42 @@ export class GetSubscriberGlobalPreference {
       return Object.values(ChannelTypeEnum);
     }
 
-    const workflowList: Pick<NotificationTemplateEntity, 'steps'>[] =
-      await this.notificationTemplateRepository.filterActive({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        tags: undefined,
-        critical: undefined,
-        severity: undefined,
-        select: 'steps.active',
-      });
+    const workflowList = await this.notificationTemplateRepository.filterActive({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      tags: undefined,
+      critical: undefined,
+      severity: undefined,
+      select: '_id steps.active steps._templateId',
+      limit: 100,
+    });
 
     const activeChannels = new Set<ChannelTypeEnum>();
-    const allChannels = Object.values(ChannelTypeEnum);
-    const maxChannels = allChannels.length;
 
     for (const workflow of workflowList) {
-      for (const step of workflow.steps) {
-        if (step.active && step.template?.type) {
-          activeChannels.add(step.template.type as unknown as ChannelTypeEnum);
-          if (activeChannels.size === maxChannels) {
-            return allChannels;
-          }
-        }
+      const workflowChannels = this.getChannels(workflow, command.includeInactiveChannels);
+      for (const channel of workflowChannels) {
+        activeChannels.add(channel);
       }
     }
 
     return Array.from(activeChannels);
+  }
+
+  private getChannels(workflow: NotificationTemplateEntity, includeInactiveChannels: boolean): ChannelTypeEnum[] {
+    if (includeInactiveChannels) {
+      return Object.values(ChannelTypeEnum);
+    }
+
+    const channelSet = new Set<ChannelTypeEnum>();
+
+    for (const step of workflow.steps) {
+      if (step.active && step.template?.type) {
+        channelSet.add(step.template.type as unknown as ChannelTypeEnum);
+      }
+    }
+
+    return Array.from(channelSet);
   }
 
   @CachedResponse({

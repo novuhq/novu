@@ -144,14 +144,6 @@ export class UpdatePreferences {
       schedule: command.schedule,
       all: command.all,
     });
-
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.UPDATE_PREFERENCES, '', {
-      _organization: command.organizationId,
-      _subscriber: subscriber._id,
-      _workflowId: command.workflowIdOrIdentifier,
-      level: command.level,
-      channels: channelPreferences,
-    });
   }
 
   private buildPreferenceChannels(command: UpdatePreferencesCommand): IPreferenceChannels {
