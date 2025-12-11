@@ -31,20 +31,25 @@ export const SubscriptionPreferenceRow = (props: {
         >[0],
       })}
     >
-      <span
+      <label
+        for={`subscription-preference-${preference().workflow.identifier}`}
         class={style({
           key: 'subscriptionPreferenceLabel',
-          className: 'nt-text-sm nt-font-medium nt-truncate nt-text-start',
+          className: 'nt-text-sm nt-font-medium nt-truncate nt-text-start nt-w-full nt-cursor-pointer',
           context: { preference: props.preference } satisfies Parameters<
             SubscriptionAppearanceCallback['subscriptionPreferenceLabel']
           >[0],
         })}
         data-localization={preference().workflow.identifier as StringLocalizationKey}
-        title={t(preference().workflow.identifier as StringLocalizationKey) ?? props.preference.label}
+        title={props.preference.label ?? t(preference().workflow.identifier as StringLocalizationKey)}
       >
-        {t(preference().workflow.identifier as StringLocalizationKey) ?? props.preference.label}
-      </span>
-      <Checkbox checked={isChecked()} onChange={handleChange} />
+        {props.preference.label ?? t(preference().workflow.identifier as StringLocalizationKey)}
+      </label>
+      <Checkbox
+        id={`subscription-preference-${preference().workflow.identifier}`}
+        checked={isChecked()}
+        onChange={handleChange}
+      />
     </div>
   );
 };

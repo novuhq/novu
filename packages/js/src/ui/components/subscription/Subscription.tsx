@@ -1,5 +1,6 @@
 import { OffsetOptions, Placement } from '@floating-ui/dom';
 import type { PreferenceFilter, TopicSubscription, WorkflowIdentifierOrId } from '../../../subscriptions';
+import { NonEmptyArray } from '../../../types';
 import { useSubscription } from '../../api/hooks/useSubscription';
 import { useInboxContext } from '../../context';
 import { cn } from '../../helpers';
@@ -25,6 +26,7 @@ export type GroupPreference = {
   label: string;
   filter: {
     workflowIds?: Array<WorkflowIdentifierOrId>;
+    workflows?: Array<{ label: string; workflowId: WorkflowIdentifierOrId }>;
     tags?: string[];
   };
   enabled?: boolean;
@@ -39,7 +41,7 @@ export type SubscriptionProps = {
   placementOffset?: OffsetOptions;
   topicKey: string;
   identifier?: string;
-  preferences: Array<UIPreference>;
+  preferences: NonEmptyArray<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
 };
 
@@ -58,14 +60,15 @@ export const Subscription = (props: SubscriptionProps) => {
     if (currentSubscription) {
       remove({ subscription: currentSubscription });
     } else {
-      const preferences: Array<PreferenceFilter> = props.preferences.map((preference) => {
+      const preferences = props.preferences.map((preference) => {
         if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
           return { workflowId: preference.workflowId, enabled: preference.enabled };
         } else if (typeof preference === 'object' && 'filter' in preference && preference.filter) {
           return { filter: preference.filter, enabled: preference.enabled };
         }
+
         return preference;
-      });
+      }) as NonEmptyArray<PreferenceFilter>;
       create({ topicKey: props.topicKey, identifier: props.identifier, preferences: preferences });
     }
   };
