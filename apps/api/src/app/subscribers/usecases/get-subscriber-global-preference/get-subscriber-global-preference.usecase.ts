@@ -69,7 +69,7 @@ export class GetSubscriberGlobalPreference {
         tags: undefined,
         critical: undefined,
         severity: undefined,
-        select: 'steps.active steps.template.type',
+        select: 'steps.active',
       });
 
     const activeChannels = new Set<ChannelTypeEnum>();
