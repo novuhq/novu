@@ -338,10 +338,7 @@ export class SendMessage {
         environmentId: job._environmentId,
       }));
 
-    const subscriber: Pick<SubscriberEntity, '_id' | 'subscriberId'> | null = await this.getSubscriberBySubscriberId({
-      _environmentId: job._environmentId,
-      subscriberId: job.subscriberId,
-    });
+    const subscriber = command.payload.subscriber;
     if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
     let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
