@@ -230,10 +230,10 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
 
     await Promise.all(promises);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
     await session.waitForWorkflowQueueCompletion();
     await session.waitForSubscriberQueueCompletion();
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     await session.waitForStandardQueueCompletion();
 
     const throttleJobs = await pollForJobStatusChange({
