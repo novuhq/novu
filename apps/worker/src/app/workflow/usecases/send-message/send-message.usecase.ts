@@ -23,6 +23,7 @@ import {
   ContextRepository,
   JobEntity,
   NotificationTemplateRepository,
+  SubscriberEntity,
   SubscriberRepository,
   TenantEntity,
   TenantRepository,
@@ -337,7 +338,7 @@ export class SendMessage {
         environmentId: job._environmentId,
       }));
 
-    const subscriber = await this.getSubscriberBySubscriberId({
+    const subscriber: Pick<SubscriberEntity, '_id' | 'subscriberId'> | null = await this.getSubscriberBySubscriberId({
       _environmentId: job._environmentId,
       subscriberId: job.subscriberId,
     });
