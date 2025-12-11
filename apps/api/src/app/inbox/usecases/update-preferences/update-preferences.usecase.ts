@@ -57,9 +57,9 @@ export class UpdatePreferences {
 
   @InstrumentUsecase()
   async execute(command: UpdatePreferencesCommand): Promise<InboxPreference> {
-    const subscriber =
+    const subscriber: Pick<SubscriberEntity, '_id'> | null =
       command.subscriber ??
-      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId, true, '_id'));
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
     const workflow = await this.getWorkflow(command);
@@ -128,7 +128,7 @@ export class UpdatePreferences {
   @Instrument()
   private async updateSubscriberPreference(
     command: UpdatePreferencesCommand,
-    subscriber: SubscriberEntity,
+    subscriber: Pick<SubscriberEntity, '_id'>,
     workflowId: string | undefined,
     subscriptionId: string | undefined
   ): Promise<void> {
@@ -167,7 +167,7 @@ export class UpdatePreferences {
   @Instrument()
   private async findPreference(
     command: UpdatePreferencesCommand,
-    subscriber: SubscriberEntity,
+    subscriber: Pick<SubscriberEntity, '_id'>,
     workflow: NotificationTemplateEntity | undefined,
     subscriptionId?: string
   ): Promise<InboxPreference> {
