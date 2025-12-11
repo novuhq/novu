@@ -3,18 +3,8 @@ import { type IEnvironment, PermissionsEnum } from '@novu/shared';
 import { type ComponentProps, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiAddLine, RiArrowRightSLine, RiDatabase2Line } from 'react-icons/ri';
-import { z } from 'zod';
 import { Button } from '@/components/primitives/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormInput,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormRoot,
-} from '@/components/primitives/form/form';
+import { Form, FormRoot } from '@/components/primitives/form/form';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { Separator } from '@/components/primitives/separator';
 import {
@@ -26,13 +16,16 @@ import {
   SheetMain,
   SheetTitle,
 } from '@/components/primitives/sheet';
-import { ExternalLink } from '@/components/shared/external-link';
 import { useAuth } from '@/context/auth/hooks';
 import { useFetchEnvironments } from '@/context/environment/hooks';
 import { useCreateEnvironment } from '@/hooks/use-environments';
+import {
+  EnvironmentFormData,
+  EnvironmentFormFields,
+  environmentFormSchema,
+} from './environment-form';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
-import { ColorPicker } from '../primitives/color-picker';
 import { InlineToast } from '../primitives/inline-toast';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 
@@ -59,13 +52,6 @@ function getRandomColor(existingEnvironments: IEnvironment[] = []) {
   return colorPool[Math.floor(Math.random() * colorPool.length)];
 }
 
-const createEnvironmentSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Enter a valid hex color, like #123456.'),
-});
-
-type CreateEnvironmentFormData = z.infer<typeof createEnvironmentSchema>;
-
 type CreateEnvironmentButtonProps = ComponentProps<typeof Button>;
 
 export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => {
@@ -75,15 +61,15 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
   const { mutateAsync, isPending } = useCreateEnvironment();
   const track = useTelemetry();
 
-  const form = useForm<CreateEnvironmentFormData>({
-    resolver: zodResolver(createEnvironmentSchema),
+  const form = useForm<EnvironmentFormData>({
+    resolver: zodResolver(environmentFormSchema),
     defaultValues: {
       name: '',
       color: getRandomColor(environments),
     },
   });
 
-  const onSubmit = async (values: CreateEnvironmentFormData) => {
+  const onSubmit = async (values: EnvironmentFormData) => {
     try {
       await mutateAsync({
         name: values.name,
@@ -140,37 +126,9 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="flex flex-col gap-4"
               >
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Name</FormLabel>
-                      <FormControl>
-                        <FormInput
-                          {...field}
-                          autoFocus
-                          onChange={(e) => {
-                            field.onChange(e);
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Color</FormLabel>
-                      <FormControl>
-                        <ColorPicker pureInput={false} value={field.value} onChange={field.onChange} />
-                      </FormControl>
-                      <FormMessage>Will be used to identify the environment in the UI.</FormMessage>
-                    </FormItem>
-                  )}
+                <EnvironmentFormFields
+                  form={form}
+                  colorHelperText="Will be used to identify the environment in the UI."
                 />
               </FormRoot>
             </Form>
