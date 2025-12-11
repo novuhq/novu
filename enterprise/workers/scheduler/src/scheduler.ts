@@ -1,230 +1,131 @@
+import ky from 'ky';
 import type { ScheduledJob, ScheduleJobRequest } from './types';
-import { verifyM2MToken } from './auth';
 
-const SCHEDULED_JOBS_KEY = 'scheduled_jobs';
+const JOB_KEY = 'job';
 
 export class Scheduler implements DurableObject {
-	constructor(private state: DurableObjectState, private env: Env) {}
+  constructor(
+    private state: DurableObjectState,
+    private env: Env
+  ) {}
 
-	async fetch(request: Request): Promise<Response> {
-		const authHeader = request.headers.get('Authorization');
-		
-		if (!authHeader || !this.env.API_KEY) {
-			if (request.body && request.method === 'POST') {
-				try {
-					await request.text();
-				} catch {}
-			}
-			return Response.json({ error: 'Unauthorized' }, { status: 401 });
-		}
+  async fetch(request: Request): Promise<Response> {
+    try {
+      const action = request.headers.get('X-Action');
 
-		const isAuthenticated = await verifyM2MToken(authHeader, this.env);
+      switch (action) {
+        case 'schedule': {
+          const body = await request.json<ScheduleJobRequest>();
+          await this.scheduleJob(body);
+          return Response.json({ success: true });
+        }
 
-		if (!isAuthenticated) {
-			if (request.body && request.method === 'POST') {
-				try {
-					await request.text();
-				} catch {}
-			}
-			return Response.json({ error: 'Unauthorized' }, { status: 401 });
-		}
+        case 'cancel': {
+          const cancelled = await this.cancelJob();
+          return Response.json({ success: cancelled });
+        }
 
-		try {
-			const url = new URL(request.url);
+        default:
+          return Response.json({ error: 'Invalid action' }, { status: 400 });
+      }
+    } catch (error) {
+      return Response.json(
+        {
+          error: error instanceof Error ? error.message : String(error),
+        },
+        { status: 500 }
+      );
+    }
+  }
 
-			if (request.method === 'POST' && url.pathname === '/schedule') {
-				const body = await request.json<ScheduleJobRequest>();
-				this.validateScheduleJobRequest(body);
-				await this.scheduleJob(body);
-				return Response.json({ success: true });
-			}
+  async alarm(): Promise<void> {
+    const job = await this.state.storage.get<ScheduledJob>(JOB_KEY);
 
-			if (request.method === 'DELETE' && url.pathname.startsWith('/cancel/')) {
-				const jobId = url.pathname.replace('/cancel/', '');
-				const cancelled = await this.cancelJob(jobId);
-				return Response.json({ success: cancelled });
-			}
+    if (!job) {
+      console.warn('[Scheduler] Alarm fired but no job found');
+      return;
+    }
 
-			return new Response('Not Found', { status: 404 });
-		} catch (error) {
-			return Response.json(
-				{
-					error: error instanceof Error ? error.message : String(error),
-				},
-				{ status: 500 }
-			);
-		}
-	}
+    await this.state.storage.delete(JOB_KEY);
 
-	async alarm(): Promise<void> {
-		await this.handleAlarm();
-	}
+    try {
+      await this.executeJob(job);
+    } catch (error) {
+      console.error(`[Scheduler] Job ${job.id} execution failed:`, {
+        jobId: job.id,
+        type: job.type,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
-	private validateScheduleJobRequest(body: unknown): asserts body is ScheduleJobRequest {
-		const req = body as Partial<ScheduleJobRequest>;
-		if (!req.jobId || typeof req.jobId !== 'string') {
-			throw new Error('jobId is required and must be a string');
-		}
-		if (typeof req.delayMs !== 'number' || req.delayMs < 0) {
-			throw new Error('delayMs must be a positive number');
-		}
-		if (!req.type || typeof req.type !== 'string') {
-			throw new Error('type is required and must be a valid JobStepType');
-		}
-		if (!req.data || typeof req.data !== 'object') {
-			throw new Error('data is required and must be an object');
-		}
-		if (!req.data._environmentId || !req.data._id || !req.data._organizationId || !req.data._userId) {
-			throw new Error('data must include _environmentId, _id, _organizationId, and _userId');
-		}
-	}
+  private async scheduleJob(request: ScheduleJobRequest): Promise<void> {
+    const job: ScheduledJob = {
+      id: request.jobId,
+      type: request.type,
+      scheduledFor: request.scheduledFor,
+      createdAt: Date.now(),
+      data: request.data,
+      metadata: request.metadata,
+    };
 
-	private async scheduleJob(request: ScheduleJobRequest): Promise<void> {
-		const scheduledFor = Date.now() + request.delayMs;
-		const job: ScheduledJob = {
-			id: request.jobId,
-			type: request.type,
-			scheduledFor,
-			createdAt: Date.now(),
-			data: request.data,
-			metadata: request.metadata,
-		};
+    await this.state.storage.put(JOB_KEY, job);
+    await this.state.storage.setAlarm(request.scheduledFor);
+  }
 
-		const jobs = await this.getScheduledJobs();
-		jobs.push(job);
-		await this.saveScheduledJobs(jobs);
+  private async cancelJob(): Promise<boolean> {
+    const job = await this.state.storage.get<ScheduledJob>(JOB_KEY);
 
-		await this.updateAlarmIfNeeded(scheduledFor);
-	}
+    if (!job) {
+      return false;
+    }
 
-	private async cancelJob(jobId: string): Promise<boolean> {
-		const jobs = await this.getScheduledJobs();
-		const filtered = jobs.filter((job) => job.id !== jobId);
+    await this.state.storage.delete(JOB_KEY);
+    await this.state.storage.deleteAlarm();
 
-		if (jobs.length === filtered.length) {
-			return false;
-		}
+    return true;
+  }
 
-		await this.saveScheduledJobs(filtered);
-		await this.recalculateAlarm();
-		
-		return true;
-	}
+  private async executeJob(job: ScheduledJob): Promise<void> {
+    console.log(`[Scheduler] Executing job ${job.id}`, {
+      type: job.type,
+      mode: job.metadata?.mode,
+      scheduledFor: new Date(job.scheduledFor).toISOString(),
+      actualTime: new Date().toISOString(),
+      alarmDriftMs: Date.now() - job.scheduledFor,
+    });
 
-	private async handleAlarm(): Promise<void> {
-		const now = Date.now();
-		const jobs = await this.getScheduledJobs();
+    if (!this.env.CALLBACK_API_URL || !this.env.CALLBACK_API_KEY) {
+      console.error('CALLBACK_API_URL or CALLBACK_API_KEY not configured, skipping API call');
+      return;
+    }
 
-		const jobsToExecute: ScheduledJob[] = [];
-		const remainingJobs: ScheduledJob[] = [];
+    const client = ky.create({
+      timeout: 30000,
+      retry: {
+        limit: 3,
+        methods: ['post'],
+        statusCodes: [408, 413, 429, 500, 502, 503, 504],
+        backoffLimit: 10000,
+      },
+    });
 
-		for (const job of jobs) {
-			if (job.scheduledFor <= now) {
-				jobsToExecute.push(job);
-			} else {
-				remainingJobs.push(job);
-			}
-		}
+    const result = await client
+      .post(`${this.env.CALLBACK_API_URL}/v1/internal/scheduler/callback`, {
+        json: {
+          jobId: job.id,
+          type: job.type,
+          data: job.data,
+          metadata: job.metadata,
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.env.CALLBACK_API_KEY}`,
+          'Idempotency-Key': job.id,
+        },
+      })
+      .json();
 
-		await this.saveScheduledJobs(remainingJobs);
-
-		await Promise.allSettled(jobsToExecute.map((job) => this.executeJob(job)));
-
-		await this.recalculateAlarm();
-	}
-
-	private async updateAlarmIfNeeded(timestamp: number): Promise<void> {
-		const currentAlarm = await this.state.storage.getAlarm();
-		if (currentAlarm === null || timestamp < currentAlarm) {
-			await this.state.storage.setAlarm(timestamp);
-		}
-	}
-
-	private async recalculateAlarm(): Promise<void> {
-		const jobs = await this.getScheduledJobs();
-		const now = Date.now();
-
-		const nextJob = jobs
-			.filter((job) => job.scheduledFor > now)
-			.sort((a, b) => a.scheduledFor - b.scheduledFor)[0];
-
-		if (nextJob) {
-			await this.state.storage.setAlarm(nextJob.scheduledFor);
-		} else {
-			await this.state.storage.deleteAlarm();
-		}
-	}
-
-	private async executeJob(job: ScheduledJob): Promise<void> {
-		try {
-			await this.onJobExecute(job);
-		} catch (error) {
-			console.error(`Failed to execute job ${job.id}:`, error);
-			await this.onJobError(job, error);
-		}
-	}
-
-	protected async onJobExecute(job: ScheduledJob): Promise<void> {
-		console.log(`[Scheduler] Alarm fired for job ${job.id}`, {
-			type: job.type,
-			mode: job.metadata?.mode,
-			scheduledFor: new Date(job.scheduledFor).toISOString(),
-			actualTime: new Date().toISOString(),
-			alarmDriftMs: Date.now() - job.scheduledFor,
-			data: job.data,
-			metadata: job.metadata,
-		});
-
-		if (!this.env.CALLBACK_API_URL || !this.env.CALLBACK_API_KEY) {
-			console.error('CALLBACK_API_URL or CALLBACK_API_KEY not configured, skipping API call');
-			return;
-		}
-
-		const url = `${this.env.CALLBACK_API_URL}/v1/internal/scheduler/callback`;
-
-		try {
-			const response = await fetch(url, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${this.env.CALLBACK_API_KEY}`,
-				},
-				body: JSON.stringify({
-					jobId: job.id,
-					type: job.type,
-					data: job.data,
-					metadata: job.metadata,
-				}),
-			});
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(`API returned ${response.status}: ${response.statusText}. ${errorText}`);
-			}
-
-			const result = await response.json();
-			console.log(`[Scheduler] Successfully called API for job ${job.id}`, result);
-		} catch (error) {
-			console.error(`[Scheduler] Failed to call API for job ${job.id}:`, error);
-			throw error;
-		}
-	}
-
-	protected async onJobError(job: ScheduledJob, error: unknown): Promise<void> {
-		console.error(`[Scheduler] Job ${job.id} execution failed:`, {
-			jobId: job.id,
-			type: job.type,
-			error: error instanceof Error ? error.message : String(error),
-			data: job.data,
-		});
-	}
-
-	private async getScheduledJobs(): Promise<ScheduledJob[]> {
-		const stored = await this.state.storage.get<ScheduledJob[]>(SCHEDULED_JOBS_KEY);
-		return stored || [];
-	}
-
-	private async saveScheduledJobs(jobs: ScheduledJob[]): Promise<void> {
-		await this.state.storage.put(SCHEDULED_JOBS_KEY, jobs);
-	}
+    console.log(`[Scheduler] Successfully called API for job ${job.id}`, result);
+  }
 }

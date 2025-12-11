@@ -1,13 +1,17 @@
-export async function verifyM2MToken(authHeader: string | null, env: Env): Promise<boolean> {
-	if (!authHeader) {
-		return false;
-	}
+import type { Context, Next } from 'hono';
 
-	const token = authHeader.replace('Bearer ', '');
+export async function authMiddleware(c: Context<{ Bindings: Env }>, next: Next): Promise<Response | void> {
+  const authHeader = c.req.header('Authorization');
 
-	if (!token || !env.API_KEY) {
-		return false;
-	}
+  if (!authHeader) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
 
-	return token === env.API_KEY;
+  const token = authHeader.replace('Bearer ', '');
+
+  if (!token || !c.env.API_KEY || token !== c.env.API_KEY) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  await next();
 }
