@@ -1,6 +1,19 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { Response } from 'express';
 import {
   GroupPreferenceFilterDto,
   WorkflowPreferenceRequestDto,
@@ -55,9 +68,10 @@ export class InboxTopicController {
   async getTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string
-  ): Promise<TopicSubscriptionDetailsResponseDto> {
-    return await this.getTopicSubscriptionUsecase.execute(
+    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<TopicSubscriptionDetailsResponseDto | void> {
+    const result = await this.getTopicSubscriptionUsecase.execute(
       GetTopicSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
@@ -67,6 +81,14 @@ export class InboxTopicController {
         _subscriberId: subscriberSession._id,
       })
     );
+
+    if (!result) {
+      res.status(HttpStatus.NO_CONTENT);
+
+      return;
+    }
+
+    return result;
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

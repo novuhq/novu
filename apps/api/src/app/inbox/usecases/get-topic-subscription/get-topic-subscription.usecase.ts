@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository, PreferencesRepository, TopicSubscribersRepository } from '@novu/dal';
 import { PreferencesTypeEnum } from '@novu/shared';
@@ -16,7 +16,7 @@ export class GetTopicSubscription {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetTopicSubscriptionCommand): Promise<TopicSubscriptionDetailsResponseDto> {
+  async execute(command: GetTopicSubscriptionCommand): Promise<TopicSubscriptionDetailsResponseDto | null> {
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -28,9 +28,7 @@ export class GetTopicSubscription {
     });
 
     if (!subscription) {
-      throw new NotFoundException(
-        `Subscription with ID ${command.subscriptionIdOrIdentifier} not found for topic ${command.topicKey}`
-      );
+      return null;
     }
 
     const preferencesEntities = await this.preferencesRepository.find({
