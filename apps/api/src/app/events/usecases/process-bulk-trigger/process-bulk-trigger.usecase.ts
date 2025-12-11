@@ -109,6 +109,6 @@ export class ProcessBulkTrigger {
       await this.workflowQueueService.addBulk(jobsToQueue);
     }
 
-    return results;
+    return results.map(({ jobData, ...rest }) => rest);
   }
 }
