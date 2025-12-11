@@ -99,4 +99,3 @@ export function getRegionCodeFromAws(awsRegion: string): string {
   initializeRegions();
   return cachedAwsRegionMap!.get(awsRegion) || getDefaultRegion();
 }
-

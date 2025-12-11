@@ -148,14 +148,15 @@ export function EditableJsonViewer({
       className={cn(
         'border-neutral-alpha-200 bg-background text-foreground-600',
         'mx-0 mt-0 rounded-lg border border-dashed',
-        'max-h-[400px] min-h-[100px] overflow-auto',
+        'max-h-[400px] min-h-[100px] overflow-hidden',
         'font-mono text-xs',
+        'flex flex-col',
         isReadOnly && 'pointer-events-none',
         className
       )}
     >
       {validationErrors.length > 0 && (
-        <div className="p-1.5 pb-0">
+        <div className="p-1.5 pb-0 shrink-0">
           <InlineToast
             variant="error"
             title={`Payload validation issue${validationErrors.length > 1 ? 's' : ''}`}
@@ -172,29 +173,38 @@ export function EditableJsonViewer({
           />
         </div>
       )}
-      <JsonEditor
-        data={value}
-        onUpdate={handleUpdate}
-        onError={handleError}
-        theme={CUSTOM_THEME}
-        TextEditor={CustomTextEditor}
-        customNodeDefinitions={customNodeDefinitions}
-        jsonParse={JSON5.parse}
-        jsonStringify={(data) => JSON5.stringify(data, null, 2)}
-        icons={JSON_EDITOR_ICONS}
-        showErrorMessages={false}
-        showStringQuotes={true}
-        showCollectionCount={!isReadOnly}
-        showArrayIndices={false}
-        enableClipboard={!isReadOnly}
-        restrictEdit={isReadOnly}
-        restrictDelete
-        restrictAdd
-        rootName={'nv-root-node'}
-        defaultValue={undefined}
-        restrictTypeSelection
-        collapseAnimationTime={100}
-      />
+      <div
+        className={cn(
+          'flex-1 overflow-auto overflow-x-auto scrollbar-thin',
+          '[mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)]',
+          '[mask-size:100%_100%]',
+          '[mask-repeat:no-repeat]'
+        )}
+      >
+        <JsonEditor
+          data={value}
+          onUpdate={handleUpdate}
+          onError={handleError}
+          theme={CUSTOM_THEME}
+          TextEditor={CustomTextEditor}
+          customNodeDefinitions={customNodeDefinitions}
+          jsonParse={JSON5.parse}
+          jsonStringify={(data) => JSON5.stringify(data, null, 2)}
+          icons={JSON_EDITOR_ICONS}
+          showErrorMessages={false}
+          showStringQuotes={true}
+          showCollectionCount={!isReadOnly}
+          showArrayIndices={false}
+          enableClipboard={!isReadOnly}
+          restrictEdit={isReadOnly}
+          restrictDelete
+          restrictAdd
+          rootName={'nv-root-node'}
+          defaultValue={undefined}
+          restrictTypeSelection
+          collapseAnimationTime={100}
+        />
+      </div>
     </div>
   );
 }

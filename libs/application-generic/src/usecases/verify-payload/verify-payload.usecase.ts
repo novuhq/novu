@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
-import { InstrumentUsecase, VerifyPayloadService } from '@novu/application-generic';
+import { InstrumentUsecase } from '../../instrumentation';
+import { VerifyPayloadService } from '../../services';
 import { DelayTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { VerifyPayloadCommand } from './verify-payload.command';
@@ -34,7 +35,6 @@ export class VerifyPayload {
     }
 
     if (invalidKeys.length) {
-      // TODO: create execution detail for missing keys in payload
       throw new BadRequestException(`payload is missing required key(s) and type(s): ${invalidKeys.join(', ')}`);
     }
 
@@ -42,7 +42,6 @@ export class VerifyPayload {
       defaultPayload = verifyPayloadService.fillDefaults(step.template?.variables || []);
     }
 
-    // TODO: create execution detail for payload created
     return defaultPayload;
   }
 

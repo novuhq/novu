@@ -26,6 +26,7 @@ import type {
   DeleteSubscriptionArgs,
   GetSubscriptionArgs,
   ListSubscriptionsArgs,
+  UpdateSubscriptionArgs,
   UpdateSubscriptionPreferenceArgs,
 } from '../subscriptions/types';
 import { Session, WebSocketEvent } from '../types';
@@ -96,7 +97,7 @@ type PreferenceScheduleUpdateEvents = BaseEvents<'preference.schedule.update', U
 type SubscriptionsFetchEvents = BaseEvents<'subscriptions.list', ListSubscriptionsArgs, TopicSubscription[]>;
 type SubscriptionGetEvents = BaseEvents<'subscription.get', GetSubscriptionArgs, TopicSubscription | null>;
 type SubscriptionCreateEvents = BaseEvents<'subscription.create', CreateSubscriptionArgs, TopicSubscription>;
-type SubscriptionUpdateEvents = BaseEvents<'subscription.update', void, TopicSubscription>;
+type SubscriptionUpdateEvents = BaseEvents<'subscription.update', UpdateSubscriptionArgs, TopicSubscription>;
 type SubscriptionPreferenceUpdateEvents = BaseEvents<
   'subscription.preference.update',
   UpdateSubscriptionPreferenceArgs,

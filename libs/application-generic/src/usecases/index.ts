@@ -39,6 +39,7 @@ export * from './trigger-multicast';
 export * from './update-change';
 export * from './update-subscriber';
 export * from './update-tenant';
+export * from './verify-payload';
 export * from './upsert-control-values';
 export * from './upsert-preferences';
 export * from './workflow';

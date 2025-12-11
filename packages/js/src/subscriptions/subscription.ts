@@ -3,11 +3,19 @@ import type { InboxService } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
 import type { Result, SubscriptionResponse } from '../types';
 import { NovuError } from '../utils/errors';
-import { bulkUpdateSubscriptionPreference, deleteSubscription, updateSubscriptionPreference } from './helpers';
+import {
+  bulkUpdateSubscriptionPreference,
+  deleteSubscription,
+  updateSubscription,
+  updateSubscriptionPreference,
+} from './helpers';
 import { SubscriptionPreference } from './subscription-preference';
 import type {
   BaseSubscriptionPreferenceArgs,
+  BaseUpdateSubscriptionArgs,
   InstanceSubscriptionPreferenceArgs,
+  InstanceUpdateSubscriptionArgs,
+  UpdateSubscriptionArgs,
   UpdateSubscriptionPreferenceArgs,
 } from './types';
 
@@ -15,7 +23,7 @@ export class TopicSubscription {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
   #cache: SubscriptionsCache;
-  #useCache: boolean;
+  #useCache?: boolean;
   #isStale: boolean = false;
 
   readonly id: string;
@@ -28,7 +36,7 @@ export class TopicSubscription {
     emitter: NovuEventEmitter,
     inboxService: InboxService,
     cache: SubscriptionsCache,
-    useCache: boolean
+    useCache?: boolean
   ) {
     this.#emitter = emitter;
     this.#inboxService = inboxService;
@@ -40,6 +48,18 @@ export class TopicSubscription {
     this.preferences = subscription.preferences.map(
       (pref) => new SubscriptionPreference({ ...pref }, this.#emitter, this.#inboxService, this.#cache, this.#useCache)
     );
+  }
+
+  async update(args: BaseUpdateSubscriptionArgs): Result<TopicSubscription>;
+  async update(args: InstanceUpdateSubscriptionArgs): Result<TopicSubscription>;
+  async update(args: UpdateSubscriptionArgs): Result<TopicSubscription> {
+    return updateSubscription({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      cache: this.#cache,
+      useCache: this.#useCache,
+      args: { ...args, subscription: this },
+    });
   }
 
   async updatePreference(args: BaseSubscriptionPreferenceArgs): Result<SubscriptionPreference>;
@@ -60,9 +80,9 @@ export class TopicSubscription {
     });
   }
 
-  async bulkUpdate(args: Array<BaseSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>;
-  async bulkUpdate(args: Array<InstanceSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>;
-  async bulkUpdate(args: Array<UpdateSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]> {
+  async bulkUpdatePreferences(args: Array<BaseSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>;
+  async bulkUpdatePreferences(args: Array<InstanceSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>;
+  async bulkUpdatePreferences(args: Array<UpdateSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]> {
     if (this.#isStale) {
       return {
         error: new NovuError('Cannot bulk update a deleted subscription', new Error('Subscription is stale')),

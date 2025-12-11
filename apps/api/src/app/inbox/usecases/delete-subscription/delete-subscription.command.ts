@@ -4,7 +4,11 @@ import { EnvironmentWithSubscriber } from '../../../shared/commands/project.comm
 export class DeleteTopicSubscriptionCommand extends EnvironmentWithSubscriber {
   @IsString()
   @IsDefined()
-  subscriptionId: string;
+  topicKey: string;
+
+  @IsString()
+  @IsDefined()
+  subscriptionIdOrIdentifier: string;
 
   @IsString()
   @IsDefined()

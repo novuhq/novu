@@ -41,7 +41,7 @@ const SubscriptionInternal = withRenderer<SubscriptionProps>((props) => {
       if (React.isValidElement(child)) {
         return React.cloneElement(child, {
           ...child.props,
-          topic: defaultSubscriptionProps.topic,
+          topicKey: defaultSubscriptionProps.topicKey,
           identifier: defaultSubscriptionProps.identifier,
           preferences: defaultSubscriptionProps.preferences,
         });

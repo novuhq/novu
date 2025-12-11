@@ -5,12 +5,12 @@ import {
   MessageInteractionService,
   StorageHelperService,
   UpsertControlValuesUseCase,
+  VerifyPayload,
   WorkflowRunService,
 } from '@novu/application-generic';
 import { CommunityUserRepository } from '@novu/dal';
 import { GenerateUniqueApiKey } from '../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { ParseEventRequest } from '../../events/usecases/parse-event-request';
-import { VerifyPayload } from '../../events/usecases/verify-payload';
 import { GetSubscriberGlobalPreference } from '../../subscribers/usecases/get-subscriber-global-preference';
 import { BulkUpdatePreferences } from './bulk-update-preferences/bulk-update-preferences.usecase';
 import { DeleteAllNotifications } from './delete-all-notifications/delete-all-notifications.usecase';

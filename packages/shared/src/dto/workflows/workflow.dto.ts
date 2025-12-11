@@ -124,10 +124,7 @@ export type UpsertStepBody = StepCreateBody | UpdateStepBody;
 export type StepCreateBody = StepCreateDto;
 export type UpdateStepBody = StepUpdateDto;
 
-export type DuplicateWorkflowDto = Pick<
-  CreateWorkflowDto,
-  'name' | 'tags' | 'description' | 'isTranslationEnabled'
-> & {
+export type DuplicateWorkflowDto = Pick<CreateWorkflowDto, 'name' | 'tags' | 'description' | 'isTranslationEnabled'> & {
   workflowId?: string;
 };
 

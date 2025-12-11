@@ -1,6 +1,6 @@
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
   GroupPreferenceFilterDto,
   WorkflowPreferenceRequestDto,
@@ -18,13 +18,13 @@ export class TopicIdentifierDto {
 
 @ApiExtraModels(WorkflowPreferenceRequestDto, GroupPreferenceFilterDto, TopicIdentifierDto)
 export class CreateTopicSubscriptionRequestDto {
-  @ApiProperty({
-    description: 'Unique identifier for this subscription',
+  @ApiPropertyOptional({
+    description: 'Unique identifier for this subscription. If not provided, a default identifier will be generated.',
     example: 'subscriber-123-subscription-a',
   })
   @IsString()
-  @IsDefined()
-  identifier: string;
+  @IsOptional()
+  identifier?: string;
 
   @ApiPropertyOptional({
     description: 'The name of the subscription',

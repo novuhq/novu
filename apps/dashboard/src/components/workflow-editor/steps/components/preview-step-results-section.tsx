@@ -59,7 +59,7 @@ export function PreviewStepResultsSection({
   const stepEntries = Object.entries(localParsedData.steps || {});
 
   return (
-    <AccordionItem value="step-results" className={ACCORDION_STYLES.itemLast}>
+    <AccordionItem value="step-results" className={ACCORDION_STYLES.item}>
       <AccordionTrigger className={ACCORDION_STYLES.trigger}>
         <div className="flex items-center gap-0.5">
           Step results
@@ -76,9 +76,10 @@ export function PreviewStepResultsSection({
         </div>
       </AccordionTrigger>
       <AccordionContent className="flex flex-col gap-2">
-        {stepEntries.length > 0 ? (
-          <div className="w-full">
-            {stepEntries.map(([stepId, stepData]) => {
+        <div className="flex flex-1 flex-col gap-2 overflow-auto">
+          {stepEntries.length > 0 ? (
+            <>
+              {stepEntries.map(([stepId, stepData]) => {
               const stepType = getStepType(workflow, stepId);
               const StepIcon = getStepTypeIcon(stepType);
               const stepName = getStepName(workflow, stepId);
@@ -133,11 +134,12 @@ export function PreviewStepResultsSection({
                     ))}
                 </div>
               );
-            })}
-          </div>
-        ) : (
-          <p className="text-xs italic text-neutral-500">no step results</p>
-        )}
+              })}
+            </>
+          ) : (
+            <p className="text-xs italic text-neutral-500">no step results</p>
+          )}
+        </div>
       </AccordionContent>
     </AccordionItem>
   );

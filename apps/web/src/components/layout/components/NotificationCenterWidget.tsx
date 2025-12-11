@@ -8,13 +8,13 @@ import {
   MessageActionStatusEnum,
 } from '@novu/shared';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../hooks/useAuth';
 import { APP_ID } from '../../../config';
-import { useEnvironment } from '../../../hooks';
-import { NotificationCenterBell } from './NotificationCenterBell';
 import { ROUTES } from '../../../constants/routes';
-import { useSegment } from '../../providers/SegmentProvider';
+import { useEnvironment } from '../../../hooks';
+import { useAuth } from '../../../hooks/useAuth';
 import { apiHostnameManager } from '../../../utils/api-hostname-manager';
+import { useSegment } from '../../providers/SegmentProvider';
+import { NotificationCenterBell } from './NotificationCenterBell';
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
   const { environment } = useEnvironment();

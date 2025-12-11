@@ -270,7 +270,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
               </TabsTrigger>
             </TabsList>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-5">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-8">
               <TabsContent value="typescript" className="mt-0 min-w-0">
                 <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
                 <TimelineContainer>

@@ -1,45 +1,34 @@
-import {
-  JobEntity,
-  JobRepository,
-  JobStatusEnum,
-  MessageRepository,
-  NotificationTemplateEntity,
-  SubscriberEntity,
-} from '@novu/dal';
-import { DigestTypeEnum, DigestUnitEnum, IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
+import { Novu } from '@novu/api';
+import { JobRepository, JobStatusEnum, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { DigestTypeEnum, DigestUnitEnum, StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
-import axios from 'axios';
 import { expect } from 'chai';
-
-const axiosInstance = axios.create();
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+  let novuClient: Novu;
   const jobRepository = new JobRepository();
 
-  const triggerEvent = async (payload, transactionId?: string): Promise<void> => {
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+  const triggerEvent = async (payload: Record<string, unknown>, transactionId?: string): Promise<void> => {
+    await novuClient.trigger(
       {
         transactionId,
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload,
       },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
+      transactionId
     );
   };
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdk(session);
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
@@ -83,7 +72,7 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs && jobs.length).to.eql(3);
+    expect(jobs?.length).to.eql(3);
 
     const completedJob = jobs.find((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedJob).to.ok;

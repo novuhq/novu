@@ -51,11 +51,11 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Get('/topics/:topicKey/subscriptions/:subscriptionId')
+  @Get('/topics/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
   async getTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionId') subscriptionId: string
+    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string
   ): Promise<TopicSubscriptionDetailsResponseDto> {
     return await this.getTopicSubscriptionUsecase.execute(
       GetTopicSubscriptionCommand.create({
@@ -63,7 +63,7 @@ export class InboxTopicController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         topicKey,
-        subscriptionId,
+        subscriptionIdOrIdentifier,
         _subscriberId: subscriberSession._id,
       })
     );
@@ -113,11 +113,11 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/topics/:topicKey/subscriptions/:subscriptionId')
+  @Patch('/topics/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
   async updateTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionId') subscriptionId: string,
+    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
     @Body() body: UpdateSubscriptionRequestDto
   ): Promise<TopicSubscriptionDetailsResponseDto> {
     const subscription = await this.updateSubscriptionUsecase.execute(
@@ -126,7 +126,7 @@ export class InboxTopicController {
         organizationId: subscriberSession._organizationId,
         userId: subscriberSession._id,
         topicKey,
-        subscriptionId,
+        subscriptionIdOrIdentifier,
         name: body.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
       })
@@ -141,17 +141,19 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Delete('/subscriptions/:subscriptionId')
+  @Delete('/topics/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
   async deleteTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
-    @Param('subscriptionId') subscriptionId: string
+    @Param('topicKey') topicKey: string,
+    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string
   ): Promise<{ success: boolean }> {
     return await this.deleteTopicSubscriptionUsecase.execute(
       DeleteTopicSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
-        subscriptionId,
+        topicKey,
+        subscriptionIdOrIdentifier,
         _subscriberId: subscriberSession._id,
       })
     );
