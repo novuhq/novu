@@ -57,8 +57,6 @@ export class CreateTopicSubscriptionRequestDto {
     example: [{ workflowId: 'workflow-123', condition: { '===': [{ var: 'tier' }, 'premium'] } }],
   })
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => Object)
   @IsOptional()
   preferences?: Array<string | WorkflowPreferenceRequestDto | GroupPreferenceFilterDto>;
 }
