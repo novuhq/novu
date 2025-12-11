@@ -1,0 +1,27 @@
+# ActivityControllerGetWorkflowRunsRequest
+
+## Example Usage
+
+```typescript
+import { ActivityControllerGetWorkflowRunsRequest } from "@novu/api/models/operations";
+
+let value: ActivityControllerGetWorkflowRunsRequest = {};
+```
+
+## Fields
+
+| Field                                                                            | Type                                                                             | Required                                                                         | Description                                                                      |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `limit`                                                                          | *number*                                                                         | :heavy_check_mark:                                                               | N/A                                                                              |
+| `cursor`                                                                         | *string*                                                                         | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `workflowIds`                                                                    | *string*[]                                                                       | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `subscriberIds`                                                                  | *string*[]                                                                       | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `transactionIds`                                                                 | *string*[]                                                                       | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `statuses`                                                                       | [operations.QueryParamStatuses](../../models/operations/queryparamstatuses.md)[] | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `channels`                                                                       | *string*[]                                                                       | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `topicKey`                                                                       | *string*                                                                         | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `createdGte`                                                                     | *string*                                                                         | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `createdLte`                                                                     | *string*                                                                         | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `severity`                                                                       | [operations.Severity](../../models/operations/severity.md)[]                     | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `contextKeys`                                                                    | *string*[]                                                                       | :heavy_minus_sign:                                                               | N/A                                                                              |
+| `idempotencyKey`                                                                 | *string*                                                                         | :heavy_minus_sign:                                                               | A header for idempotency purposes                                                |

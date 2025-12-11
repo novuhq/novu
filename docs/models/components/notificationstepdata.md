@@ -1,0 +1,25 @@
+# NotificationStepData
+
+## Example Usage
+
+```typescript
+import { NotificationStepData } from "@novu/api/models/components";
+
+let value: NotificationStepData = {};
+```
+
+## Fields
+
+| Field                                                                                  | Type                                                                                   | Required                                                                               | Description                                                                            |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `id`                                                                                   | *string*                                                                               | :heavy_minus_sign:                                                                     | Unique identifier for the notification step.                                           |
+| `uuid`                                                                                 | *string*                                                                               | :heavy_minus_sign:                                                                     | Universally unique identifier for the notification step.                               |
+| `name`                                                                                 | *string*                                                                               | :heavy_minus_sign:                                                                     | Name of the notification step.                                                         |
+| `templateId`                                                                           | *string*                                                                               | :heavy_minus_sign:                                                                     | ID of the template associated with this notification step.                             |
+| `active`                                                                               | *boolean*                                                                              | :heavy_minus_sign:                                                                     | Indicates whether the notification step is active.                                     |
+| `shouldStopOnFail`                                                                     | *boolean*                                                                              | :heavy_minus_sign:                                                                     | Determines if the process should stop on failure.                                      |
+| `template`                                                                             | [components.MessageTemplate](../../models/components/messagetemplate.md)               | :heavy_minus_sign:                                                                     | Message template used in this notification step.                                       |
+| `filters`                                                                              | [components.StepFilterDto](../../models/components/stepfilterdto.md)[]                 | :heavy_minus_sign:                                                                     | Filters applied to this notification step.                                             |
+| `parentId`                                                                             | *string*                                                                               | :heavy_minus_sign:                                                                     | ID of the parent notification step, if applicable.                                     |
+| `metadata`                                                                             | *components.NotificationStepDataMetadata*                                              | :heavy_minus_sign:                                                                     | Metadata associated with the workflow step. Can vary based on the type of step.        |
+| `replyCallback`                                                                        | [components.ReplyCallback](../../models/components/replycallback.md)                   | :heavy_minus_sign:                                                                     | Callback information for replies, including whether it is active and the callback URL. |
