@@ -13,15 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import {
-  ApiBody,
-  ApiExcludeController,
-  ApiExtraModels,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-  getSchemaPath,
-} from '@nestjs/swagger';
+import { ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { ExternalApiAccessible, FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
@@ -85,7 +77,6 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto
 )
-@ApiExcludeController()
 @ExternalApiAccessible()
 @RequireAuthentication()
 @ApiTags('Channel Endpoints')
