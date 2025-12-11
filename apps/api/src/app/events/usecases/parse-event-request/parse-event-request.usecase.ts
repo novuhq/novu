@@ -160,12 +160,16 @@ export class ParseEventRequest {
         }
       }
 
-      let tenant: TenantEntity | null = null;
+      let tenant: Pick<TenantEntity, '_id'> | null = null;
       if (command.tenant) {
-        tenant = await this.tenantRepository.findOne({
-          _environmentId: command.environmentId,
-          identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
-        });
+        tenant = await this.tenantRepository.findOne(
+          {
+            _environmentId: command.environmentId,
+            identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
+          },
+          '_id',
+          { readPreference: 'secondaryPreferred' }
+        );
 
         if (!tenant) {
           return {
@@ -175,14 +179,16 @@ export class ParseEventRequest {
         }
       }
 
-      let workflowOverride: WorkflowOverrideEntity | null = null;
+      let workflowOverride: Pick<WorkflowOverrideEntity, '_id' | 'active'> | null = null;
       if (tenant) {
-        workflowOverride = await this.workflowOverrideRepository.findOne({
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-          _workflowId: template._id,
-          _tenantId: tenant._id,
-        });
+        workflowOverride = await this.workflowOverrideRepository.findOne(
+          {
+            _environmentId: command.environmentId,
+            _workflowId: template._id,
+            _tenantId: tenant._id,
+          },
+          '_id active'
+        );
       }
 
       const inactiveWorkflow = !workflowOverride && !template.active;

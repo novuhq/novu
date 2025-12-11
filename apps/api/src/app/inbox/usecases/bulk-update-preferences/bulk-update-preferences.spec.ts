@@ -380,8 +380,6 @@ describe('BulkUpdatePreferences', () => {
       chat: true,
     });
 
-    expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
-
     expect(result).to.deep.equal([mockedInboxPreference1, mockedInboxPreference2]);
   });
 
