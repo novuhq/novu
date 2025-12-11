@@ -58,6 +58,10 @@ export class GetSubscriberGlobalPreference {
 
   @Instrument()
   private async getActiveChannels(command: GetSubscriberGlobalPreferenceCommand): Promise<ChannelTypeEnum[]> {
+    if (command.includeInactiveChannels) {
+      return Object.values(ChannelTypeEnum);
+    }
+
     const workflowList: Pick<NotificationTemplateEntity, 'steps'>[] =
       await this.notificationTemplateRepository.filterActive({
         organizationId: command.organizationId,
@@ -69,34 +73,21 @@ export class GetSubscriberGlobalPreference {
       });
 
     const activeChannels = new Set<ChannelTypeEnum>();
+    const allChannels = Object.values(ChannelTypeEnum);
+    const maxChannels = allChannels.length;
 
     for (const workflow of workflowList) {
-      const workflowChannels = this.getChannels(workflow, command.includeInactiveChannels);
-      for (const channel of workflowChannels) {
-        activeChannels.add(channel);
+      for (const step of workflow.steps) {
+        if (step.active && step.template?.type) {
+          activeChannels.add(step.template.type as unknown as ChannelTypeEnum);
+          if (activeChannels.size === maxChannels) {
+            return allChannels;
+          }
+        }
       }
     }
 
     return Array.from(activeChannels);
-  }
-
-  private getChannels(
-    workflow: Pick<NotificationTemplateEntity, 'steps'>,
-    includeInactiveChannels: boolean
-  ): ChannelTypeEnum[] {
-    if (includeInactiveChannels) {
-      return Object.values(ChannelTypeEnum);
-    }
-
-    const channelSet = new Set<ChannelTypeEnum>();
-
-    for (const step of workflow.steps) {
-      if (step.active && step.template?.type) {
-        channelSet.add(step.template.type as unknown as ChannelTypeEnum);
-      }
-    }
-
-    return Array.from(channelSet);
   }
 
   @CachedResponse({
