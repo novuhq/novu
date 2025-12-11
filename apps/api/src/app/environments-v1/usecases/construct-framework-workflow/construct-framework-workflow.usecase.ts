@@ -53,8 +53,7 @@ export class ConstructFrameworkWorkflow {
       return this.constructLayoutPreviewWorkflow(command);
     }
 
-    const dbWorkflow: Pick<NotificationTemplateEntity, '_id' | 'steps' | '_organizationId' | 'triggers'> =
-      await this.getDbWorkflow(command.environmentId, command.workflowId);
+    const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
     if (command.controlValues) {
       for (const step of dbWorkflow.steps) {
         step.controlVariables = command.controlValues;
@@ -110,7 +109,7 @@ export class ConstructFrameworkWorkflow {
     skipLayoutRendering,
     jobId,
   }: {
-    dbWorkflow: Pick<NotificationTemplateEntity, '_id' | 'steps' | '_organizationId' | 'triggers'>;
+    dbWorkflow: NotificationTemplateEntity;
     organization?: OrganizationEntity;
     skipLayoutRendering?: boolean;
     jobId?: string;
@@ -171,7 +170,7 @@ export class ConstructFrameworkWorkflow {
     step: Step;
     staticStep: NotificationStepEntity;
     fullPayloadForRender: FullPayloadForRender;
-    dbWorkflow: Pick<NotificationTemplateEntity, '_id' | 'steps' | '_organizationId' | 'triggers'>;
+    dbWorkflow: NotificationTemplateEntity;
     organization?: OrganizationEntity;
     locale?: string;
     skipLayoutRendering?: boolean;
