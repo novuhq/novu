@@ -121,7 +121,7 @@ export class SendMessage {
       );
     }
 
-    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables);
+    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables, payload);
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
@@ -215,14 +215,15 @@ export class SendMessage {
 
   private async evaluateFilters(
     command: SendMessageCommand,
-    variables: IFilterVariables
+    variables: IFilterVariables,
+    compileContext: SendMessageChannelCommand['compileContext']
   ): Promise<{
     stepCondition: IConditionsFilterResponse;
     channelPreference: { result: boolean; reason?: DetailEnum };
   }> {
     const [stepCondition, channelPreference] = await Promise.all([
       this.evaluateStepCondition(command, variables),
-      this.evaluateChannelPreference(command),
+      this.evaluateChannelPreference(command, compileContext),
     ]);
 
     return { stepCondition, channelPreference };
@@ -323,7 +324,8 @@ export class SendMessage {
 
   @Instrument()
   private async evaluateChannelPreference(
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    compileContext: SendMessageChannelCommand['compileContext']
   ): Promise<{ result: boolean; reason?: DetailEnum }> {
     const { job } = command;
 
@@ -338,7 +340,7 @@ export class SendMessage {
         environmentId: job._environmentId,
       }));
 
-    const subscriber = command.payload.subscriber;
+    const subscriber = compileContext.subscriber;
     if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
     let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
