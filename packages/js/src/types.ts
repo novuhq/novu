@@ -298,3 +298,5 @@ export type StandardNovuOptions = {
 export type NovuOptions = KeylessNovuOptions | StandardNovuOptions;
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
+export type NonEmptyArray<T> = [T, ...T[]];

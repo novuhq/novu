@@ -370,12 +370,16 @@ export class NotificationTemplateRepository extends BaseRepository<
     tags,
     critical,
     severity,
+    select,
+    limit,
   }: {
     organizationId: string;
     environmentId: string;
-    tags?: string[];
-    critical?: boolean;
-    severity?: SeverityLevelEnum[];
+    tags?: string[] | undefined;
+    critical?: boolean | undefined;
+    severity?: SeverityLevelEnum[] | undefined;
+    select?: string;
+    limit?: number;
   }) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -409,10 +413,16 @@ export class NotificationTemplateRepository extends BaseRepository<
       requestQuery.$and = [...(requestQuery.$and ?? []), ...orConditions];
     }
 
-    const items = await this.MongooseModel.find(requestQuery)
+    const query = this.MongooseModel.find(requestQuery)
       .populate('steps.template', { type: 1 })
-      .limit(200) // protective limit
+      .limit(limit || 200)
       .read('secondaryPreferred');
+
+    if (select) {
+      query.select(select);
+    }
+
+    const items = await query;
 
     return this.mapEntities(items);
   }

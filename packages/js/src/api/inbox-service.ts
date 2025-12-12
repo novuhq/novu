@@ -338,7 +338,13 @@ export class InboxService {
     return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`);
   }
 
-  getSubscription(topicKey: string, identifier: string): Promise<SubscriptionResponse | undefined> {
+  getSubscription({
+    topicKey,
+    identifier,
+  }: {
+    topicKey: string;
+    identifier: string;
+  }): Promise<SubscriptionResponse | undefined> {
     return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`);
   }
 

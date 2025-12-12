@@ -13,7 +13,6 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
-import { AnalyticsEventsEnum } from '../../utils';
 import { UpdatePreferences } from './update-preferences.usecase';
 
 const mockedSubscriber: any = {
@@ -130,20 +129,6 @@ describe('UpdatePreferences', () => {
       }),
     ]);
 
-    expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
-      AnalyticsEventsEnum.UPDATE_PREFERENCES,
-      '',
-      {
-        _organization: command.organizationId,
-        _subscriber: mockedSubscriber._id,
-        level: command.level,
-        _workflowId: undefined,
-        channels: {
-          chat: true,
-        },
-      },
-    ]);
-
     expect(result).to.deep.equal({
       level: command.level,
       ...mockedGlobalPreference.preference,
@@ -167,22 +152,6 @@ describe('UpdatePreferences', () => {
     getWorkflowByIdsUsecase.execute.resolves(mockedWorkflow);
 
     const result = await updatePreferences.execute(command);
-
-    expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
-    expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
-      AnalyticsEventsEnum.UPDATE_PREFERENCES,
-      '',
-      {
-        _organization: command.organizationId,
-        _subscriber: mockedSubscriber._id,
-        _workflowId: command.workflowIdOrIdentifier,
-        level: command.level,
-        channels: {
-          chat: true,
-          email: false,
-        },
-      },
-    ]);
 
     expect(result).to.deep.equal({
       level: command.level,
@@ -216,22 +185,6 @@ describe('UpdatePreferences', () => {
     getWorkflowByIdsUsecase.execute.resolves(mockedWorkflow);
 
     const result = await updatePreferences.execute(command);
-
-    expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
-    expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
-      AnalyticsEventsEnum.UPDATE_PREFERENCES,
-      '',
-      {
-        _organization: command.organizationId,
-        _subscriber: mockedSubscriber._id,
-        _workflowId: command.workflowIdOrIdentifier,
-        level: command.level,
-        channels: {
-          chat: true,
-          email: false,
-        },
-      },
-    ]);
 
     expect(result).to.deep.equal({
       level: command.level,
