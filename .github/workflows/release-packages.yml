@@ -18,11 +18,15 @@ on:
         required: true
         type: string
         default: "@novu/js@v3.4.0"
-      nightly:
-        description: "Publish as nightly release"
+      release_type:
+        description: "Type of release"
         required: true
-        type: boolean
-        default: false
+        type: choice
+        options:
+          - stable
+          - nightly
+          - rc
+        default: stable
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -34,8 +38,8 @@ jobs:
       contents: write
       pull-requests: write
     outputs:
-      pr_number: ${{ !github.event.inputs.nightly && steps.create-pr.outputs.pull-request-number || '' }}
-      pr_url: ${{ !github.event.inputs.nightly && steps.create-pr.outputs.pull-request-url || '' }}
+      pr_number: ${{ github.event.inputs.release_type == 'stable' && steps.create-pr.outputs.pull-request-number || '' }}
+      pr_url: ${{ github.event.inputs.release_type == 'stable' && steps.create-pr.outputs.pull-request-url || '' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -63,13 +67,18 @@ jobs:
           pnpm nx --version
           pnpm list nx
 
-      - name: Set version for nightly
-        if: ${{ github.event.inputs.nightly }}
+      - name: Set version for nightly or rc
+        if: ${{ github.event.inputs.release_type != 'stable' }}
         run: |
-          DATE=$(date +'%Y%m%d')
-          COMMIT_SHA=$(git rev-parse --short HEAD)
-          echo "NIGHTLY_VERSION=${{ github.event.inputs.version }}-nightly.${DATE}.${COMMIT_SHA}" >> $GITHUB_ENV
-          echo "Using nightly version: $NIGHTLY_VERSION"
+          if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
+            DATE=$(date +'%Y%m%d')
+            COMMIT_SHA=$(git rev-parse --short HEAD)
+            echo "RELEASE_VERSION=${{ github.event.inputs.version }}-nightly.${DATE}.${COMMIT_SHA}" >> $GITHUB_ENV
+            echo "Using nightly version: $RELEASE_VERSION"
+          elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
+            echo "RELEASE_VERSION=${{ github.event.inputs.version }}-rc" >> $GITHUB_ENV
+            echo "Using rc version: $RELEASE_VERSION"
+          fi
 
       - name: Configure Git
         run: |
@@ -78,41 +87,47 @@ jobs:
 
       - name: Release version (without commit)
         run: |
-          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
-            echo "Running nightly release with version: ${{ env.NIGHTLY_VERSION }}"
-            pnpm nx release version ${{ env.NIGHTLY_VERSION }} --projects=${{ github.event.inputs.packages }} --preid nightly --git-commit=false --verbose
+          if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
+            echo "Running nightly release with version: ${{ env.RELEASE_VERSION }}"
+            pnpm nx release version ${{ env.RELEASE_VERSION }} --projects=${{ github.event.inputs.packages }} --preid nightly --git-commit=false --verbose
+          elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
+            echo "Running rc release with version: ${{ env.RELEASE_VERSION }}"
+            pnpm nx release version ${{ env.RELEASE_VERSION }} --projects=${{ github.event.inputs.packages }} --preid rc --git-commit=false --verbose
           else
-            echo "Running regular release with version: ${{ github.event.inputs.version }}"
+            echo "Running stable release with version: ${{ github.event.inputs.version }}"
             pnpm nx release version ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }} --git-commit=false --verbose
           fi
 
       - name: Generate changelog (without commit)
         run: |
-          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
-            pnpm nx release changelog ${{ env.NIGHTLY_VERSION }} --projects=${{ github.event.inputs.packages }} --from=${{ github.event.inputs.previous_tag }} --git-commit=false
-          else
+          if [ "${{ github.event.inputs.release_type }}" = "stable" ]; then
             pnpm nx release changelog ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }} --from=${{ github.event.inputs.previous_tag }} --git-commit=false
+          else
+            pnpm nx release changelog ${{ env.RELEASE_VERSION }} --projects=${{ github.event.inputs.packages }} --from=${{ github.event.inputs.previous_tag }} --git-commit=false
           fi
 
       - name: Build packages
         run: |
-          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
+          if [ "${{ github.event.inputs.release_type }}" != "stable" ]; then
             pnpm run build:packages
           else
-            echo "Skipping build for non-nightly release"
+            echo "Skipping build for stable release (will be built after PR merge)"
           fi
 
-      - name: Publish packages (nightly only)
+      - name: Publish packages (nightly and rc only)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
+          if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
             pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly
+          elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next
           else
-            echo "Skipping publish for non-nightly release"
+            echo "Skipping publish for stable release (will be published after PR merge)"
           fi
 
       - name: Create Pull Request
+        if: ${{ github.event.inputs.release_type == 'stable' }}
         id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
