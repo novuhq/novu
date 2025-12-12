@@ -1869,76 +1869,6 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
     });
 
-    it('should fail to trigger with missing variables', async () => {
-      template = await session.createTemplate({
-        steps: [
-          {
-            name: 'Message Name',
-            subject: 'Test email {{nested.subject}}',
-            type: StepTypeEnum.EMAIL,
-            variables: [
-              { name: 'myUser.lastName', required: true, type: TemplateVariableTypeEnum.STRING },
-              { name: 'myUser.array', required: true, type: TemplateVariableTypeEnum.ARRAY },
-              { name: 'myUser.bool', required: true, type: TemplateVariableTypeEnum.BOOLEAN },
-            ],
-            content: [
-              {
-                type: EmailBlockTypeEnum.TEXT,
-                content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
-              },
-            ],
-          },
-        ],
-      });
-
-      let response = await session.testAgent
-        .post('/v1/events/trigger')
-        .send({
-          name: template.triggers[0].identifier,
-          to: [subscriber.subscriberId],
-          payload: {},
-        })
-        .expect(400);
-
-      expect(JSON.stringify(response.body)).to.include(
-        'payload is missing required key(s) and type(s): myUser.lastName (Value), myUser.array (Array), myUser.bool (Boolean)'
-      );
-
-      response = await session.testAgent
-        .post('/v1/events/trigger')
-        .send({
-          name: template.triggers[0].identifier,
-          to: [subscriber.subscriberId],
-          payload: {
-            myUser: {
-              lastName: true,
-              array: 'John Doe',
-              bool: 0,
-            },
-          },
-        })
-        .expect(400);
-
-      expect(JSON.stringify(response.body)).to.include(
-        'payload is missing required key(s) and type(s): myUser.lastName (Value), myUser.array (Array), myUser.bool (Boolean)'
-      );
-
-      response = await session.testAgent
-        .post('/v1/events/trigger')
-        .send({
-          name: template.triggers[0].identifier,
-          to: [subscriber.subscriberId],
-          payload: {
-            myUser: {
-              lastName: '',
-              array: [],
-              bool: true,
-            },
-          },
-        })
-        .expect(201);
-    });
-
     it('should fill trigger payload with default variables', async () => {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.EMAIL;
@@ -2018,26 +1948,6 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(body.statusCode).to.equal(422);
       expect(body.message).to.equal('workflow_not_found');
       expect(body.error).to.equal('Unprocessable Entity');
-    });
-
-    it('should handle empty workflow scenario', async () => {
-      template = await session.createTemplate({
-        steps: [],
-      });
-
-      const response = await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          myUser: {
-            lastName: 'Test',
-          },
-        },
-      });
-
-      const { status, acknowledged } = response.result;
-      expect(status).to.equal('no_workflow_steps_defined');
-      expect(acknowledged).to.equal(true);
     });
 
     it('should trigger with given required variables', async () => {

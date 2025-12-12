@@ -9,7 +9,7 @@ export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubsc
   template: NotificationTemplateEntity;
 
   @IsOptional()
-  subscriber?: SubscriberEntity;
+  subscriber?: Pick<SubscriberEntity, '_id'>;
 
   @IsOptional()
   tenant?: ITenantDefine;

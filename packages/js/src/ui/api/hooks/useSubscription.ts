@@ -6,14 +6,19 @@ import {
   TopicSubscription,
 } from '../../../subscriptions';
 import { useNovu } from '../../context';
+import { buildSubscriptionIdentifier } from '../../internal';
 
 export const useSubscription = (options: GetSubscriptionArgs) => {
   const novuAccessor = useNovu();
+  const identifier = () => {
+    const subscriberId = novuAccessor().subscriberId;
+    return options.identifier ?? buildSubscriptionIdentifier({ topicKey: options.topicKey, subscriberId });
+  };
 
   const [loading, setLoading] = createSignal(true);
-  const [subscription, { mutate, refetch }] = createResource(options || {}, async ({ topicKey, identifier }) => {
+  const [subscription, { mutate, refetch }] = createResource(options || {}, async ({ topicKey }) => {
     try {
-      const response = await novuAccessor().subscriptions.get({ topicKey, identifier });
+      const response = await novuAccessor().subscriptions.get({ topicKey, identifier: identifier() });
 
       return response.data;
     } catch (error) {
@@ -49,7 +54,7 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
 
   onMount(() => {
     const listener = ({ data }: { data?: TopicSubscription }) => {
-      if (!data || data.topicKey !== options.topicKey || data.identifier !== options.identifier) {
+      if (!data || data.topicKey !== options.topicKey || data.identifier !== identifier()) {
         return;
       }
 
@@ -59,7 +64,7 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
 
     const currentNovu = novuAccessor();
     const cleanupCreatePending = currentNovu.on('subscription.create.pending', ({ args }) => {
-      if (!args || args.topicKey !== options.topicKey || args.identifier !== options.identifier) {
+      if (!args || args.topicKey !== options.topicKey || args.identifier !== identifier()) {
         return;
       }
       setLoading(true);
@@ -82,7 +87,21 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
       }
       setLoading(true);
     });
-    const cleanupDelete = currentNovu.on('subscription.delete.resolved', () => {
+    const cleanupDelete = currentNovu.on('subscription.delete.resolved', ({ args }) => {
+      const subscriptionId = subscription()?.id;
+      const subscriptionIdentifier = subscription()?.identifier;
+      if (
+        !args ||
+        ('subscriptionId' in args &&
+          args.subscriptionId !== subscriptionId &&
+          args.subscriptionId !== subscriptionIdentifier) ||
+        ('subscription' in args &&
+          args.subscription.id !== subscriptionId &&
+          args.subscription.identifier !== subscriptionIdentifier)
+      ) {
+        return;
+      }
+
       mutate(null);
       setLoading(false);
     });
