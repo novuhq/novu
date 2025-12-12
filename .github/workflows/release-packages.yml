@@ -70,13 +70,13 @@ jobs:
       - name: Set version for nightly or rc
         if: ${{ github.event.inputs.release_type != 'stable' }}
         run: |
+          COMMIT_SHA=$(git rev-parse --short HEAD)
           if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
             DATE=$(date +'%Y%m%d')
-            COMMIT_SHA=$(git rev-parse --short HEAD)
             echo "RELEASE_VERSION=${{ github.event.inputs.version }}-nightly.${DATE}.${COMMIT_SHA}" >> $GITHUB_ENV
             echo "Using nightly version: $RELEASE_VERSION"
           elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
-            echo "RELEASE_VERSION=${{ github.event.inputs.version }}-rc" >> $GITHUB_ENV
+            echo "RELEASE_VERSION=${{ github.event.inputs.version }}-rc.${COMMIT_SHA}" >> $GITHUB_ENV
             echo "Using rc version: $RELEASE_VERSION"
           fi
 
