@@ -40,9 +40,6 @@ export function EnvironmentFormFields({
               <FormInput
                 {...field}
                 autoFocus={autoFocusName}
-                onChange={(e) => {
-                  field.onChange(e);
-                }}
               />
             </FormControl>
             <FormMessage />
