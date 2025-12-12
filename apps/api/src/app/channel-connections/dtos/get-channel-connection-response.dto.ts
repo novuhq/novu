@@ -18,8 +18,8 @@ export class GetChannelConnectionResponseDto {
   @ApiProperty({
     description: 'The provider identifier (e.g., sendgrid, twilio, slack, etc.).',
     enum: [...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))])],
-    enumName: 'ProvidersIdEnum',
     type: String,
+    nullable: true,
     example: 'slack',
   })
   providerId: ProvidersIdEnum | null;

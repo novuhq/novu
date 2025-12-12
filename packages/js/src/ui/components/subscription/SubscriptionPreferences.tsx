@@ -1,6 +1,7 @@
 import { createEffect, createMemo, Index, Show } from 'solid-js';
 import { TopicSubscription } from '../../../subscriptions';
 import { SubscriptionPreference } from '../../../subscriptions/subscription-preference';
+import { NonEmptyArray } from '../../../types';
 import { setDynamicLocalization } from '../../config/defaultLocalization';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, useStyle } from '../../helpers';
@@ -18,7 +19,7 @@ import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallba
 export const SubscriptionPreferences = (props: {
   loading?: boolean;
   subscription?: TopicSubscription | null;
-  preferences: Array<UIPreference>;
+  preferences: NonEmptyArray<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
   onSubscribeClick: () => void;
 }) => {
@@ -58,7 +59,26 @@ export const SubscriptionPreferences = (props: {
               preference: SubscriptionPreference;
             }> = [];
 
-            if (
+            if (typeof preferenceFilter.filter === 'object' && 'workflows' in preferenceFilter.filter) {
+              const { workflows } = preferenceFilter.filter;
+              foundPreferences = subscriptionPreferences
+                .filter((pref) => {
+                  return workflows?.some(
+                    (workflow) =>
+                      workflow.workflowId === pref.workflow?.id || workflow.workflowId === pref.workflow?.identifier
+                  );
+                })
+                .map((pref) => {
+                  const workflow = workflows?.find(
+                    (workflow) =>
+                      workflow.workflowId === pref.workflow?.id || workflow.workflowId === pref.workflow?.identifier
+                  );
+                  return {
+                    label: workflow?.label ?? pref.workflow.name,
+                    preference: pref,
+                  };
+                });
+            } else if (
               typeof preferenceFilter.filter === 'object' &&
               ('workflowIds' in preferenceFilter.filter || 'tags' in preferenceFilter.filter)
             ) {

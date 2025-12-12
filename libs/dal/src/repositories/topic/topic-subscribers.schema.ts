@@ -40,7 +40,6 @@ const topicSubscribersSchema = new Schema<TopicSubscribersDBModel>(
     },
     identifier: {
       type: Schema.Types.String,
-      required: false,
     },
   },
   schemaOptions

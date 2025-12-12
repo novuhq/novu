@@ -29,7 +29,7 @@ describe('Verify Payload Usecase', () => {
       })
     );
 
-    const final = merge({}, payload, result);
+    const final: any = merge({}, payload, result);
 
     expect(final.user.lastName).to.eq('Doe');
     expect(final.user.firstName).to.eq('John');
@@ -56,7 +56,7 @@ describe('Verify Payload Usecase', () => {
       })
     );
 
-    const final = merge({}, payload, result);
+    const final: any = merge({}, payload, result);
 
     expect(final.user.lastName).to.eq('Doe');
     expect(final.user.firstName).to.eq('John');

@@ -2,7 +2,8 @@ import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { SubscriptionsCache } from '../cache/subscriptions-cache';
 import { NovuEventEmitter } from '../event-emitter';
-import { Options, Result } from '../types';
+import { Options, Result, Subscriber } from '../types';
+import { buildSubscriptionIdentifier } from '../ui/internal';
 import {
   createSubscription,
   deleteSubscription,
@@ -25,6 +26,7 @@ import type {
 
 export class Subscriptions extends BaseModule {
   #useCache: boolean;
+  #subscriber: Subscriber;
 
   readonly cache: SubscriptionsCache;
 
@@ -32,10 +34,12 @@ export class Subscriptions extends BaseModule {
     useCache,
     inboxServiceInstance,
     eventEmitterInstance,
+    subscriber,
   }: {
     useCache: boolean;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
+    subscriber: Subscriber;
   }) {
     super({
       eventEmitterInstance,
@@ -47,6 +51,7 @@ export class Subscriptions extends BaseModule {
       useCache,
     });
     this.#useCache = useCache;
+    this.#subscriber = subscriber;
   }
 
   async list(args: ListSubscriptionsArgs, options?: Options): Result<TopicSubscription[]> {
@@ -74,7 +79,12 @@ export class Subscriptions extends BaseModule {
           ...options,
           useCache: options?.useCache ?? this.#useCache,
         },
-        args,
+        args: {
+          ...args,
+          identifier:
+            args.identifier ??
+            buildSubscriptionIdentifier({ topicKey: args.topicKey, subscriberId: this.#subscriber.subscriberId }),
+        },
       })
     );
   }

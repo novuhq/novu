@@ -55,6 +55,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const { navigate, status } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
 
+  const severity = createMemo(() => props.notification.severity ?? SeverityLevelEnum.NONE);
+
   const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
 
@@ -120,18 +122,18 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   return (
     <a
       class={style({
-        key: SEVERITY_TO_NOTIFICATION_KEYS[props.notification.severity],
+        key: SEVERITY_TO_NOTIFICATION_KEYS[severity()],
         className: cn(
           'nt-transition nt-w-full nt-text-sm hover:nt-bg-primary-alpha-25 nt-group nt-relative nt-flex nt-items-start nt-p-4 nt-gap-2',
           '[&:not(:first-child)]:nt-border-t nt-border-neutral-alpha-100',
           {
             'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
             'nt-bg-severity-high-alpha-100 hover:nt-bg-severity-high-alpha-50':
-              props.notification.severity === SeverityLevelEnum.HIGH,
+              severity() === SeverityLevelEnum.HIGH,
             'nt-bg-severity-medium-alpha-100 hover:nt-bg-severity-medium-alpha-50':
-              props.notification.severity === SeverityLevelEnum.MEDIUM,
+              severity() === SeverityLevelEnum.MEDIUM,
             'nt-bg-severity-low-alpha-100 hover:nt-bg-severity-low-alpha-50':
-              props.notification.severity === SeverityLevelEnum.LOW,
+              severity() === SeverityLevelEnum.LOW,
           }
         ),
         context: { notification: props.notification } satisfies Parameters<InboxAppearanceCallback['notification']>[0],
@@ -140,14 +142,14 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     >
       <div
         class={style({
-          key: SEVERITY_TO_BAR_KEYS[props.notification.severity],
+          key: SEVERITY_TO_BAR_KEYS[severity()],
           className: cn('nt-transition nt-absolute nt-left-0 nt-top-0 nt-bottom-0 nt-w-[3px]', {
             'nt-bg-severity-high group-hover:nt-bg-severity-high-alpha-500':
-              props.notification.severity === SeverityLevelEnum.HIGH,
+              severity() === SeverityLevelEnum.HIGH,
             'nt-bg-severity-medium group-hover:nt-bg-severity-medium-alpha-500':
-              props.notification.severity === SeverityLevelEnum.MEDIUM,
+              severity() === SeverityLevelEnum.MEDIUM,
             'nt-bg-severity-low group-hover:nt-bg-severity-low-alpha-500':
-              props.notification.severity === SeverityLevelEnum.LOW,
+              severity() === SeverityLevelEnum.LOW,
           }),
           context: { notification: props.notification } satisfies Parameters<
             InboxAppearanceCallback['notificationBar']

@@ -127,13 +127,6 @@ export class BulkUpdatePreferences {
 
     const updatedPreferences = await Promise.all(updatePromises);
 
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.UPDATE_PREFERENCES_BULK, '', {
-      _organization: command.organizationId,
-      _subscriber: subscriber._id,
-      workflowIds: Array.from(workflowPreferencesMap.keys()),
-      level: PreferenceLevelEnum.TEMPLATE,
-    });
-
     return updatedPreferences;
   }
 }

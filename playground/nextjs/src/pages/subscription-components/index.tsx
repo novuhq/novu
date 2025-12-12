@@ -20,7 +20,6 @@ export default function SubscriptionComponentsPage() {
         <NovuProvider {...novuConfig}>
           <Subscription
             topicKey="test"
-            identifier="test"
             preferences={[
               { workflowId: 'test-workflow3' },
               { label: 'Test Group', filter: { tags: [] } },
