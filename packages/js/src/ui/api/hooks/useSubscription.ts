@@ -11,16 +11,19 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
   const novuAccessor = useNovu();
 
   const [loading, setLoading] = createSignal(true);
-  const [subscription, { mutate, refetch }] = createResource(options || {}, async ({ topicKey, identifier }) => {
-    try {
-      const response = await novuAccessor().subscriptions.get({ topicKey, identifier });
+  const [subscription, { mutate, refetch }] = createResource(
+    options || {},
+    async ({ topicKey, identifier, workflowIdentifiers, tags }) => {
+      try {
+        const response = await novuAccessor().subscriptions.get({ topicKey, identifier, workflowIdentifiers, tags });
 
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching subscription:', error);
-      throw error;
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+        throw error;
+      }
     }
-  });
+  );
 
   const create = async (args: CreateSubscriptionArgs) => {
     setLoading(true);

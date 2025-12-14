@@ -41,14 +41,44 @@ export type SubscriptionProps = {
   renderPreferences?: SubscriptionPreferencesRenderer;
 };
 
+export function extractWorkflowIdentifiers(preferences: Array<UIPreference>): string[] {
+  const identifiers: string[] = [];
+  for (const preference of preferences) {
+    if (typeof preference === 'string') {
+      identifiers.push(preference);
+    } else if ('workflowId' in preference) {
+      identifiers.push(preference.workflowId);
+    } else if ('filter' in preference && preference.filter.workflowIds) {
+      identifiers.push(...preference.filter.workflowIds);
+    }
+  }
+
+  return identifiers;
+}
+
+export function extractTags(preferences: Array<UIPreference>): string[] {
+  const tags: string[] = [];
+  for (const preference of preferences) {
+    if (typeof preference === 'object' && 'filter' in preference && preference.filter.tags) {
+      tags.push(...preference.filter.tags);
+    }
+  }
+
+  return tags;
+}
+
 export const Subscription = (props: SubscriptionProps) => {
   const style = useStyle();
   const { isOpened, setIsOpened } = useInboxContext();
   const isOpen = () => props?.open ?? isOpened();
 
+  const workflowIdentifiers = extractWorkflowIdentifiers(props.preferences);
+  const tags = extractTags(props.preferences);
   const { subscription, loading, create, remove } = useSubscription({
     topicKey: props.topicKey,
     identifier: props.identifier,
+    workflowIdentifiers,
+    tags,
   });
 
   const onSubscribeClick = () => {

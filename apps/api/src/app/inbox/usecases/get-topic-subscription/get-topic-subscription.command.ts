@@ -1,4 +1,4 @@
-import { IsDefined, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class GetTopicSubscriptionCommand extends EnvironmentWithSubscriber {
@@ -13,4 +13,14 @@ export class GetTopicSubscriptionCommand extends EnvironmentWithSubscriber {
   @IsString()
   @IsDefined()
   _subscriberId: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  workflowIdentifiers?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
 }

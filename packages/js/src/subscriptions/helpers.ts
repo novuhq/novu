@@ -73,7 +73,12 @@ export const getSubscription = async ({
     emitter.emit('subscription.get.pending', { args, data });
 
     if (!data || refetch) {
-      const response = await apiService.getSubscription(args.topicKey, args.identifier ?? '');
+      const response = await apiService.getSubscription(
+        args.topicKey,
+        args.identifier ?? '',
+        args.workflowIdentifiers,
+        args.tags
+      );
       if (!response) {
         emitter.emit('subscription.get.resolved', { args, data: null });
 

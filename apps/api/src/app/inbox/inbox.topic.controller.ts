@@ -1,4 +1,15 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import {
@@ -55,8 +66,17 @@ export class InboxTopicController {
   async getTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string
+    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
+    @Query('workflowIdentifiers') workflowIdentifiers?: string | string[],
+    @Query('tags') tags?: string | string[]
   ): Promise<TopicSubscriptionDetailsResponseDto> {
+    const normalizedWorkflowIdentifiers = workflowIdentifiers
+      ? Array.isArray(workflowIdentifiers)
+        ? workflowIdentifiers
+        : [workflowIdentifiers]
+      : undefined;
+    const normalizedTags = tags ? (Array.isArray(tags) ? tags : [tags]) : undefined;
+
     return await this.getTopicSubscriptionUsecase.execute(
       GetTopicSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -65,6 +85,8 @@ export class InboxTopicController {
         topicKey,
         subscriptionIdOrIdentifier,
         _subscriberId: subscriberSession._id,
+        workflowIdentifiers: normalizedWorkflowIdentifiers,
+        tags: normalizedTags,
       })
     );
   }
