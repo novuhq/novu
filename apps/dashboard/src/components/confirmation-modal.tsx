@@ -24,6 +24,7 @@ type ConfirmationModalProps = {
   confirmTrailingIcon?: IconType;
   isLoading?: boolean;
   isConfirmDisabled?: boolean;
+  confirmButtonVariant?: 'primary' | 'error';
 };
 
 export const ConfirmationModal = ({
@@ -36,6 +37,7 @@ export const ConfirmationModal = ({
   confirmTrailingIcon,
   isLoading,
   isConfirmDisabled,
+  confirmButtonVariant = 'primary',
 }: ConfirmationModalProps) => {
   return (
     <Dialog modal open={open} onOpenChange={onOpenChange}>
@@ -78,7 +80,7 @@ export const ConfirmationModal = ({
             <Button
               type="button"
               size="sm"
-              variant="primary"
+              variant={confirmButtonVariant}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

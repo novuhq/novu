@@ -64,7 +64,7 @@ export const UnsavedChangesAlertDialog = (props: UnsavedChangesAlertDialogProps)
             <Button
               type="button"
               size="sm"
-              variant="primary"
+              variant="error"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

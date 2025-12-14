@@ -382,6 +382,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                   </>
                 }
                 confirmButtonText="Delete"
+                confirmButtonVariant="error"
               />
               <Button
                 variant="error"

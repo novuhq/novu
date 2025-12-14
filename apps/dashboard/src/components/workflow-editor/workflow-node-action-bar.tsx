@@ -212,6 +212,7 @@ export const WorkflowNodeActionBar = ({
           </>
         }
         confirmButtonText="Delete"
+        confirmButtonVariant="error"
       />
     </>
   );
