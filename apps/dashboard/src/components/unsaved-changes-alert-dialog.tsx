@@ -38,7 +38,7 @@ export const UnsavedChangesAlertDialog = (props: UnsavedChangesAlertDialogProps)
           </div>
 
           <div className="flex flex-col gap-1">
-            <DialogTitle className="text-md font-medium">You might lose your progress</DialogTitle>
+            <DialogTitle className="text-md font-medium tracking-normal">You might lose your progress</DialogTitle>
             <DialogDescription className="text-foreground-600">
               {description || 'This form has some unsaved changes. Save progress before you leave.'}
             </DialogDescription>
