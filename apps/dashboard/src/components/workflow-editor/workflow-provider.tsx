@@ -1,3 +1,4 @@
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { PatchWorkflowDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import { CheckCircleIcon } from 'lucide-react';
@@ -285,7 +286,13 @@ const SavingChangesDialog = ({
               {isUpdatePatchPending ? 'Saving changes' : 'Changes saved!'}
             </DialogTitle>
             <DialogDescription className="text-foreground-600 transition-all duration-300">
+<<<<<<< HEAD
               {isUpdatePatchPending ? 'Please wait while we save your changes' : 'Workflow has been saved successfully'}
+=======
+              {isUpdatePatchPending
+                ? 'Please wait while we save your changes'
+                : 'Workflow has been saved successfully'}
+>>>>>>> 1e59d899a9 (consistent models across the product)
             </DialogDescription>
           </div>
         </DialogContent>

@@ -26,7 +26,11 @@ export const UnsavedChangesAlertDialog = (props: UnsavedChangesAlertDialogProps)
     <Dialog modal open={show} onOpenChange={(open) => !open && onCancel?.()}>
       <DialogPortal>
         <DialogOverlay />
+<<<<<<< HEAD
         <DialogContent className="max-w-[440px] gap-4 !rounded-xl p-4 overflow-hidden" hideCloseButton>
+=======
+        <DialogContent className=" gap-4 !rounded-xl p-4 overflow-hidden" hideCloseButton>
+>>>>>>> 1e59d899a9 (consistent models across the product)
           <div className="flex items-start justify-between">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-warning/10">
               <RiAlertFill className="size-6 text-warning" />
@@ -38,7 +42,11 @@ export const UnsavedChangesAlertDialog = (props: UnsavedChangesAlertDialogProps)
           </div>
 
           <div className="flex flex-col gap-1">
+<<<<<<< HEAD
             <DialogTitle className="text-md font-medium tracking-normal">You might lose your progress</DialogTitle>
+=======
+            <DialogTitle className="text-md font-medium">You might lose your progress</DialogTitle>
+>>>>>>> 1e59d899a9 (consistent models across the product)
             <DialogDescription className="text-foreground-600">
               {description || 'This form has some unsaved changes. Save progress before you leave.'}
             </DialogDescription>
