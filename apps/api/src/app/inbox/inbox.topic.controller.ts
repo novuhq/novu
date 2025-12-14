@@ -4,14 +4,17 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { Response } from 'express';
 import {
   GroupPreferenceFilterDto,
   WorkflowPreferenceRequestDto,
@@ -69,7 +72,8 @@ export class InboxTopicController {
     @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
     @Query('workflowIdentifiers') workflowIdentifiers?: string | string[],
     @Query('tags') tags?: string | string[]
-  ): Promise<TopicSubscriptionDetailsResponseDto> {
+    @Res({ passthrough: true }) res: Response
+  ): Promise<TopicSubscriptionDetailsResponseDto | void> {
     const normalizedWorkflowIdentifiers = workflowIdentifiers
       ? Array.isArray(workflowIdentifiers)
         ? workflowIdentifiers
@@ -77,7 +81,7 @@ export class InboxTopicController {
       : undefined;
     const normalizedTags = tags ? (Array.isArray(tags) ? tags : [tags]) : undefined;
 
-    return await this.getTopicSubscriptionUsecase.execute(
+    const result = await this.getTopicSubscriptionUsecase.execute(
       GetTopicSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
@@ -89,6 +93,14 @@ export class InboxTopicController {
         tags: normalizedTags,
       })
     );
+
+    if (!result) {
+      res.status(HttpStatus.NO_CONTENT);
+
+      return;
+    }
+
+    return result;
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

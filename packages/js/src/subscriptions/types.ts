@@ -1,4 +1,5 @@
 import type { RulesLogic } from 'json-logic-js';
+import { NonEmptyArray } from '../types';
 import type { TopicSubscription } from './subscription';
 import { SubscriptionPreference } from './subscription-preference';
 
@@ -8,12 +9,14 @@ export type WorkflowFilter = {
   workflowId: WorkflowIdentifierOrId;
   enabled?: boolean;
   condition?: RulesLogic;
+  filter?: never;
 };
 
 export type WorkflowGroupFilter = {
   filter: { workflowIds?: Array<WorkflowIdentifierOrId>; tags?: string[] };
   enabled?: boolean;
   condition?: RulesLogic;
+  workflowId?: never;
 };
 
 export type PreferenceFilter = WorkflowIdentifierOrId | WorkflowFilter | WorkflowGroupFilter;
@@ -34,20 +37,20 @@ export type CreateSubscriptionArgs = {
   topicName?: string;
   identifier?: string;
   name?: string;
-  preferences: Array<PreferenceFilter>;
+  preferences: NonEmptyArray<PreferenceFilter>;
 };
 
 export type BaseUpdateSubscriptionArgs = {
   topicKey: string;
   subscriptionId: string;
   name?: string;
-  preferences?: Array<PreferenceFilter>;
+  preferences?: NonEmptyArray<PreferenceFilter>;
 };
 
 export type InstanceUpdateSubscriptionArgs = {
   subscription: TopicSubscription;
   name?: string;
-  preferences?: Array<PreferenceFilter>;
+  preferences?: NonEmptyArray<PreferenceFilter>;
 };
 
 export type UpdateSubscriptionArgs = BaseUpdateSubscriptionArgs | InstanceUpdateSubscriptionArgs;

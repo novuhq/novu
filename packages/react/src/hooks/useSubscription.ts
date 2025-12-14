@@ -1,4 +1,5 @@
 import { NovuError, TopicSubscription } from '@novu/js';
+import { buildSubscriptionIdentifier } from '@novu/js/internal';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNovu } from './NovuProvider';
 
@@ -23,7 +24,11 @@ export type UseSubscriptionResult = {
 export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionResult => {
   const novu = useNovu();
   const propsRef = useRef<UseSubscriptionProps>(props);
-  propsRef.current = props;
+  propsRef.current = {
+    ...props,
+    identifier:
+      props.identifier ?? buildSubscriptionIdentifier({ topicKey: props.topicKey, subscriberId: novu.subscriberId }),
+  };
   const [subscription, setSubscription] = useState<TopicSubscription | null>();
   const subscriptionRef = useRef<TopicSubscription | null>(null);
   subscriptionRef.current = subscription ?? null;

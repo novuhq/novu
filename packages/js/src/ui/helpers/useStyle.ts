@@ -25,6 +25,10 @@ export const useStyle = () => {
         iconKey?: AllIconKey;
         context?: any;
       }) => {
+        if (!key) {
+          return cn(className);
+        }
+
         const appearanceKeyParts = key.split('__');
         let finalAppearanceKeys: (keyof AllElements)[] = [];
         for (let i = 0; i < appearanceKeyParts.length; i += 1) {

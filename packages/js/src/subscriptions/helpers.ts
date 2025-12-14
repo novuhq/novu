@@ -65,7 +65,7 @@ export const getSubscription = async ({
   apiService: InboxService;
   cache: SubscriptionsCache;
   options: Options;
-  args: GetSubscriptionArgs;
+  args: GetSubscriptionArgs & { identifier: string };
 }): Result<TopicSubscription | null> => {
   try {
     const { useCache, refetch } = options;
@@ -75,7 +75,7 @@ export const getSubscription = async ({
     if (!data || refetch) {
       const response = await apiService.getSubscription(
         args.topicKey,
-        args.identifier ?? '',
+        args.identifier,
         args.workflowIdentifiers,
         args.tags
       );

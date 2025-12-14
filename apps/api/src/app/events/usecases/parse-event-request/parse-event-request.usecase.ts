@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import type { EventType, Trace } from '@novu/application-generic';
@@ -33,8 +33,9 @@ import {
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
 } from '@novu/shared';
-import Ajv from 'ajv';
+import Ajv, { ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
+import { LRUCache } from 'lru-cache';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
@@ -43,6 +44,33 @@ import {
   ParseEventRequestCommand,
   ParseEventRequestMulticastCommand,
 } from './parse-event-request.command';
+
+const ajv = new Ajv({
+  allErrors: true,
+  useDefaults: true,
+});
+addFormats(ajv);
+
+const validatorCache = new LRUCache<string, ValidateFunction>({
+  max: 5000,
+  ttl: 1000 * 60 * 60,
+});
+
+function getSchemaHash(schema: object): string {
+  return createHash('sha256').update(JSON.stringify(schema)).digest('hex');
+}
+
+function getCompiledValidator(schema: object): ValidateFunction {
+  const hash = getSchemaHash(schema);
+  let validate = validatorCache.get(hash);
+
+  if (!validate) {
+    validate = ajv.compile(schema);
+    validatorCache.set(hash, validate);
+  }
+
+  return validate;
+}
 
 @Injectable()
 export class ParseEventRequest {
@@ -132,12 +160,16 @@ export class ParseEventRequest {
         }
       }
 
-      let tenant: TenantEntity | null = null;
+      let tenant: Pick<TenantEntity, '_id'> | null = null;
       if (command.tenant) {
-        tenant = await this.tenantRepository.findOne({
-          _environmentId: command.environmentId,
-          identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
-        });
+        tenant = await this.tenantRepository.findOne(
+          {
+            _environmentId: command.environmentId,
+            identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
+          },
+          '_id',
+          { readPreference: 'secondaryPreferred' }
+        );
 
         if (!tenant) {
           return {
@@ -147,14 +179,16 @@ export class ParseEventRequest {
         }
       }
 
-      let workflowOverride: WorkflowOverrideEntity | null = null;
+      let workflowOverride: Pick<WorkflowOverrideEntity, '_id' | 'active'> | null = null;
       if (tenant) {
-        workflowOverride = await this.workflowOverrideRepository.findOne({
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-          _workflowId: template._id,
-          _tenantId: tenant._id,
-        });
+        workflowOverride = await this.workflowOverrideRepository.findOne(
+          {
+            _environmentId: command.environmentId,
+            _workflowId: template._id,
+            _tenantId: tenant._id,
+          },
+          '_id active'
+        );
       }
 
       const inactiveWorkflow = !workflowOverride && !template.active;
@@ -197,6 +231,7 @@ export class ParseEventRequest {
     }
   }
 
+  @Instrument()
   private async createRequestTrace({
     requestId,
     command,
@@ -257,6 +292,7 @@ export class ParseEventRequest {
     }
   }
 
+  @Instrument()
   private async queryDiscoverWorkflow(command: ParseEventRequestCommand): Promise<DiscoverWorkflowOutput | null> {
     if (!command.bridgeUrl) {
       return null;
@@ -274,6 +310,7 @@ export class ParseEventRequest {
     return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
   }
 
+  @Instrument()
   private async dispatchEventToWorkflowQueue({
     requestId,
     command,
@@ -379,6 +416,7 @@ export class ParseEventRequest {
     );
   }
 
+  @Instrument()
   private modifyAttachments(command: ParseEventRequestCommand): void {
     // eslint-disable-next-line no-param-reassign
     command.payload.attachments = command.payload.attachments.map((attachment) => {
@@ -399,6 +437,7 @@ export class ParseEventRequest {
    * @param invalidValues - Array to collect invalid values
    * @returns The valid item or null if invalid
    */
+  @Instrument()
   private validateItem(item: unknown, invalidValues: unknown[]) {
     const result = RecipientSchema.safeParse(item);
     if (result.success) {
@@ -425,6 +464,7 @@ export class ParseEventRequest {
    * @param input - The input to parse and validate. Can be a single recipient or an array of recipients.
    * @returns The object containing valid and invalid values.
    */
+  @Instrument()
   private parseRecipients(input: unknown) {
     const invalidValues: unknown[] = [];
 
@@ -447,16 +487,9 @@ export class ParseEventRequest {
     return { validRecipients: validItem, invalidRecipients: invalidValues };
   }
 
-  private validateAndApplyPayloadDefaults(payload: any, schema: any): any {
-    const ajv = new Ajv({
-      allErrors: true,
-      useDefaults: true,
-    });
-    addFormats(ajv);
-
-    const validate = ajv.compile(schema);
-
-    // Create a deep copy of the payload to avoid mutating the original
+  @Instrument()
+  private validateAndApplyPayloadDefaults(payload: Record<string, unknown>, schema: object): Record<string, unknown> {
+    const validate = getCompiledValidator(schema);
     const payloadWithDefaults = JSON.parse(JSON.stringify(payload));
     const valid = validate(payloadWithDefaults);
 

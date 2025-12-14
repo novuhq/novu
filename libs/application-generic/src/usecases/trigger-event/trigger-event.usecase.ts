@@ -1,8 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   ContextRepository,
-  EnvironmentEntity,
-  EnvironmentRepository,
   JobEntity,
   JobRepository,
   NotificationTemplateEntity,
@@ -41,7 +39,6 @@ function getActiveWorker() {
 export class TriggerEvent {
   constructor(
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
-    private environmentRepository: EnvironmentRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
