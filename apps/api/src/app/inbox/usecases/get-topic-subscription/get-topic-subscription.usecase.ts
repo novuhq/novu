@@ -124,6 +124,10 @@ export class GetTopicSubscription {
       orConditions.push({ tags: { $in: command.tags } });
     }
 
+    if (orConditions.length === 0) {
+      return [];
+    }
+
     const workflows = await this.notificationTemplateRepository.find(
       {
         _environmentId: subscription._environmentId,
