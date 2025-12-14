@@ -156,8 +156,6 @@ export class GetTopicSubscription {
           })
         );
 
-        console.log('@@@@@ result', JSON.stringify({ subscriber: command._subscriberId, result }, null, 2));
-
         if (!result?.preferences) {
           return null;
         }

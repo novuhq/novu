@@ -70,9 +70,9 @@ export class InboxTopicController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
     @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
+    @Res({ passthrough: true }) res: Response,
     @Query('workflowIdentifiers') workflowIdentifiers?: string | string[],
     @Query('tags') tags?: string | string[]
-    @Res({ passthrough: true }) res: Response
   ): Promise<TopicSubscriptionDetailsResponseDto | void> {
     const normalizedWorkflowIdentifiers = workflowIdentifiers
       ? Array.isArray(workflowIdentifiers)

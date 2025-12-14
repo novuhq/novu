@@ -50,9 +50,9 @@ export function extractWorkflowIdentifiers(preferences: Array<UIPreference>): st
   for (const preference of preferences) {
     if (typeof preference === 'string') {
       identifiers.push(preference);
-    } else if ('workflowId' in preference) {
+    } else if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
       identifiers.push(preference.workflowId);
-    } else if ('filter' in preference && preference.filter.workflowIds) {
+    } else if (typeof preference === 'object' && 'filter' in preference && preference.filter?.workflowIds) {
       identifiers.push(...preference.filter.workflowIds);
     }
   }
@@ -63,7 +63,7 @@ export function extractWorkflowIdentifiers(preferences: Array<UIPreference>): st
 export function extractTags(preferences: Array<UIPreference>): string[] {
   const tags: string[] = [];
   for (const preference of preferences) {
-    if (typeof preference === 'object' && 'filter' in preference && preference.filter.tags) {
+    if (typeof preference === 'object' && 'filter' in preference && preference.filter?.tags) {
       tags.push(...preference.filter.tags);
     }
   }
