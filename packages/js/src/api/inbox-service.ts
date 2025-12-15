@@ -359,13 +359,13 @@ export class InboxService {
     name?: string;
     topicKey: string;
     topicName?: string;
-    preferences: Array<PreferenceFilter>;
+    preferences?: Array<PreferenceFilter>;
   }): Promise<SubscriptionResponse> {
     return this.#httpClient.post(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`, {
       identifier,
       name,
       ...(topicName && { topic: { name: topicName } }),
-      preferences,
+      ...(preferences && preferences.length > 0 && { preferences }),
     });
   }
 

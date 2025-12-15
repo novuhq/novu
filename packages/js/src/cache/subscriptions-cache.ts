@@ -176,7 +176,7 @@ export class SubscriptionsCache {
     subscription: TopicSubscription,
     subscriptionPreferences: SubscriptionPreference[]
   ): TopicSubscription => {
-    const updatedPreferences = subscription.preferences.map((pref) => {
+    const updatedPreferences = subscription.preferences?.map((pref) => {
       const newPreference = subscriptionPreferences.find((el) => el.workflow.id === pref.workflow.id);
       if (newPreference) {
         return newPreference;

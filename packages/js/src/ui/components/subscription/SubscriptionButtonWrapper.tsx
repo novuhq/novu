@@ -1,5 +1,5 @@
+import { NonEmptyArray } from 'src/types';
 import type { PreferenceFilter, TopicSubscription } from '../../../subscriptions';
-import { NonEmptyArray } from '../../../types';
 import { useSubscription } from '../../api/hooks/useSubscription';
 import { UIPreference } from './Subscription';
 import { SubscriptionButton } from './SubscriptionButton';
@@ -29,18 +29,20 @@ export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps)
       const { error } = await remove({ subscription: currentSubscription });
       if (error) {
         props.onDeleteError?.(error);
+
         return;
       }
       props.onDeleteSuccess?.();
     } else {
-      const preferences = props.preferences.map((preference) => {
+      const preferences = props.preferences?.map((preference) => {
         if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
           return { workflowId: preference.workflowId, enabled: preference.enabled };
         } else if (typeof preference === 'object' && 'filter' in preference && preference.filter) {
           return { filter: preference.filter, enabled: preference.enabled };
         }
+
         return preference;
-      }) as NonEmptyArray<PreferenceFilter>;
+      }) as NonEmptyArray<PreferenceFilter> | undefined;
       const { data, error } = await create({
         topicKey: props.topicKey,
         identifier: props.identifier,
@@ -48,6 +50,7 @@ export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps)
       });
       if (data) {
         props.onCreateSuccess?.({ subscription: data });
+
         return;
       }
       props.onCreateError?.(error);

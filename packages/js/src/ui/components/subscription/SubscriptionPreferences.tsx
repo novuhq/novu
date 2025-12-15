@@ -1,7 +1,7 @@
 import { createEffect, createMemo, Index, Show } from 'solid-js';
+import { NonEmptyArray } from 'src/types';
 import { TopicSubscription } from '../../../subscriptions';
 import { SubscriptionPreference } from '../../../subscriptions/subscription-preference';
-import { NonEmptyArray } from '../../../types';
 import { setDynamicLocalization } from '../../config/defaultLocalization';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, useStyle } from '../../helpers';
@@ -19,7 +19,7 @@ import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallba
 export const SubscriptionPreferences = (props: {
   loading?: boolean;
   subscription?: TopicSubscription | null;
-  preferences: NonEmptyArray<UIPreference>;
+  preferences: NonEmptyArray<UIPreference> | undefined;
   renderPreferences?: SubscriptionPreferencesRenderer;
   onSubscribeClick: () => void;
 }) => {
@@ -31,7 +31,7 @@ export const SubscriptionPreferences = (props: {
     const subscriptionPreferences = props.subscription?.preferences ?? [];
 
     return (
-      props.preferences
+      (props.preferences ?? [])
         .map((preferenceFilter) => {
           if (typeof preferenceFilter === 'string') {
             const foundPreference = subscriptionPreferences.find(
@@ -107,7 +107,7 @@ export const SubscriptionPreferences = (props: {
     // Register the names as localizable
     setDynamicLocalization((prev) => ({
       ...prev,
-      ...props.subscription?.preferences.reduce<Record<string, string>>((acc, preference) => {
+      ...props.subscription?.preferences?.reduce<Record<string, string>>((acc, preference) => {
         if (preference.workflow?.identifier && preference.workflow?.name) {
           acc[preference.workflow.identifier] = preference.workflow.name;
         }
