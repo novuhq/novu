@@ -104,7 +104,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      subscriptionIdOrIdentifier: subscriptionId,
       updateTopicSubscriptionRequestDto: {
         preferences: [
           {
@@ -154,7 +154,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      subscriptionIdOrIdentifier: subscriptionId,
       updateTopicSubscriptionRequestDto: {
         preferences: [
           {
@@ -188,7 +188,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.topics.subscriptions.update({
         topicKey,
-        subscriptionId: nonExistentSubscriptionId,
+        subscriptionIdOrIdentifier: nonExistentSubscriptionId,
         updateTopicSubscriptionRequestDto: {
           preferences: [
             {
@@ -211,7 +211,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
     const { error } = await expectSdkExceptionGeneric(() =>
       novuClient.topics.subscriptions.update({
         topicKey: nonExistentTopicKey,
-        subscriptionId: nonExistentSubscriptionId,
+        subscriptionIdOrIdentifier: nonExistentSubscriptionId,
         updateTopicSubscriptionRequestDto: {
           preferences: [
             {
@@ -252,7 +252,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      subscriptionIdOrIdentifier: subscriptionId,
       updateTopicSubscriptionRequestDto: {},
     });
 
@@ -283,7 +283,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      subscriptionIdOrIdentifier: subscriptionId,
       updateTopicSubscriptionRequestDto: {
         preferences: [
           {
@@ -320,7 +320,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:subscr
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
-      subscriptionId,
+      subscriptionIdOrIdentifier: subscriptionId,
       updateTopicSubscriptionRequestDto: {
         name: 'Updated Subscription Name',
       },
