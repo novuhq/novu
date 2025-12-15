@@ -30,10 +30,12 @@ export const SubscriptionCog = (props: {
 }) => {
   const style = useStyle();
   const subscription = createMemo(() => props.subscription ?? undefined);
+  const preferences = createMemo(() => props.preferences);
   const hasSubscription = createMemo(() => !!subscription());
   const hasPreferences = createMemo(() => {
-    const sub = subscription();
-    return sub?.preferences !== undefined && sub.preferences.length > 0;
+    const prefs = preferences();
+
+    return prefs !== undefined && prefs.length > 0;
   });
 
   const containerClass = createMemo(() =>
@@ -111,7 +113,7 @@ export const SubscriptionCog = (props: {
             }
           >
             <SubscriptionPreferences
-              preferences={props.preferences}
+              preferences={preferences()}
               renderPreferences={props.renderPreferences}
               subscription={subscription()}
               loading={props.loading}

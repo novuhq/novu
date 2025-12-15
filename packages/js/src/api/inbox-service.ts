@@ -365,7 +365,7 @@ export class InboxService {
       identifier,
       name,
       ...(topicName && { topic: { name: topicName } }),
-      ...(preferences && preferences.length > 0 && { preferences }),
+      ...(preferences !== undefined && { preferences }),
     });
   }
 
@@ -382,7 +382,7 @@ export class InboxService {
   }): Promise<SubscriptionResponse> {
     return this.#httpClient.patch(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${subscriptionId}`, {
       name,
-      preferences,
+      ...(preferences !== undefined && { preferences }),
     });
   }
 

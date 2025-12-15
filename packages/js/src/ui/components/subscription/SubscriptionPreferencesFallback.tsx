@@ -16,12 +16,14 @@ export const SubscriptionPreferencesFallback = (props: {
   const style = useStyle();
   const { t } = useLocalization();
 
-  const hasEmptyPreferences = () => {
+  function hasEmptyPreferences() {
     const preferences = props.subscription?.preferences;
     return preferences !== undefined && preferences.length === 0;
-  };
+  }
 
-  const isSubscribed = () => !!props.subscription;
+  function isSubscribed() {
+    return !!props.subscription;
+  }
 
   return (
     <Show when={!props.loading} fallback={<SubscriptionPreferencesListSkeleton />}>

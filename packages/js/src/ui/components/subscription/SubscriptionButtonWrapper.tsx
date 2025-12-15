@@ -34,7 +34,7 @@ export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps)
       }
       props.onDeleteSuccess?.();
     } else {
-      const preferences = props.preferences?.map((preference) => {
+      const mappedPreferences = props.preferences?.map((preference) => {
         if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
           return { workflowId: preference.workflowId, enabled: preference.enabled };
         } else if (typeof preference === 'object' && 'filter' in preference && preference.filter) {
@@ -46,7 +46,7 @@ export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps)
       const { data, error } = await create({
         topicKey: props.topicKey,
         identifier: props.identifier,
-        preferences,
+        preferences: mappedPreferences,
       });
       if (data) {
         props.onCreateSuccess?.({ subscription: data });
