@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { buildDefaultSubscriptionIdentifier, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
   BaseRepository,
