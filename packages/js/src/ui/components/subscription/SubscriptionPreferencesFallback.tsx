@@ -17,12 +17,7 @@ export const SubscriptionPreferencesFallback = (props: {
   const { t } = useLocalization();
 
   function hasEmptyPreferences() {
-    const preferences = props.subscription?.preferences;
-    return preferences !== undefined && preferences.length === 0;
-  }
-
-  function isSubscribed() {
-    return !!props.subscription;
+    return props.subscription?.preferences?.length === 0;
   }
 
   return (
@@ -36,10 +31,7 @@ export const SubscriptionPreferencesFallback = (props: {
           >[0],
         })}
       >
-        <Show
-          when={hasEmptyPreferences() || (isSubscribed() && !props.subscription?.preferences)}
-          fallback={<NotSubscribedState />}
-        >
+        <Show when={hasEmptyPreferences()} fallback={<NotSubscribedState />}>
           <EmptyState />
         </Show>
         <div
@@ -60,12 +52,12 @@ export const SubscriptionPreferencesFallback = (props: {
               >[0],
             })}
             data-localization={
-              hasEmptyPreferences() || (isSubscribed() && !props.subscription?.preferences)
+              hasEmptyPreferences()
                 ? 'subscription.preferences.empty.header'
                 : 'subscription.preferences.notSubscribed.header'
             }
           >
-            {hasEmptyPreferences() || (isSubscribed() && !props.subscription?.preferences)
+            {hasEmptyPreferences()
               ? t('subscription.preferences.empty.header')
               : t('subscription.preferences.notSubscribed.header')}
           </span>
@@ -78,12 +70,12 @@ export const SubscriptionPreferencesFallback = (props: {
               >[0],
             })}
             data-localization={
-              hasEmptyPreferences() || (isSubscribed() && !props.subscription?.preferences)
+              hasEmptyPreferences()
                 ? 'subscription.preferences.empty.description'
                 : 'subscription.preferences.notSubscribed.description'
             }
           >
-            {hasEmptyPreferences() || (isSubscribed() && !props.subscription?.preferences)
+            {hasEmptyPreferences()
               ? t('subscription.preferences.empty.description')
               : t('subscription.preferences.notSubscribed.description')}
           </span>

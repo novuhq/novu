@@ -1,6 +1,6 @@
 import { OffsetOptions, Placement } from '@floating-ui/dom';
-import { NonEmptyArray } from 'src/types';
 import type { PreferenceFilter, TopicSubscription, WorkflowIdentifierOrId } from '../../../subscriptions';
+import { NonEmptyArray } from '../../../types';
 import { useSubscription } from '../../api/hooks/useSubscription';
 import { useInboxContext } from '../../context';
 import { cn } from '../../helpers';

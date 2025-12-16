@@ -42,13 +42,13 @@ export type BaseUpdateSubscriptionArgs = {
   topicKey: string;
   subscriptionId: string;
   name?: string;
-  preferences?: Array<PreferenceFilter>;
+  preferences?: NonEmptyArray<PreferenceFilter>;
 };
 
 export type InstanceUpdateSubscriptionArgs = {
   subscription: TopicSubscription;
   name?: string;
-  preferences?: Array<PreferenceFilter>;
+  preferences?: NonEmptyArray<PreferenceFilter>;
 };
 
 export type UpdateSubscriptionArgs = BaseUpdateSubscriptionArgs | InstanceUpdateSubscriptionArgs;

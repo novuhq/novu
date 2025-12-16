@@ -1,7 +1,7 @@
 import { createEffect, createMemo, Index, Show } from 'solid-js';
-import { NonEmptyArray } from 'src/types';
 import { TopicSubscription } from '../../../subscriptions';
 import { SubscriptionPreference } from '../../../subscriptions/subscription-preference';
+import { NonEmptyArray } from '../../../types';
 import { setDynamicLocalization } from '../../config/defaultLocalization';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, useStyle } from '../../helpers';
@@ -31,8 +31,8 @@ export const SubscriptionPreferences = (props: {
     const subscriptionPreferences = props.subscription?.preferences ?? [];
 
     return (
-      (props.preferences ?? [])
-        .map((preferenceFilter) => {
+      props.preferences
+        ?.map((preferenceFilter) => {
           if (typeof preferenceFilter === 'string') {
             const foundPreference = subscriptionPreferences.find(
               (el) => el.workflow?.id === preferenceFilter || el.workflow?.identifier === preferenceFilter
