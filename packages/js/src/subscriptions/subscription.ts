@@ -1,7 +1,7 @@
 import { SubscriptionsCache } from 'src/cache/subscriptions-cache';
 import type { InboxService } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
-import type { NonEmptyArray, Result, SubscriptionResponse } from '../types';
+import type { Result, SubscriptionResponse } from '../types';
 import { NovuError } from '../utils/errors';
 import {
   bulkUpdateSubscriptionPreference,
@@ -29,7 +29,7 @@ export class TopicSubscription {
   readonly id: string;
   readonly identifier: string;
   readonly topicKey: string;
-  readonly preferences?: NonEmptyArray<SubscriptionPreference> | undefined;
+  readonly preferences?: SubscriptionPreference[] | undefined;
 
   constructor(
     subscription: SubscriptionResponse & { topicKey: string },

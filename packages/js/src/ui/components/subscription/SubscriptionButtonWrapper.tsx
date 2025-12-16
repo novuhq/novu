@@ -7,7 +7,7 @@ import { SubscriptionButton } from './SubscriptionButton';
 export type SubscriptionButtonWrapperProps = {
   topicKey: string;
   identifier?: string;
-  preferences: NonEmptyArray<UIPreference>;
+  preferences?: NonEmptyArray<UIPreference> | undefined;
   onClick?: (args: { subscription?: TopicSubscription }) => void;
   onDeleteError?: (error: unknown) => void;
   onDeleteSuccess?: () => void;

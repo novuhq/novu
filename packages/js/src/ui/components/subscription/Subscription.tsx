@@ -41,7 +41,7 @@ export type SubscriptionProps = {
   placementOffset?: OffsetOptions;
   topicKey: string;
   identifier?: string;
-  preferences?: Array<UIPreference>;
+  preferences?: NonEmptyArray<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
 };
 
