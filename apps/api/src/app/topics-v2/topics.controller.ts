@@ -372,7 +372,7 @@ export class TopicsController {
   @Get('/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
-  @SdkMethodName('get')
+  @SdkMethodName('getSubscription')
   @ApiOperation({
     summary: 'Get a topic subscription',
     description: `Get a subscription by its unique identifier **subscriptionIdOrIdentifier** for a topic.`,
