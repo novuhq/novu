@@ -52,6 +52,7 @@ export interface GetWorkflowRunsDto {
   severity: SeverityLevelEnum;
   critical: boolean;
   contextKeys?: string[];
+  topics?: { _topicId: string; topicKey: string }[];
 }
 
 export type GetWorkflowRunResponse = GetWorkflowRunsDto & {
@@ -83,6 +84,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
     createdAt: workflowRun.createdAt,
     updatedAt: workflowRun.updatedAt,
     contextKeys: workflowRun.contextKeys || [],
+    topics: workflowRun.topics || [],
     template: {
       _id: workflowRun.workflowId,
       name: workflowRun.workflowName,

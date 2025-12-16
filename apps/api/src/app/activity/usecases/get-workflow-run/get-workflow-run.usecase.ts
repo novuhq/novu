@@ -307,6 +307,12 @@ export class GetWorkflowRun {
       severity: workflowRun.severity,
       critical: workflowRun.critical,
       contextKeys: workflowRun.context_keys,
+      topics:
+        workflowRun.topics &&
+        JSON.parse(workflowRun.topics)?.map((topic: { _topicId: string; topicKey: string }) => ({
+          _topicId: topic._topicId,
+          topicKey: topic.topicKey,
+        })),
     };
   }
 }
