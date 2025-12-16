@@ -1,5 +1,5 @@
 import type { RulesLogic } from 'json-logic-js';
-import { NonEmptyArray } from 'src/types';
+import { NonEmptyArray } from '../types';
 import type { TopicSubscription } from './subscription';
 import { SubscriptionPreference } from './subscription-preference';
 

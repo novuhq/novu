@@ -29,7 +29,7 @@ export class TopicSubscription {
   readonly id: string;
   readonly identifier: string;
   readonly topicKey: string;
-  readonly preferences?: SubscriptionPreference[] | undefined;
+  readonly preferences?: Array<SubscriptionPreference> | undefined;
 
   constructor(
     subscription: SubscriptionResponse & { topicKey: string },
