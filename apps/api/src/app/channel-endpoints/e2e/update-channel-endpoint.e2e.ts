@@ -24,7 +24,7 @@ describe('Update Channel Endpoint - /channel-endpoints/:identifier (PATCH) #novu
     novuClient = setupChannelTests(session);
   });
 
-  it('should update channel endpoint endpoint data', async () => {
+  it('should update channel endpoint data', async () => {
     const integration = await createSlackIntegration(session);
     const subscribersService = createSubscribersService(session);
     const subscriber = await subscribersService.createSubscriber();
