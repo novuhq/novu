@@ -14,7 +14,7 @@ export const workflowSchema = z.object({
   active: z.boolean().optional(),
   name: z.string().min(1).max(MAX_NAME_LENGTH),
   workflowId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: 'must be a valid slug format (lowercase letters, numbers, and hyphens only)',
+    message: 'workflowId must be a valid slug format (lowercase letters, numbers, and hyphens only)',
   }),
   tags: z
     .array(z.string().min(0).max(MAX_TAG_LENGTH))
