@@ -78,11 +78,11 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     onError,
   } = props || {};
   const filterRef = useRef<NotificationFilter | undefined>(undefined);
-  const { notifications } = useNovu();
+  const { notifications, on } = useNovu();
 
   const getCurrentFilter = useCallback(
-    () => filterRef.current || { tags, data: dataFilter, severity },
-    [tags, dataFilter, severity]
+    () => filterRef.current || { tags, data: dataFilter, read, archived, snoozed, seen, severity },
+    [tags, dataFilter, read, archived, snoozed, seen, severity]
   );
   const [data, setData] = useState<Array<Notification>>();
   const [error, setError] = useState<NovuError>();
@@ -92,26 +92,38 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   const length = data?.length;
   const after = length ? data[length - 1].id : undefined;
 
-  useWebSocketEvent({
-    event: 'notifications.unread_count_changed',
-    eventHandler: () => {
-      void refetch();
-    },
-  });
+  useEffect(() => {
+    const listener = ({
+      data: updatedData,
+    }: {
+      data: { notifications: Notification[]; hasMore: boolean; filter: NotificationFilter };
+    }) => {
+      if (!updatedData) return;
 
-  useWebSocketEvent({
-    event: 'notifications.unseen_count_changed',
-    eventHandler: () => {
-      void refetch();
-    },
-  });
+      const currentFilter = getCurrentFilter();
+      if (!isSameFilter(currentFilter, updatedData.filter)) {
+        return;
+      }
+
+      setData(updatedData.notifications);
+      setHasMore(updatedData.hasMore);
+    };
+
+    const cleanup = on('notifications.list.updated', listener);
+
+    return () => {
+      cleanup();
+    };
+  }, [getCurrentFilter, on]);
 
   useWebSocketEvent({
     event: 'notifications.notification_received',
     eventHandler: ({ result: notification }) => {
       const currentFilter = getCurrentFilter();
       const matches = checkNotificationMatchesFilter(notification, currentFilter);
-      if (matches) void refetch();
+      if (matches) {
+        setData((prev) => (prev ? [notification, ...prev] : [notification]));
+      }
     },
   });
 
@@ -135,13 +147,20 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
       if (response.error) {
         setError(response.error);
         onError?.(response.error);
+        setIsLoading(false);
+        setIsFetching(false);
       } else if (response.data) {
-        onSuccess?.(response.data.notifications);
-        setData(response.data.notifications);
-        setHasMore(response.data.hasMore);
+        const responseData = response.data;
+        onSuccess?.(responseData.notifications);
+        if (options?.refetch) {
+          setData(responseData.notifications);
+        } else {
+          setData((prev) => (prev ? [...prev, ...responseData.notifications] : responseData.notifications));
+        }
+        setHasMore(responseData.hasMore);
+        setIsLoading(false);
+        setIsFetching(false);
       }
-      setIsLoading(false);
-      setIsFetching(false);
     },
     [notifications, getCurrentFilter, limit, after, onError, onSuccess]
   );
@@ -155,13 +174,13 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     filterRef.current = newFilter;
 
     fetchNotifications({ refetch: true });
-  }, [tags, dataFilter, read, archived, snoozed, seen, notifications, fetchNotifications]);
+  }, [tags, dataFilter, read, archived, snoozed, seen, severity, notifications, fetchNotifications]);
 
-  const refetch = () => {
+  const refetch = useCallback(() => {
     const filter = getCurrentFilter();
     notifications.clearCache({ filter });
     return fetchNotifications({ refetch: true });
-  };
+  }, [getCurrentFilter, notifications, fetchNotifications]);
 
   const fetchMore = async () => {
     if (!hasMore || isFetching) return;
@@ -169,25 +188,25 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     return fetchNotifications();
   };
 
-  const readAll = async () => {
+  const readAll = useCallback(async () => {
     const { tags, data } = getCurrentFilter();
     return await notifications.readAll({ tags, data });
-  };
+  }, [getCurrentFilter, notifications]);
 
-  const seenAll = async () => {
+  const seenAll = useCallback(async () => {
     const { tags, data } = getCurrentFilter();
     return await notifications.seenAll({ tags, data });
-  };
+  }, [getCurrentFilter, notifications]);
 
-  const archiveAll = async () => {
+  const archiveAll = useCallback(async () => {
     const { tags, data } = getCurrentFilter();
     return await notifications.archiveAll({ tags, data });
-  };
+  }, [getCurrentFilter, notifications]);
 
-  const archiveAllRead = async () => {
+  const archiveAllRead = useCallback(async () => {
     const { tags, data } = getCurrentFilter();
     return await notifications.archiveAllRead({ tags, data });
-  };
+  }, [getCurrentFilter, notifications]);
 
   return {
     readAll,
