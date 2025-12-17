@@ -8,7 +8,92 @@ import sanitizeTypes, { IOptions } from 'sanitize-html';
  *
  * @see https://www.npmjs.com/package/sanitize-html#default-options
  */
-const SAFE_IMG_ATTRIBUTES = ['src', 'alt', 'width', 'height', 'loading', 'srcset', 'sizes', 'crossorigin', 'usemap', 'ismap', 'class', 'id', 'style', 'title', 'dir', 'lang'];
+const SAFE_IMG_ATTRIBUTES = [
+  'src',
+  'alt',
+  'width',
+  'height',
+  'loading',
+  'srcset',
+  'sizes',
+  'crossorigin',
+  'usemap',
+  'ismap',
+  'class',
+  'id',
+  'style',
+  'title',
+  'dir',
+  'lang',
+];
+
+const DANGEROUS_ATTRIBUTES = [
+  'onerror',
+  'onload',
+  'onclick',
+  'onmouseover',
+  'onmouseout',
+  'onmouseenter',
+  'onmouseleave',
+  'onfocus',
+  'onblur',
+  'onsubmit',
+  'onreset',
+  'onchange',
+  'oninput',
+  'onkeydown',
+  'onkeyup',
+  'onkeypress',
+  'ondblclick',
+  'oncontextmenu',
+  'ondrag',
+  'ondragend',
+  'ondragenter',
+  'ondragleave',
+  'ondragover',
+  'ondragstart',
+  'ondrop',
+  'onscroll',
+  'onwheel',
+  'oncopy',
+  'oncut',
+  'onpaste',
+  'onabort',
+  'oncanplay',
+  'oncanplaythrough',
+  'ondurationchange',
+  'onemptied',
+  'onended',
+  'onloadeddata',
+  'onloadedmetadata',
+  'onloadstart',
+  'onpause',
+  'onplay',
+  'onplaying',
+  'onprogress',
+  'onratechange',
+  'onseeked',
+  'onseeking',
+  'onstalled',
+  'onsuspend',
+  'ontimeupdate',
+  'onvolumechange',
+  'onwaiting',
+  'onanimationstart',
+  'onanimationend',
+  'onanimationiteration',
+  'ontransitionend',
+  'onpointerdown',
+  'onpointerup',
+  'onpointermove',
+  'onpointerenter',
+  'onpointerleave',
+  'onpointercancel',
+  'ontouchstart',
+  'ontouchend',
+  'ontouchmove',
+  'ontouchcancel',
+];
 
 const sanitizeOptions: IOptions = {
   /**
@@ -30,6 +115,20 @@ const sanitizeOptions: IOptions = {
    * while keeping all other attributes permissive for other tags.
    */
   transformTags: {
+    '*': (tagName, attribs) => {
+      const safeAttribs: Record<string, string> = {};
+
+      for (const [key, value] of Object.entries(attribs)) {
+        if (!DANGEROUS_ATTRIBUTES.includes(key.toLowerCase())) {
+          safeAttribs[key] = value;
+        }
+      }
+
+      return {
+        tagName,
+        attribs: safeAttribs,
+      };
+    },
     img: (tagName, attribs) => {
       const safeAttribs: Record<string, string> = {};
 

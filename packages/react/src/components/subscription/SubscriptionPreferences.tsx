@@ -20,7 +20,7 @@ export const SubscriptionPreferences = React.memo(
 
     const mount = React.useCallback(
       (element: HTMLElement) => {
-        if (!topicKey || !preferences) {
+        if (!topicKey) {
           return;
         }
 

@@ -329,13 +329,6 @@ describe('Count - GET /widget/notifications/count #novu-v0', () => {
     expect(seenCount).to.equal(3);
 
     await invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId,
-        _environmentId: session.environment._id,
-      }),
-    });
-
-    await invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId,
         _environmentId: session.environment._id,
@@ -371,13 +364,6 @@ describe('Count - GET /widget/notifications/count #novu-v0', () => {
 });
 
 async function invalidateSeenFeed(invalidateCache: InvalidateCacheService, subscriberId: string, session) {
-  await invalidateCache.invalidateQuery({
-    key: buildFeedKey().invalidate({
-      subscriberId,
-      _environmentId: session.environment._id,
-    }),
-  });
-
   await invalidateCache.invalidateQuery({
     key: buildMessageCountKey().invalidate({
       subscriberId,

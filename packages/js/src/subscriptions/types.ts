@@ -35,7 +35,7 @@ export type CreateSubscriptionArgs = {
   topicName?: string;
   identifier?: string;
   name?: string;
-  preferences: NonEmptyArray<PreferenceFilter>;
+  preferences?: NonEmptyArray<PreferenceFilter> | undefined;
 };
 
 export type BaseUpdateSubscriptionArgs = {

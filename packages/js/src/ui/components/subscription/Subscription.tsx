@@ -41,7 +41,7 @@ export type SubscriptionProps = {
   placementOffset?: OffsetOptions;
   topicKey: string;
   identifier?: string;
-  preferences: NonEmptyArray<UIPreference>;
+  preferences?: NonEmptyArray<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
 };
 
@@ -60,7 +60,7 @@ export const Subscription = (props: SubscriptionProps) => {
     if (currentSubscription) {
       remove({ subscription: currentSubscription });
     } else {
-      const preferences = props.preferences.map((preference) => {
+      const preferences = props.preferences?.map((preference) => {
         if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
           return { workflowId: preference.workflowId, enabled: preference.enabled };
         } else if (typeof preference === 'object' && 'filter' in preference && preference.filter) {
@@ -68,7 +68,7 @@ export const Subscription = (props: SubscriptionProps) => {
         }
 
         return preference;
-      }) as NonEmptyArray<PreferenceFilter>;
+      }) as NonEmptyArray<PreferenceFilter> | undefined;
       create({ topicKey: props.topicKey, identifier: props.identifier, preferences: preferences });
     }
   };

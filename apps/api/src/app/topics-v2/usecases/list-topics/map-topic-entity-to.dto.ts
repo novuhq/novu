@@ -19,6 +19,7 @@ export function mapTopicSubscriptionsToDto(
 ): TopicSubscriptionResponseDto {
   return {
     _id: String(subscription._id),
+    identifier: subscription.identifier ?? '',
     topic: mapTopicEntityToDto(topic),
     createdAt: subscription.createdAt!,
     subscriber: {
