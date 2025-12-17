@@ -3,7 +3,7 @@ import { JobEntity } from '@novu/dal';
 
 export const shouldHaltOnStepFailure = (job: JobEntity): boolean => {
   if (!job.type) {
-    return typeof job.step.shouldStopOnFail === 'boolean' ? job.step.shouldStopOnFail : false;
+    return job.step.shouldStopOnFail === true;
   }
 
   /*
@@ -17,9 +17,5 @@ export const shouldHaltOnStepFailure = (job: JobEntity): boolean => {
    * Legacy v1 behavior:
    * Return true if shouldStopOnFail was explicitly enabled by user
    */
-  if (job.step.shouldStopOnFail === true) {
-    return true;
-  }
-
-  return false;
+  return job.step.shouldStopOnFail === true;
 };
