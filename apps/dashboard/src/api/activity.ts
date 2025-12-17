@@ -9,6 +9,7 @@ export type ActivityFilters = {
   transactionId?: string;
   dateRange?: string;
   topicKey?: string;
+  subscriptionId?: string;
   severity?: SeverityLevelEnum[];
   contextKeys?: string;
 };
@@ -234,6 +235,10 @@ export function getActivityList({
     searchParams.append('topicKey', filters.topicKey);
   }
 
+  if (filters?.subscriptionId) {
+    searchParams.append('subscriptionId', filters.subscriptionId);
+  }
+
   if (filters?.contextKeys) {
     const contextKeys = filters.contextKeys
       .split(',')
@@ -302,6 +307,10 @@ export async function getWorkflowRunsList({
 
   if (filters?.topicKey) {
     searchParams.append('topicKey', filters.topicKey);
+  }
+
+  if (filters?.subscriptionId) {
+    searchParams.append('subscriptionId', filters.subscriptionId);
   }
 
   // Use cursor if provided, otherwise fall back to page-based

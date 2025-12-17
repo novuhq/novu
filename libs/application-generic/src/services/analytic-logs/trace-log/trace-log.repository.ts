@@ -497,7 +497,7 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     case 'push_invalid_token_removed':
       return 'Invalid push device token was removed from subscriber';
     case 'topic_subscription_preference_evaluation':
-      return 'Topic subscription preference evaluation';
+      return 'Topic subscription preference evaluated';
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
       const _exhaustiveCheck: never = eventType;

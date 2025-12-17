@@ -25,6 +25,8 @@ export interface TopicPreferencesSummary {
   subscriptionIdentifier: string;
 }
 
-export type TopicWithPreferences = Pick<TopicEntity, '_id' | 'key'> & {
+export type TopicWithPreferences = {
+  _topicId: string;
+  topicKey: string;
   preferenceEvaluation?: TopicPreferencesSummary;
 };

@@ -473,10 +473,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       control_values: notification.controls ? JSON.stringify(notification.controls) : null,
 
       // Topic information
-      topics: notification.topics
-        ? notification.topics &&
-          JSON.stringify(notification.topics.map((topic) => ({ _topicId: topic._topicId, topicKey: topic.topicKey })))
-        : null,
+      topics: notification.topics ? notification.topics && JSON.stringify(notification.topics) : null,
 
       // Digest information
       is_digest: notification._digestedNotificationId ? 'true' : 'false',

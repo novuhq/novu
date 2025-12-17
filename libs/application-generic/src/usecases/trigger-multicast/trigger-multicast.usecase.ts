@@ -5,6 +5,7 @@ import {
   TopicPreferencesSummary,
   TopicRepository,
   TopicSubscribersRepository,
+  TopicWithPreferences,
 } from '@novu/dal';
 import {
   ISubscribersDefine,
@@ -92,7 +93,7 @@ export class TriggerMulticast extends TriggerBase {
         string,
         {
           subscriberId: string;
-          topics: Array<Pick<TopicEntity, '_id' | 'key'> & { preferenceEvaluation?: TopicPreferencesSummary }>;
+          topics: Array<TopicWithPreferences>;
         }
       >();
 
@@ -115,7 +116,7 @@ export class TriggerMulticast extends TriggerBase {
           subscriptionId
         );
 
-        if (!evaluationResult.included) {
+        if (!evaluationResult.result) {
           totalSubscriptionsFiltered++;
           continue;
         }
@@ -127,11 +128,11 @@ export class TriggerMulticast extends TriggerBase {
 
         const existingSubscriber = subscribersMap.get(externalSubscriberId);
         if (existingSubscriber) {
-          if (!existingSubscriber.topics.some((t) => t._id === topic._id)) {
+          if (!existingSubscriber.topics.some((t) => t._topicId === topic._id)) {
             existingSubscriber.topics.push({
-              _id: topic._id,
-              key: topic.key,
-              preferenceEvaluation: evaluationResult.preferencesSummary,
+              _topicId: topic._id,
+              topicKey: topic.key,
+              preferenceEvaluation: evaluationResult,
             });
           }
         } else {
@@ -139,9 +140,9 @@ export class TriggerMulticast extends TriggerBase {
             subscriberId: externalSubscriberId,
             topics: [
               {
-                _id: topic._id,
-                key: topic.key,
-                preferenceEvaluation: evaluationResult.preferencesSummary,
+                _topicId: topic._id,
+                topicKey: topic.key,
+                preferenceEvaluation: evaluationResult,
               },
             ],
           });
@@ -212,10 +213,10 @@ export class TriggerMulticast extends TriggerBase {
     command: TriggerMulticastCommand,
     externalSubscriberId: string,
     internalSubscriptionId: string,
-    subscriptionId: string
-  ): Promise<{ included: boolean; preferencesSummary?: TopicPreferencesSummary }> {
+    subscriptionIdentifier: string
+  ): Promise<TopicPreferencesSummary> {
     try {
-      const subscriptionPreferences = await this.preferencesRepository.find({
+      const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _templateId: command.template._id,
@@ -223,39 +224,26 @@ export class TriggerMulticast extends TriggerBase {
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
       });
 
-      const hasPreferences = subscriptionPreferences && subscriptionPreferences.length > 0;
+      if (subscriptionPreference) {
+        const passes = await this.evaluatePreferenceCondition(subscriptionPreference.preferences, command.payload);
+        const condition = subscriptionPreference.preferences.all?.condition;
 
-      if (hasPreferences) {
-        for (const preference of subscriptionPreferences) {
-          const passes = await this.evaluatePreferenceCondition(preference.preferences, command.payload);
-          const condition = preference.preferences.all?.condition;
-
-          if (!passes) {
-            return {
-              included: false,
-              preferencesSummary: {
-                result: false,
-                subscriptionIdentifier: subscriptionId,
-                condition: condition !== undefined && condition !== null ? condition : undefined,
-              },
-            };
-          }
+        if (!passes) {
+          return {
+            result: false,
+            subscriptionIdentifier,
+            condition: condition !== undefined && condition !== null ? condition : undefined,
+          };
         }
 
-        const lastPreference = subscriptionPreferences[subscriptionPreferences.length - 1];
-        const condition = lastPreference.preferences.all?.condition;
-
         return {
-          included: true,
-          preferencesSummary: {
-            result: true,
-            subscriptionIdentifier: subscriptionId,
-            condition: condition !== undefined && condition !== null ? condition : undefined,
-          },
+          result: true,
+          subscriptionIdentifier,
+          condition: condition !== undefined && condition !== null ? condition : undefined,
         };
       }
 
-      return { included: true };
+      return { result: true, subscriptionIdentifier };
     } catch (error) {
       this.logger.error(
         {
@@ -267,7 +255,7 @@ export class TriggerMulticast extends TriggerBase {
         'Error evaluating subscription preferences, allowing subscription to pass through'
       );
 
-      return { included: true };
+      return { result: true, subscriptionIdentifier };
     }
   }
 

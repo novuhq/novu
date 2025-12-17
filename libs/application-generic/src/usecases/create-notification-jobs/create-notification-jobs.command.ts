@@ -1,5 +1,5 @@
 // TODO: We shouldn't be importing from DAL here. Needs big refactor throughout monorepo.
-import { NotificationTemplateEntity, SubscriberEntity, TopicEntity, TopicWithPreferences } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity, TopicWithPreferences } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ISubscribersDefine,

@@ -110,6 +110,7 @@ export class NotificationsController {
         subscriberIds: subscribersQuery,
         transactionId: transactionIdQuery,
         topicKey: query.topicKey,
+        subscriptionId: query.subscriptionId,
         severity: severityQuery,
         after: query.after,
         before: query.before,
