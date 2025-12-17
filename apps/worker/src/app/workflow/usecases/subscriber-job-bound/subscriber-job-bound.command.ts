@@ -1,5 +1,5 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import { SubscriberEntity, TopicEntity } from '@novu/dal';
+import { SubscriberEntity, TopicWithPreferences } from '@novu/dal';
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
   ISubscribersDefine,
@@ -51,7 +51,7 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   subscriber: ISubscribersDefine;
 
   @IsOptional()
-  topics?: Pick<TopicEntity, '_id' | 'key'>[];
+  topics?: TopicWithPreferences[];
 
   @IsDefined()
   @IsEnum(SubscriberSourceEnum)

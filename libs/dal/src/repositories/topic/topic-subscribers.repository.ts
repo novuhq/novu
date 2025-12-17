@@ -170,7 +170,7 @@ export class TopicSubscribersRepository extends BaseRepository<
       excludeSubscribers: string[];
     };
     batchSize?: number;
-  }): AsyncGenerator<{ _id: string; subscriberId: string; _topicId: string }, void, unknown> {
+  }): AsyncGenerator<{ _id: string; subscriberId: string; _topicId: string; identifier: string }, void, unknown> {
     const { _organizationId, _environmentId, topicIds, excludeSubscribers } = query;
     const mappedTopicIds = topicIds.map((id) => this.convertStringToObjectId(id));
 
@@ -188,6 +188,7 @@ export class TopicSubscribersRepository extends BaseRepository<
           _id: '$_id',
           subscriberId: '$externalSubscriberId',
           _topicId: '$_topicId',
+          identifier: '$identifier',
         },
       },
     ];

@@ -1,5 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PreferencesRepository, TopicEntity, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
+import {
+  PreferencesRepository,
+  TopicEntity,
+  TopicPreferencesSummary,
+  TopicRepository,
+  TopicSubscribersRepository,
+} from '@novu/dal';
 import {
   ISubscribersDefine,
   ITopic,
@@ -82,11 +88,18 @@ export class TriggerMulticast extends TriggerBase {
         batchSize: SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE,
       });
 
-      const subscribersMap = new Map<string, { subscriberId: string; topics: Pick<TopicEntity, '_id' | 'key'>[] }>();
+      const subscribersMap = new Map<
+        string,
+        {
+          subscriberId: string;
+          topics: Array<Pick<TopicEntity, '_id' | 'key'> & { preferenceEvaluation?: TopicPreferencesSummary }>;
+        }
+      >();
 
       for await (const subscription of getTopicDistinctSubscribersGenerator) {
         const externalSubscriberId = subscription.subscriberId;
-        const subscriptionId = subscription._id.toString();
+        const internalSubscriptionId = subscription._id.toString();
+        const subscriptionId = subscription.identifier;
         const topicId = subscription._topicId.toString();
 
         if (actor && actor.subscriberId === externalSubscriberId) {
@@ -95,13 +108,14 @@ export class TriggerMulticast extends TriggerBase {
 
         totalSubscriptionsEvaluated++;
 
-        const shouldIncludeSubscription = await this.evaluateSubscriptionPreferences(
+        const evaluationResult = await this.evaluateSubscriptionPreferences(
           command,
           externalSubscriberId,
+          internalSubscriptionId,
           subscriptionId
         );
 
-        if (!shouldIncludeSubscription) {
+        if (!evaluationResult.included) {
           totalSubscriptionsFiltered++;
           continue;
         }
@@ -114,12 +128,22 @@ export class TriggerMulticast extends TriggerBase {
         const existingSubscriber = subscribersMap.get(externalSubscriberId);
         if (existingSubscriber) {
           if (!existingSubscriber.topics.some((t) => t._id === topic._id)) {
-            existingSubscriber.topics.push({ _id: topic._id, key: topic.key });
+            existingSubscriber.topics.push({
+              _id: topic._id,
+              key: topic.key,
+              preferenceEvaluation: evaluationResult.preferencesSummary,
+            });
           }
         } else {
           subscribersMap.set(externalSubscriberId, {
             subscriberId: externalSubscriberId,
-            topics: [{ _id: topic._id, key: topic.key }],
+            topics: [
+              {
+                _id: topic._id,
+                key: topic.key,
+                preferenceEvaluation: evaluationResult.preferencesSummary,
+              },
+            ],
           });
         }
 
@@ -187,30 +211,51 @@ export class TriggerMulticast extends TriggerBase {
   private async evaluateSubscriptionPreferences(
     command: TriggerMulticastCommand,
     externalSubscriberId: string,
+    internalSubscriptionId: string,
     subscriptionId: string
-  ): Promise<boolean> {
+  ): Promise<{ included: boolean; preferencesSummary?: TopicPreferencesSummary }> {
     try {
       const subscriptionPreferences = await this.preferencesRepository.find({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _templateId: command.template._id,
-        _topicSubscriptionId: subscriptionId,
+        _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
       });
 
-      // if (!subscriptionPreferences || subscriptionPreferences.length === 0) {
-      //   return await this.evaluateFallbackPreferences(command, externalSubscriberId);
-      // }
+      const hasPreferences = subscriptionPreferences && subscriptionPreferences.length > 0;
 
-      for (const preference of subscriptionPreferences) {
-        const passes = await this.evaluatePreferenceCondition(preference.preferences, command.payload);
+      if (hasPreferences) {
+        for (const preference of subscriptionPreferences) {
+          const passes = await this.evaluatePreferenceCondition(preference.preferences, command.payload);
+          const condition = preference.preferences.all?.condition;
 
-        if (!passes) {
-          return false;
+          if (!passes) {
+            return {
+              included: false,
+              preferencesSummary: {
+                result: false,
+                subscriptionIdentifier: subscriptionId,
+                condition: condition !== undefined && condition !== null ? condition : undefined,
+              },
+            };
+          }
         }
+
+        const lastPreference = subscriptionPreferences[subscriptionPreferences.length - 1];
+        const condition = lastPreference.preferences.all?.condition;
+
+        return {
+          included: true,
+          preferencesSummary: {
+            result: true,
+            subscriptionIdentifier: subscriptionId,
+            condition: condition !== undefined && condition !== null ? condition : undefined,
+          },
+        };
       }
 
-      return true;
+      return { included: true };
     } catch (error) {
       this.logger.error(
         {
@@ -222,7 +267,7 @@ export class TriggerMulticast extends TriggerBase {
         'Error evaluating subscription preferences, allowing subscription to pass through'
       );
 
-      return true;
+      return { included: true };
     }
   }
 

@@ -1,15 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  BulkCreateExecutionDetails,
-  BulkCreateExecutionDetailsCommand,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-  Instrument,
-  InstrumentUsecase,
-  StepRunRepository,
-} from '@novu/application-generic';
-import { DalException, JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { BulkCreateExecutionDetails, InstrumentUsecase, StepRunRepository } from '@novu/application-generic';
+import { DalException, JobRepository, JobStatusEnum } from '@novu/dal';
 import { PlatformException } from '../../../shared/utils';
 import { AddJob } from '../add-job';
 import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';

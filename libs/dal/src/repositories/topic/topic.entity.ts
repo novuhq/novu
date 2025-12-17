@@ -18,3 +18,13 @@ export type TopicDBModel = Omit<TopicEntity, '_environmentId' | '_organizationId
 
   _organizationId: Types.ObjectId;
 };
+
+export interface TopicPreferencesSummary {
+  condition?: Record<string, unknown>;
+  result: boolean;
+  subscriptionIdentifier: string;
+}
+
+export type TopicWithPreferences = Pick<TopicEntity, '_id' | 'key'> & {
+  preferenceEvaluation?: TopicPreferencesSummary;
+};
