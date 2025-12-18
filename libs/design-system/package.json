@@ -67,7 +67,7 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "6.2.2",
     "rimraf": "^3.0.2",
-    "storybook": "^7.4.2",
+    "storybook": "^7.6.21",
     "ts-loader": "~9.4.0",
     "tslib": "^2.3.1",
     "typescript": "5.6.2",
