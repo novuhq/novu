@@ -359,13 +359,13 @@ export class InboxService {
     name?: string;
     topicKey: string;
     topicName?: string;
-    preferences: Array<PreferenceFilter>;
+    preferences?: Array<PreferenceFilter>;
   }): Promise<SubscriptionResponse> {
     return this.#httpClient.post(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`, {
       identifier,
       name,
       ...(topicName && { topic: { name: topicName } }),
-      preferences,
+      ...(preferences !== undefined && { preferences }),
     });
   }
 
@@ -382,7 +382,7 @@ export class InboxService {
   }): Promise<SubscriptionResponse> {
     return this.#httpClient.patch(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${subscriptionId}`, {
       name,
-      preferences,
+      ...(preferences !== undefined && { preferences }),
     });
   }
 

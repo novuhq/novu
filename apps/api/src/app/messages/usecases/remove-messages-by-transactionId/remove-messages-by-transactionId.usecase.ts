@@ -28,13 +28,6 @@ export class RemoveMessagesByTransactionId {
       const subscriberId = message.subscriber?.subscriberId;
       if (subscriberId) {
         await this.invalidateCache.invalidateQuery({
-          key: buildFeedKey().invalidate({
-            subscriberId,
-            _environmentId: command.environmentId,
-          }),
-        });
-
-        await this.invalidateCache.invalidateQuery({
           key: buildMessageCountKey().invalidate({
             subscriberId,
             _environmentId: command.environmentId,

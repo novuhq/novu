@@ -52,7 +52,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Unique identifier for the workflow' })
   @IsString()
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: 'must be a valid slug format (lowercase letters, numbers, and hyphens only)',
+    message: 'workflowId must be a valid slug format (lowercase letters, numbers, and hyphens only)',
   })
   workflowId: string;
 

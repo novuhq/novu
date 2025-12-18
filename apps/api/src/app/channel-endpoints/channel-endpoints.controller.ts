@@ -26,6 +26,7 @@ import {
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateChannelEndpointRequest } from './dtos/create-channel-endpoint-request.dto';
 import {
@@ -80,6 +81,7 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
 @ExternalApiAccessible()
 @RequireAuthentication()
 @ApiTags('Channel Endpoints')
+@SdkGroupName('ChannelEndpoints')
 @ApiCommonResponses()
 export class ChannelEndpointsController {
   constructor(
@@ -105,11 +107,12 @@ export class ChannelEndpointsController {
 
   @Get()
   @ApiOperation({
-    summary: 'List channel endpoints',
-    description: `Retrieve all channel endpoints for a resource based on query filters.`,
+    summary: 'List all channel endpoints',
+    description: `List all channel endpoints for a resource based on query filters.`,
   })
   @ApiResponse(ListChannelEndpointsResponseDto, 200)
   @ExternalApiAccessible()
+  @SdkMethodName('list')
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listChannelEndpoints(
     @UserSession() user: UserSessionData,
@@ -146,12 +149,13 @@ export class ChannelEndpointsController {
 
   @Get('/:identifier')
   @ApiOperation({
-    summary: 'Retrieve channel endpoint by identifier',
+    summary: 'Retrieve a channel endpoint',
     description: `Retrieve a specific channel endpoint by its unique identifier.`,
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel endpoint', type: String })
   @ApiResponse(GetChannelEndpointResponseDto, 200)
   @ExternalApiAccessible()
+  @SdkMethodName('retrieve')
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getChannelEndpoint(
     @UserSession() user: UserSessionData,
@@ -172,7 +176,7 @@ export class ChannelEndpointsController {
 
   @Post()
   @ApiOperation({
-    summary: 'Create channel endpoint for a resource',
+    summary: 'Create a channel endpoint',
     description: `Create a new channel endpoint for a resource.`,
   })
   @ApiBody({
@@ -200,6 +204,7 @@ export class ChannelEndpointsController {
     },
   })
   @ApiResponse(GetChannelEndpointResponseDto, 201)
+  @SdkMethodName('create')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async createChannelEndpoint(
@@ -227,11 +232,12 @@ export class ChannelEndpointsController {
 
   @Patch('/:identifier')
   @ApiOperation({
-    summary: 'Update channel endpoint',
+    summary: 'Update a channel endpoint',
     description: `Update an existing channel endpoint by its unique identifier.`,
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel endpoint', type: String })
   @ApiResponse(GetChannelEndpointResponseDto, 200)
+  @SdkMethodName('update')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
   async updateChannelEndpoint(
@@ -256,10 +262,11 @@ export class ChannelEndpointsController {
   @Delete('/:identifier')
   @HttpCode(204)
   @ApiOperation({
-    summary: 'Delete channel endpoint by identifier',
+    summary: 'Delete a channel endpoint',
     description: `Delete a specific channel endpoint by its unique identifier.`,
   })
   @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel endpoint', type: String })
+  @SdkMethodName('delete')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async deleteChannelEndpoint(

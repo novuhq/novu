@@ -31,7 +31,9 @@ export class GenerateChatOauthUrlRequestDto {
 
   @ApiProperty({
     type: String,
-    description: 'Identifier of the channel connection that will be created',
+    description:
+      'Identifier of the channel connection that will be created. It is generated automatically if not provided.',
+    example: 'slack-connection-abc123',
   })
   @IsString()
   @IsOptional()

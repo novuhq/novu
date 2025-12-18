@@ -62,13 +62,6 @@ export class MarkManyNotificationsAs {
     });
 
     await this.invalidateCacheService.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: subscriber.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCacheService.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId: subscriber.subscriberId,
         _environmentId: command.environmentId,

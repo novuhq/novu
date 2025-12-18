@@ -33,14 +33,6 @@ export class GetNotificationsFeed {
   }
 
   @InstrumentUsecase()
-  @CachedQuery({
-    builder: ({ environmentId, subscriberId, ...command }: GetNotificationsFeedCommand) =>
-      buildFeedKey().cache({
-        environmentId,
-        subscriberId,
-        ...command,
-      }),
-  })
   async execute(command: GetNotificationsFeedCommand): Promise<FeedResponseDto> {
     const payload = this.getPayloadObject(command.payload);
 

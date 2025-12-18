@@ -252,7 +252,7 @@ export type SubscriptionResponse = {
   id: string;
   identifier: string;
   name?: string;
-  preferences: Array<SubscriptionPreferenceResponse>;
+  preferences?: Array<SubscriptionPreferenceResponse>;
 };
 
 export type TODO = any;
