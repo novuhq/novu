@@ -94,6 +94,10 @@ export default defineConfig(({ mode }) => {
             ? {
                 '@clerk/clerk-react': path.resolve(__dirname, './src/utils/better-auth/index.tsx'),
                 '@/context/region': path.resolve(__dirname, './src/context/region/index.self-hosted.ts'),
+                '@/components/side-navigation/organization-dropdown-clerk': path.resolve(
+                  __dirname,
+                  './src/utils/better-auth/components/organization-dropdown.tsx'
+                ),
               }
             : {}),
         // Explicitly map prettier imports to browser-compatible versions

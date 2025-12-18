@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from './client';
@@ -7,6 +7,7 @@ import {
   OrganizationSwitcher as OrganizationSwitcherComponent,
   SignIn as SignInComponent,
   SignUp as SignUpComponent,
+  UserButton as UserButtonComponent,
 } from './components';
 
 type BetterAuthUser = {
@@ -180,15 +181,69 @@ export function useOrganization() {
   };
 }
 
-export function useOrganizationList() {
-  const { organization, isLoaded } = useOrganization();
+export function useOrganizationList(options?: { userMemberships?: { infinite?: boolean; pageSize?: number } }) {
+  const { organization: currentOrganization, isLoaded: orgLoaded } = useOrganization();
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  const revalidate = useCallback(async () => {
+    try {
+      const { data } = await authClient.organization.list();
+      setOrganizations(data || []);
+      setHasLoaded(true);
+    } catch (error) {
+      console.error('Failed to load organizations:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (orgLoaded) {
+      revalidate();
+    }
+  }, [orgLoaded, revalidate]);
+
+  const userMemberships = useMemo(() => {
+    return organizations.map((org) => ({
+      id: org.id,
+      organization: {
+        id: org.id,
+        name: org.name,
+        slug: org.slug,
+        imageUrl: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        publicMetadata: {
+          externalOrgId: org.id,
+        },
+      },
+    }));
+  }, [organizations]);
+
+  const setActive = async ({ organization }: { organization: string }) => {
+    try {
+      await authClient.organization.setActive({
+        organizationId: organization,
+      });
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to set active organization:', error);
+      throw error;
+    }
+  };
 
   return {
-    isLoaded,
+    isLoaded: hasLoaded && orgLoaded,
     userMemberships: {
-      data: organization ? [{ organization }] : [],
+      data: userMemberships,
+      revalidate,
+      isFetching: isLoading,
+      hasNextPage: false,
+      fetchNext: undefined,
     },
-    setActive: async () => {},
+    setActive,
   };
 }
 
@@ -240,16 +295,7 @@ export function SignUp() {
 }
 
 export function UserButton() {
-  const { user } = useUser();
-
-  if (!user) return null;
-
-  return (
-    <div className="flex items-center gap-2">
-      {user.imageUrl && <img src={user.imageUrl} alt={user.fullName || ''} className="h-8 w-8 rounded-full" />}
-      <span className="text-sm">{user.fullName}</span>
-    </div>
-  );
+  return <UserButtonComponent />;
 }
 
 export function UserProfile() {
