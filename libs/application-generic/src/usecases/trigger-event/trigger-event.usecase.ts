@@ -45,6 +45,7 @@ export class TriggerEvent {
     private triggerMulticast: TriggerMulticast,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
+    private contextRepository: ContextRepository,
     private verifyPayload: VerifyPayload
   ) {
     this.logger.setContext(this.constructor.name);
