@@ -20,6 +20,15 @@ const getErrorPath = (error: ErrorObject): string => {
   return fullPath?.replace(/\//g, '.');
 };
 
+const isUrlFieldError = (errorPath: string | undefined, instancePath: string): boolean => {
+  return (
+    (errorPath && (errorPath.endsWith('.url') || errorPath === 'avatar' || errorPath === 'redirect')) ||
+    instancePath.includes('/url') ||
+    instancePath === '/avatar' ||
+    instancePath === '/redirect'
+  );
+};
+
 const mapAjvErrorToMessage = (
   error: ErrorObject<string, Record<string, unknown>, unknown>,
   stepType?: StepTypeEnum
@@ -39,12 +48,14 @@ const mapAjvErrorToMessage = (
   if (error.keyword === 'minLength') {
     return `${capitalize(error.instancePath.replace('/', ''))} is required`;
   }
-  if (
-    error.keyword === 'pattern' &&
-    error.message?.includes('must match pattern') &&
-    error.message?.includes('mailto') &&
-    error.message?.includes('https')
-  ) {
+
+  // Check if this is a URL field error
+  const errorPath = getErrorPath(error);
+  const instancePath = error.instancePath || '';
+  const isUrlField = isUrlFieldError(errorPath, instancePath);
+
+  // Handle URL validation errors (anyOf from Zod union, or pattern errors)
+  if (isUrlField && (error.keyword === 'anyOf' || error.keyword === 'pattern')) {
     return `Invalid URL. Must be a valid full URL, path starting with /, or {{variable}}`;
   }
 
@@ -88,23 +99,66 @@ export const processControlValuesBySchema = ({
   const errors = validate.errors as null | ErrorObject[];
 
   if (!isValid && errors && errors?.length !== 0 && controlValues) {
-    issues = {
-      controls: errors.reduce(
-        (acc, error) => {
-          const path = getErrorPath(error);
-          if (!acc[path]) {
-            acc[path] = [];
-          }
-          acc[path].push({
-            message: mapAjvErrorToMessage(error, stepType),
-            issueType: mapAjvErrorToIssueType(error),
-            variableName: path,
-          });
+    // First pass: identify URL fields and collect errors
+    const urlFieldErrors = new Map<string, ErrorObject[]>();
+    const otherErrors: ErrorObject[] = [];
 
-          return acc;
+    for (const error of errors) {
+      const path = getErrorPath(error);
+      const instancePath = error.instancePath || '';
+      const isUrlField = isUrlFieldError(path, instancePath);
+
+      if (isUrlField && path) {
+        if (!urlFieldErrors.has(path)) {
+          urlFieldErrors.set(path, []);
+        }
+        const existingErrors = urlFieldErrors.get(path);
+        if (existingErrors) {
+          existingErrors.push(error);
+        }
+      } else {
+        otherErrors.push(error);
+      }
+    }
+
+    // Second pass: build issues object
+    const controls: Record<string, RuntimeIssue[]> = {};
+
+    // For URL fields, only keep one error (prefer anyOf, then first pattern error)
+    // anyOf errors are preferred because they represent the union validation failure,
+    // which is more accurate than individual pattern failures
+    for (const [path, fieldErrors] of urlFieldErrors.entries()) {
+      const anyOfError = fieldErrors.find((e) => e.keyword === 'anyOf');
+      const errorToUse = anyOfError || fieldErrors[0];
+      const mappedMessage = mapAjvErrorToMessage(errorToUse, stepType);
+      controls[path] = [
+        {
+          message: mappedMessage,
+          issueType: mapAjvErrorToIssueType(errorToUse),
+          variableName: path,
         },
-        {} as Record<string, RuntimeIssue[]>
-      ),
+      ];
+    }
+
+    // Add all other errors
+    for (const error of otherErrors) {
+      const path = getErrorPath(error);
+      if (!path) {
+        continue;
+      }
+      if (!controls[path]) {
+        controls[path] = [];
+      }
+      const mappedMessage = mapAjvErrorToMessage(error, stepType);
+      controls[path].push({
+        message: mappedMessage,
+        issueType: mapAjvErrorToIssueType(error),
+        variableName: path,
+      });
+    }
+
+    issues = {
+      controls,
     };
 
     return issues;

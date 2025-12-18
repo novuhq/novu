@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { buildDefaultSubscriptionIdentifier, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
   BaseRepository,
@@ -450,22 +450,12 @@ export class CreateSubscriptionsUsecase {
       workflowsByTags.push(...findByTagsResult.workflowsByTags);
       missingTags.push(...findByTagsResult.missingTags);
 
-      if (missingWorkflowIds.length > 0 || missingTags.length > 0) {
-        const errorMessages: string[] = [];
+      if (missingWorkflowIds.length > 0) {
+        this.logger.warn(`Workflows not found: ${missingWorkflowIds.join(', ')}.`);
+      }
 
-        if (missingWorkflowIds.length > 0) {
-          errorMessages.push(
-            `Workflows not found: ${missingWorkflowIds.join(', ')}. Please verify the workflow IDs or identifiers exist.`
-          );
-        }
-
-        if (missingTags.length > 0) {
-          errorMessages.push(
-            `No workflows found for tags: ${missingTags.join(', ')}. Please verify the tags exist and have associated workflows.`
-          );
-        }
-
-        throw new NotFoundException(errorMessages.join(' '));
+      if (missingTags.length > 0) {
+        this.logger.warn(`No workflows found for tags: ${missingTags.join(', ')}.`);
       }
     }
 

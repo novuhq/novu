@@ -58,9 +58,7 @@ export class ProcessVercelWebhook {
     );
 
     if (!organizations || organizations.length === 0) {
-      this.logger.error({ teamId, projectId }, 'Organization not found for vercel webhook integration');
-
-      throw new BadRequestException('Organization not found');
+      throw new BadRequestException('Organization not found for vercel webhook integration');
     }
 
     for (const organization of organizations) {

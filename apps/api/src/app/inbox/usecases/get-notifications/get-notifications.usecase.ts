@@ -18,14 +18,6 @@ export class GetNotifications {
     private messageRepository: MessageRepository
   ) {}
 
-  @CachedQuery({
-    builder: ({ environmentId, subscriberId, ...command }: GetNotificationsCommand) =>
-      buildFeedKey().cache({
-        environmentId,
-        subscriberId,
-        ...command,
-      }),
-  })
   async execute(command: GetNotificationsCommand): Promise<GetNotificationsResponseDto> {
     const subscriber = await this.getSubscriber.execute({
       environmentId: command.environmentId,

@@ -421,9 +421,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
       return await (await this._model.db.startSession()).withTransaction(fn);
     } catch (error) {
       // Check if the error is related to replica set requirement
+      const errorMessage = error?.message?.toLowerCase() || '';
       if (
-        error.message?.includes('replica set') ||
-        error.message?.includes('transaction') ||
+        errorMessage.includes('replica set') ||
+        errorMessage.includes('transaction') ||
         error.codeName === 'IllegalOperation'
       ) {
         // MongoDB is not running in replica set mode, execute without transaction

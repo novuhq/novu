@@ -35,4 +35,3 @@ class HostnameManager {
 }
 
 export const apiHostnameManager = new HostnameManager();
-

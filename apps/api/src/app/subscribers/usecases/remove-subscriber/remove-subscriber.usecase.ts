@@ -27,12 +27,6 @@ export class RemoveSubscriber {
         }),
       }),
       this.invalidateCache.invalidateQuery({
-        key: buildFeedKey().invalidate({
-          subscriberId,
-          _environmentId,
-        }),
-      }),
-      this.invalidateCache.invalidateQuery({
         key: buildMessageCountKey().invalidate({
           subscriberId,
           _environmentId,

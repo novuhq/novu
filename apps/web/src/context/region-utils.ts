@@ -44,4 +44,3 @@ export function detectRegionFromOrganization(organization: OrganizationResource 
   const regionCode = getRegionCodeFromAws(awsRegion);
   return regionCode;
 }
-

@@ -70,7 +70,7 @@ export function mapTraceToResponseDto({
 }
 
 export function mapTraceToExecutionDetailDto(
-  traces: Pick<Trace, 'entity_id' | 'id' | 'status' | 'title' | 'raw_data' | 'created_at'>[]
+  traces: Pick<Trace, 'entity_id' | 'id' | 'status' | 'title' | 'raw_data' | 'created_at' | 'event_type'>[]
 ): StepExecutionDetailDto[] {
   return traces.map((trace) => ({
     _id: trace.id,
@@ -78,6 +78,7 @@ export function mapTraceToExecutionDetailDto(
     status: mapTraceStatusToExecutionDetailsStatus(trace.status),
     detail: trace.title,
     raw: trace.raw_data,
+    eventType: trace.event_type,
   }));
 }
 

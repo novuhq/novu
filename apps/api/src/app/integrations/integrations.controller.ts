@@ -413,7 +413,6 @@ export class IntegrationsController {
     This URL allows subscribers to authorize the integration, enabling the system to send messages 
     through their chat workspace. The generated URL expires after 5 minutes.`,
   })
-  @ApiExcludeEndpoint()
   @SdkMethodName('generateChatOAuthUrl')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()

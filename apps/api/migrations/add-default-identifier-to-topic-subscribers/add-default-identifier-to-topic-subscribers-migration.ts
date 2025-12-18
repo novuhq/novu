@@ -18,14 +18,14 @@ export async function run() {
 
   const cursor = await topicSubscribersRepository._model
     .find({
-      $or: [{ identifier: { $exists: false } }, { identifier: null }, { identifier: '' }],
-    } as any)
+      identifier: { $exists: false },
+    })
     .batchSize(1000)
     .cursor();
 
   let processedCount = 0;
   let updatedCount = 0;
-  const bulkWriteOps: any[] = [];
+  let bulkWriteOps: any[] = [];
   const BATCH_SIZE = 500;
 
   for await (const topicSubscriber of cursor) {
@@ -62,10 +62,10 @@ export async function run() {
         logger.info(
           `Processed ${processedCount} topic subscribers, updated ${updatedCount} (batch: ${bulkResponse.modifiedCount || bulkWriteOps.length})`
         );
-        bulkWriteOps.length = 0;
+        bulkWriteOps = [];
       } catch (error) {
         logger.error(`Error in bulk write: ${error}`);
-        bulkWriteOps.length = 0;
+        bulkWriteOps = [];
       }
     }
   }

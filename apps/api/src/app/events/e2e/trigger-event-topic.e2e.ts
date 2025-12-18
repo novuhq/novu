@@ -717,7 +717,7 @@ describe('Topic Trigger Event #novu-v2', () => {
       // Test: Update subscription to create explicit preference and verify it overrides workflow defaults
       await novuClient.topics.subscriptions.update({
         topicKey,
-        subscriptionId: topicSubscription._id,
+        subscriptionIdOrIdentifier: topicSubscription._id,
         updateTopicSubscriptionRequestDto: {
           preferences: [
             {

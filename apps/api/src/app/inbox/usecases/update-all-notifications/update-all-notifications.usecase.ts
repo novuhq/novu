@@ -72,13 +72,6 @@ export class UpdateAllNotifications {
     await this.sendWebhookEvents(command, updatedMessages);
 
     await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,

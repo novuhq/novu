@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import {
-  NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferencesEntity,
   PreferencesRepository,
@@ -9,28 +8,13 @@ import {
   TopicSubscribersRepository,
 } from '@novu/dal';
 import { PreferencesTypeEnum } from '@novu/shared';
-import { TopicSubscriptionDetailsResponseDto } from '../../dtos/get-topic-subscriptions-response.dto';
-import { mapTopicSubscriptionToDto } from '../../utils/topic-subscription-mapper';
+import { SubscriptionDetailsResponseDto } from '../../../shared/dtos/subscription-details-response.dto';
+import {
+  mapTopicSubscriptionToDto,
+  SELECTED_WORKFLOW_FIELDS_PROJECTION,
+  SelectedWorkflowFields,
+} from '../../../subscriptions/utils/subscriptions';
 import { GetTopicSubscriptionsCommand } from './get-topic-subscriptions.command';
-
-export type SelectedWorkflowFields = Pick<
-  NotificationTemplateEntity,
-  '_id' | 'triggers' | 'name' | 'critical' | 'tags' | 'data' | 'severity'
->;
-
-/**
- * MongoDB projection object for SelectedWorkflowFields.
- * This ensures the projection is always aligned with the type definition.
- */
-export const SELECTED_WORKFLOW_FIELDS_PROJECTION: Record<keyof SelectedWorkflowFields, 1> = {
-  _id: 1,
-  triggers: 1,
-  name: 1,
-  critical: 1,
-  tags: 1,
-  data: 1,
-  severity: 1,
-} as const;
 
 @Injectable()
 export class GetTopicSubscriptions {
@@ -41,7 +25,7 @@ export class GetTopicSubscriptions {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetTopicSubscriptionsCommand): Promise<TopicSubscriptionDetailsResponseDto[]> {
+  async execute(command: GetTopicSubscriptionsCommand): Promise<SubscriptionDetailsResponseDto[]> {
     const subscriptions = await this.topicSubscribersRepository.find({
       _environmentId: command.environmentId,
       _subscriberId: command._subscriberId,
@@ -53,7 +37,7 @@ export class GetTopicSubscriptions {
 
   private async buildSubscriptionsResponse(
     subscriptions: TopicSubscribersEntity[]
-  ): Promise<TopicSubscriptionDetailsResponseDto[]> {
+  ): Promise<SubscriptionDetailsResponseDto[]> {
     const subscriptionPreferencesMap = new Map<TopicSubscribersEntity, PreferencesEntity[]>();
 
     for (const subscription of subscriptions) {
@@ -68,7 +52,7 @@ export class GetTopicSubscriptions {
 
     const workflowsMap = await this.findWorkflows(subscriptionPreferencesMap, subscriptions);
 
-    const result: TopicSubscriptionDetailsResponseDto[] = [];
+    const result: SubscriptionDetailsResponseDto[] = [];
 
     for (const [subscription, preferencesEntities] of subscriptionPreferencesMap) {
       const preferenceWorkflowIds = preferencesEntities

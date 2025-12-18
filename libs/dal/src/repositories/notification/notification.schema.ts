@@ -30,6 +30,9 @@ const notificationSchema = new Schema<NotificationDBModel>(
         topicKey: {
           type: Schema.Types.String,
         },
+        preferenceEvaluation: {
+          type: Schema.Types.Mixed,
+        },
       },
     ],
     transactionId: {

@@ -1,6 +1,7 @@
-import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { useOrganization } from '@clerk/clerk-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { IS_EE_AUTH_ENABLED } from '../config';
 import { apiHostnameManager } from '../utils/api-hostname-manager';
 import { getDefaultRegion } from './region-config';
 import {
@@ -9,7 +10,6 @@ import {
   getWebSocketHostnameForRegion,
   type Region,
 } from './region-utils';
-import { IS_EE_AUTH_ENABLED } from '../config';
 
 interface RegionContextType {
   selectedRegion: Region;
@@ -75,4 +75,3 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
   return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;
 }
-

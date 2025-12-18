@@ -1,12 +1,12 @@
+import { useUser } from '@clerk/clerk-react';
+import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
+import { useEffect, useState } from 'react';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { APP_ID, IS_SELF_HOSTED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useWorkflowEditorPage } from '@/hooks/use-workflow-editor-page';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { useUser } from '@clerk/clerk-react';
-import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
-import { useEffect, useState } from 'react';
 import { HeaderButton } from './header-navigation/header-button';
 import { InboxBellFilledDev } from './icons/inbox-bell-filled-dev';
 
@@ -109,6 +109,10 @@ export const InboxButton = () => {
 
   const localizationTestSuffix = isTestPage ? ' (Test)' : '';
 
+  const isNovuProductionDashboard = window.location.hostname.includes('dashboard.novu.co');
+  const isNovuStagingEnvironment = apiHostnameManager.getHostname() === 'https://api.novu-staging.co';
+  const shouldUseProductionApi = (isNovuProductionDashboard || isNovuStagingEnvironment) && !isTestPage;
+
   return (
     <Inbox
       subscriber={{
@@ -118,19 +122,8 @@ export const InboxButton = () => {
         lastName: user.lastName ?? '',
       }}
       applicationIdentifier={appId}
-      /**
-       * We want to ensure our staging environment is using the production API and WebSocket endpoints.
-       */
-      backendUrl={
-        apiHostnameManager.getHostname() === 'https://api.novu-staging.co' && !isTestPage
-          ? 'https://api.novu.co'
-          : apiHostnameManager.getHostname()
-      }
-      socketUrl={
-        apiHostnameManager.getWebSocketHostname() === 'https://socket.novu-staging.co' && !isTestPage
-          ? 'https://ws.novu.co'
-          : apiHostnameManager.getWebSocketHostname()
-      }
+      backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
+      socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
       localization={{
         'inbox.filters.labels.default': `Inbox${localizationTestSuffix}`,
         'inbox.filters.labels.unread': `Unread${localizationTestSuffix}`,

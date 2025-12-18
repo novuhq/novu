@@ -1,4 +1,4 @@
-import { SubscriberEntity, TopicEntity } from '@novu/dal';
+import { SubscriberEntity, TopicEntity, TopicWithPreferences } from '@novu/dal';
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
   ISubscribersDefine,
@@ -26,7 +26,7 @@ export interface IProcessSubscriberDataDto {
   subscriber: ISubscribersDefine;
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;
-  topics?: Pick<TopicEntity, '_id' | 'key'>[];
+  topics?: TopicWithPreferences[];
   requestCategory?: TriggerRequestCategoryEnum;
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
   controls?: StatelessControls;

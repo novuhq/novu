@@ -24,6 +24,7 @@ const getInitialFilters = (topicKey: string, dateRange: string): ActivityFilters
   topicKey,
   severity: [],
   contextKeys: '',
+  subscriptionId: '',
 });
 
 export const TopicActivity = ({ topicKey }: { topicKey: string }) => {

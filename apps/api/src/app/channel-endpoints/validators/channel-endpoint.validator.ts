@@ -14,7 +14,13 @@ export function IsValidChannelEndpoint(validationOptions?: ValidationOptions) {
           const obj = args.object as Record<string, unknown>;
           const type = obj.type as ChannelEndpointType;
 
-          if (!type || !value || typeof value !== 'object') {
+          // For update operations, type may not be present (it's determined from existing endpoint)
+          // Skip validation here - it will be validated in the usecase after fetching the existing endpoint
+          if (!type) {
+            return true;
+          }
+
+          if (!value || typeof value !== 'object') {
             return false;
           }
 

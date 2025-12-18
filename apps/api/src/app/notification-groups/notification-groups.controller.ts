@@ -10,8 +10,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequirePermissions } from '@novu/application-generic';
+import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';

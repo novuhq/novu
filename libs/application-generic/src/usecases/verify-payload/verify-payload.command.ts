@@ -1,6 +1,6 @@
-import { BaseCommand } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { IsDefined } from 'class-validator';
+import { BaseCommand } from '../../commands';
 
 export class VerifyPayloadCommand extends BaseCommand {
   @IsDefined()

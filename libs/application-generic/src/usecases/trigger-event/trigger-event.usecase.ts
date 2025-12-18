@@ -1,8 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   ContextRepository,
-  EnvironmentEntity,
-  EnvironmentRepository,
   JobEntity,
   JobRepository,
   NotificationTemplateEntity,
@@ -17,6 +15,7 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
+import { toMerged } from 'es-toolkit';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import type { EventType, Trace } from '../../services/analytic-logs';
@@ -27,6 +26,7 @@ import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { TriggerEventCommand } from './trigger-event.command';
 
 function getActiveWorker() {
@@ -37,7 +37,6 @@ function getActiveWorker() {
 export class TriggerEvent {
   constructor(
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
-    private environmentRepository: EnvironmentRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
@@ -46,7 +45,7 @@ export class TriggerEvent {
     private triggerMulticast: TriggerMulticast,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
-    private contextRepository: ContextRepository
+    private verifyPayload: VerifyPayload
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -64,6 +63,17 @@ export class TriggerEvent {
           organizationId: command.organizationId,
           userId: command.userId,
         });
+      }
+
+      if (storedWorkflow) {
+        const defaultPayload = this.verifyPayload.execute(
+          VerifyPayloadCommand.create({
+            payload: command.payload,
+            template: storedWorkflow,
+          })
+        );
+
+        command.payload = toMerged(defaultPayload, command.payload);
       }
 
       const mappedCommand = await this.getMappedCommand(command, storedWorkflow?._id);

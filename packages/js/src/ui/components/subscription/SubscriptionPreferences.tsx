@@ -1,6 +1,7 @@
 import { createEffect, createMemo, Index, Show } from 'solid-js';
-import { PreferenceFilter, TopicSubscription, WorkflowFilter, WorkflowIdentifierOrId } from '../../../subscriptions';
+import { TopicSubscription } from '../../../subscriptions';
 import { SubscriptionPreference } from '../../../subscriptions/subscription-preference';
+import { NonEmptyArray } from '../../../types';
 import { setDynamicLocalization } from '../../config/defaultLocalization';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, useStyle } from '../../helpers';
@@ -10,7 +11,7 @@ import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { Footer } from '../elements';
 import { Tooltip } from '../primitives/Tooltip';
 import { IconRenderer } from '../shared/IconRendererWrapper';
-import { SubscriptionPreferencesRenderer } from './Subscription';
+import { SubscriptionPreferencesRenderer, UIPreference } from './Subscription';
 import { SubscriptionPreferenceGroupRow } from './SubscriptionPreferenceGroupRow';
 import { SubscriptionPreferenceRow } from './SubscriptionPreferenceRow';
 import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallback';
@@ -18,7 +19,7 @@ import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallba
 export const SubscriptionPreferences = (props: {
   loading?: boolean;
   subscription?: TopicSubscription | null;
-  preferences: Array<PreferenceFilter>;
+  preferences: NonEmptyArray<UIPreference> | undefined;
   renderPreferences?: SubscriptionPreferencesRenderer;
   onSubscribeClick: () => void;
 }) => {
@@ -31,7 +32,7 @@ export const SubscriptionPreferences = (props: {
 
     return (
       props.preferences
-        .map((preferenceFilter) => {
+        ?.map((preferenceFilter) => {
           if (typeof preferenceFilter === 'string') {
             const foundPreference = subscriptionPreferences.find(
               (el) => el.workflow?.id === preferenceFilter || el.workflow?.identifier === preferenceFilter
@@ -58,8 +59,25 @@ export const SubscriptionPreferences = (props: {
               preference: SubscriptionPreference;
             }> = [];
 
-            if (typeof preferenceFilter.filter === 'function') {
-              foundPreferences = preferenceFilter.filter({ preferences: subscriptionPreferences });
+            if (typeof preferenceFilter.filter === 'object' && 'workflows' in preferenceFilter.filter) {
+              const { workflows } = preferenceFilter.filter;
+              foundPreferences = subscriptionPreferences
+                .filter((pref) => {
+                  return workflows?.some(
+                    (workflow) =>
+                      workflow.workflowId === pref.workflow?.id || workflow.workflowId === pref.workflow?.identifier
+                  );
+                })
+                .map((pref) => {
+                  const workflow = workflows?.find(
+                    (workflow) =>
+                      workflow.workflowId === pref.workflow?.id || workflow.workflowId === pref.workflow?.identifier
+                  );
+                  return {
+                    label: workflow?.label ?? pref.workflow.name,
+                    preference: pref,
+                  };
+                });
             } else if (
               typeof preferenceFilter.filter === 'object' &&
               ('workflowIds' in preferenceFilter.filter || 'tags' in preferenceFilter.filter)
@@ -89,7 +107,7 @@ export const SubscriptionPreferences = (props: {
     // Register the names as localizable
     setDynamicLocalization((prev) => ({
       ...prev,
-      ...props.subscription?.preferences.reduce<Record<string, string>>((acc, preference) => {
+      ...props.subscription?.preferences?.reduce<Record<string, string>>((acc, preference) => {
         if (preference.workflow?.identifier && preference.workflow?.name) {
           acc[preference.workflow.identifier] = preference.workflow.name;
         }
@@ -202,22 +220,24 @@ export const SubscriptionPreferences = (props: {
               <Index each={groupedPreferences()}>
                 {(preference) => (
                   <Show
-                    when={preference().group?.length}
+                    when={preference().group}
                     fallback={
                       <SubscriptionPreferenceRow
                         preference={preference() as { label: string; preference: SubscriptionPreference }}
                       />
                     }
                   >
-                    <SubscriptionPreferenceGroupRow
-                      group={
-                        preference() as {
-                          label: string;
-                          group: Array<{ label: string; preference: SubscriptionPreference }>;
+                    <Show when={preference().group?.length}>
+                      <SubscriptionPreferenceGroupRow
+                        group={
+                          preference() as {
+                            label: string;
+                            group: Array<{ label: string; preference: SubscriptionPreference }>;
+                          }
                         }
-                      }
-                      subscription={props.subscription as TopicSubscription}
-                    />
+                        subscription={props.subscription as TopicSubscription}
+                      />
+                    </Show>
                   </Show>
                 )}
               </Index>

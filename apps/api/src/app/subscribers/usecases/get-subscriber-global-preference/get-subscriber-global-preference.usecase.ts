@@ -58,9 +58,18 @@ export class GetSubscriberGlobalPreference {
 
   @Instrument()
   private async getActiveChannels(command: GetSubscriberGlobalPreferenceCommand): Promise<ChannelTypeEnum[]> {
+    if (command.includeInactiveChannels) {
+      return Object.values(ChannelTypeEnum);
+    }
+
     const workflowList = await this.notificationTemplateRepository.filterActive({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
+      tags: undefined,
+      critical: undefined,
+      severity: undefined,
+      select: '_id steps.active steps._templateId',
+      limit: 100,
     });
 
     const activeChannels = new Set<ChannelTypeEnum>();

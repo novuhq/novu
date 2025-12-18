@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "3.11.0",
+  "version": "3.12.0-rc.2",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu JavaScript SDK for <Inbox />",
   "author": "",
@@ -96,7 +96,6 @@
     "@arethetypeswrong/cli": "^0.17.4",
     "@types/jest": "^29.2.3",
     "@types/node": "^20.15.0",
-    "@types/json-logic-js": "^2.0.8",
     "autoprefixer": "^10.4.0",
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",
@@ -129,6 +128,7 @@
   "dependencies": {
     "@floating-ui/dom": "^1.6.13",
     "@kobalte/core": "^0.13.10",
+    "@types/json-logic-js": "^2.0.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "event-target-polyfill": "^0.0.4",

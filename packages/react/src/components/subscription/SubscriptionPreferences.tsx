@@ -7,7 +7,7 @@ export type SubscriptionPreferencesProps = Partial<SubscriptionPreferencesWrappe
 
 export const SubscriptionPreferences = React.memo(
   ({
-    topic,
+    topicKey,
     identifier,
     preferences,
     onClick,
@@ -20,7 +20,7 @@ export const SubscriptionPreferences = React.memo(
 
     const mount = React.useCallback(
       (element: HTMLElement) => {
-        if (!topic || !identifier || !preferences) {
+        if (!topicKey) {
           return;
         }
 
@@ -28,7 +28,7 @@ export const SubscriptionPreferences = React.memo(
           name: 'SubscriptionPreferences',
           element,
           props: {
-            topic,
+            topicKey,
             identifier,
             preferences,
             onClick,
@@ -39,7 +39,17 @@ export const SubscriptionPreferences = React.memo(
           },
         });
       },
-      [novuUI, topic, identifier, preferences, onClick, onDeleteError, onDeleteSuccess, onCreateError, onCreateSuccess]
+      [
+        novuUI,
+        topicKey,
+        identifier,
+        preferences,
+        onClick,
+        onDeleteError,
+        onDeleteSuccess,
+        onCreateError,
+        onCreateSuccess,
+      ]
     );
 
     return <Mounter mount={mount} />;
