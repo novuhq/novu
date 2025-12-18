@@ -98,6 +98,10 @@ export default defineConfig(({ mode }) => {
                   __dirname,
                   './src/utils/better-auth/components/organization-dropdown.tsx'
                 ),
+                '@/components/auth/create-organization': path.resolve(
+                  __dirname,
+                  './src/utils/better-auth/components/organization-create.tsx'
+                ),
               }
             : {}),
         // Explicitly map prettier imports to browser-compatible versions

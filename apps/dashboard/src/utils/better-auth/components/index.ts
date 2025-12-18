@@ -4,3 +4,4 @@ export * from './organization-list';
 export * from './organization-switcher';
 export * from './user-button';
 export * from './organization-dropdown';
+export * from './organization-create';

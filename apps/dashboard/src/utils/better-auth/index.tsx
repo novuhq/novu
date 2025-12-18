@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from './client';
 import {
+  OrganizationCreate as OrganizationCreateComponent,
   OrganizationList as OrganizationListComponent,
   OrganizationSwitcher as OrganizationSwitcherComponent,
   SignIn as SignInComponent,
@@ -152,6 +153,10 @@ export function useUser() {
             console.log('Better Auth: user.update() called with:', data);
             return Promise.resolve();
           },
+          reload: async () => {
+            console.log('Better Auth: user.reload() called');
+            return Promise.resolve();
+          },
         }
       : null,
     isLoaded: context.isLoaded,
@@ -174,6 +179,10 @@ export function useOrganization() {
           updatedAt: new Date(),
           publicMetadata: {
             externalOrgId: context.organization.id,
+          },
+          reload: async () => {
+            console.log('Better Auth: organization.reload() called');
+            return Promise.resolve();
           },
         }
       : null,
@@ -306,8 +315,14 @@ export function OrganizationSwitcher() {
   return <OrganizationSwitcherComponent />;
 }
 
-export function OrganizationList() {
-  return <OrganizationListComponent />;
+export function OrganizationList(props?: {
+  appearance?: any;
+  hidePersonal?: boolean;
+  skipInvitationScreen?: boolean;
+  afterSelectOrganizationUrl?: string;
+  afterCreateOrganizationUrl?: string;
+}) {
+  return <OrganizationCreateComponent />;
 }
 
 export function OrganizationProfile() {
