@@ -1,10 +1,6 @@
 import { OffsetOptions, Placement } from '@floating-ui/dom';
-import type {
-  TopicSubscription,
-  WorkflowFilter,
-  WorkflowGroupFilter,
-  WorkflowIdentifierOrId,
-} from '../../../subscriptions';
+import type { PreferenceFilter, TopicSubscription, WorkflowIdentifierOrId } from '../../../subscriptions';
+import { NonEmptyArray } from '../../../types';
 import { useSubscription } from '../../api/hooks/useSubscription';
 import { useInboxContext } from '../../context';
 import { cn } from '../../helpers';
@@ -19,17 +15,33 @@ export type SubscriptionPreferencesRenderer = (
   loading?: boolean
 ) => () => void;
 
+export type WorkflowPreference = {
+  label?: string;
+  workflowId: WorkflowIdentifierOrId;
+  enabled?: boolean;
+  filter?: never;
+};
+
 export type GroupPreference = {
   label: string;
-} & WorkflowGroupFilter;
+  filter: {
+    workflowIds?: Array<WorkflowIdentifierOrId>;
+    workflows?: Array<{ label: string; workflowId: WorkflowIdentifierOrId }>;
+    tags?: string[];
+  };
+  enabled?: boolean;
+  workflowId?: never;
+};
+
+export type UIPreference = WorkflowIdentifierOrId | WorkflowPreference | GroupPreference;
 
 export type SubscriptionProps = {
   open?: boolean;
   placement?: Placement;
   placementOffset?: OffsetOptions;
-  topic: string;
-  identifier: string;
-  preferences: Array<WorkflowIdentifierOrId | WorkflowFilter | GroupPreference>;
+  topicKey: string;
+  identifier?: string;
+  preferences?: NonEmptyArray<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
 };
 
@@ -39,7 +51,7 @@ export const Subscription = (props: SubscriptionProps) => {
   const isOpen = () => props?.open ?? isOpened();
 
   const { subscription, loading, create, remove } = useSubscription({
-    topicKey: props.topic,
+    topicKey: props.topicKey,
     identifier: props.identifier,
   });
 
@@ -48,7 +60,16 @@ export const Subscription = (props: SubscriptionProps) => {
     if (currentSubscription) {
       remove({ subscription: currentSubscription });
     } else {
-      create({ topicKey: props.topic, identifier: props.identifier, filters: props.preferences });
+      const preferences = props.preferences?.map((preference) => {
+        if (typeof preference === 'object' && 'workflowId' in preference && preference.workflowId) {
+          return { workflowId: preference.workflowId, enabled: preference.enabled };
+        } else if (typeof preference === 'object' && 'filter' in preference && preference.filter) {
+          return { filter: preference.filter, enabled: preference.enabled };
+        }
+
+        return preference;
+      }) as NonEmptyArray<PreferenceFilter> | undefined;
+      create({ topicKey: props.topicKey, identifier: props.identifier, preferences: preferences });
     }
   };
 

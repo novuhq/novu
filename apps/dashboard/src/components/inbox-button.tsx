@@ -109,6 +109,10 @@ export const InboxButton = () => {
 
   const localizationTestSuffix = isTestPage ? ' (Test)' : '';
 
+  const isNovuProductionDashboard = window.location.hostname.includes('dashboard.novu.co');
+  const isNovuStagingEnvironment = apiHostnameManager.getHostname() === 'https://api.novu-staging.co';
+  const shouldUseProductionApi = (isNovuProductionDashboard || isNovuStagingEnvironment) && !isTestPage;
+
   return (
     <Inbox
       subscriber={{
@@ -118,19 +122,8 @@ export const InboxButton = () => {
         lastName: user.lastName ?? '',
       }}
       applicationIdentifier={appId}
-      /**
-       * We want to ensure our staging environment is using the production API and WebSocket endpoints.
-       */
-      backendUrl={
-        apiHostnameManager.getHostname() === 'https://api.novu-staging.co' && !isTestPage
-          ? 'https://api.novu.co'
-          : apiHostnameManager.getHostname()
-      }
-      socketUrl={
-        apiHostnameManager.getWebSocketHostname() === 'https://socket.novu-staging.co' && !isTestPage
-          ? 'https://ws.novu.co'
-          : apiHostnameManager.getWebSocketHostname()
-      }
+      backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
+      socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
       localization={{
         'inbox.filters.labels.default': `Inbox${localizationTestSuffix}`,
         'inbox.filters.labels.unread': `Unread${localizationTestSuffix}`,

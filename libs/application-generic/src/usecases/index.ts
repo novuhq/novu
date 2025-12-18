@@ -41,4 +41,5 @@ export * from './update-subscriber';
 export * from './update-tenant';
 export * from './upsert-control-values';
 export * from './upsert-preferences';
+export * from './verify-payload';
 export * from './workflow';

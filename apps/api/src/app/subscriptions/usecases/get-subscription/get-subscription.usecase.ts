@@ -1,14 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository, PreferencesRepository, TopicSubscribersRepository } from '@novu/dal';
 import { PreferencesTypeEnum } from '@novu/shared';
-import { TopicSubscriptionDetailsResponseDto } from '../../dtos/get-topic-subscriptions-response.dto';
-import { mapTopicSubscriptionToDto } from '../../utils/topic-subscription-mapper';
-import { SELECTED_WORKFLOW_FIELDS_PROJECTION } from '../get-topic-subscriptions/get-topic-subscriptions.usecase';
-import { GetTopicSubscriptionCommand } from './get-topic-subscription.command';
+import { SubscriptionDetailsResponseDto } from '../../../shared/dtos/subscription-details-response.dto';
+import { mapTopicSubscriptionToDto, SELECTED_WORKFLOW_FIELDS_PROJECTION } from '../../utils/subscriptions';
+import { GetSubscriptionCommand } from './get-subscription.command';
 
 @Injectable()
-export class GetTopicSubscription {
+export class GetSubscription {
   constructor(
     private topicSubscribersRepository: TopicSubscribersRepository,
     private preferencesRepository: PreferencesRepository,
@@ -16,19 +15,18 @@ export class GetTopicSubscription {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetTopicSubscriptionCommand): Promise<TopicSubscriptionDetailsResponseDto> {
+  async execute(command: GetSubscriptionCommand): Promise<SubscriptionDetailsResponseDto | null> {
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: command._subscriberId,
       topicKey: command.topicKey,
-      _id: command.subscriptionId,
+      ...(TopicSubscribersRepository.isInternalId(command.subscriptionIdOrIdentifier)
+        ? { _id: command.subscriptionIdOrIdentifier }
+        : { identifier: command.subscriptionIdOrIdentifier }),
     });
 
     if (!subscription) {
-      throw new NotFoundException(
-        `Subscription with ID ${command.subscriptionId} not found for topic ${command.topicKey}`
-      );
+      return null;
     }
 
     const preferencesEntities = await this.preferencesRepository.find({

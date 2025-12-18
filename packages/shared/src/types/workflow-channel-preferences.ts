@@ -1,5 +1,5 @@
-import { ChannelTypeEnum } from "./channel";
-import { DeepPartial } from "./utils";
+import { ChannelTypeEnum } from './channel';
+import { DeepPartial } from './utils';
 /**
  * The preference type for a set of preferences.
  *
@@ -13,11 +13,11 @@ import { DeepPartial } from "./utils";
  * 5. `WORKFLOW_RESOURCE` - The Framework-defined preference for a workflow.
  */
 export enum PreferencesTypeEnum {
-  SUBSCRIPTION_SUBSCRIBER_WORKFLOW = "SUBSCRIPTION_SUBSCRIBER_WORKFLOW",
-  SUBSCRIBER_WORKFLOW = "SUBSCRIBER_WORKFLOW",
-  SUBSCRIBER_GLOBAL = "SUBSCRIBER_GLOBAL",
-  USER_WORKFLOW = "USER_WORKFLOW",
-  WORKFLOW_RESOURCE = "WORKFLOW_RESOURCE",
+  SUBSCRIPTION_SUBSCRIBER_WORKFLOW = 'SUBSCRIPTION_SUBSCRIBER_WORKFLOW',
+  SUBSCRIBER_WORKFLOW = 'SUBSCRIBER_WORKFLOW',
+  SUBSCRIBER_GLOBAL = 'SUBSCRIBER_GLOBAL',
+  USER_WORKFLOW = 'USER_WORKFLOW',
+  WORKFLOW_RESOURCE = 'WORKFLOW_RESOURCE',
 }
 
 /**

@@ -190,7 +190,17 @@ export class UpsertPreferences {
       },
       {
         $set: {
-          preferences: mergedPreferences,
+          preferences: {
+            ...mergedPreferences,
+            ...(mergedPreferences.all && {
+              all: {
+                ...mergedPreferences.all,
+                ...(command.preferences.all?.condition !== undefined && {
+                  condition: command.preferences.all?.condition,
+                }),
+              },
+            }),
+          },
           schedule: command.schedule,
           _userId: command.userId,
         },

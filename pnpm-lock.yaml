@@ -391,6 +391,9 @@ importers:
       lodash:
         specifier: ^4.17.15
         version: 4.17.21
+      lru-cache:
+        specifier: ^11.2.4
+        version: 11.2.4
       nanoid:
         specifier: ^3.1.31
         version: 3.3.8
@@ -3748,6 +3751,9 @@ importers:
       '@kobalte/core':
         specifier: ^0.13.10
         version: 0.13.10(solid-js@1.9.6)
+      '@types/json-logic-js':
+        specifier: ^2.0.8
+        version: 2.0.8
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1
@@ -3785,9 +3791,6 @@ importers:
       '@types/jest':
         specifier: ^29.2.3
         version: 29.5.2
-      '@types/json-logic-js':
-        specifier: ^2.0.8
-        version: 2.0.8
       '@types/node':
         specifier: ^20.15.0
         version: 20.19.10
@@ -24748,8 +24751,8 @@ packages:
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
-  lru-cache@11.0.1:
-    resolution: {integrity: sha512-CgeuL5uom6j/ZVrg7G/+1IXqRY8JXX4Hghfy5YE0EhoYQWvndP1kufu58cmZLNIDKnRhZrXfdS9urVWx98AipQ==}
+  lru-cache@11.2.4:
+    resolution: {integrity: sha512-B5Y16Jr9LB9dHVkh6ZevG+vAbOsNOYCX+sXvFWFu7B3Iz5mijW3zdbMyhsh8ANd2mSWBYdJgnqi+mL7/LrOPYg==}
     engines: {node: 20 || >=22}
 
   lru-cache@4.0.2:
@@ -61910,7 +61913,7 @@ snapshots:
 
   lru-cache@10.4.3: {}
 
-  lru-cache@11.0.1: {}
+  lru-cache@11.2.4: {}
 
   lru-cache@4.0.2:
     dependencies:
@@ -64781,7 +64784,7 @@ snapshots:
 
   path-scurry@2.0.0:
     dependencies:
-      lru-cache: 11.0.1
+      lru-cache: 11.2.4
       minipass: 7.1.2
 
   path-temp@2.0.0:

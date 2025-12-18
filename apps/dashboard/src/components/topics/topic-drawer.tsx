@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import { RiDiscussLine } from 'react-icons/ri';
 import { ListTopicSubscriptionsResponse, TopicSubscription } from '@/api/topics';
 import { Separator } from '@/components/primitives/separator';
@@ -294,29 +294,39 @@ type TopicDrawerProps = {
   onOpenChange: (open: boolean) => void;
   topicKey: string;
   readOnly?: boolean;
+  className?: string;
 };
 
 export const TopicDrawer = forwardRef<HTMLDivElement, TopicDrawerProps>((props, forwardedRef) => {
-  const { open, onOpenChange, topicKey, readOnly = false } = props;
+  const { open, onOpenChange, topicKey, readOnly = false, className } = props;
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  const handleInteractOutside = (e: Event) => {
+    const target = e.target as Node;
+    if (overlayRef.current?.contains(target)) {
+      onOpenChange(false);
+    } else {
+      e.preventDefault();
+    }
+  };
 
   return (
-    <>
-      <Sheet open={open} modal={false} onOpenChange={onOpenChange}>
-        {/* Custom overlay since SheetOverlay does not work with modal={false} */}
-        <div
-          className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
-            'pointer-events-none opacity-0': !open,
-          })}
-        />
-        <SheetContent ref={forwardedRef} className="w-[580px]">
-          <VisuallyHidden>
-            <SheetTitle />
-            <SheetDescription />
-          </VisuallyHidden>
-          <TopicTabs topicKey={topicKey} readOnly={readOnly} />
-        </SheetContent>
-      </Sheet>
-    </>
+    <Sheet open={open} modal={false} onOpenChange={onOpenChange}>
+      {/* Custom overlay since SheetOverlay does not work with modal={false} */}
+      <div
+        ref={overlayRef}
+        className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
+          'pointer-events-none opacity-0': !open,
+        })}
+      />
+      <SheetContent ref={forwardedRef} className={cn('w-[580px]', className)} onInteractOutside={handleInteractOutside}>
+        <VisuallyHidden>
+          <SheetTitle />
+          <SheetDescription />
+        </VisuallyHidden>
+        <TopicTabs topicKey={topicKey} readOnly={readOnly} />
+      </SheetContent>
+    </Sheet>
   );
 });
 

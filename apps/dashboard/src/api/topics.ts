@@ -1,4 +1,5 @@
-import type { DirectionEnum, IEnvironment } from '@novu/shared';
+import { RulesLogic } from '@novu/js';
+import type { CustomDataType, DirectionEnum, IEnvironment, SeverityLevelEnum } from '@novu/shared';
 import { Topic } from '@/components/topics/types';
 import { delV2, getV2, patchV2, postV2 } from './api.client';
 
@@ -142,8 +143,28 @@ export const removeSubscribersFromTopic = async ({
   return { acknowledged: true };
 };
 
+export const deleteTopicSubscription = async ({
+  environment,
+  topicKey,
+  identifier,
+  subscriberId,
+}: {
+  environment: IEnvironment;
+  topicKey: string;
+  identifier: string;
+  subscriberId: string;
+}) => {
+  await delV2<DeleteTopicSubscriptionsResponseDto>(`/topics/${encodeURIComponent(topicKey)}/subscriptions`, {
+    environment,
+    body: { subscriptions: [{ identifier, subscriberId }] },
+  });
+
+  return { acknowledged: true };
+};
+
 export type TopicSubscription = {
   _id: string;
+  identifier: string;
   createdAt: string;
   topic: {
     _id: string;
@@ -168,6 +189,30 @@ export type ListTopicSubscriptionsResponse = {
   previous: string | null;
   totalCount: number;
   totalCountCapped: boolean;
+};
+
+export type WorkflowDto = {
+  id: string;
+  identifier: string;
+  name: string;
+  critical: boolean;
+  tags?: string[];
+  data?: CustomDataType;
+  severity: SeverityLevelEnum;
+};
+
+export type TopicSubscriptionPreference = {
+  workflow: WorkflowDto;
+  subscriptionId: string;
+  enabled: boolean;
+  condition?: RulesLogic;
+};
+
+export type TopicSubscriptionDetailsResponse = {
+  id: string;
+  identifier?: string;
+  name?: string;
+  preferences: TopicSubscriptionPreference[];
 };
 
 export const getTopicSubscriptions = async ({
@@ -202,4 +247,23 @@ export const getTopicSubscriptions = async ({
   );
 
   return response;
+};
+
+export const getTopicSubscription = async ({
+  environment,
+  topicKey,
+  subscriptionId,
+}: {
+  environment: IEnvironment;
+  topicKey: string;
+  subscriptionId: string;
+}): Promise<TopicSubscriptionDetailsResponse> => {
+  const response = await getV2<{ data: TopicSubscriptionDetailsResponse }>(
+    `/topics/${encodeURIComponent(topicKey)}/subscriptions/${subscriptionId}`,
+    {
+      environment,
+    }
+  );
+
+  return response.data;
 };

@@ -60,12 +60,6 @@ export class RemoveAllMessages {
           this.updateServices(command, subscriber, MarkEnum.SEEN),
           this.updateServices(command, subscriber, MarkEnum.READ),
           this.invalidateCache.invalidateQuery({
-            key: buildFeedKey().invalidate({
-              subscriberId: command.subscriberId,
-              _environmentId: command.environmentId,
-            }),
-          }),
-          this.invalidateCache.invalidateQuery({
             key: buildMessageCountKey().invalidate({
               subscriberId: command.subscriberId,
               _environmentId: command.environmentId,

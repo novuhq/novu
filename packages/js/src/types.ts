@@ -218,6 +218,8 @@ export type Context = Partial<Record<string, ContextValue>>;
 export type PreferencesResponse = {
   level: PreferenceLevel;
   enabled: boolean;
+  condition?: RulesLogic;
+  subscriptionId?: string;
   channels: ChannelPreference;
   overrides?: IPreferenceOverride[];
   workflow?: Workflow;
@@ -238,10 +240,11 @@ export type IPreferenceOverride = {
   source: PreferenceOverrideSourceEnum;
 };
 
-export type SubscriptionPreferenceResponse = {
+export type SubscriptionPreferenceResponse = Omit<
+  PreferencesResponse,
+  'subscriptionId' | 'workflow' | 'schedule' | 'level' | 'channels'
+> & {
   subscriptionId: string;
-  enabled: boolean;
-  condition?: RulesLogic;
   workflow: Workflow;
 };
 
@@ -249,10 +252,15 @@ export type SubscriptionResponse = {
   id: string;
   identifier: string;
   name?: string;
-  preferences: Array<SubscriptionPreferenceResponse>;
+  preferences?: Array<SubscriptionPreferenceResponse>;
 };
 
 export type TODO = any;
+
+export type Options = {
+  refetch?: boolean;
+  useCache?: boolean;
+};
 
 export type Result<D = undefined, E = NovuError> = Promise<{
   data?: D;
@@ -290,3 +298,5 @@ export type StandardNovuOptions = {
 export type NovuOptions = KeylessNovuOptions | StandardNovuOptions;
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
+export type NonEmptyArray<T> = [T, ...T[]];

@@ -57,7 +57,9 @@ export class UpdateSubscriptionUsecase {
     }
 
     const subscription = await this.topicSubscribersRepository.findOne({
-      _id: command.subscriptionId,
+      ...(TopicSubscribersRepository.isInternalId(command.subscriptionIdOrIdentifier)
+        ? { _id: command.subscriptionIdOrIdentifier }
+        : { identifier: command.subscriptionIdOrIdentifier }),
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _topicId: topic._id,
@@ -65,7 +67,7 @@ export class UpdateSubscriptionUsecase {
 
     if (!subscription) {
       throw new NotFoundException(
-        `Subscription with ID ${command.subscriptionId} not found for topic ${command.topicKey}`
+        `Subscription with ID ${command.subscriptionIdOrIdentifier} not found for topic ${command.topicKey}`
       );
     }
 
@@ -82,7 +84,7 @@ export class UpdateSubscriptionUsecase {
     if (Object.keys(updateData).length > 0) {
       await this.topicSubscribersRepository.update(
         {
-          _id: command.subscriptionId,
+          _id: subscription._id,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },
@@ -91,13 +93,13 @@ export class UpdateSubscriptionUsecase {
     }
 
     const updatedSubscription = await this.topicSubscribersRepository.findOne({
-      _id: command.subscriptionId,
+      _id: subscription._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
 
     if (!updatedSubscription) {
-      throw new NotFoundException(`Subscription with ID ${command.subscriptionId} could not be retrieved after update`);
+      throw new NotFoundException(`Subscription with ID ${subscription._id} could not be retrieved after update`);
     }
 
     const subscriber = await this.subscriberRepository.findOne({
@@ -228,22 +230,12 @@ export class UpdateSubscriptionUsecase {
       workflowsByTags.push(...findByTagsResult.workflowsByTags);
       missingTags.push(...findByTagsResult.missingTags);
 
-      if (missingWorkflowIds.length > 0 || missingTags.length > 0) {
-        const errorMessages: string[] = [];
+      if (missingWorkflowIds.length > 0) {
+        this.logger.warn(`Workflows not found: ${missingWorkflowIds.join(', ')}.`);
+      }
 
-        if (missingWorkflowIds.length > 0) {
-          errorMessages.push(
-            `Workflows not found: ${missingWorkflowIds.join(', ')}. Please verify the workflow IDs or identifiers exist.`
-          );
-        }
-
-        if (missingTags.length > 0) {
-          errorMessages.push(
-            `No workflows found for tags: ${missingTags.join(', ')}. Please verify the tags exist and have associated workflows.`
-          );
-        }
-
-        throw new NotFoundException(errorMessages.join(' '));
+      if (missingTags.length > 0) {
+        this.logger.warn(`No workflows found for tags: ${missingTags.join(', ')}.`);
       }
     }
 

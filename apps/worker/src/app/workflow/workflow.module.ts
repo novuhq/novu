@@ -27,6 +27,7 @@ import {
   TriggerBroadcast,
   TriggerEvent,
   TriggerMulticast,
+  VerifyPayload,
   WorkflowInMemoryProviderService,
   WorkflowRunService,
 } from '@novu/application-generic';
@@ -179,6 +180,7 @@ const USE_CASES = [
   SetJobAsCompleted,
   SetJobAsFailed,
   TriggerEvent,
+  VerifyPayload,
   UpdateJobStatus,
   ProcessUnsnoozeJob,
   WebhookFilterBackoffStrategy,

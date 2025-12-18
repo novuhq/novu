@@ -39,7 +39,6 @@ import { UpdateChannelConnection } from './usecases/update-channel-connection/up
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/channel-connections', version: '1' })
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiExcludeController()
 @ApiTags('Channel Connections')
 @RequireAuthentication()
 @ApiCommonResponses()
