@@ -8,11 +8,12 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     origin: false as boolean | string | string[],
     preflightContinue: false,
     maxAge: 86400,
+    credentials: true,
     allowedHeaders: Object.values(HttpRequestHeaderKeysEnum),
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
-  if (enableWildcard(req)) {
+  if (!req.url.startsWith('/v1/better-auth') && enableWildcard(req)) {
     corsOptions.origin = '*';
   } else {
     corsOptions.origin = [];

@@ -28,6 +28,7 @@ export enum ApiAuthSchemeEnum {
 export enum PassportStrategyEnum {
   JWT = 'jwt',
   JWT_CLERK = 'jwt-clerk',
+  JWT_BETTER_AUTH = 'jwt-better-auth',
   HEADER_API_KEY = 'headerapikey',
   KEYLESS = 'keyless',
 }

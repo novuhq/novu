@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   const isSelfHosted = env.VITE_SELF_HOSTED === 'true';
+  const eeAuthProvider = env.VITE_EE_AUTH_PROVIDER || 'clerk';
 
   // Plugin to redirect direct region-context imports to self-hosted version
   // This ensures we use the simpler self-hosted version instead of bundling Clerk-dependent cloud code
@@ -19,7 +20,7 @@ export default defineConfig(({ mode }) => {
     name: 'exclude-cloud-files',
     enforce: 'pre',
     resolveId(source, importer) {
-      if (!isSelfHosted) return null;
+      if (!isSelfHosted && eeAuthProvider !== 'better-auth') return null;
 
       // Redirect direct imports of region-context.tsx to the self-hosted version
       // The alias handles @/context/region imports, but direct relative imports need this plugin
@@ -89,7 +90,12 @@ export default defineConfig(({ mode }) => {
                 './src/utils/self-hosted/organization-switcher.tsx'
               ),
             }
-          : {}),
+          : eeAuthProvider === 'better-auth'
+            ? {
+                '@clerk/clerk-react': path.resolve(__dirname, './src/utils/better-auth/index.tsx'),
+                '@/context/region': path.resolve(__dirname, './src/context/region/index.self-hosted.ts'),
+              }
+            : {}),
         // Explicitly map prettier imports to browser-compatible versions
         'prettier/standalone': path.resolve(__dirname, './node_modules/prettier/standalone.js'),
         'prettier/plugins/html': path.resolve(__dirname, './node_modules/prettier/plugins/html.js'),

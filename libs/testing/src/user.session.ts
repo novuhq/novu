@@ -259,13 +259,19 @@ export class UserSession {
       const currentPayload = this.token ? jwt.decode(this.token.replace('Bearer ', '')) : null;
 
       const baseToken = process.env.CLERK_LONG_LIVED_TOKEN as string;
+      const decodedBaseToken = jwt.decode(baseToken);
       const payload = {
-        ...jwt.decode(baseToken),
-        ...(currentPayload || {}),
+        ...(typeof decodedBaseToken === 'object' && decodedBaseToken !== null ? decodedBaseToken : {}),
+        ...(typeof currentPayload === 'object' && currentPayload !== null ? currentPayload : {}),
         ...claims,
       };
 
-      const encodedToken = jwt.sign(payload, process.env.CLERK_MOCK_JWT_PRIVATE_KEY, {
+      const privateKey = process.env.CLERK_MOCK_JWT_PRIVATE_KEY;
+      if (!privateKey) {
+        throw new Error('CLERK_MOCK_JWT_PRIVATE_KEY environment variable is not set');
+      }
+
+      const encodedToken = jwt.sign(payload, privateKey, {
         algorithm: 'RS256',
       });
 

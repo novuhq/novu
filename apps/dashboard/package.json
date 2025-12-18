@@ -29,6 +29,7 @@
     "@calcom/embed-react": "1.5.2",
     "@clerk/clerk-react": "^5.15.1",
     "@codemirror/autocomplete": "^6.18.3",
+    "better-auth": "^1.3.0",
     "@codemirror/lang-html": "^6.4.9",
     "@codemirror/lang-liquid": "^6.2.3",
     "@codemirror/language": "^6.11.1",
