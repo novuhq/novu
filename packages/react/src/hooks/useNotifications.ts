@@ -64,6 +64,20 @@ export type UseNotificationsResult = {
   fetchMore: () => Promise<void>;
 };
 
+/**
+ * Merges updated notifications with the previous list, handling filtering and deduplication.
+ *
+ * @param prev - The previous notification list, or undefined for initial load
+ * @param updated - The updated notifications from cache events
+ * @param filter - The current filter to apply when determining which notifications to keep
+ * @param filterMatches - Whether the updated data's filter matches the current filter exactly
+ * @returns A new array of notifications that match the current filter, with updates applied
+ *
+ * Behavior:
+ * - Initial load: Returns all updated notifications if filter matches, otherwise filters to matching ones
+ * - Updates existing notifications: Replaces them with updated versions if they still match the filter, removes them if not
+ * - Adds new notifications: Inserts matching notifications that aren't already in the list at the beginning (to match WebSocket behavior)
+ */
 function mergeNotifications(
   prev: Notification[] | undefined,
   updated: Notification[],
@@ -77,6 +91,9 @@ function mergeNotifications(
 
   // Create map of updated notifications for quick lookup
   const updatedMap = new Map(updated.map((n) => [n.id, n]));
+
+  // Create set of existing notification IDs for O(1) lookup
+  const existingIds = new Set(prev.map((n) => n.id));
 
   // Update existing: keep if still matches filter, remove if not
   // This handles cases like: notification marked as read when we filter read: false -> remove it
@@ -92,11 +109,13 @@ function mergeNotifications(
     .filter((n): n is Notification => n !== null);
 
   // Add new matching notifications that aren't already in the list
+  // Insert at the beginning to match WebSocket behavior ([notification, ...prev])
   // This handles cases like: notification marked as read when we filter read: true -> add it
   const matchingNotifications = updated.filter((n) => checkNotificationMatchesFilter(n, filter));
   for (const notification of matchingNotifications) {
-    if (!prev.some((n) => n.id === notification.id)) {
-      result.push(notification);
+    if (!existingIds.has(notification.id)) {
+      result.unshift(notification);
+      existingIds.add(notification.id);
     }
   }
 
@@ -164,7 +183,13 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
       const currentFilter = getCurrentFilter();
       const matches = checkNotificationMatchesFilter(notification, currentFilter);
       if (matches) {
-        setData((prev) => (prev ? [notification, ...prev] : [notification]));
+        setData((prev) => {
+          // Prevent duplicates - mergeNotifications will handle this when notifications.list.updated fires
+          if (prev?.some((n) => n.id === notification.id)) {
+            return prev;
+          }
+          return prev ? [notification, ...prev] : [notification];
+        });
       }
     },
   });
@@ -224,11 +249,11 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     return fetchNotifications({ refetch: true });
   }, [getCurrentFilter, notifications, fetchNotifications]);
 
-  const fetchMore = async () => {
+  const fetchMore = useCallback(async () => {
     if (!hasMore || isFetching) return;
 
     return fetchNotifications();
-  };
+  }, [hasMore, isFetching, fetchNotifications]);
 
   const readAll = useCallback(async () => {
     const { tags, data } = getCurrentFilter();
