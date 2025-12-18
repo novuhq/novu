@@ -86,14 +86,13 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await authClient.signOut();
-    localStorage.removeItem('better-auth-token');
     localStorage.removeItem('better-auth-session-token');
     setSession(null);
     window.location.href = ROUTES.SIGN_IN;
   };
 
   const getToken = async () => {
-    return localStorage.getItem('better-auth-token');
+    return localStorage.getItem('better-auth-session-token');
   };
 
   const value = useMemo(
@@ -277,7 +276,7 @@ if (typeof window !== 'undefined') {
   (window as any).Clerk = {
     session: {
       getToken: async () => {
-        return localStorage.getItem('better-auth-token');
+        return localStorage.getItem('better-auth-session-token');
       },
     },
   };

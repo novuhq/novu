@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
-import { API_HOSTNAME } from '@/config';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
 
@@ -33,25 +32,6 @@ export function SignIn() {
       }
 
       localStorage.setItem('better-auth-session-token', data.token);
-
-      const exchangeResponse = await fetch(`${API_HOSTNAME}/v1/better-auth/exchange-token`, {
-        headers: {
-          Authorization: `Bearer ${data.token}`,
-        },
-      });
-
-      if (!exchangeResponse.ok) {
-        throw new Error('Failed to exchange token');
-      }
-
-      const responseData = await exchangeResponse.json();
-      const novuToken = responseData?.data?.token || responseData?.token;
-
-      if (!novuToken) {
-        throw new Error('No token in exchange response');
-      }
-
-      localStorage.setItem('better-auth-token', novuToken);
 
       window.location.href = ROUTES.ROOT;
     } catch (e: any) {
