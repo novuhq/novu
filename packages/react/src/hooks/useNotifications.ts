@@ -75,8 +75,8 @@ export type UseNotificationsResult = {
  *
  * Behavior:
  * - Initial load: Returns all updated notifications if filter matches, otherwise filters to matching ones
- * - Updates existing notifications: Replaces them with updated versions if they still match the filter, removes them if not
- * - Adds new notifications: Inserts matching notifications that aren't already in the list at the beginning (to match WebSocket behavior)
+ * - Updates existing notifications: Replaces them with updated versions if they still match the filter, removes them if not.
+ * - Adds new notifications: Inserts matching notifications that aren't already in the list at the beginning (to match WebSocket behavior).
  */
 function mergeNotifications(
   prev: Notification[] | undefined,
