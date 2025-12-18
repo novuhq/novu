@@ -170,12 +170,6 @@ export class GetWorkflowRuns {
           queryBuilder.whereLike('topics', `%${subscription.topicKey}%`);
           queryBuilder.whereLike('topics', `%${subscription.identifier}%`);
           queryBuilder.whereEquals('external_subscriber_id', subscription.externalSubscriberId);
-        } else {
-          return {
-            data: [],
-            next: null,
-            previous: null,
-          };
         }
       }
 
