@@ -371,33 +371,33 @@ export class InboxService {
 
   updateSubscription({
     topicKey,
-    subscriptionId,
+    identifier,
     name,
     preferences,
   }: {
     topicKey: string;
-    subscriptionId: string;
+    identifier: string;
     name?: string;
     preferences?: Array<PreferenceFilter>;
   }): Promise<SubscriptionResponse> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${subscriptionId}`, {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`, {
       name,
       ...(preferences !== undefined && { preferences }),
     });
   }
 
   updateSubscriptionPreference({
-    subscriptionId,
+    subscriptionIdentifier,
     workflowId,
     enabled,
     condition,
   }: {
-    subscriptionId: string;
+    subscriptionIdentifier: string;
     workflowId: string;
     enabled?: boolean;
     condition?: RulesLogic;
   }): Promise<SubscriptionPreferenceResponse> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/${subscriptionId}/preferences/${workflowId}`, {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/${subscriptionIdentifier}/preferences/${workflowId}`, {
       enabled,
       condition,
     });
@@ -405,7 +405,7 @@ export class InboxService {
 
   bulkUpdateSubscriptionPreferences(
     preferences: Array<{
-      subscriptionIdOrIdentifier: string;
+      subscriptionIdentifier: string;
       workflowId: string;
       enabled?: boolean;
       condition?: RulesLogic;
@@ -414,7 +414,7 @@ export class InboxService {
     return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/bulk`, { preferences });
   }
 
-  deleteSubscription({ topicKey, subscriptionId }: { topicKey: string; subscriptionId: string }): Promise<void> {
-    return this.#httpClient.delete(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${subscriptionId}`);
+  deleteSubscription({ topicKey, identifier }: { topicKey: string; identifier: string }): Promise<void> {
+    return this.#httpClient.delete(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`);
   }
 }

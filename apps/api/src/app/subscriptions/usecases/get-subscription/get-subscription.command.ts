@@ -8,5 +8,5 @@ export class GetSubscriptionCommand extends EnvironmentCommand {
 
   @IsString()
   @IsDefined()
-  subscriptionIdOrIdentifier: string;
+  identifier: string;
 }

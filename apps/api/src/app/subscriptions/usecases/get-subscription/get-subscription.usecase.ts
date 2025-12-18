@@ -20,9 +20,7 @@ export class GetSubscription {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       topicKey: command.topicKey,
-      ...(TopicSubscribersRepository.isInternalId(command.subscriptionIdOrIdentifier)
-        ? { _id: command.subscriptionIdOrIdentifier }
-        : { identifier: command.subscriptionIdOrIdentifier }),
+      identifier: command.identifier,
     });
 
     if (!subscription) {

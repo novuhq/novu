@@ -57,9 +57,7 @@ export class UpdateSubscriptionUsecase {
     }
 
     const subscription = await this.topicSubscribersRepository.findOne({
-      ...(TopicSubscribersRepository.isInternalId(command.subscriptionIdOrIdentifier)
-        ? { _id: command.subscriptionIdOrIdentifier }
-        : { identifier: command.subscriptionIdOrIdentifier }),
+      identifier: command.identifier,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _topicId: topic._id,
@@ -67,7 +65,7 @@ export class UpdateSubscriptionUsecase {
 
     if (!subscription) {
       throw new NotFoundException(
-        `Subscription with ID ${command.subscriptionIdOrIdentifier} not found for topic ${command.topicKey}`
+        `Subscription with identifier ${command.identifier} not found for topic ${command.topicKey}`
       );
     }
 

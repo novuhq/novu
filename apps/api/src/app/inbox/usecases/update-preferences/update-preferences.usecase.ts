@@ -14,7 +14,6 @@ import {
   UpsertSubscriberWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import {
-  BaseRepository,
   NotificationTemplateEntity,
   PreferencesRepository,
   SubscriberEntity,
@@ -108,18 +107,14 @@ export class UpdatePreferences {
   }
 
   private async getSubscriptionId(command: UpdatePreferencesCommand): Promise<string | undefined> {
-    if (command.level !== PreferenceLevelEnum.TEMPLATE || !command.subscriptionIdOrIdentifier) {
+    if (command.level !== PreferenceLevelEnum.TEMPLATE || !command.subscriptionIdentifier) {
       return undefined;
-    }
-
-    if (BaseRepository.isInternalId(command.subscriptionIdOrIdentifier)) {
-      return command.subscriptionIdOrIdentifier;
     }
 
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      identifier: command.subscriptionIdOrIdentifier,
+      identifier: command.subscriptionIdentifier,
     });
 
     return subscription?._id;
@@ -165,7 +160,7 @@ export class UpdatePreferences {
   ): Promise<InboxPreference> {
     if (
       command.level === PreferenceLevelEnum.TEMPLATE &&
-      command.subscriptionIdOrIdentifier &&
+      command.subscriptionIdentifier &&
       command.workflowIdOrIdentifier &&
       workflow
     ) {
