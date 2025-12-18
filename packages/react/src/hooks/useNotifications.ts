@@ -64,6 +64,45 @@ export type UseNotificationsResult = {
   fetchMore: () => Promise<void>;
 };
 
+function mergeNotifications(
+  prev: Notification[] | undefined,
+  updated: Notification[],
+  filter: NotificationFilter,
+  filterMatches: boolean
+): Notification[] {
+  // Initial load: use all notifications if filter matches, otherwise filter to matching ones
+  if (!prev) {
+    return filterMatches ? updated : updated.filter((n) => checkNotificationMatchesFilter(n, filter));
+  }
+
+  // Create map of updated notifications for quick lookup
+  const updatedMap = new Map(updated.map((n) => [n.id, n]));
+
+  // Update existing: keep if still matches filter, remove if not
+  // This handles cases like: notification marked as read when we filter read: false -> remove it
+  const result = prev
+    .map((notification) => {
+      const updatedNotification = updatedMap.get(notification.id);
+      if (updatedNotification) {
+        return checkNotificationMatchesFilter(updatedNotification, filter) ? updatedNotification : null;
+      }
+      // Notification not in updated data - check if it still matches filter
+      return checkNotificationMatchesFilter(notification, filter) ? notification : null;
+    })
+    .filter((n): n is Notification => n !== null);
+
+  // Add new matching notifications that aren't already in the list
+  // This handles cases like: notification marked as read when we filter read: true -> add it
+  const matchingNotifications = updated.filter((n) => checkNotificationMatchesFilter(n, filter));
+  for (const notification of matchingNotifications) {
+    if (!prev.some((n) => n.id === notification.id)) {
+      result.push(notification);
+    }
+  }
+
+  return result;
+}
+
 export const useNotifications = (props?: UseNotificationsProps): UseNotificationsResult => {
   const {
     tags,
@@ -101,12 +140,15 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
       if (!updatedData) return;
 
       const currentFilter = getCurrentFilter();
-      if (!isSameFilter(currentFilter, updatedData.filter)) {
-        return;
-      }
+      const filterMatches = isSameFilter(currentFilter, updatedData.filter);
 
-      setData(updatedData.notifications);
-      setHasMore(updatedData.hasMore);
+      // Always merge - mergeNotifications handles filtering correctly
+      setData((prev) => mergeNotifications(prev, updatedData.notifications, currentFilter, filterMatches));
+
+      // Only update hasMore when filter matches exactly (preserves pagination)
+      if (filterMatches) {
+        setHasMore(updatedData.hasMore);
+      }
     };
 
     const cleanup = on('notifications.list.updated', listener);
