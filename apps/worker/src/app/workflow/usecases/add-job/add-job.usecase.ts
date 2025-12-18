@@ -123,10 +123,12 @@ export class AddJob {
 
     this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
 
-    const notification = await this.notificationRepository.findOne({
-      _id: job._notificationId,
-      _environmentId: job._environmentId,
-    });
+    const notification =
+      command.notification ??
+      (await this.notificationRepository.findOne({
+        _id: job._notificationId,
+        _environmentId: job._environmentId,
+      }));
 
     const topicsContext =
       notification?.topics && notification.topics.length > 0
