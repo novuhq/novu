@@ -53,7 +53,7 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
     expect(response.status).to.equal(204);
   });
 
-  describe('workflowIdentifiers and tags query parameter', () => {
+  describe('workflowIds and tags query parameter', () => {
     it('should compute preferences for requested workflows, avoiding duplicates with stored preferences', async () => {
       const topicKey = `topic-${Date.now()}`;
       const subscriptionIdentifier = `subscription-${Date.now()}`;
@@ -77,7 +77,7 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       });
 
       const withNewWorkflow = await getSubscription(session, topicKey, subscriptionIdentifier, {
-        workflowIdentifiers: [requestedId],
+        workflowIds: [requestedId],
       });
       expect(withNewWorkflow.body.data.preferences).to.have.lengthOf(2);
       const ids = extractWorkflowIdentifiers(withNewWorkflow.body.data.preferences);
@@ -85,7 +85,7 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       expect(ids).to.include(requestedId);
 
       const withStoredWorkflow = await getSubscription(session, topicKey, subscriptionIdentifier, {
-        workflowIdentifiers: [storedId],
+        workflowIds: [storedId],
       });
       expect(withStoredWorkflow.body.data.preferences).to.have.lengthOf(1);
       expect(withStoredWorkflow.body.data.preferences[0].workflow.identifier).to.equal(storedId);
@@ -95,12 +95,12 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       expect(withoutNewWorkflow.body.data.preferences[0].workflow.identifier).to.equal(storedId);
 
       const withBoth = await getSubscription(session, topicKey, subscriptionIdentifier, {
-        workflowIdentifiers: [storedId, requestedId],
+        workflowIds: [storedId, requestedId],
       });
       expect(withBoth.body.data.preferences).to.have.lengthOf(2);
     });
 
-    it('should handle single string and array query params for workflowIdentifiers and tags', async () => {
+    it('should handle single string and array query params for workflowIds and tags', async () => {
       const topicKey = `topic-${Date.now()}`;
       const subscriptionIdentifier = `subscription-${Date.now()}`;
       const tag = `tag-${Date.now()}`;
@@ -122,12 +122,12 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       await createSubscription({ session, topicKey, body: { identifier: subscriptionIdentifier } });
 
       const singleWorkflowParam = await getSubscription(session, topicKey, subscriptionIdentifier, {
-        workflowIdentifiers: [workflow1.triggers[0].identifier],
+        workflowIds: [workflow1.triggers[0].identifier],
       });
       expect(singleWorkflowParam.body.data.preferences).to.have.lengthOf(1);
 
       const arrayWorkflowParam = await getSubscription(session, topicKey, subscriptionIdentifier, {
-        workflowIdentifiers: [workflow1.triggers[0].identifier, workflow2.triggers[0].identifier],
+        workflowIds: [workflow1.triggers[0].identifier, workflow2.triggers[0].identifier],
       });
       expect(arrayWorkflowParam.body.data.preferences).to.have.lengthOf(2);
 
@@ -209,7 +209,7 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       });
 
       const response = await getSubscription(session, topicKey, subscriptionIdentifier, {
-        workflowIdentifiers: [identifierWorkflow.triggers[0].identifier, dualMatchWorkflow.triggers[0].identifier],
+        workflowIds: [identifierWorkflow.triggers[0].identifier, dualMatchWorkflow.triggers[0].identifier],
         tags: [testTag],
       });
 
@@ -240,7 +240,7 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       await createSubscription({ session, topicKey, body: { identifier: subscriptionIdentifier } });
 
       const response = await getSubscription(session, topicKey, subscriptionIdentifier, {
-        workflowIdentifiers: [workflow.triggers[0].identifier],
+        workflowIds: [workflow.triggers[0].identifier],
       });
 
       const pref = response.body.data.preferences[0];
@@ -275,7 +275,7 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       await createSubscription({ session, topicKey, body: { identifier: subscriptionIdentifier } });
 
       const response = await getSubscription(session, topicKey, subscriptionIdentifier, {
-        workflowIdentifiers: [workflow.triggers[0].identifier],
+        workflowIds: [workflow.triggers[0].identifier],
       });
 
       const pref = response.body.data.preferences[0];
@@ -307,13 +307,13 @@ async function getSubscription(
   session: UserSession,
   topicKey: string,
   subscriptionIdOrIdentifier: string,
-  queryParams?: { workflowIdentifiers?: string[]; tags?: string[] }
+  queryParams?: { workflowIds?: string[]; tags?: string[] }
 ) {
   const searchParams = new URLSearchParams();
 
-  if (queryParams?.workflowIdentifiers?.length) {
-    for (const id of queryParams.workflowIdentifiers) {
-      searchParams.append('workflowIdentifiers', id);
+  if (queryParams?.workflowIds?.length) {
+    for (const id of queryParams.workflowIds) {
+      searchParams.append('workflowIds', id);
     }
   }
 

@@ -81,7 +81,7 @@ export class GetSubscription {
       orConditions.push({ _id: { $in: allIds } });
     }
 
-    if (command.workflowIds?.length) {
+    if (workflowIdentifiers.length > 0) {
       orConditions.push({ 'triggers.identifier': { $in: workflowIdentifiers } });
     }
 
