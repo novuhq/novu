@@ -93,7 +93,7 @@ export function SignUp() {
       const storedPendingInvitationId = sessionStorage.getItem('pendingInvitationId');
 
       if (storedPendingInvitationId) {
-        window.location.href = `${ROUTES.INVITATION_ACCEPT}?id=${storedPendingInvitationId}`;
+        navigate(`${ROUTES.INVITATION_ACCEPT}?id=${storedPendingInvitationId}`);
 
         return;
       }
@@ -113,7 +113,7 @@ export function SignUp() {
         });
       }
 
-      window.location.href = ROUTES.ROOT;
+      navigate(ROUTES.ROOT);
     } catch (e: any) {
       setError(e.message || 'An unexpected error occurred.');
     } finally {

@@ -38,6 +38,7 @@ type AuthContextType = {
   isLoaded: boolean;
   signOut: () => Promise<void>;
   getToken: () => Promise<string | null>;
+  refreshSession: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -46,47 +47,55 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<BetterAuthSession | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const { data } = await authClient.getSession();
+  const fetchSession = useCallback(async () => {
+    try {
+      const { data } = await authClient.getSession();
 
-        if (data?.user) {
-          let organization: BetterAuthOrganization | undefined;
+      if (data?.user) {
+        let organization: BetterAuthOrganization | undefined;
 
-          if (data.session?.activeOrganizationId) {
-            const { data: orgsData } = await authClient.organization.list();
-            const activeOrg = orgsData?.find((org: any) => org.id === data.session?.activeOrganizationId);
+        if (data.session?.activeOrganizationId) {
+          const { data: orgsData } = await authClient.organization.list();
+          const activeOrg = orgsData?.find((org: any) => org.id === data.session?.activeOrganizationId);
 
-            if (activeOrg) {
-              organization = {
-                id: activeOrg.id,
-                name: activeOrg.name,
-                slug: activeOrg.slug,
-              };
-            }
+          if (activeOrg) {
+            organization = {
+              id: activeOrg.id,
+              name: activeOrg.name,
+              slug: activeOrg.slug,
+            };
           }
-
-          setSession({
-            user: {
-              id: data.user.id,
-              email: data.user.email,
-              name: data.user.name,
-              image: data.user.image || undefined,
-              emailVerified: data.user.emailVerified,
-            },
-            organization,
-          });
         }
-      } catch (error) {
-        console.error('Failed to fetch session:', error);
-      } finally {
-        setIsLoaded(true);
-      }
-    };
 
-    fetchSession();
+        setSession({
+          user: {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name,
+            image: data.user.image || undefined,
+            emailVerified: data.user.emailVerified,
+          },
+          organization,
+        });
+      } else {
+        setSession(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch session:', error);
+      setSession(null);
+    } finally {
+      setIsLoaded(true);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchSession();
+  }, [fetchSession]);
+
+  const refreshSession = useCallback(async () => {
+    setIsLoaded(false);
+    await fetchSession();
+  }, [fetchSession]);
 
   const signOut = async () => {
     await authClient.signOut();
@@ -106,8 +115,9 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
       isLoaded,
       signOut,
       getToken,
+      refreshSession,
     }),
-    [session, isLoaded]
+    [session, isLoaded, refreshSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -125,6 +135,7 @@ export function useAuth() {
     userId: context.user?.id,
     orgId: context.organization?.id,
     signOut: context.signOut,
+    refreshSession: context.refreshSession,
   };
 }
 
@@ -348,6 +359,16 @@ export function InvitationAccept() {
 
 export function Protect({ children }: { children: React.ReactNode; [key: string]: any }) {
   return <>{children}</>;
+}
+
+export async function refreshBetterAuthSession(): Promise<boolean> {
+  try {
+    const { data } = await authClient.getSession();
+
+    return !!data?.user;
+  } catch {
+    return false;
+  }
 }
 
 if (typeof window !== 'undefined') {
