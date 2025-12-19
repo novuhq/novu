@@ -21,6 +21,7 @@ import { Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { DirectionEnum } from '../shared/dtos/base-responses';
+import { SubscriptionDetailsResponseDto } from '../shared/dtos/subscription-details-response.dto';
 import {
   GroupPreferenceFilterDto,
   WorkflowPreferenceRequestDto,
@@ -33,6 +34,8 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subscriptions/usecases/create-subscriptions';
+import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscription/get-subscription.command';
+import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
 import { CreateTopicSubscriptionsRequestDto } from './dtos/create-topic-subscriptions.dto';
 import { CreateUpdateTopicRequestDto } from './dtos/create-update-topic.dto';
@@ -81,7 +84,8 @@ export class TopicsController {
     private listTopicSubscriptionsUsecase: ListTopicSubscriptionsUseCase,
     private createSubscriptionsUsecase: CreateSubscriptionsUsecase,
     private deleteTopicSubscriptionsUsecase: DeleteTopicSubscriptionsUsecase,
-    private updateSubscriptionUsecase: UpdateSubscriptionUsecase
+    private updateSubscriptionUsecase: UpdateSubscriptionUsecase,
+    private getSubscriptionUsecase: GetSubscription
   ) {}
 
   @Get('')
@@ -363,6 +367,46 @@ export class TopicsController {
 
     // All subscriptions were successfully deleted
     return typeSafeResult;
+  }
+
+  @Get('/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
+  @ExternalApiAccessible()
+  @SdkGroupName('Topics.Subscriptions')
+  @SdkMethodName('getSubscription')
+  @ApiOperation({
+    summary: 'Get a topic subscription',
+    description: `Get a subscription by its unique identifier **subscriptionIdOrIdentifier** for a topic.`,
+  })
+  @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
+  @ApiParam({
+    name: 'subscriptionIdOrIdentifier',
+    description: 'The unique identifier of the subscription',
+    type: String,
+  })
+  @ApiResponse(SubscriptionResponseDto, 200)
+  @RequirePermissions(PermissionsEnum.TOPIC_READ)
+  async getTopicSubscription(
+    @UserSession() user: UserSessionData,
+    @Param('topicKey') topicKey: string,
+    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<SubscriptionDetailsResponseDto | void> {
+    const result = await this.getSubscriptionUsecase.execute(
+      GetSubscriptionCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        topicKey,
+        subscriptionIdOrIdentifier,
+      })
+    );
+
+    if (!result) {
+      res.status(HttpStatus.NO_CONTENT);
+
+      return;
+    }
+
+    return result;
   }
 
   @Patch('/:topicKey/subscriptions/:subscriptionIdOrIdentifier')

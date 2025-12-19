@@ -147,12 +147,6 @@ export class MarkNotificationsAsSeen {
 
     await Promise.all([
       this.invalidateCache.invalidateQuery({
-        key: buildFeedKey().invalidate({
-          subscriberId: command.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      }),
-      this.invalidateCache.invalidateQuery({
         key: buildMessageCountKey().invalidate({
           subscriberId: command.subscriberId,
           _environmentId: command.environmentId,

@@ -1,16 +1,14 @@
-import { FC, useMemo } from 'react';
-
 import { Button, JsonSchemaForm, Tabs, Title, useDebouncedCallback } from '@novu/novui';
-import { IconOutlineEditNote, IconOutlineTune, IconOutlineSave } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
+import { IconOutlineEditNote, IconOutlineSave, IconOutlineTune } from '@novu/novui/icons';
 import { Container, Flex } from '@novu/novui/jsx';
-
+import { FC, useMemo } from 'react';
+import { PATHS } from '../../../../components/docs/docs.const';
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { When } from '../../../../components/utils/When';
-import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
-import { PATHS } from '../../../../components/docs/docs.const';
 import { getSuggestionVariables, subscriberVariables } from '../../../utils';
+import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 
 export type OnChangeType = 'step' | 'payload';
 
@@ -55,10 +53,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     onChange(type, data, id);
   }, TYPING_DEBOUNCE_TIME_MS);
 
-  const variables = useMemo(
-    () => [...(subscriberVariables || []), ...(payloadProperties || [])],
-    [payloadProperties]
-  );
+  const variables = useMemo(() => [...(subscriberVariables || []), ...(payloadProperties || [])], [payloadProperties]);
 
   return (
     <>

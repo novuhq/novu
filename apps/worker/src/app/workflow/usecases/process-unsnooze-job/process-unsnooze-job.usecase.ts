@@ -97,12 +97,6 @@ export class ProcessUnsnoozeJob {
           groupId: job._organizationId,
         }),
         this.invalidateCache.invalidateQuery({
-          key: buildFeedKey().invalidate({
-            subscriberId: job.subscriberId,
-            _environmentId: job._environmentId,
-          }),
-        }),
-        this.invalidateCache.invalidateQuery({
           key: buildMessageCountKey().invalidate({
             subscriberId: job.subscriberId,
             _environmentId: job._environmentId,

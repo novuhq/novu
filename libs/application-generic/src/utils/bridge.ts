@@ -98,6 +98,11 @@ export const BRIDGE_EXECUTION_ERROR = {
     code: 'PayloadTooLarge',
     message: (url: string) => `Payload too large for \`${url}\``,
   },
+  BRIDGE_AUTHENTICATION_FAILED: {
+    code: 'BridgeAuthenticationFailed',
+    message: (url: string) =>
+      `Bridge authentication failed for \`${url}\`. Please check your NOVU_SECRET_KEY environment variable.`,
+  },
   UNKNOWN_BRIDGE_REQUEST_ERROR: {
     code: 'UnknownBridgeRequestError',
     message: (url: string) => `Unknown bridge request error calling \`${url}\``,

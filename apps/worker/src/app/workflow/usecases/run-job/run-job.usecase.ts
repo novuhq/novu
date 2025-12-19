@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -19,7 +19,6 @@ import {
   JobEntity,
   JobRepository,
   JobStatusEnum,
-  NotificationEntity,
   NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -37,6 +36,7 @@ import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
+import { PartialNotificationEntity } from '../add-job/add-job.command';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 import { ProcessUnsnoozeJob, ProcessUnsnoozeJobCommand } from '../process-unsnooze-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
@@ -130,6 +130,7 @@ export class RunJob {
     let shouldQueueNextJob = true;
     let isJobExtendedToSubscriberSchedule = false;
     let error: Error | undefined;
+    let notification: PartialNotificationEntity | null = null;
 
     try {
       const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
@@ -139,14 +140,13 @@ export class RunJob {
         environment: { _id: job._environmentId },
       });
 
-      const notification: Pick<NotificationEntity, '_id' | 'critical' | 'severity' | 'tags'> | null =
-        await this.notificationRepository.findOne(
-          {
-            _id: job._notificationId,
-            _environmentId: job._environmentId,
-          },
-          '_id critical tags severity'
-        );
+      notification = await this.notificationRepository.findOne(
+        {
+          _id: job._notificationId,
+          _environmentId: job._environmentId,
+        },
+        '_id critical tags severity topics'
+      );
 
       if (!notification) {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
@@ -359,7 +359,7 @@ export class RunJob {
       throw caughtError;
     } finally {
       if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
-        await this.tryQueueNextJobs(job);
+        await this.tryQueueNextJobs(job, notification);
       } else if (!isJobExtendedToSubscriberSchedule) {
         // Update workflow run status based on step runs when halting on step failure
         await this.workflowRunService.updateDeliveryLifecycle({
@@ -384,7 +384,7 @@ export class RunJob {
    * If queueNextJob.execute returns undefined, we stop the workflow.
    * Otherwise, we continue trying to queue the next job in the chain.
    */
-  private async tryQueueNextJobs(job: JobEntity): Promise<void> {
+  private async tryQueueNextJobs(job: JobEntity, notification?: PartialNotificationEntity | null): Promise<void> {
     let currentJob: JobEntity | null = job;
     let nextJob: JobEntity | null = null;
     if (!currentJob) {
@@ -422,6 +422,7 @@ export class RunJob {
           organizationId: nextJob._organizationId,
           jobId: nextJob._id,
           job: nextJob,
+          notification,
         });
 
         if (addJobResult.stepStatus === JobStatusEnum.SKIPPED) {

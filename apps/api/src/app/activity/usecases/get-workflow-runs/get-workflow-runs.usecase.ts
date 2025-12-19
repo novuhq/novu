@@ -11,6 +11,7 @@ import {
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
+import { TopicSubscribersRepository } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
@@ -64,6 +65,7 @@ export class GetWorkflowRuns {
   constructor(
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
+    private topicSubscribersRepository: TopicSubscribersRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
@@ -156,6 +158,19 @@ export class GetWorkflowRuns {
 
       if (command.topicKey) {
         queryBuilder.whereLike('topics', `%${command.topicKey}%`);
+      }
+
+      if (command.subscriptionId) {
+        const subscription = await this.topicSubscribersRepository.findOne({
+          _environmentId: command.environmentId,
+          identifier: command.subscriptionId,
+        });
+
+        if (subscription) {
+          queryBuilder.whereLike('topics', `%${subscription.topicKey}%`);
+          queryBuilder.whereLike('topics', `%${subscription.identifier}%`);
+          queryBuilder.whereEquals('external_subscriber_id', subscription.externalSubscriberId);
+        }
       }
 
       if (command.contextKeys?.length) {

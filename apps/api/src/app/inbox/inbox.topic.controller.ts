@@ -15,6 +15,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Response } from 'express';
+import { SubscriptionDetailsResponseDto } from '../shared/dtos/subscription-details-response.dto';
 import {
   GroupPreferenceFilterDto,
   WorkflowPreferenceRequestDto,
@@ -24,13 +25,12 @@ import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempot
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subscriptions/usecases/create-subscriptions';
+import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscription/get-subscription.command';
+import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
 import { CreateTopicSubscriptionRequestDto } from './dtos/create-topic-subscription-request.dto';
-import { TopicSubscriptionDetailsResponseDto } from './dtos/get-topic-subscriptions-response.dto';
 import { DeleteTopicSubscriptionCommand } from './usecases/delete-subscription/delete-subscription.command';
 import { DeleteTopicSubscription } from './usecases/delete-subscription/delete-subscription.usecase';
-import { GetTopicSubscriptionCommand } from './usecases/get-topic-subscription/get-topic-subscription.command';
-import { GetTopicSubscription } from './usecases/get-topic-subscription/get-topic-subscription.usecase';
 import { GetTopicSubscriptionsCommand } from './usecases/get-topic-subscriptions/get-topic-subscriptions.command';
 import { GetTopicSubscriptions } from './usecases/get-topic-subscriptions/get-topic-subscriptions.usecase';
 
@@ -41,7 +41,7 @@ import { GetTopicSubscriptions } from './usecases/get-topic-subscriptions/get-to
 export class InboxTopicController {
   constructor(
     private getTopicSubscriptionsUsecase: GetTopicSubscriptions,
-    private getTopicSubscriptionUsecase: GetTopicSubscription,
+    private getTopicSubscriptionUsecase: GetSubscription,
     private createSubscriptionsUsecase: CreateSubscriptionsUsecase,
     private updateSubscriptionUsecase: UpdateSubscriptionUsecase,
     private deleteTopicSubscriptionUsecase: DeleteTopicSubscription
@@ -52,7 +52,7 @@ export class InboxTopicController {
   async getTopicSubscriptions(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string
-  ): Promise<TopicSubscriptionDetailsResponseDto[]> {
+  ): Promise<SubscriptionDetailsResponseDto[]> {
     return await this.getTopicSubscriptionsUsecase.execute(
       GetTopicSubscriptionsCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -73,7 +73,7 @@ export class InboxTopicController {
     @Res({ passthrough: true }) res: Response,
     @Query('workflowIdentifiers') workflowIdentifiers?: string | string[],
     @Query('tags') tags?: string | string[]
-  ): Promise<TopicSubscriptionDetailsResponseDto | void> {
+  ): Promise<SubscriptionDetailsResponseDto | void> {
     const normalizedWorkflowIdentifiers = workflowIdentifiers
       ? Array.isArray(workflowIdentifiers)
         ? workflowIdentifiers
@@ -82,13 +82,11 @@ export class InboxTopicController {
     const normalizedTags = tags ? (Array.isArray(tags) ? tags : [tags]) : undefined;
 
     const result = await this.getTopicSubscriptionUsecase.execute(
-      GetTopicSubscriptionCommand.create({
+      GetSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
-        subscriberId: subscriberSession.subscriberId,
         topicKey,
         subscriptionIdOrIdentifier,
-        _subscriberId: subscriberSession._id,
         workflowIdentifiers: normalizedWorkflowIdentifiers,
         tags: normalizedTags,
       })
@@ -109,7 +107,7 @@ export class InboxTopicController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionRequestDto
-  ): Promise<TopicSubscriptionDetailsResponseDto> {
+  ): Promise<SubscriptionDetailsResponseDto> {
     const result = await this.createSubscriptionsUsecase.execute(
       CreateSubscriptionsCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -153,7 +151,7 @@ export class InboxTopicController {
     @Param('topicKey') topicKey: string,
     @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
     @Body() body: UpdateSubscriptionRequestDto
-  ): Promise<TopicSubscriptionDetailsResponseDto> {
+  ): Promise<SubscriptionDetailsResponseDto> {
     const subscription = await this.updateSubscriptionUsecase.execute(
       UpdateSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,

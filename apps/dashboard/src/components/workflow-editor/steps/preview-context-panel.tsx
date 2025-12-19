@@ -99,7 +99,6 @@ export function PreviewContextPanel({
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const { isPayloadSchemaDrawerOpen, highlightedVariableKey, openSchemaDrawer, closeSchemaDrawer } =
     useCreateVariable();
 
@@ -279,15 +278,13 @@ export function PreviewContextPanel({
           currentStepId={currentStepId}
         />
 
-        {isContextEnabled && (
-          <PreviewContextSection
-            error={errors.context}
-            context={previewContext.context}
-            schema={schemas.context}
-            onUpdate={updatePreviewSection}
-            onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
-          />
-        )}
+        <PreviewContextSection
+          error={errors.context}
+          context={previewContext.context}
+          schema={schemas.context}
+          onUpdate={updatePreviewSection}
+          onClearPersisted={canClearPersisted ? handleClearPersistedContext : undefined}
+        />
       </Accordion>
       <PayloadSchemaDrawer
         isOpen={isPayloadSchemaDrawerOpen}

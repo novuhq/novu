@@ -16,7 +16,7 @@ type FeatureConfig = FeatureNameEnum | string;
 
 export const FEATURE_SECTIONS: FeatureSectionConfig[] = [
   {
-    title: 'Events',
+    title: 'Workflow Runs',
     features: [
       FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
       FeatureNameEnum.PLATFORM_COST_PER_ADDITIONAL_1K_EVENTS,
@@ -85,7 +85,7 @@ const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfi
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
     ],
     excluded: [
-      '30,000 events & more',
+      '30,000 workflow runs & more',
       'Unlimited workflows',
       FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN,
       'Dedicated support',
@@ -100,7 +100,7 @@ const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfi
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
     ],
     excluded: [
-      '250,000 events & more',
+      '250,000 workflow runs & more',
       'Unlimited workflows',
       FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN,
       FeatureNameEnum.WEBHOOKS,
@@ -115,7 +115,7 @@ const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfi
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
     ],
     excluded: [
-      'Custom event amount',
+      'Custom workflow run amount',
       FeatureNameEnum.ACCOUNT_CUSTOM_SAML_SSO_OIDC_BOOLEAN,
       '24 hours support SLA',
       'Custom delay & snooze durations',
@@ -133,7 +133,7 @@ const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfi
   },
   [ApiServiceLevelEnum.UNLIMITED]: {
     included: [
-      'Custom events',
+      'Custom workflow runs',
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,

@@ -1,15 +1,19 @@
-import { PreferencesEntity, TopicSubscribersEntity } from '@novu/dal';
+import { NotificationTemplateEntity, PreferencesEntity, TopicSubscribersEntity } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
 import { RulesLogic } from 'json-logic-js';
+import { SubscriptionDetailsResponseDto } from '../../shared/dtos/subscription-details-response.dto';
 import { SubscriptionPreferenceDto } from '../../shared/dtos/subscriptions/create-subscriptions-response.dto';
-import { TopicSubscriptionDetailsResponseDto } from '../dtos/get-topic-subscriptions-response.dto';
-import { SelectedWorkflowFields } from '../usecases/get-topic-subscriptions/get-topic-subscriptions.usecase';
+
+export type SelectedWorkflowFields = Pick<
+  NotificationTemplateEntity,
+  '_id' | 'triggers' | 'name' | 'critical' | 'tags' | 'data' | 'severity'
+>;
 
 export function mapTopicSubscriptionToDto(
   subscription: TopicSubscribersEntity,
   preferencesEntities: PreferencesEntity[],
   workflowEntities: SelectedWorkflowFields[]
-): TopicSubscriptionDetailsResponseDto {
+): SubscriptionDetailsResponseDto {
   const preferences: SubscriptionPreferenceDto[] = preferencesEntities
     .map((pref) => {
       const workflowId = pref._templateId?.toString();
@@ -46,3 +50,17 @@ export function mapTopicSubscriptionToDto(
     preferences: preferences.length > 0 ? preferences : undefined,
   };
 }
+
+/**
+ * MongoDB projection object for SelectedWorkflowFields.
+ * This ensures the projection is always aligned with the type definition.
+ */
+export const SELECTED_WORKFLOW_FIELDS_PROJECTION: Record<keyof SelectedWorkflowFields, 1> = {
+  _id: 1,
+  triggers: 1,
+  name: 1,
+  critical: 1,
+  tags: 1,
+  data: 1,
+  severity: 1,
+} as const;

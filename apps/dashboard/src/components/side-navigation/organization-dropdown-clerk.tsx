@@ -1,3 +1,9 @@
+import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
+import type { OrganizationMembershipResource } from '@clerk/types';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -11,12 +17,6 @@ import { DEFAULT_REGION, getRegionCodeFromAws } from '@/context/region/region-co
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
-import type { OrganizationMembershipResource } from '@clerk/types';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 
 const SCROLL_THRESHOLD = 100;
 const PAGE_SIZE = 10;
@@ -200,7 +200,7 @@ export function OrganizationDropdown() {
           )}
         >
           <OrganizationAvatar imageUrl={currentOrganization.imageUrl} name={currentOrganization.name} showShimmer />
-          <span className="min-w-0 flex-1 break-words text-left text-sm font-medium text-foreground-950">
+          <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground-950">
             {currentOrganization.name}
           </span>
           <RiArrowDownSLine className="ml-auto size-4 shrink-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus:opacity-100" />

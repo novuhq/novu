@@ -29,7 +29,7 @@ export class TopicSubscription {
   readonly id: string;
   readonly identifier: string;
   readonly topicKey: string;
-  readonly preferences: Array<SubscriptionPreference>;
+  readonly preferences?: Array<SubscriptionPreference> | undefined;
 
   constructor(
     subscription: SubscriptionResponse & { topicKey: string },
@@ -45,7 +45,7 @@ export class TopicSubscription {
     this.id = subscription.id;
     this.identifier = subscription.identifier;
     this.topicKey = subscription.topicKey;
-    this.preferences = subscription.preferences.map(
+    this.preferences = subscription.preferences?.map(
       (pref) => new SubscriptionPreference({ ...pref }, this.#emitter, this.#inboxService, this.#cache, this.#useCache)
     );
   }

@@ -41,7 +41,7 @@ export function WorkflowActivity() {
     <ActivityFeedContent
       initialFilters={initialFilters}
       hideFilters={['workflows']}
-      className="h-full"
+      className="h-full max-w-full"
       contentHeight="h-[calc(100%-50px)]"
       onTriggerWorkflow={handleTriggerWorkflow}
     />

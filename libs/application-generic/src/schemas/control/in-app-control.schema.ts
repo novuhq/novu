@@ -10,17 +10,18 @@ import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
  * 1. URLs that start with template variables like {{variable}}
  *    - Example: {{variable}}, {{variable}}/path
  *
- * 2. Full URLs that may contain template variables
+ * 2. Full URLs that may contain template variables anywhere
  *    - Excludes mailto: links
- *    - Example: https://example.com, https://example.com/{{variable}}, https://{{variable}}.com
+ *    - Example: https://example.com, https://example.com/{{variable}}, https://example.com?id={{var1}}&index={{var2}}
  *
- * 3. Paths starting with / that may contain template variables
+ * 3. Paths starting with / that may contain template variables anywhere
  *    - Example: /path/to/page, /path/{{variable}}/page
  *
- * Pattern is optimized to prevent exponential backtracking while maintaining all functionality
+ * Pattern prevents backtracking by excluding braces from regular character classes,
+ * ensuring braces only appear in template variables.
  */
 const redirectUrlRegex =
-  /^(?:\{\{[^}]*\}\}.*|(?!mailto:)(?:https?:\/\/[^\s/$.?#][^\s]*(?:\{\{[^}]*\}\})*[^\s]*)|\/[^\s]*(?:\{\{[^}]*\}\})*[^\s]*)$/;
+  /^(?:\{\{[^}]*\}\}.*|(?!mailto:)(?:https?:\/\/[^\s/$.?#][^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)|\/[^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)$/;
 
 const redirectZodSchema = z.object({
   url: z.string().regex(redirectUrlRegex),

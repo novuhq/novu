@@ -1,7 +1,7 @@
 import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
-import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class GetTopicSubscriptionCommand extends EnvironmentWithSubscriber {
+export class GetSubscriptionCommand extends EnvironmentCommand {
   @IsString()
   @IsDefined()
   topicKey: string;
@@ -9,10 +9,6 @@ export class GetTopicSubscriptionCommand extends EnvironmentWithSubscriber {
   @IsString()
   @IsDefined()
   subscriptionIdOrIdentifier: string;
-
-  @IsString()
-  @IsDefined()
-  _subscriberId: string;
 
   @IsArray()
   @IsString({ each: true })

@@ -31,11 +31,6 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
   const messageRepository = new MessageRepository();
   const jobRepository = new JobRepository();
 
-  before(() => {
-    // Enable the context feature flag
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
-  });
-
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -72,11 +67,6 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
 
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-  });
-
-  after(() => {
-    // Clean up the feature flag
-    delete (process.env as Record<string, string>).IS_CONTEXT_ENABLED;
   });
 
   afterEach(async () => {

@@ -90,7 +90,6 @@ export const SideNavigation = () => {
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -150,19 +149,17 @@ export const SideNavigation = () => {
                   <span>Topics</span>
                 </NavigationLink>
               </Protect>
-              {isContextEnabled && (
-                <Protect permission={PermissionsEnum.WORKFLOW_READ}>
-                  <NavigationLink to={buildRoute(ROUTES.CONTEXTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-                    <RiBuildingLine className="size-4" />
-                    <span>
-                      Contexts{' '}
-                      <Badge variant="lighter" className="text-xs">
-                        BETA
-                      </Badge>
-                    </span>
-                  </NavigationLink>
-                </Protect>
-              )}
+              <Protect permission={PermissionsEnum.WORKFLOW_READ}>
+                <NavigationLink to={buildRoute(ROUTES.CONTEXTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                  <RiBuildingLine className="size-4" />
+                  <span>
+                    Contexts{' '}
+                    <Badge variant="lighter" className="text-xs">
+                      BETA
+                    </Badge>
+                  </span>
+                </NavigationLink>
+              </Protect>
             </NavigationGroup>
             <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
               <NavigationGroup label="Monitor">

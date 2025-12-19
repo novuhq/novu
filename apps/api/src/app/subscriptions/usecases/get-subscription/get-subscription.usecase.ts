@@ -8,16 +8,16 @@ import {
   TopicSubscribersRepository,
 } from '@novu/dal';
 import { PreferencesTypeEnum } from '@novu/shared';
-import { TopicSubscriptionDetailsResponseDto } from '../../dtos/get-topic-subscriptions-response.dto';
-import { mapTopicSubscriptionToDto } from '../../utils/topic-subscription-mapper';
+import { SubscriptionDetailsResponseDto } from '../../../shared/dtos/subscription-details-response.dto';
 import {
+  mapTopicSubscriptionToDto,
   SELECTED_WORKFLOW_FIELDS_PROJECTION,
   SelectedWorkflowFields,
-} from '../get-topic-subscriptions/get-topic-subscriptions.usecase';
-import { GetTopicSubscriptionCommand } from './get-topic-subscription.command';
+} from '../../utils/subscriptions';
+import { GetSubscriptionCommand } from './get-subscription.command';
 
 @Injectable()
-export class GetTopicSubscription {
+export class GetSubscription {
   constructor(
     private topicSubscribersRepository: TopicSubscribersRepository,
     private preferencesRepository: PreferencesRepository,
@@ -26,11 +26,10 @@ export class GetTopicSubscription {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetTopicSubscriptionCommand): Promise<TopicSubscriptionDetailsResponseDto | null> {
+  async execute(command: GetSubscriptionCommand): Promise<SubscriptionDetailsResponseDto | null> {
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: command._subscriberId,
       topicKey: command.topicKey,
       ...(TopicSubscribersRepository.isInternalId(command.subscriptionIdOrIdentifier)
         ? { _id: command.subscriptionIdOrIdentifier }
@@ -58,7 +57,7 @@ export class GetTopicSubscription {
   }
 
   private async resolveWorkflowPreferences(
-    command: GetTopicSubscriptionCommand,
+    command: GetSubscriptionCommand,
     subscription: TopicSubscribersEntity,
     storedPreferences: PreferencesEntity[]
   ): Promise<{
@@ -100,7 +99,7 @@ export class GetTopicSubscription {
   }
 
   private async fetchRequestedWorkflows(
-    command: GetTopicSubscriptionCommand,
+    command: GetSubscriptionCommand,
     subscription: TopicSubscribersEntity,
     storedWorkflowIds: string[]
   ): Promise<SelectedWorkflowFields[]> {
@@ -140,7 +139,7 @@ export class GetTopicSubscription {
   }
 
   private async computePreferencesForMissingWorkflows(
-    command: GetTopicSubscriptionCommand,
+    command: GetSubscriptionCommand,
     subscription: TopicSubscribersEntity,
     missingWorkflows: SelectedWorkflowFields[]
   ): Promise<PreferencesEntity[]> {
@@ -154,7 +153,7 @@ export class GetTopicSubscription {
           GetPreferencesCommand.create({
             environmentId: command.environmentId,
             organizationId: command.organizationId,
-            subscriberId: command._subscriberId,
+            subscriberId: subscription._subscriberId,
             templateId: workflow._id,
             ensureDefaultAllEnabled: false,
           })

@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { SubscriptionPreferenceDto } from '../../shared/dtos/subscriptions/create-subscriptions-response.dto';
+import { SubscriptionPreferenceDto } from './subscriptions/create-subscriptions-response.dto';
 
-export class TopicSubscriptionDetailsResponseDto {
+export class SubscriptionDetailsResponseDto {
   @ApiProperty({
     description: 'The unique identifier of the subscription',
     example: '64f5e95d3d7946d80d0cb679',

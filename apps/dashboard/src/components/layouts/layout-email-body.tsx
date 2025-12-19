@@ -43,7 +43,6 @@ export const LayoutEmailBody = () => {
   const parsedVariables = useParseVariables(layout?.variables, undefined, undefined, true);
   const resourceId = layout?.layoutId || '';
   const resourceType = LocalizationResourceEnum.LAYOUT;
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
 
   const track = useTelemetry();
 
@@ -196,7 +195,7 @@ export const LayoutEmailBody = () => {
             addDigestVariables={false}
             isPayloadSchemaEnabled={false}
             isTranslationEnabled={isTranslationEnabled}
-            isContextEnabled={isContextEnabled}
+            isContextEnabled={true}
             translationKeys={translationKeys}
             translationValueInput={LayoutControlInput}
             onCreateNewTranslationKey={handleCreateNewTranslationKey}

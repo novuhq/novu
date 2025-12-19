@@ -23,7 +23,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   let invalidateCache: InvalidateCacheService;
   let subscriberRepository: SubscriberRepository;
   const isSubscribersScheduleEnabled = (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED;
-  const isContextEnabled = (process.env as Record<string, string>).IS_CONTEXT_ENABLED;
 
   before(async () => {
     const cacheInMemoryProviderService = new CacheInMemoryProviderService();
@@ -45,12 +44,10 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       invalidateCache
     );
     (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
   });
 
   afterEach(() => {
     (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = isContextEnabled;
   });
 
   const initializeSession = async ({
