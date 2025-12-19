@@ -17,6 +17,7 @@ import {
   CreateWorkflowPage,
   ErrorPage,
   IntegrationsListPage,
+  InvitationAcceptPage,
   LayoutsPage,
   OrganizationListPage,
   SettingsPage,
@@ -86,6 +87,10 @@ const router = createBrowserRouter([
           {
             path: ROUTES.SIGNUP_ORGANIZATION_LIST,
             element: <OrganizationListPage />,
+          },
+          {
+            path: ROUTES.INVITATION_ACCEPT,
+            element: <InvitationAcceptPage />,
           },
         ],
       },

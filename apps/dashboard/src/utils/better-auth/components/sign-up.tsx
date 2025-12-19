@@ -16,6 +16,9 @@ export function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  
+  const pendingInvitationId = sessionStorage.getItem('pendingInvitationId');
+  const hasInvitation = !!pendingInvitationId;
 
   const validatePassword = (password: string) => {
     const hasUpperCase = /[A-Z]/.test(password);
@@ -63,7 +66,7 @@ export function SignUp() {
       return;
     }
 
-    if (!organizationName.trim()) {
+    if (!hasInvitation && !organizationName.trim()) {
       setError('Organization name is required.');
       setIsLoading(false);
 
@@ -86,6 +89,14 @@ export function SignUp() {
       }
 
       localStorage.setItem('better-auth-session-token', signUpData.token);
+
+      const storedPendingInvitationId = sessionStorage.getItem('pendingInvitationId');
+
+      if (storedPendingInvitationId) {
+        window.location.href = `${ROUTES.INVITATION_ACCEPT}?id=${storedPendingInvitationId}`;
+
+        return;
+      }
 
       const { data: orgData, error: orgError } = await authClient.organization.create({
         name: organizationName,
@@ -177,20 +188,29 @@ export function SignUp() {
             Min. 8 characters, include uppercase, lowercase, number, and special character.
           </p>
         </div>
-        <div>
-          <label htmlFor="organizationName" className="mb-1 block text-sm font-medium text-gray-700">
-            Organization Name <span className="text-red-600">*</span>
-          </label>
-          <Input
-            type="text"
-            id="organizationName"
-            value={organizationName}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrganizationName(e.target.value)}
-            placeholder="Your Company"
-            required
-            className="w-full"
-          />
-        </div>
+        {!hasInvitation && (
+          <div>
+            <label htmlFor="organizationName" className="mb-1 block text-sm font-medium text-gray-700">
+              Organization Name <span className="text-red-600">*</span>
+            </label>
+            <Input
+              type="text"
+              id="organizationName"
+              value={organizationName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrganizationName(e.target.value)}
+              placeholder="Your Company"
+              required
+              className="w-full"
+            />
+          </div>
+        )}
+        {hasInvitation && (
+          <div className="rounded-md bg-blue-50 p-4">
+            <p className="text-sm text-blue-700">
+              You'll be joining an organization after creating your account.
+            </p>
+          </div>
+        )}
         {error && (
           <div className="rounded-md bg-red-50 p-4" role="alert">
             <p className="text-sm text-red-600">{error}</p>

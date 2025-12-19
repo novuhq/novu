@@ -2,6 +2,7 @@ export const ROUTES = {
   SIGN_IN: '/auth/sign-in',
   SIGN_UP: '/auth/sign-up',
   SIGNUP_ORGANIZATION_LIST: '/auth/organization-list',
+  INVITATION_ACCEPT: '/auth/invitation/accept',
   USECASE_SELECT: '/onboarding/usecase',
   INBOX_USECASE: '/onboarding/inbox',
   INBOX_EMBED: '/onboarding/inbox/embed',

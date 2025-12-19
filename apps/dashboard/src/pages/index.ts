@@ -6,6 +6,7 @@ export * from './create-layout';
 export * from './create-workflow';
 export * from './error-page';
 export * from './integrations-list-page';
+export * from './invitation-accept';
 export * from './layouts';
 export * from './organization-list';
 export * from './questionnaire-page';

@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from './client';
 import {
+  InvitationAccept as InvitationAcceptComponent,
   OrganizationCreate as OrganizationCreateComponent,
   OrganizationList as OrganizationListComponent,
   OrganizationSwitcher as OrganizationSwitcherComponent,
   SignIn as SignInComponent,
   SignUp as SignUpComponent,
+  TeamMembers as TeamMembersComponent,
   UserButton as UserButtonComponent,
 } from './components';
 
@@ -332,8 +334,16 @@ export function OrganizationList(props?: {
   return <OrganizationCreateComponent />;
 }
 
-export function OrganizationProfile() {
-  return <div>Better Auth Organization Profile</div>;
+export function OrganizationProfile({ appearance, children }: { appearance?: any; children?: React.ReactNode }) {
+  return <TeamMembersComponent appearance={appearance} />;
+}
+
+OrganizationProfile.Page = function Page({ label }: { label: string }) {
+  return null;
+};
+
+export function InvitationAccept() {
+  return <InvitationAcceptComponent />;
 }
 
 export function Protect({ children }: { children: React.ReactNode; [key: string]: any }) {

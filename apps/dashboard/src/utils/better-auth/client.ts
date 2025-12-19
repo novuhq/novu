@@ -1,9 +1,12 @@
 import { createAuthClient } from 'better-auth/client';
 import { organizationClient } from 'better-auth/client/plugins';
-import { BETTER_AUTH_BASE_URL } from '@/config';
+import { API_HOSTNAME, BETTER_AUTH_BASE_URL } from '@/config';
+
+const baseURL = BETTER_AUTH_BASE_URL || API_HOSTNAME || 'http://localhost:3000';
+const fullBaseURL = `${baseURL}/v1/better-auth`;
 
 export const authClient = createAuthClient({
-  baseURL: BETTER_AUTH_BASE_URL + '/v1/better-auth',
+  baseURL: fullBaseURL,
   plugins: [organizationClient()],
   fetchOptions: {
     credentials: 'include',
