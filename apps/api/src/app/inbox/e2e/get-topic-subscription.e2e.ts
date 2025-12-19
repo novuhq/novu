@@ -90,6 +90,10 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       expect(withStoredWorkflow.body.data.preferences).to.have.lengthOf(1);
       expect(withStoredWorkflow.body.data.preferences[0].workflow.identifier).to.equal(storedId);
 
+      const withNonedWorkflow = await getSubscription(session, topicKey, subscriptionIdentifier);
+      expect(withNonedWorkflow.body.data.preferences).to.have.lengthOf(1);
+      expect(withNonedWorkflow.body.data.preferences[0].workflow.identifier).to.equal(storedId);
+
       const withBoth = await getSubscription(session, topicKey, subscriptionIdentifier, {
         workflowIdentifiers: [storedId, requestedId],
       });
@@ -117,11 +121,9 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
 
       await createSubscription({ session, topicKey, body: { identifier: subscriptionIdentifier } });
 
-      const singleWorkflowParam = await session.testAgent
-        .get(
-          `/v1/inbox/topics/${topicKey}/subscriptions/${subscriptionIdentifier}?workflowIdentifiers=${workflow1.triggers[0].identifier}`
-        )
-        .set('Authorization', `Bearer ${session.subscriberToken}`);
+      const singleWorkflowParam = await getSubscription(session, topicKey, subscriptionIdentifier, {
+        workflowIdentifiers: [workflow1.triggers[0].identifier],
+      });
       expect(singleWorkflowParam.body.data.preferences).to.have.lengthOf(1);
 
       const arrayWorkflowParam = await getSubscription(session, topicKey, subscriptionIdentifier, {
@@ -129,9 +131,9 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       });
       expect(arrayWorkflowParam.body.data.preferences).to.have.lengthOf(2);
 
-      const singleTagParam = await session.testAgent
-        .get(`/v1/inbox/topics/${topicKey}/subscriptions/${subscriptionIdentifier}?tags=${tag}`)
-        .set('Authorization', `Bearer ${session.subscriberToken}`);
+      const singleTagParam = await getSubscription(session, topicKey, subscriptionIdentifier, {
+        tags: [tag],
+      });
       expect(singleTagParam.body.data.preferences).to.have.lengthOf(1);
       expect(singleTagParam.body.data.preferences[0].workflow.tags).to.include(tag);
     });
@@ -219,8 +221,7 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       expect(ids).to.include(taggedWorkflow.triggers[0].identifier);
       expect(ids).to.include(dualMatchWorkflow.triggers[0].identifier);
 
-      const uniqueIds = [...new Set(ids)];
-      expect(uniqueIds).to.have.lengthOf(4);
+      expect(ids).to.have.lengthOf(4);
     });
 
     it('should return enabled=true and full workflow metadata for computed preferences', async () => {
