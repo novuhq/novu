@@ -1,5 +1,4 @@
 import type { RulesLogic } from 'json-logic-js';
-import { NonEmptyArray } from '../types';
 import type { TopicSubscription } from './subscription';
 import { SubscriptionPreference } from './subscription-preference';
 
@@ -35,20 +34,20 @@ export type CreateSubscriptionArgs = {
   topicName?: string;
   identifier?: string;
   name?: string;
-  preferences?: NonEmptyArray<PreferenceFilter> | undefined;
+  preferences?: Array<PreferenceFilter> | undefined;
 };
 
 export type BaseUpdateSubscriptionArgs = {
   topicKey: string;
   subscriptionId: string;
   name?: string;
-  preferences?: NonEmptyArray<PreferenceFilter>;
+  preferences?: Array<PreferenceFilter>;
 };
 
 export type InstanceUpdateSubscriptionArgs = {
   subscription: TopicSubscription;
   name?: string;
-  preferences?: NonEmptyArray<PreferenceFilter>;
+  preferences?: Array<PreferenceFilter>;
 };
 
 export type UpdateSubscriptionArgs = BaseUpdateSubscriptionArgs | InstanceUpdateSubscriptionArgs;

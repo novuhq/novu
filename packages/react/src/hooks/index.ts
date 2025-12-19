@@ -3,9 +3,9 @@ export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@no
 export { NovuProvider, useNovu } from './NovuProvider';
 export * from './useCounts';
 export * from './useCreateSubscription';
-export * from './useDeleteSubscription';
 export * from './useNotifications';
 export * from './usePreferences';
+export * from './useRemoveSubscription';
 export * from './useSchedule';
 export * from './useSubscription';
 export * from './useSubscriptions';

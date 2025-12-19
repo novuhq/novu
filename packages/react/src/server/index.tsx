@@ -3,12 +3,12 @@ import { ShadowRootDetector } from '../components/ShadowRootDetector';
 import type {
   UseCreateSubscriptionProps,
   UseCreateSubscriptionResult,
-  UseDeleteSubscriptionProps,
-  UseDeleteSubscriptionResult,
   UseNotificationsProps,
   UseNotificationsResult,
   UsePreferencesProps,
   UsePreferencesResult,
+  UseRemoveSubscriptionProps,
+  UseRemoveSubscriptionResult,
   UseScheduleProps,
   UseScheduleResult,
   UseSubscriptionProps,
@@ -117,11 +117,11 @@ export function useUpdateSubscription(_: UseUpdateSubscriptionProps = {}): UseUp
   };
 }
 
-export function useDeleteSubscription(_: UseDeleteSubscriptionProps = {}): UseDeleteSubscriptionResult {
+export function useRemoveSubscription(_: UseRemoveSubscriptionProps = {}): UseRemoveSubscriptionResult {
   return {
-    isDeleting: false,
+    isRemoving: false,
     error: undefined,
-    delete: () => Promise.resolve({ data: undefined, error: undefined }),
+    remove: () => Promise.resolve({ data: undefined, error: undefined }),
   };
 }
 

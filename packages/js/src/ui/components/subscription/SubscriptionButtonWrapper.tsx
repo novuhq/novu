@@ -1,4 +1,3 @@
-import { NonEmptyArray } from 'src/types';
 import type { PreferenceFilter, TopicSubscription } from '../../../subscriptions';
 import { useSubscription } from '../../api/hooks/useSubscription';
 import { UIPreference } from './Subscription';
@@ -7,7 +6,7 @@ import { SubscriptionButton } from './SubscriptionButton';
 export type SubscriptionButtonWrapperProps = {
   topicKey: string;
   identifier?: string;
-  preferences?: NonEmptyArray<UIPreference> | undefined;
+  preferences?: Array<UIPreference> | undefined;
   onClick?: (args: { subscription?: TopicSubscription }) => void;
   onDeleteError?: (error: unknown) => void;
   onDeleteSuccess?: () => void;
@@ -42,7 +41,7 @@ export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps)
         }
 
         return preference;
-      }) as NonEmptyArray<PreferenceFilter> | undefined;
+      });
       const { data, error } = await create({
         topicKey: props.topicKey,
         identifier: props.identifier,

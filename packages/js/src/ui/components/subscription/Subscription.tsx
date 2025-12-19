@@ -1,6 +1,5 @@
 import { OffsetOptions, Placement } from '@floating-ui/dom';
 import type { PreferenceFilter, TopicSubscription, WorkflowIdentifierOrId } from '../../../subscriptions';
-import { NonEmptyArray } from '../../../types';
 import { useSubscription } from '../../api/hooks/useSubscription';
 import { useInboxContext } from '../../context';
 import { cn } from '../../helpers';
@@ -41,7 +40,7 @@ export type SubscriptionProps = {
   placementOffset?: OffsetOptions;
   topicKey: string;
   identifier?: string;
-  preferences?: NonEmptyArray<UIPreference>;
+  preferences?: Array<UIPreference>;
   renderPreferences?: SubscriptionPreferencesRenderer;
 };
 
@@ -68,7 +67,7 @@ export const Subscription = (props: SubscriptionProps) => {
         }
 
         return preference;
-      }) as NonEmptyArray<PreferenceFilter> | undefined;
+      });
       create({ topicKey: props.topicKey, identifier: props.identifier, preferences: preferences });
     }
   };
