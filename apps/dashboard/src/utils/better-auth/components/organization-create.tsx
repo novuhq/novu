@@ -1,27 +1,14 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
-import { AuthCard } from '../../../components/auth/auth-card';
-import { UsecasePlaygroundHeader } from '../../../components/usecase-playground-header';
 import { useTelemetry } from '../../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../../utils/telemetry';
 import { authClient } from '../client';
 import { useOrganization } from '../index';
-
-const HEADER_CONFIG = {
-  title: 'Create an organization',
-  description: 'Create an organization to get started',
-  showSkipButton: false,
-  showBackButton: false,
-  showStepper: true,
-  currentStep: 1,
-  totalSteps: 4,
-} as const;
 
 const ILLUSTRATION_CONFIG = {
   src: '/images/auth/ui-org.svg',
@@ -156,7 +143,6 @@ function OrganizationListContent({
   const [isLoading, setIsLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const loadOrganizations = async () => {
@@ -179,16 +165,15 @@ function OrganizationListContent({
       await authClient.organization.setActive({
         organizationId,
       });
-      navigate(afterSelectOrganizationUrl || ROUTES.INBOX_USECASE);
+      window.location.href = afterSelectOrganizationUrl || ROUTES.INBOX_USECASE;
     } catch (e: any) {
       console.error('Failed to set active organization:', e);
-    } finally {
       setIsSelecting(false);
     }
   };
 
   const handleCreateSuccess = () => {
-    navigate(afterCreateOrganizationUrl || ROUTES.INBOX_USECASE);
+    window.location.href = afterCreateOrganizationUrl || ROUTES.INBOX_USECASE;
   };
 
   if (isLoading) {
@@ -316,10 +301,6 @@ function MainContent({
       <IllustrationSection />
     </div>
   );
-}
-
-function PageHeader() {
-  return <UsecasePlaygroundHeader {...HEADER_CONFIG} />;
 }
 
 function PageContent({

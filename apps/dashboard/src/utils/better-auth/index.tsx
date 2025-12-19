@@ -260,7 +260,14 @@ export function useClerk() {
   const context = useContext(AuthContext);
 
   return {
-    setActive: async () => {},
+    setActive: async ({ organization }: { organization?: string }) => {
+      if (organization) {
+        await authClient.organization.setActive({
+          organizationId: organization,
+        });
+        window.location.reload();
+      }
+    },
     session: {
       getToken: () => context?.getToken() || Promise.resolve(null),
     },
