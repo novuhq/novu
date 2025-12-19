@@ -1,7 +1,6 @@
 import { OffsetOptions, Placement } from '@floating-ui/dom';
 import { createMemo, Show } from 'solid-js';
 import { Motion, Presence } from 'solid-motionone';
-import { NonEmptyArray } from 'src/types';
 import { TopicSubscription } from '../../../subscriptions';
 import { useStyle } from '../../helpers/useStyle';
 import { Cogs } from '../../icons';
@@ -23,7 +22,7 @@ export const SubscriptionCog = (props: {
   isOpen: boolean;
   placement: Placement;
   placementOffset?: OffsetOptions;
-  preferences: NonEmptyArray<UIPreference> | undefined;
+  preferences: Array<UIPreference> | undefined;
   onOpenChange?: (isOpen: boolean) => void;
   onSubscribeClick: () => void;
   renderPreferences?: SubscriptionPreferencesRenderer;

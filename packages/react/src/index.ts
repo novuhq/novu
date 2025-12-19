@@ -64,10 +64,10 @@ export type {
 export {
   useCounts,
   useCreateSubscription,
-  useDeleteSubscription,
   useNotifications,
   useNovu,
   usePreferences,
+  useRemoveSubscription,
   useSchedule,
   useSubscription,
   useSubscriptions,
