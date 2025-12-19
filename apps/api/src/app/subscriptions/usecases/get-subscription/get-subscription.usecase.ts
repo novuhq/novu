@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GetPreferences, GetPreferencesCommand, InstrumentUsecase } from '@novu/application-generic';
 import {
+  BaseRepository,
   NotificationTemplateRepository,
   PreferencesEntity,
   PreferencesRepository,
@@ -15,6 +16,8 @@ import {
   SelectedWorkflowFields,
 } from '../../utils/subscriptions';
 import { GetSubscriptionCommand } from './get-subscription.command';
+
+type PartialPreferenceEntity = Pick<PreferencesEntity, '_templateId' | 'preferences'>;
 
 @Injectable()
 export class GetSubscription {
@@ -59,30 +62,50 @@ export class GetSubscription {
   private async resolveWorkflowPreferences(
     command: GetSubscriptionCommand,
     subscription: TopicSubscribersEntity,
-    storedPreferences: PreferencesEntity[]
+    storedPreferences: Array<PartialPreferenceEntity>
   ): Promise<{
-    allPreferencesEntities: PreferencesEntity[];
+    allPreferencesEntities: Array<PartialPreferenceEntity>;
     allWorkflowEntities: SelectedWorkflowFields[];
   }> {
     const storedPreferenceWorkflowInternalIds = new Set(
       storedPreferences.map((pref) => pref._templateId?.toString()).filter((id): id is string => id !== undefined)
     );
 
-    const workflowEntities =
-      storedPreferenceWorkflowInternalIds.size > 0
-        ? await this.notificationTemplateRepository.find(
-            {
-              _id: { $in: Array.from(storedPreferenceWorkflowInternalIds) },
-              _environmentId: subscription._environmentId,
-              _organizationId: subscription._organizationId,
-            },
-            SELECTED_WORKFLOW_FIELDS_PROJECTION
-          )
-        : [];
+    const orConditions: Array<Record<string, unknown>> = [];
 
-    const storedWorkflowIds = workflowEntities.map((workflow) => workflow.triggers?.[0]?.identifier);
-    const requestedWorkflows = await this.fetchRequestedWorkflows(command, subscription, storedWorkflowIds);
-    const missingWorkflows = requestedWorkflows.filter(
+    const workflowIdentifiers = command.workflowIds?.filter((id) => !BaseRepository.isInternalId(id)) ?? [];
+    const workflowInternalIds = command.workflowIds?.filter((id) => BaseRepository.isInternalId(id)) ?? [];
+    const allIds = [...Array.from(storedPreferenceWorkflowInternalIds), ...workflowInternalIds];
+
+    if (allIds.length > 0) {
+      orConditions.push({ _id: { $in: allIds } });
+    }
+
+    if (command.workflowIds?.length) {
+      orConditions.push({ 'triggers.identifier': { $in: workflowIdentifiers } });
+    }
+
+    if (command.tags?.length) {
+      orConditions.push({ tags: { $in: command.tags } });
+    }
+
+    if (orConditions.length === 0) {
+      return {
+        allPreferencesEntities: storedPreferences,
+        allWorkflowEntities: [],
+      };
+    }
+
+    const allWorkflows = await this.notificationTemplateRepository.find(
+      {
+        _environmentId: subscription._environmentId,
+        _organizationId: subscription._organizationId,
+        $or: orConditions,
+      },
+      SELECTED_WORKFLOW_FIELDS_PROJECTION
+    );
+
+    const missingWorkflows: SelectedWorkflowFields[] = allWorkflows.filter(
       (workflow) => !storedPreferenceWorkflowInternalIds.has(workflow._id)
     );
 
@@ -94,55 +117,15 @@ export class GetSubscription {
 
     return {
       allPreferencesEntities: [...storedPreferences, ...computedPreferences],
-      allWorkflowEntities: [...workflowEntities, ...missingWorkflows],
+      allWorkflowEntities: [...allWorkflows],
     };
-  }
-
-  private async fetchRequestedWorkflows(
-    command: GetSubscriptionCommand,
-    subscription: TopicSubscribersEntity,
-    storedWorkflowIds: string[]
-  ): Promise<SelectedWorkflowFields[]> {
-    if (!command.workflowIdentifiers?.length && !command.tags?.length) {
-      return [];
-    }
-
-    const orConditions: Array<Record<string, unknown>> = [];
-
-    if (command.workflowIdentifiers?.length) {
-      // Exclude already-fetched workflows to avoid duplicate DB queries
-      const remainingIdentifiers = command.workflowIdentifiers.filter((id) => !storedWorkflowIds.includes(id));
-      if (remainingIdentifiers.length > 0) {
-        orConditions.push({
-          'triggers.identifier': { $in: remainingIdentifiers },
-        });
-      }
-    }
-
-    if (command.tags?.length) {
-      orConditions.push({ tags: { $in: command.tags } });
-    }
-
-    if (orConditions.length === 0) {
-      return [];
-    }
-
-    const workflows = await this.notificationTemplateRepository.find(
-      {
-        _environmentId: subscription._environmentId,
-        $or: orConditions,
-      },
-      SELECTED_WORKFLOW_FIELDS_PROJECTION
-    );
-
-    return workflows;
   }
 
   private async computePreferencesForMissingWorkflows(
     command: GetSubscriptionCommand,
     subscription: TopicSubscribersEntity,
     missingWorkflows: SelectedWorkflowFields[]
-  ): Promise<PreferencesEntity[]> {
+  ): Promise<Array<PartialPreferenceEntity>> {
     if (missingWorkflows.length === 0) {
       return [];
     }
@@ -164,18 +147,12 @@ export class GetSubscription {
         }
 
         return {
-          _id: `computed-${workflow._id}`,
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-          _subscriberId: subscription._subscriberId,
           _templateId: workflow._id,
-          _topicSubscriptionId: subscription._id,
-          type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
           preferences: result.preferences,
-        } as PreferencesEntity;
+        };
       })
     );
 
-    return computedPreferences.filter((pref): pref is PreferencesEntity => pref !== null);
+    return computedPreferences.filter((pref): pref is NonNullable<typeof pref> => pref !== null);
   }
 }

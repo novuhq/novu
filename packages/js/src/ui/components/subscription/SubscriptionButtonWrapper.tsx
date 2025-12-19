@@ -1,6 +1,6 @@
-import type { PreferenceFilter, TopicSubscription } from '../../../subscriptions';
+import type { TopicSubscription } from '../../../subscriptions';
 import { useSubscription } from '../../api/hooks/useSubscription';
-import { extractTags, extractWorkflowIdentifiers, UIPreference } from './Subscription';
+import { extractTags, extractWorkflowIds, UIPreference } from './Subscription';
 import { SubscriptionButton } from './SubscriptionButton';
 
 export type SubscriptionButtonWrapperProps = {
@@ -15,12 +15,12 @@ export type SubscriptionButtonWrapperProps = {
 };
 
 export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps) => {
-  const workflowIdentifiers = extractWorkflowIdentifiers(props.preferences ?? []);
+  const workflowIds = extractWorkflowIds(props.preferences ?? []);
   const tags = extractTags(props.preferences ?? []);
   const { subscription, loading, create, remove } = useSubscription({
     topicKey: props.topicKey,
     identifier: props.identifier,
-    workflowIdentifiers,
+    workflowIds,
     tags,
   });
 

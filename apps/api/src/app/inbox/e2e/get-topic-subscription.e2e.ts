@@ -90,9 +90,9 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
       expect(withStoredWorkflow.body.data.preferences).to.have.lengthOf(1);
       expect(withStoredWorkflow.body.data.preferences[0].workflow.identifier).to.equal(storedId);
 
-      const withNonedWorkflow = await getSubscription(session, topicKey, subscriptionIdentifier);
-      expect(withNonedWorkflow.body.data.preferences).to.have.lengthOf(1);
-      expect(withNonedWorkflow.body.data.preferences[0].workflow.identifier).to.equal(storedId);
+      const withoutNewWorkflow = await getSubscription(session, topicKey, subscriptionIdentifier);
+      expect(withoutNewWorkflow.body.data.preferences).to.have.lengthOf(1);
+      expect(withoutNewWorkflow.body.data.preferences[0].workflow.identifier).to.equal(storedId);
 
       const withBoth = await getSubscription(session, topicKey, subscriptionIdentifier, {
         workflowIdentifiers: [storedId, requestedId],

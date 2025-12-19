@@ -341,14 +341,13 @@ export class InboxService {
   getSubscription(
     topicKey: string,
     identifier?: string,
-    workflowIdentifiers?: string[],
+    workflowIds?: string[],
     tags?: string[]
   ): Promise<SubscriptionResponse | undefined> {
     const searchParams = new URLSearchParams();
 
-    if (workflowIdentifiers?.length)
-      for (const workflowIdentifier of workflowIdentifiers)
-        searchParams.append('workflowIdentifiers', workflowIdentifier);
+    if (workflowIds?.length)
+      for (const workflowIdentifier of workflowIds) searchParams.append('workflowIds', workflowIdentifier);
 
     if (tags?.length) for (const tag of tags) searchParams.append('tags', tag);
 

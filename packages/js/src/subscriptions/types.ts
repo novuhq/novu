@@ -27,7 +27,7 @@ export type ListSubscriptionsArgs = {
 export type GetSubscriptionArgs = {
   topicKey: string;
   identifier?: string;
-  workflowIdentifiers?: string[];
+  workflowIds?: string[];
   tags?: string[];
 };
 

@@ -18,9 +18,14 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
   const [loading, setLoading] = createSignal(true);
   const [subscription, { mutate, refetch }] = createResource(
     options || {},
-    async ({ topicKey, identifier, workflowIdentifiers, tags }) => {
+    async ({ topicKey, identifier, workflowIds, tags }) => {
       try {
-        const response = await novuAccessor().subscriptions.get({ topicKey, identifier, workflowIdentifiers, tags });
+        const response = await novuAccessor().subscriptions.get({
+          topicKey,
+          identifier,
+          workflowIds,
+          tags,
+        });
 
         return response.data;
       } catch (error) {

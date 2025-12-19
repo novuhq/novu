@@ -13,7 +13,7 @@ export class GetSubscriptionCommand extends EnvironmentCommand {
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  workflowIdentifiers?: string[];
+  workflowIds?: string[];
 
   @IsArray()
   @IsString({ each: true })
