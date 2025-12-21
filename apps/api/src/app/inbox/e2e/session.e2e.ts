@@ -1,11 +1,4 @@
-import {
-  buildIntegrationKey,
-  CacheInMemoryProviderService,
-  CacheService,
-  createContextHash,
-  createHash,
-  InvalidateCacheService,
-} from '@novu/application-generic';
+import { createContextHash, createHash } from '@novu/application-generic';
 import { ContextRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, ContextPayload, InAppProviderIdEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -19,16 +12,10 @@ const mockSubscriberId = '12345';
 
 describe('Session - /inbox/session (POST) #novu-v2', async () => {
   let session: UserSession;
-  let cacheService: CacheService;
-  let invalidateCache: InvalidateCacheService;
   let subscriberRepository: SubscriberRepository;
   const isSubscribersScheduleEnabled = (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED;
 
   before(async () => {
-    const cacheInMemoryProviderService = new CacheInMemoryProviderService();
-    cacheService = new CacheService(cacheInMemoryProviderService);
-    await cacheService.initialize();
-    invalidateCache = new InvalidateCacheService(cacheService);
     subscriberRepository = new SubscriberRepository();
   });
 
@@ -36,13 +23,10 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     session = new UserSession();
     await session.initialize();
 
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-      },
-      invalidateCache
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+    });
     (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
   });
 
@@ -93,7 +77,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
     const { body, status } = await initializeSession({
       applicationIdentifier: session.environment.identifier,
@@ -127,7 +110,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const subscriber = {
@@ -154,7 +136,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
     const subscriberId = `user-subscriber-id-${`${randomBytes(4).toString('hex')}`}`;
 
@@ -194,7 +175,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
     const subscriberId = `user-subscriber-id-${`${randomBytes(4).toString('hex')}`}`;
 
@@ -291,7 +271,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const origin = 'https://example.com';
@@ -323,7 +302,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         active: false,
       },
-      invalidateCache
     );
 
     const { body, status } = await initializeSession({
@@ -437,7 +415,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const context: ContextPayload = { tenant: 'acme', app: 'dashboard' };
@@ -482,7 +459,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
     const subscriber = {
       firstName: 'John',
@@ -506,7 +482,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const novuClient = initNovuClassSdk(session);
@@ -591,7 +566,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const { body, status } = await session.testAgent.post('/v1/inbox/session').send({
@@ -616,7 +590,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const novuClient = initNovuClassSdk(session);
@@ -692,7 +665,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const novuClient = initNovuClassSdk(session);
@@ -733,7 +705,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const novuClient = initNovuClassSdk(session);
@@ -778,8 +749,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const defaultSchedule = {
@@ -838,8 +808,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const defaultSchedule = {
@@ -865,8 +834,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const defaultSchedule = {
@@ -892,8 +860,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const defaultSchedule = {
@@ -923,8 +890,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const defaultSchedule = {
@@ -957,8 +923,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const defaultSchedule = {
@@ -991,8 +956,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const subscriberId = `existing-schedule-${randomBytes(4).toString('hex')}`;
@@ -1044,8 +1008,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const defaultSchedule = {
@@ -1083,8 +1046,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const defaultSchedule = {
@@ -1124,8 +1086,7 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
           _environmentId: session.environment._id,
           _organizationId: session.environment._organizationId,
           hmac: false,
-        },
-        invalidateCache
+        }
       );
 
       const defaultSchedule = {
@@ -1161,7 +1122,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const context: ContextPayload = { teamId: 'team-123', projectId: 'project-456' };
@@ -1196,7 +1156,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const context: ContextPayload = { teamId: 'team-789' };
@@ -1239,7 +1198,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
         _organizationId: session.environment._organizationId,
         hmac: false,
       },
-      invalidateCache
     );
 
     const { body, status } = await initializeSession({
@@ -1253,21 +1211,17 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 });
 
-async function setIntegrationConfig(
-  {
-    _environmentId,
-    _organizationId,
-    hmac = true,
-    active = true,
-  }: { _environmentId: string; _organizationId: string; active?: boolean; hmac?: boolean },
-  invalidateCache: InvalidateCacheService
-) {
-  await invalidateCache.invalidateQuery({
-    key: buildIntegrationKey().invalidate({
-      _organizationId,
-    }),
-  });
-
+async function setIntegrationConfig({
+  _environmentId,
+  _organizationId,
+  hmac = true,
+  active = true,
+}: {
+  _environmentId: string;
+  _organizationId: string;
+  active?: boolean;
+  hmac?: boolean;
+}) {
   await integrationRepository.update(
     {
       _environmentId,

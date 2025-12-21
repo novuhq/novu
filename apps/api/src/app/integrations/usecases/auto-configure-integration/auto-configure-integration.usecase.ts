@@ -1,11 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  buildIntegrationKey,
-  ChannelFactory,
-  GetDecryptedIntegrations,
-  InvalidateCacheService,
-  PinoLogger,
-} from '@novu/application-generic';
+import { ChannelFactory, GetDecryptedIntegrations, PinoLogger } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import { AutoConfigureIntegrationResponseDto } from '../../dtos/auto-configure-integration-response.dto';
 import { AutoConfigureIntegrationCommand } from './auto-configure-integration.command';
@@ -15,7 +9,6 @@ export class AutoConfigureIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
     private channelFactory: ChannelFactory,
-    private invalidateCache: InvalidateCacheService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -62,12 +55,6 @@ export class AutoConfigureIntegration {
             },
           }
         );
-
-        await this.invalidateCache.invalidateQuery({
-          key: buildIntegrationKey().invalidate({
-            _organizationId: command.organizationId,
-          }),
-        });
 
         this.logger.trace('Auto-configuration completed successfully', {
           integrationId: command.integrationId,
