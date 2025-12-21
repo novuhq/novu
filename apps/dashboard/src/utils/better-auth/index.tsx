@@ -1,3 +1,4 @@
+import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
@@ -13,6 +14,7 @@ import {
   UserButton as UserButtonComponent,
   UserProfile as UserProfileComponent,
 } from './components';
+import { ROLE_PERMISSIONS } from './role-permissions';
 
 type BetterAuthUser = {
   id: string;
@@ -31,10 +33,12 @@ type BetterAuthOrganization = {
 type AuthContextType = {
   user: BetterAuthUser | null;
   organization: BetterAuthOrganization | null;
+  memberRole: MemberRoleEnum | null;
   isLoaded: boolean;
   signOut: () => Promise<void>;
   getToken: () => Promise<string | null>;
   refreshSession: () => Promise<void>;
+  has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -42,38 +46,54 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function ClerkProvider({ children }: { children: React.ReactNode }) {
   const { data: sessionData, isPending, refetch } = authClient.useSession();
   const [organization, setOrganization] = useState<BetterAuthOrganization | undefined>(undefined);
+  const [memberRole, setMemberRole] = useState<MemberRoleEnum | null>(null);
 
   const activeOrganizationId = sessionData?.session?.activeOrganizationId;
+  const currentUserId = sessionData?.user?.id;
 
   const isOrgLoading = !!activeOrganizationId && !organization;
 
   useEffect(() => {
     const fetchOrganization = async () => {
-      if (activeOrganizationId) {
+      if (activeOrganizationId && currentUserId) {
         try {
-          const { data: orgsData } = await authClient.organization.list();
-          const activeOrg = orgsData?.find((org: any) => org.id === activeOrganizationId);
+          const { data: fullOrgData } = await authClient.organization.getFullOrganization({
+            query: {
+              organizationId: activeOrganizationId,
+            },
+          });
 
-          if (activeOrg) {
+          if (fullOrgData) {
             setOrganization({
-              id: activeOrg.id,
-              name: activeOrg.name,
-              slug: activeOrg.slug,
+              id: fullOrgData.id,
+              name: fullOrgData.name,
+              slug: fullOrgData.slug,
             });
+
+            const currentMember = (fullOrgData as any).members?.find((member: any) => member.userId === currentUserId);
+
+            if (currentMember?.role) {
+              setMemberRole(currentMember.role as MemberRoleEnum);
+            } else {
+              setMemberRole(null);
+            }
           } else {
             setOrganization(undefined);
+            setMemberRole(null);
           }
         } catch (error) {
           console.error('Failed to fetch organization:', error);
           setOrganization(undefined);
+          setMemberRole(null);
         }
       } else {
         setOrganization(undefined);
+        setMemberRole(null);
       }
     };
 
     fetchOrganization();
-  }, [activeOrganizationId]);
+  }, [activeOrganizationId, currentUserId]);
 
   const refreshSession = useCallback(async () => {
     await refetch();
@@ -99,16 +119,37 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
       }
     : null;
 
+  const has = useCallback(
+    (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => {
+      if (!memberRole) return false;
+
+      if ('permission' in params) {
+        const userPermissions = ROLE_PERMISSIONS[memberRole] || [];
+
+        return userPermissions.includes(params.permission);
+      }
+
+      if ('role' in params) {
+        return memberRole === params.role;
+      }
+
+      return false;
+    },
+    [memberRole]
+  );
+
   const value = useMemo(
     () => ({
       user,
       organization: organization || null,
+      memberRole,
       isLoaded: !isPending && !isOrgLoading,
       signOut,
       getToken,
       refreshSession,
+      has,
     }),
-    [user, organization, isPending, isOrgLoading, refreshSession, signOut, getToken]
+    [user, organization, memberRole, isPending, isOrgLoading, refreshSession, signOut, getToken, has]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -127,6 +168,7 @@ export function useAuth() {
     orgId: context.organization?.id,
     signOut: context.signOut,
     refreshSession: context.refreshSession,
+    has: context.has,
   };
 }
 
@@ -350,7 +392,35 @@ export function InvitationAccept() {
   return <InvitationAcceptComponent />;
 }
 
-export function Protect({ children }: { children: React.ReactNode; [key: string]: any }) {
+type ProtectProps = {
+  children: React.ReactNode;
+  permission?: PermissionsEnum;
+  role?: MemberRoleEnum;
+  condition?: (has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean) => boolean;
+  fallback?: React.ReactNode;
+};
+
+export function Protect({ children, permission, role, condition, fallback }: ProtectProps) {
+  const { has, isLoaded } = useAuth();
+
+  if (!isLoaded) {
+    return null;
+  }
+
+  let hasAccess = true;
+
+  if (permission) {
+    hasAccess = has({ permission });
+  } else if (role) {
+    hasAccess = has({ role });
+  } else if (condition) {
+    hasAccess = condition(has);
+  }
+
+  if (!hasAccess) {
+    return fallback ? <>{fallback}</> : null;
+  }
+
   return <>{children}</>;
 }
 

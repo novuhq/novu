@@ -62,9 +62,6 @@ export function InvitationAccept() {
         });
 
         console.log('result', result);
-        if (result) {
-          return;
-        }
 
         acceptData = result.data;
         acceptError = result.error;
@@ -77,6 +74,8 @@ export function InvitationAccept() {
       }
 
       const organizationId = acceptData?.invitation?.organizationId;
+
+      console.log('organizationId', organizationId);
       if (organizationId) {
         await authClient.organization.setActive({
           organizationId,

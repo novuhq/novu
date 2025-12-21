@@ -1,3 +1,4 @@
+import { MemberRoleEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useState } from 'react';
 import {
@@ -69,7 +70,37 @@ function MemberListItem({
   isRemoving: boolean;
 }) {
   const isCurrentUser = member.userId === currentUserId;
-  const isOwner = member.role === 'owner';
+  const isOwner = member.role === MemberRoleEnum.OWNER;
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case MemberRoleEnum.OWNER:
+        return 'Owner';
+      case MemberRoleEnum.ADMIN:
+        return 'Admin';
+      case MemberRoleEnum.AUTHOR:
+        return 'Author';
+      case MemberRoleEnum.VIEWER:
+        return 'Viewer';
+      default:
+        return role.replace('org:', '').charAt(0).toUpperCase() + role.replace('org:', '').slice(1);
+    }
+  };
+
+  const getRoleBadgeStyle = (role: string) => {
+    switch (role) {
+      case MemberRoleEnum.OWNER:
+        return 'bg-primary-100 text-primary-700';
+      case MemberRoleEnum.ADMIN:
+        return 'bg-blue-100 text-blue-700';
+      case MemberRoleEnum.AUTHOR:
+        return 'bg-purple-100 text-purple-700';
+      case MemberRoleEnum.VIEWER:
+        return 'bg-neutral-100 text-foreground-700';
+      default:
+        return 'bg-neutral-100 text-foreground-700';
+    }
+  };
 
   return (
     <motion.div
@@ -98,16 +129,8 @@ function MemberListItem({
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-            isOwner
-              ? 'bg-primary-100 text-primary-700'
-              : member.role === 'admin'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-neutral-100 text-foreground-700'
-          }`}
-        >
-          {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getRoleBadgeStyle(member.role)}`}>
+          {getRoleLabel(member.role)}
         </span>
         {!isOwner && (
           <Button
@@ -139,6 +162,20 @@ function InvitationListItem({
   onCancel: (invitationId: string) => void;
   isCancelling: boolean;
 }) {
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case MemberRoleEnum.OWNER:
+        return 'Owner';
+      case MemberRoleEnum.ADMIN:
+        return 'Admin';
+      case MemberRoleEnum.AUTHOR:
+        return 'Author';
+      case MemberRoleEnum.VIEWER:
+        return 'Viewer';
+      default:
+        return role.replace('org:', '').charAt(0).toUpperCase() + role.replace('org:', '').slice(1);
+    }
+  };
   return (
     <motion.div
       initial={{ opacity: 0, y: -4 }}
@@ -160,7 +197,7 @@ function InvitationListItem({
       </div>
       <div className="flex items-center gap-3">
         <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-foreground-700">
-          {invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)}
+          {getRoleLabel(invitation.role)}
         </span>
         <Button
           variant="secondary"
@@ -192,7 +229,7 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
   const [showPendingInvites, setShowPendingInvites] = useState(false);
 
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('member');
+  const [inviteRole, setInviteRole] = useState(MemberRoleEnum.VIEWER);
 
   const inviteEmailId = useId();
 
@@ -245,7 +282,7 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
       }
 
       setInviteEmail('');
-      setInviteRole('member');
+      setInviteRole(MemberRoleEnum.VIEWER);
       await loadOrganizationData();
     } catch (e: any) {
       console.error('Failed to invite member:', e);
@@ -355,8 +392,9 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value={MemberRoleEnum.VIEWER}>Viewer</SelectItem>
+                  <SelectItem value={MemberRoleEnum.AUTHOR}>Author</SelectItem>
+                  <SelectItem value={MemberRoleEnum.ADMIN}>Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
