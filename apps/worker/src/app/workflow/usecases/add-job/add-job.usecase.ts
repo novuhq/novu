@@ -38,7 +38,6 @@ import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
   IDelayDynamicMetadata,
   IDelayRegularMetadata,
   IDelayTimedMetadata,
