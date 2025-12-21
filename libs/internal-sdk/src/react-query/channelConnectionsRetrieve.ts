@@ -5,27 +5,32 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import { NovuCore } from '../core.js';
-import { channelConnectionsRetrieve } from '../funcs/channelConnectionsRetrieve.js';
-import { combineSignals } from '../lib/primitives.js';
-import { RequestOptions } from '../lib/sdks.js';
-import * as operations from '../models/operations/index.js';
-import { unwrapAsync } from '../types/fp.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
-
-export type ChannelConnectionsRetrieveQueryData =
-  operations.ChannelConnectionsControllerGetChannelConnectionByIdentifierResponse;
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
+import {
+  buildChannelConnectionsRetrieveQuery,
+  ChannelConnectionsRetrieveQueryData,
+  prefetchChannelConnectionsRetrieve,
+  queryKeyChannelConnectionsRetrieve,
+} from "./channelConnectionsRetrieve.core.js";
+export {
+  buildChannelConnectionsRetrieveQuery,
+  type ChannelConnectionsRetrieveQueryData,
+  prefetchChannelConnectionsRetrieve,
+  queryKeyChannelConnectionsRetrieve,
+};
 
 /**
- * Retrieve channel connection by identifier
+ * Retrieve a channel connection
  *
  * @remarks
  * Retrieve a specific channel connection by its unique identifier.
@@ -33,17 +38,22 @@ export type ChannelConnectionsRetrieveQueryData =
 export function useChannelConnectionsRetrieve(
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<ChannelConnectionsRetrieveQueryData>
+  options?: QueryHookOptions<ChannelConnectionsRetrieveQueryData>,
 ): UseQueryResult<ChannelConnectionsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildChannelConnectionsRetrieveQuery(client, identifier, idempotencyKey, options),
+    ...buildChannelConnectionsRetrieveQuery(
+      client,
+      identifier,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 /**
- * Retrieve channel connection by identifier
+ * Retrieve a channel connection
  *
  * @remarks
  * Retrieve a specific channel connection by its unique identifier.
@@ -51,30 +61,27 @@ export function useChannelConnectionsRetrieve(
 export function useChannelConnectionsRetrieveSuspense(
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<ChannelConnectionsRetrieveQueryData>
+  options?: SuspenseQueryHookOptions<ChannelConnectionsRetrieveQueryData>,
 ): UseSuspenseQueryResult<ChannelConnectionsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildChannelConnectionsRetrieveQuery(client, identifier, idempotencyKey, options),
+    ...buildChannelConnectionsRetrieveQuery(
+      client,
+      identifier,
+      idempotencyKey,
+      options,
+    ),
     ...options,
-  });
-}
-
-export function prefetchChannelConnectionsRetrieve(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  identifier: string,
-  idempotencyKey?: string | undefined
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildChannelConnectionsRetrieveQuery(client$, identifier, idempotencyKey),
   });
 }
 
 export function setChannelConnectionsRetrieveData(
   client: QueryClient,
-  queryKeyBase: [identifier: string, parameters: { idempotencyKey?: string | undefined }],
-  data: ChannelConnectionsRetrieveQueryData
+  queryKeyBase: [
+    identifier: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: ChannelConnectionsRetrieveQueryData,
 ): ChannelConnectionsRetrieveQueryData | undefined {
   const key = queryKeyChannelConnectionsRetrieve(...queryKeyBase);
 
@@ -83,53 +90,23 @@ export function setChannelConnectionsRetrieveData(
 
 export function invalidateChannelConnectionsRetrieve(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[identifier: string, parameters: { idempotencyKey?: string | undefined }]>,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  queryKeyBase: TupleToPrefixes<
+    [identifier: string, parameters: { idempotencyKey?: string | undefined }]
+  >,
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Channel Connections', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "Channel Connections", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllChannelConnectionsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Channel Connections', 'retrieve'],
+    queryKey: ["@novu/api", "Channel Connections", "retrieve"],
   });
-}
-
-export function buildChannelConnectionsRetrieveQuery(
-  client$: NovuCore,
-  identifier: string,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions
-): {
-  queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<ChannelConnectionsRetrieveQueryData>;
-} {
-  return {
-    queryKey: queryKeyChannelConnectionsRetrieve(identifier, {
-      idempotencyKey,
-    }),
-    queryFn: async function channelConnectionsRetrieveQueryFn(ctx): Promise<ChannelConnectionsRetrieveQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(channelConnectionsRetrieve(client$, identifier, idempotencyKey, mergedOptions));
-    },
-  };
-}
-
-export function queryKeyChannelConnectionsRetrieve(
-  identifier: string,
-  parameters: { idempotencyKey?: string | undefined }
-): QueryKey {
-  return ['@novu/api', 'Channel Connections', 'retrieve', identifier, parameters];
 }

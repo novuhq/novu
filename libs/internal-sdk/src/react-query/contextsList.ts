@@ -5,28 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { contextsList } from "../funcs/contextsList.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
 import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type ContextsListQueryData =
-  operations.ContextsControllerListContextsResponse;
+import {
+  buildContextsListQuery,
+  ContextsListQueryData,
+  prefetchContextsList,
+  queryKeyContextsList,
+} from "./contextsList.core.js";
+export {
+  buildContextsListQuery,
+  type ContextsListQueryData,
+  prefetchContextsList,
+  queryKeyContextsList,
+};
 
 /**
  * List all contexts
@@ -73,19 +75,6 @@ export function useContextsListSuspense(
       options,
     ),
     ...options,
-  });
-}
-
-export function prefetchContextsList(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  request: operations.ContextsControllerListContextsRequest,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildContextsListQuery(
-      client$,
-      request,
-    ),
   });
 }
 
@@ -144,60 +133,4 @@ export function invalidateAllContextsList(
     ...filters,
     queryKey: ["@novu/api", "Contexts", "list"],
   });
-}
-
-export function buildContextsListQuery(
-  client$: NovuCore,
-  request: operations.ContextsControllerListContextsRequest,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<ContextsListQueryData>;
-} {
-  return {
-    queryKey: queryKeyContextsList({
-      after: request.after,
-      before: request.before,
-      limit: request.limit,
-      orderDirection: request.orderDirection,
-      orderBy: request.orderBy,
-      includeCursor: request.includeCursor,
-      type: request.type,
-      id: request.id,
-      search: request.search,
-      idempotencyKey: request.idempotencyKey,
-    }),
-    queryFn: async function contextsListQueryFn(
-      ctx,
-    ): Promise<ContextsListQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(contextsList(
-        client$,
-        request,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyContextsList(
-  parameters: {
-    after?: string | undefined;
-    before?: string | undefined;
-    limit?: number | undefined;
-    orderDirection?: operations.OrderDirection | undefined;
-    orderBy?: string | undefined;
-    includeCursor?: boolean | undefined;
-    type?: string | undefined;
-    id?: string | undefined;
-    search?: string | undefined;
-    idempotencyKey?: string | undefined;
-  },
-): QueryKey {
-  return ["@novu/api", "Contexts", "list", parameters];
 }
