@@ -1,6 +1,6 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ActivityFilters } from '@/api/activity';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -16,10 +16,13 @@ import {
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { usePersistedPageSize } from '@/hooks/use-persisted-page-size';
 import { parsePageParam } from '@/utils/parse-page-param';
 import { useFetchActivities } from '../../hooks/use-fetch-activities';
 import { ActivityEmptyState } from './activity-empty-state';
 import { ActivityTableRow } from './components/activity-table-row';
+
+const ACTIVITY_TABLE_ID = 'activity-table';
 
 export interface ActivityTableProps {
   selectedActivityId: string | null;
@@ -43,9 +46,10 @@ export function ActivityTable({
   const location = useLocation();
   const navigate = useNavigate();
   const isWorkflowRunMigrationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_PAGE_MIGRATION_ENABLED);
-
-  // Page size state
-  const [pageSize, setPageSize] = useState(10);
+  const { pageSize, setPageSize } = usePersistedPageSize({
+    tableId: ACTIVITY_TABLE_ID,
+    defaultPageSize: 10,
+  });
 
   // Get pagination parameters from URL
   const page = parsePageParam(searchParams.get('page'));
@@ -116,6 +120,11 @@ export function ActivityTable({
 
   function handlePageSizeChange(newPageSize: number) {
     setPageSize(newPageSize);
+    if (isWorkflowRunMigrationEnabled) {
+      handleCursorNavigation(null, 'first');
+    } else {
+      handlePageChange(0);
+    }
   }
 
   return (
