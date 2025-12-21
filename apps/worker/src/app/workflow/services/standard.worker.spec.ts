@@ -43,23 +43,25 @@ let standardQueueService: StandardQueueService;
 let standardWorker: StandardWorker;
 
 const mockCloudflareSchedulerService = {
-  scheduleJob: jest.fn(),
+  scheduleJob: async () => {},
+  cancelJob: async () => false,
+  isConfigured: () => false,
 } as unknown as CloudflareSchedulerService;
 
 const mockFeatureFlagsService = {
-  getFlag: jest.fn(),
+  getFlag: async () => 'off',
 } as unknown as FeatureFlagsService;
 
 const mockOrganizationRepository = {
-  findOne: jest.fn(),
+  findOne: async () => null,
 } as unknown as CommunityOrganizationRepository;
 
 const mockLogger = {
-  setContext: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
+  setContext: () => {},
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
 } as unknown as PinoLogger;
 
 describe('Standard Worker', () => {
