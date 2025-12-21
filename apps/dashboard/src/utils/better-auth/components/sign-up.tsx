@@ -1,12 +1,33 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { useAuth } from '../index';
+
+function extractInvitationIdFromRedirect(redirectUrl: string | null): string | null {
+  if (!redirectUrl) return null;
+
+  try {
+    const decodedRedirect = decodeURIComponent(redirectUrl);
+    const url = new URL(decodedRedirect, window.location.origin);
+
+    if (url.pathname === ROUTES.INVITATION_ACCEPT) {
+      return url.searchParams.get('id');
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export function SignUp() {
+  const { refreshSession } = useAuth();
+
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -16,8 +37,10 @@ export function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
-  const pendingInvitationId = sessionStorage.getItem('pendingInvitationId');
+
+  const redirectUrl = searchParams.get('redirect');
+  const pendingInvitationId =
+    extractInvitationIdFromRedirect(redirectUrl) || sessionStorage.getItem('pendingInvitationId');
   const hasInvitation = !!pendingInvitationId;
 
   const validatePassword = (password: string) => {
@@ -88,12 +111,12 @@ export function SignUp() {
         throw new Error('Sign up failed');
       }
 
+      await refreshSession();
+
       localStorage.setItem('better-auth-session-token', signUpData.token);
 
-      const storedPendingInvitationId = sessionStorage.getItem('pendingInvitationId');
-
-      if (storedPendingInvitationId) {
-        navigate(`${ROUTES.INVITATION_ACCEPT}?id=${storedPendingInvitationId}`);
+      if (pendingInvitationId) {
+        navigate(`${ROUTES.INVITATION_ACCEPT}?id=${pendingInvitationId}`);
 
         return;
       }
@@ -131,7 +154,6 @@ export function SignUp() {
           </label>
           <Input
             type="text"
-            id="firstName"
             value={firstName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
             placeholder="John"
@@ -145,7 +167,6 @@ export function SignUp() {
           </label>
           <Input
             type="text"
-            id="lastName"
             value={lastName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
             placeholder="Doe"
@@ -158,7 +179,6 @@ export function SignUp() {
           </label>
           <Input
             type="email"
-            id="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -172,7 +192,6 @@ export function SignUp() {
           </label>
           <Input
             type="password"
-            id="password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setIsSubmitted(false);
@@ -184,7 +203,7 @@ export function SignUp() {
             className="w-full"
             aria-describedby="password-constraints"
           />
-          <p className="mt-1 text-xs text-gray-500" id="password-constraints">
+          <p className="mt-1 text-xs text-gray-500">
             Min. 8 characters, include uppercase, lowercase, number, and special character.
           </p>
         </div>
@@ -195,7 +214,6 @@ export function SignUp() {
             </label>
             <Input
               type="text"
-              id="organizationName"
               value={organizationName}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrganizationName(e.target.value)}
               placeholder="Your Company"
@@ -206,9 +224,7 @@ export function SignUp() {
         )}
         {hasInvitation && (
           <div className="rounded-md bg-blue-50 p-4">
-            <p className="text-sm text-blue-700">
-              You'll be joining an organization after creating your account.
-            </p>
+            <p className="text-sm text-blue-700">You'll be joining an organization after creating your account.</p>
           </div>
         )}
         {error && (
