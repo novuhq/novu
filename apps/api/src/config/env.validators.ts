@@ -49,7 +49,7 @@ export const envValidators = {
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
   SCHEDULER_URL: str({ default: undefined }),
   SCHEDULER_API_KEY: str({ default: undefined }),
-  SCHEDULER_CALLBACK_API_KEY: str({ default: undefined }),
+  INTERNAL_CALLBACK_API_KEY: str({ default: undefined }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {

@@ -13,14 +13,12 @@ export class HandleSchedulerCallback {
   }
 
   async execute(command: HandleSchedulerCallbackCommand): Promise<{ success: boolean; jobId: string }> {
-    const modeFromMetadata = command.metadata?.mode;
-    const shouldSkipProcessing = modeFromMetadata === CloudflareSchedulerMode.SHADOW;
+    const shouldSkipProcessing = command.mode === CloudflareSchedulerMode.SHADOW;
 
     this.logger.info(
       {
         jobId: command.jobId,
-        type: command.type,
-        mode: modeFromMetadata,
+        mode: command.mode,
         shouldSkipProcessing,
       },
       'Received scheduler callback'
@@ -44,6 +42,7 @@ export class HandleSchedulerCallback {
     this.logger.info(
       {
         jobId: command.jobId,
+        mode: command.mode,
         skipProcessing: shouldSkipProcessing,
       },
       'Job enqueued to BullMQ from scheduler callback'
@@ -52,4 +51,3 @@ export class HandleSchedulerCallback {
     return { success: true, jobId: command.jobId };
   }
 }
-

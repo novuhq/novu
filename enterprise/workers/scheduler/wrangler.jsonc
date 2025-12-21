@@ -49,7 +49,7 @@
 	 * Required secrets for this worker:
 	 * wrangler secret put API_KEY              # For incoming auth (Worker → Scheduler)
 	 * wrangler secret put CALLBACK_API_URL     # Novu API URL for callbacks
-	 * wrangler secret put CALLBACK_API_KEY     # For outgoing auth (Scheduler → API)
+	 * wrangler secret put CALLBACK_API_KEY     # For outgoing auth (Scheduler → API, must match INTERNAL_CALLBACK_API_KEY on API side)
 	 */
 	/**
 	 * Static Assets

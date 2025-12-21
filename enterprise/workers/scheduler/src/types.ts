@@ -1,17 +1,9 @@
 import * as v from 'valibot';
 
-export enum SchedulerJobType {
-  DELAY = 'delay',
-  DIGEST = 'digest',
-  THROTTLE = 'throttle',
-  SNOOZE = 'snooze',
-  SCHEDULED = 'scheduled',
-}
-
 export type ScheduledJob = {
   id: string;
-  type: SchedulerJobType;
   scheduledFor: number;
+  mode: string;
   createdAt: number;
 
   data: {
@@ -19,13 +11,6 @@ export type ScheduledJob = {
     _id: string;
     _organizationId: string;
     _userId: string;
-  };
-
-  metadata?: {
-    mode?: string;
-    workflowId?: string;
-    subscriberId?: string;
-    stepId?: string;
   };
 };
 
@@ -36,21 +21,11 @@ const JobDataSchema = v.object({
   _userId: v.pipe(v.string(), v.minLength(1)),
 });
 
-const JobMetadataSchema = v.optional(
-  v.object({
-    mode: v.optional(v.string()),
-    workflowId: v.optional(v.string()),
-    subscriberId: v.optional(v.string()),
-    stepId: v.optional(v.string()),
-  })
-);
-
 export const ScheduleJobRequestSchema = v.object({
   jobId: v.pipe(v.string(), v.minLength(1)),
-  type: v.enum(SchedulerJobType),
   scheduledFor: v.pipe(v.number(), v.minValue(Date.now())),
+  mode: v.pipe(v.string(), v.minLength(1)),
   data: JobDataSchema,
-  metadata: JobMetadataSchema,
 });
 
 export type ScheduleJobRequest = v.InferOutput<typeof ScheduleJobRequestSchema>;

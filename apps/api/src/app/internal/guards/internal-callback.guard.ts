@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
-export class SchedulerCallbackGuard implements CanActivate {
+export class InternalCallbackGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
 
@@ -11,17 +11,16 @@ export class SchedulerCallbackGuard implements CanActivate {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const expectedApiKey = process.env.SCHEDULER_CALLBACK_API_KEY;
+    const expectedApiKey = process.env.INTERNAL_CALLBACK_API_KEY;
 
     if (!expectedApiKey) {
-      throw new UnauthorizedException('SCHEDULER_CALLBACK_API_KEY is not configured');
+      throw new UnauthorizedException('INTERNAL_CALLBACK_API_KEY is not configured');
     }
 
     if (token !== expectedApiKey) {
-      throw new UnauthorizedException('Invalid scheduler callback API key');
+      throw new UnauthorizedException('Invalid internal callback API key');
     }
 
     return true;
   }
 }
-

@@ -1,4 +1,4 @@
-import { IsDefined, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsObject, IsString } from 'class-validator';
 
 export class SchedulerCallbackRequestDto {
   @IsDefined()
@@ -7,7 +7,7 @@ export class SchedulerCallbackRequestDto {
 
   @IsDefined()
   @IsString()
-  type: string;
+  mode: string;
 
   @IsDefined()
   @IsObject()
@@ -17,19 +17,9 @@ export class SchedulerCallbackRequestDto {
     _organizationId: string;
     _userId: string;
   };
-
-  @IsOptional()
-  @IsObject()
-  metadata?: {
-    mode?: string;
-    workflowId?: string;
-    subscriberId?: string;
-    stepId?: string;
-  };
 }
 
 export class SchedulerCallbackResponseDto {
   success: boolean;
   jobId: string;
 }
-

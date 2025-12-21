@@ -1,20 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SchedulerJobType } from './types';
+import got from 'got';
 
 export interface ScheduleJobRequest {
   jobId: string;
-  type: SchedulerJobType;
-  delayMs: number;
+  scheduledFor: number;
+  mode: string;
   data: {
     _environmentId: string;
     _id: string;
     _organizationId: string;
     _userId: string;
-  };
-  metadata?: {
-    workflowId?: string;
-    subscriberId?: string;
-    stepId?: string;
   };
 }
 
@@ -46,35 +41,30 @@ export class CloudflareSchedulerService {
       throw new Error('Cloudflare Scheduler is not configured. Missing SCHEDULER_URL or SCHEDULER_API_KEY');
     }
 
-    const url = `${this.schedulerUrl}/schedule`;
-
     Logger.log(
       {
         jobId: request.jobId,
-        type: request.type,
-        delayMs: request.delayMs,
-        scheduledFor: new Date(Date.now() + request.delayMs).toISOString(),
+        mode: request.mode,
+        scheduledFor: new Date(request.scheduledFor).toISOString(),
       },
       `Scheduling job in Cloudflare Scheduler`,
       LOG_CONTEXT
     );
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
+      await got.post(`${this.schedulerUrl}/schedule`, {
+        json: request,
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${this.schedulerApiKey}`,
         },
-        body: JSON.stringify(request),
-      } as unknown as RequestInit);
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unable to read error response');
-        throw new Error(
-          `Cloudflare Scheduler API returned ${response.status}: ${response.statusText}. ${errorText}`
-        );
-      }
+        responseType: 'json',
+        timeout: 10000,
+        retry: {
+          limit: 3,
+          methods: ['POST'],
+          statusCodes: [408, 429, 500, 502, 503, 504],
+        },
+      });
 
       Logger.log({ jobId: request.jobId }, 'Job successfully scheduled in Cloudflare Scheduler', LOG_CONTEXT);
     } catch (error) {
@@ -82,7 +72,6 @@ export class CloudflareSchedulerService {
         {
           error: error instanceof Error ? error.message : String(error),
           jobId: request.jobId,
-          type: request.type,
         },
         'Failed to schedule job in Cloudflare Scheduler',
         LOG_CONTEXT
@@ -97,27 +86,29 @@ export class CloudflareSchedulerService {
       throw new Error('Cloudflare Scheduler is not configured. Missing SCHEDULER_URL or SCHEDULER_API_KEY');
     }
 
-    const url = `${this.schedulerUrl}/cancel/${jobId}`;
-
     Logger.log({ jobId }, 'Canceling job in Cloudflare Scheduler', LOG_CONTEXT);
 
     try {
-      const response = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${this.schedulerApiKey}`,
-        },
-      } as unknown as RequestInit);
+      const result = await got
+        .delete(`${this.schedulerUrl}/cancel/${jobId}`, {
+          headers: {
+            Authorization: `Bearer ${this.schedulerApiKey}`,
+          },
+          responseType: 'json',
+          timeout: 10000,
+          retry: {
+            limit: 3,
+            methods: ['DELETE'],
+            statusCodes: [408, 429, 500, 502, 503, 504],
+          },
+        })
+        .json<{ success: boolean }>();
 
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unable to read error response');
-        throw new Error(
-          `Cloudflare Scheduler API returned ${response.status}: ${response.statusText}. ${errorText}`
-        );
-      }
-
-      const result = (await response.json()) as { success: boolean };
-      Logger.log({ jobId, cancelled: result.success }, 'Job cancellation result from Cloudflare Scheduler', LOG_CONTEXT);
+      Logger.log(
+        { jobId, cancelled: result.success },
+        'Job cancellation result from Cloudflare Scheduler',
+        LOG_CONTEXT
+      );
 
       return result.success;
     } catch (error) {
@@ -134,4 +125,3 @@ export class CloudflareSchedulerService {
     }
   }
 }
-

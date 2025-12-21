@@ -53,7 +53,7 @@ export class Scheduler implements DurableObject {
     } catch (error) {
       console.error(`[Scheduler] Job ${job.id} execution failed:`, {
         jobId: job.id,
-        type: job.type,
+        mode: job.mode,
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -62,11 +62,10 @@ export class Scheduler implements DurableObject {
   private async scheduleJob(request: ScheduleJobRequest): Promise<void> {
     const job: ScheduledJob = {
       id: request.jobId,
-      type: request.type,
       scheduledFor: request.scheduledFor,
+      mode: request.mode,
       createdAt: Date.now(),
       data: request.data,
-      metadata: request.metadata,
     };
 
     await this.state.storage.put(JOB_KEY, job);
@@ -88,8 +87,7 @@ export class Scheduler implements DurableObject {
 
   private async executeJob(job: ScheduledJob): Promise<void> {
     console.log(`[Scheduler] Executing job ${job.id}`, {
-      type: job.type,
-      mode: job.metadata?.mode,
+      mode: job.mode,
       scheduledFor: new Date(job.scheduledFor).toISOString(),
       actualTime: new Date().toISOString(),
       alarmDriftMs: Date.now() - job.scheduledFor,
@@ -114,14 +112,13 @@ export class Scheduler implements DurableObject {
       .post(`${this.env.CALLBACK_API_URL}/v1/internal/scheduler/callback`, {
         json: {
           jobId: job.id,
-          type: job.type,
+          mode: job.mode,
           data: job.data,
-          metadata: job.metadata,
         },
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.env.CALLBACK_API_KEY}`,
-          'Idempotency-Key': job.id,
+          // 'Idempotency-Key': job.id,
         },
       })
       .json();

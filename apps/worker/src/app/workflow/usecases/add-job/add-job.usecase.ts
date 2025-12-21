@@ -1,6 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
-  CloudflareSchedulerService,
   ComputeJobWaitDurationService,
   ConditionsFilter,
   ConditionsFilterCommand,
@@ -8,7 +7,6 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   DurationUtils,
-  FeatureFlagsService,
   getDigestType,
   getNestedValue,
   IFilterVariables,
@@ -23,7 +21,6 @@ import {
   NormalizeVariablesCommand,
   PinoLogger,
   RedisThrottleService,
-  SchedulerJobType,
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
@@ -31,17 +28,9 @@ import {
   TierRestrictionsValidateUsecase,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-import {
-  CommunityOrganizationRepository,
-  JobEntity,
-  JobRepository,
-  JobStatusEnum,
-  NotificationTemplateEntity,
-  SubscriberRepository,
-} from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
-  CloudflareSchedulerMode,
   castUnitToDigestUnitEnum,
   DelayTypeEnum,
   DeliveryLifecycleStatusEnum,
@@ -103,9 +92,6 @@ export class AddJob {
     private stepRunRepository: StepRunRepository,
     private subscriberRepository: SubscriberRepository,
     private redisThrottleService: RedisThrottleService,
-    private organizationRepository: CommunityOrganizationRepository,
-    private cloudflareSchedulerService: CloudflareSchedulerService,
-    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -1024,113 +1010,9 @@ export class AddJob {
     untilDate: Date | null;
     timezone?: string;
   }) {
-    const organization = await this.getOrganizationForFeatureFlag(job._organizationId);
-    if (!organization) {
-      this.logger.warn({ organizationId: job._organizationId }, 'Organization not found, skipping CF Scheduler check');
-      await this.addToBullMQ(job, delay, false);
-      if (delay) {
-        await this.createDelayExecutionDetails(job, delay, untilDate, timezone);
-      }
-
-      return;
-    }
-
-    const schedulerMode = await this.featureFlagsService.getFlag<string>({
-      key: FeatureFlagsKeysEnum.CF_SCHEDULER_MODE,
-      defaultValue: CloudflareSchedulerMode.OFF,
-      organization: { _id: job._organizationId, apiServiceLevel: organization.apiServiceLevel },
-      environment: { _id: job._environmentId },
-    });
-
-    const hasDelay = delay > 0;
-    const shouldUseCFScheduler = schedulerMode !== CloudflareSchedulerMode.OFF && hasDelay;
-
-    this.logger.info(
-      {
-        jobId: job._id,
-        schedulerMode,
-        schedulerModeType: typeof schedulerMode,
-        hasDelay,
-        shouldUseCFScheduler,
-        delay,
-        organizationId: job._organizationId,
-        apiServiceLevel: organization.apiServiceLevel,
-        environmentId: job._environmentId,
-      },
-      'CF Scheduler mode evaluation'
-    );
-
-    if (shouldUseCFScheduler) {
-      await this.handleCFSchedulerMode(job, delay, schedulerMode as CloudflareSchedulerMode, untilDate, timezone);
-    } else {
-      await this.addToBullMQ(job, delay, false);
-    }
-
-    if (delay) {
-      await this.createDelayExecutionDetails(job, delay, untilDate, timezone);
-    }
-  }
-
-  private async getOrganizationForFeatureFlag(organizationId: string) {
-    return await this.organizationRepository.findOne({ _id: organizationId }, 'apiServiceLevel');
-  }
-
-  private async handleCFSchedulerMode(
-    job: JobEntity,
-    delay: number,
-    mode: CloudflareSchedulerMode,
-    untilDate: Date | null,
-    timezone?: string
-  ) {
-    const jobType = this.mapStepTypeToSchedulerJobType(job.type);
-
-    const schedulerRequest = {
-      jobId: job._id,
-      type: jobType,
-      delayMs: delay,
-      data: {
-        _environmentId: job._environmentId,
-        _id: job._id,
-        _organizationId: job._organizationId,
-        _userId: job._userId,
-      },
-      metadata: {
-        mode,
-        workflowId: job._templateId,
-        subscriberId: job._subscriberId,
-        stepId: job.step?.stepId,
-      },
-    };
-
-    switch (mode) {
-      case CloudflareSchedulerMode.SHADOW:
-        this.logger.info({ jobId: job._id }, 'Shadow mode: BullMQ will process, CF Scheduler for validation');
-        await this.cloudflareSchedulerService.scheduleJob(schedulerRequest);
-        await this.addToBullMQ(job, delay, false); // No flag - this is the real one
-        break;
-
-      case CloudflareSchedulerMode.LIVE:
-        this.logger.info({ jobId: job._id }, 'Live mode: CF Scheduler will process, BullMQ is shadow');
-        await this.cloudflareSchedulerService.scheduleJob(schedulerRequest);
-        await this.addToBullMQ(job, delay, true); // skipProcessing: true - this is shadow
-        break;
-
-      case CloudflareSchedulerMode.COMPLETE:
-        this.logger.info({ jobId: job._id }, 'Complete mode: Adding only to CF Scheduler');
-        await this.cloudflareSchedulerService.scheduleJob(schedulerRequest);
-        break;
-
-      default:
-        this.logger.warn({ mode }, 'Unknown CF Scheduler mode, falling back to BullMQ');
-        await this.addToBullMQ(job, delay, false);
-    }
-  }
-
-  private async addToBullMQ(job: JobEntity, delay: number, skipProcessing: boolean) {
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
-    const options: JobsOptions = {
-      delay,
-    };
+    const options: JobsOptions = { delay };
+
     if (stepContainsWebhookFilter) {
       options.backoff = {
         type: BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF,
@@ -1138,25 +1020,21 @@ export class AddJob {
       options.attempts = this.standardQueueService.DEFAULT_ATTEMPTS;
     }
 
-    const jobData = {
-      _environmentId: job._environmentId,
-      _id: job._id,
-      _organizationId: job._organizationId,
-      _userId: job._userId,
-      ...(skipProcessing && { skipProcessing: true }),
-    };
-
-    this.logger.trace(
-      { ...jobData, skipProcessing },
-      skipProcessing ? 'Adding job to BullMQ with skipProcessing flag' : 'Adding job to BullMQ'
-    );
-
     await this.standardQueueService.add({
       name: job._id,
-      data: jobData,
+      data: {
+        _environmentId: job._environmentId,
+        _id: job._id,
+        _organizationId: job._organizationId,
+        _userId: job._userId,
+      },
       groupId: job._organizationId,
       options,
     });
+
+    if (delay) {
+      await this.createDelayExecutionDetails(job, delay, untilDate, timezone);
+    }
   }
 
   private async createDelayExecutionDetails(job: JobEntity, delay: number, untilDate: Date | null, timezone?: string) {
@@ -1187,19 +1065,6 @@ export class AddJob {
         }),
       })
     );
-  }
-
-  private mapStepTypeToSchedulerJobType(stepType?: StepTypeEnum): SchedulerJobType {
-    switch (stepType) {
-      case StepTypeEnum.DELAY:
-        return SchedulerJobType.DELAY;
-      case StepTypeEnum.DIGEST:
-        return SchedulerJobType.DIGEST;
-      case StepTypeEnum.THROTTLE:
-        return SchedulerJobType.THROTTLE;
-      default:
-        return SchedulerJobType.DELAY;
-    }
   }
 
   private stepContainsFilter(job: JobEntity, onFilter: string) {
