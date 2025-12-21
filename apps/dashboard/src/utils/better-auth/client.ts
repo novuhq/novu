@@ -1,5 +1,5 @@
-import { createAuthClient } from 'better-auth/client';
 import { organizationClient } from 'better-auth/client/plugins';
+import { createAuthClient } from 'better-auth/react';
 import { API_HOSTNAME, BETTER_AUTH_BASE_URL } from '@/config';
 
 const baseURL = BETTER_AUTH_BASE_URL || API_HOSTNAME || 'http://localhost:3000';

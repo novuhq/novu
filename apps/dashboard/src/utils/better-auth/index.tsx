@@ -27,11 +27,6 @@ type BetterAuthOrganization = {
   slug: string;
 };
 
-type BetterAuthSession = {
-  user: BetterAuthUser;
-  organization?: BetterAuthOrganization;
-};
-
 type AuthContextType = {
   user: BetterAuthUser | null;
   organization: BetterAuthOrganization | null;
@@ -44,80 +39,75 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function ClerkProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<BetterAuthSession | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const { data: sessionData, isPending, refetch } = authClient.useSession();
+  const [organization, setOrganization] = useState<BetterAuthOrganization | undefined>(undefined);
 
-  const fetchSession = useCallback(async () => {
-    try {
-      const { data } = await authClient.getSession();
+  const activeOrganizationId = sessionData?.session?.activeOrganizationId;
 
-      if (data?.user) {
-        let organization: BetterAuthOrganization | undefined;
+  const isOrgLoading = !!activeOrganizationId && !organization;
 
-        if (data.session?.activeOrganizationId) {
+  useEffect(() => {
+    const fetchOrganization = async () => {
+      if (activeOrganizationId) {
+        try {
           const { data: orgsData } = await authClient.organization.list();
-          const activeOrg = orgsData?.find((org: any) => org.id === data.session?.activeOrganizationId);
+          const activeOrg = orgsData?.find((org: any) => org.id === activeOrganizationId);
 
           if (activeOrg) {
-            organization = {
+            setOrganization({
               id: activeOrg.id,
               name: activeOrg.name,
               slug: activeOrg.slug,
-            };
+            });
+          } else {
+            setOrganization(undefined);
           }
+        } catch (error) {
+          console.error('Failed to fetch organization:', error);
+          setOrganization(undefined);
         }
-
-        setSession({
-          user: {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.name,
-            image: data.user.image || undefined,
-            emailVerified: data.user.emailVerified,
-          },
-          organization,
-        });
       } else {
-        setSession(null);
+        setOrganization(undefined);
       }
-    } catch (error) {
-      console.error('Failed to fetch session:', error);
-      setSession(null);
-    } finally {
-      setIsLoaded(true);
-    }
-  }, []);
+    };
 
-  useEffect(() => {
-    fetchSession();
-  }, [fetchSession]);
+    fetchOrganization();
+  }, [activeOrganizationId]);
 
   const refreshSession = useCallback(async () => {
-    setIsLoaded(false);
-    await fetchSession();
-  }, [fetchSession]);
+    await refetch();
+  }, [refetch]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await authClient.signOut();
     localStorage.removeItem('better-auth-session-token');
-    setSession(null);
     window.location.href = ROUTES.SIGN_IN;
-  };
+  }, []);
 
-  const getToken = async () => {
+  const getToken = useCallback(async () => {
     return localStorage.getItem('better-auth-session-token');
-  };
+  }, []);
+
+  const user: BetterAuthUser | null = sessionData?.user
+    ? {
+        id: sessionData.user.id,
+        email: sessionData.user.email,
+        name: sessionData.user.name,
+        image: sessionData.user.image || undefined,
+        emailVerified: sessionData.user.emailVerified,
+      }
+    : null;
 
   const value = useMemo(
     () => ({
-      user: session?.user || null,
-      organization: session?.organization || null,
-      isLoaded,
+      user,
+      organization: organization || null,
+      isLoaded: !isPending && !isOrgLoading,
       signOut,
       getToken,
       refreshSession,
     }),
-    [session, isLoaded, refreshSession]
+    [user, organization, isPending, isOrgLoading, refreshSession, signOut, getToken]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
