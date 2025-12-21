@@ -32,7 +32,6 @@ export function SignUp() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [organizationName, setOrganizationName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -89,13 +88,6 @@ export function SignUp() {
       return;
     }
 
-    if (!hasInvitation && !organizationName.trim()) {
-      setError('Organization name is required.');
-      setIsLoading(false);
-
-      return;
-    }
-
     try {
       const { data: signUpData, error: signUpError } = await authClient.signUp.email({
         email,
@@ -121,22 +113,7 @@ export function SignUp() {
         return;
       }
 
-      const { data: orgData, error: orgError } = await authClient.organization.create({
-        name: organizationName,
-        slug: organizationName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      });
-
-      if (orgError) {
-        console.error('Failed to create organization:', orgError);
-      }
-
-      if (orgData?.id) {
-        await authClient.organization.setActive({
-          organizationId: orgData.id,
-        });
-      }
-
-      navigate(ROUTES.ROOT);
+      navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
     } catch (e: any) {
       setError(e.message || 'An unexpected error occurred.');
     } finally {
@@ -207,21 +184,6 @@ export function SignUp() {
             Min. 8 characters, include uppercase, lowercase, number, and special character.
           </p>
         </div>
-        {!hasInvitation && (
-          <div>
-            <label htmlFor="organizationName" className="mb-1 block text-sm font-medium text-gray-700">
-              Organization Name <span className="text-red-600">*</span>
-            </label>
-            <Input
-              type="text"
-              value={organizationName}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrganizationName(e.target.value)}
-              placeholder="Your Company"
-              required
-              className="w-full"
-            />
-          </div>
-        )}
         {hasInvitation && (
           <div className="rounded-md bg-blue-50 p-4">
             <p className="text-sm text-blue-700">You'll be joining an organization after creating your account.</p>

@@ -13,8 +13,9 @@ import { Card } from '@/components/primitives/card';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { OrganizationSettings } from '@/components/settings/organization-settings';
-import { IS_SELF_HOSTED } from '@/config';
+import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { TeamMembers } from '@/utils/better-auth/components/team-members';
 import { ROUTES } from '@/utils/routes';
 import { Plan } from '../components/billing/plan';
 import { DashboardLayout } from '../components/dashboard-layout';
@@ -193,10 +194,13 @@ export function SettingsPage() {
                       variant="tip"
                     />
                   )}
-                  <OrganizationProfile appearance={clerkAppearance}>
-                    <OrganizationProfile.Page label="members" />
-                    <OrganizationProfile.Page label="general" />
-                  </OrganizationProfile>
+                  {EE_AUTH_PROVIDER === 'clerk' ? (
+                    <OrganizationProfile appearance={clerkAppearance}>
+                      <OrganizationProfile.Page label="members" />
+                    </OrganizationProfile>
+                  ) : (
+                    <TeamMembers appearance={clerkAppearance} />
+                  )}
                 </div>
               </Card>
             </motion.div>

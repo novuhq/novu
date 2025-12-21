@@ -11,6 +11,7 @@ import {
   SignUp as SignUpComponent,
   TeamMembers as TeamMembersComponent,
   UserButton as UserButtonComponent,
+  UserProfile as UserProfileComponent,
 } from './components';
 
 type BetterAuthUser = {
@@ -317,9 +318,11 @@ export function UserButton() {
   return <UserButtonComponent />;
 }
 
-export function UserProfile() {
-  return <div>Better Auth User Profile</div>;
+export function UserProfile({ appearance, children }: { appearance?: any; children?: React.ReactNode }) {
+  return <UserProfileComponent appearance={appearance}>{children}</UserProfileComponent>;
 }
+
+UserProfile.Page = UserProfileComponent.Page;
 
 export function OrganizationSwitcher() {
   return <OrganizationSwitcherComponent />;
