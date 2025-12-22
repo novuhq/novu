@@ -216,7 +216,16 @@ export const updateSubscriptionPreference = async ({
     const response = await apiService.updateSubscriptionPreference({
       subscriptionId: args.subscriptionId,
       workflowId,
-      ...(typeof args.value === 'boolean' ? { enabled: args.value } : { condition: args.value }),
+      ...(typeof args.value === 'boolean'
+        ? {
+            enabled: args.value,
+            email: args.value,
+            sms: args.value,
+            in_app: args.value,
+            chat: args.value,
+            push: args.value,
+          }
+        : { condition: args.value }),
     });
 
     const updatedSubscription = new SubscriptionPreference({ ...response }, emitter, apiService, cache, useCache);
@@ -273,7 +282,9 @@ export const bulkUpdateSubscriptionPreference = async ({
         'workflowId' in arg
           ? arg.workflowId
           : (arg.preference?.workflow?.id ?? arg.preference?.workflow?.identifier ?? ''),
-      ...(typeof arg.value === 'boolean' ? { enabled: arg.value } : { condition: arg.value }),
+      ...(typeof arg.value === 'boolean'
+        ? { enabled: arg.value, email: arg.value, sms: arg.value, in_app: arg.value, chat: arg.value, push: arg.value }
+        : { condition: arg.value }),
     }));
     const response = await apiService.bulkUpdateSubscriptionPreferences(preferencesToUpdate);
 

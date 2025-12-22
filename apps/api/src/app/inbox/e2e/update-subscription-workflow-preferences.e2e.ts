@@ -68,6 +68,68 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
     expect(response.body.data.enabled, 'Should have the correct enabled value').to.equal(false);
   });
 
+  it('should update all channel preferences when enabled is toggled', async () => {
+    const topicKey = `topic-${Date.now()}`;
+    const subscriptionIdentifier = `subscription-${Date.now()}`;
+    const workflow = await session.createTemplate({
+      noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          content: 'Test email content',
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Test notification content',
+        },
+        {
+          type: StepTypeEnum.SMS,
+          content: 'Test SMS content',
+        },
+      ],
+    });
+
+    const subscriptionResponse = await createSubscription({
+      session,
+      topicKey,
+      body: {
+        identifier: subscriptionIdentifier,
+      },
+    });
+    expect(subscriptionResponse.status).to.equal(201);
+    const subscriptionId = subscriptionResponse.body.data.id;
+
+    const response = await updateSubscriptionPreferences(session, subscriptionId, workflow._id, {
+      enabled: false,
+      email: false,
+      sms: false,
+      in_app: false,
+      chat: false,
+      push: false,
+    });
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data.enabled, 'Should have updated enabled value').to.equal(false);
+    expect(response.body.data.channels.email, 'Should have updated email channel').to.equal(false);
+    expect(response.body.data.channels.sms, 'Should have updated sms channel').to.equal(false);
+    expect(response.body.data.channels.in_app, 'Should have updated in_app channel').to.equal(false);
+
+    const responseEnabled = await updateSubscriptionPreferences(session, subscriptionId, workflow._id, {
+      enabled: true,
+      email: true,
+      sms: true,
+      in_app: true,
+      chat: true,
+      push: true,
+    });
+
+    expect(responseEnabled.status).to.equal(200);
+    expect(responseEnabled.body.data.enabled, 'Should have updated enabled value').to.equal(true);
+    expect(responseEnabled.body.data.channels.email, 'Should have updated email channel').to.equal(true);
+    expect(responseEnabled.body.data.channels.sms, 'Should have updated sms channel').to.equal(true);
+    expect(responseEnabled.body.data.channels.in_app, 'Should have updated in_app channel').to.equal(true);
+  });
+
   it('should allow different preferences for the same workflow across different subscriptions', async () => {
     const topicKey1 = `topic-${Date.now()}-1`;
     const topicKey2 = `topic-${Date.now()}-2`;
