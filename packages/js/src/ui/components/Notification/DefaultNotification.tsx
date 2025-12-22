@@ -128,12 +128,10 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           '[&:not(:first-child)]:nt-border-t nt-border-neutral-alpha-100',
           {
             'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
-            'nt-bg-severity-high-alpha-100 hover:nt-bg-severity-high-alpha-50':
-              severity() === SeverityLevelEnum.HIGH,
+            'nt-bg-severity-high-alpha-100 hover:nt-bg-severity-high-alpha-50': severity() === SeverityLevelEnum.HIGH,
             'nt-bg-severity-medium-alpha-100 hover:nt-bg-severity-medium-alpha-50':
               severity() === SeverityLevelEnum.MEDIUM,
-            'nt-bg-severity-low-alpha-100 hover:nt-bg-severity-low-alpha-50':
-              severity() === SeverityLevelEnum.LOW,
+            'nt-bg-severity-low-alpha-100 hover:nt-bg-severity-low-alpha-50': severity() === SeverityLevelEnum.LOW,
           }
         ),
         context: { notification: props.notification } satisfies Parameters<InboxAppearanceCallback['notification']>[0],
@@ -144,12 +142,10 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         class={style({
           key: SEVERITY_TO_BAR_KEYS[severity()],
           className: cn('nt-transition nt-absolute nt-left-0 nt-top-0 nt-bottom-0 nt-w-[3px]', {
-            'nt-bg-severity-high group-hover:nt-bg-severity-high-alpha-500':
-              severity() === SeverityLevelEnum.HIGH,
+            'nt-bg-severity-high group-hover:nt-bg-severity-high-alpha-500': severity() === SeverityLevelEnum.HIGH,
             'nt-bg-severity-medium group-hover:nt-bg-severity-medium-alpha-500':
               severity() === SeverityLevelEnum.MEDIUM,
-            'nt-bg-severity-low group-hover:nt-bg-severity-low-alpha-500':
-              severity() === SeverityLevelEnum.LOW,
+            'nt-bg-severity-low group-hover:nt-bg-severity-low-alpha-500': severity() === SeverityLevelEnum.LOW,
           }),
           context: { notification: props.notification } satisfies Parameters<
             InboxAppearanceCallback['notificationBar']

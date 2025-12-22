@@ -3,8 +3,7 @@ import { buildDefaultSubscriptionIdentifier } from '@novu/application-generic';
 import { expect } from 'chai';
 import { afterEach, beforeEach, describe, it } from 'mocha';
 import * as sinon from 'sinon';
-
-import { addDefaultIdentifierToTopicSubscribersMigration } from './add-default-identifier-to-topic-subscribers-migration';
+import { run as addDefaultIdentifierToTopicSubscribersMigration } from './add-default-identifier-to-topic-subscribers-migration';
 
 describe('Add Default Identifier To Topic Subscribers Migration', () => {
   let mockApp: any;

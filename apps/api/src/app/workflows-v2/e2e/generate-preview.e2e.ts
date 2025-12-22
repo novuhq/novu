@@ -190,6 +190,30 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             description: 'Previous Steps Results',
           },
           workflow: buildWorkflowSchema(),
+          context: {
+            type: 'object',
+            description: 'Context data passed at trigger time following ContextPayload structure',
+            properties: {},
+            required: [],
+            additionalProperties: {
+              type: 'object',
+              description: 'Context value - can be accessed as string or object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Context identifier',
+                },
+                data: {
+                  type: 'object',
+                  description: 'Additional context data',
+                  properties: {},
+                  additionalProperties: true,
+                },
+              },
+              required: [],
+              additionalProperties: false,
+            },
+          },
         },
         additionalProperties: false,
       },
@@ -441,6 +465,30 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             description: 'Previous Steps Results',
           },
           workflow: buildWorkflowSchema(),
+          context: {
+            type: 'object',
+            description: 'Context data passed at trigger time following ContextPayload structure',
+            properties: {},
+            required: [],
+            additionalProperties: {
+              type: 'object',
+              description: 'Context value - can be accessed as string or object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Context identifier',
+                },
+                data: {
+                  type: 'object',
+                  description: 'Additional context data',
+                  properties: {},
+                  additionalProperties: true,
+                },
+              },
+              required: [],
+              additionalProperties: false,
+            },
+          },
         },
         type: 'object',
       },

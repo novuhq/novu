@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import {
   ControlValuesRepository,
   JsonSchemaTypeEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
@@ -26,8 +26,7 @@ import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-availab
 export class BuildVariableSchemaUsecase {
   constructor(
     private readonly createVariablesObject: CreateVariablesObject,
-    private readonly controlValuesRepository: ControlValuesRepository,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly controlValuesRepository: ControlValuesRepository
   ) {}
 
   @InstrumentUsecase()
@@ -78,14 +77,6 @@ export class BuildVariableSchemaUsecase {
 
     const previousSteps = effectiveSteps?.slice(0, this.findStepIndex(effectiveSteps, stepInternalId));
 
-    const isContextEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      user: { _id: command.userId },
-      defaultValue: false,
-    });
-
     return {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {
@@ -96,7 +87,7 @@ export class BuildVariableSchemaUsecase {
           payloadSchema: workflow?.payloadSchema,
         }),
         payload: await this.resolvePayloadSchema(workflow, finalPayload),
-        ...(isContextEnabled ? { context: buildContextSchema(finalContext) } : {}),
+        context: buildContextSchema(finalContext),
       },
       additionalProperties: false,
     } as const satisfies JSONSchemaDto;

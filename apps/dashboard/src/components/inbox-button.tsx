@@ -1,12 +1,12 @@
+import { useUser } from '@clerk/clerk-react';
+import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
+import { useEffect, useState } from 'react';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { APP_ID, IS_SELF_HOSTED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useWorkflowEditorPage } from '@/hooks/use-workflow-editor-page';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { useUser } from '@clerk/clerk-react';
-import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
-import { useEffect, useState } from 'react';
 import { HeaderButton } from './header-navigation/header-button';
 import { InboxBellFilledDev } from './icons/inbox-bell-filled-dev';
 

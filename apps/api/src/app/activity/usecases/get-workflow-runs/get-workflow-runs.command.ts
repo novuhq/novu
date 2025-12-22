@@ -43,6 +43,10 @@ export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
   topicKey?: string;
 
   @IsOptional()
+  @IsString()
+  subscriptionId?: string;
+
+  @IsOptional()
   @IsISO8601()
   createdGte?: string;
 
