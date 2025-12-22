@@ -40,7 +40,7 @@ export function UpdatedAgo({ lastUpdated, onRefresh }: UpdatedAgoProps) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <div className="text-xs font-medium leading-4">
+      <div className="whitespace-nowrap text-xs font-medium leading-4">
         <span className="text-foreground-400">Updated </span>
         <span className="text-foreground-600">{timeAgo}</span>
       </div>

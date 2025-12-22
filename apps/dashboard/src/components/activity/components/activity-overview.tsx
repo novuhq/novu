@@ -26,7 +26,6 @@ export interface ActivityOverviewProps {
 export function ActivityOverview({ activity }: ActivityOverviewProps) {
   const { currentEnvironment } = useEnvironment();
   const status = getActivityStatus(activity.jobs);
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
 
   const workflowPath = buildRoute(ROUTES.EDIT_WORKFLOW, {
     environmentSlug: currentEnvironment?.slug ?? '',
@@ -198,15 +197,13 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
             </span>
           </OverviewItem>
         )}
-        {isContextEnabled && (
-          <OverviewItem
-            label="Contexts"
-            value={activity.contextKeys?.length === 1 ? activity.contextKeys[0] : undefined}
-            isCopyable={activity.contextKeys?.length === 1}
-          >
-            {renderContextKeysContent()}
-          </OverviewItem>
-        )}
+        <OverviewItem
+          label="Contexts"
+          value={activity.contextKeys?.length === 1 ? activity.contextKeys[0] : undefined}
+          isCopyable={activity.contextKeys?.length === 1}
+        >
+          {renderContextKeysContent()}
+        </OverviewItem>
       </div>
     </motion.div>
   );

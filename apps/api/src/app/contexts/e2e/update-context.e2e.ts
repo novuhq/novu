@@ -13,10 +13,6 @@ describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {
   let novuClient: Novu;
   const contextRepository = new ContextRepository();
 
-  before(() => {
-    (process.env as Record<string, string>).IS_CONTEXT_ENABLED = 'true';
-  });
-
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -27,10 +23,6 @@ describe('Update Context - /contexts/:type/:id (PATCH) #novu-v2', () => {
     await contextRepository.delete({
       _environmentId: session.environment._id,
     });
-  });
-
-  after(() => {
-    delete (process.env as Record<string, string>).IS_CONTEXT_ENABLED;
   });
 
   it('should update context data', async () => {

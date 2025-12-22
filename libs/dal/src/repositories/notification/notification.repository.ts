@@ -33,6 +33,7 @@ export class NotificationRepository extends BaseRepository<
       subscriberIds?: string[];
       transactionId?: string[];
       topicKey?: string;
+      subscriptionId?: string;
       severity?: SeverityLevelEnum[] | null;
       after?: string;
       before?: string;
@@ -53,6 +54,10 @@ export class NotificationRepository extends BaseRepository<
 
     if (query.topicKey) {
       requestQuery['topics.topicKey'] = query.topicKey;
+    }
+
+    if (query.subscriptionId) {
+      requestQuery['topics.preferenceEvaluation.subscriptionIdentifier'] = query.subscriptionId;
     }
 
     const severityCondition: Array<FilterQuery<NotificationDBModel>> = [];

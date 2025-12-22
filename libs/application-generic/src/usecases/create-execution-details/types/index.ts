@@ -81,6 +81,7 @@ export enum DetailEnum {
   MSTEAMS_INSUFFICIENT_PERMISSIONS = 'Insufficient permissions to send MS Teams message',
   MSTEAMS_TENANT_NOT_CONSENTED = 'Tenant admin consent not granted for MS Teams',
   MSTEAMS_INVALID_CREDENTIALS = 'Invalid MS Teams bot credentials',
+  TOPIC_SUBSCRIPTION_PREFERENCE_EVALUATION = 'Topic subscription preference evaluated',
 }
 
 export function createProviderSelectedMessage(providerId: string): string {

@@ -1,7 +1,6 @@
 import { createEffect, createMemo, Index, Show } from 'solid-js';
 import { TopicSubscription } from '../../../subscriptions';
 import { SubscriptionPreference } from '../../../subscriptions/subscription-preference';
-import { NonEmptyArray } from '../../../types';
 import { setDynamicLocalization } from '../../config/defaultLocalization';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, useStyle } from '../../helpers';
@@ -19,7 +18,7 @@ import { SubscriptionPreferencesFallback } from './SubscriptionPreferencesFallba
 export const SubscriptionPreferences = (props: {
   loading?: boolean;
   subscription?: TopicSubscription | null;
-  preferences: NonEmptyArray<UIPreference> | undefined;
+  preferences: Array<UIPreference> | undefined;
   renderPreferences?: SubscriptionPreferencesRenderer;
   onSubscribeClick: () => void;
 }) => {
