@@ -70,7 +70,7 @@ export class InboxTopicController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
     @Param('identifier') identifier: string,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: Response,
     @Query('workflowIds') workflowIds?: string | string[],
     @Query('tags') tags?: string | string[]
   ): Promise<SubscriptionDetailsResponseDto | void> {
