@@ -32,7 +32,7 @@ export class StandardQueueService extends QueueBaseService {
     const delay = data.options?.delay || 0;
     const hasDelay = delay > 0;
 
-    if (!hasDelay || !data.data?._id) {
+    if (!hasDelay) {
       return await super.add(data);
     }
 
@@ -97,13 +97,24 @@ export class StandardQueueService extends QueueBaseService {
           { jobId: originalData.data._id },
           'Shadow mode: BullMQ will process, CF Scheduler for validation'
         );
-        await this.cloudflareSchedulerService.scheduleJob(schedulerRequest);
+
         await super.add(originalData);
+
+        try {
+          await this.cloudflareSchedulerService.scheduleJob(schedulerRequest);
+        } catch (error) {
+          this.logger.warn(
+            { jobId: originalData.data._id, error: error instanceof Error ? error.message : String(error) },
+            'CF Scheduler failed in shadow mode, but BullMQ job was added successfully'
+          );
+        }
         break;
 
       case 'live':
         this.logger.info({ jobId: originalData.data._id }, 'Live mode: CF Scheduler will process, BullMQ is shadow');
+
         await this.cloudflareSchedulerService.scheduleJob(schedulerRequest);
+
         await super.add({
           ...originalData,
           data: {

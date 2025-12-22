@@ -96,11 +96,7 @@ export class StandardWorker extends StandardWorkerService {
   private getWorkerProcessor() {
     return async ({ data }: { data: IStandardDataDto }) => {
       if (data.skipProcessing) {
-        Logger.verbose(
-          `Skipping job ${data._id} - skipProcessing flag is set`,
-          LOG_CONTEXT
-        );
-
+        Logger.log(`Skipping job ${data._id} - skipProcessing flag is set,`, LOG_CONTEXT);
         return;
       }
 

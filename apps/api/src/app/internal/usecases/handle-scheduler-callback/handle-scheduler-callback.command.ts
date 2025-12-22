@@ -1,6 +1,7 @@
+import { BaseCommand } from '@novu/application-generic';
 import { IsDefined, IsObject, IsString } from 'class-validator';
 
-export class HandleSchedulerCallbackCommand {
+export class HandleSchedulerCallbackCommand extends BaseCommand {
   @IsDefined()
   @IsString()
   jobId: string;
@@ -17,11 +18,4 @@ export class HandleSchedulerCallbackCommand {
     _organizationId: string;
     _userId: string;
   };
-
-  static create(dto: HandleSchedulerCallbackCommand) {
-    const command = new HandleSchedulerCallbackCommand();
-    Object.assign(command, dto);
-
-    return command;
-  }
 }

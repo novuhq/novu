@@ -1,6 +1,12 @@
 import ky from 'ky';
 import type { ScheduledJob, ScheduleJobRequest } from './types';
 
+/**
+ * Storage key for the job data within this Durable Object instance.
+ * Note: Each jobId gets its own isolated Durable Object instance via `idFromName(jobId)`,
+ * so this constant key doesn't cause conflicts between different jobs.
+ * Each instance has completely separate storage - using "job" as the key is safe and simple.
+ */
 const JOB_KEY = 'job';
 
 export class Scheduler implements DurableObject {
