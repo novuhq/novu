@@ -44,9 +44,8 @@ export function TestWorkflowContent({
   onEditSubscriber,
 }: TestWorkflowContentProps) {
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
 
-  const defaultAccordionValue = ['payload', 'subscriber', ...(isContextEnabled ? ['context'] : [])];
+  const defaultAccordionValue = ['payload', 'subscriber', 'context'];
   const [accordionValue, setAccordionValue] = useState(defaultAccordionValue);
 
   return (
@@ -94,14 +93,12 @@ export function TestWorkflowContent({
             onEditSubscriber={onEditSubscriber}
           />
 
-          {isContextEnabled && (
-            <PreviewContextSection
-              error={null}
-              context={contextData ?? {}}
-              onUpdate={(_section, data) => onContextUpdate(data)}
-              onClearPersisted={onClearPersistedContext}
-            />
-          )}
+          <PreviewContextSection
+            error={null}
+            context={contextData ?? {}}
+            onUpdate={(_section, data) => onContextUpdate(data)}
+            onClearPersisted={onClearPersistedContext}
+          />
         </Accordion>
       </div>
     </div>

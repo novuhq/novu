@@ -48,7 +48,9 @@ export class GetPreferences {
   async execute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {
     const items = await this.getPreferencesFromDb(command);
 
-    const mergedPreferences = MergePreferences.execute(MergePreferencesCommand.create(items));
+    const mergedPreferences = MergePreferences.execute(
+      MergePreferencesCommand.create({ ...items, ensureDefaultAllEnabled: command.ensureDefaultAllEnabled })
+    );
 
     if (!mergedPreferences.preferences) {
       throw new PreferencesNotFoundException(command);
@@ -104,6 +106,7 @@ export class GetPreferences {
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           templateId: command.templateId,
+          ensureDefaultAllEnabled: command.ensureDefaultAllEnabled,
         })
       );
     } catch (e) {

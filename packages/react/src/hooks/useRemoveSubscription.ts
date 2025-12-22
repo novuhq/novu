@@ -1,38 +1,38 @@
-import { BaseDeleteSubscriptionArgs, DeleteSubscriptionArgs, NovuError } from '@novu/js';
+import { BaseDeleteSubscriptionArgs, NovuError, DeleteSubscriptionArgs as RemoveSubscriptionArgs } from '@novu/js';
 import { useCallback, useRef, useState } from 'react';
 import { useNovu } from './NovuProvider';
 
-export type UseDeleteSubscriptionProps = {
+export type UseRemoveSubscriptionProps = {
   onSuccess?: () => void;
   onError?: (error: NovuError) => void;
 };
 
-type DeleteResult = Promise<{
+type RemoveResult = Promise<{
   error?: NovuError;
 }>;
 
-export type UseDeleteSubscriptionResult = {
-  isDeleting: boolean;
+export type UseRemoveSubscriptionResult = {
+  isRemoving: boolean;
   error?: NovuError;
-  delete: (args: DeleteSubscriptionArgs) => DeleteResult;
+  remove: (args: RemoveSubscriptionArgs) => RemoveResult;
 };
 
-export const useDeleteSubscription = (props: UseDeleteSubscriptionProps = {}): UseDeleteSubscriptionResult => {
-  const propsRef = useRef<UseDeleteSubscriptionProps>(props);
+export const useRemoveSubscription = (props: UseRemoveSubscriptionProps = {}): UseRemoveSubscriptionResult => {
+  const propsRef = useRef<UseRemoveSubscriptionProps>(props);
   propsRef.current = props;
   const novu = useNovu();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [error, setError] = useState<NovuError>();
 
-  const deleteCallback = useCallback(
-    async (args: DeleteSubscriptionArgs): DeleteResult => {
+  const removeCallback = useCallback(
+    async (args: RemoveSubscriptionArgs): RemoveResult => {
       const { onSuccess, onError } = propsRef.current;
       setError(undefined);
-      setIsDeleting(true);
+      setIsRemoving(true);
 
       const response = await novu.subscriptions.delete(args as BaseDeleteSubscriptionArgs);
 
-      setIsDeleting(false);
+      setIsRemoving(false);
 
       if (response.error) {
         setError(response.error);
@@ -47,8 +47,8 @@ export const useDeleteSubscription = (props: UseDeleteSubscriptionProps = {}): U
   );
 
   return {
-    delete: deleteCallback,
-    isDeleting,
+    remove: removeCallback,
+    isRemoving,
     error,
   };
 };

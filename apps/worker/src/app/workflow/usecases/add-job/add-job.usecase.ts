@@ -28,7 +28,15 @@ import {
   TierRestrictionsValidateUsecase,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-import { JobEntity, JobRepository, JobStatusEnum, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import {
+  JobEntity,
+  JobRepository,
+  JobStatusEnum,
+  NotificationRepository,
+  NotificationTemplateEntity,
+  SubscriberRepository,
+  TopicPreferencesSummary,
+} from '@novu/dal';
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   castUnitToDigestUnitEnum,
@@ -91,6 +99,7 @@ export class AddJob {
     private stepRunRepository: StepRunRepository,
     private subscriberRepository: SubscriberRepository,
     private redisThrottleService: RedisThrottleService,
+    private notificationRepository: NotificationRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -113,6 +122,19 @@ export class AddJob {
     }
 
     this.logger.info(`Scheduling New Job ${job._id} of type: ${job.type}`);
+
+    const notification =
+      command.notification ??
+      (await this.notificationRepository.findOne({
+        _id: job._notificationId,
+        _environmentId: job._environmentId,
+      }));
+
+    const topicsContext =
+      notification?.topics && notification.topics.length > 0
+        ? this.formatTopicsContextForExecution(notification.topics)
+        : undefined;
+
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -121,14 +143,48 @@ export class AddJob {
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
+        raw: topicsContext ? JSON.stringify(topicsContext) : undefined,
       })
     );
+
+    if (topicsContext && job.type === StepTypeEnum.TRIGGER) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.TOPIC_SUBSCRIPTION_PREFERENCE_EVALUATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(topicsContext),
+        })
+      );
+    }
 
     const result = isJobDeferredType(job.type)
       ? await this.executeDeferredJob(command)
       : await this.executeNoneDeferredJob(command);
 
     return result;
+  }
+
+  private formatTopicsContextForExecution(
+    topics: Array<{ _topicId: string; topicKey: string; preferenceEvaluation?: TopicPreferencesSummary }>
+  ) {
+    return {
+      topics: topics.map((topic) => ({
+        topic: topic.topicKey,
+        preferenceEvaluation: topic.preferenceEvaluation
+          ? {
+              result: topic.preferenceEvaluation.result,
+              subscriptionIdentifier: topic.preferenceEvaluation.subscriptionIdentifier,
+              ...(topic.preferenceEvaluation.condition && {
+                condition: topic.preferenceEvaluation.condition,
+              }),
+            }
+          : undefined,
+      })),
+    };
   }
 
   private async executeDeferredJob(command: AddJobCommand): Promise<AddJobResult> {

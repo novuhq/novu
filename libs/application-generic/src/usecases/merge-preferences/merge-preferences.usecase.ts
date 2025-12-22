@@ -61,9 +61,10 @@ export class MergePreferences {
       ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
     ];
 
-    const normalizedPreferencesList = preferencesList.map((preference) =>
-      MergePreferences.ensureDefaultAllEnabled(preference)
-    );
+    const normalizedPreferencesList = command.ensureDefaultAllEnabled
+      ? preferencesList.map((preference) => MergePreferences.ensureDefaultAllEnabled(preference))
+      : preferencesList;
+
     const mergedPreferences = normalizedPreferencesList.reduce(
       (acc, preference) => toMerged(acc, preference),
       {}

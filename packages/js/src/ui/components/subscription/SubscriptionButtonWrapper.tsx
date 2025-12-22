@@ -1,13 +1,12 @@
-import { NonEmptyArray } from 'src/types';
-import type { PreferenceFilter, TopicSubscription } from '../../../subscriptions';
+import type { TopicSubscription } from '../../../subscriptions';
 import { useSubscription } from '../../api/hooks/useSubscription';
-import { UIPreference } from './Subscription';
+import { extractTags, extractWorkflowIds, UIPreference } from './Subscription';
 import { SubscriptionButton } from './SubscriptionButton';
 
 export type SubscriptionButtonWrapperProps = {
   topicKey: string;
   identifier?: string;
-  preferences?: NonEmptyArray<UIPreference> | undefined;
+  preferences?: Array<UIPreference> | undefined;
   onClick?: (args: { subscription?: TopicSubscription }) => void;
   onDeleteError?: (error: unknown) => void;
   onDeleteSuccess?: () => void;
@@ -16,9 +15,13 @@ export type SubscriptionButtonWrapperProps = {
 };
 
 export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps) => {
+  const workflowIds = extractWorkflowIds(props.preferences ?? []);
+  const tags = extractTags(props.preferences ?? []);
   const { subscription, loading, create, remove } = useSubscription({
     topicKey: props.topicKey,
     identifier: props.identifier,
+    workflowIds,
+    tags,
   });
 
   const onSubscribeClick = async () => {
@@ -42,7 +45,7 @@ export const SubscriptionButtonWrapper = (props: SubscriptionButtonWrapperProps)
         }
 
         return preference;
-      }) as NonEmptyArray<PreferenceFilter> | undefined;
+      });
       const { data, error } = await create({
         topicKey: props.topicKey,
         identifier: props.identifier,

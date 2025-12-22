@@ -295,8 +295,8 @@ export const WorkflowTabs = () => {
   const currentTab = activityMatch ? 'activity' : 'workflow';
 
   return (
-    <div className="flex h-full flex-1 flex-nowrap">
-      <Tabs defaultValue="workflow" className="-mt-px flex h-full flex-1 flex-col" value={currentTab}>
+    <div className="flex h-full w-full flex-1 flex-nowrap">
+      <Tabs defaultValue="workflow" className="-mt-px flex h-full max-w-full flex-1 flex-col" value={currentTab}>
         <TabsList variant="regular" className="items-center">
           <TabsTrigger value="workflow" asChild variant="regular" size="lg">
             <Link
@@ -379,10 +379,10 @@ export const WorkflowTabs = () => {
             </Protect>
           </div>
         </TabsList>
-        <TabsContent value="workflow" className="mt-0 h-full w-full">
+        <TabsContent value="workflow" className="mt-0 h-full max-w-full">
           {workflow && <WorkflowCanvas steps={workflow.steps || []} isReadOnly={isReadOnly} />}
         </TabsContent>
-        <TabsContent value="activity" className="mt-0 h-full w-full">
+        <TabsContent value="activity" className="mt-0 h-full max-w-full">
           <WorkflowActivity />
         </TabsContent>
       </Tabs>

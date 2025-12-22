@@ -1,5 +1,5 @@
 // TODO: We shouldn't be importing from DAL here. Needs big refactor throughout monorepo.
-import { NotificationTemplateEntity, SubscriberEntity, TopicEntity } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity, TopicWithPreferences } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ISubscribersDefine,
@@ -38,7 +38,7 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   to: ISubscribersDefine;
 
   @IsOptional()
-  topics?: Pick<TopicEntity, '_id' | 'key'>[];
+  topics?: TopicWithPreferences[];
 
   @IsString()
   @IsDefined()

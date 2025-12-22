@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -69,14 +70,21 @@ export class InboxTopicController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
     @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: Response,
+    @Query('workflowIds') workflowIds?: string | string[],
+    @Query('tags') tags?: string | string[]
   ): Promise<SubscriptionDetailsResponseDto | void> {
+    const normalizedWorkflowIds = workflowIds ? (Array.isArray(workflowIds) ? workflowIds : [workflowIds]) : undefined;
+    const normalizedTags = tags ? (Array.isArray(tags) ? tags : [tags]) : undefined;
+
     const result = await this.getTopicSubscriptionUsecase.execute(
       GetSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         topicKey,
         subscriptionIdOrIdentifier,
+        workflowIds: normalizedWorkflowIds,
+        tags: normalizedTags,
       })
     );
 

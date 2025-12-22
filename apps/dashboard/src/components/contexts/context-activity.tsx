@@ -99,7 +99,7 @@ export const ContextActivity = ({ type, id }: { type: ContextType; id: ContextId
           onFiltersChange={setFilters}
           onReset={handleClearFilters}
           hide={['dateRange', 'contextKeys']}
-          className="min-h-max overflow-x-auto py-2 pl-2"
+          className="min-h-max overflow-x-auto py-2 px-2"
         />
         <SubscriberActivityList
           isLoading={isLoading}

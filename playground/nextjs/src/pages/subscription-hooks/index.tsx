@@ -50,7 +50,7 @@ const SubscriptionHooks = ({ identifier, topicKey }: { identifier: string; topic
     }
 
     return filters.map((filter) => {
-      const preference = subscription.preferences.find(
+      const preference = subscription.preferences?.find(
         (pref) => pref.workflow?.id === filter.workflowId || pref.workflow?.identifier === filter.workflowId
       );
 
@@ -118,7 +118,7 @@ const SubscriptionHooks = ({ identifier, topicKey }: { identifier: string; topic
         return;
       }
 
-      const preference = subscription.preferences.find(
+      const preference = subscription.preferences?.find(
         (pref) => pref.workflow?.id === workflowId || pref.workflow?.identifier === workflowId
       );
 
@@ -143,7 +143,7 @@ const SubscriptionHooks = ({ identifier, topicKey }: { identifier: string; topic
         return;
       }
 
-      const preference = subscription.preferences.find(
+      const preference = subscription.preferences?.find(
         (pref) => pref.workflow?.id === workflowId || pref.workflow?.identifier === workflowId
       );
 

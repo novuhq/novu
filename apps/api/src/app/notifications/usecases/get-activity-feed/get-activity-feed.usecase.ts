@@ -212,6 +212,7 @@ export class GetActivityFeed {
         subscriberIds: subscriberIds || [],
         transactionId: command.transactionId,
         topicKey: command.topicKey,
+        subscriptionId: command.subscriptionId,
         after: command.after,
         before: command.before,
         severity: command.severity,

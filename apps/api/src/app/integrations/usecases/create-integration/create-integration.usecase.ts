@@ -4,9 +4,7 @@ import {
   areNovuEmailCredentialsSet,
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
-  buildIntegrationKey,
   encryptCredentials,
-  InvalidateCacheService,
 } from '@novu/application-generic';
 import { DalException, IntegrationEntity, IntegrationQuery, IntegrationRepository } from '@novu/dal';
 import {
@@ -29,7 +27,6 @@ export class CreateIntegration {
   @Inject()
   private checkIntegration: CheckIntegration;
   constructor(
-    private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService
   ) {}
@@ -139,12 +136,6 @@ export class CreateIntegration {
           })
         );
       }
-
-      await this.invalidateCache.invalidateQuery({
-        key: buildIntegrationKey().invalidate({
-          _organizationId: command.organizationId,
-        }),
-      });
 
       const providerIdCapitalized = `${command.providerId.charAt(0).toUpperCase()}${command.providerId.slice(1)}`;
       const defaultName =

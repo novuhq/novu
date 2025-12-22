@@ -338,14 +338,22 @@ export class InboxService {
     return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions`);
   }
 
-  getSubscription({
-    topicKey,
-    identifier,
-  }: {
-    topicKey: string;
-    identifier: string;
-  }): Promise<SubscriptionResponse | undefined> {
-    return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}`);
+  getSubscription(
+    topicKey: string,
+    identifier?: string,
+    workflowIds?: string[],
+    tags?: string[]
+  ): Promise<SubscriptionResponse | undefined> {
+    const searchParams = new URLSearchParams();
+
+    if (workflowIds?.length)
+      for (const workflowIdentifier of workflowIds) searchParams.append('workflowIds', workflowIdentifier);
+
+    if (tags?.length) for (const tag of tags) searchParams.append('tags', tag);
+
+    const query = searchParams.size ? `?${searchParams.toString()}` : '';
+
+    return this.#httpClient.get(`${INBOX_ROUTE}/topics/${topicKey}/subscriptions/${identifier}${query}`);
   }
 
   createSubscription({

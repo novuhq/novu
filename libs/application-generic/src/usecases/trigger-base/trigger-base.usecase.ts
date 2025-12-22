@@ -4,7 +4,7 @@ import {
   NotificationTemplateEntity,
   OrganizationEntity,
   SubscriberEntity,
-  TopicEntity,
+  TopicWithPreferences,
   UserEntity,
 } from '@novu/dal';
 import {
@@ -92,7 +92,12 @@ export abstract class TriggerBase {
 
   protected async sendToProcessSubscriberService(
     command: BaseTriggerCommand,
-    subscribers: { subscriberId: string; topics?: Pick<TopicEntity, '_id' | 'key'>[] }[] | ISubscribersDefine[],
+    subscribers:
+      | {
+          subscriberId: string;
+          topics?: Array<TopicWithPreferences>;
+        }[]
+      | ISubscribersDefine[],
     subscriberSource: SubscriberSourceEnum
   ) {
     if (subscribers.length === 0) {

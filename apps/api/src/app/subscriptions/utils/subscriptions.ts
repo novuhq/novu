@@ -9,9 +9,11 @@ export type SelectedWorkflowFields = Pick<
   '_id' | 'triggers' | 'name' | 'critical' | 'tags' | 'data' | 'severity'
 >;
 
+type PartialPreferenceEntity = Pick<PreferencesEntity, '_templateId' | 'preferences'>;
+
 export function mapTopicSubscriptionToDto(
   subscription: TopicSubscribersEntity,
-  preferencesEntities: PreferencesEntity[],
+  preferencesEntities: Array<PartialPreferenceEntity>,
   workflowEntities: SelectedWorkflowFields[]
 ): SubscriptionDetailsResponseDto {
   const preferences: SubscriptionPreferenceDto[] = preferencesEntities

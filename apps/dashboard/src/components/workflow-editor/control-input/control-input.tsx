@@ -67,7 +67,6 @@ export function ControlInput({
   const resourceId = workflow?.workflowId || '';
   const resourceType = LocalizationResourceEnum.WORKFLOW;
   const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED);
   const {
     handleCreateNewVariable,
     isPayloadSchemaDrawerOpen,
@@ -127,7 +126,7 @@ export function ControlInput({
       completionSources={translationCompletionSource}
       isPayloadSchemaEnabled={isPayloadSchemaEnabled}
       isTranslationEnabled={shouldEnableTranslations}
-      isContextEnabled={isContextEnabled}
+      isContextEnabled={true}
       getSchemaPropertyByKey={getSchemaPropertyByKey}
       extensions={extensions}
       digestStepName={digestStepBeforeCurrent?.stepId}

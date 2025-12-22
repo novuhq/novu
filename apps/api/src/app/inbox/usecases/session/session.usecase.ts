@@ -404,18 +404,7 @@ export class Session {
     environmentId: string,
     organizationId: string,
     context?: ContextPayload
-  ): Promise<string[] | undefined> {
-    const isContextsEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
-      defaultValue: false,
-      environment: { _id: environmentId },
-      organization: { _id: organizationId },
-    });
-
-    if (!isContextsEnabled) {
-      return undefined;
-    }
-
+  ): Promise<string[]> {
     if (!context) {
       return [];
     }

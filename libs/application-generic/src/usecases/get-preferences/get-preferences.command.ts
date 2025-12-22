@@ -5,4 +5,10 @@ export class GetPreferencesCommand extends EnvironmentCommand {
   // refactor-rename-subscriberId to _subscriberId
   subscriberId?: string;
   templateId?: string;
+  /**
+   * If true, the default all enabled preference will be set to true.
+   * If false, the default all enabled preference will kept as is.
+   * @default true
+   */
+  ensureDefaultAllEnabled?: boolean = true;
 }
