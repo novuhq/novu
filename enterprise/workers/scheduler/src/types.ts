@@ -23,7 +23,7 @@ const JobDataSchema = v.object({
 
 export const ScheduleJobRequestSchema = v.object({
   jobId: v.pipe(v.string(), v.minLength(1)),
-  scheduledFor: v.pipe(v.number(), v.minValue(Date.now())),
+  scheduledFor: v.number(),
   mode: v.pipe(v.string(), v.minLength(1)),
   data: JobDataSchema,
 });

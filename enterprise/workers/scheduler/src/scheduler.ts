@@ -52,30 +52,56 @@ export class Scheduler implements DurableObject {
       return;
     }
 
-    await this.state.storage.delete(JOB_KEY);
-
     try {
       await this.executeJob(job);
+      await this.state.storage.delete(JOB_KEY);
     } catch (error) {
       console.error(`[Scheduler] Job ${job.id} execution failed:`, {
         jobId: job.id,
         mode: job.mode,
         error: error instanceof Error ? error.message : String(error),
       });
+      await this.state.storage.delete(JOB_KEY);
     }
   }
 
   private async scheduleJob(request: ScheduleJobRequest): Promise<void> {
+    const now = Date.now();
+    const isInPast = request.scheduledFor <= now;
+
+    if (isInPast) {
+      console.log(`[Scheduler] Job ${request.jobId} scheduled time is in the past, executing immediately`, {
+        scheduledFor: new Date(request.scheduledFor).toISOString(),
+        currentTime: new Date(now).toISOString(),
+        delayMs: now - request.scheduledFor,
+      });
+
+      const job: ScheduledJob = {
+        id: request.jobId,
+        scheduledFor: request.scheduledFor,
+        mode: request.mode,
+        createdAt: now,
+        data: request.data,
+      };
+
+      await this.executeJob(job);
+      await this.state.storage.delete(JOB_KEY);
+
+      return;
+    }
+
     const job: ScheduledJob = {
       id: request.jobId,
       scheduledFor: request.scheduledFor,
       mode: request.mode,
-      createdAt: Date.now(),
+      createdAt: now,
       data: request.data,
     };
 
     await this.state.storage.put(JOB_KEY, job);
     await this.state.storage.setAlarm(request.scheduledFor);
+
+    console.log(`[Scheduler] Job ${request.jobId} scheduled for ${new Date(request.scheduledFor).toISOString()}`);
   }
 
   private async cancelJob(): Promise<boolean> {
