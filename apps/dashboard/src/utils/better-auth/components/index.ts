@@ -12,3 +12,4 @@ export * from './sso-sign-in';
 export * from './team-members';
 export * from './user-button';
 export * from './user-profile';
+export * from './verify-email';

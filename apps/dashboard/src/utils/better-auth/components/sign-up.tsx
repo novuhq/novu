@@ -93,14 +93,21 @@ export function SignUp() {
         email,
         password,
         name: `${firstName} ${lastName}`.trim(),
+        callbackURL: window.location.origin + ROUTES.SIGN_IN,
       });
 
       if (signUpError) {
         throw new Error(signUpError.message || 'Sign up failed');
       }
 
-      if (!signUpData?.token || !signUpData?.user) {
+      if (!signUpData?.user) {
         throw new Error('Sign up failed');
+      }
+
+      if (!signUpData.token) {
+        navigate(`${ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(email)}`);
+
+        return;
       }
 
       await refreshSession();

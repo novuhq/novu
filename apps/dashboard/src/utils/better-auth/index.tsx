@@ -16,6 +16,7 @@ import {
   TeamMembers as TeamMembersComponent,
   UserButton as UserButtonComponent,
   UserProfile as UserProfileComponent,
+  VerifyEmail as VerifyEmailComponent,
 } from './components';
 import { ROLE_PERMISSIONS } from './role-permissions';
 
@@ -369,6 +370,10 @@ export function ResetPassword() {
 
 export function SSOSignIn() {
   return <SSOSignInComponent />;
+}
+
+export function VerifyEmail() {
+  return <VerifyEmailComponent />;
 }
 
 export function UserButton() {

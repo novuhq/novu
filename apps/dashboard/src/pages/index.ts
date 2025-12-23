@@ -16,5 +16,6 @@ export * from './sign-up';
 export * from './sso-sign-in';
 export * from './translations';
 export * from './usecase-select-page';
+export * from './verify-email';
 export * from './welcome-page';
 export * from './workflows';

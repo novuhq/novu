@@ -12,10 +12,32 @@ export function SignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResendVerification = async () => {
+    setIsResending(true);
+    setError(null);
+
+    try {
+      await authClient.sendVerificationEmail({
+        email,
+        callbackURL: window.location.origin + ROUTES.SIGN_IN,
+      });
+
+      setError('Verification email sent! Please check your inbox.');
+      setShowResendVerification(false);
+    } catch (e: any) {
+      setError(e.message || 'Failed to send verification email.');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setShowResendVerification(false);
     setIsLoading(true);
 
     try {
@@ -25,6 +47,11 @@ export function SignIn() {
       });
 
       if (authError) {
+        if (authError.status === 403) {
+          setShowResendVerification(true);
+          throw new Error('Please verify your email address before signing in.');
+        }
+
         throw new Error(authError.message || 'Sign in failed');
       }
 
@@ -87,7 +114,23 @@ export function SignIn() {
             className="w-full"
           />
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <div className="space-y-2">
+            <p className="text-sm text-red-600">{error}</p>
+            {showResendVerification && (
+              <Button
+                type="button"
+                variant="secondary"
+                mode="outline"
+                className="w-full"
+                onClick={handleResendVerification}
+                disabled={isResending}
+              >
+                {isResending ? 'Sending...' : 'Resend Verification Email'}
+              </Button>
+            )}
+          </div>
+        )}
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
           {isLoading ? 'Signing In...' : 'Sign In'}
         </Button>

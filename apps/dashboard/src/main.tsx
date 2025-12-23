@@ -26,6 +26,7 @@ import {
   SSOSignInPage,
   TemplateModal,
   TranslationsPage,
+  VerifyEmailPage,
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';
@@ -106,6 +107,10 @@ const router = createBrowserRouter([
           {
             path: ROUTES.SSO_SIGN_IN,
             element: <SSOSignInPage />,
+          },
+          {
+            path: ROUTES.VERIFY_EMAIL,
+            element: <VerifyEmailPage />,
           },
         ],
       },
