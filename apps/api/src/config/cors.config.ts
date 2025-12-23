@@ -36,7 +36,15 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
 };
 
 function enableWildcard(req: Request): boolean {
-  return isDevelopmentEnvironment() || isWidgetRoute(req.url) || isInboxRoute(req.url) || isBlueprintRoute(req.url);
+  return (
+    (isDevelopmentEnvironment() || isWidgetRoute(req.url) || isInboxRoute(req.url) || isBlueprintRoute(req.url)) &&
+    !isBetterAuthRoute(req.url)
+  );
+}
+
+// Better auth are handled by the better-auth plugin, so we need to allow all origins for it
+function isBetterAuthRoute(url: string): boolean {
+  return url.startsWith('/v1/better-auth');
 }
 
 function isWidgetRoute(url: string): boolean {
