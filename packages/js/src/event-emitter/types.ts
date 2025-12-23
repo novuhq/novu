@@ -1,4 +1,3 @@
-import { SubscriptionPreference } from 'src/subscriptions';
 import type {
   ArchivedArgs,
   CompleteArgs,
@@ -21,6 +20,7 @@ import { Schedule } from '../preferences/schedule';
 import { ListPreferencesArgs, UpdatePreferenceArgs, UpdateScheduleArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
 import type { TopicSubscription } from '../subscriptions/subscription';
+import { SubscriptionPreference } from '../subscriptions/subscription-preference';
 import type {
   CreateSubscriptionArgs,
   DeleteSubscriptionArgs,

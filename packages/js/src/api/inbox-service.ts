@@ -399,15 +399,30 @@ export class InboxService {
     workflowId,
     enabled,
     condition,
+    email,
+    sms,
+    in_app,
+    chat,
+    push,
   }: {
     subscriptionIdentifier: string;
     workflowId: string;
     enabled?: boolean;
     condition?: RulesLogic;
+    email?: boolean;
+    sms?: boolean;
+    in_app?: boolean;
+    chat?: boolean;
+    push?: boolean;
   }): Promise<SubscriptionPreferenceResponse> {
     return this.#httpClient.patch(`${INBOX_ROUTE}/subscriptions/${subscriptionIdentifier}/preferences/${workflowId}`, {
       enabled,
       condition,
+      email,
+      sms,
+      in_app,
+      chat,
+      push,
     });
   }
 
@@ -417,6 +432,11 @@ export class InboxService {
       workflowId: string;
       enabled?: boolean;
       condition?: RulesLogic;
+      email?: boolean;
+      sms?: boolean;
+      in_app?: boolean;
+      chat?: boolean;
+      push?: boolean;
     }>
   ): Promise<SubscriptionPreferenceResponse[]> {
     return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/bulk`, { preferences });
