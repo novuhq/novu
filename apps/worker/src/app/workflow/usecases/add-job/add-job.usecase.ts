@@ -1066,9 +1066,8 @@ export class AddJob {
     timezone?: string;
   }) {
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
-    const options: JobsOptions = {
-      delay,
-    };
+    const options: JobsOptions = { delay };
+
     if (stepContainsWebhookFilter) {
       options.backoff = {
         type: BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF,
@@ -1076,51 +1075,51 @@ export class AddJob {
       options.attempts = this.standardQueueService.DEFAULT_ATTEMPTS;
     }
 
-    const jobData = {
-      _environmentId: job._environmentId,
-      _id: job._id,
-      _organizationId: job._organizationId,
-      _userId: job._userId,
-    };
-
-    this.logger.trace(jobData, 'Going to add a minimal job in Standard Queue');
-
     await this.standardQueueService.add({
       name: job._id,
-      data: jobData,
+      data: {
+        _environmentId: job._environmentId,
+        _id: job._id,
+        _organizationId: job._organizationId,
+        _userId: job._userId,
+      },
       groupId: job._organizationId,
       options,
     });
 
     if (delay) {
-      const logMessage =
-        job.type === StepTypeEnum.DELAY
-          ? 'Delay is active, Creating execution details'
-          : job.type === StepTypeEnum.DIGEST
-            ? 'Digest is active, Creating execution details'
-            : 'Unexpected job type, Creating execution details';
-
-      this.logger.trace(logMessage);
-
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            delay,
-            ...(untilDate && {
-              untilDate: timezone
-                ? formatInTimeZone(untilDate, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
-                : untilDate.toISOString(),
-            }),
-          }),
-        })
-      );
+      await this.createDelayExecutionDetails(job, delay, untilDate, timezone);
     }
+  }
+
+  private async createDelayExecutionDetails(job: JobEntity, delay: number, untilDate: Date | null, timezone?: string) {
+    const logMessage =
+      job.type === StepTypeEnum.DELAY
+        ? 'Delay is active, Creating execution details'
+        : job.type === StepTypeEnum.DIGEST
+          ? 'Digest is active, Creating execution details'
+          : 'Unexpected job type, Creating execution details';
+
+    this.logger.trace(logMessage);
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          delay,
+          ...(untilDate && {
+            untilDate: timezone
+              ? formatInTimeZone(untilDate, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
+              : untilDate.toISOString(),
+          }),
+        }),
+      })
+    );
   }
 
   private stepContainsFilter(job: JobEntity, onFilter: string) {
