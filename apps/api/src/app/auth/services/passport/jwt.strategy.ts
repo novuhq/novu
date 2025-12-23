@@ -24,7 +24,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Set the scheme to Bearer, meaning the user is authenticated via a JWT coming from Dashboard
     session.scheme = ApiAuthSchemeEnum.BEARER;
 
-    console.log('session in jwt strategy', session);
     const user = await this.authService.validateUser(session);
     if (!user) {
       throw new UnauthorizedException();

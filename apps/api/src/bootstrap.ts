@@ -63,8 +63,6 @@ export async function bootstrap(
     };
   }
 
-  console.log('nestOptions', nestOptions);
-
   const app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
 
   app.enableVersioning({

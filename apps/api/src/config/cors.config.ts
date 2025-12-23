@@ -13,7 +13,7 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
-  if (!req.url.startsWith('/v1/better-auth') && enableWildcard(req)) {
+  if (enableWildcard(req)) {
     corsOptions.origin = '*';
   } else {
     corsOptions.origin = [];
