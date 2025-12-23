@@ -191,16 +191,16 @@ export class CreateSubscriptionPreferencesUsecase {
     if (preferenceFilterDefinition?.enabled !== undefined) {
       enabled = preferenceFilterDefinition.enabled;
     } else {
-      enabled = (
-        await this.getPreferences.safeExecute(
-          GetPreferencesCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            templateId: workflow._id,
-            subscriberId: _subscriberId,
-          })
-        )
-      )?.preferences.all?.enabled;
+      const getPreferencesResult = await this.getPreferences.safeExecute(
+        GetPreferencesCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          templateId: workflow._id,
+          subscriberId: _subscriberId,
+          ensureDefaultAllEnabled: false,
+        })
+      );
+      enabled = getPreferencesResult?.preferences.all?.enabled;
     }
 
     const partialPreferences: WorkflowPreferencesPartial = {
@@ -224,16 +224,16 @@ export class CreateSubscriptionPreferencesUsecase {
     if (preferenceFilterDefinition?.enabled !== undefined) {
       enabled = preferenceFilterDefinition.enabled;
     } else {
-      enabled = (
-        await this.getPreferences.safeExecute(
-          GetPreferencesCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            templateId: workflow._id,
-            subscriberId: command._subscriberId,
-          })
-        )
-      )?.preferences.all?.enabled;
+      const getPreferencesResult = await this.getPreferences.safeExecute(
+        GetPreferencesCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          templateId: workflow._id,
+          subscriberId: command._subscriberId,
+          ensureDefaultAllEnabled: false,
+        })
+      );
+      enabled = getPreferencesResult?.preferences.all?.enabled;
     }
 
     const partialPreferences: WorkflowPreferencesPartial = {
