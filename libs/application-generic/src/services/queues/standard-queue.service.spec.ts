@@ -1,14 +1,42 @@
-import { Test } from '@nestjs/testing';
-import { BullMqService } from '../bull-mq';
+import { CommunityOrganizationRepository } from '@novu/dal';
+import { PinoLogger } from '../../logging';
+import { CloudflareSchedulerService } from '../cloudflare-scheduler';
+import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { StandardQueueService } from './standard-queue.service';
 
 let standardQueueService: StandardQueueService;
 
+const mockCloudflareSchedulerService = {
+  scheduleJob: jest.fn(),
+} as unknown as CloudflareSchedulerService;
+
+const mockFeatureFlagsService = {
+  getFlag: jest.fn(),
+} as unknown as FeatureFlagsService;
+
+const mockOrganizationRepository = {
+  findOne: jest.fn(),
+} as unknown as CommunityOrganizationRepository;
+
+const mockLogger = {
+  setContext: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+} as unknown as PinoLogger;
+
 describe('Standard Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      standardQueueService = new StandardQueueService(new WorkflowInMemoryProviderService());
+      standardQueueService = new StandardQueueService(
+        new WorkflowInMemoryProviderService(),
+        mockCloudflareSchedulerService,
+        mockFeatureFlagsService,
+        mockOrganizationRepository,
+        mockLogger
+      );
       await standardQueueService.queue.obliterate();
     });
 
@@ -129,7 +157,13 @@ describe('Standard Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      standardQueueService = new StandardQueueService(new WorkflowInMemoryProviderService());
+      standardQueueService = new StandardQueueService(
+        new WorkflowInMemoryProviderService(),
+        mockCloudflareSchedulerService,
+        mockFeatureFlagsService,
+        mockOrganizationRepository,
+        mockLogger
+      );
       await standardQueueService.queue.obliterate();
     });
 

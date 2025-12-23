@@ -15,6 +15,7 @@ export {
 } from './bull-mq';
 export * from './cache';
 export * from './calculate-delay';
+export * from './cloudflare-scheduler';
 export * from './content.service';
 export * from './cron';
 export * from './feature-flags';

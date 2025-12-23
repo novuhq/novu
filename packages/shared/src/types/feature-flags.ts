@@ -72,6 +72,9 @@ export enum FeatureFlagsKeysEnum {
   IS_CONTEXTUAL_HELP_DRAWER_ENABLED = 'IS_CONTEXTUAL_HELP_DRAWER_ENABLED',
   IS_SUBSCRIPTION_PREFERENCES_ENABLED = 'IS_SUBSCRIPTION_PREFERENCES_ENABLED',
 
+  // String flags
+  CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"
+
   // Numeric flags
   MAX_WORKFLOW_LIMIT_NUMBER = 'MAX_WORKFLOW_LIMIT_NUMBER',
   MAX_LAYOUT_LIMIT_NUMBER = 'MAX_LAYOUT_LIMIT_NUMBER',
@@ -84,6 +87,13 @@ export enum FeatureFlagsKeysEnum {
   IS_LEGACY_SELECTOR_BUTTON_VISIBLE = 'IS_LEGACY_SELECTOR_BUTTON_VISIBLE',
 }
 
+export enum CloudflareSchedulerMode {
+  OFF = 'off',
+  SHADOW = 'shadow',
+  LIVE = 'live',
+  COMPLETE = 'complete',
+}
+
 export type FeatureFlags = {
-  [key in FeatureFlagsKeysEnum]: boolean | number | undefined;
+  [key in FeatureFlagsKeysEnum]: boolean | number | string | undefined;
 };
