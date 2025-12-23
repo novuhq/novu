@@ -1,11 +1,11 @@
 import { createMemo, createSignal, Index, Show } from 'solid-js';
-import { InboxAppearanceCallback } from 'src/ui/types';
 import { ChannelPreference, ChannelType, Preference } from '../../../../types';
 import { useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons/ArrowDropDown';
 import { Info as DefaultInfo } from '../../../icons/Info';
 import { NodeTree as DefaultNodeTree } from '../../../icons/NodeTree';
+import { InboxAppearanceCallback } from '../../../types';
 import { Collapsible } from '../../primitives/Collapsible';
 import { Switch, SwitchState } from '../../primitives/Switch';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';

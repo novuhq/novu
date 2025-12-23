@@ -1,7 +1,8 @@
 import type { RulesLogic } from 'json-logic-js';
 import { NovuError } from './utils/errors';
 
-export type { FiltersCountResponse, ListNotificationsResponse, Notification } from './notifications';
+export type { FiltersCountResponse, ListNotificationsResponse } from './notifications';
+export type { Notification } from './notifications/notification';
 export type { Preference } from './preferences/preference';
 export type { Schedule } from './preferences/schedule';
 export type { NovuError } from './utils/errors';

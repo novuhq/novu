@@ -1,5 +1,6 @@
 import { checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useDataRef } from './internal/useDataRef';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
 import { useNovu } from './NovuProvider';
 
@@ -64,64 +65,6 @@ export type UseNotificationsResult = {
   fetchMore: () => Promise<void>;
 };
 
-/**
- * Merges updated notifications with the previous list, handling filtering and deduplication.
- *
- * @param prev - The previous notification list, or undefined for initial load
- * @param updated - The updated notifications from cache events
- * @param filter - The current filter to apply when determining which notifications to keep
- * @param filterMatches - Whether the updated data's filter matches the current filter exactly
- * @returns A new array of notifications that match the current filter, with updates applied
- *
- * Behavior:
- * - Initial load: Returns all updated notifications if filter matches, otherwise filters to matching ones
- * - Updates existing notifications: Replaces them with updated versions if they still match the filter, removes them if not.
- * - Adds new notifications: Inserts matching notifications that aren't already in the list at the beginning (to match WebSocket behavior).
- */
-function mergeNotifications(
-  prev: Notification[] | undefined,
-  updated: Notification[],
-  filter: NotificationFilter,
-  filterMatches: boolean
-): Notification[] {
-  // Initial load: use all notifications if filter matches, otherwise filter to matching ones
-  if (!prev) {
-    return filterMatches ? updated : updated.filter((n) => checkNotificationMatchesFilter(n, filter));
-  }
-
-  // Create map of updated notifications for quick lookup
-  const updatedMap = new Map(updated.map((n) => [n.id, n]));
-
-  // Create set of existing notification IDs for O(1) lookup
-  const existingIds = new Set(prev.map((n) => n.id));
-
-  // Update existing: keep if still matches filter, remove if not
-  // This handles cases like: notification marked as read when we filter read: false -> remove it
-  const result = prev
-    .map((notification) => {
-      const updatedNotification = updatedMap.get(notification.id);
-      if (updatedNotification) {
-        return checkNotificationMatchesFilter(updatedNotification, filter) ? updatedNotification : null;
-      }
-      // Notification not in updated data - check if it still matches filter
-      return checkNotificationMatchesFilter(notification, filter) ? notification : null;
-    })
-    .filter((n): n is Notification => n !== null);
-
-  // Add new matching notifications that aren't already in the list
-  // Insert at the beginning to match WebSocket behavior ([notification, ...prev])
-  // This handles cases like: notification marked as read when we filter read: true -> add it
-  const matchingNotifications = updated.filter((n) => checkNotificationMatchesFilter(n, filter));
-  for (const notification of matchingNotifications) {
-    if (!existingIds.has(notification.id)) {
-      result.unshift(notification);
-      existingIds.add(notification.id);
-    }
-  }
-
-  return result;
-}
-
 export const useNotifications = (props?: UseNotificationsProps): UseNotificationsResult => {
   const {
     tags,
@@ -131,17 +74,13 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     snoozed = false,
     seen,
     severity,
-    limit,
+    limit = 10,
     onSuccess,
     onError,
   } = props || {};
-  const filterRef = useRef<NotificationFilter | undefined>(undefined);
-  const { notifications, on } = useNovu();
-
-  const getCurrentFilter = useCallback(
-    () => filterRef.current || { tags, data: dataFilter, read, archived, snoozed, seen, severity },
-    [tags, dataFilter, read, archived, snoozed, seen, severity]
-  );
+  const limitRef = useDataRef<number | undefined>(limit);
+  const filterRef = useDataRef<NotificationFilter>({ tags, data: dataFilter, read, archived, snoozed, seen, severity });
+  const novu = useNovu();
   const [data, setData] = useState<Array<Notification>>();
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(true);
@@ -149,47 +88,40 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   const [hasMore, setHasMore] = useState(false);
   const length = data?.length;
   const after = length ? data[length - 1].id : undefined;
+  const afterRef = useDataRef<string | undefined>(after);
 
   useEffect(() => {
     const listener = ({
-      data: updatedData,
+      data,
     }: {
       data: { notifications: Notification[]; hasMore: boolean; filter: NotificationFilter };
     }) => {
-      if (!updatedData) return;
-
-      const currentFilter = getCurrentFilter();
-      const filterMatches = isSameFilter(currentFilter, updatedData.filter);
-
-      // Always merge - mergeNotifications handles filtering correctly
-      setData((prev) => mergeNotifications(prev, updatedData.notifications, currentFilter, filterMatches));
-
-      // Only update hasMore when filter matches exactly (preserves pagination)
-      if (filterMatches) {
-        setHasMore(updatedData.hasMore);
+      if (!data || !isSameFilter(filterRef.current, data.filter)) {
+        return;
       }
+
+      // the event is called with the list of all notifications cached matching the current filter
+      setData(data.notifications);
+      setHasMore(data.hasMore);
     };
 
-    const cleanup = on('notifications.list.updated', listener);
+    const cleanup = novu.on('notifications.list.updated', listener);
 
     return () => {
       cleanup();
     };
-  }, [getCurrentFilter, on]);
+  }, [filterRef, novu]);
 
   useWebSocketEvent({
     event: 'notifications.notification_received',
     eventHandler: ({ result: notification }) => {
-      const currentFilter = getCurrentFilter();
+      const currentFilter = filterRef.current;
       const matches = checkNotificationMatchesFilter(notification, currentFilter);
       if (matches) {
-        setData((prev) => {
-          // Prevent duplicates - mergeNotifications will handle this when notifications.list.updated fires
-          if (prev?.some((n) => n.id === notification.id)) {
-            return prev;
-          }
-          return prev ? [notification, ...prev] : [notification];
-        });
+        // the limit and after props are used to create a cache key
+        // the first batch of notifications in the cache doesnt include the after prop and we want to push to the first batch
+        const cacheKey = { ...currentFilter, limit: limitRef.current };
+        novu.notifications.cache.unshift(cacheKey, notification);
       }
     },
   });
@@ -203,12 +135,10 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
       }
       setIsFetching(true);
 
-      const currentFilter = getCurrentFilter();
-
-      const response = await notifications.list({
-        ...currentFilter,
+      const response = await novu.notifications.list({
+        ...filterRef.current,
         limit,
-        after: options?.refetch ? undefined : after,
+        after: options?.refetch ? undefined : afterRef.current,
       });
 
       if (response.error) {
@@ -219,35 +149,24 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
       } else if (response.data) {
         const responseData = response.data;
         onSuccess?.(responseData.notifications);
-        if (options?.refetch) {
-          setData(responseData.notifications);
-        } else {
-          setData((prev) => (prev ? [...prev, ...responseData.notifications] : responseData.notifications));
-        }
+        setData(responseData.notifications);
         setHasMore(responseData.hasMore);
         setIsLoading(false);
         setIsFetching(false);
       }
     },
-    [notifications, getCurrentFilter, limit, after, onError, onSuccess]
+    [novu, filterRef, afterRef, limit, onError, onSuccess]
   );
 
   useEffect(() => {
-    const newFilter = { tags, data: dataFilter, read, archived, snoozed, seen, severity };
-    if (filterRef.current && isSameFilter(filterRef.current, newFilter)) {
-      return;
-    }
-    notifications.clearCache({ filter: filterRef.current });
-    filterRef.current = newFilter;
-
+    novu.notifications.clearCache({ filter: filterRef.current });
     fetchNotifications({ refetch: true });
-  }, [tags, dataFilter, read, archived, snoozed, seen, severity, notifications, fetchNotifications]);
+  }, [filterRef, novu, JSON.stringify(filterRef.current), fetchNotifications]);
 
   const refetch = useCallback(() => {
-    const filter = getCurrentFilter();
-    notifications.clearCache({ filter });
+    novu.notifications.clearCache({ filter: filterRef.current });
     return fetchNotifications({ refetch: true });
-  }, [getCurrentFilter, notifications, fetchNotifications]);
+  }, [filterRef, novu, fetchNotifications]);
 
   const fetchMore = useCallback(async () => {
     if (!hasMore || isFetching) return;
@@ -256,24 +175,20 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   }, [hasMore, isFetching, fetchNotifications]);
 
   const readAll = useCallback(async () => {
-    const { tags, data } = getCurrentFilter();
-    return await notifications.readAll({ tags, data });
-  }, [getCurrentFilter, notifications]);
+    return await novu.notifications.readAll({ tags: filterRef.current.tags, data: filterRef.current.data });
+  }, [filterRef, novu]);
 
   const seenAll = useCallback(async () => {
-    const { tags, data } = getCurrentFilter();
-    return await notifications.seenAll({ tags, data });
-  }, [getCurrentFilter, notifications]);
+    return await novu.notifications.seenAll({ tags: filterRef.current.tags, data: filterRef.current.data });
+  }, [filterRef, novu]);
 
   const archiveAll = useCallback(async () => {
-    const { tags, data } = getCurrentFilter();
-    return await notifications.archiveAll({ tags, data });
-  }, [getCurrentFilter, notifications]);
+    return await novu.notifications.archiveAll({ tags: filterRef.current.tags, data: filterRef.current.data });
+  }, [filterRef, novu]);
 
   const archiveAllRead = useCallback(async () => {
-    const { tags, data } = getCurrentFilter();
-    return await notifications.archiveAllRead({ tags, data });
-  }, [getCurrentFilter, notifications]);
+    return await novu.notifications.archiveAllRead({ tags: filterRef.current.tags, data: filterRef.current.data });
+  }, [filterRef, novu]);
 
   return {
     readAll,
