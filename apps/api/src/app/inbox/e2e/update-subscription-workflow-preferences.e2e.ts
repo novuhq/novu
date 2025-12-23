@@ -46,7 +46,9 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
     expect(topicSubscription.preferences?.[0]?.condition, 'Should have condition the preference').to.equal(true);
 
     // Update using Subscription Identifier
-    let response = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, { enabled: false });
+    let response = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, {
+      enabled: false,
+    });
 
     expect(response.status, 'Should have updated the subscription preference using Identifier').to.equal(200);
     expect(response.body.data.level, 'Should have the correct level').to.equal(PreferenceLevelEnum.TEMPLATE);
@@ -95,9 +97,8 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
       },
     });
     expect(subscriptionResponse.status).to.equal(201);
-    const subscriptionId = subscriptionResponse.body.data.id;
 
-    const response = await updateSubscriptionPreferences(session, subscriptionId, workflow._id, {
+    const response = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, {
       enabled: false,
       email: false,
       sms: false,
@@ -112,7 +113,7 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
     expect(response.body.data.channels.sms, 'Should have updated sms channel').to.equal(false);
     expect(response.body.data.channels.in_app, 'Should have updated in_app channel').to.equal(false);
 
-    const responseEnabled = await updateSubscriptionPreferences(session, subscriptionId, workflow._id, {
+    const responseEnabled = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, {
       enabled: true,
       email: true,
       sms: true,
@@ -165,12 +166,16 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
     });
     expect(subscription2Response.status).to.equal(201);
 
-    const update1 = await updateSubscriptionPreferences(session, subscription1Identifier, workflow._id, { enabled: true });
+    const update1 = await updateSubscriptionPreferences(session, subscription1Identifier, workflow._id, {
+      enabled: true,
+    });
 
     expect(update1.status).to.equal(200);
     expect(update1.body.data.enabled).to.equal(true);
 
-    const update2 = await updateSubscriptionPreferences(session, subscription2Identifier, workflow._id, { enabled: false });
+    const update2 = await updateSubscriptionPreferences(session, subscription2Identifier, workflow._id, {
+      enabled: false,
+    });
 
     expect(update2.status).to.equal(200);
     expect(update2.body.data.enabled).to.equal(false);
