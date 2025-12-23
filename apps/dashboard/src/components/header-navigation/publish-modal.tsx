@@ -143,11 +143,11 @@ export function PublishModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-[486px] gap-4 p-3">
+      <DialogContent className="max-w-lg gap-4 p-3">
         <PublishModalHeader />
         <PublishModalContent environment={environment} />
 
-        <div className="space-y-1.5">
+        <div className="w-full max-w-[486px] space-y-1.5">
           {workflows.length > 0 && (
             <ResourceGroupCompact
               title="Workflows"
