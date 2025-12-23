@@ -50,10 +50,12 @@ import { EditTopicPage } from './pages/edit-topic';
 import { EditTranslationPage } from './pages/edit-translation';
 import { EditWorkflowPage } from './pages/edit-workflow';
 import { EnvironmentsPage } from './pages/environments';
+import { ForgotPasswordPage } from './pages/forgot-password';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
+import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
@@ -91,6 +93,14 @@ const router = createBrowserRouter([
           {
             path: ROUTES.INVITATION_ACCEPT,
             element: <InvitationAcceptPage />,
+          },
+          {
+            path: ROUTES.FORGOT_PASSWORD,
+            element: <ForgotPasswordPage />,
+          },
+          {
+            path: ROUTES.RESET_PASSWORD,
+            element: <ResetPasswordPage />,
           },
         ],
       },

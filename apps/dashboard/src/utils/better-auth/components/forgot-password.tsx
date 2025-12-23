@@ -5,12 +5,12 @@ import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
 
-export function SignIn() {
+export function ForgotPassword() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -18,32 +18,46 @@ export function SignIn() {
     setIsLoading(true);
 
     try {
-      const { data, error: authError } = await authClient.signIn.email({
+      const redirectUrl = `${window.location.origin}${ROUTES.RESET_PASSWORD}`;
+
+      const { error: authError } = await authClient.requestPasswordReset({
         email,
-        password,
+        redirectTo: redirectUrl,
       });
 
       if (authError) {
-        throw new Error(authError.message || 'Sign in failed');
+        throw new Error(authError.message || 'Failed to send reset email');
       }
 
-      if (!data?.token || !data?.user) {
-        throw new Error('Sign in failed');
-      }
-
-      localStorage.setItem('better-auth-session-token', data.token);
-
-      window.location.href = ROUTES.ROOT;
+      setEmailSent(true);
     } catch (e: any) {
+      console.error('Forgot password error:', e);
       setError(e.message || 'An unexpected error occurred.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (emailSent) {
+    return (
+      <div className="mx-auto w-full max-w-md pt-12">
+        <h2 className="mb-6 text-center text-xl font-semibold">Check Your Email</h2>
+        <div className="space-y-6">
+          <p className="text-center text-sm text-gray-600">
+            We've sent a password reset link to <strong>{email}</strong>. Please check your email and click the link to
+            reset your password.
+          </p>
+          <Button variant="primary" mode="filled" className="w-full" onClick={() => navigate(ROUTES.SIGN_IN)}>
+            Back to Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-md pt-12">
-      <h2 className="mb-6 text-center text-xl font-semibold">Sign In</h2>
+      <h2 className="mb-6 text-center text-xl font-semibold">Forgot Password</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
@@ -59,49 +73,22 @@ export function SignIn() {
             className="w-full"
           />
         </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <span
-              role="button"
-              tabIndex={0}
-              className="text-primary-base focus:ring-primary-base/50 cursor-pointer text-sm font-medium hover:underline focus:outline-none focus:ring-2"
-              onClick={() => navigate(ROUTES.FORGOT_PASSWORD)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') navigate(ROUTES.FORGOT_PASSWORD);
-              }}
-            >
-              Forgot password?
-            </span>
-          </div>
-          <Input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-            placeholder="Password"
-            required
-            className="w-full"
-          />
-        </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
-          {isLoading ? 'Signing In...' : 'Sign In'}
+          {isLoading ? 'Sending...' : 'Send Reset Link'}
         </Button>
         <p className="mt-4 text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
+          Remember your password?{' '}
           <span
             role="button"
             tabIndex={0}
             className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
-            onClick={() => navigate(ROUTES.SIGN_UP)}
+            onClick={() => navigate(ROUTES.SIGN_IN)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') navigate(ROUTES.SIGN_UP);
+              if (e.key === 'Enter' || e.key === ' ') navigate(ROUTES.SIGN_IN);
             }}
           >
-            Sign Up
+            Sign In
           </span>
         </p>
       </form>

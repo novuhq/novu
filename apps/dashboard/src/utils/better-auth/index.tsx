@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from './client';
 import {
+  ForgotPassword as ForgotPasswordComponent,
   InvitationAccept as InvitationAcceptComponent,
   OrganizationCreate as OrganizationCreateComponent,
   OrganizationList as OrganizationListComponent,
   OrganizationSwitcher as OrganizationSwitcherComponent,
+  ResetPassword as ResetPasswordComponent,
   SignIn as SignInComponent,
   SignUp as SignUpComponent,
   TeamMembers as TeamMembersComponent,
@@ -354,6 +356,14 @@ export function SignIn() {
 
 export function SignUp() {
   return <SignUpComponent />;
+}
+
+export function ForgotPassword() {
+  return <ForgotPasswordComponent />;
+}
+
+export function ResetPassword() {
+  return <ResetPasswordComponent />;
 }
 
 export function UserButton() {
