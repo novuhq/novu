@@ -154,7 +154,7 @@ export class CreateSubscriptionsUsecase {
 
       for (const subscription of newSubscriptions.created) {
         const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
-        const preferencesEntry = preferencesArray.find((entry) => entry.subscriptionId === subscription._id.toString());
+        const preferencesEntry = preferencesArray.find((entry) => entry.subscriptionId === subscription.identifier);
         const preferences = preferencesEntry?.preferences;
 
         subscriptionData.push({
