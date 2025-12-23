@@ -12,6 +12,7 @@ import {
   ResetPassword as ResetPasswordComponent,
   SignIn as SignInComponent,
   SignUp as SignUpComponent,
+  SSOSignIn as SSOSignInComponent,
   TeamMembers as TeamMembersComponent,
   UserButton as UserButtonComponent,
   UserProfile as UserProfileComponent,
@@ -364,6 +365,10 @@ export function ForgotPassword() {
 
 export function ResetPassword() {
   return <ResetPasswordComponent />;
+}
+
+export function SSOSignIn() {
+  return <SSOSignInComponent />;
 }
 
 export function UserButton() {

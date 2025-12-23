@@ -23,6 +23,7 @@ import {
   SettingsPage,
   SignInPage,
   SignUpPage,
+  SSOSignInPage,
   TemplateModal,
   TranslationsPage,
   WelcomePage,
@@ -101,6 +102,10 @@ const router = createBrowserRouter([
           {
             path: ROUTES.RESET_PASSWORD,
             element: <ResetPasswordPage />,
+          },
+          {
+            path: ROUTES.SSO_SIGN_IN,
+            element: <SSOSignInPage />,
           },
         ],
       },

@@ -1,3 +1,4 @@
+import { ssoClient } from '@better-auth/sso/client';
 import { organizationClient } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 import { API_HOSTNAME, BETTER_AUTH_BASE_URL } from '@/config';
@@ -7,7 +8,7 @@ const fullBaseURL = `${baseURL}/v1/better-auth`;
 
 export const authClient = createAuthClient({
   baseURL: fullBaseURL,
-  plugins: [organizationClient()],
+  plugins: [organizationClient(), ssoClient()],
   fetchOptions: {
     credentials: 'include',
     auth: {

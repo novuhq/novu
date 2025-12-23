@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
+import { IS_ENTERPRISE } from '@/config';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
 
@@ -105,6 +106,21 @@ export function SignIn() {
           </span>
         </p>
       </form>
+      {IS_ENTERPRISE && (
+        <>
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">Or</span>
+            </div>
+          </div>
+          <Button variant="secondary" mode="outline" className="w-full" onClick={() => navigate(ROUTES.SSO_SIGN_IN)}>
+            Sign in with SSO
+          </Button>
+        </>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ export const ROUTES = {
   INVITATION_ACCEPT: '/auth/invitation/accept',
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
+  SSO_SIGN_IN: '/auth/sso',
   USECASE_SELECT: '/onboarding/usecase',
   INBOX_USECASE: '/onboarding/inbox',
   INBOX_EMBED: '/onboarding/inbox/embed',

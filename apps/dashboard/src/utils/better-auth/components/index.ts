@@ -8,6 +8,7 @@ export * from './organization-switcher';
 export * from './reset-password';
 export * from './sign-in';
 export * from './sign-up';
+export * from './sso-sign-in';
 export * from './team-members';
 export * from './user-button';
 export * from './user-profile';
