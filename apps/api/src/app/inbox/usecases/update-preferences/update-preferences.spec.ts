@@ -69,7 +69,6 @@ describe('UpdatePreferences', () => {
 
     updatePreferences = new UpdatePreferences(
       subscriberRepositoryMock as any,
-      analyticsServiceMock as any,
       getSubscriberGlobalPreferenceMock as any,
       getSubscriberTemplatePreferenceUsecase as any,
       upsertPreferencesMock as any,
