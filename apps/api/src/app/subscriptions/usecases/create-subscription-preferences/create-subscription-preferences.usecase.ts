@@ -73,8 +73,6 @@ export class CreateSubscriptionPreferencesUsecase {
     command: Omit<CreateSubscriptionPreferencesCommand, 'subscriptionId' | '_subscriberId'>,
     subscriptions: TopicSubscribersEntity[] = []
   ): Promise<Array<{ subscriptionId: string; preferences: SubscriptionPreferenceDto[] }>> {
-    // Optimizes database round trips by batching all preference inserts into a single insertMany operation
-    // instead of making individual database calls for each subscription-workflow combination
     if (!command.preferences.length || !command.workflows.length || subscriptions.length === 0) {
       return [];
     }
@@ -197,7 +195,7 @@ export class CreateSubscriptionPreferencesUsecase {
           organizationId: command.organizationId,
           templateId: workflow._id,
           subscriberId: _subscriberId,
-          ensureDefaultAllEnabled: false,
+          excludeSubscriberPreferences: true,
         })
       );
       enabled = getPreferencesResult?.preferences.all?.enabled;
@@ -230,7 +228,7 @@ export class CreateSubscriptionPreferencesUsecase {
           organizationId: command.organizationId,
           templateId: workflow._id,
           subscriberId: command._subscriberId,
-          ensureDefaultAllEnabled: false,
+          excludeSubscriberPreferences: true,
         })
       );
       enabled = getPreferencesResult?.preferences.all?.enabled;
@@ -260,9 +258,11 @@ export class CreateSubscriptionPreferencesUsecase {
       if (pref.filter.workflowIds && pref.filter.workflowIds.length > 0) {
         return pref.filter.workflowIds.some((id) => {
           const workflowIdentifier = workflow.triggers?.[0]?.identifier;
+
           return id === workflow._id || id === workflowIdentifier;
         });
       }
+
       return false;
     });
   }

@@ -136,7 +136,7 @@ export class GetSubscription {
             organizationId: command.organizationId,
             subscriberId: subscription._subscriberId,
             templateId: workflow._id,
-            ensureDefaultAllEnabled: false,
+            excludeSubscriberPreferences: true,
           })
         );
 

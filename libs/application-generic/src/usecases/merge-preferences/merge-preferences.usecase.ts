@@ -15,9 +15,9 @@ import { MergePreferencesCommand } from './merge-preferences.command';
  * 3. Subscriber global preferences
  * 4. Subscriber workflow preferences
  *
- * If a workflow has the readOnly flag set to true, the subscriber preferences are ignored.
- *
- * If the workflow does not have the readOnly flag set to true, the subscriber preferences are merged with the workflow preferences.
+ * Subscriber preferences are excluded from the merge calculation when:
+ * - The workflow has the readOnly flag set to true
+ * - The excludeSubscriberPreferences flag is set to true (used for subscription preferences)
  *
  * If the subscriber has no preferences, the workflow preferences are returned.
  */
@@ -54,16 +54,16 @@ export class MergePreferences {
     );
 
     const isWorkflowPreferenceReadonly = workflowPreferences.some((preference) => preference.preferences.all?.readOnly);
+    const shouldExcludeSubscriberPreferences = command.excludeSubscriberPreferences || isWorkflowPreferenceReadonly;
 
     const preferencesList = [
       ...workflowPreferences,
-      // If the workflow preference is readOnly, we disregard the subscriber preferences
-      ...(isWorkflowPreferenceReadonly ? [] : subscriberPreferences),
+      ...(shouldExcludeSubscriberPreferences ? [] : subscriberPreferences),
     ];
 
-    const normalizedPreferencesList = command.ensureDefaultAllEnabled
-      ? preferencesList.map((preference) => MergePreferences.ensureDefaultAllEnabled(preference))
-      : preferencesList;
+    const normalizedPreferencesList = preferencesList.map((preference) =>
+      MergePreferences.ensureDefaultAllEnabled(preference)
+    );
 
     const mergedPreferences = normalizedPreferencesList.reduce(
       (acc, preference) => toMerged(acc, preference),
