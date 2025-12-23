@@ -59,13 +59,13 @@ export class UpdatePreferences {
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
     const workflow = await this.getWorkflow(command);
-    const subscriptionId = await this.getSubscriptionId(command);
+    const internalSubscriptionId = await this.getSubscriptionId(command);
 
     let newPreference: InboxPreference | null = null;
 
-    await this.updateSubscriberPreference(command, subscriber, workflow?._id, subscriptionId);
+    await this.updateSubscriberPreference(command, subscriber, workflow?._id, internalSubscriptionId);
 
-    newPreference = await this.findPreference(command, subscriber, workflow, subscriptionId);
+    newPreference = await this.findPreference(command, subscriber, workflow, internalSubscriptionId);
 
     await this.sendWebhookMessage.execute({
       eventType: WebhookEventEnum.PREFERENCE_UPDATED,
@@ -122,7 +122,7 @@ export class UpdatePreferences {
     command: UpdatePreferencesCommand,
     subscriber: Pick<SubscriberEntity, '_id'>,
     workflowId: string | undefined,
-    subscriptionId: string | undefined
+    internalSubscriptionId: string | undefined
   ): Promise<void> {
     const channelPreferences: IPreferenceChannels = this.buildPreferenceChannels(command);
 
@@ -132,7 +132,7 @@ export class UpdatePreferences {
       environmentId: command.environmentId,
       _subscriberId: subscriber._id,
       workflowId,
-      subscriptionId,
+      subscriptionId: internalSubscriptionId,
       schedule: command.schedule,
       all: command.all,
     });
@@ -153,7 +153,7 @@ export class UpdatePreferences {
     command: UpdatePreferencesCommand,
     subscriber: Pick<SubscriberEntity, '_id'>,
     workflow: NotificationTemplateEntity | undefined,
-    subscriptionId?: string
+    internalSubscriptionId?: string
   ): Promise<InboxPreference> {
     if (
       command.level === PreferenceLevelEnum.TEMPLATE &&
@@ -165,7 +165,7 @@ export class UpdatePreferences {
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _templateId: workflow._id,
-        _topicSubscriptionId: subscriptionId,
+        _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
       });
 
@@ -176,7 +176,7 @@ export class UpdatePreferences {
         level: PreferenceLevelEnum.TEMPLATE,
         enabled: builtPreferences.all.enabled,
         condition: builtPreferences.all.condition,
-        subscriptionId: command.subscriptionIdentifier,
+        subscriptionId: internalSubscriptionId,
         channels,
         workflow: {
           id: workflow._id,
@@ -199,7 +199,7 @@ export class UpdatePreferences {
           template: workflow,
           subscriber,
           includeInactiveChannels: command.includeInactiveChannels,
-          subscriptionId,
+          subscriptionId: internalSubscriptionId,
         })
       );
 
