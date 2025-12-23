@@ -1,3 +1,13 @@
+## v3.11.1 (2025-12-23)
+
+### 🩹 Fixes
+
+- **react:** fix useNotifications hook realtime behaviour fixes NV-6992 ([#9690](https://github.com/novuhq/novu/pull/9690))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v3.11.0 (2025-10-27)
 
 ### 🚀 Features
