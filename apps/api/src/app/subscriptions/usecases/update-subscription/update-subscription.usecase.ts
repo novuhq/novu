@@ -139,7 +139,7 @@ export class UpdateSubscriptionUsecase {
         organizationId: command.organizationId,
         userId: command.userId,
         preferences: command.preferences,
-        subscriptionId: subscription._id.toString(),
+        subscriptionId: subscription.identifier,
         _subscriberId: subscription._subscriberId.toString(),
         workflows,
       })
@@ -191,7 +191,7 @@ export class UpdateSubscriptionUsecase {
                 severity: workflow.severity || SeverityLevelEnum.NONE,
               }
             : undefined,
-          subscriptionId: subscription._id,
+          subscriptionId: subscription.identifier,
           enabled: preferences?.all?.enabled ?? true,
           condition: preferences?.all?.condition as RulesLogic | undefined,
         };

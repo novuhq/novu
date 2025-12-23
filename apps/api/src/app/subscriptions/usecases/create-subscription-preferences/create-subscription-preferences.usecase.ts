@@ -170,7 +170,7 @@ export class CreateSubscriptionPreferencesUsecase {
             _topicSubscriptionId: subscription._id.toString(),
             type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
             preferences: workflowPreferences,
-            subscriptionId: subscription._id.toString(),
+            subscriptionId: subscription.identifier,
             workflow,
           });
         }

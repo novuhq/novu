@@ -392,7 +392,7 @@ export class CreateSubscriptionsUsecase {
                 severity: workflow.severity || SeverityLevelEnum.NONE,
               }
             : undefined,
-          subscriptionId: subscription._id.toString(),
+          subscriptionId: subscription.identifier,
           enabled: preferences?.all?.enabled ?? true,
           condition: preferences?.all?.condition as RulesLogic | undefined,
         };
