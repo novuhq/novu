@@ -119,7 +119,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
       const matches = checkNotificationMatchesFilter(notification, currentFilter);
       if (matches) {
         // the limit and after props are used to create a cache key
-        // the first batch of notifications in the cache doesnt include the after prop and we want to push to the first batch
+        // the first batch of notifications in the cache doesn't include the after prop and we want to push to the first batch
         const cacheKey = { ...currentFilter, limit: limitRef.current };
         novu.notifications.cache.unshift(cacheKey, notification);
       }
