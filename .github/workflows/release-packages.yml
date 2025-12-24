@@ -66,10 +66,8 @@ jobs:
 
       - name: Upgrade npm for Trusted Publishing
         run: |
-          echo "Current npm version: $(npm --version)"
           npm install -g npm@latest
-          echo "Upgraded npm version: $(npm --version)"
-          echo "✅ npm CLI >= 11.5.1 required for trusted publishing"
+          echo "npm version: $(npm --version) (>= 11.5.1 required for trusted publishing)"
 
       - name: Install Dependencies
         shell: bash
@@ -125,108 +123,16 @@ jobs:
             echo "Skipping build for stable release (will be built after PR merge)"
           fi
 
-      # #region agent log - Hypothesis F: Test if nx is interfering with OIDC
-      - name: "DEBUG F: Test direct npm publish vs nx"
-        if: github.event.inputs.release_type != 'stable'
-        continue-on-error: true
-        run: |
-          echo "🔬 HYPOTHESIS F (USER): Does nx interfere with OIDC authentication?"
-          echo ""
-          echo "=== Test 1: Direct npm publish (no nx) ==="
-          cd packages/react
-          echo "Running: npm publish --dry-run --provenance"
-          npm publish --dry-run --provenance 2>&1 | grep -E "(Publishing|Signed provenance|OIDC|authToken|authenticated|login)" || echo "No auth-related output"
-          DIRECT_EXIT=$?
-          echo "Exit code: $DIRECT_EXIT"
-
-          echo ""
-          echo "=== Test 2: Via nx (current method) ==="
-          cd /home/runner/work/novu/novu
-          echo "Running: pnpm nx run @novu/react:nx-release-publish -- --tag=nightly --provenance --dry-run"
-          pnpm nx run @novu/react:nx-release-publish -- --tag=nightly --provenance --dry-run 2>&1 | grep -E "(Publishing|Signed provenance|OIDC|authToken|authenticated|login)" || echo "No auth-related output"
-          NX_EXIT=$?
-          echo "Exit code: $NX_EXIT"
-
-          echo ""
-          echo "=== Comparison ==="
-          if [ $DIRECT_EXIT -eq 0 ] && [ $NX_EXIT -ne 0 ]; then
-            echo "⚠️ HYPOTHESIS F: CONFIRMED - Direct npm works but nx fails!"
-            echo "Problem: nx is interfering with OIDC"
-          elif [ $DIRECT_EXIT -ne 0 ] && [ $NX_EXIT -ne 0 ]; then
-            echo "Both methods fail - nx might not be the problem"
-          else
-            echo "Results are similar"
-          fi
-
-          echo ""
-          echo "=== Test 3: Verify OIDC environment and npm version ==="
-          cd /home/runner/work/novu/novu/packages/react
-          echo "npm version: $(npm --version)"
-          NPM_MAJOR=$(npm --version | cut -d. -f1)
-          if [ "$NPM_MAJOR" -ge 11 ]; then
-            echo "✅ npm >= 11.5.1 (supports trusted publishing)"
-          else
-            echo "❌ npm < 11.5.1 (trusted publishing requires >= 11.5.1)"
-          fi
-          echo ""
-          echo "ACTIONS_ID_TOKEN_REQUEST_URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:-NOT_SET}"
-          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: $([ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ] && echo 'SET' || echo 'NOT_SET')"
-          echo "NODE_AUTH_TOKEN: $([ -z "${NODE_AUTH_TOKEN:-}" ] && echo 'NOT_SET (GOOD - OIDC can work)' || echo 'SET (BAD - blocks OIDC)')"
-          echo ""
-          if [ -z "${NODE_AUTH_TOKEN:-}" ] && [ "$NPM_MAJOR" -ge 11 ]; then
-            echo "✅ All requirements met - OIDC trusted publishing should work!"
-          else
-            echo "❌ Requirements not met - check errors above"
-          fi
-
-          echo ""
-          echo "=== Test 4: Simulate what nx does ==="
-          cd /home/runner/work/novu/novu
-          echo "project.json command: cd packages/react && npm publish --access public \${NX_PUBLISH_ARGS:-}"
-          echo ""
-          echo "Simulating with NX_PUBLISH_ARGS set:"
-          export NX_PUBLISH_ARGS="--tag=nightly --provenance --dry-run"
-          bash -c 'echo "ACTIONS_ID_TOKEN_REQUEST_URL in subshell: ${ACTIONS_ID_TOKEN_REQUEST_URL:-NOT_SET}"'
-          bash -c 'cd packages/react && npm publish --access public ${NX_PUBLISH_ARGS:-}' 2>&1 | tail -20
-          echo "Exit code: $?"
-      # #endregion
-      # #region agent log - PHASE 2: Test OIDC without token
       - name: Publish packages (nightly and rc only)
         if: github.event.inputs.release_type != 'stable'
         run: |
-          echo "🆔 PHASE 2: Testing OIDC authentication (NO TOKEN)"
-          echo "Expected: npm detects OIDC env vars and uses GitHub Actions OIDC"
-          echo ""
-
-          echo "=== Pre-publish verification ==="
-          echo "NODE_AUTH_TOKEN set: $( [ -n "${NODE_AUTH_TOKEN:-}" ] && echo 'YES (BAD)' || echo 'NO (GOOD)' )"
-          echo "ACTIONS_ID_TOKEN_REQUEST_URL set: $( [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && echo 'YES (GOOD)' || echo 'NO (BAD)' )"
-          echo ""
-
           if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
-            echo "Publishing nightly with --tag=nightly --provenance"
-            echo "Watch for: 'Signed provenance statement' and 'Provenance statement published to transparency log'"
-            echo ""
-            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly --provenance --verbose
+            echo "📦 Publishing nightly release with OIDC trusted publishing..."
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly --provenance
           elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
-            echo "Publishing rc with --tag=next --provenance"
-            echo "Watch for: 'Signed provenance statement' and 'Provenance statement published to transparency log'"
-            echo ""
-            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next --provenance --verbose
+            echo "📦 Publishing RC release with OIDC trusted publishing..."
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next --provenance
           fi
-
-          EXIT_CODE=$?
-          echo ""
-          echo "🔍 Publish exit code: $EXIT_CODE"
-
-          if [ $EXIT_CODE -eq 0 ]; then
-            echo "✅ SUCCESS: OIDC authentication worked!"
-          else
-            echo "❌ FAILED: Check logs above for authentication errors"
-          fi
-
-          exit $EXIT_CODE
-      # #endregion
       - name: Create Pull Request
         if: github.event.inputs.release_type == 'stable'
         id: create-pr
@@ -302,10 +208,8 @@ jobs:
 
       - name: Upgrade npm for Trusted Publishing
         run: |
-          echo "Current npm version: $(npm --version)"
           npm install -g npm@latest
-          echo "Upgraded npm version: $(npm --version)"
-          echo "✅ npm CLI >= 11.5.1 required for trusted publishing"
+          echo "npm version: $(npm --version) (>= 11.5.1 required for trusted publishing)"
 
       - name: Install Dependencies
         shell: bash
@@ -317,7 +221,7 @@ jobs:
 
       - name: Publish packages to NPM
         run: |
-          echo "Publishing stable release with OIDC authentication"
+          echo "📦 Publishing stable release with OIDC trusted publishing..."
           pnpm nx run-many -t nx-release-publish --projects=${{ steps.extract-info.outputs.packages }} -- --tag=latest --provenance
 
       - name: Create and push tags
