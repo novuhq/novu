@@ -119,16 +119,64 @@ jobs:
             echo "Skipping build for stable release (will be built after PR merge)"
           fi
 
+      # #region agent log - Debug npm/pnpm OIDC configuration
+      - name: Debug - Check npm configuration before publish
+        if: github.event.inputs.release_type != 'stable'
+        run: |
+          echo "🔍 DEBUG_LOG_START"
+          echo "=== Hypothesis A/B/C: Check npm auth config and OIDC setup ==="
+
+          echo "--- Root npm config ---"
+          npm config list
+
+          echo "--- Check if ACTIONS_ID_TOKEN_REQUEST_URL is set (OIDC) ---"
+          if env | grep -q ACTIONS_ID_TOKEN; then
+            echo "✓ OIDC environment variables ARE present"
+            env | grep ACTIONS_ID_TOKEN | sed 's/=.*/=***REDACTED***/'
+          else
+            echo "✗ OIDC environment variables NOT found"
+          fi
+
+          echo "--- Check npm whoami (should fail with OIDC) ---"
+          npm whoami 2>&1 || echo "Expected: npm whoami doesn't work with OIDC-only auth"
+
+          echo "--- Check npm registry auth in subdirectory ---"
+          cd packages/react
+          echo "Current directory: $(pwd)"
+          npm config list | grep -E "(registry|_authToken|_auth)" || echo "No auth config found"
+          cd ../..
+
+          echo "--- Check if packages exist on npm ---"
+          for pkg in js react nextjs react-native; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" https://registry.npmjs.org/@novu/${pkg})
+            if [ "$status" = "200" ]; then
+              echo "✓ @novu/${pkg}: EXISTS (HTTP ${status})"
+            else
+              echo "✗ @novu/${pkg}: NOT FOUND (HTTP ${status})"
+            fi
+          done
+
+          echo "--- Verify workflow file name for Trusted Publisher ---"
+          echo "Current workflow file: ${{ github.workflow }}"
+          echo "Workflow ref: ${{ github.workflow_ref }}"
+
+          echo "🔍 DEBUG_LOG_END"
+      # #endregion
       - name: Publish packages (nightly and rc only)
         if: github.event.inputs.release_type != 'stable'
         env:
           NPM_CONFIG_PROVENANCE: true
         run: |
+          echo "🔍 PUBLISH_DEBUG_START"
+          echo "Attempting to publish with OIDC..."
+
           if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
-            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly --provenance
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly --provenance --verbose
           elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
-            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next --provenance
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next --provenance --verbose
           fi
+
+          echo "🔍 PUBLISH_DEBUG_END"
 
       - name: Create Pull Request
         if: github.event.inputs.release_type == 'stable'
