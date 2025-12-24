@@ -1,4 +1,8 @@
 name: Release Packages
+run-name: >
+  ${{
+    github.event_name == 'workflow_dispatch' && format('Release {0} ({1}) - {2}', github.event.inputs.version, github.event.inputs.release_type, github.event.inputs.packages) || 'Release Packages'
+  }}
 
 on:
   workflow_dispatch:
