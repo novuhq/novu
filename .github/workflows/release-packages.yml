@@ -187,27 +187,24 @@ jobs:
         id: extract-info
         run: |
           PR_TITLE='${{ github.event.pull_request.title }}'
-          PR_BODY='${{ github.event.pull_request.body }}'
 
           echo "=== PR Title ==="
           echo "$PR_TITLE"
           echo ""
-          echo "=== PR Body (first 500 chars) ==="
-          echo "$PR_BODY" | head -c 500
-          echo ""
           echo "=== Extraction ==="
 
           VERSION=$(echo "$PR_TITLE" | sed -n 's/.*Release \([v0-9\.]*\).*/\1/p')
-
-          PACKAGES=$(printf '%s\n' "$PR_BODY" | awk '/### 📦 Packages Released:/,/^$/' | grep '@novu' | tr -d '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          PACKAGES=$(echo "$PR_TITLE" | sed -n 's/.*- \(@novu.*\)/\1/p')
 
           if [ -z "$VERSION" ]; then
             echo "❌ ERROR: Failed to extract version from PR title"
+            echo "Expected format: '🚀 Release vX.Y.Z - @novu/package1,@novu/package2'"
             exit 1
           fi
 
           if [ -z "$PACKAGES" ]; then
-            echo "❌ ERROR: Failed to extract packages from PR body"
+            echo "❌ ERROR: Failed to extract packages from PR title"
+            echo "Expected format: '🚀 Release vX.Y.Z - @novu/package1,@novu/package2'"
             exit 1
           fi
 
