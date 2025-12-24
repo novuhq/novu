@@ -161,27 +161,42 @@ jobs:
           echo "Branch: ${{ github.ref_name }}"
           echo "Workflow: ${{ github.workflow_ref }}"
       # #endregion
-      # #region agent log - Test with NPM_TOKEN first, then OIDC
+      # #region agent log - PHASE 2: Test OIDC without token
       - name: Publish packages (nightly and rc only)
         if: github.event.inputs.release_type != 'stable'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "🔍 TEST: Publishing with NPM_TOKEN to verify mechanism works"
-          echo "NODE_AUTH_TOKEN present: $( [ -n "${NODE_AUTH_TOKEN}" ] && echo 'YES' || echo 'NO' )"
+          echo "🆔 PHASE 2: Testing OIDC authentication (NO TOKEN)"
+          echo "Expected: npm detects OIDC env vars and uses GitHub Actions OIDC"
+          echo ""
+
+          echo "=== Pre-publish verification ==="
+          echo "NODE_AUTH_TOKEN set: $( [ -n "${NODE_AUTH_TOKEN:-}" ] && echo 'YES (BAD)' || echo 'NO (GOOD)' )"
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL set: $( [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && echo 'YES (GOOD)' || echo 'NO (BAD)' )"
           echo ""
 
           if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
             echo "Publishing nightly with --tag=nightly --provenance"
+            echo "Watch for: 'Signed provenance statement' and 'Provenance statement published to transparency log'"
+            echo ""
             pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly --provenance --verbose
           elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
             echo "Publishing rc with --tag=next --provenance"
+            echo "Watch for: 'Signed provenance statement' and 'Provenance statement published to transparency log'"
+            echo ""
             pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next --provenance --verbose
           fi
 
+          EXIT_CODE=$?
           echo ""
-          echo "🔍 Publish exit code: $?"
-          echo "If successful, next test will be without NPM_TOKEN to verify OIDC"
+          echo "🔍 Publish exit code: $EXIT_CODE"
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✅ SUCCESS: OIDC authentication worked!"
+          else
+            echo "❌ FAILED: Check logs above for authentication errors"
+          fi
+
+          exit $EXIT_CODE
       # #endregion
       - name: Create Pull Request
         if: github.event.inputs.release_type == 'stable'
@@ -266,9 +281,8 @@ jobs:
         run: pnpm run build:packages
 
       - name: Publish packages to NPM
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          echo "Publishing stable release with OIDC authentication"
           pnpm nx run-many -t nx-release-publish --projects=${{ steps.extract-info.outputs.packages }} -- --tag=latest --provenance
 
       - name: Create and push tags
