@@ -63,7 +63,6 @@ jobs:
         with:
           node-version: "20.19.0"
           cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
 
       - name: Install Dependencies
         shell: bash
@@ -119,50 +118,26 @@ jobs:
             echo "Skipping build for stable release (will be built after PR merge)"
           fi
 
-      # #region agent log - Debug npm/pnpm OIDC configuration
-      - name: Debug - Check npm configuration before publish
+      - name: Debug - Verify OIDC-only configuration
         if: github.event.inputs.release_type != 'stable'
         run: |
-          echo "🔍 DEBUG_LOG_START"
-          echo "=== HYPOTHESIS F: Branch/Environment Validation ==="
-
-          echo "--- Git context (may affect Trusted Publisher) ---"
+          echo "🔍 DEBUG: Verifying OIDC-only configuration"
           echo "Branch: ${{ github.ref_name }}"
-          echo "Ref: ${{ github.ref }}"
-          echo "SHA: ${{ github.sha }}"
-          echo "Workflow ref: ${{ github.workflow_ref }}"
-          echo "Event name: ${{ github.event_name }}"
-
+          echo "Workflow: ${{ github.workflow_ref }}"
           echo ""
-          echo "--- npm config with _authToken ---"
-          echo "Auth token location: /home/runner/work/_temp/.npmrc"
-          cat /home/runner/work/_temp/.npmrc || echo "File not found"
-
+          echo "Checking for NODE_AUTH_TOKEN (should NOT be present):"
+          if [ -f "/home/runner/work/_temp/.npmrc" ]; then
+            cat /home/runner/work/_temp/.npmrc
+            echo ""
+            echo "⚠️ WARNING: .npmrc file exists - this should NOT happen with pure OIDC"
+          else
+            echo "✅ No .npmrc file - OIDC-only mode active"
+          fi
           echo ""
-          echo "--- Test: Can we use npm directly (not pnpm)? ---"
-          cd packages/react
-          echo "Current directory: $(pwd)"
-          echo "Attempting npm pack (dry run)..."
-          npm pack --dry-run 2>&1 | head -20 || true
-
-          echo ""
-          echo "--- Test: Check if pnpm respects npm config ---"
-          echo "pnpm config list:"
-          pnpm config list 2>&1 | grep -E "(registry|_authToken)" || echo "No auth config in pnpm"
-
-          cd ../..
-
-          echo ""
-          echo "⚠️  CRITICAL: Running from branch '${{ github.ref_name }}'"
-          echo "⚠️  Trusted Publisher may only allow publishes from 'main' or 'next' branches"
-          echo "⚠️  This could explain why provenance works but publish fails"
-
-          echo "🔍 DEBUG_LOG_END"
-      # #endregion
+          echo "OIDC environment variables:"
+          env | grep -E "ACTIONS_ID_TOKEN|NPM_CONFIG" || echo "✅ Only OIDC env vars present"
       - name: Publish packages (nightly and rc only)
         if: github.event.inputs.release_type != 'stable'
-        env:
-          NPM_CONFIG_PROVENANCE: true
         run: |
           echo "🔍 PUBLISH_DEBUG_START"
           echo "Attempting to publish with OIDC..."
@@ -247,7 +222,6 @@ jobs:
         with:
           node-version: "20.19.0"
           cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
 
       - name: Install Dependencies
         shell: bash
@@ -258,8 +232,6 @@ jobs:
         run: pnpm run build:packages
 
       - name: Publish packages to NPM
-        env:
-          NPM_CONFIG_PROVENANCE: true
         run: |
           pnpm nx run-many -t nx-release-publish --projects=${{ steps.extract-info.outputs.packages }} -- --tag=latest --provenance
 
