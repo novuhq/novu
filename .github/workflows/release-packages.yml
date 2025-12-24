@@ -124,41 +124,38 @@ jobs:
         if: github.event.inputs.release_type != 'stable'
         run: |
           echo "🔍 DEBUG_LOG_START"
-          echo "=== Hypothesis A/B/C: Check npm auth config and OIDC setup ==="
+          echo "=== HYPOTHESIS F: Branch/Environment Validation ==="
 
-          echo "--- Root npm config ---"
-          npm config list
+          echo "--- Git context (may affect Trusted Publisher) ---"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Workflow ref: ${{ github.workflow_ref }}"
+          echo "Event name: ${{ github.event_name }}"
 
-          echo "--- Check if ACTIONS_ID_TOKEN_REQUEST_URL is set (OIDC) ---"
-          if env | grep -q ACTIONS_ID_TOKEN; then
-            echo "✓ OIDC environment variables ARE present"
-            env | grep ACTIONS_ID_TOKEN | sed 's/=.*/=***REDACTED***/'
-          else
-            echo "✗ OIDC environment variables NOT found"
-          fi
+          echo ""
+          echo "--- npm config with _authToken ---"
+          echo "Auth token location: /home/runner/work/_temp/.npmrc"
+          cat /home/runner/work/_temp/.npmrc || echo "File not found"
 
-          echo "--- Check npm whoami (should fail with OIDC) ---"
-          npm whoami 2>&1 || echo "Expected: npm whoami doesn't work with OIDC-only auth"
-
-          echo "--- Check npm registry auth in subdirectory ---"
+          echo ""
+          echo "--- Test: Can we use npm directly (not pnpm)? ---"
           cd packages/react
           echo "Current directory: $(pwd)"
-          npm config list | grep -E "(registry|_authToken|_auth)" || echo "No auth config found"
+          echo "Attempting npm pack (dry run)..."
+          npm pack --dry-run 2>&1 | head -20 || true
+
+          echo ""
+          echo "--- Test: Check if pnpm respects npm config ---"
+          echo "pnpm config list:"
+          pnpm config list 2>&1 | grep -E "(registry|_authToken)" || echo "No auth config in pnpm"
+
           cd ../..
 
-          echo "--- Check if packages exist on npm ---"
-          for pkg in js react nextjs react-native; do
-            status=$(curl -s -o /dev/null -w "%{http_code}" https://registry.npmjs.org/@novu/${pkg})
-            if [ "$status" = "200" ]; then
-              echo "✓ @novu/${pkg}: EXISTS (HTTP ${status})"
-            else
-              echo "✗ @novu/${pkg}: NOT FOUND (HTTP ${status})"
-            fi
-          done
-
-          echo "--- Verify workflow file name for Trusted Publisher ---"
-          echo "Current workflow file: ${{ github.workflow }}"
-          echo "Workflow ref: ${{ github.workflow_ref }}"
+          echo ""
+          echo "⚠️  CRITICAL: Running from branch '${{ github.ref_name }}'"
+          echo "⚠️  Trusted Publisher may only allow publishes from 'main' or 'next' branches"
+          echo "⚠️  This could explain why provenance works but publish fails"
 
           echo "🔍 DEBUG_LOG_END"
       # #endregion
