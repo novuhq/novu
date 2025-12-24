@@ -185,14 +185,32 @@ jobs:
           PR_TITLE='${{ github.event.pull_request.title }}'
           PR_BODY='${{ github.event.pull_request.body }}'
 
-          VERSION=$(echo "$PR_TITLE" | grep -oP 'Release \K[v\d\.]+' || echo "")
+          echo "=== PR Title ==="
+          echo "$PR_TITLE"
+          echo ""
+          echo "=== PR Body (first 500 chars) ==="
+          echo "$PR_BODY" | head -c 500
+          echo ""
+          echo "=== Extraction ==="
 
-          PACKAGES=$(printf '%s\n' "$PR_BODY" | sed -n '/### 📦 Packages Released:/,/```/p' | grep -v '###' | grep -v '```' | tr -d '\n' | xargs)
+          VERSION=$(echo "$PR_TITLE" | sed -n 's/.*Release \([v0-9\.]*\).*/\1/p')
+
+          PACKAGES=$(printf '%s\n' "$PR_BODY" | awk '/### 📦 Packages Released:/,/^$/' | grep '@novu' | tr -d '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+          if [ -z "$VERSION" ]; then
+            echo "❌ ERROR: Failed to extract version from PR title"
+            exit 1
+          fi
+
+          if [ -z "$PACKAGES" ]; then
+            echo "❌ ERROR: Failed to extract packages from PR body"
+            exit 1
+          fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
-          echo "Extracted packages: $PACKAGES"
+          echo "✅ Extracted version: $VERSION"
+          echo "✅ Extracted packages: $PACKAGES"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -232,7 +250,7 @@ jobs:
           echo "Creating tags for packages: ${{ steps.extract-info.outputs.packages }}"
           IFS=',' read -ra PACKAGES <<< "${{ steps.extract-info.outputs.packages }}"
           for package in "${PACKAGES[@]}"; do
-            package=$(echo $package | xargs)
+            package=$(echo "$package" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
             tag_name="${package}@${{ steps.extract-info.outputs.version }}"
             echo "Creating tag: $tag_name"
             git tag "$tag_name"
@@ -248,7 +266,7 @@ jobs:
 
           IFS=',' read -ra PACKAGES <<< "${{ steps.extract-info.outputs.packages }}"
           for package in "${PACKAGES[@]}"; do
-            package=$(echo $package | xargs)
+            package=$(echo "$package" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
             tag_name="${package}@${{ steps.extract-info.outputs.version }}"
             
             echo "Creating GitHub release for $package with tag: $tag_name"
