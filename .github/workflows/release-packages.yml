@@ -118,24 +118,85 @@ jobs:
             echo "Skipping build for stable release (will be built after PR merge)"
           fi
 
-      - name: Debug - Verify OIDC-only configuration
+      # #region agent log - Debug OIDC authentication setup
+      - name: Debug - OIDC Authentication Investigation
         if: github.event.inputs.release_type != 'stable'
         run: |
-          echo "🔍 DEBUG: Verifying OIDC-only configuration"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Workflow: ${{ github.workflow_ref }}"
+          echo "🔍 HYPOTHESIS A: Check npm registry configuration"
+          echo "=== Root .npmrc ==="
+          if [ -f ".npmrc" ]; then
+            cat .npmrc
+          else
+            echo "No .npmrc in repo root"
+          fi
+
           echo ""
-          echo "Checking for NODE_AUTH_TOKEN (should NOT be present):"
+          echo "=== Home .npmrc ==="
+          if [ -f "$HOME/.npmrc" ]; then
+            cat $HOME/.npmrc
+          else
+            echo "No .npmrc in home directory"
+          fi
+
+          echo ""
+          echo "=== Temp .npmrc ==="
           if [ -f "/home/runner/work/_temp/.npmrc" ]; then
             cat /home/runner/work/_temp/.npmrc
-            echo ""
-            echo "⚠️ WARNING: .npmrc file exists - this should NOT happen with pure OIDC"
           else
-            echo "✅ No .npmrc file - OIDC-only mode active"
+            echo "No .npmrc in temp directory (expected for OIDC)"
           fi
+
           echo ""
-          echo "OIDC environment variables:"
-          env | grep -E "ACTIONS_ID_TOKEN|NPM_CONFIG" || echo "✅ Only OIDC env vars present"
+          echo "🔍 HYPOTHESIS B: Check npm version and OIDC support"
+          npm --version
+          npm config get registry
+
+          echo ""
+          echo "🔍 HYPOTHESIS C: Test OIDC from different directories"
+          echo "Current directory: $(pwd)"
+          echo "OIDC env vars present:"
+          env | grep ACTIONS_ID_TOKEN_REQUEST_URL || echo "❌ ACTIONS_ID_TOKEN_REQUEST_URL not found"
+
+          echo ""
+          echo "From subdirectory (packages/react):"
+          cd packages/react
+          pwd
+          env | grep ACTIONS_ID_TOKEN_REQUEST_URL || echo "❌ ACTIONS_ID_TOKEN_REQUEST_URL not found in subdir"
+          cd ../..
+
+          echo ""
+          echo "🔍 HYPOTHESIS D: Check if npm has OIDC config"
+          npm config list 2>&1 | head -30
+
+          echo ""
+          echo "🔍 HYPOTHESIS E: Verify Trusted Publisher context"
+          echo "Workflow file: ${{ github.workflow }}"
+          echo "Workflow path: .github/workflows/$(basename ${{ github.workflow_ref }} | cut -d'@' -f1)"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Event: ${{ github.event_name }}"
+
+          echo ""
+          echo "🔍 Test: Attempt npm pack with --dry-run from subdirectory"
+          cd packages/react
+          npm pack --dry-run 2>&1 | head -15 || true
+          cd ../..
+      # #endregion
+      # #region agent log - Test manual npm publish with OIDC
+      - name: Test - Manual npm publish from root with OIDC
+        if: github.event.inputs.release_type != 'stable'
+        run: |
+          echo "🔍 HYPOTHESIS C+D: Test npm publish with explicit OIDC from root"
+          cd packages/react
+
+          echo "Current directory: $(pwd)"
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL present: $(env | grep ACTIONS_ID_TOKEN_REQUEST_URL | wc -l)"
+
+          echo ""
+          echo "Attempting: npm publish --dry-run --provenance --registry https://registry.npmjs.org --loglevel silly"
+          npm publish --dry-run --provenance --registry https://registry.npmjs.org --loglevel silly 2>&1 | tail -50 || true
+
+          cd ../..
+      # #endregion
       - name: Publish packages (nightly and rc only)
         if: github.event.inputs.release_type != 'stable'
         run: |
