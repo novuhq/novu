@@ -1,5 +1,6 @@
 import { areTagsEqual, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDataRef } from './internal/useDataRef';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
 import { useNovu } from './NovuProvider';
 
@@ -46,14 +47,11 @@ export type UseCountsResult = {
 export const useCounts = (props: UseCountsProps): UseCountsResult => {
   const { filters, onSuccess, onError } = props;
   const { notifications } = useNovu();
-  const filtersRef = useRef<NotificationFilter[]>(filters);
+  const filtersRef = useDataRef<NotificationFilter[]>(filters);
   const [error, setError] = useState<NovuError>();
   const [counts, setCounts] = useState<Count[]>();
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
-
-  // Keep ref up to date
-  filtersRef.current = filters;
 
   const sync = async (notification?: Notification, overrideFilters?: NotificationFilter[]) => {
     const currentFilters = overrideFilters || filtersRef.current;

@@ -1,5 +1,5 @@
-import { SubscriptionsCache } from 'src/cache/subscriptions-cache';
 import type { InboxService } from '../api';
+import { SubscriptionsCache } from '../cache/subscriptions-cache';
 import type { NovuEventEmitter } from '../event-emitter';
 import type { Result, SubscriptionResponse } from '../types';
 import { NovuError } from '../utils/errors';

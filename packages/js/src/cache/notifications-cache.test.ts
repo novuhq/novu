@@ -22,6 +22,7 @@ describe('NotificationsCache', () => {
     } as unknown as InboxService;
     notificationsCache = new NotificationsCache({
       emitter: mockEmitter,
+      inboxService: mockInboxService,
     });
 
     notification1 = new Notification(
