@@ -63,6 +63,7 @@ jobs:
         with:
           node-version: "20.19.0"
           cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install Dependencies
         shell: bash
@@ -118,103 +119,70 @@ jobs:
             echo "Skipping build for stable release (will be built after PR merge)"
           fi
 
-      # #region agent log - Debug OIDC authentication setup
-      - name: Debug - OIDC Authentication Investigation
+      # #region agent log - Debug authentication mode
+      - name: Debug - Check authentication mode (Token vs OIDC)
         if: github.event.inputs.release_type != 'stable'
         run: |
-          echo "🔍 HYPOTHESIS A: Check npm registry configuration"
-          echo "=== Root .npmrc ==="
-          if [ -f ".npmrc" ]; then
-            cat .npmrc
-          else
-            echo "No .npmrc in repo root"
-          fi
+          echo "🔍 DEBUG: Checking authentication configuration"
 
           echo ""
-          echo "=== Home .npmrc ==="
-          if [ -f "$HOME/.npmrc" ]; then
-            cat $HOME/.npmrc
-          else
-            echo "No .npmrc in home directory"
-          fi
-
-          echo ""
-          echo "=== Temp .npmrc ==="
+          echo "=== .npmrc created by setup-node ==="
           if [ -f "/home/runner/work/_temp/.npmrc" ]; then
+            echo "✅ .npmrc exists"
             cat /home/runner/work/_temp/.npmrc
           else
-            echo "No .npmrc in temp directory (expected for OIDC)"
+            echo "❌ .npmrc NOT found"
           fi
 
           echo ""
-          echo "🔍 HYPOTHESIS B: Check npm version and OIDC support"
-          npm --version
+          echo "=== Authentication Mode Detection ==="
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "🔑 MODE: Token-based authentication (NPM_TOKEN secret is set)"
+            echo "   This run will use traditional npm token auth"
+          else
+            echo "🆔 MODE: OIDC authentication (NPM_TOKEN secret is empty)"
+            echo "   This run will attempt OIDC with GitHub Actions"
+          fi
+
+          echo ""
+          echo "=== OIDC environment variables ==="
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "✅ ACTIONS_ID_TOKEN_REQUEST_URL is available"
+          else
+            echo "❌ ACTIONS_ID_TOKEN_REQUEST_URL not available"
+          fi
+
+          echo ""
+          echo "=== npm configuration ==="
           npm config get registry
 
           echo ""
-          echo "🔍 HYPOTHESIS C: Test OIDC from different directories"
-          echo "Current directory: $(pwd)"
-          echo "OIDC env vars present:"
-          env | grep ACTIONS_ID_TOKEN_REQUEST_URL || echo "❌ ACTIONS_ID_TOKEN_REQUEST_URL not found"
-
-          echo ""
-          echo "From subdirectory (packages/react):"
-          cd packages/react
-          pwd
-          env | grep ACTIONS_ID_TOKEN_REQUEST_URL || echo "❌ ACTIONS_ID_TOKEN_REQUEST_URL not found in subdir"
-          cd ../..
-
-          echo ""
-          echo "🔍 HYPOTHESIS D: Check if npm has OIDC config"
-          npm config list 2>&1 | head -30
-
-          echo ""
-          echo "🔍 HYPOTHESIS E: Verify Trusted Publisher context"
-          echo "Workflow file: ${{ github.workflow }}"
-          echo "Workflow path: .github/workflows/$(basename ${{ github.workflow_ref }} | cut -d'@' -f1)"
+          echo "=== Context ==="
           echo "Branch: ${{ github.ref_name }}"
-          echo "Event: ${{ github.event_name }}"
-
-          echo ""
-          echo "🔍 Test: Attempt npm pack with --dry-run from subdirectory"
-          cd packages/react
-          npm pack --dry-run 2>&1 | head -15 || true
-          cd ../..
+          echo "Workflow: ${{ github.workflow_ref }}"
       # #endregion
-      # #region agent log - Test manual npm publish with OIDC
-      - name: Test - Manual npm publish from root with OIDC
-        if: github.event.inputs.release_type != 'stable'
-        run: |
-          echo "🔍 HYPOTHESIS C+D: Test npm publish with explicit OIDC from root"
-          cd packages/react
-
-          echo "Current directory: $(pwd)"
-          echo "ACTIONS_ID_TOKEN_REQUEST_URL present: $(env | grep ACTIONS_ID_TOKEN_REQUEST_URL | wc -l)"
-
-          echo ""
-          echo "Attempting: npm publish --dry-run --provenance --registry https://registry.npmjs.org --loglevel silly"
-          npm publish --dry-run --provenance --registry https://registry.npmjs.org --loglevel silly 2>&1 | tail -50 || true
-
-          cd ../..
-      # #endregion
-      # #region agent log - Post-fix verification
+      # #region agent log - Test with NPM_TOKEN first, then OIDC
       - name: Publish packages (nightly and rc only)
         if: github.event.inputs.release_type != 'stable'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "🔍 POST-FIX: Publishing with explicit --registry flag"
-          echo "Expected: npm publish should now use OIDC authentication via explicit registry"
+          echo "🔍 TEST: Publishing with NPM_TOKEN to verify mechanism works"
+          echo "NODE_AUTH_TOKEN present: $( [ -n "${NODE_AUTH_TOKEN}" ] && echo 'YES' || echo 'NO' )"
+          echo ""
 
           if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
-            echo "Publishing nightly with tag=nightly, provenance=true, registry=https://registry.npmjs.org"
+            echo "Publishing nightly with --tag=nightly --provenance"
             pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly --provenance --verbose
           elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
-            echo "Publishing rc with tag=next, provenance=true, registry=https://registry.npmjs.org"
+            echo "Publishing rc with --tag=next --provenance"
             pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next --provenance --verbose
           fi
 
-          echo "🔍 POST-FIX: Publish completed with exit code: $?"
+          echo ""
+          echo "🔍 Publish exit code: $?"
+          echo "If successful, next test will be without NPM_TOKEN to verify OIDC"
       # #endregion
-
       - name: Create Pull Request
         if: github.event.inputs.release_type == 'stable'
         id: create-pr
@@ -287,6 +255,7 @@ jobs:
         with:
           node-version: "20.19.0"
           cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install Dependencies
         shell: bash
@@ -297,6 +266,8 @@ jobs:
         run: pnpm run build:packages
 
       - name: Publish packages to NPM
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           pnpm nx run-many -t nx-release-publish --projects=${{ steps.extract-info.outputs.packages }} -- --tag=latest --provenance
 
