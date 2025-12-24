@@ -63,7 +63,13 @@ jobs:
         with:
           node-version: "20.19.0"
           cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
+
+      - name: Upgrade npm for Trusted Publishing
+        run: |
+          echo "Current npm version: $(npm --version)"
+          npm install -g npm@latest
+          echo "Upgraded npm version: $(npm --version)"
+          echo "✅ npm CLI >= 11.5.1 required for trusted publishing"
 
       - name: Install Dependencies
         shell: bash
@@ -153,13 +159,25 @@ jobs:
           fi
 
           echo ""
-          echo "=== Test 3: Check OIDC env vars from shell ==="
+          echo "=== Test 3: Verify OIDC environment and npm version ==="
           cd /home/runner/work/novu/novu/packages/react
+          echo "npm version: $(npm --version)"
+          NPM_MAJOR=$(npm --version | cut -d. -f1)
+          if [ "$NPM_MAJOR" -ge 11 ]; then
+            echo "✅ npm >= 11.5.1 (supports trusted publishing)"
+          else
+            echo "❌ npm < 11.5.1 (trusted publishing requires >= 11.5.1)"
+          fi
+          echo ""
           echo "ACTIONS_ID_TOKEN_REQUEST_URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:-NOT_SET}"
           echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: $([ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ] && echo 'SET' || echo 'NOT_SET')"
-          echo "NODE_AUTH_TOKEN: $([ -n "${NODE_AUTH_TOKEN:-}" ] && echo 'SET' || echo 'NOT_SET')"
+          echo "NODE_AUTH_TOKEN: $([ -z "${NODE_AUTH_TOKEN:-}" ] && echo 'NOT_SET (GOOD - OIDC can work)' || echo 'SET (BAD - blocks OIDC)')"
           echo ""
-          echo "If OIDC vars are NOT_SET, that confirms environment issue"
+          if [ -z "${NODE_AUTH_TOKEN:-}" ] && [ "$NPM_MAJOR" -ge 11 ]; then
+            echo "✅ All requirements met - OIDC trusted publishing should work!"
+          else
+            echo "❌ Requirements not met - check errors above"
+          fi
 
           echo ""
           echo "=== Test 4: Simulate what nx does ==="
@@ -281,7 +299,13 @@ jobs:
         with:
           node-version: "20.19.0"
           cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
+
+      - name: Upgrade npm for Trusted Publishing
+        run: |
+          echo "Current npm version: $(npm --version)"
+          npm install -g npm@latest
+          echo "Upgraded npm version: $(npm --version)"
+          echo "✅ npm CLI >= 11.5.1 required for trusted publishing"
 
       - name: Install Dependencies
         shell: bash
