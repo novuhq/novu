@@ -27,11 +27,6 @@ on:
           - nightly
           - rc
         default: stable
-      mark_as_latest:
-        description: "Mark as latest on npm (stable releases only)"
-        required: false
-        type: boolean
-        default: true
   pull_request:
     types: [closed]
     branches: [next, main]
@@ -125,13 +120,14 @@ jobs:
           fi
 
       - name: Publish packages (nightly and rc only)
+        if: github.event.inputs.release_type != 'stable'
+        env:
+          NPM_CONFIG_PROVENANCE: true
         run: |
           if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
             pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly --provenance
           elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
             pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next --provenance
-          else
-            echo "Skipping publish for stable release (will be published after PR merge)"
           fi
 
       - name: Create Pull Request
@@ -217,6 +213,8 @@ jobs:
         run: pnpm run build:packages
 
       - name: Publish packages to NPM
+        env:
+          NPM_CONFIG_PROVENANCE: true
         run: |
           pnpm nx run-many -t nx-release-publish --projects=${{ steps.extract-info.outputs.packages }} -- --tag=latest --provenance
 
