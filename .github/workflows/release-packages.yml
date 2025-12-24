@@ -119,47 +119,58 @@ jobs:
             echo "Skipping build for stable release (will be built after PR merge)"
           fi
 
-      # #region agent log - Debug authentication mode
-      - name: Debug - Check authentication mode (Token vs OIDC)
+      # #region agent log - Hypothesis F: Test if nx is interfering with OIDC
+      - name: "DEBUG F: Test direct npm publish vs nx"
         if: github.event.inputs.release_type != 'stable'
+        continue-on-error: true
         run: |
-          echo "🔍 DEBUG: Checking authentication configuration"
+          echo "🔬 HYPOTHESIS F (USER): Does nx interfere with OIDC authentication?"
+          echo ""
+          echo "=== Test 1: Direct npm publish (no nx) ==="
+          cd packages/react
+          echo "Running: npm publish --dry-run --provenance"
+          npm publish --dry-run --provenance 2>&1 | grep -E "(Publishing|Signed provenance|OIDC|authToken|authenticated|login)" || echo "No auth-related output"
+          DIRECT_EXIT=$?
+          echo "Exit code: $DIRECT_EXIT"
 
           echo ""
-          echo "=== .npmrc created by setup-node ==="
-          if [ -f "/home/runner/work/_temp/.npmrc" ]; then
-            echo "✅ .npmrc exists"
-            cat /home/runner/work/_temp/.npmrc
+          echo "=== Test 2: Via nx (current method) ==="
+          cd /home/runner/work/novu/novu
+          echo "Running: pnpm nx run @novu/react:nx-release-publish -- --tag=nightly --provenance --dry-run"
+          pnpm nx run @novu/react:nx-release-publish -- --tag=nightly --provenance --dry-run 2>&1 | grep -E "(Publishing|Signed provenance|OIDC|authToken|authenticated|login)" || echo "No auth-related output"
+          NX_EXIT=$?
+          echo "Exit code: $NX_EXIT"
+
+          echo ""
+          echo "=== Comparison ==="
+          if [ $DIRECT_EXIT -eq 0 ] && [ $NX_EXIT -ne 0 ]; then
+            echo "⚠️ HYPOTHESIS F: CONFIRMED - Direct npm works but nx fails!"
+            echo "Problem: nx is interfering with OIDC"
+          elif [ $DIRECT_EXIT -ne 0 ] && [ $NX_EXIT -ne 0 ]; then
+            echo "Both methods fail - nx might not be the problem"
           else
-            echo "❌ .npmrc NOT found"
+            echo "Results are similar"
           fi
 
           echo ""
-          echo "=== Authentication Mode Detection ==="
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "🔑 MODE: Token-based authentication (NPM_TOKEN secret is set)"
-            echo "   This run will use traditional npm token auth"
-          else
-            echo "🆔 MODE: OIDC authentication (NPM_TOKEN secret is empty)"
-            echo "   This run will attempt OIDC with GitHub Actions"
-          fi
+          echo "=== Test 3: Check OIDC env vars from shell ==="
+          cd /home/runner/work/novu/novu/packages/react
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:-NOT_SET}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: $([ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ] && echo 'SET' || echo 'NOT_SET')"
+          echo "NODE_AUTH_TOKEN: $([ -n "${NODE_AUTH_TOKEN:-}" ] && echo 'SET' || echo 'NOT_SET')"
+          echo ""
+          echo "If OIDC vars are NOT_SET, that confirms environment issue"
 
           echo ""
-          echo "=== OIDC environment variables ==="
-          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
-            echo "✅ ACTIONS_ID_TOKEN_REQUEST_URL is available"
-          else
-            echo "❌ ACTIONS_ID_TOKEN_REQUEST_URL not available"
-          fi
-
+          echo "=== Test 4: Simulate what nx does ==="
+          cd /home/runner/work/novu/novu
+          echo "project.json command: cd packages/react && npm publish --access public \${NX_PUBLISH_ARGS:-}"
           echo ""
-          echo "=== npm configuration ==="
-          npm config get registry
-
-          echo ""
-          echo "=== Context ==="
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Workflow: ${{ github.workflow_ref }}"
+          echo "Simulating with NX_PUBLISH_ARGS set:"
+          export NX_PUBLISH_ARGS="--tag=nightly --provenance --dry-run"
+          bash -c 'echo "ACTIONS_ID_TOKEN_REQUEST_URL in subshell: ${ACTIONS_ID_TOKEN_REQUEST_URL:-NOT_SET}"'
+          bash -c 'cd packages/react && npm publish --access public ${NX_PUBLISH_ARGS:-}' 2>&1 | tail -20
+          echo "Exit code: $?"
       # #endregion
       # #region agent log - PHASE 2: Test OIDC without token
       - name: Publish packages (nightly and rc only)
