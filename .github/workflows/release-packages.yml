@@ -182,12 +182,12 @@ jobs:
       - name: Extract version and packages from PR
         id: extract-info
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BODY="${{ github.event.pull_request.body }}"
+          PR_TITLE='${{ github.event.pull_request.title }}'
+          PR_BODY='${{ github.event.pull_request.body }}'
 
           VERSION=$(echo "$PR_TITLE" | grep -oP 'Release \K[v\d\.]+' || echo "")
 
-          PACKAGES=$(echo "$PR_BODY" | sed -n '/### 📦 Packages Released:/,/```/p' | grep -v '###' | grep -v '```' | tr -d '\n' | xargs)
+          PACKAGES=$(printf '%s\n' "$PR_BODY" | sed -n '/### 📦 Packages Released:/,/```/p' | grep -v '###' | grep -v '```' | tr -d '\n' | xargs)
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
