@@ -1,3 +1,17 @@
+## v3.11.2 (2025-12-24)
+
+### 🚀 Features
+
+- **root:** new npm trusted publisher flow ([#9715](https://github.com/novuhq/novu/pull/9715))
+
+### 🩹 Fixes
+
+- **root:** use latest npm to able to use npm trusted publishing ([#9716](https://github.com/novuhq/novu/pull/9716))
+
+### ❤️ Thank You
+
+- Himanshu Garg @merrcury
+
 ## v3.11.0 (2025-10-27)
 
 This was a version bump only for @novu/react-native to align it with other projects, there were no code changes.
