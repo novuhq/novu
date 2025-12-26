@@ -94,8 +94,18 @@ export class QueueBaseService {
   }
 
   public async addBulk(data: IBulkJobParams[]) {
-    const totalPayloadSize = data.reduce((sum, item) => sum + this.calculatePayloadSize(item.data), 0);
-    const avgPayloadSize = data.length > 0 ? Math.round(totalPayloadSize / data.length) : 0;
+    const payloadSizes = data.map((item) => this.calculatePayloadSize(item.data));
+    const validSizes = payloadSizes.filter((size) => size >= 0);
+    const totalPayloadSize = validSizes.reduce((sum, size) => sum + size, 0);
+    const avgPayloadSize = validSizes.length > 0 ? Math.round(totalPayloadSize / validSizes.length) : 0;
+
+    const failedSerializationCount = payloadSizes.length - validSizes.length;
+    if (failedSerializationCount > 0) {
+      Logger.warn(
+        `Failed to serialize ${failedSerializationCount} out of ${data.length} items when calculating payload sizes`,
+        LOG_CONTEXT
+      );
+    }
 
     Logger.log(
       `Adding bulk jobs to queue. Topic: ${this.topic}, Count: ${data.length}, Total payload size: ${totalPayloadSize} bytes, Avg payload size: ${avgPayloadSize} bytes`,
