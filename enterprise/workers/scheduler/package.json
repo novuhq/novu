@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
-    "start": "wrangler dev",
+    "dev": "wrangler dev --config wrangler.local.jsonc",
+    "start": "wrangler dev --config wrangler.local.jsonc",
     "test": "vitest",
     "cf-typegen": "wrangler types"
   },
