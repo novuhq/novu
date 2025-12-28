@@ -61,18 +61,23 @@ export default defineConfig(({ mode }) => {
         ],
       }),
       // Put the Sentry vite plugin after all other plugins
-      sentryVitePlugin({
-        org: env.SENTRY_ORG,
-        project: env.SENTRY_PROJECT,
-        // Auth tokens can be obtained from https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
-        authToken: env.SENTRY_AUTH_TOKEN,
-        reactComponentAnnotation: { enabled: true },
-        sourcemaps: {
-          assets: './dist/**',
-          filesToDeleteAfterUpload: ['**/*.js.map'],
-        },
-        telemetry: false,
-      }),
+      // Only enable Sentry plugin if auth token is provided
+      ...(env.SENTRY_AUTH_TOKEN
+        ? [
+            sentryVitePlugin({
+              org: env.SENTRY_ORG,
+              project: env.SENTRY_PROJECT,
+              // Auth tokens can be obtained from https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
+              authToken: env.SENTRY_AUTH_TOKEN,
+              reactComponentAnnotation: { enabled: true },
+              sourcemaps: {
+                assets: './dist/**',
+                filesToDeleteAfterUpload: ['**/*.js.map'],
+              },
+              telemetry: false,
+            }),
+          ]
+        : []),
     ],
     css: {
       postcss: {
