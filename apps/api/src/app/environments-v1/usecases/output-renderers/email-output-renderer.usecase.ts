@@ -169,7 +169,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     });
 
     // Step 3: Add Novu branding
-    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId);
+    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId, organization);
     const cleanedHtml = this.cleanupRenderedHtml(htmlWithBranding);
 
     // Step 4: Sanitize output if needed
@@ -822,11 +822,16 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     }
   }
 
-  private async appendNovuBranding(html: string, organizationId: string): Promise<string> {
+  private async appendNovuBranding(
+    html: string,
+    organizationId: string,
+    organization?: OrganizationEntity
+  ): Promise<string> {
     try {
       const { removeNovuBranding } = await this.getOrganizationSettings.execute(
         GetOrganizationSettingsCommand.create({
           organizationId,
+          organization,
         })
       );
 
