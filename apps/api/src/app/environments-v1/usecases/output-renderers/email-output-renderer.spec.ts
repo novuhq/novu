@@ -34,15 +34,11 @@ function setupTranslationMocks(moduleRef: sinon.SinonStubbedInstance<ModuleRef>)
     return command.content || '';
   });
 
-  // Add createContext to prototype if it doesn't exist yet (for new optimization)
-  if (!Translate.prototype.createContext) {
-    Translate.prototype.createContext = async () => null;
-  }
+  // Stub createContext to return null (no translation context in tests)
+  sinon.stub(Translate.prototype, 'createContext').resolves(null);
 
-  // Add executeWithContext to prototype if it doesn't exist yet
-  if (!Translate.prototype.executeWithContext) {
-    Translate.prototype.executeWithContext = async (_context: any, content: string) => content;
-  }
+  // Stub executeWithContext to return content unchanged
+  sinon.stub(Translate.prototype, 'executeWithContext').callsFake(async (_context: any, content: string) => content);
 
   const mockLogger = {
     setContext: sinon.stub(),
@@ -52,10 +48,27 @@ function setupTranslationMocks(moduleRef: sinon.SinonStubbedInstance<ModuleRef>)
     info: sinon.stub(),
   };
 
+  const mockGetTranslation = {
+    execute: sinon.stub().resolves({ content: {} }),
+  };
+
+  const mockCommunityOrganizationRepository = {
+    findById: sinon.stub().resolves({ defaultLocale: 'en_US' }),
+  };
+
+  const mockResourceResolverService = {
+    resolveResource: sinon.stub().resolves({ isTranslationEnabled: false }),
+  };
+
   // Mock moduleRef.get to return the Translate class when requested
   (moduleRef as any).get = sinon.stub().callsFake((token) => {
     if (token === Translate) {
-      return new Translate({} as any, {} as any, mockLogger as any, {} as any);
+      return new Translate(
+        mockGetTranslation as any,
+        mockCommunityOrganizationRepository as any,
+        mockLogger as any,
+        mockResourceResolverService as any
+      );
     }
     return null;
   });
