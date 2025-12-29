@@ -75,6 +75,8 @@ export class ConstructFrameworkWorkflow {
     command: ConstructFrameworkWorkflowCommand,
     dbWorkflow: NotificationTemplateEntity
   ): Promise<Workflow> {
+    const organization = (await this.communityOrganizationRepository.findById(dbWorkflow._organizationId)) || undefined;
+
     return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber, context }) => {
       await step.email(
         LAYOUT_PREVIEW_EMAIL_STEP,
@@ -83,6 +85,7 @@ export class ConstructFrameworkWorkflow {
             controlValues,
             fullPayloadForRender: { payload, subscriber, context, steps: {} },
             dbWorkflow,
+            organization,
             locale: subscriber.locale ?? undefined,
             stepId: LAYOUT_PREVIEW_EMAIL_STEP,
             layoutId: command.layoutId,
