@@ -5,29 +5,31 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { workflowsList } from "../funcs/workflowsList.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type WorkflowsListQueryData =
-  operations.WorkflowControllerSearchWorkflowsResponse;
+import {
+  buildWorkflowsListQuery,
+  prefetchWorkflowsList,
+  queryKeyWorkflowsList,
+  WorkflowsListQueryData,
+} from "./workflowsList.core.js";
+export {
+  buildWorkflowsListQuery,
+  prefetchWorkflowsList,
+  queryKeyWorkflowsList,
+  type WorkflowsListQueryData,
+};
 
 /**
  * List all workflows
@@ -68,19 +70,6 @@ export function useWorkflowsListSuspense(
       options,
     ),
     ...options,
-  });
-}
-
-export function prefetchWorkflowsList(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  request: operations.WorkflowControllerSearchWorkflowsRequest,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildWorkflowsListQuery(
-      client$,
-      request,
-    ),
   });
 }
 
@@ -135,56 +124,4 @@ export function invalidateAllWorkflowsList(
     ...filters,
     queryKey: ["@novu/api", "Workflows", "list"],
   });
-}
-
-export function buildWorkflowsListQuery(
-  client$: NovuCore,
-  request: operations.WorkflowControllerSearchWorkflowsRequest,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<WorkflowsListQueryData>;
-} {
-  return {
-    queryKey: queryKeyWorkflowsList({
-      limit: request.limit,
-      offset: request.offset,
-      orderDirection: request.orderDirection,
-      orderBy: request.orderBy,
-      query: request.query,
-      tags: request.tags,
-      status: request.status,
-      idempotencyKey: request.idempotencyKey,
-    }),
-    queryFn: async function workflowsListQueryFn(
-      ctx,
-    ): Promise<WorkflowsListQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(workflowsList(
-        client$,
-        request,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyWorkflowsList(
-  parameters: {
-    limit?: number | undefined;
-    offset?: number | undefined;
-    orderDirection?: components.DirectionEnum | undefined;
-    orderBy?: components.WorkflowResponseDtoSortField | undefined;
-    query?: string | undefined;
-    tags?: Array<string> | undefined;
-    status?: Array<components.WorkflowStatusEnum> | undefined;
-    idempotencyKey?: string | undefined;
-  },
-): QueryKey {
-  return ["@novu/api", "Workflows", "list", parameters];
 }

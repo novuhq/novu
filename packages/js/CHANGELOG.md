@@ -1,7 +1,11 @@
-## v3.12.0-rc.1 (2025-12-12)
+## v3.11.2 (2025-12-24)
 
 ### 🚀 Features
 
+- **root:** new npm trusted publisher flow ([#9715](https://github.com/novuhq/novu/pull/9715))
+- **api-service:** enhance subscription preference updates to include channel-specific settings fixes NV-6998 ([#9706](https://github.com/novuhq/novu/pull/9706))
+- **api-service:** ensure newly added preference workflows appear in subscription component fixes NV-6955 ([#9669](https://github.com/novuhq/novu/pull/9669))
+- **js:** allow to subscribe without any preferences fixes NV-6966 ([#9675](https://github.com/novuhq/novu/pull/9675))
 - **react,nextjs:** subscription hooks fixes NV-6864 ([#9530](https://github.com/novuhq/novu/pull/9530))
 - **js,react,nextjs:** subscription button and preferences standalone components fixes NV-6909 ([#9527](https://github.com/novuhq/novu/pull/9527))
 - **js,react,nextjs:** subscription component fixes NV-6863 ([#9512](https://github.com/novuhq/novu/pull/9512))
@@ -9,11 +13,15 @@
 
 ### 🩹 Fixes
 
+- **root:** use latest npm to able to use npm trusted publishing ([#9716](https://github.com/novuhq/novu/pull/9716))
+- **react:** fix useNotifications hook realtime behaviour fixes NV-6992 ([#9690](https://github.com/novuhq/novu/pull/9690))
 - **js:** undefined access when severity is not provided ([#9663](https://github.com/novuhq/novu/pull/9663))
 
 ### ❤️ Thank You
 
 - Adam Chmara @ChmaraX
+- George Djabarov @djabarovgeorge
+- Himanshu Garg @merrcury
 - Paweł Tymczuk @LetItRock
 
 ## v3.11.0 (2025-10-27)

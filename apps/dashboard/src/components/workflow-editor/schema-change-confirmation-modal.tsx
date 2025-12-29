@@ -1,18 +1,16 @@
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { RiAlertLine, RiDeleteBinLine, RiEditLine, RiToggleLine } from 'react-icons/ri';
+import { Button } from '@/components/primitives/button';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/primitives/alert-dialog';
-import { Badge } from '@/components/primitives/badge';
-import { buttonVariants } from '@/components/primitives/button';
-import { Separator } from '@/components/primitives/separator';
-import { cn } from '@/utils/ui';
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+} from '@/components/primitives/dialog';
 import type { SchemaChange, SchemaChanges } from '../schema-editor/utils/schema-change-detection';
 
 interface SchemaChangeConfirmationModalProps {
@@ -29,7 +27,7 @@ interface VariableChangeSectionProps {
   variant: 'red' | 'orange' | 'blue' | 'purple';
 }
 
-function VariableChangeSection({ title, changes, icon, variant }: VariableChangeSectionProps) {
+function VariableChangeSection({ title, changes, icon }: VariableChangeSectionProps) {
   if (changes.length === 0) return null;
 
   return (
@@ -120,26 +118,28 @@ export function SchemaChangeConfirmationModal({
   ).length;
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className="max-w-2xl">
-        <AlertDialogHeader className="px-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-warning-light flex h-9 w-9 items-center justify-center rounded-lg">
-              <RiAlertLine className="text-warning-base h-4 w-4" />
+    <Dialog modal open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogContent className="min-w-[512px] max-w-[640px] gap-4 rounded-lg p-4 overflow-hidden" hideCloseButton>
+          <div className="flex items-start justify-between">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-warning/10">
+              <RiAlertLine className="size-6 text-warning" />
             </div>
-            <div>
-              <AlertDialogTitle className="text-base">Confirm Schema Changes</AlertDialogTitle>
-              <AlertDialogDescription className="text-sm">
-                {totalChanges} change{totalChanges === 1 ? '' : 's'} detected
-                {usedChanges > 0 && (
-                  <span className="text-warning-base"> • {usedChanges} affecting existing steps</span>
-                )}
-              </AlertDialogDescription>
-            </div>
+            <DialogClose>
+              <Cross2Icon className="size-4" />
+              <span className="sr-only">Close</span>
+            </DialogClose>
           </div>
-        </AlertDialogHeader>
 
-        <AlertDialogDescription className="px-4">
+          <div className="flex flex-col gap-1">
+            <DialogTitle className="text-md font-medium">Confirm Schema Changes</DialogTitle>
+            <DialogDescription className="text-foreground-600">
+              {totalChanges} change{totalChanges === 1 ? '' : 's'} detected
+              {usedChanges > 0 && <span className="text-warning"> • {usedChanges} affecting existing steps</span>}
+            </DialogDescription>
+          </div>
+
           <div className="max-h-96 space-y-4 overflow-y-auto">
             <VariableChangeSection
               title="Deleted"
@@ -169,18 +169,39 @@ export function SchemaChangeConfirmationModal({
               variant="purple"
             />
           </div>
-        </AlertDialogDescription>
-        <Separator className="mt-4" />
-        <AlertDialogFooter className="px-4">
-          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className={cn(buttonVariants({ variant: 'secondary', mode: 'filled' }).root())}
-          >
-            Save Changes
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+
+          <DialogFooter>
+            <DialogClose asChild aria-label="Close">
+              <Button
+                type="button"
+                size="sm"
+                mode="outline"
+                variant="secondary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onClose();
+                }}
+              >
+                Cancel
+              </Button>
+            </DialogClose>
+
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onConfirm();
+              }}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPortal>
+    </Dialog>
   );
 }

@@ -153,7 +153,7 @@ export const updateSubscription = async ({
   useCache?: boolean;
   args: UpdateSubscriptionArgs;
 }): Result<TopicSubscription> => {
-  const subscriptionId = 'subscriptionId' in args ? args.subscriptionId : args.subscription.id;
+  const identifier = 'identifier' in args ? args.identifier : args.subscription.identifier;
   const topicKey = 'topicKey' in args ? args.topicKey : args.subscription.topicKey;
 
   try {
@@ -163,7 +163,7 @@ export const updateSubscription = async ({
 
     const response = await apiService.updateSubscription({
       topicKey,
-      subscriptionId,
+      identifier,
       name: args.name,
       preferences: args.preferences,
     });
@@ -214,7 +214,7 @@ export const updateSubscriptionPreference = async ({
     });
 
     const response = await apiService.updateSubscriptionPreference({
-      subscriptionId: args.subscriptionId,
+      subscriptionIdentifier: args.subscriptionId,
       workflowId,
       ...(typeof args.value === 'boolean'
         ? {
@@ -277,7 +277,7 @@ export const bulkUpdateSubscriptionPreference = async ({
     });
 
     const preferencesToUpdate = args.map((arg) => ({
-      subscriptionIdOrIdentifier: arg.subscriptionId,
+      subscriptionIdentifier: arg.subscriptionId,
       workflowId:
         'workflowId' in arg
           ? arg.workflowId
@@ -308,12 +308,12 @@ export const deleteSubscription = async ({
   apiService: InboxService;
   args: DeleteSubscriptionArgs;
 }): Result<void> => {
-  const subscriptionId = 'subscriptionId' in args ? args.subscriptionId : args.subscription.id;
+  const identifier = 'identifier' in args ? args.identifier : args.subscription.identifier;
   const topicKey = 'topicKey' in args ? args.topicKey : args.subscription.topicKey;
   try {
     emitter.emit('subscription.delete.pending', { args });
 
-    await apiService.deleteSubscription({ topicKey, subscriptionId });
+    await apiService.deleteSubscription({ topicKey, identifier });
 
     emitter.emit('subscription.delete.resolved', { args });
 

@@ -19,6 +19,10 @@ export type TopicSubscriptionResponseDto = {
    */
   id: string;
   /**
+   * The identifier of the subscription
+   */
+  identifier: string;
+  /**
    * The date and time the subscription was created
    */
   createdAt: string;
@@ -39,6 +43,7 @@ export const TopicSubscriptionResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   _id: z.string(),
+  identifier: z.string(),
   createdAt: z.string(),
   topic: TopicResponseDto$inboundSchema,
   subscriber: SubscriberDto$inboundSchema,

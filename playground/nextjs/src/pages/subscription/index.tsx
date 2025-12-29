@@ -35,7 +35,7 @@ function WorkflowPreferences({ isDark }: { isDark: boolean }) {
           identifier={`workflows-${identifier}`}
           preferences={[
             { workflowId: 'yolo' },
-            { label: 'Test Group', filter: { tags: [] } },
+            { label: 'Test Group', filter: { tags: ['yoyo'] } },
             { label: 'Test Group', filter: { workflowIds: ['test-workflow1', 'test-workflow2', 'test-workflow3'] } },
           ]}
           appearance={{

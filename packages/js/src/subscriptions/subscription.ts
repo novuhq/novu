@@ -76,7 +76,7 @@ export class TopicSubscription {
       apiService: this.#inboxService,
       cache: this.#cache,
       useCache: this.#useCache,
-      args: { ...args, subscriptionId: this.id },
+      args: { ...args, subscriptionId: this.identifier },
     });
   }
 
@@ -94,7 +94,7 @@ export class TopicSubscription {
       apiService: this.#inboxService,
       cache: this.#cache,
       useCache: this.#useCache,
-      args: args.map((arg) => ({ ...arg, subscriptionId: this.id })),
+      args: args.map((arg) => ({ ...arg, subscriptionId: this.identifier })),
     });
   }
 

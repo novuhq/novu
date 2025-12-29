@@ -5,7 +5,7 @@ import { SubscriptionResponseDto } from '../../shared/dtos/subscriptions/create-
 import { CreateTopicSubscriptionRequestDto } from '../dtos/create-topic-subscription-request.dto';
 import { UpdatePreferencesRequestDto } from '../dtos/update-preferences-request.dto';
 
-describe('Update subscription workflow preferences - /inbox/subscriptions/:subscriptionId/preferences/:workflowIdOrIdentifier (PATCH) #novu-v2', () => {
+describe('Update subscription workflow preferences - /inbox/subscriptions/:subscriptionIdentifier/preferences/:workflowIdOrIdentifier (PATCH) #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -45,24 +45,24 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
     expect(topicSubscription.preferences?.[0]?.enabled, 'Should have enabled the preference').to.equal(true);
     expect(topicSubscription.preferences?.[0]?.condition, 'Should have condition the preference').to.equal(true);
 
-    const subscriptionId = subscriptionResponse.body.data.id;
+    // Update using Subscription Identifier
+    let response = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, {
+      enabled: false,
+    });
 
-    // Update using Subscription ID
-    let response = await updateSubscriptionPreferences(session, subscriptionId, workflow._id, { enabled: false });
-
-    expect(response.status, 'Should have updated the subscription preference using ID').to.equal(200);
+    expect(response.status, 'Should have updated the subscription preference using Identifier').to.equal(200);
     expect(response.body.data.level, 'Should have the correct level').to.equal(PreferenceLevelEnum.TEMPLATE);
     expect(response.body.data.workflow.id, 'Should have the correct workflow ID').to.equal(workflow._id);
     expect(response.body.data.enabled, 'Should have the correct enabled value').to.equal(false);
 
-    // Update using Subscription Identifier
+    // Update again using Subscription Identifier
     response = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, { enabled: true });
 
     expect(response.status, 'Should have updated the subscription preference using Identifier').to.equal(200);
     expect(response.body.data.enabled, 'Should have the correct enabled value').to.equal(true);
 
     // Handle multiple updates (toggle back)
-    response = await updateSubscriptionPreferences(session, subscriptionId, workflow._id, { enabled: false });
+    response = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, { enabled: false });
 
     expect(response.status, 'Should have updated the subscription preference again').to.equal(200);
     expect(response.body.data.enabled, 'Should have the correct enabled value').to.equal(false);
@@ -97,9 +97,8 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
       },
     });
     expect(subscriptionResponse.status).to.equal(201);
-    const subscriptionId = subscriptionResponse.body.data.id;
 
-    const response = await updateSubscriptionPreferences(session, subscriptionId, workflow._id, {
+    const response = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, {
       enabled: false,
       email: false,
       sms: false,
@@ -114,7 +113,7 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
     expect(response.body.data.channels.sms, 'Should have updated sms channel').to.equal(false);
     expect(response.body.data.channels.in_app, 'Should have updated in_app channel').to.equal(false);
 
-    const responseEnabled = await updateSubscriptionPreferences(session, subscriptionId, workflow._id, {
+    const responseEnabled = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, {
       enabled: true,
       email: true,
       sms: true,
@@ -147,32 +146,36 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
       ],
     });
 
+    const subscription1Identifier = `subscription-${Date.now()}-1`;
     const subscription1Response = await createSubscription({
       session,
       topicKey: topicKey1,
       body: {
-        identifier: `subscription-${Date.now()}-1`,
+        identifier: subscription1Identifier,
       },
     });
     expect(subscription1Response.status).to.equal(201);
-    const subscription1Id = subscription1Response.body.data.id;
 
+    const subscription2Identifier = `subscription-${Date.now()}-2`;
     const subscription2Response = await createSubscription({
       session,
       topicKey: topicKey2,
       body: {
-        identifier: `subscription-${Date.now()}-2`,
+        identifier: subscription2Identifier,
       },
     });
     expect(subscription2Response.status).to.equal(201);
-    const subscription2Id = subscription2Response.body.data.id;
 
-    const update1 = await updateSubscriptionPreferences(session, subscription1Id, workflow._id, { enabled: true });
+    const update1 = await updateSubscriptionPreferences(session, subscription1Identifier, workflow._id, {
+      enabled: true,
+    });
 
     expect(update1.status).to.equal(200);
     expect(update1.body.data.enabled).to.equal(true);
 
-    const update2 = await updateSubscriptionPreferences(session, subscription2Id, workflow._id, { enabled: false });
+    const update2 = await updateSubscriptionPreferences(session, subscription2Identifier, workflow._id, {
+      enabled: false,
+    });
 
     expect(update2.status).to.equal(200);
     expect(update2.body.data.enabled).to.equal(false);
@@ -181,12 +184,12 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
 
 async function updateSubscriptionPreferences(
   session: UserSession,
-  subscriptionId: string,
+  subscriptionIdentifier: string,
   workflowId: string,
   body: UpdatePreferencesRequestDto
 ) {
   return await session.testAgent
-    .patch(`/v1/inbox/subscriptions/${subscriptionId}/preferences/${workflowId}`)
+    .patch(`/v1/inbox/subscriptions/${subscriptionIdentifier}/preferences/${workflowId}`)
     .send(body)
     .set('Authorization', `Bearer ${session.subscriberToken}`);
 }

@@ -41,7 +41,7 @@ export type CreateSubscriptionArgs = {
 
 export type BaseUpdateSubscriptionArgs = {
   topicKey: string;
-  subscriptionId: string;
+  identifier: string;
   name?: string;
   preferences?: Array<PreferenceFilter>;
 };
@@ -67,7 +67,7 @@ export type InstanceSubscriptionPreferenceArgs = {
 export type UpdateSubscriptionPreferenceArgs = BaseSubscriptionPreferenceArgs | InstanceSubscriptionPreferenceArgs;
 
 export type BaseDeleteSubscriptionArgs = {
-  subscriptionId: string;
+  identifier: string;
   topicKey: string;
 };
 

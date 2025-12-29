@@ -7,9 +7,9 @@ export class MergePreferencesCommand extends BaseCommand {
   subscriberGlobalPreference?: PreferenceSet['subscriberGlobalPreference'];
   subscriberWorkflowPreference?: PreferenceSet['subscriberWorkflowPreference'];
   /**
-   * If true, the default all enabled preference will be set to true.
-   * If false, the default all enabled preference will kept as is.
-   * @default true
+   * If true, subscriber preferences will be excluded from the merge calculation.
+   * Used when extracting subscription preferences to only consider workflow-level preferences.
+   * @default false
    */
-  ensureDefaultAllEnabled?: boolean = true;
+  excludeSubscriberPreferences?: boolean = false;
 }

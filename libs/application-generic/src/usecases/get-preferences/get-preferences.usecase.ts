@@ -49,7 +49,10 @@ export class GetPreferences {
     const items = await this.getPreferencesFromDb(command);
 
     const mergedPreferences = MergePreferences.execute(
-      MergePreferencesCommand.create({ ...items, ensureDefaultAllEnabled: command.ensureDefaultAllEnabled })
+      MergePreferencesCommand.create({
+        ...items,
+        excludeSubscriberPreferences: command.excludeSubscriberPreferences,
+      })
     );
 
     if (!mergedPreferences.preferences) {
@@ -106,7 +109,7 @@ export class GetPreferences {
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           templateId: command.templateId,
-          ensureDefaultAllEnabled: command.ensureDefaultAllEnabled,
+          excludeSubscriberPreferences: command.excludeSubscriberPreferences,
         })
       );
     } catch (e) {

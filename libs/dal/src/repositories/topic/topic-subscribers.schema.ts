@@ -58,7 +58,7 @@ topicSubscribersSchema.index(
     _environmentId: 1,
     identifier: 1,
   },
-  { unique: true, sparse: true }
+  { unique: true }
 );
 
 topicSubscribersSchema.index({

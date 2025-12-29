@@ -84,11 +84,48 @@ export class QueueBaseService {
       ...params.options,
     };
 
+    const payloadSize = this.calculatePayloadSize(params.data);
+    Logger.log(
+      `Adding job to queue. Topic: ${this.topic}, Job: ${params.name}, Payload size: ${payloadSize} bytes`,
+      LOG_CONTEXT
+    );
+
     await this.instance.add(params.name, params.data, jobOptions, params.groupId);
   }
 
   public async addBulk(data: IBulkJobParams[]) {
+    const payloadSizes = data.map((item) => this.calculatePayloadSize(item.data));
+    const validSizes = payloadSizes.filter((size) => size >= 0);
+    const totalPayloadSize = validSizes.reduce((sum, size) => sum + size, 0);
+    const avgPayloadSize = validSizes.length > 0 ? Math.round(totalPayloadSize / validSizes.length) : 0;
+
+    const failedSerializationCount = payloadSizes.length - validSizes.length;
+    if (failedSerializationCount > 0) {
+      Logger.warn(
+        `Failed to serialize ${failedSerializationCount} out of ${data.length} items when calculating payload sizes`,
+        LOG_CONTEXT
+      );
+    }
+
+    Logger.log(
+      `Adding bulk jobs to queue. Topic: ${this.topic}, Count: ${data.length}, Total payload size: ${totalPayloadSize} bytes, Avg payload size: ${avgPayloadSize} bytes`,
+      LOG_CONTEXT
+    );
+
     await this.instance.addBulk(data);
+  }
+
+  private calculatePayloadSize(data: any): number {
+    if (!data) return 0;
+
+    try {
+      return Buffer.byteLength(JSON.stringify(data), 'utf8');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      Logger.warn(`Failed to calculate payload size: ${errorMessage}`, LOG_CONTEXT);
+
+      return -1;
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
