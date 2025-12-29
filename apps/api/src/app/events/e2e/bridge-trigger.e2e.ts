@@ -2080,7 +2080,7 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
     const responseData = response.body.data as WorkflowResponseDto;
 
     const payloadWithEmptyBody = {
-      title: 'Latrice Henderson',
+      title: 'Test Subject',
       body: '',
     };
 
@@ -2095,7 +2095,7 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
     });
 
     expect(sentMessages.length).to.be.eq(1);
-    expect(sentMessages[0].subject).to.equal('Latrice Henderson');
+    expect(sentMessages[0].subject).to.equal('Test Subject');
     expect(sentMessages[0].content).to.be.undefined;
   });
 
