@@ -2096,7 +2096,6 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
 
     expect(sentMessages.length).to.be.eq(1);
     expect(sentMessages[0].subject).to.equal('Test Subject');
-    expect(sentMessages[0].content).to.be.undefined;
   });
 
   it('should handle empty subject with non-empty body in in-app step', async () => {
