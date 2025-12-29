@@ -49,11 +49,12 @@ export class ConstructFrameworkWorkflow {
 
   @InstrumentUsecase()
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
+    const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
+
     if (command.workflowId === LAYOUT_PREVIEW_WORKFLOW_ID) {
-      return this.constructLayoutPreviewWorkflow(command);
+      return this.constructLayoutPreviewWorkflow(command, dbWorkflow);
     }
 
-    const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
     if (command.controlValues) {
       for (const step of dbWorkflow.steps) {
         step.controlVariables = command.controlValues;
@@ -70,14 +71,10 @@ export class ConstructFrameworkWorkflow {
     });
   }
 
-  private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
-    const environment = await this.environmentRepository.findOne({
-      _id: command.environmentId,
-    });
-    if (!environment) {
-      throw new InternalServerErrorException(`Environment ${command.environmentId} not found`);
-    }
-
+  private async constructLayoutPreviewWorkflow(
+    command: ConstructFrameworkWorkflowCommand,
+    dbWorkflow: NotificationTemplateEntity
+  ): Promise<Workflow> {
     return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber, context }) => {
       await step.email(
         LAYOUT_PREVIEW_EMAIL_STEP,
@@ -85,8 +82,7 @@ export class ConstructFrameworkWorkflow {
           return this.emailOutputRendererUseCase.execute({
             controlValues,
             fullPayloadForRender: { payload, subscriber, context, steps: {} },
-            environmentId: environment._id,
-            organizationId: environment._organizationId,
+            dbWorkflow: dbWorkflow,
             locale: subscriber.locale ?? undefined,
             stepId: LAYOUT_PREVIEW_EMAIL_STEP,
             layoutId: command.layoutId,
@@ -218,9 +214,7 @@ export class ConstructFrameworkWorkflow {
             return this.emailOutputRendererUseCase.execute({
               controlValues,
               fullPayloadForRender,
-              environmentId: dbWorkflow._environmentId,
-              organizationId: dbWorkflow._organizationId,
-              workflowId: dbWorkflow._id,
+              dbWorkflow,
               organization,
               locale,
               skipLayoutRendering,

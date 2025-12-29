@@ -48,6 +48,13 @@ import { BaseTranslationRendererUsecase } from './base-translation-renderer.usec
 import { NOVU_BRANDING_HTML } from './novu-branding-html';
 import { FullPayloadForRender, RenderCommand } from './render-command';
 
+type TranslationContext = {
+  i18nInstance: unknown;
+  liquidEngine: unknown;
+  locale: string;
+  resourceId: string;
+};
+
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export class EmailOutputRendererCommand extends RenderCommand {
@@ -123,6 +130,15 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organization,
     } = renderCommand;
 
+    const workflowTranslationContext = await this.createTranslationContext({
+      environmentId,
+      organizationId,
+      resourceId: workflowId,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale,
+      organization,
+    });
+
     // Step 1: Apply translations to subject (already liquid-interpolated)
     const translatedSubject = await this.processSubjectTranslations(
       controlSubject as string,
@@ -131,7 +147,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organizationId,
       workflowId,
       locale,
-      organization
+      organization,
+      workflowTranslationContext
     );
 
     // Step 2: Process body content (with translations applied before rendering)
@@ -148,6 +165,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       stepId,
       organization,
       layoutIdForPreview,
+      workflowTranslationContext,
     });
 
     // Step 3: Add Novu branding
@@ -218,6 +236,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     stepId,
     organization,
     layoutIdForPreview,
+    workflowTranslationContext,
   }: {
     body: string;
     stepLayoutId?: string | null;
@@ -231,6 +250,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     stepId: string;
     organization?: OrganizationEntity;
     layoutIdForPreview?: string;
+    workflowTranslationContext?: TranslationContext | null;
   }): Promise<string> {
     let job: JobEntity | null = null;
     let overrideLayoutId: string | null | undefined;
@@ -317,6 +337,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       locale,
       noHtmlWrappingTags: !!layoutControlsEntity,
       organization,
+      translationContext: isLayoutRendering ? undefined : workflowTranslationContext,
     });
 
     const cleanedStepBodyHtml = stepBodyHtml
@@ -384,6 +405,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale,
     noHtmlWrappingTags,
     organization,
+    translationContext,
   }: {
     body: string;
     payload: FullPayloadForRender;
@@ -394,6 +416,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale?: string;
     noHtmlWrappingTags?: boolean;
     organization?: OrganizationEntity;
+    translationContext?: TranslationContext | null;
   }): Promise<string> {
     if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
       const unescapedPayload = this.deepUnescapeTranslationStrings(payload) as FullPayloadForRender;
@@ -409,6 +432,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         resourceType,
         locale,
         organization,
+        translationContext,
       });
       const parsedMaily = await this.parseMailyContentByLiquid(translatedMaily, escapedPayloadForJson);
 
@@ -423,6 +447,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         resourceType,
         locale,
         organization,
+        translationContext,
       });
 
       return processedHtml;
@@ -436,20 +461,27 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId: string,
     workflowId?: string,
     locale?: string,
-    organization?: OrganizationEntity
+    organization?: OrganizationEntity,
+    translationContext?: TranslationContext | null
   ): Promise<string> {
     const unescapedVariables = this.deepUnescapeTranslationStrings(variables) as FullPayloadForRender;
 
-    const translatedSubject = await this.processStringTranslations({
-      content: subject,
-      variables: unescapedVariables,
-      environmentId,
-      organizationId,
-      resourceId: workflowId,
-      resourceType: LocalizationResourceEnum.WORKFLOW,
-      locale,
-      organization,
-    });
+    const translatedSubject = translationContext
+      ? await this.processStringWithContext({
+          context: translationContext,
+          content: subject,
+          variables: unescapedVariables,
+        })
+      : await this.processStringTranslations({
+          content: subject,
+          variables: unescapedVariables,
+          environmentId,
+          organizationId,
+          resourceId: workflowId,
+          resourceType: LocalizationResourceEnum.WORKFLOW,
+          locale,
+          organization,
+        });
 
     return this.unescapeJsonString(translatedSubject);
   }
@@ -463,6 +495,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     resourceType,
     locale,
     organization,
+    translationContext,
   }: {
     mailyContent: MailyJSONContent;
     variables: FullPayloadForRender;
@@ -472,18 +505,25 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     resourceType?: LocalizationResourceEnum;
     locale?: string;
     organization?: OrganizationEntity;
+    translationContext?: TranslationContext | null;
   }): Promise<MailyJSONContent> {
     const contentString = JSON.stringify(mailyContent);
-    const translatedContent = await this.processStringTranslations({
-      content: contentString,
-      variables,
-      environmentId,
-      organizationId,
-      resourceId,
-      resourceType,
-      locale,
-      organization,
-    });
+    const translatedContent = translationContext
+      ? await this.processStringWithContext({
+          context: translationContext,
+          content: contentString,
+          variables,
+        })
+      : await this.processStringTranslations({
+          content: contentString,
+          variables,
+          environmentId,
+          organizationId,
+          resourceId,
+          resourceType,
+          locale,
+          organization,
+        });
 
     return JSON.parse(translatedContent);
   }
@@ -497,6 +537,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     resourceType,
     locale,
     organization,
+    translationContext,
   }: {
     text: string;
     variables: FullPayloadForRender;
@@ -506,18 +547,25 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     resourceType?: LocalizationResourceEnum;
     locale?: string;
     organization?: OrganizationEntity;
+    translationContext?: TranslationContext | null;
   }): Promise<string> {
     const unescapedVariables = this.deepUnescapeTranslationStrings(variables) as FullPayloadForRender;
-    const translatedText = await this.processStringTranslations({
-      content: text,
-      variables: unescapedVariables,
-      environmentId,
-      organizationId,
-      resourceId,
-      resourceType,
-      locale,
-      organization,
-    });
+    const translatedText = translationContext
+      ? await this.processStringWithContext({
+          context: translationContext,
+          content: text,
+          variables: unescapedVariables,
+        })
+      : await this.processStringTranslations({
+          content: text,
+          variables: unescapedVariables,
+          environmentId,
+          organizationId,
+          resourceId,
+          resourceType,
+          locale,
+          organization,
+        });
 
     const unescapedTranslatedText = this.unescapeJsonString(translatedText);
 

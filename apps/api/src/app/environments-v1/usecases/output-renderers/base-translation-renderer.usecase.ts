@@ -5,6 +5,13 @@ import { LocalizationResourceEnum, NotificationTemplateEntity, OrganizationEntit
 import { createLiquidEngine } from '@novu/framework/internal';
 import { FullPayloadForRender } from './render-command';
 
+type TranslationContext = {
+  i18nInstance: unknown;
+  liquidEngine: unknown;
+  locale: string;
+  resourceId: string;
+};
+
 @Injectable()
 export abstract class BaseTranslationRendererUsecase {
   constructor(
@@ -83,6 +90,99 @@ export abstract class BaseTranslationRendererUsecase {
       locale,
       organization,
     }) as Promise<string>;
+  }
+
+  protected async createTranslationContext({
+    environmentId,
+    organizationId,
+    resourceId,
+    resourceType,
+    locale,
+    organization,
+  }: {
+    environmentId: string;
+    organizationId: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
+    locale?: string;
+    organization?: OrganizationEntity;
+  }): Promise<TranslationContext | null> {
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
+      return null;
+    }
+
+    if (!resourceId) {
+      this.logger.warn('Resource ID is required for translation context creation', {
+        resourceId,
+        resourceType,
+        organizationId,
+        environmentId,
+        locale,
+      });
+
+      return null;
+    }
+
+    try {
+      const translate = this.getTranslationModule();
+      const liquidEngine = createLiquidEngine();
+
+      return await translate.createContext({
+        resourceId,
+        resourceType,
+        organizationId,
+        environmentId,
+        userId: 'system',
+        locale,
+        liquidEngine,
+        organization,
+      });
+    } catch (error) {
+      this.logger.error('Translation context creation failed', {
+        error: error?.message || error,
+        resourceId,
+        resourceType,
+        organizationId,
+        environmentId,
+        locale,
+        stack: error?.stack,
+      });
+
+      throw new InternalServerErrorException(
+        `Translation context creation failed for resource ${resourceId}: ${error?.message || String(error)}`
+      );
+    }
+  }
+
+  protected async processStringWithContext({
+    context,
+    content,
+    variables,
+  }: {
+    context: TranslationContext | null;
+    content: string;
+    variables: FullPayloadForRender;
+  }): Promise<string> {
+    if (process.env.NOVU_ENTERPRISE !== 'true' || !context) {
+      return content;
+    }
+
+    try {
+      const translate = this.getTranslationModule();
+
+      return await translate.executeWithContext(context, content, variables);
+    } catch (error) {
+      this.logger.error('Translation with context failed', {
+        error: error?.message || error,
+        resourceId: context.resourceId,
+        locale: context.locale,
+        stack: error?.stack,
+      });
+
+      throw new InternalServerErrorException(
+        `Translation processing failed for resource ${context.resourceId}: ${error?.message || String(error)}`
+      );
+    }
   }
 
   private async executeTranslation({
