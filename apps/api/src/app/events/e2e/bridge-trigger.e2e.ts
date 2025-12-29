@@ -2053,6 +2053,95 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
     expect(sentMessages[0].content).to.include('"double quotes"');
     expect(sentMessages[0].content).to.include('"special characters"');
   });
+
+  it('should handle empty body with non-empty subject in in-app step', async () => {
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      active: true,
+      name: 'Test Empty Body Workflow',
+      description: 'Test Workflow with Empty Body',
+      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      workflowId: 'test-empty-body-workflow',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'In App Step',
+          controlValues: {
+            subject: '{{payload.title}}',
+            body: '{{payload.body}}',
+          },
+        },
+      ],
+    };
+
+    const response = await session.testAgent.post(`/v2/workflows`).send(createWorkflowDto);
+    expect(response.status).to.be.eq(201);
+
+    const responseData = response.body.data as WorkflowResponseDto;
+
+    const payloadWithEmptyBody = {
+      title: 'Test Subject',
+      body: '',
+    };
+
+    await triggerEvent(session, responseData.workflowId, subscriber._id, payloadWithEmptyBody);
+    await session.waitForJobCompletion();
+
+    const sentMessages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: session.subscriberProfile?._id,
+      templateIdentifier: responseData.workflowId,
+      channel: StepTypeEnum.IN_APP,
+    });
+
+    expect(sentMessages.length).to.be.eq(1);
+    expect(sentMessages[0].subject).to.equal('Test Subject');
+  });
+
+  it('should handle empty subject with non-empty body in in-app step', async () => {
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      active: true,
+      name: 'Test Empty Subject Workflow',
+      description: 'Test Workflow with Empty Subject',
+      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      workflowId: 'test-empty-subject-workflow',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'In App Step',
+          controlValues: {
+            subject: '{{payload.title}}',
+            body: '{{payload.body}}',
+          },
+        },
+      ],
+    };
+
+    const response = await session.testAgent.post(`/v2/workflows`).send(createWorkflowDto);
+    expect(response.status).to.be.eq(201);
+
+    const responseData = response.body.data as WorkflowResponseDto;
+
+    const payloadWithEmptySubject = {
+      title: '',
+      body: 'This is the message body',
+    };
+
+    await triggerEvent(session, responseData.workflowId, subscriber._id, payloadWithEmptySubject);
+    await session.waitForJobCompletion();
+
+    const sentMessages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: session.subscriberProfile?._id,
+      templateIdentifier: responseData.workflowId,
+      channel: StepTypeEnum.IN_APP,
+    });
+
+    expect(sentMessages.length).to.be.eq(1);
+    expect(sentMessages[0].subject).to.be.undefined;
+    expect(sentMessages[0].content).to.equal('This is the message body');
+  });
 });
 
 async function syncWorkflow(

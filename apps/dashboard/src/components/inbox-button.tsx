@@ -1,6 +1,6 @@
 import { useUser } from '@clerk/clerk-react';
 import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { APP_ID, IS_SELF_HOSTED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
@@ -91,6 +91,40 @@ export const InboxButton = () => {
   const { isWorkflowEditorPage: isTestPage } = useWorkflowEditorPage();
   const { currentOrganization } = useAuth();
 
+  const appId = isTestPage ? currentEnvironment?.identifier : APP_ID;
+  const localizationTestSuffix = isTestPage ? ' (Test)' : '';
+  const isNovuProductionDashboard = window.location.hostname.includes('dashboard.novu.co');
+  const isNovuStagingEnvironment = apiHostnameManager.getHostname() === 'https://api.novu-staging.co';
+  const shouldUseProductionApi = (isNovuProductionDashboard || isNovuStagingEnvironment) && !isTestPage;
+
+  const subscriber = useMemo(
+    () => ({
+      subscriberId: isTestPage ? (user?.externalId ?? '') : `org_${currentOrganization?._id}:user_${user?.externalId}`,
+      email: user?.primaryEmailAddress?.emailAddress ?? '',
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+    }),
+    [
+      isTestPage,
+      user?.externalId,
+      user?.primaryEmailAddress?.emailAddress,
+      user?.firstName,
+      user?.lastName,
+      currentOrganization?._id,
+    ]
+  );
+
+  const localization = useMemo(
+    () => ({
+      'inbox.filters.labels.default': `Inbox${localizationTestSuffix}`,
+      'inbox.filters.labels.unread': `Unread${localizationTestSuffix}`,
+      'inbox.filters.labels.archived': `Archived${localizationTestSuffix}`,
+      'preferences.title': `Preferences${localizationTestSuffix}`,
+      'notifications.emptyNotice': `${isTestPage ? 'This is a test inbox. Send a notification to preview it in real-time.' : 'No notifications'}`,
+    }),
+    [isTestPage, localizationTestSuffix]
+  );
+
   if (!user?.externalId || !currentEnvironment || !currentOrganization) {
     return null;
   }
@@ -99,38 +133,13 @@ export const InboxButton = () => {
     return null;
   }
 
-  /**
-   * If the page is a test page, we use the environment identifier as the appId.
-   *
-   * This displays a test inbox, where the user can see their test notifications appear
-   * in real-time.
-   */
-  const appId = isTestPage ? currentEnvironment?.identifier : APP_ID;
-
-  const localizationTestSuffix = isTestPage ? ' (Test)' : '';
-
-  const isNovuProductionDashboard = window.location.hostname.includes('dashboard.novu.co');
-  const isNovuStagingEnvironment = apiHostnameManager.getHostname() === 'https://api.novu-staging.co';
-  const shouldUseProductionApi = (isNovuProductionDashboard || isNovuStagingEnvironment) && !isTestPage;
-
   return (
     <Inbox
-      subscriber={{
-        subscriberId: isTestPage ? user.externalId : `org_${currentOrganization._id}:user_${user.externalId}`,
-        email: user.primaryEmailAddress?.emailAddress ?? '',
-        firstName: user.firstName ?? '',
-        lastName: user.lastName ?? '',
-      }}
+      subscriber={subscriber}
       applicationIdentifier={appId}
       backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
       socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
-      localization={{
-        'inbox.filters.labels.default': `Inbox${localizationTestSuffix}`,
-        'inbox.filters.labels.unread': `Unread${localizationTestSuffix}`,
-        'inbox.filters.labels.archived': `Archived${localizationTestSuffix}`,
-        'preferences.title': `Preferences${localizationTestSuffix}`,
-        'notifications.emptyNotice': `${isTestPage ? 'This is a test inbox. Send a notification to preview it in real-time.' : 'No notifications'}`,
-      }}
+      localization={localization}
     >
       <InboxInner />
     </Inbox>
