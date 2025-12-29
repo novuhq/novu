@@ -34,8 +34,24 @@ function setupTranslationMocks(moduleRef: sinon.SinonStubbedInstance<ModuleRef>)
     return command.content || '';
   });
 
+  // Stub createContext if it exists (for new translation context optimization)
+  if (typeof Translate.prototype.createContext === 'function') {
+    sinon.stub(Translate.prototype, 'createContext').resolves(null);
+  }
+
+  // Stub executeWithContext if it exists (fallback in case context is somehow not null)
+  if (typeof Translate.prototype.executeWithContext === 'function') {
+    sinon.stub(Translate.prototype, 'executeWithContext').callsFake(async (_context: any, content: string) => {
+      return content;
+    });
+  }
+
   const mockLogger = {
     setContext: sinon.stub(),
+    assign: sinon.stub(),
+    error: sinon.stub(),
+    warn: sinon.stub(),
+    info: sinon.stub(),
   };
 
   // Mock moduleRef.get to return the Translate class when requested
