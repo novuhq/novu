@@ -6,8 +6,10 @@ import { mailjetProviderSchemas } from './mailjet.schema';
 import { nodemailerProviderSchemas } from './nodemailer.schema';
 import { novuEmailProviderSchemas } from './novu-email.schema';
 import { sendgridProviderSchemas } from './sendgrid.schema';
+import { mailForwarderProviderSchemas } from './mail-forwarder.schema';
 
 export const emailProviderSchemas = {
+  'mail-forwarder': mailForwarderProviderSchemas,
   braze: genericProviderSchemas,
   clickatell: genericProviderSchemas,
   nodemailer: nodemailerProviderSchemas,

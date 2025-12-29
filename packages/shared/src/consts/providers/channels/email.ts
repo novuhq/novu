@@ -17,12 +17,21 @@ import {
   sparkpostConfig,
   emailWebhookConfig,
   brazeEmailConfig,
+  mailForwarderConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const emailProviders: IProviderConfig[] = [
+  {
+    id: EmailProviderIdEnum.MailForwarder,
+    displayName: 'Mail Forwarder (GCS)',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: mailForwarderConfig,
+    docReference: 'https://docs.novu.co/integrations/providers/email/mail-forwarder',
+    logoFileName: { light: 'mail.svg', dark: 'mail.svg' },
+  },
   {
     id: EmailProviderIdEnum.Novu,
     displayName: 'Novu Email',

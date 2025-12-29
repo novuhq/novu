@@ -6,6 +6,7 @@ export * from './emailjs/emailjs.provider';
 export * from './mailersend/mailersend.provider';
 export * from './mailgun/mailgun.provider';
 export * from './mailjet/mailjet.provider';
+export * from './mail-forwarder/mail-forwarder.provider';
 export * from './mailtrap/mailtrap.provider';
 export * from './mandrill/mandrill.provider';
 export * from './netcore/netcore.provider';

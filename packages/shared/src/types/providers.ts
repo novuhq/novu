@@ -47,6 +47,14 @@ export enum CredentialsKeyEnum {
   channelId = 'channelId',
   phoneNumberIdentification = 'phoneNumberIdentification',
   ApiVersion = 'apiVersion',
+
+  // Mail Forwarder specific keys
+  MAIL_FORWARDER_BUCKET = 'MAIL_FORWARDER_BUCKET',
+  GCP_PROJECT_ID = 'GCP_PROJECT_ID',
+  GCP_SERVICE_ACCOUNT_KEY_PATH = 'GCP_SERVICE_ACCOUNT_KEY_PATH',
+  SERVICE_ACCOUNT_IDENTITY = 'SERVICE_ACCOUNT_IDENTITY',
+  SENDER_EMAIL = 'senderEmail',
+  DEFAULT_FROM = 'defaultFrom',
 }
 
 export enum EmailProviderIdEnum {
@@ -71,6 +79,7 @@ export enum EmailProviderIdEnum {
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
+  MailForwarder = 'mail-forwarder',
 }
 
 export enum SmsProviderIdEnum {

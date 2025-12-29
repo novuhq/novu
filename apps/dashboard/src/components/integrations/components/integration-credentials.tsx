@@ -39,7 +39,7 @@ export function CredentialsSection({ provider, control, isReadOnly }: Credential
         <FormField
           key={credential.key}
           control={control}
-          name={`credentials.${credential.key}`}
+          name={`credentials.${credential.key}` as any}
           rules={{
             required: credential.required ? `${credential.displayName} is required` : false,
             validate: credential.validation?.validate,

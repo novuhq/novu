@@ -349,7 +349,7 @@ export function UpdateProviderSidebar({
           {selectedProvider?.credentials.map((credential: IConfigCredentials) => (
             <InputWrapper key={credential.key}>
               <Controller
-                name={`credentials.${credential.key}`}
+                name={`credentials.${credential.key}` as any}
                 control={control}
                 {...(credential.type === 'boolean' || credential.type === 'switch' ? { defaultValue: false } : {})}
                 rules={{
