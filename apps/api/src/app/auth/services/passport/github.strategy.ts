@@ -15,7 +15,7 @@ export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
       scope: ['user:email'],
       passReqToCallback: true,
       store: {
-        verify(req, state: string, meta: Metadata, callback: StateStoreVerifyCallback) {
+        verify(req, state: string, meta: Metadata, callback) {
           callback(null, true, JSON.stringify(req.query));
         },
         store(req, meta: Metadata, callback: StateStoreStoreCallback) {

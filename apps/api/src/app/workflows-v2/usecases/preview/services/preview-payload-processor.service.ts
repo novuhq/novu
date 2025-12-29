@@ -33,7 +33,7 @@ export class PreviewPayloadProcessorService {
       }
     });
 
-    return reorderedPayload;
+    return reorderedPayload as Record<string, unknown>;
   }
 
   /**
@@ -58,7 +58,7 @@ export class PreviewPayloadProcessorService {
         });
     }
 
-    return preparedPayload;
+    return preparedPayload as Record<string, Record<string, unknown>>;
   }
 
   buildState(steps: Record<string, unknown> | undefined): FrameworkPreviousStepsOutputState[] {
