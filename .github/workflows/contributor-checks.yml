@@ -59,7 +59,7 @@ jobs:
         with:
           node-version: "20.19.0"
           cache: "pnpm"
-          cache-dependency-path: "package.json"
+          cache-dependency-path: "pnpm-lock.yaml"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
