@@ -82,7 +82,7 @@ export class ConstructFrameworkWorkflow {
           return this.emailOutputRendererUseCase.execute({
             controlValues,
             fullPayloadForRender: { payload, subscriber, context, steps: {} },
-            dbWorkflow: dbWorkflow,
+            dbWorkflow,
             locale: subscriber.locale ?? undefined,
             stepId: LAYOUT_PREVIEW_EMAIL_STEP,
             layoutId: command.layoutId,

@@ -16,6 +16,7 @@ import {
   JobEntity,
   JobRepository,
   LocalizationResourceEnum,
+  NotificationTemplateEntity,
   OrganizationEntity,
 } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
@@ -58,9 +59,7 @@ type TranslationContext = {
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export class EmailOutputRendererCommand extends RenderCommand {
-  environmentId: string;
-  organizationId: string;
-  workflowId?: string;
+  dbWorkflow: NotificationTemplateEntity;
   locale?: string;
   skipLayoutRendering?: boolean;
   jobId?: string;
@@ -119,9 +118,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     const {
       fullPayloadForRender,
-      environmentId,
-      organizationId,
-      workflowId,
+      dbWorkflow,
       locale,
       skipLayoutRendering,
       jobId,
@@ -130,6 +127,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organization,
     } = renderCommand;
 
+    const { _environmentId: environmentId, _organizationId: organizationId, _id: workflowId } = dbWorkflow;
+
     const workflowTranslationContext = await this.createTranslationContext({
       environmentId,
       organizationId,
@@ -137,6 +136,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       resourceType: LocalizationResourceEnum.WORKFLOW,
       locale,
       organization,
+      resourceEntity: dbWorkflow,
     });
 
     // Step 1: Apply translations to subject (already liquid-interpolated)

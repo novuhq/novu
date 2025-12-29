@@ -99,6 +99,7 @@ export abstract class BaseTranslationRendererUsecase {
     resourceType,
     locale,
     organization,
+    resourceEntity,
   }: {
     environmentId: string;
     organizationId: string;
@@ -106,6 +107,7 @@ export abstract class BaseTranslationRendererUsecase {
     resourceType?: LocalizationResourceEnum;
     locale?: string;
     organization?: OrganizationEntity;
+    resourceEntity?: NotificationTemplateEntity | LayoutDto;
   }): Promise<TranslationContext | null> {
     if (process.env.NOVU_ENTERPRISE !== 'true') {
       return null;
@@ -136,6 +138,7 @@ export abstract class BaseTranslationRendererUsecase {
         locale,
         liquidEngine,
         organization,
+        resourceEntity,
       });
     } catch (error) {
       this.logger.error('Translation context creation failed', {
