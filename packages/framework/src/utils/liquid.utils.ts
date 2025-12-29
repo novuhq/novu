@@ -13,9 +13,14 @@ export function defaultOutputEscape(output: unknown): string {
   if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
     return stringifyDataStructureWithSingleQuotes(output);
   }
-  // For strings that might contain newlines, ensure proper escaping
-  else if (typeof output === 'string' && output.includes('\n')) {
-    return output.replace(/\n/g, '\\n');
+  // For strings, escape special JSON characters: backslashes, double quotes, and newlines
+  else if (typeof output === 'string') {
+    return output
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t');
   } else {
     return output === undefined || output === null ? '' : String(output as unknown);
   }

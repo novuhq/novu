@@ -2007,6 +2007,52 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
 
     expect(sentMessages.length).to.be.eq(2);
   });
+
+  it('should render control values with payload containing double quotes', async () => {
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      active: true,
+      name: 'Test Quotes Workflow',
+      description: 'Test Workflow with Quotes',
+      __source: WorkflowCreationSourceEnum.DASHBOARD,
+      workflowId: 'test-quotes-workflow',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          name: 'In App Step',
+          controlValues: {
+            subject: '{{payload.title}}',
+            body: '{{payload.body}}',
+          },
+        },
+      ],
+    };
+
+    const response = await session.testAgent.post(`/v2/workflows`).send(createWorkflowDto);
+    expect(response.status).to.be.eq(201);
+
+    const responseData = response.body.data as WorkflowResponseDto;
+
+    const payloadWithQuotes = {
+      title: 'Test message with "quotes"',
+      body: 'This content has "double quotes" and "special characters" in the text',
+    };
+
+    await triggerEvent(session, responseData.workflowId, subscriber._id, payloadWithQuotes);
+    await session.waitForJobCompletion();
+
+    const sentMessages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: session.subscriberProfile?._id,
+      templateIdentifier: responseData.workflowId,
+      channel: StepTypeEnum.IN_APP,
+    });
+
+    expect(sentMessages.length).to.be.eq(1);
+    expect(sentMessages[0].subject).to.equal('Test message with "quotes"');
+    expect(sentMessages[0].content).to.include('"double quotes"');
+    expect(sentMessages[0].content).to.include('"special characters"');
+  });
 });
 
 async function syncWorkflow(
