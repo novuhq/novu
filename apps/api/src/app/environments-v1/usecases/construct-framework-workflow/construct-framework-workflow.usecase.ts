@@ -49,11 +49,11 @@ export class ConstructFrameworkWorkflow {
 
   @InstrumentUsecase()
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
-    const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
-
     if (command.workflowId === LAYOUT_PREVIEW_WORKFLOW_ID) {
-      return this.constructLayoutPreviewWorkflow(command, dbWorkflow);
+      return this.constructLayoutPreviewWorkflow(command);
     }
+
+    const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
 
     if (command.controlValues) {
       for (const step of dbWorkflow.steps) {
@@ -71,11 +71,21 @@ export class ConstructFrameworkWorkflow {
     });
   }
 
-  private async constructLayoutPreviewWorkflow(
-    command: ConstructFrameworkWorkflowCommand,
-    dbWorkflow: NotificationTemplateEntity
-  ): Promise<Workflow> {
-    const organization = (await this.communityOrganizationRepository.findById(dbWorkflow._organizationId)) || undefined;
+  private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+    if (!environment) {
+      throw new InternalServerErrorException(`Environment ${command.environmentId} not found`);
+    }
+
+    const organization =
+      (await this.communityOrganizationRepository.findById(environment._organizationId)) || undefined;
+
+    const syntheticDbWorkflow: NotificationTemplateEntity = {
+      _id: LAYOUT_PREVIEW_WORKFLOW_ID,
+      _environmentId: command.environmentId,
+      _organizationId: environment._organizationId,
+      _creatorId: environment._organizationId,
+    } as NotificationTemplateEntity;
 
     return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber, context }) => {
       await step.email(
@@ -84,7 +94,7 @@ export class ConstructFrameworkWorkflow {
           return this.emailOutputRendererUseCase.execute({
             controlValues,
             fullPayloadForRender: { payload, subscriber, context, steps: {} },
-            dbWorkflow,
+            dbWorkflow: syntheticDbWorkflow,
             organization,
             locale: subscriber.locale ?? undefined,
             stepId: LAYOUT_PREVIEW_EMAIL_STEP,
