@@ -85,7 +85,19 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     private createExecutionDetails: CreateExecutionDetails
   ) {
     super(moduleRef, logger);
-    this.liquidEngine = createLiquidEngine({ skipOutputEscape: true });
+    this.liquidEngine = createLiquidEngine({
+      outputEscape: (output: unknown): string => {
+        if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
+          const valueStringified = JSON.stringify(output);
+          const valueSingleQuotes = valueStringified.replace(/"/g, "'");
+          const valueEscapedNewLines = valueSingleQuotes.replace(/\n/g, '\\n');
+
+          return valueEscapedNewLines;
+        }
+
+        return output === undefined || output === null ? '' : String(output as unknown);
+      },
+    });
   }
 
   @InstrumentUsecase()
