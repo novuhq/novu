@@ -85,7 +85,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     private createExecutionDetails: CreateExecutionDetails
   ) {
     super(moduleRef, logger);
-    this.liquidEngine = createLiquidEngine();
+    this.liquidEngine = createLiquidEngine({ skipOutputEscape: true });
   }
 
   @InstrumentUsecase()

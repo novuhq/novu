@@ -44,13 +44,25 @@ export const stringifyDataStructureWithSingleQuotes = (value: unknown, spaces: n
   }
 };
 
+export type CreateLiquidEngineOptions = LiquidOptions & {
+  skipOutputEscape?: boolean;
+};
+
 /**
  * Creates a configured Liquid instance with Novu's default settings.
+ *
+ * @param options - LiquidJS options plus:
+ *   - skipOutputEscape: Set to true when rendering content that will be used as HTML output.
+ *     The default outputEscape is designed for JSON context (escaping quotes, newlines) which
+ *     breaks HTML attributes. Email rendering should set this to true since it handles its
+ *     own escaping and outputs HTML content.
  */
-export function createLiquidEngine(options?: LiquidOptions): Liquid {
+export function createLiquidEngine(options?: CreateLiquidEngineOptions): Liquid {
+  const { skipOutputEscape, ...liquidOptions } = options ?? {};
+
   const liquidEngine = new Liquid({
-    outputEscape: defaultOutputEscape,
-    ...options,
+    outputEscape: skipOutputEscape ? undefined : defaultOutputEscape,
+    ...liquidOptions,
   });
 
   // Register default filters
