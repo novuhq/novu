@@ -46,6 +46,10 @@ export const stringifyDataStructureWithSingleQuotes = (value: unknown, spaces: n
 
 /**
  * Creates a configured Liquid instance with Novu's default settings.
+ *
+ * @param options - LiquidJS options. Note: By default, this uses a custom outputEscape function
+ *   that escapes special JSON characters. If you need different escaping behavior (e.g., for HTML
+ *   rendering), you can override the outputEscape function in the options.
  */
 export function createLiquidEngine(options?: LiquidOptions): Liquid {
   const liquidEngine = new Liquid({

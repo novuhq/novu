@@ -91,7 +91,35 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     private createExecutionDetails: CreateExecutionDetails
   ) {
     super(moduleRef, logger);
-    this.liquidEngine = createLiquidEngine();
+    /**
+     * Custom outputEscape function for email rendering that handles object serialization
+     * without escaping HTML content.
+     *
+     * The default outputEscape (from createLiquidEngine) escapes special characters in strings
+     * (quotes, newlines, etc.) which is needed for JSON context but breaks HTML attributes
+     * when rendering email content. For example, `style="color: red"` would become
+     * `style=\"color: red\"` causing malformed HTML.
+     *
+     * This custom implementation:
+     * 1. Serializes objects/arrays to JSON strings (required for Maily loops like {{ payload.items }})
+     * 2. Does NOT escape quotes/newlines in regular strings (preserves HTML attribute integrity)
+     *
+     * This allows HTML content like `{{ layout_content }}` to render properly with correct
+     * attributes while still supporting object iteration in email templates.
+     */
+    this.liquidEngine = createLiquidEngine({
+      outputEscape: (output: unknown): string => {
+        if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
+          const valueStringified = JSON.stringify(output);
+          const valueSingleQuotes = valueStringified.replace(/"/g, "'");
+          const valueEscapedNewLines = valueSingleQuotes.replace(/\n/g, '\\n');
+
+          return valueEscapedNewLines;
+        }
+
+        return output === undefined || output === null ? '' : String(output as unknown);
+      },
+    });
   }
 
   @InstrumentUsecase()
