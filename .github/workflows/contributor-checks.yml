@@ -7,7 +7,6 @@ concurrency:
 on:
   pull_request:
     branches: ["next"]
-  workflow_dispatch:
 
 jobs:
   # Only run if this is a community contribution (not team member)
