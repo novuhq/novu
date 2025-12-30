@@ -11,6 +11,7 @@
   "observability": {
     "enabled": true
   },
+  "logpush": true,
   "migrations": [
     {
       "tag": "v1",
