@@ -280,7 +280,7 @@ describe('createLiquidEngine', () => {
     expect(jsonResult).toBe('Line 1\\nLine 2\\nLine 3');
   });
 
-  describe('skipOutputEscape option', () => {
+  describe('custom outputEscape override', () => {
     it('should escape quotes in output by default (for JSON context)', async () => {
       const engine = createLiquidEngine();
       const htmlContent = '<div style="color: red">Hello</div>';
@@ -291,8 +291,21 @@ describe('createLiquidEngine', () => {
       expect(result).toBe('<div style=\\"color: red\\">Hello</div>');
     });
 
-    it('should not escape quotes when skipOutputEscape is true (for HTML context)', async () => {
-      const engine = createLiquidEngine({ skipOutputEscape: true });
+    it('should allow overriding outputEscape to not escape quotes (for HTML context)', async () => {
+      const engine = createLiquidEngine({
+        outputEscape: (output: unknown): string => {
+          if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
+            const valueStringified = JSON.stringify(output);
+            const valueSingleQuotes = valueStringified.replace(/"/g, "'");
+            const valueEscapedNewLines = valueSingleQuotes.replace(/\n/g, '\\n');
+
+            return valueEscapedNewLines;
+          }
+
+          return output === undefined || output === null ? '' : String(output as unknown);
+        },
+      });
+
       const htmlContent = '<div style="color: red">Hello</div>';
       const template = '{{ content }}';
 
@@ -301,28 +314,44 @@ describe('createLiquidEngine', () => {
       expect(result).toBe('<div style="color: red">Hello</div>');
     });
 
-    it('should preserve HTML attributes when rendering layout content with skipOutputEscape', async () => {
-      const engine = createLiquidEngine({ skipOutputEscape: true });
-      const layoutContent = '<table align="center" width="100%" style="max-width:600px"><tr><td>Content</td></tr></table>';
+    it('should preserve HTML attributes when rendering layout content with custom outputEscape', async () => {
+      const engine = createLiquidEngine({
+        outputEscape: (output: unknown): string => {
+          if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
+            return JSON.stringify(output).replace(/"/g, "'");
+          }
+
+          return output === undefined || output === null ? '' : String(output as unknown);
+        },
+      });
+
+      const layoutContent =
+        '<table align="center" width="100%" style="max-width:600px"><tr><td>Content</td></tr></table>';
       const template = '<html><body>{{ layout_content }}</body></html>';
 
       const result = await engine.parseAndRender(template, { layout_content: layoutContent });
 
-      expect(result).toBe('<html><body><table align="center" width="100%" style="max-width:600px"><tr><td>Content</td></tr></table></body></html>');
+      expect(result).toBe(
+        '<html><body><table align="center" width="100%" style="max-width:600px"><tr><td>Content</td></tr></table></body></html>'
+      );
       expect(result).not.toContain('\\"');
     });
 
-    it('should still register all default filters when skipOutputEscape is true', async () => {
-      const engine = createLiquidEngine({ skipOutputEscape: true });
+    it('should still serialize objects when using custom outputEscape', async () => {
+      const engine = createLiquidEngine({
+        outputEscape: (output: unknown): string => {
+          if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
+            return JSON.stringify(output).replace(/"/g, "'");
+          }
 
-      const jsonResult = await engine.parseAndRender('{{ data | json }}', { data: { a: 1 } });
-      expect(jsonResult).toBe("{'a':1}");
+          return output === undefined || output === null ? '' : String(output as unknown);
+        },
+      });
 
-      const digestResult = await engine.parseAndRender('{{ names | digest }}', { names: ['A', 'B', 'C'] });
-      expect(digestResult).toBe('A, B and 1 other');
+      const template = '{{ items }}';
+      const result = await engine.parseAndRender(template, { items: [{ name: 'Item 1' }, { name: 'Item 2' }] });
 
-      const pluralizeResult = await engine.parseAndRender("{{ 2 | pluralize: 'item' }}", {});
-      expect(pluralizeResult).toBe('2 items');
+      expect(result).toBe("[{'name':'Item 1'},{'name':'Item 2'}]");
     });
   });
 });
