@@ -24,9 +24,7 @@
     "build:watch": "npm run build:esm:watch",
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
-    "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json"
   },
   "dependencies": {
     "@emotion/css": "^11.10.5",
@@ -47,12 +45,6 @@
   },
   "devDependencies": {
     "@mantine/core": "^5.7.1",
-    "@storybook/addon-actions": "^7.5.0",
-    "@storybook/addon-docs": "^7.4.2",
-    "@storybook/client-api": "^7.6.10",
-    "@storybook/react": "^7.4.2",
-    "@storybook/react-webpack5": "^7.4.2",
-    "@storybook/theming": "^7.4.2",
     "@testing-library/jest-dom": "^6.4.1",
     "@testing-library/react": "^12.1.5",
     "@testing-library/react-hooks": "^8.0.1",
@@ -67,7 +59,6 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "6.2.2",
     "rimraf": "^3.0.2",
-    "storybook": "^7.4.2",
     "ts-loader": "~9.4.0",
     "tslib": "^2.3.1",
     "typescript": "5.6.2",
@@ -82,19 +73,6 @@
     "react-dom": ">=16.8.0"
   },
   "nx": {
-    "targets": {
-      "build-storybook": {
-        "dependsOn": [
-          "^build"
-        ],
-        "outputs": [
-          "{projectRoot}/storybook-static"
-        ],
-        "inputs": [
-          "{projectRoot}/.storybook",
-          "{projectRoot}/src"
-        ]
-      }
-    }
+    "targets": {}
   }
 }
