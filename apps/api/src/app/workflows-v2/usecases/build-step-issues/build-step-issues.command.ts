@@ -1,5 +1,5 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { ControlValuesEntity, NotificationTemplateEntity } from '@novu/dal';
 import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { IsDefined, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
@@ -39,4 +39,10 @@ export class BuildStepIssuesCommand extends EnvironmentWithUserObjectCommand {
    */
   @IsOptional()
   optimisticSteps?: IOptimisticStepInfo[];
+
+  /**
+   * Pre-loaded control values to avoid redundant database queries
+   */
+  @IsOptional()
+  preloadedControlValues?: ControlValuesEntity[];
 }
