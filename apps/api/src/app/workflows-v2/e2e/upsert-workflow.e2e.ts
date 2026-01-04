@@ -47,7 +47,7 @@ describe('Upsert Workflow #novu-v2', () => {
         expect(error.message).to.contain('Validation Error');
         expect(error.errors).to.exist;
         expect(error.errors.general.messages[0]).to.contain(
-          'must be a valid slug format (lowercase letters, numbers, and hyphens only)'
+          'must be a valid slug format (letters, numbers, and hyphens only)'
         );
       }
     });
