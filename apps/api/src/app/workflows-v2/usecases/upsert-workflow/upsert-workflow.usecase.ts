@@ -16,6 +16,7 @@ import {
 import {
   ClientSession,
   ControlSchemas,
+  ControlValuesEntity,
   ControlValuesRepository,
   NotificationGroupRepository,
   NotificationStepEntity,

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import {
+  ControlValuesEntity,
   ControlValuesRepository,
   JsonSchemaTypeEnum,
   NotificationStepEntity,
