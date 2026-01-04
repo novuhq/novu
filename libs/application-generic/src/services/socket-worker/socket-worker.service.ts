@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessageRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, FeatureFlagsKeysEnum, WebSocketEventEnum } from '@novu/shared';
 import got, { HTTPError, RequestError } from 'got';
 
@@ -29,7 +29,8 @@ export class SocketWorkerService {
 
   constructor(
     private featureFlagsService: FeatureFlagsService,
-    private messageRepository: MessageRepository
+    private messageRepository: MessageRepository,
+    private organizationRepository: CommunityOrganizationRepository
   ) {
     this.socketWorkerUrl = process.env.SOCKET_WORKER_URL;
     this.socketWorkerApiKey = process.env.INTERNAL_SERVICES_API_KEY;
@@ -294,10 +295,13 @@ export class SocketWorkerService {
     return isFeatureFlagEnabled;
   }
 
-  async isLegacyWsDisabled(environmentId?: string): Promise<boolean> {
+  async isLegacyWsDisabled(environmentId?: string, organizationId?: string): Promise<boolean> {
+    const organization = organizationId ? await this.organizationRepository.findById(organizationId) : undefined;
+
     return this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_LEGACY_WS_SERVICE_DISABLED,
       environment: { _id: environmentId },
+      organization,
       defaultValue: false,
     });
   }
