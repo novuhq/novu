@@ -78,17 +78,21 @@ export class ReadinessService {
     const areQueuesEnabled = await this.areQueuesEnabled();
 
     if (areQueuesEnabled) {
+      Logger.log(`Resuming ${workers.length} workers...`, LOG_CONTEXT);
       for (const worker of workers) {
         try {
-          Logger.verbose(`Resuming worker ${worker.topic}...`, LOG_CONTEXT);
+          Logger.log(`Resuming worker ${worker.topic}...`, LOG_CONTEXT);
 
           await worker.resume();
+
+          Logger.log(`Worker ${worker.topic} resumed successfully`, LOG_CONTEXT);
         } catch (error) {
           Logger.error(error, `Failed to resume worker ${worker.topic}.`, LOG_CONTEXT);
 
           throw error;
         }
       }
+      Logger.log(`All ${workers.length} workers resumed successfully`, LOG_CONTEXT);
     } else {
       const error = new Error('Queues are not enabled');
       Logger.error(error, 'Queues are not enabled', LOG_CONTEXT);
