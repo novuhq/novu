@@ -54,7 +54,7 @@
     "./styles.css": "./src/index.css"
   },
   "scripts": {
-    "dev": "pnpm build && pnpm storybook",
+    "dev": "pnpm build",
     "start": "npm run build:watch",
     "setup": "pnpm prepare:panda && pnpm build",
     "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",
@@ -66,8 +66,6 @@
     "check:fix": "biome check --write .",
     "build": "cross-env node_modules/.bin/tsc",
     "build:watch": "pnpm panda --watch & cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
-    "build:storybook": "pnpm panda && storybook build",
-    "storybook": "pnpm panda --watch & storybook dev -p 6006",
     "studio": "pnpm panda studio",
     "audit-components": "pnpm react-scanner -c './react-scanner.config.js'"
   },
@@ -77,13 +75,6 @@
   "devDependencies": {
     "@pandacss/dev": "^0.42.0",
     "@pandacss/studio": "^0.42.0",
-    "@storybook/addon-actions": "8.1.0",
-    "@storybook/addon-controls": "^8.1.0",
-    "@storybook/addon-docs": "^8.1.0",
-    "@storybook/react": "^8.1.0",
-    "@storybook/react-vite": "^8.1.0",
-    "@storybook/theming": "^8.1.0",
-    "@storybook/types": "^8.1.0",
     "@testing-library/jest-dom": "^6.4.1",
     "@testing-library/react": "^12.1.5",
     "@testing-library/react-hooks": "^8.0.1",
@@ -99,8 +90,6 @@
     "react-dom": "^18.3.1",
     "react-scanner": "^1.2.0",
     "rimraf": "^3.0.2",
-    "storybook": "^8.1.0",
-    "storybook-dark-mode": "^4.0.1",
     "typescript": "5.6.2",
     "vite": "^4.5.2",
     "vite-tsconfig-paths": "^4.3.2",
@@ -111,20 +100,7 @@
     "react-dom": ">=17.0.0"
   },
   "nx": {
-    "targets": {
-      "build-storybook": {
-        "dependsOn": [
-          "^build"
-        ],
-        "outputs": [
-          "{projectRoot}/storybook-static"
-        ],
-        "inputs": [
-          "{projectRoot}/.storybook",
-          "{projectRoot}/src"
-        ]
-      }
-    }
+    "targets": {}
   },
   "dependencies": {
     "@mantine/code-highlight": "^7.12.1",
