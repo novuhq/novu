@@ -12,7 +12,7 @@
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load",
     "start": "pnpm start:dev",
     "start:dev": "nest start --watch",
-    "start:test": "cross-env NODE_ENV=test nest start",
+    "start:test": "cross-env NODE_ENV=test node dist/main.js",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main.js",
     "check": "biome check .",
