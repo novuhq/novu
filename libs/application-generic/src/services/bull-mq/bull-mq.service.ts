@@ -189,7 +189,7 @@ export class BullMqService {
       if (BullMqService.pro && job?.groupId) {
         // BulkJobOptions.group is not defined in BullMQ types, it is defined in BullMQ Pro
 
-        // @ts-ignore
+        // @ts-expect-error
         jobOptions.group = {
           id: job.groupId,
         };
@@ -285,6 +285,19 @@ export class BullMqService {
         Logger.verbose(`Worker ${this._worker.name} resume succeeded`, LOG_CONTEXT);
       } catch (error) {
         Logger.error(error, `Worker ${this._worker.name} resume failed`, LOG_CONTEXT);
+
+        throw error;
+      }
+    }
+  }
+
+  public async waitUntilWorkerIsReady(): Promise<void> {
+    if (this._worker) {
+      try {
+        await this._worker.waitUntilReady();
+        Logger.verbose(`Worker ${this._worker.name} is now fully ready`, LOG_CONTEXT);
+      } catch (error) {
+        Logger.error(error, `Worker ${this._worker.name} waitUntilReady failed`, LOG_CONTEXT);
 
         throw error;
       }

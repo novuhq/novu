@@ -8,7 +8,7 @@ on:
   workflow_call:
     inputs:
       ee:
-        description: 'use the ee version of api'
+        description: "use the ee version of api"
         required: false
         default: false
         type: boolean
@@ -54,8 +54,8 @@ jobs:
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
           NEW_RELIC_ENABLED: true
         run: |
-          # Start the worker service in the background
-          cd apps/worker && LOG_LEVEL=debug npm run start:test &
+          # Start the worker service using pre-built code for deterministic startup
+          cd apps/worker && NODE_ENV=test LOG_LEVEL=debug node dist/main.js &
 
       - name: Wait on worker
         shell: bash
