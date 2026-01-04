@@ -1,9 +1,4 @@
 module.exports = {
-  /**
-   * Must use array + require syntax for vite + postcss & panda
-   * https://vitejs.dev/config/shared-options.html#css-postcss
-   * https://panda-css.com/docs/installation/storybook#install-panda
-   */
   plugins: [
     require('@pandacss/dev/postcss')(),
     require('postcss-preset-mantine')(),

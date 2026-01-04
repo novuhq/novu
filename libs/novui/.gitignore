@@ -23,8 +23,6 @@ coverage
 *.log
 package-lock.json
 
-storybook-static
-
 ## Panda
 styled-system
 styled-system-studio
