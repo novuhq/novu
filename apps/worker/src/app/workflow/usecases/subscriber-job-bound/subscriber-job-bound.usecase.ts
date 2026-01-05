@@ -13,19 +13,29 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
+  TopicPreferenceEvaluation,
   TraceLogRepository,
 } from '@novu/application-generic';
-import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import {
+  IntegrationRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  PreferencesRepository,
+} from '@novu/dal';
 import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
+  PreferencesTypeEnum,
   ProvidersIdEnum,
   ResourceTypeEnum,
   SeverityLevelEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
+  WorkflowPreferencesPartial,
 } from '@novu/shared';
+import type { RulesLogic } from 'json-logic-js';
+import jsonLogic from 'json-logic-js';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
@@ -42,7 +52,8 @@ export class SubscriberJobBound {
     private logger: PinoLogger,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
-    private getPreferences: GetPreferences
+    private getPreferences: GetPreferences,
+    private preferencesRepository: PreferencesRepository
   ) {}
 
   @InstrumentUsecase()
@@ -142,6 +153,16 @@ export class SubscriberJobBound {
       );
 
       return;
+    }
+
+    if (topics && topics.length > 0) {
+      const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template._id);
+
+      if (evaluatedTopics === null) {
+        return;
+      }
+
+      command.topics = evaluatedTopics;
     }
 
     const severity = command.overrides.severity ?? template.severity ?? SeverityLevelEnum.NONE;
@@ -313,6 +334,164 @@ export class SubscriberJobBound {
     }
 
     return providers;
+  }
+
+  private async evaluateTopicPreferences(
+    command: SubscriberJobBoundCommand,
+    topics: Array<{
+      _topicId: string;
+      topicKey: string;
+      _topicSubscriptionId?: string;
+      subscriptionIdentifier?: string;
+      preferenceEvaluation?: TopicPreferenceEvaluation;
+    }>,
+    templateId: string
+  ): Promise<Array<{
+    _topicId: string;
+    topicKey: string;
+    _topicSubscriptionId?: string;
+    subscriptionIdentifier?: string;
+    preferenceEvaluation?: TopicPreferenceEvaluation;
+  }> | null> {
+    const evaluatedTopics: Array<{
+      _topicId: string;
+      topicKey: string;
+      _topicSubscriptionId?: string;
+      subscriptionIdentifier?: string;
+      preferenceEvaluation?: TopicPreferenceEvaluation;
+    }> = [];
+
+    for (const topic of topics) {
+      if (!topic._topicSubscriptionId || !topic.subscriptionIdentifier) {
+        evaluatedTopics.push(topic);
+        continue;
+      }
+
+      const evaluationResult = await this.evaluateSubscriptionPreferences(
+        command,
+        topic._topicSubscriptionId,
+        topic.subscriptionIdentifier,
+        templateId
+      );
+
+      if (!evaluationResult.result) {
+        await this.createSubscriberTrace(
+          command,
+          'step_filtered',
+          'warning',
+          `Subscriber ${command.subscriber.subscriberId} filtered by subscription preferences for topic ${topic.topicKey}`,
+          {
+            topicKey: topic.topicKey,
+            subscriptionIdentifier: topic.subscriptionIdentifier,
+            preferenceEvaluation: evaluationResult,
+          }
+        );
+
+        return null;
+      }
+
+      evaluatedTopics.push({
+        ...topic,
+        preferenceEvaluation: evaluationResult,
+      });
+    }
+
+    return evaluatedTopics;
+  }
+
+  private async evaluateSubscriptionPreferences(
+    command: SubscriberJobBoundCommand,
+    internalSubscriptionId: string,
+    subscriptionIdentifier: string,
+    templateId: string
+  ): Promise<TopicPreferenceEvaluation> {
+    try {
+      const subscriptionPreference = await this.preferencesRepository.findOne({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _templateId: templateId,
+        _topicSubscriptionId: internalSubscriptionId,
+        type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      });
+
+      if (subscriptionPreference) {
+        const passes = await this.evaluatePreferenceCondition(subscriptionPreference.preferences, command.payload);
+        const condition = subscriptionPreference.preferences.all?.condition;
+
+        if (!passes) {
+          return {
+            result: false,
+            subscriptionIdentifier,
+            condition: condition !== undefined && condition !== null ? condition : undefined,
+          };
+        }
+
+        return {
+          result: true,
+          subscriptionIdentifier,
+          condition: condition !== undefined && condition !== null ? condition : undefined,
+        };
+      }
+
+      return { result: true, subscriptionIdentifier };
+    } catch (error) {
+      this.logger.error(
+        {
+          error,
+          subscriberId: command.subscriber.subscriberId,
+          workflowId: templateId,
+          transactionId: command.transactionId,
+        },
+        'Error evaluating subscription preferences, allowing subscription to pass through'
+      );
+
+      return { result: true, subscriptionIdentifier };
+    }
+  }
+
+  private async evaluatePreferenceCondition(
+    preferences: WorkflowPreferencesPartial,
+    payload: Record<string, unknown>
+  ): Promise<boolean> {
+    const condition = preferences.all?.condition;
+
+    if (condition !== undefined && condition !== null) {
+      try {
+        const result = jsonLogic.apply(condition as RulesLogic, { payload });
+
+        if (typeof result !== 'boolean') {
+          this.logger.warn(
+            {
+              condition,
+              result,
+            },
+            'Preference condition evaluation did not return a boolean, treating as false'
+          );
+
+          return false;
+        }
+
+        return result;
+      } catch (error) {
+        this.logger.error(
+          {
+            error,
+            condition,
+          },
+          'Error evaluating preference condition, treating as false'
+        );
+
+        return false;
+      }
+    }
+
+    const enabled = preferences.all?.enabled;
+
+    if (enabled === undefined || enabled === null) {
+      return true;
+    }
+
+    return enabled;
   }
 
   private async createSubscriberTrace(

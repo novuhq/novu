@@ -26,6 +26,7 @@ import {
   StepRunStatus,
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
+  TopicPreferenceEvaluation,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import {
@@ -35,7 +36,6 @@ import {
   NotificationRepository,
   NotificationTemplateEntity,
   SubscriberRepository,
-  TopicPreferencesSummary,
 } from '@novu/dal';
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
@@ -169,7 +169,7 @@ export class AddJob {
   }
 
   private formatTopicsContextForExecution(
-    topics: Array<{ _topicId: string; topicKey: string; preferenceEvaluation?: TopicPreferencesSummary }>
+    topics: Array<{ _topicId: string; topicKey: string; preferenceEvaluation?: TopicPreferenceEvaluation }>
   ) {
     return {
       topics: topics.map((topic) => ({
