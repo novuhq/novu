@@ -630,6 +630,22 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
   });
 
   it('should generate email preview when translations are not enabled', async () => {
+    const mailyContent = JSON.stringify({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Hello ' },
+            { type: 'variable', attrs: { id: 'subscriber.firstName' } },
+            { type: 'text', text: ', your order ' },
+            { type: 'variable', attrs: { id: 'payload.orderId' } },
+            { type: 'text', text: ' is ready!' },
+          ],
+        },
+      ],
+    });
+
     const createWorkflowDto: CreateWorkflowDto = {
       tags: [],
       source: WorkflowCreationSourceEnum.Editor,
@@ -643,7 +659,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           type: StepTypeEnum.EMAIL,
           controlValues: {
             subject: 'Welcome {{subscriber.firstName}}',
-            body: 'Hello {{subscriber.firstName}}, your order {{payload.orderId}} is ready!',
+            body: mailyContent,
             disableOutputSanitization: false,
           },
         },
@@ -653,7 +669,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     const stepId = workflow.steps[0].id;
     const controlValues = {
       subject: 'Welcome {{subscriber.firstName}}',
-      body: 'Hello {{subscriber.firstName}}, your order {{payload.orderId}} is ready!',
+      body: mailyContent,
       disableOutputSanitization: false,
     };
     const previewPayload: PreviewPayloadDto = {
