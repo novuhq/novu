@@ -72,7 +72,7 @@ export class ConstructFrameworkWorkflow {
   }
 
   private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
-    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId }, '_organizationId');
     if (!environment) {
       throw new InternalServerErrorException(`Environment ${command.environmentId} not found`);
     }

@@ -1,5 +1,4 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
-import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
 import { PostActionEnum, type Workflow } from '@novu/framework/internal';
 import { Client, NovuHandler, NovuRequestHandler } from '@novu/framework/nest';
 import type { Request, Response } from 'express';
@@ -21,17 +20,10 @@ export class NovuBridgeClient {
 
   constructor(
     @Inject(NovuHandler) private novuHandler: NovuHandler,
-    private constructFrameworkWorkflow: ConstructFrameworkWorkflow,
-    private getDecryptedSecretKey: GetDecryptedSecretKey
+    private constructFrameworkWorkflow: ConstructFrameworkWorkflow
   ) {}
 
   public async handleRequest(req: Request, res: Response) {
-    const secretKey = await this.getDecryptedSecretKey.execute(
-      GetDecryptedSecretKeyCommand.create({
-        environmentId: req.params.environmentId,
-      })
-    );
-
     const workflows: Workflow[] = [];
 
     /*
@@ -58,7 +50,7 @@ export class NovuBridgeClient {
     this.novuRequestHandler = new NovuRequestHandler({
       frameworkName,
       workflows,
-      client: new Client({ secretKey, strictAuthentication: true, verbose: false }),
+      client: new Client({ secretKey: 'INTERNAL_KEY', strictAuthentication: false, verbose: false }),
       handler: this.novuHandler.handler,
     });
 
