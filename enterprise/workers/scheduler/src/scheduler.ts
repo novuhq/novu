@@ -85,7 +85,6 @@ export class Scheduler implements DurableObject {
       };
 
       await this.executeJob(job);
-      await this.state.storage.delete(JOB_KEY);
 
       return;
     }
@@ -98,8 +97,7 @@ export class Scheduler implements DurableObject {
       data: request.data,
     };
 
-    await this.state.storage.put(JOB_KEY, job);
-    await this.state.storage.setAlarm(request.scheduledFor);
+    await Promise.all([this.state.storage.put(JOB_KEY, job), this.state.storage.setAlarm(request.scheduledFor)]);
 
     console.log(`[Scheduler] Job ${request.jobId} scheduled for ${new Date(request.scheduledFor).toISOString()}`);
   }
@@ -111,8 +109,7 @@ export class Scheduler implements DurableObject {
       return false;
     }
 
-    await this.state.storage.delete(JOB_KEY);
-    await this.state.storage.deleteAlarm();
+    await Promise.all([this.state.storage.delete(JOB_KEY), this.state.storage.deleteAlarm()]);
 
     return true;
   }
