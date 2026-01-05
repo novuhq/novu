@@ -635,11 +635,30 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       content: [
         {
           type: 'paragraph',
+          attrs: { textAlign: null, showIfKey: null },
           content: [
             { type: 'text', text: 'Hello ' },
-            { type: 'variable', attrs: { id: 'subscriber.firstName' } },
+            {
+              type: 'variable',
+              attrs: {
+                id: 'subscriber.firstName',
+                label: null,
+                fallback: null,
+                required: false,
+                aliasFor: null,
+              },
+            },
             { type: 'text', text: ', your order ' },
-            { type: 'variable', attrs: { id: 'payload.orderId' } },
+            {
+              type: 'variable',
+              attrs: {
+                id: 'payload.orderId',
+                label: null,
+                fallback: null,
+                required: false,
+                aliasFor: null,
+              },
+            },
             { type: 'text', text: ' is ready!' },
           ],
         },
