@@ -1,6 +1,8 @@
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
+import type { Either } from '@novu/framework/internal';
 import { PostActionEnum, type Workflow } from '@novu/framework/internal';
 import { Client, NovuHandler, NovuRequestHandler } from '@novu/framework/nest';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { Request, Response } from 'express';
 import { ConstructFrameworkWorkflow, ConstructFrameworkWorkflowCommand } from './usecases/construct-framework-workflow';
 
@@ -51,6 +53,9 @@ export class NovuBridgeClient {
       handler: this.novuHandler.handler,
     });
 
-    await novuRequestHandler.createHandler()(req, res);
+    await novuRequestHandler.createHandler()(
+      req as Either<VercelRequest, Request>,
+      res as Either<Response, VercelResponse>
+    );
   }
 }
