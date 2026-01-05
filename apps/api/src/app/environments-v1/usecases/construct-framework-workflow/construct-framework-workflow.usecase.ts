@@ -357,7 +357,7 @@ export class ConstructFrameworkWorkflow {
 
   @Instrument()
   private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
-    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
+    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId, null, false);
 
     if (!foundWorkflow) {
       throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
