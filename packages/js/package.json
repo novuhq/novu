@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "3.11.0",
+  "version": "3.11.2",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu JavaScript SDK for <Inbox />",
   "author": "",
@@ -128,6 +128,7 @@
   "dependencies": {
     "@floating-ui/dom": "^1.6.13",
     "@kobalte/core": "^0.13.10",
+    "@types/json-logic-js": "^2.0.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "event-target-polyfill": "^0.0.4",

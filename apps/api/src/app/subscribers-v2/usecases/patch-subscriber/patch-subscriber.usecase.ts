@@ -30,8 +30,12 @@ export class PatchSubscriber {
   async execute(command: PatchSubscriberCommand): Promise<SubscriberResponseDto> {
     const dto = command.patchSubscriberRequestDto;
     const [environment, organization, existingSubscriber] = await Promise.all([
-      this.environmentRepository.findOne({ _id: command.environmentId }),
-      this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
+      this.environmentRepository.findOne({ _id: command.environmentId }, '_id', {
+        readPreference: 'secondaryPreferred',
+      }),
+      this.communityOrganizationRepository.findOne({ _id: command.organizationId }, '_id', {
+        readPreference: 'secondaryPreferred',
+      }),
       this.subscriberRepository.findOne({
         _environmentId: command.environmentId,
         subscriberId: command.subscriberId,
@@ -84,8 +88,8 @@ export class PatchSubscriber {
     organization,
   }: {
     itemId: string;
-    environment?: EnvironmentEntity;
-    organization?: OrganizationEntity;
+    environment?: Pick<EnvironmentEntity, '_id'>;
+    organization?: Pick<OrganizationEntity, '_id'>;
     userId: string;
   }) {
     const isDryRun = await this.featureFlagService.getFlag({

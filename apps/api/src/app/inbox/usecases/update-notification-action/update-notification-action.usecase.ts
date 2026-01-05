@@ -58,13 +58,6 @@ export class UpdateNotificationAction {
       actionStatus: command.actionStatus,
     });
 
-    await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: subscriber.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.UPDATE_NOTIFICATION_ACTION, '', {
       _organization: command.organizationId,
       _subscriber: subscriber._id,

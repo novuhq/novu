@@ -8,6 +8,15 @@ export enum WorkflowRunStatusDtoEnum {
   ERROR = 'error',
 }
 
+export class TopicResponseDto {
+  @ApiProperty({ description: 'Internal topic identifier' })
+  @IsString()
+  _topicId: string;
+
+  @ApiProperty({ description: 'Topic key' })
+  @IsString()
+  topicKey: string;
+}
 export class GetWorkflowRunResponseBaseDto {
   @ApiProperty({ description: 'Workflow run id' })
   @IsString()
@@ -84,6 +93,14 @@ export class GetWorkflowRunResponseBaseDto {
   @IsArray()
   @IsString({ each: true })
   contextKeys?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Topics',
+    type: [TopicResponseDto],
+  })
+  @IsOptional()
+  @IsArray()
+  topics?: TopicResponseDto[];
 }
 
 export enum ReportTypeEnum {

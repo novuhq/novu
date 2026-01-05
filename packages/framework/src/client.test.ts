@@ -1014,9 +1014,7 @@ describe('Novu Client', () => {
       const emailExecutionResult = await client.executeWorkflow(event);
 
       expect(emailExecutionResult.outputs).toEqual({
-        body: `{
-  'text': 'cat'
-}`,
+        body: `{\\n  'text': 'cat'\\n}`,
         subject: 'Hello',
       });
     });
@@ -1226,6 +1224,127 @@ describe('Novu Client', () => {
         body: 'Hello body John! {{t.single}} {{t.with-dash}} {{t.with_underscore}} {{t.123}} {{t.你好}}',
         subject:
           'Hello subject John! {{t.nested.single}} {{t.nested-with-dash.single}} {{t.nested_with_underscore.single}} {{t.123.single}} {{t.你好.single}}',
+      });
+    });
+
+    it('should preserve translation keys used as filter arguments', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              count: { type: 'number' },
+            },
+            required: ['count'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        payload: { count: 5 },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        controls: {
+          body: "You have {{ payload.count | pluralize: 't.apple', 't.apples' }}",
+          subject: "{{ payload.count | pluralize: 't.itemSingular', 't.itemPlural' }} in your cart",
+        },
+        context: {},
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      // Translation keys used as filter arguments should be transformed to {{t.key}} format
+      expect(emailExecutionResult.outputs).toEqual({
+        body: 'You have 5 {{t.apples}}',
+        subject: '5 {{t.itemPlural}} in your cart',
+      });
+    });
+
+    it('should handle translation keys with mixed liquid expressions and filters', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              count: { type: 'number' },
+              name: { type: 'string' },
+            },
+            required: ['count', 'name'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        payload: { count: 1, name: 'Alice' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        controls: {
+          body: "Hello {{payload.name}}, you have {{ payload.count | pluralize: 't.item', 't.items' }}. {{t.footer}}",
+          subject: '{{t.greeting}} {{payload.name}}',
+        },
+        context: {},
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      // Mix of payload variables, translation filter args, and standalone translation keys
+      expect(emailExecutionResult.outputs).toEqual({
+        body: 'Hello Alice, you have 1 {{t.item}}. {{t.footer}}',
+        subject: '{{t.greeting}} Alice',
       });
     });
 
@@ -1540,44 +1659,6 @@ describe('Novu Client', () => {
       await client.executeWorkflow(event);
 
       expect(mockFn).toHaveBeenCalledTimes(0);
-    });
-
-    it('should NOT log anything after executing the provided stepId', async () => {
-      const mockFn = vi.fn();
-      const spyConsoleLog = vi.spyOn(console, 'log');
-      const newWorkflow = workflow('test-workflow', async ({ step }) => {
-        await step.email('active-step-id', async () => ({ body: 'Test Body', subject: 'Subject' }));
-        await step.email('inactive-step-id', async () => {
-          mockFn();
-
-          return { body: 'Test Body', subject: 'Subject' };
-        });
-      });
-
-      await client.addWorkflows([newWorkflow]);
-
-      const event: Event = {
-        action: PostActionEnum.EXECUTE,
-        workflowId: 'test-workflow',
-        stepId: 'active-step-id',
-        subscriber: {},
-        state: [],
-        payload: {},
-        controls: {},
-        context: {},
-      };
-
-      await client.executeWorkflow(event);
-
-      // Wait for the conclusion promise to resolve.
-      await new Promise((resolve) => {
-        setTimeout(resolve);
-      });
-      /*
-       * Not the most robust test, but ensures that the last log call contains the duration,
-       * which is the last expected log call.
-       */
-      expect(spyConsoleLog.mock.lastCall).toEqual([expect.stringContaining('duration:')]);
     });
 
     it('should evaluate code in steps after a skipped step', async () => {

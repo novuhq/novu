@@ -4,6 +4,7 @@
 
 import { integrationsCreate } from "../funcs/integrationsCreate.js";
 import { integrationsDelete } from "../funcs/integrationsDelete.js";
+import { integrationsGenerateChatOAuthUrl } from "../funcs/integrationsGenerateChatOAuthUrl.js";
 import { integrationsIntegrationsControllerAutoConfigureIntegration } from "../funcs/integrationsIntegrationsControllerAutoConfigureIntegration.js";
 import { integrationsList } from "../funcs/integrationsList.js";
 import { integrationsListActive } from "../funcs/integrationsListActive.js";
@@ -151,6 +152,27 @@ export class Integrations extends ClientSDK {
   ): Promise<operations.IntegrationsControllerGetActiveIntegrationsResponse> {
     return unwrapAsync(integrationsListActive(
       this,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Generate chat OAuth URL
+   *
+   * @remarks
+   * Generate an OAuth URL for chat integrations like Slack and MS Teams.
+   *     This URL allows subscribers to authorize the integration, enabling the system to send messages
+   *     through their chat workspace. The generated URL expires after 5 minutes.
+   */
+  async generateChatOAuthUrl(
+    generateChatOauthUrlRequestDto: components.GenerateChatOauthUrlRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.IntegrationsControllerGetChatOAuthUrlResponse> {
+    return unwrapAsync(integrationsGenerateChatOAuthUrl(
+      this,
+      generateChatOauthUrlRequestDto,
       idempotencyKey,
       options,
     ));

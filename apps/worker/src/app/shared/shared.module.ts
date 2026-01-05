@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import {
   analyticsService,
   BulkCreateExecutionDetails,
+  CloudflareSchedulerService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   CreateNotificationJobs,
@@ -99,6 +100,7 @@ const PROVIDERS = [
   analyticsService,
   BulkCreateExecutionDetails,
   cacheService,
+  CloudflareSchedulerService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   CreateNotificationJobs,

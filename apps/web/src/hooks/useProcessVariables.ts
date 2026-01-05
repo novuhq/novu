@@ -1,6 +1,6 @@
 import { TemplateVariableTypeEnum, IMustacheVariable, ITemplateVariable } from '@novu/shared';
 import { useMemo } from 'react';
-import set from 'lodash.set';
+import { safeSet } from '../utils/safe-set';
 import get from 'lodash.get';
 
 const processVariables = (variables: IMustacheVariable[]) => {
@@ -9,13 +9,13 @@ const processVariables = (variables: IMustacheVariable[]) => {
   variables
     .filter((variable) => variable.type !== TemplateVariableTypeEnum.ARRAY)
     .forEach((variable) => {
-      set(varsObj, variable.name, getVariableValue(variable));
+      safeSet(varsObj, variable.name, getVariableValue(variable));
     });
 
   variables
     .filter((variable) => variable.type === TemplateVariableTypeEnum.ARRAY)
     .forEach((variable) => {
-      set(varsObj, variable.name, [get(varsObj, variable.name, [])]);
+      safeSet(varsObj, variable.name, [get(varsObj, variable.name, [])]);
     });
 
   return JSON.stringify(varsObj, null, 2);

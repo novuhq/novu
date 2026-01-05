@@ -2,7 +2,7 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { cn, useStyle } from '../../helpers';
-import type { AppearanceKey } from '../../types';
+import type { AllAppearanceKey } from '../../types';
 
 export const badgeVariants = cva(cn('nt-inline-flex nt-flex-row nt-gap-1 nt-items-center'), {
   variants: {
@@ -20,7 +20,7 @@ export const badgeVariants = cva(cn('nt-inline-flex nt-flex-row nt-gap-1 nt-item
 });
 
 type BadgeProps = JSX.IntrinsicElements['span'] & {
-  appearanceKey?: AppearanceKey;
+  appearanceKey?: AllAppearanceKey;
   context?: Record<string, unknown>;
 } & VariantProps<typeof badgeVariants>;
 export const Badge = (props: BadgeProps) => {

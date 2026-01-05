@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.8.0",
+  "version": "2.10.0-alpha.0",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
@@ -220,7 +220,7 @@
     "express": "^4.19.2",
     "h3": "^1.11.1",
     "madge": "^8.0.0",
-    "next": "^13.5.4",
+    "next": "^14.2.35",
     "ts-node": "^10.9.2",
     "tsup": "^8.0.2",
     "tsx": "4.16.2",

@@ -2,7 +2,7 @@ import type { NotificationFilter } from '../../../types';
 import { useNovu } from '../../context';
 
 export const useDeleteAll = (props?: { onSuccess?: () => void; onError?: (err: unknown) => void }) => {
-  const novu = useNovu();
+  const novuAccessor = useNovu();
 
   const deleteAll = async ({
     tags,
@@ -12,7 +12,7 @@ export const useDeleteAll = (props?: { onSuccess?: () => void; onError?: (err: u
     data?: Record<string, unknown>;
   } = {}) => {
     try {
-      await novu.notifications.deleteAll({ tags, data });
+      await novuAccessor().notifications.deleteAll({ tags, data });
       props?.onSuccess?.();
     } catch (error) {
       props?.onError?.(error);

@@ -28,6 +28,7 @@ type Fields =
   | 'transactionId'
   | 'subscriberId'
   | 'topicKey'
+  | 'subscriptionId'
   | 'severity'
   | 'contextKeys';
 
@@ -71,7 +72,10 @@ export function ActivityFilters({
   const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
-  const isContextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED, false);
+  const isSubscriptionPreferencesEnabled = useFeatureFlag(
+    FeatureFlagsKeysEnum.IS_SUBSCRIPTION_PREFERENCES_ENABLED,
+    false
+  );
 
   const form = useForm<ActivityFiltersData>({
     values: filters,
@@ -105,7 +109,7 @@ export function ActivityFilters({
 
   return (
     <Form {...form}>
-      <FormRoot className={cn('flex items-center gap-2 pb-2.5', className)}>
+      <FormRoot className={cn('nv-no-scrollbar w-full flex items-center gap-2 overflow-x-auto pb-2.5', className)}>
         {!hide.includes('dateRange') && (
           <FormField
             control={form.control}
@@ -230,6 +234,25 @@ export function ActivityFilters({
           />
         )}
 
+        {isSubscriptionPreferencesEnabled && !hide.includes('subscriptionId') && (
+          <FormField
+            control={form.control}
+            name="subscriptionId"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  type="text"
+                  size="small"
+                  title="Subscription ID"
+                  value={field.value}
+                  onChange={(value) => setValue('subscriptionId', value)}
+                  placeholder="Search by full Subscription ID"
+                />
+              </FormItem>
+            )}
+          />
+        )}
+
         {!hide.includes('severity') && (
           <FormField
             control={form.control}
@@ -253,7 +276,7 @@ export function ActivityFilters({
           />
         )}
 
-        {!hide.includes('contextKeys') && isContextEnabled && (
+        {!hide.includes('contextKeys') && (
           <FormField
             control={form.control}
             name="contextKeys"

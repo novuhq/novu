@@ -44,7 +44,7 @@ type IntegrationConfigurationProps = {
   isChannelSupportPrimary?: boolean;
   hasOtherProviders?: boolean;
   isReadOnly?: boolean;
-  onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown> }) => void;
+  onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
 };
 
 function generateSlug(name: string): string {
@@ -101,9 +101,10 @@ export function IntegrationSettings({
       onFormStateChange({
         isValid: formState.isValid,
         errors: formState.errors,
+        isDirty: formState.isDirty,
       });
     }
-  }, [formState.isValid, formState.errors, onFormStateChange]);
+  }, [formState.isValid, formState.errors, formState.isDirty, onFormStateChange]);
 
   const name = useWatch({ control, name: 'name' });
   const environmentId = useWatch({ control, name: 'environmentId' });
@@ -117,20 +118,27 @@ export function IntegrationSettings({
   const isDemo = integration && isDemoIntegration(integration.providerId);
   const isSlackTeamsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED, false);
 
-  // Filter credentials for Slack: hide HMAC for new integrations when feature flag is enabled
-  // But keep HMAC visible for existing integrations (backward compatibility)
+  // Filter credentials based on provider and feature flag
   const providerCredentials = useMemo(() => {
-    if (provider.id !== ChatProviderIdEnum.Slack || !isSlackTeamsEnabled) {
-      return provider.credentials;
+    // MS Teams: only show OAuth credentials when feature flag is enabled
+    if (provider.id === ChatProviderIdEnum.MsTeams) {
+      return isSlackTeamsEnabled ? provider.credentials : [];
     }
 
-    // For existing integrations (update mode), show HMAC if it is true in credentials
-    if (mode === 'update' && integration?.credentials?.hmac === true) {
-      return provider.credentials;
+    // Slack: hide HMAC for new integrations when feature flag is enabled
+    // But keep HMAC visible for existing integrations (backward compatibility)
+    if (provider.id === ChatProviderIdEnum.Slack && isSlackTeamsEnabled) {
+      // For existing integrations (update mode), show HMAC if it is true in credentials
+      if (mode === 'update' && integration?.credentials?.hmac === true) {
+        return provider.credentials;
+      }
+
+      // For new integrations (create mode), use config without HMAC
+      return slackConfig;
     }
 
-    // For new integrations (create mode), use config without HMAC
-    return slackConfig;
+    // Default: return all credentials
+    return provider.credentials;
   }, [provider.id, provider.credentials, isSlackTeamsEnabled, mode, integration?.credentials]);
 
   return (
@@ -208,7 +216,7 @@ export function IntegrationSettings({
           </div>
         )}
 
-        {!isDemo && (
+        {!isDemo && providerCredentials.length > 0 && (
           <div className="p-3">
             <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
               <Accordion type="single" collapsible defaultValue="credentials">
@@ -220,6 +228,13 @@ export function IntegrationSettings({
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
+                    {provider?.id === ChatProviderIdEnum.MsTeams && isSlackTeamsEnabled && (
+                      <InlineToast
+                        variant="tip"
+                        className="mb-3"
+                        description="These credentials are only required for Bot App authentication and are not needed for incoming webhook functionality."
+                      />
+                    )}
                     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
                       {providerCredentials.map((credential) => (
                         <CredentialSection

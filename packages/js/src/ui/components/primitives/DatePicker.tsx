@@ -4,7 +4,7 @@ import { useStyle } from '../../helpers';
 import { cn } from '../../helpers/utils';
 import { ArrowLeft as DefaultArrowLeft } from '../../icons';
 import { ArrowRight as DefaultArrowRight } from '../../icons/ArrowRight';
-import { AppearanceKey } from '../../types';
+import { AllAppearanceKey } from '../../types';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 import { Button } from './Button';
 import { Tooltip } from './Tooltip';
@@ -32,7 +32,7 @@ const DatePickerContext = createContext<DatePickerContextType>({
 export const useDatePicker = () => useContext(DatePickerContext);
 
 type DatePickerProps = JSX.IntrinsicElements['div'] & {
-  appearanceKey?: AppearanceKey;
+  appearanceKey?: AllAppearanceKey;
   value?: Date | string;
   onDateChange?: (date: Date | null) => void;
   maxDays: number;
@@ -75,7 +75,7 @@ export const DatePicker = (props: DatePickerProps) => {
   );
 };
 
-type DatePickerHeaderProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+type DatePickerHeaderProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AllAppearanceKey };
 export const DatePickerHeader = (props: DatePickerHeaderProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'children']);
   const style = useStyle();
@@ -203,7 +203,7 @@ export const DatePickerHeader = (props: DatePickerHeaderProps) => {
   );
 };
 
-type DatePickerGridProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+type DatePickerGridProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AllAppearanceKey };
 export const DatePickerGrid = (props: DatePickerGridProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey']);
   const style = useStyle();
@@ -219,7 +219,7 @@ export const DatePickerGrid = (props: DatePickerGridProps) => {
   );
 };
 
-type DatePickerGridRowProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+type DatePickerGridRowProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AllAppearanceKey };
 export const DatePickerGridRow = (props: DatePickerGridRowProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey']);
   const style = useStyle();
@@ -235,7 +235,7 @@ export const DatePickerGridRow = (props: DatePickerGridRowProps) => {
   );
 };
 
-type DatePickerGridHeaderProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+type DatePickerGridHeaderProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AllAppearanceKey };
 export const DatePickerGridHeader = (props: DatePickerGridHeaderProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey']);
   const style = useStyle();
@@ -251,7 +251,7 @@ export const DatePickerGridHeader = (props: DatePickerGridHeaderProps) => {
   );
 };
 
-type DatePickerGridCellProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+type DatePickerGridCellProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AllAppearanceKey };
 export const DatePickerGridCell = (props: DatePickerGridCellProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey']);
   const style = useStyle();
@@ -273,7 +273,10 @@ export const DatePickerGridCell = (props: DatePickerGridCellProps) => {
   );
 };
 
-type DatePickerGridCellTriggerProps = JSX.IntrinsicElements['button'] & { appearanceKey?: AppearanceKey; date: Date };
+type DatePickerGridCellTriggerProps = JSX.IntrinsicElements['button'] & {
+  appearanceKey?: AllAppearanceKey;
+  date: Date;
+};
 export const DatePickerGridCellTrigger = (props: DatePickerGridCellTriggerProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'date']);
   const { selectedDate, viewMonth, setSelectedDate, currentDate, maxDays } = useDatePicker();
@@ -357,7 +360,7 @@ export const DatePickerWithContext = ({
 };
 
 type DatePickerCalendarProps = JSX.IntrinsicElements['div'] & {
-  appearanceKey?: AppearanceKey;
+  appearanceKey?: AllAppearanceKey;
 };
 export const DatePickerCalendar = (props: DatePickerCalendarProps) => {
   const [local, rest] = splitProps(props, ['class', 'appearanceKey']);

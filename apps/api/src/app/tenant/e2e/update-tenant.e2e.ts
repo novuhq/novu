@@ -1,6 +1,7 @@
 import { TenantRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
+import type { AxiosResponse } from 'axios';
 import { expect } from 'chai';
 
 describe('Update Tenant - /tenants/:tenantId (PUT) #novu-v0', () => {

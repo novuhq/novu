@@ -22,7 +22,10 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     properties: { url: { type: 'string' as const }, channel: { type: 'string' as const } },
     required: ['url'],
     validate: (endpoint: Record<string, unknown>) =>
-      typeof endpoint.url === 'string' && Object.keys(endpoint).length === 1,
+      typeof endpoint.url === 'string' &&
+      Object.keys(endpoint).length >= 1 &&
+      Object.keys(endpoint).length <= 2 &&
+      (endpoint.channel === undefined || typeof endpoint.channel === 'string'),
   },
   [ENDPOINT_TYPES.PHONE]: {
     description: 'Phone Endpoint',
@@ -30,6 +33,25 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     required: ['phoneNumber'],
     validate: (endpoint: Record<string, unknown>) =>
       typeof endpoint.phoneNumber === 'string' && Object.keys(endpoint).length === 1,
+  },
+  [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: {
+    description: 'MS Teams Channel Endpoint',
+    properties: {
+      teamId: { type: 'string' as const },
+      channelId: { type: 'string' as const },
+    },
+    required: ['teamId', 'channelId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.teamId === 'string' &&
+      typeof endpoint.channelId === 'string' &&
+      Object.keys(endpoint).length === 2,
+  },
+  [ENDPOINT_TYPES.MS_TEAMS_USER]: {
+    description: 'MS Teams User Endpoint',
+    properties: { userId: { type: 'string' as const } },
+    required: ['userId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
   },
 } as const;
 

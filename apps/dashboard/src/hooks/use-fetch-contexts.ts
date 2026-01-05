@@ -1,6 +1,7 @@
+import { ListContextsResponseDto } from '@novu/api/models/components';
 import { ContextId, ContextType, DirectionEnum } from '@novu/shared';
 import { keepPreviousData, UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { getContexts, type ListContextsResponse } from '@/api/contexts';
+import { getContexts } from '@/api/contexts';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
@@ -28,7 +29,7 @@ export function useFetchContexts(
     id = '',
     search = '',
   }: UseFetchContextsParams = {},
-  options: Omit<UseQueryOptions<ListContextsResponse, Error>, 'queryKey' | 'queryFn'> = {}
+  options: Omit<UseQueryOptions<ListContextsResponseDto, Error>, 'queryKey' | 'queryFn'> = {}
 ) {
   const { currentEnvironment } = useEnvironment();
 

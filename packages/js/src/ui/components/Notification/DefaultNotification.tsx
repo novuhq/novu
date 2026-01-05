@@ -6,12 +6,12 @@ import { useInboxContext, useLocalization } from '../../context';
 import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
 import { Clock as DefaultClock } from '../../icons/Clock';
 import {
-  AppearanceCallback,
-  AppearanceKey,
+  AllAppearanceKey,
   AvatarRenderer,
   type BodyRenderer,
   CustomActionsRenderer,
   DefaultActionsRenderer,
+  InboxAppearanceCallback,
   type NotificationActionClickHandler,
   type NotificationClickHandler,
   type SubjectRenderer,
@@ -35,14 +35,14 @@ type DefaultNotificationProps = {
   onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
-const SEVERITY_TO_BAR_KEYS: Record<SeverityLevelEnum, AppearanceKey> = {
+const SEVERITY_TO_BAR_KEYS: Record<SeverityLevelEnum, AllAppearanceKey> = {
   [SeverityLevelEnum.NONE]: 'notificationBar',
   [SeverityLevelEnum.HIGH]: 'severityHigh__notificationBar',
   [SeverityLevelEnum.MEDIUM]: 'severityMedium__notificationBar',
   [SeverityLevelEnum.LOW]: 'severityLow__notificationBar',
 };
 
-const SEVERITY_TO_NOTIFICATION_KEYS: Record<SeverityLevelEnum, AppearanceKey> = {
+const SEVERITY_TO_NOTIFICATION_KEYS: Record<SeverityLevelEnum, AllAppearanceKey> = {
   [SeverityLevelEnum.NONE]: 'notification',
   [SeverityLevelEnum.HIGH]: 'severityHigh__notification',
   [SeverityLevelEnum.MEDIUM]: 'severityMedium__notification',
@@ -54,6 +54,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const { t, locale } = useLocalization();
   const { navigate, status } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
+
+  const severity = createMemo(() => props.notification.severity ?? SeverityLevelEnum.NONE);
 
   const createdAt = createMemo(() => {
     minutesPassed(); // register as dep
@@ -120,36 +122,34 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   return (
     <a
       class={style({
-        key: SEVERITY_TO_NOTIFICATION_KEYS[props.notification.severity],
+        key: SEVERITY_TO_NOTIFICATION_KEYS[severity()],
         className: cn(
           'nt-transition nt-w-full nt-text-sm hover:nt-bg-primary-alpha-25 nt-group nt-relative nt-flex nt-items-start nt-p-4 nt-gap-2',
           '[&:not(:first-child)]:nt-border-t nt-border-neutral-alpha-100',
           {
             'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
-            'nt-bg-severity-high-alpha-100 hover:nt-bg-severity-high-alpha-50':
-              props.notification.severity === SeverityLevelEnum.HIGH,
+            'nt-bg-severity-high-alpha-100 hover:nt-bg-severity-high-alpha-50': severity() === SeverityLevelEnum.HIGH,
             'nt-bg-severity-medium-alpha-100 hover:nt-bg-severity-medium-alpha-50':
-              props.notification.severity === SeverityLevelEnum.MEDIUM,
-            'nt-bg-severity-low-alpha-100 hover:nt-bg-severity-low-alpha-50':
-              props.notification.severity === SeverityLevelEnum.LOW,
+              severity() === SeverityLevelEnum.MEDIUM,
+            'nt-bg-severity-low-alpha-100 hover:nt-bg-severity-low-alpha-50': severity() === SeverityLevelEnum.LOW,
           }
         ),
-        context: { notification: props.notification } satisfies Parameters<AppearanceCallback['notification']>[0],
+        context: { notification: props.notification } satisfies Parameters<InboxAppearanceCallback['notification']>[0],
       })}
       onClick={handleNotificationClick}
     >
       <div
         class={style({
-          key: SEVERITY_TO_BAR_KEYS[props.notification.severity],
+          key: SEVERITY_TO_BAR_KEYS[severity()],
           className: cn('nt-transition nt-absolute nt-left-0 nt-top-0 nt-bottom-0 nt-w-[3px]', {
-            'nt-bg-severity-high group-hover:nt-bg-severity-high-alpha-500':
-              props.notification.severity === SeverityLevelEnum.HIGH,
+            'nt-bg-severity-high group-hover:nt-bg-severity-high-alpha-500': severity() === SeverityLevelEnum.HIGH,
             'nt-bg-severity-medium group-hover:nt-bg-severity-medium-alpha-500':
-              props.notification.severity === SeverityLevelEnum.MEDIUM,
-            'nt-bg-severity-low group-hover:nt-bg-severity-low-alpha-500':
-              props.notification.severity === SeverityLevelEnum.LOW,
+              severity() === SeverityLevelEnum.MEDIUM,
+            'nt-bg-severity-low group-hover:nt-bg-severity-low-alpha-500': severity() === SeverityLevelEnum.LOW,
           }),
-          context: { notification: props.notification } satisfies Parameters<AppearanceCallback['notificationBar']>[0],
+          context: { notification: props.notification } satisfies Parameters<
+            InboxAppearanceCallback['notificationBar']
+          >[0],
         })}
       />
 
@@ -164,7 +164,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                   key: 'notificationImageLoadingFallback',
                   className: 'nt-size-8 nt-rounded-lg nt-shrink-0 nt-aspect-square',
                   context: { notification: props.notification } satisfies Parameters<
-                    AppearanceCallback['notificationImageLoadingFallback']
+                    InboxAppearanceCallback['notificationImageLoadingFallback']
                   >[0],
                 })}
               />
@@ -175,7 +175,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                 key: 'notificationImage',
                 className: 'nt-size-8 nt-rounded-lg nt-object-cover nt-aspect-square',
                 context: { notification: props.notification } satisfies Parameters<
-                  AppearanceCallback['notificationImage']
+                  InboxAppearanceCallback['notificationImage']
                 >[0],
               })}
               src={props.notification.avatar}
@@ -191,7 +191,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           key: 'notificationContent',
           className: 'nt-flex nt-flex-col nt-gap-2 nt-w-full',
           context: { notification: props.notification } satisfies Parameters<
-            AppearanceCallback['notificationContent']
+            InboxAppearanceCallback['notificationContent']
           >[0],
         })}
       >
@@ -199,7 +199,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           class={style({
             key: 'notificationTextContainer',
             context: { notification: props.notification } satisfies Parameters<
-              AppearanceCallback['notificationTextContainer']
+              InboxAppearanceCallback['notificationTextContainer']
             >[0],
           })}
         >
@@ -247,7 +247,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                 key: 'notificationDefaultActions',
                 className: `nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5`,
                 context: { notification: props.notification } satisfies Parameters<
-                  AppearanceCallback['notificationDefaultActions']
+                  InboxAppearanceCallback['notificationDefaultActions']
                 >[0],
               })}
             >
@@ -269,7 +269,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                   key: 'notificationCustomActions',
                   className: 'nt-flex nt-flex-wrap nt-gap-2',
                   context: { notification: props.notification } satisfies Parameters<
-                    AppearanceCallback['notificationCustomActions']
+                    InboxAppearanceCallback['notificationCustomActions']
                   >[0],
                 })}
               >
@@ -311,7 +311,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             key: 'notificationDate',
             className: 'nt-text-foreground-alpha-400 nt-flex nt-items-center nt-gap-1',
             context: { notification: props.notification } satisfies Parameters<
-              AppearanceCallback['notificationDate']
+              InboxAppearanceCallback['notificationDate']
             >[0],
           })}
         >
@@ -338,7 +338,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                                   className: 'nt-size-3',
                                   iconKey: 'clock',
                                   context: { notification: props.notification } satisfies Parameters<
-                                    AppearanceCallback['notificationDeliveredAt__icon']
+                                    InboxAppearanceCallback['notificationDeliveredAt__icon']
                                   >[0],
                                 })}
                                 fallback={
@@ -348,7 +348,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                                       className: 'nt-size-3',
                                       iconKey: 'clock',
                                       context: { notification: props.notification } satisfies Parameters<
-                                        AppearanceCallback['notificationDeliveredAt__icon']
+                                        InboxAppearanceCallback['notificationDeliveredAt__icon']
                                       >[0],
                                     })}
                                   />
@@ -374,7 +374,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                     className: 'nt-size-3',
                     iconKey: 'clock',
                     context: { notification: props.notification } satisfies Parameters<
-                      AppearanceCallback['notificationSnoozedUntil__icon']
+                      InboxAppearanceCallback['notificationSnoozedUntil__icon']
                     >[0],
                   })}
                   fallback={
@@ -384,7 +384,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         className: 'nt-size-3',
                         iconKey: 'clock',
                         context: { notification: props.notification } satisfies Parameters<
-                          AppearanceCallback['notificationSnoozedUntil__icon']
+                          InboxAppearanceCallback['notificationSnoozedUntil__icon']
                         >[0],
                       })}
                     />
@@ -404,7 +404,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               key: 'notificationDot',
               className: 'nt-size-1.5 nt-bg-primary nt-rounded-full',
               context: { notification: props.notification } satisfies Parameters<
-                AppearanceCallback['notificationDot']
+                InboxAppearanceCallback['notificationDot']
               >[0],
             })}
           />

@@ -1,9 +1,9 @@
 import { createMemo, For, JSX, splitProps } from 'solid-js';
 import { cn, useStyle } from '../../helpers';
 import { parseMarkdownIntoTokens } from '../../internal';
-import { AppearanceKey } from '../../types';
+import { AllAppearanceKey } from '../../types';
 
-const Bold = (props: { children?: JSX.Element; appearanceKey?: AppearanceKey }) => {
+const Bold = (props: { children?: JSX.Element; appearanceKey?: AllAppearanceKey }) => {
   const style = useStyle();
 
   return (
@@ -20,8 +20,8 @@ const Bold = (props: { children?: JSX.Element; appearanceKey?: AppearanceKey }) 
 const Text = (props: { children?: JSX.Element }) => props.children;
 
 type MarkdownProps = JSX.HTMLAttributes<HTMLParagraphElement> & {
-  appearanceKey: AppearanceKey;
-  strongAppearanceKey: AppearanceKey;
+  appearanceKey: AllAppearanceKey;
+  strongAppearanceKey: AllAppearanceKey;
   children: string;
   context?: Record<string, unknown>;
 };

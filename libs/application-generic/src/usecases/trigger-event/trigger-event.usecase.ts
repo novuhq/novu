@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   ContextRepository,
-  EnvironmentRepository,
   JobEntity,
   JobRepository,
   NotificationTemplateEntity,
@@ -10,16 +9,15 @@ import {
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
-  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITenantDefine,
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
+import { toMerged } from 'es-toolkit';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
-import { FeatureFlagsService } from '../../services';
 import type { EventType, Trace } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { AnalyticsService } from '../../services/analytics.service';
@@ -28,6 +26,7 @@ import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { TriggerEventCommand } from './trigger-event.command';
 
 function getActiveWorker() {
@@ -38,7 +37,6 @@ function getActiveWorker() {
 export class TriggerEvent {
   constructor(
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
-    private environmentRepository: EnvironmentRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
@@ -48,7 +46,7 @@ export class TriggerEvent {
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
     private contextRepository: ContextRepository,
-    private featureFlagsService: FeatureFlagsService
+    private verifyPayload: VerifyPayload
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -68,6 +66,17 @@ export class TriggerEvent {
         });
       }
 
+      if (storedWorkflow) {
+        const defaultPayload = this.verifyPayload.execute(
+          VerifyPayloadCommand.create({
+            payload: command.payload,
+            template: storedWorkflow,
+          })
+        );
+
+        command.payload = toMerged(defaultPayload, command.payload);
+      }
+
       const mappedCommand = await this.getMappedCommand(command, storedWorkflow?._id);
 
       await this.createWorkflowTrace({
@@ -79,14 +88,6 @@ export class TriggerEvent {
       });
 
       const { environmentId, identifier, organizationId, userId } = mappedCommand;
-
-      const environment = await this.environmentRepository.findOne({
-        _id: environmentId,
-      });
-
-      if (!environment) {
-        throw new BadRequestException('Environment not found');
-      }
 
       this.logger.assign({
         transactionId: mappedCommand.transactionId,
@@ -175,7 +176,6 @@ export class TriggerEvent {
             TriggerMulticastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              environmentName: environment.name,
               template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -186,7 +186,6 @@ export class TriggerEvent {
             TriggerBroadcastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              environmentName: environment.name,
               template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -198,7 +197,6 @@ export class TriggerEvent {
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
-              environmentName: environment.name,
               template: storedWorkflow || (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -232,19 +230,11 @@ export class TriggerEvent {
   }
 
   private async getMappedCommand(command: TriggerEventCommand, workflowId: string) {
-    const isContextEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      user: { _id: command.userId },
-    });
-
     return {
       ...command,
       tenant: this.mapTenant(command.tenant),
       actor: this.mapActor(command.actor),
-      ...(isContextEnabled && { contextKeys: await this.resolveContextKeys(command, workflowId) }),
+      contextKeys: await this.resolveContextKeys(command, workflowId),
     };
   }
 
@@ -316,6 +306,7 @@ export class TriggerEvent {
       activeWorkerName: getActiveWorker(),
     });
   }
+
   private async getAndUpdateWorkflowById(command: {
     triggerIdentifier: string;
     environmentId: string;
@@ -325,15 +316,15 @@ export class TriggerEvent {
   }) {
     const lastTriggeredAt = new Date();
 
-    const workflow = await this.notificationTemplateRepository.findByTriggerIdentifierAndUpdate(
+    const workflow = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
-      command.triggerIdentifier,
-      lastTriggeredAt
+      command.triggerIdentifier
     );
 
     if (workflow) {
-      // We only consider trigger when it's coming from the backend SDK
-      if (!command.payload?.__source) {
+      const isBackendSDK = !command.payload?.__source;
+
+      if (isBackendSDK) {
         if (!workflow.lastTriggeredAt) {
           this.analyticsService.track('Workflow Connected to Backend SDK - [API]', command.userId, {
             name: workflow.name,
@@ -343,9 +334,21 @@ export class TriggerEvent {
           });
         }
 
-        /**
-         * Update the entry to cache it with the new lastTriggeredAt
-         */
+        const shouldUpdate =
+          !workflow.lastTriggeredAt ||
+          new Date(workflow.lastTriggeredAt).getTime() < lastTriggeredAt.getTime() - 5 * 60 * 1000;
+
+        if (shouldUpdate) {
+          const previousLastTriggeredAt = workflow.lastTriggeredAt ? new Date(workflow.lastTriggeredAt) : null;
+
+          this.notificationTemplateRepository.updateLastTriggeredAt(
+            command.environmentId,
+            command.triggerIdentifier,
+            lastTriggeredAt,
+            previousLastTriggeredAt
+          );
+        }
+
         workflow.lastTriggeredAt = lastTriggeredAt.toISOString();
       }
     }

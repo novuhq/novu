@@ -4,6 +4,7 @@ import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
+import { TopicPreferencesSummary } from '../topic';
 
 export class NotificationEntity {
   _id: string;
@@ -19,6 +20,7 @@ export class NotificationEntity {
   topics: {
     _topicId: string;
     topicKey: string;
+    preferenceEvaluation?: TopicPreferencesSummary;
   }[];
 
   transactionId: string;

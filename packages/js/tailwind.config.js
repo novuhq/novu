@@ -88,11 +88,17 @@ module.exports = {
       },
       animation: {
         stripes: 'stripes 1s linear infinite paused',
+        shimmer: 'shimmer 1.5s ease-in-out infinite',
       },
       keyframes: {
         stripes: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(calc(var(--stripes-size) * -1))' },
+        },
+        shimmer: {
+          '0%': { opacity: '1' },
+          '50%': { opacity: '0.6' },
+          '100%': { opacity: '1' },
         },
       },
     },

@@ -1,6 +1,5 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
-  "plugins": ["./biome-plugins/api-property-record-type.grit"],
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -28,7 +27,9 @@
       "!.github",
       "!scripts",
       "!packages/framework/scripts",
-      "!packages/framework/src/jsonSchemaFaker.js"
+      "!packages/framework/src/jsonSchemaFaker.js",
+      "!libs/maily-tsconfig/*",
+      "!libs/maily-tailwind-config/*"
     ]
   },
   "formatter": {
@@ -277,6 +278,10 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.dto.ts"],
+      "plugins": ["./biome-plugins/api-property-record-type.grit"]
     }
   ],
   "assist": {

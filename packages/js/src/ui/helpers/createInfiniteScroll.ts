@@ -4,6 +4,7 @@ export function createInfiniteScroll<T>(
   fetcher: (after: string | undefined) => Promise<{ data: T[]; hasMore: boolean }>,
   options: {
     paginationField: string;
+    dependency?: Accessor<any>;
   }
 ): [
   data: Accessor<T[]>,
@@ -27,7 +28,7 @@ export function createInfiniteScroll<T>(
   const [after, setAfter] = createSignal<string | undefined>(undefined);
   const [end, setEnd] = createSignal(false);
   const [contents, { mutate, refetch }] = createResource(
-    () => ({ trigger: true, after: after() }),
+    () => ({ trigger: true, after: after(), dependency: options.dependency?.() }),
     (params) => fetcher(params.after)
   );
 
@@ -41,7 +42,7 @@ export function createInfiniteScroll<T>(
         if (entry && entry.isIntersecting && !end() && !contents.loading) {
           const data = contents.latest?.data;
           if (data) {
-            // @ts-ignore
+            // @ts-expect-error
             setAfter(data[data.length - 1][options.paginationField]);
           }
         }
@@ -91,7 +92,7 @@ export function createInfiniteScroll<T>(
           if (entry.isIntersecting) {
             const data = contents.latest?.data;
             if (data) {
-              // @ts-ignore
+              // @ts-expect-error
               setAfter(data[data.length - 1][options.paginationField]);
             }
           }

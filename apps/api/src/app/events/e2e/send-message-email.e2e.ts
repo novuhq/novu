@@ -1,5 +1,5 @@
 import { CompileEmailTemplate } from '@novu/application-generic';
-import { IEmailOptions } from '@novu/stateless';
+import type { IEmailOptions } from '@novu/shared';
 import { expect } from 'chai';
 
 export const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {

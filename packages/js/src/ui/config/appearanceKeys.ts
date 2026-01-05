@@ -3,8 +3,9 @@
  * i.e. foo__bar means that foo_bar is an extension of bar. Both keys will be applied when foo_bar is used
  * meaning you would have `bar foo__bar` in the dom
  */
-export const appearanceKeys = [
+export const commonAppearanceKeys = [
   // Primitives
+  'root',
   'button',
   'input',
   'icon',
@@ -12,6 +13,28 @@ export const appearanceKeys = [
   'popoverContent',
   'popoverTrigger',
   'popoverClose',
+  'collapsible',
+  'tooltipContent',
+  'tooltipTrigger',
+] as const;
+
+export const inboxAppearanceKeys = [
+  // General
+  'bellIcon',
+  'lockIcon',
+  'bellContainer',
+  'severityHigh__bellContainer',
+  'severityMedium__bellContainer',
+  'severityLow__bellContainer',
+  'bellSeverityGlow',
+  'severityGlowHigh__bellSeverityGlow',
+  'severityGlowMedium__bellSeverityGlow',
+  'severityGlowLow__bellSeverityGlow',
+  'bellDot',
+  'preferences__button',
+  'preferencesContainer',
+  'inboxHeader',
+  'loading',
 
   'dropdownContent',
   'dropdownTrigger',
@@ -21,11 +44,6 @@ export const appearanceKeys = [
   'dropdownItemLeft__icon',
   'dropdownItemRight__icon',
   'dropdownItem__icon',
-
-  'collapsible',
-
-  'tooltipContent',
-  'tooltipTrigger',
 
   'datePicker',
   'datePickerGrid',
@@ -70,24 +88,6 @@ export const appearanceKeys = [
   'tabsContent',
   'tabsTrigger',
   'dots',
-
-  // General
-  'root',
-  'bellIcon',
-  'lockIcon',
-  'bellContainer',
-  'severityHigh__bellContainer',
-  'severityMedium__bellContainer',
-  'severityLow__bellContainer',
-  'bellSeverityGlow',
-  'severityGlowHigh__bellSeverityGlow',
-  'severityGlowMedium__bellSeverityGlow',
-  'severityGlowLow__bellSeverityGlow',
-  'bellDot',
-  'preferences__button',
-  'preferencesContainer',
-  'inboxHeader',
-  'loading',
 
   // Inbox
   'inboxContent',
@@ -292,3 +292,46 @@ export const appearanceKeys = [
   // Text formatting
   'strong',
 ] as const;
+
+export const subscriptionAppearanceKeys = [
+  // Subscription
+  'subscriptionContainer',
+  // Subscription Button
+  'subscriptionButton__button',
+  'subscriptionButtonContainer',
+  'subscriptionButtonIcon',
+  'subscriptionButtonLabel',
+  // Subscription Popover
+  'subscription__popoverTriggerContainer',
+  'subscription__popoverTrigger',
+  'subscriptionTriggerIcon',
+  'subscription__popoverContent',
+  // Subscription Preferences
+  'subscriptionPreferencesContainer',
+  'subscriptionPreferencesHeaderContainer',
+  'subscriptionPreferencesHeader',
+  'subscriptionPreferencesInfoIcon',
+  'subscriptionPreferencesContent',
+  'subscriptionPreferencesGroupsContainer',
+  // Subscription Preferences Fallback
+  'subscriptionPreferencesFallback',
+  'subscriptionPreferencesFallbackTexts',
+  'subscriptionPreferencesFallbackHeader',
+  'subscriptionPreferencesFallbackDescription',
+  // Subscription Preference Row
+  'subscriptionPreferenceRow',
+  'subscriptionPreferenceLabel',
+  // Subscription Preference Group Row
+  'subscriptionPreferenceGroupContainer',
+  'subscriptionPreferenceGroupHeader',
+  'subscriptionPreferenceGroupLabelContainer',
+  'subscriptionPreferenceGroupLabelIcon',
+  'subscriptionPreferenceGroupLabel',
+  'subscriptionPreferenceGroupActionsContainer',
+  'subscriptionPreferenceGroupActionsContainerRight__icon',
+  'subscriptionPreferenceGroupBody',
+  'subscriptionPreferenceGroupWorkflowRow',
+  'subscriptionPreferenceGroupWorkflowLabel',
+] as const;
+
+export const appearanceKeys = [...commonAppearanceKeys, ...inboxAppearanceKeys, ...subscriptionAppearanceKeys];

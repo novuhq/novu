@@ -1,6 +1,6 @@
 import { Novu, NovuOptions } from '@novu/js';
 import { buildSubscriber } from '@novu/js/internal';
-import { createContext, ReactNode, useContext, useEffect, useMemo } from 'react';
+import { createContext, ReactNode, useContext, useMemo } from 'react';
 
 // @ts-expect-error
 const version = PACKAGE_VERSION;
@@ -16,7 +16,10 @@ const NovuContext = createContext<Novu | undefined>(undefined);
 
 export const NovuProvider = (props: NovuProviderProps) => {
   const { subscriberId, ...propsWithoutSubscriberId } = props;
-  const subscriberObj = buildSubscriber({ subscriberId, subscriber: props.subscriber });
+  const subscriberObj = useMemo(
+    () => buildSubscriber({ subscriberId, subscriber: props.subscriber }),
+    [subscriberId, props.subscriber]
+  );
   const applicationIdentifier = propsWithoutSubscriberId.applicationIdentifier
     ? propsWithoutSubscriberId.applicationIdentifier
     : '';
@@ -41,7 +44,10 @@ export const NovuProvider = (props: NovuProviderProps) => {
  */
 export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType: 'components' | 'hooks' }) => {
   const applicationIdentifier = props.applicationIdentifier || '';
-  const subscriberObj = buildSubscriber({ subscriberId: props.subscriberId, subscriber: props.subscriber });
+  const subscriberObj = useMemo(
+    () => buildSubscriber({ subscriberId: props.subscriberId, subscriber: props.subscriber }),
+    [props.subscriberId, props.subscriber]
+  );
 
   const {
     children,
@@ -71,24 +77,19 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
         defaultSchedule,
         context,
       }),
-    [applicationIdentifier, backendUrl, apiUrl, socketUrl, useCache, userAgentType]
+    [
+      applicationIdentifier,
+      subscriberHash,
+      subscriberObj,
+      context,
+      contextHash,
+      backendUrl,
+      apiUrl,
+      socketUrl,
+      useCache,
+      userAgentType,
+    ]
   );
-
-  useEffect(() => {
-    novu.changeSubscriber({
-      subscriber: subscriberObj,
-      subscriberHash: props.subscriberHash,
-    });
-  }, [subscriberObj.subscriberId, props.subscriberHash, novu]);
-
-  useEffect(() => {
-    if (context && contextHash) {
-      novu.changeContext({
-        context,
-        contextHash,
-      });
-    }
-  }, [context, contextHash, novu]);
 
   return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;
 };

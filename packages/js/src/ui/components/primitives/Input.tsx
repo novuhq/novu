@@ -2,7 +2,7 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { cn, useStyle } from '../../helpers';
-import type { AppearanceKey } from '../../types';
+import type { AllAppearanceKey } from '../../types';
 
 export const inputVariants = cva(
   cn(
@@ -26,7 +26,7 @@ export const inputVariants = cva(
   }
 );
 
-type InputProps = JSX.IntrinsicElements['input'] & { appearanceKey?: AppearanceKey } & VariantProps<
+type InputProps = JSX.IntrinsicElements['input'] & { appearanceKey?: AllAppearanceKey } & VariantProps<
     typeof inputVariants
   >;
 export const Input = (props: InputProps) => {

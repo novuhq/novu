@@ -543,6 +543,37 @@ export const slackConfig: IConfigCredential[] = [
   },
 ];
 
+export const msTeamsConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Azure Bot Application (client) ID',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    description: 'Azure Bot Client Secret value',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.TenantId,
+    displayName: 'Tenant ID',
+    description: 'Azure Bot Tenant ID',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after Teams OAuth flow finished (default behaviour will close the tab)',
+    type: 'string',
+    required: false,
+  },
+];
+
 export const grafanaOnCallConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.alertUid,

@@ -1,12 +1,16 @@
+import { ResourceType } from '@novu/api/models/components';
+
+// Re-export SDK type with const values for runtime usage
+export type LocalizationResourceEnum = ResourceType;
+export const LocalizationResourceEnum = {
+  WORKFLOW: 'workflow',
+  LAYOUT: 'layout',
+} as const;
+
 export type TranslationResource = {
   resourceId: string;
   resourceType: LocalizationResourceEnum;
 };
-
-export enum LocalizationResourceEnum {
-  WORKFLOW = 'workflow',
-  LAYOUT = 'layout',
-}
 
 export type TranslationKey = {
   name: string;

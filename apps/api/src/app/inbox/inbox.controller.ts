@@ -397,7 +397,7 @@ export class InboxController {
   async bulkUpdateWorkflowPreferences(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: BulkUpdatePreferencesRequestDto
-  ): Promise<GetPreferencesResponseDto[]> {
+  ): Promise<InboxPreference[]> {
     return await this.bulkUpdatePreferencesUsecase.execute(
       BulkUpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -421,11 +421,47 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         level: PreferenceLevelEnum.TEMPLATE,
+        all: {
+          ...(body.enabled !== undefined && { enabled: body.enabled }),
+          ...(body.condition !== undefined && { condition: body.condition }),
+        },
         chat: body.chat,
         email: body.email,
         in_app: body.in_app,
         push: body.push,
         sms: body.sms,
+        schedule: body.schedule,
+        workflowIdOrIdentifier,
+        includeInactiveChannels: false,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/subscriptions/:subscriptionIdentifier/preferences/:workflowIdOrIdentifier')
+  async updateSubscriptionWorkflowPreference(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Param('subscriptionIdentifier') subscriptionIdentifier: string,
+    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
+    @Body() body: UpdatePreferencesRequestDto
+  ): Promise<InboxPreference> {
+    return await this.updatePreferencesUsecase.execute(
+      UpdatePreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        level: PreferenceLevelEnum.TEMPLATE,
+        subscriptionIdentifier,
+        all: {
+          ...(body.enabled !== undefined && { enabled: body.enabled }),
+          ...(body.condition !== undefined && { condition: body.condition }),
+        },
+        chat: body.chat,
+        email: body.email,
+        in_app: body.in_app,
+        push: body.push,
+        sms: body.sms,
+        schedule: body.schedule,
         workflowIdOrIdentifier,
         includeInactiveChannels: false,
       })

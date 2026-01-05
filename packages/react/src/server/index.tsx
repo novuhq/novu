@@ -1,12 +1,22 @@
 import type { InboxProps } from '../components/Inbox';
 import { ShadowRootDetector } from '../components/ShadowRootDetector';
 import type {
+  UseCreateSubscriptionProps,
+  UseCreateSubscriptionResult,
   UseNotificationsProps,
   UseNotificationsResult,
   UsePreferencesProps,
   UsePreferencesResult,
+  UseRemoveSubscriptionProps,
+  UseRemoveSubscriptionResult,
   UseScheduleProps,
   UseScheduleResult,
+  UseSubscriptionProps,
+  UseSubscriptionResult,
+  UseSubscriptionsProps,
+  UseSubscriptionsResult,
+  UseUpdateSubscriptionProps,
+  UseUpdateSubscriptionResult,
 } from '../hooks';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
 import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
@@ -29,7 +39,17 @@ export function Preferences() {}
 
 export function Bell() {}
 
-export function NovuProvider(props: NovuProviderProps) {}
+export function NovuProvider(props: NovuProviderProps) {
+  return <>{props.children}</>;
+}
+
+export function Subscription() {
+  return <ShadowRootDetector />;
+}
+
+export function SubscriptionButton() {}
+
+export function SubscriptionPreferences() {}
 
 export function useNovu() {
   return null;
@@ -73,34 +93,77 @@ export function useSchedule(_: UseScheduleProps): UseScheduleResult {
   };
 }
 
-export type {
-  ChannelPreference,
-  ChannelType,
-  FiltersCountResponse,
-  InboxNotification,
-  ListNotificationsResponse,
-  Notification,
-  NotificationFilter,
-  NotificationStatus,
-  NovuError,
-  NovuOptions,
-  Preference,
-} from '@novu/js';
+export function useSubscription(_: UseSubscriptionProps): UseSubscriptionResult {
+  return {
+    isLoading: false,
+    isFetching: false,
+    refetch: () => Promise.resolve(),
+  };
+}
+
+export function useCreateSubscription(_: UseCreateSubscriptionProps = {}): UseCreateSubscriptionResult {
+  return {
+    isCreating: false,
+    error: undefined,
+    create: () => Promise.resolve({ data: undefined, error: undefined }),
+  };
+}
+
+export function useUpdateSubscription(_: UseUpdateSubscriptionProps = {}): UseUpdateSubscriptionResult {
+  return {
+    isUpdating: false,
+    error: undefined,
+    update: () => Promise.resolve({ data: undefined, error: undefined }),
+  };
+}
+
+export function useRemoveSubscription(_: UseRemoveSubscriptionProps = {}): UseRemoveSubscriptionResult {
+  return {
+    isRemoving: false,
+    error: undefined,
+    remove: () => Promise.resolve({ data: undefined, error: undefined }),
+  };
+}
+
+export function useSubscriptions(_: UseSubscriptionsProps): UseSubscriptionsResult {
+  return {
+    isLoading: false,
+    isFetching: false,
+    refetch: () => Promise.resolve(),
+  };
+}
+
+export type * from '@novu/js';
 export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 
 export type {
-  Appearance,
-  AppearanceKey,
+  AllLocalization,
+  AllLocalizationKey,
   ElementStyles,
-  Elements,
-  Localization,
-  LocalizationKey,
+  InboxAppearance,
+  InboxAppearanceCallback,
+  InboxAppearanceCallbackFunction,
+  InboxAppearanceCallbackKeys,
+  InboxAppearanceKey,
+  InboxElements,
+  InboxLocalization,
+  InboxLocalizationKey,
+  InboxTheme,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
   PreferenceGroups,
   PreferencesFilter,
   RouterPush,
+  SubscriptionAppearance,
+  SubscriptionAppearanceCallback,
+  SubscriptionAppearanceCallbackFunction,
+  SubscriptionAppearanceCallbackKeys,
+  SubscriptionAppearanceKey,
+  SubscriptionElements,
+  SubscriptionLocalization,
+  SubscriptionLocalizationKey,
+  SubscriptionTheme,
   Tab,
   Variables,
 } from '@novu/js/ui';

@@ -10,6 +10,6 @@ This group of icons comes from the Material Icons by means of the [react-icons](
 
 ## Use
 
-To use an Icon, simply use the [react-icons docs](https://react-icons.github.io/react-icons/icons/md/) for names with "Icon" as a prefix instead of "Md". Alternatively, you can refer to our Storybook!
+To use an Icon, simply use the [react-icons docs](https://react-icons.github.io/react-icons/icons/md/) for names with "Icon" as a prefix instead of "Md".
 
 E.g. instead of using `<Md10k />`, use `<Icon10k />`

@@ -102,8 +102,9 @@ export function encodeLabel(
       });
       encValue = mapped?.join("").slice(1);
     } else {
-      const k =
-        options?.explode && isPlainObject(value) ? `${encodeString(pk)}=` : "";
+      const k = options?.explode && isPlainObject(value)
+        ? `${encodeString(pk)}=`
+        : "";
       encValue = `${k}${encodeValue(pv)}`;
     }
 
@@ -426,6 +427,7 @@ export function queryJoin(...args: (string | undefined)[]): string {
 type QueryEncoderOptions = {
   explode?: boolean;
   charEncoding?: "percent" | "none";
+  allowEmptyValue?: string[];
 };
 
 type QueryEncoder = (
@@ -440,7 +442,7 @@ type BulkQueryEncoder = (
 ) => string;
 
 export function queryEncoder(f: QueryEncoder): BulkQueryEncoder {
-  const bulkEncode = function (
+  const bulkEncode = function(
     values: Record<string, unknown>,
     options?: QueryEncoderOptions,
   ): string {
@@ -450,7 +452,19 @@ export function queryEncoder(f: QueryEncoder): BulkQueryEncoder {
       charEncoding: options?.charEncoding ?? "percent",
     };
 
+    const allowEmptySet = new Set(options?.allowEmptyValue ?? []);
+
     const encoded = Object.entries(values).map(([key, value]) => {
+      if (allowEmptySet.has(key)) {
+        if (
+          value === undefined
+          || value === null
+          || value === ""
+          || (Array.isArray(value) && value.length === 0)
+        ) {
+          return `${encodeURIComponent(key)}=`;
+        }
+      }
       return f(key, value, opts);
     });
     return queryJoin(...encoded);

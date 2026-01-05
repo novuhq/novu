@@ -58,7 +58,7 @@ export class NovuBridgeClient {
     this.novuRequestHandler = new NovuRequestHandler({
       frameworkName,
       workflows,
-      client: new Client({ secretKey, strictAuthentication: true }),
+      client: new Client({ secretKey, strictAuthentication: true, verbose: false }),
       handler: this.novuHandler.handler,
     });
 

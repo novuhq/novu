@@ -51,6 +51,12 @@ export class TopicSubscriptionResponseDto {
   _id: string;
 
   @ApiProperty({
+    description: 'The identifier of the subscription',
+    example: 'tk=product-updates:si=subscriber-123',
+  })
+  identifier: string;
+
+  @ApiProperty({
     description: 'The date and time the subscription was created',
     example: '2021-01-01T00:00:00.000Z',
   })

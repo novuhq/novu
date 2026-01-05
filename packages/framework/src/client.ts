@@ -41,6 +41,7 @@ import type {
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, resolveApiUrl, resolveSecretKey, sanitizeHtmlInObject } from './utils';
 import { createLiquidEngine } from './utils/liquid.utils';
+import { normalizeControlData } from './utils/normalize-controls.utils';
 import { deepMerge } from './utils/object.utils';
 import { validateData } from './validators';
 
@@ -62,11 +63,14 @@ export class Client {
 
   public strictAuthentication: boolean;
 
+  public verbose: boolean;
+
   constructor(options?: ClientOptions) {
     const builtOpts = this.buildOptions(options);
     this.apiUrl = builtOpts.apiUrl;
     this.secretKey = builtOpts.secretKey;
     this.strictAuthentication = builtOpts.strictAuthentication;
+    this.verbose = builtOpts.verbose;
     this.templateEngine = createLiquidEngine();
   }
 
@@ -75,6 +79,7 @@ export class Client {
       apiUrl: resolveApiUrl(providedOptions?.apiUrl),
       secretKey: resolveSecretKey(providedOptions?.secretKey),
       strictAuthentication: !isRuntimeInDevelopment(),
+      verbose: isRuntimeInDevelopment(),
     };
 
     if (providedOptions?.strictAuthentication !== undefined) {
@@ -83,7 +88,17 @@ export class Client {
       builtConfiguration.strictAuthentication = process.env.NOVU_STRICT_AUTHENTICATION_ENABLED === 'true';
     }
 
+    if (providedOptions?.verbose !== undefined) {
+      builtConfiguration.verbose = providedOptions.verbose;
+    }
+
     return builtConfiguration;
+  }
+
+  private log(...args: any[]): void {
+    if (this.verbose) {
+      console.log(...args);
+    }
   }
 
   /**
@@ -116,7 +131,7 @@ export class Client {
   private async addWorkflow(workflow: Workflow): Promise<void> {
     try {
       const definition = await workflow.discover();
-      prettyPrintDiscovery(definition);
+      prettyPrintDiscovery(definition, this.verbose);
       this.discoveredWorkflows.set(workflow.id, definition);
     } finally {
       this.discoverWorkflowPromises.delete(workflow.id);
@@ -388,7 +403,7 @@ export class Client {
     const actionMessage = actionMessages[event.action];
 
     const actionMessageFormatted = `${actionMessage} workflowId:`;
-    console.log(`\n${log.bold(log.underline(actionMessageFormatted))} '${event.workflowId}'`);
+    this.log(`\n${log.bold(log.underline(actionMessageFormatted))} '${event.workflowId}'`);
     const workflow = this.getWorkflow(event.workflowId);
 
     const startTime = process.hrtime();
@@ -479,7 +494,7 @@ export class Client {
     } as const;
     const resultMessage = resultMessages[event.action];
 
-    console.log(`${emoji} ${resultMessage} workflowId: \`${event.workflowId}\``);
+    this.log(`${emoji} ${resultMessage} workflowId: \`${event.workflowId}\``);
 
     this.prettyPrintExecute(event, elapsedTimeInMilliseconds, executionError);
 
@@ -522,6 +537,8 @@ export class Client {
   }
 
   private prettyPrintExecute(event: Event, duration: number, error?: Error): void {
+    if (!this.verbose) return;
+
     const successPrefix = error ? EMOJI.ERROR : EMOJI.SUCCESS;
     const actionMessages = {
       [PostActionEnum.EXECUTE]: 'Executed',
@@ -567,7 +584,7 @@ export class Client {
 
     outputs: Record<string, unknown>
   ): Record<string, unknown> {
-    console.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
+    this.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
     const mockOutput = this.mock(provider.outputs.schema);
 
     return mockOutput;
@@ -595,7 +612,7 @@ export class Client {
           step.stepId,
           provider.type
         );
-        console.log(`  ${EMOJI.SUCCESS} Executed provider: \`${provider.type}\``);
+        this.log(`  ${EMOJI.SUCCESS} Executed provider: \`${provider.type}\``);
 
         return {
           ...validatedOutput,
@@ -603,12 +620,12 @@ export class Client {
         };
       } else {
         // No-op. We don't execute providers for hydrated steps
-        console.log(`  ${EMOJI.HYDRATED} Hydrated provider: \`${provider.type}\``);
+        this.log(`  ${EMOJI.HYDRATED} Hydrated provider: \`${provider.type}\``);
 
         return {};
       }
     } catch (error) {
-      console.log(`  ${EMOJI.ERROR} Failed to execute provider: \`${provider.type}\``);
+      this.log(`  ${EMOJI.ERROR} Failed to execute provider: \`${provider.type}\``);
 
       throw new ProviderExecutionFailedError(provider.type, event.action, error);
     }
@@ -634,14 +651,14 @@ export class Client {
 
         const providers = await this.executeProviders(event, step, validatedOutput);
 
-        console.log(`  ${EMOJI.SUCCESS} Executed stepId: \`${step.stepId}\``);
+        this.log(`  ${EMOJI.SUCCESS} Executed stepId: \`${step.stepId}\``);
 
         return {
           outputs: validatedOutput,
           providers,
         };
       } catch (error) {
-        console.log(`  ${EMOJI.ERROR} Failed to execute stepId: \`${step.stepId}\``);
+        this.log(`  ${EMOJI.ERROR} Failed to execute stepId: \`${step.stepId}\``);
         if (isFrameworkError(error)) {
           throw error;
         } else {
@@ -661,7 +678,7 @@ export class Client {
             event.workflowId,
             step.stepId
           );
-          console.log(`  ${EMOJI.HYDRATED} Hydrated stepId: \`${step.stepId}\``);
+          this.log(`  ${EMOJI.HYDRATED} Hydrated stepId: \`${step.stepId}\``);
 
           return {
             outputs: validatedOutput,
@@ -671,7 +688,7 @@ export class Client {
           throw new ExecutionStateCorruptError(event.workflowId, step.stepId);
         }
       } catch (error) {
-        console.log(`  ${EMOJI.ERROR} Failed to hydrate stepId: \`${step.stepId}\``);
+        this.log(`  ${EMOJI.ERROR} Failed to hydrate stepId: \`${step.stepId}\``);
 
         throw error;
       }
@@ -680,7 +697,8 @@ export class Client {
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
     try {
-      const templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      let templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      templateString = this.preprocessFilterTranslationArgs(templateString);
       const parsedTemplate = this.templateEngine.parse(templateString);
       const discoveredWorkflow = this.getWorkflow(event.workflowId);
 
@@ -696,25 +714,46 @@ export class Client {
         subscriber: event.subscriber,
         context: event.context,
         steps: buildSteps(event.state),
-        t: {}, // Empty object so t.* properties are undefined and trigger default filters
       };
 
       const compiledString = await this.templateEngine.render(parsedTemplate, renderVariables);
+      // Post-process: convert [T:key] placeholders back to {{t.key}} markers
+      const withMarkers = this.postprocessTranslationMarkers(compiledString);
       // repair the string to fix invalid JSON, it could happen in the case when the control value
       // doesn't have escaped quotes like '"foo"' then compiled string '{"body":""foo""}' is not valid JSON and parse will fail
-      const repairedString = jsonrepair(compiledString);
-      return JSON.parse(repairedString);
+      const repairedString = jsonrepair(withMarkers);
+      const parsedControls = JSON.parse(repairedString);
+      // Normalize string values in the data field that contain invalid JSON (e.g., from Liquid template variables)
+      // This handles cases where Liquid outputs JavaScript object notation instead of valid JSON
+      return normalizeControlData(parsedControls);
     } catch (error) {
       throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
     }
   }
 
   /**
-   * Preprocesses translation patterns to preserve them when values are undefined.
-   * Transforms {{t.key}} to {{t.key | default: "{{t.key}}"}}
+   * Preprocesses standalone translation patterns.
+   * Transforms {{t.key}} to [T:key] placeholder (not Liquid syntax, passes through unchanged).
    */
   private preprocessTranslationPatterns(template: string): string {
-    return template.replace(/\{\{\s*t\.([\p{L}\p{N}_.-]+)\s*\}\}/gu, '{{ t.$1 | default: "{{t.$1}}" }}');
+    return template.replace(/\{\{\s*t\.([\p{L}\p{N}_.-]+)\s*\}\}/gu, '[T:$1]');
+  }
+
+  /**
+   * Preprocesses translation keys used as filter arguments.
+   * Transforms 't.key' to '[T:key]' placeholder (not Liquid syntax, passes through unchanged).
+   * Example: pluralize: 't.apple', 't.apples' → pluralize: '[T:apple]', '[T:apples]'
+   */
+  private preprocessFilterTranslationArgs(template: string): string {
+    return template.replace(/'t\.([\p{L}\p{N}_.-]+)'/gu, "'[T:$1]'");
+  }
+
+  /**
+   * Post-processes placeholders back to translation markers after Liquid render.
+   * Transforms [T:key] back to {{t.key}} for the translation service.
+   */
+  private postprocessTranslationMarkers(content: string): string {
+    return content.replace(/\[T:([\p{L}\p{N}_.-]+)\]/gu, '{{t.$1}}');
   }
 
   /**
@@ -744,7 +783,7 @@ export class Client {
     try {
       return await this.constructStepForPreview(event, step);
     } catch (error) {
-      console.log(`  ${EMOJI.ERROR} Failed to preview stepId: \`${step.stepId}\``);
+      this.log(`  ${EMOJI.ERROR} Failed to preview stepId: \`${step.stepId}\``);
 
       if (isFrameworkError(error)) {
         throw error;
@@ -789,7 +828,7 @@ export class Client {
       step.stepId
     );
 
-    console.log(`  ${EMOJI.MOCK} Mocked stepId: \`${step.stepId}\``);
+    this.log(`  ${EMOJI.MOCK} Mocked stepId: \`${step.stepId}\``);
 
     return {
       outputs: validatedOutput,

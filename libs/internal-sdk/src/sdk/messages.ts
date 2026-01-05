@@ -58,7 +58,9 @@ export class Messages extends ClientSDK {
    */
   async deleteByTransactionId(
     transactionId: string,
-    channel?: operations.Channel | undefined,
+    channel?:
+      | operations.MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel
+      | undefined,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<

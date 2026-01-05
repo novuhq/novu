@@ -1,6 +1,6 @@
-// Removed unused imports
+import { GetContextResponseDto } from '@novu/api/models/components';
 import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ContextResponseDto, updateContext } from '@/api/contexts';
+import { updateContext } from '@/api/contexts';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
@@ -8,7 +8,7 @@ import { OmitEnvironmentFromParameters } from '@/utils/types';
 export type UpdateContextParameters = OmitEnvironmentFromParameters<typeof updateContext>;
 
 export const useUpdateContext = (
-  options?: UseMutationOptions<ContextResponseDto, unknown, UpdateContextParameters>
+  options?: UseMutationOptions<GetContextResponseDto, unknown, UpdateContextParameters>
 ) => {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();

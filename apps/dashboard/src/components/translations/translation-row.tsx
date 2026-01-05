@@ -1,8 +1,8 @@
+import { TranslationGroupDto } from '@novu/api/models/components';
 import { EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { ComponentProps, useCallback } from 'react';
 import { RiDeleteBin2Line, RiLayout5Line, RiMore2Fill, RiRouteFill } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
-import { TranslationGroup } from '@/api/translations';
 import { StackedFlagCircles } from '@/components/flag-circle';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -131,7 +131,7 @@ function TranslationActionsMenu({
   );
 }
 
-function useTranslationRowLogic(translation: TranslationGroup) {
+function useTranslationRowLogic(translation: TranslationGroupDto) {
   const navigate = useNavigate();
   const { environmentSlug } = useParams<{ environmentSlug: string }>();
 
@@ -194,9 +194,9 @@ export function TranslationRowSkeleton() {
 }
 
 type TranslationRowProps = {
-  translation: TranslationGroup;
-  onTranslationClick?: (translation: TranslationGroup) => void;
-  onDeleteClick?: (translation: TranslationGroup) => void;
+  translation: TranslationGroupDto;
+  onTranslationClick?: (translation: TranslationGroupDto) => void;
+  onDeleteClick?: (translation: TranslationGroupDto) => void;
 };
 
 export function TranslationRow({ translation, onTranslationClick, onDeleteClick }: TranslationRowProps) {

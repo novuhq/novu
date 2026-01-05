@@ -1,14 +1,15 @@
 import { ThemeProvider } from '@novu/design-system';
-import { HelmetProvider } from 'react-helmet-async';
+import { NovuiProvider } from '@novu/novui';
 import { withProfiler } from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
-import { NovuiProvider } from '@novu/novui';
+import { HelmetProvider } from 'react-helmet-async';
 import { api } from './api/api.client';
 import { AuthProvider } from './components/providers/AuthProvider';
-import { ClerkProvider } from './ee/clerk/providers/ClerkProvider';
 import { EnvironmentProvider } from './components/providers/EnvironmentProvider';
 import { SegmentProvider } from './components/providers/SegmentProvider';
+import { RegionProvider } from './context/RegionProvider';
+import { ClerkProvider } from './ee/clerk/providers/ClerkProvider';
 import { StudioStateProvider } from './studio/StudioStateProvider';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
@@ -32,17 +33,19 @@ const Providers: React.FC<PropsWithChildren> = ({ children }) => {
     <ThemeProvider shouldDisableGlobals>
       <NovuiProvider>
         <ClerkProvider>
-          <SegmentProvider>
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <EnvironmentProvider>
-                  <HelmetProvider>
-                    <StudioStateProvider>{children}</StudioStateProvider>
-                  </HelmetProvider>
-                </EnvironmentProvider>
-              </AuthProvider>
-            </QueryClientProvider>
-          </SegmentProvider>
+          <QueryClientProvider client={queryClient}>
+            <RegionProvider>
+              <SegmentProvider>
+                <AuthProvider>
+                  <EnvironmentProvider>
+                    <HelmetProvider>
+                      <StudioStateProvider>{children}</StudioStateProvider>
+                    </HelmetProvider>
+                  </EnvironmentProvider>
+                </AuthProvider>
+              </SegmentProvider>
+            </RegionProvider>
+          </QueryClientProvider>
         </ClerkProvider>
       </NovuiProvider>
     </ThemeProvider>

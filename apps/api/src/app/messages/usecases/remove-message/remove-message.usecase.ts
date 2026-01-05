@@ -24,13 +24,6 @@ export class RemoveMessage {
       throw new BadRequestException(`A subscriber was not found for message ${command.messageId}`);
 
     await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: message.subscriber.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId: message.subscriber.subscriberId,
         _environmentId: command.environmentId,

@@ -3,4 +3,4 @@ export { CronExpression } from './constants';
 export { NovuRequestHandler, type ServeHandlerOptions } from './handler';
 export { workflow } from './resources';
 export { providerSchemas } from './schemas';
-export { SeverityLevelEnum, Workflow } from './types';
+export { ClientOptions, SeverityLevelEnum, Workflow } from './types';

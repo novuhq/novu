@@ -19,10 +19,14 @@ export class ProcessBulkTrigger {
     // Extract unique workflow identifiers from all events
     const uniqueWorkflowIdentifiers = [...new Set(command.events.map((event) => event.name))];
 
-    // Fetch all unique workflows in a single batch operation
-    const workflows = await this.notificationTemplateRepository.findByTriggerIdentifierBulk(
-      command.environmentId,
-      uniqueWorkflowIdentifiers
+    // Fetch all unique workflows in a single batch operation with specific fields
+    const workflows = await this.notificationTemplateRepository.find(
+      {
+        _environmentId: command.environmentId,
+        'triggers.identifier': { $in: uniqueWorkflowIdentifiers },
+      },
+      '_id active payloadSchema validatePayload triggers',
+      { readPreference: 'secondaryPreferred' }
     );
 
     // Create a map for quick lookup
@@ -34,50 +38,61 @@ export class ProcessBulkTrigger {
       }
     }
 
-    const eventPromises = command.events.map(async (event) => {
-      try {
-        const workflow = workflowMap.get(event.name);
+    const processBatch = async (batch: typeof command.events) => {
+      return Promise.all(
+        batch.map(async (event) => {
+          try {
+            const workflow = workflowMap.get(event.name);
 
-        const result = (await this.parseEventRequest.execute(
-          ParseEventRequestMulticastCommand.create({
-            userId: command.userId,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            identifier: event.name,
-            payload: event.payload,
-            overrides: event.overrides || {},
-            to: event.to,
-            actor: event.actor,
-            tenant: event.tenant,
-            context: event.context,
-            transactionId: event.transactionId,
-            addressingType: AddressingTypeEnum.MULTICAST,
-            requestCategory: TriggerRequestCategoryEnum.BULK,
-            bridgeUrl: event.bridgeUrl,
-            requestId: command.requestId,
-            workflow,
-            skipQueueInsertion: true,
-          })
-        )) as unknown as TriggerEventResponseDto;
+            const result = (await this.parseEventRequest.execute(
+              ParseEventRequestMulticastCommand.create({
+                userId: command.userId,
+                environmentId: command.environmentId,
+                organizationId: command.organizationId,
+                identifier: event.name,
+                payload: event.payload,
+                overrides: event.overrides || {},
+                to: event.to,
+                actor: event.actor,
+                tenant: event.tenant,
+                context: event.context,
+                transactionId: event.transactionId,
+                addressingType: AddressingTypeEnum.MULTICAST,
+                requestCategory: TriggerRequestCategoryEnum.BULK,
+                bridgeUrl: event.bridgeUrl,
+                requestId: command.requestId,
+                workflow,
+                skipQueueInsertion: true,
+              })
+            )) as unknown as TriggerEventResponseDto;
 
-        return result;
-      } catch (e) {
-        let error: string[];
-        if (e.response?.message) {
-          error = Array.isArray(e.response?.message) ? e.response?.message : [e.response?.message];
-        } else {
-          error = [e.message];
-        }
+            return result;
+          } catch (e) {
+            let error: string[];
+            if (e.response?.message) {
+              error = Array.isArray(e.response?.message) ? e.response?.message : [e.response?.message];
+            } else {
+              error = [e.message];
+            }
 
-        return {
-          acknowledged: true,
-          status: TriggerEventStatusEnum.ERROR,
-          error,
-        } as TriggerEventResponseDto;
-      }
-    });
+            return {
+              acknowledged: true,
+              status: TriggerEventStatusEnum.ERROR,
+              error,
+            } as TriggerEventResponseDto;
+          }
+        })
+      );
+    };
 
-    const results = await Promise.all(eventPromises);
+    const BATCH_SIZE = 5;
+    const results: TriggerEventResponseDto[] = [];
+
+    for (let i = 0; i < command.events.length; i += BATCH_SIZE) {
+      const batch = command.events.slice(i, i + BATCH_SIZE);
+      const batchResults = await processBatch(batch);
+      results.push(...batchResults);
+    }
 
     const jobsToQueue: IWorkflowBulkJobDto[] = results
       .filter(
@@ -94,6 +109,6 @@ export class ProcessBulkTrigger {
       await this.workflowQueueService.addBulk(jobsToQueue);
     }
 
-    return results;
+    return results.map(({ jobData, ...rest }) => rest);
   }
 }

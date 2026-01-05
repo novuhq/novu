@@ -5,24 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import { NovuCore } from '../core.js';
-import { translationsRetrieve } from '../funcs/translationsRetrieve.js';
-import { combineSignals } from '../lib/primitives.js';
-import { RequestOptions } from '../lib/sdks.js';
-import * as components from '../models/components/index.js';
-import * as operations from '../models/operations/index.js';
-import { unwrapAsync } from '../types/fp.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
-
-export type TranslationsRetrieveQueryData = components.TranslationResponseDto;
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
+import {
+  buildTranslationsRetrieveQuery,
+  prefetchTranslationsRetrieve,
+  queryKeyTranslationsRetrieve,
+  TranslationsRetrieveQueryData,
+} from "./translationsRetrieve.core.js";
+export {
+  buildTranslationsRetrieveQuery,
+  prefetchTranslationsRetrieve,
+  queryKeyTranslationsRetrieve,
+  type TranslationsRetrieveQueryData,
+};
 
 /**
  * Retrieve a translation
@@ -32,11 +38,15 @@ export type TranslationsRetrieveQueryData = components.TranslationResponseDto;
  */
 export function useTranslationsRetrieve(
   request: operations.TranslationControllerGetSingleTranslationRequest,
-  options?: QueryHookOptions<TranslationsRetrieveQueryData>
+  options?: QueryHookOptions<TranslationsRetrieveQueryData>,
 ): UseQueryResult<TranslationsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTranslationsRetrieveQuery(client, request, options),
+    ...buildTranslationsRetrieveQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -49,22 +59,16 @@ export function useTranslationsRetrieve(
  */
 export function useTranslationsRetrieveSuspense(
   request: operations.TranslationControllerGetSingleTranslationRequest,
-  options?: SuspenseQueryHookOptions<TranslationsRetrieveQueryData>
+  options?: SuspenseQueryHookOptions<TranslationsRetrieveQueryData>,
 ): UseSuspenseQueryResult<TranslationsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTranslationsRetrieveQuery(client, request, options),
+    ...buildTranslationsRetrieveQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
-  });
-}
-
-export function prefetchTranslationsRetrieve(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  request: operations.TranslationControllerGetSingleTranslationRequest
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildTranslationsRetrieveQuery(client$, request),
   });
 }
 
@@ -76,7 +80,7 @@ export function setTranslationsRetrieveData(
     locale: string,
     parameters: { idempotencyKey?: string | undefined },
   ],
-  data: TranslationsRetrieveQueryData
+  data: TranslationsRetrieveQueryData,
 ): TranslationsRetrieveQueryData | undefined {
   const key = queryKeyTranslationsRetrieve(...queryKeyBase);
 
@@ -93,53 +97,20 @@ export function invalidateTranslationsRetrieve(
       parameters: { idempotencyKey?: string | undefined },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Translations', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "Translations", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllTranslationsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Translations', 'retrieve'],
+    queryKey: ["@novu/api", "Translations", "retrieve"],
   });
-}
-
-export function buildTranslationsRetrieveQuery(
-  client$: NovuCore,
-  request: operations.TranslationControllerGetSingleTranslationRequest,
-  options?: RequestOptions
-): {
-  queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<TranslationsRetrieveQueryData>;
-} {
-  return {
-    queryKey: queryKeyTranslationsRetrieve(request.resourceType, request.resourceId, request.locale, {
-      idempotencyKey: request.idempotencyKey,
-    }),
-    queryFn: async function translationsRetrieveQueryFn(ctx): Promise<TranslationsRetrieveQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(translationsRetrieve(client$, request, mergedOptions));
-    },
-  };
-}
-
-export function queryKeyTranslationsRetrieve(
-  resourceType: operations.PathParamResourceType,
-  resourceId: string,
-  locale: string,
-  parameters: { idempotencyKey?: string | undefined }
-): QueryKey {
-  return ['@novu/api', 'Translations', 'retrieve', resourceType, resourceId, locale, parameters];
 }

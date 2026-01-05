@@ -5,7 +5,7 @@ import { useLocalization } from '../../../../ui/context/LocalizationContext';
 import { cn } from '../../../../ui/helpers';
 import { useStyle } from '../../../../ui/helpers/useStyle';
 import { Copy } from '../../../../ui/icons';
-import { AppearanceCallback } from '../../../../ui/types';
+import { InboxAppearanceCallback } from '../../../../ui/types';
 import { Button, Checkbox, Dropdown } from '../../primitives';
 import { Tooltip } from '../../primitives/Tooltip';
 import { IconRenderer } from '../../shared/IconRendererWrapper';
@@ -89,7 +89,7 @@ export const DayScheduleCopy = (props: DayScheduleCopyProps) => {
                       }
                     ),
                     context: { schedule: props.schedule() } satisfies Parameters<
-                      AppearanceCallback['dayScheduleCopyIcon']
+                      InboxAppearanceCallback['dayScheduleCopyIcon']
                     >[0],
                   })}
                   fallback={Copy}
@@ -106,7 +106,7 @@ export const DayScheduleCopy = (props: DayScheduleCopyProps) => {
                   key: 'dayScheduleCopyTitle',
                   className: 'nt-text-sm nt-text-neutral-600  nt-mb-3 nt-text-left',
                   context: { schedule: props.schedule() } satisfies Parameters<
-                    AppearanceCallback['dayScheduleCopyTitle']
+                    InboxAppearanceCallback['dayScheduleCopyTitle']
                   >[0],
                 })}
                 data-localization="preferences.schedule.dayScheduleCopy.title"
@@ -118,7 +118,7 @@ export const DayScheduleCopy = (props: DayScheduleCopyProps) => {
                   key: 'dayScheduleCopySelectAll',
                   className: 'nt-flex nt-items-center nt-gap-2 nt-text-sm nt-text-neutral-600 nt-mb-2',
                   context: { schedule: props.schedule() } satisfies Parameters<
-                    AppearanceCallback['dayScheduleCopySelectAll']
+                    InboxAppearanceCallback['dayScheduleCopySelectAll']
                   >[0],
                 })}
                 data-localization="preferences.schedule.dayScheduleCopy.selectAll"
@@ -139,7 +139,7 @@ export const DayScheduleCopy = (props: DayScheduleCopyProps) => {
                       key: 'dayScheduleCopyDay',
                       className: 'nt-flex nt-items-center nt-gap-2 nt-text-sm nt-text-neutral-600 nt-mb-2',
                       context: { schedule: props.schedule() } satisfies Parameters<
-                        AppearanceCallback['dayScheduleCopyDay']
+                        InboxAppearanceCallback['dayScheduleCopyDay']
                       >[0],
                     })}
                     data-localization={`preferences.schedule.${day}`}
@@ -161,7 +161,7 @@ export const DayScheduleCopy = (props: DayScheduleCopyProps) => {
                   key: 'dayScheduleCopyFooterContainer',
                   className: 'nt-flex nt-justify-end nt-border-t nt-border-neutral-alpha-100 nt-pt-2',
                   context: { schedule: props.schedule() } satisfies Parameters<
-                    AppearanceCallback['dayScheduleCopyFooterContainer']
+                    InboxAppearanceCallback['dayScheduleCopyFooterContainer']
                   >[0],
                 })}
               >

@@ -21,14 +21,29 @@ import { Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { DirectionEnum } from '../shared/dtos/base-responses';
+import { SubscriptionDetailsResponseDto } from '../shared/dtos/subscription-details-response.dto';
+import {
+  GroupPreferenceFilterDto,
+  WorkflowPreferenceRequestDto,
+} from '../shared/dtos/subscriptions/create-subscriptions.dto';
+import {
+  CreateSubscriptionsResponseDto,
+  SubscriptionResponseDto,
+} from '../shared/dtos/subscriptions/create-subscriptions-response.dto';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subscriptions/usecases/create-subscriptions';
+import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscription/get-subscription.command';
+import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
+import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
 import { CreateTopicSubscriptionsRequestDto } from './dtos/create-topic-subscriptions.dto';
-import { CreateTopicSubscriptionsResponseDto } from './dtos/create-topic-subscriptions-response.dto';
 import { CreateUpdateTopicRequestDto } from './dtos/create-update-topic.dto';
 import { DeleteTopicResponseDto } from './dtos/delete-topic-response.dto';
-import { DeleteTopicSubscriptionsRequestDto } from './dtos/delete-topic-subscriptions.dto';
+import {
+  DeleteTopicSubscriberIdentifierDto,
+  DeleteTopicSubscriptionsRequestDto,
+} from './dtos/delete-topic-subscriptions.dto';
 import { DeleteTopicSubscriptionsResponseDto } from './dtos/delete-topic-subscriptions-response.dto';
 import { ListTopicSubscriptionsQueryDto } from './dtos/list-topic-subscriptions-query.dto';
 import { ListTopicSubscriptionsResponseDto } from './dtos/list-topic-subscriptions-response.dto';
@@ -36,8 +51,7 @@ import { ListTopicsQueryDto } from './dtos/list-topics-query.dto';
 import { ListTopicsResponseDto } from './dtos/list-topics-response.dto';
 import { TopicResponseDto } from './dtos/topic-response.dto';
 import { UpdateTopicRequestDto } from './dtos/update-topic.dto';
-import { CreateTopicSubscriptionsCommand } from './usecases/create-topic-subscriptions/create-topic-subscriptions.command';
-import { CreateTopicSubscriptionsUsecase } from './usecases/create-topic-subscriptions/create-topic-subscriptions.usecase';
+import { UpdateTopicSubscriptionRequestDto } from './dtos/update-topic-subscription.dto';
 import { DeleteTopicCommand } from './usecases/delete-topic/delete-topic.command';
 import { DeleteTopicUseCase } from './usecases/delete-topic/delete-topic.usecase';
 import { DeleteTopicSubscriptionsCommand } from './usecases/delete-topic-subscriptions/delete-topic-subscriptions.command';
@@ -68,8 +82,10 @@ export class TopicsController {
     private updateTopicUsecase: UpdateTopicUseCase,
     private deleteTopicUsecase: DeleteTopicUseCase,
     private listTopicSubscriptionsUsecase: ListTopicSubscriptionsUseCase,
-    private createTopicSubscriptionsUsecase: CreateTopicSubscriptionsUsecase,
-    private deleteTopicSubscriptionsUsecase: DeleteTopicSubscriptionsUsecase
+    private createSubscriptionsUsecase: CreateSubscriptionsUsecase,
+    private deleteTopicSubscriptionsUsecase: DeleteTopicSubscriptionsUsecase,
+    private updateSubscriptionUsecase: UpdateSubscriptionUsecase,
+    private getSubscriptionUsecase: GetSubscription
   ) {}
 
   @Get('')
@@ -133,7 +149,6 @@ export class TopicsController {
       UpsertTopicCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        userId: user._id,
         key: body.key,
         name: body.name,
         failIfExists,
@@ -267,7 +282,7 @@ export class TopicsController {
       Its like subscribing to a common interest group. if topic does not exist, it will be created.`,
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
-  @ApiResponse(CreateTopicSubscriptionsResponseDto, 201, false, true, {
+  @ApiResponse(CreateSubscriptionsResponseDto, 201, false, true, {
     description: 'Subscriptions created successfully',
   })
   @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
@@ -275,18 +290,20 @@ export class TopicsController {
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionsRequestDto
-  ): Promise<CreateTopicSubscriptionsResponseDto> {
-    const result = await this.createTopicSubscriptionsUsecase.execute(
-      CreateTopicSubscriptionsCommand.create({
+  ): Promise<CreateSubscriptionsResponseDto> {
+    const result = await this.createSubscriptionsUsecase.execute(
+      CreateSubscriptionsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         topicKey,
-        subscriberIds: body.subscriberIds,
+        subscriptions: this.mapSubscriptions(body.subscriptions || body.subscriberIds || []),
+        name: body.name,
+        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
       })
     );
 
-    const typeSafeResult: CreateTopicSubscriptionsResponseDto = {
+    const typeSafeResult: CreateSubscriptionsResponseDto = {
       data: result.data.map((item) => ({
         ...item,
         createdAt: item.createdAt || '',
@@ -328,7 +345,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         userId: user._id,
         topicKey,
-        subscriberIds: body.subscriberIds,
+        subscriptions: this.mapDeleteSubscriptions(body.subscriptions || body.subscriberIds || []),
       })
     );
 
@@ -350,5 +367,139 @@ export class TopicsController {
 
     // All subscriptions were successfully deleted
     return typeSafeResult;
+  }
+
+  @Get('/:topicKey/subscriptions/:identifier')
+  @ExternalApiAccessible()
+  @SdkGroupName('Topics.Subscriptions')
+  @SdkMethodName('getSubscription')
+  @ApiOperation({
+    summary: 'Get a topic subscription',
+    description: `Get a subscription by its unique identifier for a topic.`,
+  })
+  @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
+  @ApiParam({
+    name: 'identifier',
+    description: 'The unique identifier of the subscription',
+    type: String,
+  })
+  @ApiResponse(SubscriptionResponseDto, 200)
+  @RequirePermissions(PermissionsEnum.TOPIC_READ)
+  async getTopicSubscription(
+    @UserSession() user: UserSessionData,
+    @Param('topicKey') topicKey: string,
+    @Param('identifier') identifier: string,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<SubscriptionDetailsResponseDto | void> {
+    const result = await this.getSubscriptionUsecase.execute(
+      GetSubscriptionCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        topicKey,
+        identifier,
+      })
+    );
+
+    if (!result) {
+      res.status(HttpStatus.NO_CONTENT);
+
+      return;
+    }
+
+    return result;
+  }
+
+  @Patch('/:topicKey/subscriptions/:identifier')
+  @ExternalApiAccessible()
+  @SdkGroupName('Topics.Subscriptions')
+  @SdkMethodName('update')
+  @ApiOperation({
+    summary: 'Update a topic subscription',
+    description: `Update a subscription by its unique identifier for a topic. You can update the preferences and name associated with the subscription.`,
+  })
+  @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
+  @ApiParam({
+    name: 'identifier',
+    description: 'The unique identifier of the subscription',
+    type: String,
+  })
+  @ApiResponse(SubscriptionResponseDto, 200)
+  @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
+  async updateTopicSubscription(
+    @UserSession() user: UserSessionData,
+    @Param('topicKey') topicKey: string,
+    @Param('identifier') identifier: string,
+    @Body() body: UpdateTopicSubscriptionRequestDto
+  ): Promise<SubscriptionResponseDto> {
+    return await this.updateSubscriptionUsecase.execute(
+      UpdateSubscriptionCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        topicKey,
+        identifier,
+        name: body.name,
+        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+      })
+    );
+  }
+
+  private mapSubscriptions(
+    subscriptions: Array<string | { identifier: string; subscriberId: string; name?: string }>
+  ): Array<{ identifier?: string; subscriberId: string; name?: string }> {
+    return subscriptions.map((subscription) => {
+      if (typeof subscription === 'string') {
+        return {
+          subscriberId: subscription,
+        };
+      }
+
+      return subscription;
+    });
+  }
+
+  private mapDeleteSubscriptions(
+    subscriptions: Array<string | DeleteTopicSubscriberIdentifierDto>
+  ): Array<{ identifier?: string; subscriberId?: string; name?: string }> {
+    return subscriptions.map((subscription) => {
+      if (typeof subscription === 'string') {
+        return {
+          subscriberId: subscription,
+        };
+      }
+
+      return subscription;
+    });
+  }
+
+  private convertPreferencesToGroupFilters(
+    preferences: Array<string | WorkflowPreferenceRequestDto | GroupPreferenceFilterDto>
+  ): Array<GroupPreferenceFilterDto> {
+    return preferences.map((preference) => {
+      if (typeof preference === 'string') {
+        return {
+          filter: {
+            workflowIds: [preference],
+          },
+        };
+      }
+
+      if (this.isGroupPreferenceFilter(preference)) {
+        return preference;
+      }
+
+      return {
+        filter: {
+          workflowIds: [preference.workflowId],
+        },
+        condition: preference.condition,
+      };
+    });
+  }
+
+  private isGroupPreferenceFilter(
+    preference: WorkflowPreferenceRequestDto | GroupPreferenceFilterDto
+  ): preference is GroupPreferenceFilterDto {
+    return 'filter' in preference;
   }
 }

@@ -16,13 +16,15 @@ export class GetWorkflowByIdsUseCase {
       workflowEntity = await this.notificationTemplateRepository.findById(
         command.workflowIdOrInternalId,
         command.environmentId,
-        command.session
+        command.session,
+        command.includeUpdatedBy || false
       );
     } else {
       workflowEntity = await this.notificationTemplateRepository.findByTriggerIdentifier(
         command.environmentId,
         command.workflowIdOrInternalId,
-        command.session
+        command.session,
+        command.includeUpdatedBy || false
       );
     }
 

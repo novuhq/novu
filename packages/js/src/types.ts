@@ -1,6 +1,8 @@
+import type { RulesLogic } from 'json-logic-js';
 import { NovuError } from './utils/errors';
 
-export type { FiltersCountResponse, ListNotificationsResponse, Notification } from './notifications';
+export type { FiltersCountResponse, ListNotificationsResponse } from './notifications';
+export type { Notification } from './notifications/notification';
 export type { Preference } from './preferences/preference';
 export type { Schedule } from './preferences/schedule';
 export type { NovuError } from './utils/errors';
@@ -217,6 +219,8 @@ export type Context = Partial<Record<string, ContextValue>>;
 export type PreferencesResponse = {
   level: PreferenceLevel;
   enabled: boolean;
+  condition?: RulesLogic;
+  subscriptionId?: string;
   channels: ChannelPreference;
   overrides?: IPreferenceOverride[];
   workflow?: Workflow;
@@ -237,7 +241,27 @@ export type IPreferenceOverride = {
   source: PreferenceOverrideSourceEnum;
 };
 
+export type SubscriptionPreferenceResponse = Omit<
+  PreferencesResponse,
+  'subscriptionId' | 'workflow' | 'schedule' | 'level' | 'channels'
+> & {
+  subscriptionId: string;
+  workflow: Workflow;
+};
+
+export type SubscriptionResponse = {
+  id: string;
+  identifier: string;
+  name?: string;
+  preferences?: Array<SubscriptionPreferenceResponse>;
+};
+
 export type TODO = any;
+
+export type Options = {
+  refetch?: boolean;
+  useCache?: boolean;
+};
 
 export type Result<D = undefined, E = NovuError> = Promise<{
   data?: D;

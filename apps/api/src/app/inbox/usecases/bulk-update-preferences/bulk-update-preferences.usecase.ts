@@ -93,12 +93,23 @@ export class BulkUpdatePreferences {
 
     const updatePromises = Array.from(workflowPreferencesMap.entries()).map(
       async ([workflowId, { preference, workflow }]) => {
+        const isUpdatingSubscriptionPreference =
+          preference.subscriptionIdentifier &&
+          (typeof preference.enabled !== 'undefined' || typeof preference.condition !== 'undefined');
+
         return this.updatePreferencesUsecase.execute(
           UpdatePreferencesCommand.create({
             organizationId: command.organizationId,
             subscriberId: command.subscriberId,
             environmentId: command.environmentId,
             level: PreferenceLevelEnum.TEMPLATE,
+            subscriptionIdentifier: preference.subscriptionIdentifier,
+            ...(isUpdatingSubscriptionPreference && {
+              all: {
+                ...(typeof preference.enabled !== 'undefined' && { enabled: preference.enabled }),
+                ...(typeof preference.condition !== 'undefined' && { condition: preference.condition }),
+              },
+            }),
             chat: preference.chat,
             email: preference.email,
             in_app: preference.in_app,
@@ -116,13 +127,6 @@ export class BulkUpdatePreferences {
     );
 
     const updatedPreferences = await Promise.all(updatePromises);
-
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.UPDATE_PREFERENCES_BULK, '', {
-      _organization: command.organizationId,
-      _subscriber: subscriber._id,
-      workflowIds: Array.from(workflowPreferencesMap.keys()),
-      level: PreferenceLevelEnum.TEMPLATE,
-    });
 
     return updatedPreferences;
   }

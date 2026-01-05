@@ -131,6 +131,12 @@ export type EventType =
   | 'chat_phone_missing'
   | 'push_tokens_missing'
   | 'chat_some_channels_skipped'
+  | 'msteams_bot_not_installed'
+  | 'msteams_channel_not_found'
+  | 'msteams_user_not_found'
+  | 'msteams_insufficient_permissions'
+  | 'msteams_tenant_not_consented'
+  | 'msteams_invalid_credentials'
   | 'push_tokens_missing'
   | 'push_some_channels_skipped'
   | 'subscriber_missing_email_address'
@@ -170,7 +176,8 @@ export type EventType =
   | 'step_skipped_outside_of_the_schedule'
   | 'step_extended_to_schedule'
   | 'step_skipped_max_extensions_reached'
-  | 'push_invalid_token_removed';
+  | 'push_invalid_token_removed'
+  | 'topic_subscription_preference_evaluation';
 
 export type EntityType = 'request' | 'step_run';
 

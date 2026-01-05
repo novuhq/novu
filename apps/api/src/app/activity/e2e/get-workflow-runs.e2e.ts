@@ -6,8 +6,8 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { sleep } from '../../events/e2e/utils/sleep.util';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
-import { GetWorkflowRunsResponseDto } from '../dtos/workflow-runs-response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
+import { GetWorkflowRunsResponseDto } from '../dtos/workflow-runs-response.dto';
 
 describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
   let session: UserSession;
@@ -160,7 +160,9 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       subscriberId: [subscriber.subscriberId, '123'],
     });
 
+    await new Promise((resolve) => setTimeout(resolve, 500));
     await session.waitForWorkflowQueueCompletion();
+    await session.waitForStandardQueueCompletion();
     await session.waitForSubscriberQueueCompletion();
 
     // Force ClickHouse merge to deduplicate workflow runs

@@ -22,5 +22,3 @@ src/**.js
 coverage
 *.log
 package-lock.json
-
-storybook-static

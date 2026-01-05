@@ -2,11 +2,11 @@ import { createMemo, JSX, splitProps } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { useStyle } from '../../../helpers';
 import { mergeRefs } from '../../../helpers/mergeRefs';
-import type { AppearanceKey } from '../../../types';
+import type { AllAppearanceKey } from '../../../types';
 import { usePopover } from '.';
 
 type PopoverTriggerProps = JSX.IntrinsicElements['button'] & {
-  appearanceKey?: AppearanceKey;
+  appearanceKey?: AllAppearanceKey;
   asChild?: (props: any) => JSX.Element;
 };
 export const PopoverTrigger = (props: PopoverTriggerProps) => {

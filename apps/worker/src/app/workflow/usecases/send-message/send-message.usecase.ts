@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   AnalyticsService,
   buildSubscriberKey,
@@ -23,6 +23,7 @@ import {
   ContextRepository,
   JobEntity,
   NotificationTemplateRepository,
+  SubscriberEntity,
   SubscriberRepository,
   TenantEntity,
   TenantRepository,
@@ -102,6 +103,7 @@ export class SendMessage {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
+        workflow: command.workflow,
       });
     }
     const isBridgeSkipped = bridgeResponse?.options?.skip;
@@ -119,7 +121,7 @@ export class SendMessage {
       );
     }
 
-    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables);
+    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables, payload);
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
@@ -213,14 +215,15 @@ export class SendMessage {
 
   private async evaluateFilters(
     command: SendMessageCommand,
-    variables: IFilterVariables
+    variables: IFilterVariables,
+    compileContext: SendMessageChannelCommand['compileContext']
   ): Promise<{
     stepCondition: IConditionsFilterResponse;
     channelPreference: { result: boolean; reason?: DetailEnum };
   }> {
     const [stepCondition, channelPreference] = await Promise.all([
       this.evaluateStepCondition(command, variables),
-      this.evaluateChannelPreference(command),
+      this.evaluateChannelPreference(command, compileContext),
     ]);
 
     return { stepCondition, channelPreference };
@@ -321,7 +324,8 @@ export class SendMessage {
 
   @Instrument()
   private async evaluateChannelPreference(
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    compileContext: SendMessageChannelCommand['compileContext']
   ): Promise<{ result: boolean; reason?: DetailEnum }> {
     const { job } = command;
 
@@ -329,15 +333,14 @@ export class SendMessage {
       return { result: true };
     }
 
-    const workflow = await this.getWorkflow({
-      _id: job._templateId,
-      environmentId: job._environmentId,
-    });
+    const workflow =
+      command.workflow ??
+      (await this.getWorkflow({
+        _id: job._templateId,
+        environmentId: job._environmentId,
+      }));
 
-    const subscriber = await this.getSubscriberBySubscriberId({
-      _environmentId: job._environmentId,
-      subscriberId: job.subscriberId,
-    });
+    const subscriber = compileContext.subscriber;
     if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
     let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
@@ -379,7 +382,10 @@ export class SendMessage {
 
     const result = this.stepPreferred(subscriberPreference, job);
 
-    const preferenceDetailFromPreferenceType: Record<PreferencesTypeEnum, DetailEnum> = {
+    const preferenceDetailFromPreferenceType: Record<
+      Exclude<PreferencesTypeEnum, PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW>,
+      DetailEnum
+    > = {
       [PreferencesTypeEnum.WORKFLOW_RESOURCE]: DetailEnum.STEP_FILTERED_BY_WORKFLOW_RESOURCE_PREFERENCES,
       [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_WORKFLOW_PREFERENCES,
       [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES,
@@ -398,6 +404,17 @@ export class SendMessage {
           isRetry: false,
           raw: JSON.stringify(subscriberPreference),
         })
+      );
+
+      Logger.log(
+        {
+          reason,
+          subscriberId: job.subscriberId,
+          templateId: job._templateId,
+          transactionId: job.transactionId,
+          channel: job.type,
+        },
+        'Skipped step by preference'
       );
     }
 

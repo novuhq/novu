@@ -22,7 +22,7 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
-
+import { PreferencesModule } from '../../preferences/preferences.module';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { SharedModule } from '../../shared/shared.module';
 import { EventsModule } from '../events.module';
@@ -101,7 +101,7 @@ describe('TriggerMulticast #novu-v2', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, EventsModule],
+      imports: [SharedModule, EventsModule, PreferencesModule],
       providers: [
         TriggerMulticast,
         {
@@ -117,7 +117,9 @@ describe('TriggerMulticast #novu-v2', () => {
   });
 
   afterEach(() => {
-    addBulkStub.restore();
+    if (addBulkStub) {
+      addBulkStub.restore();
+    }
   });
 
   let session: UserSession;
