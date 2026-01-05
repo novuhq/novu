@@ -630,48 +630,27 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
   });
 
   it('should generate email preview when translations are not enabled', async () => {
-    const mailyContent = JSON.stringify({
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-          attrs: { textAlign: null, showIfKey: null },
-          content: [
-            { type: 'text', text: 'Hello ' },
-            {
-              type: 'variable',
-              attrs: {
-                id: 'subscriber.firstName',
-                label: null,
-                fallback: null,
-                required: false,
-                aliasFor: null,
-              },
-            },
-            { type: 'text', text: ', your order ' },
-            {
-              type: 'variable',
-              attrs: {
-                id: 'payload.orderId',
-                label: null,
-                fallback: null,
-                required: false,
-                aliasFor: null,
-              },
-            },
-            { type: 'text', text: ' is ready!' },
-          ],
-        },
-      ],
-    });
+    const mailyContent =
+      '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Hello "},{"type":"variable","attrs":{"id":"subscriber.firstName","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":", your order status: "},{"type":"variable","attrs":{"id":"payload.test","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":"!"}]}]}';
 
     const createWorkflowDto: CreateWorkflowDto = {
       tags: [],
       source: WorkflowCreationSourceEnum.Editor,
       name: 'Email Without Translations Workflow',
       workflowId: `email-no-translations-${randomUUID()}`,
-      description: 'Test workflow without translations',
+      description: 'Test workflow without translations - should render successfully without errors',
       active: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          title: {
+            type: 'string',
+          },
+          test: {
+            type: 'string',
+          },
+        },
+      },
       steps: [
         {
           name: 'Email Step Without Translations',
@@ -696,7 +675,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         firstName: 'Jane',
       },
       payload: {
-        orderId: '12345',
+        test: 'confirmed',
       },
     };
 
@@ -708,7 +687,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
     expect(result.result.preview.subject).to.equal('Welcome Jane');
     expect(result.result.preview.body).to.contain('Hello Jane');
-    expect(result.result.preview.body).to.contain('your order 12345 is ready');
+    expect(result.result.preview.body).to.contain('your order status: confirmed!');
   });
 
   it.skip('should generate preview for the email step with digest variables', async () => {
