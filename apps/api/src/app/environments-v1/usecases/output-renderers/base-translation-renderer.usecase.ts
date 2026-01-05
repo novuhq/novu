@@ -114,14 +114,6 @@ export abstract class BaseTranslationRendererUsecase {
     }
 
     if (!resourceId) {
-      this.logger.warn('Resource ID is required for translation context creation', {
-        resourceId,
-        resourceType,
-        organizationId,
-        environmentId,
-        locale,
-      });
-
       return null;
     }
 
@@ -141,19 +133,26 @@ export abstract class BaseTranslationRendererUsecase {
         resourceEntity,
       });
     } catch (error) {
-      this.logger.error('Translation context creation failed', {
-        error: error?.message || error,
-        resourceId,
-        resourceType,
-        organizationId,
-        environmentId,
-        locale,
-        stack: error?.stack,
-      });
+      const errorMessage = error?.message || String(error);
+      const isExpectedError =
+        error?.status === 402 ||
+        errorMessage.includes('Translation is not enabled') ||
+        errorMessage.includes('Translation feature is not available on your plan') ||
+        errorMessage.includes('No translation found');
 
-      throw new InternalServerErrorException(
-        `Translation context creation failed for resource ${resourceId}: ${error?.message || String(error)}`
-      );
+      if (!isExpectedError) {
+        this.logger.error('Unexpected error during translation context creation', {
+          error: errorMessage,
+          resourceId,
+          resourceType,
+          organizationId,
+          environmentId,
+          locale,
+          stack: error?.stack,
+        });
+      }
+
+      return null;
     }
   }
 

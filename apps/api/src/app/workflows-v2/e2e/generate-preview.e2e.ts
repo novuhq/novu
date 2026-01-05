@@ -629,6 +629,53 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(result.result.preview.body).to.contain('Hello, John!');
   });
 
+  it('should generate email preview when translations are not enabled', async () => {
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      source: WorkflowCreationSourceEnum.Editor,
+      name: 'Email Without Translations Workflow',
+      workflowId: `email-no-translations-${randomUUID()}`,
+      description: 'Test workflow without translations',
+      active: true,
+      steps: [
+        {
+          name: 'Email Step Without Translations',
+          type: StepTypeEnum.EMAIL,
+          controlValues: {
+            subject: 'Welcome {{subscriber.firstName}}',
+            body: 'Hello {{subscriber.firstName}}, your order {{payload.orderId}} is ready!',
+            disableOutputSanitization: false,
+          },
+        },
+      ],
+    };
+    const { result: workflow } = await novuClient.workflows.create(createWorkflowDto);
+    const stepId = workflow.steps[0].id;
+    const controlValues = {
+      subject: 'Welcome {{subscriber.firstName}}',
+      body: 'Hello {{subscriber.firstName}}, your order {{payload.orderId}} is ready!',
+      disableOutputSanitization: false,
+    };
+    const previewPayload: PreviewPayloadDto = {
+      subscriber: {
+        firstName: 'Jane',
+      },
+      payload: {
+        orderId: '12345',
+      },
+    };
+
+    const { result } = await novuClient.workflows.steps.generatePreview({
+      workflowId: workflow.id,
+      stepId,
+      generatePreviewRequestDto: { controlValues, previewPayload },
+    });
+
+    expect(result.result.preview.subject).to.equal('Welcome Jane');
+    expect(result.result.preview.body).to.contain('Hello Jane');
+    expect(result.result.preview.body).to.contain('your order 12345 is ready');
+  });
+
   it.skip('should generate preview for the email step with digest variables', async () => {
     const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
 
