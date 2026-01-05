@@ -54,14 +54,14 @@ export class Scheduler implements DurableObject {
 
     try {
       await this.executeJob(job);
-      await Promise.all([this.state.storage.delete(JOB_KEY), this.state.storage.deleteAlarm()]);
     } catch (error) {
       console.error(`[Scheduler] Job ${job.id} execution failed:`, {
         jobId: job.id,
         mode: job.mode,
         error: error instanceof Error ? error.message : String(error),
       });
-      await Promise.all([this.state.storage.delete(JOB_KEY), this.state.storage.deleteAlarm()]);
+    } finally {
+      await Promise.all([this.state.storage.deleteAll(), this.state.storage.deleteAlarm()]);
     }
   }
 
@@ -109,7 +109,7 @@ export class Scheduler implements DurableObject {
       return false;
     }
 
-    await Promise.all([this.state.storage.delete(JOB_KEY), this.state.storage.deleteAlarm()]);
+    await Promise.all([this.state.storage.deleteAll(), this.state.storage.deleteAlarm()]);
 
     return true;
   }
