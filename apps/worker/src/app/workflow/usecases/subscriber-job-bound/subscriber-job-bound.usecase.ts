@@ -14,7 +14,6 @@ import {
   mapEventTypeToTitle,
   PinoLogger,
   SubscriberTopicPreference,
-  TopicPreferenceEvaluation,
   TraceLogRepository,
 } from '@novu/application-generic';
 import {
@@ -22,6 +21,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferencesRepository,
+  TopicPreferenceEvaluation,
 } from '@novu/dal';
 import {
   buildWorkflowPreferences,
@@ -302,7 +302,7 @@ export class SubscriberJobBound {
     const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
     const channelTypesToFetch: ChannelTypeEnum[] = [];
 
-    for (const step of template?.steps) {
+    for (const step of template?.steps || []) {
       const type = step.template?.type;
       if (!type) continue;
 
@@ -370,7 +370,7 @@ export class SubscriberJobBound {
           }
         );
 
-        return null;
+        continue;
       }
 
       evaluatedTopics.push({
@@ -379,7 +379,7 @@ export class SubscriberJobBound {
       });
     }
 
-    return evaluatedTopics;
+    return evaluatedTopics.length > 0 ? evaluatedTopics : null;
   }
 
   private async evaluateSubscriptionPreferences(
@@ -482,7 +482,7 @@ export class SubscriberJobBound {
     eventType: EventType,
     status: 'success' | 'error' | 'warning' = 'success',
     message?: string,
-    rawData?: any
+    rawData?: Record<string, unknown>
   ): Promise<void> {
     if (!command.requestId) {
       return;
