@@ -26,7 +26,6 @@ import {
   StepRunStatus,
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
-  TopicPreferenceEvaluation,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import {
@@ -36,6 +35,7 @@ import {
   NotificationRepository,
   NotificationTemplateEntity,
   SubscriberRepository,
+  TopicPreferenceEvaluation,
 } from '@novu/dal';
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
