@@ -14,10 +14,7 @@ export const frameworkName = 'novu-nest';
  * This class overrides the default NestJS Novu Bridge Client to allow for dynamic construction of
  * workflows to serve on the Novu Bridge.
  */
-@Injectable({ scope: Scope.REQUEST })
 export class NovuBridgeClient {
-  public novuRequestHandler: NovuRequestHandler | null = null;
-
   constructor(
     @Inject(NovuHandler) private novuHandler: NovuHandler,
     private constructFrameworkWorkflow: ConstructFrameworkWorkflow
@@ -47,13 +44,13 @@ export class NovuBridgeClient {
       workflows.push(programmaticallyConstructedWorkflow);
     }
 
-    this.novuRequestHandler = new NovuRequestHandler({
+    const novuRequestHandler = new NovuRequestHandler({
       frameworkName,
       workflows,
       client: new Client({ secretKey: 'INTERNAL_KEY', strictAuthentication: false, verbose: false }),
       handler: this.novuHandler.handler,
     });
 
-    await this.novuRequestHandler.createHandler()(req, res);
+    await novuRequestHandler.createHandler()(req, res);
   }
 }
