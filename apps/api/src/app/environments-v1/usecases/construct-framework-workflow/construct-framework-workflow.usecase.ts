@@ -9,10 +9,11 @@ import {
   OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
-import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
+import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
 import { LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
+import { LRUCache } from 'lru-cache';
 import { evaluateRules } from '../../../shared/services/query-parser/query-parser.service';
 import { isMatchingJsonSchema } from '../../../workflows-v2/util/jsonToSchema';
 import {
@@ -29,6 +30,16 @@ import { ThrottleOutputRendererUsecase } from '../output-renderers/throttle-outp
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
+
+const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
+  max: 500,
+  ttl: 1000 * 60,
+});
+
+const organizationCache = new LRUCache<string, OrganizationEntity>({
+  max: 500,
+  ttl: 1000 * 60,
+});
 
 @Injectable()
 export class ConstructFrameworkWorkflow {
@@ -53,7 +64,8 @@ export class ConstructFrameworkWorkflow {
       return this.constructLayoutPreviewWorkflow(command);
     }
 
-    const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
+    const useCache = command.action === PostActionEnum.EXECUTE;
+    const dbWorkflow = await this.getDbWorkflowWithCache(command.environmentId, command.workflowId, useCache);
 
     if (command.controlValues) {
       for (const step of dbWorkflow.steps) {
@@ -61,7 +73,7 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
-    const organization = (await this.communityOrganizationRepository.findById(dbWorkflow._organizationId)) || undefined;
+    const organization = await this.getOrganizationWithCache(dbWorkflow._organizationId, useCache);
 
     return this.constructFrameworkWorkflow({
       dbWorkflow,
@@ -364,6 +376,49 @@ export class ConstructFrameworkWorkflow {
     }
 
     return foundWorkflow;
+  }
+
+  private async getDbWorkflowWithCache(
+    environmentId: string,
+    workflowId: string,
+    useCache: boolean
+  ): Promise<NotificationTemplateEntity> {
+    const cacheKey = `${environmentId}:${workflowId}`;
+
+    if (useCache) {
+      const cached = workflowCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    const workflow = await this.getDbWorkflow(environmentId, workflowId);
+
+    if (useCache) {
+      workflowCache.set(cacheKey, workflow);
+    }
+
+    return workflow;
+  }
+
+  private async getOrganizationWithCache(
+    organizationId: string,
+    useCache: boolean
+  ): Promise<OrganizationEntity | undefined> {
+    if (useCache) {
+      const cached = organizationCache.get(organizationId);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    const organization = await this.communityOrganizationRepository.findById(organizationId);
+
+    if (organization && useCache) {
+      organizationCache.set(organizationId, organization);
+    }
+
+    return organization || undefined;
   }
 
   private async processSkipOption(
