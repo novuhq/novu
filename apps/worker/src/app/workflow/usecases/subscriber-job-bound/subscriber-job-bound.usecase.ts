@@ -13,6 +13,7 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
+  SubscriberTopicPreference,
   TopicPreferenceEvaluation,
   TraceLogRepository,
 } from '@novu/application-generic';
@@ -338,28 +339,10 @@ export class SubscriberJobBound {
 
   private async evaluateTopicPreferences(
     command: SubscriberJobBoundCommand,
-    topics: Array<{
-      _topicId: string;
-      topicKey: string;
-      _topicSubscriptionId?: string;
-      subscriptionIdentifier?: string;
-      preferenceEvaluation?: TopicPreferenceEvaluation;
-    }>,
+    topics: SubscriberTopicPreference[],
     templateId: string
-  ): Promise<Array<{
-    _topicId: string;
-    topicKey: string;
-    _topicSubscriptionId?: string;
-    subscriptionIdentifier?: string;
-    preferenceEvaluation?: TopicPreferenceEvaluation;
-  }> | null> {
-    const evaluatedTopics: Array<{
-      _topicId: string;
-      topicKey: string;
-      _topicSubscriptionId?: string;
-      subscriptionIdentifier?: string;
-      preferenceEvaluation?: TopicPreferenceEvaluation;
-    }> = [];
+  ): Promise<SubscriberTopicPreference[] | null> {
+    const evaluatedTopics: SubscriberTopicPreference[] = [];
 
     for (const topic of topics) {
       if (!topic._topicSubscriptionId || !topic.subscriptionIdentifier) {
