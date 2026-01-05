@@ -54,14 +54,14 @@ export class Scheduler implements DurableObject {
 
     try {
       await this.executeJob(job);
-      await this.state.storage.delete(JOB_KEY);
+      await Promise.all([this.state.storage.delete(JOB_KEY), this.state.storage.deleteAlarm()]);
     } catch (error) {
       console.error(`[Scheduler] Job ${job.id} execution failed:`, {
         jobId: job.id,
         mode: job.mode,
         error: error instanceof Error ? error.message : String(error),
       });
-      await this.state.storage.delete(JOB_KEY);
+      await Promise.all([this.state.storage.delete(JOB_KEY), this.state.storage.deleteAlarm()]);
     }
   }
 
