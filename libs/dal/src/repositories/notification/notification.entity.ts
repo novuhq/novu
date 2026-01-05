@@ -11,6 +11,12 @@ export interface TopicPreferenceEvaluation {
   subscriptionIdentifier: string;
 }
 
+export type NotificationTopic = {
+  _topicId: string;
+  topicKey: string;
+  preferenceEvaluation?: TopicPreferenceEvaluation;
+};
+
 export class NotificationEntity {
   _id: string;
 
@@ -22,11 +28,7 @@ export class NotificationEntity {
 
   _subscriberId: string;
 
-  topics: {
-    _topicId: string;
-    topicKey: string;
-    preferenceEvaluation?: TopicPreferenceEvaluation;
-  }[];
+  topics: NotificationTopic[];
 
   transactionId: string;
 

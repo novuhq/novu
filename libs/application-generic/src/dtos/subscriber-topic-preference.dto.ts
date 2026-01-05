@@ -1,13 +1,6 @@
-export interface TopicPreferenceEvaluation {
-  condition?: Record<string, unknown>;
-  result: boolean;
-  subscriptionIdentifier: string;
-}
+import type { NotificationTopic } from '@novu/dal';
 
-export interface SubscriberTopicPreference {
-  _topicId: string;
-  topicKey: string;
+export type SubscriberTopicPreference = NotificationTopic & {
   _topicSubscriptionId?: string;
   subscriptionIdentifier?: string;
-  preferenceEvaluation?: TopicPreferenceEvaluation;
-}
+};
