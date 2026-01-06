@@ -12,7 +12,7 @@ const apiKeyUserCache = new LRUCache<string, UserSessionData>({
   ttl: 1000 * 60,
 });
 
-const apiKeyInflightRequests = new Map<string, Promise<UserSessionData>>();
+const apiKeyInflightRequests = new Map<string, Promise<UserSessionData | null>>();
 
 @Injectable()
 export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
@@ -42,16 +42,14 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
   private async validateApiKey(apiKey: string): Promise<UserSessionData | null> {
     const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
 
-    const isFeatureEnabled = await this.featureFlagsService.getFlag({
+    const isLruCacheEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
       defaultValue: false,
       environment: { _id: 'system' },
       component: 'api-key-auth',
     });
 
-    const useCache = isFeatureEnabled;
-
-    if (useCache) {
+    if (isLruCacheEnabled) {
       const cached = apiKeyUserCache.get(hashedApiKey);
       if (cached) {
         return cached;
@@ -66,19 +64,19 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
     const fetchPromise = this.authService
       .getUserByApiKey(apiKey)
       .then((user) => {
-        if (user && useCache) {
+        if (user && isLruCacheEnabled) {
           apiKeyUserCache.set(hashedApiKey, user);
         }
 
         return user;
       })
       .finally(() => {
-        if (useCache) {
+        if (isLruCacheEnabled) {
           apiKeyInflightRequests.delete(hashedApiKey);
         }
       });
 
-    if (useCache) {
+    if (isLruCacheEnabled) {
       apiKeyInflightRequests.set(hashedApiKey, fetchPromise);
     }
 
