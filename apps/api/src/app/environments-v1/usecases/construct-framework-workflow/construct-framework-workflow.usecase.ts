@@ -72,7 +72,7 @@ export class ConstructFrameworkWorkflow {
   }
 
   private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
-    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId }, '_organizationId');
     if (!environment) {
       throw new InternalServerErrorException(`Environment ${command.environmentId} not found`);
     }
@@ -357,7 +357,7 @@ export class ConstructFrameworkWorkflow {
 
   @Instrument()
   private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
-    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
+    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId, null, false);
 
     if (!foundWorkflow) {
       throw new InternalServerErrorException(`Workflow ${workflowId} not found`);

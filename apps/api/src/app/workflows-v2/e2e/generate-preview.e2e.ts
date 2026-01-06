@@ -629,6 +629,67 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(result.result.preview.body).to.contain('Hello, John!');
   });
 
+  it('should generate email preview when translations are not enabled', async () => {
+    const mailyContent =
+      '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"Hello "},{"type":"variable","attrs":{"id":"subscriber.firstName","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":", your order status: "},{"type":"variable","attrs":{"id":"payload.test","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":"!"}]}]}';
+
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      source: WorkflowCreationSourceEnum.Editor,
+      name: 'Email Without Translations Workflow',
+      workflowId: `email-no-translations-${randomUUID()}`,
+      description: 'Test workflow without translations - should render successfully without errors',
+      active: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          title: {
+            type: 'string',
+          },
+          test: {
+            type: 'string',
+          },
+        },
+      },
+      steps: [
+        {
+          name: 'Email Step Without Translations',
+          type: StepTypeEnum.EMAIL,
+          controlValues: {
+            subject: 'Welcome {{subscriber.firstName}}',
+            body: mailyContent,
+            disableOutputSanitization: false,
+          },
+        },
+      ],
+    };
+    const { result: workflow } = await novuClient.workflows.create(createWorkflowDto);
+    const stepId = workflow.steps[0].id;
+    const controlValues = {
+      subject: 'Welcome {{subscriber.firstName}}',
+      body: mailyContent,
+      disableOutputSanitization: false,
+    };
+    const previewPayload: PreviewPayloadDto = {
+      subscriber: {
+        firstName: 'Jane',
+      },
+      payload: {
+        test: 'confirmed',
+      },
+    };
+
+    const { result } = await novuClient.workflows.steps.generatePreview({
+      workflowId: workflow.id,
+      stepId,
+      generatePreviewRequestDto: { controlValues, previewPayload },
+    });
+
+    expect(result.result.preview.subject).to.equal('Welcome Jane');
+    expect(result.result.preview.body).to.contain('Hello Jane');
+    expect(result.result.preview.body).to.contain('your order status: confirmed!');
+  });
+
   it.skip('should generate preview for the email step with digest variables', async () => {
     const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
 
