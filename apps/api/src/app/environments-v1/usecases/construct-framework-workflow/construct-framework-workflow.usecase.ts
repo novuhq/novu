@@ -44,7 +44,7 @@ import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflo
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 
 const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
-  max: 500,
+  max: 1000,
   ttl: 1000 * 60,
 });
 
@@ -83,12 +83,7 @@ export class ConstructFrameworkWorkflow {
     const shouldUseCache =
       command.action === PostActionEnum.EXECUTE && command.environmentType !== EnvironmentTypeEnum.DEV;
 
-    const dbWorkflow = await this.getWorkflow(
-      command.environmentId,
-      command.workflowId,
-      shouldUseCache,
-      command.organizationId
-    );
+    const dbWorkflow = await this.getWorkflow(command.environmentId, command.workflowId, shouldUseCache);
 
     if (command.controlValues) {
       for (const step of dbWorkflow.steps) {
@@ -394,21 +389,16 @@ export class ConstructFrameworkWorkflow {
   private async getWorkflow(
     environmentId: string,
     workflowId: string,
-    shouldUseCache: boolean,
-    organizationId?: string
+    shouldUseCache: boolean
   ): Promise<NotificationTemplateEntity> {
     const cacheKey = `${environmentId}:${workflowId}`;
 
-    let isFeatureEnabled = false;
-    if (organizationId) {
-      isFeatureEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
-        defaultValue: false,
-        environment: { _id: environmentId },
-        organization: { _id: organizationId },
-        component: 'bridge-workflow',
-      });
-    }
+    const isFeatureEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      component: 'bridge-workflow',
+    });
 
     const useCache = shouldUseCache && isFeatureEnabled;
 
