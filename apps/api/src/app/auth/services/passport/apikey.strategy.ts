@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
-import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
+import { FeatureFlagsService, HttpRequestHeaderKeysEnum } from '@novu/application-generic';
+import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import { createHash } from 'crypto';
 import { LRUCache } from 'lru-cache';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
@@ -16,7 +16,10 @@ const apiKeyInflightRequests = new Map<string, Promise<UserSessionData>>();
 
 @Injectable()
 export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
-  constructor(private readonly authService: AuthService) {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly featureFlagsService: FeatureFlagsService
+  ) {
     super(
       { header: HttpRequestHeaderKeysEnum.AUTHORIZATION, prefix: `${ApiAuthSchemeEnum.API_KEY} ` },
       true,
@@ -38,7 +41,15 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
 
   private async validateApiKey(apiKey: string): Promise<UserSessionData | null> {
     const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
-    const useCache = process.env.IS_LRU_CACHE_ENABLED === 'true';
+
+    const isFeatureEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: 'system' },
+      component: 'api-key-auth',
+    });
+
+    const useCache = isFeatureEnabled;
 
     if (useCache) {
       const cached = apiKeyUserCache.get(hashedApiKey);
