@@ -40,7 +40,7 @@ export abstract class BaseTranslationRendererUsecase {
     resourceEntity?: NotificationTemplateEntity | LayoutDto;
     organization?: OrganizationEntity;
   }): Promise<Record<string, unknown>> {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
       return controls;
     }
 
@@ -76,7 +76,7 @@ export abstract class BaseTranslationRendererUsecase {
     locale?: string;
     organization?: OrganizationEntity;
   }): Promise<string> {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
       return content;
     }
 
@@ -109,7 +109,7 @@ export abstract class BaseTranslationRendererUsecase {
     organization?: OrganizationEntity;
     resourceEntity?: NotificationTemplateEntity | LayoutDto;
   }): Promise<TranslationContext | null> {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
       return null;
     }
 
@@ -165,7 +165,7 @@ export abstract class BaseTranslationRendererUsecase {
     content: string;
     variables: FullPayloadForRender;
   }): Promise<string> {
-    if (process.env.NOVU_ENTERPRISE !== 'true' || !context) {
+    if ((process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') || !context) {
       return content;
     }
 
