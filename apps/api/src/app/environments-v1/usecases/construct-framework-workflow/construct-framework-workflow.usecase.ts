@@ -10,7 +10,7 @@ import {
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import { LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import { LRUCache } from 'lru-cache';
@@ -41,6 +41,9 @@ const organizationCache = new LRUCache<string, OrganizationEntity>({
   ttl: 1000 * 60,
 });
 
+const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity>>();
+const organizationInflightRequests = new Map<string, Promise<OrganizationEntity | undefined>>();
+
 @Injectable()
 export class ConstructFrameworkWorkflow {
   constructor(
@@ -64,7 +67,7 @@ export class ConstructFrameworkWorkflow {
       return this.constructLayoutPreviewWorkflow(command);
     }
 
-    const useCache = command.action === PostActionEnum.EXECUTE;
+    const useCache = command.action === PostActionEnum.EXECUTE && command.environmentType !== EnvironmentTypeEnum.DEV;
     const dbWorkflow = await this.getDbWorkflowWithCache(command.environmentId, command.workflowId, useCache);
 
     if (command.controlValues) {
@@ -369,7 +372,12 @@ export class ConstructFrameworkWorkflow {
 
   @Instrument()
   private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
-    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId, null, false);
+    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(
+      environmentId,
+      workflowId,
+      null,
+      false
+    );
 
     if (!foundWorkflow) {
       throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
@@ -390,15 +398,32 @@ export class ConstructFrameworkWorkflow {
       if (cached) {
         return cached;
       }
+
+      const inflightRequest = workflowInflightRequests.get(cacheKey);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
     }
 
-    const workflow = await this.getDbWorkflow(environmentId, workflowId);
+    const fetchPromise = this.getDbWorkflow(environmentId, workflowId)
+      .then((workflow) => {
+        if (useCache) {
+          workflowCache.set(cacheKey, workflow);
+        }
+
+        return workflow;
+      })
+      .finally(() => {
+        if (useCache) {
+          workflowInflightRequests.delete(cacheKey);
+        }
+      });
 
     if (useCache) {
-      workflowCache.set(cacheKey, workflow);
+      workflowInflightRequests.set(cacheKey, fetchPromise);
     }
 
-    return workflow;
+    return fetchPromise;
   }
 
   private async getOrganizationWithCache(
@@ -410,15 +435,33 @@ export class ConstructFrameworkWorkflow {
       if (cached) {
         return cached;
       }
+
+      const inflightRequest = organizationInflightRequests.get(organizationId);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
     }
 
-    const organization = await this.communityOrganizationRepository.findById(organizationId);
+    const fetchPromise = this.communityOrganizationRepository
+      .findById(organizationId)
+      .then((organization) => {
+        if (organization && useCache) {
+          organizationCache.set(organizationId, organization);
+        }
 
-    if (organization && useCache) {
-      organizationCache.set(organizationId, organization);
+        return organization || undefined;
+      })
+      .finally(() => {
+        if (useCache) {
+          organizationInflightRequests.delete(organizationId);
+        }
+      });
+
+    if (useCache) {
+      organizationInflightRequests.set(organizationId, fetchPromise);
     }
 
-    return organization || undefined;
+    return fetchPromise;
   }
 
   private async processSkipOption(
