@@ -80,13 +80,13 @@ export class ConstructFrameworkWorkflow {
       return this.constructLayoutPreviewWorkflow(command);
     }
 
-    const baseCondition =
+    const shouldUseCache =
       command.action === PostActionEnum.EXECUTE && command.environmentType !== EnvironmentTypeEnum.DEV;
 
-    const dbWorkflow = await this.getDbWorkflowWithCache(
+    const dbWorkflow = await this.getWorkflow(
       command.environmentId,
       command.workflowId,
-      baseCondition,
+      shouldUseCache,
       command.organizationId
     );
 
@@ -96,11 +96,7 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
-    const organization = await this.getOrganizationWithCache(
-      dbWorkflow._organizationId,
-      baseCondition,
-      command.environmentId
-    );
+    const organization = await this.getOrganization(dbWorkflow._organizationId, shouldUseCache, command.environmentId);
 
     return this.constructFrameworkWorkflow({
       dbWorkflow,
@@ -395,25 +391,10 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
-    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(
-      environmentId,
-      workflowId,
-      null,
-      false
-    );
-
-    if (!foundWorkflow) {
-      throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
-    }
-
-    return foundWorkflow;
-  }
-
-  private async getDbWorkflowWithCache(
+  private async getWorkflow(
     environmentId: string,
     workflowId: string,
-    baseCondition: boolean,
+    shouldUseCache: boolean,
     organizationId?: string
   ): Promise<NotificationTemplateEntity> {
     const cacheKey = `${environmentId}:${workflowId}`;
@@ -429,7 +410,7 @@ export class ConstructFrameworkWorkflow {
       });
     }
 
-    const useCache = baseCondition && isFeatureEnabled;
+    const useCache = shouldUseCache && isFeatureEnabled;
 
     if (useCache) {
       const cached = workflowCache.get(cacheKey);
@@ -443,13 +424,18 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
-    const fetchPromise = this.getDbWorkflow(environmentId, workflowId)
-      .then((workflow) => {
-        if (useCache) {
-          workflowCache.set(cacheKey, workflow);
+    const fetchPromise = this.workflowsRepository
+      .findByTriggerIdentifier(environmentId, workflowId, null, false)
+      .then((foundWorkflow) => {
+        if (!foundWorkflow) {
+          throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
         }
 
-        return workflow;
+        if (useCache) {
+          workflowCache.set(cacheKey, foundWorkflow);
+        }
+
+        return foundWorkflow;
       })
       .finally(() => {
         if (useCache) {
@@ -464,9 +450,9 @@ export class ConstructFrameworkWorkflow {
     return fetchPromise;
   }
 
-  private async getOrganizationWithCache(
+  private async getOrganization(
     organizationId: string,
-    baseCondition: boolean,
+    shouldUseCache: boolean,
     environmentId: string
   ): Promise<OrganizationEntity | undefined> {
     const isFeatureEnabled = await this.featureFlagsService.getFlag({
@@ -477,7 +463,7 @@ export class ConstructFrameworkWorkflow {
       component: 'bridge-org',
     });
 
-    const useCache = baseCondition && isFeatureEnabled;
+    const useCache = shouldUseCache && isFeatureEnabled;
 
     if (useCache) {
       const cached = organizationCache.get(organizationId);
