@@ -1794,6 +1794,9 @@ importers:
       lodash:
         specifier: ^4.17.15
         version: 4.17.21
+      lru-cache:
+        specifier: ^11.2.4
+        version: 11.2.4
       nest-raven:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.18)(@sentry/node@8.33.1)(class-transformer@0.5.1)(class-validator@0.14.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.1)
@@ -2748,7 +2751,7 @@ importers:
         version: 16.5.0
       jest:
         specifier: ^27.1.0
-        version: 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2))
+        version: 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
@@ -2763,16 +2766,16 @@ importers:
         version: 9.2.4
       ts-jest:
         specifier: ^27.0.5
-        version: 27.1.5(@babel/core@7.28.0)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.28.0))(esbuild@0.23.1)(jest@27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)))(typescript@5.6.2)
+        version: 27.1.5(@babel/core@7.28.0)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.28.0))(esbuild@0.23.1)(jest@27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)))(typescript@5.6.2)
       ts-node:
         specifier: ~10.9.1
-        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       typescript:
         specifier: 5.6.2
         version: 5.6.2
       vitest:
         specifier: ^2.1.9
-        version: 2.1.9(@edge-runtime/vm@4.0.2)(@types/node@20.19.10)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
+        version: 2.1.9(@edge-runtime/vm@4.0.2)(@types/node@22.15.13)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
     optionalDependencies:
       '@novu/ee-shared-services':
         specifier: workspace:*
@@ -3256,7 +3259,7 @@ importers:
     devDependencies:
       '@tailwindcss/typography':
         specifier: ^0.5.15
-        version: 0.5.19(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)))
+        version: 0.5.19(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3)))
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.4.47)
@@ -3265,13 +3268,13 @@ importers:
         version: 8.4.47
       tailwind-scrollbar:
         specifier: ^3.1.0
-        version: 3.1.0(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)))
+        version: 3.1.0(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3)))
       tailwindcss:
         specifier: ^3.4.14
-        version: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2))
+        version: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3))
       tailwindcss-animate:
         specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)))
+        version: 1.0.7(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3)))
 
   libs/maily-tsconfig: {}
 
@@ -3556,13 +3559,13 @@ importers:
         version: 5.0.10
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.8.3)
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3)
       typescript:
         specifier: ^5.0.0
         version: 5.8.3
       vitest:
         specifier: ^2.1.9
-        version: 2.1.9(@edge-runtime/vm@4.0.2)(@types/node@20.19.10)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
+        version: 2.1.9(@edge-runtime/vm@4.0.2)(@types/node@22.15.13)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
 
   packages/framework:
     dependencies:
@@ -3944,13 +3947,13 @@ importers:
         version: 3.0.1
       ts-node:
         specifier: ~10.9.1
-        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       typescript:
         specifier: 5.6.2
         version: 5.6.2
       vitest:
         specifier: ^1.2.1
-        version: 1.6.1(@edge-runtime/vm@4.0.2)(@types/node@20.19.10)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
+        version: 1.6.1(@edge-runtime/vm@4.0.2)(@types/node@22.15.13)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
 
   packages/providers:
     dependencies:
@@ -4125,7 +4128,7 @@ importers:
         version: 3.0.2
       ts-node:
         specifier: ~10.9.1
-        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       typedoc:
         specifier: ^0.24.0
         version: 0.24.6(typescript@5.6.2)
@@ -4134,7 +4137,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: 2.1.9
-        version: 2.1.9(@edge-runtime/vm@4.0.2)(@types/node@20.19.10)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
+        version: 2.1.9(@edge-runtime/vm@4.0.2)(@types/node@22.15.13)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
 
   packages/react:
     dependencies:
@@ -24672,7 +24675,6 @@ packages:
   next@14.2.10:
     resolution: {integrity: sha512-sDDExXnh33cY3RkS9JuFEKaS4HmlWmDKP1VJioucCG6z5KuA008DPsDZOzi8UfqEk3Ii+2NCQSJrfbEWtZZfww==}
     engines: {node: '>=18.17.0'}
-    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -38414,6 +38416,43 @@ snapshots:
       - ts-node
       - utf-8-validate
 
+  '@jest/core@27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))':
+    dependencies:
+      '@jest/console': 27.5.1
+      '@jest/reporters': 27.5.1
+      '@jest/test-result': 27.5.1
+      '@jest/transform': 27.5.1
+      '@jest/types': 27.5.1
+      '@types/node': 20.19.10
+      ansi-escapes: 4.3.2
+      chalk: 4.1.2
+      emittery: 0.8.1
+      exit: 0.1.2
+      graceful-fs: 4.2.11
+      jest-changed-files: 27.5.1
+      jest-config: 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
+      jest-haste-map: 27.5.1
+      jest-message-util: 27.5.1
+      jest-regex-util: 27.5.1
+      jest-resolve: 27.5.1
+      jest-resolve-dependencies: 27.5.1
+      jest-runner: 27.5.1
+      jest-runtime: 27.5.1
+      jest-snapshot: 27.5.1
+      jest-util: 27.5.1
+      jest-validate: 27.5.1
+      jest-watcher: 27.5.1
+      micromatch: 4.0.8
+      rimraf: 3.0.2
+      slash: 3.0.0
+      strip-ansi: 6.0.1
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - ts-node
+      - utf-8-validate
+
   '@jest/core@29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2))':
     dependencies:
       '@jest/console': 29.7.0
@@ -46249,10 +46288,10 @@ snapshots:
       postcss: 8.4.47
       tailwindcss: 4.0.12
 
-  '@tailwindcss/typography@0.5.19(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)))':
+  '@tailwindcss/typography@0.5.19(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3)))':
     dependencies:
       postcss-selector-parser: 6.0.10
-      tailwindcss: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2))
+      tailwindcss: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3))
 
   '@tanem/svg-injector@10.1.68':
     dependencies:
@@ -56122,6 +56161,27 @@ snapshots:
       - ts-node
       - utf-8-validate
 
+  jest-cli@27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)):
+    dependencies:
+      '@jest/core': 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
+      '@jest/test-result': 27.5.1
+      '@jest/types': 27.5.1
+      chalk: 4.1.2
+      exit: 0.1.2
+      graceful-fs: 4.2.11
+      import-local: 3.1.0
+      jest-config: 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
+      jest-util: 27.5.1
+      jest-validate: 27.5.1
+      prompts: 2.4.2
+      yargs: 16.2.0
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - ts-node
+      - utf-8-validate
+
   jest-cli@29.7.0(@types/node@20.19.10)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)):
     dependencies:
       '@jest/core': 29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2))
@@ -56188,6 +56248,40 @@ snapshots:
       strip-json-comments: 3.1.1
     optionalDependencies:
       ts-node: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - utf-8-validate
+
+  jest-config@27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)):
+    dependencies:
+      '@babel/core': 7.28.0
+      '@jest/test-sequencer': 27.5.1
+      '@jest/types': 27.5.1
+      babel-jest: 27.5.1(@babel/core@7.28.0)
+      chalk: 4.1.2
+      ci-info: 3.9.0
+      deepmerge: 4.3.1
+      glob: 7.2.3
+      graceful-fs: 4.2.11
+      jest-circus: 27.5.1
+      jest-environment-jsdom: 27.5.1
+      jest-environment-node: 27.5.1
+      jest-get-type: 27.5.1
+      jest-jasmine2: 27.5.1
+      jest-regex-util: 27.5.1
+      jest-resolve: 27.5.1
+      jest-runner: 27.5.1
+      jest-util: 27.5.1
+      jest-validate: 27.5.1
+      micromatch: 4.0.8
+      parse-json: 5.2.0
+      pretty-format: 27.5.1
+      slash: 3.0.0
+      strip-json-comments: 3.1.1
+    optionalDependencies:
+      ts-node: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -57044,6 +57138,18 @@ snapshots:
       '@jest/core': 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2))
       import-local: 3.1.0
       jest-cli: 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2))
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - ts-node
+      - utf-8-validate
+
+  jest@27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)):
+    dependencies:
+      '@jest/core': 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
+      import-local: 3.1.0
+      jest-cli: 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -61281,6 +61387,14 @@ snapshots:
     optionalDependencies:
       postcss: 8.4.47
       ts-node: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
+
+  postcss-load-config@4.0.2(postcss@8.4.47)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3)):
+    dependencies:
+      lilconfig: 3.1.3
+      yaml: 2.6.1
+    optionalDependencies:
+      postcss: 8.4.47
+      ts-node: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3)
 
   postcss-load-config@6.0.1(jiti@2.4.2)(postcss@8.4.47)(tsx@4.16.2)(yaml@2.6.1):
     dependencies:
@@ -65568,9 +65682,9 @@ snapshots:
 
   tailwind-merge@2.6.0: {}
 
-  tailwind-scrollbar@3.1.0(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2))):
+  tailwind-scrollbar@3.1.0(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3))):
     dependencies:
-      tailwindcss: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2))
+      tailwindcss: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3))
 
   tailwind-variants@0.3.0(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))):
     dependencies:
@@ -65584,6 +65698,10 @@ snapshots:
   tailwindcss-animate@1.0.7(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))):
     dependencies:
       tailwindcss: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
+
+  tailwindcss-animate@1.0.7(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3))):
+    dependencies:
+      tailwindcss: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3))
 
   tailwindcss-animate@1.0.7(tailwindcss@4.0.12):
     dependencies:
@@ -65636,6 +65754,33 @@ snapshots:
       postcss-import: 15.1.0(postcss@8.4.47)
       postcss-js: 4.0.1(postcss@8.4.47)
       postcss-load-config: 4.0.2(postcss@8.4.47)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
+      postcss-nested: 6.2.0(postcss@8.4.47)
+      postcss-selector-parser: 6.1.2
+      resolve: 1.22.8
+      sucrase: 3.35.0
+    transitivePeerDependencies:
+      - ts-node
+
+  tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3)):
+    dependencies:
+      '@alloc/quick-lru': 5.2.0
+      arg: 5.0.2
+      chokidar: 3.6.0
+      didyoumean: 1.2.2
+      dlv: 1.1.3
+      fast-glob: 3.3.2
+      glob-parent: 6.0.2
+      is-glob: 4.0.3
+      jiti: 1.21.6
+      lilconfig: 3.1.3
+      micromatch: 4.0.8
+      normalize-path: 3.0.0
+      object-hash: 3.0.0
+      picocolors: 1.1.1
+      postcss: 8.4.47
+      postcss-import: 15.1.0(postcss@8.4.47)
+      postcss-js: 4.0.1(postcss@8.4.47)
+      postcss-load-config: 4.0.2(postcss@8.4.47)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3))
       postcss-nested: 6.2.0(postcss@8.4.47)
       postcss-selector-parser: 6.1.2
       resolve: 1.22.8
@@ -66117,6 +66262,24 @@ snapshots:
       babel-jest: 27.5.1(@babel/core@7.28.0)
       esbuild: 0.23.1
 
+  ts-jest@27.1.5(@babel/core@7.28.0)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.28.0))(esbuild@0.23.1)(jest@27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)))(typescript@5.6.2):
+    dependencies:
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
+      jest-util: 27.5.1
+      json5: 2.2.3
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.6.3
+      typescript: 5.6.2
+      yargs-parser: 20.2.9
+    optionalDependencies:
+      '@babel/core': 7.28.0
+      '@types/jest': 29.5.2
+      babel-jest: 27.5.1(@babel/core@7.28.0)
+      esbuild: 0.23.1
+
   ts-jest@27.1.5(@babel/core@7.28.0)(@types/jest@30.0.0)(babel-jest@27.5.1(@babel/core@7.28.0))(esbuild@0.23.1)(jest@30.0.5(@types/node@20.19.10)(babel-plugin-macros@3.1.0)(esbuild-register@3.5.0(esbuild@0.23.1))(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.6.2)))(typescript@5.6.2):
     dependencies:
       bs-logger: 0.2.6
@@ -66265,26 +66428,6 @@ snapshots:
     optionalDependencies:
       '@swc/core': 1.7.26(@swc/helpers@0.5.15)
 
-  ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@20.19.10)(typescript@5.8.3):
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.9
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.3
-      '@types/node': 20.19.10
-      acorn: 8.11.3
-      acorn-walk: 8.3.2
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.8.3
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
-    optionalDependencies:
-      '@swc/core': 1.7.26(@swc/helpers@0.5.15)
-
   ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -66304,7 +66447,26 @@ snapshots:
       yn: 3.1.1
     optionalDependencies:
       '@swc/core': 1.7.26(@swc/helpers@0.5.15)
-    optional: true
+
+  ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.8.3):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.3
+      '@types/node': 22.15.13
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 5.8.3
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+    optionalDependencies:
+      '@swc/core': 1.7.26(@swc/helpers@0.5.15)
 
   ts-node@9.1.1(typescript@5.6.2):
     dependencies:
@@ -67301,6 +67463,24 @@ snapshots:
       - supports-color
       - terser
 
+  vite-node@1.6.1(@types/node@22.15.13)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6):
+    dependencies:
+      cac: 6.7.14
+      debug: 4.4.0(supports-color@8.1.1)
+      pathe: 1.1.2
+      picocolors: 1.1.1
+      vite: 5.4.21(@types/node@22.15.13)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
+    transitivePeerDependencies:
+      - '@types/node'
+      - less
+      - lightningcss
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+
   vite-node@2.1.9(@types/node@20.19.10)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6):
     dependencies:
       cac: 6.7.14
@@ -67485,6 +67665,43 @@ snapshots:
     optionalDependencies:
       '@edge-runtime/vm': 4.0.2
       '@types/node': 20.19.10
+      happy-dom: 20.0.11
+      jsdom: 25.0.0
+    transitivePeerDependencies:
+      - less
+      - lightningcss
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+
+  vitest@1.6.1(@edge-runtime/vm@4.0.2)(@types/node@22.15.13)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6):
+    dependencies:
+      '@vitest/expect': 1.6.1
+      '@vitest/runner': 1.6.1
+      '@vitest/snapshot': 1.6.1
+      '@vitest/spy': 1.6.1
+      '@vitest/utils': 1.6.1
+      acorn-walk: 8.3.2
+      chai: 4.4.1
+      debug: 4.4.0(supports-color@8.1.1)
+      execa: 8.0.1
+      local-pkg: 0.5.1
+      magic-string: 0.30.17
+      pathe: 1.1.2
+      picocolors: 1.1.1
+      std-env: 3.9.0
+      strip-literal: 2.1.1
+      tinybench: 2.9.0
+      tinypool: 0.8.4
+      vite: 5.4.21(@types/node@22.15.13)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
+      vite-node: 1.6.1(@types/node@22.15.13)(less@4.2.0)(lightningcss@1.29.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@edge-runtime/vm': 4.0.2
+      '@types/node': 22.15.13
       happy-dom: 20.0.11
       jsdom: 25.0.0
     transitivePeerDependencies:

@@ -34,6 +34,7 @@ import {
 import { setUser } from '@sentry/node';
 import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import { LRUCache } from 'lru-cache';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
 import { PartialNotificationEntity } from '../add-job/add-job.command';
@@ -47,6 +48,13 @@ import { RunJobCommand } from './run-job.command';
 import { calculateNextAvailableTime, isWithinSchedule } from './schedule-validator';
 
 const nr = require('newrelic');
+
+const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
+  max: 1000,
+  ttl: 1000 * 60,
+});
+
+const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity | undefined>>();
 
 export type SelectedWorkflowFields = Pick<NotificationTemplateEntity, 'steps'>;
 
@@ -152,8 +160,7 @@ export class RunJob {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
       }
 
-      const workflow =
-        (await this.notificationTemplateRepository.findById(job._templateId, job._environmentId)) ?? undefined;
+      const workflow = await this.getWorkflow(job._templateId, job._environmentId, job._organizationId);
 
       if (isSubscribersScheduleEnabled) {
         const schedule = await this.getSubscriberSchedule.execute(
@@ -373,6 +380,56 @@ export class RunJob {
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
     }
+  }
+
+  @Instrument()
+  private async getWorkflow(
+    templateId: string,
+    environmentId: string,
+    organizationId: string
+  ): Promise<NotificationTemplateEntity | undefined> {
+    const cacheKey = `${environmentId}:${templateId}`;
+
+    const isFeatureEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      component: 'worker-workflow',
+    });
+
+    if (isFeatureEnabled) {
+      const cached = workflowCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const inflightRequest = workflowInflightRequests.get(cacheKey);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
+    }
+
+    const fetchPromise = this.notificationTemplateRepository
+      .findById(templateId, environmentId)
+      .then((workflow) => {
+        if (workflow && isFeatureEnabled) {
+          workflowCache.set(cacheKey, workflow);
+        }
+
+        return workflow ?? undefined;
+      })
+      .finally(() => {
+        if (isFeatureEnabled) {
+          workflowInflightRequests.delete(cacheKey);
+        }
+      });
+
+    if (isFeatureEnabled) {
+      workflowInflightRequests.set(cacheKey, fetchPromise);
+    }
+
+    return fetchPromise;
   }
 
   private isUnsnoozeJob(job: JobEntity) {
