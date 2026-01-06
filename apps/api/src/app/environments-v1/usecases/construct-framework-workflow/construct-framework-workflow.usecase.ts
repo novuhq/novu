@@ -1,5 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { emailControlSchema, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  emailControlSchema,
+  FeatureFlagsService,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
@@ -10,7 +16,13 @@ import {
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import { EnvironmentTypeEnum, LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
+import {
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  LAYOUT_PREVIEW_EMAIL_STEP,
+  LAYOUT_PREVIEW_WORKFLOW_ID,
+  StepTypeEnum,
+} from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import { LRUCache } from 'lru-cache';
@@ -58,7 +70,8 @@ export class ConstructFrameworkWorkflow {
     private pushOutputRendererUseCase: PushOutputRendererUsecase,
     private delayOutputRendererUseCase: DelayOutputRendererUsecase,
     private digestOutputRendererUseCase: DigestOutputRendererUsecase,
-    private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase
+    private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -67,8 +80,15 @@ export class ConstructFrameworkWorkflow {
       return this.constructLayoutPreviewWorkflow(command);
     }
 
-    const useCache = command.action === PostActionEnum.EXECUTE && command.environmentType !== EnvironmentTypeEnum.DEV;
-    const dbWorkflow = await this.getDbWorkflowWithCache(command.environmentId, command.workflowId, useCache);
+    const baseCondition =
+      command.action === PostActionEnum.EXECUTE && command.environmentType !== EnvironmentTypeEnum.DEV;
+
+    const dbWorkflow = await this.getDbWorkflowWithCache(
+      command.environmentId,
+      command.workflowId,
+      baseCondition,
+      command.organizationId
+    );
 
     if (command.controlValues) {
       for (const step of dbWorkflow.steps) {
@@ -76,7 +96,11 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
-    const organization = await this.getOrganizationWithCache(dbWorkflow._organizationId, useCache);
+    const organization = await this.getOrganizationWithCache(
+      dbWorkflow._organizationId,
+      baseCondition,
+      command.environmentId
+    );
 
     return this.constructFrameworkWorkflow({
       dbWorkflow,
@@ -389,9 +413,23 @@ export class ConstructFrameworkWorkflow {
   private async getDbWorkflowWithCache(
     environmentId: string,
     workflowId: string,
-    useCache: boolean
+    baseCondition: boolean,
+    organizationId?: string
   ): Promise<NotificationTemplateEntity> {
     const cacheKey = `${environmentId}:${workflowId}`;
+
+    let isFeatureEnabled = false;
+    if (organizationId) {
+      isFeatureEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+        defaultValue: false,
+        environment: { _id: environmentId },
+        organization: { _id: organizationId },
+        component: 'bridge-workflow',
+      });
+    }
+
+    const useCache = baseCondition && isFeatureEnabled;
 
     if (useCache) {
       const cached = workflowCache.get(cacheKey);
@@ -428,8 +466,19 @@ export class ConstructFrameworkWorkflow {
 
   private async getOrganizationWithCache(
     organizationId: string,
-    useCache: boolean
+    baseCondition: boolean,
+    environmentId: string
   ): Promise<OrganizationEntity | undefined> {
+    const isFeatureEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      component: 'bridge-org',
+    });
+
+    const useCache = baseCondition && isFeatureEnabled;
+
     if (useCache) {
       const cached = organizationCache.get(organizationId);
       if (cached) {
