@@ -1,3 +1,18 @@
+## v3.12.0 (2026-01-07)
+
+### 🚀 Features
+
+- **js,react:** Italics formatting support in content fixes NV-7025 ([#9789](https://github.com/novuhq/novu/pull/9789))
+
+### 🩹 Fixes
+
+- **js:** inbox doubled notifications issue fixes NV-7014 ([#9773](https://github.com/novuhq/novu/pull/9773))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Paweł Tymczuk @LetItRock
+
 ## v3.11.2 (2025-12-24)
 
 ### 🚀 Features
