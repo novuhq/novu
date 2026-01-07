@@ -1,4 +1,4 @@
-import sgClient from '@sendgrid/client';
+import { Client } from '@sendgrid/client';
 import { MailService } from '@sendgrid/mail';
 import { expect, test, vi } from 'vitest';
 import { SendgridEmailProvider } from './sendgrid.provider';
@@ -171,7 +171,7 @@ test('should override credentials with mail data', async () => {
 });
 
 test('should set custom base url when provided', async () => {
-  const setDefaultRequestSpy = vi.spyOn(sgClient, 'setDefaultRequest');
+  const setDefaultRequestSpy = vi.spyOn(Client.prototype, 'setDefaultRequest');
 
   new SendgridEmailProvider({
     ...mockConfig,
@@ -182,7 +182,7 @@ test('should set custom base url when provided', async () => {
 });
 
 test('should not set custom base url when not provided', async () => {
-  const setDefaultRequestSpy = vi.spyOn(sgClient, 'setDefaultRequest');
+  const setDefaultRequestSpy = vi.spyOn(Client.prototype, 'setDefaultRequest');
   setDefaultRequestSpy.mockClear();
 
   new SendgridEmailProvider(mockConfig);
