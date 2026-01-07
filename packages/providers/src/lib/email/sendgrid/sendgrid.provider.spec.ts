@@ -1,3 +1,4 @@
+import sgClient from '@sendgrid/client';
 import { MailService } from '@sendgrid/mail';
 import { expect, test, vi } from 'vitest';
 import { SendgridEmailProvider } from './sendgrid.provider';
@@ -167,4 +168,24 @@ test('should override credentials with mail data', async () => {
     ...{ ipPoolName: 'ip_from_mail_data' },
   });
   expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ ipPoolName: 'ip_from_mail_data' }));
+});
+
+test('should set EU data residency when EU base url is provided', async () => {
+  const setDataResidencySpy = vi.spyOn(sgClient, 'setDataResidency');
+
+  new SendgridEmailProvider({
+    ...mockConfig,
+    baseUrl: 'https://api.eu.sendgrid.com',
+  });
+
+  expect(setDataResidencySpy).toHaveBeenCalledWith('eu');
+});
+
+test('should not set data residency when base url is not provided', async () => {
+  const setDataResidencySpy = vi.spyOn(sgClient, 'setDataResidency');
+  setDataResidencySpy.mockClear();
+
+  new SendgridEmailProvider(mockConfig);
+
+  expect(setDataResidencySpy).not.toHaveBeenCalled();
 });

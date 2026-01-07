@@ -202,6 +202,13 @@ export const sendgridConfig: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    description: 'Use https://api.eu.sendgrid.com for EU region accounts',
+    type: 'string',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.IpPoolName,
     displayName: 'IP Pool Name',
     type: 'string',
