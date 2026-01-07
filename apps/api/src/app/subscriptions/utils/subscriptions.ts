@@ -1,3 +1,4 @@
+import { buildDefaultSubscriptionIdentifier } from '@novu/application-generic';
 import { NotificationTemplateEntity, PreferencesEntity, TopicSubscribersEntity } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
 import { RulesLogic } from 'json-logic-js';
@@ -38,7 +39,9 @@ export function mapTopicSubscriptionToDto(
               severity: workflow.severity || SeverityLevelEnum.NONE,
             }
           : undefined,
-        subscriptionId: subscription._id,
+        subscriptionId:
+          subscription.identifier ||
+          buildDefaultSubscriptionIdentifier(subscription.topicKey, subscription.externalSubscriberId),
         enabled: preferences?.all?.enabled ?? true,
         condition: preferences?.all?.condition as RulesLogic | undefined,
       };

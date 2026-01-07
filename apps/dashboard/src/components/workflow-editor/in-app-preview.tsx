@@ -216,8 +216,16 @@ const Markdown = (props: MarkdownProps) => {
   return (
     <p {...rest}>
       {tokens.map((token, index) => {
-        if (token.type === 'bold') {
+        if (token.type === 'boldItalic') {
+          return (
+            <strong key={index}>
+              <em>{token.content}</em>
+            </strong>
+          );
+        } else if (token.type === 'bold') {
           return <strong key={index}>{token.content}</strong>;
+        } else if (token.type === 'italic') {
+          return <em key={index}>{token.content}</em>;
         } else {
           return <span key={index}>{token.content}</span>;
         }

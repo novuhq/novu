@@ -34,9 +34,7 @@ export class GetSubscription {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       topicKey: command.topicKey,
-      ...(TopicSubscribersRepository.isInternalId(command.subscriptionIdOrIdentifier)
-        ? { _id: command.subscriptionIdOrIdentifier }
-        : { identifier: command.subscriptionIdOrIdentifier }),
+      identifier: command.identifier,
     });
 
     if (!subscription) {
@@ -138,7 +136,7 @@ export class GetSubscription {
             organizationId: command.organizationId,
             subscriberId: subscription._subscriberId,
             templateId: workflow._id,
-            ensureDefaultAllEnabled: false,
+            excludeSubscriberPreferences: true,
           })
         );
 

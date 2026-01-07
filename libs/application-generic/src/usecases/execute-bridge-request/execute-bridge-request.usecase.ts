@@ -198,6 +198,11 @@ export class ExecuteBridgeRequest {
     const retriesLimit = command.retriesLimit || DEFAULT_RETRIES_LIMIT;
     const bridgeActionUrl = new URL(bridgeUrl);
     bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.ACTION, command.action);
+
+    if (environment.type) {
+      bridgeActionUrl.searchParams.set('environmentType', environment.type);
+    }
+
     Object.entries(command.searchParams || {}).forEach(([key, value]) => {
       bridgeActionUrl.searchParams.set(key, value);
     });

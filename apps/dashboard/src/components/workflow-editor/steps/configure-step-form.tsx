@@ -377,11 +377,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                 description={
                   <>
                     You're about to delete the{' '}
-                    <TruncatedText className="max-w-[32ch] font-bold">{step.name}</TruncatedText> step, this action is
-                    permanent.
+                    <TruncatedText className="max-w-[32ch] font-semibold">{step.name}</TruncatedText> step, this action
+                    is permanent.
                   </>
                 }
                 confirmButtonText="Delete"
+                confirmButtonVariant="error"
               />
               <Button
                 variant="error"

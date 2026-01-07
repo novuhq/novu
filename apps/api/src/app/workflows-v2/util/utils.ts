@@ -16,12 +16,12 @@ export function findMissingKeys(requiredRecord: object, actualRecord: object) {
 }
 
 export function collectKeys(obj, prefix = ''): string[] {
-  return reduce<Record<string, unknown>, string[]>(
+  return reduce<any, string[]>(
     obj,
     (result, value, key) => {
       const newKey = prefix ? `${prefix}.${key}` : key;
       if (isObject(value) && !isArray(value)) {
-        result.push(...collectKeys(value, newKey as string));
+        result.push(...(collectKeys(value, newKey) as string[]));
       } else {
         result.push(newKey as string);
       }

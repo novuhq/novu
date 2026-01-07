@@ -43,7 +43,7 @@
     "class-validator": "0.14.1",
     "dotenv": "^16.4.5",
     "envalid": "^8.0.0",
-    "jsonwebtoken": "9.0.0",
+    "jsonwebtoken": "9.0.3",
     "lodash": "^4.17.15",
     "nest-raven": "10.1.0",
     "newrelic": "^12.8.1",

@@ -65,12 +65,9 @@ export class Notifications extends BaseModule {
     });
     this.cache = new NotificationsCache({
       emitter: eventEmitterInstance,
+      inboxService: inboxServiceInstance,
     });
     this.#useCache = useCache;
-  }
-
-  get inboxService(): InboxService {
-    return this._inboxService;
   }
 
   async list({ limit = 10, ...restOptions }: ListNotificationsArgs = {}): Result<ListNotificationsResponse> {

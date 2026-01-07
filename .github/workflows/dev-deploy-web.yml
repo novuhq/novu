@@ -10,13 +10,6 @@ on:
         required: false
         type: boolean
         default: false
-  push:
-    branches:
-      - next
-      - main
-    paths:
-      - "apps/web/**"
-      - "packages/shared/**"
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}

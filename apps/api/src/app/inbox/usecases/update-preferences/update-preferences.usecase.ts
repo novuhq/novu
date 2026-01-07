@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AnalyticsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -14,7 +13,6 @@ import {
   UpsertSubscriberWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import {
-  BaseRepository,
   NotificationTemplateEntity,
   PreferencesRepository,
   SubscriberEntity,
@@ -37,7 +35,6 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
-import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
@@ -45,7 +42,6 @@ import { UpdatePreferencesCommand } from './update-preferences.command';
 export class UpdatePreferences {
   constructor(
     private subscriberRepository: SubscriberRepository,
-    private analyticsService: AnalyticsService,
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private upsertPreferences: UpsertPreferences,
@@ -63,13 +59,13 @@ export class UpdatePreferences {
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
     const workflow = await this.getWorkflow(command);
-    const subscriptionId = await this.getSubscriptionId(command);
+    const internalSubscriptionId = await this.getSubscriptionId(command);
 
     let newPreference: InboxPreference | null = null;
 
-    await this.updateSubscriberPreference(command, subscriber, workflow?._id, subscriptionId);
+    await this.updateSubscriberPreference(command, subscriber, workflow?._id, internalSubscriptionId);
 
-    newPreference = await this.findPreference(command, subscriber, workflow, subscriptionId);
+    newPreference = await this.findPreference(command, subscriber, workflow, internalSubscriptionId);
 
     await this.sendWebhookMessage.execute({
       eventType: WebhookEventEnum.PREFERENCE_UPDATED,
@@ -108,18 +104,14 @@ export class UpdatePreferences {
   }
 
   private async getSubscriptionId(command: UpdatePreferencesCommand): Promise<string | undefined> {
-    if (command.level !== PreferenceLevelEnum.TEMPLATE || !command.subscriptionIdOrIdentifier) {
+    if (command.level !== PreferenceLevelEnum.TEMPLATE || !command.subscriptionIdentifier) {
       return undefined;
-    }
-
-    if (BaseRepository.isInternalId(command.subscriptionIdOrIdentifier)) {
-      return command.subscriptionIdOrIdentifier;
     }
 
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      identifier: command.subscriptionIdOrIdentifier,
+      identifier: command.subscriptionIdentifier,
     });
 
     return subscription?._id;
@@ -130,7 +122,7 @@ export class UpdatePreferences {
     command: UpdatePreferencesCommand,
     subscriber: Pick<SubscriberEntity, '_id'>,
     workflowId: string | undefined,
-    subscriptionId: string | undefined
+    internalSubscriptionId: string | undefined
   ): Promise<void> {
     const channelPreferences: IPreferenceChannels = this.buildPreferenceChannels(command);
 
@@ -140,7 +132,7 @@ export class UpdatePreferences {
       environmentId: command.environmentId,
       _subscriberId: subscriber._id,
       workflowId,
-      subscriptionId,
+      subscriptionId: internalSubscriptionId,
       schedule: command.schedule,
       all: command.all,
     });
@@ -161,11 +153,11 @@ export class UpdatePreferences {
     command: UpdatePreferencesCommand,
     subscriber: Pick<SubscriberEntity, '_id'>,
     workflow: NotificationTemplateEntity | undefined,
-    subscriptionId?: string
+    internalSubscriptionId?: string
   ): Promise<InboxPreference> {
     if (
       command.level === PreferenceLevelEnum.TEMPLATE &&
-      command.subscriptionIdOrIdentifier &&
+      command.subscriptionIdentifier &&
       command.workflowIdOrIdentifier &&
       workflow
     ) {
@@ -173,7 +165,7 @@ export class UpdatePreferences {
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _templateId: workflow._id,
-        _topicSubscriptionId: subscriptionId,
+        _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
       });
 
@@ -184,7 +176,7 @@ export class UpdatePreferences {
         level: PreferenceLevelEnum.TEMPLATE,
         enabled: builtPreferences.all.enabled,
         condition: builtPreferences.all.condition,
-        subscriptionId,
+        subscriptionId: internalSubscriptionId,
         channels,
         workflow: {
           id: workflow._id,
@@ -207,7 +199,7 @@ export class UpdatePreferences {
           template: workflow,
           subscriber,
           includeInactiveChannels: command.includeInactiveChannels,
-          subscriptionId,
+          subscriptionId: internalSubscriptionId,
         })
       );
 

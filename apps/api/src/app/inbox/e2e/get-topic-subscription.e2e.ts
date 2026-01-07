@@ -4,7 +4,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { CreateTopicSubscriptionRequestDto } from '../dtos/create-topic-subscription-request.dto';
 
-describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscriptionIdOrIdentifier (GET) #novu-v2', () => {
+describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:identifier (GET) #novu-v2', () => {
   let session: UserSession;
   const preferencesRepository = new PreferencesRepository();
 
@@ -13,7 +13,7 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
     await session.initialize();
   });
 
-  it('should return subscription by identifier or ID, with stored preferences when present', async () => {
+  it('should return subscription by identifier with stored preferences when present', async () => {
     const topicKey = `topic-${Date.now()}`;
     const subscriptionIdentifier = `subscription-${Date.now()}`;
 
@@ -33,18 +33,11 @@ describe('Get topic subscription - /inbox/topics/:topicKey/subscriptions/:subscr
     });
     expect(createResponse.status).to.equal(201);
 
-    const subscriptionId = createResponse.body.data.id;
-
-    const byIdentifier = await getSubscription(session, topicKey, subscriptionIdentifier);
-    expect(byIdentifier.status).to.equal(200);
-    expect(byIdentifier.body.data.identifier).to.equal(subscriptionIdentifier);
-    expect(byIdentifier.body.data.preferences).to.have.lengthOf(1);
-    expect(byIdentifier.body.data.preferences[0].workflow.identifier).to.equal(workflowIdentifier);
-
-    const byId = await getSubscription(session, topicKey, subscriptionId);
-    expect(byId.status).to.equal(200);
-    expect(byId.body.data.id).to.equal(subscriptionId);
-    expect(byId.body.data.preferences).to.have.lengthOf(1);
+    const response = await getSubscription(session, topicKey, subscriptionIdentifier);
+    expect(response.status).to.equal(200);
+    expect(response.body.data.identifier).to.equal(subscriptionIdentifier);
+    expect(response.body.data.preferences).to.have.lengthOf(1);
+    expect(response.body.data.preferences[0].workflow.identifier).to.equal(workflowIdentifier);
   });
 
   it('should return 204 when subscription does not exist', async () => {
@@ -306,7 +299,7 @@ async function createSubscription({
 async function getSubscription(
   session: UserSession,
   topicKey: string,
-  subscriptionIdOrIdentifier: string,
+  identifier: string,
   queryParams?: { workflowIds?: string[]; tags?: string[] }
 ) {
   const searchParams = new URLSearchParams();
@@ -326,6 +319,6 @@ async function getSubscription(
   const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
 
   return await session.testAgent
-    .get(`/v1/inbox/topics/${topicKey}/subscriptions/${subscriptionIdOrIdentifier}${query}`)
+    .get(`/v1/inbox/topics/${topicKey}/subscriptions/${identifier}${query}`)
     .set('Authorization', `Bearer ${session.subscriberToken}`);
 }

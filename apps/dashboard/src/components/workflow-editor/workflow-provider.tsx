@@ -1,15 +1,18 @@
 import { PatchWorkflowDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { CheckCircleIcon } from 'lucide-react';
 import { createContext, ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
+import { RiAlertFill } from 'react-icons/ri';
 import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/primitives/alert-dialog';
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+} from '@/components/primitives/dialog';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { useDataRef } from '@/hooks/use-data-ref';
@@ -251,40 +254,43 @@ const SavingChangesDialog = ({
   onCancel: () => void;
 }) => {
   return (
-    <AlertDialog open={isOpen}>
-      <AlertDialogContent className="w-[26rem]">
-        <AlertDialogHeader className="flex flex-row items-start gap-4">
-          <div
-            className={`rounded-md p-3 transition-all duration-300 ${
-              isUpdatePatchPending ? 'bg-warning/10' : 'bg-success/10 scale-110'
-            }`}
-          >
-            <div className="transition-opacity duration-300">
-              {isUpdatePatchPending ? (
-                <RiAlertFill className="text-warning animate-in fade-in size-6" />
-              ) : (
-                <CheckCircleIcon className="text-success animate-in fade-in size-6" />
-              )}
+    <Dialog modal open={isOpen} onOpenChange={(open) => !open && isUpdatePatchPending && onCancel()}>
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogContent className="max-w-[440px] gap-4 !rounded-xl p-4 overflow-hidden" hideCloseButton>
+          <div className="flex items-start justify-between">
+            <div
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ${
+                isUpdatePatchPending ? 'bg-warning/10' : 'bg-success/10 scale-110'
+              }`}
+            >
+              <div className="transition-opacity duration-300">
+                {isUpdatePatchPending ? (
+                  <RiAlertFill className="text-warning animate-in fade-in size-6" />
+                ) : (
+                  <CheckCircleIcon className="text-success animate-in fade-in size-6" />
+                )}
+              </div>
             </div>
+            {isUpdatePatchPending && (
+              <DialogClose>
+                <Cross2Icon className="size-4" />
+                <span className="sr-only">Close</span>
+              </DialogClose>
+            )}
           </div>
-          <div className="space-y-1">
-            <div>
-              <AlertDialogTitle className="transition-all duration-300">
-                {isUpdatePatchPending ? 'Saving changes' : 'Changes saved!'}
-              </AlertDialogTitle>
-            </div>
-            <AlertDialogDescription className="transition-all duration-300">
+
+          <div className="flex flex-col gap-1">
+            <DialogTitle className="text-md font-medium transition-all duration-300">
+              {isUpdatePatchPending ? 'Saving changes' : 'Changes saved!'}
+            </DialogTitle>
+            <DialogDescription className="text-foreground-600 transition-all duration-300">
               {isUpdatePatchPending ? 'Please wait while we save your changes' : 'Workflow has been saved successfully'}
-            </AlertDialogDescription>
+            </DialogDescription>
           </div>
-          {isUpdatePatchPending && (
-            <button onClick={onCancel} className="text-gray-500">
-              <RiCloseFill className="size-4" />
-            </button>
-          )}
-        </AlertDialogHeader>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogContent>
+      </DialogPortal>
+    </Dialog>
   );
 };
 

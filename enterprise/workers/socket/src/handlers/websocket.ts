@@ -73,7 +73,7 @@ export async function handleSendMessage(context: Context) {
     const id = namespace.idFromName(roomId);
     const stub = namespace.get(id);
 
-    await stub.sendToUser(userId, event, data, contextKeys);
+    context.executionCtx.waitUntil(stub.sendToUser(userId, event, data, contextKeys));
 
     return context.json({ success: true, roomId, timestamp: new Date().toISOString() });
   } catch (error) {

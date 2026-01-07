@@ -178,6 +178,13 @@ export class NotificationFeedItemDto implements INotificationDto {
   })
   seen: boolean;
 
+  @ApiProperty({
+    description: 'Indicates whether the notification has been archived by the subscriber.',
+    example: false,
+    type: Boolean,
+  })
+  archived: boolean;
+
   @ApiPropertyOptional({
     description: 'Device tokens for push notifications, if applicable.',
     type: [String],

@@ -96,7 +96,7 @@
     "json-logic-js": "^2.0.5",
     "json-schema-faker": "^0.5.6",
     "json-schema-to-ts": "^3.0.0",
-    "jsonwebtoken": "9.0.0",
+    "jsonwebtoken": "9.0.3",
     "liquidjs": "^10.20.0",
     "lodash": "^4.17.15",
     "nanoid": "^3.1.20",

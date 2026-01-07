@@ -1,4 +1,8 @@
 name: Release Packages
+run-name: >
+  ${{
+    github.event_name == 'workflow_dispatch' && format('Release {0} ({1}) - {2}', github.event.inputs.version, github.event.inputs.release_type, github.event.inputs.packages) || 'Release Packages'
+  }}
 
 on:
   workflow_dispatch:
@@ -27,16 +31,21 @@ on:
           - nightly
           - rc
         default: stable
+  pull_request:
+    types: [closed]
+    branches: [next, main]
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 jobs:
   release:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     outputs:
       pr_number: ${{ github.event.inputs.release_type == 'stable' && steps.create-pr.outputs.pull-request-number || '' }}
       pr_url: ${{ github.event.inputs.release_type == 'stable' && steps.create-pr.outputs.pull-request-url || '' }}
@@ -58,7 +67,11 @@ jobs:
         with:
           node-version: "20.19.0"
           cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
+
+      - name: Upgrade npm for Trusted Publishing
+        run: |
+          npm install -g npm@latest
+          echo "npm version: $(npm --version) (>= 11.5.1 required for trusted publishing)"
 
       - name: Install Dependencies
         shell: bash
@@ -68,7 +81,7 @@ jobs:
           pnpm list nx
 
       - name: Set version for nightly or rc
-        if: ${{ github.event.inputs.release_type != 'stable' }}
+        if: github.event.inputs.release_type != 'stable'
         run: |
           COMMIT_SHA=$(git rev-parse --short HEAD)
           if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
@@ -115,19 +128,17 @@ jobs:
           fi
 
       - name: Publish packages (nightly and rc only)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: github.event.inputs.release_type != 'stable'
         run: |
           if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
-            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly
+            echo "📦 Publishing nightly release with OIDC trusted publishing..."
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly --provenance
           elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
-            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next
-          else
-            echo "Skipping publish for stable release (will be published after PR merge)"
+            echo "📦 Publishing RC release with OIDC trusted publishing..."
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next --provenance
           fi
-
       - name: Create Pull Request
-        if: ${{ github.event.inputs.release_type == 'stable' }}
+        if: github.event.inputs.release_type == 'stable'
         id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
@@ -147,9 +158,144 @@ jobs:
             ### 🔄 Changes:
             - Updated package versions to ${{ github.event.inputs.version }}
             - Generated changelogs from ${{ github.event.inputs.previous_tag }}
-            - Built packages for release
 
-            **Please review the changes and merge when ready for the release to be tagged and GitHub releases to be created.**
+            **After merging this PR:**
+            - Packages will be built and published to npm with provenance
+            - Git tags will be created
+            - GitHub releases will be created
+
+            **Please review the changes and merge when ready.**
           branch: release-${{ github.event.inputs.version }}
           base: ${{ github.ref_name }}
           delete-branch: false
+          labels: automated-npm-release
+
+  publish-stable:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release-') && contains(github.event.pull_request.labels.*.name, 'automated-npm-release')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Extract version and packages from PR
+        id: extract-info
+        run: |
+          PR_TITLE='${{ github.event.pull_request.title }}'
+
+          echo "=== PR Title ==="
+          echo "$PR_TITLE"
+          echo ""
+          echo "=== Extraction ==="
+
+          VERSION=$(echo "$PR_TITLE" | sed -n 's/.*Release \([v0-9\.]*\).*/\1/p')
+          PACKAGES=$(echo "$PR_TITLE" | sed -n 's/.*- \(@novu.*\)/\1/p')
+
+          if [ -z "$VERSION" ]; then
+            echo "❌ ERROR: Failed to extract version from PR title"
+            echo "Expected format: '🚀 Release vX.Y.Z - @novu/package1,@novu/package2'"
+            exit 1
+          fi
+
+          if [ -z "$PACKAGES" ]; then
+            echo "❌ ERROR: Failed to extract packages from PR title"
+            echo "Expected format: '🚀 Release vX.Y.Z - @novu/package1,@novu/package2'"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          echo "✅ Extracted version: $VERSION"
+          echo "✅ Extracted packages: $PACKAGES"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.16.1
+          run_install: false
+
+      - name: Setup Node Version
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: "pnpm"
+
+      - name: Upgrade npm for Trusted Publishing
+        run: |
+          npm install -g npm@latest
+          echo "npm version: $(npm --version) (>= 11.5.1 required for trusted publishing)"
+
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm run build:packages
+
+      - name: Publish packages to NPM
+        run: |
+          echo "📦 Publishing stable release with OIDC trusted publishing..."
+          pnpm nx run-many -t nx-release-publish --projects=${{ steps.extract-info.outputs.packages }} -- --tag=latest --provenance
+
+      - name: Create and push tags
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+          echo "Creating tags for packages: ${{ steps.extract-info.outputs.packages }}"
+          IFS=',' read -ra PACKAGES <<< "${{ steps.extract-info.outputs.packages }}"
+          for package in "${PACKAGES[@]}"; do
+            package=$(echo "$package" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            tag_name="${package}@${{ steps.extract-info.outputs.version }}"
+            echo "Creating tag: $tag_name"
+            git tag "$tag_name"
+            echo "Pushing tag: $tag_name"
+            git push origin "$tag_name"
+          done
+
+      - name: Create GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Creating GitHub releases for packages: ${{ steps.extract-info.outputs.packages }}"
+
+          IFS=',' read -ra PACKAGES <<< "${{ steps.extract-info.outputs.packages }}"
+          for package in "${PACKAGES[@]}"; do
+            package=$(echo "$package" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            tag_name="${package}@${{ steps.extract-info.outputs.version }}"
+            
+            echo "Creating GitHub release for $package with tag: $tag_name"
+            
+            package_name=$(echo $package | sed 's/@novu\///')
+            release_body="Release of ${package} version ${{ steps.extract-info.outputs.version }}"
+            
+            possible_paths=(
+              "packages/${package_name}/CHANGELOG.md"
+              "${package_name}/CHANGELOG.md"
+              "CHANGELOG.md"
+            )
+            
+            for changelog_path in "${possible_paths[@]}"; do
+              if [ -f "$changelog_path" ]; then
+                echo "Found changelog at: $changelog_path"
+                changelog_content=$(head -100 "$changelog_path")
+                if [ -n "$changelog_content" ]; then
+                  release_body="$changelog_content"
+                  break
+                fi
+              fi
+            done
+            
+            gh release create "$tag_name" \
+              --title "$tag_name" \
+              --notes "$release_body" \
+              --target ${{ github.event.pull_request.base.ref }}
+
+            echo "✅ Created GitHub release for $tag_name"
+          done

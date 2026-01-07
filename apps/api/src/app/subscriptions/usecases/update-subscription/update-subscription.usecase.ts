@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { buildDefaultSubscriptionIdentifier, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
   BaseRepository,
   NotificationTemplateEntity,
@@ -57,9 +57,7 @@ export class UpdateSubscriptionUsecase {
     }
 
     const subscription = await this.topicSubscribersRepository.findOne({
-      ...(TopicSubscribersRepository.isInternalId(command.subscriptionIdOrIdentifier)
-        ? { _id: command.subscriptionIdOrIdentifier }
-        : { identifier: command.subscriptionIdOrIdentifier }),
+      identifier: command.identifier,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _topicId: topic._id,
@@ -67,7 +65,7 @@ export class UpdateSubscriptionUsecase {
 
     if (!subscription) {
       throw new NotFoundException(
-        `Subscription with ID ${command.subscriptionIdOrIdentifier} not found for topic ${command.topicKey}`
+        `Subscription with identifier ${command.identifier} not found for topic ${command.topicKey}`
       );
     }
 
@@ -141,8 +139,11 @@ export class UpdateSubscriptionUsecase {
         organizationId: command.organizationId,
         userId: command.userId,
         preferences: command.preferences,
-        subscriptionId: subscription._id.toString(),
+        _topicSubscriptionId: subscription._id.toString(),
+        subscriptionId: subscription.identifier,
         _subscriberId: subscription._subscriberId.toString(),
+        topicKey: subscription.topicKey,
+        externalSubscriberId: subscription.externalSubscriberId,
         workflows,
       })
     );
@@ -193,7 +194,9 @@ export class UpdateSubscriptionUsecase {
                 severity: workflow.severity || SeverityLevelEnum.NONE,
               }
             : undefined,
-          subscriptionId: subscription._id,
+          subscriptionId:
+            subscription.identifier ||
+            buildDefaultSubscriptionIdentifier(subscription.topicKey, subscription.externalSubscriberId),
           enabled: preferences?.all?.enabled ?? true,
           condition: preferences?.all?.condition as RulesLogic | undefined,
         };

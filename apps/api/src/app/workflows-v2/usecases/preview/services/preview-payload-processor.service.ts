@@ -33,7 +33,7 @@ export class PreviewPayloadProcessorService {
       }
     });
 
-    return reorderedPayload;
+    return reorderedPayload as Record<string, unknown>;
   }
 
   /**

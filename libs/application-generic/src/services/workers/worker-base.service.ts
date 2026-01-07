@@ -53,6 +53,11 @@ export class WorkerBaseService implements INovuWorker {
   public async resume(): Promise<void> {
     if (this.worker) {
       await this.instance.resumeWorker();
+      if (process.env.NODE_ENV === 'test') {
+        Logger.log(`Worker ${this.topic} waiting until ready...`, LOG_CONTEXT);
+        await this.instance.waitUntilWorkerIsReady();
+        Logger.log(`Worker ${this.topic} is now ready to process jobs`, LOG_CONTEXT);
+      }
     }
   }
 

@@ -6,9 +6,9 @@ export class GetPreferencesCommand extends EnvironmentCommand {
   subscriberId?: string;
   templateId?: string;
   /**
-   * If true, the default all enabled preference will be set to true.
-   * If false, the default all enabled preference will kept as is.
-   * @default true
+   * Excludes subscriber-level preferences from the merge calculation.
+   * Used for subscription preferences where subscribers cannot control the preferences,
+   * ensuring only workflow-level preferences are considered to avoid unintended side effects.
    */
-  ensureDefaultAllEnabled?: boolean = true;
+  excludeSubscriberPreferences?: boolean = false;
 }

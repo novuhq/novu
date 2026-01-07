@@ -1,5 +1,4 @@
 import {
-  AnalyticsService,
   GetSubscriberTemplatePreference,
   GetWorkflowByIdsUseCase,
   SendWebhookMessage,
@@ -48,7 +47,6 @@ const mockedWorkflow: any = {
 describe('UpdatePreferences', () => {
   let updatePreferences: UpdatePreferences;
   let subscriberRepositoryMock: sinon.SinonStubbedInstance<SubscriberRepository>;
-  let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
   let getSubscriberTemplatePreferenceUsecase: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
   let upsertPreferencesMock: sinon.SinonStubbedInstance<UpsertPreferences>;
@@ -58,7 +56,6 @@ describe('UpdatePreferences', () => {
   let preferencesRepositoryMock: sinon.SinonStubbedInstance<PreferencesRepository>;
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
-    analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
     getSubscriberTemplatePreferenceUsecase = sinon.createStubInstance(GetSubscriberTemplatePreference);
     upsertPreferencesMock = sinon.createStubInstance(UpsertPreferences);
@@ -69,7 +66,6 @@ describe('UpdatePreferences', () => {
 
     updatePreferences = new UpdatePreferences(
       subscriberRepositoryMock as any,
-      analyticsServiceMock as any,
       getSubscriberGlobalPreferenceMock as any,
       getSubscriberTemplatePreferenceUsecase as any,
       upsertPreferencesMock as any,

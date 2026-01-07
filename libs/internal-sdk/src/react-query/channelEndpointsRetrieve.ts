@@ -5,26 +5,32 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import { NovuCore } from '../core.js';
-import { channelEndpointsRetrieve } from '../funcs/channelEndpointsRetrieve.js';
-import { combineSignals } from '../lib/primitives.js';
-import { RequestOptions } from '../lib/sdks.js';
-import * as operations from '../models/operations/index.js';
-import { unwrapAsync } from '../types/fp.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
-
-export type ChannelEndpointsRetrieveQueryData = operations.ChannelEndpointsControllerGetChannelEndpointResponse;
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
+import {
+  buildChannelEndpointsRetrieveQuery,
+  ChannelEndpointsRetrieveQueryData,
+  prefetchChannelEndpointsRetrieve,
+  queryKeyChannelEndpointsRetrieve,
+} from "./channelEndpointsRetrieve.core.js";
+export {
+  buildChannelEndpointsRetrieveQuery,
+  type ChannelEndpointsRetrieveQueryData,
+  prefetchChannelEndpointsRetrieve,
+  queryKeyChannelEndpointsRetrieve,
+};
 
 /**
- * Retrieve channel endpoint by identifier
+ * Retrieve a channel endpoint
  *
  * @remarks
  * Retrieve a specific channel endpoint by its unique identifier.
@@ -32,17 +38,22 @@ export type ChannelEndpointsRetrieveQueryData = operations.ChannelEndpointsContr
 export function useChannelEndpointsRetrieve(
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<ChannelEndpointsRetrieveQueryData>
+  options?: QueryHookOptions<ChannelEndpointsRetrieveQueryData>,
 ): UseQueryResult<ChannelEndpointsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildChannelEndpointsRetrieveQuery(client, identifier, idempotencyKey, options),
+    ...buildChannelEndpointsRetrieveQuery(
+      client,
+      identifier,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 /**
- * Retrieve channel endpoint by identifier
+ * Retrieve a channel endpoint
  *
  * @remarks
  * Retrieve a specific channel endpoint by its unique identifier.
@@ -50,30 +61,27 @@ export function useChannelEndpointsRetrieve(
 export function useChannelEndpointsRetrieveSuspense(
   identifier: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<ChannelEndpointsRetrieveQueryData>
+  options?: SuspenseQueryHookOptions<ChannelEndpointsRetrieveQueryData>,
 ): UseSuspenseQueryResult<ChannelEndpointsRetrieveQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildChannelEndpointsRetrieveQuery(client, identifier, idempotencyKey, options),
+    ...buildChannelEndpointsRetrieveQuery(
+      client,
+      identifier,
+      idempotencyKey,
+      options,
+    ),
     ...options,
-  });
-}
-
-export function prefetchChannelEndpointsRetrieve(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  identifier: string,
-  idempotencyKey?: string | undefined
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildChannelEndpointsRetrieveQuery(client$, identifier, idempotencyKey),
   });
 }
 
 export function setChannelEndpointsRetrieveData(
   client: QueryClient,
-  queryKeyBase: [identifier: string, parameters: { idempotencyKey?: string | undefined }],
-  data: ChannelEndpointsRetrieveQueryData
+  queryKeyBase: [
+    identifier: string,
+    parameters: { idempotencyKey?: string | undefined },
+  ],
+  data: ChannelEndpointsRetrieveQueryData,
 ): ChannelEndpointsRetrieveQueryData | undefined {
   const key = queryKeyChannelEndpointsRetrieve(...queryKeyBase);
 
@@ -82,51 +90,23 @@ export function setChannelEndpointsRetrieveData(
 
 export function invalidateChannelEndpointsRetrieve(
   client: QueryClient,
-  queryKeyBase: TupleToPrefixes<[identifier: string, parameters: { idempotencyKey?: string | undefined }]>,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  queryKeyBase: TupleToPrefixes<
+    [identifier: string, parameters: { idempotencyKey?: string | undefined }]
+  >,
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Channel Endpoints', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "Channel Endpoints", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllChannelEndpointsRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Channel Endpoints', 'retrieve'],
+    queryKey: ["@novu/api", "Channel Endpoints", "retrieve"],
   });
-}
-
-export function buildChannelEndpointsRetrieveQuery(
-  client$: NovuCore,
-  identifier: string,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions
-): {
-  queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<ChannelEndpointsRetrieveQueryData>;
-} {
-  return {
-    queryKey: queryKeyChannelEndpointsRetrieve(identifier, { idempotencyKey }),
-    queryFn: async function channelEndpointsRetrieveQueryFn(ctx): Promise<ChannelEndpointsRetrieveQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(channelEndpointsRetrieve(client$, identifier, idempotencyKey, mergedOptions));
-    },
-  };
-}
-
-export function queryKeyChannelEndpointsRetrieve(
-  identifier: string,
-  parameters: { idempotencyKey?: string | undefined }
-): QueryKey {
-  return ['@novu/api', 'Channel Endpoints', 'retrieve', identifier, parameters];
 }
