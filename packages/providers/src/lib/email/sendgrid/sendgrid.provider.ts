@@ -40,7 +40,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     this.sendgridClient = sgClient;
 
     if (this.config.baseUrl) {
-      this.sendgridClient.setDefaultRequest({ baseUrl: this.config.baseUrl });
+      this.sendgridClient.setDefaultRequest('baseUrl', this.config.baseUrl);
     }
 
     this.sendgridClient.setApiKey(this.config.apiKey);

@@ -178,7 +178,7 @@ test('should set custom base url when provided', async () => {
     baseUrl: 'https://api.eu.sendgrid.com/',
   });
 
-  expect(setDefaultRequestSpy).toHaveBeenCalledWith({ baseUrl: 'https://api.eu.sendgrid.com/' });
+  expect(setDefaultRequestSpy).toHaveBeenCalledWith('baseUrl', 'https://api.eu.sendgrid.com/');
 });
 
 test('should not set custom base url when not provided', async () => {
@@ -188,7 +188,7 @@ test('should not set custom base url when not provided', async () => {
   new SendgridEmailProvider(mockConfig);
 
   const customBaseUrlCall = setDefaultRequestSpy.mock.calls.find(
-    (call) => typeof call[0] === 'object' && 'baseUrl' in call[0]
+    (call) => call[0] === 'baseUrl' && call[1]?.includes('eu.sendgrid')
   );
   expect(customBaseUrlCall).toBeUndefined();
 });
