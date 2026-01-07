@@ -285,17 +285,17 @@ jobs:
               if [ -f "$changelog_path" ]; then
                 echo "Found changelog at: $changelog_path"
                 changelog_content=$(awk -v version="${{ steps.extract-info.outputs.version }}" '
-                  BEGIN { found=0; capture=0 }
-                  /^## / || /^# / || /^v[0-9]/ {
+                  BEGIN { capture=0 }
+                  /^## / || /^# / || /^v[0-9]+\./ {
                     if (capture) exit
-                    if ($0 ~ version) {
-                      found=1
+                    if ($0 ~ "(^|[^0-9.])" version "([^0-9.]|$)") {
                       capture=1
                       next
                     }
                   }
                   capture { print }
                 ' "$changelog_path" | sed '/^$/d' | head -50)
+                
                 if [ -n "$changelog_content" ]; then
                   release_body="$changelog_content"
                   break
