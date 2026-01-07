@@ -66,7 +66,13 @@ const Markdown = (props: MarkdownProps) => {
     >
       <For each={tokens()}>
         {(token) => {
-          if (token.type === 'bold') {
+          if (token.type === 'boldItalic') {
+            return (
+              <Bold appearanceKey={local.strongAppearanceKey}>
+                <Italic appearanceKey={local.emAppearanceKey}>{token.content}</Italic>
+              </Bold>
+            );
+          } else if (token.type === 'bold') {
             return <Bold appearanceKey={local.strongAppearanceKey}>{token.content}</Bold>;
           } else if (token.type === 'italic') {
             return <Italic appearanceKey={local.emAppearanceKey}>{token.content}</Italic>;
