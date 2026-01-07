@@ -163,7 +163,7 @@
     "@tiptap/extension-heading": "^2.9.1",
     "@tiptap/extension-horizontal-rule": "^2.9.1",
     "@tiptap/extension-image": "^2.9.1",
-    "@tiptap/extension-link": "^2.9.1",
+    "@tiptap/extension-link": "^2.10.4",
     "@tiptap/extension-list-item": "^2.9.1",
     "@tiptap/extension-mention": "^2.9.1",
     "@tiptap/extension-paragraph": "^2.9.1",
