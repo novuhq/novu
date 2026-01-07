@@ -20,6 +20,15 @@ let value: GetWorkflowRunsDto = {
   updatedAt: "1735613423191",
   severity: "high",
   critical: false,
+  topics: [
+    {
+      id: "64da692e9a94fb2e6449ad06",
+      key: "product-updates",
+      name: "Product Updates",
+      createdAt: "2023-08-15T00:00:00.000Z",
+      updatedAt: "2023-08-15T00:00:00.000Z",
+    },
+  ],
   steps: [],
 };
 ```
@@ -44,4 +53,5 @@ let value: GetWorkflowRunsDto = {
 | `severity`                                                                                       | [components.Severity](../../models/components/severity.md)                                       | :heavy_check_mark:                                                                               | Severity                                                                                         |
 | `critical`                                                                                       | *boolean*                                                                                        | :heavy_check_mark:                                                                               | Critical flag                                                                                    |
 | `contextKeys`                                                                                    | *string*[]                                                                                       | :heavy_minus_sign:                                                                               | Context (single or multi) in which the workflow run was executed                                 |
+| `topics`                                                                                         | [components.TopicResponseDto](../../models/components/topicresponsedto.md)[]                     | :heavy_minus_sign:                                                                               | Topics                                                                                           |
 | `steps`                                                                                          | [components.WorkflowRunStepsDetailsDto](../../models/components/workflowrunstepsdetailsdto.md)[] | :heavy_check_mark:                                                                               | Workflow run steps                                                                               |

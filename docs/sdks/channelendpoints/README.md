@@ -4,15 +4,15 @@
 
 ### Available Operations
 
-* [list](#list) - List channel endpoints
-* [create](#create) - Create channel endpoint for a resource
-* [retrieve](#retrieve) - Retrieve channel endpoint by identifier
-* [update](#update) - Update channel endpoint
-* [delete](#delete) - Delete channel endpoint by identifier
+* [list](#list) - List all channel endpoints
+* [create](#create) - Create a channel endpoint
+* [retrieve](#retrieve) - Retrieve a channel endpoint
+* [update](#update) - Update a channel endpoint
+* [delete](#delete) - Delete a channel endpoint
 
 ## list
 
-Retrieve all channel endpoints for a resource based on query filters.
+List all channel endpoints for a resource based on query filters.
 
 ### Example Usage
 

@@ -44,6 +44,7 @@ let value: SubscribersV1ControllerGetNotificationsFeedResponse = {
         channel: "chat",
         read: false,
         seen: true,
+        archived: false,
         deviceTokens: [
           "token1",
           "token2",

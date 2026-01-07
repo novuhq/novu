@@ -4,15 +4,15 @@
 
 ### Available Operations
 
-* [list](#list) - List channel connections
-* [create](#create) - Create channel connection for a resource and integration
-* [retrieve](#retrieve) - Retrieve channel connection by identifier
-* [update](#update) - Update channel connection
-* [delete](#delete) - Delete channel connection
+* [list](#list) - List all channel connections
+* [create](#create) - Create a channel connection
+* [retrieve](#retrieve) - Retrieve a channel connection
+* [update](#update) - Update a channel connection
+* [delete](#delete) - Delete a channel connection
 
 ## list
 
-Retrieve all channel connections for a resource.
+List all channel connections for a resource.
 
 ### Example Usage
 

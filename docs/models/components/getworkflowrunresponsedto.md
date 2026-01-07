@@ -20,6 +20,15 @@ let value: GetWorkflowRunResponseDto = {
   updatedAt: "1735614725040",
   severity: "high",
   critical: true,
+  topics: [
+    {
+      id: "64da692e9a94fb2e6449ad06",
+      key: "product-updates",
+      name: "Product Updates",
+      createdAt: "2023-08-15T00:00:00.000Z",
+      updatedAt: "2023-08-15T00:00:00.000Z",
+    },
+  ],
   steps: [],
   payload: {},
 };
@@ -45,5 +54,6 @@ let value: GetWorkflowRunResponseDto = {
 | `severity`                                                                                                                                 | [components.GetWorkflowRunResponseDtoSeverity](../../models/components/getworkflowrunresponsedtoseverity.md)                               | :heavy_check_mark:                                                                                                                         | Severity                                                                                                                                   |
 | `critical`                                                                                                                                 | *boolean*                                                                                                                                  | :heavy_check_mark:                                                                                                                         | Critical flag                                                                                                                              |
 | `contextKeys`                                                                                                                              | *string*[]                                                                                                                                 | :heavy_minus_sign:                                                                                                                         | Context (single or multi) in which the workflow run was executed                                                                           |
+| `topics`                                                                                                                                   | [components.TopicResponseDto](../../models/components/topicresponsedto.md)[]                                                               | :heavy_minus_sign:                                                                                                                         | Topics                                                                                                                                     |
 | `steps`                                                                                                                                    | [components.StepRunDto](../../models/components/steprundto.md)[]                                                                           | :heavy_check_mark:                                                                                                                         | Step runs                                                                                                                                  |
 | `payload`                                                                                                                                  | [components.Payload](../../models/components/payload.md)                                                                                   | :heavy_check_mark:                                                                                                                         | Trigger payload                                                                                                                            |

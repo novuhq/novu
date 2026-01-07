@@ -11,6 +11,7 @@ let value: TopicsControllerListTopicSubscriptionsResponse = {
     data: [
       {
         id: "64da692e9a94fb2e6449ad08",
+        identifier: "tk=product-updates:si=subscriber-123",
         createdAt: "2021-01-01T00:00:00.000Z",
         topic: {
           id: "64da692e9a94fb2e6449ad06",

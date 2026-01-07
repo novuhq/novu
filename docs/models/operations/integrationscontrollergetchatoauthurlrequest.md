@@ -9,6 +9,7 @@ let value: IntegrationsControllerGetChatOAuthUrlRequest = {
   generateChatOauthUrlRequestDto: {
     subscriberId: "subscriber-123",
     integrationIdentifier: "<value>",
+    connectionIdentifier: "slack-connection-abc123",
     context: {
       "key": "org-acme",
     },

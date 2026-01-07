@@ -736,6 +736,7 @@ async function run() {
   const result = await novu.integrations.generateChatOAuthUrl({
     subscriberId: "subscriber-123",
     integrationIdentifier: "<value>",
+    connectionIdentifier: "slack-connection-abc123",
     context: {
       "key": "org-acme",
     },
@@ -776,6 +777,7 @@ async function run() {
   const res = await integrationsGenerateChatOAuthUrl(novu, {
     subscriberId: "subscriber-123",
     integrationIdentifier: "<value>",
+    connectionIdentifier: "slack-connection-abc123",
     context: {
       "key": "org-acme",
     },

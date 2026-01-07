@@ -7,6 +7,7 @@ import { TopicSubscriptionResponseDto } from "@novu/api/models/components";
 
 let value: TopicSubscriptionResponseDto = {
   id: "64da692e9a94fb2e6449ad08",
+  identifier: "tk=product-updates:si=subscriber-123",
   createdAt: "2021-01-01T00:00:00.000Z",
   topic: {
     id: "64da692e9a94fb2e6449ad06",
@@ -31,6 +32,7 @@ let value: TopicSubscriptionResponseDto = {
 | Field                                                                      | Type                                                                       | Required                                                                   | Description                                                                | Example                                                                    |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | `id`                                                                       | *string*                                                                   | :heavy_check_mark:                                                         | The identifier of the subscription                                         | 64da692e9a94fb2e6449ad08                                                   |
+| `identifier`                                                               | *string*                                                                   | :heavy_check_mark:                                                         | The identifier of the subscription                                         | tk=product-updates:si=subscriber-123                                       |
 | `createdAt`                                                                | *string*                                                                   | :heavy_check_mark:                                                         | The date and time the subscription was created                             | 2021-01-01T00:00:00.000Z                                                   |
 | `topic`                                                                    | [components.TopicResponseDto](../../models/components/topicresponsedto.md) | :heavy_check_mark:                                                         | Topic information                                                          |                                                                            |
 | `subscriber`                                                               | [components.SubscriberDto](../../models/components/subscriberdto.md)       | :heavy_check_mark:                                                         | Subscriber information                                                     |                                                                            |
