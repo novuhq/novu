@@ -8,16 +8,19 @@ export type FeatureFlagContextBase =
       environment: PartialWithId<EnvironmentEntity>;
       organization?: PartialWithId<OrganizationEntity>;
       user?: PartialWithId<UserEntity>;
+      component?: string;
     }
   | {
       environment?: PartialWithId<EnvironmentEntity>;
       organization: PartialWithId<OrganizationEntity>;
       user?: PartialWithId<UserEntity>;
+      component?: string;
     }
   | {
       environment?: PartialWithId<EnvironmentEntity>;
       organization?: PartialWithId<OrganizationEntity>;
       user: PartialWithId<UserEntity>;
+      component?: string;
     };
 
 export type FeatureFlagContext<T_Result> = FeatureFlagContextBase & {

@@ -1,5 +1,6 @@
 import { type IEnvironment, type WorkflowResponseDto } from '@novu/shared';
 import { createContext, ReactNode, useContext } from 'react';
+import { useParams } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { type UseWorkflowSchemaManagerReturn, useWorkflowSchemaManager } from './use-workflow-schema-manager';
@@ -16,6 +17,7 @@ interface WorkflowSchemaProviderProps {
 }
 
 export function WorkflowSchemaProvider({ children }: WorkflowSchemaProviderProps) {
+  const { workflowSlug = '' } = useParams<{ workflowSlug?: string }>();
   const { workflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
@@ -33,7 +35,7 @@ export function WorkflowSchemaProvider({ children }: WorkflowSchemaProviderProps
   };
 
   return (
-    <WorkflowSchemaContext.Provider key={workflow?.slug} value={contextValue}>
+    <WorkflowSchemaContext.Provider key={workflowSlug} value={contextValue}>
       {children}
     </WorkflowSchemaContext.Provider>
   );

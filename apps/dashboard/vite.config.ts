@@ -12,6 +12,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   const isSelfHosted = env.VITE_SELF_HOSTED === 'true';
+  const isEnterprise = env.VITE_NOVU_ENTERPRISE === 'true';
+  const isCommunitySelHosted = isSelfHosted && !isEnterprise;
 
   // Plugin to redirect direct region-context imports to self-hosted version
   // This ensures we use the simpler self-hosted version instead of bundling Clerk-dependent cloud code
@@ -19,7 +21,7 @@ export default defineConfig(({ mode }) => {
     name: 'exclude-cloud-files',
     enforce: 'pre',
     resolveId(source, importer) {
-      if (!isSelfHosted) return null;
+      if (!isCommunitySelHosted) return null;
 
       // Redirect direct imports of region-context.tsx to the self-hosted version
       // The alias handles @/context/region imports, but direct relative imports need this plugin
@@ -59,18 +61,23 @@ export default defineConfig(({ mode }) => {
         ],
       }),
       // Put the Sentry vite plugin after all other plugins
-      sentryVitePlugin({
-        org: env.SENTRY_ORG,
-        project: env.SENTRY_PROJECT,
-        // Auth tokens can be obtained from https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
-        authToken: env.SENTRY_AUTH_TOKEN,
-        reactComponentAnnotation: { enabled: true },
-        sourcemaps: {
-          assets: './dist/**',
-          filesToDeleteAfterUpload: ['**/*.js.map'],
-        },
-        telemetry: false,
-      }),
+      // Only enable Sentry plugin if auth token is provided
+      ...(env.SENTRY_AUTH_TOKEN
+        ? [
+            sentryVitePlugin({
+              org: env.SENTRY_ORG,
+              project: env.SENTRY_PROJECT,
+              // Auth tokens can be obtained from https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
+              authToken: env.SENTRY_AUTH_TOKEN,
+              reactComponentAnnotation: { enabled: true },
+              sourcemaps: {
+                assets: './dist/**',
+                filesToDeleteAfterUpload: ['**/*.js.map'],
+              },
+              telemetry: false,
+            }),
+          ]
+        : []),
     ],
     css: {
       postcss: {
@@ -80,7 +87,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        ...(isSelfHosted
+        ...(isCommunitySelHosted
           ? {
               '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx'),
               '@/context/region': path.resolve(__dirname, './src/context/region/index.self-hosted.ts'),
