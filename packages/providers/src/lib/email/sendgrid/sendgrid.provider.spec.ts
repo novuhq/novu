@@ -170,25 +170,34 @@ test('should override credentials with mail data', async () => {
   expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ ipPoolName: 'ip_from_mail_data' }));
 });
 
-test('should set custom base url when provided', async () => {
-  const setDefaultRequestSpy = vi.spyOn(Client.prototype, 'setDefaultRequest');
+test('should set EU data residency when region is eu', async () => {
+  const setDataResidencySpy = vi.spyOn(Client.prototype, 'setDataResidency');
 
   new SendgridEmailProvider({
     ...mockConfig,
-    baseUrl: 'https://api.eu.sendgrid.com/',
+    region: 'eu',
   });
 
-  expect(setDefaultRequestSpy).toHaveBeenCalledWith('baseUrl', 'https://api.eu.sendgrid.com/');
+  expect(setDataResidencySpy).toHaveBeenCalledWith('eu');
 });
 
-test('should not set custom base url when not provided', async () => {
-  const setDefaultRequestSpy = vi.spyOn(Client.prototype, 'setDefaultRequest');
-  setDefaultRequestSpy.mockClear();
+test('should not set data residency when region is global', async () => {
+  const setDataResidencySpy = vi.spyOn(Client.prototype, 'setDataResidency');
+  setDataResidencySpy.mockClear();
+
+  new SendgridEmailProvider({
+    ...mockConfig,
+    region: 'global',
+  });
+
+  expect(setDataResidencySpy).not.toHaveBeenCalled();
+});
+
+test('should not set data residency when region is not provided', async () => {
+  const setDataResidencySpy = vi.spyOn(Client.prototype, 'setDataResidency');
+  setDataResidencySpy.mockClear();
 
   new SendgridEmailProvider(mockConfig);
 
-  const customBaseUrlCall = setDefaultRequestSpy.mock.calls.find(
-    (call) => call[0] === 'baseUrl' && call[1]?.includes('eu.sendgrid')
-  );
-  expect(customBaseUrlCall).toBeUndefined();
+  expect(setDataResidencySpy).not.toHaveBeenCalled();
 });

@@ -32,14 +32,14 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
       senderName: string;
       ipPoolName?: string;
       webhookPublicKey?: string;
-      baseUrl?: string;
+      region?: string;
     }
   ) {
     super();
     this.client = new Client();
 
-    if (this.config.baseUrl) {
-      this.client.setDefaultRequest('baseUrl', this.config.baseUrl);
+    if (this.config.region === 'eu') {
+      this.client.setDataResidency('eu');
     }
 
     this.client.setApiKey(this.config.apiKey);
