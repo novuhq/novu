@@ -33,7 +33,7 @@ export class PreferencesEntity {
 
   schedule?: Schedule;
 
-  createdAt: string;
+  createdAt?: string;
 
-  updatedAt: string;
+  updatedAt?: string;
 }
