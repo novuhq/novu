@@ -179,6 +179,9 @@ export class GetSubscriberPreference {
               channels,
               enabled: true,
               overrides,
+              ...(preferences.subscriberWorkflowPreference?.updatedAt && {
+                updatedAt: preferences.subscriberWorkflowPreference.updatedAt,
+              }),
             },
             template: mapTemplateConfiguration({
               ...workflow,
