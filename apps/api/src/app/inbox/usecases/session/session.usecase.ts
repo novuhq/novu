@@ -167,6 +167,7 @@ export class Session {
         phone: subscriber.phone,
         email: subscriber.email,
         avatar: subscriber.avatar,
+        locale: subscriber.locale,
         data: subscriber.data as CustomDataType,
         timezone: subscriber.timezone,
         allowUpdate: isHmacValid(

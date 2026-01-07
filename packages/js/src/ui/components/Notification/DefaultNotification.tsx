@@ -212,6 +212,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                     appearanceKey="notificationSubject"
                     class="nt-text-start nt-font-medium nt-whitespace-pre-wrap [word-break:break-word]"
                     strongAppearanceKey="notificationSubject__strong"
+                    emAppearanceKey="notificationSubject__em"
                     context={{ notification: props.notification }}
                   >
                     {subject()}
@@ -228,6 +229,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <Markdown
                 appearanceKey="notificationBody"
                 strongAppearanceKey="notificationBody__strong"
+                emAppearanceKey="notificationBody__em"
                 class="nt-text-start nt-whitespace-pre-wrap nt-text-foreground-alpha-600 [word-break:break-word]"
                 context={{ notification: props.notification }}
               >
