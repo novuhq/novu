@@ -1,0 +1,13 @@
+// Flags reversed pino arg order: logger.error(message, { ... })
+// Pino expects: logger.error({ ... }, message)
+
+engine biome(1.0)
+language js(typescript)
+
+`$_.error($_, { $_: $_, $_: $_, $_: $_, $_: $_ })` where {
+  register_diagnostic(
+    span = $match,
+    severity = "warn",
+    message = "Pino expects (object, message). Use logger.error({ ... }, message) instead of logger.error(message, { ... })."
+  )
+}
