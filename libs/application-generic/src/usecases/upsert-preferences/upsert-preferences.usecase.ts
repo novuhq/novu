@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
+import { EnforceEnvOrOrgIds, PreferencesDBModel, PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import {
   FeatureFlagsKeysEnum,
   PreferencesTypeEnum,
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
+import { FilterQuery } from 'mongoose';
 import { Instrument } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags/feature-flags.service';
 import { deepMerge } from '../../utils';
@@ -74,6 +75,7 @@ export class UpsertPreferences {
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       returnPreference: command.returnPreference,
       schedule: isSubscribersScheduleEnabled ? command.schedule : undefined,
+      contextKeys: command.contextKeys,
     });
   }
 
@@ -112,6 +114,7 @@ export class UpsertPreferences {
       _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
+      contextKeys: command.contextKeys,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
@@ -147,6 +150,7 @@ export class UpsertPreferences {
       topicSubscriptionId: command.topicSubscriptionId,
       type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
       returnPreference: command.returnPreference,
+      contextKeys: command.contextKeys,
     });
   }
 
@@ -171,6 +175,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       type: command.type,
       schedule: command.schedule,
+      contextKeys: command.contextKeys ?? [],
     });
   }
 
@@ -215,13 +220,31 @@ export class UpsertPreferences {
   }
 
   private async getPreference(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
-    return await this.preferencesRepository.findOne({
+    const query: FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _topicSubscriptionId: command.topicSubscriptionId,
       _templateId: command.templateId,
       type: command.type,
-    });
+      ...this.buildContextKeysQuery(command.contextKeys),
+    };
+
+    return await this.preferencesRepository.findOne(query);
+  }
+
+  private buildContextKeysQuery(contextKeys: string[] | undefined): Record<string, unknown> {
+    // undefined = no filter, [] = explicitly no context, [...keys] = exact match
+    if (contextKeys === undefined) {
+      return {};
+    }
+
+    if (contextKeys.length === 0) {
+      // Match records with no context (legacy records have undefined, newer records have [] as default)
+      return { $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }] };
+    }
+
+    // Match records with exact same context keys (order-independent)
+    return { contextKeys: { $all: contextKeys, $size: contextKeys.length } };
   }
 }

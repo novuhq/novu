@@ -131,6 +131,7 @@ export class UpdatePreferences {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       _subscriberId: subscriber._id,
+      contextKeys: command.contextKeys,
       workflowId,
       subscriptionId: internalSubscriptionId,
       schedule: command.schedule,
@@ -161,13 +162,24 @@ export class UpdatePreferences {
       command.workflowIdOrIdentifier &&
       workflow
     ) {
-      const preferenceEntity = await this.preferencesRepository.findOne({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const query: any = {
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _templateId: workflow._id,
         _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
-      });
+      };
+
+      if (command.contextKeys !== undefined) {
+        if (command.contextKeys.length === 0) {
+          query.$or = [{ contextKeys: { $exists: false } }, { contextKeys: [] }];
+        } else {
+          query.contextKeys = { $all: command.contextKeys, $size: command.contextKeys.length };
+        }
+      }
+
+      const preferenceEntity = await this.preferencesRepository.findOne(query);
 
       const builtPreferences = buildWorkflowPreferences(preferenceEntity?.preferences);
       const channels = GetPreferences.mapWorkflowPreferencesToChannelPreferences(preferenceEntity?.preferences || {});
@@ -200,7 +212,8 @@ export class UpdatePreferences {
           subscriber,
           includeInactiveChannels: command.includeInactiveChannels,
           subscriptionId: internalSubscriptionId,
-        })
+          contextKeys: command.contextKeys,
+        } as GetSubscriberTemplatePreferenceCommand)
       );
 
       return {
@@ -225,6 +238,7 @@ export class UpdatePreferences {
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         includeInactiveChannels: command.includeInactiveChannels,
+        contextKeys: command.contextKeys,
       })
     );
 
@@ -240,6 +254,7 @@ export class UpdatePreferences {
     organizationId: string;
     _subscriberId: string;
     environmentId: string;
+    contextKeys?: string[];
     workflowId?: string;
     subscriptionId?: string;
     schedule?: Schedule;
@@ -270,6 +285,7 @@ export class UpdatePreferences {
           templateId: item.workflowId,
           topicSubscriptionId: item.subscriptionId,
           preferences,
+          contextKeys: item.contextKeys,
           returnPreference: false,
         })
       );
@@ -285,6 +301,7 @@ export class UpdatePreferences {
           _subscriberId: item._subscriberId,
           templateId: item.workflowId,
           preferences,
+          contextKeys: item.contextKeys,
           returnPreference: false,
         })
       );
@@ -300,6 +317,7 @@ export class UpdatePreferences {
         _subscriberId: item._subscriberId,
         returnPreference: false,
         schedule: item.schedule,
+        contextKeys: item.contextKeys,
       })
     );
   }
