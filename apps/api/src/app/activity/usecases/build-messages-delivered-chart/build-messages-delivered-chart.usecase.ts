@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase, PinoLogger, StepRunRepository } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, TraceLogRepository } from '@novu/application-generic';
 import { MessagesDeliveredDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildMessagesDeliveredChartCommand } from './build-messages-delivered-chart.command';
 
 @Injectable()
 export class BuildMessagesDeliveredChart {
   constructor(
-    private stepRunRepository: StepRunRepository,
+    private traceLogRepository: TraceLogRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(BuildMessagesDeliveredChart.name);
@@ -16,12 +16,11 @@ export class BuildMessagesDeliveredChart {
   async execute(command: BuildMessagesDeliveredChartCommand): Promise<MessagesDeliveredDataPointDto> {
     const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
-    // Calculate previous period dates
     const periodDuration = endDate.getTime() - startDate.getTime();
-    const previousEndDate = new Date(startDate.getTime() - 1); // Day before start date
+    const previousEndDate = new Date(startDate.getTime() - 1);
     const previousStartDate = new Date(previousEndDate.getTime() - periodDuration);
 
-    const result = await this.stepRunRepository.getMessagesDeliveredData(
+    const result = await this.traceLogRepository.getMessagesSentData(
       environmentId,
       organizationId,
       startDate,

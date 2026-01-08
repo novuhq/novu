@@ -5,6 +5,7 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository } from '../log.repository';
 import { getInsertOptions } from '../shared';
+import { TRACE_EVENT_COUNTS_TABLE_NAME } from './trace-event-counts.schema';
 import { EventType, ORDER_BY, TABLE_NAME, Trace, traceLogSchema } from './trace-log.schema';
 
 const TRACE_INSERT_OPTIONS: InsertOptions = getInsertOptions(
@@ -199,6 +200,79 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
       organizationId,
       previousStartDate: LogRepository.formatDateTime64(previousStartDate),
       previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+    };
+
+    if (workflowIds && workflowIds.length > 0) {
+      currentParams.workflowIds = workflowIds;
+      previousParams.workflowIds = workflowIds;
+    }
+
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentQuery,
+        params: currentParams,
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousQuery,
+        params: previousParams,
+      }),
+    ]);
+
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
+  }
+
+  async getMessagesSentData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date,
+    workflowIds?: string[]
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? `AND workflow_id IN {workflowIds:Array(String)}` : '';
+
+    const currentQuery = `
+      SELECT sum(count) as count
+      FROM ${TRACE_EVENT_COUNTS_TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND environment_id = {environmentId:String}
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        ${workflowFilter}
+    `;
+
+    const previousQuery = `
+      SELECT sum(count) as count
+      FROM ${TRACE_EVENT_COUNTS_TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND environment_id = {environmentId:String}
+        AND date >= {previousStartDate:Date}
+        AND date <= {previousEndDate:Date}
+        ${workflowFilter}
+    `;
+
+    const currentParams: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    const previousParams: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      previousStartDate: previousStartDate.toISOString().split('T')[0],
+      previousEndDate: previousEndDate.toISOString().split('T')[0],
     };
 
     if (workflowIds && workflowIds.length > 0) {
