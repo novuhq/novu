@@ -22,7 +22,7 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { workflow, channels, updatedAt } = workflowPreferences;
   return (
-    <Card className="border-1 rounded-lg border border-neutral-100 bg-neutral-50 p-1 shadow-none">
+    <Card className="border rounded-lg border-neutral-100 bg-neutral-50 p-1 shadow-none">
       <CardHeader
         className={cn('flex w-full flex-row items-center justify-between p-1 hover:cursor-pointer', {
           'pb-2': isExpanded,
@@ -30,7 +30,7 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <span className="text-foreground-600 text-xs">{workflow.name}</span>
-        <div className="!mt-0 flex items-center gap-1.5">
+        <div className="mt-0! flex items-center gap-1.5">
           <StepIcons steps={Object.keys(channels) as ChannelTypeEnum[]} />
 
           {isExpanded ? (

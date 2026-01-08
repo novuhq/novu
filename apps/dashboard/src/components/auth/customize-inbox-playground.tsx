@@ -113,7 +113,7 @@ function StylePreviewCard({
       aria-pressed={isSelected}
     >
       <div
-        className={`absolute bottom-0 w-full translate-y-full transform border-t bg-neutral-50/90 text-center opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 ${isSelected ? '!translate-y-0 !opacity-100' : ''}`}
+        className={`absolute bottom-0 w-full translate-y-full transform border-t bg-neutral-50/90 text-center opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 ${isSelected ? 'translate-y-0! opacity-100!' : ''}`}
       >
         <span className="text-xs leading-6">{style.label}</span>
       </div>

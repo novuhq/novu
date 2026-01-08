@@ -229,7 +229,7 @@ function FeedbackSection({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + index * 0.1 }}
-                className="w-full rounded-none border-r-[1px] border-[#D1D5DB] transition-colors last:border-r-0 hover:bg-[#F8F9FB] data-[state=on]:bg-[#F8F9FB]"
+                className="w-full rounded-none border-r border-[#D1D5DB] transition-colors last:border-r-0 hover:bg-[#F8F9FB] data-[state=on]:bg-[#F8F9FB]"
                 whileTap={{ scale: 0.95 }}
               >
                 <ToggleGroupItem className="w-full py-2.5 text-xl transition-colors" value={reaction.value}>

@@ -188,7 +188,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                       e.stopPropagation();
                     }}
                   >
-                    <Avatar className="size-[3.75rem] cursor-default">
+                    <Avatar className="size-15 cursor-default">
                       <AvatarImage
                         src={subscriber?.avatar ?? (firstNameChar || lastNameChar ? '' : '/images/avatar.svg')}
                       />

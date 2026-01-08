@@ -22,7 +22,7 @@ export function FilterInput({ inputRef, value, onChange, placeholder, size, show
         onChange={onChange}
         placeholder={placeholder}
         className={cn(
-          'w-full !border-none !shadow-none !ring-0',
+          'w-full border-none! shadow-none! ring-0!',
           STYLES.size[size].input,
           STYLES.input.base,
           STYLES.input.text

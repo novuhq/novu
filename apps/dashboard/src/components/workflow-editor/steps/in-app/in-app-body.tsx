@@ -42,7 +42,7 @@ export const InAppBody = () => {
           <FormControl>
             <InputRoot hasError={!!fieldState.error}>
               <ControlInput
-                className="min-h-[7rem]"
+                className="min-h-28"
                 indentWithTab={false}
                 placeholder={capitalize(field.name)}
                 id={field.name}

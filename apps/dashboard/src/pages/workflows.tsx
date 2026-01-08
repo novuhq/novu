@@ -267,16 +267,16 @@ export const WorkflowsPage = () => {
                 <div className="bg-bg-weak rounded-12 flex gap-4 p-3">
                   {isLoadingQuickStart && (
                     <>
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
                     </>
                   )}
                   {!isLoadingQuickStart && (
                     <>
-                      <div className="w-[250px] flex-shrink-0">
+                      <div className="w-[250px] shrink-0">
                         <WorkflowCard
                           name="Start from scratch"
                           description="Create a workflow from scratch"
@@ -288,7 +288,7 @@ export const WorkflowsPage = () => {
                         />
                       </div>
                       {quickStartTemplates.map((template) => (
-                        <div key={template.workflowId} className="w-[250px] flex-shrink-0">
+                        <div key={template.workflowId} className="w-[250px] shrink-0">
                           <WorkflowCard
                             name={template.name}
                             description={template.description}

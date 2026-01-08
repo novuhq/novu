@@ -51,7 +51,7 @@ function OrganizationAvatar({ imageUrl, name, size = 'sm', showShimmer = false }
         </AvatarFallback>
       </Avatar>
       {showShimmer && (
-        <span className="absolute inset-0 -translate-x-full rotate-12 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-[shimmer_0.8s_ease-in-out] pointer-events-none" />
+        <span className="absolute inset-0 -translate-x-full rotate-12 bg-linear-to-r from-transparent via-white/30 to-transparent group-hover:animate-[shimmer_0.8s_ease-in-out] pointer-events-none" />
       )}
     </span>
   );
@@ -194,9 +194,9 @@ export function OrganizationDropdown() {
           className={cn(
             'group relative flex w-full items-center justify-start gap-2 rounded-lg px-1.5 py-1.5 transition-all duration-300',
             'hover:bg-background hover:shadow-sm',
-            'before:absolute before:bottom-0 before:left-0 before:h-0 before:w-full before:border-b before:border-stroke-100 before:transition-all before:duration-300 before:content-[""]',
+            'before:absolute before:bottom-0 before:left-0 before:h-0 before:w-full before:border-b before:border-b-neutral-200 before:transition-all before:duration-300 before:content-[""]',
             'hover:before:border-transparent',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-background focus-visible:shadow-sm focus-visible:before:border-transparent'
+            'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-background focus-visible:shadow-sm focus-visible:before:border-transparent'
           )}
         >
           <OrganizationAvatar imageUrl={currentOrganization.imageUrl} name={currentOrganization.name} showShimmer />
@@ -236,7 +236,7 @@ export function OrganizationDropdown() {
 
         <DropdownMenuItem
           className={cn(
-            'flex h-9 cursor-pointer items-center gap-2 rounded-none border-t border-stroke-100 px-2 text-sm transition-shadow focus:bg-accent hover:bg-accent',
+            'flex h-9 cursor-pointer items-center gap-2 rounded-none border-t border-neutral-200 px-2 text-sm transition-shadow focus:bg-accent hover:bg-accent',
             isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
           )}
           onSelect={() => {

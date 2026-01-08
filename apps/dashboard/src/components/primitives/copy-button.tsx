@@ -37,7 +37,7 @@ export const CopyButton = (props: CopyButtonProps) => {
             e.preventDefault();
           }}
           className={cn(
-            'inline-flex select-none items-center justify-center whitespace-nowrap p-2.5 outline-none',
+            'inline-flex select-none items-center justify-center whitespace-nowrap p-2.5 outline-hidden',
             // colors
             'text-text-sub',
             // transitions

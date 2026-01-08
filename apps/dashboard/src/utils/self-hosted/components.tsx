@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/primitives/button';
@@ -100,7 +101,7 @@ export function SignIn() {
           <span
             role="button"
             tabIndex={0}
-            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
+            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-hidden focus:ring-2"
             onClick={() => navigate('/auth/sign-up')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') navigate('/auth/sign-up');
@@ -304,7 +305,7 @@ export function SignUp() {
             <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
-        <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="!mt-6 w-full">
+        <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="mt-6! w-full">
           {isLoading ? 'Creating Account...' : 'Create Account'}
         </Button>
         <p className="mt-4 text-center text-sm text-gray-600">
@@ -312,7 +313,7 @@ export function SignUp() {
           <span
             role="button"
             tabIndex={0}
-            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
+            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-hidden focus:ring-2"
             onClick={() => navigate('/auth/sign-in')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') navigate('/auth/sign-in');

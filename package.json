@@ -152,7 +152,7 @@
       "stop-only --file"
     ],
     "**/*.{ts,tsx,js,jsx,json}": [
-      "biome check --write --no-errors-on-unmatched"
+      "biome check --write --no-errors-on-unmatched --diagnostic-level=error"
     ]
   },
   "engines": {

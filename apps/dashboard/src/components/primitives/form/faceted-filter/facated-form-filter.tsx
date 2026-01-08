@@ -157,8 +157,8 @@ export function FacetedFormFilter({
             'hover:border-neutral-300 hover:bg-neutral-50/30 hover:text-neutral-700',
             'rounded-lg border-neutral-200 ring-0 ring-offset-0 transition-colors duration-200 ease-out',
             sizes.trigger,
-            isEmpty && 'border-[1px] border-dashed px-1.5 hover:border-neutral-300',
-            !isEmpty && 'border-[1px] bg-white',
+            isEmpty && 'border border-dashed px-1.5 hover:border-neutral-300',
+            !isEmpty && 'border bg-white',
             className
           )}
           disabled={disabled}

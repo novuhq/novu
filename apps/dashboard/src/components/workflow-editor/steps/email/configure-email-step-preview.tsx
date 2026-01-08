@@ -16,7 +16,7 @@ const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
   return (
     <div
       className={cn(
-        'border-neutral-alpha-200 before:to-background relative isolate rounded-lg border border-dashed before:pointer-events-none before:absolute before:inset-0 before:-m-px before:rounded-lg before:bg-gradient-to-b before:from-transparent before:bg-clip-padding',
+        'border-neutral-alpha-200 before:to-background relative isolate rounded-lg border border-dashed before:pointer-events-none before:absolute before:inset-0 before:-m-px before:rounded-lg before:bg-linear-to-b before:from-transparent before:bg-clip-padding',
         className
       )}
       {...rest}
@@ -39,9 +39,13 @@ export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps)
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
 
-    ['style', 'script', 'head'].forEach((tag) => {
-      tempDiv.querySelectorAll(tag).forEach((el) => el.remove());
-    });
+    const tags = ['style', 'script', 'head'];
+    for (const tag of tags) {
+      const foundTagElements = tempDiv.querySelectorAll(tag);
+      for (const element of foundTagElements) {
+        element.remove();
+      }
+    }
 
     // Replace <br> tags with a space
     tempDiv.querySelectorAll('br').forEach((el) => {

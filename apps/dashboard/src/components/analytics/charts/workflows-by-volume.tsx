@@ -64,8 +64,8 @@ function WorkflowsByVolumeSkeleton() {
         const width = Math.random() * 60 + 20; // Random width between 20-80%
         return (
           <div key={i} className="flex items-center gap-2">
-            <Skeleton className="h-4 w-20 flex-shrink-0 rounded-sm" />
-            <Skeleton className="h-4 flex-grow rounded-sm" style={{ width: `${width}%` }} />
+            <Skeleton className="h-4 w-20 shrink-0 rounded-sm" />
+            <Skeleton className="h-4 grow rounded-sm" style={{ width: `${width}%` }} />
           </div>
         );
       })}

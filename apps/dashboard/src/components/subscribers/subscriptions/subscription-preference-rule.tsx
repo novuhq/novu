@@ -46,7 +46,7 @@ export const SubscriptionPreferenceRule = ({ preference }: { preference: TopicSu
 
   if (preference.condition) {
     return (
-      <Card className="border-1 rounded-lg border border-neutral-100 bg-neutral-50 p-1 shadow-none">
+      <Card className="border rounded-lg border-neutral-100 bg-neutral-50 p-1 shadow-none">
         <CardHeader
           className={cn('flex w-full flex-row items-center justify-between gap-2 p-1 hover:cursor-pointer', {
             'pb-2': isExpanded,
@@ -54,7 +54,7 @@ export const SubscriptionPreferenceRule = ({ preference }: { preference: TopicSu
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <span className="text-label-xs truncate">{preference.workflow.name}</span>
-          <div className="!mt-0 flex items-center gap-1.5">
+          <div className="mt-0! flex items-center gap-1.5">
             {isExpanded ? (
               <RiContractUpDownLine className="text-foreground-400 h-3 w-3" />
             ) : (

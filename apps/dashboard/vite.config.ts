@@ -1,7 +1,6 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import tailwindcss from 'tailwindcss';
 import { defineConfig, loadEnv, Plugin } from 'vite';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -79,11 +78,6 @@ export default defineConfig(({ mode }) => {
           ]
         : []),
     ],
-    css: {
-      postcss: {
-        plugins: [tailwindcss()],
-      },
-    },
     resolve: {
       alias: {
         ...(isCommunitySelHosted

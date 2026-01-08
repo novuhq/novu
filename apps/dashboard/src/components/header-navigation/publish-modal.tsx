@@ -330,13 +330,11 @@ function CompactResourceRow({
         {resource.resourceType === 'layout' ? (
           // Layout: name and ID side by side
           <div className="leading-0 flex w-full min-w-0 items-center gap-1 text-left">
-            <span className="min-w-0 flex-shrink truncate text-xs font-medium leading-4 text-gray-900">
-              {displayName}
-            </span>
+            <span className="min-w-0 shrink truncate text-xs font-medium leading-4 text-gray-900">{displayName}</span>
             {hasDependencies && (
               <Tooltip>
                 <TooltipTrigger>
-                  <RiLinkUnlinkM className="h-3 w-3 flex-shrink-0 text-orange-500" />
+                  <RiLinkUnlinkM className="h-3 w-3 shrink-0 text-orange-500" />
                 </TooltipTrigger>
                 <TooltipContent>
                   {dependencies && dependencies.length > 0 && (
@@ -360,7 +358,7 @@ function CompactResourceRow({
               {hasDependencies && (
                 <Tooltip>
                   <TooltipTrigger>
-                    <RiLinkUnlinkM className="h-3 w-3 flex-shrink-0 text-orange-500" />
+                    <RiLinkUnlinkM className="h-3 w-3 shrink-0 text-orange-500" />
                   </TooltipTrigger>
                   <TooltipContent>
                     {dependencies && dependencies.length > 0 && (

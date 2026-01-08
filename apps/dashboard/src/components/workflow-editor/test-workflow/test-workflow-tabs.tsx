@@ -88,7 +88,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
         <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-1">
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel defaultSize={70} minSize={40} className="h-full">
-              <Tabs defaultValue="workflow" className="-mt-[1px] flex h-full flex-1 flex-col" value="trigger">
+              <Tabs defaultValue="workflow" className="-mt-px flex h-full flex-1 flex-col" value="trigger">
                 <TabsList variant="regular" className="items-center">
                   <TabsTrigger value="workflow" asChild variant="regular" size="xl">
                     <Link

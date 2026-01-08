@@ -86,7 +86,7 @@ export function UsecasePlaygroundHeader({
                 variant="gray"
                 size="sm"
                 onClick={handleSkip}
-                className="text-foreground-600 h-4 !text-xs !font-medium !leading-4 !no-underline hover:!no-underline focus:!no-underline"
+                className="text-foreground-600 h-4 text-xs! font-medium! leading-4! no-underline! hover:no-underline! focus:no-underline!"
               >
                 {skipButtonText}
               </LinkButton>

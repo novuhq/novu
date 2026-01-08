@@ -200,7 +200,7 @@ const TranslationValueInput = ({
             </span>
           )}
         </div>
-        <InputRoot size="2xs" className="min-h-[4rem] overflow-visible">
+        <InputRoot size="2xs" className="min-h-16 overflow-visible">
           <TranslationValueInputComponent
             value={value}
             onChange={onChange}
@@ -209,7 +209,7 @@ const TranslationValueInput = ({
             placeholder="Type your translation text here."
             multiline={true}
             size="2xs"
-            className="resize-none [&_.cm-scroller]:max-h-[8rem] [&_.cm-scroller]:overflow-y-auto"
+            className="resize-none [&_.cm-scroller]:max-h-32 [&_.cm-scroller]:overflow-y-auto"
           />
         </InputRoot>
       </div>

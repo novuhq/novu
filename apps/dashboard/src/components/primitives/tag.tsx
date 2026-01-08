@@ -29,7 +29,7 @@ export const tagVariants = tv({
       // base
       'group/dismiss-button -ml-1.5 -mr-1 size-4 shrink-0',
       // focus
-      'focus:outline-none',
+      'focus:outline-hidden',
     ],
     dismissIcon: 'size-4 text-text-soft transition duration-200 ease-out',
   },
