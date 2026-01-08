@@ -62,6 +62,7 @@ export class GetSubscriberPreference {
     } = await this.findAllPreferences({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
+      contextKeys: command.contextKeys,
       subscriberId: subscriber._id,
       workflowIds,
     });
@@ -241,11 +242,13 @@ export class GetSubscriberPreference {
     organizationId,
     subscriberId,
     workflowIds,
+    contextKeys,
   }: {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
     workflowIds: string[];
+    contextKeys?: string[];
   }) {
     const baseQuery = {
       _environmentId: environmentId,
@@ -253,6 +256,7 @@ export class GetSubscriberPreference {
     };
 
     const readOptions = { readPreference: 'secondaryPreferred' as const };
+    const contextQuery = this.buildContextExactMatchQuery(contextKeys);
 
     const [
       workflowResourcePreferences,
@@ -284,6 +288,7 @@ export class GetSubscriberPreference {
           _subscriberId: subscriberId,
           _templateId: { $in: workflowIds },
           type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+          ...contextQuery,
         },
         undefined,
         readOptions
@@ -293,6 +298,7 @@ export class GetSubscriberPreference {
           ...baseQuery,
           _subscriberId: subscriberId,
           type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+          ...contextQuery,
         },
         undefined,
         readOptions
@@ -304,6 +310,22 @@ export class GetSubscriberPreference {
       workflowUserPreferences,
       subscriberWorkflowPreferences,
       subscriberGlobalPreference: subscriberGlobalPreferences[0] ?? null,
+    };
+  }
+
+  private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
+    if (contextKeys === undefined) {
+      return {};
+    }
+
+    if (contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
     };
   }
 }

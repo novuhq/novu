@@ -156,6 +156,7 @@ export class SubscriberJobBound {
           organizationId,
           subscriberId: subscriberProcessed._id,
           templateId,
+          contextKeys,
         })
       );
       critical = preferences.preferences.all.readOnly;

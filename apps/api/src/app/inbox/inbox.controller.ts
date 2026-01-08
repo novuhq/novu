@@ -173,6 +173,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         tags: query.tags,
         severity: query.severity,
         criticality: query.criticality,
@@ -188,6 +189,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         environmentId: subscriberSession._environmentId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys,
         includeInactiveChannels: false,
         subscriber: subscriberSession,
       })

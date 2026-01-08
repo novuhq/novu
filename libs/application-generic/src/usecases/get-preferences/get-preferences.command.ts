@@ -11,4 +11,5 @@ export class GetPreferencesCommand extends EnvironmentCommand {
    * ensuring only workflow-level preferences are considered to avoid unintended side effects.
    */
   excludeSubscriberPreferences?: boolean = false;
+  contextKeys?: string[];
 }

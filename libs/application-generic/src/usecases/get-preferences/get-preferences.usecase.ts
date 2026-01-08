@@ -110,6 +110,7 @@ export class GetPreferences {
           subscriberId: command.subscriberId,
           templateId: command.templateId,
           excludeSubscriberPreferences: command.excludeSubscriberPreferences,
+          contextKeys: command.contextKeys,
         })
       );
     } catch (e) {
@@ -166,6 +167,8 @@ export class GetPreferences {
     ];
 
     if (command.subscriberId) {
+      const contextQuery = this.buildContextExactMatchQuery(command.contextKeys);
+
       queries.push(
         this.preferencesRepository.findOne(
           {
@@ -173,6 +176,7 @@ export class GetPreferences {
             _subscriberId: command.subscriberId,
             _templateId: command.templateId,
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+            ...contextQuery,
           },
           undefined,
           queryOptions
@@ -182,6 +186,7 @@ export class GetPreferences {
             ...baseQuery,
             _subscriberId: command.subscriberId,
             type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+            ...contextQuery,
           },
           undefined,
           queryOptions
@@ -216,5 +221,21 @@ export class GetPreferences {
     }
 
     return result;
+  }
+
+  private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
+    if (contextKeys === undefined) {
+      return {};
+    }
+
+    if (contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }
