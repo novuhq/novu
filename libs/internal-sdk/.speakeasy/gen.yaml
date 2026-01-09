@@ -22,7 +22,8 @@ generation:
   schemas:
     allOfMergeStrategy: shallowMerge
   requestBodyFieldName: ""
-  persistentEdits: {}
+  persistentEdits:
+    enabled: never
   tests:
     generateTests: true
     generateNewTests: false
@@ -91,6 +92,7 @@ typescript:
   outputModelSuffix: output
   packageName: '@novu/api'
   preApplyUnionDiscriminators: true
+  preserveModelFieldNames: false
   responseFormat: flat
   sseFlatResponse: false
   templateVersion: v2

@@ -107,7 +107,8 @@ preferencesSchema.index(
 );
 
 // Subscriber Workflow Preferences
-// Ensures one workflow preference per subscriber per template (SUBSCRIBER_WORKFLOW type)
+// Ensures one workflow preference per subscriber per template per context (SUBSCRIBER_WORKFLOW type)
+// Includes contextKeys to allow multiple preferences for different contexts
 // Partial filter ensures this only applies to SUBSCRIBER_WORKFLOW type,
 // preventing conflicts with other preference types
 preferencesSchema.index(
@@ -116,6 +117,7 @@ preferencesSchema.index(
     _subscriberId: 1,
     _templateId: 1,
     type: 1,
+    contextKeys: 1,
   },
   {
     unique: true,
@@ -143,7 +145,8 @@ preferencesSchema.index(
   }
 );
 
-// Ensures one workflow preference per subscriber per template per topic subscription (SUBSCRIPTION_SUBSCRIBER_WORKFLOW type)
+// Ensures one workflow preference per subscriber per template per topic subscription per context (SUBSCRIPTION_SUBSCRIBER_WORKFLOW type)
+// Includes contextKeys to allow multiple preferences for different contexts
 // Only for this type (via partial filter).
 preferencesSchema.index(
   {
@@ -152,6 +155,7 @@ preferencesSchema.index(
     _topicSubscriptionId: 1,
     _templateId: 1,
     type: 1,
+    contextKeys: 1,
   },
   {
     unique: true,
