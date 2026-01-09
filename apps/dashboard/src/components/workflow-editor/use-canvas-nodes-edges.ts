@@ -1,6 +1,6 @@
 import { ResourceOriginEnum, StepCreateDto, WorkflowResponseDto } from '@novu/shared';
 import { Node, ReactFlowInstance, useEdgesState, useNodesState } from '@xyflow/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDataRef } from '@/hooks/use-data-ref';
@@ -8,12 +8,13 @@ import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { Step } from '@/utils/types';
 import { generateUUID } from '@/utils/uuid';
+import { AddNodeEdgeType } from './edges';
 import {
+  createAddNode,
   createEdges,
   createNode,
-  generateNodesAndEdges,
+  createTriggerNode,
   mapStepToNode,
   mapStepToNodeContent,
   NODE_TYPE_TO_STEP_TYPE,
@@ -45,13 +46,13 @@ function isIntersecting(el1: Element, el2: Element) {
 }
 
 export const useCanvasNodesEdges = ({
-  steps,
   showStepPreview: currentShowStepPreview,
   reactFlowInstance: currentReactFlowInstance,
+  reactFlowWrapper,
 }: {
-  steps: Step[];
   showStepPreview?: boolean;
   reactFlowInstance: ReactFlowInstance;
+  reactFlowWrapper: React.RefObject<HTMLDivElement>;
 }) => {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
@@ -60,13 +61,9 @@ export const useCanvasNodesEdges = ({
     limit: 100,
     refetchOnWindowFocus: false,
   });
-
-  const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
-    return generateNodesAndEdges(steps, currentShowStepPreview ?? false, currentWorkflow, currentEnvironment);
-  }, [steps, currentShowStepPreview, currentWorkflow, currentEnvironment]);
   // to have a nice animation in the workflow canvas, we need to store the nodes and edges in the state and perform the updates on the state
-  const [currentNodes, setNodes] = useNodesState(initialNodes);
-  const [currentEdges, setEdges] = useEdgesState(initialEdges);
+  const [currentNodes, setNodes] = useNodesState<Node<NodeData, keyof typeof nodeTypes>>([]);
+  const [currentEdges, setEdges] = useEdgesState<AddNodeEdgeType>([]);
   const [currentSelectedNodeId, setSelectedNodeId] = useState<string | undefined>();
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [intersectingNodeId, setIntersectingNodeId] = useState<string | null>(null);
@@ -82,6 +79,7 @@ export const useCanvasNodesEdges = ({
     nodes: currentNodes,
     edges: currentEdges,
     isTemplateStorePreview: currentShowStepPreview ?? false,
+    containerWidth: reactFlowWrapper.current?.clientWidth ?? 0,
   });
 
   const updateEdges = useCallback(() => {
@@ -126,7 +124,7 @@ export const useCanvasNodesEdges = ({
         nodes.find((node) => node.type === 'add'),
       ].filter((node) => node !== undefined);
 
-      setNodes(recalculatePositionAndIndex(updatedNodes));
+      setNodes(recalculatePositionAndIndex(updatedNodes, dataRef.current.containerWidth));
 
       const updatedSteps = [
         ...workflow.steps.slice(0, insertIndex).map((step) => ({
@@ -173,7 +171,8 @@ export const useCanvasNodesEdges = ({
                     return { ...node, data: newNodeData };
                   }
                   return { ...node, data: { ...node.data, isPending: false } };
-                })
+                }),
+                dataRef.current.containerWidth
               )
             );
 
@@ -198,7 +197,7 @@ export const useCanvasNodesEdges = ({
           },
           onError: () => {
             options?.onError?.();
-            setNodes(recalculatePositionAndIndex(oldNodes));
+            setNodes(recalculatePositionAndIndex(oldNodes, dataRef.current.containerWidth));
           },
         }
       );
@@ -289,9 +288,8 @@ export const useCanvasNodesEdges = ({
         },
         {
           onSuccess: () => {
-            const newNodes = [...dataRef.current.nodes];
-            newNodes.splice(removeIndex, 1);
-            setNodes(recalculatePositionAndIndex(newNodes));
+            const newNodes = [...dataRef.current.nodes].filter((node) => node.id !== nodeToRemove.id);
+            setNodes(recalculatePositionAndIndex(newNodes, dataRef.current.containerWidth));
             updateEdges();
             options?.onSuccess?.();
 
@@ -309,7 +307,7 @@ export const useCanvasNodesEdges = ({
           onError: () => {
             showErrorToast('Failed to remove node');
             options?.onError?.();
-            setNodes(recalculatePositionAndIndex(oldNodes));
+            setNodes(recalculatePositionAndIndex(oldNodes, dataRef.current.containerWidth));
           },
         }
       );
@@ -338,7 +336,7 @@ export const useCanvasNodesEdges = ({
       if (selectedNode) {
         setSelectedNodeId(selectedNode.id);
       }
-      setNodes(recalculatePositionAndIndex(newNodes));
+      setNodes(recalculatePositionAndIndex(newNodes, dataRef.current.containerWidth));
       removeEdges();
 
       update(
@@ -349,7 +347,8 @@ export const useCanvasNodesEdges = ({
         {
           onSuccess: () => {
             const finalNodes = recalculatePositionAndIndex(
-              newNodes.map((node) => ({ ...node, data: { ...node.data, isPending: false } }))
+              newNodes.map((node) => ({ ...node, data: { ...node.data, isPending: false } })),
+              dataRef.current.containerWidth
             );
 
             setNodes(finalNodes);
@@ -366,7 +365,7 @@ export const useCanvasNodesEdges = ({
           onError: () => {
             showErrorToast('Failed to reorder nodes');
             options?.onError?.();
-            setNodes(recalculatePositionAndIndex(oldNodes));
+            setNodes(recalculatePositionAndIndex(oldNodes, dataRef.current.containerWidth));
             updateEdges();
           },
         }
@@ -631,8 +630,8 @@ export const useCanvasNodesEdges = ({
       if (currentWorkflow) {
         const nodes = dataRef.current.nodes;
         const step = dataRef.current.step;
-        const triggerNode = nodes.find((node) => node.type === 'trigger');
-        const addNode = nodes.find((node) => node.type === 'add');
+        const containerWidth = dataRef.current.containerWidth;
+        const currentEnvironment = dataRef.current.environment;
 
         const newNodes = currentWorkflow.steps.map((step) => {
           const foundNode = nodes.find(
@@ -653,6 +652,11 @@ export const useCanvasNodesEdges = ({
 
           return newNode;
         });
+        const triggerNode =
+          nodes.find((node) => node.type === 'trigger') ??
+          createTriggerNode(currentWorkflow, currentEnvironment, containerWidth);
+        const previousPosition = newNodes[newNodes.length - 1].position ?? triggerNode.position;
+        const addNode = nodes.find((node) => node.type === 'add') ?? createAddNode(previousPosition, newNodes);
         const finalNodes = [triggerNode, ...newNodes, addNode].filter((node) => node !== undefined);
         const finalSelectedNode = finalNodes.find(
           (node) =>
@@ -662,10 +666,10 @@ export const useCanvasNodesEdges = ({
         if (step && finalSelectedNode) {
           setSelectedNodeId(finalSelectedNode.id);
         }
-        setNodes(recalculatePositionAndIndex(finalNodes));
+        setNodes(recalculatePositionAndIndex(finalNodes, dataRef.current.containerWidth));
         updateEdges();
       }
-    }, 150);
+    }, 0);
 
     return () => {
       clearTimeout(timeout);

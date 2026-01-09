@@ -57,7 +57,7 @@ export function TimezoneSelect(props: TimezoneSelectProps) {
         <Command>
           <CommandInput
             placeholder="Search timezone..."
-            inputRootClassName="rounded-b-none before:ring-0 before:border-b has-[input:focus]:shadow-none focus-within:shadow-none"
+            inputRootClassName="rounded-b-none before:ring-0 before:border-b before:border-gray-200 has-[input:focus]:shadow-none focus-within:shadow-none"
             inlineLeadingNode={<RiSearchLine className="size-4 text-neutral-400" />}
             autoComplete="off"
             /**

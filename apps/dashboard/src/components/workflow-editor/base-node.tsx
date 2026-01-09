@@ -223,7 +223,7 @@ const DraggedNode = ({
       ref={draggedNodeRef}
       className={cn(
         nodeVariants({ variant, className }),
-        'transition-all fixed pointer-events-none z-9999 cursor-grab! rotate-[-4deg]'
+        'transition-all fixed pointer-events-none z-9999 cursor-grab!'
       )}
       style={{
         left: 0,

@@ -253,7 +253,7 @@ export function LocaleSelect(props: LocaleSelectProps) {
         {isOpen && (
           <div
             className={cn(
-              'border-border bg-background absolute z-9999 mt-1 w-full min-w-[320px] rounded-lg border shadow-lg',
+              'border-border bg-background absolute z-[9999] mt-1 w-full min-w-[320px] rounded-lg border shadow-lg',
               dropdownPosition === 'right' ? 'right-0' : 'left-0'
             )}
           >

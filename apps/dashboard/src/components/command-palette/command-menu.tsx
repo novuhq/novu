@@ -94,9 +94,9 @@ const CommandGroup = React.forwardRef<
       ref={forwardedRef}
       className={cn(
         'px-2 py-0',
-        '*:[[cmdk-group-heading]]:text-[10px] *:[[cmdk-group-heading]]:text-text-soft',
-        '*:[[cmdk-group-heading]]:px-1.5 *:[[cmdk-group-heading]]:py-2',
-        '*:[[cmdk-group-heading]]:uppercase',
+        '**:[[cmdk-group-heading]]:text-[10px] **:[[cmdk-group-heading]]:text-text-soft',
+        '**:[[cmdk-group-heading]]:px-1.5 **:[[cmdk-group-heading]]:py-2',
+        '**:[[cmdk-group-heading]]:uppercase',
         className
       )}
       {...rest}

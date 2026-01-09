@@ -30,10 +30,8 @@ export type NodeData = {
 
 export type NodeType = FlowNode<NodeData>;
 
-const topHandleClasses = `data-[handlepos=top]:!w-2 data-[handlepos=top]:!h-2 data-[handlepos=top]:!bg-transparent data-[handlepos=top]:!rounded-none data-[handlepos=top]:before:!absolute data-[handlepos=top]:before:!top-0 data-[handlepos=top]:before:!left-0 data-[handlepos=top]:before:!w-full data-[handlepos=top]:before:!h-full data-[handlepos=top]:before:!bg-neutral-alpha-200 data-[handlepos=top]:before:!rotate-45`;
-
-const bottomHandleClasses = `data-[handlepos=bottom]:!w-2 data-[handlepos=bottom]:!h-2 data-[handlepos=bottom]:!bg-transparent data-[handlepos=bottom]:!rounded-none data-[handlepos=bottom]:before:!absolute data-[handlepos=bottom]:before:!bottom-0 data-[handlepos=bottom]:before:!left-0 data-[handlepos=bottom]:before:!w-full data-[handlepos=bottom]:before:!h-full data-[handlepos=bottom]:before:!bg-neutral-alpha-200 data-[handlepos=bottom]:before:!rotate-45`;
-
+const topHandleClasses = `data-[handlepos=top]:w-2! data-[handlepos=top]:h-2! data-[handlepos=top]:bg-transparent! data-[handlepos=top]:rounded-none! data-[handlepos=top]:before:absolute! data-[handlepos=top]:before:top-0! data-[handlepos=top]:before:left-0! data-[handlepos=top]:before:w-full! data-[handlepos=top]:before:h-full! data-[handlepos=top]:before:bg-neutral-alpha-200! data-[handlepos=top]:before:rotate-45!`;
+const bottomHandleClasses = `data-[handlepos=bottom]:w-2! data-[handlepos=bottom]:h-2! data-[handlepos=bottom]:bg-transparent! data-[handlepos=bottom]:rounded-none! data-[handlepos=bottom]:before:absolute! data-[handlepos=bottom]:before:bottom-0! data-[handlepos=bottom]:before:left-0! data-[handlepos=bottom]:before:w-full! data-[handlepos=bottom]:before:h-full! data-[handlepos=bottom]:before:bg-neutral-alpha-200! data-[handlepos=bottom]:before:rotate-45!`;
 const handleClassName = `${topHandleClasses} ${bottomHandleClasses}`;
 
 export const TriggerNode = ({ data }: NodeProps<FlowNode<{ triggerLink?: string }>>) => {

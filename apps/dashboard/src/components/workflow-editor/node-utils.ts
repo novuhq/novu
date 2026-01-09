@@ -6,7 +6,7 @@ import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Step } from '@/utils/types';
 import { generateUUID } from '@/utils/uuid';
-import { NODE_HEIGHT } from './base-node';
+import { NODE_HEIGHT, NODE_WIDTH } from './base-node';
 import { AddNodeEdge, AddNodeEdgeType, DefaultEdge } from './edges';
 import {
   AddNode,
@@ -24,6 +24,7 @@ import {
 } from './nodes';
 
 // y distance = node height + space between nodes
+export const NODE_Y_OFFSET = 50;
 const Y_DISTANCE = NODE_HEIGHT + 50;
 
 export const nodeTypes = {
@@ -99,8 +100,12 @@ export const mapStepToNodeContent = (
   }
 };
 
-export const recalculatePositionAndIndex = (nodes: Node<NodeData, keyof typeof nodeTypes>[]) => {
-  const position = { x: 0, y: 0 };
+export const recalculatePositionAndIndex = (
+  nodes: Node<NodeData, keyof typeof nodeTypes>[],
+  containerWidth?: number
+) => {
+  const middleX = containerWidth ? containerWidth / 2 - NODE_WIDTH / 2 : 0;
+  const position = { x: middleX, y: NODE_Y_OFFSET };
 
   return nodes.map((node, index) => {
     const newNode = {
@@ -220,15 +225,16 @@ export const createEdges = (nodes: Node<NodeData, keyof typeof nodeTypes>[], sho
   }, []);
 };
 
-export const createNodes = (
-  steps: Step[],
+export const createTriggerNode = (
   currentWorkflow?: WorkflowResponseDto,
-  currentEnvironment?: IEnvironment
+  currentEnvironment?: IEnvironment,
+  containerWidth?: number
 ) => {
+  const middleX = containerWidth ? containerWidth / 2 - NODE_WIDTH / 2 : 0;
   const id = generateUUID();
   const triggerNode: Node<NodeData, 'trigger'> = {
     id,
-    position: { x: 0, y: 0 },
+    position: { x: middleX, y: 50 },
     data: {
       index: 0,
       triggerLink: buildRoute(ROUTES.TRIGGER_WORKFLOW, {
@@ -238,6 +244,32 @@ export const createNodes = (
     },
     type: 'trigger',
   };
+  return triggerNode;
+};
+
+export const createAddNode = (
+  previousPosition: { x: number; y: number },
+  allNodes: Node<NodeData, keyof typeof nodeTypes>[]
+) => {
+  const addNodeId = generateUUID();
+  const addNode: Node<NodeData, 'add'> = {
+    id: addNodeId,
+    position: { ...previousPosition, y: previousPosition.y + Y_DISTANCE },
+    data: {
+      index: allNodes.length,
+    },
+    type: 'add',
+  };
+  return addNode;
+};
+
+export const createNodes = (
+  steps: Step[],
+  currentWorkflow?: WorkflowResponseDto,
+  currentEnvironment?: IEnvironment,
+  containerWidth?: number
+) => {
+  const triggerNode = createTriggerNode(currentWorkflow, currentEnvironment, containerWidth);
   let previousPosition = triggerNode.position;
 
   const createdNodes = steps?.map((step, index) => {
@@ -270,9 +302,10 @@ export const generateNodesAndEdges = (
   steps: Step[],
   showStepPreview?: boolean,
   currentWorkflow?: WorkflowResponseDto,
-  currentEnvironment?: IEnvironment
+  currentEnvironment?: IEnvironment,
+  containerWidth?: number
 ): { nodes: Node<NodeData, keyof typeof nodeTypes>[]; edges: AddNodeEdgeType[] } => {
-  const nodes = createNodes(steps, currentWorkflow, currentEnvironment);
+  const nodes = createNodes(steps, currentWorkflow, currentEnvironment, containerWidth);
 
   return {
     nodes,
