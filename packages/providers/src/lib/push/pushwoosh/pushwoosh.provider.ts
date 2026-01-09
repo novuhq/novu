@@ -14,7 +14,7 @@ export class PushwooshPushProvider extends BaseProvider implements IPushProvider
 
     constructor(
         private config: {
-            applicationCode: string;
+            applicationId: string;
             apiKey: string;
         }
     ) {
@@ -24,13 +24,8 @@ export class PushwooshPushProvider extends BaseProvider implements IPushProvider
     async sendMessage(
         options: IPushOptions
     ): Promise<ISendMessageSuccessResponse> {
-        // TODO: Implement Pushwoosh API logic here
-        // https://docs.pushwoosh.com/platform-docs/api-reference/messages
-        // Use this.config.applicationCode and this.config.apiKey
+        void options;
 
-        return {
-            ids: ['stub_id'], // Placeholder
-            date: new Date().toISOString(),
-        };
+        throw new Error('PushwooshPushProvider.sendMessage is not implemented yet');
     }
 }

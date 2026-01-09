@@ -6,3 +6,4 @@ export * from './push-webhook.handler';
 export * from './pusher-beams.handler';
 export * from './pushpad.handler';
 export * from './appio.handler';
+export * from './pushwoosh.handler';

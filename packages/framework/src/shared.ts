@@ -47,14 +47,14 @@ export interface IAttachmentOptions {
 export interface ITriggerPayload {
   attachments?: IAttachmentOptions[];
   [key: string]:
-    | string
-    | string[]
-    | boolean
-    | number
-    | undefined
-    | IAttachmentOptions
-    | IAttachmentOptions[]
-    | Record<string, unknown>;
+  | string
+  | string[]
+  | boolean
+  | number
+  | undefined
+  | IAttachmentOptions
+  | IAttachmentOptions[]
+  | Record<string, unknown>;
 }
 
 export interface ISubscriberPayload {
@@ -186,6 +186,7 @@ export enum PushProviderIdEnum {
   PushWebhook = 'push-webhook',
   PusherBeams = 'pusher-beams',
   AppIO = 'appio',
+  Pushwoosh = 'pushwoosh',
 }
 
 export enum InAppProviderIdEnum {
@@ -251,8 +252,8 @@ export type WorkflowPreferences = {
 // TODO: This utility also exists in src/types/util.types.ts. They should be consolidated.
 export type DeepPartial<T> = T extends object
   ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
+    [P in keyof T]?: DeepPartial<T[P]>;
+  }
   : T;
 
 /** A partial set of workflow preferences. */

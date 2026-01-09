@@ -1,18 +1,19 @@
+import { ChannelTypeEnum, PushProviderIdEnum } from '@novu/shared';
 import { PushwooshPushProvider } from './pushwoosh.provider';
 
 describe('PushwooshPushProvider', () => {
     const config = {
-        applicationCode: 'TEST-APP-CODE',
+        applicationId: 'TEST-APP-CODE',
         apiKey: 'test-api-key',
     };
 
     test('should create provider instance', () => {
         const provider = new PushwooshPushProvider(config);
-        expect(provider.id).toBe('pushwoosh');
-        expect(provider.channelType).toBe('push');
+        expect(provider.id).toBe(PushProviderIdEnum.Pushwoosh);
+        expect(provider.channelType).toBe(ChannelTypeEnum.PUSH);
     });
 
-    test('should send message successfully', async () => {
+    test('should throw not implemented error', async () => {
         const provider = new PushwooshPushProvider(config);
 
         const options = {
@@ -24,10 +25,9 @@ describe('PushwooshPushProvider', () => {
             },
         };
 
-        const result = await provider.sendMessage(options);
-
-        expect(result).toHaveProperty('ids');
-        expect(result).toHaveProperty('date');
-        expect(Array.isArray(result.ids)).toBe(true);
+        await expect(provider.sendMessage(options)).rejects.toThrow(
+            'PushwooshPushProvider.sendMessage is not implemented yet'
+        );
     });
 });
+

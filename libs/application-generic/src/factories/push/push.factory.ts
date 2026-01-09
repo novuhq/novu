@@ -8,6 +8,7 @@ import {
   PushpadHandler,
   PushWebhookHandler,
   AppIOHandler,
+  PushwooshHandler,
 } from './handlers';
 import { IPushFactory, IPushHandler } from './interfaces';
 
@@ -21,6 +22,7 @@ export class PushFactory implements IPushFactory {
     new PushWebhookHandler(),
     new PusherBeamsHandler(),
     new AppIOHandler(),
+    new PushwooshHandler(),
   ];
 
   getHandler(
