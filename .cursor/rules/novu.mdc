@@ -38,12 +38,6 @@ When writing FrontEnd code, you are an expert on modern dev tool UI and UX desig
 ### Git Rules
 - when adding commit titles, use proper scope (dashboard,web,api,worker,shared,etc...)
 
-### Pull Request Rules
-- When creating a pull request, use the following format semantic format for semantic pr title:
-  - Title: fix([scope]): [description] (e.g. feat(dashboard): add new feature)
-  - Description: A detailed description of the changes made in the pull request
-- If working on a linear issue, add fixes NV-<issue-number> to the title end
-
 ### Key Conventions
 - Linting: Add blank lines before return statements
 - When importing "motion-react" package, import it from "motion/react" 

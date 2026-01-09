@@ -168,6 +168,107 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     expect(storedSubscriber.email).to.equal(newRandomSubscriber.email);
   });
 
+  it('should create a new subscriber with locale and data fields', async () => {
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
+    const subscriberId = `user-subscriber-id-${`${randomBytes(4).toString('hex')}`}`;
+
+    const newRandomSubscriber = {
+      subscriberId,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com',
+      locale: 'de-DE',
+      data: { customKey: 'customValue', nestedData: { key: 'value' } },
+    };
+
+    const res = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriber: newRandomSubscriber,
+    });
+
+    const { status, body } = res;
+
+    expect(status).to.equal(201);
+    expect(body.data.token).to.be.ok;
+
+    const storedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+    expect(storedSubscriber).to.exist;
+    if (!storedSubscriber) {
+      throw new Error('Subscriber exists but was not found');
+    }
+
+    expect(storedSubscriber.firstName).to.equal(newRandomSubscriber.firstName);
+    expect(storedSubscriber.lastName).to.equal(newRandomSubscriber.lastName);
+    expect(storedSubscriber.email).to.equal(newRandomSubscriber.email);
+    expect(storedSubscriber.locale).to.equal(newRandomSubscriber.locale);
+    expect(storedSubscriber.data).to.deep.equal(newRandomSubscriber.data);
+  });
+
+  it('should update locale and data fields when subscriber already exists with valid HMAC', async () => {
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
+    const subscriberId = `user-subscriber-id-${`${randomBytes(4).toString('hex')}`}`;
+
+    const initialSubscriber = {
+      subscriberId,
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: 'jane@example.com',
+      locale: 'en-US',
+      data: { initialKey: 'initialValue' },
+    };
+
+    const res = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriber: initialSubscriber,
+    });
+
+    expect(res.status).to.equal(201);
+
+    const storedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+    expect(storedSubscriber).to.exist;
+    expect(storedSubscriber?.locale).to.equal('en-US');
+    expect(storedSubscriber?.data).to.deep.equal({ initialKey: 'initialValue' });
+
+    const updatedSubscriber = {
+      subscriberId,
+      firstName: 'Jane Updated',
+      lastName: 'Smith Updated',
+      email: 'jane.updated@example.com',
+      locale: 'fr-FR',
+      data: { updatedKey: 'updatedValue', nested: { key: 'value' } },
+    };
+
+    const secretKey = session.environment.apiKeys[0].key;
+    const subscriberHash = createHash(secretKey, subscriberId);
+
+    const updateRes = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriber: updatedSubscriber,
+      subscriberHash,
+    });
+
+    expect(updateRes.status).to.equal(201);
+
+    const updatedStoredSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      subscriberId
+    );
+    expect(updatedStoredSubscriber).to.exist;
+    expect(updatedStoredSubscriber?.firstName).to.equal(updatedSubscriber.firstName);
+    expect(updatedStoredSubscriber?.lastName).to.equal(updatedSubscriber.lastName);
+    expect(updatedStoredSubscriber?.email).to.equal(updatedSubscriber.email);
+    expect(updatedStoredSubscriber?.locale).to.equal(updatedSubscriber.locale);
+    expect(updatedStoredSubscriber?.data).to.deep.equal(updatedSubscriber.data);
+  });
+
   it('should upsert a subscriber', async () => {
     await setIntegrationConfig(
       {
