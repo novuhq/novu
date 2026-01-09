@@ -86,6 +86,7 @@ export class SubscriberJobBound {
           _id: templateId,
           environmentId,
           organizationId,
+          source: command.payload?.__source,
         });
 
     if (!template) {
@@ -285,10 +286,12 @@ export class SubscriberJobBound {
     _id,
     environmentId,
     organizationId,
+    source,
   }: {
     _id: string;
     environmentId: string;
     organizationId: string;
+    source?: string;
   }): Promise<NotificationTemplateEntity | null> {
     const cacheKey = `${environmentId}:${_id}`;
 
@@ -300,7 +303,9 @@ export class SubscriberJobBound {
       component: 'worker-workflow',
     });
 
-    if (isFeatureFlagEnabled) {
+    const isCacheEnabled = isFeatureFlagEnabled && !source;
+
+    if (isCacheEnabled) {
       const cached = workflowCache.get(cacheKey);
       if (cached) {
         return cached;
@@ -315,19 +320,19 @@ export class SubscriberJobBound {
     const fetchPromise = this.notificationTemplateRepository
       .findById(_id, environmentId)
       .then((workflow) => {
-        if (workflow && isFeatureFlagEnabled) {
+        if (workflow && isCacheEnabled) {
           workflowCache.set(cacheKey, workflow);
         }
 
         return workflow;
       })
       .finally(() => {
-        if (isFeatureFlagEnabled) {
+        if (isCacheEnabled) {
           workflowInflightRequests.delete(cacheKey);
         }
       });
 
-    if (isFeatureFlagEnabled) {
+    if (isCacheEnabled) {
       workflowInflightRequests.set(cacheKey, fetchPromise);
     }
 
