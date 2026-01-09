@@ -13,7 +13,9 @@ import {
   UpsertSubscriberWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import {
+  EnforceEnvOrOrgIds,
   NotificationTemplateEntity,
+  PreferencesDBModel,
   PreferencesRepository,
   SubscriberEntity,
   SubscriberRepository,
@@ -31,6 +33,7 @@ import {
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
+import { FilterQuery } from 'mongoose';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -162,8 +165,7 @@ export class UpdatePreferences {
       command.workflowIdOrIdentifier &&
       workflow
     ) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const query: any = {
+      const query: FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds = {
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _templateId: workflow._id,
