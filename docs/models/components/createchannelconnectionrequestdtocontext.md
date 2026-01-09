@@ -9,10 +9,10 @@
 const value: string = "org-acme";
 ```
 
-### `components.Context2`
+### `components.CreateChannelConnectionRequestDtoContext2`
 
 ```typescript
-const value: components.Context2 = {
+const value: components.CreateChannelConnectionRequestDtoContext2 = {
   id: "org-acme",
   data: {
     "name": "Acme Corp",

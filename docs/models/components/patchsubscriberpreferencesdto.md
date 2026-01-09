@@ -74,6 +74,9 @@ let value: PatchSubscriberPreferencesDto = {
       },
     },
   },
+  context: {
+    "key": "org-acme",
+  },
 };
 ```
 
@@ -84,3 +87,4 @@ let value: PatchSubscriberPreferencesDto = {
 | `channels`                                                                                                                        | [components.PatchPreferenceChannelsDto](../../models/components/patchpreferencechannelsdto.md)                                    | :heavy_minus_sign:                                                                                                                | Channel-specific preference settings                                                                                              |
 | `workflowId`                                                                                                                      | *string*                                                                                                                          | :heavy_minus_sign:                                                                                                                | Workflow internal _id, identifier or slug. If provided, update workflow specific preferences, otherwise update global preferences |
 | `schedule`                                                                                                                        | [components.ScheduleDto](../../models/components/scheduledto.md)                                                                  | :heavy_minus_sign:                                                                                                                | Subscriber schedule                                                                                                               |
+| `context`                                                                                                                         | Record<string, *components.Context*>                                                                                              | :heavy_minus_sign:                                                                                                                | N/A                                                                                                                               |

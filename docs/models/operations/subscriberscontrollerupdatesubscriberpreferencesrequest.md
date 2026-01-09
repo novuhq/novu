@@ -76,6 +76,9 @@ let value: SubscribersControllerUpdateSubscriberPreferencesRequest = {
         },
       },
     },
+    context: {
+      "key": "org-acme",
+    },
   },
 };
 ```

@@ -14,6 +14,9 @@ let value: SubscribersControllerBulkUpdateSubscriberPreferencesRequest = {
         workflowId: "<id>",
       },
     ],
+    context: {
+      "key": "org-acme",
+    },
   },
 };
 ```

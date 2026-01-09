@@ -26,7 +26,12 @@ const novu = new Novu({
 });
 
 async function run() {
-  const result = await novu.subscribers.preferences.list("<id>");
+  const result = await novu.subscribers.preferences.list({
+    subscriberId: "<id>",
+    contextKeys: [
+      "tenant:acme",
+    ],
+  });
 
   console.log(result);
 }
@@ -51,7 +56,12 @@ const novu = new NovuCore({
 });
 
 async function run() {
-  const res = await subscribersPreferencesList(novu, "<id>");
+  const res = await subscribersPreferencesList(novu, {
+    subscriberId: "<id>",
+    contextKeys: [
+      "tenant:acme",
+    ],
+  });
   if (res.ok) {
     const { value: result } = res;
     console.log(result);
@@ -95,9 +105,7 @@ import {
 
 | Parameter                                                                                                                                                                      | Type                                                                                                                                                                           | Required                                                                                                                                                                       | Description                                                                                                                                                                    |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `subscriberId`                                                                                                                                                                 | *string*                                                                                                                                                                       | :heavy_check_mark:                                                                                                                                                             | N/A                                                                                                                                                                            |
-| `criticality`                                                                                                                                                                  | [operations.Criticality](../../models/operations/criticality.md)                                                                                                               | :heavy_minus_sign:                                                                                                                                                             | N/A                                                                                                                                                                            |
-| `idempotencyKey`                                                                                                                                                               | *string*                                                                                                                                                                       | :heavy_minus_sign:                                                                                                                                                             | A header for idempotency purposes                                                                                                                                              |
+| `request`                                                                                                                                                                      | [operations.SubscribersControllerGetSubscriberPreferencesRequest](../../models/operations/subscriberscontrollergetsubscriberpreferencesrequest.md)                             | :heavy_check_mark:                                                                                                                                                             | The request object to use for the request.                                                                                                                                     |
 | `options`                                                                                                                                                                      | RequestOptions                                                                                                                                                                 | :heavy_minus_sign:                                                                                                                                                             | Used to set various options for making HTTP requests.                                                                                                                          |
 | `options.fetchOptions`                                                                                                                                                         | [RequestInit](https://developer.mozilla.org/en-US/docs/Web/API/Request/Request#options)                                                                                        | :heavy_minus_sign:                                                                                                                                                             | Options that are passed to the underlying HTTP request. This can be used to inject extra headers for examples. All `Request` options, except `method` and `body`, are allowed. |
 | `options.retries`                                                                                                                                                              | [RetryConfig](../../lib/utils/retryconfig.md)                                                                                                                                  | :heavy_minus_sign:                                                                                                                                                             | Enables retrying HTTP requests under certain failure conditions.                                                                                                               |
@@ -204,6 +212,9 @@ async function run() {
         },
       },
     },
+    context: {
+      "key": "org-acme",
+    },
   }, "<id>");
 
   console.log(result);
@@ -298,6 +309,9 @@ async function run() {
         },
       },
     },
+    context: {
+      "key": "org-acme",
+    },
   }, "<id>");
   if (res.ok) {
     const { value: result } = res;
@@ -372,6 +386,9 @@ const novu = new Novu({
 async function run() {
   const result = await novu.subscribers.preferences.bulkUpdate({
     preferences: [],
+    context: {
+      "key": "org-acme",
+    },
   }, "<id>");
 
   console.log(result);
@@ -399,6 +416,9 @@ const novu = new NovuCore({
 async function run() {
   const res = await subscribersPreferencesBulkUpdate(novu, {
     preferences: [],
+    context: {
+      "key": "org-acme",
+    },
   }, "<id>");
   if (res.ok) {
     const { value: result } = res;
