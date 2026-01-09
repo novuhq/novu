@@ -178,11 +178,14 @@ export class GetSubscriberPreference {
 
           const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
 
-          return {
+          const preference: ISubscriberPreferenceResponse = {
             preference: {
               channels,
               enabled: true,
               overrides,
+              ...(preferences.subscriberWorkflowPreference?.updatedAt && {
+                updatedAt: preferences.subscriberWorkflowPreference.updatedAt,
+              }),
             },
             template: mapTemplateConfiguration({
               ...workflow,
@@ -190,6 +193,8 @@ export class GetSubscriberPreference {
             }),
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           };
+
+          return preference;
         })
         .filter((item): item is ISubscriberPreferenceResponse => item !== null);
 

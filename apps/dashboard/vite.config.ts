@@ -86,17 +86,16 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src'),
         ...(isCommunitySelHosted
           ? {
               '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx'),
-              '@/context/region': path.resolve(__dirname, './src/context/region/index.self-hosted.ts'),
               '@/components/side-navigation/organization-dropdown-clerk': path.resolve(
                 __dirname,
                 './src/utils/self-hosted/organization-switcher.tsx'
               ),
             }
           : {}),
+        '@': path.resolve(__dirname, './src'),
         // Explicitly map prettier imports to browser-compatible versions
         'prettier/standalone': path.resolve(__dirname, './node_modules/prettier/standalone.js'),
         'prettier/plugins/html': path.resolve(__dirname, './node_modules/prettier/plugins/html.js'),

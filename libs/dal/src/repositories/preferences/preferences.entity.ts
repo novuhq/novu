@@ -34,4 +34,8 @@ export class PreferencesEntity {
   schedule?: Schedule;
 
   contextKeys?: string[];
+
+  createdAt?: string;
+
+  updatedAt?: string;
 }
