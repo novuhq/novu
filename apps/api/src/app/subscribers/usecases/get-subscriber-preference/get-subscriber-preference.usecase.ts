@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
+  FeatureFlagsService,
   filteredPreference,
   GetPreferences,
   GetPreferencesResponseDto,
@@ -20,6 +21,7 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
   IPreferenceChannels,
   ISubscriberPreferenceResponse,
   PreferencesTypeEnum,
@@ -33,7 +35,8 @@ export class GetSubscriberPreference {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private preferencesRepository: PreferencesRepository
+    private preferencesRepository: PreferencesRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -256,7 +259,7 @@ export class GetSubscriberPreference {
     };
 
     const readOptions = { readPreference: 'secondaryPreferred' as const };
-    const contextQuery = this.buildContextExactMatchQuery(contextKeys);
+    const contextQuery = await this.buildContextExactMatchQuery(contextKeys, organizationId);
 
     const [
       workflowResourcePreferences,
@@ -312,7 +315,20 @@ export class GetSubscriberPreference {
     };
   }
 
-  private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    organizationId: string
+  ): Promise<Record<string, unknown>> {
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!useContextFiltering) {
+      return {}; // FF OFF: no context filtering (pre-feature behavior)
+    }
+
     // undefined or empty array = match only "no context" preferences
     if (contextKeys === undefined || contextKeys.length === 0) {
       return {

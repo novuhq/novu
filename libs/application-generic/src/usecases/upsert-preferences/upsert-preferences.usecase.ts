@@ -164,7 +164,13 @@ export class UpsertPreferences {
   }
 
   private async createPreferences(command: UpsertPreferencesCommand): Promise<PreferencesEntity> {
-    // Determine contextKeys based on preference type
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    // Determine contextKeys based on preference type AND feature flag
     // Non-context-scoped types (universal/workflow-level): undefined (no field)
     // Context-scoped types (subscriber-level): [] or ["key"]
     const isContextScoped = [
@@ -182,7 +188,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       type: command.type,
       schedule: command.schedule,
-      contextKeys: isContextScoped ? (command.contextKeys ?? []) : undefined,
+      contextKeys: useContextFiltering && isContextScoped ? (command.contextKeys ?? []) : undefined,
     });
   }
 
@@ -234,13 +240,17 @@ export class UpsertPreferences {
       _topicSubscriptionId: command.topicSubscriptionId,
       _templateId: command.templateId,
       type: command.type,
-      ...this.buildContextKeysQuery(command.contextKeys, command.type),
+      ...this.buildContextExactMatchQuery(command.contextKeys, command.type, command.organizationId),
     };
 
     return await this.preferencesRepository.findOne(query);
   }
 
-  private buildContextKeysQuery(contextKeys: string[] | undefined, type: PreferencesTypeEnum): Record<string, unknown> {
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    type: PreferencesTypeEnum,
+    organizationId: string
+  ): Promise<Record<string, unknown>> {
     // Non-context-scoped types (universal/workflow-level) - no context filter
     const nonContextScopedTypes = [
       PreferencesTypeEnum.WORKFLOW_RESOURCE,
@@ -252,7 +262,16 @@ export class UpsertPreferences {
       return {};
     }
 
-    // Context-scoped types (subscriber-level)
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!useContextFiltering) {
+      return {};
+    }
+
     // undefined or empty array = match only "no context" preferences
     if (contextKeys === undefined || contextKeys.length === 0) {
       return { $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }] };

@@ -167,7 +167,7 @@ export class GetPreferences {
     ];
 
     if (command.subscriberId) {
-      const contextQuery = this.buildContextExactMatchQuery(command.contextKeys);
+      const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
 
       queries.push(
         this.preferencesRepository.findOne(
@@ -222,7 +222,20 @@ export class GetPreferences {
     return result;
   }
 
-  private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    organizationId: string
+  ): Promise<Record<string, unknown>> {
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!useContextFiltering) {
+      return {}; // FF OFF: no context filtering (pre-feature behavior)
+    }
+
     // undefined or empty array = match only "no context" preferences
     if (contextKeys === undefined || contextKeys.length === 0) {
       return {
