@@ -6,6 +6,7 @@ import {
   CreateNotificationJobsCommand,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
+  FeatureFlagsService,
   GetPreferences,
   GetPreferencesCommand,
   Instrument,
@@ -19,6 +20,7 @@ import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplate
 import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
@@ -26,10 +28,18 @@ import {
   SeverityLevelEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
+import { LRUCache } from 'lru-cache';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
+
+const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
+  max: 1000,
+  ttl: 1000 * 30,
+});
+
+const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity | null>>();
 
 @Injectable()
 export class SubscriberJobBound {
@@ -42,7 +52,8 @@ export class SubscriberJobBound {
     private logger: PinoLogger,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
-    private getPreferences: GetPreferences
+    private getPreferences: GetPreferences,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -74,6 +85,7 @@ export class SubscriberJobBound {
       : await this.getWorkflow({
           _id: templateId,
           environmentId,
+          organizationId,
         });
 
     if (!template) {
@@ -268,8 +280,58 @@ export class SubscriberJobBound {
     return true;
   }
 
-  private async getWorkflow({ _id, environmentId }: { _id: string; environmentId: string }) {
-    return await this.notificationTemplateRepository.findById(_id, environmentId);
+  @Instrument()
+  private async getWorkflow({
+    _id,
+    environmentId,
+    organizationId,
+  }: {
+    _id: string;
+    environmentId: string;
+    organizationId: string;
+  }): Promise<NotificationTemplateEntity | null> {
+    const cacheKey = `${environmentId}:${_id}`;
+
+    const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      component: 'worker-workflow',
+    });
+
+    if (isFeatureFlagEnabled) {
+      const cached = workflowCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const inflightRequest = workflowInflightRequests.get(cacheKey);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
+    }
+
+    const fetchPromise = this.notificationTemplateRepository
+      .findById(_id, environmentId)
+      .then((workflow) => {
+        if (workflow && isFeatureFlagEnabled) {
+          workflowCache.set(cacheKey, workflow);
+        }
+
+        return workflow;
+      })
+      .finally(() => {
+        if (isFeatureFlagEnabled) {
+          workflowInflightRequests.delete(cacheKey);
+        }
+      });
+
+    if (isFeatureFlagEnabled) {
+      workflowInflightRequests.set(cacheKey, fetchPromise);
+    }
+
+    return fetchPromise;
   }
 
   @InstrumentUsecase()
