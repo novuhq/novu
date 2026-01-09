@@ -741,6 +741,22 @@ export const pushpadConfig: IConfigCredential[] = [
   ...pushConfigBase,
 ];
 
+export const pushwooshConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Access Token',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application Code',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const apnsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.SecretKey,

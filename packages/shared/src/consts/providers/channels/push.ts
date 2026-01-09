@@ -15,6 +15,7 @@ import {
   oneSignalConfig,
   pusherBeamsConfig,
   pushpadConfig,
+  pushwooshConfig,
   pushWebhookConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
@@ -36,6 +37,14 @@ export const pushProviders: IProviderConfig[] = [
     configurations: pushpadGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/push/pushpad${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'pushpad.svg', dark: 'pushpad.svg' },
+  },
+  {
+    id: PushProviderIdEnum.Pushwoosh,
+    displayName: 'Pushwoosh',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: pushwooshConfig,
+    docReference: `https://docs.novu.co/platform/integrations/push/pushwoosh${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'pushwoosh.svg', dark: 'pushwoosh.svg' },
   },
   {
     id: PushProviderIdEnum.FCM,

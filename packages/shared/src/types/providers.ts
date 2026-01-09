@@ -146,6 +146,7 @@ export enum PushProviderIdEnum {
   PushWebhook = 'push-webhook',
   PusherBeams = 'pusher-beams',
   AppIO = 'appio',
+  Pushwoosh = 'pushwoosh',
 }
 
 export enum InAppProviderIdEnum {
