@@ -233,6 +233,12 @@ export class UpsertPreferences {
   }
 
   private async getPreference(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
+    const contextQuery = await this.buildContextExactMatchQuery(
+      command.contextKeys,
+      command.type,
+      command.organizationId
+    );
+
     const query: FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -240,7 +246,7 @@ export class UpsertPreferences {
       _topicSubscriptionId: command.topicSubscriptionId,
       _templateId: command.templateId,
       type: command.type,
-      ...this.buildContextExactMatchQuery(command.contextKeys, command.type, command.organizationId),
+      ...contextQuery,
     };
 
     return await this.preferencesRepository.findOne(query);

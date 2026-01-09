@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  FeatureFlagsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -23,6 +24,7 @@ import {
 } from '@novu/dal';
 import {
   buildWorkflowPreferences,
+  FeatureFlagsKeysEnum,
   IPreferenceChannels,
   PreferenceLevelEnum,
   PreferencesTypeEnum,
@@ -51,7 +53,8 @@ export class UpdatePreferences {
     private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase,
     private sendWebhookMessage: SendWebhookMessage,
     private topicSubscribersRepository: TopicSubscribersRepository,
-    private preferencesRepository: PreferencesRepository
+    private preferencesRepository: PreferencesRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -165,21 +168,16 @@ export class UpdatePreferences {
       command.workflowIdOrIdentifier &&
       workflow
     ) {
+      const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
       const query: FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds = {
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _templateId: workflow._id,
         _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+        ...contextQuery,
       };
-
-      if (command.contextKeys !== undefined) {
-        if (command.contextKeys.length === 0) {
-          query.$or = [{ contextKeys: { $exists: false } }, { contextKeys: [] }];
-        } else {
-          query.contextKeys = { $all: command.contextKeys, $size: command.contextKeys.length };
-        }
-      }
 
       const preferenceEntity = await this.preferencesRepository.findOne(query);
 
@@ -322,5 +320,30 @@ export class UpdatePreferences {
         contextKeys: item.contextKeys,
       })
     );
+  }
+
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    organizationId: string
+  ): Promise<Record<string, unknown>> {
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!useContextFiltering) {
+      return {};
+    }
+
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }
