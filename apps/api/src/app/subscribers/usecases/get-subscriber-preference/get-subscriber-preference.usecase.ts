@@ -298,7 +298,6 @@ export class GetSubscriberPreference {
           ...baseQuery,
           _subscriberId: subscriberId,
           type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-          ...contextQuery,
         },
         undefined,
         readOptions
@@ -314,16 +313,14 @@ export class GetSubscriberPreference {
   }
 
   private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
-    if (contextKeys === undefined) {
-      return {};
-    }
-
-    if (contextKeys.length === 0) {
+    // undefined or empty array = match only "no context" preferences
+    if (contextKeys === undefined || contextKeys.length === 0) {
       return {
         $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
       };
     }
 
+    // non-empty array = exact match
     return {
       contextKeys: { $all: contextKeys, $size: contextKeys.length },
     };

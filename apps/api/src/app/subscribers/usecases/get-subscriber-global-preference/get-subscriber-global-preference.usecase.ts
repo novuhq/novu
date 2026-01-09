@@ -36,7 +36,6 @@ export class GetSubscriberGlobalPreference {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       subscriberId: subscriber._id,
-      contextKeys: command.contextKeys,
     });
 
     const channelsWithDefaults = this.buildDefaultPreferences(subscriberGlobalPreference.channels);

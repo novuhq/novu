@@ -75,7 +75,6 @@ export class UpsertPreferences {
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       returnPreference: command.returnPreference,
       schedule: isSubscribersScheduleEnabled ? command.schedule : undefined,
-      contextKeys: command.contextKeys,
     });
   }
 
@@ -165,6 +164,14 @@ export class UpsertPreferences {
   }
 
   private async createPreferences(command: UpsertPreferencesCommand): Promise<PreferencesEntity> {
+    // Determine contextKeys based on preference type
+    // Non-context-scoped types (universal/workflow-level): undefined (no field)
+    // Context-scoped types (subscriber-level): [] or ["key"]
+    const isContextScoped = [
+      PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+      PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+    ].includes(command.type);
+
     return await this.preferencesRepository.create({
       _subscriberId: command._subscriberId,
       _userId: command.userId,
@@ -175,7 +182,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       type: command.type,
       schedule: command.schedule,
-      contextKeys: command.contextKeys ?? [],
+      contextKeys: isContextScoped ? (command.contextKeys ?? []) : undefined,
     });
   }
 
@@ -227,20 +234,27 @@ export class UpsertPreferences {
       _topicSubscriptionId: command.topicSubscriptionId,
       _templateId: command.templateId,
       type: command.type,
-      ...this.buildContextKeysQuery(command.contextKeys),
+      ...this.buildContextKeysQuery(command.contextKeys, command.type),
     };
 
     return await this.preferencesRepository.findOne(query);
   }
 
-  private buildContextKeysQuery(contextKeys: string[] | undefined): Record<string, unknown> {
-    // undefined = no filter, [] = explicitly no context, [...keys] = exact match
-    if (contextKeys === undefined) {
+  private buildContextKeysQuery(contextKeys: string[] | undefined, type: PreferencesTypeEnum): Record<string, unknown> {
+    // Non-context-scoped types (universal/workflow-level) - no context filter
+    const nonContextScopedTypes = [
+      PreferencesTypeEnum.WORKFLOW_RESOURCE,
+      PreferencesTypeEnum.USER_WORKFLOW,
+      PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+    ];
+
+    if (nonContextScopedTypes.includes(type)) {
       return {};
     }
 
-    if (contextKeys.length === 0) {
-      // Match records with no context (legacy records have undefined, newer records have [] as default)
+    // Context-scoped types (subscriber-level)
+    // undefined or empty array = match only "no context" preferences
+    if (contextKeys === undefined || contextKeys.length === 0) {
       return { $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }] };
     }
 
