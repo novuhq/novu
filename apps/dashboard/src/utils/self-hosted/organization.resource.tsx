@@ -16,10 +16,11 @@ const getCurrentOrganization = withJwtValidation(async () => {
 });
 
 export function OrganizationContextProvider({ children }: any) {
+  const hasToken = !!getJwtToken();
   const { data: organization, isLoading } = useQuery({
     queryKey: [QueryKeys.myOrganization],
     queryFn: getCurrentOrganization,
-    enabled: !!getJwtToken(),
+    enabled: hasToken,
   });
 
   const value = {
@@ -34,17 +35,8 @@ export function OrganizationContextProvider({ children }: any) {
           },
           _id: organization._id,
         }
-      : {
-          name: 'System Organization',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          externalOrgId: null,
-          publicMetadata: {
-            externalOrgId: null,
-          },
-          _id: null,
-        },
-    isLoaded: isLoading,
+      : undefined,
+    isLoaded: hasToken ? !isLoading : true,
   };
 
   return <OrganizationContext.Provider value={value}>{children}</OrganizationContext.Provider>;

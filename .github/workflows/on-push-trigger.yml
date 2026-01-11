@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   actions: write
+  pull-requests: read
 
 jobs:
   trigger-deploy-workflow:
@@ -16,15 +17,108 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Get PR Number
+        id: get-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list --state merged --search "${{ github.sha }}" --json number --jq '.[0].number')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR found for this commit"
+            echo "pr_number=" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "Found PR #$PR_NUMBER"
+          fi
+
+      - name: Get PR Labels
+        id: get-labels
+        if: steps.get-pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABELS=$(gh pr view ${{ steps.get-pr.outputs.pr_number }} --json labels --jq '.labels[].name')
+          echo "Labels found:"
+          echo "$LABELS"
+          echo "labels<<EOF" >> $GITHUB_OUTPUT
+          echo "$LABELS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Determine Services to Deploy
+        id: determine-services
+        env:
+          LABELS: ${{ steps.get-labels.outputs.labels || '' }}
+        run: |
+          DEPLOY_API=false
+          DEPLOY_WORKER=false
+          DEPLOY_WS=false
+          DEPLOY_WEBHOOK=false
+          SKIP_DEPLOYMENT=false
+
+          # Check if only CI/CD label exists (standalone)
+          LABEL_COUNT=$(echo "$LABELS" | grep -v '^$' | wc -l | tr -d ' ')
+          if [ "$LABEL_COUNT" = "1" ] && echo "$LABELS" | grep -q "CI/CD"; then
+            echo "Only CI/CD label found, skipping deployment"
+            SKIP_DEPLOYMENT=true
+          elif echo "$LABELS" | grep -q "CI/CD"; then
+            echo "CI/CD label found with other labels, continuing with deployment"
+          fi
+
+          # Check for service-specific labels only if not skipping
+          if [ "$SKIP_DEPLOYMENT" = "false" ]; then
+            if echo "$LABELS" | grep -q "@novu/api-service"; then
+              DEPLOY_API=true
+              echo "Found @novu/api-service label"
+            fi
+            
+            if echo "$LABELS" | grep -q "@novu/worker"; then
+              DEPLOY_WORKER=true
+              echo "Found @novu/worker label"
+            fi
+            
+            if echo "$LABELS" | grep -q "@novu/ws"; then
+              DEPLOY_WS=true
+              echo "Found @novu/ws label"
+            fi
+            
+            if echo "$LABELS" | grep -q "@novu/webhook"; then
+              DEPLOY_WEBHOOK=true
+              echo "Found @novu/webhook label"
+            fi
+            
+            # If no service labels found, deploy api and worker by default
+            if [ "$DEPLOY_API" = "false" ] && [ "$DEPLOY_WORKER" = "false" ] && [ "$DEPLOY_WS" = "false" ] && [ "$DEPLOY_WEBHOOK" = "false" ]; then
+              echo "No service labels found, deploying api and worker by default"
+              DEPLOY_API=true
+              DEPLOY_WORKER=true
+            fi
+          fi
+
+          echo "skip_deployment=$SKIP_DEPLOYMENT" >> $GITHUB_OUTPUT
+          echo "deploy_api=$DEPLOY_API" >> $GITHUB_OUTPUT
+          echo "deploy_worker=$DEPLOY_WORKER" >> $GITHUB_OUTPUT
+          echo "deploy_ws=$DEPLOY_WS" >> $GITHUB_OUTPUT
+          echo "deploy_webhook=$DEPLOY_WEBHOOK" >> $GITHUB_OUTPUT
+
+          echo "Final deployment configuration:"
+          echo "  Skip: $SKIP_DEPLOYMENT"
+          echo "  API: $DEPLOY_API"
+          echo "  Worker: $DEPLOY_WORKER"
+          echo "  WS: $DEPLOY_WS"
+          echo "  Webhook: $DEPLOY_WEBHOOK"
 
       - name: Trigger Deploy Workflow via GitHub CLI
+        if: steps.determine-services.outputs.skip_deployment == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run "deploy.yml" \
             --ref next \
             -f environment=staging \
-            -f deploy_api=true \
-            -f deploy_worker=true \
-            -f deploy_ws=true \
-            -f deploy_webhook=true
+            -f deploy_api=${{ steps.determine-services.outputs.deploy_api }} \
+            -f deploy_worker=${{ steps.determine-services.outputs.deploy_worker }} \
+            -f deploy_ws=${{ steps.determine-services.outputs.deploy_ws }} \
+            -f deploy_webhook=${{ steps.determine-services.outputs.deploy_webhook }}

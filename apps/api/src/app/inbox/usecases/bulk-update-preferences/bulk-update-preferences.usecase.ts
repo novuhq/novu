@@ -102,6 +102,7 @@ export class BulkUpdatePreferences {
             organizationId: command.organizationId,
             subscriberId: command.subscriberId,
             environmentId: command.environmentId,
+            contextKeys: command.contextKeys,
             level: PreferenceLevelEnum.TEMPLATE,
             subscriptionIdentifier: preference.subscriptionIdentifier,
             ...(isUpdatingSubscriptionPreference && {

@@ -73,6 +73,10 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       },
     },
     schedule: Schema.Types.Mixed,
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
   },
   { ...schemaOptions, minimize: false }
 );

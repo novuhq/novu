@@ -32,4 +32,10 @@ export class PreferencesEntity {
   preferences: WorkflowPreferencesPartial;
 
   schedule?: Schedule;
+
+  contextKeys?: string[];
+
+  createdAt?: string;
+
+  updatedAt?: string;
 }

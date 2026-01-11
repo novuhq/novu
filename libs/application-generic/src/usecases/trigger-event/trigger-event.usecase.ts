@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
+  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITenantDefine,
   TriggerRecipientSubscriber,
@@ -16,11 +17,13 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { toMerged } from 'es-toolkit';
+import { LRUCache } from 'lru-cache';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import type { EventType, Trace } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { AnalyticsService } from '../../services/analytics.service';
+import { FeatureFlagsService } from '../../services/feature-flags';
 import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
@@ -32,6 +35,13 @@ import { TriggerEventCommand } from './trigger-event.command';
 function getActiveWorker() {
   return process.env.ACTIVE_WORKER;
 }
+
+const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
+  max: 1000,
+  ttl: 1000 * 30,
+});
+
+const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity | null>>();
 
 @Injectable()
 export class TriggerEvent {
@@ -46,7 +56,8 @@ export class TriggerEvent {
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
     private contextRepository: ContextRepository,
-    private verifyPayload: VerifyPayload
+    private verifyPayload: VerifyPayload,
+    private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -316,9 +327,11 @@ export class TriggerEvent {
   }) {
     const lastTriggeredAt = new Date();
 
-    const workflow = await this.notificationTemplateRepository.findByTriggerIdentifier(
+    const workflow = await this.findWorkflowByTriggerIdentifier(
+      command.triggerIdentifier,
       command.environmentId,
-      command.triggerIdentifier
+      command.organizationId,
+      command.payload?.__source
     );
 
     if (workflow) {
@@ -354,6 +367,59 @@ export class TriggerEvent {
     }
 
     return workflow;
+  }
+
+  @Instrument()
+  private async findWorkflowByTriggerIdentifier(
+    triggerIdentifier: string,
+    environmentId: string,
+    organizationId: string,
+    source?: string
+  ): Promise<NotificationTemplateEntity | null> {
+    const cacheKey = `${environmentId}:${triggerIdentifier}`;
+
+    const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      component: 'api-trigger-event',
+    });
+
+    const isCacheEnabled = isFeatureFlagEnabled && !source;
+
+    if (isCacheEnabled) {
+      const cached = workflowCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const inflightRequest = workflowInflightRequests.get(cacheKey);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
+    }
+
+    const fetchPromise = this.notificationTemplateRepository
+      .findByTriggerIdentifier(environmentId, triggerIdentifier)
+      .then((workflow) => {
+        if (workflow && isCacheEnabled) {
+          workflowCache.set(cacheKey, workflow);
+        }
+
+        return workflow;
+      })
+      .finally(() => {
+        if (isCacheEnabled) {
+          workflowInflightRequests.delete(cacheKey);
+        }
+      });
+
+    if (isCacheEnabled) {
+      workflowInflightRequests.set(cacheKey, fetchPromise);
+    }
+
+    return fetchPromise;
   }
 
   @Instrument()
