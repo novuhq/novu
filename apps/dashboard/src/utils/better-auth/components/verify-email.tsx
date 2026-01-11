@@ -70,7 +70,7 @@ export function VerifyEmail() {
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <p className="mb-3 text-sm text-gray-700">Didn&apos;t receive the email?</p>
+            <p className="mb-3 text-sm text-gray-700">Didn't receive the email?</p>
             <Button
               type="button"
               variant="secondary"
