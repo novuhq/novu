@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase, PinoLogger, TraceLogRepository } from '@novu/application-generic';
+import { InstrumentUsecase, MessageSentCountsRepository, PinoLogger } from '@novu/application-generic';
 import { MessagesDeliveredDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildMessagesDeliveredChartCommand } from './build-messages-delivered-chart.command';
 
 @Injectable()
 export class BuildMessagesDeliveredChart {
   constructor(
-    private traceLogRepository: TraceLogRepository,
+    private messageSentCountsRepository: MessageSentCountsRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(BuildMessagesDeliveredChart.name);
@@ -20,7 +20,7 @@ export class BuildMessagesDeliveredChart {
     const previousEndDate = new Date(startDate.getTime() - 1);
     const previousStartDate = new Date(previousEndDate.getTime() - periodDuration);
 
-    const result = await this.traceLogRepository.getMessagesSentData(
+    const result = await this.messageSentCountsRepository.getMessagesSentData(
       environmentId,
       organizationId,
       startDate,

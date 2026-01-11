@@ -1,6 +1,6 @@
 import { CHDate, CHString, CHUInt64, ClickhouseSchema } from 'clickhouse-schema';
 
-export const TRACE_EVENT_COUNTS_TABLE_NAME = 'trace_event_counts';
+export const MESSAGE_SENT_COUNTS_TABLE_NAME = 'trace_event_counts';
 
 const schemaDefinition = {
   date: { type: CHDate() },
@@ -10,7 +10,7 @@ const schemaDefinition = {
   count: { type: CHUInt64() },
 };
 
-export const TRACE_EVENT_COUNTS_ORDER_BY: (keyof typeof schemaDefinition)[] = [
+export const MESSAGE_SENT_COUNTS_ORDER_BY: (keyof typeof schemaDefinition)[] = [
   'organization_id',
   'environment_id',
   'workflow_id',
@@ -18,15 +18,15 @@ export const TRACE_EVENT_COUNTS_ORDER_BY: (keyof typeof schemaDefinition)[] = [
 ];
 
 const clickhouseSchemaOptions = {
-  table_name: TRACE_EVENT_COUNTS_TABLE_NAME,
+  table_name: MESSAGE_SENT_COUNTS_TABLE_NAME,
   engine: 'SummingMergeTree',
-  order_by: `(${TRACE_EVENT_COUNTS_ORDER_BY.join(', ')})` as any,
+  order_by: `(${MESSAGE_SENT_COUNTS_ORDER_BY.join(', ')})` as any,
   additional_options: ['PARTITION BY toYYYYMM(date)'],
 };
 
-export const traceEventCountsSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
+export const messageSentCountsSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
 
-export type TraceEventCount = {
+export type MessageSentCount = {
   date: string;
   organization_id: string;
   environment_id: string;

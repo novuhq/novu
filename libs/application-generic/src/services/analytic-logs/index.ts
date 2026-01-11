@@ -1,6 +1,7 @@
 export { createClient as createClickHouseClient } from '@clickhouse/client';
 export * from './clickhouse.service';
 export * from './log.repository';
+export * from './message-sent-counts';
 export * from './request-log';
 export { StepRun, StepRunFinalStatus, StepRunNonFinalStatus, StepRunRepository, StepRunStatus } from './step-run';
 export { EventType, mapEventTypeToTitle, Trace, TraceLogRepository, TraceStatus, traceLogSchema } from './trace-log';
