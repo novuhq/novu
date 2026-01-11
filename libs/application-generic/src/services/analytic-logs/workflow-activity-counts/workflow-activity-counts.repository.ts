@@ -228,4 +228,88 @@ export class WorkflowActivityCountsRepository extends LogRepository<
 
     return result.data;
   }
+
+  async getAvgMessagesPerSubscriberData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date,
+    workflowIds?: string[]
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? `AND workflow_id IN {workflowIds:Array(String)}` : '';
+
+    const currentQuery = `
+      SELECT 
+        sum(count) as total_messages,
+        count(DISTINCT external_subscriber_id) as unique_subscribers
+      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND environment_id = {environmentId:String}
+        AND external_subscriber_id != ''
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        ${workflowFilter}
+    `;
+
+    const previousQuery = `
+      SELECT 
+        sum(count) as total_messages,
+        count(DISTINCT external_subscriber_id) as unique_subscribers
+      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND environment_id = {environmentId:String}
+        AND external_subscriber_id != ''
+        AND date >= {previousStartDate:Date}
+        AND date <= {previousEndDate:Date}
+        ${workflowFilter}
+    `;
+
+    const currentParams: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    const previousParams: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      previousStartDate: previousStartDate.toISOString().split('T')[0],
+      previousEndDate: previousEndDate.toISOString().split('T')[0],
+    };
+
+    if (workflowIds && workflowIds.length > 0) {
+      currentParams.workflowIds = workflowIds;
+      previousParams.workflowIds = workflowIds;
+    }
+
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ total_messages: string; unique_subscribers: string }>({
+        query: currentQuery,
+        params: currentParams,
+      }),
+      this.clickhouseService.query<{ total_messages: string; unique_subscribers: string }>({
+        query: previousQuery,
+        params: previousParams,
+      }),
+    ]);
+
+    const currentTotalMessages = parseInt(currentResult.data[0]?.total_messages || '0', 10);
+    const currentUniqueSubscribers = parseInt(currentResult.data[0]?.unique_subscribers || '0', 10);
+    const previousTotalMessages = parseInt(previousResult.data[0]?.total_messages || '0', 10);
+    const previousUniqueSubscribers = parseInt(previousResult.data[0]?.unique_subscribers || '0', 10);
+
+    const currentPeriod = currentUniqueSubscribers > 0 ? currentTotalMessages / currentUniqueSubscribers : 0;
+    const previousPeriod = previousUniqueSubscribers > 0 ? previousTotalMessages / previousUniqueSubscribers : 0;
+
+    return {
+      currentPeriod: Math.round(currentPeriod * 100) / 100,
+      previousPeriod: Math.round(previousPeriod * 100) / 100,
+    };
+  }
 }
