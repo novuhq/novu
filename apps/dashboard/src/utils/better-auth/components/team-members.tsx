@@ -261,19 +261,6 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
     loadOrganizationData();
   }, [loadOrganizationData]);
 
-  const mapRoleToApiFormat = (role: MemberRoleEnum): 'owner' | 'admin' | 'member' => {
-    switch (role) {
-      case MemberRoleEnum.OWNER:
-        return 'owner';
-      case MemberRoleEnum.ADMIN:
-        return 'admin';
-      case MemberRoleEnum.AUTHOR:
-      case MemberRoleEnum.VIEWER:
-      default:
-        return 'member';
-    }
-  };
-
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim() || !organization?.id) return;
@@ -283,7 +270,7 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
       const { data, error } = await authClient.organization.inviteMember({
         organizationId: organization.id,
         email: inviteEmail,
-        role: mapRoleToApiFormat(inviteRole),
+        role: inviteRole as any,
       });
 
       if (error) {
