@@ -226,6 +226,7 @@ export function useOrganization() {
           id: context.organization.id,
           name: context.organization.name,
           slug: context.organization.slug,
+          imageUrl: (context.organization as any).logo || '',
           createdAt: new Date(),
           updatedAt: new Date(),
           publicMetadata: {
@@ -272,7 +273,7 @@ export function useOrganizationList(options?: { userMemberships?: { infinite?: b
         id: org.id,
         name: org.name,
         slug: org.slug,
-        imageUrl: '',
+        imageUrl: org.logo || '',
         createdAt: new Date(),
         updatedAt: new Date(),
         publicMetadata: {
@@ -301,7 +302,7 @@ export function useOrganizationList(options?: { userMemberships?: { infinite?: b
       revalidate,
       isFetching: isLoading,
       hasNextPage: false,
-      fetchNext: undefined,
+      fetchNext: () => {},
     },
     setActive,
   };
