@@ -5,6 +5,8 @@ export interface SingleEnvironmentConfig {
   workflows: number;
   subscribers: number;
   runsPerDay: number;
+  workflowId?: string;
+  subscriberId?: string;
 }
 
 export interface SeederConfig {
@@ -167,6 +169,16 @@ export function parseCliArgs(): SeederConfig {
         singleEnvConfig.runsPerDay = parseInt(value, 10);
         if (!args[i].includes('=')) i++;
         break;
+      case '--workflow':
+        singleEnvConfig.workflowId = value;
+        singleEnvConfig.workflows = 1;
+        if (!args[i].includes('=')) i++;
+        break;
+      case '--subscriber':
+        singleEnvConfig.subscriberId = value;
+        singleEnvConfig.subscribers = 1;
+        if (!args[i].includes('=')) i++;
+        break;
       case '--organizations':
       case '-o':
         config.organizations = parseInt(value, 10);
@@ -228,6 +240,8 @@ Single Environment Mode:
   -w, --workflows <num>       Number of workflows (default: 5)
   --subscribers <num>         Number of subscribers (default: 1000)
   -r, --runs-per-day <num>    Workflow runs per day (default: 5000)
+  --workflow <id>             Specific workflow ID to use (sets workflows to 1)
+  --subscriber <id>           Specific subscriber ID to use (sets subscribers to 1)
 
 Common Options:
   -d, --days <num>            Days of data to generate (default: 30)
@@ -244,5 +258,6 @@ Examples:
   # Single environment mode
   pnpm seed:clickhouse --single-env --days=7 --runs-per-day=10000
   pnpm seed:clickhouse --single-env --org-id=abc123 --env-id=def456 --workflows=10 --subscribers=5000
+  pnpm seed:clickhouse --single-env --workflow=693ab23238cf527f6dc645d6 --subscriber=69395055051b1b19ff9e1b4c --org-id=69395056051b1b19ff9e1b52 --env-id=69395056c66fd6620f4521ba
   `);
 }

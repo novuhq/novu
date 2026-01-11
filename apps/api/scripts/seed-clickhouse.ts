@@ -34,8 +34,16 @@ async function main() {
     console.log('-'.repeat(60));
     console.log(`  Organization ID: ${config.singleEnv.organizationId || '(auto-generated)'}`);
     console.log(`  Environment ID:  ${config.singleEnv.environmentId || '(auto-generated)'}`);
-    console.log(`  Workflows:       ${config.singleEnv.workflows}`);
-    console.log(`  Subscribers:     ${config.singleEnv.subscribers.toLocaleString()}`);
+    if (config.singleEnv.workflowId) {
+      console.log(`  Workflow ID:     ${config.singleEnv.workflowId}`);
+    } else {
+      console.log(`  Workflows:       ${config.singleEnv.workflows}`);
+    }
+    if (config.singleEnv.subscriberId) {
+      console.log(`  Subscriber ID:   ${config.singleEnv.subscriberId}`);
+    } else {
+      console.log(`  Subscribers:     ${config.singleEnv.subscribers.toLocaleString()}`);
+    }
     console.log(`  Runs/Day:        ${config.singleEnv.runsPerDay.toLocaleString()}`);
     console.log(`  Days:            ${config.days}`);
     console.log(`  Batch Size:      ${config.batchSize.toLocaleString()}`);

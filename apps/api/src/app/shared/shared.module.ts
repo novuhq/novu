@@ -15,6 +15,7 @@ import {
   GetDecryptedSecretKey,
   InvalidateCacheService,
   LoggerModule,
+  WorkflowActivityCountsRepository,
   QueuesModule,
   RequestLogRepository,
   StepRunRepository,
@@ -120,6 +121,7 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  WorkflowActivityCountsRepository,
 
   // Services
   clickHouseService,

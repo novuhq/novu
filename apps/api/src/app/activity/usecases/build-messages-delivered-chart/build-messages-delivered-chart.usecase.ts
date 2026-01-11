@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import {
   FeatureFlagsService,
   InstrumentUsecase,
-  MessageSentCountsRepository,
   PinoLogger,
   StepRunRepository,
+  WorkflowActivityCountsRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { MessagesDeliveredDataPointDto } from '../../dtos/get-charts.response.dto';
@@ -13,7 +13,7 @@ import { BuildMessagesDeliveredChartCommand } from './build-messages-delivered-c
 @Injectable()
 export class BuildMessagesDeliveredChart {
   constructor(
-    private messageSentCountsRepository: MessageSentCountsRepository,
+    private workflowActivityCountsRepository: WorkflowActivityCountsRepository,
     private stepRunRepository: StepRunRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -50,7 +50,7 @@ export class BuildMessagesDeliveredChart {
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
     const result = useNewQuery
-      ? await this.messageSentCountsRepository.getCount(
+      ? await this.workflowActivityCountsRepository.getMessageSendCount(
           environmentId,
           organizationId,
           startDate,

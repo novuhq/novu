@@ -251,7 +251,7 @@ export function generateSingleEnvironment(singleEnvConfig: SingleEnvironmentConf
 
   for (let w = 0; w < singleEnvConfig.workflows; w++) {
     const template = selectWorkflowTemplate();
-    const workflowId = generateId();
+    const workflowId = singleEnvConfig.workflowId || generateId();
 
     env.workflows.push({
       id: workflowId,
@@ -265,8 +265,9 @@ export function generateSingleEnvironment(singleEnvConfig: SingleEnvironmentConf
   }
 
   for (let s = 0; s < singleEnvConfig.subscribers; s++) {
+    const subscriberId = singleEnvConfig.subscriberId || generateId();
     env.subscribers.push({
-      id: generateId(),
+      id: subscriberId,
       externalId: `user_${s + 1}`,
       environmentId: envId,
       organizationId: orgId,

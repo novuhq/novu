@@ -82,7 +82,30 @@ pnpm seed:clickhouse -- \
   --start-date=2024-01-01
 ```
 
+### Single Environment Mode with Specific IDs
+
+For testing with existing organization, environment, workflow, and subscriber IDs:
+
+```bash
+pnpm seed:clickhouse -- \
+  --single-env \
+  --workflow=693ab23238cf527f6dc645d6 \
+  --subscriber=69395055051b1b19ff9e1b4c \
+  --org-id=69395056051b1b19ff9e1b52 \
+  --env-id=69395056c66fd6620f4521ba \
+  --days=30 \
+  --runs-per-day=5000
+```
+
+This will generate data for:
+- A single specified workflow
+- A single specified subscriber
+- Using the exact IDs provided
+- 30 days of data with 5000 runs per day
+
 ## Configuration Options
+
+### Multi-Organization Mode Options
 
 | Option | Short | Default | Description |
 |--------|-------|---------|-------------|
@@ -92,6 +115,22 @@ pnpm seed:clickhouse -- \
 | `--batch-size` | `-b` | 10000 | Records per ClickHouse insert batch |
 | `--start-date` | - | Last month | Start date for data generation (YYYY-MM-DD) |
 | `--help` | `-h` | - | Show help message |
+
+### Single Environment Mode Options
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--single-env` | - | - | Enable single environment mode |
+| `--org-id` | - | auto-generated | Organization ID to use |
+| `--env-id` | - | auto-generated | Environment ID to use |
+| `--workflows` | `-w` | 5 | Number of workflows to create |
+| `--workflow` | - | - | Specific workflow ID (sets workflows to 1) |
+| `--subscribers` | - | 1000 | Number of subscribers to create |
+| `--subscriber` | - | - | Specific subscriber ID (sets subscribers to 1) |
+| `--runs-per-day` | `-r` | 5000 | Workflow runs per day |
+| `--days` | `-d` | 30 | Days of data to generate |
+| `--batch-size` | `-b` | 10000 | Records per ClickHouse insert batch |
+| `--start-date` | - | Last month | Start date for data generation (YYYY-MM-DD) |
 
 ## Data Volume Estimates
 
