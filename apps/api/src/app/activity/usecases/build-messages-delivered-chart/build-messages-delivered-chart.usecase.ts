@@ -47,10 +47,10 @@ export class BuildMessagesDeliveredChart {
       }),
     ]);
 
-    const useNewLogic = isGlobalEnabled || isDedicatedEnabled;
+    const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
-    const result = useNewLogic
-      ? await this.messageSentCountsRepository.getMessagesSentData(
+    const result = useNewQuery
+      ? await this.messageSentCountsRepository.getCount(
           environmentId,
           organizationId,
           startDate,

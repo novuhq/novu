@@ -24,7 +24,7 @@ export class MessageSentCountsRepository extends LogRepository<typeof messageSen
     this.logger.setContext(this.constructor.name);
   }
 
-  async getMessagesSentData(
+  async getCount(
     environmentId: string,
     organizationId: string,
     startDate: Date,
