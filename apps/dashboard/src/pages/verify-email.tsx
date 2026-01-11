@@ -1,8 +1,15 @@
-import { VerifyEmail } from '@/utils/better-auth';
+import { Navigate } from 'react-router-dom';
+import { EE_AUTH_PROVIDER } from '@/config';
+import { VerifyEmail } from '@/utils/better-auth/components/verify-email';
+import { ROUTES } from '@/utils/routes';
 import { AuthSideBanner } from '../components/auth/auth-side-banner';
 import { PageMeta } from '../components/page-meta';
 
 export const VerifyEmailPage = () => {
+  if (EE_AUTH_PROVIDER === 'clerk') {
+    return <Navigate to={ROUTES.SIGN_IN} replace />;
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col md:max-w-[1100px] md:flex-row md:gap-36">
       <PageMeta title="Verify Email" />

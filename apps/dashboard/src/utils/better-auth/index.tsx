@@ -2,6 +2,7 @@ import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
+import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '../../config';
 import { authClient } from './client';
 import {
   ForgotPassword as ForgotPasswordComponent,
@@ -454,7 +455,7 @@ export async function refreshBetterAuthSession(): Promise<boolean> {
   }
 }
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && IS_SELF_HOSTED && EE_AUTH_PROVIDER === 'better-auth') {
   (window as any).Clerk = {
     session: {
       getToken: async () => {

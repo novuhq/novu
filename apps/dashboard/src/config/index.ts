@@ -6,8 +6,6 @@ export const LAUNCH_DARKLY_CLIENT_SIDE_ID = import.meta.env.VITE_LAUNCH_DARKLY_C
 
 export const HUBSPOT_PORTAL_ID = import.meta.env.VITE_HUBSPOT_EMBED;
 
-export const IS_EE_AUTH_ENABLED = import.meta.env.VITE_IS_EE_AUTH_ENABLED === 'true';
-
 export const EE_AUTH_PROVIDER = (window._env_?.VITE_EE_AUTH_PROVIDER ||
   import.meta.env.VITE_EE_AUTH_PROVIDER ||
   'clerk') as 'clerk' | 'better-auth';
