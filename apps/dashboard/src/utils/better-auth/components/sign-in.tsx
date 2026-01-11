@@ -61,6 +61,14 @@ export function SignIn() {
 
       localStorage.setItem('better-auth-session-token', data.token);
 
+      const pendingInvitationId = sessionStorage.getItem('pendingInvitationId');
+
+      if (pendingInvitationId) {
+        window.location.href = `${ROUTES.INVITATION_ACCEPT}?id=${pendingInvitationId}`;
+
+        return;
+      }
+
       window.location.href = ROUTES.ROOT;
     } catch (e: any) {
       setError(e.message || 'An unexpected error occurred.');

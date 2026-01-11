@@ -43,6 +43,7 @@ export function InvitationAccept() {
 
     if (!isSignedIn) {
       console.log('not signed in, redirecting to sign-up');
+      sessionStorage.setItem('pendingInvitationId', invitationId || '');
       navigate(`${ROUTES.SIGN_UP}?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
 
       return;
