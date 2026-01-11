@@ -239,7 +239,9 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
     try {
       setIsLoading(true);
       const { data, error } = await authClient.organization.getFullOrganization({
-        organizationId: organization.id,
+        query: {
+          organizationId: organization.id,
+        },
       });
 
       if (error) {
@@ -259,6 +261,19 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
     loadOrganizationData();
   }, [loadOrganizationData]);
 
+  const mapRoleToApiFormat = (role: MemberRoleEnum): 'owner' | 'admin' | 'member' => {
+    switch (role) {
+      case MemberRoleEnum.OWNER:
+        return 'owner';
+      case MemberRoleEnum.ADMIN:
+        return 'admin';
+      case MemberRoleEnum.AUTHOR:
+      case MemberRoleEnum.VIEWER:
+      default:
+        return 'member';
+    }
+  };
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim() || !organization?.id) return;
@@ -268,7 +283,7 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
       const { data, error } = await authClient.organization.inviteMember({
         organizationId: organization.id,
         email: inviteEmail,
-        role: inviteRole,
+        role: mapRoleToApiFormat(inviteRole),
       });
 
       if (error) {
@@ -325,7 +340,6 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
     setIsCancelling(true);
     try {
       const { error } = await authClient.organization.cancelInvitation({
-        organizationId: organization.id,
         invitationId,
       });
 
@@ -387,7 +401,11 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
               />
             </div>
             <div className="w-32">
-              <Select value={inviteRole} onValueChange={setInviteRole} disabled={isInviting}>
+              <Select
+                value={inviteRole}
+                onValueChange={(value) => setInviteRole(value as MemberRoleEnum)}
+                disabled={isInviting}
+              >
                 <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>

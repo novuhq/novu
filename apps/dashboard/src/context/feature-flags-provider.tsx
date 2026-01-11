@@ -1,8 +1,7 @@
 import { IS_ENTERPRISE, IS_SELF_HOSTED, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
+import { detectRegionFromURL, getRegionConfig } from '@/context/region';
 import { AsyncProviderConfig, asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { lazy, Suspense } from 'react';
-import { getRegionConfig } from './region/region-config';
-import { detectRegionFromURL } from './region/region-utils';
 
 function getAwsRegion(): string {
   const currentRegion = detectRegionFromURL();
