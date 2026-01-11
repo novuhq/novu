@@ -351,7 +351,10 @@ export class GetCharts {
     const buffer = 1 * 60 * 60 * 1000; // 1 hour
     const bufferedEarliestAllowedDate = new Date(earliestAllowedDate.getTime() - buffer);
 
-    if (startDate < bufferedEarliestAllowedDate || endDate < bufferedEarliestAllowedDate) {
+    if (
+      process.env.NODE_ENV !== 'local' &&
+      (startDate < bufferedEarliestAllowedDate || endDate < bufferedEarliestAllowedDate)
+    ) {
       throw new HttpException(
         `Requested date range exceeds your plan's retention period. ` +
           `The earliest accessible date for your plan is ${earliestAllowedDate.toISOString().split('T')[0]}. ` +

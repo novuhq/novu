@@ -15,12 +15,13 @@ import {
   GetDecryptedSecretKey,
   InvalidateCacheService,
   LoggerModule,
-  WorkflowActivityCountsRepository,
+  ProviderVolumeCountsRepository,
   QueuesModule,
   RequestLogRepository,
   StepRunRepository,
   storageService,
   TraceLogRepository,
+  WorkflowActivityCountsRepository,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
@@ -122,6 +123,7 @@ const ANALYTICS_PROVIDERS = [
   StepRunRepository,
   WorkflowRunRepository,
   WorkflowActivityCountsRepository,
+  ProviderVolumeCountsRepository,
 
   // Services
   clickHouseService,
