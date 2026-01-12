@@ -13,6 +13,7 @@ import {
   ExecuteBridgeRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
+  InteractionCountsRepository,
   InvalidateCacheService,
   LoggerModule,
   ProviderVolumeCountsRepository,
@@ -124,6 +125,7 @@ const ANALYTICS_PROVIDERS = [
   WorkflowRunRepository,
   WorkflowActivityCountsRepository,
   ProviderVolumeCountsRepository,
+  InteractionCountsRepository,
 
   // Services
   clickHouseService,
