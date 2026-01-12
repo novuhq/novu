@@ -21,7 +21,7 @@
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "mongoose": "^8.9.5",
-    "mongoose-delete": "^1.0.1",
+    "mongoose-delete": "^1.0.7",
     "rimraf": "^3.0.2"
   },
   "devDependencies": {
