@@ -174,7 +174,7 @@ export class SnoozeNotification {
       status: JobStatusEnum.PENDING,
       delay,
       createdAt: Date.now().toString(),
-      id: JobRepository.createObjectId(),
+      _id: JobRepository.createObjectId(),
       _parentId: null,
       payload: {
         ...originalJob.payload,
