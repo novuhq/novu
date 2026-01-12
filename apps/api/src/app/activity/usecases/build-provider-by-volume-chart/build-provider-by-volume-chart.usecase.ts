@@ -42,7 +42,6 @@ export class BuildProviderByVolumeChart {
         ...featureFlagContext,
       }),
     ]);
-    console.log('@@@@isGlobalEnabled', isGlobalEnabled);
 
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
