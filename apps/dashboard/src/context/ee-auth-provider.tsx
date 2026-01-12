@@ -11,13 +11,13 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   const navigate = useNavigate();
   const { children } = props;
 
-  if (IS_SELF_HOSTED) {
-    return <>{children}</>;
-  }
-
   if (EE_AUTH_PROVIDER === 'better-auth') {
     // @ts-expect-error - Better Auth wrapper has different props via vite alias
     return <_ClerkProvider>{children}</_ClerkProvider>;
+  }
+
+  if (IS_SELF_HOSTED) {
+    return <>{children}</>;
   }
 
   return (

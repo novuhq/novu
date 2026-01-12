@@ -1,7 +1,7 @@
-import { IS_ENTERPRISE, IS_SELF_HOSTED, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
-import { detectRegionFromURL, getRegionConfig } from '@/context/region';
 import { AsyncProviderConfig, asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { lazy, Suspense } from 'react';
+import { IS_ENTERPRISE, IS_SELF_HOSTED, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
+import { detectRegionFromURL, getRegionConfig } from '@/context/region';
 
 function getAwsRegion(): string {
   const currentRegion = detectRegionFromURL();
@@ -32,7 +32,7 @@ const LD_CONFIG: AsyncProviderConfig = {
 };
 
 const AsyncFeatureFlagsProvider = lazy(async () => {
-  if (!LAUNCH_DARKLY_CLIENT_SIDE_ID || (IS_SELF_HOSTED && IS_ENTERPRISE)) {
+  if (!LAUNCH_DARKLY_CLIENT_SIDE_ID) {
     return {
       default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     };

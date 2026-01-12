@@ -76,7 +76,6 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
             });
 
             const currentMember = (fullOrgData as any).members?.find((member: any) => member.userId === currentUserId);
-
             if (currentMember?.role) {
               setMemberRole(currentMember.role as MemberRoleEnum);
             } else {
@@ -455,7 +454,7 @@ export async function refreshBetterAuthSession(): Promise<boolean> {
   }
 }
 
-if (typeof window !== 'undefined' && IS_SELF_HOSTED && EE_AUTH_PROVIDER === 'better-auth') {
+if (typeof window !== 'undefined' && EE_AUTH_PROVIDER === 'better-auth') {
   (window as any).Clerk = {
     session: {
       getToken: async () => {

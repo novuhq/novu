@@ -1,3 +1,6 @@
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -8,10 +11,7 @@ import {
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
-import { useAuth, useOrganization, useOrganizationList, useClerk } from '../index';
+import { useAuth, useClerk, useOrganization, useOrganizationList } from '../index';
 
 const SCROLL_THRESHOLD = 100;
 
@@ -177,7 +177,11 @@ export function OrganizationDropdown() {
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-background focus-visible:shadow-sm focus-visible:before:border-transparent'
           )}
         >
-          <OrganizationAvatar imageUrl={currentOrganization.imageUrl || ''} name={currentOrganization.name} showShimmer />
+          <OrganizationAvatar
+            imageUrl={currentOrganization.imageUrl || ''}
+            name={currentOrganization.name}
+            showShimmer
+          />
           <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground-950">
             {currentOrganization.name}
           </span>
