@@ -10,6 +10,7 @@ import {
   clickHouseService,
   createNestLoggingModuleOptions,
   DalServiceHealthIndicator,
+  DeliveryTrendCountsRepository,
   ExecuteBridgeRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
@@ -126,6 +127,7 @@ const ANALYTICS_PROVIDERS = [
   WorkflowActivityCountsRepository,
   ProviderVolumeCountsRepository,
   InteractionCountsRepository,
+  DeliveryTrendCountsRepository,
 
   // Services
   clickHouseService,
