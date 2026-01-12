@@ -1,26 +1,27 @@
-import styled from '@emotion/styled';
-import { Button, Table as MantineTable, Pagination, Skeleton, TableProps } from '@mantine/core';
 import React, { useEffect, useMemo } from 'react';
+import { Skeleton, TableProps, Table as MantineTable, Pagination, Button } from '@mantine/core';
+import styled from '@emotion/styled';
 import {
-  CellProps,
+  useTable,
   Column,
-  IdType,
-  Row,
+  usePagination,
   TableInstance,
   UsePaginationInstanceProps,
   UsePaginationState,
+  Row,
+  CellProps,
+  IdType,
+  useRowSelect,
   UseRowSelectInstanceProps,
   UseRowSelectState,
-  usePagination,
-  useRowSelect,
-  useTable,
 } from 'react-table';
-import { colors } from '../config';
 import { useDataRef } from '../hooks/useDataRef';
+
+import useStyles from './Table.styles';
+import { colors } from '../config';
+import { DefaultCell } from './DefaultCell';
 import { ChevronLeft, ChevronRight } from '../icons';
 import { Radio } from '../radio/Radio';
-import { DefaultCell } from './DefaultCell';
-import useStyles from './Table.styles';
 
 const NoDataPlaceholder = styled.div`
   padding: 0 30px;
@@ -153,7 +154,7 @@ export function Table<T extends object>({
         width: 30,
         maxWidth: 30,
       };
-      hooks.visibleColumns.push((visibleColumns) => [selectionRow as any, ...visibleColumns]);
+      hooks.visibleColumns.push((visibleColumns) => [selectionRow, ...visibleColumns]);
     }
   ) as unknown as UseTableProps<T>;
 

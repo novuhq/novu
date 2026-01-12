@@ -1,6 +1,3 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -11,7 +8,10 @@ import {
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { useAuth, useClerk, useOrganization, useOrganizationList } from '../index';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { useAuth, useOrganization, useOrganizationList, useClerk } from '../index';
 
 const SCROLL_THRESHOLD = 100;
 
@@ -135,11 +135,11 @@ export function OrganizationDropdown() {
 
     setIsScrolled(container.scrollTop > 0);
 
-    if (!userMemberships?.hasNextPage || userMemberships?.isFetching || !userMemberships?.fetchNext) return;
+    if (!userMemberships?.hasNextPage || userMemberships?.isFetching) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
     if (scrollHeight - scrollTop - clientHeight < SCROLL_THRESHOLD) {
-      userMemberships.fetchNext();
+      userMemberships.fetchNext?.();
     }
   }, [userMemberships]);
 
@@ -177,11 +177,7 @@ export function OrganizationDropdown() {
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-background focus-visible:shadow-sm focus-visible:before:border-transparent'
           )}
         >
-          <OrganizationAvatar
-            imageUrl={(currentOrganization as any).imageUrl || ''}
-            name={currentOrganization.name}
-            showShimmer
-          />
+          <OrganizationAvatar imageUrl={currentOrganization.imageUrl || ''} name={currentOrganization.name} showShimmer />
           <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground-950">
             {currentOrganization.name}
           </span>
