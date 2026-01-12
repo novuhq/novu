@@ -76,8 +76,12 @@ export class PulseCronService extends CronService {
         acc[jobName] = { active: 0, waiting: 0 };
       }
 
-      const isRunning = job.attrs.lockedAt && !job.attrs.lastFinishedAt;
-      const isWaiting = job.attrs.lockedAt && job.attrs.lastFinishedAt;
+      const lockedAt = job.attrs.lockedAt;
+      const lastFinishedAt = job.attrs.lastFinishedAt;
+
+      const isRunning =
+        lockedAt && (!lastFinishedAt || lockedAt.getTime() > lastFinishedAt.getTime());
+      const isWaiting = !isRunning && lastFinishedAt && !lockedAt;
 
       if (isRunning) {
         acc[jobName].active += 1;
