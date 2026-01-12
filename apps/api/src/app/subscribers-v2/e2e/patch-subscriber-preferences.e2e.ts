@@ -24,6 +24,7 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
   let workflow: NotificationTemplateEntity;
 
   beforeEach(async () => {
+    (process.env as any).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
     const uuid = randomBytes(4).toString('hex');
     session = new UserSession();
     await session.initialize();
@@ -32,6 +33,10 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
     workflow = await session.createTemplate({
       noFeedId: true,
     });
+  });
+
+  afterEach(() => {
+    delete (process.env as any).IS_CONTEXT_PREFERENCES_ENABLED;
   });
 
   it('should patch workflow channel preferences', async () => {
@@ -258,6 +263,101 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
 
     expect(error?.statusCode).to.equal(404);
     expect(error?.message).to.include('Workflows with ids: non-existent-workflow-id not found');
+  });
+
+  it('should create workflow preference with context', async () => {
+    const patchData: PatchSubscriberPreferencesDto = {
+      workflowId: workflow._id,
+      channels: {
+        email: false,
+        inApp: true,
+      },
+      context: { tenant: 'acme' },
+    };
+
+    const response = await novuClient.subscribers.preferences.update(patchData, subscriber.subscriberId);
+
+    expect(response.result.workflows).to.have.lengthOf(1);
+    expect(response.result.workflows[0].channels).to.deep.equal({ inApp: true, email: false });
+  });
+
+  it('should create separate preferences for different contexts', async () => {
+    // Create preference for context A
+    await novuClient.subscribers.preferences.update(
+      {
+        workflowId: workflow._id,
+        channels: { email: false },
+        context: { tenant: 'acme' },
+      },
+      subscriber.subscriberId
+    );
+
+    // Create preference for context B
+    await novuClient.subscribers.preferences.update(
+      {
+        workflowId: workflow._id,
+        channels: { email: true },
+        context: { tenant: 'globex' },
+      },
+      subscriber.subscriberId
+    );
+
+    // Both should coexist - verify by listing with different contextKeys
+    const responseA = await novuClient.subscribers.preferences.list({
+      subscriberId: subscriber.subscriberId,
+      contextKeys: ['tenant:acme'],
+    });
+    expect(responseA.result.workflows[0].channels.email).to.equal(false);
+
+    const responseB = await novuClient.subscribers.preferences.list({
+      subscriberId: subscriber.subscriberId,
+      contextKeys: ['tenant:globex'],
+    });
+    expect(responseB.result.workflows[0].channels.email).to.equal(true);
+  });
+
+  it('should reject context for global preferences', async () => {
+    const patchData: PatchSubscriberPreferencesDto = {
+      // No workflowId = global preference
+      channels: {
+        email: false,
+      },
+      context: { tenant: 'acme' }, // Should be rejected
+    };
+
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.preferences.update(patchData, subscriber.subscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(400);
+    expect(error?.message).to.include('Context cannot be used with global preferences');
+  });
+
+  it('should bulk update with context', async () => {
+    const bulkUpdateData: BulkUpdateSubscriberPreferencesDto = {
+      context: { tenant: 'acme' },
+      preferences: [
+        {
+          workflowId: workflow._id,
+          channels: {
+            email: false,
+            inApp: true,
+          },
+        },
+      ],
+    };
+
+    const response = await novuClient.subscribers.preferences.bulkUpdate(bulkUpdateData, subscriber.subscriberId);
+
+    expect(response.result).to.have.lengthOf(1);
+    expect(response.result[0].channels.email).to.equal(false);
+
+    // Verify it's stored with context
+    const listResponse = await novuClient.subscribers.preferences.list({
+      subscriberId: subscriber.subscriberId,
+      contextKeys: ['tenant:acme'],
+    });
+    expect(listResponse.result.workflows[0].channels.email).to.equal(false);
   });
 });
 

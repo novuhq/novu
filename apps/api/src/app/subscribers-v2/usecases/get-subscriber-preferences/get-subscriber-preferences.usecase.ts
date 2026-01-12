@@ -57,6 +57,7 @@ export class GetSubscriberPreferences {
         organizationId: command.organizationId,
         includeInactiveChannels: false,
         criticality: command.criticality ?? WorkflowCriticalityEnum.NON_CRITICAL,
+        contextKeys: command.contextKeys,
       })
     );
 
