@@ -1,6 +1,12 @@
 import { faker } from '@faker-js/faker';
 import { Test } from '@nestjs/testing';
-import { StandardQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
+import {
+  CloudflareSchedulerService,
+  FeatureFlagsService,
+  PinoLogger,
+  StandardQueueService,
+  WorkflowInMemoryProviderService,
+} from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
@@ -35,6 +41,28 @@ import { StandardWorker } from './standard.worker';
 
 let standardQueueService: StandardQueueService;
 let standardWorker: StandardWorker;
+
+const mockCloudflareSchedulerService = {
+  scheduleJob: async () => {},
+  cancelJob: async () => false,
+  isConfigured: () => false,
+} as unknown as CloudflareSchedulerService;
+
+const mockFeatureFlagsService = {
+  getFlag: async () => 'off',
+} as unknown as FeatureFlagsService;
+
+const mockOrganizationRepository = {
+  findOne: async () => null,
+} as unknown as CommunityOrganizationRepository;
+
+const mockLogger = {
+  setContext: () => {},
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+} as unknown as PinoLogger;
 
 describe('Standard Worker', () => {
   let jobRepository: JobRepository;
@@ -91,7 +119,13 @@ describe('Standard Worker', () => {
       WorkflowInMemoryProviderService
     );
 
-    standardQueueService = new StandardQueueService(workflowInMemoryProviderService);
+    standardQueueService = new StandardQueueService(
+      workflowInMemoryProviderService,
+      mockCloudflareSchedulerService,
+      mockFeatureFlagsService,
+      mockOrganizationRepository,
+      mockLogger
+    );
     await standardQueueService.queue.obliterate();
   });
 

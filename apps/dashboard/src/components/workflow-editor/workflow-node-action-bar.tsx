@@ -207,11 +207,12 @@ export const WorkflowNodeActionBar = ({
         title="Proceeding will delete the step"
         description={
           <>
-            You're about to delete the <TruncatedText className="max-w-[32ch] font-bold">{stepName}</TruncatedText>{' '}
+            You're about to delete the <TruncatedText className="max-w-[32ch] font-semibold">{stepName}</TruncatedText>{' '}
             step, this action is permanent.
           </>
         }
         confirmButtonText="Delete"
+        confirmButtonVariant="error"
       />
     </>
   );

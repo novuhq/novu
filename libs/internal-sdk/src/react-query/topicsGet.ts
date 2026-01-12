@@ -5,27 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { topicsGet } from "../funcs/topicsGet.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type TopicsGetQueryData = operations.TopicsControllerGetTopicResponse;
+import {
+  buildTopicsGetQuery,
+  prefetchTopicsGet,
+  queryKeyTopicsGet,
+  TopicsGetQueryData,
+} from "./topicsGet.core.js";
+export {
+  buildTopicsGetQuery,
+  prefetchTopicsGet,
+  queryKeyTopicsGet,
+  type TopicsGetQueryData,
+};
 
 /**
  * Retrieve a topic
@@ -73,21 +75,6 @@ export function useTopicsGetSuspense(
   });
 }
 
-export function prefetchTopicsGet(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  topicKey: string,
-  idempotencyKey?: string | undefined,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildTopicsGetQuery(
-      client$,
-      topicKey,
-      idempotencyKey,
-    ),
-  });
-}
-
 export function setTopicsGetData(
   client: QueryClient,
   queryKeyBase: [
@@ -122,39 +109,4 @@ export function invalidateAllTopicsGet(
     ...filters,
     queryKey: ["@novu/api", "Topics", "get"],
   });
-}
-
-export function buildTopicsGetQuery(
-  client$: NovuCore,
-  topicKey: string,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<TopicsGetQueryData>;
-} {
-  return {
-    queryKey: queryKeyTopicsGet(topicKey, { idempotencyKey }),
-    queryFn: async function topicsGetQueryFn(ctx): Promise<TopicsGetQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(topicsGet(
-        client$,
-        topicKey,
-        idempotencyKey,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyTopicsGet(
-  topicKey: string,
-  parameters: { idempotencyKey?: string | undefined },
-): QueryKey {
-  return ["@novu/api", "Topics", "get", topicKey, parameters];
 }

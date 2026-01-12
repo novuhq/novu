@@ -1,5 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { emailControlSchema, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  emailControlSchema,
+  FeatureFlagsService,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
@@ -9,10 +15,17 @@ import {
   OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
-import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import { LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
+import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
+import {
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  LAYOUT_PREVIEW_EMAIL_STEP,
+  LAYOUT_PREVIEW_WORKFLOW_ID,
+  StepTypeEnum,
+} from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
+import { LRUCache } from 'lru-cache';
 import { evaluateRules } from '../../../shared/services/query-parser/query-parser.service';
 import { isMatchingJsonSchema } from '../../../workflows-v2/util/jsonToSchema';
 import {
@@ -30,6 +43,19 @@ import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflo
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 
+const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
+  max: 1000,
+  ttl: 1000 * 60,
+});
+
+const organizationCache = new LRUCache<string, OrganizationEntity>({
+  max: 500,
+  ttl: 1000 * 60,
+});
+
+const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity>>();
+const organizationInflightRequests = new Map<string, Promise<OrganizationEntity | undefined>>();
+
 @Injectable()
 export class ConstructFrameworkWorkflow {
   constructor(
@@ -44,7 +70,8 @@ export class ConstructFrameworkWorkflow {
     private pushOutputRendererUseCase: PushOutputRendererUsecase,
     private delayOutputRendererUseCase: DelayOutputRendererUsecase,
     private digestOutputRendererUseCase: DigestOutputRendererUsecase,
-    private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase
+    private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -53,14 +80,18 @@ export class ConstructFrameworkWorkflow {
       return this.constructLayoutPreviewWorkflow(command);
     }
 
-    const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
+    const shouldUseCache =
+      command.action === PostActionEnum.EXECUTE && command.environmentType !== EnvironmentTypeEnum.DEV;
+
+    const dbWorkflow = await this.getWorkflow(command.environmentId, command.workflowId, shouldUseCache);
+
     if (command.controlValues) {
       for (const step of dbWorkflow.steps) {
         step.controlVariables = command.controlValues;
       }
     }
 
-    const organization = (await this.communityOrganizationRepository.findById(dbWorkflow._organizationId)) || undefined;
+    const organization = await this.getOrganization(dbWorkflow._organizationId, shouldUseCache, command.environmentId);
 
     return this.constructFrameworkWorkflow({
       dbWorkflow,
@@ -71,12 +102,20 @@ export class ConstructFrameworkWorkflow {
   }
 
   private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
-    const environment = await this.environmentRepository.findOne({
-      _id: command.environmentId,
-    });
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId }, '_organizationId');
     if (!environment) {
       throw new InternalServerErrorException(`Environment ${command.environmentId} not found`);
     }
+
+    const organization =
+      (await this.communityOrganizationRepository.findById(environment._organizationId)) || undefined;
+
+    const syntheticDbWorkflow: NotificationTemplateEntity = {
+      _id: LAYOUT_PREVIEW_WORKFLOW_ID,
+      _environmentId: command.environmentId,
+      _organizationId: environment._organizationId,
+      _creatorId: environment._organizationId,
+    } as NotificationTemplateEntity;
 
     return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber, context }) => {
       await step.email(
@@ -85,8 +124,8 @@ export class ConstructFrameworkWorkflow {
           return this.emailOutputRendererUseCase.execute({
             controlValues,
             fullPayloadForRender: { payload, subscriber, context, steps: {} },
-            environmentId: environment._id,
-            organizationId: environment._organizationId,
+            dbWorkflow: syntheticDbWorkflow,
+            organization,
             locale: subscriber.locale ?? undefined,
             stepId: LAYOUT_PREVIEW_EMAIL_STEP,
             layoutId: command.layoutId,
@@ -218,9 +257,7 @@ export class ConstructFrameworkWorkflow {
             return this.emailOutputRendererUseCase.execute({
               controlValues,
               fullPayloadForRender,
-              environmentId: dbWorkflow._environmentId,
-              organizationId: dbWorkflow._organizationId,
-              workflowId: dbWorkflow._id,
+              dbWorkflow,
               organization,
               locale,
               skipLayoutRendering,
@@ -349,14 +386,107 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
-    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
+  private async getWorkflow(
+    environmentId: string,
+    workflowId: string,
+    shouldUseCache: boolean
+  ): Promise<NotificationTemplateEntity> {
+    const cacheKey = `${environmentId}:${workflowId}`;
 
-    if (!foundWorkflow) {
-      throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
+    const isFeatureEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      component: 'bridge-workflow',
+    });
+
+    const useCache = shouldUseCache && isFeatureEnabled;
+
+    if (useCache) {
+      const cached = workflowCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const inflightRequest = workflowInflightRequests.get(cacheKey);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
     }
 
-    return foundWorkflow;
+    const fetchPromise = this.workflowsRepository
+      .findByTriggerIdentifier(environmentId, workflowId, null, false)
+      .then((foundWorkflow) => {
+        if (!foundWorkflow) {
+          throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
+        }
+
+        if (useCache) {
+          workflowCache.set(cacheKey, foundWorkflow);
+        }
+
+        return foundWorkflow;
+      })
+      .finally(() => {
+        if (useCache) {
+          workflowInflightRequests.delete(cacheKey);
+        }
+      });
+
+    if (useCache) {
+      workflowInflightRequests.set(cacheKey, fetchPromise);
+    }
+
+    return fetchPromise;
+  }
+
+  private async getOrganization(
+    organizationId: string,
+    shouldUseCache: boolean,
+    environmentId: string
+  ): Promise<OrganizationEntity | undefined> {
+    const isFeatureEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      component: 'bridge-org',
+    });
+
+    const useCache = shouldUseCache && isFeatureEnabled;
+
+    if (useCache) {
+      const cached = organizationCache.get(organizationId);
+      if (cached) {
+        return cached;
+      }
+
+      const inflightRequest = organizationInflightRequests.get(organizationId);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
+    }
+
+    const fetchPromise = this.communityOrganizationRepository
+      .findById(organizationId)
+      .then((organization) => {
+        if (organization && useCache) {
+          organizationCache.set(organizationId, organization);
+        }
+
+        return organization || undefined;
+      })
+      .finally(() => {
+        if (useCache) {
+          organizationInflightRequests.delete(organizationId);
+        }
+      });
+
+    if (useCache) {
+      organizationInflightRequests.set(organizationId, fetchPromise);
+    }
+
+    return fetchPromise;
   }
 
   private async processSkipOption(

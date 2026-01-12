@@ -48,7 +48,12 @@ export class GetPreferences {
   async execute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {
     const items = await this.getPreferencesFromDb(command);
 
-    const mergedPreferences = MergePreferences.execute(MergePreferencesCommand.create(items));
+    const mergedPreferences = MergePreferences.execute(
+      MergePreferencesCommand.create({
+        ...items,
+        excludeSubscriberPreferences: command.excludeSubscriberPreferences,
+      })
+    );
 
     if (!mergedPreferences.preferences) {
       throw new PreferencesNotFoundException(command);
@@ -104,6 +109,8 @@ export class GetPreferences {
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           templateId: command.templateId,
+          excludeSubscriberPreferences: command.excludeSubscriberPreferences,
+          contextKeys: command.contextKeys,
         })
       );
     } catch (e) {
@@ -160,6 +167,8 @@ export class GetPreferences {
     ];
 
     if (command.subscriberId) {
+      const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
       queries.push(
         this.preferencesRepository.findOne(
           {
@@ -167,6 +176,7 @@ export class GetPreferences {
             _subscriberId: command.subscriberId,
             _templateId: command.templateId,
             type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+            ...contextQuery,
           },
           undefined,
           queryOptions
@@ -210,5 +220,32 @@ export class GetPreferences {
     }
 
     return result;
+  }
+
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    organizationId: string
+  ): Promise<Record<string, unknown>> {
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!useContextFiltering) {
+      return {}; // FF OFF: no context filtering (pre-feature behavior)
+    }
+
+    // undefined or empty array = match only "no context" preferences
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }

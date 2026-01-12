@@ -293,4 +293,13 @@ export class SocketWorkerService {
 
     return isFeatureFlagEnabled;
   }
+
+  async isLegacyWsDisabled(environmentId?: string, organizationId?: string): Promise<boolean> {
+    return this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LEGACY_WS_SERVICE_DISABLED,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      defaultValue: false,
+    });
+  }
 }

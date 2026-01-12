@@ -20,7 +20,7 @@ type WorkflowPreferencesProps = {
 export function WorkflowPreferences(props: WorkflowPreferencesProps) {
   const { workflowPreferences, onToggle, readOnly = false } = props;
   const [isExpanded, setIsExpanded] = useState(false);
-  const { workflow, channels } = workflowPreferences;
+  const { workflow, channels, updatedAt } = workflowPreferences;
   return (
     <Card className="border-1 rounded-lg border border-neutral-100 bg-neutral-50 p-1 shadow-none">
       <CardHeader
@@ -67,10 +67,10 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
           ))}
         </CardContent>
         <CardFooter className="p-1 pb-0">
-          {workflow.updatedAt && (
+          {updatedAt && (
             <span className="text-2xs py-1 text-neutral-400">
               Updated at{' '}
-              {formatDateSimple(workflow.updatedAt, {
+              {formatDateSimple(updatedAt, {
                 month: 'short',
                 day: '2-digit',
                 year: 'numeric',

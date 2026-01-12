@@ -61,6 +61,8 @@ export const envValidators = {
   SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: str({ default: '15 days' }),
   SOCKET_WORKER_URL: str({ default: undefined }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
+  SCHEDULER_URL: str({ default: undefined }),
+  SCHEDULER_API_KEY: str({ default: undefined }),
   // Feature Flags
   ...Object.keys(FeatureFlagsKeysEnum).reduce(
     (acc, key) => {

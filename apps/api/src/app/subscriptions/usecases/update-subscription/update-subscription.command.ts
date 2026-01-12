@@ -9,7 +9,7 @@ export class UpdateSubscriptionCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsDefined()
-  subscriptionIdOrIdentifier: string;
+  identifier: string;
 
   @IsString()
   @IsOptional()

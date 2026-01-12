@@ -76,6 +76,30 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return super.findOne(transformedQuery, select, options);
   }
 
+  async findOneForInbox(
+    query: FilterQuery<MessageDBModel> & EnforceEnvId,
+    select?: ProjectionType<MessageEntity>,
+    options: {
+      readPreference?: 'secondaryPreferred' | 'primary';
+      query?: any;
+      session?: any;
+    } = {}
+  ): Promise<MessageEntity | null> {
+    const transformedQuery = this.transformContextKeysQuery(query) as FilterQuery<MessageDBModel> & EnforceEnvId;
+
+    return super.findOne(transformedQuery, select, {
+      ...options,
+      enhanceQuery: (queryBuilder) =>
+        queryBuilder.populate('subscriber', '_id firstName lastName avatar subscriberId').populate({
+          path: 'template',
+          select: '_id name tags data critical triggers severity',
+          options: {
+            withDeleted: true,
+          },
+        }),
+    });
+  }
+
   private async getFilterQueryForMessage(
     environmentId: string,
     subscriberId: string,

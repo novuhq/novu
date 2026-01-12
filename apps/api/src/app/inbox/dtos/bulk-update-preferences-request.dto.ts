@@ -10,7 +10,7 @@ export class BulkUpdatePreferenceItemDto extends UpdatePreferencesRequestDto {
 
   @IsOptional()
   @IsString()
-  readonly subscriptionIdOrIdentifier?: string;
+  readonly subscriptionIdentifier?: string;
 }
 
 export class BulkUpdatePreferencesRequestDto {

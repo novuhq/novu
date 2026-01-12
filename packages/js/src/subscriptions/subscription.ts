@@ -1,5 +1,5 @@
-import { SubscriptionsCache } from 'src/cache/subscriptions-cache';
 import type { InboxService } from '../api';
+import { SubscriptionsCache } from '../cache/subscriptions-cache';
 import type { NovuEventEmitter } from '../event-emitter';
 import type { Result, SubscriptionResponse } from '../types';
 import { NovuError } from '../utils/errors';
@@ -76,7 +76,7 @@ export class TopicSubscription {
       apiService: this.#inboxService,
       cache: this.#cache,
       useCache: this.#useCache,
-      args: { ...args, subscriptionId: this.id },
+      args: { ...args, subscriptionId: this.identifier },
     });
   }
 
@@ -94,7 +94,7 @@ export class TopicSubscription {
       apiService: this.#inboxService,
       cache: this.#cache,
       useCache: this.#useCache,
-      args: args.map((arg) => ({ ...arg, subscriptionId: this.id })),
+      args: args.map((arg) => ({ ...arg, subscriptionId: this.identifier })),
     });
   }
 

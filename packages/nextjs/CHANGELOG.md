@@ -1,13 +1,23 @@
-## v3.12.0-rc.1 (2025-12-12)
+## v3.12.0 (2026-01-07)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
+## v3.11.2 (2025-12-24)
 
 ### 🚀 Features
 
+- **root:** new npm trusted publisher flow ([#9715](https://github.com/novuhq/novu/pull/9715))
 - **react,nextjs:** subscription hooks fixes NV-6864 ([#9530](https://github.com/novuhq/novu/pull/9530))
 - **js,react,nextjs:** subscription button and preferences standalone components fixes NV-6909 ([#9527](https://github.com/novuhq/novu/pull/9527))
 - **js,react,nextjs:** subscription component fixes NV-6863 ([#9512](https://github.com/novuhq/novu/pull/9512))
 
+### 🩹 Fixes
+
+- **root:** use latest npm to able to use npm trusted publishing ([#9716](https://github.com/novuhq/novu/pull/9716))
+
 ### ❤️ Thank You
 
+- Himanshu Garg @merrcury
 - Paweł Tymczuk @LetItRock
 
 ## v3.11.0 (2025-10-27)

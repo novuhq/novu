@@ -5,29 +5,30 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { translationsGroupsRetrieve } from "../funcs/translationsGroupsRetrieve.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type TranslationsGroupsRetrieveQueryData =
-  components.TranslationGroupDto;
+import {
+  buildTranslationsGroupsRetrieveQuery,
+  prefetchTranslationsGroupsRetrieve,
+  queryKeyTranslationsGroupsRetrieve,
+  TranslationsGroupsRetrieveQueryData,
+} from "./translationsGroupsRetrieve.core.js";
+export {
+  buildTranslationsGroupsRetrieveQuery,
+  prefetchTranslationsGroupsRetrieve,
+  queryKeyTranslationsGroupsRetrieve,
+  type TranslationsGroupsRetrieveQueryData,
+};
 
 /**
  * Retrieve a translation group
@@ -81,24 +82,6 @@ export function useTranslationsGroupsRetrieveSuspense(
   });
 }
 
-export function prefetchTranslationsGroupsRetrieve(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  resourceType:
-    operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
-  resourceId: string,
-  idempotencyKey?: string | undefined,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildTranslationsGroupsRetrieveQuery(
-      client$,
-      resourceType,
-      resourceId,
-      idempotencyKey,
-    ),
-  });
-}
-
 export function setTranslationsGroupsRetrieveData(
   client: QueryClient,
   queryKeyBase: [
@@ -140,57 +123,4 @@ export function invalidateAllTranslationsGroupsRetrieve(
     ...filters,
     queryKey: ["@novu/api", "Groups", "retrieve"],
   });
-}
-
-export function buildTranslationsGroupsRetrieveQuery(
-  client$: NovuCore,
-  resourceType:
-    operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
-  resourceId: string,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<TranslationsGroupsRetrieveQueryData>;
-} {
-  return {
-    queryKey: queryKeyTranslationsGroupsRetrieve(resourceType, resourceId, {
-      idempotencyKey,
-    }),
-    queryFn: async function translationsGroupsRetrieveQueryFn(
-      ctx,
-    ): Promise<TranslationsGroupsRetrieveQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(translationsGroupsRetrieve(
-        client$,
-        resourceType,
-        resourceId,
-        idempotencyKey,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyTranslationsGroupsRetrieve(
-  resourceType:
-    operations.TranslationControllerGetTranslationGroupEndpointPathParamResourceType,
-  resourceId: string,
-  parameters: { idempotencyKey?: string | undefined },
-): QueryKey {
-  return [
-    "@novu/api",
-    "Groups",
-    "retrieve",
-    resourceType,
-    resourceId,
-    parameters,
-  ];
 }

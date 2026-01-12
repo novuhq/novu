@@ -154,7 +154,7 @@ export class CreateSubscriptionsUsecase {
 
       for (const subscription of newSubscriptions.created) {
         const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
-        const preferencesEntry = preferencesArray.find((entry) => entry.subscriptionId === subscription._id.toString());
+        const preferencesEntry = preferencesArray.find((entry) => entry.subscriptionId === subscription.identifier);
         const preferences = preferencesEntry?.preferences;
 
         subscriptionData.push({
@@ -392,7 +392,9 @@ export class CreateSubscriptionsUsecase {
                 severity: workflow.severity || SeverityLevelEnum.NONE,
               }
             : undefined,
-          subscriptionId: subscription._id.toString(),
+          subscriptionId:
+            subscription.identifier ||
+            buildDefaultSubscriptionIdentifier(subscription.topicKey, subscription.externalSubscriberId),
           enabled: preferences?.all?.enabled ?? true,
           condition: preferences?.all?.condition as RulesLogic | undefined,
         };

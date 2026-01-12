@@ -23,7 +23,7 @@ export const ListNoResults = ({
         </div>
       </div>
       {onClearFilters && (
-        <Button variant="secondary" onClick={onClearFilters}>
+        <Button variant="secondary" mode="outline" onClick={onClearFilters}>
           Clear filters
         </Button>
       )}

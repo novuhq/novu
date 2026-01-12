@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AnalyticsService,
+  FeatureFlagsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -14,8 +14,9 @@ import {
   UpsertSubscriberWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import {
-  BaseRepository,
+  EnforceEnvOrOrgIds,
   NotificationTemplateEntity,
+  PreferencesDBModel,
   PreferencesRepository,
   SubscriberEntity,
   SubscriberRepository,
@@ -23,6 +24,7 @@ import {
 } from '@novu/dal';
 import {
   buildWorkflowPreferences,
+  FeatureFlagsKeysEnum,
   IPreferenceChannels,
   PreferenceLevelEnum,
   PreferencesTypeEnum,
@@ -33,11 +35,11 @@ import {
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
+import { FilterQuery } from 'mongoose';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
-import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
@@ -45,14 +47,14 @@ import { UpdatePreferencesCommand } from './update-preferences.command';
 export class UpdatePreferences {
   constructor(
     private subscriberRepository: SubscriberRepository,
-    private analyticsService: AnalyticsService,
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private upsertPreferences: UpsertPreferences,
     private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase,
     private sendWebhookMessage: SendWebhookMessage,
     private topicSubscribersRepository: TopicSubscribersRepository,
-    private preferencesRepository: PreferencesRepository
+    private preferencesRepository: PreferencesRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -63,13 +65,13 @@ export class UpdatePreferences {
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
     const workflow = await this.getWorkflow(command);
-    const subscriptionId = await this.getSubscriptionId(command);
+    const internalSubscriptionId = await this.getSubscriptionId(command);
 
     let newPreference: InboxPreference | null = null;
 
-    await this.updateSubscriberPreference(command, subscriber, workflow?._id, subscriptionId);
+    await this.updateSubscriberPreference(command, subscriber, workflow?._id, internalSubscriptionId);
 
-    newPreference = await this.findPreference(command, subscriber, workflow, subscriptionId);
+    newPreference = await this.findPreference(command, subscriber, workflow, internalSubscriptionId);
 
     await this.sendWebhookMessage.execute({
       eventType: WebhookEventEnum.PREFERENCE_UPDATED,
@@ -108,18 +110,14 @@ export class UpdatePreferences {
   }
 
   private async getSubscriptionId(command: UpdatePreferencesCommand): Promise<string | undefined> {
-    if (command.level !== PreferenceLevelEnum.TEMPLATE || !command.subscriptionIdOrIdentifier) {
+    if (command.level !== PreferenceLevelEnum.TEMPLATE || !command.subscriptionIdentifier) {
       return undefined;
-    }
-
-    if (BaseRepository.isInternalId(command.subscriptionIdOrIdentifier)) {
-      return command.subscriptionIdOrIdentifier;
     }
 
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      identifier: command.subscriptionIdOrIdentifier,
+      identifier: command.subscriptionIdentifier,
     });
 
     return subscription?._id;
@@ -130,7 +128,7 @@ export class UpdatePreferences {
     command: UpdatePreferencesCommand,
     subscriber: Pick<SubscriberEntity, '_id'>,
     workflowId: string | undefined,
-    subscriptionId: string | undefined
+    internalSubscriptionId: string | undefined
   ): Promise<void> {
     const channelPreferences: IPreferenceChannels = this.buildPreferenceChannels(command);
 
@@ -139,8 +137,9 @@ export class UpdatePreferences {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       _subscriberId: subscriber._id,
+      contextKeys: command.contextKeys,
       workflowId,
-      subscriptionId,
+      subscriptionId: internalSubscriptionId,
       schedule: command.schedule,
       all: command.all,
     });
@@ -161,21 +160,26 @@ export class UpdatePreferences {
     command: UpdatePreferencesCommand,
     subscriber: Pick<SubscriberEntity, '_id'>,
     workflow: NotificationTemplateEntity | undefined,
-    subscriptionId?: string
+    internalSubscriptionId?: string
   ): Promise<InboxPreference> {
     if (
       command.level === PreferenceLevelEnum.TEMPLATE &&
-      command.subscriptionIdOrIdentifier &&
+      command.subscriptionIdentifier &&
       command.workflowIdOrIdentifier &&
       workflow
     ) {
-      const preferenceEntity = await this.preferencesRepository.findOne({
+      const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
+      const query: FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds = {
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _templateId: workflow._id,
-        _topicSubscriptionId: subscriptionId,
+        _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
-      });
+        ...contextQuery,
+      };
+
+      const preferenceEntity = await this.preferencesRepository.findOne(query);
 
       const builtPreferences = buildWorkflowPreferences(preferenceEntity?.preferences);
       const channels = GetPreferences.mapWorkflowPreferencesToChannelPreferences(preferenceEntity?.preferences || {});
@@ -184,7 +188,7 @@ export class UpdatePreferences {
         level: PreferenceLevelEnum.TEMPLATE,
         enabled: builtPreferences.all.enabled,
         condition: builtPreferences.all.condition,
-        subscriptionId,
+        subscriptionId: internalSubscriptionId,
         channels,
         workflow: {
           id: workflow._id,
@@ -207,8 +211,9 @@ export class UpdatePreferences {
           template: workflow,
           subscriber,
           includeInactiveChannels: command.includeInactiveChannels,
-          subscriptionId,
-        })
+          subscriptionId: internalSubscriptionId,
+          contextKeys: command.contextKeys,
+        } as GetSubscriberTemplatePreferenceCommand)
       );
 
       return {
@@ -233,6 +238,7 @@ export class UpdatePreferences {
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         includeInactiveChannels: command.includeInactiveChannels,
+        contextKeys: command.contextKeys,
       })
     );
 
@@ -248,6 +254,7 @@ export class UpdatePreferences {
     organizationId: string;
     _subscriberId: string;
     environmentId: string;
+    contextKeys?: string[];
     workflowId?: string;
     subscriptionId?: string;
     schedule?: Schedule;
@@ -278,6 +285,7 @@ export class UpdatePreferences {
           templateId: item.workflowId,
           topicSubscriptionId: item.subscriptionId,
           preferences,
+          contextKeys: item.contextKeys,
           returnPreference: false,
         })
       );
@@ -293,6 +301,7 @@ export class UpdatePreferences {
           _subscriberId: item._subscriberId,
           templateId: item.workflowId,
           preferences,
+          contextKeys: item.contextKeys,
           returnPreference: false,
         })
       );
@@ -308,7 +317,33 @@ export class UpdatePreferences {
         _subscriberId: item._subscriberId,
         returnPreference: false,
         schedule: item.schedule,
+        contextKeys: item.contextKeys,
       })
     );
+  }
+
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    organizationId: string
+  ): Promise<Record<string, unknown>> {
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!useContextFiltering) {
+      return {};
+    }
+
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }

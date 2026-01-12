@@ -1,3 +1,4 @@
+import { buildDefaultSubscriptionIdentifier } from '@novu/application-generic';
 import { NotificationTemplateEntity, PreferencesEntity, TopicSubscribersEntity } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
 import { RulesLogic } from 'json-logic-js';
@@ -9,9 +10,11 @@ export type SelectedWorkflowFields = Pick<
   '_id' | 'triggers' | 'name' | 'critical' | 'tags' | 'data' | 'severity'
 >;
 
+type PartialPreferenceEntity = Pick<PreferencesEntity, '_templateId' | 'preferences'>;
+
 export function mapTopicSubscriptionToDto(
   subscription: TopicSubscribersEntity,
-  preferencesEntities: PreferencesEntity[],
+  preferencesEntities: Array<PartialPreferenceEntity>,
   workflowEntities: SelectedWorkflowFields[]
 ): SubscriptionDetailsResponseDto {
   const preferences: SubscriptionPreferenceDto[] = preferencesEntities
@@ -36,7 +39,9 @@ export function mapTopicSubscriptionToDto(
               severity: workflow.severity || SeverityLevelEnum.NONE,
             }
           : undefined,
-        subscriptionId: subscription._id,
+        subscriptionId:
+          subscription.identifier ||
+          buildDefaultSubscriptionIdentifier(subscription.topicKey, subscription.externalSubscriberId),
         enabled: preferences?.all?.enabled ?? true,
         condition: preferences?.all?.condition as RulesLogic | undefined,
       };

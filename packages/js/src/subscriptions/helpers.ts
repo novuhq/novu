@@ -73,10 +73,7 @@ export const getSubscription = async ({
     emitter.emit('subscription.get.pending', { args, data });
 
     if (!data || refetch) {
-      const response = await apiService.getSubscription({
-        topicKey: args.topicKey,
-        identifier: args.identifier,
-      });
+      const response = await apiService.getSubscription(args.topicKey, args.identifier, args.workflowIds, args.tags);
       if (!response) {
         emitter.emit('subscription.get.resolved', { args, data: null });
 
@@ -156,7 +153,7 @@ export const updateSubscription = async ({
   useCache?: boolean;
   args: UpdateSubscriptionArgs;
 }): Result<TopicSubscription> => {
-  const subscriptionId = 'subscriptionId' in args ? args.subscriptionId : args.subscription.id;
+  const identifier = 'identifier' in args ? args.identifier : args.subscription.identifier;
   const topicKey = 'topicKey' in args ? args.topicKey : args.subscription.topicKey;
 
   try {
@@ -166,7 +163,7 @@ export const updateSubscription = async ({
 
     const response = await apiService.updateSubscription({
       topicKey,
-      subscriptionId,
+      identifier,
       name: args.name,
       preferences: args.preferences,
     });
@@ -217,9 +214,18 @@ export const updateSubscriptionPreference = async ({
     });
 
     const response = await apiService.updateSubscriptionPreference({
-      subscriptionId: args.subscriptionId,
+      subscriptionIdentifier: args.subscriptionId,
       workflowId,
-      ...(typeof args.value === 'boolean' ? { enabled: args.value } : { condition: args.value }),
+      ...(typeof args.value === 'boolean'
+        ? {
+            enabled: args.value,
+            email: args.value,
+            sms: args.value,
+            in_app: args.value,
+            chat: args.value,
+            push: args.value,
+          }
+        : { condition: args.value }),
     });
 
     const updatedSubscription = new SubscriptionPreference({ ...response }, emitter, apiService, cache, useCache);
@@ -271,12 +277,14 @@ export const bulkUpdateSubscriptionPreference = async ({
     });
 
     const preferencesToUpdate = args.map((arg) => ({
-      subscriptionIdOrIdentifier: arg.subscriptionId,
+      subscriptionIdentifier: arg.subscriptionId,
       workflowId:
         'workflowId' in arg
           ? arg.workflowId
           : (arg.preference?.workflow?.id ?? arg.preference?.workflow?.identifier ?? ''),
-      ...(typeof arg.value === 'boolean' ? { enabled: arg.value } : { condition: arg.value }),
+      ...(typeof arg.value === 'boolean'
+        ? { enabled: arg.value, email: arg.value, sms: arg.value, in_app: arg.value, chat: arg.value, push: arg.value }
+        : { condition: arg.value }),
     }));
     const response = await apiService.bulkUpdateSubscriptionPreferences(preferencesToUpdate);
 
@@ -300,12 +308,12 @@ export const deleteSubscription = async ({
   apiService: InboxService;
   args: DeleteSubscriptionArgs;
 }): Result<void> => {
-  const subscriptionId = 'subscriptionId' in args ? args.subscriptionId : args.subscription.id;
+  const identifier = 'identifier' in args ? args.identifier : args.subscription.identifier;
   const topicKey = 'topicKey' in args ? args.topicKey : args.subscription.topicKey;
   try {
     emitter.emit('subscription.delete.pending', { args });
 
-    await apiService.deleteSubscription({ topicKey, subscriptionId });
+    await apiService.deleteSubscription({ topicKey, identifier });
 
     emitter.emit('subscription.delete.resolved', { args });
 

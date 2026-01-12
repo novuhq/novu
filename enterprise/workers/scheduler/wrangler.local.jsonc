@@ -1,0 +1,28 @@
+/**
+ * Local development configuration
+ * Use this for local development with: wrangler dev --config wrangler.local.jsonc
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scheduler-worker-local",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-11-18",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "observability": {
+    "enabled": true
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Scheduler"]
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SCHEDULER",
+        "class_name": "Scheduler"
+      }
+    ]
+  }
+}

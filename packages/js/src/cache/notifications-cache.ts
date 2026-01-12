@@ -1,3 +1,4 @@
+import { InboxService } from '../api';
 import { NotificationEvents, NovuEventEmitter } from '../event-emitter';
 import type {
   ArchivedArgs,
@@ -14,7 +15,8 @@ import type {
   UnreadArgs,
   UnsnoozeArgs,
 } from '../notifications';
-import type { NotificationFilter } from '../types';
+import type { InboxNotification, NotificationFilter } from '../types';
+import { createNotification } from '../ui/internal/createNotification';
 import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
@@ -115,13 +117,15 @@ type NotificationEventArgs =
 
 export class NotificationsCache {
   #emitter: NovuEventEmitter;
+  #inboxService: InboxService;
   /**
    * The key is the stringified notifications filter, the values are the paginated notifications.
    */
   #cache: Cache<ListNotificationsResponse>;
 
-  constructor({ emitter }: { emitter: NovuEventEmitter }) {
+  constructor({ emitter, inboxService }: { emitter: NovuEventEmitter; inboxService: InboxService }) {
     this.#emitter = emitter;
+    this.#inboxService = inboxService;
     updateEvents.forEach((event) => {
       this.#emitter.on(event, this.handleNotificationEvent());
     });
@@ -260,12 +264,36 @@ export class NotificationsCache {
       );
   }
 
+  get(args: ListNotificationsArgs): ListNotificationsResponse | undefined {
+    return this.#cache.get(getCacheKey(args));
+  }
+
   has(args: ListNotificationsArgs): boolean {
     return this.#cache.get(getCacheKey(args)) !== undefined;
   }
 
   set(args: ListNotificationsArgs, data: ListNotificationsResponse): void {
     this.#cache.set(getCacheKey(args), data);
+  }
+
+  unshift(args: ListNotificationsArgs, notification: InboxNotification): void {
+    const cacheKey = getCacheKey(args);
+    const cachedData = this.#cache.get(cacheKey) || {
+      hasMore: false,
+      filter: getFilter(cacheKey),
+      notifications: [],
+    };
+
+    const notificationInstance = createNotification({
+      notification: { ...notification },
+      emitter: this.#emitter,
+      inboxService: this.#inboxService,
+    });
+
+    this.update(args, {
+      ...cachedData,
+      notifications: [notificationInstance, ...cachedData.notifications],
+    });
   }
 
   update(args: ListNotificationsArgs, data: ListNotificationsResponse): void {

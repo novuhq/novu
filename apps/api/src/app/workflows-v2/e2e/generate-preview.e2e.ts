@@ -1395,6 +1395,76 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       expect(previewResponseDto.previewPayloadExample.payload?.subject.test).to.have.property('payload');
     });
 
+    it('email: should render HTML without escaping quotes in attributes', async () => {
+      const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(novuClient, StepTypeEnum.EMAIL);
+
+      const controlValues = {
+        subject: 'Test HTML Rendering',
+        body: JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'button',
+              attrs: {
+                text: 'Click Me',
+                isTextVariable: false,
+                url: 'https://example.com',
+                isUrlVariable: false,
+                alignment: 'center',
+                variant: 'filled',
+                borderRadius: 'smooth',
+                buttonColor: '#FF5733',
+                textColor: '#FFFFFF',
+                showIfKey: null,
+                paddingTop: 12,
+                paddingRight: 24,
+                paddingBottom: 12,
+                paddingLeft: 24,
+                width: 'auto',
+                aliasFor: null,
+              },
+            },
+            {
+              type: 'paragraph',
+              attrs: { textAlign: 'center', showIfKey: null },
+              content: [
+                {
+                  type: 'text',
+                  text: 'Test content with special characters: "quotes" & symbols',
+                },
+              ],
+            },
+          ],
+        }),
+      };
+
+      const previewResponseDto = await generatePreview(novuClient, workflowId, stepDatabaseId, {
+        controlValues,
+      });
+
+      expect(previewResponseDto.result).to.exist;
+      if (!previewResponseDto.result || previewResponseDto.result.type !== 'email') {
+        throw new Error('Expected email preview');
+      }
+
+      const preview = previewResponseDto.result.preview as EmailRenderOutput;
+      expect(preview.body).to.exist;
+
+      expect(preview.body).to.not.contain('\\"');
+      expect(preview.body).to.not.contain('\\&quot;');
+      expect(preview.body).to.not.contain('&quot;center&quot;');
+      expect(preview.body).to.not.contain('align=\\"center\\"');
+
+      expect(preview.body).to.contain('#FF5733');
+      expect(preview.body).to.contain('#FFFFFF');
+      expect(preview.body).to.contain('Click Me');
+      expect(preview.body).to.contain('Test content with special characters');
+
+      expect(preview.body).to.match(/style="[^"]*color[^"]*"/);
+      expect(preview.body).to.match(/style="[^"]*background-color[^"]*"/);
+      expect(preview.body).to.match(/align="center"/);
+    });
+
     async function createWorkflowAndPreview(type: StepTypeEnum, description: string) {
       const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(novuClient, type);
       const requestDto = buildDtoNoPayload(type);

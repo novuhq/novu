@@ -374,6 +374,7 @@ export class SendMessage {
           subscriber,
           tenant: job.tenant,
           includeInactiveChannels: false,
+          contextKeys: job.contextKeys,
         })
       );
       subscriberPreference = preference;

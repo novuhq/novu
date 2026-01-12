@@ -1,6 +1,6 @@
 import { Prism } from '@mantine/prism';
 import { useMemo } from 'react';
-import set from 'lodash.set';
+import { safeSet } from '../../../utils/safe-set';
 import get from 'lodash.get';
 
 import { INotificationTrigger, INotificationTriggerVariable, TemplateVariableTypeEnum } from '@novu/shared';
@@ -75,12 +75,12 @@ export const getPayloadValue = (variables: INotificationTriggerVariable[]) => {
   variables
     .filter((variable) => variable?.type !== TemplateVariableTypeEnum.ARRAY)
     .forEach((variable) => {
-      set(varsObj, variable.name, variable.value || '<REPLACE_WITH_DATA>');
+      safeSet(varsObj, variable.name, variable.value || '<REPLACE_WITH_DATA>');
     });
   variables
     .filter((variable) => variable?.type === TemplateVariableTypeEnum.ARRAY)
     .forEach((variable) => {
-      set(varsObj, variable.name, [get(varsObj, variable.name, '<REPLACE_WITH_DATA>')]);
+      safeSet(varsObj, variable.name, [get(varsObj, variable.name, '<REPLACE_WITH_DATA>')]);
     });
 
   return varsObj;
@@ -91,7 +91,7 @@ export const getSubscriberValue = (
 ) => {
   const varsObj: Record<string, any> = {};
   variables.forEach((variable) => {
-    set(varsObj, variable.name, getValue(variable));
+    safeSet(varsObj, variable.name, getValue(variable));
   });
 
   return varsObj;
