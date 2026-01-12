@@ -1186,12 +1186,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     const res = results[0];
-    const mapped = this.mapEntity(res);
+    const mapped = this.mapEntity(res) as MessageEntity;
+    const jobData = res.job ? { step: { stepId: res.job.step?.stepId as string | undefined } } : undefined;
 
-    return {
-      ...mapped,
-      job: res.job ? { step: { stepId: res.job.step?.stepId } } : undefined,
-    };
+    return Object.assign(mapped, { job: jobData });
   }
 
   private transformContextKeysQuery(query: FilterQuery<MessageDBModel>): FilterQuery<MessageDBModel> {
