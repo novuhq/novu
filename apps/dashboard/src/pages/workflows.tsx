@@ -33,11 +33,14 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
 import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { QuickTemplate, useTemplateStore } from '@/hooks/use-template-store';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+
+const WORKFLOWS_TABLE_ID = 'workflows-list';
 
 interface WorkflowFilters {
   query: string;
@@ -45,10 +48,16 @@ interface WorkflowFilters {
   status: string[];
 }
 
+const DEFAULT_PAGE_SIZE = getPersistedPageSize(WORKFLOWS_TABLE_ID, 10);
+
 export const WorkflowsPage = () => {
   const { environmentSlug } = useParams();
   const track = useTelemetry();
   const navigate = useNavigate();
+  const { setPageSize: setPersistedPageSize } = usePersistedPageSize({
+    tableId: WORKFLOWS_TABLE_ID,
+    defaultPageSize: 10,
+  });
   const [searchParams, setSearchParams] = useSearchParams({
     orderDirection: DirectionEnum.DESC,
     orderBy: 'createdAt',
@@ -145,7 +154,7 @@ export const WorkflowsPage = () => {
   }, [quickTemplates]);
 
   const offset = parseInt(searchParams.get('offset') || '0', 10);
-  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const limit = parseInt(searchParams.get('limit') || DEFAULT_PAGE_SIZE.toString(), 10);
 
   const {
     data: workflowsData,
@@ -317,10 +326,12 @@ export const WorkflowsPage = () => {
             isError={isError}
             limit={limit}
             onPageSizeChange={(newPageSize) => {
+              setPersistedPageSize(newPageSize);
               setSearchParams((prev) => {
                 const sp = new URLSearchParams(prev);
                 sp.set('limit', newPageSize.toString());
-                sp.delete('offset'); // Reset to first page when changing page size
+                sp.delete('offset');
+
                 return sp;
               });
             }}

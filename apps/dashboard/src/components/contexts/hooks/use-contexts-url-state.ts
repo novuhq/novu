@@ -1,6 +1,9 @@
 import { DirectionEnum } from '@novu/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
+
+const CONTEXTS_TABLE_ID = 'contexts-list';
 
 export type ContextsSortableColumn = 'createdAt' | 'updatedAt';
 
@@ -26,12 +29,16 @@ export interface ContextsUrlState {
   handlePageSizeChange: (newSize: number) => void;
 }
 
-const DEFAULT_LIMIT = 10;
+const DEFAULT_LIMIT = getPersistedPageSize(CONTEXTS_TABLE_ID, 10);
 
 export const useContextsUrlState = (): ContextsUrlState => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [previousCursor, setPreviousCursor] = useState<string | undefined>(undefined);
+  const { setPageSize: setPersistedPageSize } = usePersistedPageSize({
+    tableId: CONTEXTS_TABLE_ID,
+    defaultPageSize: 10,
+  });
 
   const filterValues: ContextsFilter = useMemo(() => {
     const search = searchParams.get('search') || '';
@@ -166,6 +173,7 @@ export const useContextsUrlState = (): ContextsUrlState => {
 
   const handlePageSizeChange = useCallback(
     (newSize: number) => {
+      setPersistedPageSize(newSize);
       setSearchParams((prev) => {
         prev.set('limit', newSize.toString());
         prev.delete('after');
@@ -174,7 +182,7 @@ export const useContextsUrlState = (): ContextsUrlState => {
         return prev;
       });
     },
-    [setSearchParams]
+    [setSearchParams, setPersistedPageSize]
   );
 
   return {
