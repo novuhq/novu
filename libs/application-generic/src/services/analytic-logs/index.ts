@@ -10,3 +10,4 @@ export { EventType, mapEventTypeToTitle, Trace, TraceLogRepository, TraceStatus,
 export { StepType } from './types';
 export * from './workflow-activity-counts';
 export { WorkflowRun, WorkflowRunRepository, WorkflowRunStatusEnum } from './workflow-run';
+export * from './workflow-volume-counts';
