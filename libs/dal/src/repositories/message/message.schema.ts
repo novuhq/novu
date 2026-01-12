@@ -34,6 +34,7 @@ const messageSchema = new Schema<MessageDBModel>(
       ref: 'Job',
     },
     templateIdentifier: Schema.Types.String,
+    stepId: Schema.Types.String,
     email: Schema.Types.String,
     subject: Schema.Types.String,
     cta: {

@@ -1144,54 +1144,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return messagesToDelete;
   }
 
-  async findByIdentifierWithJob(query: {
-    identifier: string;
-    _environmentId: string;
-    _organizationId: string;
-  }): Promise<(MessageEntity & { job?: { step?: { stepId?: string } } }) | null> {
-    const pipeline = [
-      {
-        $match: {
-          identifier: query.identifier,
-          _environmentId: this.convertStringToObjectId(query._environmentId),
-          _organizationId: this.convertStringToObjectId(query._organizationId),
-          deleted: { $exists: false },
-        },
-      },
-      {
-        $lookup: {
-          from: 'jobs',
-          localField: '_jobId',
-          foreignField: '_id',
-          as: 'jobData',
-          pipeline: [{ $project: { 'step.stepId': 1 } }],
-        },
-      },
-      {
-        $addFields: {
-          job: { $arrayElemAt: ['$jobData', 0] },
-        },
-      },
-      {
-        $project: {
-          jobData: 0,
-        },
-      },
-    ];
-
-    const results = await this.MongooseModel.aggregate(pipeline);
-
-    if (!results || results.length === 0) {
-      return null;
-    }
-
-    const res = results[0];
-    const mapped = this.mapEntity(res) as MessageEntity;
-    const jobData = res.job ? { step: { stepId: res.job.step?.stepId as string | undefined } } : undefined;
-
-    return Object.assign(mapped, { job: jobData });
-  }
-
   private transformContextKeysQuery(query: FilterQuery<MessageDBModel>): FilterQuery<MessageDBModel> {
     if (!('contextKeys' in query)) {
       return query;

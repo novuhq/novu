@@ -210,6 +210,7 @@ export class SendMessageEmail extends SendMessageBase {
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
+      stepId: command.step.stepId,
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
