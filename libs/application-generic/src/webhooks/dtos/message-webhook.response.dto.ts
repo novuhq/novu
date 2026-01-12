@@ -34,4 +34,6 @@ export type MessageWebhookResponseDto = Pick<
   webhookUrl?: string;
   channelData?: ChannelData;
   subscriberId?: string;
+  workflowId?: string;
+  stepId?: string;
 };

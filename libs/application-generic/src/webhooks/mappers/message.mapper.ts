@@ -40,6 +40,7 @@ export const messageWebhookMapper = (
      */
     webhookUrl?: string;
     channelData?: ChannelData;
+    stepId?: string;
   }
 ): MessageWebhookResponseDto => {
   return {
@@ -73,5 +74,7 @@ export const messageWebhookMapper = (
     channelData: context?.channelData,
     providerResponseId: context?.providerResponseId,
     contextKeys: message.contextKeys,
+    workflowId: message.templateIdentifier,
+    stepId: context?.stepId,
   };
 };
