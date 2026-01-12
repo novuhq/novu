@@ -51,6 +51,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
+        AND event_type = 'message_sent'
         AND date >= {startDate:Date}
         AND date <= {endDate:Date}
         ${workflowFilter}
@@ -62,6 +63,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
+        AND event_type = 'message_sent'
         AND date >= {previousStartDate:Date}
         AND date <= {previousEndDate:Date}
         ${workflowFilter}
@@ -124,6 +126,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
+        AND event_type = 'message_sent'
         AND external_subscriber_id != ''
         AND date >= {startDate:Date}
         AND date <= {endDate:Date}
@@ -136,6 +139,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
+        AND event_type = 'message_sent'
         AND external_subscriber_id != ''
         AND date >= {previousStartDate:Date}
         AND date <= {previousEndDate:Date}
@@ -199,6 +203,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       WHERE 
         environment_id = {environmentId:String} 
         AND organization_id = {organizationId:String}
+        AND event_type = 'message_sent'
         AND external_subscriber_id != ''
         AND date >= {startDate:Date}
         AND date <= {endDate:Date}
@@ -249,6 +254,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
+        AND event_type = 'message_sent'
         AND external_subscriber_id != ''
         AND date >= {startDate:Date}
         AND date <= {endDate:Date}
@@ -263,6 +269,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
+        AND event_type = 'message_sent'
         AND external_subscriber_id != ''
         AND date >= {previousStartDate:Date}
         AND date <= {previousEndDate:Date}
@@ -311,5 +318,130 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       currentPeriod: Math.round(currentPeriod * 100) / 100,
       previousPeriod: Math.round(previousPeriod * 100) / 100,
     };
+  }
+
+  async getTotalInteractionsCount(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date,
+    workflowIds?: string[]
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? `AND workflow_id IN {workflowIds:Array(String)}` : '';
+
+    const currentQuery = `
+      SELECT sum(count) as count
+      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND environment_id = {environmentId:String}
+        AND event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        ${workflowFilter}
+    `;
+
+    const previousQuery = `
+      SELECT sum(count) as count
+      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      WHERE
+        organization_id = {organizationId:String}
+        AND environment_id = {environmentId:String}
+        AND event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+        AND date >= {previousStartDate:Date}
+        AND date <= {previousEndDate:Date}
+        ${workflowFilter}
+    `;
+
+    const currentParams: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    const previousParams: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      previousStartDate: previousStartDate.toISOString().split('T')[0],
+      previousEndDate: previousEndDate.toISOString().split('T')[0],
+    };
+
+    if (workflowIds && workflowIds.length > 0) {
+      currentParams.workflowIds = workflowIds;
+      previousParams.workflowIds = workflowIds;
+    }
+
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentQuery,
+        params: currentParams,
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousQuery,
+        params: previousParams,
+      }),
+    ]);
+
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
+  }
+
+  async getInteractionTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    workflowIds?: string[]
+  ): Promise<Array<{ date: string; event_type: string; count: string }>> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? 'AND workflow_id IN {workflowIds:Array(String)}' : '';
+
+    const query = `
+      SELECT 
+        date,
+        event_type,
+        sum(count) as count
+      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        ${workflowFilter}
+      GROUP BY date, event_type
+      ORDER BY date, event_type
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    if (workflowIds && workflowIds.length > 0) {
+      params.workflowIds = workflowIds;
+    }
+
+    const result = await this.clickhouseService.query<{
+      date: string;
+      event_type: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
   }
 }

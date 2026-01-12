@@ -1,4 +1,4 @@
-import { CHDate, CHString, CHUInt64, ClickhouseSchema } from 'clickhouse-schema';
+import { CHDate, CHLowCardinality, CHString, CHUInt64, ClickhouseSchema } from 'clickhouse-schema';
 
 export const WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME = 'workflow_activity_counts';
 
@@ -8,6 +8,7 @@ const schemaDefinition = {
   environment_id: { type: CHString() },
   workflow_id: { type: CHString() },
   external_subscriber_id: { type: CHString() },
+  event_type: { type: CHLowCardinality(CHString()) },
   count: { type: CHUInt64() },
 };
 
@@ -17,6 +18,7 @@ export const WORKFLOW_ACTIVITY_COUNTS_ORDER_BY: (keyof typeof schemaDefinition)[
   'workflow_id',
   'date',
   'external_subscriber_id',
+  'event_type',
 ];
 
 const clickhouseSchemaOptions = {
@@ -34,5 +36,6 @@ export type WorkflowActivityCount = {
   environment_id: string;
   workflow_id: string;
   external_subscriber_id: string;
+  event_type: string;
   count: number;
 };

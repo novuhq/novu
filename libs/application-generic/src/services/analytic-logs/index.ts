@@ -1,7 +1,6 @@
 export { createClient as createClickHouseClient } from '@clickhouse/client';
 export * from './clickhouse.service';
 export * from './delivery-trend-counts';
-export * from './interaction-counts';
 export * from './log.repository';
 export * from './provider-volume-counts';
 export * from './request-log';

@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import {
   FeatureFlagsService,
   InstrumentUsecase,
-  InteractionCountsRepository,
   PinoLogger,
   TraceLogRepository,
+  WorkflowActivityCountsRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InteractionTrendDataPointDto } from '../../dtos/get-charts.response.dto';
@@ -13,7 +13,7 @@ import { BuildInteractionTrendChartCommand } from './build-interaction-trend-cha
 @Injectable()
 export class BuildInteractionTrendChart {
   constructor(
-    private interactionCountsRepository: InteractionCountsRepository,
+    private workflowActivityCountsRepository: WorkflowActivityCountsRepository,
     private traceLogRepository: TraceLogRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -46,7 +46,7 @@ export class BuildInteractionTrendChart {
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
     const traces = useNewQuery
-      ? await this.interactionCountsRepository.getInteractionTrendData(
+      ? await this.workflowActivityCountsRepository.getInteractionTrendData(
           environmentId,
           organizationId,
           startDate,

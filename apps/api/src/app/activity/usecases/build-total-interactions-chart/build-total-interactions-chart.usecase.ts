@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import {
   FeatureFlagsService,
   InstrumentUsecase,
-  InteractionCountsRepository,
   PinoLogger,
   TraceLogRepository,
+  WorkflowActivityCountsRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { TotalInteractionsDataPointDto } from '../../dtos/get-charts.response.dto';
@@ -13,7 +13,7 @@ import { BuildTotalInteractionsChartCommand } from './build-total-interactions-c
 @Injectable()
 export class BuildTotalInteractionsChart {
   constructor(
-    private interactionCountsRepository: InteractionCountsRepository,
+    private workflowActivityCountsRepository: WorkflowActivityCountsRepository,
     private traceLogRepository: TraceLogRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -50,7 +50,7 @@ export class BuildTotalInteractionsChart {
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
     const result = useNewQuery
-      ? await this.interactionCountsRepository.getTotalInteractionsCount(
+      ? await this.workflowActivityCountsRepository.getTotalInteractionsCount(
           environmentId,
           organizationId,
           startDate,
