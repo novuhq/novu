@@ -24,7 +24,6 @@ import {
   TraceLogRepository,
   WorkflowActivityCountsRepository,
   WorkflowRunRepository,
-  WorkflowVolumeCountsRepository,
 } from '@novu/application-generic';
 import {
   ChangeRepository,
@@ -127,7 +126,6 @@ const ANALYTICS_PROVIDERS = [
   WorkflowActivityCountsRepository,
   ProviderVolumeCountsRepository,
   DeliveryTrendCountsRepository,
-  WorkflowVolumeCountsRepository,
 
   // Services
   clickHouseService,
