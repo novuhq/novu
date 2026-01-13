@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  buildFeedKey,
   buildMessageCountKey,
   EventType,
   InvalidateCacheService,
@@ -210,5 +209,6 @@ function createTraceLog({
     workflow_run_identifier: '',
     _notificationId: message._notificationId,
     workflow_id: message._templateId,
+    provider_id: '',
   };
 }

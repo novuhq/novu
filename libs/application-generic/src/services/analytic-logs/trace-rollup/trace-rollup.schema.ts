@@ -1,6 +1,6 @@
 import { CHDate, CHLowCardinality, CHString, CHUInt64, ClickhouseSchema } from 'clickhouse-schema';
 
-export const WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME = 'workflow_activity_counts';
+export const TRACE_ROLLUP_TABLE_NAME = 'trace_rollup';
 
 const schemaDefinition = {
   date: { type: CHDate() },
@@ -13,7 +13,7 @@ const schemaDefinition = {
   count: { type: CHUInt64() },
 };
 
-export const WORKFLOW_ACTIVITY_COUNTS_ORDER_BY: (keyof typeof schemaDefinition)[] = [
+export const TRACE_ROLLUP_ORDER_BY: (keyof typeof schemaDefinition)[] = [
   'organization_id',
   'environment_id',
   'workflow_id',
@@ -24,15 +24,15 @@ export const WORKFLOW_ACTIVITY_COUNTS_ORDER_BY: (keyof typeof schemaDefinition)[
 ];
 
 const clickhouseSchemaOptions = {
-  table_name: WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME,
+  table_name: TRACE_ROLLUP_TABLE_NAME,
   engine: 'SummingMergeTree',
-  order_by: `(${WORKFLOW_ACTIVITY_COUNTS_ORDER_BY.join(', ')})` as any,
+  order_by: `(${TRACE_ROLLUP_ORDER_BY.join(', ')})` as any,
   additional_options: ['PARTITION BY toYYYYMM(date)'],
 };
 
-export const workflowActivityCountsSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
+export const traceRollupSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
 
-export type WorkflowActivityCount = {
+export type TraceRollup = {
   date: string;
   organization_id: string;
   environment_id: string;

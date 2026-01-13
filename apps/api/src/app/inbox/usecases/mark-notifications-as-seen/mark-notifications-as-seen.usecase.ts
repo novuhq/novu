@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
   LogRepository,
@@ -270,6 +269,7 @@ export class MarkNotificationsAsSeen {
       workflow_run_identifier: '',
       _notificationId: message._notificationId,
       workflow_id: message._templateId,
+      provider_id: '',
     };
   }
 }

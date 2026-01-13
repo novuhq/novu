@@ -4,7 +4,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
   StepRunRepository,
-  WorkflowActivityCountsRepository,
+  TraceRollupRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { MessagesDeliveredDataPointDto } from '../../dtos/get-charts.response.dto';
@@ -13,7 +13,7 @@ import { BuildMessagesDeliveredChartCommand } from './build-messages-delivered-c
 @Injectable()
 export class BuildMessagesDeliveredChart {
   constructor(
-    private workflowActivityCountsRepository: WorkflowActivityCountsRepository,
+    private traceRollupRepository: TraceRollupRepository,
     private stepRunRepository: StepRunRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -50,7 +50,7 @@ export class BuildMessagesDeliveredChart {
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
     const result = useNewQuery
-      ? await this.workflowActivityCountsRepository.getMessageSendCount(
+      ? await this.traceRollupRepository.getMessageSendCount(
           environmentId,
           organizationId,
           startDate,

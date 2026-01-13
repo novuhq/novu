@@ -1,7 +1,7 @@
--- Unified workflow activity counts table
+-- Trace rollup table
 -- Handles both message counts and subscriber activity from traces table (message_sent events)
 
-CREATE TABLE IF NOT EXISTS workflow_activity_counts (
+CREATE TABLE IF NOT EXISTS trace_rollup (
   date Date,
   organization_id String,
   environment_id String,
@@ -14,8 +14,8 @@ PARTITION BY toYYYYMM(date)
 ORDER BY (organization_id, environment_id, workflow_id, date, external_subscriber_id);
 
 -- Materialized view populates from traces table (message_sent events)
-CREATE MATERIALIZED VIEW IF NOT EXISTS workflow_activity_counts_mv
-TO workflow_activity_counts
+CREATE MATERIALIZED VIEW IF NOT EXISTS trace_rollup_mv
+TO trace_rollup
 AS SELECT
   toDate(created_at) AS date,
   organization_id,
@@ -57,20 +57,20 @@ WHERE
   status = 'completed'
   AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push');
 
--- Unified workflow activity counts migration
--- Merges interaction_counts functionality into workflow_activity_counts
+-- Trace rollup migration
+-- Merges interaction_counts functionality into trace_rollup
 -- Adds event_type column to track both message_sent and interaction events
 
 -- Drop existing materialized views
-DROP VIEW IF EXISTS workflow_activity_counts_mv;
+DROP VIEW IF EXISTS trace_rollup_mv;
 DROP VIEW IF EXISTS interaction_counts_mv;
 
 -- Drop existing tables
-DROP TABLE IF EXISTS workflow_activity_counts;
+DROP TABLE IF EXISTS trace_rollup;
 DROP TABLE IF EXISTS interaction_counts;
 
--- Create unified workflow activity counts table with event_type
-CREATE TABLE IF NOT EXISTS workflow_activity_counts (
+-- Create trace rollup table with event_type
+CREATE TABLE IF NOT EXISTS trace_rollup (
   date Date,
   organization_id String,
   environment_id String,
@@ -86,8 +86,8 @@ ORDER BY (organization_id, environment_id, workflow_id, date, external_subscribe
 
 -- Materialized view populates from traces table
 -- Captures both message_sent events and interaction events
-CREATE MATERIALIZED VIEW IF NOT EXISTS workflow_activity_counts_mv
-TO workflow_activity_counts
+CREATE MATERIALIZED VIEW IF NOT EXISTS trace_rollup_mv
+TO trace_rollup
 AS SELECT
   toDate(created_at) AS date,
   organization_id,

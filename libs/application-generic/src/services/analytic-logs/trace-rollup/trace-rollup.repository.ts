@@ -4,19 +4,19 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
 import { LogRepository } from '../log.repository';
 import {
-  WORKFLOW_ACTIVITY_COUNTS_ORDER_BY,
-  WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME,
-  WorkflowActivityCount,
-  workflowActivityCountsSchema,
-} from './workflow-activity-counts.schema';
+  TRACE_ROLLUP_ORDER_BY,
+  TRACE_ROLLUP_TABLE_NAME,
+  TraceRollup,
+  traceRollupSchema,
+} from './trace-rollup.schema';
 
 @Injectable()
-export class WorkflowActivityCountsRepository extends LogRepository<
-  typeof workflowActivityCountsSchema,
-  WorkflowActivityCount
+export class TraceRollupRepository extends LogRepository<
+  typeof traceRollupSchema,
+  TraceRollup
 > {
-  public readonly table = WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME;
-  public readonly identifierPrefix = 'wac_';
+  public readonly table = TRACE_ROLLUP_TABLE_NAME;
+  public readonly identifierPrefix = 'tr_';
 
   constructor(
     protected readonly clickhouseService: ClickHouseService,
@@ -26,8 +26,8 @@ export class WorkflowActivityCountsRepository extends LogRepository<
     super(
       clickhouseService,
       logger,
-      workflowActivityCountsSchema,
-      WORKFLOW_ACTIVITY_COUNTS_ORDER_BY,
+      traceRollupSchema,
+      TRACE_ROLLUP_ORDER_BY,
       featureFlagsService
     );
     this.logger.setContext(this.constructor.name);
@@ -47,7 +47,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
 
     const currentQuery = `
       SELECT sum(count) as count
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
@@ -59,7 +59,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
 
     const previousQuery = `
       SELECT sum(count) as count
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
@@ -122,7 +122,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
 
     const currentQuery = `
       SELECT count(DISTINCT external_subscriber_id) as count
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
@@ -135,7 +135,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
 
     const previousQuery = `
       SELECT count(DISTINCT external_subscriber_id) as count
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
@@ -199,7 +199,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       SELECT 
         date,
         count(DISTINCT external_subscriber_id) as count
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE 
         environment_id = {environmentId:String} 
         AND organization_id = {organizationId:String}
@@ -250,7 +250,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       SELECT 
         sum(count) as total_messages,
         count(DISTINCT external_subscriber_id) as unique_subscribers
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
@@ -265,7 +265,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       SELECT 
         sum(count) as total_messages,
         count(DISTINCT external_subscriber_id) as unique_subscribers
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
@@ -334,7 +334,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
 
     const currentQuery = `
       SELECT sum(count) as count
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
@@ -346,7 +346,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
 
     const previousQuery = `
       SELECT sum(count) as count
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE
         organization_id = {organizationId:String}
         AND environment_id = {environmentId:String}
@@ -410,7 +410,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
         date,
         event_type,
         sum(count) as count
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE 
         environment_id = {environmentId:String} 
         AND organization_id = {organizationId:String}
@@ -459,7 +459,7 @@ export class WorkflowActivityCountsRepository extends LogRepository<
       SELECT 
         provider_id,
         sum(count) as count
-      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      FROM ${TRACE_ROLLUP_TABLE_NAME}
       WHERE 
         environment_id = {environmentId:String} 
         AND organization_id = {organizationId:String}

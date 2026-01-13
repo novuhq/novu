@@ -3,7 +3,7 @@ import {
   FeatureFlagsService,
   InstrumentUsecase,
   PinoLogger,
-  WorkflowActivityCountsRepository,
+  TraceRollupRepository,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -13,7 +13,7 @@ import { BuildActiveSubscribersTrendChartCommand } from './build-active-subscrib
 @Injectable()
 export class BuildActiveSubscribersTrendChart {
   constructor(
-    private workflowActivityCountsRepository: WorkflowActivityCountsRepository,
+    private traceRollupRepository: TraceRollupRepository,
     private workflowRunRepository: WorkflowRunRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -46,7 +46,7 @@ export class BuildActiveSubscribersTrendChart {
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
     const activeSubscribers = useNewQuery
-      ? await this.workflowActivityCountsRepository.getActiveSubscribersTrendData(
+      ? await this.traceRollupRepository.getActiveSubscribersTrendData(
           environmentId,
           organizationId,
           startDate,

@@ -4,7 +4,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
   StepRunRepository,
-  WorkflowActivityCountsRepository,
+  TraceRollupRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AvgMessagesPerSubscriberDataPointDto } from '../../dtos/get-charts.response.dto';
@@ -13,7 +13,7 @@ import { BuildAvgMessagesPerSubscriberChartCommand } from './build-avg-messages-
 @Injectable()
 export class BuildAvgMessagesPerSubscriberChart {
   constructor(
-    private workflowActivityCountsRepository: WorkflowActivityCountsRepository,
+    private traceRollupRepository: TraceRollupRepository,
     private stepRunRepository: StepRunRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -50,7 +50,7 @@ export class BuildAvgMessagesPerSubscriberChart {
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
     const result = useNewQuery
-      ? await this.workflowActivityCountsRepository.getAvgMessagesPerSubscriberData(
+      ? await this.traceRollupRepository.getAvgMessagesPerSubscriberData(
           environmentId,
           organizationId,
           startDate,

@@ -4,7 +4,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
   TraceLogRepository,
-  WorkflowActivityCountsRepository,
+  TraceRollupRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InteractionTrendDataPointDto } from '../../dtos/get-charts.response.dto';
@@ -13,7 +13,7 @@ import { BuildInteractionTrendChartCommand } from './build-interaction-trend-cha
 @Injectable()
 export class BuildInteractionTrendChart {
   constructor(
-    private workflowActivityCountsRepository: WorkflowActivityCountsRepository,
+    private traceRollupRepository: TraceRollupRepository,
     private traceLogRepository: TraceLogRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -46,7 +46,7 @@ export class BuildInteractionTrendChart {
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
     const traces = useNewQuery
-      ? await this.workflowActivityCountsRepository.getInteractionTrendData(
+      ? await this.traceRollupRepository.getInteractionTrendData(
           environmentId,
           organizationId,
           startDate,

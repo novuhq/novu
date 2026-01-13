@@ -4,7 +4,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
   TraceLogRepository,
-  WorkflowActivityCountsRepository,
+  TraceRollupRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { TotalInteractionsDataPointDto } from '../../dtos/get-charts.response.dto';
@@ -13,7 +13,7 @@ import { BuildTotalInteractionsChartCommand } from './build-total-interactions-c
 @Injectable()
 export class BuildTotalInteractionsChart {
   constructor(
-    private workflowActivityCountsRepository: WorkflowActivityCountsRepository,
+    private traceRollupRepository: TraceRollupRepository,
     private traceLogRepository: TraceLogRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -50,7 +50,7 @@ export class BuildTotalInteractionsChart {
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
     const result = useNewQuery
-      ? await this.workflowActivityCountsRepository.getTotalInteractionsCount(
+      ? await this.traceRollupRepository.getTotalInteractionsCount(
           environmentId,
           organizationId,
           startDate,

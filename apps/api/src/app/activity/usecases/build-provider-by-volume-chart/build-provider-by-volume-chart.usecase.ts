@@ -4,7 +4,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
   StepRunRepository,
-  WorkflowActivityCountsRepository,
+  TraceRollupRepository,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ProviderVolumeDataPointDto } from '../../dtos/get-charts.response.dto';
@@ -13,7 +13,7 @@ import { BuildProviderByVolumeChartCommand } from './build-provider-by-volume-ch
 @Injectable()
 export class BuildProviderByVolumeChart {
   constructor(
-    private workflowActivityCountsRepository: WorkflowActivityCountsRepository,
+    private traceRollupRepository: TraceRollupRepository,
     private stepRunRepository: StepRunRepository,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
@@ -46,7 +46,7 @@ export class BuildProviderByVolumeChart {
     const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
 
     const providerData = useNewQuery
-      ? await this.workflowActivityCountsRepository.getProviderVolumeData(
+      ? await this.traceRollupRepository.getProviderVolumeData(
           environmentId,
           organizationId,
           startDate,

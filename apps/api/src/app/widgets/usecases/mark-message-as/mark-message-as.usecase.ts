@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildFeedKey,
   buildMessageCountKey,
   buildSubscriberKey,
   CachedResponse,
@@ -15,7 +14,6 @@ import {
   PinoLogger,
   SendWebhookMessage,
   StepType,
-  Trace,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
@@ -140,6 +138,7 @@ export class MarkMessageAs {
           workflow_run_identifier: '',
           _notificationId: message._notificationId,
           workflow_id: message._templateId,
+          provider_id: '',
         });
       }
     }
