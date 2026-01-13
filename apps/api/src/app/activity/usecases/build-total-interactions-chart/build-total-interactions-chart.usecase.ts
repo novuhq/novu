@@ -41,7 +41,7 @@ export class BuildTotalInteractionsChart {
         ...featureFlagContext,
       }),
       this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_V2_INTERACTION_COUNTS_READ_ENABLED,
+        key: FeatureFlagsKeysEnum.IS_V2_TOTAL_INTERACTIONS_READ_ENABLED,
         defaultValue: false,
         ...featureFlagContext,
       }),
