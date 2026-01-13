@@ -1,6 +1,16 @@
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
-import type { OrganizationMembershipResource } from '@clerk/types';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+
+type OrganizationMembershipLike = {
+  id: string;
+  organization: {
+    id: string;
+    name: string;
+    imageUrl: string;
+    publicMetadata: Record<string, unknown>;
+  };
+};
+
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
@@ -58,7 +68,7 @@ function OrganizationAvatar({ imageUrl, name, size = 'sm', showShimmer = false }
 }
 
 type OrganizationListItemProps = {
-  membership: OrganizationMembershipResource;
+  membership: OrganizationMembershipLike;
   onSwitch: (id: string) => void;
   isSwitching: boolean;
   switchingToId: string | null;
@@ -158,7 +168,7 @@ export function OrganizationDropdown() {
   }, [userMemberships]);
 
   const filterMemberships = useCallback(
-    (membership: OrganizationMembershipResource) => {
+    (membership: OrganizationMembershipLike) => {
       if (membership.organization.id === orgId) return false;
 
       if (isRegionSelectorEnabled) {

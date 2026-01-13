@@ -6,7 +6,7 @@ import { ClearButton } from './clear-button';
 import { FilterInput } from './filter-input';
 
 interface BaseFilterContentProps {
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   title?: string;
   onClear: () => void;
   size: SizeType;

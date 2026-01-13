@@ -52,7 +52,7 @@ export const useCanvasNodesEdges = ({
 }: {
   showStepPreview?: boolean;
   reactFlowInstance: ReactFlowInstance;
-  reactFlowWrapper: React.RefObject<HTMLDivElement>;
+  reactFlowWrapper: React.RefObject<HTMLDivElement | null>;
 }) => {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();

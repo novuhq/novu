@@ -176,7 +176,7 @@ const DraggedNode = ({
   nodeId?: string;
 }) => {
   const draggedNodeRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number | null>(null);
   const lastPositionRef = useRef(initialPosition);
 
   useEffect(() => {

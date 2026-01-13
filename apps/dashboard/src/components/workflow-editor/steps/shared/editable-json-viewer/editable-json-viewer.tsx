@@ -34,7 +34,7 @@ export function EditableJsonViewer({
   schema,
   isReadOnly = false,
 }: EditableJsonViewerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const ajvValidator = useMemo(() => {

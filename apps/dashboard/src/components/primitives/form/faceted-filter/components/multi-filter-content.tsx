@@ -5,7 +5,7 @@ import { FilterOption, SizeType } from '../types';
 import { BaseFilterContent } from './base-filter-content';
 
 type MultiFilterContentProps = {
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   title?: string;
   options: FilterOption[];
   selectedValues: Set<string>;

@@ -1,9 +1,9 @@
-import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { ROUTES } from '@/utils/routes';
 import { useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { ROUTES } from '@/utils/routes';
 import { DEFAULT_REGION } from './region-config';
 import { RegionModals } from './region-modals';
 import { type OrgCreationModalState, type Region, type RegionContextType } from './region-types';
@@ -100,7 +100,7 @@ export function RegionProvider({ children }: RegionProviderProps) {
     if (targetOrgMembership && clerk) {
       try {
         await clerk.setActive({
-          organization: targetOrgMembership.organization,
+          organization: targetOrgMembership.organization as Parameters<typeof clerk.setActive>[0]['organization'],
         });
 
         const newUrl = `${targetDashboardUrl}${currentPath}`;

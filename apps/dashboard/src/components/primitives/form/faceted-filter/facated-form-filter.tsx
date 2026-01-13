@@ -32,7 +32,7 @@ export function FacetedFormFilter({
   disabled,
 }: FacetedFilterProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   const selectedValues = React.useMemo(() => new Set(selected), [selected]);
   const currentValue = React.useMemo(() => value, [value]);

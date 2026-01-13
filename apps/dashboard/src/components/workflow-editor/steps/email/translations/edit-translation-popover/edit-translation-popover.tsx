@@ -259,7 +259,7 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
       // Clear any pending debounced save
       if (editor.debounceTimeoutRef.current) {
         clearTimeout(editor.debounceTimeoutRef.current);
-        editor.debounceTimeoutRef.current = undefined;
+        editor.debounceTimeoutRef.current = null;
       }
 
       updateTranslationValue.mutate({
@@ -299,7 +299,7 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
       // Clear any pending debounced save
       if (editor.debounceTimeoutRef.current) {
         clearTimeout(editor.debounceTimeoutRef.current);
-        editor.debounceTimeoutRef.current = undefined;
+        editor.debounceTimeoutRef.current = null;
       }
 
       updateTranslationValue.mutate({

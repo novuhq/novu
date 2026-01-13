@@ -1,5 +1,5 @@
 import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
-import { Appearance } from '@clerk/types';
+import type { Appearance } from '@clerk/types';
 import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,

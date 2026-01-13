@@ -18,8 +18,8 @@ export function TimezoneSelect(props: TimezoneSelectProps) {
   const { value, disabled, readOnly, onChange, className, ...rest } = props;
   const [open, setOpen] = useState(false);
   const { options, parseTimezone } = useTimezoneSelect({ labelStyle: 'abbrev', displayValue: 'UTC' });
-  const listRef = useRef<HTMLDivElement>(null);
-  const scrollId = useRef<ReturnType<typeof setTimeout>>();
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const scrollId = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return (
     <Popover modal={true} open={open} onOpenChange={setOpen}>
@@ -64,8 +64,10 @@ export function TimezoneSelect(props: TimezoneSelectProps) {
              * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
              */
             onValueChange={() => {
-              // clear pending scroll
-              clearTimeout(scrollId.current);
+              if (scrollId.current) {
+                // clear pending scroll
+                clearTimeout(scrollId.current);
+              }
 
               // the setTimeout is used to create a new task
               // this is to make sure that we don't scroll until the user is done typing

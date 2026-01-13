@@ -51,7 +51,7 @@ interface UsePromotionalBannerResult {
 }
 
 export function usePromotionalBanner(props: UsePromotionalBannerProps): UsePromotionalBannerResult {
-  const toastId = useRef<string | number>();
+  const toastId = useRef<string | number | null>(null);
   const track = useTelemetry();
 
   const hide = useCallback(() => {
@@ -62,7 +62,7 @@ export function usePromotionalBanner(props: UsePromotionalBannerProps): UsePromo
       });
 
       toast.dismiss(toastId.current);
-      toastId.current = undefined;
+      toastId.current = null;
     }
   }, []);
 
@@ -79,7 +79,7 @@ export function usePromotionalBanner(props: UsePromotionalBannerProps): UsePromo
         <PromotionalBannerContent
           onDismiss={() => {
             toast.dismiss(id);
-            toastId.current = undefined;
+            toastId.current = null;
             props.onDismiss?.();
           }}
           onReactionSelect={props.onReactionSelect}

@@ -6,7 +6,7 @@ import { FilterOption, SizeType } from '../types';
 import { BaseFilterContent } from './base-filter-content';
 
 interface SingleFilterContentProps {
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   title?: string;
   options: FilterOption[];
   selectedValues: Set<string>;
