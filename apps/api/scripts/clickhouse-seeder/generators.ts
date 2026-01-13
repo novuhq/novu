@@ -123,6 +123,7 @@ export interface TraceRecord {
   step_run_type: string;
   workflow_run_identifier: string;
   workflow_id: string;
+  provider_id: string | null;
 }
 
 function generateId(): string {
@@ -686,6 +687,7 @@ function createTraceRecord(stepRun: StepRunRecord, eventType: string, createdAt:
     step_run_type: stepRun.step_type,
     workflow_run_identifier: stepRun.workflow_run_id,
     workflow_id: stepRun.workflow_id,
+    provider_id: stepRun.provider_id,
   };
 }
 

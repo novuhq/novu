@@ -162,8 +162,11 @@ async function main() {
 
     console.log('\n✓ Data seeding completed successfully!');
     console.log('\nNote: Materialized views will automatically populate aggregation tables:');
-    console.log('      - trace_event_counts: Pre-aggregated event counts by date/type');
-    console.log('      Query trace_event_counts for optimized message_sent counts.\n');
+    console.log('      - trace_rollup: Pre-aggregated counts by date/event_type/workflow/subscriber/provider');
+    console.log('      - delivery_trend_counts: Pre-aggregated delivery counts by step_type');
+    console.log(
+      '      Query trace_rollup for optimized analytics (message counts, active subscribers, interactions).\n'
+    );
   } catch (error) {
     console.error('\n✗ Error during seeding:', error);
     throw error;
