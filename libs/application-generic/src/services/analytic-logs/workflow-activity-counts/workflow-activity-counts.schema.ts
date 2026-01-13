@@ -9,6 +9,7 @@ const schemaDefinition = {
   workflow_id: { type: CHString() },
   external_subscriber_id: { type: CHString() },
   event_type: { type: CHLowCardinality(CHString()) },
+  provider_id: { type: CHString() },
   count: { type: CHUInt64() },
 };
 
@@ -19,6 +20,7 @@ export const WORKFLOW_ACTIVITY_COUNTS_ORDER_BY: (keyof typeof schemaDefinition)[
   'date',
   'external_subscriber_id',
   'event_type',
+  'provider_id',
 ];
 
 const clickhouseSchemaOptions = {
@@ -37,5 +39,6 @@ export type WorkflowActivityCount = {
   workflow_id: string;
   external_subscriber_id: string;
   event_type: string;
+  provider_id: string;
   count: number;
 };

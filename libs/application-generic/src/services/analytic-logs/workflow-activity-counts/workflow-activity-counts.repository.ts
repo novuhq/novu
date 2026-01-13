@@ -444,4 +444,53 @@ export class WorkflowActivityCountsRepository extends LogRepository<
 
     return result.data;
   }
+
+  async getProviderVolumeData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    workflowIds?: string[]
+  ): Promise<Array<{ provider_id: string; count: string }>> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? 'AND workflow_id IN {workflowIds:Array(String)}' : '';
+
+    const query = `
+      SELECT 
+        provider_id,
+        sum(count) as count
+      FROM ${WORKFLOW_ACTIVITY_COUNTS_TABLE_NAME}
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND event_type = 'message_sent'
+        AND date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        ${workflowFilter}
+      GROUP BY provider_id
+      ORDER BY count DESC
+      LIMIT 5
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    if (workflowIds && workflowIds.length > 0) {
+      params.workflowIds = workflowIds;
+    }
+
+    const result = await this.clickhouseService.query<{
+      provider_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
 }

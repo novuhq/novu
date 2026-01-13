@@ -16,7 +16,6 @@ import {
   GetDecryptedSecretKey,
   InvalidateCacheService,
   LoggerModule,
-  ProviderVolumeCountsRepository,
   QueuesModule,
   RequestLogRepository,
   StepRunRepository,
@@ -124,7 +123,6 @@ const ANALYTICS_PROVIDERS = [
   StepRunRepository,
   WorkflowRunRepository,
   WorkflowActivityCountsRepository,
-  ProviderVolumeCountsRepository,
   DeliveryTrendCountsRepository,
 
   // Services
