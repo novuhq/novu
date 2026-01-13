@@ -625,11 +625,15 @@ function selectTraceEventType(index: number, total: number, stepStatus: string):
   }
 
   if (index === 1) {
+    if (stepStatus === 'completed') {
+      return 'message_sent';
+    }
+
     return 'step_queued';
   }
 
-  if (index === 2 && stepStatus === 'completed') {
-    return 'message_sent';
+  if (index === 2) {
+    return 'step_queued';
   }
 
   if (index === total - 1) {

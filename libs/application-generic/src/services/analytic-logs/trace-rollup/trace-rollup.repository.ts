@@ -3,18 +3,17 @@ import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
 import { LogRepository } from '../log.repository';
-import {
-  TRACE_ROLLUP_ORDER_BY,
-  TRACE_ROLLUP_TABLE_NAME,
-  TraceRollup,
-  traceRollupSchema,
-} from './trace-rollup.schema';
+import { TRACE_ROLLUP_ORDER_BY, TRACE_ROLLUP_TABLE_NAME, TraceRollup, traceRollupSchema } from './trace-rollup.schema';
+
+function getDateOnlyPreviousEndDate(startDate: Date): string {
+  const adjustedDate = new Date(startDate);
+  adjustedDate.setDate(adjustedDate.getDate() - 1);
+
+  return adjustedDate.toISOString().split('T')[0];
+}
 
 @Injectable()
-export class TraceRollupRepository extends LogRepository<
-  typeof traceRollupSchema,
-  TraceRollup
-> {
+export class TraceRollupRepository extends LogRepository<typeof traceRollupSchema, TraceRollup> {
   public readonly table = TRACE_ROLLUP_TABLE_NAME;
   public readonly identifierPrefix = 'tr_';
 
@@ -23,13 +22,7 @@ export class TraceRollupRepository extends LogRepository<
     protected readonly logger: PinoLogger,
     protected readonly featureFlagsService: FeatureFlagsService
   ) {
-    super(
-      clickhouseService,
-      logger,
-      traceRollupSchema,
-      TRACE_ROLLUP_ORDER_BY,
-      featureFlagsService
-    );
+    super(clickhouseService, logger, traceRollupSchema, TRACE_ROLLUP_ORDER_BY, featureFlagsService);
     this.logger.setContext(this.constructor.name);
   }
 
@@ -69,6 +62,8 @@ export class TraceRollupRepository extends LogRepository<
         ${workflowFilter}
     `;
 
+    const adjustedPreviousEndDate = getDateOnlyPreviousEndDate(startDate);
+
     const currentParams: Record<string, unknown> = {
       environmentId,
       organizationId,
@@ -80,7 +75,7 @@ export class TraceRollupRepository extends LogRepository<
       environmentId,
       organizationId,
       previousStartDate: previousStartDate.toISOString().split('T')[0],
-      previousEndDate: previousEndDate.toISOString().split('T')[0],
+      previousEndDate: adjustedPreviousEndDate,
     };
 
     if (workflowIds && workflowIds.length > 0) {
@@ -146,6 +141,8 @@ export class TraceRollupRepository extends LogRepository<
         ${workflowFilter}
     `;
 
+    const adjustedPreviousEndDate = getDateOnlyPreviousEndDate(startDate);
+
     const currentParams: Record<string, unknown> = {
       environmentId,
       organizationId,
@@ -157,7 +154,7 @@ export class TraceRollupRepository extends LogRepository<
       environmentId,
       organizationId,
       previousStartDate: previousStartDate.toISOString().split('T')[0],
-      previousEndDate: previousEndDate.toISOString().split('T')[0],
+      previousEndDate: adjustedPreviousEndDate,
     };
 
     if (workflowIds && workflowIds.length > 0) {
@@ -276,6 +273,8 @@ export class TraceRollupRepository extends LogRepository<
         ${workflowFilter}
     `;
 
+    const adjustedPreviousEndDate = getDateOnlyPreviousEndDate(startDate);
+
     const currentParams: Record<string, unknown> = {
       environmentId,
       organizationId,
@@ -287,7 +286,7 @@ export class TraceRollupRepository extends LogRepository<
       environmentId,
       organizationId,
       previousStartDate: previousStartDate.toISOString().split('T')[0],
-      previousEndDate: previousEndDate.toISOString().split('T')[0],
+      previousEndDate: adjustedPreviousEndDate,
     };
 
     if (workflowIds && workflowIds.length > 0) {
@@ -356,6 +355,8 @@ export class TraceRollupRepository extends LogRepository<
         ${workflowFilter}
     `;
 
+    const adjustedPreviousEndDate = getDateOnlyPreviousEndDate(startDate);
+
     const currentParams: Record<string, unknown> = {
       environmentId,
       organizationId,
@@ -367,7 +368,7 @@ export class TraceRollupRepository extends LogRepository<
       environmentId,
       organizationId,
       previousStartDate: previousStartDate.toISOString().split('T')[0],
-      previousEndDate: previousEndDate.toISOString().split('T')[0],
+      previousEndDate: adjustedPreviousEndDate,
     };
 
     if (workflowIds && workflowIds.length > 0) {
