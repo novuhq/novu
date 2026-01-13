@@ -41,7 +41,7 @@ export class BuildAvgMessagesPerSubscriberChart {
         ...featureFlagContext,
       }),
       this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_V2_AVG_MESSAGES_PER_SUBSCRIBER_READ_ENABLED,
+        key: FeatureFlagsKeysEnum.IS_ANALYTIC_V2_AVG_MESSAGES_PER_SUBSCRIBER_READ_ENABLED,
         defaultValue: false,
         ...featureFlagContext,
       }),

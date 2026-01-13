@@ -37,7 +37,7 @@ export class BuildActiveSubscribersTrendChart {
         ...featureFlagContext,
       }),
       this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_V2_ACTIVE_SUBSCRIBER_TREND_READ_ENABLED,
+        key: FeatureFlagsKeysEnum.IS_ANALYTIC_V2_ACTIVE_SUBSCRIBER_TREND_READ_ENABLED,
         defaultValue: false,
         ...featureFlagContext,
       }),

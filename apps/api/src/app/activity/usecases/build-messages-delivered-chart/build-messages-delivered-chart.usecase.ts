@@ -41,7 +41,7 @@ export class BuildMessagesDeliveredChart {
         ...featureFlagContext,
       }),
       this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_V2_MESSAGE_DELIVERY_READ_ENABLED,
+        key: FeatureFlagsKeysEnum.IS_ANALYTIC_V2_MESSAGE_DELIVERY_READ_ENABLED,
         defaultValue: false,
         ...featureFlagContext,
       }),
