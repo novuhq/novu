@@ -195,6 +195,7 @@ export class CreateExecutionDetails {
       step_run_type: command.channel as StepType,
       workflow_run_identifier: command.workflowRunIdentifier,
       workflow_id: command.notificationTemplateId,
+      provider_id: command.providerId || null,
     };
 
     await this.traceLogRepository.createStepRun([traceData]);

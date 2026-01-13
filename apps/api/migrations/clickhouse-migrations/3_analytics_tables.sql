@@ -128,3 +128,8 @@ AS SELECT
   1 AS count
 FROM traces
 WHERE event_type IN ('message_sent', 'message_seen', 'message_read', 'message_snoozed', 'message_archived');
+
+-- Add provider_id column to traces table
+-- This column stores the provider ID that was used to send the message
+ALTER TABLE traces
+ADD COLUMN IF NOT EXISTS provider_id Nullable(String) DEFAULT NULL;
