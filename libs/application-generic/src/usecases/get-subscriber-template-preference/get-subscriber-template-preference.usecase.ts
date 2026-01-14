@@ -93,6 +93,7 @@ export class GetSubscriberTemplatePreference {
       organizationId: command.organizationId,
       subscriberId,
       templateId: command.template._id,
+      contextKeys: command.contextKeys,
     });
 
     const subscriberWorkflowChannels = GetPreferences.mapWorkflowPreferencesToChannelPreferences(

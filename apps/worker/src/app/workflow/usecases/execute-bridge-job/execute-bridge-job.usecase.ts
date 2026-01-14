@@ -6,12 +6,14 @@ import {
   dashboardSanitizeControlValues,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
+  FeatureFlagsService,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
+  EnvironmentEntity,
   EnvironmentRepository,
   JobEntity,
   JobRepository,
@@ -33,12 +35,23 @@ import {
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   ITriggerPayload,
   JobStatusEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
 } from '@novu/shared';
+import { LRUCache } from 'lru-cache';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
+
+type EnvironmentCacheData = Pick<EnvironmentEntity, '_id' | 'echo' | 'apiKeys'>;
+
+const environmentCache = new LRUCache<string, EnvironmentCacheData>({
+  max: 500,
+  ttl: 1000 * 60,
+});
+
+const environmentInflightRequests = new Map<string, Promise<EnvironmentCacheData | null>>();
 
 @Injectable()
 export class ExecuteBridgeJob {
@@ -50,7 +63,8 @@ export class ExecuteBridgeJob {
     private controlValuesRepository: ControlValuesRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private executeBridgeRequest: ExecuteBridgeRequest,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -90,13 +104,7 @@ export class ExecuteBridgeJob {
       throw new Error('Step id is not set');
     }
 
-    const environment = await this.environmentRepository.findOne(
-      {
-        _id: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      'echo apiKeys _id'
-    );
+    const environment = await this.getEnvironment(command.environmentId, command.organizationId);
 
     if (!environment) {
       throw new Error(`Environment id ${command.environmentId} is not found`);
@@ -333,5 +341,60 @@ export class ExecuteBridgeJob {
         error: job?.error,
       },
     };
+  }
+
+  @Instrument()
+  private async getEnvironment(
+    environmentId: string,
+    organizationId: string
+  ): Promise<EnvironmentCacheData | null> {
+    const cacheKey = `${organizationId}:${environmentId}`;
+
+    const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      component: 'worker-environment',
+    });
+
+    if (isFeatureFlagEnabled) {
+      const cached = environmentCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const inflightRequest = environmentInflightRequests.get(cacheKey);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
+    }
+
+    const fetchPromise = this.environmentRepository
+      .findOne(
+        {
+          _id: environmentId,
+          _organizationId: organizationId,
+        },
+        'echo apiKeys _id'
+      )
+      .then((environment) => {
+        if (environment && isFeatureFlagEnabled) {
+          environmentCache.set(cacheKey, environment);
+        }
+
+        return environment;
+      })
+      .finally(() => {
+        if (isFeatureFlagEnabled) {
+          environmentInflightRequests.delete(cacheKey);
+        }
+      });
+
+    if (isFeatureFlagEnabled) {
+      environmentInflightRequests.set(cacheKey, fetchPromise);
+    }
+
+    return fetchPromise;
   }
 }

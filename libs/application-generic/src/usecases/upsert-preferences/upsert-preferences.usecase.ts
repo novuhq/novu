@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
+import { EnforceEnvOrOrgIds, PreferencesDBModel, PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import {
   FeatureFlagsKeysEnum,
   PreferencesTypeEnum,
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
+import { FilterQuery } from 'mongoose';
 import { Instrument } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags/feature-flags.service';
 import { deepMerge } from '../../utils';
@@ -112,6 +113,7 @@ export class UpsertPreferences {
       _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
+      contextKeys: command.contextKeys,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
@@ -147,6 +149,7 @@ export class UpsertPreferences {
       topicSubscriptionId: command.topicSubscriptionId,
       type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
       returnPreference: command.returnPreference,
+      contextKeys: command.contextKeys,
     });
   }
 
@@ -161,6 +164,20 @@ export class UpsertPreferences {
   }
 
   private async createPreferences(command: UpsertPreferencesCommand): Promise<PreferencesEntity> {
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    // Determine contextKeys based on preference type AND feature flag
+    // Non-context-scoped types (universal/workflow-level): undefined (no field)
+    // Context-scoped types (subscriber-level): [] or ["key"]
+    const isContextScoped = [
+      PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+      PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+    ].includes(command.type);
+
     return await this.preferencesRepository.create({
       _subscriberId: command._subscriberId,
       _userId: command.userId,
@@ -171,6 +188,7 @@ export class UpsertPreferences {
       preferences: command.preferences,
       type: command.type,
       schedule: command.schedule,
+      contextKeys: useContextFiltering && isContextScoped ? (command.contextKeys ?? []) : undefined,
     });
   }
 
@@ -215,13 +233,57 @@ export class UpsertPreferences {
   }
 
   private async getPreference(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
-    return await this.preferencesRepository.findOne({
+    const contextQuery = await this.buildContextExactMatchQuery(
+      command.contextKeys,
+      command.type,
+      command.organizationId
+    );
+
+    const query: FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _topicSubscriptionId: command.topicSubscriptionId,
       _templateId: command.templateId,
       type: command.type,
+      ...contextQuery,
+    };
+
+    return await this.preferencesRepository.findOne(query);
+  }
+
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    type: PreferencesTypeEnum,
+    organizationId: string
+  ): Promise<Record<string, unknown>> {
+    // Non-context-scoped types (universal/workflow-level) - no context filter
+    const nonContextScopedTypes = [
+      PreferencesTypeEnum.WORKFLOW_RESOURCE,
+      PreferencesTypeEnum.USER_WORKFLOW,
+      PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+    ];
+
+    if (nonContextScopedTypes.includes(type)) {
+      return {};
+    }
+
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
     });
+
+    if (!useContextFiltering) {
+      return {};
+    }
+
+    // undefined or empty array = match only "no context" preferences
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return { $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }] };
+    }
+
+    // Match records with exact same context keys (order-independent)
+    return { contextKeys: { $all: contextKeys, $size: contextKeys.length } };
   }
 }

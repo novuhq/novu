@@ -280,6 +280,14 @@
       }
     },
     {
+      "includes": [
+        "apps/api/**/*.{ts,tsx,js}",
+        "apps/worker/**/*.{ts,tsx,js}",
+        "libs/application-generic/**/*.{ts,tsx,js}"
+      ],
+      "plugins": ["./biome-plugins/pino-logger-arg-order.grit"]
+    },
+    {
       "includes": ["**/*.dto.ts"],
       "plugins": ["./biome-plugins/api-property-record-type.grit"]
     }
