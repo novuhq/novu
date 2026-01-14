@@ -655,7 +655,7 @@ export const useCanvasNodesEdges = ({
         const triggerNode =
           nodes.find((node) => node.type === 'trigger') ??
           createTriggerNode(currentWorkflow, currentEnvironment, containerWidth);
-        const previousPosition = newNodes[newNodes.length - 1].position ?? triggerNode.position;
+        const previousPosition = newNodes[newNodes.length - 1]?.position ?? triggerNode.position;
         const addNode = nodes.find((node) => node.type === 'add') ?? createAddNode(previousPosition, newNodes);
         const finalNodes = [triggerNode, ...newNodes, addNode].filter((node) => node !== undefined);
         const finalSelectedNode = finalNodes.find(
