@@ -1,13 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
+import { AnalyticsService, FeatureFlagsService, InstrumentUsecase } from '@novu/application-generic';
 import {
   BaseRepository,
+  ContextRepository,
   EnvironmentRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { PreferenceLevelEnum } from '@novu/shared';
+import { ContextPayload, FeatureFlagsKeysEnum, PreferenceLevelEnum } from '@novu/shared';
 import { BulkUpdatePreferenceItemDto } from '../../dtos/bulk-update-preferences-request.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
@@ -24,11 +25,15 @@ export class BulkUpdatePreferences {
     private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService,
     private updatePreferencesUsecase: UpdatePreferences,
-    private environmentRepository: EnvironmentRepository
+    private environmentRepository: EnvironmentRepository,
+    private contextRepository: ContextRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: BulkUpdatePreferencesCommand): Promise<InboxPreference[]> {
+    const contextKeys = await this.resolveContexts(command.environmentId, command.organizationId, command.context);
+
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
@@ -102,7 +107,7 @@ export class BulkUpdatePreferences {
             organizationId: command.organizationId,
             subscriberId: command.subscriberId,
             environmentId: command.environmentId,
-            contextKeys: command.contextKeys,
+            contextKeys,
             level: PreferenceLevelEnum.TEMPLATE,
             subscriptionIdentifier: preference.subscriptionIdentifier,
             ...(isUpdatingSubscriptionPreference && {
@@ -130,5 +135,34 @@ export class BulkUpdatePreferences {
     const updatedPreferences = await Promise.all(updatePromises);
 
     return updatedPreferences;
+  }
+
+  private async resolveContexts(
+    environmentId: string,
+    organizationId: string,
+    context?: ContextPayload
+  ): Promise<string[] | undefined> {
+    // Check if context preferences feature is enabled
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!isEnabled) {
+      return undefined; // Ignore context when FF is off
+    }
+
+    if (!context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      environmentId,
+      organizationId,
+      context
+    );
+
+    return contexts.map((ctx) => ctx.key);
   }
 }

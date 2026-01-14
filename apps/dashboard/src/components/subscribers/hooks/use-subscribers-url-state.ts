@@ -2,8 +2,11 @@ import { DirectionEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
 import { QueryKeys } from '@/utils/query-keys';
 import { useDebounce } from '../../../hooks/use-debounce';
+
+const SUBSCRIBERS_TABLE_ID = 'subscribers-list';
 
 export type SubscribersSortableColumn = '_id' | 'updatedAt';
 export interface SubscribersFilter {
@@ -23,7 +26,7 @@ export const defaultSubscribersFilter: Required<SubscribersFilter> = {
   phone: '',
   name: '',
   subscriberId: '',
-  limit: 10,
+  limit: getPersistedPageSize(SUBSCRIBERS_TABLE_ID, 10),
   after: '',
   before: '',
   orderBy: '_id',
@@ -53,6 +56,10 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { setPageSize: setPersistedPageSize } = usePersistedPageSize({
+    tableId: SUBSCRIBERS_TABLE_ID,
+    defaultPageSize: 10,
+  });
   const filterValues = useMemo(
     () => ({
       email: searchParams.get('email') || '',
@@ -233,12 +240,13 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
 
   const handlePageSizeChange = useCallback(
     (newSize: number) => {
+      setPersistedPageSize(newSize);
       updateSearchParams({
         ...filterValues,
         limit: newSize,
       });
     },
-    [updateSearchParams, filterValues]
+    [updateSearchParams, filterValues, setPersistedPageSize]
   );
 
   return {

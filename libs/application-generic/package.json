@@ -42,7 +42,7 @@
     "@azure/storage-blob": "^12.11.0",
     "@clickhouse/client": "^1.11.2",
     "@google-cloud/storage": "^6.2.3",
-    "@hokify/agenda": "^6.3.0",
+    "@pulsecron/pulse": "1.6.8",
     "@launchdarkly/node-server-sdk": "^9.7.3",
     "@novu/maily-render": "workspace:*",
     "@novu/dal": "workspace:*",

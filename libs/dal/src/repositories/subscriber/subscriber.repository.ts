@@ -46,6 +46,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     });
 
     let bulkResponse;
+    let writeErrors: Array<{ err: { index: number; errmsg: string; op?: { subscriberId?: string } } }> = [];
     try {
       bulkResponse = await this.bulkWrite(bulkWriteOps);
     } catch (e: unknown) {
@@ -54,12 +55,17 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
           throw new DalException(e.message);
         }
         bulkResponse = e.result;
+        writeErrors = e.writeErrors as Array<{ err: { index: number; errmsg: string; op?: { subscriberId?: string } } }>;
       } else {
         throw new DalException('An unknown error occurred');
       }
     }
-    const created = bulkResponse.getUpsertedIds();
-    const writeErrors = bulkResponse.getWriteErrors();
+
+    const upsertedIds = bulkResponse.upsertedIds || {};
+    const created = Object.entries(upsertedIds).map(([index, _id]) => ({
+      index: parseInt(index, 10),
+      _id,
+    }));
 
     const indexes: number[] = [];
 
@@ -69,7 +75,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       return mapToSubscriberObject(subscribers[inserted.index]?.subscriberId);
     });
 
-    let failed = [];
+    let failed: Array<{ message: string; subscriberId?: string }> = [];
     if (writeErrors.length > 0) {
       failed = writeErrors.map((error) => {
         indexes.push(error.err.index);
