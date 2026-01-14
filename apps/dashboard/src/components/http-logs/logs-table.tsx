@@ -1,6 +1,5 @@
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import {
   Table,
@@ -35,22 +34,13 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     handleNext,
     handlePrevious,
     handleFiltersChange,
+    handlePageSizeChange,
     clearFilters,
     hasActiveFilters,
     currentPage,
     limit,
     filters,
   } = useLogsUrlState();
-
-  const [, setSearchParams] = useSearchParams();
-
-  const handlePageSizeChange = (newPageSize: number) => {
-    setSearchParams((prev) => {
-      prev.set('limit', newPageSize.toString());
-      prev.delete('page'); // Reset to first page when changing page size
-      return prev;
-    });
-  };
 
   const track = useTelemetry();
 

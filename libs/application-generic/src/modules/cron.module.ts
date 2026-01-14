@@ -1,10 +1,10 @@
-import { Agenda } from '@hokify/agenda';
+import { Pulse } from '@pulsecron/pulse';
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { DalService } from '@novu/dal';
 import { JobCronNameEnum, JobTopicNameEnum } from '@novu/shared';
 import os from 'os';
 import { dalService as customDalService } from '../custom-providers';
-import { ACTIVE_CRON_JOBS_TOKEN, AgendaCronService, CronService, MetricsService } from '../services';
+import { ACTIVE_CRON_JOBS_TOKEN, PulseCronService, CronService, MetricsService } from '../services';
 import { MetricsModule } from './metrics.module';
 
 /**
@@ -21,17 +21,17 @@ const cronJobsFromWorkers: Partial<Record<JobTopicNameEnum, Array<JobCronNameEnu
 export const cronService = {
   provide: CronService,
   useFactory: async (metricsService: MetricsService, activeCronJobs: JobCronNameEnum[], dalService: DalService) => {
-    const agenda = new Agenda({
+    const pulse = new Pulse({
       mongo: dalService.connection.getClient().db() as any,
       /**
        * Sets the hostname for the Job. Used to debug last host to run the job via
        * the collection's `lastModifiedBy` attribute.
        *
-       * @see https://github.com/agenda/agenda/tree/master?tab=readme-ov-file#namename
+       * @see https://github.com/pulsecron/pulse#name
        */
       name: `${os.hostname}-${process.pid}`,
     });
-    const service = new AgendaCronService(metricsService, activeCronJobs, agenda);
+    const service = new PulseCronService(metricsService, activeCronJobs, pulse);
 
     return service;
   },

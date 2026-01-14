@@ -1,6 +1,6 @@
 // @ts-expect-error inline import esbuild syntax
 import css from 'directcss:../index.directcss';
-import { Accessor, For, Match, onCleanup, onMount, Switch } from 'solid-js';
+import { Accessor, createMemo, For, onCleanup, onMount, Show } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { Novu } from '../../novu';
 import type { NovuOptions } from '../../types';
@@ -76,6 +76,78 @@ export type NovuComponentControls = {
   updateProps: (params: { element: MountableElement; props: unknown }) => void;
 };
 
+const InboxComponentsRenderer = (props: {
+  elements: MountableElement[];
+  nodes: Map<MountableElement, NovuComponent>;
+}) => {
+  return (
+    <Show when={props.elements.length > 0}>
+      <CountProvider>
+        <For each={props.elements}>
+          {(node) => {
+            const novuComponent = () => props.nodes.get(node)!;
+            let portalDivElement: HTMLDivElement;
+            const Component = novuComponents[novuComponent().name];
+
+            onMount(() => {
+              /*
+               ** return here if not `<Notifications /> or `<Preferences />`
+               ** since we only want to override some styles for those to work properly
+               ** due to the extra divs being introduced by the renderer/mounter
+               */
+              if (!['Notifications', 'Preferences', 'InboxContent'].includes(novuComponent().name)) return;
+
+              if (node instanceof HTMLElement) {
+                node.style.height = '100%';
+              }
+              if (portalDivElement) {
+                portalDivElement.style.height = '100%';
+              }
+            });
+
+            return (
+              <Portal
+                mount={node}
+                ref={(el) => {
+                  portalDivElement = el;
+                }}
+              >
+                <Root>
+                  <Component {...novuComponent().props} />
+                </Root>
+              </Portal>
+            );
+          }}
+        </For>
+      </CountProvider>
+    </Show>
+  );
+};
+
+const SubscriptionComponentsRenderer = (props: {
+  elements: MountableElement[];
+  nodes: Map<MountableElement, NovuComponent>;
+}) => {
+  return (
+    <Show when={props.elements.length > 0}>
+      <For each={props.elements}>
+        {(node) => {
+          const novuComponent = () => props.nodes.get(node)!;
+          const Component = novuComponents[novuComponent().name];
+
+          return (
+            <Portal mount={node}>
+              <Root>
+                <Component {...novuComponent().props} />
+              </Root>
+            </Portal>
+          );
+        }}
+      </For>
+    </Show>
+  );
+};
+
 type RendererProps = {
   novuUI: NovuUI;
   appearance?: AllAppearance;
@@ -92,7 +164,16 @@ type RendererProps = {
 };
 
 export const Renderer = (props: RendererProps) => {
-  const nodes = () => [...props.nodes.keys()];
+  const inboxComponents = createMemo(() =>
+    [...props.nodes.entries()]
+      .filter(([_, node]) => !SUBSCRIPTION_COMPONENTS.includes(node.name))
+      .map(([element, _]) => element)
+  );
+  const subscriptionComponents = createMemo(() =>
+    [...props.nodes.entries()]
+      .filter(([_, node]) => SUBSCRIPTION_COMPONENTS.includes(node.name))
+      .map(([element, _]) => element)
+  );
 
   onMount(() => {
     const id = NOVU_DEFAULT_CSS_ID;
@@ -127,61 +208,8 @@ export const Renderer = (props: RendererProps) => {
               preferencesSort={props.preferencesSort}
               routerPush={props.routerPush}
             >
-              <For each={nodes()}>
-                {(node) => {
-                  const novuComponent = () => props.nodes.get(node)!;
-                  let portalDivElement: HTMLDivElement;
-                  const Component = novuComponents[novuComponent().name];
-
-                  onMount(() => {
-                    /*
-                     ** return here if not `<Notifications /> or `<Preferences />`
-                     ** since we only want to override some styles for those to work properly
-                     ** due to the extra divs being introduced by the renderer/mounter
-                     */
-                    if (!['Notifications', 'Preferences', 'InboxContent'].includes(novuComponent().name)) return;
-
-                    if (node instanceof HTMLElement) {
-                      node.style.height = '100%';
-                    }
-                    if (portalDivElement) {
-                      portalDivElement.style.height = '100%';
-                    }
-                  });
-
-                  return (
-                    <Switch
-                      fallback={
-                        <CountProvider>
-                          <Portal
-                            mount={node}
-                            ref={(el) => {
-                              portalDivElement = el;
-                            }}
-                          >
-                            <Root>
-                              <Component {...novuComponent().props} />
-                            </Root>
-                          </Portal>
-                        </CountProvider>
-                      }
-                    >
-                      <Match when={SUBSCRIPTION_COMPONENTS.includes(novuComponent().name)}>
-                        <Portal
-                          mount={node}
-                          ref={(el) => {
-                            portalDivElement = el;
-                          }}
-                        >
-                          <Root>
-                            <Component {...novuComponent().props} />
-                          </Root>
-                        </Portal>
-                      </Match>
-                    </Switch>
-                  );
-                }}
-              </For>
+              <InboxComponentsRenderer elements={inboxComponents()} nodes={props.nodes} />
+              <SubscriptionComponentsRenderer elements={subscriptionComponents()} nodes={props.nodes} />
             </InboxProvider>
           </FocusManagerProvider>
         </AppearanceProvider>

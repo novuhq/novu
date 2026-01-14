@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import {
+  ControlValuesEntity,
   ControlValuesRepository,
   JsonSchemaTypeEnum,
   NotificationStepEntity,
@@ -31,23 +32,28 @@ export class BuildVariableSchemaUsecase {
 
   @InstrumentUsecase()
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
-    const { workflow, stepInternalId, optimisticSteps, previewData } = command;
+    const { workflow, stepInternalId, optimisticSteps, previewData, preloadedControlValues } = command;
 
     let workflowControlValues: unknown[] = [];
     if (workflow) {
-      const controls = await this.controlValuesRepository.find(
-        {
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-          _workflowId: workflow._id,
-          level: ControlValuesLevelEnum.STEP_CONTROLS,
-          controls: { $ne: null },
-        },
-        {
-          controls: 1,
-          _id: 0,
-        }
-      );
+      let controls: ControlValuesEntity[];
+      if (preloadedControlValues) {
+        controls = preloadedControlValues;
+      } else {
+        controls = await this.controlValuesRepository.find(
+          {
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+            _workflowId: workflow._id,
+            level: ControlValuesLevelEnum.STEP_CONTROLS,
+            controls: { $ne: null },
+          },
+          {
+            controls: 1,
+            _id: 0,
+          }
+        );
+      }
 
       workflowControlValues = controls
         .flatMap((item) => item.controls)

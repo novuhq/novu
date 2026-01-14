@@ -105,7 +105,7 @@ describe('UpdateNotificationAction', () => {
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.findOne.resolves(undefined);
+    messageRepositoryMock.findOneForInbox.resolves(undefined);
 
     try {
       await updateNotificationAction.execute(command);
@@ -126,7 +126,7 @@ describe('UpdateNotificationAction', () => {
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.findOne.resolves(mockMessage);
+    messageRepositoryMock.findOneForInbox.resolves(mockMessage);
 
     try {
       await updateNotificationAction.execute(command);
@@ -147,7 +147,7 @@ describe('UpdateNotificationAction', () => {
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.findOne.resolves(mockMessage);
+    messageRepositoryMock.findOneForInbox.resolves(mockMessage);
 
     try {
       await updateNotificationAction.execute(command);
@@ -179,8 +179,8 @@ describe('UpdateNotificationAction', () => {
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.findOne.onFirstCall().resolves(mockMessageWithButtons);
-    messageRepositoryMock.findOne.onSecondCall().resolves(updatedMessageWithButtonsMock);
+    messageRepositoryMock.findOneForInbox.onFirstCall().resolves(mockMessageWithButtons);
+    messageRepositoryMock.findOneForInbox.onSecondCall().resolves(updatedMessageWithButtonsMock);
     messageRepositoryMock.updateActionStatus.resolves();
 
     const updatedMessage = await updateNotificationAction.execute(command);
@@ -211,7 +211,8 @@ describe('UpdateNotificationAction', () => {
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.findOne.resolves(mockMessageWithButtons);
+    messageRepositoryMock.findOneForInbox.onFirstCall().resolves(mockMessageWithButtons);
+    messageRepositoryMock.findOneForInbox.onSecondCall().resolves(mockMessageWithButtons);
     messageRepositoryMock.updateActionStatus.resolves();
 
     await updateNotificationAction.execute(command);

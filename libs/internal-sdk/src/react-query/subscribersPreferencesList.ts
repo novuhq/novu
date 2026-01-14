@@ -5,24 +5,20 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import * as operations from "../models/operations/index.js";
-import { useNovuContext } from "./_context.js";
-import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import * as operations from '../models/operations/index.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildSubscribersPreferencesListQuery,
   prefetchSubscribersPreferencesList,
   queryKeySubscribersPreferencesList,
   SubscribersPreferencesListQueryData,
-} from "./subscribersPreferencesList.core.js";
+} from './subscribersPreferencesList.core.js';
 export {
   buildSubscribersPreferencesListQuery,
   prefetchSubscribersPreferencesList,
@@ -38,20 +34,12 @@ export {
  *     This API returns all five channels preferences for all workflows and global preferences.
  */
 export function useSubscribersPreferencesList(
-  subscriberId: string,
-  criticality?: operations.Criticality | undefined,
-  idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<SubscribersPreferencesListQueryData>,
+  request: operations.SubscribersControllerGetSubscriberPreferencesRequest,
+  options?: QueryHookOptions<SubscribersPreferencesListQueryData>
 ): UseQueryResult<SubscribersPreferencesListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildSubscribersPreferencesListQuery(
-      client,
-      subscriberId,
-      criticality,
-      idempotencyKey,
-      options,
-    ),
+    ...buildSubscribersPreferencesListQuery(client, request, options),
     ...options,
   });
 }
@@ -64,20 +52,12 @@ export function useSubscribersPreferencesList(
  *     This API returns all five channels preferences for all workflows and global preferences.
  */
 export function useSubscribersPreferencesListSuspense(
-  subscriberId: string,
-  criticality?: operations.Criticality | undefined,
-  idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<SubscribersPreferencesListQueryData>,
+  request: operations.SubscribersControllerGetSubscriberPreferencesRequest,
+  options?: SuspenseQueryHookOptions<SubscribersPreferencesListQueryData>
 ): UseSuspenseQueryResult<SubscribersPreferencesListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildSubscribersPreferencesListQuery(
-      client,
-      subscriberId,
-      criticality,
-      idempotencyKey,
-      options,
-    ),
+    ...buildSubscribersPreferencesListQuery(client, request, options),
     ...options,
   });
 }
@@ -88,10 +68,11 @@ export function setSubscribersPreferencesListData(
     subscriberId: string,
     parameters: {
       criticality?: operations.Criticality | undefined;
+      contextKeys?: Array<string> | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
-  data: SubscribersPreferencesListQueryData,
+  data: SubscribersPreferencesListQueryData
 ): SubscribersPreferencesListQueryData | undefined {
   const key = queryKeySubscribersPreferencesList(...queryKeyBase);
 
@@ -105,24 +86,25 @@ export function invalidateSubscribersPreferencesList(
       subscriberId: string,
       parameters: {
         criticality?: operations.Criticality | undefined;
+        contextKeys?: Array<string> | undefined;
         idempotencyKey?: string | undefined;
       },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Preferences", "list", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Preferences', 'list', ...queryKeyBase],
   });
 }
 
 export function invalidateAllSubscribersPreferencesList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Preferences", "list"],
+    queryKey: ['@novu/api', 'Preferences', 'list'],
   });
 }

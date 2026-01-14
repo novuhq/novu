@@ -87,6 +87,7 @@ export class TopicSubscribersRepository extends BaseRepository<
     });
 
     let bulkResponse: mongo.BulkWriteResult;
+    let writeErrors: Array<{ err: { index: number; errmsg: string } }> = [];
     try {
       bulkResponse = await this.bulkWrite(bulkUpsertWriteOps);
     } catch (e: unknown) {
@@ -95,13 +96,13 @@ export class TopicSubscribersRepository extends BaseRepository<
           throw new DalException(e.message || 'Unknown error');
         }
         bulkResponse = e.result as mongo.BulkWriteResult;
+        writeErrors = e.writeErrors as Array<{ err: { index: number; errmsg: string } }>;
       } else {
         throw new DalException('An unknown error occurred while adding topic subscribers');
       }
     }
 
     const upsertedIds = bulkResponse.upsertedIds || {};
-    const writeErrors = bulkResponse.getWriteErrors() || [];
 
     const createdOrFailedIndexes: number[] = [];
 

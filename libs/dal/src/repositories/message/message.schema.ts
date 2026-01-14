@@ -34,6 +34,7 @@ const messageSchema = new Schema<MessageDBModel>(
       ref: 'Job',
     },
     templateIdentifier: Schema.Types.String,
+    stepId: Schema.Types.String,
     email: Schema.Types.String,
     subject: Schema.Types.String,
     cta: {
@@ -170,9 +171,6 @@ messageSchema.pre('findOneAndUpdate', function filterDeletedFindOneAndUpdate() {
   this.where({ deleted: { $exists: false } });
 });
 messageSchema.pre('countDocuments', function filterDeletedCountDocuments() {
-  this.where({ deleted: { $exists: false } });
-});
-messageSchema.pre('count', function filterDeletedCount() {
   this.where({ deleted: { $exists: false } });
 });
 
