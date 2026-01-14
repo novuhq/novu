@@ -1,7 +1,9 @@
 import { useCallback, useRef } from 'react';
+import { useDataRef } from './use-data-ref';
 
 export const useOnElementUnmount = (props: { callback: () => void; condition: boolean }) => {
   const { callback, condition } = props;
+  const callbackRef = useDataRef(callback);
   const hasCalledCallback = useRef(false);
 
   const ref = useCallback(
@@ -20,13 +22,13 @@ export const useOnElementUnmount = (props: { callback: () => void; condition: bo
         if (!element.isConnected && condition) {
           hasCalledCallback.current = true;
           observer.disconnect();
-          callback();
+          callbackRef.current();
         }
       });
 
       observer.observe(element.parentNode!, { childList: true });
     },
-    [callback]
+    [callbackRef, condition]
   );
 
   return { ref };
