@@ -1,0 +1,10 @@
+---
+description: When creating a new pull request on GitHub, use this to specifiy the contents
+alwaysApply: false
+---
+
+### Pull Request Rules
+- When creating a pull request, use the following format semantic format for semantic pr title:
+  - Title: fix([scope]): [description] (e.g. feat(dashboard): add new feature)
+  - Description: A detailed description of the changes made in the pull request
+- If working on a linear issue, add fixes NV-<issue-number> to the title end

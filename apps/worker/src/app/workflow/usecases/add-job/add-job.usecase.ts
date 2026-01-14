@@ -383,7 +383,7 @@ export class AddJob {
 
     if (errors.length > 0) {
       const uniqueErrors = _.uniq(errors.map((error) => error.message));
-      this.logger.warn({ errors, jobId: job._id }, uniqueErrors);
+      this.logger.warn({ errors, jobId: job._id }, uniqueErrors?.toString());
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

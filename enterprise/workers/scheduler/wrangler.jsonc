@@ -9,7 +9,12 @@
   "compatibility_date": "2025-11-18",
   "compatibility_flags": ["global_fetch_strictly_public"],
   "observability": {
-    "enabled": true
+    "traces": {
+      "enabled": true
+    },
+    "logs": {
+      "enabled": true
+    }
   },
   "logpush": true,
   "migrations": [

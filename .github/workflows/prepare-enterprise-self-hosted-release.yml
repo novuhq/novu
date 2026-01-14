@@ -18,30 +18,29 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 1.0.0)'
+        description: "Version to release (e.g., 1.0.0)"
         required: true
         type: string
       build_api:
-        description: 'Build API service'
+        description: "Build API service"
         required: true
         type: boolean
         default: true
       build_worker:
-        description: 'Build Worker service'
+        description: "Build Worker service"
         required: true
         type: boolean
         default: true
       build_dashboard:
-        description: 'Build Dashboard service'
+        description: "Build Dashboard service"
         required: true
         type: boolean
         default: true
       build_ws:
-        description: 'Build WebSocket service'
+        description: "Build WebSocket service"
         required: true
         type: boolean
         default: true
-
 
 permissions:
   contents: write
@@ -125,8 +124,8 @@ jobs:
       - name: Setup Node Version
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.0'
-          cache: 'pnpm'
+          node-version: "20.19.0"
+          cache: "pnpm"
 
       - name: Install Dependencies
         shell: bash
@@ -135,7 +134,7 @@ jobs:
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: 'image=moby/buildkit:v0.13.1'
+          driver-opts: "image=moby/buildkit:v0.13.1"
 
       - name: Prepare Variables
         run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV

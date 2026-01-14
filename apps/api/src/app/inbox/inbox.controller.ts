@@ -173,6 +173,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         tags: query.tags,
         severity: query.severity,
         criticality: query.criticality,
@@ -188,6 +189,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         environmentId: subscriberSession._environmentId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys,
         includeInactiveChannels: false,
         subscriber: subscriberSession,
       })
@@ -376,6 +378,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         level: PreferenceLevelEnum.GLOBAL,
         chat: body.chat,
         email: body.email,
@@ -403,6 +406,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         preferences: body.preferences,
       })
     );
@@ -420,6 +424,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         level: PreferenceLevelEnum.TEMPLATE,
         all: {
           ...(body.enabled !== undefined && { enabled: body.enabled }),
@@ -450,6 +455,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        contextKeys: subscriberSession.contextKeys,
         level: PreferenceLevelEnum.TEMPLATE,
         subscriptionIdentifier,
         all: {

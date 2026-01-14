@@ -1,6 +1,9 @@
 import { DirectionEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { createSearchParams, useSearchParams } from 'react-router-dom';
+import { getPersistedPageSize } from '@/hooks/use-persisted-page-size';
+
+const LAYOUTS_TABLE_ID = 'layouts-list';
 
 export type LayoutsSortableColumn = 'name' | 'createdAt' | 'updatedAt';
 
@@ -17,7 +20,7 @@ export const defaultLayoutsFilter: LayoutsFilter = {
   orderBy: 'createdAt',
   orderDirection: DirectionEnum.DESC,
   offset: 0,
-  limit: 10,
+  limit: getPersistedPageSize(LAYOUTS_TABLE_ID, 10),
 };
 
 export type LayoutsUrlState = {

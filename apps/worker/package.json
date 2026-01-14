@@ -1,6 +1,6 @@
 {
   "name": "@novu/worker",
-  "version": "3.11.0",
+  "version": "3.12.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -43,6 +43,7 @@
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.14.6",
     "svix": "^1.64.1",
+    "lru-cache": "^11.2.4",
     "axios": "^1.9.0",
     "body-parser": "^2.2.0",
     "class-transformer": "0.5.1",

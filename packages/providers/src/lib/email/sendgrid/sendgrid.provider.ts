@@ -9,7 +9,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import sgClient from '@sendgrid/client';
+import { Client } from '@sendgrid/client';
 // cspell:disable-next-line
 import { EventWebhook } from '@sendgrid/eventwebhook';
 import { MailDataRequired, MailService } from '@sendgrid/mail';
@@ -23,7 +23,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private sendgridMail: MailService;
-  private sendgridClient: typeof sgClient;
+  private client: Client;
 
   constructor(
     private config: {
@@ -32,13 +32,20 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
       senderName: string;
       ipPoolName?: string;
       webhookPublicKey?: string;
+      region?: string;
     }
   ) {
     super();
+    this.client = new Client();
+
+    if (this.config.region === 'eu') {
+      this.client.setDataResidency('eu');
+    }
+
+    this.client.setApiKey(this.config.apiKey);
+
     this.sendgridMail = new MailService();
-    this.sendgridMail.setApiKey(this.config.apiKey);
-    this.sendgridClient = sgClient;
-    this.sendgridClient.setApiKey(this.config.apiKey);
+    this.sendgridMail.setClient(this.client);
   }
 
   async sendMessage(
@@ -210,7 +217,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
   }> {
     try {
       // Step 1: Create a new Event Webhook
-      const [createResponse, createBody] = await this.sendgridClient.request({
+      const [createResponse, createBody] = await this.client.request({
         url: '/v3/user/webhooks/event/settings',
         method: 'POST' as const,
         body: {
@@ -237,7 +244,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
       const webhookId = createBody.id;
 
       // Step 2: Enable Signature Verification
-      const [enableSignatureResponse, enableSignatureBody] = await this.sendgridClient.request({
+      const [enableSignatureResponse, enableSignatureBody] = await this.client.request({
         url: `/v3/user/webhooks/event/settings/signed/${webhookId}`,
         method: 'PATCH' as const,
         body: {

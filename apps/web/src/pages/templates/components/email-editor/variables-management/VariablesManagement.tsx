@@ -1,7 +1,7 @@
 import { useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
-import set from 'lodash.set';
+import { safeSet } from '../../../../../utils/safe-set';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
 
@@ -41,7 +41,7 @@ function searchByKey(object, searchString) {
 
   Object.keys(object).forEach((key) => {
     if (key.toLowerCase().includes(searchString.toLowerCase())) {
-      set(varsObj, key, object[key]);
+      safeSet(varsObj, key, object[key]);
     }
   });
 

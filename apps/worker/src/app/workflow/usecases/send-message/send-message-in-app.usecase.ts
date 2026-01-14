@@ -225,6 +225,7 @@ export class SendMessageInApp extends SendMessageBase {
         _templateId: command._templateId,
         _messageTemplateId: step.template._id,
         templateIdentifier: command.identifier,
+        stepId: command.step.stepId,
         transactionId: command.transactionId,
         providerId: integration.providerId,
         _feedId: step.template._feedId,
