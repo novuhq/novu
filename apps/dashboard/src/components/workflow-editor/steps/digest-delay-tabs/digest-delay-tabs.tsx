@@ -142,7 +142,7 @@ export const DigestDelayTabs = ({ isDigest = true }: { isDigest?: boolean }) => 
               <RegularType isReadOnly={isReadOnly} isDigest={isDigest} />
               {isDigest && (
                 <>
-                  <Separator className="my-2" />
+                  <Separator className="my-2 stroke-stroke-weak" />
                   <LookbackWindow isReadOnly={isReadOnly} />
                 </>
               )}
