@@ -81,6 +81,9 @@ export class DuplicateWorkflowUseCase {
       steps: this.mapStepsToDuplicate(originWorkflow.steps),
       preferences: this.mapPreferences(preferences),
       isTranslationEnabled: overrides.isTranslationEnabled ?? originWorkflow.isTranslationEnabled,
+      payloadSchema: originWorkflow.payloadSchema || null,
+      validatePayload: originWorkflow.validatePayload,
+      severity: originWorkflow.severity,
     };
   }
 
