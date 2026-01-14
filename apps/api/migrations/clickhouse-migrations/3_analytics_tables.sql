@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS trace_rollup (
 )
 ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
-ORDER BY (organization_id, environment_id, workflow_id, date, external_subscriber_id, event_type, provider_id);
+ORDER BY (organization_id, environment_id, event_type, date, workflow_id, external_subscriber_id, provider_id);
 
 -- Materialized view populates from traces table
 -- Captures both message_sent events and interaction events

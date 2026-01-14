@@ -16,10 +16,10 @@ const schemaDefinition = {
 export const TRACE_ROLLUP_ORDER_BY: (keyof typeof schemaDefinition)[] = [
   'organization_id',
   'environment_id',
-  'workflow_id',
-  'date',
-  'external_subscriber_id',
   'event_type',
+  'date',
+  'workflow_id',
+  'external_subscriber_id',
   'provider_id',
 ];
 
