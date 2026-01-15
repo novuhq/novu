@@ -101,7 +101,7 @@ export class TriggerMulticast extends TriggerBase {
 
         const existingSubscriber = subscribersMap.get(externalSubscriberId);
         if (existingSubscriber) {
-          if (!existingSubscriber.topics.some((t) => t._topicId === topic._id)) {
+          if (!existingSubscriber.topics.some((t) => t.subscriptionIdentifier === subscriptionId)) {
             existingSubscriber.topics.push({
               _topicId: topic._id,
               topicKey: topic.key,
