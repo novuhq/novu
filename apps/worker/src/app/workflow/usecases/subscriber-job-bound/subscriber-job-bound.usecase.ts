@@ -413,6 +413,7 @@ export class SubscriberJobBound {
     templateId: string
   ): Promise<SubscriberTopicPreference[] | null> {
     const evaluatedTopics: SubscriberTopicPreference[] = [];
+    let filteredCount = 0;
 
     for (const topic of topics) {
       if (!topic._topicSubscriptionId || !topic.subscriptionIdentifier) {
@@ -428,17 +429,7 @@ export class SubscriberJobBound {
       );
 
       if (!evaluationResult.result) {
-        await this.createSubscriberTrace(
-          command,
-          'step_filtered',
-          'warning',
-          `Subscriber ${command.subscriber.subscriberId} filtered by subscription preferences for topic ${topic.topicKey}`,
-          {
-            topicKey: topic.topicKey,
-            subscriptionIdentifier: topic.subscriptionIdentifier,
-            preferenceEvaluation: evaluationResult,
-          }
-        );
+        filteredCount++;
 
         continue;
       }
@@ -447,6 +438,20 @@ export class SubscriberJobBound {
         ...topic,
         preferenceEvaluation: evaluationResult,
       });
+    }
+
+    if (filteredCount > 0) {
+      const status = evaluatedTopics.length > 0 ? 'success' : 'warning';
+      await this.createSubscriberTrace(
+        command,
+        'topic_subscription_preference_evaluation',
+        status,
+        `${filteredCount} topic subscription(s) filtered by preferences`,
+        {
+          totalSubscriptionEvaluated: topics.length,
+          totalSubscriptionFiltered: filteredCount,
+        }
+      );
     }
 
     return evaluatedTopics.length > 0 ? evaluatedTopics : null;
