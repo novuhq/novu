@@ -8,6 +8,7 @@ import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { Step } from '@/utils/types';
 import { generateUUID } from '@/utils/uuid';
 import { AddNodeEdgeType } from './edges';
 import {
@@ -46,10 +47,12 @@ function isIntersecting(el1: Element, el2: Element) {
 }
 
 export const useCanvasNodesEdges = ({
+  steps: currentSteps,
   showStepPreview: currentShowStepPreview,
   reactFlowInstance: currentReactFlowInstance,
   reactFlowWrapper,
 }: {
+  steps: Step[];
   showStepPreview?: boolean;
   reactFlowInstance: ReactFlowInstance;
   reactFlowWrapper: React.RefObject<HTMLDivElement | null>;
@@ -80,6 +83,7 @@ export const useCanvasNodesEdges = ({
     edges: currentEdges,
     isTemplateStorePreview: currentShowStepPreview ?? false,
     containerWidth: reactFlowWrapper.current?.clientWidth ?? 0,
+    steps: currentSteps,
   });
 
   const updateEdges = useCallback(() => {
@@ -627,48 +631,48 @@ export const useCanvasNodesEdges = ({
     // get the latest nodes and edges changes in state first
     // the steps can be updated or deleted outside of the workflow canvas, so we need to handle that
     const timeout = setTimeout(() => {
-      if (currentWorkflow) {
-        const nodes = dataRef.current.nodes;
-        const step = dataRef.current.step;
-        const containerWidth = dataRef.current.containerWidth;
-        const currentEnvironment = dataRef.current.environment;
+      const steps = currentWorkflow?.steps ?? dataRef.current.steps;
 
-        const newNodes = currentWorkflow.steps.map((step) => {
-          const foundNode = nodes.find(
-            (node) =>
-              getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER }) ===
-              getIdFromSlug({ slug: node.data.stepSlug ?? '', divider: STEP_DIVIDER })
-          );
+      const nodes = dataRef.current.nodes;
+      const step = dataRef.current.step;
+      const containerWidth = dataRef.current.containerWidth;
+      const currentEnvironment = dataRef.current.environment;
 
-          const newNode = mapStepToNode({
-            step,
-            previousPosition: foundNode?.position ?? { x: 0, y: 0 },
-            index: foundNode?.data.index ?? 0,
-          });
-
-          if (foundNode) {
-            return { ...foundNode, data: newNode.data };
-          }
-
-          return newNode;
-        });
-        const triggerNode =
-          nodes.find((node) => node.type === 'trigger') ??
-          createTriggerNode(currentWorkflow, currentEnvironment, containerWidth);
-        const previousPosition = newNodes[newNodes.length - 1]?.position ?? triggerNode.position;
-        const addNode = nodes.find((node) => node.type === 'add') ?? createAddNode(previousPosition, newNodes);
-        const finalNodes = [triggerNode, ...newNodes, addNode].filter((node) => node !== undefined);
-        const finalSelectedNode = finalNodes.find(
+      const newNodes = steps.map((step) => {
+        const foundNode = nodes.find(
           (node) =>
-            getIdFromSlug({ slug: step?.slug ?? '', divider: STEP_DIVIDER }) ===
+            getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER }) ===
             getIdFromSlug({ slug: node.data.stepSlug ?? '', divider: STEP_DIVIDER })
         );
-        if (step && finalSelectedNode) {
-          setSelectedNodeId(finalSelectedNode.id);
+
+        const newNode = mapStepToNode({
+          step,
+          previousPosition: foundNode?.position ?? { x: 0, y: 0 },
+          index: foundNode?.data.index ?? 0,
+        });
+
+        if (foundNode) {
+          return { ...foundNode, data: newNode.data };
         }
-        setNodes(recalculatePositionAndIndex(finalNodes, dataRef.current.containerWidth));
-        updateEdges();
+
+        return newNode;
+      });
+      const triggerNode =
+        nodes.find((node) => node.type === 'trigger') ??
+        createTriggerNode(currentWorkflow, currentEnvironment, containerWidth);
+      const previousPosition = newNodes[newNodes.length - 1]?.position ?? triggerNode.position;
+      const addNode = nodes.find((node) => node.type === 'add') ?? createAddNode(previousPosition, newNodes);
+      const finalNodes = [triggerNode, ...newNodes, addNode].filter((node) => node !== undefined);
+      const finalSelectedNode = finalNodes.find(
+        (node) =>
+          getIdFromSlug({ slug: step?.slug ?? '', divider: STEP_DIVIDER }) ===
+          getIdFromSlug({ slug: node.data.stepSlug ?? '', divider: STEP_DIVIDER })
+      );
+      if (step && finalSelectedNode) {
+        setSelectedNodeId(finalSelectedNode.id);
       }
+      setNodes(recalculatePositionAndIndex(finalNodes, dataRef.current.containerWidth));
+      updateEdges();
     }, 0);
 
     return () => {

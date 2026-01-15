@@ -51,6 +51,7 @@ const WorkflowCanvasChild = ({
     addNode,
     removeNode,
   } = useCanvasNodesEdges({
+    steps,
     reactFlowInstance,
     reactFlowWrapper,
   });
