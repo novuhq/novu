@@ -181,15 +181,16 @@ export function LocaleSelect(props: LocaleSelectProps) {
 
   const handleToggle = () => {
     if (!disabled && !readOnly) {
-      // Calculate dropdown position based on available space
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
         const dropdownWidth = 320;
-        const spaceOnRight = viewportWidth - rect.right;
-        const spaceOnLeft = rect.left;
+        const spaceOnRight = window.innerWidth - rect.left;
+        const spaceOnLeft = rect.right;
 
-        if (spaceOnRight < dropdownWidth && spaceOnLeft >= dropdownWidth) {
+        const fitsOnLeft = spaceOnLeft >= dropdownWidth;
+        const fitsOnRight = spaceOnRight >= dropdownWidth;
+
+        if (!fitsOnRight && fitsOnLeft) {
           setDropdownPosition('right');
         } else {
           setDropdownPosition('left');
