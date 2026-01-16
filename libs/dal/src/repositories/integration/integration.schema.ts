@@ -62,6 +62,13 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       channelId: Schema.Types.String,
       phoneNumberIdentification: Schema.Types.String,
       accessKey: Schema.Types.String,
+      // Mail Forwarder provider credentials
+      MAIL_FORWARDER_BUCKET: Schema.Types.String,
+      GCP_PROJECT_ID: Schema.Types.String,
+      GCP_SERVICE_ACCOUNT_KEY_PATH: Schema.Types.String,
+      SERVICE_ACCOUNT_IDENTITY: Schema.Types.String,
+      senderEmail: Schema.Types.String,
+      defaultFrom: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,

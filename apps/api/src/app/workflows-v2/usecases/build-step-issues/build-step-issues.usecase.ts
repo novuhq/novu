@@ -351,7 +351,9 @@ export class BuildStepIssuesUsecase {
     }
 
     if (error.keyword === 'required') {
-      return `${capitalize(error.params.missingProperty)} is required`;
+      const missingProperty = this.extractMissingProperty(error);
+
+      return `${capitalize(missingProperty || 'value')} is required`;
     }
     if (error.keyword === 'minLength') {
       return `${capitalize(error.instancePath.replace('/', ''))} is required`;
@@ -366,6 +368,17 @@ export class BuildStepIssuesUsecase {
     }
 
     return error.message || 'Invalid value';
+  }
+
+  private extractMissingProperty(error: ErrorObject): string | null {
+    if (!error.params || typeof (error.params as Record<string, unknown>).missingProperty === 'undefined') {
+      return null;
+    }
+
+    const params = error.params as Record<string, unknown>;
+    const missingProperty = params.missingProperty;
+
+    return typeof missingProperty === 'string' ? missingProperty : null;
   }
 
   @Instrument()

@@ -43,10 +43,10 @@ export abstract class Filter {
       result = actualValue <= filterValue;
     }
     if (fieldFilter.operator === FieldOperatorEnum.NOT_IN) {
-      result = !actualValue.includes(filterValue);
+      result = !(actualValue as any).includes(filterValue);
     }
     if (fieldFilter.operator === FieldOperatorEnum.IN) {
-      result = actualValue.includes(filterValue);
+      result = (actualValue as any).includes(filterValue);
     }
     if (fieldFilter.operator === FieldOperatorEnum.IS_DEFINED) {
       result = actualValue !== undefined;

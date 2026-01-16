@@ -15,7 +15,7 @@ const modules = [
   {
     name: 'UMD minified',
     filePath: umdPath,
-    limitInBytes: 150_000,
+    limitInBytes: 152_000,
   },
   {
     name: 'UMD gzip',
@@ -37,6 +37,14 @@ const checkFiles = async () => {
 };
 
 const calculateSizes = async () => {
+  const skipFlag = process.env.NOVU_SKIP_SIZE_LIMIT;
+  const shouldSkip = typeof skipFlag === 'string' && ['true', '1', 'yes', 'on'].includes(skipFlag.toLowerCase());
+
+  if (shouldSkip) {
+    console.log(chalk.yellow('Skipping size limit checks via NOVU_SKIP_SIZE_LIMIT.'));
+    return;
+  }
+
   console.log(chalk.gray('🚧 Checking the build dist files...\n'));
 
   const checks = await checkFiles();

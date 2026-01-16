@@ -1,6 +1,12 @@
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import * as mixpanel from 'mixpanel-browser';
+import mixpanel from 'mixpanel-browser';
+
+type MixpanelWithSessionReplay = typeof mixpanel & {
+  get_session_recording_properties?: () => Record<string, unknown>;
+};
+
+const mixpanelWithSession = mixpanel as MixpanelWithSessionReplay;
 import { measure } from '@/api/telemetry';
 import { MIXPANEL_KEY, IS_SELF_HOSTED } from '@/config';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -17,8 +23,7 @@ export const useTelemetry = () => {
       const mixpanelEnabled = !!MIXPANEL_KEY;
 
       if (mixpanelEnabled) {
-        // @ts-expect-error missing from types
-        const sessionReplayProperties = mixpanel.get_session_recording_properties();
+        const sessionReplayProperties = mixpanelWithSession.get_session_recording_properties?.() ?? {};
 
         data = {
           ...(data || {}),

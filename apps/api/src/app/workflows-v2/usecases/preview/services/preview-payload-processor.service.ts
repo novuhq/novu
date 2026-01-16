@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import _ from 'lodash';
 import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
-import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
+import { StepResponseDto } from '../../../dtos';
+import { PreviewPayloadExample } from '../preview.types';
 import { FrameworkPreviousStepsOutputState } from '../../../../bridge/usecases/preview-step/preview-step.command';
 
 @Injectable()
@@ -9,10 +10,10 @@ export class PreviewPayloadProcessorService {
   /**
    * Reorders keys to have "payload" first, followed by "subscriber", then the rest.
    */
-  cleanPreviewExamplePayload(payloadExample: Record<string, unknown>): Record<string, unknown> {
-    const cleanedPayloadExample = _.cloneDeep(payloadExample);
+  cleanPreviewExamplePayload(payloadExample: PreviewPayloadExample): PreviewPayloadExample {
+    const cleanedPayloadExample = _.cloneDeep(payloadExample) as PreviewPayloadExample;
 
-    const reorderedPayload: Record<string, unknown> = {};
+    const reorderedPayload = {} as PreviewPayloadExample;
 
     if (cleanedPayloadExample.payload !== undefined) {
       reorderedPayload.payload = cleanedPayloadExample.payload;
@@ -36,8 +37,8 @@ export class PreviewPayloadProcessorService {
    * Calculates eventCount from events array length for digest steps only, ensuring bridge
    * receives accurate event counts for processing.
    */
-  enhanceEventCountValue(payloadExample: PreviewPayloadDto): Record<string, Record<string, unknown>> {
-    const preparedPayload = _.cloneDeep(payloadExample);
+  enhanceEventCountValue(payloadExample: PreviewPayloadExample): PreviewPayloadExample {
+    const preparedPayload = _.cloneDeep(payloadExample) as PreviewPayloadExample;
 
     if (preparedPayload.steps && typeof preparedPayload.steps === 'object') {
       const steps = preparedPayload.steps as Record<string, unknown>;

@@ -13,12 +13,12 @@ export const useDeleteWorkflow = (options?: UseMutationOptions<void, unknown, De
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: DeleteWorkflowParameters) => deleteWorkflow({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchWorkflows],
       });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

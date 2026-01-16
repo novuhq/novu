@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MailForwarderProvider } from './mail-forwarder.provider';
 import { CheckIntegrationResponseEnum } from '@novu/stateless';
+import { MailForwarderProvider } from './mail-forwarder.provider';
 
 // Create mock functions that we can control per test
 let mockSave: any;
@@ -132,7 +132,7 @@ describe('MailForwarderProvider', () => {
         html: '<b>Hello World</b>',
       });
 
-      expect(result.id).toMatch(/^novu-email-.*\.json$/);
+      expect(result.id).toMatch(/^dhsmart-email-.*\.json$/);
       expect(result.date).toBeDefined();
       expect(new Date(result.date)).toBeInstanceOf(Date);
       expect(mockSave).toHaveBeenCalled();
@@ -176,7 +176,7 @@ describe('MailForwarderProvider', () => {
         html: 'Test',
       });
 
-      expect(result.id).toMatch(/^novu-email-.*\.json$/);
+      expect(result.id).toMatch(/^dhsmart-email-.*\.json$/);
     });
 
     it('should handle CC and BCC recipients', async () => {
@@ -188,7 +188,7 @@ describe('MailForwarderProvider', () => {
         html: 'Test',
       });
 
-      expect(result.id).toMatch(/^novu-email-.*\.json$/);
+      expect(result.id).toMatch(/^dhsmart-email-.*\.json$/);
     });
 
     it('should handle plain text body', async () => {
@@ -199,7 +199,7 @@ describe('MailForwarderProvider', () => {
         text: 'Plain text body',
       });
 
-      expect(result.id).toMatch(/^novu-email-.*\.json$/);
+      expect(result.id).toMatch(/^dhsmart-email-.*\.json$/);
     });
 
     it('should handle attachments', async () => {
@@ -218,10 +218,10 @@ describe('MailForwarderProvider', () => {
         ],
       });
 
-      expect(result.id).toMatch(/^novu-email-.*\.json$/);
+      expect(result.id).toMatch(/^dhsmart-email-.*\.json$/);
     });
 
-    it('should throw error if attachment is missing content', async () => {
+    it('should throw error if attachment is missing file data', async () => {
       await expect(
         provider.sendMessage({
           to: ['test@dunnhumby.com'],
@@ -235,7 +235,7 @@ describe('MailForwarderProvider', () => {
             },
           ],
         })
-      ).rejects.toThrow('Attachment "test.txt" is missing content');
+      ).rejects.toThrow('missing file data');
     });
   });
 
@@ -255,7 +255,7 @@ describe('MailForwarderProvider', () => {
         from: 'ignored@dunnhumby.com',
       });
 
-      expect(result.id).toMatch(/^novu-email-.*\.json$/);
+      expect(result.id).toMatch(/^dhsmart-email-.*\.json$/);
     });
 
     it('should fall back to defaultFrom if senderEmail not set', async () => {
@@ -272,7 +272,7 @@ describe('MailForwarderProvider', () => {
         html: 'Test',
       });
 
-      expect(result.id).toMatch(/^novu-email-.*\.json$/);
+      expect(result.id).toMatch(/^dhsmart-email-.*\.json$/);
     });
 
     it('should use hardcoded default if no sender config provided', async () => {
@@ -282,7 +282,7 @@ describe('MailForwarderProvider', () => {
         html: 'Test',
       });
 
-      expect(result.id).toMatch(/^novu-email-.*\.json$/);
+      expect(result.id).toMatch(/^dhsmart-email-.*\.json$/);
     });
   });
 

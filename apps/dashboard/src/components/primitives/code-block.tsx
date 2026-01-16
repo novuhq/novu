@@ -9,20 +9,20 @@ import { CopyToClipboard } from './copy-to-clipboard';
 
 loadLanguage('tsx');
 loadLanguage('json');
-loadLanguage('shell');
-loadLanguage('typescript');
+loadLanguage('bash');
+loadLanguage('ts');
 loadLanguage('php');
 loadLanguage('go');
-loadLanguage('python');
+loadLanguage('py');
 
 const languageMap = {
-  typescript: langs.typescript,
+  typescript: langs.ts,
   tsx: langs.tsx,
   json: langs.json,
-  shell: langs.shell,
+  shell: langs.bash,
   php: langs.php,
   go: langs.go,
-  python: langs.python,
+  python: langs.py,
 } as const;
 
 export type Language = keyof typeof languageMap;

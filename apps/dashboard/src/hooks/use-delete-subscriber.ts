@@ -14,8 +14,8 @@ export const useDeleteSubscriber = (
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: DeleteSubscriberParameters) => deleteSubscriber({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: (data, variables, ctx) => {
-      options?.onSuccess?.(data, variables, ctx);
+    onSuccess: (data, variables, onMutateResult, context) => {
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

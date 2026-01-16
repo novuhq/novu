@@ -216,4 +216,35 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   accessKey?: string;
+
+  // Mail Forwarder provider credentials
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  MAIL_FORWARDER_BUCKET?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  GCP_PROJECT_ID?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  GCP_SERVICE_ACCOUNT_KEY_PATH?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  SERVICE_ACCOUNT_IDENTITY?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  senderEmail?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  defaultFrom?: string;
 }

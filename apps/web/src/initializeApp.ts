@@ -17,7 +17,6 @@ export const initializeApp = () => {
     init({
       dsn: SENTRY_DSN,
       integrations: [
-        // @ts-expect-error - @sentry/react is not typed correctly
         new Integrations.BrowserTracing(),
         new Replay({
           // Additional SDK configuration goes in here, for example:

@@ -1,6 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { StepResponseDto, JSONSchemaDto } from '../../dtos';
+import { StepResponseDto, JSONSchemaDto, PreviewPayloadDto } from '../../dtos';
 
 export type PreviewContext = {
   stepData: StepResponseDto;
@@ -14,6 +14,8 @@ export type PreviewTemplateData = {
   payloadExample: Record<string, unknown>;
   controlValues: Record<string, unknown>;
 };
+
+export type PreviewPayloadExample = PreviewPayloadDto & Record<string, unknown>;
 
 export type FrameworkError = {
   response: {

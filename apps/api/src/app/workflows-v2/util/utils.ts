@@ -14,13 +14,17 @@ export function findMissingKeys(requiredRecord: object, actualRecord: object) {
   return difference(requiredKeys, actualKeys);
 }
 
-export function collectKeys(obj, prefix = ''): string[] {
-  return reduce(
-    obj,
+export function collectKeys(obj: Record<string, unknown> | unknown, prefix = ''): string[] {
+  if (!isObject(obj) || obj === null) {
+    return prefix ? [prefix] : [];
+  }
+
+  return reduce<Record<string, unknown>, string[]>(
+    obj as Record<string, unknown>,
     (result, value, key) => {
       const newKey = prefix ? `${prefix}.${key}` : key;
       if (isObject(value) && !isArray(value)) {
-        result.push(...collectKeys(value, newKey));
+        result.push(...collectKeys(value as Record<string, unknown>, newKey));
       } else {
         result.push(newKey);
       }
@@ -28,7 +32,7 @@ export function collectKeys(obj, prefix = ''): string[] {
       return result;
     },
     []
-  ).filter(Boolean);
+  ).filter((key): key is string => Boolean(key));
 }
 
 /**

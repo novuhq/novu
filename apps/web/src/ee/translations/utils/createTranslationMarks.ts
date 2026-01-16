@@ -1,5 +1,5 @@
 import { parseWithoutProcessing } from '@handlebars/parser';
-import { MustacheStatement, PathExpression, StringLiteral } from '@handlebars/parser/types/ast';
+import type { AST } from '@handlebars/parser';
 import { editor as NEditor, Range } from 'monaco-editor';
 
 export const createTranslationMarks = (
@@ -20,9 +20,9 @@ export const createTranslationMarks = (
       if (line.type !== 'MustacheStatement') {
         continue;
       }
-      const statement: MustacheStatement = line as MustacheStatement;
+      const statement = line as AST.MustacheStatement;
 
-      if ((statement.path as PathExpression).head !== 'i18n') {
+      if ((statement.path as AST.PathExpression).head !== 'i18n') {
         continue;
       }
 
@@ -31,7 +31,7 @@ export const createTranslationMarks = (
           return false;
         }
 
-        const pathExpression = param as PathExpression | StringLiteral;
+        const pathExpression = param as AST.PathExpression | AST.StringLiteral;
         const variable = pathExpression.original;
         const keys = variable.split('.');
         let context = variables.translations;

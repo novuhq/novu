@@ -258,8 +258,8 @@ export class UserSession {
 
       const baseToken = process.env.CLERK_LONG_LIVED_TOKEN as string;
       const payload = {
-        ...jwt.decode(baseToken),
-        ...(currentPayload || {}),
+        ...((jwt.decode(baseToken) as object) || {}),
+        ...((currentPayload as object) || {}),
         ...claims,
       };
 

@@ -45,4 +45,11 @@ export interface ICredentials {
   phoneNumberIdentification?: string;
   channelId?: string;
   apiVersion?: string;
+  // Mail Forwarder provider credentials
+  MAIL_FORWARDER_BUCKET?: string;
+  GCP_PROJECT_ID?: string;
+  GCP_SERVICE_ACCOUNT_KEY_PATH?: string;
+  SERVICE_ACCOUNT_IDENTITY?: string;
+  senderEmail?: string;
+  defaultFrom?: string;
 }

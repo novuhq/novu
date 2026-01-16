@@ -38,7 +38,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   ) {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
-    });
+    } as any);
 
     return await transporter.sendMail(
       this.transform(bridgeProviderData, {
@@ -85,7 +85,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
     );
 
     return {
-      id: info?.messageId,
+      id: (info as any)?.messageId,
       date: new Date().toISOString(),
     };
   }

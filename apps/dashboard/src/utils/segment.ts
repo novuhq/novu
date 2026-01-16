@@ -2,7 +2,14 @@ import { MIXPANEL_KEY, SEGMENT_KEY } from '@/config';
 import type { IUserEntity } from '@novu/shared';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import * as Sentry from '@sentry/react';
-import * as mixpanel from 'mixpanel-browser';
+import mixpanel from 'mixpanel-browser';
+
+type MixpanelWithSessionReplay = typeof mixpanel & {
+  start_session_recording?: () => void;
+  get_session_recording_properties?: () => Record<string, unknown>;
+};
+
+const mixpanelWithSession = mixpanel as MixpanelWithSessionReplay;
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -17,13 +24,11 @@ export class SegmentService {
 
     if (this._mixpanelEnabled) {
       mixpanel.init(MIXPANEL_KEY as string, {
-        //@ts-expect-error missing from types
         record_sessions_percent: 100,
       });
 
       try {
-        //@ts-expect-error missing from types
-        mixpanel.start_session_recording();
+        mixpanelWithSession.start_session_recording?.();
       } catch (e) {
         Sentry.captureException(e);
         console.error(e);
@@ -44,9 +49,7 @@ export class SegmentService {
           if (payload.type() === 'track' || payload.type() === 'page') {
             const segmentDeviceId = payload.obj.anonymousId;
             mixpanel.register({ $device_id: segmentDeviceId });
-            const sessionReplayProperties =
-              //@ts-expect-error missing from types
-              mixpanel.get_session_recording_properties();
+            const sessionReplayProperties = mixpanelWithSession.get_session_recording_properties?.() ?? {};
             payload.obj.properties = {
               ...payload.obj.properties,
               ...sessionReplayProperties,
@@ -120,9 +123,7 @@ export class SegmentService {
     }
 
     if (this._mixpanelEnabled) {
-      const sessionReplayProperties =
-        //@ts-expect-error missing from types
-        mixpanel.get_session_recording_properties();
+      const sessionReplayProperties = mixpanelWithSession.get_session_recording_properties?.() ?? {};
 
       data = {
         ...(data || {}),

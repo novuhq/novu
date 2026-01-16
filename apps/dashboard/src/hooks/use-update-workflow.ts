@@ -44,7 +44,7 @@ export const useUpdateWorkflow = (
   const mutation = useMutation({
     mutationFn: (args: UpdateWorkflowParameters) => updateWorkflow({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       const workflowId = getWorkflowIdFromSlug({ slug: data.slug, divider: WORKFLOW_DIVIDER });
       const previousData = await queryClient.getQueryData<WorkflowResponseDto>([
         QueryKeys.fetchWorkflow,
@@ -60,7 +60,7 @@ export const useUpdateWorkflow = (
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchWorkflowTestData, currentEnvironment?._id, workflowId],
       });
-      options?.onSuccess?.(data, variables, context);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

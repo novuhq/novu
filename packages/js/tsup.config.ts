@@ -93,6 +93,8 @@ export default defineConfig((config: Options) => {
     entry: { novu: 'src/umd.ts' },
     format: ['iife'],
     minify: true,
+    treeshake: true,
+    splitting: false,
     dts: false,
     outExtension: () => {
       return {

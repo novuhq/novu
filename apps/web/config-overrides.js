@@ -4,6 +4,16 @@ const { version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 function overrideConfig(config, env) {
+  if (config.module?.rules) {
+    config.module.rules.push({
+      test: /\.m?js$/,
+      // Allow extension-less ESM imports from dependencies such as @clerk/themes
+      resolve: {
+        fullySpecified: false,
+      },
+    });
+  }
+
   const plugins = [
     ...config.plugins,
     new DefinePlugin({

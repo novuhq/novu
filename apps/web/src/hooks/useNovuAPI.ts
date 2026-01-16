@@ -1,11 +1,15 @@
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import * as mixpanel from 'mixpanel-browser';
+import mixpanel from 'mixpanel-browser';
 import { INotificationTemplate, IPaginationWithQueryParams } from '@novu/shared';
 import { buildApiHttpClient } from '../api/api.client';
 
 import { useStudioState } from '../studio/StudioStateProvider';
 import { useEnvironment } from './useEnvironment';
+
+type MixpanelWithSessionReplay = typeof mixpanel & {
+  get_session_recording_properties?: () => Record<string, unknown>;
+};
 
 export function useNovuAPI() {
   const { devSecretKey } = useStudioState();
@@ -46,13 +50,14 @@ export const useTelemetry = () => {
   const { mutate } = useMutation(({ event, data }: { event: string; data?: Record<string, unknown> }) =>
     api.postTelemetry(event, data)
   );
+  const mixpanelWithSession = mixpanel as MixpanelWithSessionReplay;
 
   return useCallback(
     (event: string, data?: Record<string, unknown>) => {
       const mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
 
       if (mixpanelEnabled) {
-        const sessionReplayProperties = mixpanel.get_session_recording_properties();
+        const sessionReplayProperties = mixpanelWithSession.get_session_recording_properties?.() ?? {};
 
         data = {
           ...(data || {}),

@@ -19,7 +19,7 @@ export const usePatchSubscriberPreferences = (
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: PatchSubscriberPreferencesParameters) =>
       patchSubscriberPreferences({ environment: currentEnvironment!, ...args }),
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       await queryClient.invalidateQueries({
         queryKey: [
           QueryKeys.fetchSubscriberPreferences,
@@ -29,7 +29,7 @@ export const usePatchSubscriberPreferences = (
         ],
       });
 
-      onSuccess?.(data, variables, ctx);
+      onSuccess?.(data, variables, onMutateResult, context);
     },
     ...restOptions,
   });

@@ -1,7 +1,13 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { IUserEntity } from '@novu/shared';
-import * as mixpanel from 'mixpanel-browser';
+import mixpanel from 'mixpanel-browser';
 import { api } from '../api';
+
+type MixpanelWithSessionReplay = typeof mixpanel & {
+  get_session_recording_properties?: () => Record<string, unknown>;
+};
+
+const mixpanelWithSession = mixpanel as MixpanelWithSessionReplay;
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -30,7 +36,7 @@ export class SegmentService {
           if (payload.type() === 'track' || payload.type() === 'page') {
             const segmentDeviceId = payload.obj.anonymousId;
             mixpanel.register({ $device_id: segmentDeviceId });
-            const sessionReplayProperties = mixpanel.get_session_recording_properties();
+            const sessionReplayProperties = mixpanelWithSession.get_session_recording_properties?.() ?? {};
 
             payload.obj.properties = {
               ...payload.obj.properties,
@@ -93,7 +99,7 @@ export class SegmentService {
     }
 
     if (this._mixpanelEnabled) {
-      const sessionReplayProperties = mixpanel.get_session_recording_properties();
+      const sessionReplayProperties = mixpanelWithSession.get_session_recording_properties?.() ?? {};
 
       data = {
         ...(data || {}),

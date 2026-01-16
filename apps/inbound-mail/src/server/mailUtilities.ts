@@ -60,10 +60,7 @@ module.exports = {
 
     child_process.execFile(cmd, args, function (err, stdout) {
       logger.verbose(stdout);
-      let code = 0;
-      if (err) {
-        code = err.code;
-      }
+      const code = err && err.code !== undefined ? Number(err.code) || 0 : 0;
 
       logger.verbose(`closed with return code ${code}`);
 

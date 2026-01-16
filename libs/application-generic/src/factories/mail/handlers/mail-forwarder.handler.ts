@@ -9,6 +9,8 @@ export class MailForwarderHandler extends BaseHandler {
   }
 
   buildProvider(credentials: ICredentials, from?: string) {
+    console.log('[MailForwarderHandler] Received credentials:', JSON.stringify(credentials, null, 2));
+    
     const config = {
       MAIL_FORWARDER_BUCKET: credentials['MAIL_FORWARDER_BUCKET'] as string,
       GCP_PROJECT_ID: credentials['GCP_PROJECT_ID'] as string,

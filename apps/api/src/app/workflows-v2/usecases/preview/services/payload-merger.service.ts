@@ -4,6 +4,7 @@ import { NotificationTemplateEntity } from '@novu/dal';
 import { createMockObjectFromSchema, FeatureFlagsKeysEnum, WorkflowOriginEnum } from '@novu/shared';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
+import { PreviewPayloadExample } from '../preview.types';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
 import { mergeCommonObjectKeys } from '../../../util/utils';
 import { PreviewCommand } from '../preview.command';
@@ -27,7 +28,7 @@ export class PayloadMergerService {
     payloadExample: Record<string, unknown>,
     userPayloadExample: PreviewPayloadDto | undefined,
     command: PreviewCommand
-  ): Promise<Record<string, unknown>> {
+  ): Promise<PreviewPayloadExample> {
     const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
       defaultValue: false,
@@ -67,7 +68,7 @@ export class PayloadMergerService {
     command: PreviewCommand,
     isPayloadSchemaEnabled: boolean,
     isV2TemplateEditorEnabled: boolean
-  ): Promise<Record<string, unknown>> {
+  ): Promise<PreviewPayloadExample> {
     let schemaBasedPayloadExample: Record<string, unknown>;
 
     if (isPayloadSchemaEnabled) {
@@ -159,7 +160,7 @@ export class PayloadMergerService {
       }
     );
 
-    return mergedPayload;
+    return mergedPayload as PreviewPayloadExample;
   }
 
   private async mergeWithoutPayloadSchema(
@@ -167,7 +168,7 @@ export class PayloadMergerService {
     userPayloadExample: PreviewPayloadDto | undefined,
     workflow: NotificationTemplateEntity,
     command: PreviewCommand
-  ): Promise<Record<string, unknown>> {
+  ): Promise<PreviewPayloadExample> {
     let finalPayload: Record<string, unknown>;
 
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
@@ -211,7 +212,7 @@ export class PayloadMergerService {
       }
     );
 
-    return finalPayload;
+    return finalPayload as PreviewPayloadExample;
   }
 
   /**

@@ -10,24 +10,6 @@
       "options": {
         "stripLeadingPaths": true
       }
-    },
-    "assets": [
-      {
-        "include": ".env",
-        "outDir": "dist"
-      },
-      {
-        "include": ".env.development",
-        "outDir": "dist"
-      },
-      {
-        "include": ".env.test",
-        "outDir": "dist"
-      },
-      {
-        "include": ".env.production",
-        "outDir": "dist"
-      }
-    ]
+    }
   }
 }

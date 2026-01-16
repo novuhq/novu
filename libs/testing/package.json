@@ -22,7 +22,7 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@clerk/backend": "1.25.2",
-    "@clerk/types": "^4.6.1",
+    "@clerk/types": "^4.101.10",
     "@faker-js/faker": "^6.0.0",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
