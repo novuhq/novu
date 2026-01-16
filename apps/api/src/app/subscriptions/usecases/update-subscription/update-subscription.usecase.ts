@@ -25,6 +25,7 @@ import {
   SubscriptionPreferenceDto,
   SubscriptionResponseDto,
 } from '../../../shared/dtos/subscriptions/create-subscriptions-response.dto';
+import { stripContextFromIdentifier } from '../../utils/subscriptions';
 import { CreateSubscriptionPreferencesCommand } from '../create-subscription-preferences/create-subscription-preferences.command';
 import { CreateSubscriptionPreferencesUsecase } from '../create-subscription-preferences/create-subscription-preferences.usecase';
 import { UpdateSubscriptionCommand } from './update-subscription.command';
@@ -46,6 +47,16 @@ export class UpdateSubscriptionUsecase {
 
   @InstrumentUsecase()
   async execute(command: UpdateSubscriptionCommand): Promise<SubscriptionResponseDto> {
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    if (!isContextEnabled) {
+      command.identifier = stripContextFromIdentifier(command.identifier);
+    }
+
     const workflows = await this.validateAndFetchWorkflows(
       command.preferences,
       command.environmentId,

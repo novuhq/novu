@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { FeatureFlagsService, InstrumentUsecase } from '@novu/application-generic';
 import { PreferencesRepository, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, PreferencesTypeEnum } from '@novu/shared';
+import { stripContextFromIdentifier } from '../../../subscriptions/utils/subscriptions';
 import { DeleteTopicSubscriptionCommand } from './delete-subscription.command';
 
 @Injectable()
@@ -15,6 +16,16 @@ export class DeleteTopicSubscription {
 
   @InstrumentUsecase()
   async execute(command: DeleteTopicSubscriptionCommand): Promise<{ success: boolean }> {
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    if (!isContextEnabled) {
+      command.identifier = stripContextFromIdentifier(command.identifier);
+    }
+
     const topic = await this.topicRepository.findTopicByKey(
       command.topicKey,
       command.organizationId,

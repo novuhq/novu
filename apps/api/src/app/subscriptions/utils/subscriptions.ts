@@ -61,6 +61,23 @@ export function mapTopicSubscriptionToDto(
 }
 
 /**
+ * Strips the context part from an identifier when feature flag is off.
+ * This handles the case where the client includes context in identifiers
+ * but the server has stored them without context.
+ *
+ * @example
+ * stripContextFromIdentifier('tk_topic:si_sub:ctx_project:a,tenant:b') // 'tk_topic:si_sub'
+ * stripContextFromIdentifier('tk_topic:si_sub') // 'tk_topic:si_sub'
+ */
+export function stripContextFromIdentifier(identifier: string): string {
+  const contextIndex = identifier.indexOf(':ctx_');
+  if (contextIndex === -1) {
+    return identifier;
+  }
+  return identifier.substring(0, contextIndex);
+}
+
+/**
  * MongoDB projection object for SelectedWorkflowFields.
  * This ensures the projection is always aligned with the type definition.
  */

@@ -19,6 +19,7 @@ import {
   mapTopicSubscriptionToDto,
   SELECTED_WORKFLOW_FIELDS_PROJECTION,
   SelectedWorkflowFields,
+  stripContextFromIdentifier,
 } from '../../utils/subscriptions';
 import { GetSubscriptionCommand } from './get-subscription.command';
 
@@ -36,6 +37,16 @@ export class GetSubscription {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriptionCommand): Promise<SubscriptionDetailsResponseDto | null> {
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    if (!isContextEnabled) {
+      command.identifier = stripContextFromIdentifier(command.identifier);
+    }
+
     const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
 
     const subscription = await this.topicSubscribersRepository.findOne({

@@ -41,6 +41,7 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
+import { stripContextFromIdentifier } from '../../../subscriptions/utils/subscriptions';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
@@ -115,13 +116,24 @@ export class UpdatePreferences {
       return undefined;
     }
 
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    let identifier = command.subscriptionIdentifier;
+    if (!isContextEnabled) {
+      identifier = stripContextFromIdentifier(identifier);
+    }
+
     const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
 
     // Try to find by identifier first
     let subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      identifier: command.subscriptionIdentifier,
+      identifier,
       ...contextQuery,
     });
 

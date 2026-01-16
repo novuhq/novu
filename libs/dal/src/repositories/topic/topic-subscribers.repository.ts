@@ -75,7 +75,7 @@ export class TopicSubscribersRepository extends BaseRepository<
         _subscriberId,
         _topicId,
         identifier,
-        contextKeys,
+        ...(contextKeys && contextKeys.length > 0 ? { contextKeys } : {}),
       };
 
       return {
