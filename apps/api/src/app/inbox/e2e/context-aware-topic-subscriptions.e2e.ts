@@ -135,7 +135,8 @@ describe('Context-aware topic subscriptions - /inbox/topics (with context) #novu
         { identifier, name: 'Second Name' },
         contextBToken
       );
-      expect(createSecond.status).to.not.equal(201);
+      expect(createSecond.status).to.equal(400);
+      expect(createSecond.body.message).to.include('duplicate');
 
       const subscriptions = await topicSubscribersRepository.find({
         _environmentId: session.environment._id,

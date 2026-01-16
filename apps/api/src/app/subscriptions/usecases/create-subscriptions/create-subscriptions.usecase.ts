@@ -175,6 +175,16 @@ export class CreateSubscriptionsUsecase {
       );
       const newSubscriptions = await this.topicSubscribersRepository.createSubscriptions(subscriptionsToCreate);
 
+      if (newSubscriptions.failed && newSubscriptions.failed.length > 0) {
+        errors.push(
+          ...newSubscriptions.failed.map((failure) => ({
+            subscriberId: failure.subscriberId,
+            code: 'SUBSCRIPTION_CREATE_FAILED',
+            message: failure.message,
+          }))
+        );
+      }
+
       const BATCH_SIZE = 50;
       const subscriptionBatches: TopicSubscribersEntity[][] = _.chunk(newSubscriptions.created, BATCH_SIZE);
       const preferencesArray: Array<{ subscriptionId: string; preferences: SubscriptionPreferenceDto[] }> = [];
