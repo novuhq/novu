@@ -7,7 +7,7 @@ export function buildDefaultSubscriptionIdentifier(
 
   // Include context in identifier for uniqueness (only when auto-generated)
   if (contextKeys && contextKeys.length > 0) {
-    const contextPart = contextKeys.sort().join(',');
+    const contextPart = [...contextKeys].sort().join(',');
     return `${base}:ctx_${contextPart}`;
   }
 

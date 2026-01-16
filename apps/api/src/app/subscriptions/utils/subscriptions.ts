@@ -70,7 +70,7 @@ export function mapTopicSubscriptionToDto(
  * stripContextFromIdentifier('tk_topic:si_sub') // 'tk_topic:si_sub'
  */
 export function stripContextFromIdentifier(identifier: string): string {
-  const contextIndex = identifier.indexOf(':ctx_');
+  const contextIndex = identifier.lastIndexOf(':ctx_');
   if (contextIndex === -1) {
     return identifier;
   }
