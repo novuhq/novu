@@ -257,7 +257,7 @@ const SavingChangesDialog = ({
     <Dialog modal open={isOpen} onOpenChange={(open) => !open && isUpdatePatchPending && onCancel()}>
       <DialogPortal>
         <DialogOverlay />
-        <DialogContent className="max-w-[440px] gap-4 !rounded-xl p-4 overflow-hidden" hideCloseButton>
+        <DialogContent className="max-w-[440px] gap-4 rounded-xl! p-4 overflow-hidden" hideCloseButton>
           <div className="flex items-start justify-between">
             <div
               className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ${

@@ -18,7 +18,7 @@ export const InAppPreviewBell = (props: InAppPreviewBellProps) => {
     <div className={cn('flex items-center justify-end p-2 text-neutral-300', className)} {...rest}>
       <span className="relative rounded-lg bg-neutral-50 p-1">
         <InboxBell className="relative size-5" />
-        <div className="bg-primary border-background absolute right-1 top-1 h-2 w-2 translate-y-[1px] rounded-full border border-solid" />
+        <div className="bg-primary border-background absolute right-1 top-1 h-2 w-2 translate-y-px rounded-full border border-solid" />
       </span>
     </div>
   );

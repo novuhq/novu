@@ -92,7 +92,7 @@ const useInboxLoading = (organizationId?: string) => {
   const [phase, setPhase] = useState<LoadingPhase>('initializing');
 
   const { refetchEnvironments } = useFetchEnvironments({ organizationId });
-  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initializeAndFetch = useCallback(async () => {
     if (!organizationId) return;
 

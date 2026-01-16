@@ -1,9 +1,11 @@
 import { DirectionEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEnvironment } from '@/context/environment/hooks';
 import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
 import { QueryKeys } from '@/utils/query-keys';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { useDebounce } from '../../../hooks/use-debounce';
 
 const SUBSCRIBERS_TABLE_ID = 'subscribers-list';
@@ -60,6 +62,8 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     tableId: SUBSCRIBERS_TABLE_ID,
     defaultPageSize: 10,
   });
+  const { currentEnvironment } = useEnvironment();
+  const location = useLocation();
   const filterValues = useMemo(
     () => ({
       email: searchParams.get('email') || '',
@@ -75,6 +79,11 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
     }),
     [searchParams]
   );
+
+  const isUnderSubscribersPage = useMemo(() => {
+    const mainSubscribersRoute = buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' });
+    return location.pathname.startsWith(mainSubscribersRoute);
+  }, [location.pathname, currentEnvironment?.slug]);
 
   const updateSearchParams = useCallback(
     (data: SubscribersFilter) => {
@@ -235,7 +244,13 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps = {}):
      */
     newParams.delete('before');
 
-    navigate(`${location.pathname}?${newParams}`, { replace: true });
+    if (isUnderSubscribersPage) {
+      navigate(`${buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}?${newParams}`, {
+        replace: true,
+      });
+    } else {
+      navigate(`${location.pathname}?${newParams}`, { replace: true });
+    }
   };
 
   const handlePageSizeChange = useCallback(

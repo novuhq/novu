@@ -8,7 +8,7 @@ const Switch = React.forwardRef<
 >(({ className, disabled, ...rest }, forwardedRef) => {
   return (
     <SwitchPrimitives.Root
-      className={cn('group/switch block h-5 w-8 shrink-0 p-0.5 outline-none focus:outline-none', className)}
+      className={cn('group/switch block h-5 w-8 shrink-0 p-0.5 outline-hidden focus:outline-hidden', className)}
       ref={forwardedRef}
       disabled={disabled}
       {...rest}
@@ -16,7 +16,7 @@ const Switch = React.forwardRef<
       <div
         className={cn(
           // base
-          'bg-bg-soft h-4 w-7 rounded-full p-0.5 outline-none',
+          'bg-bg-soft h-4 w-7 rounded-full p-0.5 outline-hidden',
           'transition duration-200 ease-out',
           !disabled && [
             // hover
@@ -32,7 +32,7 @@ const Switch = React.forwardRef<
             // checked pressed
             'group-active:data-[state=checked]/switch:bg-primary-base',
             // focus
-            'group-focus/switch:outline-none',
+            'group-focus/switch:outline-hidden',
           ],
           // disabled
           disabled && ['bg-bg-white ring-stroke-soft p-[3px] ring-1 ring-inset']
@@ -48,7 +48,7 @@ const Switch = React.forwardRef<
             !disabled && [
               // before
               'before:bg-static-white before:absolute before:inset-y-0 before:left-1/2 before:w-3 before:-translate-x-1/2 before:rounded-full',
-              'before:[mask:--mask]',
+              'before:[mask:var(--mask)]',
               // after
               'after:shadow-switch-thumb after:absolute after:inset-y-0 after:left-1/2 after:w-3 after:-translate-x-1/2 after:rounded-full',
               // pressed

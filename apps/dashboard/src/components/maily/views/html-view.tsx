@@ -40,7 +40,7 @@ const EMAIL_RESET_MARGIN_STYLES = `
 
 function CodeView() {
   return (
-    <div className="mx-[-0.5rem] rounded-md border p-[2px]">
+    <div className="-mx-2 rounded-md border p-[2px]">
       <pre className="mly-text-black font-code my-0 rounded-md border border-dashed border-gray-300 bg-white p-2 text-xs leading-[18px]">
         <NodeViewContent as="code" className={'is-editable language-html'} />
       </pre>
@@ -91,7 +91,7 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
     <div className="group relative cursor-pointer" onClick={onClick}>
       <div
         className={cn(
-          'mx-[-0.5rem] min-h-[42px] rounded-md border px-2',
+          '-mx-2 min-h-[42px] rounded-md border px-2',
           'border-transparent group-hover:border-[#E4E4E7]',
           'flex flex-col justify-center'
         )}
@@ -105,8 +105,8 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
         }}
       />
       <div className="border-soft-100 absolute right-[-10px] top-[-3px] hidden cursor-grab items-center justify-center gap-[2px] rounded border bg-white px-1 py-[2px] group-hover:flex">
-        <RiCodeBlock className="size-2.5 flex-shrink-0" />
-        <span className="text-2xs font-medium leading-[1]">html</span>
+        <RiCodeBlock className="size-2.5 shrink-0" />
+        <span className="text-2xs font-medium leading-none">html</span>
       </div>
     </div>
   );

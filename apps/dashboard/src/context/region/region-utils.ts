@@ -1,6 +1,13 @@
-import { type OrganizationMembershipResource, type OrganizationResource } from '@clerk/types';
 import { DEFAULT_REGION, getRegionCodeFromAws, getRegionConfig, REGIONS } from './region-config';
 import { type OrganizationMetadata, type Region } from './region-types';
+
+type OrganizationLike = {
+  publicMetadata: Record<string, unknown>;
+};
+
+type OrganizationMembershipLike = {
+  organization: OrganizationLike;
+};
 
 export function getApiHostnameForRegion(region: Region): string {
   const config = getRegionConfig(region);
@@ -24,7 +31,7 @@ export function getWebSocketHostnameForRegion(region: Region): string {
   return defaultConfig?.websocketHostname || '';
 }
 
-export function detectRegionFromOrganization(organization: OrganizationResource | null | undefined): Region {
+export function detectRegionFromOrganization(organization: OrganizationLike | null | undefined): Region {
   if (!organization) return DEFAULT_REGION;
 
   const orgMetadata = organization.publicMetadata as OrganizationMetadata;
@@ -40,10 +47,7 @@ export function detectRegionFromOrganization(organization: OrganizationResource 
   return regionCode;
 }
 
-export function findOrganizationForRegion(
-  region: Region,
-  userMemberships: { data?: OrganizationMembershipResource[] }
-) {
+export function findOrganizationForRegion(region: Region, userMemberships: { data?: OrganizationMembershipLike[] }) {
   // Get the AWS region for the requested region code
   const regionConfig = getRegionConfig(region);
   if (!regionConfig) {

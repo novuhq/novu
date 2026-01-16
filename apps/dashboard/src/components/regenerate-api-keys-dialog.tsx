@@ -1,5 +1,6 @@
-import { Cross2Icon } from '@radix-ui/react-icons';
+/** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
 import { IEnvironment } from '@novu/shared';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { useState } from 'react';
 import { RiAlertFill } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
@@ -55,7 +56,7 @@ export const RegenerateApiKeysDialog = ({
     <Dialog modal open={open} onOpenChange={handleOpenChange}>
       <DialogPortal>
         <DialogOverlay />
-        <DialogContent className="max-w-[440px] gap-4 !rounded-xl p-4 overflow-hidden" hideCloseButton>
+        <DialogContent className="max-w-[440px] gap-4 rounded-xl! p-4 overflow-hidden" hideCloseButton>
           <div className="flex items-start justify-between">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-warning/10">
               <RiAlertFill className="size-6 text-warning" />

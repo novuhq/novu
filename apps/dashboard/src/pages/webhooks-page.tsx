@@ -195,7 +195,7 @@ export function WebhooksPage() {
         }}
       >
         <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
-          <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
+          <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 px-2!">
             {tabDefinitions.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value} variant="regular" size="xl">
                 {tab.label}
@@ -207,7 +207,7 @@ export function WebhooksPage() {
         {canDisplayPortal && portalToken && appId ? (
           <SvixProvider token={portalToken} appId={appId}>
             {tabDefinitions.map((tab) => (
-              <TabsContent key={tab.value} value={tab.value} className="!mt-0 overflow-hidden p-2.5">
+              <TabsContent key={tab.value} value={tab.value} className="mt-0! overflow-hidden p-2.5">
                 {activeTabDefinition.value === tab.value && (
                   <div className="mt-[-61px]">
                     <AppPortal url={buildPortalUrl(portalUrl || null, activeTabDefinition.portalPath)} fullSize />
@@ -219,7 +219,7 @@ export function WebhooksPage() {
         ) : (
           <>
             {tabDefinitions.map((tab) => (
-              <TabsContent key={tab.value} value={tab.value} className="!mt-0 overflow-hidden p-2.5">
+              <TabsContent key={tab.value} value={tab.value} className="mt-0! overflow-hidden p-2.5">
                 {activeTabDefinition.value === tab.value && (
                   <div className="flex h-full min-h-[calc(100vh-250px)] items-center justify-center p-4 text-center">
                     {isInitialLoading ? (

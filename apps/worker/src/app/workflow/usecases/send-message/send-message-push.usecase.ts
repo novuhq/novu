@@ -731,6 +731,7 @@ export class SendMessagePush extends SendMessageBase {
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
+      stepId: command.step?.stepId,
       ...(command.contextKeys && { contextKeys: command.contextKeys }),
     });
 

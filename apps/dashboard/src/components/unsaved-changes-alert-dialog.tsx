@@ -17,16 +17,27 @@ type UnsavedChangesAlertDialogProps = {
   description?: string;
   onCancel?: () => void;
   onProceed?: () => void;
+  onExitComplete?: () => void;
 };
 
 export const UnsavedChangesAlertDialog = (props: UnsavedChangesAlertDialogProps) => {
-  const { show, description, onCancel, onProceed } = props;
+  const { show, description, onCancel, onProceed, onExitComplete } = props;
+
+  const handleAnimationEnd = (e: React.AnimationEvent) => {
+    if (e.animationName.includes('exit') || e.animationName.includes('out')) {
+      onExitComplete?.();
+    }
+  };
 
   return (
     <Dialog modal open={show} onOpenChange={(open) => !open && onCancel?.()}>
       <DialogPortal>
         <DialogOverlay />
-        <DialogContent className="max-w-[440px] gap-4 !rounded-xl p-4 overflow-hidden" hideCloseButton>
+        <DialogContent
+          className="max-w-[440px] gap-4 rounded-xl! p-4 overflow-hidden"
+          hideCloseButton
+          onAnimationEnd={handleAnimationEnd}
+        >
           <div className="flex items-start justify-between">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-warning/10">
               <RiAlertFill className="size-6 text-warning" />

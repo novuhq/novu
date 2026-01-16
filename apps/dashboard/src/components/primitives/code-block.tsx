@@ -276,7 +276,7 @@ export function CodeBlock({
               'absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md',
               'opacity-0 transition-opacity duration-200 group-hover:opacity-100',
               theme === 'light' ? 'bg-white/90' : 'bg-[#0d1117]/90',
-              'backdrop-blur-sm border',
+              'backdrop-blur-xs border',
               theme === 'light' ? 'border-neutral-200' : 'border-neutral-800/50'
             )}
           >
@@ -313,8 +313,8 @@ export function CodeBlock({
               className={cn(
                 'pointer-events-none absolute right-2.5 top-2.5 bottom-2.5 z-10 w-8 rounded-r-lg',
                 theme === 'light'
-                  ? 'bg-gradient-to-l from-neutral-50 to-transparent'
-                  : 'bg-gradient-to-l from-[#161b22] to-transparent'
+                  ? 'bg-linear-to-l from-neutral-50 to-transparent'
+                  : 'bg-linear-to-l from-[#161b22] to-transparent'
               )}
             />
           )}

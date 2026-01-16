@@ -14,13 +14,13 @@ export const buttonGroupVariants = tv({
     root: 'flex -space-x-[1.5px]',
     item: [
       // base
-      'group relative flex items-center justify-center whitespace-nowrap bg-bg-white text-center text-text-sub outline-none',
+      'group relative flex items-center justify-center whitespace-nowrap bg-bg-white text-center text-text-sub outline-hidden',
       'border border-stroke-soft',
       'transition duration-200 ease-out',
       // hover
       'hover:bg-bg-weak',
       // focus
-      'focus:bg-bg-weak focus:outline-none',
+      'focus:bg-bg-weak focus:outline-hidden',
       // active
       'data-[state=on]:bg-bg-weak',
       'data-[state=on]:text-text-strong',

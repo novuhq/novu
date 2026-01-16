@@ -131,7 +131,7 @@ function getCardStyles(planKey: string, currentPlan?: ApiServiceLevelEnum, isOnT
   }
 
   return {
-    className: 'border border-black/[0.02] bg-white',
+    className: 'border border-black/2 bg-white',
     style: {
       boxShadow:
         '0 0.602px 0.602px -1.25px rgba(0, 0, 0, 0.11), 0 2.289px 2.289px -2.5px rgba(0, 0, 0, 0.09), 0 10px 10px -3.75px rgba(0, 0, 0, 0.04)',
@@ -225,7 +225,7 @@ export function PlansRow({ selectedBillingInterval, currentPlan, plans, isOnTria
       {/* Invisible trigger element positioned before the sticky container */}
       <div ref={triggerRef} className="h-1 -mb-1" />
 
-      <div className="sticky top-[-10px] z-10 bg-background backdrop-blur-sm py-6 -my-6">
+      <div className="sticky top-[-10px] z-10 bg-background backdrop-blur-xs py-6 -my-6">
         <div className="grid grid-cols-4 gap-6">
           {Object.entries(plans).map(([planKey, planConfig]) => (
             <PlanCard

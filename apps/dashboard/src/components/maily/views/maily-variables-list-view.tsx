@@ -121,7 +121,7 @@ export const MailyVariablesListView = React.forwardRef(
     return (
       <VariableList
         ref={variablesListRef}
-        className="rounded-md border shadow-md outline-none"
+        className="rounded-md border shadow-md outline-hidden"
         options={options}
         onSelect={onSelect}
         title="Variables"

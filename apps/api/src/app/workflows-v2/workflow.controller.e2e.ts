@@ -787,6 +787,37 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(res.error!.message).to.contain('Workflow');
       expect(res.error!.ctx?.workflowId).to.contain('123');
     });
+
+    it('should duplicate a workflow with payloadSchema, validatePayload, and severity', async () => {
+      const payloadSchema = {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          email: { type: 'string' },
+        },
+        required: ['name'],
+      };
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+        name: 'Test Workflow with Schema',
+        payloadSchema,
+        validatePayload: true,
+      });
+      const workflowCreated = await createWorkflow(apiClient, createWorkflowDto);
+
+      const duplicatedWorkflow = (
+        await apiClient.workflows.duplicate(
+          {
+            name: 'Duplicated Workflow with Schema',
+          },
+          workflowCreated.id
+        )
+      ).result;
+
+      expect(duplicatedWorkflow?.id).to.not.equal(workflowCreated.id);
+      expect(duplicatedWorkflow?.payloadSchema).to.deep.equal(payloadSchema);
+      expect(duplicatedWorkflow?.validatePayload).to.equal(true);
+      expect(duplicatedWorkflow?.severity).to.equal(workflowCreated.severity);
+    });
   });
 
   describe('Get step data', () => {

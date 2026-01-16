@@ -126,6 +126,7 @@ export class TriggerBroadcast extends TriggerBase {
         entity_id: command.requestId,
         workflow_run_identifier: command.template.triggers[0].identifier,
         workflow_id: command.template._id,
+        provider_id: '',
       };
 
       await this.traceLogRepository.createRequest([traceData]);

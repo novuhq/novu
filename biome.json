@@ -20,16 +20,15 @@
       "!**/*.generated.ts",
       "!**/pnpm-lock.yaml",
       "!**/swagger-spec.json",
-      "!apps/web",
       "!playground",
       "!libs/internal-sdk",
-      "!libs/design-system",
       "!.github",
       "!scripts",
       "!packages/framework/scripts",
       "!packages/framework/src/jsonSchemaFaker.js",
       "!libs/maily-tsconfig/*",
-      "!libs/maily-tailwind-config/*"
+      "!libs/maily-tailwind-config/*",
+      "!packages/add-inbox/vitest.config.js"
     ]
   },
   "formatter": {

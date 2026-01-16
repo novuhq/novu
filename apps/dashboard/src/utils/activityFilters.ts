@@ -1,6 +1,7 @@
-import { type OrganizationResource } from '@clerk/types';
 import { ApiServiceLevelEnum, FeatureNameEnum, type GetSubscriptionDto, getFeatureForTierAsNumber } from '@novu/shared';
 import { IS_SELF_HOSTED } from '../config';
+
+type OrganizationLike = { createdAt: Date };
 
 export const DEFAULT_ACTIVITY_FEED_RANGE = '24h';
 
@@ -15,7 +16,7 @@ export function buildActivityDateFilters({
   organization,
   apiServiceLevel,
 }: {
-  organization: OrganizationResource;
+  organization: OrganizationLike;
   apiServiceLevel?: ApiServiceLevelEnum;
 }) {
   const maxActivityFeedRetentionMs = getFeatureForTierAsNumber(
@@ -45,7 +46,7 @@ export function getMaxAvailableActivityFeedDateRange({
   organization,
 }: Partial<{
   subscription: GetSubscriptionDto | null;
-  organization: OrganizationResource | null;
+  organization: OrganizationLike | null;
 }>) {
   if (!organization || !subscription) {
     return DEFAULT_ACTIVITY_FEED_RANGE;

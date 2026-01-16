@@ -64,7 +64,7 @@ export const URLInput = ({
                         saveForm();
                       }}
                     >
-                      <SelectTrigger className="border-1 h-[36px] max-w-24 rounded-l-none border-l-0 text-xs focus:ring-0">
+                      <SelectTrigger className="border h-[36px] max-w-24 rounded-l-none border-l-0 text-xs focus:ring-0">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

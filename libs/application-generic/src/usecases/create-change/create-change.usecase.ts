@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ChangeRepository } from '@novu/dal';
 import { applyDiff, getDiff } from 'recursive-diff';
 
@@ -14,11 +14,7 @@ export class CreateChange {
       throw new BadRequestException('Item must have an _id to create a change');
     }
 
-    const changes = await this.changeRepository.getEntityChanges(
-      command.organizationId,
-      command.type,
-      itemId
-    );
+    const changes = await this.changeRepository.getEntityChanges(command.organizationId, command.type, itemId);
     const aggregatedItem = changes
       .filter((change) => change.enabled)
       .reduce((prev, change) => {

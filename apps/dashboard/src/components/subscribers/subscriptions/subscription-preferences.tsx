@@ -29,9 +29,9 @@ interface SubscriptionOverviewProps {
 const SubscriptionOverview = ({ children, className, isCopyable, label, value }: SubscriptionOverviewProps) => {
   return (
     <div className={cn('flex items-center justify-between gap-2 overflow-hidden', className)}>
-      <span className="text-text-soft font-code flex-shrink-0 text-xs font-medium">{label}</span>
+      <span className="text-text-soft font-code shrink-0 text-xs font-medium">{label}</span>
       <div className="relative flex min-w-0 items-center gap-2 overflow-hidden">
-        {isCopyable && value && <CopyButton valueToCopy={value} size="2xs" className="h-1 flex-shrink-0 p-0.5" />}
+        {isCopyable && value && <CopyButton valueToCopy={value} size="2xs" className="h-1 shrink-0 p-0.5" />}
         <span className="text-foreground-600 truncate font-mono text-xs" title={value}>
           {children ?? value}
         </span>
@@ -51,7 +51,7 @@ export const SubscriptionPreferences = ({
   if (isLoading || !subscription || !topicKey || !subscriberId) {
     return (
       <div className="flex h-full flex-col">
-        <header className="border-bg-soft flex h-12 w-full flex-shrink-0 flex-row items-center gap-3 border-b px-3 py-4">
+        <header className="border-bg-soft flex h-12 w-full shrink-0 flex-row items-center gap-3 border-b px-3 py-4">
           <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
             <RiMindMap className="size-5 p-0.5" />
             <TruncatedText className="flex-1 pr-10">Subscription preferences</TruncatedText>
@@ -95,7 +95,7 @@ export const SubscriptionPreferences = ({
             </div>
           </div>
         </div>
-        <div className="flex flex-shrink-0 flex-col gap-2 border-t border-bg-soft p-3">
+        <div className="flex shrink-0 flex-col gap-2 border-t border-bg-soft p-3">
           <span className="text-xs font-medium text-text-soft">Quick actions</span>
           <div className="flex gap-2">
             <Button variant="secondary" size="2xs" mode="outline" leadingIcon={RiDiscussLine} disabled>
@@ -113,7 +113,7 @@ export const SubscriptionPreferences = ({
   return (
     <>
       <div className="flex h-full flex-col">
-        <header className="border-bg-soft flex h-12 w-full flex-shrink-0 flex-row items-center gap-3 border-b px-3 py-4">
+        <header className="border-bg-soft flex h-12 w-full shrink-0 flex-row items-center gap-3 border-b px-3 py-4">
           <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
             <RiMindMap className="size-5 p-0.5" />
             <TruncatedText className="flex-1 pr-10">Subscription preferences</TruncatedText>
@@ -142,7 +142,7 @@ export const SubscriptionPreferences = ({
             ))}
           </div>
         </div>
-        <div className="flex flex-shrink-0 flex-col gap-2 border-t border-bg-soft p-3">
+        <div className="flex shrink-0 flex-col gap-2 border-t border-bg-soft p-3">
           <span className="text-xs font-medium text-text-soft">Quick actions</span>
           <div className="flex gap-2">
             <Button

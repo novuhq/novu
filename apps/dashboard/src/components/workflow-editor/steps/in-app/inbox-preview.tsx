@@ -26,7 +26,7 @@ const InboxPreviewContainer = ({ children, className }: { children: ReactNode; c
           {children}
         </InAppPreview>
       </div>
-      <div className="absolute -bottom-3 h-16 w-full bg-gradient-to-b from-transparent to-80% to-bg-weak" />
+      <div className="absolute -bottom-3 h-16 w-full bg-linear-to-b from-transparent to-80% to-bg-weak" />
     </div>
   );
 };

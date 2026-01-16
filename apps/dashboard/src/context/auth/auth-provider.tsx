@@ -1,5 +1,5 @@
 import { useOrganization, useUser } from '@clerk/clerk-react';
-import type { UserResource } from '@clerk/types';
+import type { OrganizationResource, UserResource } from '@clerk/types';
 import { ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { ROUTES } from '@/utils/routes';
 import { AuthContext } from './auth-context';
@@ -56,9 +56,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isUserLoaded, isOrganizationLoaded, clerkUser, clerkOrganization, redirectTo]);
 
-  const currentUser = useMemo(() => (clerkUser ? toUserEntity(clerkUser as UserResource) : undefined), [clerkUser]);
+  const currentUser = useMemo(
+    () => (clerkUser ? toUserEntity(clerkUser as unknown as UserResource) : undefined),
+    [clerkUser]
+  );
   const currentOrganization = useMemo(
-    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization) : undefined),
+    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization as unknown as OrganizationResource) : undefined),
     [clerkOrganization]
   );
 

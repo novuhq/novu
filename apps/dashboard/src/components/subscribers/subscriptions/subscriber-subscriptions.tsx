@@ -109,7 +109,7 @@ export function SubscriberSubscriptions({ subscriberId }: SubscriberSubscription
       </motion.div>
       <TopicDrawer
         open={isTopicDrawerOpen}
-        className={'w-3/4 sm:max-w-[540px] [&_[data-close-button="true"]]:hidden'}
+        className={'w-3/4 sm:max-w-[540px] **:data-[close-button="true"]:hidden'}
         onOpenChange={(open) => {
           setIsTopicDrawerOpen(open);
           if (!open) {

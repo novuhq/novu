@@ -86,7 +86,7 @@ export const NodeBody = ({
           <span className="text-foreground-400 overflow-hidden text-ellipsis text-nowrap text-sm font-medium">
             {children}
           </span>
-          <span className="to-background/90 absolute left-0 top-0 h-full w-full rounded-b-[calc(var(--radius)-1px)] bg-gradient-to-r from-[rgba(255,255,255,0.00)] from-70% to-95%" />
+          <span className="to-background/90 absolute left-0 top-0 h-full w-full rounded-b-[calc(var(--radius)-1px)] bg-linear-to-r from-[rgba(255,255,255,0.00)] from-70% to-95%" />
         </div>
       </HoverCardTrigger>
       {(isPreviewEnabled || showPreview) && (
@@ -114,7 +114,7 @@ export const NodeError = ({ children }: { children: ReactNode }) => {
           onMouseEnter={() => setIsPopoverOpen(true)}
           onMouseLeave={() => setIsPopoverOpen(false)}
         >
-          <RiErrorWarningFill className="border-destructive fill-destructive bg-foreground-0 rounded-full border p-[1px]" />
+          <RiErrorWarningFill className="border-destructive fill-destructive bg-foreground-0 rounded-full border p-px" />
         </span>
       </PopoverTrigger>
       <PopoverPortal>
@@ -131,7 +131,7 @@ export const NODE_WIDTH = 300;
 export const NODE_HEIGHT = 86;
 
 const nodeVariants = cva(
-  `relative bg-neutral-alpha-200 transition-colors aria-selected:bg-gradient-to-bl aria-selected:from-[#FFB84D] aria-selected:to-[#E300BD] [&>span]:bg-foreground-0 flex w-[300px] flex-col p-px drop-shadow-sm flex [&>span]:flex-1 [&>span]:rounded-[calc(var(--radius)-1px)] [&>span]:p-1 [&>span]:flex [&>span]:flex-col [&>span]:gap-1`,
+  `relative bg-neutral-alpha-200 transition-colors aria-selected:bg-linear-to-bl aria-selected:from-[#FFB84D] aria-selected:to-[#E300BD] [&>span]:bg-foreground-0 flex w-[300px] flex-col p-px drop-shadow-xs flex [&>span]:flex-1 [&>span]:rounded-[calc(var(--radius)-1px)] [&>span]:p-1 [&>span]:flex [&>span]:flex-col [&>span]:gap-1`,
   {
     variants: {
       variant: {
@@ -176,7 +176,7 @@ const DraggedNode = ({
   nodeId?: string;
 }) => {
   const draggedNodeRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number | null>(null);
   const lastPositionRef = useRef(initialPosition);
 
   useEffect(() => {
@@ -223,7 +223,7 @@ const DraggedNode = ({
       ref={draggedNodeRef}
       className={cn(
         nodeVariants({ variant, className }),
-        'transition-all fixed pointer-events-none z-[9999] !cursor-grab rotate-[-4deg]'
+        'transition-all fixed pointer-events-none z-9999 cursor-grab!'
       )}
       style={{
         left: 0,
@@ -237,7 +237,7 @@ const DraggedNode = ({
       }}
     >
       <div
-        className="absolute top-2 -left-6 bg-background rounded-4 shadow-md size-4 flex items-center justify-center !cursor-grab"
+        className="absolute top-2 -left-6 bg-background rounded-4 shadow-md size-4 flex items-center justify-center cursor-grab!"
         data-draggable-node-id={nodeId}
       >
         <RiDraggable className="size-3 text-text-soft" />

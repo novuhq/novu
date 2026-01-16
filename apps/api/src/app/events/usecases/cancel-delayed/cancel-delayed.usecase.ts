@@ -164,6 +164,7 @@ export class CancelDelayed {
         workflow_run_identifier: job.identifier || '',
         _notificationId: job._notificationId,
         workflow_id: job._templateId,
+        provider_id: '',
       }));
 
       await this.messageInteractionService.trace(

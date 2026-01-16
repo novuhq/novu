@@ -12,7 +12,6 @@ import { SubscriberSubscriptions } from '@/components/subscribers/subscriptions/
 import TruncatedText from '@/components/truncated-text';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferences';
-import { useFormProtection } from '@/hooks/use-form-protection';
 
 type SubscriberOverviewProps = {
   subscriberId: string;
@@ -72,21 +71,9 @@ type SubscriberTabsProps = {
 export function SubscriberTabs(props: SubscriberTabsProps) {
   const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
   const [tab, setTab] = useState('overview');
-  const {
-    protectedOnValueChange,
-    ProtectionAlert,
-    ref: protectionRef,
-  } = useFormProtection({
-    onValueChange: setTab,
-  });
 
   return (
-    <Tabs
-      ref={protectionRef}
-      className="flex h-full w-full flex-col"
-      value={tab}
-      onValueChange={protectedOnValueChange}
-    >
+    <Tabs className="flex h-full w-full flex-col" value={tab} onValueChange={setTab}>
       <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
         <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
           <RiGroup2Line className="size-5 p-0.5" />
@@ -130,8 +117,6 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
         <SubscriberActivity subscriberId={subscriberId} />
       </TabsContent>
       <Separator />
-
-      {ProtectionAlert}
     </Tabs>
   );
 }
