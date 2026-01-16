@@ -52,8 +52,8 @@ type CountrySelectProps = {
 };
 
 const CountrySelect = ({ disabled, value: selectedCountry, options: countryList, onChange }: CountrySelectProps) => {
-  const listRef = React.useRef<HTMLDivElement>(null);
-  const scrollId = React.useRef<ReturnType<typeof setTimeout>>();
+  const listRef = React.useRef<HTMLDivElement | null>(null);
+  const scrollId = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return (
     <Popover modal={false}>
@@ -78,8 +78,10 @@ const CountrySelect = ({ disabled, value: selectedCountry, options: countryList,
              * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
              */
             onValueChange={() => {
-              // clear pending scroll
-              clearTimeout(scrollId.current);
+              if (scrollId.current) {
+                // clear pending scroll
+                clearTimeout(scrollId.current);
+              }
 
               // the setTimeout is used to create a new task
               // this is to make sure that we don't scroll until the user is done typing

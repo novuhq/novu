@@ -1,5 +1,5 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { ControlValuesEntity, NotificationTemplateEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { PreviewPayloadDto } from '../../dtos';
@@ -33,4 +33,10 @@ export class BuildVariableSchemaCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   previewData?: PreviewPayloadDto;
+
+  /**
+   * Pre-loaded control values to avoid redundant database queries
+   */
+  @IsOptional()
+  preloadedControlValues?: ControlValuesEntity[];
 }

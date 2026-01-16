@@ -42,7 +42,7 @@ export function SelectWidget(props: WidgetProps) {
               disabled={disabled || readonly}
               required={required}
             >
-              <SelectTrigger className="group p-1.5 shadow-sm last:[&>svg]:hidden">
+              <SelectTrigger className="group p-1.5 shadow-sm [&>svg]:last:hidden">
                 <SelectValue asChild>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground text-sm">{field.value}</span>

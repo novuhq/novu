@@ -3,6 +3,7 @@ import { Node as TNode } from '@tiptap/pm/model';
 import { PluginKey } from '@tiptap/pm/state';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import Suggestion, { SuggestionOptions } from '@tiptap/suggestion';
+import type { JSX } from 'react';
 import { registerSuggestionProvider } from '../../bubble-suggestions';
 import { createVariableProvider } from '../../bubble-suggestions/providers/variable-provider';
 import { VariableSuggestionsPopover, VariableSuggestionsPopoverType } from './variable-suggestions-popover';

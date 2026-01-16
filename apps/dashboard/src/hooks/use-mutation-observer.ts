@@ -12,7 +12,7 @@ type MutationObserverOptions = {
 };
 
 type UseMutationObserverProps = {
-  target: React.RefObject<Node> | Node | null;
+  target: React.RefObject<Node | null> | Node | null;
   callback: MutationCallback;
   options?: MutationObserverOptions;
 };

@@ -25,7 +25,7 @@ function transformItemsForPopover(items: InlineDecoratorItem[]) {
 /**
  * Handles keyboard navigation for the suggestion list
  */
-function createKeyboardHandler(popoverRef: React.RefObject<VariableSuggestionsPopoverRef>) {
+function createKeyboardHandler(popoverRef: React.RefObject<VariableSuggestionsPopoverRef | null>) {
   return ({ event }: { event: KeyboardEvent }) => {
     if (!popoverRef.current) {
       return false;
@@ -72,7 +72,7 @@ function createItemSelectHandler(items: InlineDecoratorItem[], command: (params:
 export const InlineDecoratorList = forwardRef<any, InlineDecoratorListProps>((props, ref) => {
   const { items = [], editor, command } = props;
 
-  const popoverRef = useRef<VariableSuggestionsPopoverRef>(null);
+  const popoverRef = useRef<VariableSuggestionsPopoverRef | null>(null);
   const VariableSuggestionPopoverComponent = useInlineDecoratorOptions(editor)?.variableSuggestionsPopover;
 
   // Transform items for the popover component

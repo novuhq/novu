@@ -29,7 +29,7 @@ export const tagVariants = tv({
       // base
       'group/dismiss-button -ml-1.5 -mr-1 size-4 shrink-0',
       // focus
-      'focus:outline-none',
+      'focus:outline-hidden',
     ],
     dismissIcon: 'size-4 text-text-soft transition duration-200 ease-out',
   },
@@ -170,7 +170,12 @@ const Tag = React.forwardRef<HTMLDivElement, TagProps>(
   ({ children, icon, onDismiss, asChild, variant, disabled, className, dismissTestId, ...rest }, ref) => {
     return (
       <TagRoot ref={ref} asChild={asChild} variant={variant} disabled={disabled} className={className} {...rest}>
-        {icon && <TagIcon as={icon.type} {...icon.props} />}
+        {icon && (
+          <TagIcon
+            as={icon.type as React.ElementType | undefined}
+            {...(icon.props as React.HTMLAttributes<HTMLElement>)}
+          />
+        )}
         {children}
         {onDismiss && <TagDismissButton onClick={onDismiss} disabled={disabled} data-testid={dismissTestId} />}
       </TagRoot>

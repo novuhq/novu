@@ -71,7 +71,7 @@ export const MultiSelect = <T extends string | number>({
       </PopoverTrigger>
       <PopoverPortal>
         <Command loop className="h-0 w-0">
-          <PopoverContent className="min-w-[8rem] p-0" align="end">
+          <PopoverContent className="min-w-32 p-0" align="end">
             <CommandList>
               <CommandGroup className="max-h-96 overflow-auto">
                 {options.map(({ value, label }) => {

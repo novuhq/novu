@@ -100,7 +100,7 @@ export const TranslationSuggestionsListView = React.forwardRef<
   return (
     <VariableList
       ref={variablesListRef}
-      className="min-w-[250px] rounded-md border shadow-md outline-none"
+      className="min-w-[250px] rounded-md border shadow-md outline-hidden"
       options={options}
       onSelect={onSelect}
       title="Translation Keys"

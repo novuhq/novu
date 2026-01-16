@@ -344,10 +344,7 @@ export class ExecuteBridgeJob {
   }
 
   @Instrument()
-  private async getEnvironment(
-    environmentId: string,
-    organizationId: string
-  ): Promise<EnvironmentCacheData | null> {
+  private async getEnvironment(environmentId: string, organizationId: string): Promise<EnvironmentCacheData | null> {
     const cacheKey = `${organizationId}:${environmentId}`;
 
     const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({

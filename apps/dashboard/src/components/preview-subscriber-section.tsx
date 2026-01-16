@@ -102,7 +102,7 @@ export function PreviewSubscriberSection({
         </div>
         {onEditSubscriber && (
           <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-            <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
+            <RiInformation2Line className="h-3 w-3 shrink-0" />
             <span>Click "Edit subscriber" above to modify subscriber details.</span>
           </div>
         )}

@@ -1,7 +1,6 @@
 Portions of this software are licensed as follows:
 
-* All content that resides under https://github.com/novuhq/novu/tree/next/enterprise/packages and 
-https://github.com/novuhq/novu/tree/next/apps/web/src/ee directory of this repository (Commercial License) is licensed under the license defined in "https://github.com/novuhq/novu/blob/next/apps/web/src/ee/LICENSE".
+* All content that resides under https://github.com/novuhq/novu/tree/next/enterprise/packages and is licensed under the license defined in "https://github.com/novuhq/novu/blob/next/EE-PACKAGES-LICENSE".
 * All third party components incorporated into the Novu Software are licensed under the original license provided by the owner of the applicable component.
 * Content outside of the above mentioned directories or restrictions above is available under the "MIT" license as defined below.
 

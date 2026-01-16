@@ -36,7 +36,7 @@ export const CreateSubscriberForm = () => {
                 e.stopPropagation();
               }}
             >
-              <Avatar className="size-[3.75rem] cursor-default">
+              <Avatar className="size-15 cursor-default">
                 <AvatarImage src={firstNameChar || lastNameChar ? '' : '/images/avatar.svg'} />
                 <AvatarFallback>
                   {firstNameChar || lastNameChar ? (

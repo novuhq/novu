@@ -27,7 +27,10 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "files.exclude": {
-    "**/.source": true
+    "**/.source": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/*.map": true
   },
   "search.exclude": {
     "**/.source": true

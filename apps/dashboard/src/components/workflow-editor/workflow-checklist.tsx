@@ -271,7 +271,7 @@ function ChecklistItemButton({ item, steps }: { item: ChecklistItem; steps: Step
       className="hover:bg-background group flex w-full items-center gap-1 rounded-md transition-colors duration-200"
       onClick={item.onClick}
     >
-      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
+      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-xs">
         <div className="flex items-center justify-center">
           {item.isCompleted(steps) ? (
             <RiCheckboxCircleFill className="text-success h-4 w-4" />

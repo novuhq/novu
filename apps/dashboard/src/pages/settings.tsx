@@ -1,5 +1,5 @@
 import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
-import { Appearance } from '@clerk/types';
+import type { Appearance } from '@clerk/types';
 import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
@@ -70,6 +70,7 @@ const getClerkComponentAppearance = (isRbacEnabled: boolean): Appearance => ({
     formFieldRow__role: {
       visibility: isRbacEnabled ? 'visible' : 'hidden',
     },
+    apiKeys: 'py-1',
   },
 });
 
@@ -118,7 +119,7 @@ export function SettingsPage() {
   return (
     <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Settings</h1>}>
       <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2 w-full">
-        <TabsList align="center" variant="regular" className="border-t-transparent !py-0">
+        <TabsList align="center" variant="regular" className="border-t-transparent py-0!">
           <TabsTrigger variant="regular" value="account" size="xl">
             Account
           </TabsTrigger>
@@ -142,7 +143,7 @@ export function SettingsPage() {
           <TabsContent value="account" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
-                <div className="pb-6 pt-4">
+                <div className="pb-6 pt-4 flex flex-col">
                   <UserProfile appearance={clerkAppearance}>
                     <UserProfile.Page label="account" />
                     <UserProfile.Page label="security" />
@@ -161,7 +162,7 @@ export function SettingsPage() {
           <TabsContent value="organization" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
-                <div className="pb-6 pt-4">
+                <div className="pb-6 pt-4 flex flex-col">
                   {subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE && (
                     <InlineToast
                       title="Tip:"
@@ -183,7 +184,7 @@ export function SettingsPage() {
           <TabsContent value="team" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
-                <div className={`pb-6 pt-4 ${isRbacEnabled ? 'show-role-column' : 'hide-role-column'}`}>
+                <div className={`pb-6 pt-4 flex flex-col ${isRbacEnabled ? 'show-role-column' : 'hide-role-column'}`}>
                   {isRbacEnabledFlag && !isRbacEnabled && (
                     <InlineToast
                       title="Tip:"
@@ -210,7 +211,7 @@ export function SettingsPage() {
             <TabsContent value="billing" className="rounded-lg">
               <motion.div {...FADE_ANIMATION}>
                 <Card className="border-none shadow-none">
-                  <div className="pb-6 pt-4">
+                  <div className="pb-6 pt-4 flex flex-col">
                     <Plan />
                   </div>
                 </Card>

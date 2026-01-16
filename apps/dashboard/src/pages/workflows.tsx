@@ -276,16 +276,16 @@ export const WorkflowsPage = () => {
                 <div className="bg-bg-weak rounded-12 flex gap-4 p-3">
                   {isLoadingQuickStart && (
                     <>
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
                     </>
                   )}
                   {!isLoadingQuickStart && (
                     <>
-                      <div className="w-[250px] flex-shrink-0">
+                      <div className="w-[250px] shrink-0">
                         <WorkflowCard
                           name="Start from scratch"
                           description="Create a workflow from scratch"
@@ -297,7 +297,7 @@ export const WorkflowsPage = () => {
                         />
                       </div>
                       {quickStartTemplates.map((template) => (
-                        <div key={template.workflowId} className="w-[250px] flex-shrink-0">
+                        <div key={template.workflowId} className="w-[250px] shrink-0">
                           <WorkflowCard
                             name={template.name}
                             description={template.description}
@@ -350,12 +350,16 @@ const CreateWorkflowButton = () => {
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
 
-  const handleCreateWorkflow = () => {
+  const handleCreateWorkflow = (event: Pick<Event, 'preventDefault' | 'stopPropagation'>) => {
+    event.preventDefault();
+    event.stopPropagation();
     track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
     navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
   };
 
-  const navigateToTemplateStore = () => {
+  const navigateToTemplateStore = (event: Pick<Event, 'preventDefault' | 'stopPropagation'>) => {
+    event.preventDefault();
+    event.stopPropagation();
     navigate(
       `${buildRoute(ROUTES.TEMPLATE_STORE, {
         environmentSlug: environmentSlug || '',
@@ -368,7 +372,7 @@ const CreateWorkflowButton = () => {
   if (!canCreateWorkflow || currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
     return (
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger asChild>
           <Button
             className="text-label-xs gap-1 rounded-lg p-2"
             variant="primary"
@@ -424,11 +428,9 @@ const CreateWorkflowButton = () => {
             ></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <button type="button" className="w-full text-left" onClick={handleCreateWorkflow}>
-                <RiFileAddLine />
-                From Blank
-              </button>
+            <DropdownMenuItem className="cursor-pointer" onSelect={handleCreateWorkflow}>
+              <RiFileAddLine />
+              From Blank
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onSelect={navigateToTemplateStore}>
               <RiFileMarkedLine />

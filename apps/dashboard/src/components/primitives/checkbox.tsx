@@ -35,8 +35,8 @@ const Checkbox = React.forwardRef<
       ref={forwardedRef}
       checked={checked}
       className={cn(
-        'group/checkbox relative flex size-5 shrink-0 items-center justify-center outline-none',
-        'focus:outline-none',
+        'group/checkbox relative flex size-5 shrink-0 items-center justify-center outline-hidden',
+        'focus:outline-hidden',
         className
       )}
       {...rest}
@@ -57,17 +57,17 @@ const Checkbox = React.forwardRef<
             // disabled
             'group-disabled/checkbox:fill-bg-soft',
             // hover
-            'group-hover/checkbox:group-data-[state=checked]/checkbox:fill-primary-darker',
-            'group-hover/checkbox:group-data-[state=indeterminate]/checkbox:fill-primary-darker',
+            'group-data-[state=checked]/checkbox:group-hover/checkbox:fill-primary-darker',
+            'group-data-[state=indeterminate]/checkbox:group-hover/checkbox:fill-primary-darker',
             // focus
-            'group-focus/checkbox:group-data-[state=checked]/checkbox:fill-primary-dark',
-            'group-focus/checkbox:group-data-[state=indeterminate]/checkbox:fill-primary-dark',
+            'group-data-[state=checked]/checkbox:group-focus/checkbox:fill-primary-dark',
+            'group-data-[state=indeterminate]/checkbox:group-focus/checkbox:fill-primary-dark',
             // checked
             'group-data-[state=checked]/checkbox:fill-primary-base',
             'group-data-[state=indeterminate]/checkbox:fill-primary-base',
             // disabled checked
-            'group-disabled/checkbox:group-data-[state=checked]/checkbox:fill-bg-soft',
-            'group-disabled/checkbox:group-data-[state=indeterminate]/checkbox:fill-bg-soft'
+            'group-data-[state=checked]/checkbox:group-disabled/checkbox:fill-bg-soft',
+            'group-data-[state=indeterminate]/checkbox:group-disabled/checkbox:fill-bg-soft'
           )}
         />
         <g filter={`url(#${filterId})`}>
@@ -121,7 +121,7 @@ const Checkbox = React.forwardRef<
             'absolute left-1/2 top-1/2 shrink-0 -translate-x-1/2 -translate-y-1/2',
             // checked
             'group-data-[state=checked]/checkbox:opacity-100',
-            'group-data-[state=checked]/checkbox:[&>path]:[stroke-dashoffset:0]',
+            '[&>path]:group-data-[state=checked]/checkbox:[stroke-dashoffset:0]',
             // path
             '[&>path]:[stroke-dasharray:var(--total-length)] [&>path]:[stroke-dashoffset:var(--total-length)]',
             'group-data-[state=indeterminate]/checkbox:invisible'
@@ -135,7 +135,7 @@ const Checkbox = React.forwardRef<
             'absolute left-1/2 top-1/2 shrink-0 -translate-x-1/2 -translate-y-1/2',
             // indeterminate
             'group-data-[state=indeterminate]/checkbox:opacity-100',
-            'group-data-[state=indeterminate]/checkbox:[&>path]:[stroke-dashoffset:0]',
+            '[&>path]:group-data-[state=indeterminate]/checkbox:[stroke-dashoffset:0]',
             // path
             '[&>path]:[stroke-dasharray:var(--total-length)] [&>path]:[stroke-dashoffset:var(--total-length)]',
             'invisible group-data-[state=indeterminate]/checkbox:visible'

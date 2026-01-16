@@ -36,7 +36,7 @@ const OrganizationAvatar = ({ shining = false }: { shining?: boolean }) => {
     <Avatar className="relative h-6 w-6 overflow-hidden border-gray-200">
       <NovuLogoBlackBg />
       {shining && (
-        <div className="absolute inset-0 before:absolute before:left-[-100%] before:top-0 before:h-full before:w-full before:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.3),transparent)] before:transition-all before:duration-[10000ms] before:ease-in-out group-hover:before:left-[100%]"></div>
+        <div className="absolute inset-0 before:absolute before:-left-full before:top-0 before:h-full before:w-full before:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.3),transparent)] before:transition-all before:duration-[10000ms] before:ease-in-out group-hover:before:left-full"></div>
       )}
     </Avatar>
   );

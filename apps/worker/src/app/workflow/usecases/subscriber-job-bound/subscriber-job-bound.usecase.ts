@@ -411,6 +411,7 @@ export class SubscriberJobBound {
         entity_id: command.requestId,
         workflow_run_identifier: command.identifier,
         workflow_id: command.templateId,
+        provider_id: '',
       };
 
       await this.traceLogRepository.createRequest([traceData]);

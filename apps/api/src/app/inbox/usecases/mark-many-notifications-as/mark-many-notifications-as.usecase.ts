@@ -257,5 +257,6 @@ function createTraceLog({
     workflow_run_identifier: '',
     _notificationId: message._notificationId,
     workflow_id: message._templateId,
+    provider_id: '',
   };
 }

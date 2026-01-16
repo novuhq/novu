@@ -280,6 +280,7 @@ export class TriggerEvent {
         entity_id: command.requestId,
         workflow_run_identifier: command.identifier,
         workflow_id: workflowId || '',
+        provider_id: '',
       };
 
       await this.traceLogRepository.createRequest([traceData]);

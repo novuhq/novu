@@ -206,7 +206,7 @@ function SettingField({
   };
 
   return (
-    <div className="grid grid-cols-[1fr,400px] items-center gap-3">
+    <div className="grid grid-cols-[1fr_400px] items-center gap-3">
       <label className="text-foreground-600 font-medium\\ inline-flex items-center gap-1 text-xs">
         {label}
         {tooltip && <HelpTooltipIndicator text={tooltip} />}
@@ -221,7 +221,7 @@ function SettingField({
         ) : (
           <>
             <Input
-              className="cursor-default font-mono !text-neutral-500"
+              className="cursor-default font-mono text-neutral-500!"
               value={secret ? (showSecret ? value : maskSecret(value ?? '')) : value}
               readOnly={readOnly}
               trailingNode={<CopyButton valueToCopy={value ?? ''} />}

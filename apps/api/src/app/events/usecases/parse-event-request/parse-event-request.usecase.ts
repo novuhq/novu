@@ -275,6 +275,7 @@ export class ParseEventRequest {
         entity_id: requestId,
         workflow_run_identifier: command.identifier,
         workflow_id: command.workflow?._id || '',
+        provider_id: '',
       };
 
       await this.traceLogRepository.createRequest([traceData]);

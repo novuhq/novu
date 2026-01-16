@@ -55,7 +55,9 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
           throw new DalException(e.message);
         }
         bulkResponse = e.result;
-        writeErrors = e.writeErrors as Array<{ err: { index: number; errmsg: string; op?: { subscriberId?: string } } }>;
+        writeErrors = e.writeErrors as Array<{
+          err: { index: number; errmsg: string; op?: { subscriberId?: string } };
+        }>;
       } else {
         throw new DalException('An unknown error occurred');
       }

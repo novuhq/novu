@@ -66,7 +66,7 @@ export function StatusPreviewCard({ jobs }: StatusPreviewCardProps) {
                 )}
               >
                 {/* Step Icon with Status Overlay */}
-                <div className="relative flex-shrink-0">
+                <div className="relative shrink-0">
                   <div
                     className={cn(
                       'flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 transition-all duration-200',

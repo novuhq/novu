@@ -35,7 +35,7 @@ export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) 
     <div className="relative flex items-center gap-1">
       <div
         className={cn(
-          'absolute left-[11px] h-[calc(100%+24px)] w-[1px] bg-neutral-200',
+          'absolute left-[11px] h-[calc(100%+24px)] w-px bg-neutral-200',
           isFirst ? 'top-[50%]' : 'top-0',
           isLast ? 'h-[50%]' : 'h-[calc(100%+24px)]',
           isFirst && isLast && 'bg-transparent'
@@ -44,7 +44,7 @@ export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) 
 
       <JobStatusIndicator status={job.status} />
 
-      <Card className="border-1 flex-1 overflow-hidden border border-neutral-200 p-1 shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
+      <Card className="border flex-1 overflow-hidden border-neutral-200 p-1 shadow-xs">
         <CardHeader
           className="flex flex-row items-center justify-between bg-white p-2 px-1 hover:cursor-pointer"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -66,7 +66,7 @@ export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) 
             variant="secondary"
             mode="ghost"
             size="xs"
-            className="text-foreground-600 !mt-0 h-5 gap-0 p-0 leading-[12px] hover:bg-transparent"
+            className="text-foreground-600 mt-0! h-5 gap-0 p-0 leading-[12px] hover:bg-transparent"
           >
             Show more
             <ChevronDown className={cn('ml-1 h-4 w-4 transition-transform', isExpanded && 'rotate-180')} />
@@ -305,8 +305,8 @@ function JobStatusIndicator({ status }: JobStatusIndicatorProps) {
   const { icon: Icon, animationClass } = JOB_STATUS_CONFIG[status] || JOB_STATUS_CONFIG[JobStatusEnum.PENDING];
 
   return (
-    <div className="relative flex-shrink-0">
-      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
+    <div className="relative shrink-0">
+      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-xs">
         <div className={`${getJobClasses(status)} flex items-center justify-center`}>
           <Icon className={cn('h-4 w-4', animationClass)} />
         </div>

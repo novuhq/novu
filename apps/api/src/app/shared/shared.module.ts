@@ -10,6 +10,7 @@ import {
   clickHouseService,
   createNestLoggingModuleOptions,
   DalServiceHealthIndicator,
+  DeliveryTrendCountsRepository,
   ExecuteBridgeRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
@@ -20,6 +21,7 @@ import {
   StepRunRepository,
   storageService,
   TraceLogRepository,
+  TraceRollupRepository,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
@@ -120,6 +122,8 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  TraceRollupRepository,
+  DeliveryTrendCountsRepository,
 
   // Services
   clickHouseService,

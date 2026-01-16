@@ -1,6 +1,150 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@config '../tailwind.config.ts';
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility hide-inbox-footer {
+  &
+    .nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-relative {
+  .hide-inbox-footer
+    &.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-flex {
+  .hide-inbox-footer
+    &.nt-relative.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-shrink-0 {
+  .hide-inbox-footer
+    &.nt-relative.nt-flex.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-flex-col {
+  .hide-inbox-footer
+    &.nt-relative.nt-flex.nt-shrink-0.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-justify-center {
+  .hide-inbox-footer
+    &.nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-items-center {
+  .hide-inbox-footer
+    &.nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-gap-1 {
+  .hide-inbox-footer
+    &.nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-mt-auto {
+  .hide-inbox-footer
+    &.nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-py-3 {
+  .hide-inbox-footer
+    &.nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
+}
+
+@utility nt-text-foreground-alpha-400 {
+  .hide-inbox-footer
+    &.nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3 {
+    display: none !important;
+  }
+}
+
+@utility hide-role-column {
+  /*
+   * Hide role column in Clerk organization members table when RBAC is disabled
+   * Unfortunately Clerk doesn't provide a better appearance selector.
+   */
+  & .cl-tableHeaderCell[data-localization-key*='role'] {
+    display: none !important;
+  }
+  & .cl-tableBodyCell:nth-child(3) {
+    display: none !important;
+  }
+}
+
+@utility cl-tableHeaderCell {
+  /*
+   * Hide role column in Clerk organization members table when RBAC is disabled
+   * Unfortunately Clerk doesn't provide a better appearance selector.
+   */
+  .hide-role-column &[data-localization-key*='role'] {
+    display: none !important;
+  }
+
+  /* Show role column in Clerk organization members table when RBAC is enabled */
+  .show-role-column &[data-localization-key*='role'] {
+    display: table-cell !important;
+  }
+}
+
+@utility cl-tableBodyCell {
+  .hide-role-column &:nth-child(3) {
+    display: none !important;
+  }
+
+  .show-role-column &:nth-child(3) {
+    display: table-cell !important;
+  }
+}
+
+@utility show-role-column {
+  /* Show role column in Clerk organization members table when RBAC is enabled */
+  & .cl-tableHeaderCell[data-localization-key*='role'] {
+    display: table-cell !important;
+  }
+  & .cl-tableBodyCell:nth-child(3) {
+    display: table-cell !important;
+  }
+}
+
 @layer base {
   :root {
     --chart-1: oklch(0.646 0.222 41.116);
@@ -365,47 +509,27 @@
   }
 }
 
-/* Chrome, Safari and Opera */
-.nv-no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.nv-no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
-
-/* Hide scrollbar in Novu notification list */
-.nv-no-scrollbar .nv-notificationList::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-
-.nv-no-scrollbar .nv-notificationList {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
-
 @layer utilities {
-  .hide-inbox-footer
-    .nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
-    display: none !important;
+  /* Chrome, Safari and Opera */
+  .nv-no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
-  /*
-   * Hide role column in Clerk organization members table when RBAC is disabled
-   * Unfortunately Clerk doesn't provide a better appearance selector.
-   */
-  .hide-role-column .cl-tableHeaderCell[data-localization-key*="role"],
-  .hide-role-column .cl-tableBodyCell:nth-child(3) {
-    display: none !important;
+  .nv-no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 
-  /* Show role column in Clerk organization members table when RBAC is enabled */
-  .show-role-column .cl-tableHeaderCell[data-localization-key*="role"],
-  .show-role-column .cl-tableBodyCell:nth-child(3) {
-    display: table-cell !important;
+  /* Hide scrollbar in Novu notification list */
+  .nv-no-scrollbar .nv-notificationList::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .nv-no-scrollbar .nv-notificationList {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 }
 
