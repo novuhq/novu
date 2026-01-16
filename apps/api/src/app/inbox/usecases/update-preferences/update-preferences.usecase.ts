@@ -14,6 +14,7 @@ import {
   UpsertSubscriberWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import {
+  BaseRepository,
   EnforceEnvOrOrgIds,
   NotificationTemplateEntity,
   PreferencesDBModel,
@@ -114,13 +115,27 @@ export class UpdatePreferences {
       return undefined;
     }
 
-    const subscription = await this.topicSubscribersRepository.findOne({
+    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
+    // Try to find by identifier first
+    let subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       identifier: command.subscriptionIdentifier,
+      ...contextQuery,
     });
 
-    return subscription?._id;
+    // If not found by identifier, try by _id (in case subscriptionIdentifier is actually an _id)
+    if (!subscription && BaseRepository.isInternalId(command.subscriptionIdentifier)) {
+      subscription = await this.topicSubscribersRepository.findOne({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _id: command.subscriptionIdentifier,
+        ...contextQuery,
+      });
+    }
+
+    return subscription?._id?.toString();
   }
 
   @Instrument()

@@ -41,7 +41,11 @@ export function mapTopicSubscriptionToDto(
           : undefined,
         subscriptionId:
           subscription.identifier ||
-          buildDefaultSubscriptionIdentifier(subscription.topicKey, subscription.externalSubscriberId),
+          buildDefaultSubscriptionIdentifier(
+            subscription.topicKey,
+            subscription.externalSubscriberId,
+            subscription.contextKeys
+          ),
         enabled: preferences?.all?.enabled ?? true,
         condition: preferences?.all?.condition as RulesLogic | undefined,
       };

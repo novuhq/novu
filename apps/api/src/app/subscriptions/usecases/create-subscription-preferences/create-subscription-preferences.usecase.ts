@@ -56,6 +56,7 @@ export class CreateSubscriptionPreferencesUsecase {
         _topicSubscriptionId: command._topicSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
         preferences: workflowPreferences,
+        contextKeys: command.contextKeys,
       });
 
       if (createdPreference) {
@@ -71,7 +72,7 @@ export class CreateSubscriptionPreferencesUsecase {
           },
           subscriptionId:
             command.subscriptionId ||
-            buildDefaultSubscriptionIdentifier(command.topicKey, command.externalSubscriberId),
+            buildDefaultSubscriptionIdentifier(command.topicKey, command.externalSubscriberId, command.contextKeys),
           enabled: createdPreference.preferences?.all?.enabled ?? true,
           condition: createdPreference.preferences?.all?.condition as RulesLogic | undefined,
         });
@@ -148,6 +149,7 @@ export class CreateSubscriptionPreferencesUsecase {
       _topicSubscriptionId: string;
       type: PreferencesTypeEnum;
       preferences: WorkflowPreferences;
+      contextKeys?: string[];
       subscriptionId: string;
       workflow: NotificationTemplateEntity;
     }>
@@ -160,6 +162,7 @@ export class CreateSubscriptionPreferencesUsecase {
       _topicSubscriptionId: string;
       type: PreferencesTypeEnum;
       preferences: WorkflowPreferences;
+      contextKeys?: string[];
       subscriptionId: string;
       workflow: NotificationTemplateEntity;
     }> = [];
@@ -181,9 +184,14 @@ export class CreateSubscriptionPreferencesUsecase {
             _topicSubscriptionId: subscription._id.toString(),
             type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
             preferences: workflowPreferences,
+            contextKeys: command.contextKeys,
             subscriptionId:
               subscription.identifier ||
-              buildDefaultSubscriptionIdentifier(subscription.topicKey, subscription.externalSubscriberId),
+              buildDefaultSubscriptionIdentifier(
+                subscription.topicKey,
+                subscription.externalSubscriberId,
+                subscription.contextKeys
+              ),
             workflow,
           });
         }

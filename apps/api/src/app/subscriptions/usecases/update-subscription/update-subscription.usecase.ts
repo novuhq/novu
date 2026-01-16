@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { buildDefaultSubscriptionIdentifier, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  buildDefaultSubscriptionIdentifier,
+  FeatureFlagsService,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   BaseRepository,
   NotificationTemplateEntity,
@@ -12,7 +17,7 @@ import {
   TopicSubscribersEntity,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { PreferencesTypeEnum, SeverityLevelEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PreferencesTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import { RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import { GroupPreferenceFilterDto } from '../../../shared/dtos/subscriptions/create-subscriptions.dto';
@@ -33,6 +38,7 @@ export class UpdateSubscriptionUsecase {
     private preferencesRepository: PreferencesRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createSubscriptionPreferencesUsecase: CreateSubscriptionPreferencesUsecase,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -56,11 +62,14 @@ export class UpdateSubscriptionUsecase {
       throw new NotFoundException(`Topic with key ${command.topicKey} not found`);
     }
 
+    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
     const subscription = await this.topicSubscribersRepository.findOne({
       identifier: command.identifier,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _topicId: topic._id,
+      ...contextQuery,
     });
 
     if (!subscription) {
@@ -110,10 +119,38 @@ export class UpdateSubscriptionUsecase {
       updatedSubscription,
       command.environmentId,
       command.organizationId,
-      workflows
+      workflows,
+      command.contextKeys
     );
 
     return this.mapSubscriptionToDto(updatedSubscription, subscriber, topic, preferences);
+  }
+
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    organizationId: string
+  ): Promise<Record<string, unknown>> {
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!useContextFiltering) {
+      return {}; // FF OFF: no context filtering (pre-feature behavior)
+    }
+
+    // undefined or empty array = match only "no context" subscriptions/preferences
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 
   private async updatePreferencesForSubscription(
@@ -121,12 +158,15 @@ export class UpdateSubscriptionUsecase {
     subscription: TopicSubscribersEntity,
     workflows: NotificationTemplateEntity[]
   ): Promise<void> {
+    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
     await this.preferencesRepository.delete({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _topicSubscriptionId: subscription._id,
       _subscriberId: subscription._subscriberId,
       type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      ...contextQuery,
     });
 
     if (!command.preferences || command.preferences.length === 0) {
@@ -145,6 +185,7 @@ export class UpdateSubscriptionUsecase {
         topicKey: subscription.topicKey,
         externalSubscriberId: subscription.externalSubscriberId,
         workflows,
+        contextKeys: subscription.contextKeys,
       })
     );
   }
@@ -153,11 +194,14 @@ export class UpdateSubscriptionUsecase {
     subscription: TopicSubscribersEntity,
     environmentId: string,
     organizationId: string,
-    workflows: NotificationTemplateEntity[]
+    workflows: NotificationTemplateEntity[],
+    contextKeys?: string[]
   ): Promise<SubscriptionPreferenceDto[] | undefined> {
     if (workflows.length === 0) {
       return undefined;
     }
+
+    const contextQuery = await this.buildContextExactMatchQuery(contextKeys, organizationId);
 
     const preferencesEntities = await this.preferencesRepository.find({
       _environmentId: environmentId,
@@ -166,6 +210,7 @@ export class UpdateSubscriptionUsecase {
       _subscriberId: subscription._subscriberId,
       _templateId: { $in: workflows.map((w) => w._id) },
       type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      ...contextQuery,
     });
 
     if (preferencesEntities.length === 0) {
@@ -196,7 +241,11 @@ export class UpdateSubscriptionUsecase {
             : undefined,
           subscriptionId:
             subscription.identifier ||
-            buildDefaultSubscriptionIdentifier(subscription.topicKey, subscription.externalSubscriberId),
+            buildDefaultSubscriptionIdentifier(
+              subscription.topicKey,
+              subscription.externalSubscriberId,
+              subscription.contextKeys
+            ),
           enabled: preferences?.all?.enabled ?? true,
           condition: preferences?.all?.condition as RulesLogic | undefined,
         };

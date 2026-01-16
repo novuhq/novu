@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { GetPreferences, GetPreferencesCommand, InstrumentUsecase } from '@novu/application-generic';
+import {
+  FeatureFlagsService,
+  GetPreferences,
+  GetPreferencesCommand,
+  InstrumentUsecase,
+} from '@novu/application-generic';
 import {
   BaseRepository,
   NotificationTemplateRepository,
@@ -8,7 +13,7 @@ import {
   TopicSubscribersEntity,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { PreferencesTypeEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PreferencesTypeEnum } from '@novu/shared';
 import { SubscriptionDetailsResponseDto } from '../../../shared/dtos/subscription-details-response.dto';
 import {
   mapTopicSubscriptionToDto,
@@ -25,16 +30,20 @@ export class GetSubscription {
     private topicSubscribersRepository: TopicSubscribersRepository,
     private preferencesRepository: PreferencesRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private getPreferences: GetPreferences
+    private getPreferences: GetPreferences,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: GetSubscriptionCommand): Promise<SubscriptionDetailsResponseDto | null> {
+    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       topicKey: command.topicKey,
       identifier: command.identifier,
+      ...contextQuery,
     });
 
     if (!subscription) {
@@ -46,6 +55,7 @@ export class GetSubscription {
       _subscriberId: subscription._subscriberId,
       _topicSubscriptionId: subscription._id,
       type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      ...contextQuery,
     });
 
     const { allPreferencesEntities, allWorkflowEntities } = await this.resolveWorkflowPreferences(
@@ -137,6 +147,7 @@ export class GetSubscription {
             subscriberId: subscription._subscriberId,
             templateId: workflow._id,
             excludeSubscriberPreferences: true,
+            contextKeys: subscription.contextKeys,
           })
         );
 
@@ -152,5 +163,32 @@ export class GetSubscription {
     );
 
     return computedPreferences.filter((pref): pref is NonNullable<typeof pref> => pref !== null);
+  }
+
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    organizationId: string
+  ): Promise<Record<string, unknown>> {
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!useContextFiltering) {
+      return {}; // FF OFF: no context filtering (pre-feature behavior)
+    }
+
+    // undefined or empty array = match only "no context" preferences
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }

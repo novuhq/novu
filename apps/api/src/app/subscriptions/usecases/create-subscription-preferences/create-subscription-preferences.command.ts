@@ -36,4 +36,9 @@ export class CreateSubscriptionPreferencesCommand extends EnvironmentWithUserCom
   @ValidateNested({ each: true })
   @Type(() => NotificationTemplateEntity)
   workflows: NotificationTemplateEntity[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  contextKeys?: string[];
 }
