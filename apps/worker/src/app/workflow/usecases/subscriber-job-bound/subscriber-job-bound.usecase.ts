@@ -90,9 +90,10 @@ export class SubscriberJobBound {
       identifier,
       _subscriberSource,
       requestCategory,
-      topics,
       contextKeys,
     } = command;
+
+    let { topics } = command;
 
     const template = command.bridge?.workflow
       ? await this.getCodeFirstWorkflow(command)
@@ -171,7 +172,6 @@ export class SubscriberJobBound {
       return;
     }
 
-    let finalTopics = topics;
     if (topics && topics.length > 0) {
       const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template._id);
 
@@ -179,7 +179,7 @@ export class SubscriberJobBound {
         return;
       }
 
-      finalTopics = evaluatedTopics;
+      topics = evaluatedTopics;
     }
 
     const severity = command.overrides.severity ?? template.severity ?? SeverityLevelEnum.NONE;
@@ -213,7 +213,7 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       userId,
       tenant,
-      topics: finalTopics,
+      topics,
       bridgeUrl: command.bridge?.url,
       /*
        * Only populate preferences if the command contains a `bridge` property,
@@ -471,8 +471,7 @@ export class SubscriberJobBound {
         organization: { _id: command.organizationId },
       });
 
-      const contextQuery =
-        useContextFiltering && command.contextKeys ? this.buildContextExactMatchQuery(command.contextKeys) : {};
+      const contextQuery = useContextFiltering ? this.buildContextExactMatchQuery(command.contextKeys) : {};
 
       const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
