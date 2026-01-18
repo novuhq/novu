@@ -52,7 +52,7 @@ export function SSOSignIn() {
       <h2 className="mb-6 text-center text-xl font-semibold">Sign In with SSO</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="sso-email" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="sso-email" className="mb-1 block text-sm font-medium text-foreground-700">
             Work Email
           </label>
           <Input
@@ -64,7 +64,7 @@ export function SSOSignIn() {
             required
             className="w-full"
           />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-foreground-500">
             Enter your work email to sign in with your organization&apos;s SSO provider
           </p>
         </div>
@@ -72,7 +72,7 @@ export function SSOSignIn() {
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
           {isLoading ? 'Redirecting...' : 'Continue with SSO'}
         </Button>
-        <p className="mt-4 text-center text-sm text-gray-600">
+        <p className="mt-4 text-center text-sm text-foreground-600">
           <span
             role="button"
             tabIndex={0}

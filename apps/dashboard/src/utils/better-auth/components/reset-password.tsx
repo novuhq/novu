@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
@@ -71,7 +71,7 @@ export function ResetPassword() {
       <h2 className="mb-6 text-center text-xl font-semibold">Reset Password</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="newPassword" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="newPassword" className="mb-1 block text-sm font-medium text-foreground-700">
             New Password
           </label>
           <Input
@@ -86,7 +86,7 @@ export function ResetPassword() {
           />
         </div>
         <div>
-          <label htmlFor="confirmPassword" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="confirmPassword" className="mb-1 block text-sm font-medium text-foreground-700">
             Confirm Password
           </label>
           <Input
@@ -104,7 +104,7 @@ export function ResetPassword() {
         <Button type="submit" disabled={isLoading || !token} variant="primary" mode="filled" className="w-full">
           {isLoading ? 'Resetting...' : 'Reset Password'}
         </Button>
-        <p className="mt-4 text-center text-sm text-gray-600">
+        <p className="mt-4 text-center text-sm text-foreground-600">
           <span
             role="button"
             tabIndex={0}

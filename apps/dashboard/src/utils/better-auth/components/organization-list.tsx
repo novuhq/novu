@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { authClient } from '../client';
@@ -63,18 +63,13 @@ export function OrganizationList() {
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Organizations</h2>
-        <Button
-          variant="primary"
-          mode="filled"
-          size="sm"
-          onClick={() => setShowCreateForm(!showCreateForm)}
-        >
+        <Button variant="primary" mode="filled" size="sm" onClick={() => setShowCreateForm(!showCreateForm)}>
           {showCreateForm ? 'Cancel' : 'Create New'}
         </Button>
       </div>
 
       {showCreateForm && (
-        <form onSubmit={handleCreateOrganization} className="space-y-3 rounded border p-4">
+        <form onSubmit={handleCreateOrganization} className="space-y-3 rounded border-neutral-200 p-4">
           <div>
             <label htmlFor="orgName" className="mb-1 block text-sm font-medium">
               Organization Name
@@ -96,26 +91,18 @@ export function OrganizationList() {
 
       <div className="space-y-2">
         {organizations.map((org) => (
-          <div
-            key={org.id}
-            className="flex items-center justify-between rounded border p-3"
-          >
+          <div key={org.id} className="flex items-center justify-between rounded border-neutral-200 p-3">
             <div>
               <p className="font-medium">{org.name}</p>
-              <p className="text-sm text-gray-500">{org.slug}</p>
+              <p className="text-sm text-foreground-500">{org.slug}</p>
             </div>
-            <Button
-              variant="secondary"
-              mode="outline"
-              size="sm"
-              onClick={() => handleSetActive(org.id)}
-            >
+            <Button variant="secondary" mode="outline" size="sm" onClick={() => handleSetActive(org.id)}>
               Switch To
             </Button>
           </div>
         ))}
         {organizations.length === 0 && !showCreateForm && (
-          <p className="text-center text-gray-500">No organizations found</p>
+          <p className="text-center text-foreground-500">No organizations found</p>
         )}
       </div>
     </div>

@@ -451,7 +451,7 @@ export function UserProfile({ children }: UserProfileProps) {
 
   const pageLabels = React.Children.toArray(children)
     .filter((child): child is React.ReactElement => React.isValidElement(child))
-    .map((child) => child.props.label)
+    .map((child) => (child.props as { label: string }).label)
     .filter(Boolean);
 
   const showProfile = !pageLabels.length || pageLabels[0] === 'account';

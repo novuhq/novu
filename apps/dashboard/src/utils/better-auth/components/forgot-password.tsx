@@ -43,7 +43,7 @@ export function ForgotPassword() {
       <div className="mx-auto w-full max-w-md pt-12">
         <h2 className="mb-6 text-center text-xl font-semibold">Check Your Email</h2>
         <div className="space-y-6">
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-foreground-600">
             We've sent a password reset link to <strong>{email}</strong>. Please check your email and click the link to
             reset your password.
           </p>
@@ -60,7 +60,7 @@ export function ForgotPassword() {
       <h2 className="mb-6 text-center text-xl font-semibold">Forgot Password</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-foreground-700">
             Email
           </label>
           <Input
@@ -77,7 +77,7 @@ export function ForgotPassword() {
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
           {isLoading ? 'Sending...' : 'Send Reset Link'}
         </Button>
-        <p className="mt-4 text-center text-sm text-gray-600">
+        <p className="mt-4 text-center text-sm text-foreground-600">
           Remember your password?{' '}
           <span
             role="button"

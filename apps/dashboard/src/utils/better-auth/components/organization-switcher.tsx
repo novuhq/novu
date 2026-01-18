@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { RiArrowDownSLine } from 'react-icons/ri';
 import { authClient } from '../client';
 
 export function OrganizationSwitcher() {
@@ -43,42 +44,26 @@ export function OrganizationSwitcher() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded border px-3 py-2 hover:bg-gray-50"
+        className="flex items-center gap-2 rounded border-neutral-200 px-3 py-2 hover:bg-neutral-50"
       >
-        <span className="text-sm font-medium">
-          {currentOrg?.name || 'Select Organization'}
-        </span>
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        <span className="text-sm font-medium">{currentOrg?.name || 'Select Organization'}</span>
+        <RiArrowDownSLine className="h-4 w-4" />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full z-10 mt-1 w-64 rounded border bg-white shadow-lg">
+        <div className="absolute left-0 top-full z-10 mt-1 w-64 rounded border-neutral-200 bg-white shadow-lg">
           <div className="max-h-64 overflow-y-auto p-2">
             {organizations.map((org) => (
               <button
                 key={org.id}
                 onClick={() => handleSwitch(org.id)}
-                className="w-full rounded px-3 py-2 text-left text-sm hover:bg-gray-100"
+                className="w-full rounded px-3 py-2 text-left text-sm hover:bg-neutral-100"
               >
                 <div className="font-medium">{org.name}</div>
-                <div className="text-xs text-gray-500">{org.slug}</div>
+                <div className="text-xs text-foreground-500">{org.slug}</div>
               </button>
             ))}
-            {organizations.length === 0 && (
-              <p className="px-3 py-2 text-sm text-gray-500">No organizations</p>
-            )}
+            {organizations.length === 0 && <p className="px-3 py-2 text-sm text-foreground-500">No organizations</p>}
           </div>
         </div>
       )}

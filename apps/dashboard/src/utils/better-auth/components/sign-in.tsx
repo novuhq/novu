@@ -82,7 +82,7 @@ export function SignIn() {
       <h2 className="mb-6 text-center text-xl font-semibold">Sign In</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-foreground-700">
             Email
           </label>
           <Input
@@ -97,7 +97,7 @@ export function SignIn() {
         </div>
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-foreground-700">
               Password
             </label>
             <span
@@ -142,7 +142,7 @@ export function SignIn() {
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
           {isLoading ? 'Signing In...' : 'Sign In'}
         </Button>
-        <p className="mt-4 text-center text-sm text-gray-600">
+        <p className="mt-4 text-center text-sm text-foreground-600">
           Don&apos;t have an account?{' '}
           <span
             role="button"
@@ -161,10 +161,10 @@ export function SignIn() {
         <>
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-neutral-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">Or</span>
+              <span className="bg-white px-2 text-foreground-500">Or</span>
             </div>
           </div>
           <Button variant="secondary" mode="outline" className="w-full" onClick={() => navigate(ROUTES.SSO_SIGN_IN)}>

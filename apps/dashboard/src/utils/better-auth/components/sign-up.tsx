@@ -133,7 +133,7 @@ export function SignUp() {
       <h2 className="mb-6 text-center text-xl font-semibold">Create Account</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="firstName" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="firstName" className="mb-1 block text-sm font-medium text-foreground-700">
             First Name <span className="text-red-600">*</span>
           </label>
           <Input
@@ -146,7 +146,7 @@ export function SignUp() {
           />
         </div>
         <div>
-          <label htmlFor="lastName" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="lastName" className="mb-1 block text-sm font-medium text-foreground-700">
             Last Name
           </label>
           <Input
@@ -158,7 +158,7 @@ export function SignUp() {
           />
         </div>
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-foreground-700">
             Email <span className="text-red-600">*</span>
           </label>
           <Input
@@ -171,7 +171,7 @@ export function SignUp() {
           />
         </div>
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="mb-1 block text-sm font-medium text-foreground-700">
             Password <span className="text-red-600">*</span>
           </label>
           <Input
@@ -187,7 +187,7 @@ export function SignUp() {
             className="w-full"
             aria-describedby="password-constraints"
           />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-foreground-500">
             Min. 8 characters, include uppercase, lowercase, number, and special character.
           </p>
         </div>
@@ -204,7 +204,7 @@ export function SignUp() {
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="!mt-6 w-full">
           {isLoading ? 'Creating Account...' : 'Create Account'}
         </Button>
-        <p className="mt-4 text-center text-sm text-gray-600">
+        <p className="mt-4 text-center text-sm text-foreground-600">
           Already have an account?{' '}
           <span
             role="button"
