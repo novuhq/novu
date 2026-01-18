@@ -336,12 +336,12 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
               </div>
               <Separator />
 
-              <div className="grid grid-cols-[1fr_3fr] gap-2.5">
+              <div className="grid grid-cols-[1fr_1fr] gap-2.5">
                 <FormField
                   control={form.control}
                   name="locale"
                   render={({ field }) => (
-                    <FormItem className="w-full">
+                    <FormItem className="">
                       <FormLabel>Locale</FormLabel>
                       <FormControl>
                         <LocaleSelect
@@ -361,7 +361,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                   control={form.control}
                   name="timezone"
                   render={({ field }) => (
-                    <FormItem className="w-full grow-0 overflow-hidden">
+                    <FormItem className="flex flex-col gap-1.5 space-y-0 grow-0 overflow-hidden">
                       <FormLabel>Timezone</FormLabel>
                       <FormControl>
                         <TimezoneSelect

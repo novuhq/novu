@@ -400,7 +400,7 @@ describe('Session', () => {
       )
     ).to.be.true;
 
-    expect(response.contextKeys).to.deep.equal(['teamId:team-123', 'projectId:project-456']);
+    expect(response.contextKeys).to.deep.equal(['projectId:project-456', 'teamId:team-123']);
   });
 
   it('should validate context HMAC when HMAC is enabled and context is provided', async () => {

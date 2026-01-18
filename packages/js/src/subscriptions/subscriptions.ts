@@ -27,7 +27,7 @@ import type {
 export class Subscriptions extends BaseModule {
   #useCache: boolean;
   #subscriber: Subscriber;
-
+  #contextKey: string;
   readonly cache: SubscriptionsCache;
 
   constructor({
@@ -35,11 +35,13 @@ export class Subscriptions extends BaseModule {
     inboxServiceInstance,
     eventEmitterInstance,
     subscriber,
+    contextKey,
   }: {
     useCache: boolean;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
     subscriber: Subscriber;
+    contextKey: string;
   }) {
     super({
       eventEmitterInstance,
@@ -52,6 +54,7 @@ export class Subscriptions extends BaseModule {
     });
     this.#useCache = useCache;
     this.#subscriber = subscriber;
+    this.#contextKey = contextKey;
   }
 
   async list(args: ListSubscriptionsArgs, options?: Options): Result<TopicSubscription[]> {
@@ -83,7 +86,11 @@ export class Subscriptions extends BaseModule {
           ...args,
           identifier:
             args.identifier ??
-            buildSubscriptionIdentifier({ topicKey: args.topicKey, subscriberId: this.#subscriber.subscriberId }),
+            buildSubscriptionIdentifier({
+              topicKey: args.topicKey,
+              subscriberId: this.#subscriber.subscriberId,
+              contextKey: this.#contextKey,
+            }),
         },
       })
     );

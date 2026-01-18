@@ -14,6 +14,7 @@ import {
   UpsertSubscriberWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import {
+  BaseRepository,
   EnforceEnvOrOrgIds,
   NotificationTemplateEntity,
   PreferencesDBModel,
@@ -40,6 +41,7 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
+import { stripContextFromIdentifier } from '../../../subscriptions/utils/subscriptions';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
@@ -114,13 +116,38 @@ export class UpdatePreferences {
       return undefined;
     }
 
-    const subscription = await this.topicSubscribersRepository.findOne({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      identifier: command.subscriptionIdentifier,
+    const isContextEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
     });
 
-    return subscription?._id;
+    let identifier = command.subscriptionIdentifier;
+    if (!isContextEnabled) {
+      identifier = stripContextFromIdentifier(identifier);
+    }
+
+    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
+    // Try to find by identifier first
+    let subscription = await this.topicSubscribersRepository.findOne({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      identifier,
+      ...contextQuery,
+    });
+
+    // If not found by identifier, try by _id (in case subscriptionIdentifier is actually an _id)
+    if (!subscription && BaseRepository.isInternalId(command.subscriptionIdentifier)) {
+      subscription = await this.topicSubscribersRepository.findOne({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _id: command.subscriptionIdentifier,
+        ...contextQuery,
+      });
+    }
+
+    return subscription?._id?.toString();
   }
 
   @Instrument()
