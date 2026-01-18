@@ -71,12 +71,11 @@ const getRuleSchema = (
 
   return z.union([
     z
-      .object({
+      .looseObject({
         field: z.string().min(1),
         operator: z.string(),
         value: z.string().nullable(),
       })
-      .passthrough()
       .superRefine(({ field, operator, value }, ctx) => {
         if (operator === 'between' || operator === 'notBetween') {
           const values = value?.split(',').filter((val) => val.trim() !== '');
@@ -138,12 +137,10 @@ const getRuleSchema = (
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is not valid', path: ['field'] });
         }
       }),
-    z
-      .object({
-        combinator: z.string(),
-        rules: z.array(z.lazy(() => getRuleSchema(fields, isAllowedVariableFn))),
-      })
-      .passthrough(),
+    z.looseObject({
+      combinator: z.string(),
+      rules: z.array(z.lazy(() => getRuleSchema(fields, isAllowedVariableFn))),
+    }),
   ]);
 };
 
@@ -156,12 +153,10 @@ const getConditionsSchema = (
   isAllowedVariableFn: (variable: { name: string }) => boolean
 ): z.ZodType<FormQuery> => {
   return z.object({
-    query: z
-      .object({
-        combinator: z.string(),
-        rules: z.array(getRuleSchema(fields, isAllowedVariableFn)),
-      })
-      .passthrough(),
+    query: z.looseObject({
+      combinator: z.string(),
+      rules: z.array(getRuleSchema(fields, isAllowedVariableFn)),
+    }),
   });
 };
 

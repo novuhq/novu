@@ -34,7 +34,7 @@
     "@codemirror/lang-html": "^6.4.9",
     "@codemirror/lang-liquid": "^6.2.3",
     "@codemirror/language": "^6.11.1",
-    "@hookform/resolvers": "^3.10.0",
+    "@hookform/resolvers": "^5.2.2",
     "@inkeep/cxkit-react": "^0.5.107",
     "@lezer/highlight": "^1.2.1",
     "@novu/api": "workspace:*",
@@ -128,7 +128,7 @@
     "tailwindcss-animate": "^1.0.7",
     "use-deep-compare-effect": "^1.8.1",
     "uuid": "^11.1.0",
-    "zod": "^3.23.8"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",

@@ -17,11 +17,11 @@ export type ZodValue =
 
 const handleStringFormat = ({ value, key, format }: { value: z.ZodString; key: string; format: string }) => {
   if (format === 'email') {
-    return value.email();
+    return z.email();
   } else if (format === 'uri') {
     return value
       .transform((val) => (val === '' ? undefined : val))
-      .refine((val) => !val || z.string().url().safeParse(val).success, {
+      .refine((val) => !val || z.url().safeParse(val).success, {
         message: `${capitalize(key)} must be a valid URI`,
       });
   }

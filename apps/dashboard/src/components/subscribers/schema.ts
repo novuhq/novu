@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const SubscriberFormSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  email: z.string().email().optional().nullable(),
+  email: z.email().optional().nullable(),
   phone: z
     .string()
     .refine(isValidPhoneNumber, { message: 'Invalid phone number' })
@@ -40,7 +40,7 @@ export const CreateSubscriberFormSchema = SubscriberFormSchema.extend({
   email: z
     .string()
     .trim()
-    .refine((val) => val === '' || z.string().email().safeParse(val).success, {
+    .refine((val) => val === '' || z.email().safeParse(val).success, {
       message: 'Invalid email',
     }),
   locale: z.string().optional(),

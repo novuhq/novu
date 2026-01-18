@@ -56,17 +56,17 @@ export const buildDynamicFormSchema = ({
     let zodValue: z.ZodString | z.ZodNumber | z.ZodOptional<z.ZodString | z.ZodNumber>;
 
     if (value.type === 'string') {
-      zodValue = z.string().min(1);
-
-      if (key === 'subscriberId') {
-        zodValue = zodValue.regex(
-          VALID_ID_REGEX,
-          'SubscriberId must be a string of alphanumeric characters, -, _, and . or a valid email address.'
-        );
-      }
-
       if (value.format === 'email') {
-        zodValue = zodValue.email();
+        zodValue = z.email();
+      } else {
+        zodValue = z.string().min(1);
+
+        if (key === 'subscriberId') {
+          zodValue = zodValue.regex(
+            VALID_ID_REGEX,
+            'SubscriberId must be a string of alphanumeric characters, -, _, and . or a valid email address.'
+          );
+        }
       }
     } else {
       zodValue = z.number().min(1);
@@ -80,11 +80,9 @@ export const buildDynamicFormSchema = ({
   }, {});
 
   return z.object({
-    to: z
-      .object({
-        ...keys,
-      })
-      .passthrough(),
+    to: z.looseObject({
+      ...keys,
+    }),
     payload: z.string().transform((str, ctx) => {
       try {
         return JSON.parse(str);
@@ -118,5 +116,5 @@ const WorkflowPreferencesSchema = z.object({
 
 export const UserPreferencesFormSchema = z.object({
   user: WorkflowPreferencesSchema.nullable(),
-  severity: z.nativeEnum(SeverityLevelEnum).default(SeverityLevelEnum.NONE),
+  severity: z.enum(Object.values(SeverityLevelEnum) as [string, ...string[]]).default(SeverityLevelEnum.NONE),
 });

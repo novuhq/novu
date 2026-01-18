@@ -25,7 +25,7 @@ import { PermissionButton } from '../primitives/permission-button';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '../primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
-const formSchema = z.object({ bridgeUrl: z.string().url() });
+const formSchema = z.object({ bridgeUrl: z.url() });
 
 export const EditBridgeUrlButton = () => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
