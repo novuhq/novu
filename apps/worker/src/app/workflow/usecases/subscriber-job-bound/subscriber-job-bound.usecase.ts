@@ -464,12 +464,22 @@ export class SubscriberJobBound {
     templateId: string
   ): Promise<TopicPreferenceEvaluation> {
     try {
+      const useContextFiltering = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+      });
+
+      const contextQuery =
+        useContextFiltering && command.contextKeys ? this.buildContextExactMatchQuery(command.contextKeys) : {};
+
       const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _templateId: templateId,
         _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+        ...contextQuery,
       });
 
       if (subscriptionPreference) {
@@ -550,6 +560,18 @@ export class SubscriberJobBound {
     }
 
     return enabled;
+  }
+
+  private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 
   private async createSubscriberTrace(
