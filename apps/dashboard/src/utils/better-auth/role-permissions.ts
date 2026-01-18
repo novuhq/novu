@@ -77,3 +77,9 @@ export const ROLE_PERMISSIONS: Record<MemberRoleEnum, PermissionsEnum[]> = {
   [MemberRoleEnum.OSS_MEMBER]: [],
   [MemberRoleEnum.OSS_ADMIN]: [],
 };
+
+type UsedPermissions = (typeof ROLE_PERMISSIONS)[MemberRoleEnum][number];
+type UnusedPermissions = Exclude<PermissionsEnum, UsedPermissions>;
+type AssertAllPermissionsUsed = UnusedPermissions extends never ? true : `Missing permissions: ${UnusedPermissions}`;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _assertAllPermissionsUsed: AssertAllPermissionsUsed = true;

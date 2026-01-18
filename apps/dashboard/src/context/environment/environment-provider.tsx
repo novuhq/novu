@@ -86,8 +86,6 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     showError: false,
   });
 
-  console.log({ authResp }, 'ENVIRONMENTS', { currentOrganization });
-
   useLayoutEffect(() => {
     if (!environments) {
       return;

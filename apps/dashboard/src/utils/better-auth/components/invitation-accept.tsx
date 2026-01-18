@@ -15,7 +15,6 @@ export function InvitationAccept() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasAttempted = useRef(false);
-  const isRefreshing = useRef(false);
 
   const invitationId = searchParams.get('id');
 
@@ -28,12 +27,6 @@ export function InvitationAccept() {
       return;
     }
 
-    console.log('invitationId', invitationId);
-    console.log('isSignedIn', isSignedIn);
-    console.log('isLoaded', isLoaded);
-    console.log('isRefreshing', isRefreshing.current);
-    console.log('hasAttempted', hasAttempted.current);
-
     if (!invitationId) {
       setError('Invalid invitation link. No invitation ID provided.');
       setIsLoading(false);
@@ -42,7 +35,6 @@ export function InvitationAccept() {
     }
 
     if (!isSignedIn) {
-      console.log('not signed in, redirecting to sign-up');
       sessionStorage.setItem('pendingInvitationId', invitationId || '');
       navigate(`${ROUTES.SIGN_UP}?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
 
@@ -62,8 +54,6 @@ export function InvitationAccept() {
           invitationId,
         });
 
-        console.log('result', result);
-
         acceptData = result.data;
         acceptError = result.error;
       } catch (apiError: any) {
@@ -76,7 +66,6 @@ export function InvitationAccept() {
 
       const organizationId = acceptData?.invitation?.organizationId;
 
-      console.log('organizationId', organizationId);
       if (organizationId) {
         await authClient.organization.setActive({
           organizationId,
@@ -93,7 +82,7 @@ export function InvitationAccept() {
     } finally {
       setIsLoading(false);
     }
-  }, [invitationId, isSignedIn, navigate, isLoaded, refreshSession]);
+  }, [invitationId, isSignedIn, navigate, isLoaded]);
 
   useEffect(() => {
     if (isLoaded) {

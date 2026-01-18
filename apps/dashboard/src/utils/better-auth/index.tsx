@@ -200,11 +200,9 @@ export function useUser() {
             newDashboardOptInStatus: 'opted_in',
           },
           update: async (data: any) => {
-            console.log('Better Auth: user.update() called with:', data);
             return Promise.resolve();
           },
           reload: async () => {
-            console.log('Better Auth: user.reload() called');
             return Promise.resolve();
           },
         }
@@ -231,7 +229,6 @@ export function useOrganization() {
             externalOrgId: context.organization.id,
           },
           reload: async () => {
-            console.log('Better Auth: organization.reload() called');
             return Promise.resolve();
           },
         }
