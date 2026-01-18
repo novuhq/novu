@@ -171,6 +171,7 @@ export class SubscriberJobBound {
       return;
     }
 
+    let finalTopics = topics;
     if (topics && topics.length > 0) {
       const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template._id);
 
@@ -178,7 +179,7 @@ export class SubscriberJobBound {
         return;
       }
 
-      command.topics = evaluatedTopics;
+      finalTopics = evaluatedTopics;
     }
 
     const severity = command.overrides.severity ?? template.severity ?? SeverityLevelEnum.NONE;
@@ -212,7 +213,7 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       userId,
       tenant,
-      topics,
+      topics: finalTopics,
       bridgeUrl: command.bridge?.url,
       /*
        * Only populate preferences if the command contains a `bridge` property,
