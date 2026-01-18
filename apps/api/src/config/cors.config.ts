@@ -42,7 +42,7 @@ function enableWildcard(req: Request): boolean {
   );
 }
 
-// Better auth are handled by the better-auth plugin, so we need to allow all origins for it
+// BetterAuth routes require explicit origin validation for credential-based requests
 function isBetterAuthRoute(url: string): boolean {
   return url.startsWith('/v1/better-auth');
 }
