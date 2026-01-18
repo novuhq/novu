@@ -36,7 +36,7 @@ export const EnvironmentDropdown = ({
         open={isSelectOpen}
         onOpenChange={setIsSelectOpen}
       >
-        <SelectTrigger className={cn('group p-1.5 shadow-sm last:[&>svg]:hidden', className)}>
+        <SelectTrigger className={cn('group p-1.5 shadow-sm [&>svg]:last:hidden', className)}>
           <SelectValue asChild>
             <div className="flex items-center gap-2">
               <EnvironmentBranchIcon environment={currentEnvironment} />

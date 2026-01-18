@@ -36,7 +36,7 @@ const CommandDialog = ({
           className={cn(
             'divide-y divide-neutral-200',
             'grid min-h-0 auto-cols-auto grid-flow-row',
-            '[&>[cmdk-label]+*]:!border-t-0'
+            '[&>[cmdk-label]+*]:border-t-0!'
           )}
           filter={(value, search, keywords) => {
             const extendValue = value + ' ' + (keywords?.join(' ') || '');
@@ -59,10 +59,10 @@ const CommandInput = React.forwardRef<
     <Command.Input
       ref={forwardedRef}
       className={cn(
-        'w-full bg-transparent text-sm text-foreground-950 outline-none',
+        'w-full bg-transparent text-sm text-foreground-950 outline-hidden',
         'transition duration-200 ease-out',
         'placeholder:text-foreground-400',
-        'focus:outline-none',
+        'focus:outline-hidden',
         className
       )}
       {...rest}
@@ -94,9 +94,9 @@ const CommandGroup = React.forwardRef<
       ref={forwardedRef}
       className={cn(
         'px-2 py-0',
-        '[&>[cmdk-group-heading]]:text-[10px] [&>[cmdk-group-heading]]:text-text-soft',
-        '[&>[cmdk-group-heading]]:px-1.5 [&>[cmdk-group-heading]]:py-2',
-        '[&>[cmdk-group-heading]]:uppercase',
+        '**:[[cmdk-group-heading]]:text-[10px] **:[[cmdk-group-heading]]:text-text-soft',
+        '**:[[cmdk-group-heading]]:px-1.5 **:[[cmdk-group-heading]]:py-2',
+        '**:[[cmdk-group-heading]]:uppercase',
         className
       )}
       {...rest}

@@ -34,7 +34,7 @@ export function EditableJsonViewer({
   schema,
   isReadOnly = false,
 }: EditableJsonViewerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const ajvValidator = useMemo(() => {
@@ -176,9 +176,9 @@ export function EditableJsonViewer({
       <div
         className={cn(
           'flex-1 overflow-auto overflow-x-auto scrollbar-thin',
-          '[mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)]',
-          '[mask-size:100%_100%]',
-          '[mask-repeat:no-repeat]'
+          'mask-[linear-gradient(to_right,black_calc(100%-1.5rem),transparent)]',
+          'mask-size-[100%_100%]',
+          'mask-no-repeat'
         )}
       >
         <JsonEditor

@@ -68,13 +68,14 @@ export class TopicSubscribersRepository extends BaseRepository<
 
   async createSubscriptions(subscriptions: CreateTopicSubscribersEntity[]): Promise<BulkAddTopicSubscribersResult> {
     const bulkUpsertWriteOps = subscriptions.map((subscription) => {
-      const { _subscriberId, _topicId, _environmentId, identifier } = subscription;
+      const { _subscriberId, _topicId, _environmentId, identifier, contextKeys } = subscription;
 
       const filter: Partial<CreateTopicSubscribersEntity> = {
         _environmentId,
         _subscriberId,
         _topicId,
         identifier,
+        ...(contextKeys && contextKeys.length > 0 ? { contextKeys } : {}),
       };
 
       return {
@@ -169,11 +170,15 @@ export class TopicSubscribersRepository extends BaseRepository<
       _organizationId: OrganizationId;
       topicIds: string[];
       excludeSubscribers: string[];
+      contextKeys?: string[];
     };
     batchSize?: number;
   }): AsyncGenerator<{ _id: string; subscriberId: string; _topicId: string; identifier: string }, void, unknown> {
-    const { _organizationId, _environmentId, topicIds, excludeSubscribers } = query;
+    const { _organizationId, _environmentId, topicIds, excludeSubscribers, contextKeys } = query;
     const mappedTopicIds = topicIds.map((id) => this.convertStringToObjectId(id));
+
+    // Build context query: undefined = no filter (backward compatibility), otherwise use shared method
+    const contextMatch = contextKeys !== undefined ? this.buildContextExactMatchQuery(contextKeys) : {};
 
     const aggregatePipeline = [
       {
@@ -182,6 +187,7 @@ export class TopicSubscribersRepository extends BaseRepository<
           _environmentId: this.convertStringToObjectId(_environmentId),
           _topicId: { $in: mappedTopicIds },
           externalSubscriberId: { $nin: excludeSubscribers },
+          ...contextMatch,
         },
       },
       {
@@ -370,6 +376,20 @@ export class TopicSubscribersRepository extends BaseRepository<
     }
 
     return countMap;
+  }
+
+  buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
+    // undefined or empty array = match only "no context" subscriptions
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match filtering (order-insensitive)
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }
 

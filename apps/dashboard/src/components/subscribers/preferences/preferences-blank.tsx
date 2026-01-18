@@ -1,4 +1,5 @@
 import { PermissionsEnum } from '@novu/shared';
+import { IconType } from 'react-icons';
 import { RiBookMarkedLine } from 'react-icons/ri';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteFill } from '@/components/icons';
@@ -26,7 +27,7 @@ export function PreferencesBlank() {
           permission={PermissionsEnum.WORKFLOW_WRITE}
           mode="gradient"
           variant="primary"
-          leadingIcon={RouteFill}
+          leadingIcon={RouteFill as IconType}
           onClick={() => navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }))}
         >
           Create workflow

@@ -10,7 +10,6 @@ import {
   Button,
   Column,
   Container,
-  Font,
   Head,
   Heading,
   Hr,
@@ -27,6 +26,7 @@ import { renderAsync as reactEmailRenderAsync } from '@react-email/render';
 import type { JSONContent } from '@tiptap/core';
 import juice from 'juice';
 import { parse } from 'node-html-parser';
+import type { JSX } from 'react';
 import { type CSSProperties, Fragment } from 'react';
 import type { MetaDescriptors } from './meta';
 import { meta } from './meta';
@@ -549,16 +549,6 @@ export class Maily {
     ) : (
       <Html {...htmlProps}>
         <Head>
-          <Font
-            fallbackFontFamily={['system-ui', 'sans-serif'] as any}
-            fontFamily="Inter"
-            fontStyle="normal"
-            fontWeight={400}
-            webFont={{
-              url: 'https://rsms.me/inter/font-files/Inter-Regular.woff2?v=3.19',
-              format: 'woff2',
-            }}
-          />
           <style
             dangerouslySetInnerHTML={{
               __html: `blockquote,h1,h2,h3,img,li,ol,p,ul{margin-top:0;margin-bottom:0}@media only screen and (max-width:425px){.tab-row-full{width:100%!important}.tab-col-full{display:block!important;width:100%!important}.tab-pad{padding:0!important}}`,
@@ -885,7 +875,7 @@ export class Maily {
   private heading(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
 
-    const level = `h${Number(attrs?.level) || 1}`;
+    const level = `h${Number(attrs?.level) || 1}` as AllowedHeadings;
     const alignment = attrs?.textAlign || 'left';
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(node, options);
     const { fontSize, fontStyle, fontWeight, lineHeight } = headings[level as AllowedHeadings];
@@ -897,7 +887,6 @@ export class Maily {
 
     return (
       <Heading
-        // @ts-expect-error - `this` is not assignable to type 'never'
         as={level}
         style={{
           textAlign: alignment,

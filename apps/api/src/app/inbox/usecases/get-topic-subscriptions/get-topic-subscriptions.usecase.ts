@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { FeatureFlagsService, InstrumentUsecase } from '@novu/application-generic';
 import {
   NotificationTemplateRepository,
   PreferencesEntity,
@@ -7,7 +7,7 @@ import {
   TopicSubscribersEntity,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { PreferencesTypeEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PreferencesTypeEnum } from '@novu/shared';
 import { SubscriptionDetailsResponseDto } from '../../../shared/dtos/subscription-details-response.dto';
 import {
   mapTopicSubscriptionToDto,
@@ -21,24 +21,32 @@ export class GetTopicSubscriptions {
   constructor(
     private topicSubscribersRepository: TopicSubscribersRepository,
     private preferencesRepository: PreferencesRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: GetTopicSubscriptionsCommand): Promise<SubscriptionDetailsResponseDto[]> {
+    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
     const subscriptions = await this.topicSubscribersRepository.find({
       _environmentId: command.environmentId,
       _subscriberId: command._subscriberId,
       topicKey: command.topicKey,
+      ...contextQuery,
     });
 
-    return await this.buildSubscriptionsResponse(subscriptions);
+    return await this.buildSubscriptionsResponse(subscriptions, command.contextKeys, command.organizationId);
   }
 
   private async buildSubscriptionsResponse(
-    subscriptions: TopicSubscribersEntity[]
+    subscriptions: TopicSubscribersEntity[],
+    contextKeys?: string[],
+    organizationId?: string
   ): Promise<SubscriptionDetailsResponseDto[]> {
     const subscriptionPreferencesMap = new Map<TopicSubscribersEntity, PreferencesEntity[]>();
+
+    const contextQuery = await this.buildContextExactMatchQuery(contextKeys, organizationId);
 
     for (const subscription of subscriptions) {
       const preferences = await this.preferencesRepository.find({
@@ -46,6 +54,7 @@ export class GetTopicSubscriptions {
         _subscriberId: subscription._subscriberId,
         _topicSubscriptionId: subscription._id,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+        ...contextQuery,
       });
       subscriptionPreferencesMap.set(subscription, preferences);
     }
@@ -98,5 +107,36 @@ export class GetTopicSubscriptions {
     }
 
     return workflowsMap;
+  }
+
+  private async buildContextExactMatchQuery(
+    contextKeys: string[] | undefined,
+    organizationId?: string
+  ): Promise<Record<string, unknown>> {
+    if (!organizationId) {
+      return {};
+    }
+
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!useContextFiltering) {
+      return {}; // FF OFF: no context filtering (pre-feature behavior)
+    }
+
+    // undefined or empty array = match only "no context" subscriptions/preferences
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 }

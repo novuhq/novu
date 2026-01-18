@@ -41,7 +41,11 @@ export function mapTopicSubscriptionToDto(
           : undefined,
         subscriptionId:
           subscription.identifier ||
-          buildDefaultSubscriptionIdentifier(subscription.topicKey, subscription.externalSubscriberId),
+          buildDefaultSubscriptionIdentifier(
+            subscription.topicKey,
+            subscription.externalSubscriberId,
+            subscription.contextKeys
+          ),
         enabled: preferences?.all?.enabled ?? true,
         condition: preferences?.all?.condition as RulesLogic | undefined,
       };
@@ -54,6 +58,23 @@ export function mapTopicSubscriptionToDto(
     name: subscription.name,
     preferences: preferences.length > 0 ? preferences : undefined,
   };
+}
+
+/**
+ * Strips the context part from an identifier when feature flag is off.
+ * This handles the case where the client includes context in identifiers
+ * but the server has stored them without context.
+ *
+ * @example
+ * stripContextFromIdentifier('tk_topic:si_sub:ctx_project:a,tenant:b') // 'tk_topic:si_sub'
+ * stripContextFromIdentifier('tk_topic:si_sub') // 'tk_topic:si_sub'
+ */
+export function stripContextFromIdentifier(identifier: string): string {
+  const contextIndex = identifier.lastIndexOf(':ctx_');
+  if (contextIndex === -1) {
+    return identifier;
+  }
+  return identifier.substring(0, contextIndex);
 }
 
 /**

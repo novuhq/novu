@@ -26,7 +26,7 @@ export const BaseBody = () => {
           <FormControl>
             <InputRoot hasError={!!fieldState.error}>
               <ControlInput
-                className="min-h-[7rem]"
+                className="min-h-28"
                 placeholder={capitalize(field.name)}
                 id={field.name}
                 variables={variables}

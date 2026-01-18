@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { TopicEntity, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import {
+  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITopic,
   SubscriberSourceEnum,
@@ -66,12 +67,23 @@ export class TriggerMulticast extends TriggerBase {
         new Set([...Array.from(topicExclusions.values()).flatMap((set) => Array.from(set))])
       );
 
+      // Check feature flag and resolve contextKeys
+      const useContextFiltering = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+        defaultValue: false,
+        organization: { _id: organizationId },
+      });
+
+      // Only pass contextKeys if feature flag is enabled
+      const contextKeysForQuery = useContextFiltering ? command.contextKeys : undefined;
+
       const getTopicDistinctSubscribersGenerator = this.topicSubscribersRepository.getTopicDistinctSubscribers({
         query: {
           _organizationId: organizationId,
           _environmentId: environmentId,
           topicIds,
           excludeSubscribers: [...singleSubscriberIds, ...allTopicExcludedSubscribers],
+          contextKeys: contextKeysForQuery,
         },
         batchSize: SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE,
       });
@@ -210,6 +222,7 @@ export class TriggerMulticast extends TriggerBase {
         entity_id: command.requestId,
         workflow_run_identifier: command.template.triggers[0].identifier,
         workflow_id: command.template._id,
+        provider_id: '',
       };
 
       await this.traceLogRepository.createRequest([traceData]);

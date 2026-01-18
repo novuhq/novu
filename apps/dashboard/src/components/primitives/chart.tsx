@@ -46,7 +46,7 @@ const ChartContainer = React.forwardRef<
         data-chart={chartId}
         ref={ref}
         className={cn(
-          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none",
+          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-hidden [&_.recharts-surface]:outline-hidden",
           className
         )}
         {...props}
@@ -184,7 +184,7 @@ const ChartTooltipContent = React.forwardRef<
                     ) : (
                       !hideIndicator && (
                         <div
-                          className={cn('shrink-0 rounded-4 border-[--color-border] bg-[--color-bg]', {
+                          className={cn('shrink-0 rounded-4 border-(--color-border) bg-(--color-bg)', {
                             'size-2.5': indicator === 'dot',
                             'w-1': indicator === 'line',
                             'w-0 border-[1.5px] border-dashed bg-transparent': indicator === 'dashed',
@@ -374,7 +374,7 @@ const NovuTooltip = React.forwardRef<HTMLDivElement, NovuTooltipProps>(
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col font-normal justify-center text-text-sub text-code-2xs text-nowrap text-right font-code flex-shrink-0">
+                <div className="flex flex-col font-normal justify-center text-text-sub text-code-2xs text-nowrap text-right font-code shrink-0">
                   <p className="whitespace-pre">{row.value.toLocaleString()}</p>
                 </div>
               </div>
@@ -396,7 +396,7 @@ const NovuTooltip = React.forwardRef<HTMLDivElement, NovuTooltipProps>(
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col font-normal justify-center text-text-sub text-code-2xs text-nowrap text-right font-code flex-shrink-0">
+                <div className="flex flex-col font-normal justify-center text-text-sub text-code-2xs text-nowrap text-right font-code shrink-0">
                   <p className="whitespace-pre">{total.toLocaleString()}</p>
                 </div>
               </div>

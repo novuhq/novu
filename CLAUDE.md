@@ -16,7 +16,6 @@ Novu is a notification infrastructure platform built as a **monorepo using Nx** 
 **Key Applications** (`apps/`):
 - `api` - Core NestJS backend service (REST API, authentication, business logic)
 - `dashboard` - Modern React dashboard built with Vite (primary UI)
-- `web` - Legacy React dashboard (CRA-based, maintained for compatibility)
 - `worker` - Background job processing service (Bull queues)  
 - `ws` - WebSocket service for real-time updates
 - `webhook` - Webhook delivery service
@@ -25,7 +24,6 @@ Novu is a notification infrastructure platform built as a **monorepo using Nx** 
 **Key Libraries** (`libs/`):
 - `application-generic` - Common business logic, CQRS patterns, auth decorators
 - `dal` - Data Access Layer (MongoDB models, repositories)
-- `design-system` - Shared UI components and themes
 - `internal-sdk` - TypeScript SDK with auto-generated types
 
 **NPM Packages** (`packages/`):
@@ -51,7 +49,6 @@ pnpm start  # or: pnpm jarvis
 # Core development stack
 pnpm start:api:dev    # API service with hot reload
 pnpm start:dashboard  # New React dashboard  
-pnpm start:web       # Legacy web app
 pnpm start:worker    # Background worker
 pnpm start:ws        # WebSocket service
 ```
@@ -70,7 +67,6 @@ cd apps/api && pnpm test              # Unit tests
 cd apps/api && pnpm test:e2e:novu-v2  # E2E tests
 
 # Frontend E2E tests
-cd apps/web && pnpm test:e2e         # Playwright tests
 cd apps/dashboard && pnpm test:e2e   # Dashboard E2E tests
 ```
 
@@ -91,7 +87,7 @@ pnpm typecheck      # Run TypeScript checks
 - Prefer interfaces over types (backend), types over interfaces (frontend)
 - Add blank lines before return statements
 - Import "motion-react" from "motion/react"
-- Git commits: use proper scope (dashboard, web, api, worker, shared, etc.)
+- Git commits: use proper scope (dashboard, api, worker, shared, etc.)
 
 **Dashboard-specific (.cursor/rules/dashboard.mdc):**
 - Do not attempt to build/run dashboard (user will be running it)
@@ -146,7 +142,7 @@ pnpm typecheck      # Run TypeScript checks
 - **pnpm 10+** required as package manager
 - **MongoDB & Redis** required for local development (available via Docker Compose)
 - **Environment files** are set up automatically by setup scripts
-- **Dashboard is primary UI** - web app is legacy but still maintained
+- **Dashboard is primary UI**
 
 ## Development Guidance
 

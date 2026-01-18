@@ -24,7 +24,7 @@ export function ActivityDetailCard({
   const isExpanded = open ?? internalOpen;
 
   return (
-    <div className="border-1 w-full overflow-hidden rounded-lg border border-neutral-100">
+    <div className="border w-full overflow-hidden rounded-lg border border-neutral-100">
       <div
         className={cn('group flex w-full items-center px-3 py-2 hover:bg-neutral-50', expandable && 'cursor-pointer')}
         onClick={expandable ? () => setInternalOpen(!internalOpen) : undefined}

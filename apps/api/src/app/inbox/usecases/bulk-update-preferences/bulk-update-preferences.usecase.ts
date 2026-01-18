@@ -163,6 +163,6 @@ export class BulkUpdatePreferences {
       context
     );
 
-    return contexts.map((ctx) => ctx.key);
+    return contexts.map((ctx) => ctx.key).sort();
   }
 }

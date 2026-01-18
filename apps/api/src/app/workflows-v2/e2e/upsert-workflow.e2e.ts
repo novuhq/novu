@@ -506,8 +506,8 @@ describe('Upsert Workflow #novu-v2', () => {
       expect(updatedEmailStep.controls.values.body).to.contain('<html');
       expect(updatedEmailStep.controls.values.body).to.contain('<body');
       expect(updatedEmailStep.controls.values.body).to.contain(`>
-              test
-            </p>`);
+                      test
+                    </p>`);
       expect(updatedEmailStep.controls.values.body).to.contain('</body>');
       expect(updatedEmailStep.controls.values.body).to.contain('</html>');
 

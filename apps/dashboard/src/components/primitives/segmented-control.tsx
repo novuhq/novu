@@ -66,11 +66,11 @@ const SegmentedControlTrigger = React.forwardRef<
       className={cn(
         // base
         'peer',
-        'text-foreground-400 relative z-10 h-7 whitespace-nowrap rounded-md px-1 text-sm outline-none',
+        'text-foreground-400 relative z-10 h-7 whitespace-nowrap rounded-md px-1 text-sm outline-hidden',
         'flex items-center justify-center gap-1.5',
         'transition duration-300 ease-out',
         // focus
-        'focus:outline-none',
+        'focus:outline-hidden',
         // active
         'data-[state=active]:text-foreground-950',
         className,

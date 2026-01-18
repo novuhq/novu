@@ -89,7 +89,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
     return (
       <>
         <Sheet open={isOpen} onOpenChange={protectedOnValueChange}>
-          <SheetContent ref={combinedRef} side="right" className="w-[500px] !max-w-none">
+          <SheetContent ref={combinedRef} side="right" className="w-[500px] max-w-none!">
             <div className="flex h-full flex-col">
               <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
                 <div className="flex flex-1 items-center gap-2 overflow-hidden text-sm font-medium">

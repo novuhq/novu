@@ -83,34 +83,37 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
         onCloseDrawer();
       }
 
-      if (isLastSubscriber) {
-        queryClient.invalidateQueries({
-          queryKey: [QueryKeys.fetchSubscribers],
-        });
-        navigateToSubscribersFirstPage();
-      } else {
-        const firstTwoSubscribersInternalIds = data?.data.slice(0, 2).map((s) => s._id as string) || [];
-        const subscribersCount = data?.data.length || 0;
-
-        const hasTwoSubscribersInternalIds = firstTwoSubscribersInternalIds.length === 2 && subscribersCount > 1;
-        const firstSubscriberInternalId = firstTwoSubscribersInternalIds[0] || '';
-        const isFirstSubscriberBeingDeleted = (subscriber as any)._id === firstSubscriberInternalId;
-        let afterCursor = firstSubscriberInternalId;
-
-        /**
-         * If the first subscriber is being deleted and there are more than one subscribers on the list then
-         * fetch the list from the second subscriber onwards.
-         */
-        if (isFirstSubscriberBeingDeleted && hasTwoSubscribersInternalIds) {
-          afterCursor = firstTwoSubscribersInternalIds[1];
-        }
-
-        if (afterCursor) {
-          handleNavigationAfterDelete(afterCursor);
+      // let the delete modal close animation complete
+      setTimeout(() => {
+        if (isLastSubscriber) {
+          queryClient.invalidateQueries({
+            queryKey: [QueryKeys.fetchSubscribers],
+          });
+          navigateToSubscribersFirstPage();
         } else {
-          navigateToSubscribersCurrentPage();
+          const firstTwoSubscribersInternalIds = data?.data.slice(0, 2).map((s) => s._id as string) || [];
+          const subscribersCount = data?.data.length || 0;
+
+          const hasTwoSubscribersInternalIds = firstTwoSubscribersInternalIds.length === 2 && subscribersCount > 1;
+          const firstSubscriberInternalId = firstTwoSubscribersInternalIds[0] || '';
+          const isFirstSubscriberBeingDeleted = (subscriber as any)._id === firstSubscriberInternalId;
+          let afterCursor = firstSubscriberInternalId;
+
+          /**
+           * If the first subscriber is being deleted and there are more than one subscribers on the list then
+           * fetch the list from the second subscriber onwards.
+           */
+          if (isFirstSubscriberBeingDeleted && hasTwoSubscribersInternalIds) {
+            afterCursor = firstTwoSubscribersInternalIds[1];
+          }
+
+          if (afterCursor) {
+            handleNavigationAfterDelete(afterCursor);
+          } else {
+            navigateToSubscribersCurrentPage();
+          }
         }
-      }
+      }, 250);
     },
     onError: () => {
       showErrorToast('Failed to delete subscriber', undefined, toastOptions);
@@ -188,7 +191,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                       e.stopPropagation();
                     }}
                   >
-                    <Avatar className="size-[3.75rem] cursor-default">
+                    <Avatar className="size-15 cursor-default">
                       <AvatarImage
                         src={subscriber?.avatar ?? (firstNameChar || lastNameChar ? '' : '/images/avatar.svg')}
                       />
@@ -333,12 +336,12 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
               </div>
               <Separator />
 
-              <div className="grid grid-cols-[1fr_3fr] gap-2.5">
+              <div className="grid grid-cols-[1fr_1fr] gap-2.5">
                 <FormField
                   control={form.control}
                   name="locale"
                   render={({ field }) => (
-                    <FormItem className="w-full">
+                    <FormItem className="">
                       <FormLabel>Locale</FormLabel>
                       <FormControl>
                         <LocaleSelect
@@ -358,7 +361,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                   control={form.control}
                   name="timezone"
                   render={({ field }) => (
-                    <FormItem className="w-full grow-0 overflow-hidden">
+                    <FormItem className="flex flex-col gap-1.5 space-y-0 grow-0 overflow-hidden">
                       <FormLabel>Timezone</FormLabel>
                       <FormControl>
                         <TimezoneSelect

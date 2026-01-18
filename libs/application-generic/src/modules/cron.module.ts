@@ -1,10 +1,10 @@
-import { Pulse } from '@pulsecron/pulse';
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { DalService } from '@novu/dal';
 import { JobCronNameEnum, JobTopicNameEnum } from '@novu/shared';
+import { Pulse } from '@pulsecron/pulse';
 import os from 'os';
 import { dalService as customDalService } from '../custom-providers';
-import { ACTIVE_CRON_JOBS_TOKEN, PulseCronService, CronService, MetricsService } from '../services';
+import { ACTIVE_CRON_JOBS_TOKEN, CronService, MetricsService, PulseCronService } from '../services';
 import { MetricsModule } from './metrics.module';
 
 /**

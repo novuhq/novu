@@ -124,7 +124,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
 
               return (
                 <div className="flex flex-col gap-1" key={index}>
-                  <div className="grid grid-cols-[3fr,4fr,1.75rem] items-center gap-2">
+                  <div className="grid grid-cols-[3fr_4fr_1.75rem] items-center gap-2">
                     <Input
                       size="xs"
                       placeholder="Insert property key..."

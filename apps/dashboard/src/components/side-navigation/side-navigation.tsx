@@ -99,7 +99,7 @@ export const SideNavigation = () => {
   };
 
   return (
-    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col">
+    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] shrink-0 flex-col">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
         <EnvironmentDropdown
@@ -111,20 +111,38 @@ export const SideNavigation = () => {
           <div className="flex flex-col gap-4">
             <NavigationGroup>
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
-                <NavigationLink to={buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <NavigationLink
+                  to={
+                    currentEnvironment?.slug
+                      ? buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      : undefined
+                  }
+                >
                   <RiRouteFill className="size-4" />
                   <span>Workflows</span>
                 </NavigationLink>
               </Protect>
 
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
-                <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <NavigationLink
+                  to={
+                    currentEnvironment?.slug
+                      ? buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      : undefined
+                  }
+                >
                   <RiLayout5Line className="size-4" />
                   <span>Email Layouts</span>
                 </NavigationLink>
               </Protect>
 
-              <NavigationLink to={buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+              <NavigationLink
+                to={
+                  currentEnvironment?.slug
+                    ? buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                    : undefined
+                }
+              >
                 <RiTranslate2 className="size-4" />
                 <span>
                   Translations{' '}
@@ -137,20 +155,36 @@ export const SideNavigation = () => {
             <NavigationGroup label="Data">
               <Protect permission={PermissionsEnum.SUBSCRIBER_READ}>
                 <NavigationLink
-                  to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                  to={
+                    currentEnvironment?.slug
+                      ? buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      : undefined
+                  }
                 >
                   <RiGroup2Line className="size-4" />
                   <span>Subscribers</span>
                 </NavigationLink>
               </Protect>
               <Protect permission={PermissionsEnum.TOPIC_READ}>
-                <NavigationLink to={buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <NavigationLink
+                  to={
+                    currentEnvironment?.slug
+                      ? buildRoute(ROUTES.TOPICS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      : undefined
+                  }
+                >
                   <RiDiscussLine className="size-4" />
                   <span>Topics</span>
                 </NavigationLink>
               </Protect>
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
-                <NavigationLink to={buildRoute(ROUTES.CONTEXTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                <NavigationLink
+                  to={
+                    currentEnvironment?.slug
+                      ? buildRoute(ROUTES.CONTEXTS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      : undefined
+                  }
+                >
                   <RiBuildingLine className="size-4" />
                   <span>
                     Contexts{' '}
@@ -165,9 +199,13 @@ export const SideNavigation = () => {
               <NavigationGroup label="Monitor">
                 <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
                   <NavigationLink
-                    to={buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_WORKFLOW_RUNS : ROUTES.ACTIVITY_FEED, {
-                      environmentSlug: currentEnvironment?.slug ?? '',
-                    })}
+                    to={
+                      currentEnvironment?.slug
+                        ? buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_WORKFLOW_RUNS : ROUTES.ACTIVITY_FEED, {
+                            environmentSlug: currentEnvironment?.slug ?? '',
+                          })
+                        : undefined
+                    }
                   >
                     <RiBarChartBoxLine className="size-4" />
                     <span>Activity Feed</span>
@@ -176,7 +214,11 @@ export const SideNavigation = () => {
                 {isAnalyticsPageEnabled && (
                   <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
                     <NavigationLink
-                      to={buildRoute(ROUTES.ANALYTICS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                      to={
+                        currentEnvironment?.slug
+                          ? buildRoute(ROUTES.ANALYTICS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                          : undefined
+                      }
                     >
                       <RiLineChartLine className="size-4" />
                       <span>Usage</span>
@@ -195,7 +237,13 @@ export const SideNavigation = () => {
             >
               <NavigationGroup label="Developer">
                 <Protect permission={PermissionsEnum.API_KEY_READ}>
-                  <NavigationLink to={buildRoute(ROUTES.API_KEYS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                  <NavigationLink
+                    to={
+                      currentEnvironment?.slug
+                        ? buildRoute(ROUTES.API_KEYS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                        : undefined
+                    }
+                  >
                     <RiKey2Line className="size-4" />
                     <span>API Keys</span>
                   </NavigationLink>
@@ -208,7 +256,11 @@ export const SideNavigation = () => {
                     }
                   >
                     <NavigationLink
-                      to={buildRoute(ROUTES.WEBHOOKS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                      to={
+                        currentEnvironment?.slug
+                          ? buildRoute(ROUTES.WEBHOOKS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                          : undefined
+                      }
                     >
                       <RiSignalTowerLine className="size-4" />
                       <span className="flex items-center gap-2">Webhooks</span>
@@ -216,14 +268,22 @@ export const SideNavigation = () => {
                   </Protect>
                 )}
                 <NavigationLink
-                  to={buildRoute(ROUTES.ENVIRONMENTS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                  to={
+                    currentEnvironment?.slug
+                      ? buildRoute(ROUTES.ENVIRONMENTS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      : undefined
+                  }
                 >
                   <RiDatabase2Line className="size-4" />
                   <span>Environments</span>
                 </NavigationLink>
                 <Protect permission={PermissionsEnum.INTEGRATION_READ}>
                   <NavigationLink
-                    to={buildRoute(ROUTES.INTEGRATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                    to={
+                      currentEnvironment?.slug
+                        ? buildRoute(ROUTES.INTEGRATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                        : undefined
+                    }
                   >
                     <RiStore3Line className="size-4" />
                     <span>Integration Store</span>

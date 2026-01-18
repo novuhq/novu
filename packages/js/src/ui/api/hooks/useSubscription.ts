@@ -12,7 +12,8 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
   const novuAccessor = useNovu();
   const identifier = () => {
     const subscriberId = novuAccessor().subscriberId;
-    return options.identifier ?? buildSubscriptionIdentifier({ topicKey: options.topicKey, subscriberId });
+    const contextKey = novuAccessor().contextKey;
+    return options.identifier ?? buildSubscriptionIdentifier({ topicKey: options.topicKey, subscriberId, contextKey });
   };
 
   const [loading, setLoading] = createSignal(true);

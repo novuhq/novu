@@ -33,7 +33,7 @@ export const FixedThrottle = () => {
         fields={{ inputKey: AMOUNT_KEY, selectKey: UNIT_KEY }}
         options={THROTTLE_TIME_UNIT_OPTIONS}
         defaultOption={TimeUnitEnum.MINUTES}
-        className="w-min [&_input]:!w-[5ch] [&_input]:!min-w-[5ch]"
+        className="w-min [&_input]:w-[5ch]! [&_input]:min-w-[5ch]!"
         onValueChange={() => saveForm()}
         showError={false}
         min={minAmountValue}

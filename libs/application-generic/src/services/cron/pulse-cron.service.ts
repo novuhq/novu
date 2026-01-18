@@ -1,5 +1,5 @@
-import { Pulse, JobPriority } from '@pulsecron/pulse';
 import { JobCronNameEnum } from '@novu/shared';
+import { JobPriority, Pulse } from '@pulsecron/pulse';
 import { MetricsService } from '../metrics';
 import { CronService } from './cron.service';
 import { CronJobProcessor, CronMetrics, CronOptions } from './cron.types';
@@ -50,9 +50,14 @@ export class PulseCronService extends CronService {
       }
     );
 
-    await this.pulse.every(interval, jobName, {}, {
-      timezone: options.timezone,
-    });
+    await this.pulse.every(
+      interval,
+      jobName,
+      {},
+      {
+        timezone: options.timezone,
+      }
+    );
   }
 
   protected async removeJob(jobName: string) {
@@ -79,8 +84,7 @@ export class PulseCronService extends CronService {
       const lockedAt = job.attrs.lockedAt;
       const lastFinishedAt = job.attrs.lastFinishedAt;
 
-      const isRunning =
-        lockedAt && (!lastFinishedAt || lockedAt.getTime() > lastFinishedAt.getTime());
+      const isRunning = lockedAt && (!lastFinishedAt || lockedAt.getTime() > lastFinishedAt.getTime());
       const isWaiting = !isRunning && lastFinishedAt && !lockedAt;
 
       if (isRunning) {

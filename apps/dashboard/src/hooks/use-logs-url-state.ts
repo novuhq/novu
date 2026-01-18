@@ -125,7 +125,9 @@ export function useLogsUrlState(): LogsUrlState {
 
         // Set new filter params
         if (newFilters.status.length > 0) {
-          newFilters.status.forEach((status) => prev.append('status', status));
+          for (const status of newFilters.status) {
+            prev.append('status', status);
+          }
         }
 
         if (newFilters.transactionId.trim()) {
