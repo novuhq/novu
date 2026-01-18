@@ -53,7 +53,12 @@ export const buildDynamicFormSchema = ({
     }
 
     const isRequired = requiredFields.includes(key);
-    let zodValue: z.ZodString | z.ZodNumber | z.ZodOptional<z.ZodString | z.ZodNumber>;
+    let zodValue:
+      | z.ZodString
+      | z.ZodNumber
+      | z.ZodOptional<z.ZodString | z.ZodNumber>
+      | z.ZodEmail
+      | z.ZodOptional<z.ZodEmail>;
 
     if (value.type === 'string') {
       if (value.format === 'email') {
@@ -83,14 +88,17 @@ export const buildDynamicFormSchema = ({
     to: z.looseObject({
       ...keys,
     }),
-    payload: z.string().transform((str, ctx) => {
-      try {
-        return JSON.parse(str);
-      } catch (e) {
-        ctx.addIssue({ code: 'custom', message: 'Payload must be valid JSON' });
-        return z.NEVER;
-      }
-    }),
+    payload: z.string().refine(
+      (str) => {
+        try {
+          JSON.parse(str);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Payload must be valid JSON' }
+    ),
   });
 };
 

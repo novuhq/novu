@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { PermissionsEnum } from '@novu/shared';
 import { useLayoutEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -29,7 +29,7 @@ const formSchema = z.object({ bridgeUrl: z.url() });
 
 export const EditBridgeUrlButton = () => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const form = useForm<z.infer<typeof formSchema>>({ mode: 'onSubmit', resolver: zodResolver(formSchema) });
+  const form = useForm({ mode: 'onSubmit', resolver: standardSchemaResolver(formSchema) });
   const {
     control,
     handleSubmit,

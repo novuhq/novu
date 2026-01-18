@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { ContentIssueEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -214,7 +214,7 @@ export const EditStepConditionsForm = () => {
 
   const form = useForm<FormQuery>({
     mode: 'onSubmit',
-    resolver: zodResolver(getConditionsSchema(fields, isAllowedVariable)),
+    resolver: standardSchemaResolver(getConditionsSchema(fields, isAllowedVariable)),
     defaultValues: {
       query,
     },
