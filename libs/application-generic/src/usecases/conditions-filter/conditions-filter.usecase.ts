@@ -278,7 +278,7 @@ export class ConditionsFilter extends Filter {
     });
     if (!environment) throw new PlatformException('Environment is not found');
 
-    return createHash(decryptApiKey(environment.apiKeys[0].key), command.environmentId);
+    return createHash(decryptApiKey(environment.apiKeys[0].key), command.environmentId) || '';
   }
 
   private async buildPayload(variables: IFilterVariables, command: ConditionsFilterCommand) {
