@@ -38,7 +38,7 @@ interface TestWorkflowInstructionsProps {
   onClose: () => void;
   workflow?: WorkflowResponseDto;
   to?: Record<string, string>;
-  payload?: string;
+  payload?: string | Record<string, unknown>;
 }
 
 const LANGUAGE_TO_SNIPPET_UTIL: Record<SnippetLanguage, (props: CodeSnippet) => string> = {
@@ -175,8 +175,9 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
   const getSnippetForLanguage = (language: SnippetLanguage) => {
     const snippetUtil = LANGUAGE_TO_SNIPPET_UTIL[language];
     const secretKey = language === 'shell' && canReadApiKeys && apiKey ? apiKey : undefined;
+    const parsedPayload = typeof payload === 'string' ? (payload ? JSON.parse(payload) : {}) : (payload ?? {});
 
-    return snippetUtil({ identifier, to: to ?? {}, payload: payload ?? '', secretKey });
+    return snippetUtil({ identifier, to: to ?? {}, payload: parsedPayload, secretKey });
   };
 
   const getApiKeyMaskPositions = (key: string) => {
@@ -192,9 +193,13 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
 
   const handleCopyAIPrompt = async () => {
     try {
-      let parsedPayload = {};
+      let parsedPayload: Record<string, unknown> = {};
       try {
-        parsedPayload = payload ? JSON.parse(payload) : {};
+        if (typeof payload === 'string') {
+          parsedPayload = payload ? JSON.parse(payload) : {};
+        } else {
+          parsedPayload = payload ?? {};
+        }
       } catch {
         parsedPayload = {};
       }

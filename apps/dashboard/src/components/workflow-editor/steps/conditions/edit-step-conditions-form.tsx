@@ -151,12 +151,14 @@ type FormQuery = {
 const getConditionsSchema = (
   fields: Array<{ value: string }>,
   isAllowedVariableFn: (variable: { name: string }) => boolean
-): z.ZodType<FormQuery> => {
+) => {
   return z.object({
-    query: z.looseObject({
-      combinator: z.string(),
-      rules: z.array(getRuleSchema(fields, isAllowedVariableFn)),
-    }),
+    query: z
+      .object({
+        combinator: z.string(),
+        rules: z.array(getRuleSchema(fields, isAllowedVariableFn)),
+      })
+      .passthrough(),
   });
 };
 
@@ -212,24 +214,27 @@ export const EditStepConditionsForm = () => {
     format: enhancedVariable.format,
   }));
 
-  const form = useForm<FormQuery>({
+  const form = useForm({
     mode: 'onSubmit',
     resolver: standardSchemaResolver(getConditionsSchema(fields, isAllowedVariable)),
     defaultValues: {
-      query,
+      query: query as unknown as z.infer<ReturnType<typeof getConditionsSchema>>['query'],
     },
   });
 
   const { onBlur, saveForm } = useFormAutosave({
     previousData: {
-      query,
+      query: query as unknown as z.infer<ReturnType<typeof getConditionsSchema>>['query'],
     },
     form,
     shouldClientValidate: true,
     save: (data) => {
       if (!step || !workflow) return;
 
-      const skip = formatQuery(data.query, { format: 'jsonlogic', ruleProcessor: customRuleProcessor });
+      const skip = formatQuery(data.query as unknown as RuleGroupType, {
+        format: 'jsonlogic',
+        ruleProcessor: customRuleProcessor,
+      });
       const updateStepData: Partial<StepUpdateDto> = {
         controlValues: { ...step.controls.values, skip },
       };
@@ -313,7 +318,7 @@ export const EditStepConditionsForm = () => {
             render={({ field }) => (
               <ConditionsEditor
                 saveForm={saveForm}
-                query={field.value}
+                query={field.value as RuleGroupType}
                 onQueryChange={field.onChange}
                 fields={fields}
                 variables={variables}

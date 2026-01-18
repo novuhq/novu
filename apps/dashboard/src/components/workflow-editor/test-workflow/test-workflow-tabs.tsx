@@ -47,7 +47,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
 
   const onSubmit = async (data: TestWorkflowFormType) => {
     try {
-      const parsedPayload = JSON.parse(data.payload);
+      const parsedPayload = data.payload ? JSON.parse(data.payload as string) : {};
       const {
         data: { transactionId: newTransactionId },
       } = await triggerWorkflow({ name: workflow?.workflowId ?? '', to: data.to, payload: parsedPayload });
