@@ -68,7 +68,7 @@
   },
   "resolutions": {
     "minimist": "1.2.6",
-    "zod": "^3.23.8"
+    "zod": "^3.25.0"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
@@ -161,7 +161,7 @@
   },
   "pnpm": {
     "overrides": {
-      "zod": "^3.23.8",
+      "zod": "^3.25.0",
       "body-parser@<1.20.3": "^1.20.3",
       "braces@<2.3.1": "^2.3.1",
       "file-type@>=13.0.0 <16.5.4": "^16.5.4",

@@ -128,7 +128,7 @@
     "tailwindcss-animate": "^1.0.7",
     "use-deep-compare-effect": "^1.8.1",
     "uuid": "^11.1.0",
-    "zod": "^3.23.8"
+    "zod": "^3.25.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",

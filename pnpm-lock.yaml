@@ -6,7 +6,7 @@ settings:
 
 overrides:
   minimist: 1.2.6
-  zod: ^3.23.8
+  zod: ^3.25.0
   body-parser@<1.20.3: ^1.20.3
   braces@<2.3.1: ^2.3.1
   file-type@>=13.0.0 <16.5.4: ^16.5.4
@@ -467,7 +467,7 @@ importers:
         specifier: ^8.3.2
         version: 8.3.2
       zod:
-        specifier: ^3.23.8
+        specifier: ^3.25.0
         version: 3.25.20
       zod-to-json-schema:
         specifier: ^3.23.3
@@ -889,7 +889,7 @@ importers:
         specifier: ^11.1.0
         version: 11.1.0
       zod:
-        specifier: ^3.23.8
+        specifier: ^3.25.0
         version: 3.25.20
     devDependencies:
       '@biomejs/biome':
@@ -2326,7 +2326,7 @@ importers:
         specifier: ^1.64.1
         version: 1.64.1(encoding@0.1.13)
       zod:
-        specifier: ^3.23.8
+        specifier: ^3.25.0
         version: 3.25.20
       zod-to-json-schema:
         specifier: ^3.23.3
@@ -2528,7 +2528,7 @@ importers:
         specifier: ^18 || ^19
         version: 18.3.1(react@18.3.1)
       zod:
-        specifier: ^3.23.8
+        specifier: ^3.25.0
         version: 3.25.20
     devDependencies:
       '@eslint/js':
@@ -2803,7 +2803,7 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
       zod:
-        specifier: ^3.23.8
+        specifier: ^3.25.0
         version: 3.25.20
     devDependencies:
       '@types/react':
@@ -3050,7 +3050,7 @@ importers:
         specifier: ^1.2.1
         version: 1.6.1(@edge-runtime/vm@4.0.2)(@types/node@20.19.10)(happy-dom@20.0.11)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.30.2)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
       zod:
-        specifier: ^3.23.8
+        specifier: ^3.25.0
         version: 3.25.20
       zod-to-json-schema:
         specifier: ^3.23.3
@@ -3681,7 +3681,7 @@ importers:
         specifier: 7.8.1
         version: 7.8.1
       zod:
-        specifier: ^3.23.8
+        specifier: ^3.25.0
         version: 3.25.20
       zod-to-json-schema:
         specifier: ^3.23.0
@@ -15011,7 +15011,7 @@ packages:
   better-call@1.1.5:
     resolution: {integrity: sha512-nQJ3S87v6wApbDwbZ++FrQiSiVxWvZdjaO+2v6lZJAG2WWggkB2CziUDjPciz3eAt9TqfRursIQMZIcpkBnvlw==}
     peerDependencies:
-      zod: ^3.23.8
+      zod: ^3.25.0
     peerDependenciesMeta:
       zod:
         optional: true
@@ -21723,7 +21723,7 @@ packages:
     resolution: {integrity: sha512-drt0lHZBd2lMyORckOXFPQTmnGLWSLt8VK0W9BhOKWpMFBEoHMoz5gxMPmVq5icp+sOrsbMnsmZTVHUlKvD1Ow==}
     hasBin: true
     peerDependencies:
-      zod: ^3.23.8
+      zod: ^3.25.0
     peerDependenciesMeta:
       zod:
         optional: true
@@ -26620,13 +26620,13 @@ packages:
   zod-to-json-schema@3.23.3:
     resolution: {integrity: sha512-TYWChTxKQbRJp5ST22o/Irt9KC5nj7CdBKYB/AosCRdj/wxEMvv4NNaj9XVUHDOIp53ZxArGhnw5HMZziPFjog==}
     peerDependencies:
-      zod: ^3.23.8
+      zod: ^3.25.0
 
   zod-validation-error@3.3.0:
     resolution: {integrity: sha512-Syib9oumw1NTqEv4LT0e6U83Td9aVRk9iTXPUQr1otyV1PuXQKOvOwhMNqZIq5hluzHP2pMgnOmHEo7kPdI2mw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      zod: ^3.23.8
+      zod: ^3.25.0
 
   zod@3.25.20:
     resolution: {integrity: sha512-z03fqpTMDF1G02VLKUMt6vyACE7rNWkh3gpXVHgPTw28NPtDFRGvcpTtPwn2kMKtQ0idtYJUTxchytmnqYswcw==}
