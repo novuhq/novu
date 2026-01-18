@@ -86,7 +86,7 @@ export function InvitationAccept() {
       showSuccessToast('You have joined the organization', 'Invitation Accepted');
       sessionStorage.removeItem('pendingInvitationId');
 
-      navigate(ROUTES.ROOT);
+      navigate(ROUTES.INBOX_USECASE);
     } catch (e) {
       console.error('Failed to accept invitation:', e);
       setError(e instanceof Error ? e.message : 'Failed to accept invitation');
@@ -122,7 +122,7 @@ export function InvitationAccept() {
           </div>
           <h2 className="mb-2 text-xl font-semibold text-foreground-950">Failed to Accept Invitation</h2>
           <p className="mb-6 text-sm text-foreground-600">{error}</p>
-          <Button variant="secondary" mode="outline" onClick={() => navigate(ROUTES.ROOT)}>
+          <Button variant="secondary" mode="outline" onClick={() => navigate(ROUTES.INBOX_USECASE)}>
             Go to Dashboard
           </Button>
         </div>

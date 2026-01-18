@@ -1,4 +1,4 @@
-import { MemberRoleEnum } from '@novu/shared';
+import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useState } from 'react';
 import {
@@ -16,7 +16,7 @@ import { Input } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { authClient } from '../client';
-import { useOrganization, useUser } from '../index';
+import { useAuth, useOrganization, useUser } from '../index';
 
 function getInitials(name: string): string {
   return name
@@ -63,11 +63,13 @@ function MemberListItem({
   currentUserId,
   onRemove,
   isRemoving,
+  canManageMembers,
 }: {
   member: Member;
   currentUserId: string;
   onRemove: (memberId: string) => void;
   isRemoving: boolean;
+  canManageMembers: boolean;
 }) {
   const isCurrentUser = member.userId === currentUserId;
   const isOwner = member.role === MemberRoleEnum.OWNER;
@@ -132,7 +134,7 @@ function MemberListItem({
         <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getRoleBadgeStyle(member.role)}`}>
           {getRoleLabel(member.role)}
         </span>
-        {!isOwner && (
+        {!isOwner && canManageMembers && (
           <Button
             variant="secondary"
             mode="ghost"
@@ -157,10 +159,12 @@ function InvitationListItem({
   invitation,
   onCancel,
   isCancelling,
+  canManageMembers,
 }: {
   invitation: Invitation;
   onCancel: (invitationId: string) => void;
   isCancelling: boolean;
+  canManageMembers: boolean;
 }) {
   const getRoleLabel = (role: string) => {
     switch (role) {
@@ -199,20 +203,22 @@ function InvitationListItem({
         <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-foreground-700">
           {getRoleLabel(invitation.role)}
         </span>
-        <Button
-          variant="secondary"
-          mode="ghost"
-          size="sm"
-          onClick={() => onCancel(invitation.id)}
-          disabled={isCancelling}
-          className="h-8 w-8 p-0"
-        >
-          {isCancelling ? (
-            <RiLoader4Line className="size-4 animate-spin" />
-          ) : (
-            <RiCloseLine className="size-4 text-foreground-600" />
-          )}
-        </Button>
+        {canManageMembers && (
+          <Button
+            variant="secondary"
+            mode="ghost"
+            size="sm"
+            onClick={() => onCancel(invitation.id)}
+            disabled={isCancelling}
+            className="h-8 w-8 p-0"
+          >
+            {isCancelling ? (
+              <RiLoader4Line className="size-4 animate-spin" />
+            ) : (
+              <RiCloseLine className="size-4 text-foreground-600" />
+            )}
+          </Button>
+        )}
       </div>
     </motion.div>
   );
@@ -221,6 +227,8 @@ function InvitationListItem({
 export function TeamMembers({ appearance }: { appearance?: any }) {
   const { organization } = useOrganization();
   const { user } = useUser();
+  const { has } = useAuth();
+  const canManageMembers = has({ permission: PermissionsEnum.ORG_SETTINGS_WRITE });
   const [organizationData, setOrganizationData] = useState<OrganizationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInviting, setIsInviting] = useState(false);
@@ -364,69 +372,71 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
         <p className="mt-1 text-sm text-foreground-600">Manage who has access to this organization</p>
       </div>
 
-      <div className="rounded-lg border border-neutral-200 bg-white p-4">
-        <div className="mb-4 flex items-center gap-2">
-          <RiUserAddLine className="size-5 text-foreground-600" />
-          <h3 className="text-sm font-medium text-foreground-950">Invite new member</h3>
-        </div>
-
-        <form onSubmit={handleInvite} className="space-y-3">
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label htmlFor={inviteEmailId} className="sr-only">
-                Email address
-              </label>
-              <Input
-                id={inviteEmailId}
-                type="email"
-                value={inviteEmail}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInviteEmail(e.target.value)}
-                placeholder="member@example.com"
-                required
-                disabled={isInviting}
-                className="h-10"
-              />
-            </div>
-            <div className="w-32">
-              <Select
-                value={inviteRole}
-                onValueChange={(value) => setInviteRole(value as MemberRoleEnum)}
-                disabled={isInviting}
-              >
-                <SelectTrigger className="h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={MemberRoleEnum.VIEWER}>Viewer</SelectItem>
-                  <SelectItem value={MemberRoleEnum.AUTHOR}>Author</SelectItem>
-                  <SelectItem value={MemberRoleEnum.ADMIN}>Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              type="submit"
-              disabled={isInviting || !inviteEmail.trim()}
-              variant="primary"
-              mode="gradient"
-              className="h-10 px-4"
-            >
-              {isInviting ? (
-                <RiLoader4Line className="size-4 animate-spin" />
-              ) : (
-                <>
-                  <RiAddCircleLine className="size-4" />
-                  <span className="ml-1.5">Invite</span>
-                </>
-              )}
-            </Button>
+      {canManageMembers && (
+        <div className="rounded-lg border border-neutral-200 bg-white p-4">
+          <div className="mb-4 flex items-center gap-2">
+            <RiUserAddLine className="size-5 text-foreground-600" />
+            <h3 className="text-sm font-medium text-foreground-950">Invite new member</h3>
           </div>
-          <p className="text-xs text-foreground-600">
-            An invitation link will be generated and copied to your clipboard
-          </p>
-        </form>
-      </div>
 
-      {pendingInvitations.length > 0 && (
+          <form onSubmit={handleInvite} className="space-y-3">
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label htmlFor={inviteEmailId} className="sr-only">
+                  Email address
+                </label>
+                <Input
+                  id={inviteEmailId}
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInviteEmail(e.target.value)}
+                  placeholder="member@example.com"
+                  required
+                  disabled={isInviting}
+                  className="h-10"
+                />
+              </div>
+              <div className="w-32">
+                <Select
+                  value={inviteRole}
+                  onValueChange={(value) => setInviteRole(value as MemberRoleEnum)}
+                  disabled={isInviting}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={MemberRoleEnum.VIEWER}>Viewer</SelectItem>
+                    <SelectItem value={MemberRoleEnum.AUTHOR}>Author</SelectItem>
+                    <SelectItem value={MemberRoleEnum.ADMIN}>Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="submit"
+                disabled={isInviting || !inviteEmail.trim()}
+                variant="primary"
+                mode="gradient"
+                className="h-10 px-4"
+              >
+                {isInviting ? (
+                  <RiLoader4Line className="size-4 animate-spin" />
+                ) : (
+                  <>
+                    <RiAddCircleLine className="size-4" />
+                    <span className="ml-1.5">Invite</span>
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-foreground-600">
+              An invitation link will be generated and copied to your clipboard
+            </p>
+          </form>
+        </div>
+      )}
+
+      {pendingInvitations.length > 0 && canManageMembers && (
         <div className="rounded-lg border border-neutral-200 bg-white">
           <button
             onClick={() => setShowPendingInvites(!showPendingInvites)}
@@ -459,6 +469,7 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
                         invitation={invitation}
                         onCancel={handleCancelInvitation}
                         isCancelling={isCancelling}
+                        canManageMembers={canManageMembers}
                       />
                     ))}
                   </AnimatePresence>
@@ -479,6 +490,7 @@ export function TeamMembers({ appearance }: { appearance?: any }) {
                 currentUserId={user?.id || ''}
                 onRemove={handleRemoveMember}
                 isRemoving={isRemoving}
+                canManageMembers={canManageMembers}
               />
             ))}
           </AnimatePresence>

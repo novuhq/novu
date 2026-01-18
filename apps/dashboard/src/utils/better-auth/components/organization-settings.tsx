@@ -1,3 +1,4 @@
+import { PermissionsEnum } from '@novu/shared';
 import * as React from 'react';
 import { useState } from 'react';
 import { RiEdit2Line, RiLoader4Line, RiOrganizationChart } from 'react-icons/ri';
@@ -9,7 +10,8 @@ import { useAuth, useOrganization } from '../index';
 
 export function OrganizationSettings() {
   const { organization, isLoaded } = useOrganization();
-  const { refreshSession } = useAuth();
+  const { refreshSession, has } = useAuth();
+  const canEditSettings = has({ permission: PermissionsEnum.ORG_SETTINGS_WRITE });
   const [isEditingName, setIsEditingName] = useState(false);
   const [organizationName, setOrganizationName] = useState(organization?.name || '');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -134,16 +136,18 @@ export function OrganizationSettings() {
               <span className="text-sm font-medium text-foreground-950">{currentOrgData.name}</span>
               <span className="text-xs text-foreground-600">Slug: {currentOrgData.slug}</span>
             </div>
-            <Button
-              onClick={() => setIsEditingName(true)}
-              variant="secondary"
-              mode="ghost"
-              size="sm"
-              className="h-8 gap-1.5"
-            >
-              <RiEdit2Line className="size-4" />
-              Edit
-            </Button>
+            {canEditSettings && (
+              <Button
+                onClick={() => setIsEditingName(true)}
+                variant="secondary"
+                mode="ghost"
+                size="sm"
+                className="h-8 gap-1.5"
+              >
+                <RiEdit2Line className="size-4" />
+                Edit
+              </Button>
+            )}
           </div>
         )}
       </div>

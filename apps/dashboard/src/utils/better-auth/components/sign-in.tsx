@@ -69,7 +69,7 @@ export function SignIn() {
         return;
       }
 
-      window.location.href = ROUTES.ROOT;
+      window.location.href = ROUTES.INBOX_USECASE;
     } catch (e: any) {
       setError(e.message || 'An unexpected error occurred.');
     } finally {

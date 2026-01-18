@@ -165,7 +165,7 @@ function OrganizationListContent({
       await authClient.organization.setActive({
         organizationId,
       });
-      window.location.href = afterSelectOrganizationUrl || ROUTES.ROOT;
+      window.location.href = afterSelectOrganizationUrl || ROUTES.INBOX_USECASE;
     } catch (e: any) {
       console.error('Failed to set active organization:', e);
       setIsSelecting(false);

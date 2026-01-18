@@ -29,11 +29,11 @@ export function SSOSignIn() {
       await authClient.signIn.sso(
         {
           providerId: 'enterprise-sso',
-          callbackURL: window.location.origin + ROUTES.ROOT,
+          callbackURL: window.location.origin + ROUTES.INBOX_USECASE,
         },
         {
           onSuccess: () => {
-            window.location.href = ROUTES.ROOT;
+            window.location.href = ROUTES.INBOX_USECASE;
           },
           onError: (ctx: any) => {
             throw new Error(ctx.error.message || 'SSO sign in failed');

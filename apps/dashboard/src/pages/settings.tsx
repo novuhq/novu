@@ -1,4 +1,4 @@
-import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
+import { UserProfile as ClerkUserProfile, OrganizationProfile } from '@clerk/clerk-react';
 import type { Appearance } from '@clerk/types';
 import {
   ApiServiceLevelEnum,
@@ -16,6 +16,7 @@ import { OrganizationSettings } from '@/components/settings/organization-setting
 import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { TeamMembers } from '@/utils/better-auth/components/team-members';
+import { UserProfile as BetterAuthUserProfile } from '@/utils/better-auth/index';
 import { ROUTES } from '@/utils/routes';
 import { Plan } from '../components/billing/plan';
 import { DashboardLayout } from '../components/dashboard-layout';
@@ -82,6 +83,7 @@ export function SettingsPage() {
   const isRbacEnabled = checkRbacEnabled(subscription, isRbacEnabledFlag);
 
   const clerkAppearance = getClerkComponentAppearance(isRbacEnabled);
+  const UserProfile = EE_AUTH_PROVIDER === 'clerk' ? ClerkUserProfile : BetterAuthUserProfile;
 
   function checkRbacEnabled(subscription: GetSubscriptionDto | undefined, featureFlag: boolean) {
     const apiServiceLevel = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
