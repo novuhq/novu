@@ -175,9 +175,9 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
   const getSnippetForLanguage = (language: SnippetLanguage) => {
     const snippetUtil = LANGUAGE_TO_SNIPPET_UTIL[language];
     const secretKey = language === 'shell' && canReadApiKeys && apiKey ? apiKey : undefined;
-    const parsedPayload = typeof payload === 'string' ? (payload ? JSON.parse(payload) : {}) : (payload ?? {});
+    const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload ?? {}, null, 2);
 
-    return snippetUtil({ identifier, to: to ?? {}, payload: parsedPayload, secretKey });
+    return snippetUtil({ identifier, to: to ?? {}, payload: payloadString, secretKey });
   };
 
   const getApiKeyMaskPositions = (key: string) => {
