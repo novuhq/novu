@@ -2,7 +2,8 @@ import { type DialogProps } from '@radix-ui/react-dialog';
 import { Command as CommandPrimitive } from 'cmdk';
 import * as React from 'react';
 
-import { Dialog, DialogContent } from '@/components/primitives/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/primitives/dialog';
+import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { InputRoot, InputWrapper } from '@/components/primitives/input';
 import { cn } from '@/utils/ui';
 
@@ -27,6 +28,9 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
   return (
     <Dialog {...props}>
       <DialogContent className="overflow-hidden p-0">
+        <VisuallyHidden>
+          <DialogTitle>Command</DialogTitle>
+        </VisuallyHidden>
         <Command className="**:[[cmdk-group-heading]]:text-foreground-400 **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:font-medium [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 **:[[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 **:[[cmdk-input]]:h-12 **:[[cmdk-item]]:px-2 **:[[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
           {children}
         </Command>
