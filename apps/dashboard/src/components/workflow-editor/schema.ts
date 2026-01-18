@@ -40,12 +40,12 @@ export const buildDynamicFormSchema = ({
 }: {
   to: JSONSchemaDefinition;
 }): z.ZodObject<{
-  to: z.ZodObject<Record<string, z.ZodTypeAny>>;
-  payload: z.ZodEffects<z.ZodString, any, string>;
+  to: z.ZodObject<Record<string, z.ZodType>>;
+  payload: z.ZodType;
 }> => {
   const properties = typeof to === 'object' ? (to.properties ?? {}) : {};
   const requiredFields = typeof to === 'object' ? (to.required ?? []) : [];
-  const keys: Record<string, z.ZodTypeAny> = Object.keys(properties).reduce((acc, key) => {
+  const keys: Record<string, z.ZodType> = Object.keys(properties).reduce((acc, key) => {
     const value = properties[key];
 
     if (typeof value !== 'object') {
