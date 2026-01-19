@@ -1,8 +1,9 @@
-import { MockCacheService, PinoLogger } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import { CommunityOrganizationRepository, EnvironmentRepository, NotificationRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, isClerkEnabled } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 describe('GetPlatformNotificationUsage #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -16,11 +17,21 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
   const notificationRepo = new NotificationRepository();
   const communityOrganizationRepo = new CommunityOrganizationRepository();
 
+  const mockWorkflowRunRepository = {
+    getPlatformUsageByDateRange: sinon.stub().resolves([]),
+  };
+
+  const mockFeatureFlagsService = {
+    getFlag: sinon.stub().resolves(false),
+  };
+
   const createUseCase = () => {
     return new GetPlatformNotificationUsage(
+      mockWorkflowRunRepository,
       environmentRepo,
       notificationRepo,
       communityOrganizationRepo,
+      mockFeatureFlagsService,
       new PinoLogger({})
     );
   };
@@ -29,6 +40,10 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    mockWorkflowRunRepository.getPlatformUsageByDateRange.reset();
+    mockWorkflowRunRepository.getPlatformUsageByDateRange.resolves([]);
+    mockFeatureFlagsService.getFlag.reset();
+    mockFeatureFlagsService.getFlag.resolves(false);
   });
 
   it(`should return an empty array when there is no recorded usage`, async () => {
