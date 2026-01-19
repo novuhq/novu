@@ -1,8 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
-
+import { PinoLogger } from '../../logging';
 import { BullMqService, Processor, Worker, WorkerOptions } from '../bull-mq';
 import { INovuWorker } from '../readiness';
+import { ISqsConsumerOptions, SqsConsumerService, SqsService } from '../sqs';
 
 const LOG_CONTEXT = 'WorkerService';
 
@@ -11,60 +12,130 @@ export type WorkerProcessor = string | Processor<any, unknown, string> | undefin
 export { WorkerOptions };
 
 export class WorkerBaseService implements INovuWorker {
-  private instance: BullMqService;
+  private bullMqService: BullMqService;
+  private sqsConsumer?: SqsConsumerService;
+  private processorFunction?: Processor<any, unknown, string>;
 
   public readonly DEFAULT_ATTEMPTS = 3;
 
   constructor(
     public readonly topic: JobTopicNameEnum,
-    public bullMqServiceInstance: BullMqService
+    public bullMqServiceInstance: BullMqService,
+    protected sqsService?: SqsService,
+    protected logger?: PinoLogger
   ) {
-    this.instance = bullMqServiceInstance;
+    this.bullMqService = bullMqServiceInstance;
   }
 
   public get worker(): Worker {
-    return this.instance.worker;
+    return this.bullMqService.worker;
   }
 
   public initWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
     Logger.log(`Worker ${this.topic} initialized`, LOG_CONTEXT);
 
     this.createWorker(processor, options);
+
+    if (typeof processor === 'function') {
+      this.processorFunction = processor;
+      this.initSqsConsumer(processor, options);
+    }
   }
 
   public createWorker(processor: WorkerProcessor, options: WorkerOptions): void {
-    this.instance.createWorker(this.topic, processor, options);
+    this.bullMqService.createWorker(this.topic, processor, options);
+  }
+
+  private initSqsConsumer(processor: Processor<any, unknown, string>, options?: WorkerOptions): void {
+    if (!this.sqsService) {
+      Logger.debug(`SQS service not configured for ${this.topic}, skipping SQS consumer`, LOG_CONTEXT);
+      return;
+    }
+
+    if (!this.sqsService.isConfigured(this.topic)) {
+      Logger.debug(`SQS queue not configured for ${this.topic}, skipping SQS consumer`, LOG_CONTEXT);
+      return;
+    }
+
+    const sqsConsumerOptions: ISqsConsumerOptions = {
+      maxNumberOfMessages: 10,
+      waitTimeSeconds: 20,
+      visibilityTimeout: 300,
+    };
+
+    const sqsProcessor = async (data: any): Promise<void> => {
+      const job = {
+        data,
+        id: data._id || data.identifier || 'unknown',
+        name: this.topic,
+      };
+
+      await processor(job as any);
+    };
+
+    this.sqsConsumer = new SqsConsumerService(
+      this.topic,
+      this.sqsService,
+      sqsProcessor,
+      this.logger,
+      sqsConsumerOptions
+    );
+
+    this.sqsConsumer.start();
+
+    Logger.log(`SQS consumer for ${this.topic} initialized and started`, LOG_CONTEXT);
   }
 
   public async isRunning(): Promise<boolean> {
-    return await this.instance.isWorkerRunning();
+    const bullMqRunning = await this.bullMqService.isWorkerRunning();
+    const sqsRunning = this.sqsConsumer?.getStatus().isRunning || false;
+    return bullMqRunning || sqsRunning;
   }
 
   public async isPaused(): Promise<boolean> {
-    return await this.instance.isWorkerPaused();
+    const bullMqPaused = await this.bullMqService.isWorkerPaused();
+    const sqsPaused = this.sqsConsumer?.getStatus().isPaused || false;
+    return bullMqPaused && sqsPaused;
   }
 
   public async pause(): Promise<void> {
     if (this.worker) {
-      await this.instance.pauseWorker();
+      await this.bullMqService.pauseWorker();
     }
+
+    if (this.sqsConsumer) {
+      await this.sqsConsumer.pause();
+    }
+
+    Logger.log(`Worker ${this.topic} paused (BullMQ and SQS)`, LOG_CONTEXT);
   }
 
   public async resume(): Promise<void> {
     if (this.worker) {
-      await this.instance.resumeWorker();
+      await this.bullMqService.resumeWorker();
       if (process.env.NODE_ENV === 'test') {
         Logger.log(`Worker ${this.topic} waiting until ready...`, LOG_CONTEXT);
-        await this.instance.waitUntilWorkerIsReady();
+        await this.bullMqService.waitUntilWorkerIsReady();
         Logger.log(`Worker ${this.topic} is now ready to process jobs`, LOG_CONTEXT);
       }
     }
+
+    if (this.sqsConsumer) {
+      await this.sqsConsumer.resume();
+    }
+
+    Logger.log(`Worker ${this.topic} resumed (BullMQ and SQS)`, LOG_CONTEXT);
   }
 
   public async gracefulShutdown(): Promise<void> {
     Logger.log(`Shutting the ${this.topic} worker service down`, LOG_CONTEXT);
 
-    await this.instance.gracefulShutdown();
+    await this.bullMqService.gracefulShutdown();
+
+    if (this.sqsConsumer) {
+      await this.sqsConsumer.stop();
+      Logger.log(`SQS consumer for ${this.topic} stopped`, LOG_CONTEXT);
+    }
 
     Logger.log(`Shutting down the ${this.topic} worker service has finished`, LOG_CONTEXT);
   }

@@ -5,6 +5,7 @@ import {
   IStandardDataDto,
   Job,
   PinoLogger,
+  SqsService,
   StandardWorkerService,
   Store,
   storage,
@@ -38,9 +39,11 @@ export class StandardWorker extends StandardWorkerService {
     @Inject(forwardRef(() => WorkflowInMemoryProviderService))
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private organizationRepository: CommunityOrganizationRepository,
-    private jobRepository: JobRepository
+    private jobRepository: JobRepository,
+    sqsService: SqsService,
+    logger: PinoLogger
   ) {
-    super(new BullMqService(workflowInMemoryProviderService));
+    super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 

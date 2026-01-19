@@ -4,6 +4,8 @@ import {
   BullMqService,
   getWebSocketWorkerOptions,
   IWebSocketDataDto,
+  PinoLogger,
+  SqsService,
   WebSocketsWorkerService,
   WorkerOptions,
   WorkflowInMemoryProviderService,
@@ -20,9 +22,11 @@ const LOG_CONTEXT = 'WebSocketWorker';
 export class WebSocketWorker extends WebSocketsWorkerService {
   constructor(
     private externalServicesRoute: ExternalServicesRoute,
-    private workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    private workflowInMemoryProviderService: WorkflowInMemoryProviderService,
+    sqsService: SqsService,
+    logger: PinoLogger
   ) {
-    super(new BullMqService(workflowInMemoryProviderService));
+    super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
   }

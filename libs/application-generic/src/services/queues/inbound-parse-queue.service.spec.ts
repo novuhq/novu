@@ -1,15 +1,45 @@
 import { Test } from '@nestjs/testing';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { IHeaders, IInboundParseJobDto } from '../../dtos';
+import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
+import { FeatureFlagsService } from '../feature-flags';
+import { SqsService } from '../sqs';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { InboundParseQueueService } from './inbound-parse-queue.service';
 
 let inboundParseQueueService: InboundParseQueueService;
 
+const mockSqsService = {
+  sendMessage: jest.fn(),
+} as unknown as SqsService;
+
+const mockFeatureFlagsService = {
+  getFlag: jest.fn(),
+} as unknown as FeatureFlagsService;
+
+const mockOrganizationRepository = {
+  findOne: jest.fn(),
+} as unknown as CommunityOrganizationRepository;
+
+const mockLogger = {
+  setContext: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+} as unknown as PinoLogger;
+
 describe('Inbound Parse Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      inboundParseQueueService = new InboundParseQueueService(new WorkflowInMemoryProviderService());
+      inboundParseQueueService = new InboundParseQueueService(
+        new WorkflowInMemoryProviderService(),
+        mockSqsService,
+        mockFeatureFlagsService,
+        mockOrganizationRepository,
+        mockLogger
+      );
       await inboundParseQueueService.queue.obliterate();
     });
 
@@ -126,7 +156,13 @@ describe('Inbound Parse Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      inboundParseQueueService = new InboundParseQueueService(new WorkflowInMemoryProviderService());
+      inboundParseQueueService = new InboundParseQueueService(
+        new WorkflowInMemoryProviderService(),
+        mockSqsService,
+        mockFeatureFlagsService,
+        mockOrganizationRepository,
+        mockLogger
+      );
       await inboundParseQueueService.queue.obliterate();
     });
 

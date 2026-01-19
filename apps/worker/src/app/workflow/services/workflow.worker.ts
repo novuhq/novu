@@ -4,6 +4,7 @@ import {
   getWorkflowWorkerOptions,
   IWorkflowDataDto,
   PinoLogger,
+  SqsService,
   Store,
   storage,
   TriggerEvent,
@@ -23,10 +24,13 @@ export class WorkflowWorker extends WorkflowWorkerService {
     private triggerEventUsecase: TriggerEvent,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private organizationRepository: CommunityOrganizationRepository,
-    private logger: PinoLogger
+    sqsService: SqsService,
+    logger: PinoLogger
   ) {
-    super(new BullMqService(workflowInMemoryProviderService));
-    this.logger.setContext(this.constructor.name);
+    super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
+    if (this.logger) {
+      this.logger.setContext(this.constructor.name);
+    }
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
 
@@ -39,7 +43,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
       const organizationExists = await this.organizationExist(data);
 
       if (!organizationExists) {
-        this.logger.warn(`Organization not found for organizationId ${data.organizationId}. Skipping job.`);
+        this.logger?.warn(`Organization not found for organizationId ${data.organizationId}. Skipping job.`);
 
         return;
       }
@@ -47,7 +51,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
       return await new Promise((resolve, reject) => {
         const _this = this;
 
-        this.logger.trace(`Job ${data.identifier} is being processed in the new instance workflow worker`);
+        this.logger?.trace(`Job ${data.identifier} is being processed in the new instance workflow worker`);
 
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.TRIGGER_HANDLER_QUEUE,

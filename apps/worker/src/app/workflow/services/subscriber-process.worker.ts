@@ -4,6 +4,7 @@ import {
   getSubscriberProcessWorkerOptions,
   IProcessSubscriberDataDto,
   PinoLogger,
+  SqsService,
   Store,
   SubscriberProcessWorkerService,
   storage,
@@ -23,9 +24,11 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
   constructor(
     private subscriberJobBoundUsecase: SubscriberJobBound,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private organizationRepository: CommunityOrganizationRepository
+    private organizationRepository: CommunityOrganizationRepository,
+    sqsService: SqsService,
+    logger: PinoLogger
   ) {
-    super(new BullMqService(workflowInMemoryProviderService));
+    super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
   }

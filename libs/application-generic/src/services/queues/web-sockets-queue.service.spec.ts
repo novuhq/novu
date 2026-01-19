@@ -1,6 +1,10 @@
 import { Test } from '@nestjs/testing';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { IWebSocketJobDto } from '../../dtos';
+import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
+import { FeatureFlagsService } from '../feature-flags';
+import { SqsService } from '../sqs';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SocketWorkerService } from '../socket-worker';
 import { WebSocketsQueueService } from './web-sockets-queue.service';
@@ -13,12 +17,36 @@ const mockSocketWorkerService = {
   sendMessage: jest.fn().mockResolvedValue(undefined),
 } as any;
 
+const mockSqsService = {
+  sendMessage: jest.fn(),
+} as unknown as SqsService;
+
+const mockFeatureFlagsService = {
+  getFlag: jest.fn(),
+} as unknown as FeatureFlagsService;
+
+const mockOrganizationRepository = {
+  findOne: jest.fn(),
+} as unknown as CommunityOrganizationRepository;
+
+const mockLogger = {
+  setContext: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+} as unknown as PinoLogger;
+
 describe('WebSockets Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
       webSocketsQueueService = new WebSocketsQueueService(
         new WorkflowInMemoryProviderService(),
-        mockSocketWorkerService
+        mockSocketWorkerService,
+        mockSqsService,
+        mockFeatureFlagsService,
+        mockOrganizationRepository,
+        mockLogger
       );
       await webSocketsQueueService.queue.obliterate();
     });
@@ -130,7 +158,11 @@ describe('WebSockets Queue service', () => {
 
       webSocketsQueueService = new WebSocketsQueueService(
         new WorkflowInMemoryProviderService(),
-        mockSocketWorkerService
+        mockSocketWorkerService,
+        mockSqsService,
+        mockFeatureFlagsService,
+        mockOrganizationRepository,
+        mockLogger
       );
       await webSocketsQueueService.queue.obliterate();
     });

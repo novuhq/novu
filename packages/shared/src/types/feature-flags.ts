@@ -86,6 +86,7 @@ export enum FeatureFlagsKeysEnum {
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"
+  QUEUE_BACKEND_MODE = 'QUEUE_BACKEND_MODE', // Values: "bullmq" | "shadow" | "live" | "complete"
 
   // Numeric flags
   MAX_WORKFLOW_LIMIT_NUMBER = 'MAX_WORKFLOW_LIMIT_NUMBER',
@@ -101,6 +102,13 @@ export enum FeatureFlagsKeysEnum {
 
 export enum CloudflareSchedulerMode {
   OFF = 'off',
+  SHADOW = 'shadow',
+  LIVE = 'live',
+  COMPLETE = 'complete',
+}
+
+export enum QueueBackendMode {
+  BULLMQ = 'bullmq',
   SHADOW = 'shadow',
   LIVE = 'live',
   COMPLETE = 'complete',

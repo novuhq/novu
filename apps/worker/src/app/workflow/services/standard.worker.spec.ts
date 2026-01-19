@@ -4,6 +4,7 @@ import {
   CloudflareSchedulerService,
   FeatureFlagsService,
   PinoLogger,
+  SqsService,
   StandardQueueService,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
@@ -55,6 +56,12 @@ const mockFeatureFlagsService = {
 const mockOrganizationRepository = {
   findOne: async () => null,
 } as unknown as CommunityOrganizationRepository;
+
+const mockSqsService = {
+  getQueueUrl: () => undefined,
+  getProducer: () => undefined,
+  getClient: () => ({}),
+} as unknown as SqsService;
 
 const mockLogger = {
   setContext: () => {},
@@ -124,6 +131,7 @@ describe('Standard Worker', () => {
       mockCloudflareSchedulerService,
       mockFeatureFlagsService,
       mockOrganizationRepository,
+      mockSqsService,
       mockLogger
     );
     await standardQueueService.queue.obliterate();
@@ -150,7 +158,9 @@ describe('Standard Worker', () => {
       webhookFilterBackoffStrategy,
       workflowInMemoryProviderService,
       organizationRepository,
-      jobRepository
+      jobRepository,
+      mockSqsService,
+      mockLogger
     );
   });
 
