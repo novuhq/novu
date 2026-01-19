@@ -47,18 +47,19 @@ export class GetSubscription {
       command.identifier = stripContextFromIdentifier(command.identifier);
     }
 
+    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       topicKey: command.topicKey,
       identifier: command.identifier,
+      ...contextQuery,
     });
 
     if (!subscription) {
       return null;
     }
-
-    const contextQuery = await this.buildContextExactMatchQuery(subscription.contextKeys, command.organizationId);
 
     const preferencesEntities = await this.preferencesRepository.find({
       _environmentId: subscription._environmentId,
