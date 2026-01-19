@@ -424,6 +424,7 @@ export class UpdateSubscriptionUsecase {
           }
         : null,
       preferences,
+      contextKeys: subscription.contextKeys,
       createdAt: subscription.createdAt ?? '',
       updatedAt: subscription.updatedAt ?? '',
     };

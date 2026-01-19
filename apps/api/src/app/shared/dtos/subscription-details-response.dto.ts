@@ -35,4 +35,11 @@ export class SubscriptionDetailsResponseDto {
   @Type(() => SubscriptionPreferenceDto)
   @IsOptional()
   preferences?: SubscriptionPreferenceDto[];
+
+  @ApiPropertyOptional({
+    description: 'Context keys that scope this subscription (e.g., tenant:org-a, project:proj-123)',
+    example: ['tenant:org-a', 'project:proj-123'],
+    type: [String],
+  })
+  contextKeys?: string[];
 }
