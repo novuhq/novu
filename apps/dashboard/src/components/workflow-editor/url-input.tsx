@@ -55,7 +55,7 @@ export const URLInput = ({
               control={control}
               name={targetKey}
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-0">
                   <FormControl>
                     <Select
                       value={field.value}

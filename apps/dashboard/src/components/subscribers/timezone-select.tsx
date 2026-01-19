@@ -22,7 +22,7 @@ export function TimezoneSelect(props: TimezoneSelectProps) {
   const scrollId = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return (
-    <Popover modal={true} open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="secondary"

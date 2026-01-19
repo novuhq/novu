@@ -34,14 +34,16 @@ export class GetMyProfileUsecase extends BaseUserProfileUsecase {
       const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
       const userHashForIntercom = createHash(intercomSecretKey, profile._id);
 
-      await this.userRepository.update(
-        { _id: profile._id },
-        {
-          $set: {
-            'servicesHashes.intercom': userHashForIntercom,
-          },
-        }
-      );
+      if (userHashForIntercom) {
+        await this.userRepository.update(
+          { _id: profile._id },
+          {
+            $set: {
+              'servicesHashes.intercom': userHashForIntercom,
+            },
+          }
+        );
+      }
     }
 
     this.logger.trace('Found User');

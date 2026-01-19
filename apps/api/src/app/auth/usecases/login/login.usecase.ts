@@ -65,14 +65,16 @@ export class Login {
     if (process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY && !user.servicesHashes?.intercom) {
       const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
       const userHashForIntercom = createHash(intercomSecretKey, user._id);
-      await this.userRepository.update(
-        { _id: user._id },
-        {
-          $set: {
-            'servicesHashes.intercom': userHashForIntercom,
-          },
-        }
-      );
+      if (userHashForIntercom) {
+        await this.userRepository.update(
+          { _id: user._id },
+          {
+            $set: {
+              'servicesHashes.intercom': userHashForIntercom,
+            },
+          }
+        );
+      }
     }
 
     this.analyticsService.upsertUser(user, user._id);
