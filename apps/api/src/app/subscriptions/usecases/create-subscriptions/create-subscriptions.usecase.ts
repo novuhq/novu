@@ -161,6 +161,7 @@ export class CreateSubscriptionsUsecase {
             }
           : null,
         preferences,
+        contextKeys: subscription.contextKeys,
         createdAt: subscription.createdAt ?? '',
         updatedAt: subscription.updatedAt ?? '',
       });
@@ -227,6 +228,7 @@ export class CreateSubscriptionsUsecase {
               }
             : null,
           preferences,
+          contextKeys: subscription.contextKeys,
           createdAt: subscription.createdAt ?? '',
           updatedAt: subscription.updatedAt ?? '',
         });
@@ -259,6 +261,7 @@ export class CreateSubscriptionsUsecase {
               }
             : null,
           preferences,
+          contextKeys: subscription.contextKeys,
           createdAt: subscription.createdAt ?? '',
           updatedAt: subscription.updatedAt ?? '',
         });

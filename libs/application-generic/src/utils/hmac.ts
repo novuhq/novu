@@ -7,7 +7,9 @@ export function createHash(key: string, valueToHash: string): string | null {
   Logger.verbose('Creating Hmac');
 
   if (!key || !valueToHash) {
-    Logger.warn(`createHash called with invalid arguments: key=${key ? '[SET]' : '[EMPTY]'}, valueToHash=${valueToHash ? '[SET]' : '[EMPTY]'}`);
+    Logger.warn(
+      `createHash called with invalid arguments: key=${key ? '[SET]' : '[EMPTY]'}, valueToHash=${valueToHash ? '[SET]' : '[EMPTY]'}`
+    );
 
     return null;
   }

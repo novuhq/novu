@@ -3425,6 +3425,108 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(message[0].content).to.include(`Hello ${subscriber.lastName},`);
     });
 
+    it('should allow html entities in subject and body when using html editor', async function test() {
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test HTML Entities Workflow',
+        workflowId: 'test-html-entities-workflow',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            controlValues: {
+              subject: '{{payload.htmlEntities}}',
+              editorType: 'html',
+              body: '<p>{{payload.htmlEntities}}</p>',
+            },
+          },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: {
+          htmlEntities: 'Hello &lt; &gt; &amp; &quot; &apos;',
+        },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      await session.waitForJobCompletion(workflow._id);
+      const message = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+
+      expect(message.length).to.equal(1);
+      expect(message[0].subject).to.equal(`Hello < > & " '`);
+      // for html content it preserves the html entities, because it's rendered as html and will be decoded by the browser
+      expect(message[0].content).to.include(`Hello &lt; &gt; &amp; " '`);
+    });
+
+    it('should allow html entities in subject and body when using block editor', async function test() {
+      const mailyContent = JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            attrs: { textAlign: null, showIfKey: null },
+            content: [
+              {
+                type: 'variable',
+                attrs: { id: 'payload.htmlEntities' },
+              },
+            ],
+          },
+        ],
+      });
+
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Test HTML Entities Workflow',
+        workflowId: 'test-html-entities-workflow',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            controlValues: {
+              subject: '{{payload.htmlEntities}}',
+              editorType: 'block',
+              body: mailyContent,
+            },
+          },
+        ],
+      };
+
+      const response = await session.testAgent.post('/v2/workflows').send(workflowBody);
+      expect(response.status).to.equal(201);
+      const workflow: WorkflowResponseDto = response.body.data;
+
+      await novuClient.trigger({
+        workflowId: workflow.workflowId,
+        to: [subscriber.subscriberId],
+        payload: {
+          htmlEntities: 'Hello &lt; &gt; &amp; &quot; &apos;',
+        },
+      });
+      await session.waitForJobCompletion(workflow._id);
+
+      await session.waitForJobCompletion(workflow._id);
+      const message = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+      });
+
+      expect(message.length).to.equal(1);
+      expect(message[0].subject).to.equal(`Hello < > & " '`);
+      // for html content it preserves the html entities, because it's rendered as html and will be decoded by the browser
+      expect(message[0].content).to.include(`Hello &lt; &gt; &amp; " '`);
+    });
+
     it('should execute step based on conditions', async () => {
       const workflowBody: CreateWorkflowDto = {
         name: 'Test Step Conditions Workflow',

@@ -381,6 +381,7 @@ export class SubscribersController {
         organizationId: user.organizationId,
         subscriberId,
         topicKey: query.key,
+        contextKeys: query.contextKeys,
         limit: query.limit ? Number(query.limit) : 10,
         after: query.after,
         before: query.before,

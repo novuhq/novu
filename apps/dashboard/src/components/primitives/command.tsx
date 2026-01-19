@@ -3,8 +3,8 @@ import { Command as CommandPrimitive } from 'cmdk';
 import * as React from 'react';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/primitives/dialog';
-import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { InputRoot, InputWrapper } from '@/components/primitives/input';
+import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { cn } from '@/utils/ui';
 
 const Command = React.forwardRef<

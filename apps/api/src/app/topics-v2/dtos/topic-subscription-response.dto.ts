@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TopicResponseDto } from './topic-response.dto';
 
 export class SubscriberDto {
@@ -73,4 +73,11 @@ export class TopicSubscriptionResponseDto {
     type: SubscriberDto,
   })
   subscriber: SubscriberDto;
+
+  @ApiPropertyOptional({
+    description: 'Context keys that scope this subscription (e.g., tenant:org-a, project:proj-123)',
+    example: ['tenant:org-a', 'project:proj-123'],
+    type: [String],
+  })
+  contextKeys?: string[];
 }
