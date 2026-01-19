@@ -186,6 +186,7 @@ export class GetPreferences {
             ...baseQuery,
             _subscriberId: command.subscriberId,
             type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+            ...contextQuery,
           },
           undefined,
           queryOptions
