@@ -55,6 +55,7 @@ export function AnalyticsPage() {
   const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
 
   // Define report types for each section
+  // Request 1: Metrics
   const metricsReportTypes = [
     ReportTypeEnum.MESSAGES_DELIVERED,
     ReportTypeEnum.ACTIVE_SUBSCRIBERS,
@@ -62,13 +63,18 @@ export function AnalyticsPage() {
     ReportTypeEnum.TOTAL_INTERACTIONS,
   ];
 
-  const chartsReportTypes = [
+  // Request 2: Trends and provider charts
+  const trendsReportTypes = [
     ReportTypeEnum.DELIVERY_TREND,
     ReportTypeEnum.INTERACTION_TREND,
-    ReportTypeEnum.WORKFLOW_BY_VOLUME,
     ReportTypeEnum.PROVIDER_BY_VOLUME,
-    ReportTypeEnum.WORKFLOW_RUNS_TREND,
     ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND,
+  ];
+
+  // Request 3: Workflow charts
+  const workflowReportTypes = [
+    ReportTypeEnum.WORKFLOW_BY_VOLUME,
+    ReportTypeEnum.WORKFLOW_RUNS_TREND,
   ];
 
   const { charts: metricsCharts, isLoading: isMetricsLoading } = useFetchCharts({
@@ -82,11 +88,11 @@ export function AnalyticsPage() {
   });
 
   const {
-    charts: chartsData,
-    isLoading: isChartsLoading,
-    error: chartsError,
+    charts: trendsCharts,
+    isLoading: isTrendsLoading,
+    error: trendsError,
   } = useFetchCharts({
-    reportType: chartsReportTypes,
+    reportType: trendsReportTypes,
     createdAtGte: chartsDateRange.createdAtGte,
     workflowIds: selectedWorkflows.length > 0 ? selectedWorkflows : undefined,
     enabled: true,
@@ -94,6 +100,24 @@ export function AnalyticsPage() {
     staleTime: CHART_CONFIG.staleTime,
     useMockData: isDevMockMode,
   });
+
+  const {
+    charts: workflowCharts,
+    isLoading: isWorkflowLoading,
+    error: workflowError,
+  } = useFetchCharts({
+    reportType: workflowReportTypes,
+    createdAtGte: chartsDateRange.createdAtGte,
+    workflowIds: selectedWorkflows.length > 0 ? selectedWorkflows : undefined,
+    enabled: true,
+    refetchInterval: CHART_CONFIG.refetchInterval,
+    staleTime: CHART_CONFIG.staleTime,
+    useMockData: isDevMockMode,
+  });
+
+  const chartsData = { ...trendsCharts, ...workflowCharts };
+  const isChartsLoading = isTrendsLoading || isWorkflowLoading;
+  const chartsError = trendsError || workflowError;
 
   const { messagesDeliveredData, activeSubscribersData, avgMessagesPerSubscriberData, totalInteractionsData } =
     useMetricData(metricsCharts);
