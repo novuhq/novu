@@ -75,6 +75,7 @@ export class UpsertPreferences {
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       returnPreference: command.returnPreference,
       schedule: isSubscribersScheduleEnabled ? command.schedule : undefined,
+      contextKeys: command.contextKeys,
     });
   }
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FeatureFlagsService, GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '@novu/application-generic';
 import { ContextRepository } from '@novu/dal';
 import { ContextPayload, FeatureFlagsKeysEnum, PreferenceLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
@@ -20,8 +20,6 @@ export class UpdateSubscriberPreferences {
   ) {}
 
   async execute(command: UpdateSubscriberPreferencesCommand): Promise<GetSubscriberPreferencesDto> {
-    this.validateContextRequiresWorkflow(command);
-
     const contextKeys = await this.resolveContexts(command.environmentId, command.organizationId, command.context);
 
     let workflowId: string | undefined;
@@ -62,14 +60,6 @@ export class UpdateSubscriberPreferences {
       global: subscriberPreferences.global,
       workflows: subscriberPreferences.workflows,
     });
-  }
-
-  private validateContextRequiresWorkflow(command: UpdateSubscriberPreferencesCommand): void {
-    if (command.context && !command.workflowIdOrInternalId) {
-      throw new BadRequestException(
-        'Context cannot be used with global preferences. Please provide a workflowId to update workflow preferences with context.'
-      );
-    }
   }
 
   private async resolveContexts(

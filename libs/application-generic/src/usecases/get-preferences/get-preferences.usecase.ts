@@ -67,6 +67,7 @@ export class GetPreferences {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
+    contextKeys?: string[];
   }): Promise<{
     enabled: boolean;
     channels: IPreferenceChannels;
