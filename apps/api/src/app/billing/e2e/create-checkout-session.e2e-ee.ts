@@ -13,7 +13,7 @@ const checkoutSessionCreateParamsMock = {
   automatic_tax: {
     enabled: true,
   },
-  billing_address_collection: 'auto',
+  billing_address_collection: 'required',
   customer_update: {
     name: 'auto',
     address: 'auto',
