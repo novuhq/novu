@@ -108,13 +108,13 @@ export class UpsertWorkflowDataCommand {
 
   @IsOptional()
   @IsString()
-  description?: string;
+  description?: string | null;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   @ArrayMaxSize(16, { message: 'tags must contain no more than 16 elements' })
-  tags?: string[];
+  tags?: string[] | null;
 
   @IsOptional()
   @IsBoolean()

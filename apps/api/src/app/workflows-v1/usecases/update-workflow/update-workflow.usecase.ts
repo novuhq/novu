@@ -102,7 +102,7 @@ export class UpdateWorkflow {
       updatePayload.severity = command.severity;
     }
 
-    if (command.description !== undefined) {
+    if (command.description !== undefined && command.description !== null) {
       updatePayload.description = command.description;
     }
 

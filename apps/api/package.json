@@ -41,7 +41,10 @@
     "admin:remove-organization": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-organization.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.10",
+    "@ai-sdk/openai": "^3.0.10",
     "@aws-sdk/client-secrets-manager": "^3.716.0",
+    "ai": "^6.0.0",
     "@godaddy/terminus": "^4.12.1",
     "@google-cloud/storage": "^6.2.3",
     "@novu/maily-render": "workspace:*",

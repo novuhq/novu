@@ -1,0 +1,271 @@
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { createOpenAI } from '@ai-sdk/openai';
+import { BadRequestException, Injectable, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
+import { generateObject, generateText, LanguageModel, ModelMessage, streamText } from 'ai';
+import { z } from 'zod';
+
+export type LlmProvider = 'openai' | 'anthropic';
+
+export type LlmConfig = {
+  provider: LlmProvider;
+  apiKey: string;
+  model: string;
+  maxTokens: number;
+  temperature: number;
+  maxRetries: number;
+};
+
+export type GenerateTextInput = {
+  systemPrompt: string;
+  userPrompt: string;
+  maxTokens?: number;
+  temperature?: number;
+};
+
+export type GenerateObjectInput<T extends z.ZodType> = {
+  systemPrompt: string;
+  userPrompt: string;
+  schema: T;
+  maxTokens?: number;
+  temperature?: number;
+};
+
+export type ChatStreamInput = {
+  systemPrompt: string;
+  message: string;
+  messageHistory: Array<{
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+  }>;
+  maxTokens?: number;
+  temperature?: number;
+};
+
+@Injectable()
+export class LlmService implements OnModuleInit {
+  private config: LlmConfig | null = null;
+  private isConfigured = false;
+  private model: LanguageModel | null = null;
+  private maxSchemaValidationRetries = 3;
+  private requestTimeoutMs = 30000;
+
+  constructor(private readonly logger: PinoLogger) {}
+
+  onModuleInit() {
+    this.initializeConfig();
+  }
+
+  private initializeConfig(): void {
+    const provider = (process.env.AI_LLM_PROVIDER as LlmProvider) || 'openai';
+    const apiKey = process.env.AI_LLM_API_KEY;
+
+    if (!apiKey) {
+      this.logger.warn('AI_LLM_API_KEY not configured.');
+      this.isConfigured = false;
+
+      return;
+    }
+
+    this.config = {
+      provider,
+      apiKey,
+      model: process.env.AI_LLM_MODEL || this.getDefaultModel(provider),
+      maxTokens: parseInt(process.env.AI_LLM_MAX_TOKENS || '4096', 10),
+      temperature: parseFloat(process.env.AI_LLM_TEMPERATURE || '0.7'),
+      maxRetries: parseInt(process.env.AI_LLM_MAX_RETRIES || '3', 10),
+    };
+    this.maxSchemaValidationRetries = parseInt(process.env.AI_LLM_SCHEMA_VALIDATION_RETRIES || '3', 10);
+    this.requestTimeoutMs = parseInt(process.env.AI_LLM_REQUEST_TIMEOUT_MS || '30000', 10);
+
+    this.model = this.createModel(provider, apiKey, this.config.model);
+    this.isConfigured = true;
+    this.logger.info(`LLM Service initialized with provider: ${provider}`);
+  }
+
+  private createModel(provider: LlmProvider, apiKey: string, modelId: string): LanguageModel {
+    if (provider === 'anthropic') {
+      const anthropic = createAnthropic({ apiKey });
+
+      return anthropic(modelId);
+    }
+
+    const openai = createOpenAI({ apiKey });
+
+    return openai(modelId);
+  }
+
+  private getDefaultModel(provider: LlmProvider): string {
+    if (provider === 'anthropic') {
+      return 'claude-sonnet-4-20250514';
+    }
+
+    return 'gpt-4o';
+  }
+
+  isAvailable(): boolean {
+    return this.isConfigured;
+  }
+
+  getModel(): LanguageModel | null {
+    return this.model;
+  }
+
+  getConfig(): LlmConfig | null {
+    return this.config;
+  }
+
+  private handleAIError(error: unknown): never {
+    const errorObj = error as {
+      name?: string;
+      message?: string;
+      statusCode?: number;
+      url?: string;
+      responseBody?: string;
+      text?: string;
+    };
+    const errorContext = {
+      errorName: errorObj?.name,
+      errorMessage: errorObj?.message,
+      statusCode: errorObj?.statusCode,
+    };
+
+    if (errorObj?.name === 'AbortError' || errorObj?.message?.includes('aborted')) {
+      this.logger.error('AI request timed out', errorContext);
+      throw new ServiceUnavailableException(
+        'Content generation request timed out. Please try again with a simpler prompt.'
+      );
+    }
+
+    if (errorObj?.statusCode) {
+      this.logger.error('OpenAI API call failed', {
+        ...errorContext,
+        statusCode: errorObj.statusCode,
+        url: errorObj.url,
+        responseBody: errorObj.responseBody,
+      });
+
+      if (errorObj.statusCode === 429) {
+        throw new ServiceUnavailableException('AI service is currently rate limited. Please try again in a moment.');
+      }
+
+      if (errorObj.statusCode === 401 || errorObj.statusCode === 403) {
+        this.logger.error('OpenAI authentication failed - check API key configuration');
+        throw new ServiceUnavailableException('AI service configuration error. Please contact support.');
+      }
+
+      if (errorObj.statusCode >= 500) {
+        throw new ServiceUnavailableException('AI service is temporarily unavailable. Please try again later.');
+      }
+
+      throw new BadRequestException('Invalid request to AI service. Please check your input and try again.');
+    }
+
+    if (errorObj?.name === 'AI_NoObjectGeneratedError') {
+      this.logger.error('AI failed to generate valid content after retries', {
+        ...errorContext,
+        responseText: errorObj?.text?.substring(0, 500),
+      });
+      throw new BadRequestException('Failed to generate valid content. Please try rephrasing your prompt.');
+    }
+
+    this.logger.error(`Unexpected error during content generation`, errorContext);
+    throw new ServiceUnavailableException('Failed to generate content. Please try again.');
+  }
+
+  private async callWithRetries<T>(fn: () => Promise<T>, retryCount = 0): Promise<T> {
+    if (!this.isConfigured || !this.model || !this.config) {
+      throw new Error('LLM not configured. Please set AI_LLM_API_KEY environment variable.');
+    }
+
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), this.requestTimeoutMs);
+
+    try {
+      return await fn();
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (retryCount < this.maxSchemaValidationRetries && error?.name === 'AI_NoObjectGeneratedError') {
+        this.logger.warn(
+          `Schema validation failed, retrying... (attempt ${retryCount + 1}/${this.maxSchemaValidationRetries})`,
+          {
+            errorName: error.name,
+            errorMessage: error.message,
+            responseText: error.text?.substring(0, 500),
+          }
+        );
+
+        return await this.callWithRetries(fn, retryCount + 1);
+      }
+
+      this.handleAIError(error);
+    }
+  }
+
+  async generateText(input: GenerateTextInput): Promise<string> {
+    if (!this.isConfigured || !this.model || !this.config) {
+      throw new Error('LLM not configured. Please set AI_LLM_API_KEY environment variable.');
+    }
+
+    const args = {
+      model: this.model,
+      system: input.systemPrompt,
+      prompt: input.userPrompt,
+      maxOutputTokens: input.maxTokens ?? this.config.maxTokens,
+      temperature: input.temperature ?? this.config.temperature,
+      maxRetries: this.config.maxRetries,
+    };
+
+    const { text } = await this.callWithRetries(async () => generateText(args));
+
+    return text;
+  }
+
+  async generateObject<T extends z.ZodType>(input: GenerateObjectInput<T>): Promise<z.infer<T>> {
+    if (!this.isConfigured || !this.model || !this.config) {
+      throw new Error('LLM not configured. Please set AI_LLM_API_KEY environment variable.');
+    }
+
+    const args = {
+      model: this.model,
+      system: input.systemPrompt,
+      prompt: input.userPrompt,
+      schema: input.schema,
+      maxTokens: input.maxTokens ?? this.config.maxTokens,
+      temperature: input.temperature ?? this.config.temperature,
+      maxRetries: this.config.maxRetries,
+    };
+    const { object } = await this.callWithRetries(async () => generateObject(args));
+
+    return object;
+  }
+
+  async *streamChat(input: ChatStreamInput): AsyncGenerator<string> {
+    if (!this.isConfigured || !this.model || !this.config) {
+      throw new Error('LLM not configured. Please set AI_LLM_API_KEY environment variable.');
+    }
+
+    const messages: ModelMessage[] = input.messageHistory.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+
+    messages.push({ role: 'user', content: input.message });
+
+    const args = {
+      model: this.model,
+      system: input.systemPrompt,
+      messages,
+      maxOutputTokens: input.maxTokens ?? this.config.maxTokens,
+      temperature: input.temperature ?? this.config.temperature,
+      maxRetries: this.config.maxRetries,
+    };
+
+    const result = await this.callWithRetries(async () => streamText(args));
+
+    for await (const chunk of result.textStream) {
+      yield chunk;
+    }
+  }
+}

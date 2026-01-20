@@ -50,6 +50,16 @@ export const envValidators = {
   SCHEDULER_URL: str({ default: undefined }),
   SCHEDULER_API_KEY: str({ default: undefined }),
   INTERNAL_CALLBACK_API_KEY: str({ default: undefined }),
+  // AI/LLM Configuration
+  AI_LLM_PROVIDER: str({ choices: ['openai', 'anthropic'], default: 'openai' }),
+  AI_LLM_API_KEY: str({ default: '' }),
+  AI_LLM_MODEL: str({ default: '' }),
+  AI_LLM_MAX_TOKENS: num({ default: 4096 }),
+  AI_LLM_TEMPERATURE: num({ default: 0.7 }),
+  AI_LLM_MAX_RETRIES: num({ default: 3 }),
+  AI_LLM_SCHEMA_VALIDATION_RETRIES: num({ default: 3 }),
+  AI_LLM_REQUEST_TIMEOUT_MS: num({ default: 30000 }),
+
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {

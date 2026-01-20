@@ -45,13 +45,13 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsOptional()
   @Length(0, MAX_DESCRIPTION_LENGTH)
-  description?: string;
+  description?: string | null;
 
   @IsOptional()
   @IsArray()
   @ArrayUnique()
   @Length(1, MAX_TAG_LENGTH, { each: true })
-  tags?: string[];
+  tags?: string[] | null;
 
   @IsBoolean()
   @IsOptional()
