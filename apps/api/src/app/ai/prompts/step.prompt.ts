@@ -241,12 +241,12 @@ Generate the throttle step configuration.
 ${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
 
 ## Schema Requirements
-- type: "fixed" | null - Throttle type (fixed for time-window based throttling)
+- type: "fixed" | "dynamic" - Throttle type (fixed for time-window based throttling)
 - amount: number (required for fixed) - Number of time units for throttle window
 - unit: string (required for fixed) - One of: "seconds", "minutes", "hours", "days", "weeks", "months"
 - threshold: number (required) - Maximum number of notifications allowed in the window
-- throttleKey: string | null - Key to group throttle rules
-- dynamicKey: string | null - Key for dynamic grouping
+- throttleKey: string (required for fixed) - Key to group throttle rules
+- dynamicKey: string (required for dynamic) - Key for dynamic grouping
 
 ## Usage Guidelines
 - Use throttle to prevent notification fatigue
