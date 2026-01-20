@@ -173,6 +173,7 @@ export class RunJob {
             environmentId: job._environmentId,
             organizationId: job._organizationId,
             _subscriberId: job._subscriberId,
+            contextKeys: job.contextKeys,
           })
         );
 
