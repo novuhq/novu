@@ -3804,11 +3804,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
     afterEach(() => {
       // Restore the original feature flag states
       (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = isSubscribersScheduleEnabled;
-      if (isContextPreferencesEnabled) {
-        (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = isContextPreferencesEnabled;
-      } else {
-        delete (process.env as any).IS_CONTEXT_PREFERENCES_ENABLED;
-      }
+      (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = isContextPreferencesEnabled;
     });
 
     // Helper function to create a schedule that's outside current time
