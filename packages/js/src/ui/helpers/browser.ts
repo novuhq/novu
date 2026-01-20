@@ -1,4 +1,10 @@
 export function requestLock(id: string, cb: (id: string) => void) {
+  if (typeof navigator === 'undefined' || !('locks' in navigator) || !navigator.locks) {
+    cb(id);
+
+    return () => {};
+  }
+
   let isFulfilled = false;
   let promiseResolve: () => void;
 

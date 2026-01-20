@@ -67,6 +67,7 @@ export class GetPreferences {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
+    contextKeys?: string[];
   }): Promise<{
     enabled: boolean;
     channels: IPreferenceChannels;
@@ -186,6 +187,7 @@ export class GetPreferences {
             ...baseQuery,
             _subscriberId: command.subscriberId,
             type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+            ...contextQuery,
           },
           undefined,
           queryOptions
