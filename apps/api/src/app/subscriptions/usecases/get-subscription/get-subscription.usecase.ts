@@ -190,14 +190,20 @@ export class GetSubscription {
       return {}; // FF OFF: no context filtering (pre-feature behavior)
     }
 
-    // undefined or empty array = match only "no context" preferences
-    if (contextKeys === undefined || contextKeys.length === 0) {
+    // Admin API (topics-v2): contextKeys undefined → no context filtering (identifier is sufficient)
+    if (contextKeys === undefined) {
+      return {};
+    }
+
+    // Subscriber API (inbox): contextKeys always provided as array
+    // Empty array → match only subscriptions with no context
+    if (contextKeys.length === 0) {
       return {
         $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
       };
     }
 
-    // non-empty array = exact match
+    // Non-empty array → exact context match for security
     return {
       contextKeys: { $all: contextKeys, $size: contextKeys.length },
     };

@@ -1,4 +1,6 @@
 import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
@@ -6,6 +8,7 @@ import {
   TopicSubscriberIdentifierDto,
   WorkflowPreferenceRequestDto,
 } from '../../shared/dtos/subscriptions/create-subscriptions.dto';
+import { ApiContextPayload } from '../../shared/framework/swagger/context-payload.decorator';
 
 @ApiExtraModels(WorkflowPreferenceRequestDto, GroupPreferenceFilterDto, TopicSubscriberIdentifierDto)
 export class CreateTopicSubscriptionsRequestDto {
@@ -50,6 +53,11 @@ export class CreateTopicSubscriptionsRequestDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @ApiContextPayload()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 
   @ApiProperty({
     description:

@@ -252,6 +252,7 @@ export class TopicSubscribersRepository extends BaseRepository<
     organizationId,
     topicKey,
     subscriberId,
+    contextKeys,
     limit = 10,
     before,
     after,
@@ -276,6 +277,10 @@ export class TopicSubscribersRepository extends BaseRepository<
 
     if (subscriberId) {
       query.externalSubscriberId = subscriberId;
+    }
+
+    if (contextKeys) {
+      Object.assign(query, this.buildContextExactMatchQuery(contextKeys));
     }
 
     // Handle cursor-based pagination

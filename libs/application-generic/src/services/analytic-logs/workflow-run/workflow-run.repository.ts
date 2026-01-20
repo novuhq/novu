@@ -786,4 +786,44 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
     return result.data;
   }
+
+  async getPlatformUsageByDateRange(
+    startDate: Date,
+    endDate: Date,
+    organizationId?: string
+  ): Promise<Array<{ organization_id: string; count: string }>> {
+    const organizationFilter = organizationId ? 'AND organization_id = {organizationId:String}' : '';
+
+    const query = `
+      SELECT 
+        organization_id,
+        count(*) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        created_at >= {startDate:DateTime64(3)}
+        AND created_at < {endDate:DateTime64(3)}
+        ${organizationFilter}
+      GROUP BY organization_id
+      ORDER BY organization_id
+    `;
+
+    const params: Record<string, unknown> = {
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    if (organizationId) {
+      params.organizationId = organizationId;
+    }
+
+    const result = await this.clickhouseService.query<{
+      organization_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
 }
