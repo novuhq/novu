@@ -249,11 +249,13 @@ export class ConditionsFilter extends Filter {
 
     const hmac = await this.buildHmac(command);
 
-    const config = {
-      headers: {
-        'nv-hmac-256': hmac,
-      },
+    const config: { headers: Record<string, string> } = {
+      headers: {},
     };
+
+    if (hmac) {
+      config.headers['nv-hmac-256'] = hmac;
+    }
 
     try {
       return await axios.post(child.webhookUrl, payload, config).then((response) => {
@@ -269,8 +271,8 @@ export class ConditionsFilter extends Filter {
     }
   }
 
-  private async buildHmac(command: ConditionsFilterCommand): Promise<string> {
-    if (process.env.NODE_ENV === 'test') return '';
+  private async buildHmac(command: ConditionsFilterCommand): Promise<string | null> {
+    if (process.env.NODE_ENV === 'test') return null;
 
     const environment = await this.environmentRepository.findOne({
       _id: command.environmentId,
@@ -278,7 +280,14 @@ export class ConditionsFilter extends Filter {
     });
     if (!environment) throw new PlatformException('Environment is not found');
 
-    return createHash(decryptApiKey(environment.apiKeys[0].key), command.environmentId);
+    const apiKey = environment.apiKeys[0]?.key;
+    const decryptedKey = apiKey ? decryptApiKey(apiKey) : null;
+
+    if (!decryptedKey || !command.environmentId) {
+      return null;
+    }
+
+    return createHash(decryptedKey, command.environmentId);
   }
 
   private async buildPayload(variables: IFilterVariables, command: ConditionsFilterCommand) {

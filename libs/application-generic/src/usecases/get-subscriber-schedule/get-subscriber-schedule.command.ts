@@ -1,4 +1,4 @@
-import { IsDefined, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../commands';
 
 export class GetSubscriberScheduleCommand extends EnvironmentCommand {
@@ -6,4 +6,9 @@ export class GetSubscriberScheduleCommand extends EnvironmentCommand {
   @IsString()
   @IsDefined()
   _subscriberId: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  readonly contextKeys?: string[];
 }

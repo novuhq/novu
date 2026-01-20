@@ -71,13 +71,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   };
 
   it('should initialize session', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
     const { body, status } = await initializeSession({
       applicationIdentifier: session.environment.identifier,
       subscriberId: mockSubscriberId,
@@ -104,13 +102,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should initialize session with subscriber object', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const subscriber = {
       subscriberId: mockSubscriberId,
@@ -130,13 +126,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should create a new subscriber if it does not exist', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
     const subscriberId = `user-subscriber-id-${`${randomBytes(4).toString('hex')}`}`;
 
     const newRandomSubscriber = {
@@ -270,13 +264,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should upsert a subscriber', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
     const subscriberId = `user-subscriber-id-${`${randomBytes(4).toString('hex')}`}`;
 
     const newRandomSubscriber = {
@@ -366,13 +358,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should initialize session with origin header', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const origin = 'https://example.com';
     const { body, status } = await initializeSession({
@@ -397,13 +387,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should throw an error when no active integrations', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        active: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      active: false,
+    });
 
     const { body, status } = await initializeSession({
       applicationIdentifier: session.environment.identifier,
@@ -510,13 +498,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should accept context without contextHash when HMAC disabled', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const context: ContextPayload = { tenant: 'acme', app: 'dashboard' };
 
@@ -554,13 +540,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should throw an error when subscriber object is missing subscriberId', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
     const subscriber = {
       firstName: 'John',
       lastName: 'Doe',
@@ -577,13 +561,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should return severity-based unread counts in session', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const novuClient = initNovuClassSdk(session);
 
@@ -661,13 +643,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should return correct severity counts when no notifications exist', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const { body, status } = await session.testAgent.post('/v1/inbox/session').send({
       applicationIdentifier: session.environment.identifier,
@@ -685,13 +665,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should return correct severity counts with mixed read/unread notifications', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const novuClient = initNovuClassSdk(session);
 
@@ -760,13 +738,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should maintain backward compatibility with totalUnreadCount', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const novuClient = initNovuClassSdk(session);
 
@@ -800,13 +776,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should handle notifications with no severity (none)', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const novuClient = initNovuClassSdk(session);
 
@@ -845,13 +819,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
 
   describe('defaultSchedule functionality', () => {
     it('should initialize session with valid defaultSchedule', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const defaultSchedule = {
         isEnabled: true,
@@ -904,13 +876,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     });
 
     it('should initialize session with defaultSchedule when isEnabled is false', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const defaultSchedule = {
         isEnabled: false,
@@ -930,13 +900,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     });
 
     it('should create schedule with isEnabled true when weeklySchedule is not provided', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const defaultSchedule = {
         isEnabled: true,
@@ -956,13 +924,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     });
 
     it('should fail validation when isEnabled is true but weeklySchedule is empty', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const defaultSchedule = {
         isEnabled: true,
@@ -986,13 +952,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     });
 
     it('should fail validation with invalid time format', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const defaultSchedule = {
         isEnabled: true,
@@ -1019,13 +983,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     });
 
     it('should fail validation with invalid day name', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const defaultSchedule = {
         isEnabled: true,
@@ -1052,13 +1014,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     });
 
     it('should not set defaultSchedule when subscriber already has a schedule', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const subscriberId = `existing-schedule-${randomBytes(4).toString('hex')}`;
 
@@ -1104,13 +1064,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     });
 
     it('should handle multiple time ranges in a day', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const defaultSchedule = {
         isEnabled: true,
@@ -1142,13 +1100,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     });
 
     it('should handle different time formats (with/without leading zero)', async () => {
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const defaultSchedule = {
         isEnabled: true,
@@ -1182,13 +1138,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
 
       (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'false';
 
-      await setIntegrationConfig(
-        {
-          _environmentId: session.environment._id,
-          _organizationId: session.environment._organizationId,
-          hmac: false,
-        }
-      );
+      await setIntegrationConfig({
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      });
 
       const defaultSchedule = {
         isEnabled: true,
@@ -1214,16 +1168,89 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
 
       (process.env as Record<string, string>).IS_SUBSCRIBERS_SCHEDULE_ENABLED = 'true';
     });
-  });
 
-  it('should create contexts in database and return contextKeys in session', async () => {
-    await setIntegrationConfig(
-      {
+    it('should return context-specific schedule when multiple contexts exist', async () => {
+      (process.env as any).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
+
+      await setIntegrationConfig({
         _environmentId: session.environment._id,
         _organizationId: session.environment._organizationId,
         hmac: false,
-      },
-    );
+      });
+
+      const subscriberIdForContextSchedule = `context-schedule-${randomBytes(4).toString('hex')}`;
+
+      // Create schedule for context A (9 AM - 5 PM)
+      const scheduleContextA = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+          },
+        },
+      };
+
+      const sessionA = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: subscriberIdForContextSchedule,
+        context: { tenant: 'acme' },
+        defaultSchedule: scheduleContextA,
+      });
+
+      expect(sessionA.status).to.equal(201);
+      expect(sessionA.body.data.schedule.isEnabled).to.equal(true);
+      expect(sessionA.body.data.schedule.weeklySchedule.monday.hours[0].start).to.equal('09:00 AM');
+
+      // Create schedule for context B (24/7 - all days enabled)
+      const scheduleContextB = {
+        isEnabled: true,
+        weeklySchedule: {
+          monday: {
+            isEnabled: true,
+            hours: [{ start: '12:00 AM', end: '11:59 PM' }],
+          },
+          tuesday: {
+            isEnabled: true,
+            hours: [{ start: '12:00 AM', end: '11:59 PM' }],
+          },
+        },
+      };
+
+      const sessionB = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: subscriberIdForContextSchedule,
+        context: { tenant: 'globex' },
+        defaultSchedule: scheduleContextB,
+      });
+
+      expect(sessionB.status).to.equal(201);
+      expect(sessionB.body.data.schedule.isEnabled).to.equal(true);
+      expect(sessionB.body.data.schedule.weeklySchedule.monday.hours[0].start).to.equal('12:00 AM');
+      expect(sessionB.body.data.schedule.weeklySchedule.tuesday).to.exist;
+
+      // Verify context A still has its schedule
+      const sessionA2 = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: subscriberIdForContextSchedule,
+        context: { tenant: 'acme' },
+      });
+
+      expect(sessionA2.status).to.equal(201);
+      expect(sessionA2.body.data.schedule.isEnabled).to.equal(true);
+      expect(sessionA2.body.data.schedule.weeklySchedule.monday.hours[0].start).to.equal('09:00 AM');
+      expect(sessionA2.body.data.schedule.weeklySchedule.tuesday).to.not.exist;
+
+      delete (process.env as any).IS_CONTEXT_PREFERENCES_ENABLED;
+    });
+  });
+
+  it('should create contexts in database and return contextKeys in session', async () => {
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const context: ContextPayload = { teamId: 'team-123', projectId: 'project-456' };
 
@@ -1251,13 +1278,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should reuse existing contexts on subsequent sessions', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const context: ContextPayload = { teamId: 'team-789' };
 
@@ -1293,13 +1318,11 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   });
 
   it('should return empty contextKeys array when no context provided', async () => {
-    await setIntegrationConfig(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.environment._organizationId,
-        hmac: false,
-      },
-    );
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
 
     const { body, status } = await initializeSession({
       applicationIdentifier: session.environment.identifier,

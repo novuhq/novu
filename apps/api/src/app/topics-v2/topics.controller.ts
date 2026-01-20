@@ -262,6 +262,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         topicKey,
         subscriberId: query.subscriberId,
+        contextKeys: query.contextKeys,
         limit: query.limit ? Number(query.limit) : 10,
         after: query.after,
         before: query.before,
@@ -300,6 +301,7 @@ export class TopicsController {
         subscriptions: this.mapSubscriptions(body.subscriptions || body.subscriberIds || []),
         name: body.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        context: body.context,
       })
     );
 
@@ -308,6 +310,7 @@ export class TopicsController {
         ...item,
         createdAt: item.createdAt || '',
         updatedAt: item.updatedAt || '',
+        contextKeys: item.contextKeys,
       })),
       meta: result.meta,
       errors: result.errors,
@@ -383,7 +386,7 @@ export class TopicsController {
     description: 'The unique identifier of the subscription',
     type: String,
   })
-  @ApiResponse(SubscriptionResponseDto, 200)
+  @ApiResponse(SubscriptionDetailsResponseDto, 200)
   @RequirePermissions(PermissionsEnum.TOPIC_READ)
   async getTopicSubscription(
     @UserSession() user: UserSessionData,

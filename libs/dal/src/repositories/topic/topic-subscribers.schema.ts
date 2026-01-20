@@ -41,6 +41,10 @@ const topicSubscribersSchema = new Schema<TopicSubscribersDBModel>(
     identifier: {
       type: Schema.Types.String,
     },
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
   },
   schemaOptions
 );

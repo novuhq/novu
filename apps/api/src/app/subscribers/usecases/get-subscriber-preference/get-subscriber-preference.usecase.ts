@@ -306,6 +306,7 @@ export class GetSubscriberPreference {
           ...baseQuery,
           _subscriberId: subscriberId,
           type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+          ...contextQuery,
         },
         undefined,
         readOptions

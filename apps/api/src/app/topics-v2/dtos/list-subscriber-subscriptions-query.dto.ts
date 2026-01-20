@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
 import { TopicSubscriptionResponseDto } from './topic-subscription-response.dto';
 
@@ -12,4 +13,21 @@ export class ListSubscriberSubscriptionsQueryDto extends CursorPaginationQueryDt
   @IsOptional()
   @IsString()
   key?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by exact context keys, order insensitive (format: "type:id")',
+    type: String,
+    isArray: true,
+    example: ['tenant:org-123', 'region:us-east-1'],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined) return undefined;
+    if (value === '') return [];
+    const array = Array.isArray(value) ? value : [value];
+    return array.filter((v) => v !== '');
+  })
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 }

@@ -60,6 +60,7 @@ export class InboxTopicController {
         subscriberId: subscriberSession.subscriberId,
         topicKey,
         _subscriberId: subscriberSession._id,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
   }
@@ -85,6 +86,7 @@ export class InboxTopicController {
         identifier,
         workflowIds: normalizedWorkflowIds,
         tags: normalizedTags,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
 
@@ -119,6 +121,7 @@ export class InboxTopicController {
         ],
         name: body.topic?.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
 
@@ -157,6 +160,7 @@ export class InboxTopicController {
         identifier,
         name: body.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
 
@@ -183,6 +187,7 @@ export class InboxTopicController {
         topicKey,
         identifier,
         _subscriberId: subscriberSession._id,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
   }

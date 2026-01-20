@@ -30,6 +30,23 @@ async function dropDatabase(): Promise<void> {
   }
 }
 
+async function ensureIndexes(conn: Connection): Promise<void> {
+  const models = Object.values(conn.models);
+
+  await Promise.all(
+    models.map(async (model) => {
+      try {
+        await model.ensureIndexes();
+      } catch (_error) {
+        // Ignore errors - indexes will be created if they don't exist
+        // Conflicts are expected when index already exists
+      }
+    })
+  );
+
+  console.log('Indexes ensured for all models');
+}
+
 async function closeDatabaseConnection(): Promise<void> {
   if (databaseConnection) {
     await databaseConnection.close();
@@ -325,6 +342,11 @@ before(async () => {
   await dropDatabase();
   await cleanupClickHouseDatabase();
   const bootstrapped = await bootstrap();
+
+  // Ensure indexes after bootstrap when all models are registered
+  const conn = await getDatabaseConnection();
+  await ensureIndexes(conn);
+
   await testServer.create(bootstrapped.app);
 
   await waitForHealthCheck();

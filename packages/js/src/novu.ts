@@ -56,6 +56,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
     this.#emitter = new NovuEventEmitter();
     const subscriber = buildSubscriber({ subscriberId: options.subscriberId, subscriber: options.subscriber });
+    const contextKey = buildContextKey(options.context);
     this.#session = new Session(
       {
         applicationIdentifier: options.applicationIdentifier || '',
@@ -82,6 +83,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
     this.subscriptions = new Subscriptions({
       subscriber,
+      contextKey,
       useCache: options.useCache ?? true,
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,

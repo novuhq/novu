@@ -20,6 +20,7 @@ export class TopicSubscribersEntity {
   externalSubscriberId: ExternalSubscriberId;
   name?: string;
   identifier: string;
+  contextKeys?: string[];
   createdAt?: string;
   updatedAt?: string;
 }

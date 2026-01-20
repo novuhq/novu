@@ -10,7 +10,6 @@ import {
   Button,
   Column,
   Container,
-  Font,
   Head,
   Heading,
   Hr,
@@ -550,16 +549,6 @@ export class Maily {
     ) : (
       <Html {...htmlProps}>
         <Head>
-          <Font
-            fallbackFontFamily={['system-ui', 'sans-serif'] as any}
-            fontFamily="Inter"
-            fontStyle="normal"
-            fontWeight={400}
-            webFont={{
-              url: 'https://rsms.me/inter/font-files/Inter-Regular.woff2?v=3.19',
-              format: 'woff2',
-            }}
-          />
           <style
             dangerouslySetInnerHTML={{
               __html: `blockquote,h1,h2,h3,img,li,ol,p,ul{margin-top:0;margin-bottom:0}@media only screen and (max-width:425px){.tab-row-full{width:100%!important}.tab-col-full{display:block!important;width:100%!important}.tab-pad{padding:0!important}}`,
