@@ -11,7 +11,7 @@ export type LlmConfig = {
   provider: LlmProvider;
   apiKey: string;
   model: string;
-  maxTokens: number;
+  maxOutputTokens: number;
   temperature: number;
   maxRetries: number;
 };
@@ -19,7 +19,7 @@ export type LlmConfig = {
 export type GenerateTextInput = {
   systemPrompt: string;
   userPrompt: string;
-  maxTokens?: number;
+  maxOutputTokens?: number;
   temperature?: number;
 };
 
@@ -27,7 +27,7 @@ export type GenerateObjectInput<T extends z.ZodType> = {
   systemPrompt: string;
   userPrompt: string;
   schema: T;
-  maxTokens?: number;
+  maxOutputTokens?: number;
   temperature?: number;
 };
 
@@ -38,7 +38,7 @@ export type ChatStreamInput = {
     role: 'user' | 'assistant' | 'system';
     content: string;
   }>;
-  maxTokens?: number;
+  maxOutputTokens?: number;
   temperature?: number;
 };
 
@@ -61,7 +61,7 @@ export class LlmService implements OnModuleInit {
     const apiKey = process.env.AI_LLM_API_KEY;
 
     if (!apiKey) {
-      this.logger.warn('AI_LLM_API_KEY not configured.');
+      this.logger.warn('LLM service AI_LLM_API_KEY not configured.');
       this.isConfigured = false;
 
       return;
@@ -71,7 +71,7 @@ export class LlmService implements OnModuleInit {
       provider,
       apiKey,
       model: process.env.AI_LLM_MODEL || this.getDefaultModel(provider),
-      maxTokens: parseInt(process.env.AI_LLM_MAX_TOKENS || '4096', 10),
+      maxOutputTokens: parseInt(process.env.AI_LLM_MAX_OUTPUT_TOKENS || '4096', 10),
       temperature: parseFloat(process.env.AI_LLM_TEMPERATURE || '0.7'),
       maxRetries: parseInt(process.env.AI_LLM_MAX_RETRIES || '3', 10),
     };
@@ -80,7 +80,7 @@ export class LlmService implements OnModuleInit {
 
     this.model = this.createModel(provider, apiKey, this.config.model);
     this.isConfigured = true;
-    this.logger.info(`LLM Service initialized with provider: ${provider}`);
+    this.logger.info(`LLM service initialized with provider: ${provider}`);
   }
 
   private createModel(provider: LlmProvider, apiKey: string, modelId: string): LanguageModel {
@@ -131,14 +131,14 @@ export class LlmService implements OnModuleInit {
     };
 
     if (errorObj?.name === 'AbortError' || errorObj?.message?.includes('aborted')) {
-      this.logger.error('AI request timed out', errorContext);
+      this.logger.error('AI Provider request timed out', errorContext);
       throw new ServiceUnavailableException(
         'Content generation request timed out. Please try again with a simpler prompt.'
       );
     }
 
     if (errorObj?.statusCode) {
-      this.logger.error('OpenAI API call failed', {
+      this.logger.error('AI Provider API call failed', {
         ...errorContext,
         statusCode: errorObj.statusCode,
         url: errorObj.url,
@@ -146,43 +146,45 @@ export class LlmService implements OnModuleInit {
       });
 
       if (errorObj.statusCode === 429) {
-        throw new ServiceUnavailableException('AI service is currently rate limited. Please try again in a moment.');
+        throw new ServiceUnavailableException('AI Provider is currently rate limited. Please try again in a moment.');
       }
 
       if (errorObj.statusCode === 401 || errorObj.statusCode === 403) {
-        this.logger.error('OpenAI authentication failed - check API key configuration');
-        throw new ServiceUnavailableException('AI service configuration error. Please contact support.');
+        this.logger.error('AI authentication failed - check API key configuration');
+        throw new ServiceUnavailableException('AI Provider configuration error. Please contact support.');
       }
 
       if (errorObj.statusCode >= 500) {
-        throw new ServiceUnavailableException('AI service is temporarily unavailable. Please try again later.');
+        throw new ServiceUnavailableException('AI Provider is temporarily unavailable. Please try again later.');
       }
 
-      throw new BadRequestException('Invalid request to AI service. Please check your input and try again.');
+      throw new BadRequestException('Invalid request to AI Provider. Please check your input and try again.');
     }
 
     if (errorObj?.name === 'AI_NoObjectGeneratedError') {
-      this.logger.error('AI failed to generate valid content after retries', {
+      this.logger.error('AI Provider failed to generate valid content after retries', {
         ...errorContext,
         responseText: errorObj?.text?.substring(0, 500),
       });
       throw new BadRequestException('Failed to generate valid content. Please try rephrasing your prompt.');
     }
 
-    this.logger.error(`Unexpected error during content generation`, errorContext);
+    this.logger.error(`Unexpected error during AI Provider content generation`, errorContext);
     throw new ServiceUnavailableException('Failed to generate content. Please try again.');
   }
 
-  private async callWithRetries<T>(fn: () => Promise<T>, retryCount = 0): Promise<T> {
+  private async callWithRetries<T>(fn: (signal: AbortSignal) => Promise<T>, retryCount = 0): Promise<T> {
     if (!this.isConfigured || !this.model || !this.config) {
-      throw new Error('LLM not configured. Please set AI_LLM_API_KEY environment variable.');
+      throw new Error('AI Provider not configured. Please set AI_LLM_API_KEY environment variable.');
     }
 
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => abortController.abort(), this.requestTimeoutMs);
 
     try {
-      return await fn();
+      const result = await fn(abortController.signal);
+      clearTimeout(timeoutId);
+      return result;
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -205,26 +207,26 @@ export class LlmService implements OnModuleInit {
 
   async generateText(input: GenerateTextInput): Promise<string> {
     if (!this.isConfigured || !this.model || !this.config) {
-      throw new Error('LLM not configured. Please set AI_LLM_API_KEY environment variable.');
+      throw new Error('LLM service not configured. Please set AI_LLM_API_KEY environment variable.');
     }
 
     const args = {
       model: this.model,
       system: input.systemPrompt,
       prompt: input.userPrompt,
-      maxOutputTokens: input.maxTokens ?? this.config.maxTokens,
+      maxOutputTokens: input.maxOutputTokens ?? this.config.maxOutputTokens,
       temperature: input.temperature ?? this.config.temperature,
       maxRetries: this.config.maxRetries,
     };
 
-    const { text } = await this.callWithRetries(async () => generateText(args));
+    const { text } = await this.callWithRetries(async (signal) => generateText({ ...args, abortSignal: signal }));
 
     return text;
   }
 
   async generateObject<T extends z.ZodType>(input: GenerateObjectInput<T>): Promise<z.infer<T>> {
     if (!this.isConfigured || !this.model || !this.config) {
-      throw new Error('LLM not configured. Please set AI_LLM_API_KEY environment variable.');
+      throw new Error('LLM service not configured. Please set AI_LLM_API_KEY environment variable.');
     }
 
     const args = {
@@ -232,18 +234,81 @@ export class LlmService implements OnModuleInit {
       system: input.systemPrompt,
       prompt: input.userPrompt,
       schema: input.schema,
-      maxTokens: input.maxTokens ?? this.config.maxTokens,
+      maxOutputTokens: input.maxOutputTokens ?? this.config.maxOutputTokens,
       temperature: input.temperature ?? this.config.temperature,
       maxRetries: this.config.maxRetries,
     };
-    const { object } = await this.callWithRetries(async () => generateObject(args));
+    const { object } = await this.callWithRetries(async (signal) => generateObject({ ...args, abortSignal: signal }));
 
     return object;
   }
 
+  private async *streamWithRetries(
+    streamFn: (signal: AbortSignal) => Promise<{ textStream: AsyncIterable<string> }>,
+    retryCount = 0
+  ): AsyncGenerator<string> {
+    if (!this.config) {
+      throw new Error('LLM service not configured.');
+    }
+
+    const abortController = new AbortController();
+    let chunkTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let hasYielded = false;
+
+    const clearChunkTimeout = () => {
+      if (chunkTimeoutId) {
+        clearTimeout(chunkTimeoutId);
+        chunkTimeoutId = null;
+      }
+    };
+
+    const resetChunkTimeout = () => {
+      clearChunkTimeout();
+      chunkTimeoutId = setTimeout(() => abortController.abort(), this.requestTimeoutMs);
+    };
+
+    try {
+      resetChunkTimeout();
+      const result = await streamFn(abortController.signal);
+
+      for await (const chunk of result.textStream) {
+        if (abortController.signal.aborted) {
+          const error = new Error('Stream aborted due to inactivity timeout');
+          error.name = 'AbortError';
+          throw error;
+        }
+        resetChunkTimeout();
+        hasYielded = true;
+        yield chunk;
+      }
+
+      clearChunkTimeout();
+    } catch (error) {
+      clearChunkTimeout();
+
+      const isRetryableError =
+        error?.name === 'AbortError' ||
+        error?.name === 'AI_NoObjectGeneratedError' ||
+        error?.statusCode >= 500 ||
+        error?.statusCode === 429;
+
+      if (!hasYielded && retryCount < this.maxSchemaValidationRetries && isRetryableError) {
+        this.logger.warn(
+          { errorName: error?.name, errorMessage: error?.message },
+          `Stream failed before yielding, retrying... (attempt ${retryCount + 1}/${this.maxSchemaValidationRetries})`
+        );
+        yield* this.streamWithRetries(streamFn, retryCount + 1);
+
+        return;
+      }
+
+      this.handleAIError(error);
+    }
+  }
+
   async *streamChat(input: ChatStreamInput): AsyncGenerator<string> {
     if (!this.isConfigured || !this.model || !this.config) {
-      throw new Error('LLM not configured. Please set AI_LLM_API_KEY environment variable.');
+      throw new Error('LLM service not configured. Please set AI_LLM_API_KEY environment variable.');
     }
 
     const messages: ModelMessage[] = input.messageHistory.map((msg) => ({
@@ -257,15 +322,11 @@ export class LlmService implements OnModuleInit {
       model: this.model,
       system: input.systemPrompt,
       messages,
-      maxOutputTokens: input.maxTokens ?? this.config.maxTokens,
+      maxOutputTokens: input.maxOutputTokens ?? this.config.maxOutputTokens,
       temperature: input.temperature ?? this.config.temperature,
       maxRetries: this.config.maxRetries,
     };
 
-    const result = await this.callWithRetries(async () => streamText(args));
-
-    for await (const chunk of result.textStream) {
-      yield chunk;
-    }
+    yield* this.streamWithRetries(async (signal) => streamText({ ...args, abortSignal: signal }));
   }
 }

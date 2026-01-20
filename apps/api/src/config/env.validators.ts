@@ -54,7 +54,7 @@ export const envValidators = {
   AI_LLM_PROVIDER: str({ choices: ['openai', 'anthropic'], default: 'openai' }),
   AI_LLM_API_KEY: str({ default: '' }),
   AI_LLM_MODEL: str({ default: '' }),
-  AI_LLM_MAX_TOKENS: num({ default: 4096 }),
+  AI_LLM_MAX_OUTPUT_TOKENS: num({ default: 4096 }),
   AI_LLM_TEMPERATURE: num({ default: 0.7 }),
   AI_LLM_MAX_RETRIES: num({ default: 3 }),
   AI_LLM_SCHEMA_VALIDATION_RETRIES: num({ default: 3 }),

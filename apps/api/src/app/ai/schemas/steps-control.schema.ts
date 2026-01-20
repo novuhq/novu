@@ -103,7 +103,7 @@ const aiDigestTimedControlSchema = z.object({
 const aiDigestControlSchema = z.union([aiDigestRegularControlSchema, aiDigestTimedControlSchema]);
 
 const aiThrottleFixedControlSchema = z.object({
-  type: z.literal(ThrottleTypeEnum.FIXED).nullable(),
+  type: z.literal(ThrottleTypeEnum.FIXED).describe('Fixed throttle type, always use fixed for AI generation'),
   amount: z.number().min(1).describe('Amount of time for throttle window'),
   unit: z.nativeEnum(TimeUnitEnum).describe('Time unit for throttle window'),
   dynamicKey: z.string().nullable().describe('Key to group notifications for throttle'),
@@ -112,7 +112,7 @@ const aiThrottleFixedControlSchema = z.object({
 });
 
 const aiThrottleDynamicControlSchema = z.object({
-  type: z.literal(ThrottleTypeEnum.DYNAMIC).nullable(),
+  type: z.literal(ThrottleTypeEnum.DYNAMIC).describe('Dynamic throttle type, use dynamic for AI generation'),
   dynamicKey: z.string().min(1).describe('Key to group notifications for throttle'),
   threshold: z.number().min(1).describe('Threshold for throttle'),
   throttleKey: z.string().nullable().describe('Key to group throttle rules'),

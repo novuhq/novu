@@ -57,7 +57,7 @@ ${STEP_CONTENT_GUIDELINES}
 - Use semantic HTML: <h1>, <h2>, <p>, <a>, <table> for layout
 - Add inline styles for colors, spacing, fonts (e.g., style="color: #333; margin: 16px 0;")
 - Make sure that the content has enough whitespace between the elements and around the content to be readable.
-- Use tables for layout to ensure compatibility across email clients. Never use inline styles for the table cells. Never use flexbox or grid for the table cells.
+- Use tables for layout to ensure compatibility across email clients. Avoid flexbox or grid; apply inline styles to table cells only when needed for spacing or typography.
 - Include variables using Liquid syntax: {{ subscriber.firstName }}, {{ payload.variableName }}
 
 Example button:
