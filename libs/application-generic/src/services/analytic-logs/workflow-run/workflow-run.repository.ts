@@ -840,7 +840,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         organizationId,
         resultCount: result.data.length,
         totalRecords: totalCount,
-        sampleResults: result.data.slice(0, 5),
       },
       'ClickHouse platform usage query completed'
     );
