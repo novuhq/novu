@@ -32,8 +32,10 @@ const excludeEmpty = ({
   limit,
   offset,
   after,
+  createdAfter,
+  createdBefore,
 }: ListNotificationsArgs) =>
-  Object.entries({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after })
+  Object.entries({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after, createdAfter, createdBefore })
     .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
     .reduce((acc, [key, value]) => {
       // @ts-expect-error
@@ -53,8 +55,10 @@ const getCacheKey = ({
   limit,
   offset,
   after,
+  createdAfter,
+  createdBefore,
 }: ListNotificationsArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after }));
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after, createdAfter, createdBefore }));
 };
 
 const getFilterKey = ({
@@ -65,8 +69,10 @@ const getFilterKey = ({
   snoozed,
   seen,
   severity,
-}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed' | 'seen' | 'severity'>): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity }));
+  createdAfter,
+  createdBefore,
+}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed' | 'seen' | 'severity' | 'createdAfter' | 'createdBefore'>): string => {
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity, createdAfter, createdBefore }));
 };
 
 const getFilter = (key: string): NotificationFilter => {
@@ -314,6 +320,8 @@ export class NotificationsCache {
         archived: args.archived,
         seen: args.seen,
         severity: args.severity,
+        createdAfter: args.createdAfter,
+        createdBefore: args.createdBefore,
       });
     }
   }

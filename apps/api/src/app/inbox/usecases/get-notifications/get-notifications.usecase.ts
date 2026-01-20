@@ -64,6 +64,8 @@ export class GetNotifications {
         seen: command.seen,
         data: parsedData,
         severity,
+        createdAfter: command.createdAfter ? new Date(command.createdAfter) : undefined,
+        createdBefore: command.createdBefore ? new Date(command.createdBefore) : undefined,
       },
       {
         limit: command.limit,
@@ -88,6 +90,8 @@ export class GetNotifications {
       seen: command.seen,
       data: parsedData,
       severity: command.severity,
+      createdAfter: command.createdAfter,
+      createdBefore: command.createdBefore,
     };
 
     return {

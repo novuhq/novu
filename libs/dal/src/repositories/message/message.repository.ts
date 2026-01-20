@@ -268,6 +268,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       data,
       severity: severityArray,
       contextKeys,
+      createdAfter,
+      createdBefore,
     }: {
       environmentId: string;
       subscriberId: string;
@@ -280,6 +282,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       data?: Record<string, unknown>;
       severity?: SeverityLevelEnum[];
       contextKeys?: string[];
+      createdAfter?: Date;
+      createdBefore?: Date;
     },
     options: { limit: number; offset: number; after?: string }
   ) {
@@ -351,6 +355,17 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         ...flatData,
         ...query,
       };
+    }
+
+    if (createdAfter || createdBefore) {
+      const createdAtFilter: { $gte?: Date; $lte?: Date } = {};
+      if (createdAfter) {
+        createdAtFilter.$gte = createdAfter;
+      }
+      if (createdBefore) {
+        createdAtFilter.$lte = createdBefore;
+      }
+      query.createdAt = createdAtFilter;
     }
 
     return await this.cursorPagination({

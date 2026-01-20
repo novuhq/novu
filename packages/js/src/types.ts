@@ -164,6 +164,8 @@ export type NotificationFilter = {
   seen?: boolean;
   data?: Record<string, unknown>;
   severity?: SeverityLevelEnum | SeverityLevelEnum[];
+  createdAfter?: string;
+  createdBefore?: string;
 };
 
 export type ChannelPreference = {
