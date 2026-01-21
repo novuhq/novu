@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
 import { IWorkflowBulkJobDto, IWorkflowJobDto } from '../../dtos';
 import { PinoLogger } from '../../logging';
@@ -17,7 +16,6 @@ export class WorkflowQueueService extends QueueBaseService {
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     sqsService: SqsService,
     featureFlagsService: FeatureFlagsService,
-    organizationRepository: CommunityOrganizationRepository,
     logger: PinoLogger
   ) {
     super(
@@ -25,7 +23,6 @@ export class WorkflowQueueService extends QueueBaseService {
       new BullMqService(workflowInMemoryProviderService),
       sqsService,
       featureFlagsService,
-      organizationRepository,
       logger
     );
 

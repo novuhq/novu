@@ -1,11 +1,10 @@
 import { Test } from '@nestjs/testing';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { IWorkflowDataDto } from '../../dtos';
 import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
 import { FeatureFlagsService } from '../feature-flags';
-import { SqsService } from '../sqs';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { SqsService } from '../sqs';
 import { WorkflowQueueService } from './workflow-queue.service';
 
 let workflowQueueService: WorkflowQueueService;
@@ -17,10 +16,6 @@ const mockSqsService = {
 const mockFeatureFlagsService = {
   getFlag: jest.fn(),
 } as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: jest.fn(),
-} as unknown as CommunityOrganizationRepository;
 
 const mockLogger = {
   setContext: jest.fn(),
@@ -37,7 +32,6 @@ describe('Workflow Queue service', () => {
         new WorkflowInMemoryProviderService(),
         mockSqsService,
         mockFeatureFlagsService,
-        mockOrganizationRepository,
         mockLogger
       );
       await workflowQueueService.queue.obliterate();
@@ -163,7 +157,6 @@ describe('Workflow Queue service', () => {
         new WorkflowInMemoryProviderService(),
         mockSqsService,
         mockFeatureFlagsService,
-        mockOrganizationRepository,
         mockLogger
       );
       await workflowQueueService.queue.obliterate();

@@ -26,8 +26,7 @@ export class StandardQueueService extends QueueBaseService {
       JobTopicNameEnum.STANDARD,
       new BullMqService(workflowInMemoryProviderService),
       sqsService,
-      _featureFlagsService,
-      _organizationRepository
+      _featureFlagsService
     );
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);

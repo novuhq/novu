@@ -63,14 +63,12 @@ describe('Readiness Service', () => {
       new WorkflowInMemoryProviderService(),
       mockSqsService,
       mockFeatureFlagsService,
-      mockOrganizationRepository,
       mockLogger
     );
     subscriberProcessQueueService = new SubscriberProcessQueueService(
       new WorkflowInMemoryProviderService(),
       mockSqsService,
       mockFeatureFlagsService,
-      mockOrganizationRepository,
       mockLogger
     );
 
