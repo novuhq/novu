@@ -59,19 +59,6 @@ export class SqsConsumerService {
   private async processMessage(message: Message): Promise<void> {
     try {
       const data = JSON.parse(message.Body || '{}');
-
-      // Skip shadow mode messages
-      if (data.skipProcessing) {
-        this.logger?.debug(
-          {
-            messageId: message.MessageId,
-            topic: this.topic,
-          },
-          'Skipping message marked for skip processing'
-        );
-        return;
-      }
-
       await this.processor(data);
     } catch (error) {
       // Log error with more details and re-throw so BBC library can handle retry logic

@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { PinoLogger } from '../../logging';
-import { BullMqService, Processor, Worker, WorkerOptions } from '../bull-mq';
+import { BullMqService, Processor, WorkerOptions } from '../bull-mq';
 import { INovuWorker } from '../readiness';
 import { ISqsConsumerOptions, SqsConsumerService, SqsService } from '../sqs';
 
@@ -14,7 +14,6 @@ export { WorkerOptions };
 export class WorkerBaseService implements INovuWorker {
   private bullMqService: BullMqService;
   private sqsConsumer?: SqsConsumerService;
-  private processorFunction?: Processor<any, unknown, string>;
 
   public readonly DEFAULT_ATTEMPTS = 3;
 
@@ -27,40 +26,30 @@ export class WorkerBaseService implements INovuWorker {
     this.bullMqService = bullMqServiceInstance;
   }
 
-  public get worker(): Worker {
-    return this.bullMqService.worker;
-  }
-
   public initWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
     Logger.log(`Worker ${this.topic} initialized`, LOG_CONTEXT);
 
     if (typeof processor === 'function') {
-      this.processorFunction = processor;
-      // Wrap processor with skipProcessing check for BullMQ
-      const wrappedProcessor = this.wrapProcessorWithSkipCheck(processor);
-      this.createWorker(wrappedProcessor, options);
+      this.createWorker(this.wrapForBullMQ(processor), options);
       this.initSqsConsumer(processor, options);
     } else {
       this.createWorker(processor, options);
     }
   }
 
-  private wrapProcessorWithSkipCheck(processor: Processor<any, unknown, string>): Processor<any, unknown, string> {
+  private shouldSkipProcessing(data: any, jobId: string): boolean {
+    if (data?.skipProcessing) {
+      Logger.log({ topic: this.topic, jobId }, 'Skipping job - marked for skip during migration', LOG_CONTEXT);
+      return true;
+    }
+    return false;
+  }
+
+  private wrapForBullMQ(processor: Processor<any, unknown, string>): Processor<any, unknown, string> {
     return async (job: any) => {
-      // Universal skipProcessing check for BullMQ workers
-      if (job.data?.skipProcessing) {
-        Logger.log(
-          {
-            topic: this.topic,
-            jobId: job.id,
-            jobName: job.name,
-          },
-          'Skipping BullMQ job - skipProcessing flag is set',
-          LOG_CONTEXT
-        );
+      if (this.shouldSkipProcessing(job.data, job.id)) {
         return;
       }
-
       return await processor(job);
     };
   }
@@ -70,13 +59,8 @@ export class WorkerBaseService implements INovuWorker {
   }
 
   private initSqsConsumer(processor: Processor<any, unknown, string>, options?: WorkerOptions): void {
-    if (!this.sqsService) {
-      Logger.debug(`SQS service not configured for ${this.topic}, skipping SQS consumer`, LOG_CONTEXT);
-      return;
-    }
-
-    if (!this.sqsService.isConfigured(this.topic)) {
-      Logger.debug(`SQS queue not configured for ${this.topic}, skipping SQS consumer`, LOG_CONTEXT);
+    if (!this.sqsService?.isConfigured(this.topic)) {
+      Logger.log(`SQS consumer for ${this.topic} not configured, skipping initialization`, LOG_CONTEXT);
       return;
     }
 
@@ -86,58 +70,53 @@ export class WorkerBaseService implements INovuWorker {
       visibilityTimeout: 300,
     };
 
-    const sqsProcessor = async (data: any): Promise<void> => {
-      // Universal skipProcessing check for all workers
-      if (data.skipProcessing) {
-        Logger.log(
-          {
-            topic: this.topic,
-            jobId: data._id || data.identifier || 'unknown',
-          },
-          'Skipping job - skipProcessing flag is set',
-          LOG_CONTEXT
-        );
-        return;
-      }
-
-      const job = {
-        data,
-        id: data._id || data.identifier || 'unknown',
-        name: this.topic,
-      };
-
-      await processor(job as any);
-    };
-
     this.sqsConsumer = new SqsConsumerService(
       this.topic,
       this.sqsService,
-      sqsProcessor,
+      this.wrapForSqs(processor),
       this.logger,
       sqsConsumerOptions
     );
 
     this.sqsConsumer.start();
-
     Logger.log(`SQS consumer for ${this.topic} initialized and started`, LOG_CONTEXT);
+  }
+
+  private wrapForSqs(processor: Processor<any, unknown, string>): (data: any) => Promise<void> {
+    return async (data: any): Promise<void> => {
+      const jobId = data._id || data.identifier || 'unknown';
+      if (this.shouldSkipProcessing(data, jobId)) {
+        return;
+      }
+
+      await processor({ data, id: jobId, name: this.topic } as any);
+    };
   }
 
   public async isRunning(): Promise<boolean> {
     const bullMqRunning = await this.bullMqService.isWorkerRunning();
-    const sqsRunning = this.sqsConsumer?.getStatus().isRunning || false;
+
+    if (!this.sqsConsumer) {
+      return bullMqRunning;
+    }
+
+    const sqsRunning = this.sqsConsumer.getStatus().isRunning;
     return bullMqRunning || sqsRunning;
   }
 
   public async isPaused(): Promise<boolean> {
     const bullMqPaused = await this.bullMqService.isWorkerPaused();
-    const sqsPaused = this.sqsConsumer?.getStatus().isPaused || false;
+
+    if (!this.sqsConsumer) {
+      return bullMqPaused;
+    }
+
+    const sqsPaused = this.sqsConsumer.getStatus().isPaused;
     return bullMqPaused && sqsPaused;
   }
 
   public async pause(): Promise<void> {
-    if (this.worker) {
-      await this.bullMqService.pauseWorker();
-    }
+    await this.bullMqService.pauseWorker();
 
     if (this.sqsConsumer) {
       await this.sqsConsumer.pause();
@@ -148,13 +127,12 @@ export class WorkerBaseService implements INovuWorker {
   }
 
   public async resume(): Promise<void> {
-    if (this.worker) {
-      await this.bullMqService.resumeWorker();
-      if (process.env.NODE_ENV === 'test') {
-        Logger.log(`Worker ${this.topic} waiting until ready...`, LOG_CONTEXT);
-        await this.bullMqService.waitUntilWorkerIsReady();
-        Logger.log(`Worker ${this.topic} is now ready to process jobs`, LOG_CONTEXT);
-      }
+    await this.bullMqService.resumeWorker();
+
+    if (process.env.NODE_ENV === 'test') {
+      Logger.log(`Worker ${this.topic} waiting until ready...`, LOG_CONTEXT);
+      await this.bullMqService.waitUntilWorkerIsReady();
+      Logger.log(`Worker ${this.topic} is now ready to process jobs`, LOG_CONTEXT);
     }
 
     if (this.sqsConsumer) {
