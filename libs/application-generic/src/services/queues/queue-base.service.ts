@@ -142,13 +142,44 @@ export class QueueBaseService {
       }
 
       case QueueBackendMode.LIVE: {
-        await this.addJobsToSQS(jobs, organizationId);
         await this.addJobsToBullMQ(this.markAsSkipProcessing(jobs));
+        try {
+          await this.addJobsToSQS(jobs, organizationId);
+        } catch (error) {
+          // SQS failed in LIVE mode - fall back to BullMQ as primary
+          Logger.error(
+            {
+              topic: this.topic,
+              count: jobs.length,
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+            'SQS failed in LIVE mode, falling back to BullMQ as primary',
+            LOG_CONTEXT
+          );
+          await this.addJobsToBullMQ(jobs);
+        }
         break;
       }
 
-      case QueueBackendMode.COMPLETE:
-        return await this.addJobsToSQS(jobs, organizationId);
+      case QueueBackendMode.COMPLETE: {
+        try {
+          return await this.addJobsToSQS(jobs, organizationId);
+        } catch (error) {
+          // SQS failed in COMPLETE mode - fall back to BullMQ for resilience
+          Logger.error(
+            {
+              topic: this.topic,
+              count: jobs.length,
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+            'SQS failed in COMPLETE mode, falling back to BullMQ',
+            LOG_CONTEXT
+          );
+          return await this.addJobsToBullMQ(jobs);
+        }
+      }
 
       default:
         Logger.warn({ mode: queueBackendMode }, 'Unknown queue backend mode, falling back to BullMQ', LOG_CONTEXT);
@@ -173,30 +204,21 @@ export class QueueBaseService {
   }
 
   private async addJobsToSQS(jobs: (IJobParams | IBulkJobParams)[], organizationId: string): Promise<void> {
-    try {
-      const messages = jobs.map((job) => ({
-        id: job.groupId || job.name,
-        body: JSON.stringify(job.data || {}),
-        groupId: organizationId,
-      }));
+    const messages = jobs.map((job) => ({
+      id: job.groupId || job.name,
+      body: JSON.stringify(job.data || {}),
+      groupId: organizationId,
+    }));
 
-      if (messages.length === 1) {
-        await this.sqsService.send(this.topic, messages[0]);
-        Logger.log(
-          `Added job to SQS. Topic: ${this.topic}, Job: ${jobs[0].name}, Size: ${this.calculatePayloadSize(jobs[0].data)} bytes`,
-          LOG_CONTEXT
-        );
-      } else {
-        await this.sqsService.sendBulk(this.topic, messages);
-        Logger.log({ topic: this.topic, count: messages.length }, 'Added bulk jobs to SQS', LOG_CONTEXT);
-      }
-    } catch (error) {
-      Logger.warn(
-        { topic: this.topic, count: jobs.length, error: error instanceof Error ? error.message : String(error) },
-        'Failed to send to SQS, falling back to BullMQ',
+    if (messages.length === 1) {
+      await this.sqsService.send(this.topic, messages[0]);
+      Logger.log(
+        `Added job to SQS. Topic: ${this.topic}, Job: ${jobs[0].name}, Size: ${this.calculatePayloadSize(jobs[0].data)} bytes`,
         LOG_CONTEXT
       );
-      await this.addJobsToBullMQ(jobs);
+    } else {
+      await this.sqsService.sendBulk(this.topic, messages);
+      Logger.log({ topic: this.topic, count: messages.length }, 'Added bulk jobs to SQS', LOG_CONTEXT);
     }
   }
 
