@@ -95,16 +95,18 @@ export class QueueBaseService {
       return await this.addToBullMQ(params);
     }
 
-    const organizationId = this.getOrganizationId(params.data);
+    /*
+     * During the migration, we know groupId is organizationId.
+     * After the migration is complete, we won't need feature flag for queue backend mode.
+     * Then we will use groupId for all scenarios.
+     * This currently being only applied when SQS is enabled for certain topic.
+     * */
+    const organizationId = params.groupId;
     const queueBackendMode = await this.getQueueBackendMode(organizationId);
 
     Logger.log({ topic: this.topic, queueBackendMode, organizationId }, 'Queue backend mode evaluation', LOG_CONTEXT);
 
     return await this.routeByMode([params], queueBackendMode, organizationId);
-  }
-
-  private getOrganizationId(data: any): string {
-    return data?._organizationId || data?.organizationId;
   }
 
   private async getQueueBackendMode(organizationId: string): Promise<string> {
@@ -280,7 +282,7 @@ export class QueueBaseService {
     const jobsByOrg = new Map<string, IBulkJobParams[]>();
 
     for (const job of jobs) {
-      const organizationId = this.getOrganizationId(job.data);
+      const organizationId = job.groupId;
       if (!jobsByOrg.has(organizationId)) {
         jobsByOrg.set(organizationId, []);
       }
