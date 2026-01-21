@@ -41,8 +41,6 @@ export class SqsService {
       [JobTopicNameEnum.WORKFLOW, process.env.SQS_QUEUE_URL_WORKFLOW],
       [JobTopicNameEnum.PROCESS_SUBSCRIBER, process.env.SQS_QUEUE_URL_PROCESS_SUBSCRIBER],
       [JobTopicNameEnum.WEB_SOCKETS, process.env.SQS_QUEUE_URL_WEB_SOCKETS],
-      [JobTopicNameEnum.INBOUND_PARSE_MAIL, process.env.SQS_QUEUE_URL_INBOUND_PARSE_MAIL],
-      [JobTopicNameEnum.ACTIVE_JOBS_METRIC, process.env.SQS_QUEUE_URL_ACTIVE_JOBS_METRIC],
     ]);
 
     Logger.log('SQS queue URLs loaded from environment variables', LOG_CONTEXT);
@@ -97,6 +95,37 @@ export class SqsService {
 
   public getProducer(topic: JobTopicNameEnum): Producer | undefined {
     return this.producers.get(topic);
+  }
+
+  /**
+   * Send a single message to SQS
+   */
+  public async send(topic: JobTopicNameEnum, message: { id: string; body: string; groupId: string }): Promise<void> {
+    const producer = this.getProducer(topic);
+    if (!producer) {
+      throw new Error(`No SQS producer configured for topic: ${topic}`);
+    }
+
+    await producer.send(message);
+  }
+
+  /**
+   * Send multiple messages to SQS in bulk
+   * The BBC producer will automatically batch them in groups of 10
+   */
+  public async sendBulk(
+    topic: JobTopicNameEnum,
+    messages: Array<{ id: string; body: string; groupId: string }>
+  ): Promise<void> {
+    const producer = this.getProducer(topic);
+    if (!producer) {
+      throw new Error(`No SQS producer configured for topic: ${topic}`);
+    }
+
+    // BBC producer will automatically batch messages (default: 10 per batch)
+    await producer.send(messages);
+
+    Logger.log({ topic, count: messages.length }, 'Sent bulk messages to SQS', LOG_CONTEXT);
   }
 
   public async gracefulShutdown(): Promise<void> {

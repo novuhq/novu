@@ -103,21 +103,6 @@ export class QueueBaseService {
       return await this.addToBullMQ(params);
     }
 
-    // Check for environment variable first (for testing/global config)
-    const envQueueMode = process.env.QUEUE_BACKEND_MODE_OVERRIDE;
-    if (envQueueMode) {
-      Logger.log(
-        {
-          topic: this.topic,
-          queueBackendMode: envQueueMode,
-          source: 'environment_variable',
-        },
-        'Using queue backend mode from environment variable',
-        LOG_CONTEXT
-      );
-      return await this.routeByMode(params, envQueueMode);
-    }
-
     // If SQS services are not configured, fall back to BullMQ only
     if (!this.sqsService || !this.featureFlagsService || !this.organizationRepository) {
       Logger.log(
@@ -183,8 +168,14 @@ export class QueueBaseService {
     return await this.routeByMode(params, queueBackendMode, organizationId);
   }
 
-  private async routeByMode(params: IJobParams, queueBackendMode: string, organizationId?: string): Promise<void> {
-    const orgId = organizationId || this.extractOrganizationId(params.data) || 'unknown';
+  private async routeByMode(
+    jobs: IJobParams | IBulkJobParams | IBulkJobParams[],
+    queueBackendMode: string,
+    organizationId?: string
+  ): Promise<void> {
+    const isBulk = Array.isArray(jobs);
+    const jobsArray = isBulk ? jobs : [jobs];
+    const orgId = organizationId || this.extractOrganizationId(jobsArray[0].data) || 'unknown';
 
     // If SQS service not available, force BullMQ mode
     if (!this.sqsService && queueBackendMode !== QueueBackendMode.BULLMQ) {
@@ -197,17 +188,22 @@ export class QueueBaseService {
         'SQS service not available, forcing BullMQ mode',
         LOG_CONTEXT
       );
-      return await this.addToBullMQ(params);
+      return await this.addJobsToBullMQ(jobsArray, isBulk);
     }
 
     switch (queueBackendMode) {
       case QueueBackendMode.BULLMQ:
-        return await this.addToBullMQ(params);
+        return await this.addJobsToBullMQ(jobsArray, isBulk);
 
-      case QueueBackendMode.SHADOW:
-        await this.addToBullMQ(params);
+      case QueueBackendMode.SHADOW: {
+        await this.addJobsToBullMQ(jobsArray, isBulk);
         try {
-          await this.addToSQS(params, orgId);
+          // In shadow mode, SQS messages are marked for skip to prevent double processing
+          const jobsWithSkip = jobsArray.map((job) => ({
+            ...job,
+            data: { ...job.data, skipProcessing: true },
+          }));
+          await this.addJobsToSQS(jobsWithSkip, orgId, isBulk);
         } catch (error) {
           if (this.logger) {
             this.logger.warn(
@@ -217,24 +213,56 @@ export class QueueBaseService {
           }
         }
         break;
+      }
 
-      case QueueBackendMode.LIVE:
-        await this.addToSQS(params, orgId);
-        await this.addToBullMQ({
-          ...params,
-          data: {
-            ...params.data,
-            skipProcessing: true,
-          },
-        });
+      case QueueBackendMode.LIVE: {
+        await this.addJobsToSQS(jobsArray, orgId, isBulk);
+        const jobsWithSkip = jobsArray.map((job) => ({
+          ...job,
+          data: { ...job.data, skipProcessing: true },
+        }));
+        await this.addJobsToBullMQ(jobsWithSkip, isBulk);
         break;
+      }
 
       case QueueBackendMode.COMPLETE:
-        return await this.addToSQS(params, orgId);
+        return await this.addJobsToSQS(jobsArray, orgId, isBulk);
 
       default:
         Logger.warn({ mode: queueBackendMode }, 'Unknown queue backend mode, falling back to BullMQ', LOG_CONTEXT);
-        return await this.addToBullMQ(params);
+        return await this.addJobsToBullMQ(jobsArray, isBulk);
+    }
+  }
+
+  private async addJobsToBullMQ(jobs: (IJobParams | IBulkJobParams)[], isBulk: boolean): Promise<void> {
+    if (!isBulk && jobs.length === 1) {
+      await this.addToBullMQ(jobs[0] as IJobParams);
+    } else {
+      const bulkJobs = jobs.map((job) => ({
+        name: job.name,
+        data: job.data || {},
+        groupId: job.groupId,
+        options: job.options,
+      }));
+      await this.bullMqService.addBulk(bulkJobs);
+    }
+  }
+
+  private async addJobsToSQS(
+    jobs: (IJobParams | IBulkJobParams)[],
+    organizationId: string,
+    isBulk: boolean
+  ): Promise<void> {
+    if (!isBulk && jobs.length === 1) {
+      await this.addToSQS(jobs[0] as IJobParams, organizationId);
+    } else {
+      const bulkJobs = jobs.map((job) => ({
+        name: job.name,
+        data: job.data || {},
+        groupId: job.groupId,
+        options: job.options,
+      }));
+      await this.addBulkToSQS(bulkJobs, organizationId);
     }
   }
 
@@ -255,25 +283,26 @@ export class QueueBaseService {
   }
 
   protected async addToSQS(params: IJobParams, organizationId: string) {
-    const producer = this.sqsService.getProducer(this.topic);
-    if (!producer) {
-      Logger.warn({ topic: this.topic }, 'No SQS producer configured, falling back to BullMQ', LOG_CONTEXT);
+    try {
+      await this.sqsService.send(this.topic, {
+        id: params.groupId || params.name,
+        body: JSON.stringify(params.data),
+        groupId: organizationId, // For fair queuing across organizations
+      });
+
+      const payloadSize = this.calculatePayloadSize(params.data);
+      Logger.log(
+        `Adding job to SQS queue. Topic: ${this.topic}, Job: ${params.name}, Payload size: ${payloadSize} bytes`,
+        LOG_CONTEXT
+      );
+    } catch (error) {
+      Logger.warn(
+        { topic: this.topic, error: error instanceof Error ? error.message : String(error) },
+        'No SQS producer configured, falling back to BullMQ',
+        LOG_CONTEXT
+      );
       return await this.addToBullMQ(params);
     }
-
-    const messageBody = JSON.stringify(params.data);
-
-    await producer.send({
-      id: params.groupId || params.name,
-      body: messageBody,
-      groupId: organizationId, // For fair queuing across organizations
-    });
-
-    const payloadSize = this.calculatePayloadSize(params.data);
-    Logger.log(
-      `Adding job to SQS queue. Topic: ${this.topic}, Job: ${params.name}, Payload size: ${payloadSize} bytes`,
-      LOG_CONTEXT
-    );
   }
 
   private extractOrganizationId(data: any): string | undefined {
@@ -303,7 +332,121 @@ export class QueueBaseService {
       LOG_CONTEXT
     );
 
-    await this.bullMqService.addBulk(data);
+    // Check if SQS services are configured for bulk operations
+    if (!this.sqsService || !this.featureFlagsService || !this.organizationRepository) {
+      Logger.log({ topic: this.topic, count: data.length }, 'SQS not configured for bulk, using BullMQ', LOG_CONTEXT);
+      await this.bullMqService.addBulk(data);
+      return;
+    }
+
+    // Separate jobs by whether they have delays
+    const jobsWithDelay: IBulkJobParams[] = [];
+    const jobsWithoutDelay: IBulkJobParams[] = [];
+
+    for (const job of data) {
+      const delay = job.options?.delay || 0;
+      if (delay > 0) {
+        jobsWithDelay.push(job);
+      } else {
+        jobsWithoutDelay.push(job);
+      }
+    }
+
+    // Process delayed jobs through BullMQ
+    if (jobsWithDelay.length > 0) {
+      Logger.log(
+        { topic: this.topic, count: jobsWithDelay.length },
+        'Routing delayed jobs to BullMQ in bulk operation',
+        LOG_CONTEXT
+      );
+      await this.bullMqService.addBulk(jobsWithDelay);
+    }
+
+    // Process non-delayed jobs through standard routing (which may use SQS)
+    if (jobsWithoutDelay.length > 0) {
+      await this.addBulkToSqsOrBullMq(jobsWithoutDelay);
+    }
+  }
+
+  private async addBulkToSqsOrBullMq(data: IBulkJobParams[]) {
+    // Group jobs by organization for feature flag evaluation
+    const jobsByOrg = new Map<string, IBulkJobParams[]>();
+    const jobsWithoutOrg: IBulkJobParams[] = [];
+
+    for (const job of data) {
+      const organizationId = this.extractOrganizationId(job.data);
+      if (organizationId) {
+        if (!jobsByOrg.has(organizationId)) {
+          jobsByOrg.set(organizationId, []);
+        }
+        const orgJobs = jobsByOrg.get(organizationId);
+        if (orgJobs) {
+          orgJobs.push(job);
+        }
+      } else {
+        jobsWithoutOrg.push(job);
+      }
+    }
+
+    // Process jobs without org through BullMQ
+    if (jobsWithoutOrg.length > 0) {
+      Logger.log(
+        { topic: this.topic, count: jobsWithoutOrg.length },
+        'Routing jobs without organization ID to BullMQ',
+        LOG_CONTEXT
+      );
+      await this.bullMqService.addBulk(jobsWithoutOrg);
+    }
+
+    // Process jobs by organization
+    for (const [organizationId, jobs] of jobsByOrg.entries()) {
+      const environmentId = this.extractEnvironmentId(jobs[0].data);
+      if (!environmentId) {
+        await this.bullMqService.addBulk(jobs);
+        continue;
+      }
+
+      // Get organization for feature flag
+      const organization = await this.organizationRepository.findOne({ _id: organizationId }, 'apiServiceLevel', {
+        readPreference: 'secondaryPreferred',
+      });
+
+      if (!organization) {
+        await this.bullMqService.addBulk(jobs);
+        continue;
+      }
+
+      // Check feature flag
+      const queueBackendMode = await this.featureFlagsService.getFlag<string>({
+        key: FeatureFlagsKeysEnum.QUEUE_BACKEND_MODE,
+        defaultValue: QueueBackendMode.BULLMQ,
+        organization: { _id: organizationId, apiServiceLevel: organization.apiServiceLevel },
+        environment: { _id: environmentId },
+      });
+
+      // Route based on unified mode routing
+      await this.routeByMode(jobs, queueBackendMode, organizationId);
+    }
+  }
+
+  protected async addBulkToSQS(jobs: IBulkJobParams[], organizationId: string) {
+    try {
+      // Convert jobs to SQS messages
+      const messages = jobs.map((job) => ({
+        id: job.groupId || job.name,
+        body: JSON.stringify(job.data),
+        groupId: organizationId, // For fair queuing across organizations
+      }));
+
+      await this.sqsService.sendBulk(this.topic, messages);
+    } catch (error) {
+      Logger.warn(
+        { topic: this.topic, count: jobs.length, error: error instanceof Error ? error.message : String(error) },
+        'Failed to send bulk to SQS, falling back to BullMQ',
+        LOG_CONTEXT
+      );
+      await this.bullMqService.addBulk(jobs);
+    }
   }
 
   private calculatePayloadSize(data: any): number {

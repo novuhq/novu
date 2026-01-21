@@ -1,44 +1,12 @@
-import { Test } from '@nestjs/testing';
-import { CommunityOrganizationRepository } from '@novu/dal';
-import { PinoLogger } from '../../logging';
-import { BullMqService } from '../bull-mq';
-import { FeatureFlagsService } from '../feature-flags';
-import { SqsService } from '../sqs';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { ActiveJobsMetricQueueService } from './active-jobs-metric-queue.service';
 
 let activeJobsMetricQueueService: ActiveJobsMetricQueueService;
 
-const mockSqsService = {
-  sendMessage: jest.fn(),
-} as unknown as SqsService;
-
-const mockFeatureFlagsService = {
-  getFlag: jest.fn(),
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: jest.fn(),
-} as unknown as CommunityOrganizationRepository;
-
-const mockLogger = {
-  setContext: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-} as unknown as PinoLogger;
-
 describe('Job metrics Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      activeJobsMetricQueueService = new ActiveJobsMetricQueueService(
-        new WorkflowInMemoryProviderService(),
-        mockSqsService,
-        mockFeatureFlagsService,
-        mockOrganizationRepository,
-        mockLogger
-      );
+      activeJobsMetricQueueService = new ActiveJobsMetricQueueService(new WorkflowInMemoryProviderService());
       await activeJobsMetricQueueService.queue.drain();
     });
 
@@ -57,7 +25,7 @@ describe('Job metrics Queue service', () => {
     it('should be initialised properly', async () => {
       expect(activeJobsMetricQueueService).toBeDefined();
       expect(Object.keys(activeJobsMetricQueueService)).toEqual(
-        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
+        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'bullMqService', 'queue'])
       );
       expect(activeJobsMetricQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(activeJobsMetricQueueService.topic).toEqual('metric-active-jobs');
@@ -88,13 +56,7 @@ describe('Job metrics Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      activeJobsMetricQueueService = new ActiveJobsMetricQueueService(
-        new WorkflowInMemoryProviderService(),
-        mockSqsService,
-        mockFeatureFlagsService,
-        mockOrganizationRepository,
-        mockLogger
-      );
+      activeJobsMetricQueueService = new ActiveJobsMetricQueueService(new WorkflowInMemoryProviderService());
       await activeJobsMetricQueueService.queue.obliterate();
     });
 

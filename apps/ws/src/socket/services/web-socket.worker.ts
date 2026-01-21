@@ -33,14 +33,22 @@ export class WebSocketWorker extends WebSocketsWorkerService {
 
   private getWorkerProcessor() {
     return async (job) => {
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const _this = this;
 
-        Logger.log(`Job ${job.id} / ${job.data.event} is being processed WebSocketWorker`, LOG_CONTEXT);
+        const { data: jobData } = job;
+
+        // Skip processing if marked (for shadow/live modes)
+        if (jobData.skipProcessing) {
+          Logger.log(`Skipping job ${job.id} - skipProcessing flag is set`, LOG_CONTEXT);
+          resolve();
+          return;
+        }
+
+        Logger.log(`Job ${job.id} / ${jobData.event} is being processed WebSocketWorker`, LOG_CONTEXT);
 
         nr.startBackgroundTransaction(ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE, 'WS Service', () => {
           const transaction = nr.getTransaction();
-          const { data: jobData } = job;
           const data: IWebSocketDataDto = jobData;
 
           _this.externalServicesRoute
@@ -53,7 +61,7 @@ export class WebSocketWorker extends WebSocketsWorkerService {
                 contextKeys: data.contextKeys,
               })
             )
-            .then(resolve)
+            .then(() => resolve())
             .catch((error) => {
               Logger.error(error, 'Unexpected exception occurred while handling external services route ', LOG_CONTEXT);
 

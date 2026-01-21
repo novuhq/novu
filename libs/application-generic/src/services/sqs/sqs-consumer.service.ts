@@ -8,7 +8,7 @@ import { ISqsConsumerOptions } from './types';
 
 const LOG_CONTEXT = 'SqsConsumerService';
 
-export type SqsMessageProcessor<T = any> = (data: T) => Promise<void>;
+export type SqsMessageProcessor<T = unknown> = (data: T) => Promise<void>;
 
 export class SqsConsumerService {
   private consumer: Consumer;
@@ -26,60 +26,68 @@ export class SqsConsumerService {
       throw new Error(`No queue URL configured for topic: ${this.topic}`);
     }
 
+    const batchSize = this.options.maxNumberOfMessages || 10;
+    const waitTime = this.options.waitTimeSeconds || 20;
+    const visibilityTimeout = this.options.visibilityTimeout || 300;
+
     this.consumer = Consumer.create({
       queueUrl,
       sqs: this.sqsService.getClient(),
-      batchSize: this.options.maxNumberOfMessages || 10,
-      waitTimeSeconds: this.options.waitTimeSeconds || 20,
-      visibilityTimeout: this.options.visibilityTimeout || 300,
-      handleMessageBatch: async (messages: Message[]): Promise<Message[]> => {
-        return await this.handleMessageBatch(messages);
+      batchSize,
+      waitTimeSeconds: waitTime,
+      visibilityTimeout,
+      handleMessage: async (message: Message): Promise<Message> => {
+        await this.processMessage(message);
+        return message;
       },
     });
+
+    Logger.log(
+      {
+        topic: this.topic,
+        concurrency: batchSize,
+        waitTimeSeconds: waitTime,
+        visibilityTimeout,
+      },
+      'SQS consumer configured with parallel message processing',
+      LOG_CONTEXT
+    );
 
     this.setupEventHandlers();
   }
 
-  private async handleMessageBatch(messages: Message[]): Promise<Message[]> {
-    const processedMessages: Message[] = [];
+  private async processMessage(message: Message): Promise<void> {
+    try {
+      const data = JSON.parse(message.Body || '{}');
 
-    for (const message of messages) {
-      try {
-        const data = JSON.parse(message.Body || '{}');
-
-        // Skip shadow mode messages
-        if (data.skipProcessing) {
-          this.logger?.debug(
-            {
-              messageId: message.MessageId,
-              topic: this.topic,
-            },
-            'Skipping message marked for skip processing'
-          );
-          processedMessages.push(message);
-          continue;
-        }
-
-        await this.processor(data);
-
-        // Message processed successfully, acknowledge it
-        processedMessages.push(message);
-      } catch (error) {
-        // Log error but don't add to processedMessages so it stays on queue for retry
-        Logger.error(
+      // Skip shadow mode messages
+      if (data.skipProcessing) {
+        this.logger?.debug(
           {
-            error: error instanceof Error ? error.message : String(error),
             messageId: message.MessageId,
             topic: this.topic,
           },
-          'Error processing SQS message',
-          LOG_CONTEXT
+          'Skipping message marked for skip processing'
         );
+        return;
       }
-    }
 
-    // Return processed messages to acknowledge and delete them
-    return processedMessages;
+      await this.processor(data);
+    } catch (error) {
+      // Log error with more details and re-throw so BBC library can handle retry logic
+      Logger.error(
+        {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          messageId: message.MessageId,
+          topic: this.topic,
+          messageBodyPreview: message.Body?.substring(0, 200),
+        },
+        'Error processing SQS message',
+        LOG_CONTEXT
+      );
+      throw error;
+    }
   }
 
   private setupEventHandlers(): void {

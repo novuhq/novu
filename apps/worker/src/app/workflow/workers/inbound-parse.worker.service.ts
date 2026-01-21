@@ -3,9 +3,6 @@ import {
   BullMqService,
   getInboundParseMailWorkerOptions,
   IInboundParseDataDto,
-  IInboundParseJobDto,
-  PinoLogger,
-  SqsService,
   WorkerBaseService,
   WorkerOptions,
   WorkflowInMemoryProviderService,
@@ -20,11 +17,9 @@ const LOG_CONTEXT = 'InboundParseQueueService';
 export class InboundParseWorker extends WorkerBaseService {
   constructor(
     private inboundEmailParseUsecase: InboundEmailParse,
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    sqsService: SqsService,
-    logger: PinoLogger
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {
-    super(JobTopicNameEnum.INBOUND_PARSE_MAIL, new BullMqService(workflowInMemoryProviderService), sqsService, logger);
+    super(JobTopicNameEnum.INBOUND_PARSE_MAIL, new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }

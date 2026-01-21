@@ -34,12 +34,35 @@ export class WorkerBaseService implements INovuWorker {
   public initWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
     Logger.log(`Worker ${this.topic} initialized`, LOG_CONTEXT);
 
-    this.createWorker(processor, options);
-
     if (typeof processor === 'function') {
       this.processorFunction = processor;
+      // Wrap processor with skipProcessing check for BullMQ
+      const wrappedProcessor = this.wrapProcessorWithSkipCheck(processor);
+      this.createWorker(wrappedProcessor, options);
       this.initSqsConsumer(processor, options);
+    } else {
+      this.createWorker(processor, options);
     }
+  }
+
+  private wrapProcessorWithSkipCheck(processor: Processor<any, unknown, string>): Processor<any, unknown, string> {
+    return async (job: any) => {
+      // Universal skipProcessing check for BullMQ workers
+      if (job.data?.skipProcessing) {
+        Logger.log(
+          {
+            topic: this.topic,
+            jobId: job.id,
+            jobName: job.name,
+          },
+          'Skipping BullMQ job - skipProcessing flag is set',
+          LOG_CONTEXT
+        );
+        return;
+      }
+
+      return await processor(job);
+    };
   }
 
   public createWorker(processor: WorkerProcessor, options: WorkerOptions): void {
@@ -64,6 +87,19 @@ export class WorkerBaseService implements INovuWorker {
     };
 
     const sqsProcessor = async (data: any): Promise<void> => {
+      // Universal skipProcessing check for all workers
+      if (data.skipProcessing) {
+        Logger.log(
+          {
+            topic: this.topic,
+            jobId: data._id || data.identifier || 'unknown',
+          },
+          'Skipping job - skipProcessing flag is set',
+          LOG_CONTEXT
+        );
+        return;
+      }
+
       const job = {
         data,
         id: data._id || data.identifier || 'unknown',
@@ -107,7 +143,8 @@ export class WorkerBaseService implements INovuWorker {
       await this.sqsConsumer.pause();
     }
 
-    Logger.log(`Worker ${this.topic} paused (BullMQ and SQS)`, LOG_CONTEXT);
+    const backends = this.sqsConsumer ? 'BullMQ and SQS' : 'BullMQ';
+    Logger.log(`Worker ${this.topic} paused (${backends})`, LOG_CONTEXT);
   }
 
   public async resume(): Promise<void> {
@@ -124,7 +161,8 @@ export class WorkerBaseService implements INovuWorker {
       await this.sqsConsumer.resume();
     }
 
-    Logger.log(`Worker ${this.topic} resumed (BullMQ and SQS)`, LOG_CONTEXT);
+    const backends = this.sqsConsumer ? 'BullMQ and SQS' : 'BullMQ';
+    Logger.log(`Worker ${this.topic} resumed (${backends})`, LOG_CONTEXT);
   }
 
   public async gracefulShutdown(): Promise<void> {

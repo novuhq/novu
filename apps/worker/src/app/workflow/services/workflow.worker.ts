@@ -40,6 +40,17 @@ export class WorkflowWorker extends WorkflowWorkerService {
 
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: IWorkflowDataDto }) => {
+      this.logger?.debug(
+        {
+          dataKeys: Object.keys(data || {}),
+          organizationId: data.organizationId,
+          _organizationId: (data as any)._organizationId,
+          hasOrganizationId: 'organizationId' in (data || {}),
+          has_OrganizationId: '_organizationId' in (data || {}),
+        },
+        'WorkflowWorker data structure check'
+      );
+
       const organizationExists = await this.organizationExist(data);
 
       if (!organizationExists) {
@@ -78,7 +89,12 @@ export class WorkflowWorker extends WorkflowWorkerService {
   }
 
   private async organizationExist(data: IWorkflowDataDto): Promise<boolean> {
-    const { organizationId } = data;
+    const organizationId = data.organizationId || (data as any)._organizationId;
+
+    if (!organizationId) {
+      this.logger?.warn({ data }, 'No organization ID found in data');
+      return false;
+    }
 
     const organization = await this.organizationRepository.findOne({ _id: organizationId });
 

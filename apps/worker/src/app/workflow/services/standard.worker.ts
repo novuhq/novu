@@ -98,11 +98,6 @@ export class StandardWorker extends StandardWorkerService {
 
   private getWorkerProcessor() {
     return async ({ data }: { data: IStandardDataDto }) => {
-      if (data.skipProcessing) {
-        Logger.log(`Skipping job ${data._id} - skipProcessing flag is set,`, LOG_CONTEXT);
-        return;
-      }
-
       const minimalJobData = this.extractMinimalJobData(data);
       const organizationExists = await this.organizationExist(data);
 
@@ -242,7 +237,6 @@ export class StandardWorker extends StandardWorkerService {
 
   private async organizationExist(data: IStandardDataDto): Promise<boolean> {
     const { _organizationId } = data;
-
     const organization = await this.organizationRepository.findOne({ _id: _organizationId });
 
     return !!organization;
