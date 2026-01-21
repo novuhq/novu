@@ -25,12 +25,11 @@ export class WorkflowWorker extends WorkflowWorkerService {
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private organizationRepository: CommunityOrganizationRepository,
     sqsService: SqsService,
-    logger: PinoLogger
+    protected logger: PinoLogger
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
-    if (this.logger) {
-      this.logger.setContext(this.constructor.name);
-    }
+    this.logger.setContext(this.constructor.name);
+
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
 
@@ -40,21 +39,10 @@ export class WorkflowWorker extends WorkflowWorkerService {
 
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: IWorkflowDataDto }) => {
-      this.logger?.debug(
-        {
-          dataKeys: Object.keys(data || {}),
-          organizationId: data.organizationId,
-          _organizationId: (data as any)._organizationId,
-          hasOrganizationId: 'organizationId' in (data || {}),
-          has_OrganizationId: '_organizationId' in (data || {}),
-        },
-        'WorkflowWorker data structure check'
-      );
-
       const organizationExists = await this.organizationExist(data);
 
       if (!organizationExists) {
-        this.logger?.warn(`Organization not found for organizationId ${data.organizationId}. Skipping job.`);
+        this.logger.warn(`Organization not found for organizationId ${data.organizationId}. Skipping job.`);
 
         return;
       }
@@ -62,7 +50,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
       return await new Promise((resolve, reject) => {
         const _this = this;
 
-        this.logger?.trace(`Job ${data.identifier} is being processed in the new instance workflow worker`);
+        this.logger.trace(`Job ${data.identifier} is being processed in the new instance workflow worker`);
 
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.TRIGGER_HANDLER_QUEUE,
@@ -89,13 +77,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
   }
 
   private async organizationExist(data: IWorkflowDataDto): Promise<boolean> {
-    const organizationId = data.organizationId || (data as any)._organizationId;
-
-    if (!organizationId) {
-      this.logger?.warn({ data }, 'No organization ID found in data');
-      return false;
-    }
-
+    const { organizationId } = data;
     const organization = await this.organizationRepository.findOne({ _id: organizationId });
 
     return !!organization;
