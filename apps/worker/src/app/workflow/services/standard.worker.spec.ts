@@ -173,7 +173,7 @@ describe('Standard Worker', () => {
     expect(standardWorker).to.be.ok;
 
     expect(standardWorker.DEFAULT_ATTEMPTS).to.eql(3);
-    expect(standardWorker.worker).to.deep.include({
+    expect(standardWorker.bullMqWorker).to.deep.include({
       _eventsCount: 2,
       _maxListeners: undefined,
       name: 'standard',
@@ -185,7 +185,7 @@ describe('Standard Worker', () => {
       workerIsPaused: false,
       workerIsRunning: true,
     });
-    expect(standardWorker.worker.opts).to.deep.include({
+    expect(standardWorker.bullMqWorker.opts).to.deep.include({
       concurrency: 200,
       lockDuration: 90000,
     });
@@ -343,7 +343,7 @@ describe('Standard Worker', () => {
   });
 
   it('should pause the worker', async () => {
-    const isPaused = await standardWorker.worker.isPaused();
+    const isPaused = await standardWorker.bullMqWorker.isPaused();
     expect(isPaused).to.equal(false);
 
     const runningStatus = await standardWorker.bullMqService.getStatus();
@@ -357,7 +357,7 @@ describe('Standard Worker', () => {
 
     await standardWorker.pause();
 
-    const isNowPaused = await standardWorker.worker.isPaused();
+    const isNowPaused = await standardWorker.bullMqWorker.isPaused();
     expect(isNowPaused).to.equal(true);
 
     const runningStatusChanged = await standardWorker.bullMqService.getStatus();
@@ -373,7 +373,7 @@ describe('Standard Worker', () => {
   it('should resume the worker', async () => {
     await standardWorker.pause();
 
-    const isPaused = await standardWorker.worker.isPaused();
+    const isPaused = await standardWorker.bullMqWorker.isPaused();
     expect(isPaused).to.equal(true);
 
     const runningStatus = await standardWorker.bullMqService.getStatus();
@@ -387,7 +387,7 @@ describe('Standard Worker', () => {
 
     await standardWorker.resume();
 
-    const isNowPaused = await standardWorker.worker.isPaused();
+    const isNowPaused = await standardWorker.bullMqWorker.isPaused();
     expect(isNowPaused).to.equal(false);
 
     const runningStatusChanged = await standardWorker.bullMqService.getStatus();

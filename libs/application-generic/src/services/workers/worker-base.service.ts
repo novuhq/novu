@@ -12,7 +12,7 @@ export type WorkerProcessor = string | Processor<any, unknown, string> | undefin
 export { WorkerOptions };
 
 export class WorkerBaseService implements INovuWorker {
-  private bullMqService: BullMqService;
+  public bullMqService: BullMqService;
   private sqsConsumer?: SqsConsumerService;
 
   public readonly DEFAULT_ATTEMPTS = 3;
