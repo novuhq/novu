@@ -10,7 +10,6 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import { PinoLogger } from '../logging';
 import {
   CloudflareSchedulerService,
   ReadinessService,
@@ -45,7 +44,6 @@ const BASE_PROVIDERS: Provider[] = [
   CloudflareSchedulerService,
   CommunityOrganizationRepository,
   SqsService,
-  PinoLogger,
 ];
 
 @Module({
