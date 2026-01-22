@@ -13,6 +13,7 @@ export type SqsMessageProcessor<T = unknown> = (data: T) => Promise<void>;
 export class SqsConsumerService {
   private consumer: Consumer;
   private isStarted = false;
+  private isPaused = false;
 
   constructor(
     private readonly topic: JobTopicNameEnum,
@@ -133,6 +134,7 @@ export class SqsConsumerService {
 
     this.consumer.start();
     this.isStarted = true;
+    this.isPaused = false;
   }
 
   public async pause(): Promise<void> {
@@ -142,6 +144,7 @@ export class SqsConsumerService {
 
     this.consumer.stop({ abort: false });
     this.isStarted = false;
+    this.isPaused = true;
     Logger.log(`Paused SQS consumer for ${this.topic}`, LOG_CONTEXT);
   }
 
@@ -159,12 +162,13 @@ export class SqsConsumerService {
 
     this.consumer.stop({ abort: false });
     this.isStarted = false;
+    this.isPaused = false;
   }
 
   public getStatus(): { isRunning: boolean; isPaused: boolean } {
     return {
       isRunning: this.consumer.status.isRunning,
-      isPaused: !this.consumer.status.isRunning && this.isStarted,
+      isPaused: this.isPaused,
     };
   }
 }
