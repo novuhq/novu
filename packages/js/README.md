@@ -81,3 +81,17 @@ const novu = new Novu({
 ```
 
 > Note: When HMAC encryption is enabled and `context` is provided, the `contextHash` is required. The hash is order-independent, so `{a:1, b:2}` produces the same hash as `{b:2, a:1}`.
+
+## Custom User Agent
+
+You can remove the User-Agent header sent with requests by providing the `__userAgent` option set to `null`:
+
+```ts
+const novu = new Novu({
+  applicationIdentifier: 'YOUR_NOVU_APPLICATION_IDENTIFIER',
+  subscriber: 'YOUR_INTERNAL_SUBSCRIBER_ID',
+  __userAgent: null,
+});
+```
+
+If `__userAgent` is set to `null`, the SDK will not add a User-Agent header to requests, allowing the browser's default user agent to be used instead. This is done since some client's block adding user agent headers to requests.

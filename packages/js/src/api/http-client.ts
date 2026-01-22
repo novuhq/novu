@@ -29,7 +29,7 @@ export class HttpClient {
     this.headers = {
       'Novu-API-Version': NOVU_API_VERSION,
       'Content-Type': 'application/json',
-      'User-Agent': userAgent,
+      ...(userAgent !== null && { 'User-Agent': userAgent }),
       ...headers,
     };
   }
@@ -121,7 +121,8 @@ export class HttpClient {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(`${this.headers['User-Agent']} error. Status: ${response.status}, Message: ${errorData.message}`);
+      const userAgent = this.headers['User-Agent'] || DEFAULT_USER_AGENT;
+      throw new Error(`${userAgent} error. Status: ${response.status}, Message: ${errorData.message}`);
     }
     if (response.status === 204) {
       return undefined as unknown as T;

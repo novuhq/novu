@@ -39,6 +39,20 @@ describe('HttpClient', () => {
       expect((client as any).apiVersion).toBe('v2');
       expect((client as any).headers['User-Agent']).toBe('custom-agent');
     });
+
+    it('should not add User-Agent header when userAgent is null', () => {
+      const client = new HttpClient({
+        userAgent: null as any,
+      });
+      expect((client as any).headers['User-Agent']).toBeUndefined();
+    });
+
+    it('should use default User-Agent when userAgent is undefined', () => {
+      const client = new HttpClient({
+        userAgent: undefined,
+      });
+      expect((client as any).headers['User-Agent']).toBe(`${PACKAGE_NAME}@${PACKAGE_VERSION}`);
+    });
   });
 
   describe('setAuthorizationToken', () => {
