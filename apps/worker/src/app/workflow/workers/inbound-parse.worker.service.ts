@@ -15,6 +15,10 @@ const LOG_CONTEXT = 'InboundParseQueueService';
 
 @Injectable()
 export class InboundParseWorker extends WorkerBaseService {
+  /* *
+   * BullMQ-only worker - no SQS support.
+   * Processes inbound email parsing, not part of the SQS migration.
+   */
   constructor(
     private inboundEmailParseUsecase: InboundEmailParse,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService

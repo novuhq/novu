@@ -8,6 +8,10 @@ const LOG_CONTEXT = 'ActiveJobsMetricWorkerService';
 
 @Injectable()
 export class ActiveJobsMetricWorkerService extends WorkerBaseService {
+  /* *
+   * BullMQ-only worker - no SQS support.
+   * Tracks active job metrics internally, not part of the SQS migration.
+   */
   constructor(workflowInMemoryProvider: WorkflowInMemoryProviderService) {
     super(JobTopicNameEnum.ACTIVE_JOBS_METRIC, new BullMqService(workflowInMemoryProvider));
   }
