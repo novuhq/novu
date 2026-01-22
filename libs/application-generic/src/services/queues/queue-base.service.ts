@@ -6,7 +6,6 @@ import { FeatureFlagsService } from '../feature-flags';
 import { SqsService } from '../sqs';
 
 const LOG_CONTEXT = 'QueueService';
-const NO_ORG_FALLBACK = '__NO_ORG__';
 
 export class QueueBaseService {
   private bullMqService: BullMqService;
@@ -226,8 +225,8 @@ export class QueueBaseService {
   }
 
   private async addJobsToSQS(jobs: (IJobParams | IBulkJobParams)[], organizationId: string): Promise<void> {
-    const messages = jobs.map((job) => ({
-      id: job.groupId || job.name,
+    const messages = jobs.map((job, index) => ({
+      id: `${job.groupId || job.name}-${index}`,
       body: JSON.stringify(job.data || {}),
       groupId: organizationId,
     }));
@@ -275,21 +274,21 @@ export class QueueBaseService {
     }
 
     if (immediate.length > 0) {
-      const jobsByOrg = this.groupByOrganization(immediate);
-      for (const [organizationId, jobs] of jobsByOrg.entries()) {
-        if (organizationId === NO_ORG_FALLBACK) {
-          Logger.log(
-            { topic: this.topic, count: jobs.length },
-            'Jobs without organization ID, routing to BullMQ fallback',
-            LOG_CONTEXT
-          );
-          await this.addJobsToBullMQ(jobs);
-          continue;
-        }
+      const organizationId = immediate[0]?.groupId;
 
-        const queueBackendMode = await this.getQueueBackendMode(organizationId);
-        await this.routeByMode(jobs, queueBackendMode, organizationId);
+      if (!organizationId) {
+        Logger.log(
+          { topic: this.topic, count: immediate.length },
+          'Jobs without organization ID, routing to BullMQ fallback',
+          LOG_CONTEXT
+        );
+        await this.addJobsToBullMQ(immediate);
+
+        return;
       }
+
+      const queueBackendMode = await this.getQueueBackendMode(organizationId);
+      await this.routeByMode(immediate, queueBackendMode, organizationId);
     }
   }
 
@@ -306,20 +305,6 @@ export class QueueBaseService {
     }
 
     return { delayed, immediate };
-  }
-
-  private groupByOrganization(jobs: IBulkJobParams[]): Map<string, IBulkJobParams[]> {
-    const jobsByOrg = new Map<string, IBulkJobParams[]>();
-
-    for (const job of jobs) {
-      const organizationId = job.groupId || NO_ORG_FALLBACK;
-      if (!jobsByOrg.has(organizationId)) {
-        jobsByOrg.set(organizationId, []);
-      }
-      jobsByOrg.get(organizationId).push(job);
-    }
-
-    return jobsByOrg;
   }
 
   private logBulkPayloadMetrics(data: IBulkJobParams[]): void {
