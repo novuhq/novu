@@ -62,7 +62,7 @@ export class SqsConsumerService {
       const data = JSON.parse(message.Body || '{}');
       await this.processor(data);
     } catch (error) {
-      // Log error with more details and re-throw so BBC library can handle retry logic
+      // Log error with more details and re-throw so sqs-consumer can handle retry logic
       Logger.error(
         {
           error: error instanceof Error ? error.message : String(error),
