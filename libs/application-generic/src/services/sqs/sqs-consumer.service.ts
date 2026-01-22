@@ -148,10 +148,13 @@ export class SqsConsumerService {
   }
 
   public async resume(): Promise<void> {
-    if (!this.isStarted) {
-      this.start();
-      Logger.log(`Resumed SQS consumer for ${this.topic}`, LOG_CONTEXT);
+    if (!this.isPaused) {
+      Logger.warn(`Cannot resume SQS consumer for ${this.topic}: not in paused state`, LOG_CONTEXT);
+      return;
     }
+
+    this.start();
+    Logger.log(`Resumed SQS consumer for ${this.topic}`, LOG_CONTEXT);
   }
 
   public async stop(): Promise<void> {
