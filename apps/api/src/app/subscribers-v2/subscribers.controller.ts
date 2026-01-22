@@ -285,7 +285,7 @@ export class SubscribersController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         subscriberId: subscriberId,
-        includeInactiveChannels: true,
+        includeInactiveChannels: false,
       })
     );
 
