@@ -3,6 +3,7 @@ import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useMemo } from 'react';
 import { RiLoader4Line, RiQuestionLine } from 'react-icons/ri';
+import { ContextFilter } from '@/components/contexts/context-filter';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
@@ -20,14 +21,17 @@ type PreferencesProps = {
   subscriberPreferences: GetSubscriberPreferencesDto;
   subscriberId: string;
   readOnly?: boolean;
+  contextKeys?: string[];
+  onContextChange?: (contextKeys: string[] | undefined) => void;
 };
 
 export const Preferences = (props: PreferencesProps) => {
-  const { subscriberPreferences, subscriberId, readOnly = false } = props;
+  const { subscriberPreferences, subscriberId, readOnly = false, contextKeys, onContextChange } = props;
   const track = useTelemetry();
 
   const { updateChannelPreferences, isPending } = useOptimisticChannelPreferences({
     subscriberId,
+    contextKeys,
     onSuccess: () => {
       showSuccessToast('Subscriber preferences updated successfully');
       track(TelemetryEvent.SUBSCRIBER_PREFERENCES_UPDATED);
@@ -38,6 +42,7 @@ export const Preferences = (props: PreferencesProps) => {
   });
 
   const isSubscribersScheduleEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED);
+  const isContextPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED);
 
   const { workflows, globalChannelsKeys, hasZeroPreferences } = useMemo(() => {
     const global = subscriberPreferences?.global ?? { channels: {} };
@@ -60,6 +65,20 @@ export const Preferences = (props: PreferencesProps) => {
       animate="visible"
       variants={{ ...sectionVariants }}
     >
+      {onContextChange && isContextPreferencesEnabled && (
+        <motion.div variants={itemVariants}>
+          <SidebarContent size="md" className="min-h-max overflow-x-auto py-2 px-2">
+            <div className="flex items-center gap-2">
+              <ContextFilter
+                contextKeys={contextKeys || ['']}
+                onContextKeysChange={(keys) => onContextChange?.(keys)}
+                defaultOnClear={true}
+              />
+            </div>
+          </SidebarContent>
+        </motion.div>
+      )}
+
       <motion.div variants={itemVariants}>
         <div className="flex items-center gap-2 bg-neutral-50 px-4 py-2">
           <span className="text-2xs line-height uppercase text-neutral-400">Global preferences</span>
@@ -99,7 +118,11 @@ export const Preferences = (props: PreferencesProps) => {
           </motion.div>
           <motion.div variants={itemVariants}>
             <SidebarContent size="md">
-              <SubscribersSchedule globalPreference={subscriberPreferences.global} subscriberId={subscriberId} />
+              <SubscribersSchedule
+                globalPreference={subscriberPreferences.global}
+                subscriberId={subscriberId}
+                contextKeys={contextKeys}
+              />
             </SidebarContent>
           </motion.div>
         </>

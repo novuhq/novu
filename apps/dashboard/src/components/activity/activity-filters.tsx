@@ -16,6 +16,7 @@ import { capitalize } from '@/utils/string';
 import { cn } from '@/utils/ui';
 import { IS_SELF_HOSTED } from '../../config';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
+import { ContextFilter } from '../contexts/context-filter';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '../primitives/form/form';
@@ -39,6 +40,7 @@ export type ActivityFilters = {
   onReset?: () => void;
   hide?: Fields[];
   className?: string;
+  defaultContextOnClear?: boolean;
 };
 
 const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
@@ -68,6 +70,7 @@ export function ActivityFilters({
   showReset = false,
   hide = [],
   className,
+  defaultContextOnClear = false,
 }: ActivityFilters) {
   const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
   const { organization } = useOrganization();
@@ -282,13 +285,11 @@ export function ActivityFilters({
             name="contextKeys"
             render={({ field }) => (
               <FormItem>
-                <FacetedFormFilter
-                  type="text"
+                <ContextFilter
+                  contextKeys={field.value}
+                  onContextKeysChange={field.onChange}
+                  defaultOnClear={defaultContextOnClear}
                   size="small"
-                  title="Context"
-                  value={field.value}
-                  onChange={(value) => setValue('contextKeys', value)}
-                  placeholder="e.g., tenant:org-123, region:us-east-1"
                 />
               </FormItem>
             )}

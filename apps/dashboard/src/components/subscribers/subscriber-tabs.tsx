@@ -47,15 +47,26 @@ type SubscriberPreferencesProps = {
 
 const SubscriberPreferences = (props: SubscriberPreferencesProps) => {
   const { subscriberId, readOnly = false } = props;
+  const [selectedContextKeys, setSelectedContextKeys] = useState<string[] | undefined>(['']);
+
   const { data, isPending } = useFetchSubscriberPreferences({
     subscriberId,
+    contextKeys: selectedContextKeys,
   });
 
   if (isPending) {
     return <PreferencesSkeleton />;
   }
 
-  return <Preferences subscriberPreferences={data!} subscriberId={subscriberId} readOnly={readOnly} />;
+  return (
+    <Preferences
+      subscriberPreferences={data!}
+      subscriberId={subscriberId}
+      readOnly={readOnly}
+      contextKeys={selectedContextKeys}
+      onContextChange={setSelectedContextKeys}
+    />
+  );
 };
 
 const tabTriggerClasses =

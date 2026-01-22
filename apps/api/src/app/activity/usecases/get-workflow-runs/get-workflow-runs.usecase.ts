@@ -173,9 +173,14 @@ export class GetWorkflowRuns {
         }
       }
 
-      if (command.contextKeys?.length) {
-        // This checks if context_keys array contains any of the specified keys
-        queryBuilder.whereHasAny('context_keys', command.contextKeys);
+      if (command.contextKeys !== undefined) {
+        if (command.contextKeys.length === 0) {
+          // Empty array = filter for records with no context (empty context_keys)
+          queryBuilder.whereEquals('context_keys', []);
+        } else {
+          // Non-empty array = filter for records containing all specified contexts
+          queryBuilder.whereHasAll('context_keys', command.contextKeys);
+        }
       }
 
       const safeWhere = queryBuilder.build();

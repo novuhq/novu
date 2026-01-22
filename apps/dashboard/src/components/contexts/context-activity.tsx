@@ -15,7 +15,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 const getInitialFilters = (contextKey: string, dateRange?: string): ActivityFiltersData => ({
   ...defaultActivityFilters,
   dateRange: dateRange || '24h',
-  contextKeys: contextKey,
+  contextKeys: [contextKey],
 });
 
 export const ContextActivity = ({ type, id }: { type: ContextType; id: ContextId }) => {
@@ -79,8 +79,10 @@ export const ContextActivity = ({ type, id }: { type: ContextType; id: ContextId
       params.set('severity', filters.severity.join(','));
     }
 
-    if (filters.contextKeys) {
-      params.set('contextKeys', filters.contextKeys);
+    if (filters.contextKeys.length > 0) {
+      for (const contextKey of filters.contextKeys) {
+        params.append('contextKeys', contextKey);
+      }
     }
 
     return params;
