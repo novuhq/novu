@@ -109,7 +109,7 @@ export function ActivityFilters({
 
   return (
     <Form {...form}>
-      <FormRoot className={cn('nv-no-scrollbar w-full flex items-center gap-2 overflow-x-auto pb-2.5', className)}>
+        <FormRoot className={cn('w-full flex flex-wrap items-center gap-2 pb-2.5', className)}>
         {!hide.includes('dateRange') && (
           <FormField
             control={form.control}
