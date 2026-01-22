@@ -37,9 +37,9 @@
     "reflect-metadata": "0.2.2"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.567.0",
+    "@aws-sdk/client-s3": "^3.971.0",
     "@aws-sdk/client-sqs": "^3.971.0",
-    "@aws-sdk/s3-request-presigner": "^3.567.0",
+    "@aws-sdk/s3-request-presigner": "^3.971.0",
     "@azure/storage-blob": "^12.11.0",
     "@clickhouse/client": "^1.11.2",
     "@google-cloud/storage": "^6.2.3",
