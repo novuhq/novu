@@ -27,9 +27,9 @@ export class SqsConsumerService {
       throw new Error(`No queue URL configured for topic: ${this.topic}`);
     }
 
-    const batchSize = this.options.maxNumberOfMessages || 10;
-    const waitTime = this.options.waitTimeSeconds || 20;
-    const visibilityTimeout = this.options.visibilityTimeout || 300;
+    const batchSize = this.options.maxNumberOfMessages ?? 10;
+    const waitTime = this.options.waitTimeSeconds ?? 20;
+    const visibilityTimeout = this.options.visibilityTimeout ?? 300;
 
     this.consumer = Consumer.create({
       queueUrl,
