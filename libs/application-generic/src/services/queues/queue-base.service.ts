@@ -151,11 +151,12 @@ export class QueueBaseService {
       }
 
       case QueueBackendMode.LIVE: {
-        await this.addJobsToBullMQ(this.markAsSkipProcessing(jobs));
         try {
           await this.addJobsToSQS(jobs, organizationId);
+          // SQS succeeded - add skip-marked jobs to BullMQ as fallback
+          await this.addJobsToBullMQ(this.markAsSkipProcessing(jobs));
         } catch (error) {
-          // SQS failed in LIVE mode - fall back to BullMQ as primary
+          // SQS failed in LIVE mode - fall back to BullMQ as primary (no skip flag)
           Logger.error(
             {
               topic: this.topic,
