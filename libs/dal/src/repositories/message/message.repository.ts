@@ -57,9 +57,19 @@ const getFlatObject = (obj: object) => {
 };
 
 export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity, EnforceEnvId> {
+  private static readonly BATCH_SIZE = 100;
   private feedRepository = new FeedRepository();
   constructor() {
     super(Message, MessageEntity);
+  }
+
+  private chunkArray<T>(array: T[], size: number = MessageRepository.BATCH_SIZE): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+
+    return chunks;
   }
 
   async findOne(
@@ -568,14 +578,18 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     // Extract IDs for targeted update
     const documentIds = documentsToUpdate.map((doc) => doc._id);
 
-    // Perform the update using document IDs
-    await this.update(
-      {
-        _id: { $in: documentIds },
-        _environmentId: environmentId,
-      },
-      { $set: updatePayload }
-    );
+    // Perform the update using document IDs in batches
+    const chunks = this.chunkArray(documentIds);
+
+    for (const chunk of chunks) {
+      await this.update(
+        {
+          _id: { $in: chunk },
+          _environmentId: environmentId,
+        },
+        { $set: updatePayload }
+      );
+    }
 
     // Fetch and return the updated documents
     return this.find({
@@ -631,21 +645,22 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     markAs: MessagesStatusEnum;
   }): Promise<MessageEntity[]> {
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
+    const chunks = this.chunkArray(messageIds);
 
-    await this.update(
-      {
-        _environmentId: environmentId,
-        _subscriberId: subscriberId,
-        _id: {
-          $in: messageIds.map((id) => {
-            return new Types.ObjectId(id);
-          }),
+    for (const chunk of chunks) {
+      await this.update(
+        {
+          _environmentId: environmentId,
+          _subscriberId: subscriberId,
+          _id: {
+            $in: chunk.map((id) => new Types.ObjectId(id)),
+          },
         },
-      },
-      {
-        $set: updatePayload,
-      }
-    );
+        {
+          $set: updatePayload,
+        }
+      );
+    }
 
     return this.find({
       _environmentId: environmentId,
@@ -675,20 +690,22 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.lastReadDate = new Date();
     }
 
-    await this.update(
-      {
-        _environmentId: environmentId,
-        _subscriberId: subscriberId,
-        _id: {
-          $in: messageIds.map((id) => {
-            return new Types.ObjectId(id);
-          }),
+    const chunks = this.chunkArray(messageIds);
+
+    for (const chunk of chunks) {
+      await this.update(
+        {
+          _environmentId: environmentId,
+          _subscriberId: subscriberId,
+          _id: {
+            $in: chunk.map((id) => new Types.ObjectId(id)),
+          },
         },
-      },
-      {
-        $set: requestQuery,
-      }
-    );
+        {
+          $set: requestQuery,
+        }
+      );
+    }
   }
 
   async updateMessagesStatusByIds({
@@ -874,32 +891,22 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     // Handle firstSeenDate logic separately for operations that mark as seen
     const shouldMarkAsSeen = isUpdatingArchived || isUpdatingRead || (isUpdatingSeen && seen) || isUpdatingSnoozed;
 
-    if (shouldMarkAsSeen) {
-      // First, update all matching documents with the main update
-      await this.update(
-        idQuery,
-        { $set: updatePayload },
-        {
-          writeConcern: { w: 1 },
-        }
-      );
+    // Batch the updates
+    const chunks = this.chunkArray(documentIds);
 
-      // Then, set firstSeenDate only for documents that don't already have it
-      await this.update(
-        {
-          ...idQuery,
-          firstSeenDate: { $exists: false },
-        },
-        {
-          $set: { firstSeenDate: new Date() },
-        },
-        {
-          writeConcern: { w: 1 },
-        }
-      );
-    } else {
-      // For non-seen operations, just do the regular update
-      await this.update(idQuery, { $set: updatePayload });
+    for (const chunk of chunks) {
+      const chunkQuery = { _id: { $in: chunk }, _environmentId: query._environmentId };
+
+      if (shouldMarkAsSeen) {
+        await this.update(chunkQuery, { $set: updatePayload }, { writeConcern: { w: 1 } });
+        await this.update(
+          { ...chunkQuery, firstSeenDate: { $exists: false } },
+          { $set: { firstSeenDate: new Date() } },
+          { writeConcern: { w: 1 } }
+        );
+      } else {
+        await this.update(chunkQuery, { $set: updatePayload });
+      }
     }
 
     return this.find(idQuery, undefined, { limit: 100 });
@@ -1073,23 +1080,24 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string;
     ids: string[];
   }): Promise<MessageEntity[]> {
-    const query: MessageQuery & EnforceEnvId = {
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
-      _id: {
-        $in: ids.map((id) => {
-          return new Types.ObjectId(id);
-        }),
-      },
-    };
+    const chunks = this.chunkArray(ids);
+    const allDeletedMessages: MessageEntity[] = [];
 
-    // First, retrieve the messages that will be deleted for webhook events
-    const messagesToDelete = await this.find(query);
+    for (const chunk of chunks) {
+      const query: MessageQuery & EnforceEnvId = {
+        _environmentId: environmentId,
+        _subscriberId: subscriberId,
+        _id: {
+          $in: chunk.map((id) => new Types.ObjectId(id)),
+        },
+      };
 
-    // Then delete them
-    await this.delete(query);
+      const messagesToDelete = await this.find(query);
+      await this.delete(query);
+      allDeletedMessages.push(...messagesToDelete);
+    }
 
-    return messagesToDelete;
+    return allDeletedMessages;
   }
 
   async deleteMessagesWithFilters({
