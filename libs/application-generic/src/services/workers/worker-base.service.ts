@@ -17,6 +17,10 @@ export class WorkerBaseService implements INovuWorker {
 
   public readonly DEFAULT_ATTEMPTS = 3;
 
+  public get bullMqWorker() {
+    return this.bullMqService.worker;
+  }
+
   constructor(
     public readonly topic: JobTopicNameEnum,
     public bullMqServiceInstance: BullMqService,
