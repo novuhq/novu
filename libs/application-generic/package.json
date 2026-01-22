@@ -22,7 +22,7 @@
     "reset-hard": "git clean -dfx && git reset --hard && pnpm install"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=18.0.0"
   },
   "peerDependencies": {
     "@nestjs/common": "10.4.18",
