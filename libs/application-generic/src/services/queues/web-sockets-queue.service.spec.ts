@@ -17,7 +17,12 @@ const mockSocketWorkerService = {
 } as any;
 
 const mockSqsService = {
-  sendMessage: jest.fn(),
+  getQueueUrl: jest.fn(() => undefined),
+  getProducer: jest.fn(() => undefined),
+  getClient: jest.fn(() => ({})),
+  isConfigured: jest.fn(() => false),
+  send: jest.fn(),
+  sendBulk: jest.fn(),
 } as unknown as SqsService;
 
 const mockFeatureFlagsService = {

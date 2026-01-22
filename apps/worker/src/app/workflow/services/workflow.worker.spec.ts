@@ -17,8 +17,10 @@ import { WorkflowWorker } from './workflow.worker';
 const mockSqsService = {
   getQueueUrl: () => undefined,
   getProducer: () => undefined,
-  getClient: () => ({}),
+  getClient: () => ({}) as any,
   isConfigured: () => false,
+  send: async () => {},
+  sendBulk: async () => {},
 } as unknown as SqsService;
 
 const mockFeatureFlagsService = {
