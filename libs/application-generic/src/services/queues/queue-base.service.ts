@@ -6,6 +6,7 @@ import { FeatureFlagsService } from '../feature-flags';
 import { SqsService } from '../sqs';
 
 const LOG_CONTEXT = 'QueueService';
+const NO_ORG_FALLBACK = '__NO_ORG__';
 
 export class QueueBaseService {
   private bullMqService: BullMqService;
@@ -102,6 +103,12 @@ export class QueueBaseService {
      * This currently being only applied when SQS is enabled for certain topic.
      * */
     const organizationId = params.groupId;
+
+    if (!organizationId) {
+      Logger.log({ topic: this.topic }, 'Job without organization ID, routing to BullMQ fallback', LOG_CONTEXT);
+      return await this.addToBullMQ(params);
+    }
+
     const queueBackendMode = await this.getQueueBackendMode(organizationId);
 
     Logger.log({ topic: this.topic, queueBackendMode, organizationId }, 'Queue backend mode evaluation', LOG_CONTEXT);
@@ -257,6 +264,16 @@ export class QueueBaseService {
     if (immediate.length > 0) {
       const jobsByOrg = this.groupByOrganization(immediate);
       for (const [organizationId, jobs] of jobsByOrg.entries()) {
+        if (organizationId === NO_ORG_FALLBACK) {
+          Logger.log(
+            { topic: this.topic, count: jobs.length },
+            'Jobs without organization ID, routing to BullMQ fallback',
+            LOG_CONTEXT
+          );
+          await this.addJobsToBullMQ(jobs);
+          continue;
+        }
+
         const queueBackendMode = await this.getQueueBackendMode(organizationId);
         await this.routeByMode(jobs, queueBackendMode, organizationId);
       }
@@ -282,7 +299,7 @@ export class QueueBaseService {
     const jobsByOrg = new Map<string, IBulkJobParams[]>();
 
     for (const job of jobs) {
-      const organizationId = job.groupId;
+      const organizationId = job.groupId || NO_ORG_FALLBACK;
       if (!jobsByOrg.has(organizationId)) {
         jobsByOrg.set(organizationId, []);
       }
