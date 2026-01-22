@@ -90,6 +90,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
     this.socket = createSocket({
       socketUrl: options.socketUrl,
+      socketOptions: options.socketOptions,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
     });

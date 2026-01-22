@@ -280,6 +280,7 @@ export type StandardNovuOptions = {
   contextHash?: string;
   apiUrl?: string;
   socketUrl?: string;
+  socketOptions?: Record<string, any>;
   useCache?: boolean;
   defaultSchedule?: DefaultSchedule;
   context?: Context;

@@ -30,10 +30,12 @@ function shouldUsePartySocket(socketUrl?: string): boolean {
 
 export function createSocket({
   socketUrl,
+  socketOptions,
   inboxServiceInstance,
   eventEmitterInstance,
 }: {
   socketUrl?: string;
+  socketOptions?: Record<string, unknown>;
   inboxServiceInstance: InboxService;
   eventEmitterInstance: NovuEventEmitter;
 }): BaseSocketInterface {
@@ -44,6 +46,7 @@ export function createSocket({
     case SocketType.PARTY_SOCKET:
       return new PartySocketClient({
         socketUrl: transformedSocketUrl,
+        socketOptions,
         inboxServiceInstance,
         eventEmitterInstance,
       });
@@ -51,6 +54,7 @@ export function createSocket({
     default:
       return new Socket({
         socketUrl: transformedSocketUrl,
+        socketOptions,
         inboxServiceInstance,
         eventEmitterInstance,
       });
