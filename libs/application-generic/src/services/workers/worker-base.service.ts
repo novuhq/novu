@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { PinoLogger } from '../../logging';
-import { BullMqService, Processor, WorkerOptions } from '../bull-mq';
+import { BullMqService, Job, Processor, WorkerOptions } from '../bull-mq';
 import { INovuWorker } from '../readiness';
 import { ISqsConsumerOptions, SqsConsumerService, SqsService } from '../sqs';
 
@@ -93,7 +93,21 @@ export class WorkerBaseService implements INovuWorker {
         return;
       }
 
-      await processor({ data, id: jobId, name: this.topic } as any);
+      /* *
+       * Create a Job-like mock for SQS messages to match BullMQ Job API
+       * SQS consumer handles retries, so attemptsMade is always 0 at processor level
+       * */
+      const jobMock = {
+        id: jobId,
+        name: this.topic,
+        data,
+        attemptsMade: 0,
+        opts: {},
+        progress: async () => {},
+        remove: async () => {},
+      };
+
+      await processor(jobMock as Job<any, unknown, string>);
     };
   }
 
