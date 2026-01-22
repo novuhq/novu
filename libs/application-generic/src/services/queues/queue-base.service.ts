@@ -153,10 +153,22 @@ export class QueueBaseService {
       case QueueBackendMode.LIVE: {
         try {
           await this.addJobsToSQS(jobs, organizationId);
-          // SQS succeeded - add skip-marked jobs to BullMQ as fallback
-          await this.addJobsToBullMQ(this.markAsSkipProcessing(jobs));
+
+          try {
+            await this.addJobsToBullMQ(this.markAsSkipProcessing(jobs));
+          } catch (bullmqError) {
+            Logger.warn(
+              {
+                topic: this.topic,
+                count: jobs.length,
+                error: bullmqError instanceof Error ? bullmqError.message : String(bullmqError),
+                stack: bullmqError instanceof Error ? bullmqError.stack : undefined,
+              },
+              'BullMQ fallback failed in LIVE mode after successful SQS push',
+              LOG_CONTEXT
+            );
+          }
         } catch (error) {
-          // SQS failed in LIVE mode - fall back to BullMQ as primary (no skip flag)
           Logger.error(
             {
               topic: this.topic,
