@@ -8,7 +8,9 @@ import {
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
 import { z } from 'zod';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import {
+  UpsertStepDataCommand,
   UpsertWorkflowCommand,
   UpsertWorkflowDataCommand,
   UpsertWorkflowUseCase,
@@ -26,8 +28,20 @@ import {
 } from '../../schemas/workflow-generation.schema';
 import { LlmService } from '../../services/llm.service';
 import { GenerateWorkflowCommand } from './generate-workflow.command';
+import {
+  buildFullVariableSchema,
+  createInitialVariableSchemaContext,
+  extractPayloadVariablesFromControlValues,
+  GeneratedStep,
+  hasPayloadProperties,
+  updateVariableSchemaContext,
+  VariableSchemaContext,
+} from './variable-schema.utils';
 
-type StepWithControlValues = StepMetadata & { controlValues: Record<string, unknown> };
+interface GenerateStepControlValuesResult {
+  steps: UpsertStepDataCommand[];
+  variableSchemaContext: VariableSchemaContext;
+}
 
 @Injectable()
 export class GenerateWorkflowUseCase {
@@ -47,7 +61,13 @@ export class GenerateWorkflowUseCase {
 
     // Phase 2: Generate step control values based on step type
     // Each prompt instructs the AI to wrap the response in { root: { ... } }
-    const stepsWithControlValues = await this.generateStepControlValues({ workflowMetadata, userPrompt });
+    // Also builds a cumulative variable schema (payload, steps, etc.) from variables used in each step
+    const { steps: stepsWithControlValues, variableSchemaContext } = await this.generateStepControlValues({
+      workflowMetadata,
+      userPrompt,
+    });
+
+    const { payloadSchema } = variableSchemaContext;
 
     const workflowDto: UpsertWorkflowDataCommand = {
       ...workflowFields,
@@ -55,6 +75,7 @@ export class GenerateWorkflowUseCase {
       __source: WorkflowCreationSourceEnum.AI,
       active: true,
       steps: stepsWithControlValues,
+      payloadSchema: hasPayloadProperties(payloadSchema) ? payloadSchema : null,
     };
 
     const workflow = await this.upsertWorkflowUseCase.execute(
@@ -102,31 +123,81 @@ export class GenerateWorkflowUseCase {
   }: {
     workflowMetadata: WorkflowMetadata;
     userPrompt: string;
-  }): Promise<StepWithControlValues[]> {
+  }): Promise<GenerateStepControlValuesResult> {
     const { steps } = workflowMetadata;
     this.logger.info(`AI Phase 2: Generating control values for ${steps.length} steps...`);
 
-    const stepsWithControlValues: StepWithControlValues[] = [];
+    const stepsWithControlValues: UpsertStepDataCommand[] = [];
+    let variableSchemaContext = createInitialVariableSchemaContext();
+    const existingStepIds = new Set<string>();
 
-    for (const step of steps) {
-      const controlValues = await this.generateSingleStepControlValues({ step, workflowMetadata, userPrompt });
-      stepsWithControlValues.push({
-        ...step,
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      const stepId = this.generateUniqueStepId(step.name, existingStepIds);
+      existingStepIds.add(stepId);
+
+      const fullVariableSchema = buildFullVariableSchema(variableSchemaContext);
+      const controlValues = await this.generateSingleStepControlValues({
+        step,
+        workflowMetadata,
+        userPrompt,
+        variableSchema: fullVariableSchema,
+      });
+
+      const extractedVariables = extractPayloadVariablesFromControlValues(controlValues);
+      if (extractedVariables.length > 0) {
+        this.logger.info(
+          `AI Extracted ${extractedVariables.length} payload variables from step "${step.name}": ${extractedVariables.map((v) => v.name).join(', ')}`
+        );
+      }
+
+      const generatedStep: GeneratedStep = {
+        stepId,
+        name: step.name,
+        type: step.type,
         controlValues,
+      };
+
+      variableSchemaContext = updateVariableSchemaContext(variableSchemaContext, generatedStep, extractedVariables);
+
+      stepsWithControlValues.push({
+        ...generatedStep,
       });
     }
 
-    return stepsWithControlValues;
+    return { steps: stepsWithControlValues, variableSchemaContext };
+  }
+
+  private generateUniqueStepId(stepName: string, existingStepIds: Set<string>): string {
+    const baseId = stepName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    if (!existingStepIds.has(baseId)) {
+      return baseId;
+    }
+
+    let counter = 2;
+    let uniqueId = `${baseId}-${counter}`;
+    while (existingStepIds.has(uniqueId)) {
+      counter++;
+      uniqueId = `${baseId}-${counter}`;
+    }
+
+    return uniqueId;
   }
 
   private async generateSingleStepControlValues({
     step,
     workflowMetadata,
     userPrompt,
+    variableSchema,
   }: {
     step: StepMetadata;
     workflowMetadata: WorkflowMetadata;
     userPrompt: string;
+    variableSchema?: JSONSchemaDto;
   }): Promise<Record<string, unknown>> {
     const stepType = step.type as SupportedStepType;
     const schema = stepControlValueSchemas[stepType];
@@ -140,14 +211,13 @@ export class GenerateWorkflowUseCase {
 
     const wrappedResult = await this.llmService.generateObject({
       systemPrompt,
-      userPrompt: buildStepPrompt({ step, workflowMetadata, userPrompt }),
+      userPrompt: buildStepPrompt({ step, workflowMetadata, userPrompt, variableSchema }),
       schema,
     });
 
     if (stepType === StepTypeEnum.EMAIL) {
       const result = wrappedResult as z.infer<typeof wrappedEmailControlSchema>;
       const { editorType, body, ...rest } = result.root;
-      // The Maily JSON body is returned as an object, so we need to stringify it.
       if (editorType === 'block') {
         return { editorType, body: JSON.stringify(body), ...rest };
       }
