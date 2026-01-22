@@ -20,19 +20,20 @@ export class StandardQueueService extends QueueBaseService {
     private _featureFlagsService: FeatureFlagsService,
     private _organizationRepository: CommunityOrganizationRepository,
     sqsService: SqsService,
-    private _logger: PinoLogger
+    _logger: PinoLogger
   ) {
     super(
       JobTopicNameEnum.STANDARD,
       new BullMqService(workflowInMemoryProviderService),
       sqsService,
-      _featureFlagsService
+      _featureFlagsService,
+      _logger
     );
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 
     this.createQueue();
-    this._logger.setContext(LOG_CONTEXT);
+    this.logger.setContext(LOG_CONTEXT);
   }
 
   public async add(data: IStandardJobDto) {
@@ -67,7 +68,7 @@ export class StandardQueueService extends QueueBaseService {
 
     const shouldUseCFScheduler = schedulerMode !== CloudflareSchedulerMode.OFF;
 
-    this._logger.debug(
+    this.logger.debug(
       {
         jobId: data.data._id,
         schedulerMode,

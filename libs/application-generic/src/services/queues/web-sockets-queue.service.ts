@@ -31,6 +31,7 @@ export class WebSocketsQueueService extends QueueBaseService {
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 
     this.createQueue();
+    this.logger.setContext(LOG_CONTEXT);
   }
 
   public async add(data: IWebSocketJobDto) {
