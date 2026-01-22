@@ -20,10 +20,9 @@
 >
     <img src="https://img.shields.io/npm/v/@novu/react" alt="NPM">
   </a>
-  <!-- TODO: Replace this with @novu/api as soon as the NPM download traffic switches to the new package -->
-  <a href="https://www.npmjs.com/package/@novu/node" target="_blank" rel="noopener noreferrer"
+  <a href="https://www.npmjs.com/package/@novu/react" target="_blank" rel="noopener noreferrer"
 >
-    <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
+    <img src="https://img.shields.io/npm/dm/@novu/react" alt="npm downloads">
   </a>
 </p>
 
@@ -64,6 +63,8 @@
   ·
   <a href="https://novu.co/contact-us/?utm_campaign=github-readme" target="_blank" rel="noopener noreferrer"
 >Contact us</a>
+.
+<a href="https://www.recent.dev">Recent.dev</a>
 </p>
 
 ## ⭐️ Why Novu?

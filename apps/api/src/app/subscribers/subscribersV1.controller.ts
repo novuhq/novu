@@ -480,7 +480,7 @@ export class SubscribersV1Controller {
       subscriberId,
       environmentId: user.environmentId,
       level: parameter,
-      includeInactiveChannels: includeInactiveChannels ?? false,
+      includeInactiveChannels: includeInactiveChannels ?? true,
     });
 
     return await this.getPreferenceUsecase.execute(command);

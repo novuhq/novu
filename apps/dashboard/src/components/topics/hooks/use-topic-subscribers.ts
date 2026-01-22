@@ -11,17 +11,24 @@ export function useTopicSubscriptions(
     after,
     before,
     subscriberId,
+    contextKeys,
   }: {
     limit?: number;
     after?: string;
     before?: string;
     subscriberId?: string;
+    contextKeys?: string[];
   } = {}
 ) {
   const { currentEnvironment } = useEnvironment();
 
   return useQuery({
-    queryKey: ['topic-subscriptions', currentEnvironment?._id, topicKey, { limit, after, before, subscriberId }],
+    queryKey: [
+      'topic-subscriptions',
+      currentEnvironment?._id,
+      topicKey,
+      { limit, after, before, subscriberId, contextKeys },
+    ],
     queryFn: async () => {
       if (!currentEnvironment) {
         throw new Error('Environment not found');
@@ -34,6 +41,7 @@ export function useTopicSubscriptions(
         after,
         before,
         subscriberId,
+        contextKeys,
       });
     },
     retry: false,

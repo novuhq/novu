@@ -1,3 +1,4 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import { RiDiscussLine } from 'react-icons/ri';
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitive
 import { TooltipProvider } from '@/components/primitives/tooltip';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
 import { cn } from '../../utils/ui';
@@ -72,6 +74,8 @@ type TopicSubscribersProps = {
   subscriberId?: string;
   onSubscriberIdChange: (subscriberId?: string) => void;
   onLoadingChange: (loading: boolean) => void;
+  contextKeys: string[];
+  onContextKeysChange: (contextKeys: string[]) => void;
 };
 
 const TopicSubscribers = (props: TopicSubscribersProps) => {
@@ -84,6 +88,8 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
     subscriberId,
     onSubscriberIdChange,
     onLoadingChange,
+    contextKeys,
+    onContextKeysChange,
   } = props;
 
   if (error) {
@@ -124,6 +130,8 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
           onSubscriberIdChange={onSubscriberIdChange}
           isLoading={isLoading}
           onLoadingChange={onLoadingChange}
+          contextKeys={contextKeys}
+          onContextKeysChange={onContextKeysChange}
         />
       </div>
 
@@ -179,12 +187,21 @@ type TopicTabsProps = {
 
 function TopicTabs(props: TopicTabsProps) {
   const { topicKey, readOnly = false } = props;
+  const isContextPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED);
   const [tab, setTab] = useState('overview');
   const [subscriberId, setSubscriberId] = useState<string | undefined>(undefined);
+  const [contextKeys, setContextKeys] = useState<string[]>(['']);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
 
   // Fetch subscription data at the top level so count is always available
-  const { data: subscriptionData, isPending, error } = useTopicSubscriptions(topicKey, { subscriberId });
+  const {
+    data: subscriptionData,
+    isPending,
+    error,
+  } = useTopicSubscriptions(topicKey, {
+    subscriberId,
+    contextKeys: isContextPreferencesEnabled ? contextKeys : undefined,
+  });
 
   const {
     protectedOnValueChange,
@@ -263,6 +280,8 @@ function TopicTabs(props: TopicTabsProps) {
             subscriberId={subscriberId}
             onSubscriberIdChange={handleSubscriberIdChange}
             onLoadingChange={setIsFilterLoading}
+            contextKeys={contextKeys}
+            onContextKeysChange={setContextKeys}
           />
         </TabsContent>
         <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">

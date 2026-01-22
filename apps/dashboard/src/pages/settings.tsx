@@ -6,8 +6,10 @@ import {
   FeatureNameEnum,
   GetSubscriptionDto,
   getFeatureForTierAsBoolean,
+  PermissionsEnum,
 } from '@novu/shared';
 import { motion } from 'motion/react';
+import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/primitives/card';
 import { InlineToast } from '@/components/primitives/inline-toast';
@@ -15,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitive
 import { OrganizationSettings } from '@/components/settings/organization-settings';
 import { IS_SELF_HOSTED } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { ROUTES } from '@/utils/routes';
 import { Plan } from '../components/billing/plan';
 import { DashboardLayout } from '../components/dashboard-layout';
@@ -79,6 +82,8 @@ export function SettingsPage() {
   const { subscription } = useFetchSubscription();
   const isRbacEnabledFlag = useFeatureFlag(FeatureFlagsKeysEnum.IS_RBAC_ENABLED, false);
   const isRbacEnabled = checkRbacEnabled(subscription, isRbacEnabledFlag);
+  const has = useHasPermission();
+  const hasBillingPermission = has({ permission: PermissionsEnum.BILLING_WRITE });
 
   const clerkAppearance = getClerkComponentAppearance(isRbacEnabled);
 
@@ -92,8 +97,16 @@ export function SettingsPage() {
     return rbacFeatureEnabled && featureFlag;
   }
 
+  const canShowBilling = !IS_SELF_HOSTED && hasBillingPermission;
+
   const currentTab =
     location.pathname === ROUTES.SETTINGS ? 'account' : location.pathname.split('/settings/')[1] || 'account';
+
+  useEffect(() => {
+    if (currentTab === 'billing' && !canShowBilling) {
+      navigate(ROUTES.SETTINGS_ACCOUNT, { replace: true });
+    }
+  }, [currentTab, canShowBilling, navigate]);
 
   const handleTabChange = (value: string) => {
     switch (value) {
@@ -107,7 +120,7 @@ export function SettingsPage() {
         navigate(ROUTES.SETTINGS_TEAM);
         break;
       case 'billing':
-        if (!IS_SELF_HOSTED) {
+        if (canShowBilling) {
           navigate(ROUTES.SETTINGS_BILLING);
         }
 
@@ -129,7 +142,7 @@ export function SettingsPage() {
             Team
           </TabsTrigger>
 
-          {!IS_SELF_HOSTED && (
+          {canShowBilling && (
             <TabsTrigger variant="regular" value="billing" size="xl">
               Billing
             </TabsTrigger>
@@ -137,7 +150,7 @@ export function SettingsPage() {
         </TabsList>
 
         <div
-          className={`mx-auto mt-1 px-1.5 ${currentTab === 'billing' && !IS_SELF_HOSTED ? 'max-w-[1400px]' : 'max-w-[700px]'}`}
+          className={`mx-auto mt-1 px-1.5 ${currentTab === 'billing' && canShowBilling ? 'max-w-[1400px]' : 'max-w-[700px]'}`}
         >
           <TabsContent value="account" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
@@ -162,7 +175,7 @@ export function SettingsPage() {
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
                 <div className="pb-6 pt-4 flex flex-col">
-                  {subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE && (
+                  {subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE && canShowBilling && (
                     <InlineToast
                       title="Tip:"
                       description="Hide Novu branding from your notification channels by upgrading to a paid plan."
@@ -184,7 +197,7 @@ export function SettingsPage() {
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
                 <div className={`pb-6 pt-4 flex flex-col ${isRbacEnabled ? 'show-role-column' : 'hide-role-column'}`}>
-                  {isRbacEnabledFlag && !isRbacEnabled && (
+                  {isRbacEnabledFlag && !isRbacEnabled && canShowBilling && (
                     <InlineToast
                       title="Tip:"
                       description="Get role-based access control and add unlimited members by upgrading."
@@ -203,7 +216,7 @@ export function SettingsPage() {
             </motion.div>
           </TabsContent>
 
-          {!IS_SELF_HOSTED && (
+          {canShowBilling && (
             <TabsContent value="billing" className="rounded-lg">
               <motion.div {...FADE_ANIMATION}>
                 <Card className="border-none shadow-none">

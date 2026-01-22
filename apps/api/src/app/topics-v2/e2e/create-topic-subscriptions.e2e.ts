@@ -14,6 +14,8 @@ describe('Create topic subscriptions - /v2/topics/:topicKey/subscriptions (POST)
   let topicSubscribersRepository: TopicSubscribersRepository;
 
   before(async () => {
+    (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
+
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdk(session);
@@ -436,5 +438,122 @@ describe('Create topic subscriptions - /v2/topics/:topicKey/subscriptions (POST)
       console.error(error);
       throw error;
     }
+  });
+
+  describe('Context-aware subscriptions', () => {
+    it('should create subscriptions with context payload', async () => {
+      const topicKey = `topic-key-context-${Date.now()}`;
+
+      const response = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber1.subscriberId],
+          context: { tenant: 'org-123', project: 'proj-456' },
+        },
+        topicKey
+      );
+
+      expect(response).to.exist;
+      expect(response.result.data.length).to.equal(1);
+      expect(response.result.meta.successful).to.equal(1);
+      expect(response.result.meta.failed).to.equal(0);
+      expect(response.result.data[0].contextKeys).to.have.members(['project:proj-456', 'tenant:org-123']);
+
+      const subscriptionIdentifier = response.result.data[0].identifier;
+      expect(subscriptionIdentifier).to.exist;
+
+      // Verify we can retrieve the subscription by identifier alone (no contextKeys needed)
+      const getResponse = await novuClient.topics.subscriptions.getSubscription(
+        topicKey,
+        subscriptionIdentifier as string
+      );
+
+      expect(getResponse.result).to.exist;
+      expect(getResponse.result.contextKeys).to.have.members(['project:proj-456', 'tenant:org-123']);
+      expect(getResponse.result.identifier).to.include(':ctx_');
+    });
+
+    it('should create separate subscriptions for same subscriber with different contexts', async () => {
+      const topicKey = `topic-key-multi-context-${Date.now()}`;
+
+      const responseA = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber1.subscriberId],
+          context: { tenant: 'org-a' },
+        },
+        topicKey
+      );
+
+      expect(responseA.result.data.length).to.equal(1);
+      expect(responseA.result.meta.successful).to.equal(1);
+      expect(responseA.result.data[0].contextKeys).to.deep.equal(['tenant:org-a']);
+
+      const responseB = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber1.subscriberId],
+          context: { tenant: 'org-b' },
+        },
+        topicKey
+      );
+
+      expect(responseB.result.data.length).to.equal(1);
+      expect(responseB.result.meta.successful).to.equal(1);
+      expect(responseB.result.data[0].contextKeys).to.deep.equal(['tenant:org-b']);
+
+      const identifierA = responseA.result.data[0].identifier;
+      const identifierB = responseB.result.data[0].identifier;
+
+      expect(identifierA).to.not.equal(identifierB);
+
+      // Verify we can retrieve both subscriptions via SDK
+      const getResponseA = await novuClient.topics.subscriptions.getSubscription(topicKey, identifierA as string);
+      const getResponseB = await novuClient.topics.subscriptions.getSubscription(topicKey, identifierB as string);
+
+      const subscriptionA = getResponseA.result;
+      const subscriptionB = getResponseB.result;
+
+      expect(subscriptionA).to.exist;
+      expect(subscriptionB).to.exist;
+      expect(subscriptionA?.contextKeys).to.deep.equal(['tenant:org-a']);
+      expect(subscriptionB?.contextKeys).to.deep.equal(['tenant:org-b']);
+
+      const allSubscriptions = await topicSubscribersRepository.find({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        topicKey,
+        externalSubscriberId: subscriber1.subscriberId,
+      });
+
+      expect(allSubscriptions.length).to.equal(2);
+    });
+
+    it('should create subscription without context when context not provided', async () => {
+      const topicKey = `topic-key-no-context-${Date.now()}`;
+
+      const response = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber1.subscriberId],
+        },
+        topicKey
+      );
+
+      expect(response).to.exist;
+      expect(response.result.data.length).to.equal(1);
+      expect(response.result.meta.successful).to.equal(1);
+      const contextKeys = response.result.data[0].contextKeys;
+      expect(contextKeys === undefined || (Array.isArray(contextKeys) && contextKeys.length === 0)).to.be.true;
+
+      const subscriptionIdentifier = response.result.data[0].identifier;
+      expect(subscriptionIdentifier).to.exist;
+
+      // Verify we can retrieve the subscription via SDK
+      const getResponse = await novuClient.topics.subscriptions.getSubscription(
+        topicKey,
+        subscriptionIdentifier as string
+      );
+
+      expect(getResponse.result).to.exist;
+      expect(getResponse.result.contextKeys).to.deep.equal([]);
+      expect(getResponse.result.identifier).to.not.include(':ctx_');
+    });
   });
 });

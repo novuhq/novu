@@ -316,6 +316,7 @@ export class Session {
         organizationId: environment._organizationId,
         environmentId: environment._id,
         _subscriberId: subscriber._id,
+        contextKeys,
       })
     );
 

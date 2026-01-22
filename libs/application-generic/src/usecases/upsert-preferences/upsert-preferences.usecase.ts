@@ -75,6 +75,7 @@ export class UpsertPreferences {
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       returnPreference: command.returnPreference,
       schedule: isSubscribersScheduleEnabled ? command.schedule : undefined,
+      contextKeys: command.contextKeys,
     });
   }
 
@@ -176,6 +177,7 @@ export class UpsertPreferences {
     const isContextScoped = [
       PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
       PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     ].includes(command.type);
 
     return await this.preferencesRepository.create({
@@ -258,11 +260,7 @@ export class UpsertPreferences {
     organizationId: string
   ): Promise<Record<string, unknown>> {
     // Non-context-scoped types (universal/workflow-level) - no context filter
-    const nonContextScopedTypes = [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.USER_WORKFLOW,
-      PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-    ];
+    const nonContextScopedTypes = [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW];
 
     if (nonContextScopedTypes.includes(type)) {
       return {};
