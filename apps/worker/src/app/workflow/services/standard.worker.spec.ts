@@ -61,6 +61,7 @@ const mockSqsService = {
   getQueueUrl: () => undefined,
   getProducer: () => undefined,
   getClient: () => ({}),
+  isConfigured: () => false,
 } as unknown as SqsService;
 
 const mockLogger = {

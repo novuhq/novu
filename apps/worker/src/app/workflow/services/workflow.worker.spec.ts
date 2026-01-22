@@ -1,7 +1,9 @@
 import { Test } from '@nestjs/testing';
 import {
   BullMqService,
+  FeatureFlagsService,
   PinoLogger,
+  SqsService,
   TriggerEvent,
   WorkflowInMemoryProviderService,
   WorkflowQueueService,
@@ -11,6 +13,17 @@ import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 import { WorkflowModule } from '../workflow.module';
 import { WorkflowWorker } from './workflow.worker';
+
+const mockSqsService = {
+  getQueueUrl: () => undefined,
+  getProducer: () => undefined,
+  getClient: () => ({}),
+  isConfigured: () => false,
+} as unknown as SqsService;
+
+const mockFeatureFlagsService = {
+  getFlag: async () => 'off',
+} as unknown as FeatureFlagsService;
 
 let workflowQueueService: WorkflowQueueService;
 let workflowWorker: WorkflowWorker;
@@ -34,10 +47,16 @@ describe('Workflow Worker', () => {
       triggerEventUseCase,
       workflowInMemoryProviderService,
       organizationRepository,
+      mockSqsService,
       new PinoLogger({})
     );
 
-    workflowQueueService = new WorkflowQueueService(workflowInMemoryProviderService);
+    workflowQueueService = new WorkflowQueueService(
+      workflowInMemoryProviderService,
+      mockSqsService,
+      mockFeatureFlagsService,
+      new PinoLogger({})
+    );
     await workflowQueueService.queue.obliterate();
   });
 
