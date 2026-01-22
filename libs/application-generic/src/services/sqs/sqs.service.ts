@@ -111,7 +111,7 @@ export class SqsService {
 
   /**
    * Send multiple messages to SQS in bulk
-   * The BBC producer will automatically batch them in groups of 10
+   * The sqs-producer will automatically batch them in groups of 10
    */
   public async sendBulk(
     topic: JobTopicNameEnum,
@@ -122,7 +122,7 @@ export class SqsService {
       throw new Error(`No SQS producer configured for topic: ${topic}`);
     }
 
-    // BBC producer will automatically batch messages (default: 10 per batch)
+    // sqs-producer will automatically batch messages (default: 10 per batch)
     await producer.send(messages);
 
     Logger.log({ topic, count: messages.length }, 'Sent bulk messages to SQS', LOG_CONTEXT);
