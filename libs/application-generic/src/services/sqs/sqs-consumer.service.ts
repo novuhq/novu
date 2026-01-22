@@ -69,7 +69,6 @@ export class SqsConsumerService {
           stack: error instanceof Error ? error.stack : undefined,
           messageId: message.MessageId,
           topic: this.topic,
-          messageBodyPreview: message.Body?.substring(0, 200),
         },
         'Error processing SQS message',
         LOG_CONTEXT
@@ -87,7 +86,7 @@ export class SqsConsumerService {
       Logger.error(
         {
           error: err.message,
-          messageId: message.MessageId,
+          messageId: message?.MessageId,
           topic: this.topic,
         },
         'SQS message processing error',
@@ -99,7 +98,7 @@ export class SqsConsumerService {
       Logger.error(
         {
           error: err.message,
-          messageId: message.MessageId,
+          messageId: message?.MessageId,
           topic: this.topic,
         },
         'SQS message timeout error',
