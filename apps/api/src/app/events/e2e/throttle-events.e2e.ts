@@ -97,6 +97,13 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     const completedThrottleJobs = throttleJobs.filter((job) => job.status === JobStatusEnum.COMPLETED);
     expect(completedThrottleJobs?.length).to.equal(2);
 
+    completedThrottleJobs.forEach((job, index) => {
+      expect(job.stepOutput).to.be.ok;
+      expect(job.stepOutput?.throttled).to.equal(false);
+      expect(job.stepOutput?.threshold).to.equal(3);
+      expect(job.stepOutput?.executionCount).to.equal(index + 1);
+    });
+
     // Both in-app messages should be created
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -171,13 +178,21 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     expect(completedThrottleJobs?.length).to.equal(2);
     expect(skippedThrottleJobs?.length).to.equal(1);
 
-    // Check throttle result in skipped job
-    const skippedJob = skippedThrottleJobs[0];
-    expect(skippedJob.stepOutput).to.be.ok;
-    expect(skippedJob.stepOutput?.throttled).to.equal(true);
-    expect(skippedJob.stepOutput?.threshold).to.equal(2);
-    // The execution count should be at least the threshold (2) when throttled
-    expect(skippedJob.stepOutput?.executionCount).to.be.at.least(2);
+    completedThrottleJobs.forEach((job, index) => {
+      expect(job.stepOutput).to.be.ok;
+      expect(job.stepOutput?.throttled).to.equal(false);
+      expect(job.stepOutput?.threshold).to.equal(2);
+      expect(job.stepOutput?.executionCount).to.equal(index + 1);
+    });
+
+    // Check throttle result in skipped jobs
+    skippedThrottleJobs.forEach((job) => {
+      expect(job.stepOutput).to.be.ok;
+      expect(job.stepOutput?.throttled).to.equal(true);
+      expect(job.stepOutput?.threshold).to.equal(2);
+      // The execution count should be at least the threshold (2) when throttled
+      expect(job.stepOutput?.executionCount).to.be.at.least(2);
+    });
 
     // Only 2 in-app messages should be created
     const messages = await messageRepository.find({
@@ -255,12 +270,19 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
     expect(completedThrottleJobs?.length).to.equal(1);
     expect(skippedThrottleJobs?.length).to.equal(19);
 
+    completedThrottleJobs.forEach((job) => {
+      expect(job.stepOutput).to.be.ok;
+      expect(job.stepOutput?.throttled).to.equal(false);
+      expect(job.stepOutput?.threshold).to.equal(1);
+      expect(job.stepOutput?.executionCount).to.equal(1);
+    });
+
     // Verify throttle results in skipped jobs
-    for (const job of skippedThrottleJobs) {
+    skippedThrottleJobs.forEach((job) => {
       expect(job.stepOutput).to.be.ok;
       expect(job.stepOutput?.throttled).to.equal(true);
       expect(job.stepOutput?.threshold).to.equal(1);
-    }
+    });
 
     // Only 1 in-app message should be created
     const messages = await messageRepository.find({
@@ -331,6 +353,19 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
 
     expect(completedThrottleJobs?.length).to.equal(2);
     expect(skippedThrottleJobs?.length).to.equal(1);
+
+    completedThrottleJobs.forEach((job) => {
+      expect(job.stepOutput).to.be.ok;
+      expect(job.stepOutput?.throttled).to.equal(false);
+      expect(job.stepOutput?.threshold).to.equal(1);
+      expect(job.stepOutput?.executionCount).to.equal(1);
+    });
+
+    skippedThrottleJobs.forEach((job) => {
+      expect(job.stepOutput).to.be.ok;
+      expect(job.stepOutput?.throttled).to.equal(true);
+      expect(job.stepOutput?.threshold).to.equal(1);
+    });
 
     // Check messages created
     const messages = await messageRepository.find({

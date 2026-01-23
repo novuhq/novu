@@ -291,6 +291,19 @@ export class AddJob {
             workflowStatus: WorkflowRunStatusEnum.COMPLETED,
             deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SKIPPED,
           };
+        } else {
+          await this.jobRepository.updateOne(
+            { _id: job._id, _environmentId: command.environmentId },
+            {
+              $set: {
+                stepOutput: {
+                  throttled: false,
+                  executionCount: throttleResult.executionCount,
+                  threshold: throttleResult.threshold,
+                },
+              },
+            }
+          );
         }
       } catch (error) {
         return await this.handleStepValidationError(
