@@ -81,7 +81,10 @@ describe('ClickHouseBatchService', () => {
     });
 
     it('should not add rows when ClickHouse client is not initialized', () => {
-      clickhouseService.client = undefined;
+      Object.defineProperty(clickhouseService, 'client', {
+        get: () => undefined,
+        configurable: true,
+      });
 
       service.add('test_table', { id: '1' }, { maxBatchSize: 10, flushIntervalMs: 1000 });
 
