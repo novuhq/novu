@@ -1,5 +1,5 @@
 # Use the base image for development
-FROM node:20-alpine3.19 AS dev_base
+FROM node:20-alpine3.20 AS dev_base
 RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -60,6 +60,12 @@ COPY --chown=1000:1000 --from=assets /usr/src/app .
 RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store \
     pnpm install --reporter=silent --filter "{${PACKAGE_PATH}}..." \
     --frozen-lockfile --unsafe-perm --reporter=silent
+
+# Clean up pnpm cache, npm cache, and temporary files to reduce image size and remove false positive secrets
+RUN rm -rf /root/.pnpm-store /root/.npm /root/.cache \
+    /home/node/.pnpm-store /home/node/.npm /home/node/.cache /home/node/.local \
+    /tmp/* /var/tmp/* \
+    && find /usr/src/app -name "*.spec.ts" -o -name "*.spec.js" -o -name "*.test.ts" -o -name "*.test.js" | xargs rm -f
 
 # Set the working directory to the webhook app and start the application using pm2-runtime
 WORKDIR /usr/src/app/apps/webhook

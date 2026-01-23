@@ -1,4 +1,4 @@
-FROM node:20-alpine3.19 AS builder
+FROM node:20-alpine3.20 AS builder
 RUN apk add g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -25,7 +25,12 @@ RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
 
 RUN CI='' pnpm build:dashboard --skip-nx-cache
 
-FROM node:20-alpine
+# Clean up build artifacts and cache
+RUN rm -rf /root/.pnpm-store /root/.npm /root/.cache \
+    /home/node/.pnpm-store /home/node/.npm /home/node/.cache /home/node/.local \
+    /tmp/* /var/tmp/*
+
+FROM node:20-alpine3.20
 
 RUN npm install -g http-server --loglevel notice
 
