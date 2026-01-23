@@ -184,14 +184,15 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     let allConditions: WhereCondition<InferClickhouseSchemaType<TSchema>>[] = [];
 
     if ('__unsafe' in rawWhere) {
-      // Unsafe mode - log for monitoring but allow
-      this.logger.warn('Using unsafe WHERE clause without tenant enforcement', {
-        table: this.table,
-        conditionsCount: rawWhere.conditions.length,
-      });
+      this.logger.warn(
+        {
+          table: this.table,
+          conditionsCount: rawWhere.conditions.length,
+        },
+        'Using unsafe WHERE clause without tenant enforcement'
+      );
       allConditions = rawWhere.conditions;
     } else {
-      // Safe mode - enforce tenant context
       const enforcedConditions = this.buildEnforcedConditions(rawWhere.enforced);
       allConditions = [...enforcedConditions, ...(rawWhere.conditions || [])];
     }
@@ -288,21 +289,15 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     },
     options: InsertOptions
   ): Promise<void> {
-    // Use provided id (e.g., ID for request entities), otherwise generate a new unique id
     const id: string = data?.id || `${this.identifierPrefix}${generateObjectId()}`;
     const expirationDate = await this.getExpirationDate(context);
     const expiresAt = LogRepository.formatDateTime64(expirationDate);
 
     const row = { ...data, id, expires_at: expiresAt };
 
-    // Only use batching for traces table
-    const isBatchingEnabled =
-      this.batchService &&
-      this.table === 'traces' &&
-      process.env.CLICKHOUSE_BATCHING_ENABLED === 'true' &&
-      this.clickhouseService.client;
+    const shouldUseBatching = await this.shouldUseBatching(context);
 
-    if (isBatchingEnabled) {
+    if (shouldUseBatching && this.batchService) {
       const batchConfig = this.getBatchConfig();
       this.batchService.add(this.table, row, {
         maxBatchSize: batchConfig.maxBatchSize,
@@ -311,6 +306,38 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
       });
     } else {
       await this.clickhouseService.insert(this.table, [row], options);
+    }
+  }
+
+  protected async shouldUseBatching(context: {
+    organizationId?: string;
+    environmentId?: string;
+    userId?: string;
+  }): Promise<boolean> {
+    if (!this.batchService || !this.clickhouseService.client || this.table !== 'traces') {
+      return false;
+    }
+
+    try {
+      const isBatchingEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CLICKHOUSE_BATCHING_ENABLED,
+        defaultValue: false,
+        organization: context.organizationId ? { _id: context.organizationId } : undefined,
+        environment: context.environmentId ? { _id: context.environmentId } : undefined,
+        user: context.userId ? { _id: context.userId } : undefined,
+      });
+
+      return isBatchingEnabled;
+    } catch (error) {
+      this.logger.warn(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          table: this.table,
+        },
+        'Failed to check batching feature flag, falling back to direct insert'
+      );
+
+      return false;
     }
   }
 
@@ -349,14 +376,9 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
 
     const rows = data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt }));
 
-    // Only use batching for traces table
-    const isBatchingEnabled =
-      this.batchService &&
-      this.table === 'traces' &&
-      process.env.CLICKHOUSE_BATCHING_ENABLED === 'true' &&
-      this.clickhouseService.client;
+    const shouldUseBatching = await this.shouldUseBatching(context);
 
-    if (isBatchingEnabled) {
+    if (shouldUseBatching && this.batchService) {
       const batchConfig = this.getBatchConfig();
       for (const row of rows) {
         this.batchService.add(this.table, row, {
