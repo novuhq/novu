@@ -6,6 +6,7 @@ import { generateObjectId } from '../../utils/generate-id';
 import { Prettify } from '../../utils/prettify.type';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
+import { ClickHouseBatchService } from './clickhouse-batch.service';
 
 // Define operators as const assertion to maintain literal types
 const CLICKHOUSE_OPERATORS = [
@@ -99,7 +100,8 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     protected readonly logger: PinoLogger,
     protected readonly schema: TSchema,
     protected readonly schemaOrderBy: SchemaKeys<TSchema>[],
-    protected readonly featureFlagsService: FeatureFlagsService
+    protected readonly featureFlagsService: FeatureFlagsService,
+    protected readonly batchService?: ClickHouseBatchService
   ) {
     this.initialize();
   }
@@ -291,7 +293,33 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     const expirationDate = await this.getExpirationDate(context);
     const expiresAt = LogRepository.formatDateTime64(expirationDate);
 
-    await this.clickhouseService.insert(this.table, [{ ...data, id, expires_at: expiresAt }], options);
+    const row = { ...data, id, expires_at: expiresAt };
+
+    // Only use batching for traces table
+    const isBatchingEnabled =
+      this.batchService &&
+      this.table === 'traces' &&
+      process.env.CLICKHOUSE_BATCHING_ENABLED === 'true' &&
+      this.clickhouseService.client;
+
+    if (isBatchingEnabled) {
+      const batchConfig = this.getBatchConfig();
+      this.batchService.add(this.table, row, {
+        maxBatchSize: batchConfig.maxBatchSize,
+        flushIntervalMs: batchConfig.flushIntervalMs,
+        insertOptions: options,
+      });
+    } else {
+      await this.clickhouseService.insert(this.table, [row], options);
+    }
+  }
+
+  protected getBatchConfig(): { maxBatchSize: number; flushIntervalMs: number } {
+    const tableName = this.table.toUpperCase();
+    const maxBatchSize = parseInt(process.env[`${tableName}_BATCH_SIZE`] || '500', 10);
+    const flushIntervalMs = parseInt(process.env[`${tableName}_FLUSH_INTERVAL_MS`] || '30000', 10);
+
+    return { maxBatchSize, flushIntervalMs };
   }
 
   protected async insertMany(
@@ -307,11 +335,27 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     const expirationDate = await this.getExpirationDate(context);
     const expiresAt = LogRepository.formatDateTime64(expirationDate);
 
-    await this.clickhouseService.insert(
-      this.table,
-      data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt })),
-      options
-    );
+    const rows = data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt }));
+
+    // Only use batching for traces table
+    const isBatchingEnabled =
+      this.batchService &&
+      this.table === 'traces' &&
+      process.env.CLICKHOUSE_BATCHING_ENABLED === 'true' &&
+      this.clickhouseService.client;
+
+    if (isBatchingEnabled) {
+      const batchConfig = this.getBatchConfig();
+      for (const row of rows) {
+        this.batchService.add(this.table, row, {
+          maxBatchSize: batchConfig.maxBatchSize,
+          flushIntervalMs: batchConfig.flushIntervalMs,
+          insertOptions: options,
+        });
+      }
+    } else {
+      await this.clickhouseService.insert(this.table, rows, options);
+    }
   }
 
   // Overload for column array selection

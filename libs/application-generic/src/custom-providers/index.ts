@@ -5,6 +5,7 @@ import {
   AnalyticsService,
   CacheInMemoryProviderService,
   CacheService,
+  ClickHouseBatchService,
   ClickHouseService,
   FeatureFlagsService,
 } from '../services';
@@ -67,4 +68,12 @@ export const clickHouseService = {
 
     return service;
   },
+};
+
+export const clickHouseBatchService = {
+  provide: ClickHouseBatchService,
+  useFactory: async (clickhouseService: ClickHouseService, logger: PinoLogger) => {
+    return new ClickHouseBatchService(clickhouseService, logger);
+  },
+  inject: [ClickHouseService, PinoLogger],
 };
