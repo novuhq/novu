@@ -316,8 +316,20 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
 
   protected getBatchConfig(): { maxBatchSize: number; flushIntervalMs: number } {
     const tableName = this.table.toUpperCase();
-    const maxBatchSize = parseInt(process.env[`${tableName}_BATCH_SIZE`] || '500', 10);
-    const flushIntervalMs = parseInt(process.env[`${tableName}_FLUSH_INTERVAL_MS`] || '30000', 10);
+    const defaultMaxBatchSize = 500;
+    const defaultFlushIntervalMs = 30000;
+
+    const maxBatchSizeEnv = process.env[`${tableName}_BATCH_SIZE`];
+    const parsedMaxBatchSize = maxBatchSizeEnv ? parseInt(maxBatchSizeEnv, 10) : defaultMaxBatchSize;
+    const maxBatchSize =
+      Number.isFinite(parsedMaxBatchSize) && parsedMaxBatchSize > 0 ? parsedMaxBatchSize : defaultMaxBatchSize;
+
+    const flushIntervalMsEnv = process.env[`${tableName}_FLUSH_INTERVAL_MS`];
+    const parsedFlushIntervalMs = flushIntervalMsEnv ? parseInt(flushIntervalMsEnv, 10) : defaultFlushIntervalMs;
+    const flushIntervalMs =
+      Number.isFinite(parsedFlushIntervalMs) && parsedFlushIntervalMs > 0
+        ? parsedFlushIntervalMs
+        : defaultFlushIntervalMs;
 
     return { maxBatchSize, flushIntervalMs };
   }

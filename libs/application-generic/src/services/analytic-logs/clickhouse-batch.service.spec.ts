@@ -1,18 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PinoLogger } from 'nestjs-pino';
-import { ClickHouseService } from './clickhouse.service';
+import { ClickHouseClient, ClickHouseService } from './clickhouse.service';
 import { ClickHouseBatchService } from './clickhouse-batch.service';
+
+type MockClickHouseService = {
+  insert: jest.MockedFunction<ClickHouseService['insert']>;
+  client: ClickHouseClient | undefined;
+};
 
 describe('ClickHouseBatchService', () => {
   let service: ClickHouseBatchService;
-  let clickhouseService: jest.Mocked<ClickHouseService>;
+  let clickhouseService: MockClickHouseService;
   let logger: jest.Mocked<PinoLogger>;
 
   beforeEach(async () => {
     clickhouseService = {
       insert: jest.fn().mockResolvedValue(undefined),
-      client: {} as any,
-    } as any;
+      client: {} as ClickHouseClient,
+    };
 
     logger = {
       setContext: jest.fn(),
@@ -81,10 +86,7 @@ describe('ClickHouseBatchService', () => {
     });
 
     it('should not add rows when ClickHouse client is not initialized', () => {
-      Object.defineProperty(clickhouseService, 'client', {
-        get: () => undefined,
-        configurable: true,
-      });
+      clickhouseService.client = undefined;
 
       service.add('test_table', { id: '1' }, { maxBatchSize: 10, flushIntervalMs: 1000 });
 

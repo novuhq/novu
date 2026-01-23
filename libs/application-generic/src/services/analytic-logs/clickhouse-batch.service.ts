@@ -132,6 +132,18 @@ export class ClickHouseBatchService implements OnModuleDestroy {
         },
         'Failed to flush batch to ClickHouse after retries'
       );
+
+      if (!this.isShuttingDown) {
+        buffer.rows.unshift(...batch);
+        this.logger.warn(
+          {
+            table,
+            rowCount: batch.length,
+            bufferSize: buffer.rows.length,
+          },
+          'Re-queued failed batch back into buffer'
+        );
+      }
     } finally {
       this.flushing.set(table, false);
     }
