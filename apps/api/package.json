@@ -100,7 +100,7 @@
     "json-schema-to-ts": "^3.0.0",
     "jsonwebtoken": "9.0.3",
     "liquidjs": "^10.20.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.23",
     "lru-cache": "^11.2.4",
     "nanoid": "^3.1.20",
     "nest-raven": "10.1.0",
