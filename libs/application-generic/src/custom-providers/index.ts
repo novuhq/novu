@@ -1,4 +1,3 @@
-import { forwardRef } from '@nestjs/common';
 import { DalService } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
 import {
