@@ -26,9 +26,10 @@ RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
 RUN CI='' pnpm build:dashboard --skip-nx-cache
 
 # Clean up build artifacts and cache
-RUN rm -rf /root/.pnpm-store /root/.npm /root/.cache \
+RUN rm -rf ~/.pnpm-store ~/.npm ~/.cache ~/.local \
     /home/node/.pnpm-store /home/node/.npm /home/node/.cache /home/node/.local \
-    /tmp/* /var/tmp/*
+    /tmp/* /var/tmp/* \
+    2>/dev/null || true
 
 FROM node:20-alpine3.20
 
