@@ -68,10 +68,5 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  --unsafe-perm\
  --reporter=silent
 
-# Clean up pnpm cache, npm cache, and temporary files to reduce image size and remove false positive secrets
-RUN rm -rf ~/.pnpm-store ~/.npm ~/.cache ~/.local \
-    /home/node/.pnpm-store /home/node/.npm /home/node/.cache /home/node/.local \
-    2>/dev/null || true
-
 WORKDIR /usr/src/app/apps/inbound-mail
 CMD [ "pm2-runtime", "dist/src/main.js" ]

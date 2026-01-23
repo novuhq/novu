@@ -66,10 +66,6 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  --frozen-lockfile \
  --unsafe-perm
 
-# Clean up pnpm cache, npm cache, and temporary files to reduce image size and remove false positive secrets
-RUN rm -rf ~/.pnpm-store ~/.npm ~/.cache ~/.local \
-    /home/node/.pnpm-store /home/node/.npm /home/node/.cache /home/node/.local \
-    2>/dev/null || true
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 

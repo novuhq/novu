@@ -29,11 +29,6 @@ RUN --mount=type=cache,id=pnpm-store-ws,target=/root/.pnpm-store\
 
 RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && NODE_ENV=production NX_DAEMON=false pnpm build:ws
 
-# Clean up pnpm cache, npm cache, and temporary files to reduce image size and remove false positive secrets
-RUN rm -rf ~/.pnpm-store ~/.npm ~/.cache ~/.local \
-    /home/node/.pnpm-store /home/node/.npm /home/node/.cache /home/node/.local \
-    2>/dev/null || true
-
 WORKDIR /usr/src/app/apps/ws
 
 RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs

@@ -61,11 +61,6 @@ RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store \
     pnpm install --reporter=silent --filter "{${PACKAGE_PATH}}..." \
     --frozen-lockfile --unsafe-perm --reporter=silent
 
-# Clean up pnpm cache, npm cache, and temporary files to reduce image size and remove false positive secrets
-RUN rm -rf ~/.pnpm-store ~/.npm ~/.cache ~/.local \
-    /home/node/.pnpm-store /home/node/.npm /home/node/.cache /home/node/.local \
-    2>/dev/null || true
-
 # Set the working directory to the webhook app and start the application using pm2-runtime
 WORKDIR /usr/src/app/apps/webhook
 ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=novu/webhook -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV && pm2-runtime start dist/main.js -i max" ]
