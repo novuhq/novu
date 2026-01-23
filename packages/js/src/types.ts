@@ -280,7 +280,12 @@ export type StandardNovuOptions = {
   contextHash?: string;
   apiUrl?: string;
   socketUrl?: string;
-  socketOptions?: Record<string, any>;
+  /**
+   * Custom socket configuration options. These options will be merged with the default socket configuration.
+   * For socket.io-client connections, supports all socket.io-client options (e.g., `path`, `reconnectionDelay`, `timeout`, etc.).
+   * For PartySocket connections, options are applied to the WebSocket instance.
+   */
+  socketOptions?: Record<string, unknown>;
   useCache?: boolean;
   defaultSchedule?: DefaultSchedule;
   context?: Context;
