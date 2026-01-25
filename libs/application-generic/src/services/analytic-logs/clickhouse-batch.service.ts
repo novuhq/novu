@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { BeforeApplicationShutdown, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import PQueue from 'p-queue';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
@@ -60,9 +60,14 @@ const DEFAULT_BACKPRESSURE_MODE: 'drop' | 'block' = 'drop';
  * - When maxQueueDepth is exceeded:
  *   - 'drop' mode (default): Rejects new rows to prevent memory overflow
  *   - 'block' mode: Awaits flush completion before accepting new rows
+ *
+ * Shutdown Strategy:
+ * - Uses beforeApplicationShutdown instead of onModuleDestroy to ensure all workers
+ *   complete their graceful shutdown (which waits for in-flight jobs) before the
+ *   batch service sets isShuttingDown=true and flushes pending logs
  */
 @Injectable()
-export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
+export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, BeforeApplicationShutdown {
   private buffers: Map<string, TableBuffer> = new Map();
   private isShuttingDown = false;
 
@@ -299,9 +304,13 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
   }
 
   async onModuleDestroy(): Promise<void> {
+    this.logger.debug('ClickHouse batch service onModuleDestroy called (no-op)');
+  }
+
+  async beforeApplicationShutdown(signal?: string): Promise<void> {
     this.isShuttingDown = true;
 
-    this.logger.info('Starting graceful shutdown of ClickHouse batch service');
+    this.logger.info({ signal }, 'Starting graceful shutdown of ClickHouse batch service');
 
     for (const [table, buffer] of this.buffers.entries()) {
       clearInterval(buffer.timer);
