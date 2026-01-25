@@ -53,7 +53,6 @@ describe('Novu', () => {
           'Novu-API-Version': '2024-06-26',
           'Novu-Client-Version': '@novu/js@test',
           'Content-Type': 'application/json',
-          'User-Agent': '@novu/js@test',
         },
       });
 
@@ -65,7 +64,6 @@ describe('Novu', () => {
           'Novu-API-Version': '2024-06-26',
           'Novu-Client-Version': '@novu/js@test',
           'Content-Type': 'application/json',
-          'User-Agent': '@novu/js@test',
           Authorization: 'Bearer cafebabe',
         },
       });
