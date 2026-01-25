@@ -26,7 +26,6 @@ interface TableBuffer {
   rows: Row[];
   config: BatchConfig;
   timer: NodeJS.Timeout;
-  writeQueue: PQueue;
   flushQueue: PQueue;
   metrics: BufferMetrics;
 }
@@ -41,13 +40,12 @@ const DEFAULT_BACKPRESSURE_MODE: 'drop' | 'block' = 'drop';
  * Batches and flushes rows to ClickHouse with concurrent write safety.
  *
  * Core Design:
- * - Each table maintains two independent single-threaded queues (concurrency: 1):
- *   1. writeQueue: Serializes all buffer modifications (adding rows, swapping batches)
- *   2. flushQueue: Serializes flush operations to prevent duplicate flushes
+ * - Each table maintains a single-threaded queue (concurrency: 1) for flush operations
+ * - Buffer modifications (adding rows, swapping batches) are synchronous and atomic in single-threaded JS
+ * - The flushQueue serializes network I/O to ClickHouse to prevent duplicate inserts
  *
  * Concurrent Flow:
- * - Multiple add() calls can arrive concurrently and queue their operations in writeQueue
- * - Each queued operation executes atomically (one at a time) to prevent race conditions
+ * - Multiple add() calls can arrive concurrently and perform synchronous buffer pushes
  * - When flushing, the buffer is atomically swapped (old batch out, fresh buffer in)
  * - New rows accumulate in the fresh buffer while the old batch is being sent to ClickHouse
  * - This allows continuous writes without blocking on network I/O
@@ -58,38 +56,25 @@ const DEFAULT_BACKPRESSURE_MODE: 'drop' | 'block' = 'drop';
  * - Manual: Explicit flush() calls
  *
  * Backpressure Protection:
- * - Tracks total queued operations (queue size + buffer size)
+ * - Tracks buffer size to enforce maxQueueDepth
  * - When maxQueueDepth is exceeded:
  *   - 'drop' mode (default): Rejects new rows to prevent memory overflow
- *   - 'block' mode: Awaits queue space before accepting new rows
+ *   - 'block' mode: Awaits flush completion before accepting new rows
  */
 @Injectable()
 export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
   private buffers: Map<string, TableBuffer> = new Map();
   private isShuttingDown = false;
-  private PQueueClass: typeof PQueue | null = null;
-  private pQueueReady: Promise<void>;
-  private resolvePQueueReady!: () => void;
 
   constructor(
     private readonly clickhouseService: ClickHouseService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(ClickHouseBatchService.name);
-    this.pQueueReady = new Promise((resolve) => {
-      this.resolvePQueueReady = resolve;
-    });
   }
 
   async onModuleInit(): Promise<void> {
-    try {
-      this.PQueueClass = PQueue;
-      this.resolvePQueueReady();
-      this.logger.debug('p-queue module loaded successfully');
-    } catch (error) {
-      this.logger.error({ err: error }, 'Failed to load p-queue module');
-      this.resolvePQueueReady();
-    }
+    this.logger.debug('ClickHouse batch service initialized');
   }
 
   async add<T extends Record<string, unknown>>(table: string, row: T, config: BatchConfig): Promise<void> {
@@ -105,8 +90,6 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
       return;
     }
 
-    await this.pQueueReady;
-
     let buffer = this.buffers.get(table);
 
     if (!buffer) {
@@ -117,15 +100,13 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
     const backpressureMode = config.backpressureMode ?? DEFAULT_BACKPRESSURE_MODE;
     const maxQueueDepth = config.maxQueueDepth ?? DEFAULT_MAX_QUEUE_DEPTH;
 
-    const totalQueued = buffer.writeQueue.size + buffer.writeQueue.pending + buffer.rows.length;
-
-    if (totalQueued >= maxQueueDepth) {
+    if (buffer.rows.length >= maxQueueDepth) {
       if (backpressureMode === 'drop') {
         buffer.metrics.totalDropped++;
         this.logger.warn(
           {
             table,
-            totalQueued,
+            bufferSize: buffer.rows.length,
             maxQueueDepth,
             totalDropped: buffer.metrics.totalDropped,
           },
@@ -134,21 +115,10 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
 
         return;
       }
+
+      await buffer.flushQueue.onIdle();
     }
 
-    if (backpressureMode === 'block') {
-      await buffer.writeQueue.add(() => this.addRowToBuffer(table, row, buffer, config));
-    } else {
-      void buffer.writeQueue.add(() => this.addRowToBuffer(table, row, buffer, config));
-    }
-  }
-
-  private async addRowToBuffer<T extends Record<string, unknown>>(
-    table: string,
-    row: T,
-    buffer: TableBuffer,
-    config: BatchConfig
-  ): Promise<void> {
     buffer.rows.push(row);
     buffer.metrics.totalAdded++;
 
@@ -173,7 +143,6 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
       void this.flush(table);
     }, config.flushIntervalMs);
 
-    const writeQueue = this.createQueue();
     const flushQueue = this.createQueue();
 
     const metrics: BufferMetrics = {
@@ -196,23 +165,16 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
       rows: [],
       config,
       timer,
-      writeQueue,
       flushQueue,
       metrics,
     };
   }
 
   private createQueue(): PQueue {
-    if (!this.PQueueClass) {
-      throw new Error('p-queue module not loaded');
-    }
-
-    return new this.PQueueClass({ concurrency: DEFAULT_QUEUE_CONCURRENCY });
+    return new PQueue({ concurrency: DEFAULT_QUEUE_CONCURRENCY });
   }
 
   async flush(table?: string): Promise<void> {
-    await this.pQueueReady;
-
     if (table) {
       await this.enqueueFlush(table);
     } else {
@@ -233,24 +195,12 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
   private async flushTable(table: string): Promise<void> {
     const buffer = this.buffers.get(table);
 
-    if (!buffer) {
+    if (!buffer || buffer.rows.length === 0) {
       return;
     }
 
-    const batchToFlush = await buffer.writeQueue.add(async () => {
-      if (buffer.rows.length === 0) {
-        return null;
-      }
-
-      const batch = buffer.rows;
-      buffer.rows = [];
-
-      return batch;
-    });
-
-    if (!batchToFlush || batchToFlush.length === 0) {
-      return;
-    }
+    const batchToFlush = buffer.rows;
+    buffer.rows = [];
 
     const maxRetries = buffer.config.maxRetries ?? DEFAULT_MAX_RETRIES;
     const retryDelayMs = buffer.config.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
@@ -283,18 +233,16 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
       );
 
       if (!this.isShuttingDown) {
-        await buffer.writeQueue.add(async () => {
-          buffer.rows.unshift(...batchToFlush);
+        buffer.rows.unshift(...batchToFlush);
 
-          this.logger.warn(
-            {
-              table,
-              rowCount: batchToFlush.length,
-              bufferSize: buffer.rows.length,
-            },
-            'Re-queued failed batch back into buffer'
-          );
-        });
+        this.logger.warn(
+          {
+            table,
+            rowCount: batchToFlush.length,
+            bufferSize: buffer.rows.length,
+          },
+          'Re-queued failed batch back into buffer'
+        );
       }
     }
   }
@@ -347,7 +295,7 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
 
   private async waitForAllQueues(): Promise<void> {
     const buffers = Array.from(this.buffers.values());
-    await Promise.all(buffers.flatMap((buffer) => [buffer.writeQueue.onIdle(), buffer.flushQueue.onIdle()]));
+    await Promise.all(buffers.map((buffer) => buffer.flushQueue.onIdle()));
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -376,8 +324,6 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
     table: string;
     bufferSize: number;
     maxBatchSize: number;
-    writeQueueSize: number;
-    writeQueuePending: number;
     flushQueueSize: number;
     flushQueuePending: number;
     metrics: BufferMetrics;
@@ -386,8 +332,6 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
       table,
       bufferSize: buffer.rows.length,
       maxBatchSize: buffer.config.maxBatchSize,
-      writeQueueSize: buffer.writeQueue.size,
-      writeQueuePending: buffer.writeQueue.pending,
       flushQueueSize: buffer.flushQueue.size,
       flushQueuePending: buffer.flushQueue.pending,
       metrics: { ...buffer.metrics },
