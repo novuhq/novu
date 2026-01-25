@@ -10,7 +10,7 @@ export type ActivityFiltersData = {
   topicKey: string;
   subscriptionId: string;
   severity: SeverityLevelEnum[];
-  contextKeys: string;
+  contextKeys: string[];
 };
 
 export type ActivityUrlState = {

@@ -477,13 +477,6 @@ export class SendMessage {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
-  @CachedResponse({
-    builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildSubscriberKey({
-        _environmentId: command._environmentId,
-        subscriberId: command.subscriberId,
-      }),
-  })
   public async getSubscriberBySubscriberId({
     subscriberId,
     _environmentId,
@@ -491,10 +484,16 @@ export class SendMessage {
     subscriberId: string;
     _environmentId: string;
   }) {
-    return await this.subscriberRepository.findOne({
-      _environmentId,
-      subscriberId,
-    });
+    return await this.subscriberRepository.findOne(
+      {
+        _environmentId,
+        subscriberId,
+      },
+      undefined,
+      {
+        readPreference: 'secondaryPreferred',
+      }
+    );
   }
 
   @Instrument()

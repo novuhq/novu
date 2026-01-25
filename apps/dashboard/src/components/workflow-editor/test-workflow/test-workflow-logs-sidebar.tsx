@@ -126,8 +126,8 @@ export const TestWorkflowLogsSidebar = (props: TestWorkflowLogsSidebarProps) => 
         isOpen={showInstructions}
         onClose={() => setShowInstructions(false)}
         workflow={props.workflow}
-        to={to}
-        payload={payload}
+        to={(to ?? {}) as unknown as Record<string, string>}
+        payload={(payload ?? '') as unknown as string | Record<string, unknown>}
       />
     </aside>
   );

@@ -1,7 +1,7 @@
 /**
  * biome-ignore-all lint/correctness/useUniqueElementIds: expected
  */
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { IEnvironment } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -33,7 +33,7 @@ export const EditEnvironmentSheet = ({ environment, isOpen, onOpenChange }: Edit
   const { mutateAsync: updateEnvironment, isPending } = useUpdateEnvironment();
 
   const form = useForm<EnvironmentFormData>({
-    resolver: zodResolver(environmentFormSchema),
+    resolver: standardSchemaResolver(environmentFormSchema),
     defaultValues: {
       name: environment?.name || '',
       color: environment?.color,

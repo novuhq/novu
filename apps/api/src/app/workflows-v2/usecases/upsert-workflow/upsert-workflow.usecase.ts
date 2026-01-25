@@ -145,9 +145,6 @@ export class UpsertWorkflowUseCase {
     const isWorkflowActive = workflowDto?.active ?? true;
     const notificationGroupId = await this.getNotificationGroup(command.user.environmentId, command.session);
 
-    if (!notificationGroupId) {
-      throw new BadRequestException('Notification group not found');
-    }
     const steps = await this.buildSteps(command);
 
     return {

@@ -44,14 +44,16 @@ const DEFAULT_WEEKLY_SCHEDULE: WeeklySchedule = {
 type SubscribersScheduleProps = {
   globalPreference: SubscriberGlobalPreferenceDto;
   subscriberId: string;
+  contextKeys?: string[];
 };
 
 export const SubscribersSchedule = (props: SubscribersScheduleProps) => {
-  const { globalPreference, subscriberId } = props;
+  const { globalPreference, subscriberId, contextKeys } = props;
   const [isExpanded, setIsExpanded] = useState(globalPreference.schedule?.isEnabled ?? false);
 
   const { updateSchedule, isPending } = useOptimisticScheduleUpdate({
     subscriberId,
+    contextKeys,
     onError: () => {
       showErrorToast('Failed to update schedule. Please try again.');
     },
