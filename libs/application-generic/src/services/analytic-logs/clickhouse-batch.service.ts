@@ -136,29 +136,34 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
       }
     }
 
-    const addOperation = async () => {
-      buffer.rows.push(row);
-      buffer.metrics.totalAdded++;
-
-      this.logger.debug(
-        {
-          table,
-          bufferSize: buffer.rows.length,
-          maxBatchSize: config.maxBatchSize,
-        },
-        'Row added to batch buffer'
-      );
-
-      if (buffer.rows.length >= config.maxBatchSize) {
-        this.logger.debug({ table, bufferSize: buffer.rows.length }, 'Max batch size reached, triggering flush');
-        void this.enqueueFlush(table);
-      }
-    };
-
     if (backpressureMode === 'block') {
-      await buffer.writeQueue.add(addOperation);
+      await buffer.writeQueue.add(() => this.addRowToBuffer(table, row, buffer, config));
     } else {
-      void buffer.writeQueue.add(addOperation);
+      void buffer.writeQueue.add(() => this.addRowToBuffer(table, row, buffer, config));
+    }
+  }
+
+  private async addRowToBuffer<T extends Record<string, unknown>>(
+    table: string,
+    row: T,
+    buffer: TableBuffer,
+    config: BatchConfig
+  ): Promise<void> {
+    buffer.rows.push(row);
+    buffer.metrics.totalAdded++;
+
+    this.logger.debug(
+      {
+        table,
+        bufferSize: buffer.rows.length,
+        maxBatchSize: config.maxBatchSize,
+      },
+      'Row added to batch buffer'
+    );
+
+    if (buffer.rows.length >= config.maxBatchSize) {
+      this.logger.debug({ table, bufferSize: buffer.rows.length }, 'Max batch size reached, triggering flush');
+      void this.enqueueFlush(table);
     }
   }
 
