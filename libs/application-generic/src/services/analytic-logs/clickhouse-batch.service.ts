@@ -37,6 +37,32 @@ const DEFAULT_QUEUE_CONCURRENCY = 1;
 const DEFAULT_MAX_QUEUE_DEPTH = 10000;
 const DEFAULT_BACKPRESSURE_MODE: 'drop' | 'block' = 'drop';
 
+/**
+ * Batches and flushes rows to ClickHouse with concurrent write safety.
+ *
+ * Core Design:
+ * - Each table maintains two independent single-threaded queues (concurrency: 1):
+ *   1. writeQueue: Serializes all buffer modifications (adding rows, swapping batches)
+ *   2. flushQueue: Serializes flush operations to prevent duplicate flushes
+ *
+ * Concurrent Flow:
+ * - Multiple add() calls can arrive concurrently and queue their operations in writeQueue
+ * - Each queued operation executes atomically (one at a time) to prevent race conditions
+ * - When flushing, the buffer is atomically swapped (old batch out, fresh buffer in)
+ * - New rows accumulate in the fresh buffer while the old batch is being sent to ClickHouse
+ * - This allows continuous writes without blocking on network I/O
+ *
+ * Batching Triggers:
+ * - Size-based: Flush when buffer reaches maxBatchSize
+ * - Time-based: Periodic flush every flushIntervalMs
+ * - Manual: Explicit flush() calls
+ *
+ * Backpressure Protection:
+ * - Tracks total queued operations (queue size + buffer size)
+ * - When maxQueueDepth is exceeded:
+ *   - 'drop' mode (default): Rejects new rows to prevent memory overflow
+ *   - 'block' mode: Awaits queue space before accepting new rows
+ */
 @Injectable()
 export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
   private buffers: Map<string, TableBuffer> = new Map();
