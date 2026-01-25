@@ -1,4 +1,4 @@
-FROM node:20-alpine3.19 AS dev_base
+FROM node:20-alpine3.20 AS dev_base
 RUN apk --update --no-cache add curl g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -35,7 +35,6 @@ WORKDIR /usr/src/app/apps/worker
 
 RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.example.env dist/.env
-RUN cp src/.env.test dist/.env.test
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
 

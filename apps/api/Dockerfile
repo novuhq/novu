@@ -1,4 +1,4 @@
-FROM node:20-alpine3.19 AS dev_base
+FROM node:20-alpine3.20 AS dev_base
 RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -32,7 +32,6 @@ WORKDIR /usr/src/app/apps/api
 
 RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.example.env dist/.env
-RUN cp src/.env.test dist/.env.test
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
 
@@ -65,6 +64,7 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  pnpm install --filter "{${PACKAGE_PATH}}..." \
  --frozen-lockfile \
  --unsafe-perm
+
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 

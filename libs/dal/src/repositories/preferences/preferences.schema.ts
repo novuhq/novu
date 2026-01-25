@@ -89,7 +89,8 @@ preferencesSchema.plugin(mongooseDelete, {
 });
 
 // Subscriber Global Preferences
-// Ensures one global preference per subscriber (SUBSCRIBER_GLOBAL type)
+// Ensures one global preference per subscriber per context (SUBSCRIBER_GLOBAL type)
+// Includes contextKeys to allow multiple preferences for different contexts
 // Partial filter ensures this only applies to SUBSCRIBER_GLOBAL type,
 // preventing conflicts with other preference types
 preferencesSchema.index(
@@ -97,6 +98,7 @@ preferencesSchema.index(
     _environmentId: 1,
     _subscriberId: 1,
     type: 1,
+    contextKeys: 1,
   },
   {
     unique: true,

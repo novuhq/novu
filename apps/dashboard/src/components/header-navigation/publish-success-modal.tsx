@@ -3,7 +3,8 @@ import { RiArrowRightSLine, RiCheckboxCircleFill, RiCloseFill } from 'react-icon
 import type { IEnvironmentPublishResponse } from '@/api/environments';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Button } from '../primitives/button';
-import { Dialog, DialogClose, DialogContent } from '../primitives/dialog';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '../primitives/dialog';
+import { VisuallyHidden } from '../primitives/visually-hidden';
 
 type PublishSuccessModalProps = {
   isOpen: boolean;
@@ -52,6 +53,12 @@ export function PublishSuccessModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-sm gap-4 p-4">
+        <VisuallyHidden>
+          <DialogTitle>Environment Published to {environment?.name}</DialogTitle>
+          <DialogDescription>
+            {buildSummaryText()} have been published to {environment?.name}.
+          </DialogDescription>
+        </VisuallyHidden>
         <div className="flex items-start justify-between">
           <div className="bg-success-lighter rounded-full p-2">
             <RiCheckboxCircleFill className="text-success-base size-6" />

@@ -5,24 +5,20 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  useQuery,
   UseQueryResult,
-  useSuspenseQuery,
   UseSuspenseQueryResult,
-} from "@tanstack/react-query";
-import * as operations from "../models/operations/index.js";
-import { useNovuContext } from "./_context.js";
-import {
-  QueryHookOptions,
-  SuspenseQueryHookOptions,
-  TupleToPrefixes,
-} from "./_types.js";
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import * as operations from '../models/operations/index.js';
+import { useNovuContext } from './_context.js';
+import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
 import {
   buildTopicsSubscriptionsListQuery,
   prefetchTopicsSubscriptionsList,
   queryKeyTopicsSubscriptionsList,
   TopicsSubscriptionsListQueryData,
-} from "./topicsSubscriptionsList.core.js";
+} from './topicsSubscriptionsList.core.js';
 export {
   buildTopicsSubscriptionsListQuery,
   prefetchTopicsSubscriptionsList,
@@ -39,15 +35,11 @@ export {
  */
 export function useTopicsSubscriptionsList(
   request: operations.TopicsControllerListTopicSubscriptionsRequest,
-  options?: QueryHookOptions<TopicsSubscriptionsListQueryData>,
+  options?: QueryHookOptions<TopicsSubscriptionsListQueryData>
 ): UseQueryResult<TopicsSubscriptionsListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildTopicsSubscriptionsListQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildTopicsSubscriptionsListQuery(client, request, options),
     ...options,
   });
 }
@@ -61,15 +53,11 @@ export function useTopicsSubscriptionsList(
  */
 export function useTopicsSubscriptionsListSuspense(
   request: operations.TopicsControllerListTopicSubscriptionsRequest,
-  options?: SuspenseQueryHookOptions<TopicsSubscriptionsListQueryData>,
+  options?: SuspenseQueryHookOptions<TopicsSubscriptionsListQueryData>
 ): UseSuspenseQueryResult<TopicsSubscriptionsListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildTopicsSubscriptionsListQuery(
-      client,
-      request,
-      options,
-    ),
+    ...buildTopicsSubscriptionsListQuery(client, request, options),
     ...options,
   });
 }
@@ -82,16 +70,15 @@ export function setTopicsSubscriptionsListData(
       after?: string | undefined;
       before?: string | undefined;
       limit?: number | undefined;
-      orderDirection?:
-        | operations.TopicsControllerListTopicSubscriptionsQueryParamOrderDirection
-        | undefined;
+      orderDirection?: operations.TopicsControllerListTopicSubscriptionsQueryParamOrderDirection | undefined;
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
       subscriberId?: string | undefined;
+      contextKeys?: Array<string> | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
-  data: TopicsSubscriptionsListQueryData,
+  data: TopicsSubscriptionsListQueryData
 ): TopicsSubscriptionsListQueryData | undefined {
   const key = queryKeyTopicsSubscriptionsList(...queryKeyBase);
 
@@ -107,30 +94,29 @@ export function invalidateTopicsSubscriptionsList(
         after?: string | undefined;
         before?: string | undefined;
         limit?: number | undefined;
-        orderDirection?:
-          | operations.TopicsControllerListTopicSubscriptionsQueryParamOrderDirection
-          | undefined;
+        orderDirection?: operations.TopicsControllerListTopicSubscriptionsQueryParamOrderDirection | undefined;
         orderBy?: string | undefined;
         includeCursor?: boolean | undefined;
         subscriberId?: string | undefined;
+        contextKeys?: Array<string> | undefined;
         idempotencyKey?: string | undefined;
       },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Subscriptions", "list", ...queryKeyBase],
+    queryKey: ['@novu/api', 'Subscriptions', 'list', ...queryKeyBase],
   });
 }
 
 export function invalidateAllTopicsSubscriptionsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
+  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Subscriptions", "list"],
+    queryKey: ['@novu/api', 'Subscriptions', 'list'],
   });
 }

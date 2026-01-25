@@ -41,6 +41,7 @@ export class GetSubscriberPreferences {
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         includeInactiveChannels: false,
+        contextKeys: command.contextKeys,
       })
     );
 

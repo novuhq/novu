@@ -34,7 +34,7 @@ describe('Novu', () => {
   const subscriberId = 'bar';
 
   beforeEach(() => {
-    // @ts-ignore
+    // @ts-expect-error
     global.fetch.mockImplementation(mockFetch) as jest.Mock;
   });
 
@@ -50,8 +50,9 @@ describe('Novu', () => {
         method: 'POST',
         body: JSON.stringify({ applicationIdentifier, subscriber: { subscriberId } }),
         headers: {
-          'Content-Type': 'application/json',
           'Novu-API-Version': '2024-06-26',
+          'Novu-Client-Version': '@novu/js@test',
+          'Content-Type': 'application/json',
           'User-Agent': '@novu/js@test',
         },
       });
@@ -61,10 +62,11 @@ describe('Novu', () => {
         method: 'GET',
         body: undefined,
         headers: {
-          Authorization: 'Bearer cafebabe',
-          'Content-Type': 'application/json',
           'Novu-API-Version': '2024-06-26',
+          'Novu-Client-Version': '@novu/js@test',
+          'Content-Type': 'application/json',
           'User-Agent': '@novu/js@test',
+          Authorization: 'Bearer cafebabe',
         },
       });
 

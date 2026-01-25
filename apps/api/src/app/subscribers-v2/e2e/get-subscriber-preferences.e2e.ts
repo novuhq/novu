@@ -157,10 +157,11 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
   });
 
   it('should isolate preferences per context', async () => {
-    // Set global preference
+    // Set global preference for context B
     await novuClient.subscribers.preferences.update(
       {
         channels: { email: false, inApp: false },
+        context: { tenant: 'globex' },
       },
       subscriber.subscriberId
     );
@@ -175,20 +176,21 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
       subscriber.subscriberId
     );
 
-    // List with context A
+    // List with context A - should see workflow override and default global
     const responseA = await novuClient.subscribers.preferences.list({
       subscriberId: subscriber.subscriberId,
       contextKeys: ['tenant:acme'],
     });
     expect(responseA.result.workflows[0].channels.email).to.equal(true);
-    expect(responseA.result.global.channels.email).to.equal(false); // Global unchanged
+    expect(responseA.result.global.channels.email).to.equal(true); // No global set for this context, uses default
 
-    // List with context B (should see global)
+    // List with context B - should see the global preference set for this context
     const responseB = await novuClient.subscribers.preferences.list({
       subscriberId: subscriber.subscriberId,
       contextKeys: ['tenant:globex'],
     });
-    expect(responseB.result.workflows[0].channels.email).to.equal(false); // Inherits global
+    expect(responseB.result.global.channels.email).to.equal(false); // Global preference for tenant:globex
+    expect(responseB.result.workflows[0].channels.email).to.equal(false); // Inherits from global
   });
 });
 

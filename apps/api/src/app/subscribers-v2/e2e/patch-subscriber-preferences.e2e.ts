@@ -316,23 +316,6 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
     expect(responseB.result.workflows[0].channels.email).to.equal(true);
   });
 
-  it('should reject context for global preferences', async () => {
-    const patchData: PatchSubscriberPreferencesDto = {
-      // No workflowId = global preference
-      channels: {
-        email: false,
-      },
-      context: { tenant: 'acme' }, // Should be rejected
-    };
-
-    const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.subscribers.preferences.update(patchData, subscriber.subscriberId)
-    );
-
-    expect(error?.statusCode).to.equal(400);
-    expect(error?.message).to.include('Context cannot be used with global preferences');
-  });
-
   it('should bulk update with context', async () => {
     const bulkUpdateData: BulkUpdateSubscriberPreferencesDto = {
       context: { tenant: 'acme' },

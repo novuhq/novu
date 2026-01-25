@@ -51,7 +51,7 @@ export class InboundEmailParse {
     });
 
     const userPayload: IUserWebhookPayload = {
-      hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId),
+      hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',
       transactionId,
       payload: job.payload,
       templateIdentifier: job.identifier,

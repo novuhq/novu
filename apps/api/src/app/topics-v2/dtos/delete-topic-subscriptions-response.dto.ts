@@ -107,6 +107,14 @@ export class SubscriptionDto {
   subscriber: SubscriberDto | null;
 
   @ApiProperty({
+    description: 'Context keys that scope this subscription (e.g., tenant:org-a, project:proj-123)',
+    example: ['tenant:org-a', 'project:proj-123'],
+    type: [String],
+    required: false,
+  })
+  contextKeys?: string[];
+
+  @ApiProperty({
     description: 'The creation date of the subscription',
     example: '2025-04-24T05:40:21Z',
   })

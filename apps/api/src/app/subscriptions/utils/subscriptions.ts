@@ -57,6 +57,7 @@ export function mapTopicSubscriptionToDto(
     identifier: subscription.identifier,
     name: subscription.name,
     preferences: preferences.length > 0 ? preferences : undefined,
+    contextKeys: subscription.contextKeys,
   };
 }
 
