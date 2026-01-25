@@ -35,6 +35,7 @@ const DEFAULT_RETRY_DELAY_MS = 1000;
 const DEFAULT_QUEUE_CONCURRENCY = 1;
 const DEFAULT_MAX_QUEUE_DEPTH = 10000;
 const DEFAULT_BACKPRESSURE_MODE: 'drop' | 'block' = 'drop';
+const DEFAULT_BACKPRESSURE_TIMEOUT_MS = 1500;
 
 /**
  * Batches and flushes rows to ClickHouse with concurrent write safety.
@@ -121,7 +122,21 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
         return;
       }
 
-      await buffer.flushQueue.onIdle();
+      // Wait for pending flushes to complete before accepting new rows to relieve memory pressure
+      const result = await Promise.race([
+        buffer.flushQueue.onIdle().then(() => 'idle' as const),
+        this.sleep(DEFAULT_BACKPRESSURE_TIMEOUT_MS).then(() => 'timeout' as const),
+      ]);
+
+      if (result === 'timeout') {
+        this.logger.warn(
+          {
+            table,
+            bufferSize: buffer.rows.length,
+          },
+          `Backpressure timeout after ${DEFAULT_BACKPRESSURE_TIMEOUT_MS}ms waiting for flush queue, proceeding to add row`
+        );
+      }
     }
 
     buffer.rows.push(row);
@@ -238,7 +253,7 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
       );
 
       if (!this.isShuttingDown) {
-        buffer.rows.unshift(...batchToFlush);
+        buffer.rows = [...batchToFlush, ...buffer.rows];
 
         this.logger.warn(
           {
