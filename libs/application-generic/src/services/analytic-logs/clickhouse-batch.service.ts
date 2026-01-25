@@ -1,9 +1,9 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
+import PQueue from 'p-queue';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
 
 type Row = Record<string, unknown>;
-type PQueue = import('p-queue').default;
 
 interface BatchConfig {
   maxBatchSize: number;
@@ -41,7 +41,7 @@ const DEFAULT_BACKPRESSURE_MODE: 'drop' | 'block' = 'drop';
 export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
   private buffers: Map<string, TableBuffer> = new Map();
   private isShuttingDown = false;
-  private PQueueClass: typeof import('p-queue').default | null = null;
+  private PQueueClass: typeof PQueue | null = null;
   private pQueueReady: Promise<void>;
   private resolvePQueueReady!: () => void;
 
@@ -57,8 +57,7 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     try {
-      const pQueueModule = await import('p-queue');
-      this.PQueueClass = pQueueModule.default;
+      this.PQueueClass = PQueue;
       this.resolvePQueueReady();
       this.logger.debug('p-queue module loaded successfully');
     } catch (error) {
