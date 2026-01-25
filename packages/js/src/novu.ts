@@ -52,7 +52,6 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.#options = options;
     this.#inboxService = new InboxService({
       apiUrl: options.apiUrl || options.backendUrl,
-      userAgent: options.__userAgent,
     });
     this.#emitter = new NovuEventEmitter();
     const subscriber = buildSubscriber({ subscriberId: options.subscriberId, subscriber: options.subscriber });

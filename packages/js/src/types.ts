@@ -273,8 +273,6 @@ type KeylessNovuOptions = {} & { [K in string]?: never }; // empty object,disall
 export type StandardNovuOptions = {
   /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
-  /** @internal Should be used internally for testing purposes */
-  __userAgent?: string;
   applicationIdentifier: string;
   subscriberHash?: string;
   contextHash?: string;
