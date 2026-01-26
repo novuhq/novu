@@ -1,12 +1,12 @@
 // Ensures MongoDB session properties in *.command.ts files have @Exclude() decorator
 // MongoDB sessions must be excluded from command serialization to prevent serialization issues
-// Note: This rule flags ALL session properties. Verify @Exclude() is present above the property.
+// This rule matches class property declarations by looking for the specific syntax pattern
 
 engine biome(1.0)
 language js(typescript)
 
-// Match session as a property name
-// This matches "session" when it appears as a property identifier in a class
+// Match "session" identifier that appears as a class property name
+// Strategy: Match the exact property declaration pattern to avoid false positives
 `session` where {
   register_diagnostic(
     span = $match,
