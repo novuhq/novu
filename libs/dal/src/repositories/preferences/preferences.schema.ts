@@ -1,5 +1,6 @@
 import { ChannelTypeEnum, PreferencesTypeEnum } from '@novu/shared';
-import mongoose, { Schema } from 'mongoose';
+import { createHash } from 'crypto';
+import mongoose, { Schema, UpdateQuery } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { PreferencesDBModel } from './preferences.entity';
 
@@ -77,6 +78,10 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       type: [Schema.Types.String],
       default: undefined,
     },
+    contextKeysHash: {
+      type: Schema.Types.String,
+      default: undefined,
+    },
   },
   { ...schemaOptions, minimize: false }
 );
@@ -88,9 +93,22 @@ preferencesSchema.plugin(mongooseDelete, {
   use$neOperator: false,
 });
 
+preferencesSchema.pre('save', function (next) {
+  // Generate a hash from contextKeys to enforce uniqueness, since MongoDB cannot create unique indexes directly on arrays the way we need.
+  // See: https://www.mongodb.com/docs/manual/core/indexes/index-types/index-multikey/#unique-multikey-indexes
+  // The hash ensures each unique combination of contextKeys is properly indexed.
+  if (this.contextKeys && this.contextKeys.length > 0) {
+    const sorted = [...this.contextKeys].sort();
+    this.contextKeysHash = createHash('sha256').update(JSON.stringify(sorted)).digest('hex').substring(0, 16);
+  } else {
+    this.contextKeysHash = undefined;
+  }
+  next();
+});
+
 // Subscriber Global Preferences
 // Ensures one global preference per subscriber per context (SUBSCRIBER_GLOBAL type)
-// Includes contextKeys to allow multiple preferences for different contexts
+// Includes contextKeysHash to allow multiple preferences for different contexts
 // Partial filter ensures this only applies to SUBSCRIBER_GLOBAL type,
 // preventing conflicts with other preference types
 preferencesSchema.index(
@@ -98,7 +116,7 @@ preferencesSchema.index(
     _environmentId: 1,
     _subscriberId: 1,
     type: 1,
-    contextKeys: 1,
+    contextKeysHash: 1,
   },
   {
     unique: true,
@@ -110,7 +128,7 @@ preferencesSchema.index(
 
 // Subscriber Workflow Preferences
 // Ensures one workflow preference per subscriber per template per context (SUBSCRIBER_WORKFLOW type)
-// Includes contextKeys to allow multiple preferences for different contexts
+// Includes contextKeysHash to allow multiple preferences for different contexts
 // Partial filter ensures this only applies to SUBSCRIBER_WORKFLOW type,
 // preventing conflicts with other preference types
 preferencesSchema.index(
@@ -119,7 +137,7 @@ preferencesSchema.index(
     _subscriberId: 1,
     _templateId: 1,
     type: 1,
-    contextKeys: 1,
+    contextKeysHash: 1,
   },
   {
     unique: true,
@@ -148,7 +166,7 @@ preferencesSchema.index(
 );
 
 // Ensures one workflow preference per subscriber per template per topic subscription per context (SUBSCRIPTION_SUBSCRIBER_WORKFLOW type)
-// Includes contextKeys to allow multiple preferences for different contexts
+// Includes contextKeysHash to allow multiple preferences for different contexts
 // Only for this type (via partial filter).
 preferencesSchema.index(
   {
@@ -157,7 +175,7 @@ preferencesSchema.index(
     _topicSubscriptionId: 1,
     _templateId: 1,
     type: 1,
-    contextKeys: 1,
+    contextKeysHash: 1,
   },
   {
     unique: true,
