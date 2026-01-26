@@ -52,7 +52,8 @@ export class EmailBlock {
 class MessageActionResult {
   @ApiPropertyOptional({
     description: 'Payload of the action result',
-    type: Object,
+    type: 'object',
+    additionalProperties: true,
   })
   payload?: Record<string, unknown>;
 
@@ -349,13 +350,15 @@ export class MessageResponseDto implements IMessage {
 
   @ApiPropertyOptional({
     description: 'The payload that was used to send the notification trigger',
-    type: Object,
+    type: 'object',
+    additionalProperties: true,
   })
   payload: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Provider specific overrides used when triggering the notification',
-    type: Object,
+    type: 'object',
+    additionalProperties: true,
   })
   overrides?: Record<string, unknown>;
 
