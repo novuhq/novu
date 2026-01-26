@@ -7,6 +7,7 @@ import {
   ClickHouseBatchService,
   ClickHouseService,
   FeatureFlagsService,
+  QueueBaseService,
 } from '../services';
 
 export const featureFlagsService = {
@@ -71,8 +72,8 @@ export const clickHouseService = {
 
 export const clickHouseBatchService = {
   provide: ClickHouseBatchService,
-  useFactory: async (clickhouseService: ClickHouseService, logger: PinoLogger) => {
-    return new ClickHouseBatchService(clickhouseService, logger);
+  useFactory: async (clickhouseService: ClickHouseService, logger: PinoLogger, queueServices?: QueueBaseService[]) => {
+    return new ClickHouseBatchService(clickhouseService, logger, queueServices || []);
   },
-  inject: [ClickHouseService, PinoLogger],
+  inject: [ClickHouseService, PinoLogger, { token: 'BULLMQ_LIST', optional: true }],
 };

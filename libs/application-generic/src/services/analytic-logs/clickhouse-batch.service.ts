@@ -1,6 +1,7 @@
 import { BeforeApplicationShutdown, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import PQueue from 'p-queue';
+import { QueueBaseService } from '../queues';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
 
 type Row = Record<string, unknown>;
@@ -36,6 +37,8 @@ const DEFAULT_QUEUE_CONCURRENCY = 1;
 const DEFAULT_MAX_QUEUE_DEPTH = 10000;
 const DEFAULT_BACKPRESSURE_MODE: 'drop' | 'block' = 'drop';
 const DEFAULT_BACKPRESSURE_TIMEOUT_MS = 1500;
+const SHUTDOWN_POLL_INTERVAL_MS = 10_000;
+const SHUTDOWN_MAX_ATTEMPTS = 10;
 
 /**
  * Batches and flushes rows to ClickHouse with concurrent write safety.
@@ -74,7 +77,8 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
 
   constructor(
     private readonly clickhouseService: ClickHouseService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly queueServices: QueueBaseService[] = []
   ) {
     this.logger.setContext(ClickHouseBatchService.name);
   }
@@ -318,6 +322,12 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
     await Promise.all(buffers.map((buffer) => buffer.flushQueue.onIdle()));
   }
 
+  private async getTotalActiveJobsCount(): Promise<number> {
+    const counts = await Promise.all(this.queueServices.map((queue) => queue.getActiveCount()));
+
+    return counts.reduce((sum, count) => sum + count, 0);
+  }
+
   async onModuleDestroy(): Promise<void> {
     this.logger.debug('ClickHouse batch service onModuleDestroy called (no-op)');
   }
@@ -332,12 +342,47 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
       this.logger.debug({ table }, 'Cleared flush timer for table');
     }
 
+    await this.waitForActiveJobsToComplete();
+
     await this.flushAll();
     await this.waitForAllQueues();
 
     this.buffers.clear();
 
     this.logger.info('ClickHouse batch service shutdown complete');
+  }
+
+  private async waitForActiveJobsToComplete(): Promise<void> {
+    if (this.queueServices.length === 0) {
+      this.logger.debug('No queue services configured, skipping active jobs wait');
+
+      return;
+    }
+
+    for (let attempt = 1; attempt <= SHUTDOWN_MAX_ATTEMPTS; attempt++) {
+      const totalActiveJobs = await this.getTotalActiveJobsCount();
+
+      if (totalActiveJobs === 0) {
+        this.logger.info('All active jobs completed, proceeding with final flush');
+
+        return;
+      }
+
+      this.logger.info(
+        { activeJobs: totalActiveJobs, attempt, maxAttempts: SHUTDOWN_MAX_ATTEMPTS },
+        `Waiting for ${totalActiveJobs} active jobs to complete (attempt ${attempt}/${SHUTDOWN_MAX_ATTEMPTS})`
+      );
+
+      if (attempt < SHUTDOWN_MAX_ATTEMPTS) {
+        await this.sleep(SHUTDOWN_POLL_INTERVAL_MS);
+      }
+    }
+
+    const remainingJobs = await this.getTotalActiveJobsCount();
+    this.logger.warn(
+      { remainingJobs, maxAttempts: SHUTDOWN_MAX_ATTEMPTS },
+      'Max shutdown attempts reached, proceeding with final flush'
+    );
   }
 
   private sleep(ms: number): Promise<void> {
