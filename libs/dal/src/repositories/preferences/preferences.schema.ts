@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, PreferencesTypeEnum } from '@novu/shared';
 import { createHash } from 'crypto';
-import mongoose, { Schema, UpdateQuery } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { PreferencesDBModel } from './preferences.entity';
 
@@ -93,16 +93,41 @@ preferencesSchema.plugin(mongooseDelete, {
   use$neOperator: false,
 });
 
-preferencesSchema.pre('save', function (next) {
-  // Generate a hash from contextKeys to enforce uniqueness, since MongoDB cannot create unique indexes directly on arrays the way we need.
-  // See: https://www.mongodb.com/docs/manual/core/indexes/index-types/index-multikey/#unique-multikey-indexes
-  // The hash ensures each unique combination of contextKeys is properly indexed.
-  if (this.contextKeys && this.contextKeys.length > 0) {
-    const sorted = [...this.contextKeys].sort();
-    this.contextKeysHash = createHash('sha256').update(JSON.stringify(sorted)).digest('hex').substring(0, 16);
-  } else {
-    this.contextKeysHash = undefined;
+const CONTEXT_FILTERING_PREFERENCE_TYPES = [
+  PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+  PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+  PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+] as const;
+
+function shouldApplyContextKeysHash(type: PreferencesTypeEnum): boolean {
+  return CONTEXT_FILTERING_PREFERENCE_TYPES.includes(type as (typeof CONTEXT_FILTERING_PREFERENCE_TYPES)[number]);
+}
+
+function generateContextKeysHash(contextKeys: string[] | undefined): string {
+  if (!contextKeys || contextKeys.length === 0) {
+    return 'DEFAULT_CONTEXT';
   }
+
+  const sorted = [...contextKeys].sort();
+
+  return createHash('sha256').update(JSON.stringify(sorted)).digest('hex').substring(0, 16);
+}
+
+preferencesSchema.pre('save', function (next) {
+  if (shouldApplyContextKeysHash(this.type)) {
+    this.contextKeysHash = generateContextKeysHash(this.contextKeys);
+  }
+
+  next();
+});
+
+preferencesSchema.pre('insertMany', (next, docs: PreferencesDBModel[]) => {
+  for (const doc of docs) {
+    if (shouldApplyContextKeysHash(doc.type)) {
+      doc.contextKeysHash = generateContextKeysHash(doc.contextKeys);
+    }
+  }
+
   next();
 });
 
@@ -122,6 +147,7 @@ preferencesSchema.index(
     unique: true,
     partialFilterExpression: {
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+      contextKeysHash: { $exists: true },
     },
   }
 );
@@ -143,6 +169,7 @@ preferencesSchema.index(
     unique: true,
     partialFilterExpression: {
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+      contextKeysHash: { $exists: true },
     },
   }
 );
@@ -181,6 +208,7 @@ preferencesSchema.index(
     unique: true,
     partialFilterExpression: {
       type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      contextKeysHash: { $exists: true },
     },
   }
 );
