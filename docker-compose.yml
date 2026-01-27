@@ -8,7 +8,7 @@
 #   docker compose up -d
 #
 # Access:
-#   Dashboard: http://localhost:3000
+#   Dashboard: http://localhost:4000
 #   API:       http://localhost:3001
 #   WebSocket: http://localhost:3002
 # =============================================================================
@@ -97,7 +97,7 @@ services:
       NODE_ENV: ${NODE_ENV:-local}
       PORT: 3001
       API_ROOT_URL: ${API_ROOT_URL:-http://localhost:3001}
-      FRONT_BASE_URL: ${FRONT_BASE_URL:-http://localhost:3000}
+      FRONT_BASE_URL: ${FRONT_BASE_URL:-http://localhost:4000}
 
       # Database
       MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@mongodb:27017/renovu-db?authSource=admin
@@ -314,7 +314,7 @@ services:
       VITE_CLERK_PUBLISHABLE_KEY: ""
       VITE_IS_EE: false
     ports:
-      - "${DASHBOARD_PORT:-3000}:4000"
+      - "${DASHBOARD_PORT:-4000}:4000"
     networks:
       - renovu-network
     healthcheck:

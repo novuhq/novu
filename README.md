@@ -50,13 +50,13 @@ cp .env.example .env
 docker compose up -d
 ```
 
-**That's it.** Open [http://localhost:3000](http://localhost:3000) and start sending notifications.
+**That's it.** Open [http://localhost:4000](http://localhost:4000) and start sending notifications.
 
 ## Access Points
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| Dashboard | [localhost:3000](http://localhost:3000) | Web admin interface |
+| Dashboard | [localhost:4000](http://localhost:4000) | Web admin interface |
 | API | [localhost:3001](http://localhost:3001) | REST API & OpenAPI docs |
 | WebSocket | [localhost:3002](http://localhost:3002) | Real-time updates |
 
@@ -106,7 +106,7 @@ Novu's enterprise translation feature uses proprietary AI. ReNovu will implement
 │                                                             │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
 │  │Dashboard │  │   API    │  │  Worker  │  │    WS    │   │
-│  │  :3000   │  │  :3001   │  │  :3004   │  │  :3002   │   │
+│  │  :4000   │  │  :3001   │  │  :3004   │  │  :3002   │   │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘   │
 │       │             │             │             │          │
 │       └─────────────┴──────┬──────┴─────────────┘          │
@@ -137,7 +137,7 @@ MONGO_PASSWORD=secure-password
 
 # URLs (update for production)
 API_ROOT_URL=http://localhost:3001
-FRONT_BASE_URL=http://localhost:3000
+FRONT_BASE_URL=http://localhost:4000
 ```
 
 ## Providers
@@ -205,8 +205,8 @@ ReNovu supports 50+ notification providers out of the box:
 pnpm install
 
 # Start dev servers
-pnpm start:api:dev      # API on :3000
-pnpm start:dashboard    # Dashboard on :4200
+pnpm start:api:dev      # API on :3001
+pnpm start:dashboard    # Dashboard on :4000
 pnpm start:worker       # Background worker
 pnpm start:ws           # WebSocket server
 ```
