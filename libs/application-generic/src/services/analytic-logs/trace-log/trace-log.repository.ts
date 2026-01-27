@@ -542,33 +542,31 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     case 'topic_subscription_preference_evaluation':
       return 'Topic subscription preference evaluated';
 
-    // Workflow run events
-    case 'workflow_run_created':
-      return 'Workflow run created';
-    case 'workflow_run_processing':
+    // Workflow run status events
+    case 'workflow_run_status_processing':
       return 'Workflow run processing';
-    case 'workflow_run_completed':
+    case 'workflow_run_status_completed':
       return 'Workflow run completed';
-    case 'workflow_run_error':
+    case 'workflow_run_status_error':
       return 'Workflow run error';
 
-    // Workflow run delivery lifecycle status events
-    case 'workflow_run_pending':
-      return 'Workflow run pending';
-    case 'workflow_run_sent':
-      return 'Workflow run sent';
-    case 'workflow_run_errored':
-      return 'Workflow run errored';
-    case 'workflow_run_skipped':
-      return 'Workflow run skipped';
-    case 'workflow_run_canceled':
-      return 'Workflow run canceled';
-    case 'workflow_run_merged':
-      return 'Workflow run merged';
-    case 'workflow_run_delivered':
-      return 'Workflow run delivered';
-    case 'workflow_run_interacted':
-      return 'Workflow run interacted';
+    // Workflow run delivery lifecycle events
+    case 'workflow_run_delivery_pending':
+      return 'Workflow run delivery pending';
+    case 'workflow_run_delivery_sent':
+      return 'Workflow run delivery sent';
+    case 'workflow_run_delivery_errored':
+      return 'Workflow run delivery errored';
+    case 'workflow_run_delivery_skipped':
+      return 'Workflow run delivery skipped';
+    case 'workflow_run_delivery_canceled':
+      return 'Workflow run delivery canceled';
+    case 'workflow_run_delivery_merged':
+      return 'Workflow run delivery merged';
+    case 'workflow_run_delivery_delivered':
+      return 'Workflow run delivery delivered';
+    case 'workflow_run_delivery_interacted':
+      return 'Workflow run delivery interacted';
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
       const _exhaustiveCheck: never = eventType;

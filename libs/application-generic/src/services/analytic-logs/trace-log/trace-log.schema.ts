@@ -200,18 +200,17 @@ export type EventType =
   | 'step_skipped_max_extensions_reached'
   | 'push_invalid_token_removed'
   | 'topic_subscription_preference_evaluation'
-  | 'workflow_run_created'
-  | 'workflow_run_processing'
-  | 'workflow_run_completed'
-  | 'workflow_run_error'
-  | 'workflow_run_pending'
-  | 'workflow_run_sent'
-  | 'workflow_run_errored'
-  | 'workflow_run_skipped'
-  | 'workflow_run_canceled'
-  | 'workflow_run_merged'
-  | 'workflow_run_delivered'
-  | 'workflow_run_interacted';
+  | 'workflow_run_status_processing'
+  | 'workflow_run_status_completed'
+  | 'workflow_run_status_error'
+  | 'workflow_run_delivery_pending'
+  | 'workflow_run_delivery_sent'
+  | 'workflow_run_delivery_errored'
+  | 'workflow_run_delivery_skipped'
+  | 'workflow_run_delivery_canceled'
+  | 'workflow_run_delivery_merged'
+  | 'workflow_run_delivery_delivered'
+  | 'workflow_run_delivery_interacted';
 
 export type EntityType = 'request' | 'step_run' | 'workflow_run';
 

@@ -246,14 +246,14 @@ export class WorkflowRunService {
       }
 
       const deliveryLifecycleEventTypeMap: Record<DeliveryLifecycleStatusEnum, EventType> = {
-        [DeliveryLifecycleStatusEnum.PENDING]: 'workflow_run_pending',
-        [DeliveryLifecycleStatusEnum.SENT]: 'workflow_run_sent',
-        [DeliveryLifecycleStatusEnum.ERRORED]: 'workflow_run_errored',
-        [DeliveryLifecycleStatusEnum.SKIPPED]: 'workflow_run_skipped',
-        [DeliveryLifecycleStatusEnum.CANCELED]: 'workflow_run_canceled',
-        [DeliveryLifecycleStatusEnum.MERGED]: 'workflow_run_merged',
-        [DeliveryLifecycleStatusEnum.DELIVERED]: 'workflow_run_delivered',
-        [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_interacted',
+        [DeliveryLifecycleStatusEnum.PENDING]: 'workflow_run_delivery_pending',
+        [DeliveryLifecycleStatusEnum.SENT]: 'workflow_run_delivery_sent',
+        [DeliveryLifecycleStatusEnum.ERRORED]: 'workflow_run_delivery_errored',
+        [DeliveryLifecycleStatusEnum.SKIPPED]: 'workflow_run_delivery_skipped',
+        [DeliveryLifecycleStatusEnum.CANCELED]: 'workflow_run_delivery_canceled',
+        [DeliveryLifecycleStatusEnum.MERGED]: 'workflow_run_delivery_merged',
+        [DeliveryLifecycleStatusEnum.DELIVERED]: 'workflow_run_delivery_delivered',
+        [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_delivery_interacted',
       };
 
       const statusMap: Record<WorkflowRunStatusEnum, string> = {
