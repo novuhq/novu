@@ -7,9 +7,9 @@ import { WebSocketsQueueService } from './web-sockets-queue.service';
 
 let webSocketsQueueService: WebSocketsQueueService;
 
-// Mock SocketWorkerService
 const mockSocketWorkerService = {
   isEnabled: jest.fn().mockResolvedValue(false),
+  isLegacyWsDisabled: jest.fn().mockResolvedValue(false),
   sendMessage: jest.fn().mockResolvedValue(undefined),
 } as any;
 

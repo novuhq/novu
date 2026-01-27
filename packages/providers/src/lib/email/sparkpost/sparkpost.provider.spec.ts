@@ -2,8 +2,10 @@ import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { SparkPostEmailProvider } from './sparkpost.provider';
 
+const FAKE_SPARKPOST_API_KEY = 'fake-sparkpost-api-key-for-testing-do-not-use-in-production-00000000000000';
+
 const mockConfig = {
-  apiKey: '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',
+  apiKey: FAKE_SPARKPOST_API_KEY,
   region: undefined,
   from: 'test@test.com',
   senderName: 'test',
@@ -45,7 +47,7 @@ test('should trigger sparkpost library correctly', async () => {
     {
       baseURL: 'https://api.sparkpost.com/api/v1',
       headers: {
-        Authorization: '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',
+        Authorization: FAKE_SPARKPOST_API_KEY,
         'Content-Type': 'application/json',
       },
     }
@@ -88,7 +90,7 @@ test('should trigger sparkpost library correctly with _passthrough', async () =>
     {
       baseURL: 'https://api.sparkpost.com/api/v1',
       headers: {
-        Authorization: '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',
+        Authorization: FAKE_SPARKPOST_API_KEY,
         'Content-Type': 'application/json',
       },
     }

@@ -1,3 +1,4 @@
+import { buildDefaultSubscriptionIdentifier } from '@novu/application-generic';
 import { NotificationTemplateEntity, PreferencesEntity, TopicSubscribersEntity } from '@novu/dal';
 import { SeverityLevelEnum } from '@novu/shared';
 import { RulesLogic } from 'json-logic-js';
@@ -9,9 +10,11 @@ export type SelectedWorkflowFields = Pick<
   '_id' | 'triggers' | 'name' | 'critical' | 'tags' | 'data' | 'severity'
 >;
 
+type PartialPreferenceEntity = Pick<PreferencesEntity, '_templateId' | 'preferences'>;
+
 export function mapTopicSubscriptionToDto(
   subscription: TopicSubscribersEntity,
-  preferencesEntities: PreferencesEntity[],
+  preferencesEntities: Array<PartialPreferenceEntity>,
   workflowEntities: SelectedWorkflowFields[]
 ): SubscriptionDetailsResponseDto {
   const preferences: SubscriptionPreferenceDto[] = preferencesEntities
@@ -36,7 +39,13 @@ export function mapTopicSubscriptionToDto(
               severity: workflow.severity || SeverityLevelEnum.NONE,
             }
           : undefined,
-        subscriptionId: subscription._id,
+        subscriptionId:
+          subscription.identifier ||
+          buildDefaultSubscriptionIdentifier(
+            subscription.topicKey,
+            subscription.externalSubscriberId,
+            subscription.contextKeys
+          ),
         enabled: preferences?.all?.enabled ?? true,
         condition: preferences?.all?.condition as RulesLogic | undefined,
       };
@@ -48,7 +57,25 @@ export function mapTopicSubscriptionToDto(
     identifier: subscription.identifier,
     name: subscription.name,
     preferences: preferences.length > 0 ? preferences : undefined,
+    contextKeys: subscription.contextKeys,
   };
+}
+
+/**
+ * Strips the context part from an identifier when feature flag is off.
+ * This handles the case where the client includes context in identifiers
+ * but the server has stored them without context.
+ *
+ * @example
+ * stripContextFromIdentifier('tk_topic:si_sub:ctx_project:a,tenant:b') // 'tk_topic:si_sub'
+ * stripContextFromIdentifier('tk_topic:si_sub') // 'tk_topic:si_sub'
+ */
+export function stripContextFromIdentifier(identifier: string): string {
+  const contextIndex = identifier.lastIndexOf(':ctx_');
+  if (contextIndex === -1) {
+    return identifier;
+  }
+  return identifier.substring(0, contextIndex);
 }
 
 /**

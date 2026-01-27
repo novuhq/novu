@@ -8,6 +8,7 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     origin: false as boolean | string | string[],
     preflightContinue: false,
     maxAge: 86400,
+    credentials: true,
     allowedHeaders: Object.values(HttpRequestHeaderKeysEnum),
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
@@ -35,7 +36,15 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
 };
 
 function enableWildcard(req: Request): boolean {
-  return isDevelopmentEnvironment() || isWidgetRoute(req.url) || isInboxRoute(req.url) || isBlueprintRoute(req.url);
+  return (
+    (isDevelopmentEnvironment() || isWidgetRoute(req.url) || isInboxRoute(req.url) || isBlueprintRoute(req.url)) &&
+    !isBetterAuthRoute(req.url)
+  );
+}
+
+// BetterAuth routes require explicit origin validation for credential-based requests
+function isBetterAuthRoute(url: string): boolean {
+  return url.startsWith('/v1/better-auth');
 }
 
 function isWidgetRoute(url: string): boolean {

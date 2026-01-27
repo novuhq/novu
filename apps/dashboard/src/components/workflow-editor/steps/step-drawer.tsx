@@ -83,7 +83,7 @@ export const StepDrawer = ({
               }}
               transition={transitionSetting}
               className={cn(
-                'bg-background fixed inset-y-0 right-0 z-50 flex h-full w-3/4 flex-col border-l shadow-lg outline-none sm:max-w-[600px]',
+                'bg-background fixed inset-y-0 right-0 z-50 flex h-full w-3/4 flex-col border-l shadow-lg outline-hidden sm:max-w-[600px]',
                 maxWidth || stepTypeToClassname[step.type]
               )}
             >

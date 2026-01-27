@@ -12,20 +12,29 @@ export const useSubscription = (options: GetSubscriptionArgs) => {
   const novuAccessor = useNovu();
   const identifier = () => {
     const subscriberId = novuAccessor().subscriberId;
-    return options.identifier ?? buildSubscriptionIdentifier({ topicKey: options.topicKey, subscriberId });
+    const contextKey = novuAccessor().contextKey;
+    return options.identifier ?? buildSubscriptionIdentifier({ topicKey: options.topicKey, subscriberId, contextKey });
   };
 
   const [loading, setLoading] = createSignal(true);
-  const [subscription, { mutate, refetch }] = createResource(options || {}, async ({ topicKey }) => {
-    try {
-      const response = await novuAccessor().subscriptions.get({ topicKey, identifier: identifier() });
+  const [subscription, { mutate, refetch }] = createResource(
+    options || {},
+    async ({ topicKey, identifier, workflowIds, tags }) => {
+      try {
+        const response = await novuAccessor().subscriptions.get({
+          topicKey,
+          identifier,
+          workflowIds,
+          tags,
+        });
 
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching subscription:', error);
-      throw error;
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+        throw error;
+      }
     }
-  });
+  );
 
   const create = async (args: CreateSubscriptionArgs) => {
     setLoading(true);

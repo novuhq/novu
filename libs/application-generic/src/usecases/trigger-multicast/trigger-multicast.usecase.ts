@@ -8,6 +8,7 @@ import {
   TopicWithPreferences,
 } from '@novu/dal';
 import {
+  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITopic,
   PreferencesTypeEnum,
@@ -79,12 +80,23 @@ export class TriggerMulticast extends TriggerBase {
       let totalSubscriptionsEvaluated = 0;
       let totalSubscriptionsFiltered = 0;
 
+      // Check feature flag and resolve contextKeys
+      const useContextFiltering = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+        defaultValue: false,
+        organization: { _id: organizationId },
+      });
+
+      // Only pass contextKeys if feature flag is enabled
+      const contextKeysForQuery = useContextFiltering ? command.contextKeys : undefined;
+
       const getTopicDistinctSubscribersGenerator = this.topicSubscribersRepository.getTopicDistinctSubscribers({
         query: {
           _organizationId: organizationId,
           _environmentId: environmentId,
           topicIds,
           excludeSubscribers: [...singleSubscriberIds, ...allTopicExcludedSubscribers],
+          contextKeys: contextKeysForQuery,
         },
         batchSize: SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE,
       });
@@ -216,12 +228,22 @@ export class TriggerMulticast extends TriggerBase {
     subscriptionIdentifier: string
   ): Promise<TopicPreferencesSummary> {
     try {
+      const useContextFiltering = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+      });
+
+      const contextQuery =
+        useContextFiltering && command.contextKeys ? this.buildContextExactMatchQuery(command.contextKeys) : {};
+
       const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _templateId: command.template._id,
         _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+        ...contextQuery,
       });
 
       if (subscriptionPreference) {
@@ -257,6 +279,20 @@ export class TriggerMulticast extends TriggerBase {
 
       return { result: true, subscriptionIdentifier };
     }
+  }
+
+  private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
+    // undefined or empty array = match only "no context" preferences
+    if (contextKeys === undefined || contextKeys.length === 0) {
+      return {
+        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
+      };
+    }
+
+    // non-empty array = exact match filtering (order-insensitive)
+    return {
+      contextKeys: { $all: contextKeys, $size: contextKeys.length },
+    };
   }
 
   private async evaluatePreferenceCondition(
@@ -330,6 +366,7 @@ export class TriggerMulticast extends TriggerBase {
         entity_id: command.requestId,
         workflow_run_identifier: command.template.triggers[0].identifier,
         workflow_id: command.template._id,
+        provider_id: '',
       };
 
       await this.traceLogRepository.createRequest([traceData]);

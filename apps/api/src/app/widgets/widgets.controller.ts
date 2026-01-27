@@ -29,6 +29,7 @@ import {
 } from '@novu/shared';
 import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
+import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses, ApiNoContentResponse } from '../shared/framework/response.decorator';
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos/update-subscriber-global-preferences-request.dto';
@@ -98,6 +99,7 @@ export class WidgetsController {
     private analyticsService: AnalyticsService
   ) {}
 
+  @ExcludeFromIdempotency()
   @Post('/session/initialize')
   async sessionInitialize(@Body() body: SessionInitializeRequestDto): Promise<SessionInitializeResponseDto> {
     return await this.initializeSessionUsecase.execute(

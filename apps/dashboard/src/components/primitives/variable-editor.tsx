@@ -151,7 +151,7 @@ export function VariableEditor({
   );
 
   // Create extensions only once and never recreate them unless external extensions change
-  const extensionsRef = useRef<Extension[]>();
+  const extensionsRef = useRef<Extension[] | null>(null);
   const callbacksRef = useRef({
     onVariableSelect,
     onCreateNewVariable,
@@ -281,7 +281,7 @@ export function VariableEditor({
 
   const editorExtensions = useMemo(() => {
     // Clear cache when extensions change
-    extensionsRef.current = undefined;
+    extensionsRef.current = null;
 
     // For props that rarely change, we can check them dynamically
     const baseExtensions = [...(callbacksRef.current.multiline ? [EditorView.lineWrapping] : []), variablePillTheme];

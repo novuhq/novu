@@ -1,7 +1,7 @@
 /**
  * biome-ignore-all lint/correctness/useUniqueElementIds: expected
  */
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { type IEnvironment, PermissionsEnum } from '@novu/shared';
 import { type ComponentProps, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -53,7 +53,7 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
   const track = useTelemetry();
 
   const form = useForm<EnvironmentFormData>({
-    resolver: zodResolver(environmentFormSchema),
+    resolver: standardSchemaResolver(environmentFormSchema),
     defaultValues: {
       name: '',
       color: getRandomColor(environments),

@@ -33,11 +33,14 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
 import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { QuickTemplate, useTemplateStore } from '@/hooks/use-template-store';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+
+const WORKFLOWS_TABLE_ID = 'workflows-list';
 
 interface WorkflowFilters {
   query: string;
@@ -45,10 +48,16 @@ interface WorkflowFilters {
   status: string[];
 }
 
+const DEFAULT_PAGE_SIZE = getPersistedPageSize(WORKFLOWS_TABLE_ID, 10);
+
 export const WorkflowsPage = () => {
   const { environmentSlug } = useParams();
   const track = useTelemetry();
   const navigate = useNavigate();
+  const { setPageSize: setPersistedPageSize } = usePersistedPageSize({
+    tableId: WORKFLOWS_TABLE_ID,
+    defaultPageSize: 10,
+  });
   const [searchParams, setSearchParams] = useSearchParams({
     orderDirection: DirectionEnum.DESC,
     orderBy: 'createdAt',
@@ -145,7 +154,7 @@ export const WorkflowsPage = () => {
   }, [quickTemplates]);
 
   const offset = parseInt(searchParams.get('offset') || '0', 10);
-  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const limit = parseInt(searchParams.get('limit') || DEFAULT_PAGE_SIZE.toString(), 10);
 
   const {
     data: workflowsData,
@@ -267,16 +276,16 @@ export const WorkflowsPage = () => {
                 <div className="bg-bg-weak rounded-12 flex gap-4 p-3">
                   {isLoadingQuickStart && (
                     <>
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
-                      <Skeleton className="h-[140px] w-[250px] flex-shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                      <Skeleton className="h-[140px] w-[250px] shrink-0" />
                     </>
                   )}
                   {!isLoadingQuickStart && (
                     <>
-                      <div className="w-[250px] flex-shrink-0">
+                      <div className="w-[250px] shrink-0">
                         <WorkflowCard
                           name="Start from scratch"
                           description="Create a workflow from scratch"
@@ -288,7 +297,7 @@ export const WorkflowsPage = () => {
                         />
                       </div>
                       {quickStartTemplates.map((template) => (
-                        <div key={template.workflowId} className="w-[250px] flex-shrink-0">
+                        <div key={template.workflowId} className="w-[250px] shrink-0">
                           <WorkflowCard
                             name={template.name}
                             description={template.description}
@@ -317,10 +326,12 @@ export const WorkflowsPage = () => {
             isError={isError}
             limit={limit}
             onPageSizeChange={(newPageSize) => {
+              setPersistedPageSize(newPageSize);
               setSearchParams((prev) => {
                 const sp = new URLSearchParams(prev);
                 sp.set('limit', newPageSize.toString());
-                sp.delete('offset'); // Reset to first page when changing page size
+                sp.delete('offset');
+
                 return sp;
               });
             }}
@@ -339,12 +350,16 @@ const CreateWorkflowButton = () => {
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
 
-  const handleCreateWorkflow = () => {
+  const handleCreateWorkflow = (event: Pick<Event, 'preventDefault' | 'stopPropagation'>) => {
+    event.preventDefault();
+    event.stopPropagation();
     track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
     navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
   };
 
-  const navigateToTemplateStore = () => {
+  const navigateToTemplateStore = (event: Pick<Event, 'preventDefault' | 'stopPropagation'>) => {
+    event.preventDefault();
+    event.stopPropagation();
     navigate(
       `${buildRoute(ROUTES.TEMPLATE_STORE, {
         environmentSlug: environmentSlug || '',
@@ -357,7 +372,7 @@ const CreateWorkflowButton = () => {
   if (!canCreateWorkflow || currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
     return (
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger asChild>
           <Button
             className="text-label-xs gap-1 rounded-lg p-2"
             variant="primary"
@@ -413,11 +428,9 @@ const CreateWorkflowButton = () => {
             ></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
-            <DropdownMenuItem className="cursor-pointer" asChild>
-              <button type="button" className="w-full text-left" onClick={handleCreateWorkflow}>
-                <RiFileAddLine />
-                From Blank
-              </button>
+            <DropdownMenuItem className="cursor-pointer" onSelect={handleCreateWorkflow}>
+              <RiFileAddLine />
+              From Blank
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onSelect={navigateToTemplateStore}>
               <RiFileMarkedLine />

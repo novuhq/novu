@@ -170,7 +170,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
           {selectedTemplate ? (
             <CompactButton size="md" variant="ghost" onClick={handleBackClick} icon={RiArrowLeftSLine}></CompactButton>
           ) : null}
-          <Breadcrumb className="!mt-0">
+          <Breadcrumb className="mt-0!">
             <BreadcrumbList>
               {selectedTemplate && (
                 <>
@@ -279,7 +279,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
         </div>
 
         {selectedTemplate && (
-          <DialogFooter className="border-stroke-soft !mx-0 border-t !p-1.5">
+          <DialogFooter className="border-stroke-soft mx-0! border-t p-1.5!">
             <Button className="ml-auto" mode="gradient" type="submit" form="create-workflow" isLoading={isCreating}>
               Create workflow
             </Button>

@@ -92,7 +92,7 @@ function StepItem({ step, environmentSlug }: StepItemProps) {
         onClick={handleStepClick}
       >
         <Card
-          className={`shadow-xs w-full p-1 ${step.status !== 'completed' ? 'transition-all duration-200 hover:translate-x-[1px] hover:shadow-md' : ''}`}
+          className={`shadow-xs w-full p-1 ${step.status !== 'completed' ? 'transition-all duration-200 hover:translate-x-px hover:shadow-md' : ''}`}
         >
           <CardContent className="flex flex-col rounded-[6px] bg-[#FBFBFB] px-2 py-1.5">
             <div className="flex items-center justify-between">

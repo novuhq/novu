@@ -26,6 +26,7 @@ describe('HttpClient', () => {
       const client = new HttpClient();
       expect((client as any).apiUrl).toBe('https://api.novu.co/v1');
       expect((client as any).apiVersion).toBe('v1');
+      expect((client as any).headers['Novu-Client-Version']).toBe(`${PACKAGE_NAME}@${PACKAGE_VERSION}`);
       expect((client as any).headers['User-Agent']).toBe(`${PACKAGE_NAME}@${PACKAGE_VERSION}`);
     });
 
@@ -37,6 +38,7 @@ describe('HttpClient', () => {
       });
       expect((client as any).apiUrl).toBe('https://custom-api.example.com/v2');
       expect((client as any).apiVersion).toBe('v2');
+      expect((client as any).headers['Novu-Client-Version']).toBe(`${PACKAGE_NAME}@${PACKAGE_VERSION}`);
       expect((client as any).headers['User-Agent']).toBe('custom-agent');
     });
   });

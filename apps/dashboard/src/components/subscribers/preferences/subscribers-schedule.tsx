@@ -44,20 +44,22 @@ const DEFAULT_WEEKLY_SCHEDULE: WeeklySchedule = {
 type SubscribersScheduleProps = {
   globalPreference: SubscriberGlobalPreferenceDto;
   subscriberId: string;
+  contextKeys?: string[];
 };
 
 export const SubscribersSchedule = (props: SubscribersScheduleProps) => {
-  const { globalPreference, subscriberId } = props;
+  const { globalPreference, subscriberId, contextKeys } = props;
   const [isExpanded, setIsExpanded] = useState(globalPreference.schedule?.isEnabled ?? false);
 
   const { updateSchedule, isPending } = useOptimisticScheduleUpdate({
     subscriberId,
+    contextKeys,
     onError: () => {
       showErrorToast('Failed to update schedule. Please try again.');
     },
   });
   return (
-    <Card className="border-1 rounded-lg border border-neutral-100 bg-neutral-50 p-1 shadow-none">
+    <Card className="border rounded-lg border-neutral-100 bg-neutral-50 p-1 shadow-none">
       <CardHeader
         className={cn('flex w-full flex-row items-center justify-between p-1 hover:cursor-pointer', {
           'pb-2': isExpanded,
@@ -80,7 +82,7 @@ export const SubscribersSchedule = (props: SubscribersScheduleProps) => {
           </Tooltip>
           {isPending && <RiLoader4Line className="size-3 animate-spin text-neutral-400" />}
         </div>
-        <div className="!mt-0 flex items-center gap-1.5">
+        <div className="mt-0! flex items-center gap-1.5">
           <Switch
             checked={globalPreference.schedule?.isEnabled}
             onClick={(e) => {

@@ -167,6 +167,7 @@ export class Session {
         phone: subscriber.phone,
         email: subscriber.email,
         avatar: subscriber.avatar,
+        locale: subscriber.locale,
         data: subscriber.data as CustomDataType,
         timezone: subscriber.timezone,
         allowUpdate: isHmacValid(
@@ -236,6 +237,7 @@ export class Session {
       environment,
       defaultSchedule: command.requestData.defaultSchedule,
       subscriber: subscriberEntity,
+      contextKeys,
     });
 
     const [{ removeNovuBranding }, maxSnoozeDurationHours, schedule] = await Promise.all([
@@ -291,10 +293,12 @@ export class Session {
     environment,
     defaultSchedule,
     subscriber,
+    contextKeys,
   }: {
     environment: EnvironmentEntity;
     defaultSchedule?: ScheduleDto;
     subscriber: SubscriberEntity;
+    contextKeys: string[];
   }): Promise<Schedule | undefined> {
     const isSubscribersScheduleEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_SUBSCRIBERS_SCHEDULE_ENABLED,
@@ -312,6 +316,7 @@ export class Session {
         organizationId: environment._organizationId,
         environmentId: environment._id,
         _subscriberId: subscriber._id,
+        contextKeys,
       })
     );
 
@@ -325,6 +330,7 @@ export class Session {
         environmentId: environment._id,
         subscriber,
         subscriberId: subscriber.subscriberId,
+        contextKeys,
         level: PreferenceLevelEnum.GLOBAL,
         includeInactiveChannels: false,
         schedule: defaultSchedule,
@@ -415,7 +421,7 @@ export class Session {
       context
     );
 
-    return contexts.map((context) => context.key);
+    return contexts.map((context) => context.key).sort();
   }
 
   private async getMaxSnoozeDurationHours(apiServiceLevel: ApiServiceLevelEnum) {

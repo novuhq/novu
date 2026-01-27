@@ -8,8 +8,10 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Res,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
@@ -28,6 +30,7 @@ import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscripti
 import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
 import { CreateTopicSubscriptionRequestDto } from './dtos/create-topic-subscription-request.dto';
+import { ContextCompatibilityInterceptor } from './interceptors/context-compatibility.interceptor';
 import { DeleteTopicSubscriptionCommand } from './usecases/delete-subscription/delete-subscription.command';
 import { DeleteTopicSubscription } from './usecases/delete-subscription/delete-subscription.usecase';
 import { GetTopicSubscriptionsCommand } from './usecases/get-topic-subscriptions/get-topic-subscriptions.command';
@@ -37,6 +40,7 @@ import { GetTopicSubscriptions } from './usecases/get-topic-subscriptions/get-to
 @Controller('/inbox')
 @ApiExcludeController()
 @ExcludeFromIdempotency()
+@UseInterceptors(ContextCompatibilityInterceptor)
 export class InboxTopicController {
   constructor(
     private getTopicSubscriptionsUsecase: GetTopicSubscriptions,
@@ -59,24 +63,33 @@ export class InboxTopicController {
         subscriberId: subscriberSession.subscriberId,
         topicKey,
         _subscriberId: subscriberSession._id,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Get('/topics/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
+  @Get('/topics/:topicKey/subscriptions/:identifier')
   async getTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
-    @Res({ passthrough: true }) res: Response
+    @Param('identifier') identifier: string,
+    @Res({ passthrough: true }) res: Response,
+    @Query('workflowIds') workflowIds?: string | string[],
+    @Query('tags') tags?: string | string[]
   ): Promise<SubscriptionDetailsResponseDto | void> {
+    const normalizedWorkflowIds = workflowIds ? (Array.isArray(workflowIds) ? workflowIds : [workflowIds]) : undefined;
+    const normalizedTags = tags ? (Array.isArray(tags) ? tags : [tags]) : undefined;
+
     const result = await this.getTopicSubscriptionUsecase.execute(
       GetSubscriptionCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         topicKey,
-        subscriptionIdOrIdentifier,
+        identifier,
+        workflowIds: normalizedWorkflowIds,
+        tags: normalizedTags,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
 
@@ -111,6 +124,7 @@ export class InboxTopicController {
         ],
         name: body.topic?.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
 
@@ -133,11 +147,11 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/topics/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
+  @Patch('/topics/:topicKey/subscriptions/:identifier')
   async updateTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
+    @Param('identifier') identifier: string,
     @Body() body: UpdateSubscriptionRequestDto
   ): Promise<SubscriptionDetailsResponseDto> {
     const subscription = await this.updateSubscriptionUsecase.execute(
@@ -146,9 +160,10 @@ export class InboxTopicController {
         organizationId: subscriberSession._organizationId,
         userId: subscriberSession._id,
         topicKey,
-        subscriptionIdOrIdentifier,
+        identifier,
         name: body.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
 
@@ -161,11 +176,11 @@ export class InboxTopicController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Delete('/topics/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
+  @Delete('/topics/:topicKey/subscriptions/:identifier')
   async deleteTopicSubscription(
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string
+    @Param('identifier') identifier: string
   ): Promise<{ success: boolean }> {
     return await this.deleteTopicSubscriptionUsecase.execute(
       DeleteTopicSubscriptionCommand.create({
@@ -173,8 +188,9 @@ export class InboxTopicController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         topicKey,
-        subscriptionIdOrIdentifier,
+        identifier,
         _subscriberId: subscriberSession._id,
+        contextKeys: subscriberSession.contextKeys,
       })
     );
   }

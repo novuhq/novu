@@ -1,4 +1,3 @@
-import { type OrganizationResource } from '@clerk/types';
 import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
@@ -9,6 +8,8 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { IS_SELF_HOSTED } from '../../../config';
 import { useNumericFeatureFlag } from '../../../hooks/use-feature-flag';
+
+type OrganizationLike = { createdAt: Date };
 
 export type DateRangeOption = {
   value: string;
@@ -36,7 +37,7 @@ function buildDateFilterOptions({
   apiServiceLevel,
   maxDateAnalyticsMs,
 }: {
-  organization: OrganizationResource;
+  organization: OrganizationLike;
   apiServiceLevel?: ApiServiceLevelEnum;
   maxDateAnalyticsMs?: number;
 }): Omit<DateFilterOption, 'icon'>[] {
@@ -74,7 +75,7 @@ function getDefaultDateRange({
   maxDateAnalyticsMs,
 }: {
   subscription: GetSubscriptionDto | null | undefined;
-  organization: OrganizationResource | null | undefined;
+  organization: OrganizationLike | null | undefined;
   maxDateAnalyticsMs?: number;
 }): string {
   if (!organization || !subscription) {
@@ -119,7 +120,7 @@ function getChartsDateRange(selectedDateRange: string) {
 }
 
 type UseHomepageDateFilterParams = {
-  organization: OrganizationResource | null | undefined;
+  organization: OrganizationLike | null | undefined;
   subscription: GetSubscriptionDto | null | undefined;
   upgradeCtaIcon?: React.ComponentType<{ className?: string }>;
 };

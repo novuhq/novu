@@ -1,10 +1,4 @@
-import {
-  buildIntegrationKey,
-  CacheInMemoryProviderService,
-  CacheService,
-  createHash,
-  InvalidateCacheService,
-} from '@novu/application-generic';
+import { createHash } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -17,20 +11,12 @@ const subscriberId = '12345';
 
 describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', async () => {
   let session: UserSession;
-  let invalidateCache: InvalidateCacheService;
-
-  before(async () => {
-    const cacheInMemoryProviderService = new CacheInMemoryProviderService();
-    const cacheService = new CacheService(cacheInMemoryProviderService);
-    await cacheService.initialize();
-    invalidateCache = new InvalidateCacheService(cacheService);
-  });
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
 
-    await setHmacConfig(subscriberId, session, invalidateCache);
+    await setHmacConfig(session);
   });
 
   it('should create a valid app session for current widget user', async () => {
@@ -134,27 +120,7 @@ async function initWidgetSession(subscriberIdentifier: string, session, hmacHash
   });
 }
 
-async function setHmacConfig(userId: string, session: UserSession, invalidateCache: InvalidateCacheService) {
-  await invalidateCache.invalidateQuery({
-    key: buildIntegrationKey().invalidate({
-      _organizationId: session.organization._id,
-    }),
-  });
-
-  const command = {
-    environmentId: session.environment._id,
-    userId,
-    providerId: InAppProviderIdEnum.Novu,
-    channel: ChannelTypeEnum.IN_APP,
-  };
-
-  await invalidateCache.invalidateByKey({
-    key: buildIntegrationKey().cache({
-      _organizationId: session.organization._id,
-      ...command,
-    }),
-  });
-
+async function setHmacConfig(session: UserSession) {
   const result = await integrationRepository.update(
     {
       _environmentId: session.environment._id,

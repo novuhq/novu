@@ -210,6 +210,7 @@ export class SendMessageEmail extends SendMessageBase {
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
+      stepId: command.step.stepId,
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
@@ -261,6 +262,7 @@ export class SendMessageEmail extends SendMessageBase {
           html = await inlineCss(html, {
             // Used for style sheet links that starts with / so should not be needed in our case.
             url: ' ',
+            applyLinkTags: false,
           });
         }
       }

@@ -99,7 +99,7 @@ export const WorkflowNodeActionBar = ({
                   ease: 'easeIn',
                 },
               }}
-              className="absolute left-1/2 top-[-12px] h-3 w-[2px] -translate-x-1/2 bg-gradient-to-t from-neutral-200 to-transparent"
+              className="absolute left-1/2 top-[-12px] h-3 w-[2px] -translate-x-1/2 bg-linear-to-t from-neutral-200 to-transparent"
               style={{ transformOrigin: 'bottom center' }}
             />
 
@@ -207,11 +207,12 @@ export const WorkflowNodeActionBar = ({
         title="Proceeding will delete the step"
         description={
           <>
-            You're about to delete the <TruncatedText className="max-w-[32ch] font-bold">{stepName}</TruncatedText>{' '}
+            You're about to delete the <TruncatedText className="max-w-[32ch] font-semibold">{stepName}</TruncatedText>{' '}
             step, this action is permanent.
           </>
         }
         confirmButtonText="Delete"
+        confirmButtonVariant="error"
       />
     </>
   );

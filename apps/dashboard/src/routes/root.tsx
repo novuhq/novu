@@ -1,17 +1,17 @@
+import { ErrorBoundary, withProfiler } from '@sentry/react';
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
+import { Outlet } from 'react-router-dom';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { TooltipProvider } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED } from '@/config';
 import { AuthProvider } from '@/context/auth/auth-provider';
-import { ClerkProvider } from '@/context/clerk-provider';
+import { EEAuthProvider as ClerkProvider } from '@/context/ee-auth-provider';
 import { EscapeKeyManagerProvider } from '@/context/escape-key-manager/escape-key-manager';
 import { IdentityProvider } from '@/context/identity-provider';
 import { RegionProvider } from '@/context/region';
 import { SegmentProvider } from '@/context/segment';
-import { ErrorBoundary, withProfiler } from '@sentry/react';
-import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { HelmetProvider } from 'react-helmet-async';
-import { Outlet } from 'react-router-dom';
 
 const queryClient = new QueryClient({
   defaultOptions: {

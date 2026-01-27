@@ -18,7 +18,7 @@ export const OperatorSelector = React.memo(
       >
         <SelectTrigger
           size="2xs"
-          className={cn('w-18 bg-background hover:bg-bg-weak hover:text-text-strong text-label-xs gap-1')}
+          className={cn('w-fit bg-background hover:bg-bg-weak hover:text-text-strong text-label-xs gap-1')}
         >
           <SelectValue />
         </SelectTrigger>

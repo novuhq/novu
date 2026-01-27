@@ -624,6 +624,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
         });
       }
 
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await session.waitForWorkflowQueueCompletion();
       await session.waitForSubscriberQueueCompletion();
 

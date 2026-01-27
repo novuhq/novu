@@ -19,10 +19,10 @@ export default function SubscriptionComponentsPage() {
         <button onClick={toggleDarkTheme}>Toggle Dark Theme</button>
         <NovuProvider {...novuConfig}>
           <Subscription
-            topicKey="test"
+            topicKey="test1"
             preferences={[
-              { workflowId: 'test-workflow3' },
-              { label: 'Test Group', filter: { tags: [] } },
+              { workflowId: 'yolo' },
+              { label: 'Test Group', filter: { tags: ['yoyo'] } },
               { label: 'Test Group', filter: { workflowIds: ['test-workflow1', 'test-workflow2', 'test-workflow3'] } },
             ]}
             appearance={{

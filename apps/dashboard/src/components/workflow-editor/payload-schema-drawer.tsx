@@ -227,7 +227,7 @@ export function PayloadSchemaDrawer({
                       <div className="mb-2 flex flex-row items-center justify-between gap-2">
                         <h3 className="text-label-xs w-full">Payload schema</h3>
                       </div>
-                      <div className="rounded-4 border-1 mb-2 flex items-center justify-between border border-neutral-100 bg-white p-1.5">
+                      <div className="rounded-4 border mb-2 flex items-center justify-between border-neutral-100 bg-white p-1.5">
                         <div className="text-text-strong text-label-xs flex items-center gap-1">
                           <RiShieldCheckLine className="text-text-strong size-3" />
                           Enforce schema validation

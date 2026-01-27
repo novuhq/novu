@@ -16,7 +16,7 @@ export const BypassSanitizationSwitch = () => {
         control={control}
         name={fieldKey}
         render={({ field }) => (
-          <FormItem className="flex items-center justify-between gap-2">
+          <FormItem className="flex items-center justify-between gap-2 space-y-0">
             <FormControl>
               <Switch
                 checked={field.value}

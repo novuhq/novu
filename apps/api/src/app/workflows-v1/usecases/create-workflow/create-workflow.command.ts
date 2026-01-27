@@ -64,7 +64,7 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   draft?: boolean;
 
   @IsMongoId()
-  @IsDefined()
+  @IsOptional()
   notificationGroupId?: string;
 
   @IsOptional()

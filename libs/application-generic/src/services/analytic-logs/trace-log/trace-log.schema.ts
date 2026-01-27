@@ -43,6 +43,9 @@ const schemaDefinition = {
   // Workflow run metadata
   workflow_run_identifier: { type: CHString('') }, // default value is empty string
   workflow_id: { type: CHString('') }, // Maps to NotificationTemplateEntity._id
+
+  // Provider metadata
+  provider_id: { type: CHString('') },
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = [

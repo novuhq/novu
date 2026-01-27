@@ -262,6 +262,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         topicKey,
         subscriberId: query.subscriberId,
+        contextKeys: query.contextKeys,
         limit: query.limit ? Number(query.limit) : 10,
         after: query.after,
         before: query.before,
@@ -300,6 +301,7 @@ export class TopicsController {
         subscriptions: this.mapSubscriptions(body.subscriptions || body.subscriberIds || []),
         name: body.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        context: body.context,
       })
     );
 
@@ -308,6 +310,7 @@ export class TopicsController {
         ...item,
         createdAt: item.createdAt || '',
         updatedAt: item.updatedAt || '',
+        contextKeys: item.contextKeys,
       })),
       meta: result.meta,
       errors: result.errors,
@@ -369,26 +372,26 @@ export class TopicsController {
     return typeSafeResult;
   }
 
-  @Get('/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
+  @Get('/:topicKey/subscriptions/:identifier')
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('getSubscription')
   @ApiOperation({
     summary: 'Get a topic subscription',
-    description: `Get a subscription by its unique identifier **subscriptionIdOrIdentifier** for a topic.`,
+    description: `Get a subscription by its unique identifier for a topic.`,
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiParam({
-    name: 'subscriptionIdOrIdentifier',
+    name: 'identifier',
     description: 'The unique identifier of the subscription',
     type: String,
   })
-  @ApiResponse(SubscriptionResponseDto, 200)
+  @ApiResponse(SubscriptionDetailsResponseDto, 200)
   @RequirePermissions(PermissionsEnum.TOPIC_READ)
   async getTopicSubscription(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
+    @Param('identifier') identifier: string,
     @Res({ passthrough: true }) res: Response
   ): Promise<SubscriptionDetailsResponseDto | void> {
     const result = await this.getSubscriptionUsecase.execute(
@@ -396,7 +399,7 @@ export class TopicsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         topicKey,
-        subscriptionIdOrIdentifier,
+        identifier,
       })
     );
 
@@ -409,17 +412,17 @@ export class TopicsController {
     return result;
   }
 
-  @Patch('/:topicKey/subscriptions/:subscriptionIdOrIdentifier')
+  @Patch('/:topicKey/subscriptions/:identifier')
   @ExternalApiAccessible()
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('update')
   @ApiOperation({
     summary: 'Update a topic subscription',
-    description: `Update a subscription by its unique identifier **subscriptionIdOrIdentifier** for a topic. You can update the preferences and name associated with the subscription.`,
+    description: `Update a subscription by its unique identifier for a topic. You can update the preferences and name associated with the subscription.`,
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiParam({
-    name: 'subscriptionIdOrIdentifier',
+    name: 'identifier',
     description: 'The unique identifier of the subscription',
     type: String,
   })
@@ -428,7 +431,7 @@ export class TopicsController {
   async updateTopicSubscription(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: string,
-    @Param('subscriptionIdOrIdentifier') subscriptionIdOrIdentifier: string,
+    @Param('identifier') identifier: string,
     @Body() body: UpdateTopicSubscriptionRequestDto
   ): Promise<SubscriptionResponseDto> {
     return await this.updateSubscriptionUsecase.execute(
@@ -437,7 +440,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         userId: user._id,
         topicKey,
-        subscriptionIdOrIdentifier,
+        identifier,
         name: body.name,
         preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
       })

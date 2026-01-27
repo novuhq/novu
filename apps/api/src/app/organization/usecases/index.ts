@@ -1,4 +1,4 @@
-import { isClerkEnabled } from '@novu/shared';
+import { isBetterAuthEnabled, isClerkEnabled } from '@novu/shared';
 import { CreateOrganization } from './create-organization/create-organization.usecase';
 import { SyncExternalOrganization } from './create-organization/sync-external-organization/sync-external-organization.usecase';
 import { GetMyOrganization } from './get-my-organization/get-my-organization.usecase';
@@ -15,7 +15,7 @@ import { UpdateOrganizationSettings } from './update-organization-settings/updat
 
 // TODO: move ee.organization.controller.ts to EE package
 function getEnterpriseUsecases() {
-  if (isClerkEnabled()) {
+  if (isClerkEnabled() || isBetterAuthEnabled()) {
     return [
       {
         provide: 'SyncOrganizationUsecase',

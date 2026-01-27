@@ -36,7 +36,7 @@ export const CreateSubscriberForm = () => {
                 e.stopPropagation();
               }}
             >
-              <Avatar className="size-[3.75rem] cursor-default">
+              <Avatar className="size-15 cursor-default">
                 <AvatarImage src={firstNameChar || lastNameChar ? '' : '/images/avatar.svg'} />
                 <AvatarFallback>
                   {firstNameChar || lastNameChar ? (
@@ -186,7 +186,7 @@ export const CreateSubscriberForm = () => {
           />
         </div>
 
-        <div className="grid grid-cols-[1fr_3fr] gap-2.5">
+        <div className="grid grid-cols-[1fr_1fr] gap-2.5">
           <FormField
             control={form.control}
             name="locale"
@@ -210,7 +210,7 @@ export const CreateSubscriberForm = () => {
             control={form.control}
             name="timezone"
             render={({ field }) => (
-              <FormItem className="overflow-hidden">
+              <FormItem className="flex flex-col gap-1.5 space-y-0 overflow-hidden">
                 <FormLabel>Timezone</FormLabel>
                 <FormControl>
                   <TimezoneSelect
@@ -249,7 +249,7 @@ export const CreateSubscriberForm = () => {
                     multiline
                     foldGutter
                     {...field}
-                    value={field.value}
+                    value={field.value ?? ''}
                     onChange={(val) => {
                       field.onChange(val);
                       form.trigger(field.name);

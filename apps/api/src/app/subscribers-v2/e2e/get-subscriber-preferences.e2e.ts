@@ -14,6 +14,7 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
   let workflow: NotificationTemplateEntity;
 
   beforeEach(async () => {
+    (process.env as any).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
     const uuid = randomBytes(4).toString('hex');
     session = new UserSession();
     await session.initialize();
@@ -24,8 +25,12 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
     });
   });
 
+  afterEach(() => {
+    delete (process.env as any).IS_CONTEXT_PREFERENCES_ENABLED;
+  });
+
   it('should fetch subscriber preferences with default values', async () => {
-    const response = await novuClient.subscribers.preferences.list(subscriber.subscriberId);
+    const response = await novuClient.subscribers.preferences.list({ subscriberId: subscriber.subscriberId });
 
     const { global, workflows } = response.result;
 
@@ -37,7 +42,7 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
   it('should return 404 if subscriber does not exist', async () => {
     const invalidSubscriberId = `non-existent-${randomBytes(2).toString('hex')}`;
     const { error } = await expectSdkExceptionGeneric(() =>
-      novuClient.subscribers.preferences.list(invalidSubscriberId)
+      novuClient.subscribers.preferences.list({ subscriberId: invalidSubscriberId })
     );
 
     expect(error?.statusCode).to.equal(404);
@@ -48,7 +53,7 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
     const workflow2 = await session.createTemplate({ noFeedId: true });
     const workflow3 = await session.createTemplate({ noFeedId: true });
 
-    const response = await novuClient.subscribers.preferences.list(subscriber.subscriberId);
+    const response = await novuClient.subscribers.preferences.list({ subscriberId: subscriber.subscriberId });
 
     const { workflows } = response.result;
 
@@ -75,7 +80,7 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
     const newWorkflow = await session.createTemplate({ noFeedId: true });
 
     // Check preferences
-    const response = await novuClient.subscribers.preferences.list(subscriber.subscriberId);
+    const response = await novuClient.subscribers.preferences.list({ subscriberId: subscriber.subscriberId });
 
     const { workflows } = response.result;
 
@@ -84,6 +89,108 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
     );
     // New workflow should inherit global settings
     expect(newWorkflowPreferences?.channels).to.deep.equal({ email: false, inApp: true });
+  });
+
+  it('should filter preferences by contextKeys', async () => {
+    // Create preference for context A
+    await novuClient.subscribers.preferences.update(
+      {
+        workflowId: workflow._id,
+        channels: { email: false },
+        context: { tenant: 'acme' },
+      },
+      subscriber.subscriberId
+    );
+
+    // Create preference for context B
+    const workflow2 = await session.createTemplate({ noFeedId: true });
+    await novuClient.subscribers.preferences.update(
+      {
+        workflowId: workflow2._id,
+        channels: { email: false },
+        context: { tenant: 'globex' },
+      },
+      subscriber.subscriberId
+    );
+
+    // List with context A filter
+    const responseA = await novuClient.subscribers.preferences.list({
+      subscriberId: subscriber.subscriberId,
+      contextKeys: ['tenant:acme'],
+    });
+
+    // Should return BOTH workflows (all workflows always returned regardless of context)
+    const workflowIdentifiers = responseA.result.workflows.map((w) => w.workflow.identifier);
+    expect(workflowIdentifiers).to.include(workflow.triggers[0].identifier);
+    expect(workflowIdentifiers).to.include(workflow2.triggers[0].identifier);
+
+    // workflow1 uses tenant:acme preference (email: false)
+    const wf1 = responseA.result.workflows.find((w) => w.workflow.identifier === workflow.triggers[0].identifier);
+    expect(wf1?.channels.email).to.equal(false);
+
+    // workflow2 falls back to global/default (email: true by default)
+    const wf2 = responseA.result.workflows.find((w) => w.workflow.identifier === workflow2.triggers[0].identifier);
+    expect(wf2?.channels.email).to.equal(true);
+  });
+
+  it('should return default preferences when no context-specific preference exists', async () => {
+    // Create workflow preference for context A
+    await novuClient.subscribers.preferences.update(
+      {
+        workflowId: workflow._id,
+        channels: { email: false },
+        context: { tenant: 'acme' },
+      },
+      subscriber.subscriberId
+    );
+
+    // List with different context B (no specific preference exists)
+    const response = await novuClient.subscribers.preferences.list({
+      subscriberId: subscriber.subscriberId,
+      contextKeys: ['tenant:globex'],
+    });
+
+    // Should return workflow with default/inherited settings
+    expect(response.result.workflows).to.have.lengthOf(1);
+    // Default should be enabled
+    expect(response.result.workflows[0].channels.email).to.equal(true);
+  });
+
+  it('should isolate preferences per context', async () => {
+    // Set global preference for context B
+    await novuClient.subscribers.preferences.update(
+      {
+        channels: { email: false, inApp: false },
+        context: { tenant: 'globex' },
+      },
+      subscriber.subscriberId
+    );
+
+    // Create workflow preference for context A (override email)
+    await novuClient.subscribers.preferences.update(
+      {
+        workflowId: workflow._id,
+        channels: { email: true }, // Override to true
+        context: { tenant: 'acme' },
+      },
+      subscriber.subscriberId
+    );
+
+    // List with context A - should see workflow override and default global
+    const responseA = await novuClient.subscribers.preferences.list({
+      subscriberId: subscriber.subscriberId,
+      contextKeys: ['tenant:acme'],
+    });
+    expect(responseA.result.workflows[0].channels.email).to.equal(true);
+    expect(responseA.result.global.channels.email).to.equal(true); // No global set for this context, uses default
+
+    // List with context B - should see the global preference set for this context
+    const responseB = await novuClient.subscribers.preferences.list({
+      subscriberId: subscriber.subscriberId,
+      contextKeys: ['tenant:globex'],
+    });
+    expect(responseB.result.global.channels.email).to.equal(false); // Global preference for tenant:globex
+    expect(responseB.result.workflows[0].channels.email).to.equal(false); // Inherits from global
   });
 });
 

@@ -51,6 +51,7 @@ export class MessageInteractionService {
                 status: trace.status,
                 workflow_run_identifier: trace.workflow_run_identifier,
                 workflow_id: trace.workflow_id,
+                provider_id: trace.provider_id,
               }) satisfies Omit<Trace, 'id' | 'expires_at' | 'entity_type'>
           )
         );

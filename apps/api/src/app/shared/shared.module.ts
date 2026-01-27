@@ -3,12 +3,14 @@ import { JwtModule } from '@nestjs/jwt';
 import {
   analyticsService,
   CacheServiceHealthIndicator,
+  CloudflareSchedulerService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   cacheService,
   clickHouseService,
   createNestLoggingModuleOptions,
   DalServiceHealthIndicator,
+  DeliveryTrendCountsRepository,
   ExecuteBridgeRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
@@ -19,6 +21,7 @@ import {
   StepRunRepository,
   storageService,
   TraceLogRepository,
+  TraceRollupRepository,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
@@ -119,6 +122,8 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  TraceRollupRepository,
+  DeliveryTrendCountsRepository,
 
   // Services
   clickHouseService,
@@ -128,6 +133,7 @@ const PROVIDERS = [
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,
+  CloudflareSchedulerService,
   ComputeJobWaitDurationService,
   dalService,
   DalServiceHealthIndicator,

@@ -41,6 +41,10 @@ const topicSubscribersSchema = new Schema<TopicSubscribersDBModel>(
     identifier: {
       type: Schema.Types.String,
     },
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
   },
   schemaOptions
 );
@@ -58,7 +62,7 @@ topicSubscribersSchema.index(
     _environmentId: 1,
     identifier: 1,
   },
-  { unique: true, sparse: true }
+  { unique: true }
 );
 
 topicSubscribersSchema.index({

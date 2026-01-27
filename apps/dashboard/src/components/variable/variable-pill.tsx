@@ -49,7 +49,7 @@ export const VariablePill = React.forwardRef<
           isNotInSchema={isPayloadSchemaEnabled ? isNotInSchema : false}
         />
         {/* INFO: Keep the color defined on the span to avoid overriding it in maily components for example button */}
-        <span className="leading-1 text-text-sub max-w-[24ch] truncate" title={displayVariableName}>
+        <span className="text-label-xs text-text-sub max-w-[24ch] truncate" title={displayVariableName}>
           {displayVariableName}
         </span>
         <FiltersSection filters={filters} />

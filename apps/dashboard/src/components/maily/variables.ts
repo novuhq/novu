@@ -180,9 +180,17 @@ const getVariablesByContext = ({
           return [];
         }
 
-        // Handle array payload variables (e.g., "steps.digest-step.events[0].payload.xxx")
-        if (variable.name?.startsWith(iterableName + '[0].payload.')) {
+        // Handle array payload variables (e.g., "steps.digest-step.events.0.payload.xxx" or "steps.digest-step.events[0].payload.xxx")
+        const dotNotationPrefix = iterableName + '.0.payload.';
+        const bracketNotationPrefix = iterableName + '[0].payload.';
+        if (variable.name?.startsWith(dotNotationPrefix)) {
+          const suffix = variable.name.replace(iterableName + '.0.', '');
+
+          return [{ name: `${REPEAT_BLOCK_ITERABLE_ALIAS}.${suffix}` }];
+        }
+        if (variable.name?.startsWith(bracketNotationPrefix)) {
           const suffix = variable.name.replace(iterableName + '[0].', '');
+
           return [{ name: `${REPEAT_BLOCK_ITERABLE_ALIAS}.${suffix}` }];
         }
 

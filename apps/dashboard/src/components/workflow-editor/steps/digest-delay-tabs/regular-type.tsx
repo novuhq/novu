@@ -35,7 +35,7 @@ export const RegularType = ({ isReadOnly, isDigest }: { isReadOnly: boolean; isD
         fields={{ inputKey: `${AMOUNT_KEY}`, selectKey: `${UNIT_KEY}` }}
         options={TIME_UNIT_OPTIONS}
         defaultOption={TimeUnitEnum.SECONDS}
-        className="w-min [&_input]:!w-[5ch] [&_input]:!min-w-[5ch]"
+        className="w-min [&_input]:w-[5ch]! [&_input]:min-w-[5ch]!"
         onValueChange={() => saveForm()}
         showError={false}
         min={minAmountValue}

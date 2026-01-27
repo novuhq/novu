@@ -90,12 +90,14 @@ export function EditorBreadcrumbs() {
         icon={RiArrowLeftSLine}
         onClick={handleBackNavigation}
       />
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItems breadcrumbs={breadcrumbs} workflow={workflow} isOnStepRoute={!!isOnStepRoute} />
-          {isOnStepRoute && step && <StepBreadcrumb step={step} />}
-        </BreadcrumbList>
-      </Breadcrumb>
+      {currentEnvironment && (
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItems breadcrumbs={breadcrumbs} workflow={workflow} isOnStepRoute={!!isOnStepRoute} />
+            {isOnStepRoute && step && <StepBreadcrumb step={step} />}
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
     </div>
   );
 }

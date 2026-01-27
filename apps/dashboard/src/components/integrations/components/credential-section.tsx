@@ -229,7 +229,7 @@ function PushResources({ credential, integrationId }: { credential: IConfigCrede
         {resources.map((resource) => {
           const inputId = `${credential.key}_${resource.key}`;
           return (
-            <div key={resource.key} className="grid grid-cols-[150px,1fr] items-center gap-3">
+            <div key={resource.key} className="grid grid-cols-[150px_1fr] items-center gap-3">
               <label
                 htmlFor={inputId}
                 className="text-foreground-600 font-medium inline-flex items-center gap-1 text-xs whitespace-nowrap"
@@ -238,7 +238,7 @@ function PushResources({ credential, integrationId }: { credential: IConfigCrede
               </label>
               <div className="flex items-center gap-2">
                 <Input
-                  className="cursor-default font-mono !text-neutral-500"
+                  className="cursor-default font-mono text-neutral-500!"
                   id={inputId}
                   value={resource.value}
                   type="text"

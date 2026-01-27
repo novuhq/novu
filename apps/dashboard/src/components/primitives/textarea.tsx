@@ -20,17 +20,17 @@ const Textarea = React.forwardRef<
       className={cn(
         [
           // base
-          'text-paragraph-xs text-text-strong block w-full resize-none outline-none',
+          'text-paragraph-xs text-text-strong block w-full resize-none outline-hidden',
           !simple && ['pointer-events-auto h-full min-h-[82px] bg-transparent pl-3 pr-2.5 pt-2.5'],
           simple && [
             'bg-bg-white shadow-regular-xs min-h-28 rounded-xl px-3 py-2.5',
             'ring-stroke-soft ring-1 ring-inset',
             'transition duration-200 ease-out',
             // hover
-            'hover:[&:not(:focus)]:bg-bg-weak',
+            'hover:not-focus:bg-bg-weak',
             !hasError && [
               // hover
-              'hover:[&:not(:focus)]:ring-transparent',
+              'hover:not-focus:ring-transparent',
               // focus
               'focus:border-stroke-soft focus:ring-stroke-soft/50 focus:ring-[3px]',
             ],
@@ -50,7 +50,7 @@ const Textarea = React.forwardRef<
             // hover placeholder
             'group-hover/textarea:placeholder:text-text-sub',
             // focus
-            'focus:outline-none',
+            'focus:outline-hidden',
             // focus placeholder
             'focus:placeholder:text-text-sub',
           ],
@@ -114,7 +114,7 @@ const TextareaRoot = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             'ring-stroke-soft ring-1 ring-inset',
             'transition duration-200 ease-out',
             // hover
-            'hover:[&:not(:focus-within)]:bg-bg-weak',
+            'hover:not-focus-within:bg-bg-weak',
             // disabled
             'has-[[disabled]]:bg-bg-weak has-[[disabled]]:pointer-events-none has-[[disabled]]:ring-transparent',
             // aria-invalid

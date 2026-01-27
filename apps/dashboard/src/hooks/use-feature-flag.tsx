@@ -3,6 +3,10 @@ import { useFlags } from 'launchdarkly-react-client-sdk';
 import { IS_ENTERPRISE, IS_SELF_HOSTED, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 
 function isLaunchDarklyEnabled() {
+  if (!!LAUNCH_DARKLY_CLIENT_SIDE_ID && IS_ENTERPRISE) {
+    return true;
+  }
+
   return !!LAUNCH_DARKLY_CLIENT_SIDE_ID && !(IS_SELF_HOSTED && IS_ENTERPRISE);
 }
 

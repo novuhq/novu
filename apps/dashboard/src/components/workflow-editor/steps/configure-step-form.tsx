@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
   EnvironmentTypeEnum,
   IEnvironment,
@@ -150,10 +150,10 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     [step, registerInlineControlValues]
   );
 
-  const form = useForm<z.infer<typeof stepSchema>>({
+  const form = useForm({
     defaultValues,
     shouldFocusError: false,
-    resolver: zodResolver(stepSchema),
+    resolver: standardSchemaResolver(stepSchema),
   });
 
   const { onBlur, saveForm } = useFormAutosave({
@@ -377,11 +377,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                 description={
                   <>
                     You're about to delete the{' '}
-                    <TruncatedText className="max-w-[32ch] font-bold">{step.name}</TruncatedText> step, this action is
-                    permanent.
+                    <TruncatedText className="max-w-[32ch] font-semibold">{step.name}</TruncatedText> step, this action
+                    is permanent.
                   </>
                 }
                 confirmButtonText="Delete"
+                confirmButtonVariant="error"
               />
               <Button
                 variant="error"

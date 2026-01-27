@@ -14,8 +14,14 @@ type IntegrationSheetProps = {
 };
 
 export function IntegrationSheet({ isOpened, onClose, provider, mode, step, onBack, children }: IntegrationSheetProps) {
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
+    }
+  };
+
   return (
-    <Sheet open={isOpened} onOpenChange={onClose}>
+    <Sheet open={isOpened} onOpenChange={handleOpenChange}>
       <SheetContent className={`w-auto min-w-[460px] flex-col`}>
         <IntegrationSheetHeader provider={provider} mode={mode} step={step} onBack={onBack} />
         {children}

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '@novu/application-generic';
-import { PreferenceLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
+import { FeatureFlagsService, GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '@novu/application-generic';
+import { ContextRepository } from '@novu/dal';
+import { ContextPayload, FeatureFlagsKeysEnum, PreferenceLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
 import { plainToInstance } from 'class-transformer';
 import { UpdatePreferencesCommand } from '../../../inbox/usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../../../inbox/usecases/update-preferences/update-preferences.usecase';
@@ -13,10 +14,14 @@ export class UpdateSubscriberPreferences {
   constructor(
     private updatePreferencesUsecase: UpdatePreferences,
     private getSubscriberPreferences: GetSubscriberPreferences,
-    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase
+    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
+    private contextRepository: ContextRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   async execute(command: UpdateSubscriberPreferencesCommand): Promise<GetSubscriberPreferencesDto> {
+    const contextKeys = await this.resolveContexts(command.environmentId, command.organizationId, command.context);
+
     let workflowId: string | undefined;
     if (command.workflowIdOrInternalId) {
       const workflowEntity = await this.getWorkflowByIdsUseCase.execute(
@@ -39,6 +44,7 @@ export class UpdateSubscriberPreferences {
         includeInactiveChannels: false,
         ...command.channels,
         schedule: command.schedule,
+        contextKeys,
       })
     );
 
@@ -47,11 +53,41 @@ export class UpdateSubscriberPreferences {
       organizationId: command.organizationId,
       subscriberId: command.subscriberId,
       criticality: WorkflowCriticalityEnum.NON_CRITICAL,
+      contextKeys,
     });
 
     return plainToInstance(GetSubscriberPreferencesDto, {
       global: subscriberPreferences.global,
       workflows: subscriberPreferences.workflows,
     });
+  }
+
+  private async resolveContexts(
+    environmentId: string,
+    organizationId: string,
+    context?: ContextPayload
+  ): Promise<string[] | undefined> {
+    // Check if context preferences feature is enabled
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!isEnabled) {
+      return undefined; // Ignore context when FF is off
+    }
+
+    if (!context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      environmentId,
+      organizationId,
+      context
+    );
+
+    return contexts.map((ctx) => ctx.key);
   }
 }

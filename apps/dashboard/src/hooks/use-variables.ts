@@ -18,7 +18,7 @@ type SelectedVariable = {
  * 3. Handles proper Liquid syntax maintenance
  * 4. Manages cursor position and editor state updates
  */
-export function useVariables(viewRef: React.RefObject<EditorView>, onChange: (value: string) => void) {
+export function useVariables(viewRef: React.RefObject<EditorView | null>, onChange: (value: string) => void) {
   const [selectedVariable, setSelectedVariable] = useState<SelectedVariable | null>(null);
   const isUpdatingRef = useRef(false);
   const onChangeRef = useDataRef(onChange);

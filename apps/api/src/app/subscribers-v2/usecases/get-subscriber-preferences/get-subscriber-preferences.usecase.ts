@@ -41,6 +41,7 @@ export class GetSubscriberPreferences {
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         includeInactiveChannels: false,
+        contextKeys: command.contextKeys,
       })
     );
 
@@ -57,6 +58,7 @@ export class GetSubscriberPreferences {
         organizationId: command.organizationId,
         includeInactiveChannels: false,
         criticality: command.criticality ?? WorkflowCriticalityEnum.NON_CRITICAL,
+        contextKeys: command.contextKeys,
       })
     );
 
@@ -72,6 +74,7 @@ export class GetSubscriberPreferences {
       enabled: preference.enabled,
       channels: preference.channels,
       overrides: preference.overrides,
+      updatedAt: preference.updatedAt,
       workflow: {
         slug: buildSlug(template.name, ShortIsPrefixEnum.WORKFLOW, template._id),
         identifier: template.triggers[0].identifier,

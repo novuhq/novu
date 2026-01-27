@@ -1,4 +1,6 @@
+/** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
 import { IEnvironment } from '@novu/shared';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { useState } from 'react';
 import { RiAlertFill } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
@@ -54,49 +56,58 @@ export const RegenerateApiKeysDialog = ({
     <Dialog modal open={open} onOpenChange={handleOpenChange}>
       <DialogPortal>
         <DialogOverlay />
-        <DialogContent className="overflow-hidden sm:max-w-[480px]">
-          <div className="flex items-start gap-4 self-stretch">
-            <div className="bg-warning/10 flex items-center justify-center gap-2 rounded-[10px] p-2">
-              <RiAlertFill className="text-warning size-6" />
+        <DialogContent className="max-w-[440px] gap-4 rounded-xl! p-4 overflow-hidden" hideCloseButton>
+          <div className="flex items-start justify-between">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-warning/10">
+              <RiAlertFill className="size-6 text-warning" />
             </div>
-            <div className="flex flex-1 flex-col items-start gap-3">
-              <DialogTitle className="text-md font-medium">Regenerate API Keys</DialogTitle>
-              <DialogDescription className="text-foreground-600 space-y-3">
-                <p>
-                  This action will invalidate all existing API keys for the{' '}
-                  <span className="text-foreground-950 font-semibold">{environment.name}</span> environment.
-                </p>
-                <p className="text-sm">
-                  All applications using the current keys will need to be updated with the new keys immediately after
-                  regeneration.
-                </p>
-              </DialogDescription>
-
-              <div className="w-full space-y-2">
-                <label htmlFor="environment-confirmation" className="text-foreground-700 text-sm font-medium">
-                  Type <span className="text-foreground-950 font-semibold">{environment.name}</span> to confirm
-                </label>
-                <Input
-                  id="environment-confirmation"
-                  placeholder={`Enter "${environment.name}" to confirm`}
-                  value={environmentName}
-                  onChange={(e) => setEnvironmentName(e.target.value)}
-                  autoFocus
-                  autoComplete="off"
-                  className="font-mono"
-                />
-              </div>
-            </div>
+            <DialogClose>
+              <Cross2Icon className="size-4" />
+              <span className="sr-only">Close</span>
+            </DialogClose>
           </div>
 
-          <DialogFooter className="gap-3">
+          <div className="flex flex-col gap-1">
+            <DialogTitle className="text-md font-medium">Regenerate API Keys</DialogTitle>
+            <DialogDescription className="text-foreground-600 space-y-3">
+              <p>
+                This action will invalidate all existing API keys for the{' '}
+                <span className="font-semibold">{environment.name}</span> environment.
+              </p>
+              <p className="text-sm">
+                All applications using the current keys will need to be updated with the new keys immediately after
+                regeneration.
+              </p>
+            </DialogDescription>
+          </div>
+
+          <div className="w-full space-y-2">
+            <label htmlFor="environment-confirmation" className="text-foreground-700 text-sm font-medium">
+              Type <span className="font-semibold">{environment.name}</span> to confirm
+            </label>
+            <Input
+              id="environment-confirmation"
+              placeholder={`Enter "${environment.name}" to confirm`}
+              value={environmentName}
+              onChange={(e) => setEnvironmentName(e.target.value)}
+              autoFocus
+              autoComplete="off"
+              className="font-mono"
+            />
+          </div>
+
+          <DialogFooter>
             <DialogClose asChild aria-label="Close">
               <Button
                 type="button"
                 size="sm"
                 mode="outline"
                 variant="secondary"
-                onClick={() => handleOpenChange(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleOpenChange(false);
+                }}
               >
                 Cancel
               </Button>
@@ -106,7 +117,11 @@ export const RegenerateApiKeysDialog = ({
               type="button"
               size="sm"
               variant="error"
-              onClick={handleConfirm}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleConfirm();
+              }}
               isLoading={isLoading}
               disabled={isConfirmDisabled}
             >

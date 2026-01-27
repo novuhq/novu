@@ -233,6 +233,7 @@ export * from './subscriberpreferencesworkflowinfodto.js';
 export * from './subscriberresponsedto.js';
 export * from './subscriberresponsedtooptional.js';
 export * from './subscriberworkflowpreferencedto.js';
+export * from './subscriptiondetailsresponsedto.js';
 export * from './subscriptiondto.js';
 export * from './subscriptionerrordto.js';
 export * from './subscriptionpreferencedto.js';

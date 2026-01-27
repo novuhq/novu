@@ -28,7 +28,7 @@ export function UserProfile() {
         appearance={{
           elements: {
             avatarBox: 'h-6 w-6',
-            userButtonTrigger: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            userButtonTrigger: 'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
           },
         }}
       >
@@ -49,7 +49,7 @@ export function UserProfile() {
         appearance={{
           elements: {
             avatarBox: 'h-6 w-6',
-            userButtonTrigger: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            userButtonTrigger: 'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring',
           },
         }}
       ></UserButton>

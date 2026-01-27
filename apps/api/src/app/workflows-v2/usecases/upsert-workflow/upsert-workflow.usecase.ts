@@ -16,6 +16,7 @@ import {
 import {
   ClientSession,
   ControlSchemas,
+  ControlValuesEntity,
   ControlValuesRepository,
   NotificationGroupRepository,
   NotificationStepEntity,
@@ -144,9 +145,6 @@ export class UpsertWorkflowUseCase {
     const isWorkflowActive = workflowDto?.active ?? true;
     const notificationGroupId = await this.getNotificationGroup(command.user.environmentId, command.session);
 
-    if (!notificationGroupId) {
-      throw new BadRequestException('Notification group not found');
-    }
     const steps = await this.buildSteps(command);
 
     return {
@@ -210,64 +208,95 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand,
     existingWorkflow?: NotificationTemplateEntity
   ): Promise<NotificationStep[]> {
-    const steps: NotificationStep[] = [];
+    const {
+      user,
+      workflowDto: { origin: workflowOrigin },
+    } = command;
 
-    // Build optimistic step information for sync scenarios
-    const optimisticSteps = command.workflowDto.steps.map((step, index) => ({
-      stepId: step.stepId || this.generateUniqueStepId(step, steps.slice(0, index)),
-      type: step.type,
-    }));
+    let preloadedControlValues: ControlValuesEntity[] | undefined;
+    if (existingWorkflow) {
+      preloadedControlValues = await this.controlValuesRepository.find(
+        {
+          _environmentId: user.environmentId,
+          _organizationId: user.organizationId,
+          _workflowId: existingWorkflow._id,
+          level: ControlValuesLevelEnum.STEP_CONTROLS,
+          controls: { $ne: null },
+        },
+        {
+          controls: 1,
+          _stepId: 1,
+          _id: 0,
+        }
+      );
+    }
+
+    const tempSteps: NotificationStep[] = [];
+    const stepIds: string[] = [];
 
     for (const step of command.workflowDto.steps) {
       const existingStep: NotificationStepEntity | null | undefined =
         '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
-      const {
-        user,
-        workflowDto: { origin: workflowOrigin },
-      } = command;
-
-      const controlSchemas: ControlSchemas = existingStep?.template?.controls || stepTypeToControlSchema[step.type];
-      const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({
-        workflowOrigin,
-        user,
-        stepInternalId: existingStep?._id,
-        workflow: existingWorkflow,
-        stepType: step.type,
-        controlSchema: controlSchemas.schema,
-        controlsDto: step.controlValues,
-        optimisticSteps, // Pass optimistic steps for variable schema building
-      });
-
       const updateStepId = existingStep?.stepId;
       const syncToEnvironmentCreateStepId = step.stepId;
-      const finalStep = {
-        template: {
-          type: step.type,
-          name: step.name,
-          controls: controlSchemas,
-          content: '',
-        },
-        stepId:
-          updateStepId ||
-          syncToEnvironmentCreateStepId ||
-          this.generateUniqueStepId(step, existingWorkflow ? existingWorkflow.steps : steps),
-        name: step.name,
-        issues,
-      };
+      const generatedStepId =
+        updateStepId ||
+        syncToEnvironmentCreateStepId ||
+        this.generateUniqueStepId(step, existingWorkflow ? existingWorkflow.steps : tempSteps);
 
-      if (existingStep) {
-        Object.assign(finalStep, {
-          _id: existingStep._templateId,
-          _templateId: existingStep._templateId,
-          template: { ...finalStep.template, _id: existingStep._templateId },
-        });
-      }
-
-      steps.push(finalStep);
+      stepIds.push(generatedStepId);
+      tempSteps.push({ stepId: generatedStepId } as NotificationStep);
     }
 
-    return steps;
+    const optimisticSteps = command.workflowDto.steps.map((step, index) => ({
+      stepId: stepIds[index],
+      type: step.type,
+    }));
+
+    const stepsWithIssues = await Promise.all(
+      command.workflowDto.steps.map(async (step, index) => {
+        const existingStep: NotificationStepEntity | null | undefined =
+          '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
+
+        const controlSchemas: ControlSchemas = existingStep?.template?.controls || stepTypeToControlSchema[step.type];
+        const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({
+          workflowOrigin,
+          user,
+          stepInternalId: existingStep?._id,
+          workflow: existingWorkflow,
+          stepType: step.type,
+          controlSchema: controlSchemas.schema,
+          controlsDto: step.controlValues,
+          optimisticSteps,
+          preloadedControlValues,
+        });
+
+        const finalStep = {
+          template: {
+            type: step.type,
+            name: step.name,
+            controls: controlSchemas,
+            content: '',
+          },
+          stepId: stepIds[index],
+          name: step.name,
+          issues,
+        };
+
+        if (existingStep) {
+          Object.assign(finalStep, {
+            _id: existingStep._templateId,
+            _templateId: existingStep._templateId,
+            template: { ...finalStep.template, _id: existingStep._templateId },
+          });
+        }
+
+        return finalStep;
+      })
+    );
+
+    return stepsWithIssues;
   }
 
   @Instrument()

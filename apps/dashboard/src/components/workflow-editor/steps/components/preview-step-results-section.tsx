@@ -95,12 +95,12 @@ export function PreviewStepResultsSection({
                       className="flex w-full items-center gap-2 py-1.5 transition-colors hover:bg-neutral-50"
                     >
                       <div className="flex flex-1 items-center gap-2">
-                        <StepIcon className="h-3 w-3 flex-shrink-0 text-neutral-300" />
+                        <StepIcon className="h-3 w-3 shrink-0 text-neutral-300" />
                         <span className="text-label-2xs text-left font-medium">{stepName}</span>
                         {isCurrentStep && <span className="text-label-2xs text-neutral-500">(current step)</span>}
                         <div className="border-soft mx-2 flex-1 border-t" />
                       </div>
-                      <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+                      <div className="flex h-4 w-4 shrink-0 items-center justify-center">
                         {isOpen ? (
                           <RiContractUpDownLine className="h-3 w-3 text-neutral-400" />
                         ) : (
@@ -120,7 +120,7 @@ export function PreviewStepResultsSection({
                           {stepType === 'digest' && (
                             <div className="pt-2">
                               <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-                                <RiInformation2Line className="h-3 w-3 flex-shrink-0" />
+                                <RiInformation2Line className="h-3 w-3 shrink-0" />
                                 <span>
                                   Event count and events array are synchronized automatically. The event payload is
                                   originating from the workflow trigger payload.

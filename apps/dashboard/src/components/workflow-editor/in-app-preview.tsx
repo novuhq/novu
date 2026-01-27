@@ -18,7 +18,7 @@ export const InAppPreviewBell = (props: InAppPreviewBellProps) => {
     <div className={cn('flex items-center justify-end p-2 text-neutral-300', className)} {...rest}>
       <span className="relative rounded-lg bg-neutral-50 p-1">
         <InboxBell className="relative size-5" />
-        <div className="bg-primary border-background absolute right-1 top-1 h-2 w-2 translate-y-[1px] rounded-full border border-solid" />
+        <div className="bg-primary border-background absolute right-1 top-1 h-2 w-2 translate-y-px rounded-full border border-solid" />
       </span>
     </div>
   );
@@ -216,8 +216,16 @@ const Markdown = (props: MarkdownProps) => {
   return (
     <p {...rest}>
       {tokens.map((token, index) => {
-        if (token.type === 'bold') {
+        if (token.type === 'boldItalic') {
+          return (
+            <strong key={index}>
+              <em>{token.content}</em>
+            </strong>
+          );
+        } else if (token.type === 'bold') {
           return <strong key={index}>{token.content}</strong>;
+        } else if (token.type === 'italic') {
+          return <em key={index}>{token.content}</em>;
         } else {
           return <span key={index}>{token.content}</span>;
         }

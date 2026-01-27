@@ -1,5 +1,5 @@
 import {
-  AnalyticsService,
+  FeatureFlagsService,
   GetSubscriberTemplatePreference,
   GetWorkflowByIdsUseCase,
   SendWebhookMessage,
@@ -48,7 +48,6 @@ const mockedWorkflow: any = {
 describe('UpdatePreferences', () => {
   let updatePreferences: UpdatePreferences;
   let subscriberRepositoryMock: sinon.SinonStubbedInstance<SubscriberRepository>;
-  let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
   let getSubscriberTemplatePreferenceUsecase: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
   let upsertPreferencesMock: sinon.SinonStubbedInstance<UpsertPreferences>;
@@ -56,9 +55,9 @@ describe('UpdatePreferences', () => {
   let sendWebhookMessageMock: sinon.SinonStubbedInstance<SendWebhookMessage>;
   let topicSubscribersRepositoryMock: sinon.SinonStubbedInstance<TopicSubscribersRepository>;
   let preferencesRepositoryMock: sinon.SinonStubbedInstance<PreferencesRepository>;
+  let featureFlagsServiceMock: sinon.SinonStubbedInstance<FeatureFlagsService>;
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
-    analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
     getSubscriberTemplatePreferenceUsecase = sinon.createStubInstance(GetSubscriberTemplatePreference);
     upsertPreferencesMock = sinon.createStubInstance(UpsertPreferences);
@@ -66,17 +65,18 @@ describe('UpdatePreferences', () => {
     sendWebhookMessageMock = sinon.createStubInstance(SendWebhookMessage);
     topicSubscribersRepositoryMock = sinon.createStubInstance(TopicSubscribersRepository);
     preferencesRepositoryMock = sinon.createStubInstance(PreferencesRepository);
+    featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
 
     updatePreferences = new UpdatePreferences(
       subscriberRepositoryMock as any,
-      analyticsServiceMock as any,
       getSubscriberGlobalPreferenceMock as any,
       getSubscriberTemplatePreferenceUsecase as any,
       upsertPreferencesMock as any,
       getWorkflowByIdsUsecase as any,
       sendWebhookMessageMock as any,
       topicSubscribersRepositoryMock as any,
-      preferencesRepositoryMock as any
+      preferencesRepositoryMock as any,
+      featureFlagsServiceMock as any
     );
   });
 
@@ -109,6 +109,7 @@ describe('UpdatePreferences', () => {
       environmentId: 'env-1',
       organizationId: 'org-1',
       subscriberId: 'test-mockSubscriber',
+      contextKeys: [],
       level: PreferenceLevelEnum.GLOBAL,
       chat: true,
       includeInactiveChannels: false,
@@ -125,6 +126,7 @@ describe('UpdatePreferences', () => {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         subscriberId: mockedSubscriber.subscriberId,
+        contextKeys: [],
         includeInactiveChannels: false,
       }),
     ]);

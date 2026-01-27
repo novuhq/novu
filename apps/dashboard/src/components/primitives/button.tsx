@@ -15,17 +15,17 @@ export const buttonVariants = tv({
   slots: {
     root: [
       // base
-      'group select-none relative inline-flex items-center justify-center whitespace-nowrap outline-none',
+      'group select-none relative inline-flex items-center justify-center whitespace-nowrap outline-hidden',
       'transition duration-200 ease-out',
       // focus
-      'focus:outline-none',
+      'focus:outline-hidden',
       // disabled
       'disabled:pointer-events-none [&:disabled:not(.loading)]:bg-bg-weak [&:disabled:not(.loading)]:text-text-disabled [&:disabled:not(.loading)]:ring-transparent',
     ],
     icon: [
       // base
       'flex size-5 shrink-0 items-center justify-center transition-transform duration-200',
-      '[&.arrow-right-hover-animation]:group-hover:translate-x-0.5',
+      'group-hover:[&.arrow-right-hover-animation]:translate-x-0.5',
     ],
   },
   variants: {
@@ -341,7 +341,7 @@ const ButtonRoot = React.forwardRef<HTMLButtonElement, ButtonRootProps>(
       >
         {extendedChildren}
         {isLoading && (
-          <div className="animate-in zoom-in-50 fade-in absolute inset-0 flex w-full items-center justify-center rounded-lg text-current backdrop-blur duration-300">
+          <div className="animate-in zoom-in-50 fade-in absolute inset-0 flex w-full items-center justify-center rounded-lg text-current backdrop-blur-sm duration-300">
             <RiLoader4Line className="size-4 animate-spin" />
           </div>
         )}

@@ -5,28 +5,29 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  QueryFunctionContext,
-  QueryKey,
   useQuery,
   UseQueryResult,
   useSuspenseQuery,
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
-import { NovuCore } from "../core.js";
-import { environmentsGetTags } from "../funcs/environmentsGetTags.js";
-import { combineSignals } from "../lib/primitives.js";
-import { RequestOptions } from "../lib/sdks.js";
-import * as operations from "../models/operations/index.js";
-import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import {
   QueryHookOptions,
   SuspenseQueryHookOptions,
   TupleToPrefixes,
 } from "./_types.js";
-
-export type EnvironmentsGetTagsQueryData =
-  operations.EnvironmentsControllerGetEnvironmentTagsResponse;
+import {
+  buildEnvironmentsGetTagsQuery,
+  EnvironmentsGetTagsQueryData,
+  prefetchEnvironmentsGetTags,
+  queryKeyEnvironmentsGetTags,
+} from "./environmentsGetTags.core.js";
+export {
+  buildEnvironmentsGetTagsQuery,
+  type EnvironmentsGetTagsQueryData,
+  prefetchEnvironmentsGetTags,
+  queryKeyEnvironmentsGetTags,
+};
 
 /**
  * Get environment tags
@@ -74,21 +75,6 @@ export function useEnvironmentsGetTagsSuspense(
   });
 }
 
-export function prefetchEnvironmentsGetTags(
-  queryClient: QueryClient,
-  client$: NovuCore,
-  environmentId: string,
-  idempotencyKey?: string | undefined,
-): Promise<void> {
-  return queryClient.prefetchQuery({
-    ...buildEnvironmentsGetTagsQuery(
-      client$,
-      environmentId,
-      idempotencyKey,
-    ),
-  });
-}
-
 export function setEnvironmentsGetTagsData(
   client: QueryClient,
   queryKeyBase: [
@@ -123,43 +109,4 @@ export function invalidateAllEnvironmentsGetTags(
     ...filters,
     queryKey: ["@novu/api", "Environments", "getTags"],
   });
-}
-
-export function buildEnvironmentsGetTagsQuery(
-  client$: NovuCore,
-  environmentId: string,
-  idempotencyKey?: string | undefined,
-  options?: RequestOptions,
-): {
-  queryKey: QueryKey;
-  queryFn: (
-    context: QueryFunctionContext,
-  ) => Promise<EnvironmentsGetTagsQueryData>;
-} {
-  return {
-    queryKey: queryKeyEnvironmentsGetTags(environmentId, { idempotencyKey }),
-    queryFn: async function environmentsGetTagsQueryFn(
-      ctx,
-    ): Promise<EnvironmentsGetTagsQueryData> {
-      const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
-      const mergedOptions = {
-        ...options,
-        fetchOptions: { ...options?.fetchOptions, signal: sig },
-      };
-
-      return unwrapAsync(environmentsGetTags(
-        client$,
-        environmentId,
-        idempotencyKey,
-        mergedOptions,
-      ));
-    },
-  };
-}
-
-export function queryKeyEnvironmentsGetTags(
-  environmentId: string,
-  parameters: { idempotencyKey?: string | undefined },
-): QueryKey {
-  return ["@novu/api", "Environments", "getTags", environmentId, parameters];
 }

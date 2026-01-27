@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export function useHideRootNode(containerRef: React.RefObject<HTMLDivElement>, value: unknown) {
+export function useHideRootNode(containerRef: React.RefObject<HTMLDivElement | null>, value: unknown) {
   useEffect(() => {
     const hideRootNodeName = () => {
       const keyTextElements = containerRef.current?.querySelectorAll('.jer-key-text');

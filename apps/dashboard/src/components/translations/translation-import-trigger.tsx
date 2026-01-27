@@ -1,4 +1,4 @@
-import { cloneElement, ReactElement, useCallback, useRef } from 'react';
+import { cloneElement, MouseEventHandler, ReactElement, useCallback, useRef } from 'react';
 import { useUploadTranslations } from '@/hooks/use-upload-translations';
 import { TranslationResource } from '@/types/translations';
 import { ACCEPTED_FILE_EXTENSION } from './constants';
@@ -33,7 +33,7 @@ export function TranslationImportTrigger({ resource, onSuccess, children }: Tran
     [uploadMutation, resource]
   );
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
+  const handleClick = useCallback<React.MouseEventHandler<HTMLElement>>((e) => {
     e.stopPropagation();
     fileInputRef.current?.click();
   }, []);
@@ -53,7 +53,7 @@ export function TranslationImportTrigger({ resource, onSuccess, children }: Tran
         isUploading: uploadMutation.isPending,
         uploadSuccess: uploadMutation.isSuccess,
         uploadError: uploadMutation.isError,
-      })}
+      } as React.HTMLAttributes<HTMLElement>)}
     </>
   );
 }

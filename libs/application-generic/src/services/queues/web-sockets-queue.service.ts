@@ -37,13 +37,22 @@ export class WebSocketsQueueService extends QueueBaseService {
       });
 
       Logger.debug(`Sent message directly to socket worker for user ${userId}, event ${event}`, LOG_CONTEXT);
+
+      const isLegacyWsDisabled = await this.socketWorkerService.isLegacyWsDisabled(
+        data.data._environmentId,
+        data.data._organizationId
+      );
+      if (isLegacyWsDisabled) {
+        Logger.debug(`Legacy WS service is disabled, skipping queue push for user ${userId}`, LOG_CONTEXT);
+
+        return;
+      }
     }
 
     return await super.add(data);
   }
 
   public async addBulk(data: IWebSocketBulkJobDto[]): Promise<void> {
-    // Check if socket worker is enabled using the first item's context
     const firstItem = data.find((item) => item.data);
     const isSocketWorkerEnabled = firstItem
       ? await this.socketWorkerService.isEnabled(firstItem.data?._environmentId)
@@ -69,6 +78,16 @@ export class WebSocketsQueueService extends QueueBaseService {
       await Promise.all(promises);
 
       Logger.debug(`Sent ${data.length} messages directly to socket worker`, LOG_CONTEXT);
+
+      const isLegacyWsDisabled = await this.socketWorkerService.isLegacyWsDisabled(
+        firstItem?.data?._environmentId,
+        firstItem?.data?._organizationId
+      );
+      if (isLegacyWsDisabled) {
+        Logger.debug(`Legacy WS service is disabled, skipping bulk queue push`, LOG_CONTEXT);
+
+        return;
+      }
     }
 
     await super.addBulk(data);
