@@ -8,8 +8,8 @@
 #   docker compose up -d
 #
 # Access:
-#   Dashboard: http://localhost:4000
-#   API:       http://localhost:3000
+#   Dashboard: http://localhost:3000
+#   API:       http://localhost:3001
 #   WebSocket: http://localhost:3002
 # =============================================================================
 
@@ -95,9 +95,9 @@ services:
     environment:
       # Core Configuration
       NODE_ENV: ${NODE_ENV:-local}
-      PORT: 3000
-      API_ROOT_URL: ${API_ROOT_URL:-http://localhost:3000}
-      FRONT_BASE_URL: ${FRONT_BASE_URL:-http://localhost:4000}
+      PORT: 3001
+      API_ROOT_URL: ${API_ROOT_URL:-http://localhost:3001}
+      FRONT_BASE_URL: ${FRONT_BASE_URL:-http://localhost:3000}
 
       # Database
       MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@mongodb:27017/renovu-db?authSource=admin
@@ -128,6 +128,8 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
 
       # Self-Hosted Mode - Unlocks all features
+      # Note: NOVU_ENTERPRISE=true removed because enterprise packages are empty stubs
+      # All features are already unlocked via modified feature-tiers-constants.ts
       IS_SELF_HOSTED: "true"
       IS_API_IDEMPOTENCY_ENABLED: false
       IS_API_RATE_LIMITING_ENABLED: false
@@ -138,14 +140,14 @@ services:
       SENTRY_DSN: ${SENTRY_DSN:-}
       NEW_RELIC_ENABLED: false
     ports:
-      - "${API_PORT:-3000}:3000"
+      - "${API_PORT:-3001}:3001"
     networks:
       - renovu-network
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:3000/v1/health-check || exit 1",
+          "wget --no-verbose --tries=1 --spider http://localhost:3001/v1/health-check || exit 1",
         ]
       interval: 20s
       timeout: 10s
@@ -176,7 +178,7 @@ services:
       # Core Configuration
       NODE_ENV: ${NODE_ENV:-local}
       PORT: 3004
-      API_ROOT_URL: http://api:3000
+      API_ROOT_URL: http://api:3001
 
       # Database
       MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@mongodb:27017/renovu-db?authSource=admin
@@ -305,14 +307,14 @@ services:
       worker:
         condition: service_healthy
     environment:
-      VITE_API_HOSTNAME: ${VITE_API_HOSTNAME:-http://localhost:3000}
+      VITE_API_HOSTNAME: ${VITE_API_HOSTNAME:-http://localhost:3001}
       VITE_SELF_HOSTED: true
       VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME:-http://localhost:3002}
       VITE_LEGACY_DASHBOARD_URL: ""
       VITE_CLERK_PUBLISHABLE_KEY: ""
       VITE_IS_EE: false
     ports:
-      - "${DASHBOARD_PORT:-4000}:4000"
+      - "${DASHBOARD_PORT:-3000}:4000"
     networks:
       - renovu-network
     healthcheck:

@@ -23,7 +23,6 @@ COPY tsconfig.json .
 COPY apps/ws ./apps/ws
 COPY libs ./libs
 COPY packages ./packages
-COPY enterprise ./enterprise
 
 # Install dependencies
 RUN --mount=type=cache,id=pnpm-store-ws,target=/root/.pnpm-store \
@@ -47,7 +46,6 @@ WORKDIR /usr/src/app
 COPY --chown=1000:1000 --from=builder /usr/src/app/node_modules ./node_modules
 COPY --chown=1000:1000 --from=builder /usr/src/app/packages ./packages
 COPY --chown=1000:1000 --from=builder /usr/src/app/libs ./libs
-COPY --chown=1000:1000 --from=builder /usr/src/app/enterprise ./enterprise
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/ws/node_modules ./apps/ws/node_modules
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/ws/dist ./apps/ws/dist
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/ws/package.json ./apps/ws/package.json

@@ -26,7 +26,6 @@ COPY tsconfig.json .
 COPY apps/api ./apps/api
 COPY libs ./libs
 COPY packages ./packages
-COPY enterprise ./enterprise
 
 # Install dependencies
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store \
@@ -57,7 +56,6 @@ WORKDIR /usr/src/app
 COPY --chown=1000:1000 --from=builder /usr/src/app/node_modules ./node_modules
 COPY --chown=1000:1000 --from=builder /usr/src/app/packages ./packages
 COPY --chown=1000:1000 --from=builder /usr/src/app/libs ./libs
-COPY --chown=1000:1000 --from=builder /usr/src/app/enterprise ./enterprise
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/api/node_modules ./apps/api/node_modules
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/api/dist ./apps/api/dist
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/api/package.json ./apps/api/package.json
@@ -66,6 +64,6 @@ WORKDIR /usr/src/app/apps/api
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["pm2-runtime", "start", "dist/main.js", "-i", "max"]

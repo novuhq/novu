@@ -1,9 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="RUN LOCAL ENV" type="CompoundRunConfigurationType">
-    <toRun name="API" type="js.build_tools.npm" />
-    <toRun name="WORKER" type="js.build_tools.npm" />
-    <toRun name="WS" type="js.build_tools.npm" />
-    <toRun name="start:dashboard" type="js.build_tools.npm" />
-    <method v="2" />
-  </configuration>
-</component>

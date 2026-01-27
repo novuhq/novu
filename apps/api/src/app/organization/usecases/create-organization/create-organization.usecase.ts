@@ -27,9 +27,9 @@ export class CreateOrganization {
     if (!user) throw new BadRequestException('User not found');
 
     const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const defaultApiServiceLevel =
-      isSelfHosted && isEnterprise ? ApiServiceLevelEnum.UNLIMITED : ApiServiceLevelEnum.FREE;
+    // ReNovu: Self-hosted deployments get UNLIMITED tier without requiring NOVU_ENTERPRISE
+    // Enterprise packages are not available, but feature-tiers-constants.ts unlocks all features
+    const defaultApiServiceLevel = isSelfHosted ? ApiServiceLevelEnum.UNLIMITED : ApiServiceLevelEnum.FREE;
 
     const createdOrganization = await this.organizationRepository.create({
       logo: command.logo,
@@ -37,6 +37,8 @@ export class CreateOrganization {
       apiServiceLevel: command.apiServiceLevel || defaultApiServiceLevel,
       domain: command.domain,
       language: command.language,
+      // ReNovu: Auto-remove Novu branding for self-hosted deployments
+      removeNovuBranding: isSelfHosted ? true : undefined,
     });
 
     if (command.jobTitle) {

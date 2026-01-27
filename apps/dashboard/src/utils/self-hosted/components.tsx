@@ -47,7 +47,38 @@ export function SignIn() {
       }
 
       if (data.data.token) {
-        localStorage.setItem(JWT_STORAGE_KEY, data.data.token);
+        let token = data.data.token;
+
+        // Check if user has an organization
+        const payload = JSON.parse(atob(token.split('.')[1]));
+
+        if (!payload.organizationId) {
+          // Auto-create organization for user
+          const orgResponse = await fetch(`${API_HOSTNAME}/v1/organizations`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ name: `${payload.firstName || 'My'}'s Organization` }),
+          });
+
+          if (orgResponse.ok) {
+            // Re-login to get token with organizationId
+            const reloginResponse = await fetch(`${API_HOSTNAME}/v1/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password }),
+            });
+
+            if (reloginResponse.ok) {
+              const reloginData = await reloginResponse.json();
+              token = reloginData.data.token;
+            }
+          }
+        }
+
+        localStorage.setItem(JWT_STORAGE_KEY, token);
         (window as any).Clerk = { ...((window as any).Clerk || {}), loggedIn: true };
         navigate('/');
       } else {
