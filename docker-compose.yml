@@ -1,0 +1,348 @@
+# =============================================================================
+# ReNovu - Self-Hosted Notification Platform
+# =============================================================================
+# Standalone self-hosted deployment with all enterprise features unlocked.
+# Builds from source to include custom modifications.
+#
+# Usage:
+#   docker compose up -d
+#
+# Access:
+#   Dashboard: http://localhost:4000
+#   API:       http://localhost:3000
+#   WebSocket: http://localhost:3002
+# =============================================================================
+
+name: renovu
+
+services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure - Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: renovu-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - renovu-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # Infrastructure - MongoDB
+  # ---------------------------------------------------------------------------
+  mongodb:
+    image: mongo:8.0
+    container_name: renovu-mongodb
+    restart: unless-stopped
+    environment:
+      PUID: 1000
+      PGID: 1000
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-renovu}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-renovu-dev-password}
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - renovu-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--username",
+          "${MONGO_USER:-renovu}",
+          "--password",
+          "${MONGO_PASSWORD:-renovu-dev-password}",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # API Server (Built from source)
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    image: renovu/api:latest
+    container_name: renovu-api
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Core Configuration
+      NODE_ENV: ${NODE_ENV:-local}
+      PORT: 3000
+      API_ROOT_URL: ${API_ROOT_URL:-http://localhost:3000}
+      FRONT_BASE_URL: ${FRONT_BASE_URL:-http://localhost:4000}
+
+      # Database
+      MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@mongodb:27017/renovu-db?authSource=admin
+      MONGO_MIN_POOL_SIZE: ${MONGO_MIN_POOL_SIZE:-5}
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
+      MONGO_AUTO_CREATE_INDEXES: true
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB_INDEX: 2
+      REDIS_CACHE_SERVICE_HOST: redis
+      REDIS_CACHE_SERVICE_PORT: 6379
+      REDIS_CACHE_PASSWORD: ${REDIS_PASSWORD:-}
+
+      # Security - CHANGE IN PRODUCTION
+      JWT_SECRET: ${JWT_SECRET:-renovu-jwt-secret-change-in-production}
+      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY:-renovu-32char-encryption-key!!!!}
+      NOVU_SECRET_KEY: ${NOVU_SECRET_KEY:-renovu-secret-key-change-in-prod}
+      SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME:-15d}
+
+      # S3/Storage (optional)
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK:-}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-renovu-local}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+
+      # Self-Hosted Mode - Unlocks all features
+      IS_SELF_HOSTED: "true"
+      IS_API_IDEMPOTENCY_ENABLED: false
+      IS_API_RATE_LIMITING_ENABLED: false
+      IS_NEW_MESSAGES_API_RESPONSE_ENABLED: true
+      IS_V2_ENABLED: true
+
+      # Monitoring (optional)
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEW_RELIC_ENABLED: false
+    ports:
+      - "${API_PORT:-3000}:3000"
+    networks:
+      - renovu-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3000/v1/health-check || exit 1",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # Worker (Built from source)
+  # ---------------------------------------------------------------------------
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    image: renovu/worker:latest
+    container_name: renovu-worker
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Core Configuration
+      NODE_ENV: ${NODE_ENV:-local}
+      PORT: 3004
+      API_ROOT_URL: http://api:3000
+
+      # Database
+      MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@mongodb:27017/renovu-db?authSource=admin
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB_INDEX: 2
+      REDIS_CACHE_SERVICE_HOST: redis
+      REDIS_CACHE_SERVICE_PORT: 6379
+      REDIS_CACHE_PASSWORD: ${REDIS_PASSWORD:-}
+
+      # Security
+      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY:-renovu-32char-encryption-key!!!!}
+      SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME:-15d}
+
+      # S3/Storage (optional)
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK:-}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-renovu-local}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+
+      # Self-Hosted Mode
+      IS_SELF_HOSTED: "true"
+
+      # Worker Settings
+      BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE:-100}
+      MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE:-100}
+      IS_EMAIL_INLINE_CSS_DISABLED: false
+      IS_USE_MERGED_DIGEST_ID_ENABLED: false
+
+      # Monitoring (optional)
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEW_RELIC_ENABLED: false
+    networks:
+      - renovu-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3004/v1/health-check || exit 1",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # WebSocket Server (Built from source)
+  # ---------------------------------------------------------------------------
+  ws:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ws
+    image: renovu/ws:latest
+    container_name: renovu-ws
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Core Configuration
+      NODE_ENV: ${NODE_ENV:-local}
+      PORT: 3002
+
+      # Database
+      MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@mongodb:27017/renovu-db?authSource=admin
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-renovu-jwt-secret-change-in-production}
+
+      # Self-Hosted Mode
+      IS_SELF_HOSTED: "true"
+
+      # Monitoring (optional)
+      NEW_RELIC_ENABLED: false
+    ports:
+      - "${WS_PORT:-3002}:3002"
+    networks:
+      - renovu-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3002/v1/health-check || exit 1",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # Dashboard (Built from source with self-hosted fixes)
+  # ---------------------------------------------------------------------------
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+    image: renovu/dashboard:latest
+    container_name: renovu-dashboard
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+    environment:
+      VITE_API_HOSTNAME: ${VITE_API_HOSTNAME:-http://localhost:3000}
+      VITE_SELF_HOSTED: true
+      VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME:-http://localhost:3002}
+      VITE_LEGACY_DASHBOARD_URL: ""
+      VITE_CLERK_PUBLISHABLE_KEY: ""
+      VITE_IS_EE: false
+    ports:
+      - "${DASHBOARD_PORT:-4000}:4000"
+    networks:
+      - renovu-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "const http = require(''http''); const req = http.get({hostname: ''localhost'', port: 4000, path: ''/'', timeout: 5000}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on(''error'', () => process.exit(1)); req.on(''timeout'', () => { req.destroy(); process.exit(1); });"',
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  renovu-network:
+    driver: bridge
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  redis-data:
+    driver: local
+  mongodb-data:
+    driver: local

@@ -1,0 +1,61 @@
+# =============================================================================
+# ReNovu Worker - Self-Hosted Build
+# =============================================================================
+
+FROM node:20-alpine3.20 AS builder
+
+RUN apk add --no-cache g++ make py3-pip bash
+ENV NX_DAEMON=false
+
+WORKDIR /usr/src/app
+
+RUN npm install -g pnpm@10.16.1 --loglevel notice
+
+# Copy package files first for better caching
+COPY .npmrc .
+COPY package.json .
+COPY pnpm-workspace.yaml .
+COPY pnpm-lock.yaml .
+COPY nx.json .
+COPY tsconfig.json .
+
+# Copy source code
+COPY apps/worker ./apps/worker
+COPY libs ./libs
+COPY packages ./packages
+COPY enterprise ./enterprise
+
+# Install dependencies
+RUN --mount=type=cache,id=pnpm-store-worker,target=/root/.pnpm-store \
+    pnpm install --frozen-lockfile --unsafe-perm
+
+# Build Worker
+RUN NODE_ENV=production pnpm build:worker --skip-nx-cache
+
+# =============================================================================
+# Production Stage
+# =============================================================================
+FROM node:20-alpine3.20
+
+RUN apk add --no-cache g++ make py3-pip
+RUN npm install -g pnpm@10.16.1 pm2 --loglevel notice
+
+USER 1000
+WORKDIR /usr/src/app
+
+# Copy all necessary files from builder (including workspace packages)
+COPY --chown=1000:1000 --from=builder /usr/src/app/node_modules ./node_modules
+COPY --chown=1000:1000 --from=builder /usr/src/app/packages ./packages
+COPY --chown=1000:1000 --from=builder /usr/src/app/libs ./libs
+COPY --chown=1000:1000 --from=builder /usr/src/app/enterprise ./enterprise
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/worker/node_modules ./apps/worker/node_modules
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/worker/dist ./apps/worker/dist
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/worker/package.json ./apps/worker/package.json
+
+WORKDIR /usr/src/app/apps/worker
+
+ENV NEW_RELIC_NO_CONFIG_FILE=true
+
+EXPOSE 3004
+
+CMD ["pm2-runtime", "start", "dist/main.js", "-i", "max"]

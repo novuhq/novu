@@ -1,0 +1,67 @@
+# =============================================================================
+# ReNovu Dashboard - Self-Hosted Build
+# =============================================================================
+# Builds the dashboard with self-hosted mode enabled at build time.
+# This ensures Vite's loadEnv() picks up VITE_SELF_HOSTED=true during build.
+# =============================================================================
+
+FROM node:20-alpine3.20 AS builder
+
+RUN apk add g++ make py3-pip bash
+ENV NX_DAEMON=false
+
+WORKDIR /usr/src/app
+
+RUN npm install -g pnpm@10.16.1 --loglevel notice
+
+# Copy package files first for better caching
+COPY .npmrc .
+COPY package.json .
+COPY pnpm-workspace.yaml .
+COPY pnpm-lock.yaml .
+COPY nx.json .
+COPY tsconfig.json .
+
+# Copy source code
+COPY apps/dashboard ./apps/dashboard
+COPY libs ./libs
+COPY packages ./packages
+COPY enterprise ./enterprise
+
+# Install dependencies
+RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store \
+    pnpm install --frozen-lockfile --unsafe-perm
+
+# =============================================================================
+# CRITICAL: Create .env file for Vite build
+# =============================================================================
+# Vite's loadEnv() reads from .env FILES, not OS environment variables.
+# Without this, VITE_SELF_HOSTED won't be set during build, causing the
+# dashboard to use cloud-mode auth (Clerk) instead of self-hosted auth.
+# =============================================================================
+RUN echo "VITE_SELF_HOSTED=true" > /usr/src/app/apps/dashboard/.env
+
+# Build dashboard
+RUN CI='' pnpm build:dashboard --skip-nx-cache
+
+# =============================================================================
+# Production Stage
+# =============================================================================
+FROM node:20-alpine3.20
+
+RUN npm install -g http-server --loglevel notice
+
+USER 1000
+WORKDIR /app
+
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/dist /app/dist
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/package.json /app/package.json
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/docker-entrypoint.sh /app/docker-entrypoint.sh
+
+RUN chmod +x /app/docker-entrypoint.sh
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+
+EXPOSE 4000
+
+CMD ["http-server", "dist", "-p", "4000", "-d", "false", "--proxy", "http://localhost:4000?"]
