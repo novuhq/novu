@@ -1,38 +1,67 @@
-name: novu
-services:
-  redis:
-    image: "redis:alpine"
-    container_name: redis
-    restart: unless-stopped
-    logging:
-      driver: "json-file" # Enabled json-file logging with limits for consistency
-      options:
-        max-size: "50m"
-        max-file: "5"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+# =============================================================================
+# ReNovu Community Edition - Official Novu Images
+# =============================================================================
+# Uses official ghcr.io/novuhq/novu/* images for quick deployment.
+# All ports and URLs are configurable via environment variables.
+#
+# Usage:
+#   docker compose up -d
+#
+# Default Access:
+#   Dashboard: http://localhost:${DASHBOARD_PORT:-4000}
+#   API:       http://localhost:${API_PORT:-3000}
+#   WebSocket: http://localhost:${WS_PORT:-3002}
+#
+# Required Environment Variables (set in .env):
+#   MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD
+#   JWT_SECRET, STORE_ENCRYPTION_KEY, NOVU_SECRET_KEY
+# =============================================================================
 
-  mongodb:
-    image: mongo:8.0.17
-    container_name: mongodb
+name: novu
+
+services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure - Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    container_name: ${REDIS_CONTAINER_NAME:-redis}
     restart: unless-stopped
+    command: redis-server ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     logging:
       driver: "json-file"
       options:
         max-size: "50m"
         max-file: "5"
+    healthcheck:
+      test: ["CMD", "redis-cli", ${REDIS_PASSWORD:+-a $REDIS_PASSWORD}, "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Infrastructure - MongoDB
+  # ---------------------------------------------------------------------------
+  mongodb:
+    image: mongo:8.0
+    container_name: ${MONGO_CONTAINER_NAME:-mongodb}
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      PUID: 1000
+      PGID: 1000
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-novu}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-novu-dev-password}
     volumes:
       - mongodb:/data/db
-    ports:
-      - 27017:27017
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
     healthcheck:
       test:
         [
@@ -40,9 +69,9 @@ services:
           "mongosh",
           "--quiet",
           "--username",
-          "${MONGO_INITDB_ROOT_USERNAME}",
+          "${MONGO_INITDB_ROOT_USERNAME:-novu}",
           "--password",
-          "${MONGO_INITDB_ROOT_PASSWORD}",
+          "${MONGO_INITDB_ROOT_PASSWORD:-novu-dev-password}",
           "--eval",
           "db.adminCommand('ping').ok",
         ]
@@ -51,179 +80,225 @@ services:
       retries: 5
       start_period: 20s
 
+  # ---------------------------------------------------------------------------
+  # API Server (Official Novu Image)
+  # ---------------------------------------------------------------------------
   api:
-    image: "ghcr.io/novuhq/novu/api:3.11.0"
+    image: ghcr.io/novuhq/novu/api:${NOVU_VERSION:-3.11.0}
+    container_name: ${API_CONTAINER_NAME:-api}
+    restart: unless-stopped
     depends_on:
       mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
-    container_name: api
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "5"
     environment:
-      NODE_ENV: ${NODE_ENV}
-      API_ROOT_URL: ${API_ROOT_URL}
-      PORT: ${API_PORT}
-      FRONT_BASE_URL: ${FRONT_BASE_URL}
-      MONGO_URL: ${MONGO_URL}
-      MONGO_MIN_POOL_SIZE: ${MONGO_MIN_POOL_SIZE}
-      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_DB_INDEX: 2
-      REDIS_CACHE_SERVICE_HOST: ${REDIS_CACHE_SERVICE_HOST}
-      REDIS_CACHE_SERVICE_PORT: ${REDIS_CACHE_SERVICE_PORT}
-      S3_LOCAL_STACK: ${S3_LOCAL_STACK}
-      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
-      S3_REGION: ${S3_REGION}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      JWT_SECRET: ${JWT_SECRET}
-      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY}
-      NOVU_SECRET_KEY: ${NOVU_SECRET_KEY}
-      SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME}
-      SENTRY_DSN: ${SENTRY_DSN}
-      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED}
-      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
-      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NODE_ENV: ${NODE_ENV:-local}
+      PORT: ${API_INTERNAL_PORT:-3000}
+      # IMPORTANT: API_ROOT_URL must be external (browser-accessible) URL
+      API_ROOT_URL: ${API_EXTERNAL_URL:-http://localhost:${API_PORT:-3000}}
+      FRONT_BASE_URL: ${DASHBOARD_EXTERNAL_URL:-http://localhost:${DASHBOARD_PORT:-4000}}
+
+      # Database
+      MONGO_URL: ${MONGO_URL:-mongodb://${MONGO_INITDB_ROOT_USERNAME:-novu}:${MONGO_INITDB_ROOT_PASSWORD:-novu-dev-password}@mongodb:27017/novu-db?authSource=admin}
+      MONGO_MIN_POOL_SIZE: ${MONGO_MIN_POOL_SIZE:-5}
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
+      MONGO_AUTO_CREATE_INDEXES: ${MONGO_AUTO_CREATE_INDEXES:-true}
+
+      # Redis
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_INTERNAL_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB_INDEX: ${REDIS_DB_INDEX:-2}
+      REDIS_CACHE_SERVICE_HOST: ${REDIS_CACHE_SERVICE_HOST:-redis}
+      REDIS_CACHE_SERVICE_PORT: ${REDIS_CACHE_SERVICE_PORT:-6379}
+
+      # S3/Storage (optional)
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK:-}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-novu-local}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+
+      # Security - CHANGE IN PRODUCTION
+      JWT_SECRET: ${JWT_SECRET:-novu-jwt-secret-change-in-production}
+      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY:-novu-32char-encryption-key!!!!!!}
+      NOVU_SECRET_KEY: ${NOVU_SECRET_KEY:-novu-secret-key-change-in-prod}
+      SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME:-15d}
+
+      # API Settings
       API_CONTEXT_PATH: ${API_CONTEXT_PATH:-}
-      MONGO_AUTO_CREATE_INDEXES: ${MONGO_AUTO_CREATE_INDEXES}
-      IS_API_IDEMPOTENCY_ENABLED: ${IS_API_IDEMPOTENCY_ENABLED}
-      IS_API_RATE_LIMITING_ENABLED: ${IS_API_RATE_LIMITING_ENABLED}
-      IS_NEW_MESSAGES_API_RESPONSE_ENABLED: ${IS_NEW_MESSAGES_API_RESPONSE_ENABLED}
-      IS_V2_ENABLED: ${IS_V2_ENABLED}
+      IS_API_IDEMPOTENCY_ENABLED: ${IS_API_IDEMPOTENCY_ENABLED:-false}
+      IS_API_RATE_LIMITING_ENABLED: ${IS_API_RATE_LIMITING_ENABLED:-false}
+      IS_NEW_MESSAGES_API_RESPONSE_ENABLED: ${IS_NEW_MESSAGES_API_RESPONSE_ENABLED:-true}
+      IS_V2_ENABLED: ${IS_V2_ENABLED:-true}
+
+      # Monitoring (optional)
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED:-false}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME:-}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
     ports:
-      - ${API_PORT}:${API_PORT}
+      - "${API_PORT:-3000}:${API_INTERNAL_PORT:-3000}"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:$${PORT}/v1/health-check || exit 1",
+          "wget --no-verbose --tries=1 --spider http://localhost:${API_INTERNAL_PORT:-3000}/v1/health-check || exit 1",
         ]
       interval: 20s
       timeout: 10s
       retries: 3
       start_period: 40s
 
+  # ---------------------------------------------------------------------------
+  # Worker (Official Novu Image)
+  # ---------------------------------------------------------------------------
   worker:
-    image: "ghcr.io/novuhq/novu/worker:3.11.0"
+    image: ghcr.io/novuhq/novu/worker:${NOVU_VERSION:-3.11.0}
+    container_name: ${WORKER_CONTAINER_NAME:-worker}
+    restart: unless-stopped
     depends_on:
       mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
-    container_name: worker
-    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-local}
+      PORT: ${WORKER_INTERNAL_PORT:-3004}
+      # Worker uses internal URL to communicate with API (server-to-server)
+      API_ROOT_URL: ${API_INTERNAL_URL:-http://api:${API_INTERNAL_PORT:-3000}}
+
+      # Database
+      MONGO_URL: ${MONGO_URL:-mongodb://${MONGO_INITDB_ROOT_USERNAME:-novu}:${MONGO_INITDB_ROOT_PASSWORD:-novu-dev-password}@mongodb:27017/novu-db?authSource=admin}
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
+
+      # Redis
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_INTERNAL_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB_INDEX: ${REDIS_DB_INDEX:-2}
+      REDIS_CACHE_SERVICE_HOST: ${REDIS_CACHE_SERVICE_HOST:-redis}
+      REDIS_CACHE_SERVICE_PORT: ${REDIS_CACHE_SERVICE_PORT:-6379}
+
+      # S3/Storage (optional)
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK:-}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-novu-local}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+
+      # Security
+      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY:-novu-32char-encryption-key!!!!!!}
+      SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME:-15d}
+
+      # Worker Settings
+      BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE:-100}
+      MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE:-100}
+      IS_EMAIL_INLINE_CSS_DISABLED: ${IS_EMAIL_INLINE_CSS_DISABLED:-false}
+      IS_USE_MERGED_DIGEST_ID_ENABLED: ${IS_USE_MERGED_DIGEST_ID_ENABLED:-false}
+
+      # Monitoring (optional)
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED:-false}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME:-}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
     logging:
       driver: "json-file"
       options:
         max-size: "50m"
         max-file: "5"
-    environment:
-      NODE_ENV: ${NODE_ENV}
-      PORT: ${WORKER_PORT:-3004}
-      MONGO_URL: ${MONGO_URL}
-      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      REDIS_DB_INDEX: 2
-      REDIS_CACHE_SERVICE_HOST: ${REDIS_CACHE_SERVICE_HOST}
-      REDIS_CACHE_SERVICE_PORT: ${REDIS_CACHE_SERVICE_PORT}
-      S3_LOCAL_STACK: ${S3_LOCAL_STACK}
-      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
-      S3_REGION: ${S3_REGION}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY}
-      SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME}
-      SENTRY_DSN: ${SENTRY_DSN}
-      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED}
-      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
-      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
-      BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE}
-      MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
-      API_ROOT_URL: http://api:${API_PORT}
-      IS_EMAIL_INLINE_CSS_DISABLED: ${IS_EMAIL_INLINE_CSS_DISABLED}
-      IS_USE_MERGED_DIGEST_ID_ENABLED: ${IS_USE_MERGED_DIGEST_ID_ENABLED}
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:$${PORT:-3004}/v1/health-check || exit 1",
-        ]
+      # Worker is a background job processor using PM2, check if processes are running
+      test: ["CMD-SHELL", "pm2 pid main | grep -q '[0-9]' || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 30s
 
+  # ---------------------------------------------------------------------------
+  # WebSocket Server (Official Novu Image)
+  # ---------------------------------------------------------------------------
   ws:
-    image: "ghcr.io/novuhq/novu/ws:3.11.0"
+    image: ghcr.io/novuhq/novu/ws:${NOVU_VERSION:-3.11.0}
+    container_name: ${WS_CONTAINER_NAME:-ws}
+    restart: unless-stopped
     depends_on:
       mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
-    container_name: ws
-    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-local}
+      PORT: ${WS_INTERNAL_PORT:-3002}
+
+      # Database
+      MONGO_URL: ${MONGO_URL:-mongodb://${MONGO_INITDB_ROOT_USERNAME:-novu}:${MONGO_INITDB_ROOT_PASSWORD:-novu-dev-password}@mongodb:27017/novu-db?authSource=admin}
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
+
+      # Redis
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_INTERNAL_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-novu-jwt-secret-change-in-production}
+
+      # WebSocket Settings
+      WS_CONTEXT_PATH: ${WS_CONTEXT_PATH:-}
+
+      # Monitoring (optional)
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED:-false}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME:-}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
+    ports:
+      - "${WS_PORT:-3002}:${WS_INTERNAL_PORT:-3002}"
     logging:
       driver: "json-file"
       options:
         max-size: "50m"
         max-file: "5"
-    environment:
-      PORT: ${WS_PORT}
-      NODE_ENV: ${NODE_ENV}
-      MONGO_URL: ${MONGO_URL}
-      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      WS_CONTEXT_PATH: ${WS_CONTEXT_PATH:-}
-      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED}
-      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
-      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
-    ports:
-      - ${WS_PORT}:${WS_PORT}
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:$${PORT}/v1/health-check || exit 1",
+          "wget --no-verbose --tries=1 --spider http://localhost:${WS_INTERNAL_PORT:-3002}/v1/health-check || exit 1",
         ]
       interval: 20s
       timeout: 10s
       retries: 3
       start_period: 40s
 
+  # ---------------------------------------------------------------------------
+  # Dashboard (Official Novu Image)
+  # ---------------------------------------------------------------------------
   dashboard:
-    image: "ghcr.io/novuhq/novu/dashboard:3.11.0"
+    image: ghcr.io/novuhq/novu/dashboard:${NOVU_VERSION:-3.11.0}
+    container_name: ${DASHBOARD_CONTAINER_NAME:-dashboard}
+    restart: unless-stopped
     depends_on:
       api:
         condition: service_healthy
       worker:
-        condition: service_healthy
-    container_name: dashboard
-    restart: unless-stopped
+        condition: service_started  # Worker doesn't expose HTTP, use service_started
+    environment:
+      # IMPORTANT: These must be external URLs (browser-accessible)
+      VITE_API_HOSTNAME: ${API_EXTERNAL_URL:-http://localhost:${API_PORT:-3000}}
+      VITE_SELF_HOSTED: "true"
+      VITE_WEBSOCKET_HOSTNAME: ${WS_EXTERNAL_URL:-http://localhost:${WS_PORT:-3002}}
+      VITE_LEGACY_DASHBOARD_URL: ${VITE_LEGACY_DASHBOARD_URL:-}
+    ports:
+      - "${DASHBOARD_PORT:-4000}:4000"
     logging:
       driver: "json-file"
       options:
         max-size: "50m"
         max-file: "5"
-    environment:
-      VITE_API_HOSTNAME: ${VITE_API_HOSTNAME}
-      VITE_SELF_HOSTED: true
-      VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME}
-      VITE_LEGACY_DASHBOARD_URL: ${VITE_LEGACY_DASHBOARD_URL}
-    ports:
-      - 4000:4000
     healthcheck:
       test:
         [
@@ -235,5 +310,9 @@ services:
       retries: 3
       start_period: 20s
 
+# =============================================================================
+# Volumes
+# =============================================================================
 volumes:
-  mongodb: ~
+  mongodb:
+    driver: local

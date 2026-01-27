@@ -1,5 +1,5 @@
 # =============================================================================
-# ReNovu - Production Overrides for ArokaGO
+# ReNovu - Production Overrides
 # =============================================================================
 # Use with: docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
 #
@@ -7,6 +7,19 @@
 # - Traefik labels for HTTPS routing
 # - Production-ready settings
 # - Resource limits
+#
+# Required Environment Variables:
+#   NOVU_API_DOMAIN        - API domain (e.g., novu-api.example.com)
+#   NOVU_WS_DOMAIN         - WebSocket domain (e.g., novu-ws.example.com)
+#   NOVU_DASHBOARD_DOMAIN  - Dashboard domain (e.g., novu.example.com)
+#   NOVU_CORS_ORIGINS      - Comma-separated CORS origins (e.g., https://www.example.com,https://staging.example.com)
+#
+# Optional Environment Variables:
+#   API_INTERNAL_PORT      - Internal API port (default: 3001)
+#   WS_INTERNAL_PORT       - Internal WS port (default: 3002)
+#   DASHBOARD_INTERNAL_PORT - Internal dashboard port (default: 4000)
+#   TRAEFIK_NETWORK        - Traefik network name (default: traefik-network)
+#   TRAEFIK_CERTRESOLVER   - Traefik cert resolver (default: letsencrypt)
 # =============================================================================
 
 services:
@@ -17,9 +30,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: ${REDIS_MEMORY_LIMIT:-512M}
         reservations:
-          memory: 256M
+          memory: ${REDIS_MEMORY_RESERVATION:-256M}
 
   # ---------------------------------------------------------------------------
   # MongoDB - Production Settings
@@ -28,9 +41,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: ${MONGO_MEMORY_LIMIT:-2G}
         reservations:
-          memory: 1G
+          memory: ${MONGO_MEMORY_RESERVATION:-1G}
 
   # ---------------------------------------------------------------------------
   # API - Production with Traefik
@@ -40,30 +53,30 @@ services:
       - "traefik.enable=true"
       # HTTP to HTTPS redirect
       - "traefik.http.middlewares.renovu-api-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.renovu-api-http.rule=Host(`novu-api.arokago.com`)"
+      - "traefik.http.routers.renovu-api-http.rule=Host(`${NOVU_API_DOMAIN}`)"
       - "traefik.http.routers.renovu-api-http.entrypoints=http"
       - "traefik.http.routers.renovu-api-http.middlewares=renovu-api-https"
       # HTTPS router
-      - "traefik.http.routers.renovu-api.rule=Host(`novu-api.arokago.com`)"
+      - "traefik.http.routers.renovu-api.rule=Host(`${NOVU_API_DOMAIN}`)"
       - "traefik.http.routers.renovu-api.entrypoints=https"
       - "traefik.http.routers.renovu-api.tls=true"
-      - "traefik.http.routers.renovu-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.renovu-api.loadbalancer.server.port=3001"
+      - "traefik.http.routers.renovu-api.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.services.renovu-api.loadbalancer.server.port=${API_INTERNAL_PORT:-3001}"
       # CORS headers
-      - "traefik.http.middlewares.renovu-api-cors.headers.accessControlAllowOriginList=https://www.arokago.com,https://staging.arokago.com"
+      - "traefik.http.middlewares.renovu-api-cors.headers.accessControlAllowOriginList=${NOVU_CORS_ORIGINS}"
       - "traefik.http.middlewares.renovu-api-cors.headers.accessControlAllowMethods=GET,POST,PUT,DELETE,OPTIONS"
       - "traefik.http.middlewares.renovu-api-cors.headers.accessControlAllowHeaders=Content-Type,Authorization"
       - "traefik.http.routers.renovu-api.middlewares=renovu-api-cors"
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: ${API_MEMORY_LIMIT:-1G}
         reservations:
-          memory: 512M
+          memory: ${API_MEMORY_RESERVATION:-512M}
     environment:
       NODE_ENV: production
-      API_ROOT_URL: https://novu-api.arokago.com
-      FRONT_BASE_URL: https://novu.arokago.com
+      API_ROOT_URL: https://${NOVU_API_DOMAIN}
+      FRONT_BASE_URL: https://${NOVU_DASHBOARD_DOMAIN}
     ports: []  # Disable direct port exposure in production
 
   # ---------------------------------------------------------------------------
@@ -73,9 +86,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: ${WORKER_MEMORY_LIMIT:-1G}
         reservations:
-          memory: 512M
+          memory: ${WORKER_MEMORY_RESERVATION:-512M}
     environment:
       NODE_ENV: production
 
@@ -87,24 +100,24 @@ services:
       - "traefik.enable=true"
       # HTTP to HTTPS redirect
       - "traefik.http.middlewares.renovu-ws-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.renovu-ws-http.rule=Host(`novu-ws.arokago.com`)"
+      - "traefik.http.routers.renovu-ws-http.rule=Host(`${NOVU_WS_DOMAIN}`)"
       - "traefik.http.routers.renovu-ws-http.entrypoints=http"
       - "traefik.http.routers.renovu-ws-http.middlewares=renovu-ws-https"
       # HTTPS router
-      - "traefik.http.routers.renovu-ws.rule=Host(`novu-ws.arokago.com`)"
+      - "traefik.http.routers.renovu-ws.rule=Host(`${NOVU_WS_DOMAIN}`)"
       - "traefik.http.routers.renovu-ws.entrypoints=https"
       - "traefik.http.routers.renovu-ws.tls=true"
-      - "traefik.http.routers.renovu-ws.tls.certresolver=letsencrypt"
-      - "traefik.http.services.renovu-ws.loadbalancer.server.port=3002"
+      - "traefik.http.routers.renovu-ws.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.services.renovu-ws.loadbalancer.server.port=${WS_INTERNAL_PORT:-3002}"
       # WebSocket headers
       - "traefik.http.middlewares.renovu-ws-headers.headers.customRequestHeaders.X-Forwarded-Proto=https"
       - "traefik.http.routers.renovu-ws.middlewares=renovu-ws-headers"
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: ${WS_MEMORY_LIMIT:-512M}
         reservations:
-          memory: 256M
+          memory: ${WS_MEMORY_RESERVATION:-256M}
     environment:
       NODE_ENV: production
     ports: []  # Disable direct port exposure in production
@@ -117,24 +130,24 @@ services:
       - "traefik.enable=true"
       # HTTP to HTTPS redirect
       - "traefik.http.middlewares.renovu-dashboard-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.renovu-dashboard-http.rule=Host(`novu.arokago.com`)"
+      - "traefik.http.routers.renovu-dashboard-http.rule=Host(`${NOVU_DASHBOARD_DOMAIN}`)"
       - "traefik.http.routers.renovu-dashboard-http.entrypoints=http"
       - "traefik.http.routers.renovu-dashboard-http.middlewares=renovu-dashboard-https"
       # HTTPS router
-      - "traefik.http.routers.renovu-dashboard.rule=Host(`novu.arokago.com`)"
+      - "traefik.http.routers.renovu-dashboard.rule=Host(`${NOVU_DASHBOARD_DOMAIN}`)"
       - "traefik.http.routers.renovu-dashboard.entrypoints=https"
       - "traefik.http.routers.renovu-dashboard.tls=true"
-      - "traefik.http.routers.renovu-dashboard.tls.certresolver=letsencrypt"
-      - "traefik.http.services.renovu-dashboard.loadbalancer.server.port=4000"
+      - "traefik.http.routers.renovu-dashboard.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.services.renovu-dashboard.loadbalancer.server.port=${DASHBOARD_INTERNAL_PORT:-4000}"
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: ${DASHBOARD_MEMORY_LIMIT:-512M}
         reservations:
-          memory: 256M
+          memory: ${DASHBOARD_MEMORY_RESERVATION:-256M}
     environment:
-      VITE_API_HOSTNAME: https://novu-api.arokago.com
-      VITE_WEBSOCKET_HOSTNAME: https://novu-ws.arokago.com
+      VITE_API_HOSTNAME: https://${NOVU_API_DOMAIN}
+      VITE_WEBSOCKET_HOSTNAME: https://${NOVU_WS_DOMAIN}
     ports: []  # Disable direct port exposure in production
 
 # =============================================================================
@@ -143,4 +156,4 @@ services:
 networks:
   renovu-network:
     external: true
-    name: traefik-network
+    name: ${TRAEFIK_NETWORK:-traefik-network}

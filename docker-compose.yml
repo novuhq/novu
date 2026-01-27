@@ -2,15 +2,22 @@
 # ReNovu - Self-Hosted Notification Platform
 # =============================================================================
 # Standalone self-hosted deployment with all enterprise features unlocked.
-# Builds from source to include custom modifications.
+# All ports and URLs are configurable via environment variables.
 #
 # Usage:
 #   docker compose up -d
 #
-# Access:
-#   Dashboard: http://localhost:4000
-#   API:       http://localhost:3001
-#   WebSocket: http://localhost:3002
+# Default Access:
+#   Dashboard: http://localhost:${DASHBOARD_PORT:-4000}
+#   API:       http://localhost:${API_PORT:-3001}
+#   WebSocket: http://localhost:${WS_PORT:-3002}
+#
+# Environment Variables (override in .env file):
+#   API_PORT, WS_PORT, DASHBOARD_PORT - External ports
+#   API_EXTERNAL_URL, WS_EXTERNAL_URL, DASHBOARD_EXTERNAL_URL - Browser URLs
+#   MONGO_USER, MONGO_PASSWORD - MongoDB credentials
+#   REDIS_PASSWORD - Redis password
+#   JWT_SECRET, STORE_ENCRYPTION_KEY, NOVU_SECRET_KEY - Security keys
 # =============================================================================
 
 name: renovu
@@ -21,14 +28,17 @@ services:
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: renovu-redis
+    container_name: ${REDIS_CONTAINER_NAME:-renovu-redis}
     restart: unless-stopped
+    command: redis-server ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     networks:
       - renovu-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", ${REDIS_PASSWORD:+-a $REDIS_PASSWORD}, "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,8 +53,10 @@ services:
   # ---------------------------------------------------------------------------
   mongodb:
     image: mongo:8.0
-    container_name: renovu-mongodb
+    container_name: ${MONGO_CONTAINER_NAME:-renovu-mongodb}
     restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
     environment:
       PUID: 1000
       PGID: 1000
@@ -84,8 +96,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
-    image: renovu/api:latest
-    container_name: renovu-api
+    image: ${API_IMAGE:-renovu/api:latest}
+    container_name: ${API_CONTAINER_NAME:-renovu-api}
     restart: unless-stopped
     depends_on:
       mongodb:
@@ -95,24 +107,25 @@ services:
     environment:
       # Core Configuration
       NODE_ENV: ${NODE_ENV:-local}
-      PORT: 3001
-      API_ROOT_URL: ${API_ROOT_URL:-http://localhost:3001}
-      FRONT_BASE_URL: ${FRONT_BASE_URL:-http://localhost:4000}
+      PORT: ${API_INTERNAL_PORT:-3001}
+      # IMPORTANT: API_ROOT_URL must be external (browser-accessible) URL
+      API_ROOT_URL: ${API_EXTERNAL_URL:-http://localhost:${API_PORT:-3001}}
+      FRONT_BASE_URL: ${DASHBOARD_EXTERNAL_URL:-http://localhost:${DASHBOARD_PORT:-4000}}
 
       # Database
-      MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@mongodb:27017/renovu-db?authSource=admin
+      MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@${MONGO_HOST:-mongodb}:${MONGO_INTERNAL_PORT:-27017}/renovu-db?authSource=admin
       MONGO_MIN_POOL_SIZE: ${MONGO_MIN_POOL_SIZE:-5}
       MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
-      MONGO_AUTO_CREATE_INDEXES: true
+      MONGO_AUTO_CREATE_INDEXES: ${MONGO_AUTO_CREATE_INDEXES:-true}
 
       # Redis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      REDIS_DB_INDEX: 2
-      REDIS_CACHE_SERVICE_HOST: redis
-      REDIS_CACHE_SERVICE_PORT: 6379
-      REDIS_CACHE_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_INTERNAL_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-renovu-redis-dev}
+      REDIS_DB_INDEX: ${REDIS_DB_INDEX:-2}
+      REDIS_CACHE_SERVICE_HOST: ${REDIS_HOST:-redis}
+      REDIS_CACHE_SERVICE_PORT: ${REDIS_INTERNAL_PORT:-6379}
+      REDIS_CACHE_PASSWORD: ${REDIS_PASSWORD:-renovu-redis-dev}
 
       # Security - CHANGE IN PRODUCTION
       JWT_SECRET: ${JWT_SECRET:-renovu-jwt-secret-change-in-production}
@@ -128,26 +141,24 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
 
       # Self-Hosted Mode - Unlocks all features
-      # Note: NOVU_ENTERPRISE=true removed because enterprise packages are empty stubs
-      # All features are already unlocked via modified feature-tiers-constants.ts
       IS_SELF_HOSTED: "true"
-      IS_API_IDEMPOTENCY_ENABLED: false
-      IS_API_RATE_LIMITING_ENABLED: false
-      IS_NEW_MESSAGES_API_RESPONSE_ENABLED: true
-      IS_V2_ENABLED: true
+      IS_API_IDEMPOTENCY_ENABLED: ${IS_API_IDEMPOTENCY_ENABLED:-false}
+      IS_API_RATE_LIMITING_ENABLED: ${IS_API_RATE_LIMITING_ENABLED:-false}
+      IS_NEW_MESSAGES_API_RESPONSE_ENABLED: ${IS_NEW_MESSAGES_API_RESPONSE_ENABLED:-true}
+      IS_V2_ENABLED: ${IS_V2_ENABLED:-true}
 
       # Monitoring (optional)
       SENTRY_DSN: ${SENTRY_DSN:-}
-      NEW_RELIC_ENABLED: false
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED:-false}
     ports:
-      - "${API_PORT:-3001}:3001"
+      - "${API_PORT:-3001}:${API_INTERNAL_PORT:-3001}"
     networks:
       - renovu-network
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:3001/v1/health-check || exit 1",
+          "wget --no-verbose --tries=1 --spider http://localhost:${API_INTERNAL_PORT:-3001}/v1/health-check || exit 1",
         ]
       interval: 20s
       timeout: 10s
@@ -166,8 +177,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.worker
-    image: renovu/worker:latest
-    container_name: renovu-worker
+    image: ${WORKER_IMAGE:-renovu/worker:latest}
+    container_name: ${WORKER_CONTAINER_NAME:-renovu-worker}
     restart: unless-stopped
     depends_on:
       mongodb:
@@ -177,21 +188,22 @@ services:
     environment:
       # Core Configuration
       NODE_ENV: ${NODE_ENV:-local}
-      PORT: 3004
-      API_ROOT_URL: http://api:3001
+      PORT: ${WORKER_INTERNAL_PORT:-3004}
+      # Worker uses internal URL to communicate with API (server-to-server)
+      API_ROOT_URL: ${API_INTERNAL_URL:-http://api:${API_INTERNAL_PORT:-3001}}
 
       # Database
-      MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@mongodb:27017/renovu-db?authSource=admin
+      MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@${MONGO_HOST:-mongodb}:${MONGO_INTERNAL_PORT:-27017}/renovu-db?authSource=admin
       MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
 
       # Redis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      REDIS_DB_INDEX: 2
-      REDIS_CACHE_SERVICE_HOST: redis
-      REDIS_CACHE_SERVICE_PORT: 6379
-      REDIS_CACHE_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_INTERNAL_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-renovu-redis-dev}
+      REDIS_DB_INDEX: ${REDIS_DB_INDEX:-2}
+      REDIS_CACHE_SERVICE_HOST: ${REDIS_HOST:-redis}
+      REDIS_CACHE_SERVICE_PORT: ${REDIS_INTERNAL_PORT:-6379}
+      REDIS_CACHE_PASSWORD: ${REDIS_PASSWORD:-renovu-redis-dev}
 
       # Security
       STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY:-renovu-32char-encryption-key!!!!}
@@ -210,24 +222,21 @@ services:
       # Worker Settings
       BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE:-100}
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE:-100}
-      IS_EMAIL_INLINE_CSS_DISABLED: false
-      IS_USE_MERGED_DIGEST_ID_ENABLED: false
+      IS_EMAIL_INLINE_CSS_DISABLED: ${IS_EMAIL_INLINE_CSS_DISABLED:-false}
+      IS_USE_MERGED_DIGEST_ID_ENABLED: ${IS_USE_MERGED_DIGEST_ID_ENABLED:-false}
 
       # Monitoring (optional)
       SENTRY_DSN: ${SENTRY_DSN:-}
-      NEW_RELIC_ENABLED: false
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED:-false}
     networks:
       - renovu-network
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:3004/v1/health-check || exit 1",
-        ]
+      # Worker is a background job processor using PM2, check if processes are running
+      test: ["CMD-SHELL", "pm2 pid main | grep -q '[0-9]' || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -241,8 +250,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.ws
-    image: renovu/ws:latest
-    container_name: renovu-ws
+    image: ${WS_IMAGE:-renovu/ws:latest}
+    container_name: ${WS_CONTAINER_NAME:-renovu-ws}
     restart: unless-stopped
     depends_on:
       mongodb:
@@ -252,16 +261,16 @@ services:
     environment:
       # Core Configuration
       NODE_ENV: ${NODE_ENV:-local}
-      PORT: 3002
+      PORT: ${WS_INTERNAL_PORT:-3002}
 
       # Database
-      MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@mongodb:27017/renovu-db?authSource=admin
+      MONGO_URL: mongodb://${MONGO_USER:-renovu}:${MONGO_PASSWORD:-renovu-dev-password}@${MONGO_HOST:-mongodb}:${MONGO_INTERNAL_PORT:-27017}/renovu-db?authSource=admin
       MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
 
       # Redis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_INTERNAL_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-renovu-redis-dev}
 
       # Security
       JWT_SECRET: ${JWT_SECRET:-renovu-jwt-secret-change-in-production}
@@ -270,16 +279,16 @@ services:
       IS_SELF_HOSTED: "true"
 
       # Monitoring (optional)
-      NEW_RELIC_ENABLED: false
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED:-false}
     ports:
-      - "${WS_PORT:-3002}:3002"
+      - "${WS_PORT:-3002}:${WS_INTERNAL_PORT:-3002}"
     networks:
       - renovu-network
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:3002/v1/health-check || exit 1",
+          "wget --no-verbose --tries=1 --spider http://localhost:${WS_INTERNAL_PORT:-3002}/v1/health-check || exit 1",
         ]
       interval: 20s
       timeout: 10s
@@ -298,21 +307,22 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.dashboard
-    image: renovu/dashboard:latest
-    container_name: renovu-dashboard
+    image: ${DASHBOARD_IMAGE:-renovu/dashboard:latest}
+    container_name: ${DASHBOARD_CONTAINER_NAME:-renovu-dashboard}
     restart: unless-stopped
     depends_on:
       api:
         condition: service_healthy
       worker:
-        condition: service_healthy
+        condition: service_started
     environment:
-      VITE_API_HOSTNAME: ${VITE_API_HOSTNAME:-http://localhost:3001}
-      VITE_SELF_HOSTED: true
-      VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME:-http://localhost:3002}
+      # IMPORTANT: These must be external URLs (browser-accessible)
+      VITE_API_HOSTNAME: ${API_EXTERNAL_URL:-http://localhost:${API_PORT:-3001}}
+      VITE_SELF_HOSTED: "true"
+      VITE_WEBSOCKET_HOSTNAME: ${WS_EXTERNAL_URL:-http://localhost:${WS_PORT:-3002}}
       VITE_LEGACY_DASHBOARD_URL: ""
       VITE_CLERK_PUBLISHABLE_KEY: ""
-      VITE_IS_EE: false
+      VITE_IS_EE: "false"
     ports:
       - "${DASHBOARD_PORT:-4000}:4000"
     networks:

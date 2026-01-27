@@ -9,10 +9,10 @@
 #   - Release published
 #
 # Images published:
-#   - ghcr.io/arokago/renovu-api:latest
-#   - ghcr.io/arokago/renovu-worker:latest
-#   - ghcr.io/arokago/renovu-ws:latest
-#   - ghcr.io/arokago/renovu-dashboard:latest
+#   - ghcr.io/atlonxp/renovu-api:latest
+#   - ghcr.io/atlonxp/renovu-worker:latest
+#   - ghcr.io/atlonxp/renovu-ws:latest
+#   - ghcr.io/atlonxp/renovu-dashboard:latest
 # =============================================================================
 
 name: Build and Push to GHCR
@@ -39,7 +39,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/arokago/renovu
+  IMAGE_PREFIX: ghcr.io/atlonxp/renovu
 
 jobs:
   build-and-push:
@@ -104,7 +104,7 @@ jobs:
     steps:
       - name: Create summary
         env:
-          IMAGE_PREFIX: ghcr.io/arokago/renovu
+          IMAGE_PREFIX: ghcr.io/atlonxp/renovu
         run: |
           echo "## ReNovu Docker Images Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
