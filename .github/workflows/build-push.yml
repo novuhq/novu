@@ -1,0 +1,116 @@
+# =============================================================================
+# ReNovu - Build and Push Docker Images to GHCR
+# =============================================================================
+# Builds all ReNovu service images and pushes to GitHub Container Registry.
+#
+# Triggers:
+#   - Push to main branch
+#   - Manual workflow dispatch
+#   - Release published
+#
+# Images published:
+#   - ghcr.io/arokago/renovu-api:latest
+#   - ghcr.io/arokago/renovu-worker:latest
+#   - ghcr.io/arokago/renovu-ws:latest
+#   - ghcr.io/arokago/renovu-dashboard:latest
+# =============================================================================
+
+name: Build and Push to GHCR
+
+on:
+  push:
+    branches:
+      - next
+    paths:
+      - 'apps/**'
+      - 'libs/**'
+      - 'packages/**'
+      - 'docker/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/build-push.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag (e.g., v3.12.0)'
+        required: false
+        default: 'latest'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/arokago/renovu
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service:
+          - name: api
+            dockerfile: docker/Dockerfile.api
+          - name: worker
+            dockerfile: docker/Dockerfile.worker
+          - name: ws
+            dockerfile: docker/Dockerfile.ws
+          - name: dashboard
+            dockerfile: docker/Dockerfile.dashboard
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.service.name }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  summary:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Create summary
+        env:
+          IMAGE_PREFIX: ghcr.io/arokago/renovu
+        run: |
+          echo "## ReNovu Docker Images Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Image |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| API | \`${IMAGE_PREFIX}-api:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | \`${IMAGE_PREFIX}-worker:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| WebSocket | \`${IMAGE_PREFIX}-ws:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dashboard | \`${IMAGE_PREFIX}-dashboard:latest\` |" >> $GITHUB_STEP_SUMMARY
