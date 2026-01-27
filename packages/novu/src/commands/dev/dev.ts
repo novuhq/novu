@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import open from 'open';
 import ora from 'ora';
 import ws from 'ws';
+import packageJson from '../../../package.json';
 import { DevServer } from '../../dev-server';
 import { config } from '../../index';
 import { showWelcomeScreen } from '../shared';
@@ -16,6 +17,7 @@ process.on('SIGINT', () => {
 
 let tunnelClient: NtfrTunnel | null = null;
 export const TUNNEL_URL = 'https://novu.sh/api/tunnels';
+const { version } = packageJson;
 
 export async function devCommand(options: DevCommandOptions, anonymousId?: string) {
   await showWelcomeScreen();
@@ -98,6 +100,7 @@ async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
         headers: {
           accept: 'application/json',
           'Content-Type': 'application/json',
+          'User-Agent': `novu@${version}`,
         },
       })
     ).json();

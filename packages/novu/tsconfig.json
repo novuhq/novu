@@ -9,7 +9,6 @@
     "esModuleInterop": true,
     "module": "commonjs",
     "noImplicitAny": true,
-    "rootDir": ".",
     "outDir": "./dist",
     "removeComments": true,
     "resolveJsonModule": true,
