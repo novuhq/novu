@@ -1,12 +1,25 @@
 import { setUser as sentrySetUser, setTags as setSentryTags } from '@sentry/react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect, useRef } from 'react';
+import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
 import { getRegionConfig, useRegion } from '@/context/region';
 import { useAuth } from './auth/hooks';
 import { useSegment } from './segment/hooks';
 
+// Wrapper hook that safely handles missing LaunchDarkly provider
+function useLDClientSafe() {
+  // When LaunchDarkly is not configured, don't call useLDClient
+  // This avoids the error from calling the hook outside of LDProvider
+  if (!LAUNCH_DARKLY_CLIENT_SIDE_ID) {
+    return undefined;
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return useLDClient();
+}
+
 export function IdentityProvider({ children }: { children: React.ReactNode }) {
-  const ldClient = useLDClient();
+  const ldClient = useLDClientSafe();
   const segment = useSegment();
   const { currentUser, currentOrganization } = useAuth();
   const { selectedRegion } = useRegion();

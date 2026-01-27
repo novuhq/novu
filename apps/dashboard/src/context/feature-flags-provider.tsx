@@ -45,8 +45,13 @@ const AsyncFeatureFlagsProvider = lazy(async () => {
 });
 
 export function FeatureFlagsProvider({ children }: { children: React.ReactNode }) {
+  // For self-hosted without LaunchDarkly, skip the lazy loading entirely
+  if (!LAUNCH_DARKLY_CLIENT_SIDE_ID) {
+    return <>{children}</>;
+  }
+
   return (
-    <Suspense>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
       <AsyncFeatureFlagsProvider>{children}</AsyncFeatureFlagsProvider>
     </Suspense>
   );

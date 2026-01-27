@@ -17,7 +17,10 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   }
 
   if (IS_SELF_HOSTED) {
-    return <>{children}</>;
+    // Use the aliased ClerkProvider (points to self-hosted version via vite.config.ts)
+    // This wraps children with UserContextProvider, AuthContextProvider, and OrganizationContextProvider
+    // @ts-expect-error - Self-hosted ClerkProvider wrapper has different props via vite alias
+    return <_ClerkProvider>{children}</_ClerkProvider>;
   }
 
   return (
