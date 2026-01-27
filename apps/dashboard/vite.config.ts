@@ -10,10 +10,21 @@ export default defineConfig(({ mode }) => {
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, process.cwd(), '');
 
-  const isSelfHosted = env.VITE_SELF_HOSTED === 'true';
-  const eeAuthProvider = env.VITE_EE_AUTH_PROVIDER || 'clerk';
-  const isEnterprise = env.VITE_NOVU_ENTERPRISE === 'true';
+  // Also check process.env as a fallback for Docker builds where loadEnv might not find the files
+  const isSelfHosted = env.VITE_SELF_HOSTED === 'true' || process.env.VITE_SELF_HOSTED === 'true';
+  const eeAuthProvider = env.VITE_EE_AUTH_PROVIDER || process.env.VITE_EE_AUTH_PROVIDER || 'clerk';
+  const isEnterprise = env.VITE_NOVU_ENTERPRISE === 'true' || process.env.VITE_NOVU_ENTERPRISE === 'true';
   const isCommunitySelHosted = isSelfHosted && !isEnterprise;
+
+  // Debug output during build
+  console.log('[vite.config.ts] Build configuration:');
+  console.log(`  - mode: ${mode}`);
+  console.log(`  - cwd: ${process.cwd()}`);
+  console.log(`  - env.VITE_SELF_HOSTED: ${env.VITE_SELF_HOSTED}`);
+  console.log(`  - process.env.VITE_SELF_HOSTED: ${process.env.VITE_SELF_HOSTED}`);
+  console.log(`  - isSelfHosted: ${isSelfHosted}`);
+  console.log(`  - isEnterprise: ${isEnterprise}`);
+  console.log(`  - isCommunitySelHosted: ${isCommunitySelHosted}`);
 
   // Plugin to redirect direct region-context imports to self-hosted version
   // This ensures we use the simpler self-hosted version instead of bundling Clerk-dependent cloud code

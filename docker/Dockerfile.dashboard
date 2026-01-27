@@ -6,12 +6,12 @@
 # =============================================================================
 
 FROM node:20-alpine3.20 AS builder
-
-RUN apk add g++ make py3-pip bash
+RUN apk add --no-cache g++ make py3-pip bash
 ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
 
+# Install pnpm
 RUN npm install -g pnpm@10.16.1 --loglevel notice
 
 # Copy package files first for better caching
@@ -19,49 +19,71 @@ COPY .npmrc .
 COPY package.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
-COPY nx.json .
 COPY tsconfig.json .
+COPY nx.json .
 
-# Copy source code
+# Copy all necessary source directories
 COPY apps/dashboard ./apps/dashboard
 COPY libs ./libs
 COPY packages ./packages
-COPY enterprise ./enterprise
+
+# Create enterprise directory if it doesn't exist (for compatibility)
+RUN mkdir -p enterprise
 
 # Install dependencies
 RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store \
     pnpm install --frozen-lockfile --unsafe-perm
 
-# =============================================================================
-# CRITICAL: Create .env file for Vite build
-# =============================================================================
-# Vite's loadEnv() reads from .env FILES, not OS environment variables.
-# Without this, VITE_SELF_HOSTED won't be set during build, causing the
-# dashboard to use cloud-mode auth (Clerk) instead of self-hosted auth.
-# =============================================================================
-RUN echo "VITE_SELF_HOSTED=true" > /usr/src/app/apps/dashboard/.env
+# Build the dashboard with self-hosted flag
+# CRITICAL: VITE_SELF_HOSTED must be set at BUILD time for Vite to alias
+# @clerk/clerk-react to the self-hosted mock implementation
+# Note: Vite's loadEnv() reads from .env FILES, not OS env vars
+# process.cwd() during nx build is the monorepo root, so we need .env there
 
-# Build dashboard
-RUN CI='' pnpm build:dashboard --skip-nx-cache
+# Create .env files in multiple locations to ensure loadEnv finds it
+RUN echo "VITE_SELF_HOSTED=true" > /usr/src/app/.env && \
+    echo "VITE_SELF_HOSTED=true" > /usr/src/app/.env.local && \
+    echo "VITE_SELF_HOSTED=true" > /usr/src/app/.env.production && \
+    echo "VITE_SELF_HOSTED=true" > /usr/src/app/.env.production.local && \
+    echo "VITE_SELF_HOSTED=true" > /usr/src/app/apps/dashboard/.env && \
+    echo "VITE_SELF_HOSTED=true" > /usr/src/app/apps/dashboard/.env.local && \
+    echo "VITE_SELF_HOSTED=true" > /usr/src/app/apps/dashboard/.env.production && \
+    echo "VITE_SELF_HOSTED=true" > /usr/src/app/apps/dashboard/.env.production.local
+
+# Debug: Verify env files exist
+RUN echo "=== DEBUG: Checking .env files ===" && \
+    cat /usr/src/app/.env && \
+    cat /usr/src/app/apps/dashboard/.env && \
+    echo "=== DEBUG: Current directory ===" && \
+    pwd && \
+    ls -la /usr/src/app/.env* || true && \
+    ls -la /usr/src/app/apps/dashboard/.env* || true
+
+# Build with VITE_SELF_HOSTED set as environment variable
+# The vite.config.ts has been updated to check process.env as a fallback
+ENV VITE_SELF_HOSTED=true
+
+# Build the dashboard using nx (handles dependency builds)
+RUN CI='' VITE_SELF_HOSTED=true pnpm build:dashboard --skip-nx-cache
 
 # =============================================================================
-# Production Stage
+# Production Image
 # =============================================================================
-FROM node:20-alpine3.20
+FROM node:20-alpine3.20 AS production
 
 RUN npm install -g http-server --loglevel notice
 
 USER 1000
 WORKDIR /app
 
+# Copy built dashboard
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/dist /app/dist
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/package.json /app/package.json
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/dashboard/docker-entrypoint.sh /app/docker-entrypoint.sh
 
 RUN chmod +x /app/docker-entrypoint.sh
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
-
 EXPOSE 4000
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["http-server", "dist", "-p", "4000", "-d", "false", "--proxy", "http://localhost:4000?"]
