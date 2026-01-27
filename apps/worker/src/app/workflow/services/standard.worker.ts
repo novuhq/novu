@@ -98,6 +98,10 @@ export class StandardWorker extends StandardWorkerService {
 
   private getWorkerProcessor() {
     return async ({ data }: { data: IStandardDataDto }) => {
+      if (data.skipProcessing) {
+        Logger.log(`Skipping job ${data._id} - skipProcessing flag is set,`, LOG_CONTEXT);
+        return;
+      }
       const minimalJobData = this.extractMinimalJobData(data);
       const organizationExists = await this.organizationExist(data);
 
