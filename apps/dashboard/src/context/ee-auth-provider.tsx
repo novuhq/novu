@@ -2,7 +2,7 @@ import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buttonVariants } from '@/components/primitives/button';
-import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '@/config';
+import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { ROUTES } from '@/utils/routes';
 
 type EEAuthProviderProps = PropsWithChildren;
@@ -17,7 +17,7 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   }
 
   if (IS_SELF_HOSTED) {
-    // Use the aliased ClerkProvider (points to self-hosted version via vite.config.ts)
+    // ReNovu: Use the aliased ClerkProvider (points to self-hosted version via vite.config.ts)
     // This wraps children with UserContextProvider, AuthContextProvider, and OrganizationContextProvider
     // @ts-expect-error - Self-hosted ClerkProvider wrapper has different props via vite alias
     return <_ClerkProvider>{children}</_ClerkProvider>;
