@@ -1,6 +1,8 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/novuhq/novu/next/apps/dashboard/public/images/novu-logo-light-bg.svg" width="200" alt="ReNovu Logo">
-</p>
+[//]: # (<p align="center">)
+
+[//]: # (  <img src="https://raw.githubusercontent.com/novuhq/novu/next/apps/dashboard/public/images/novu-logo-light-bg.svg" width="200" alt="ReNovu Logo">)
+
+[//]: # (</p>)
 
 <h1 align="center">ReNovu</h1>
 
