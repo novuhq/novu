@@ -1,9 +1,10 @@
 import { Body, Container, Head, Html, Img, Preview, Tailwind } from '@react-email/components';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 interface IBaseEmailLayoutProps {
   previewText: string;
-  children: React.ReactNode;
+  // ArokaGO: Use ReactNode type directly to avoid React 18/19 type conflicts
+  children: ReactNode;
 }
 
 export function EmailLayout({ previewText, children }: IBaseEmailLayoutProps) {
@@ -21,7 +22,8 @@ export function EmailLayout({ previewText, children }: IBaseEmailLayoutProps) {
               alt="Novu"
               className="mx-auto my-[32px]"
             />
-            {children}
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {children as any}
           </Container>
         </Body>
       </Tailwind>

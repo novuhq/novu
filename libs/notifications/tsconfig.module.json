@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig",
   "compilerOptions": {
+    "skipLibCheck": true,
     "sourceMap": true,
     "target": "esnext",
     "outDir": "build/module",

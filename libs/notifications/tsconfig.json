@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "skipLibCheck": true,
     "sourceMap": true,
     "strictNullChecks": false,
     "allowSyntheticDefaultImports": true,
