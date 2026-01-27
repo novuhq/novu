@@ -69,6 +69,11 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
   }
 
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
+    // ArokaGO: Self-hosted deployments bypass rate limiting
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return true;
+    }
+
     const req = context.switchToHttp().getRequest();
     const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
     const isAllowedEnvironment = this.isAllowedEnvironment(context);

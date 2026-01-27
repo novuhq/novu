@@ -58,6 +58,11 @@ export class ResourceValidatorService {
   ) {}
 
   async validateStepsLimit(environmentId: string, organizationId: string, steps: NotificationStep[]): Promise<void> {
+    // ArokaGO: Self-hosted deployments have NO step limits
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return;
+    }
+
     if (steps.length < MIN_VALIDATION_LIMITS.STEPS_PER_WORKFLOW) {
       return;
     }
@@ -81,6 +86,11 @@ export class ResourceValidatorService {
   }
 
   async validateWorkflowLimit(environmentId: string): Promise<void> {
+    // ArokaGO: Self-hosted deployments have NO workflow limits
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return;
+    }
+
     const workflowsCount = await this.notificationTemplateRepository.count({
       _environmentId: environmentId,
       'triggers.identifier': { $nin: DEMO_WORKFLOWS_IDENTIFIER },
@@ -139,6 +149,11 @@ export class ResourceValidatorService {
   }
 
   async validateLayoutsLimit(environmentId: string, isV2Layout: boolean): Promise<void> {
+    // ArokaGO: Self-hosted deployments have NO layout limits
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return;
+    }
+
     let layoutsCount = 0;
     if (isV2Layout) {
       layoutsCount = await this.layoutRepository.count({

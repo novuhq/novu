@@ -30,6 +30,11 @@ export class TierRestrictionsValidateUsecase {
 
   @InstrumentUsecase()
   async execute(command: TierRestrictionsValidateCommand): Promise<TierRestrictionsValidateResponse> {
+    // ArokaGO: Self-hosted deployments have NO tier restrictions
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return [];
+    }
+
     const { stepType } = command;
 
     if (!isDigestDelayOrThrottle(stepType)) {

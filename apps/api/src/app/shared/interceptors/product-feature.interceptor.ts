@@ -25,6 +25,11 @@ export class ProductFeatureInterceptor implements NestInterceptor {
   ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+    // ArokaGO: Self-hosted deployments have ALL features enabled
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return next.handle();
+    }
+
     const handler = context.getHandler();
     const classRef = context.getClass();
     const requestedFeature: ProductFeatureKeyEnum | undefined = this.reflector.getAllAndOverride(ProductFeature, [

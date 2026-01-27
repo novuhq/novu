@@ -173,25 +173,28 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: { value: 5000000, label: '5,000,000 events included' },
   },
   [FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_TRIGGER_EVENTS]: {
-    [ApiServiceLevelEnum.FREE]: 60,
-    [ApiServiceLevelEnum.PRO]: 240,
-    [ApiServiceLevelEnum.BUSINESS]: 600,
-    [ApiServiceLevelEnum.ENTERPRISE]: 6000,
-    [ApiServiceLevelEnum.UNLIMITED]: 6000,
+    // ArokaGO: Unlimited API rate limits for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.PRO]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.BUSINESS]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.ENTERPRISE]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.UNLIMITED]: UNLIMITED_VALUE,
   },
   [FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_CONFIGURATION]: {
-    [ApiServiceLevelEnum.FREE]: 20,
-    [ApiServiceLevelEnum.PRO]: 80,
-    [ApiServiceLevelEnum.BUSINESS]: 200,
-    [ApiServiceLevelEnum.ENTERPRISE]: 2000,
-    [ApiServiceLevelEnum.UNLIMITED]: 2000,
+    // ArokaGO: Unlimited API rate limits for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.PRO]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.BUSINESS]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.ENTERPRISE]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.UNLIMITED]: UNLIMITED_VALUE,
   },
   [FeatureNameEnum.PLATFORM_MAX_API_REQUESTS_GLOBAL]: {
-    [ApiServiceLevelEnum.FREE]: 30,
-    [ApiServiceLevelEnum.PRO]: 120,
-    [ApiServiceLevelEnum.BUSINESS]: 300,
-    [ApiServiceLevelEnum.ENTERPRISE]: 3000,
-    [ApiServiceLevelEnum.UNLIMITED]: 3000,
+    // ArokaGO: Unlimited API rate limits for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.PRO]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.BUSINESS]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.ENTERPRISE]: UNLIMITED_VALUE,
+    [ApiServiceLevelEnum.UNLIMITED]: UNLIMITED_VALUE,
   },
   [FeatureNameEnum.PLATFORM_COST_PER_ADDITIONAL_1K_EVENTS]: {
     [ApiServiceLevelEnum.FREE]: { label: 'No additional events', value: null },
@@ -222,14 +225,16 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited notification subscribers', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.PLATFORM_MAX_WORKFLOWS]: {
-    [ApiServiceLevelEnum.FREE]: { label: '20 workflows', value: 20 },
-    [ApiServiceLevelEnum.PRO]: { label: '20 workflows', value: 20 },
+    // ArokaGO: Unlimited workflows for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Unlimited workflows', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited workflows', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited workflows', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited workflows', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited workflows', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.PLATFORM_MAX_LAYOUTS]: {
-    [ApiServiceLevelEnum.FREE]: { label: '1 layout', value: 1 },
+    // ArokaGO: Unlimited layouts for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.PRO]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
@@ -257,32 +262,36 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
   [FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Custom environments', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'Custom environments', value: false },
+    // ArokaGO: Custom environments enabled for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Custom environments', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'Custom environments', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Custom environments', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom environments', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom environments', value: true },
   },
   [FeatureNameEnum.WEBHOOKS]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Webhooks', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'Webhooks', value: false },
+    // ArokaGO: Webhooks enabled for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Webhooks', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'Webhooks', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Webhooks', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Webhooks', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Webhooks', value: true },
   },
   [FeatureNameEnum.AUTO_TRANSLATIONS]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Translations', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'Translations', value: false },
+    // ArokaGO: Enabled translations for all tiers in self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Translations', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'Translations', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Translations', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Translations', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Translations', value: true },
   },
   [FeatureNameEnum.PLATFORM_MULTI_ORG_MULTI_TENANCY]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'No', value: 0 },
-    [ApiServiceLevelEnum.PRO]: { label: 'No', value: 0 },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'Q2 2025', value: true },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Q2 2025', value: true },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Q2 2025', value: true },
+    // ArokaGO: Multi-org/multi-tenancy enabled for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Multi-org enabled', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'Multi-org enabled', value: true },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Multi-org enabled', value: true },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Multi-org enabled', value: true },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Multi-org enabled', value: true },
   },
   [FeatureNameEnum.PLATFORM_PROVIDER_INTEGRATIONS]: {
     [ApiServiceLevelEnum.FREE]: UNLIMITED_VALUE,
@@ -292,46 +301,51 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: UNLIMITED_VALUE,
   },
   [FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION]: {
-    [ApiServiceLevelEnum.FREE]: { label: '24 hours activity feed retention', value: 24, timeSuffix: 'h' },
-    [ApiServiceLevelEnum.PRO]: { label: '7 days activity feed retention', value: 7, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.BUSINESS]: { label: '90 days activity feed retention', value: 90, timeSuffix: 'd' },
+    // ArokaGO: Unlimited activity feed retention for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Unlimited activity feed retention', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited activity feed retention', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited activity feed retention', value: UNLIMITED_VALUE, timeSuffix: 'd' },
     [ApiServiceLevelEnum.ENTERPRISE]: {
-      label: 'Custom activity feed retention',
+      label: 'Unlimited activity feed retention',
       value: UNLIMITED_VALUE,
       timeSuffix: 'd',
     },
     [ApiServiceLevelEnum.UNLIMITED]: {
-      label: 'Custom activity feed retention',
+      label: 'Unlimited activity feed retention',
       value: UNLIMITED_VALUE,
       timeSuffix: 'd',
     },
   },
   [FeatureNameEnum.PLATFORM_MAX_DIGEST_WINDOW_TIME]: {
-    [ApiServiceLevelEnum.FREE]: { label: '24 hours max digest window time', value: 24, timeSuffix: 'h' },
-    [ApiServiceLevelEnum.PRO]: { label: '7 days max digest window time', value: 7, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.BUSINESS]: { label: '90 days max digest window time', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom digest window time', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    // ArokaGO: Unlimited digest window for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Unlimited digest window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited digest window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited digest window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited digest window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_DELAY_DURATION]: {
-    [ApiServiceLevelEnum.FREE]: { label: '24 hours max delay duration', value: 24, timeSuffix: 'h' },
-    [ApiServiceLevelEnum.PRO]: { label: '7 days max delay duration', value: 7, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.BUSINESS]: { label: '90 days max delay duration', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom delay duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    // ArokaGO: Unlimited delay duration for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Unlimited delay duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited delay duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited delay duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited delay duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_THROTTLE_WINDOW_TIME]: {
-    [ApiServiceLevelEnum.FREE]: { label: '1 hour max throttle window', value: 1, timeSuffix: 'h' },
-    [ApiServiceLevelEnum.PRO]: { label: '24 hours max throttle window', value: 24, timeSuffix: 'h' },
-    [ApiServiceLevelEnum.BUSINESS]: { label: '7 days max throttle window', value: 7, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom throttle window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    // ArokaGO: Unlimited throttle window for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Unlimited throttle window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited throttle window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited throttle window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited throttle window', value: UNLIMITED_VALUE, timeSuffix: 'd' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_MAX_SNOOZE_DURATION]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Up to 24 hours max snooze duration', value: 24, timeSuffix: 'h' },
-    [ApiServiceLevelEnum.PRO]: { label: 'Up to 90 days max snooze duration', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'Up to 90 days max snooze duration', value: 90, timeSuffix: 'd' },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom snooze duration', value: 90, timeSuffix: 'd' },
+    // ArokaGO: Unlimited snooze duration for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Unlimited snooze duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited snooze duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited snooze duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited snooze duration', value: UNLIMITED_VALUE, timeSuffix: 'd' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited', value: UNLIMITED_VALUE, timeSuffix: 'd' },
   },
   [FeatureNameEnum.PLATFORM_BLOCK_BASED_EMAIL_EDITOR_BOOLEAN]: {
@@ -342,7 +356,8 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
   [FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Remove Novu branding', value: false },
+    // ArokaGO: Enabled branding removal for all tiers in self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Remove Novu branding', value: true },
     [ApiServiceLevelEnum.PRO]: { label: 'Remove Novu branding', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Remove Novu branding', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Remove Novu branding', value: true },
@@ -386,15 +401,17 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   },
   // Account Administration Features
   [FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS]: {
-    [ApiServiceLevelEnum.FREE]: { label: '3 team members max', value: 3 },
-    [ApiServiceLevelEnum.PRO]: { label: '3 team members max', value: 3 },
+    // ArokaGO: Unlimited team members for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Unlimited team members', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited team members', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited team members', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited team members', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited team members', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Role-Based Access Control (RBAC)', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'Role-Based Access Control (RBAC)', value: false },
+    // ArokaGO: RBAC enabled for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Role-Based Access Control (RBAC)', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'Role-Based Access Control (RBAC)', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Role-Based Access Control (RBAC)', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Role-Based Access Control (RBAC)', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: 1,
@@ -407,9 +424,10 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
   [FeatureNameEnum.ACCOUNT_CUSTOM_SAML_SSO_OIDC_BOOLEAN]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'SAML and Enterprise SSO providers', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'SAML and Enterprise SSO providers', value: false },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'SAML and Enterprise SSO providers', value: false },
+    // ArokaGO: SAML/SSO enabled for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'SAML and Enterprise SSO providers', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'SAML and Enterprise SSO providers', value: true },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'SAML and Enterprise SSO providers', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'SAML and Enterprise SSO providers', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
@@ -430,16 +448,18 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   },
 
   [FeatureNameEnum.COMPLIANCE_SOC2_ISO27001_REPORT_BOOLEAN]: {
-    [ApiServiceLevelEnum.FREE]: 0,
-    [ApiServiceLevelEnum.PRO]: 0,
+    // ArokaGO: SOC2/ISO27001 enabled for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: 1,
+    [ApiServiceLevelEnum.PRO]: 1,
     [ApiServiceLevelEnum.BUSINESS]: 1,
     [ApiServiceLevelEnum.ENTERPRISE]: 1,
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
   [FeatureNameEnum.COMPLIANCE_HIPAA_BAA_BOOLEAN]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'HIPAA compliance', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'HIPAA compliance', value: false },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'HIPAA compliance', value: false },
+    // ArokaGO: HIPAA enabled for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'HIPAA compliance', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'HIPAA compliance', value: true },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'HIPAA compliance', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'HIPAA compliance', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'HIPAA compliance', value: true },
   },
@@ -457,9 +477,10 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     },
   },
   [FeatureNameEnum.COMPLIANCE_DATA_PROCESSING_AGREEMENTS]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Standard DPA', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'Standard DPA', value: false },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'Standard DPA', value: false },
+    // ArokaGO: Custom DPA enabled for self-hosted deployment
+    [ApiServiceLevelEnum.FREE]: { label: 'Custom DPA', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'Custom DPA', value: true },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Custom DPA', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom DPA', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom DPA', value: true },
   },
