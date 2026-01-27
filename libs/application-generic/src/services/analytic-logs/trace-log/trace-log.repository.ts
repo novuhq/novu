@@ -551,6 +551,24 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Workflow run completed';
     case 'workflow_run_error':
       return 'Workflow run error';
+
+    // Workflow run delivery lifecycle status events
+    case 'workflow_run_pending':
+      return 'Workflow run pending';
+    case 'workflow_run_sent':
+      return 'Workflow run sent';
+    case 'workflow_run_errored':
+      return 'Workflow run errored';
+    case 'workflow_run_skipped':
+      return 'Workflow run skipped';
+    case 'workflow_run_canceled':
+      return 'Workflow run canceled';
+    case 'workflow_run_merged':
+      return 'Workflow run merged';
+    case 'workflow_run_delivered':
+      return 'Workflow run delivered';
+    case 'workflow_run_interacted':
+      return 'Workflow run interacted';
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
       const _exhaustiveCheck: never = eventType;

@@ -200,11 +200,18 @@ export type EventType =
   | 'step_skipped_max_extensions_reached'
   | 'push_invalid_token_removed'
   | 'topic_subscription_preference_evaluation'
-  | 'workflow_run_created'
+  | 'workflow_run_created' //
   | 'workflow_run_processing'
   | 'workflow_run_completed'
-  | 'workflow_run_error';
-// todo: add delivery lifecycle status
+  | 'workflow_run_error'
+  | 'workflow_run_pending'
+  | 'workflow_run_sent' //
+  | 'workflow_run_errored'
+  | 'workflow_run_skipped'
+  | 'workflow_run_canceled'
+  | 'workflow_run_merged'
+  | 'workflow_run_delivered'
+  | 'workflow_run_interacted';
 
 export type EntityType = 'request' | 'step_run' | 'workflow_run';
 

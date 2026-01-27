@@ -16,6 +16,7 @@ import {
 } from '@novu/shared';
 import { PinoLogger } from '../logging';
 import {
+  EventType,
   TraceLogRepository,
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
@@ -244,12 +245,15 @@ export class WorkflowRunService {
         return;
       }
 
-      const eventTypeMap: Record<WorkflowRunStatusEnum, string> = {
-        [WorkflowRunStatusEnum.PROCESSING]: 'workflow_run_processing',
-        [WorkflowRunStatusEnum.PENDING]: 'workflow_run_processing',
-        [WorkflowRunStatusEnum.COMPLETED]: 'workflow_run_completed',
-        [WorkflowRunStatusEnum.SUCCESS]: 'workflow_run_completed',
-        [WorkflowRunStatusEnum.ERROR]: 'workflow_run_error',
+      const deliveryLifecycleEventTypeMap: Record<DeliveryLifecycleStatusEnum, EventType> = {
+        [DeliveryLifecycleStatusEnum.PENDING]: 'workflow_run_pending',
+        [DeliveryLifecycleStatusEnum.SENT]: 'workflow_run_sent',
+        [DeliveryLifecycleStatusEnum.ERRORED]: 'workflow_run_errored',
+        [DeliveryLifecycleStatusEnum.SKIPPED]: 'workflow_run_skipped',
+        [DeliveryLifecycleStatusEnum.CANCELED]: 'workflow_run_canceled',
+        [DeliveryLifecycleStatusEnum.MERGED]: 'workflow_run_merged',
+        [DeliveryLifecycleStatusEnum.DELIVERED]: 'workflow_run_delivered',
+        [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_interacted',
       };
 
       const statusMap: Record<WorkflowRunStatusEnum, string> = {
@@ -267,8 +271,8 @@ export class WorkflowRunService {
         user_id: '',
         external_subscriber_id: notification.to?.subscriberId || '',
         subscriber_id: notification._subscriberId,
-        event_type: eventTypeMap[workflowStatus] as any,
-        title: `Workflow run ${workflowStatus}`,
+        event_type: deliveryLifecycleEventTypeMap[deliveryLifecycleStatus],
+        title: `Workflow run ${deliveryLifecycleStatus}`,
         message: '',
         raw_data: '',
         status: statusMap[workflowStatus] as any,
