@@ -37,28 +37,30 @@ WORKDIR /usr/src/app
 # Create a new stage for building assets
 FROM dev AS assets
 
-# Remove node_modules and source directories
-RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
+# Remove source files but KEEP node_modules (already compiled)
+RUN pnpm recursive exec -- rm -rf ./src
 
 # ------- PRODUCTION BUILD ----------
-# Use the base image for production
-FROM dev_base AS prod
+# Use clean base for production (NO Python)
+FROM node:20-alpine3.20 AS prod
 ARG PACKAGE_PATH
 
 # Set environment variables for production
 ENV CI=true
+ENV NX_DAEMON=false
+
+# Install only runtime dependencies
+RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.16.1
+
+USER 1000
 
 # Set the working directory to the root of the app
 WORKDIR /usr/src/app
 
 # Copy necessary directories from the build stage
 COPY --chown=1000:1000 ./meta ./
+# Copy build artifacts AND pre-compiled node_modules from assets
 COPY --chown=1000:1000 --from=assets /usr/src/app .
-
-# Install production dependencies
-RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store \
-    pnpm install --reporter=silent --filter "{${PACKAGE_PATH}}..." \
-    --frozen-lockfile --unsafe-perm --reporter=silent
 
 # Set the working directory to the webhook app and start the application using pm2-runtime
 WORKDIR /usr/src/app/apps/webhook
