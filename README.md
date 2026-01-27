@@ -1,119 +1,200 @@
-# ReNovu
+<p align="center">
+  <img src="https://raw.githubusercontent.com/novuhq/novu/next/apps/dashboard/public/images/novu-logo-light-bg.svg" width="200" alt="ReNovu Logo">
+</p>
 
-Self-hosted notification platform based on [Novu](https://novu.co) with all enterprise features unlocked.
+<h1 align="center">ReNovu</h1>
 
-## Features
+<p align="center">
+  <strong>Re</strong>verse-Engineered <strong>Novu</strong> — Self-hosted notifications with enterprise features unlocked
+</p>
 
-- **All Tiers Unlocked** - UNLIMITED tier for all organizations
-- **No Branding** - Novu branding removed by default
-- **Multi-Channel** - Email, SMS, Push, In-App, Chat notifications
-- **Inbox Component** - Embeddable React notification inbox
-- **Workflow Engine** - Visual workflow builder with conditions and delays
-- **50+ Providers** - Sendgrid, Twilio, FCM, Slack, and more
+<p align="center">
+  <em>Like <a href="https://github.com/ReVanced">ReVanced</a> for YouTube, but for <a href="https://novu.co">Novu</a> notifications</em>
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#whats-unlocked">What's Unlocked</a> •
+  <a href="#roadmap">Roadmap</a> •
+  <a href="#providers">Providers</a>
+</p>
+
+---
+
+## Why ReNovu?
+
+Novu is an excellent open-source notification infrastructure, but many features are locked behind enterprise tiers. **ReNovu** reverse-engineers these restrictions to give self-hosters the full experience:
+
+| Feature | Novu Free | Novu Enterprise | ReNovu |
+|---------|:---------:|:---------------:|:------:|
+| Unlimited workflows | Limited | Yes | **Yes** |
+| Custom layouts | Limited | Yes | **Yes** |
+| Remove branding | No | Yes | **Yes** |
+| Multi-org support | No | Yes | **Yes** |
+| Priority support | No | Yes | Community |
+| AI Translation | No | Yes | **Planned** |
 
 ## Quick Start
 
 ```bash
-# Clone the repository
-git clone <your-repo-url> renovu
+# Clone
+git clone https://github.com/atlonxp/renovu.git
 cd renovu
 
-# Copy environment file
+# Configure
 cp .env.example .env
 
-# Start all services
+# Launch
 docker compose up -d
 ```
 
-## Access
+**That's it.** Open [http://localhost:3000](http://localhost:3000) and start sending notifications.
 
-| Service | URL |
-|---------|-----|
-| Dashboard | http://localhost:3000 |
-| API | http://localhost:3001 |
-| WebSocket | http://localhost:3002 |
+## Access Points
 
-## Services
+| Service | URL | Description |
+|---------|-----|-------------|
+| Dashboard | [localhost:3000](http://localhost:3000) | Web admin interface |
+| API | [localhost:3001](http://localhost:3001) | REST API & OpenAPI docs |
+| WebSocket | [localhost:3002](http://localhost:3002) | Real-time updates |
 
-| Service | Description |
-|---------|-------------|
-| `api` | Core REST API server |
-| `dashboard` | Web admin interface |
-| `worker` | Background job processor |
-| `ws` | WebSocket server for real-time updates |
-| `mongodb` | Database |
-| `redis` | Cache and queue |
+## What's Unlocked
+
+### Tier System
+All organizations automatically receive **UNLIMITED** tier:
+- Unlimited workflows and notification templates
+- Unlimited team members
+- Unlimited API calls
+- All premium features enabled
+
+### Branding Freedom
+- "Powered by Novu" banners removed
+- Inbox component footer hidden
+- Full white-label capability
+
+### Self-Hosted Auth
+- No Clerk dependency
+- JWT-based authentication
+- Auto-organization creation on first login
+
+## Roadmap
+
+ReNovu is actively reverse-engineering locked enterprise features:
+
+| Feature | Status | Implementation |
+|---------|--------|----------------|
+| Unlimited Tier | **Done** | Modified tier assignment |
+| Remove Branding | **Done** | Auto-enabled for self-hosted |
+| AI Translation | **Planned** | OpenAI GPT-4o integration |
+| Custom Providers | Exploring | Community contributions |
+
+### AI Translation (Coming Soon)
+
+Novu's enterprise translation feature uses proprietary AI. ReNovu will implement this using:
+- **OpenAI GPT-4o** for high-quality translations
+- **Configurable providers** (OpenAI, Anthropic, local LLMs)
+- **13+ languages** support
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        ReNovu Stack                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
+│  │Dashboard │  │   API    │  │  Worker  │  │    WS    │   │
+│  │  :3000   │  │  :3001   │  │  :3004   │  │  :3002   │   │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘   │
+│       │             │             │             │          │
+│       └─────────────┴──────┬──────┴─────────────┘          │
+│                            │                                │
+│              ┌─────────────┴─────────────┐                 │
+│              │                           │                  │
+│         ┌────┴────┐               ┌──────┴──────┐          │
+│         │ MongoDB │               │    Redis    │          │
+│         │  :27017 │               │    :6379    │          │
+│         └─────────┘               └─────────────┘          │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Configuration
 
-Edit `.env` to customize:
+Edit `.env` for your environment:
 
 ```bash
-# Security - CHANGE IN PRODUCTION
-JWT_SECRET=your-secret-here
-STORE_ENCRYPTION_KEY=32-character-key-here
-NOVU_SECRET_KEY=your-secret-here
+# Security (CHANGE IN PRODUCTION!)
+JWT_SECRET=your-super-secret-jwt-key
+STORE_ENCRYPTION_KEY=32-character-encryption-key!!
+NOVU_SECRET_KEY=your-novu-secret-key
 
 # Database
 MONGO_USER=renovu
-MONGO_PASSWORD=your-password
+MONGO_PASSWORD=secure-password
 
-# Ports
-DASHBOARD_PORT=3000
-API_PORT=3001
-WS_PORT=3002
+# URLs (update for production)
+API_ROOT_URL=http://localhost:3001
+FRONT_BASE_URL=http://localhost:3000
 ```
 
-## Project Structure
+## Providers
 
-```
-renovu/
-├── apps/
-│   ├── api/            # NestJS API server
-│   ├── dashboard/      # React dashboard (Vite)
-│   ├── worker/         # Background job processor
-│   ├── ws/             # WebSocket server
-│   ├── inbound-mail/   # Email parsing service
-│   └── webhook/        # Webhook delivery service
-├── docker/             # Dockerfiles
-├── libs/               # Core libraries
-│   ├── dal/            # Data access layer
-│   └── application-generic/
-├── packages/           # NPM packages
-│   ├── shared/         # Shared types and utilities
-│   ├── framework/      # Workflow framework
-│   ├── js/             # JavaScript SDK
-│   ├── react/          # React components
-│   └── providers/      # Channel providers
-└── docker-compose.yml
-```
+ReNovu supports 50+ notification providers out of the box:
 
-## Modifications from Novu
+<details>
+<summary><strong>Email Providers</strong></summary>
 
-### Tier System
-- All organizations get `UNLIMITED` tier automatically
-- Feature limits unlocked in `packages/shared/src/consts/feature-tiers-constants.ts`
-- No enterprise packages required
+- Sendgrid
+- Mailgun
+- Amazon SES
+- Postmark
+- SMTP (any)
+- Mailjet
+- Mandrill
+- Brevo (Sendinblue)
+- MailerSend
+- Resend
+- SparkPost
+- Outlook 365
 
-### Authentication
-- Self-hosted authentication (no Clerk dependency)
-- Auto-creates organization on first login
-- JWT-based authentication
+</details>
 
-### Branding
-- `removeNovuBranding: true` by default for new organizations
-- Inbox component footer hidden
+<details>
+<summary><strong>SMS Providers</strong></summary>
 
-## Building from Source
+- Twilio
+- Plivo
+- Amazon SNS
+- Vonage (Nexmo)
+- Telnyx
+- Termii
+- Gupshup
+- Clickatell
+- Infobip
 
-```bash
-# Build all services
-docker compose build
+</details>
 
-# Build specific service
-docker compose build api
-docker compose build dashboard
-```
+<details>
+<summary><strong>Push Providers</strong></summary>
+
+- Firebase Cloud Messaging (FCM)
+- Expo
+- Apple Push Notification Service (APNS)
+- OneSignal
+- Pushpad
+
+</details>
+
+<details>
+<summary><strong>Chat Providers</strong></summary>
+
+- Slack
+- Discord
+- Microsoft Teams
+- Mattermost
+
+</details>
 
 ## Development
 
@@ -121,30 +202,67 @@ docker compose build dashboard
 # Install dependencies
 pnpm install
 
-# Start development servers
-pnpm start:api:dev
-pnpm start:dashboard
-pnpm start:worker
-pnpm start:ws
+# Start dev servers
+pnpm start:api:dev      # API on :3000
+pnpm start:dashboard    # Dashboard on :4200
+pnpm start:worker       # Background worker
+pnpm start:ws           # WebSocket server
 ```
 
-## Providers
+### Build from Source
 
-### Email
-Sendgrid, Mailgun, SES, Postmark, SMTP, Mailjet, Mandrill, Brevo, MailerSend, Resend, SparkPost, Outlook 365
+```bash
+# Build all images
+docker compose build
 
-### SMS
-Twilio, Plivo, SNS, Vonage, Telnyx, Termii, Gupshup, Clickatell, Infobip
+# Build specific service
+docker compose build api
+docker compose build dashboard
+```
 
-### Push
-FCM, Expo, APNS, OneSignal, Pushpad
+## Project Structure
 
-### Chat
-Slack, Discord, MS Teams, Mattermost
+```
+renovu/
+├── apps/
+│   ├── api/              # NestJS REST API
+│   ├── dashboard/        # React admin dashboard
+│   ├── worker/           # Background job processor
+│   ├── ws/               # WebSocket server
+│   ├── inbound-mail/     # Inbound email processor
+│   └── webhook/          # Webhook delivery service
+├── libs/
+│   ├── dal/              # Data access layer
+│   └── application-generic/
+├── packages/
+│   ├── shared/           # Shared types & constants
+│   ├── framework/        # Workflow framework
+│   ├── js/               # JavaScript SDK
+│   ├── react/            # React components (Inbox)
+│   └── providers/        # Channel provider implementations
+├── docker/               # Dockerfiles
+└── docker-compose.yml
+```
 
-### In-App
-Novu Inbox component (React)
+## Contributing
+
+ReNovu is community-driven. We welcome contributions for:
+
+- Reverse-engineering additional enterprise features
+- Adding new notification providers
+- Improving documentation
+- Bug fixes and optimizations
+
+## Disclaimer
+
+ReNovu is an independent project that modifies Novu for self-hosted use. It is not affiliated with, endorsed by, or supported by Novu Co. Use at your own discretion.
 
 ## License
 
-Based on Novu, licensed under MIT License.
+Based on [Novu](https://github.com/novuhq/novu), licensed under MIT License.
+
+---
+
+<p align="center">
+  <strong>ReNovu</strong> — Your notifications, your infrastructure, your rules.
+</p>
