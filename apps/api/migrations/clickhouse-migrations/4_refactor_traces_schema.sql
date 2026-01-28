@@ -121,7 +121,7 @@ ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
 ORDER BY (organization_id, environment_id, date, workflow_id, step_type);
 
--- Step 4: Create materialized view to populate delivery_trend_counts_new from traces
+-- Step 4: Create materialized view to populate delivery_trend_counts_new from traces_new
 -- Only captures records created after migration deployment
 -- Historical data will be backfilled separately via INSERT SELECT
 CREATE MATERIALIZED VIEW IF NOT EXISTS delivery_trend_counts_new_mv
@@ -133,15 +133,15 @@ AS SELECT
   ifNull(workflow_id, '') AS workflow_id,
   step_run_type AS step_type,
   1 AS count
-FROM traces
+FROM traces_new
 WHERE 
   event_type = 'message_sent'
   AND step_run_type IN ('in_app', 'email', 'sms', 'chat', 'push')
   AND created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
 
--- Step 5: Create workflow_run_count_new table for workflow run event aggregation
+-- Step 5: Create workflow_run_count table for workflow run event aggregation
 -- Aggregates event counts by workflow run identifier for analytics
-CREATE TABLE IF NOT EXISTS workflow_run_count_new (
+CREATE TABLE IF NOT EXISTS workflow_run_count (
   date Date,
   organization_id String,
   environment_id String,
@@ -153,11 +153,12 @@ ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
 ORDER BY (organization_id, environment_id, date, event_type, workflow_run_id);
 
--- Step 6: Create materialized view to populate workflow_run_count_new from traces
+-- Step 6: Create temporary materialized view to populate workflow_run_count from traces_new
 -- Only captures records created after migration deployment
 -- Historical data will be backfilled separately via INSERT SELECT
-CREATE MATERIALIZED VIEW IF NOT EXISTS workflow_run_count_new_mv
-TO workflow_run_count_new
+-- This MV will be dropped and replaced with a permanent one in migration 5
+CREATE MATERIALIZED VIEW IF NOT EXISTS workflow_run_count_temp_mv
+TO workflow_run_count
 AS SELECT
   toDate(created_at) AS date,
   organization_id,
@@ -165,5 +166,5 @@ AS SELECT
   event_type,
   workflow_run_identifier AS workflow_run_id,
   1 AS count
-FROM traces
+FROM traces_new
 WHERE created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
