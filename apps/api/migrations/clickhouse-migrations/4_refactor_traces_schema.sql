@@ -138,3 +138,32 @@ WHERE
   event_type = 'message_sent'
   AND step_run_type IN ('in_app', 'email', 'sms', 'chat', 'push')
   AND created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
+
+-- Step 5: Create workflow_run_count_new table for workflow run event aggregation
+-- Aggregates event counts by workflow run identifier for analytics
+CREATE TABLE IF NOT EXISTS workflow_run_count_new (
+  date Date,
+  organization_id String,
+  environment_id String,
+  event_type LowCardinality(String),
+  workflow_run_id String,
+  count UInt64
+)
+ENGINE = SummingMergeTree(count)
+PARTITION BY toYYYYMM(date)
+ORDER BY (organization_id, environment_id, date, event_type, workflow_run_id);
+
+-- Step 6: Create materialized view to populate workflow_run_count_new from traces
+-- Only captures records created after migration deployment
+-- Historical data will be backfilled separately via INSERT SELECT
+CREATE MATERIALIZED VIEW IF NOT EXISTS workflow_run_count_new_mv
+TO workflow_run_count_new
+AS SELECT
+  toDate(created_at) AS date,
+  organization_id,
+  environment_id,
+  event_type,
+  workflow_run_identifier AS workflow_run_id,
+  1 AS count
+FROM traces
+WHERE created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
