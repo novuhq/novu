@@ -206,17 +206,17 @@ export class WorkflowRunService {
           (job) => job.status === JobStatusEnum.COMPLETED && messages.some((m) => m._jobId === job._id)
         );
 
-        return completedWithMessage.length === 1;
+        return completedWithMessage.length >= 1;
       }
       case DeliveryLifecycleStatusEnum.DELIVERED: {
         const deliveredMessages = messages.filter((m) => !!m.deliveredAt);
 
-        return deliveredMessages.length === 1;
+        return deliveredMessages.length >= 1;
       }
       case DeliveryLifecycleStatusEnum.INTERACTED: {
         const interactedMessages = messages.filter((m) => m.seen || m.read || m.snoozedUntil || m.archived);
 
-        return interactedMessages.length === 1;
+        return interactedMessages.length >= 1;
       }
       default:
         return true;
