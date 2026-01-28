@@ -33,6 +33,7 @@ interface WorkflowStatusUpdateParams {
   _subscriberId: string;
   deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum;
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
+  isWorkflowComplete?: boolean;
 }
 
 type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id'>;
@@ -85,31 +86,31 @@ export class WorkflowRunService {
     workflowStatus,
     deliveryLifecycleStatus: providedStatus,
     deliveryLifecycleDetail: providedDetail,
+    isWorkflowComplete = false,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
       let deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
       let deliveryLifecycleDetail: DeliveryLifecycleDetail | undefined;
 
+      const [jobs, messages] = await Promise.all([
+        this.getJobsForWorkflowRun(notificationId, environmentId, organizationId, _subscriberId),
+        this.getMessagesForWorkflowRun(notificationId, environmentId, organizationId, _subscriberId),
+      ]);
+
       if (providedStatus) {
         deliveryLifecycleStatus = providedStatus;
         deliveryLifecycleDetail = providedDetail;
       } else {
-        const result = await this.getDeliveryLifecycle({
-          workflowStatus,
-          notificationId,
-          environmentId,
-          organizationId,
-          _subscriberId,
-        });
+        const result = this.buildDeliveryLifecycle(jobs, messages);
         deliveryLifecycleStatus = result.deliveryLifecycleStatus;
         deliveryLifecycleDetail = result.deliveryLifecycleDetail;
       }
 
       if (deliveryLifecycleStatus === DeliveryLifecycleStatusEnum.PENDING) {
-        // Optimization: Skip workflow run updates when delivery lifecycle is pending
-        // since the workflow run should already be in the expected pending state
         return;
       }
+
+      const shouldTrace = this.shouldCreateTrace(deliveryLifecycleStatus, jobs, messages, isWorkflowComplete);
 
       await this.workflowRunRepository.updateWorkflowRunState(
         notificationId,
@@ -122,14 +123,16 @@ export class WorkflowRunService {
         deliveryLifecycleDetail
       );
 
-      await this.createWorkflowRunTraceUpdate(
-        notificationId,
-        workflowStatus,
-        organizationId,
-        environmentId,
-        deliveryLifecycleStatus,
-        deliveryLifecycleDetail
-      );
+      if (shouldTrace) {
+        await this.createWorkflowRunTraceUpdate(
+          notificationId,
+          workflowStatus,
+          organizationId,
+          environmentId,
+          deliveryLifecycleStatus,
+          deliveryLifecycleDetail
+        );
+      }
 
       this.logger.debug(
         {
@@ -138,6 +141,7 @@ export class WorkflowRunService {
           environmentId,
           deliveryLifecycleStatus,
           deliveryLifecycleDetail,
+          shouldTrace,
         },
         `Updated workflow run delivery lifecycle to ${deliveryLifecycleStatus}${deliveryLifecycleDetail ? ` with reason: ${deliveryLifecycleDetail}` : ''}`
       );
@@ -176,6 +180,46 @@ export class WorkflowRunService {
         },
         'Failed to get workflow run delivery lifecycle'
       );
+    }
+  }
+
+  private shouldCreateTrace(
+    deliveryLifecycleStatus: DeliveryLifecycleStatusEnum,
+    jobs: JobResult[],
+    messages: MessageResult[],
+    isWorkflowComplete: boolean
+  ): boolean {
+    const terminalStatuses = [
+      DeliveryLifecycleStatusEnum.SKIPPED,
+      DeliveryLifecycleStatusEnum.CANCELED,
+      DeliveryLifecycleStatusEnum.ERRORED,
+      DeliveryLifecycleStatusEnum.MERGED,
+    ];
+
+    if (terminalStatuses.includes(deliveryLifecycleStatus)) {
+      return isWorkflowComplete;
+    }
+
+    switch (deliveryLifecycleStatus) {
+      case DeliveryLifecycleStatusEnum.SENT: {
+        const completedWithMessage = jobs.filter(
+          (job) => job.status === JobStatusEnum.COMPLETED && messages.some((m) => m._jobId === job._id)
+        );
+
+        return completedWithMessage.length === 1;
+      }
+      case DeliveryLifecycleStatusEnum.DELIVERED: {
+        const deliveredMessages = messages.filter((m) => !!m.deliveredAt);
+
+        return deliveredMessages.length === 1;
+      }
+      case DeliveryLifecycleStatusEnum.INTERACTED: {
+        const interactedMessages = messages.filter((m) => m.seen || m.read || m.snoozedUntil || m.archived);
+
+        return interactedMessages.length === 1;
+      }
+      default:
+        return true;
     }
   }
 

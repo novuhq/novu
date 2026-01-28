@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DeliveryLifecycleDetail, DeliveryLifecycleStatusEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { WorkflowRunStatusEnum } from './analytic-logs';
-import { StepRunTraceInput, Trace, TraceLogRepository } from './analytic-logs/trace-log';
+import { StepRunTraceInput, TraceLogRepository } from './analytic-logs/trace-log';
 import { WorkflowRunService } from './workflow-run.service';
 
 export interface MessageInteractionResult {
@@ -11,7 +11,7 @@ export interface MessageInteractionResult {
   error?: string;
 }
 
-export type MessageInteractionTrace = Omit<Trace, 'id' | 'expires_at'> & {
+export type MessageInteractionTrace = StepRunTraceInput & {
   _notificationId: string;
 };
 

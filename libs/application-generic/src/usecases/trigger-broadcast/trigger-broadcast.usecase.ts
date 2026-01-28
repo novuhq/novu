@@ -6,7 +6,7 @@ import { SubscriberSourceEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../instrumentation';
 import { CacheService, FeatureFlagsService } from '../../services';
-import type { EventType, Trace } from '../../services/analytic-logs';
+import type { EventType, RequestTraceInput } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBase } from '../trigger-base';
@@ -110,7 +110,7 @@ export class TriggerBroadcast extends TriggerBase {
     }
 
     try {
-      const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+      const traceData: RequestTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: command.organizationId,
         environment_id: command.environmentId,
@@ -122,7 +122,6 @@ export class TriggerBroadcast extends TriggerBase {
         message: message || null,
         raw_data: rawData ? JSON.stringify(rawData) : null,
         status,
-        entity_type: 'request',
         entity_id: command.requestId,
         workflow_run_identifier: command.template.triggers[0].identifier,
         workflow_id: command.template._id,
