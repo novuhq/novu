@@ -65,7 +65,7 @@ TTL toDateTime(expires_at)
 SETTINGS index_granularity = 8192, async_insert = 1;
 
 -- Step 2: Create materialized view to populate traces_new from new inserts into traces
--- Only captures records created after migration deployment (2026-01-26)
+-- Only captures records created after migration deployment
 -- Historical data will be backfilled separately via INSERT SELECT
 CREATE MATERIALIZED VIEW IF NOT EXISTS traces_to_traces_new_mv
 TO traces_new
@@ -105,15 +105,27 @@ AS SELECT
     0 AS critical,
     [] AS context_keys
 FROM traces
-WHERE created_at > '2026-01-26 00:00:00';
+WHERE created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
 
--- Step 3: Migrate delivery_trend_counts_mv from step_runs to traces table
--- Drop the old materialized view that sources from step_runs
-DROP VIEW IF EXISTS delivery_trend_counts_mv;
+-- Step 3: Create delivery_trend_counts_new table for migration from step_runs to traces
+-- Similar to traces_new, this allows backfilling historical data separately
+CREATE TABLE IF NOT EXISTS delivery_trend_counts_new (
+  date Date,
+  organization_id String,
+  environment_id String,
+  workflow_id String DEFAULT '',
+  step_type LowCardinality(String),
+  count UInt64
+)
+ENGINE = SummingMergeTree(count)
+PARTITION BY toYYYYMM(date)
+ORDER BY (organization_id, environment_id, date, workflow_id, step_type);
 
--- Recreate materialized view to populate from traces table (message_sent events)
-CREATE MATERIALIZED VIEW IF NOT EXISTS delivery_trend_counts_mv
-TO delivery_trend_counts
+-- Step 4: Create materialized view to populate delivery_trend_counts_new from traces
+-- Only captures records created after migration deployment
+-- Historical data will be backfilled separately via INSERT SELECT
+CREATE MATERIALIZED VIEW IF NOT EXISTS delivery_trend_counts_new_mv
+TO delivery_trend_counts_new
 AS SELECT
   toDate(created_at) AS date,
   organization_id,
@@ -125,4 +137,4 @@ FROM traces
 WHERE 
   event_type = 'message_sent'
   AND step_run_type IN ('in_app', 'email', 'sms', 'chat', 'push')
-  AND created_at > '2026-01-26 00:00:00';
+  AND created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
