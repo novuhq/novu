@@ -106,3 +106,23 @@ AS SELECT
     [] AS context_keys
 FROM traces
 WHERE created_at > '2026-01-26 00:00:00';
+
+-- Step 3: Migrate delivery_trend_counts_mv from step_runs to traces table
+-- Drop the old materialized view that sources from step_runs
+DROP VIEW IF EXISTS delivery_trend_counts_mv;
+
+-- Recreate materialized view to populate from traces table (message_sent events)
+CREATE MATERIALIZED VIEW IF NOT EXISTS delivery_trend_counts_mv
+TO delivery_trend_counts
+AS SELECT
+  toDate(created_at) AS date,
+  organization_id,
+  environment_id,
+  ifNull(workflow_id, '') AS workflow_id,
+  step_run_type AS step_type,
+  1 AS count
+FROM traces
+WHERE 
+  event_type = 'message_sent'
+  AND step_run_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+  AND created_at > '2026-01-26 00:00:00';
