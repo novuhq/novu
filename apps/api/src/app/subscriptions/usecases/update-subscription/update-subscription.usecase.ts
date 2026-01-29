@@ -73,7 +73,7 @@ export class UpdateSubscriptionUsecase {
       throw new NotFoundException(`Topic with key ${command.topicKey} not found`);
     }
 
-    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+    const contextQuery = await this.buildContextQuery(command.contextKeys, command.organizationId);
 
     const subscription = await this.topicSubscribersRepository.findOne({
       identifier: command.identifier,
@@ -137,39 +137,12 @@ export class UpdateSubscriptionUsecase {
     return this.mapSubscriptionToDto(updatedSubscription, subscriber, topic, preferences);
   }
 
-  private async buildContextExactMatchQuery(
-    contextKeys: string[] | undefined,
-    organizationId: string
-  ): Promise<Record<string, unknown>> {
-    const useContextFiltering = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-    });
-
-    if (!useContextFiltering) {
-      return {}; // FF OFF: no context filtering (pre-feature behavior)
-    }
-
-    // undefined or empty array = match only "no context" subscriptions/preferences
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
-  }
-
   private async updatePreferencesForSubscription(
     command: UpdateSubscriptionCommand,
     subscription: TopicSubscribersEntity,
     workflows: NotificationTemplateEntity[]
   ): Promise<void> {
-    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+    const contextQuery = await this.buildContextQuery(command.contextKeys, command.organizationId);
 
     await this.preferencesRepository.delete({
       _environmentId: command.environmentId,
@@ -212,7 +185,7 @@ export class UpdateSubscriptionUsecase {
       return undefined;
     }
 
-    const contextQuery = await this.buildContextExactMatchQuery(contextKeys, organizationId);
+    const contextQuery = await this.buildContextQuery(contextKeys, organizationId);
 
     const preferencesEntities = await this.preferencesRepository.find({
       _environmentId: environmentId,
@@ -428,5 +401,21 @@ export class UpdateSubscriptionUsecase {
       createdAt: subscription.createdAt ?? '',
       updatedAt: subscription.updatedAt ?? '',
     };
+  }
+
+  private async buildContextQuery(contextKeys?: string[], organizationId?: string): Promise<Record<string, unknown>> {
+    if (!organizationId) {
+      return {};
+    }
+
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    return this.topicSubscribersRepository.buildContextExactMatchQuery(contextKeys, {
+      enabled: useContextFiltering,
+    });
   }
 }

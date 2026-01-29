@@ -235,8 +235,9 @@ export class TriggerMulticast extends TriggerBase {
         organization: { _id: command.organizationId },
       });
 
-      const contextQuery =
-        useContextFiltering && command.contextKeys ? this.buildContextExactMatchQuery(command.contextKeys) : {};
+      const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+        enabled: useContextFiltering,
+      });
 
       const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
@@ -280,20 +281,6 @@ export class TriggerMulticast extends TriggerBase {
 
       return { result: true, subscriptionIdentifier };
     }
-  }
-
-  private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
-    // undefined or empty array = match only "no context" preferences
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match filtering (order-insensitive)
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
   }
 
   private async evaluatePreferenceCondition(
