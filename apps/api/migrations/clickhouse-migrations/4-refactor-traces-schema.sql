@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS workflow_run_count (
 )
 ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
-ORDER BY (organization_id, environment_id, date, event_type, workflow_run_id)
+ORDER BY (organization_id, environment_id, event_type, date, workflow_run_id)
 TTL expires_at;
 
 -- Step 6: Create temporary materialized view to populate workflow_run_count from traces_temp
@@ -170,4 +170,4 @@ AS SELECT
   1 AS count,
   toDate(expires_at) AS expires_at
 FROM traces_temp
-WHERE workflow_run_identifier IS NOT NULL AND workflow_run_identifier != ''
+WHERE entity_type = 'workflow_run'
