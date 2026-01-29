@@ -105,6 +105,7 @@ AS SELECT
     0 AS critical,
     [] AS context_keys
 FROM traces
+WHERE created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
 
 -- Step 3: Create delivery_trend_counts_temp table for migration from step_runs to traces
 -- Similar to traces_temp, this allows backfilling historical data separately
