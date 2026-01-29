@@ -25,7 +25,26 @@ import {
 import { LogRepository } from './analytic-logs/log.repository';
 import { FeatureFlagsService } from './feature-flags';
 
-interface WorkflowStatusUpdateParams {
+export type NotificationForTrace = {
+  _id: string;
+  _templateId: string;
+  _organizationId: string;
+  _environmentId: string;
+  _subscriberId: string;
+  transactionId: string;
+  channels?: string[];
+  to?: { subscriberId?: string } | any;
+  payload?: any;
+  controls?: any;
+  topics?: any[];
+  _digestedNotificationId?: string;
+  createdAt?: string;
+  severity?: string;
+  critical?: boolean;
+  contextKeys?: string[];
+};
+
+export interface WorkflowStatusUpdateParams {
   workflowStatus: WorkflowRunStatusEnum;
   notificationId: string;
   environmentId: string;
@@ -33,6 +52,7 @@ interface WorkflowStatusUpdateParams {
   _subscriberId: string;
   deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum;
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
+  notification?: NotificationForTrace | null;
 }
 
 type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id'>;
@@ -85,6 +105,7 @@ export class WorkflowRunService {
     workflowStatus,
     deliveryLifecycleStatus: providedStatus,
     deliveryLifecycleDetail: providedDetail,
+    notification,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
       let deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
@@ -130,7 +151,8 @@ export class WorkflowRunService {
           organizationId,
           environmentId,
           deliveryLifecycleStatus,
-          deliveryLifecycleDetail
+          deliveryLifecycleDetail,
+          notification
         );
       }
 
@@ -229,7 +251,8 @@ export class WorkflowRunService {
     organizationId: string,
     environmentId: string,
     deliveryLifecycleStatus: DeliveryLifecycleStatusEnum,
-    deliveryLifecycleDetail?: DeliveryLifecycleDetail
+    deliveryLifecycleDetail?: DeliveryLifecycleDetail,
+    passedNotification?: NotificationForTrace | null
   ): Promise<void> {
     try {
       const isTracesWriteEnabled = await this.featureFlagsService.getFlag({
@@ -244,31 +267,33 @@ export class WorkflowRunService {
         return;
       }
 
-      const notification = await this.notificationRepository.findOne(
-        {
-          _id: notificationId,
-          _organizationId: organizationId,
-          _environmentId: environmentId,
-        },
-        {
-          _id: 1,
-          _templateId: 1,
-          _organizationId: 1,
-          _environmentId: 1,
-          _subscriberId: 1,
-          transactionId: 1,
-          channels: 1,
-          to: 1,
-          payload: 1,
-          controls: 1,
-          topics: 1,
-          _digestedNotificationId: 1,
-          createdAt: 1,
-          severity: 1,
-          critical: 1,
-          contextKeys: 1,
-        }
-      );
+      const notification =
+        passedNotification ??
+        (await this.notificationRepository.findOne(
+          {
+            _id: notificationId,
+            _organizationId: organizationId,
+            _environmentId: environmentId,
+          },
+          {
+            _id: 1,
+            _templateId: 1,
+            _organizationId: 1,
+            _environmentId: 1,
+            _subscriberId: 1,
+            transactionId: 1,
+            channels: 1,
+            to: 1,
+            payload: 1,
+            controls: 1,
+            topics: 1,
+            _digestedNotificationId: 1,
+            createdAt: 1,
+            severity: 1,
+            critical: 1,
+            contextKeys: 1,
+          }
+        ));
 
       if (!notification) {
         return;
