@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS traces_temp (
     delivery_lifecycle_status LowCardinality(String) DEFAULT '',
     delivery_lifecycle_detail LowCardinality(String) DEFAULT '',
     severity LowCardinality(String) DEFAULT '',
-    critical UInt8 DEFAULT 0,
+    critical Bool DEFAULT false,
     context_keys Array(String) DEFAULT [],
     
     INDEX idx_event_type event_type TYPE set(50) GRANULARITY 4,
@@ -102,7 +102,7 @@ AS SELECT
     '' AS delivery_lifecycle_status,
     '' AS delivery_lifecycle_detail,
     '' AS severity,
-    0 AS critical,
+    false AS critical,
     [] AS context_keys
 FROM traces
 WHERE created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
@@ -115,11 +115,13 @@ CREATE TABLE IF NOT EXISTS delivery_trend_counts_temp (
   environment_id String,
   workflow_id String DEFAULT '',
   step_type LowCardinality(String),
-  count UInt64
+  count UInt64,
+  expires_at SimpleAggregateFunction(max, Date)
 )
 ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
-ORDER BY (organization_id, environment_id, date, workflow_id, step_type);
+ORDER BY (organization_id, environment_id, date, workflow_id, step_type)
+TTL expires_at;
 
 -- Step 4: Create materialized view to populate delivery_trend_counts_temp from traces_temp
 -- Historical data will be backfilled separately via INSERT SELECT
@@ -131,11 +133,12 @@ AS SELECT
   environment_id,
   ifNull(workflow_id, '') AS workflow_id,
   step_run_type AS step_type,
-  1 AS count
+  1 AS count,
+  toDate(expires_at) AS expires_at
 FROM traces_temp
 WHERE 
   event_type = 'message_sent'
-  AND step_run_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+  AND step_run_type IN ('in_app', 'email', 'sms', 'chat', 'push');
 
 -- Step 5: Create workflow_run_count table for workflow run event aggregation
 -- Aggregates event counts by workflow run identifier for analytics
@@ -145,11 +148,13 @@ CREATE TABLE IF NOT EXISTS workflow_run_count (
   environment_id String,
   event_type LowCardinality(String),
   workflow_run_id String,
-  count UInt64
+  count UInt64,
+  expires_at SimpleAggregateFunction(max, Date)
 )
 ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
-ORDER BY (organization_id, environment_id, date, event_type, workflow_run_id);
+ORDER BY (organization_id, environment_id, date, event_type, workflow_run_id)
+TTL expires_at;
 
 -- Step 6: Create temporary materialized view to populate workflow_run_count from traces_temp
 -- Historical data will be backfilled separately via INSERT SELECT
@@ -162,6 +167,7 @@ AS SELECT
   environment_id,
   event_type,
   workflow_run_identifier AS workflow_run_id,
-  1 AS count
+  1 AS count,
+  toDate(expires_at) AS expires_at
 FROM traces_temp
 WHERE workflow_run_identifier IS NOT NULL AND workflow_run_identifier != ''
