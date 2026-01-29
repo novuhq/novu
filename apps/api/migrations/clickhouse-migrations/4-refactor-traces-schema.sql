@@ -88,7 +88,7 @@ AS SELECT
     step_run_type,
     workflow_run_identifier,
     workflow_id,
-    provider_id,
+    coalesce(provider_id, '') AS provider_id,
     '' AS workflow_name,
     '' AS trigger_identifier,
     '' AS transaction_id,
