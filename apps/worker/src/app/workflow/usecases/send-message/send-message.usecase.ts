@@ -484,16 +484,10 @@ export class SendMessage {
     subscriberId: string;
     _environmentId: string;
   }) {
-    return await this.subscriberRepository.findOne(
-      {
-        _environmentId,
-        subscriberId,
-      },
-      undefined,
-      {
-        readPreference: 'secondaryPreferred',
-      }
-    );
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      subscriberId,
+    });
   }
 
   @Instrument()
