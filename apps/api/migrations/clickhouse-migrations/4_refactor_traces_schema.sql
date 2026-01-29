@@ -4,8 +4,8 @@
 -- This migration creates a new table with the desired schema and a materialized view
 -- to populate it from the existing traces table
 
--- Step 1: Create traces_new table with refactored ORDER BY
-CREATE TABLE IF NOT EXISTS traces_new (
+-- Step 1: Create traces_temp table with refactored ORDER BY
+CREATE TABLE IF NOT EXISTS traces_temp (
     -- Core fields
     id String,
     created_at DateTime64(3, 'UTC'),
@@ -64,11 +64,11 @@ ORDER BY (organization_id, environment_id, entity_type, toDate(created_at), enti
 TTL toDateTime(expires_at)
 SETTINGS index_granularity = 8192, async_insert = 1;
 
--- Step 2: Create materialized view to populate traces_new from new inserts into traces
+-- Step 2: Create materialized view to populate traces_temp from new inserts into traces
 -- Only captures records created after migration deployment
 -- Historical data will be backfilled separately via INSERT SELECT
-CREATE MATERIALIZED VIEW IF NOT EXISTS traces_to_traces_new_mv
-TO traces_new
+CREATE MATERIALIZED VIEW IF NOT EXISTS traces_to_traces_temp_mv
+TO traces_temp
 AS SELECT
     id,
     created_at,
@@ -105,11 +105,10 @@ AS SELECT
     0 AS critical,
     [] AS context_keys
 FROM traces
-WHERE created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
 
--- Step 3: Create delivery_trend_counts_new table for migration from step_runs to traces
--- Similar to traces_new, this allows backfilling historical data separately
-CREATE TABLE IF NOT EXISTS delivery_trend_counts_new (
+-- Step 3: Create delivery_trend_counts_temp table for migration from step_runs to traces
+-- Similar to traces_temp, this allows backfilling historical data separately
+CREATE TABLE IF NOT EXISTS delivery_trend_counts_temp (
   date Date,
   organization_id String,
   environment_id String,
@@ -121,11 +120,11 @@ ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
 ORDER BY (organization_id, environment_id, date, workflow_id, step_type);
 
--- Step 4: Create materialized view to populate delivery_trend_counts_new from traces_new
+-- Step 4: Create materialized view to populate delivery_trend_counts_temp from traces_temp
 -- Only captures records created after migration deployment
 -- Historical data will be backfilled separately via INSERT SELECT
-CREATE MATERIALIZED VIEW IF NOT EXISTS delivery_trend_counts_new_mv
-TO delivery_trend_counts_new
+CREATE MATERIALIZED VIEW IF NOT EXISTS delivery_trend_counts_temp_mv
+TO delivery_trend_counts_temp
 AS SELECT
   toDate(created_at) AS date,
   organization_id,
@@ -133,11 +132,10 @@ AS SELECT
   ifNull(workflow_id, '') AS workflow_id,
   step_run_type AS step_type,
   1 AS count
-FROM traces_new
+FROM traces_temp
 WHERE 
   event_type = 'message_sent'
   AND step_run_type IN ('in_app', 'email', 'sms', 'chat', 'push')
-  AND created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
 
 -- Step 5: Create workflow_run_count table for workflow run event aggregation
 -- Aggregates event counts by workflow run identifier for analytics
@@ -153,7 +151,7 @@ ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
 ORDER BY (organization_id, environment_id, date, event_type, workflow_run_id);
 
--- Step 6: Create temporary materialized view to populate workflow_run_count from traces_new
+-- Step 6: Create temporary materialized view to populate workflow_run_count from traces_temp
 -- Only captures records created after migration deployment
 -- Historical data will be backfilled separately via INSERT SELECT
 -- This MV will be dropped and replaced with a permanent one in migration 5
@@ -166,5 +164,4 @@ AS SELECT
   event_type,
   workflow_run_identifier AS workflow_run_id,
   1 AS count
-FROM traces_new
-WHERE created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
+FROM traces_temp
