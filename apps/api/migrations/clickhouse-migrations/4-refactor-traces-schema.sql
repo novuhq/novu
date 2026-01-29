@@ -122,7 +122,6 @@ PARTITION BY toYYYYMM(date)
 ORDER BY (organization_id, environment_id, date, workflow_id, step_type);
 
 -- Step 4: Create materialized view to populate delivery_trend_counts_temp from traces_temp
--- Only captures records created after migration deployment
 -- Historical data will be backfilled separately via INSERT SELECT
 CREATE MATERIALIZED VIEW IF NOT EXISTS delivery_trend_counts_temp_mv
 TO delivery_trend_counts_temp
@@ -153,7 +152,6 @@ PARTITION BY toYYYYMM(date)
 ORDER BY (organization_id, environment_id, date, event_type, workflow_run_id);
 
 -- Step 6: Create temporary materialized view to populate workflow_run_count from traces_temp
--- Only captures records created after migration deployment
 -- Historical data will be backfilled separately via INSERT SELECT
 -- This MV will be dropped and replaced with a permanent one in migration 5
 CREATE MATERIALIZED VIEW IF NOT EXISTS workflow_run_count_temp_mv
