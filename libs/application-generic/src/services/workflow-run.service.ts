@@ -33,7 +33,6 @@ interface WorkflowStatusUpdateParams {
   _subscriberId: string;
   deliveryLifecycleStatus?: DeliveryLifecycleStatusEnum;
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
-  isWorkflowComplete?: boolean;
 }
 
 type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id'>;
@@ -86,11 +85,12 @@ export class WorkflowRunService {
     workflowStatus,
     deliveryLifecycleStatus: providedStatus,
     deliveryLifecycleDetail: providedDetail,
-    isWorkflowComplete = false,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
       let deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
       let deliveryLifecycleDetail: DeliveryLifecycleDetail | undefined;
+      const isWorkflowComplete =
+        workflowStatus === WorkflowRunStatusEnum.COMPLETED || workflowStatus === WorkflowRunStatusEnum.SUCCESS;
 
       const [jobs, messages] = await Promise.all([
         this.getJobsForWorkflowRun(notificationId, environmentId, organizationId, _subscriberId),

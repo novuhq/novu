@@ -36,7 +36,6 @@ export class SetJobAsFailed {
       organizationId: command.organizationId,
       _subscriberId: jobEntity._subscriberId,
       workflowStatus: command.isLastJobInWorkflow ? WorkflowRunStatusEnum.COMPLETED : WorkflowRunStatusEnum.PROCESSING,
-      isWorkflowComplete: command.isLastJobInWorkflow,
     });
 
     return jobEntity;

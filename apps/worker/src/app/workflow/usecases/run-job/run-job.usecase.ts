@@ -381,7 +381,6 @@ export class RunJob {
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           _subscriberId: job._subscriberId,
-          isWorkflowComplete: true,
         });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
@@ -479,8 +478,8 @@ export class RunJob {
             environmentId: currentJob._environmentId,
             organizationId: currentJob._organizationId,
             _subscriberId: currentJob._subscriberId,
-            isWorkflowComplete: true,
           });
+
           return;
         }
 
@@ -533,7 +532,6 @@ export class RunJob {
             environmentId: nextJob._environmentId,
             organizationId: nextJob._organizationId,
             _subscriberId: nextJob._subscriberId,
-            isWorkflowComplete: true,
           });
         }
       } catch (error: unknown) {
@@ -546,8 +544,8 @@ export class RunJob {
             environmentId: currentJob._environmentId,
             organizationId: currentJob._organizationId,
             _subscriberId: currentJob._subscriberId,
-            isWorkflowComplete: true,
           });
+
           return;
         }
 
@@ -783,7 +781,6 @@ export class RunJob {
       environmentId: job._environmentId,
       organizationId: job._organizationId,
       _subscriberId: job._subscriberId,
-      isWorkflowComplete: false,
     });
   }
 
