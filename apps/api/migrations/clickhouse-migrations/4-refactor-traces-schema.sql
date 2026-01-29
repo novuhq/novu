@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS delivery_trend_counts_temp (
   workflow_id String DEFAULT '',
   step_type LowCardinality(String),
   count UInt64,
-  expires_at SimpleAggregateFunction(max, Date)
+  expires_at Date
 )
 ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS workflow_run_count (
   event_type LowCardinality(String),
   workflow_run_id String,
   count UInt64,
-  expires_at SimpleAggregateFunction(max, Date)
+  expires_at Date
 )
 ENGINE = SummingMergeTree(count)
 PARTITION BY toYYYYMM(date)
