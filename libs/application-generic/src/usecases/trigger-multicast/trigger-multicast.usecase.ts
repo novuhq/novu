@@ -49,7 +49,7 @@ export class TriggerMulticast extends TriggerBase {
     protected logger: PinoLogger,
     private traceLogRepository: TraceLogRepository
   ) {
-    super(subscriberProcessQueueService, cacheService, featureFlagsService, logger, QUEUE_CHUNK_SIZE);
+    super(subscriberProcessQueueService, cacheService, logger, QUEUE_CHUNK_SIZE);
     this.logger.setContext(this.constructor.name);
   }
 
