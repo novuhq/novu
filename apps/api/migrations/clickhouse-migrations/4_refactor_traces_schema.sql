@@ -103,7 +103,7 @@ AS SELECT
     '' AS delivery_lifecycle_detail,
     '' AS severity,
     false AS critical,
-    [] AS context_keys
+    CAST([] AS Array(String)) AS context_keys
 FROM traces
 WHERE created_at > toDateTime64('2026-01-26 00:00:00', 3, 'UTC');
 
