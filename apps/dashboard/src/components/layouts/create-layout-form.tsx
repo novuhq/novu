@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { slugify } from '@novu/shared';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -26,8 +26,8 @@ interface CreateLayoutFormProps {
 }
 
 export function CreateLayoutForm({ onSubmit, template }: CreateLayoutFormProps) {
-  const form = useForm<z.infer<typeof layoutSchema>>({
-    resolver: zodResolver(layoutSchema),
+  const form = useForm({
+    resolver: standardSchemaResolver(layoutSchema),
     defaultValues: {
       name: template?.name ?? '',
       layoutId: slugify(template?.name ?? ''),
@@ -83,7 +83,7 @@ export function CreateLayoutForm({ onSubmit, template }: CreateLayoutFormProps) 
           control={form.control}
           name="isTranslationEnabled"
           render={({ field }) => (
-            <TranslationToggleSection value={field.value} showManageLink={false} onChange={field.onChange} />
+            <TranslationToggleSection value={field.value ?? false} showManageLink={false} onChange={field.onChange} />
           )}
         />
       </FormRoot>

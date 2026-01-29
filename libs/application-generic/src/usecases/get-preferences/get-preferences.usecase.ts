@@ -67,6 +67,7 @@ export class GetPreferences {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
+    contextKeys?: string[];
   }): Promise<{
     enabled: boolean;
     channels: IPreferenceChannels;
@@ -167,7 +168,15 @@ export class GetPreferences {
     ];
 
     if (command.subscriberId) {
-      const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+      const useContextFiltering = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+      });
+
+      const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+        enabled: useContextFiltering,
+      });
 
       queries.push(
         this.preferencesRepository.findOne(
@@ -186,6 +195,7 @@ export class GetPreferences {
             ...baseQuery,
             _subscriberId: command.subscriberId,
             type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+            ...contextQuery,
           },
           undefined,
           queryOptions
@@ -220,32 +230,5 @@ export class GetPreferences {
     }
 
     return result;
-  }
-
-  private async buildContextExactMatchQuery(
-    contextKeys: string[] | undefined,
-    organizationId: string
-  ): Promise<Record<string, unknown>> {
-    const useContextFiltering = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-    });
-
-    if (!useContextFiltering) {
-      return {}; // FF OFF: no context filtering (pre-feature behavior)
-    }
-
-    // undefined or empty array = match only "no context" preferences
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
   }
 }

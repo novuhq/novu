@@ -144,6 +144,22 @@
     },
     {
       "type": "npm",
+      "script": "build:watch",
+      "isBackground": true,
+      "label": "EE - API",
+      "path": "/enterprise/packages/api",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "build:watch",
+      "isBackground": true,
+      "label": "EE - AUTH",
+      "path": "/enterprise/packages/auth",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
       "script": "start",
       "isBackground": true,
       "label": "EE - SHARED SERVICES",

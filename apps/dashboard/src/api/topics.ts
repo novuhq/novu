@@ -222,6 +222,7 @@ export const getTopicSubscriptions = async ({
   after,
   before,
   subscriberId,
+  contextKeys,
 }: {
   environment: IEnvironment;
   topicKey: string;
@@ -229,6 +230,7 @@ export const getTopicSubscriptions = async ({
   after?: string;
   before?: string;
   subscriberId?: string;
+  contextKeys?: string[];
 }): Promise<ListTopicSubscriptionsResponse> => {
   const params = new URLSearchParams();
 
@@ -236,6 +238,12 @@ export const getTopicSubscriptions = async ({
   if (after) params.append('after', after);
   if (before) params.append('before', before);
   if (subscriberId) params.append('subscriberId', subscriberId);
+
+  if (contextKeys?.length) {
+    for (const contextKey of contextKeys) {
+      params.append('contextKeys', contextKey);
+    }
+  }
 
   const query = params.toString() ? `?${params.toString()}` : '';
 

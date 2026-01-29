@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import type { EventType, Trace } from '@novu/application-generic';
+import type { EventType, RequestTraceInput } from '@novu/application-generic';
 import {
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
@@ -247,7 +247,7 @@ export class ParseEventRequest {
     transactionId: string;
     status?: 'success' | 'error';
     message?: string;
-    rawData?: any;
+    rawData?: unknown;
   }): Promise<void> {
     if (!requestId) {
       this.logger.warn(
@@ -259,19 +259,18 @@ export class ParseEventRequest {
     }
 
     try {
-      const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+      const traceData: RequestTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: command.organizationId,
         environment_id: command.environmentId,
         user_id: command.userId,
-        subscriber_id: null,
-        external_subscriber_id: null,
+        subscriber_id: '',
+        external_subscriber_id: '',
         event_type: eventType,
         title: mapEventTypeToTitle(eventType),
-        message: message || null,
-        raw_data: rawData ? JSON.stringify(rawData) : null,
+        message: message || '',
+        raw_data: rawData ? JSON.stringify(rawData) : '',
         status,
-        entity_type: 'request',
         entity_id: requestId,
         workflow_run_identifier: command.identifier,
         workflow_id: command.workflow?._id || '',

@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { useForm } from 'react-hook-form';
 import { RiGroup2Line, RiInformationFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -31,7 +31,7 @@ export function CreateSubscriberPage() {
   const track = useTelemetry();
   const { navigateToSubscribersFirstPage } = useSubscribersNavigate();
 
-  const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
+  const form = useForm({
     defaultValues: {
       data: '',
       subscriberId: generateUUID(),
@@ -43,7 +43,7 @@ export function CreateSubscriberPage() {
       timezone: '',
       email: '',
     },
-    resolver: zodResolver(CreateSubscriberFormSchema),
+    resolver: standardSchemaResolver(CreateSubscriberFormSchema),
     shouldFocusError: false,
     mode: 'onBlur',
   });
@@ -72,18 +72,19 @@ export function CreateSubscriberPage() {
   const onSubmit = async (formData: z.infer<typeof CreateSubscriberFormSchema>) => {
     const dirtyFields = form.formState.dirtyFields;
 
-    const dirtyPayload = Object.keys(dirtyFields).reduce<Partial<typeof formData>>((acc, key) => {
+    const dirtyPayload = Object.keys(dirtyFields).reduce<Record<string, any>>((acc, key) => {
       const typedKey = key as keyof typeof formData;
 
       if (typedKey === 'data') {
-        const data = JSON.parse(JSON.stringify(formData.data));
-        return { ...acc, data: data === '' ? {} : data };
+        const data = formData.data ? JSON.parse(formData.data) : {};
+
+        return { ...acc, data: data && Object.keys(data).length > 0 ? data : {} };
       }
 
       return { ...acc, [typedKey]: formData[typedKey]?.trim() };
     }, {});
 
-    form.reset({ ...formData, data: JSON.stringify(formData.data) });
+    form.reset(formData);
     await createSubscriber({
       subscriber: { ...dirtyPayload, subscriberId: formData.subscriberId },
     });

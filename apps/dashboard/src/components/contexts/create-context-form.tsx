@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useEffect, useId, useRef } from 'react';
 import { useForm } from 'react-hook-form';
@@ -69,13 +69,13 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
     },
   });
 
-  const form = useForm<z.infer<typeof CreateContextFormSchema>>({
+  const form = useForm({
     defaultValues: {
       id: '',
       type: '',
       data: '',
     },
-    resolver: zodResolver(CreateContextFormSchema),
+    resolver: standardSchemaResolver(CreateContextFormSchema),
     shouldFocusError: false,
     mode: 'onSubmit',
     reValidateMode: 'onChange',
@@ -90,10 +90,12 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
   const onSubmit = async (formData: z.infer<typeof CreateContextFormSchema>) => {
     onSubmitStart?.();
 
+    const parsedData = formData.data ? JSON.parse(formData.data) : {};
+
     await createContext({
       type: formData.type.trim(),
       id: formData.id.trim(),
-      ...(formData.data && Object.keys(formData.data).length > 0 ? { data: formData.data } : {}),
+      ...(parsedData && Object.keys(parsedData).length > 0 ? { data: parsedData } : {}),
     });
   };
 
@@ -199,7 +201,7 @@ export const CreateContextForm = (props: CreateContextFormProps) => {
                       multiline
                       foldGutter
                       {...field}
-                      value={field.value}
+                      value={field.value ?? ''}
                       onChange={(val) => {
                         field.onChange(val);
                         form.trigger(field.name);

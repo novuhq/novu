@@ -117,7 +117,7 @@ export class RunJob {
       });
 
       // Update workflow run delivery lifecycle after job cancellation
-      await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, undefined);
+      await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, undefined, null);
 
       return;
     }
@@ -153,7 +153,25 @@ export class RunJob {
           _id: job._notificationId,
           _environmentId: job._environmentId,
         },
-        '_id critical tags severity topics'
+        {
+          _id: 1,
+          _templateId: 1,
+          _organizationId: 1,
+          _environmentId: 1,
+          _subscriberId: 1,
+          transactionId: 1,
+          channels: 1,
+          to: 1,
+          payload: 1,
+          controls: 1,
+          topics: 1,
+          _digestedNotificationId: 1,
+          createdAt: 1,
+          severity: 1,
+          critical: 1,
+          contextKeys: 1,
+          tags: 1,
+        }
       );
 
       if (!notification) {
@@ -173,6 +191,7 @@ export class RunJob {
             environmentId: job._environmentId,
             organizationId: job._organizationId,
             _subscriberId: job._subscriberId,
+            contextKeys: job.contextKeys,
           })
         );
 
@@ -242,7 +261,7 @@ export class RunJob {
           );
 
           // Update workflow run delivery lifecycle after schedule-based cancellation
-          await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, workflow);
+          await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, workflow, notification);
 
           return;
         }
@@ -301,7 +320,7 @@ export class RunJob {
         });
 
         // Update workflow run delivery lifecycle after successful step completion
-        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING, workflow);
+        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING, workflow, notification);
       } else if (sendMessageResult.status === 'failed') {
         await this.jobRepository.update(
           {
@@ -323,7 +342,7 @@ export class RunJob {
         });
 
         // Update workflow run delivery lifecycle after step failure
-        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, workflow);
+        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, workflow, notification);
 
         if (shouldHaltOnStepFailure(job)) {
           shouldQueueNextJob = false;
@@ -346,7 +365,7 @@ export class RunJob {
         });
 
         // Update workflow run delivery lifecycle after step skip/cancellation
-        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING, workflow);
+        await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING, workflow, notification);
       }
     } catch (caughtError: unknown) {
       error = caughtError as Error;
@@ -380,6 +399,7 @@ export class RunJob {
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           _subscriberId: job._subscriberId,
+          notification,
         });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
@@ -477,7 +497,9 @@ export class RunJob {
             environmentId: currentJob._environmentId,
             organizationId: currentJob._organizationId,
             _subscriberId: currentJob._subscriberId,
+            notification,
           });
+
           return;
         }
 
@@ -516,7 +538,12 @@ export class RunJob {
           );
 
           // Update workflow run delivery lifecycle after step skip
-          await this.conditionallyUpdateDeliveryLifecycle(nextJob, WorkflowRunStatusEnum.PROCESSING, undefined);
+          await this.conditionallyUpdateDeliveryLifecycle(
+            nextJob,
+            WorkflowRunStatusEnum.PROCESSING,
+            undefined,
+            notification
+          );
 
           currentJob = nextJob; // if skipped, continue to the next job
         } else {
@@ -530,6 +557,7 @@ export class RunJob {
             environmentId: nextJob._environmentId,
             organizationId: nextJob._organizationId,
             _subscriberId: nextJob._subscriberId,
+            notification,
           });
         }
       } catch (error: unknown) {
@@ -542,7 +570,9 @@ export class RunJob {
             environmentId: currentJob._environmentId,
             organizationId: currentJob._organizationId,
             _subscriberId: currentJob._subscriberId,
+            notification,
           });
+
           return;
         }
 
@@ -725,7 +755,8 @@ export class RunJob {
   private async conditionallyUpdateDeliveryLifecycle(
     job: JobEntity,
     workflowStatus: WorkflowRunStatusEnum,
-    workflow?: NotificationTemplateEntity
+    workflow?: NotificationTemplateEntity,
+    notification?: PartialNotificationEntity | null
   ): Promise<void> {
     this.logger.debug({ nv: { job } }, 'Conditionally updating delivery lifecycle');
 
@@ -778,6 +809,7 @@ export class RunJob {
       environmentId: job._environmentId,
       organizationId: job._organizationId,
       _subscriberId: job._subscriberId,
+      notification,
     });
   }
 

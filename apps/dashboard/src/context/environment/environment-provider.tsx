@@ -47,7 +47,8 @@ function selectEnvironment(
 }
 
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
-  const { currentOrganization } = useAuth();
+  const authResp = useAuth();
+  const currentOrganization = authResp.currentOrganization;
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { environmentSlug: paramsEnvironmentSlug } = useParams<{ environmentSlug?: string }>();

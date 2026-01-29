@@ -12,6 +12,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
@@ -49,6 +50,7 @@ import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.d
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
 import { UpdateAllNotificationsRequestDto } from './dtos/update-all-notifications-request.dto';
 import { UpdatePreferencesRequestDto } from './dtos/update-preferences-request.dto';
+import { ContextCompatibilityInterceptor } from './interceptors/context-compatibility.interceptor';
 import { BulkUpdatePreferencesCommand } from './usecases/bulk-update-preferences/bulk-update-preferences.command';
 import { BulkUpdatePreferences } from './usecases/bulk-update-preferences/bulk-update-preferences.usecase';
 import { DeleteAllNotificationsCommand } from './usecases/delete-all-notifications/delete-all-notifications.command';
@@ -443,6 +445,7 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
+  @UseInterceptors(ContextCompatibilityInterceptor)
   @Patch('/subscriptions/:subscriptionIdentifier/preferences/:workflowIdOrIdentifier')
   async updateSubscriptionWorkflowPreference(
     @SubscriberSession() subscriberSession: SubscriberSession,

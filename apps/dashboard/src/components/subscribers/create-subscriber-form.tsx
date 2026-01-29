@@ -249,7 +249,7 @@ export const CreateSubscriberForm = () => {
                     multiline
                     foldGutter
                     {...field}
-                    value={field.value}
+                    value={field.value ?? ''}
                     onChange={(val) => {
                       field.onChange(val);
                       form.trigger(field.name);

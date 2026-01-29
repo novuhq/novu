@@ -418,12 +418,15 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       LIMIT ${limit}
     `;
 
-    this.logger.debug('Executing compound cursor query with tenant enforcement', {
-      query: query.replace(/\s+/g, ' ').trim(),
-      cursor: cursor ? 'present' : 'none',
-      selectedColumns: select === '*' ? 'all' : (select as readonly string[]).length,
-      tenantEnforcement: '__unsafe' in where ? 'bypassed' : 'enforced',
-    });
+    this.logger.debug(
+      {
+        query: query.replace(/\s+/g, ' ').trim(),
+        cursor: cursor ? 'present' : 'none',
+        selectedColumns: select === '*' ? 'all' : (select as readonly string[]).length,
+        tenantEnforcement: '__unsafe' in where ? 'bypassed' : 'enforced',
+      },
+      'Executing compound cursor query with tenant enforcement'
+    );
 
     const result = await this.clickhouseService.query({
       query,
@@ -823,6 +826,23 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       query,
       params,
     });
+
+    const totalCount = result.data.reduce((sum, item) => sum + parseInt(item.count, 10), 0);
+
+    this.logger.debug(
+      {
+        query: query.replace(/\s+/g, ' ').trim(),
+        params: {
+          ...params,
+          startDateRaw: startDate.toISOString(),
+          endDateRaw: endDate.toISOString(),
+        },
+        organizationId,
+        resultCount: result.data.length,
+        totalRecords: totalCount,
+      },
+      'ClickHouse platform usage query completed'
+    );
 
     return result.data;
   }

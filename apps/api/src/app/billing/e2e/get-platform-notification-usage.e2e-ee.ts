@@ -25,6 +25,11 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
     getFlag: sinon.stub().resolves(false),
   };
 
+  const mockCacheService = {
+    cacheEnabled: sinon.stub().returns(false),
+    get: sinon.stub().resolves(undefined),
+  };
+
   const createUseCase = () => {
     return new GetPlatformNotificationUsage(
       mockWorkflowRunRepository,
@@ -32,6 +37,7 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
       notificationRepo,
       communityOrganizationRepo,
       mockFeatureFlagsService,
+      mockCacheService,
       new PinoLogger({})
     );
   };

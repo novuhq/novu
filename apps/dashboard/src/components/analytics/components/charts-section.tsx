@@ -10,27 +10,35 @@ import { WorkflowsByVolume } from '../charts/workflows-by-volume';
 
 type ChartsSectionProps = {
   charts: Record<string, unknown> | undefined;
-  isLoading: boolean;
-  error: Error | null;
+  isTrendsLoading: boolean;
+  isWorkflowLoading: boolean;
+  trendsError: Error | null;
+  workflowError: Error | null;
 };
 
-export function ChartsSection({ charts, isLoading, error }: ChartsSectionProps) {
+export function ChartsSection({
+  charts,
+  isTrendsLoading,
+  isWorkflowLoading,
+  trendsError,
+  workflowError,
+}: ChartsSectionProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
       <DeliveryTrendsChart
         data={charts?.[ReportTypeEnum.DELIVERY_TREND] as ChartDataPoint[]}
-        isLoading={isLoading}
-        error={error}
+        isLoading={isTrendsLoading}
+        error={trendsError}
       />
       <WorkflowsByVolume
         data={charts?.[ReportTypeEnum.WORKFLOW_BY_VOLUME] as WorkflowVolumeDataPoint[]}
-        isLoading={isLoading}
-        error={error}
+        isLoading={isWorkflowLoading}
+        error={workflowError}
       />
       <InteractionTrendChart
         data={charts?.[ReportTypeEnum.INTERACTION_TREND] as InteractionTrendDataPoint[]}
-        isLoading={isLoading}
-        error={error}
+        isLoading={isTrendsLoading}
+        error={trendsError}
       />
     </div>
   );

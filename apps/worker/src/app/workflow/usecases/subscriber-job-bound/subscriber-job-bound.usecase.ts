@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import type { EventType, Trace } from '@novu/application-generic';
+import type { EventType, RequestTraceInput, Trace } from '@novu/application-generic';
 import {
   AnalyticsService,
   CreateNotificationJobs,
@@ -471,7 +471,9 @@ export class SubscriberJobBound {
         organization: { _id: command.organizationId },
       });
 
-      const contextQuery = useContextFiltering ? this.buildContextExactMatchQuery(command.contextKeys) : {};
+      const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+        enabled: useContextFiltering,
+      });
 
       const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
@@ -562,18 +564,6 @@ export class SubscriberJobBound {
     return enabled;
   }
 
-  private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
-  }
-
   private async createSubscriberTrace(
     command: SubscriberJobBoundCommand,
     eventType: EventType,
@@ -586,19 +576,18 @@ export class SubscriberJobBound {
     }
 
     try {
-      const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+      const traceData: RequestTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: command.organizationId,
         environment_id: command.environmentId,
         user_id: command.userId,
-        subscriber_id: null,
-        external_subscriber_id: command.subscriber?.subscriberId || null,
+        subscriber_id: '',
+        external_subscriber_id: command.subscriber?.subscriberId || '',
         event_type: eventType,
         title: mapEventTypeToTitle(eventType),
-        message: message || null,
-        raw_data: rawData ? JSON.stringify(rawData) : null,
+        message: message || '',
+        raw_data: rawData ? JSON.stringify(rawData) : '',
         status,
-        entity_type: 'request',
         entity_id: command.requestId,
         workflow_run_identifier: command.identifier,
         workflow_id: command.templateId,

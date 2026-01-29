@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { GetContextResponseDto } from '@novu/api/models/components';
 import { ContextId, ContextType } from '@novu/shared';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
@@ -110,11 +110,11 @@ const ContextOverviewForm = ({ context, readOnly }: { context: GetContextRespons
 
   const { deleteContext, isPending: isDeleting } = useDeleteContext();
 
-  const form = useForm<z.infer<typeof EditContextFormSchema>>({
+  const form = useForm({
     defaultValues: {
       data: context.data ? JSON.stringify(context.data, null, 2) : '{}',
     },
-    resolver: zodResolver(EditContextFormSchema),
+    resolver: standardSchemaResolver(EditContextFormSchema),
     shouldFocusError: false,
     mode: 'onSubmit',
     reValidateMode: 'onChange',
@@ -123,10 +123,12 @@ const ContextOverviewForm = ({ context, readOnly }: { context: GetContextRespons
   const onSubmit = async (formData: z.infer<typeof EditContextFormSchema>) => {
     setIsSubmitting(true);
     try {
+      const parsedData = formData.data ? JSON.parse(formData.data) : {};
+
       await updateContext({
         type: context.type,
         id: context.id,
-        data: formData.data && Object.keys(formData.data).length > 0 ? formData.data : {},
+        data: parsedData && Object.keys(parsedData).length > 0 ? parsedData : {},
       });
     } catch {
       // Error is handled by the hook's onError callback
@@ -184,7 +186,6 @@ const ContextOverviewForm = ({ context, readOnly }: { context: GetContextRespons
               />
             </FormItem>
 
-            {/* Custom Data - Editable */}
             <FormField
               control={form.control}
               name="data"
@@ -208,7 +209,7 @@ const ContextOverviewForm = ({ context, readOnly }: { context: GetContextRespons
                         multiline
                         foldGutter
                         {...field}
-                        value={field.value}
+                        value={field.value ?? ''}
                         onChange={(val) => {
                           field.onChange(val);
                           form.trigger(field.name);
