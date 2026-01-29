@@ -282,7 +282,8 @@ export class WorkflowRunService {
         {
           name: 1,
           triggers: 1,
-        }
+        },
+        { readPreference: 'secondaryPreferred' }
       );
 
       if (!template) {
