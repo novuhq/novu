@@ -35,6 +35,8 @@ export class PreferencesEntity {
 
   contextKeys?: string[];
 
+  contextKeysHash?: string;
+
   createdAt?: string;
 
   updatedAt?: string;

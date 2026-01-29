@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import type { EventType, Trace } from '@novu/application-generic';
+import type { EventType, RequestTraceInput, Trace } from '@novu/application-generic';
 import {
   AnalyticsService,
   CreateNotificationJobs,
@@ -388,26 +388,25 @@ export class SubscriberJobBound {
     eventType: EventType,
     status: 'success' | 'error' | 'warning' = 'success',
     message?: string,
-    rawData?: any
+    rawData?: unknown
   ): Promise<void> {
     if (!command.requestId) {
       return;
     }
 
     try {
-      const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+      const traceData: RequestTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: command.organizationId,
         environment_id: command.environmentId,
         user_id: command.userId,
-        subscriber_id: null,
-        external_subscriber_id: command.subscriber?.subscriberId || null,
+        subscriber_id: '',
+        external_subscriber_id: command.subscriber?.subscriberId || '',
         event_type: eventType,
         title: mapEventTypeToTitle(eventType),
-        message: message || null,
-        raw_data: rawData ? JSON.stringify(rawData) : null,
+        message: message || '',
+        raw_data: rawData ? JSON.stringify(rawData) : '',
         status,
-        entity_type: 'request',
         entity_id: command.requestId,
         workflow_run_identifier: command.identifier,
         workflow_id: command.templateId,

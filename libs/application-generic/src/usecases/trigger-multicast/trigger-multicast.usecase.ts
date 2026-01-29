@@ -24,8 +24,9 @@ import jsonLogic from 'json-logic-js';
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../instrumentation';
 import { CacheService, FeatureFlagsService } from '../../services';
-import type { EventType, Trace } from '../../services/analytic-logs';
+import type { EventType } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
+import { RequestTraceInput } from '../../services/analytic-logs/trace-log';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBase } from '../trigger-base';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
@@ -48,7 +49,7 @@ export class TriggerMulticast extends TriggerBase {
     protected logger: PinoLogger,
     private traceLogRepository: TraceLogRepository
   ) {
-    super(subscriberProcessQueueService, cacheService, featureFlagsService, logger, QUEUE_CHUNK_SIZE);
+    super(subscriberProcessQueueService, cacheService, logger, QUEUE_CHUNK_SIZE);
     this.logger.setContext(this.constructor.name);
   }
 
@@ -234,8 +235,9 @@ export class TriggerMulticast extends TriggerBase {
         organization: { _id: command.organizationId },
       });
 
-      const contextQuery =
-        useContextFiltering && command.contextKeys ? this.buildContextExactMatchQuery(command.contextKeys) : {};
+      const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+        enabled: useContextFiltering,
+      });
 
       const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
@@ -279,20 +281,6 @@ export class TriggerMulticast extends TriggerBase {
 
       return { result: true, subscriptionIdentifier };
     }
-  }
-
-  private buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
-    // undefined or empty array = match only "no context" preferences
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match filtering (order-insensitive)
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
   }
 
   private async evaluatePreferenceCondition(
@@ -350,7 +338,7 @@ export class TriggerMulticast extends TriggerBase {
     }
 
     try {
-      const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+      const traceData: RequestTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: command.organizationId,
         environment_id: command.environmentId,
@@ -362,7 +350,6 @@ export class TriggerMulticast extends TriggerBase {
         message: message || null,
         raw_data: rawData ? JSON.stringify(rawData) : null,
         status,
-        entity_type: 'request',
         entity_id: command.requestId,
         workflow_run_identifier: command.template.triggers[0].identifier,
         workflow_id: command.template._id,
