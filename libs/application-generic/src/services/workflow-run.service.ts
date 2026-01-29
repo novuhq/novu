@@ -300,7 +300,7 @@ export class WorkflowRunService {
         [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_delivery_interacted',
       };
 
-      const statusMap: Record<WorkflowRunStatusEnum, string> = {
+      const statusMap: Record<WorkflowRunStatusEnum, WorkflowRunTraceInput['status']> = {
         [WorkflowRunStatusEnum.PROCESSING]: 'pending',
         [WorkflowRunStatusEnum.PENDING]: 'pending',
         [WorkflowRunStatusEnum.COMPLETED]: 'success',
@@ -319,7 +319,7 @@ export class WorkflowRunService {
         title: `Workflow run ${deliveryLifecycleStatus}`,
         message: '',
         raw_data: '',
-        status: statusMap[workflowStatus] as any,
+        status: statusMap[workflowStatus],
         entity_id: notification._id,
         workflow_run_identifier: notification._id,
         workflow_id: notification._templateId,

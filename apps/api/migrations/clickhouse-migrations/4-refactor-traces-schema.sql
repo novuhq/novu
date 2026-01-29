@@ -164,3 +164,4 @@ AS SELECT
   workflow_run_identifier AS workflow_run_id,
   1 AS count
 FROM traces_temp
+WHERE workflow_run_identifier IS NOT NULL AND workflow_run_identifier != ''
