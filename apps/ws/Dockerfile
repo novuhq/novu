@@ -36,4 +36,35 @@ RUN cp src/.example.env dist/.env
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
 
+WORKDIR /usr/src/app
+
+# ------- ASSETS BUILD ----------
+FROM dev AS assets
+
+WORKDIR /usr/src/app
+
+# Remove source files but KEEP node_modules (already compiled)
+RUN pnpm recursive exec -- rm -rf ./src
+
+# ------- PRODUCTION BUILD ----------
+FROM node:20-alpine3.20 AS prod
+
+ARG PACKAGE_PATH
+
+ENV CI=true
+ENV NX_DAEMON=false
+
+# Install only runtime tools (NO Python, NO build tools)
+RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.16.1
+
+# Set non-root user
+USER 1000
+WORKDIR /usr/src/app
+
+COPY --chown=1000:1000 ./meta .
+
+# Copy build artifacts AND pre-compiled node_modules from assets
+COPY --chown=1000:1000 --from=assets /usr/src/app .
+
+WORKDIR /usr/src/app/apps/ws
 ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV -h=$IS_SELF_HOSTED && pm2-runtime start dist/main.js -i max" ]

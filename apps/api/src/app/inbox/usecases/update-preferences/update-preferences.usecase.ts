@@ -127,7 +127,15 @@ export class UpdatePreferences {
       identifier = stripContextFromIdentifier(identifier);
     }
 
-    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    const contextQuery = this.topicSubscribersRepository.buildContextExactMatchQuery(command.contextKeys, {
+      enabled: useContextFiltering,
+    });
 
     // Try to find by identifier first
     let subscription = await this.topicSubscribersRepository.findOne({
@@ -195,7 +203,15 @@ export class UpdatePreferences {
       command.workflowIdOrIdentifier &&
       workflow
     ) {
-      const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+      const useContextFiltering = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+      });
+
+      const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+        enabled: useContextFiltering,
+      });
 
       const query: FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds = {
         _environmentId: command.environmentId,
@@ -347,30 +363,5 @@ export class UpdatePreferences {
         contextKeys: item.contextKeys,
       })
     );
-  }
-
-  private async buildContextExactMatchQuery(
-    contextKeys: string[] | undefined,
-    organizationId: string
-  ): Promise<Record<string, unknown>> {
-    const useContextFiltering = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-    });
-
-    if (!useContextFiltering) {
-      return {};
-    }
-
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
   }
 }

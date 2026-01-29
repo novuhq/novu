@@ -27,7 +27,7 @@ export class GetTopicSubscriptions {
 
   @InstrumentUsecase()
   async execute(command: GetTopicSubscriptionsCommand): Promise<SubscriptionDetailsResponseDto[]> {
-    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+    const contextQuery = await this.buildContextQuery(command.contextKeys, command.organizationId);
 
     const subscriptions = await this.topicSubscribersRepository.find({
       _environmentId: command.environmentId,
@@ -46,7 +46,7 @@ export class GetTopicSubscriptions {
   ): Promise<SubscriptionDetailsResponseDto[]> {
     const subscriptionPreferencesMap = new Map<TopicSubscribersEntity, PreferencesEntity[]>();
 
-    const contextQuery = await this.buildContextExactMatchQuery(contextKeys, organizationId);
+    const contextQuery = await this.buildContextQuery(contextKeys, organizationId);
 
     for (const subscription of subscriptions) {
       const preferences = await this.preferencesRepository.find({
@@ -109,10 +109,7 @@ export class GetTopicSubscriptions {
     return workflowsMap;
   }
 
-  private async buildContextExactMatchQuery(
-    contextKeys: string[] | undefined,
-    organizationId?: string
-  ): Promise<Record<string, unknown>> {
+  private async buildContextQuery(contextKeys?: string[], organizationId?: string): Promise<Record<string, unknown>> {
     if (!organizationId) {
       return {};
     }
@@ -123,20 +120,8 @@ export class GetTopicSubscriptions {
       organization: { _id: organizationId },
     });
 
-    if (!useContextFiltering) {
-      return {}; // FF OFF: no context filtering (pre-feature behavior)
-    }
-
-    // undefined or empty array = match only "no context" subscriptions/preferences
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
+    return this.topicSubscribersRepository.buildContextExactMatchQuery(contextKeys, {
+      enabled: useContextFiltering,
+    });
   }
 }
