@@ -14,11 +14,19 @@
  * - TranslationValidatorService: Validates translated content integrity
  * - OpenAITranslationService: Orchestrates translation via OpenAI
  *
+ * Phase 3: Usecases (CQRS Pattern)
+ * - ManageTranslations: Enable/disable translations on resources
+ * - DeleteTranslationGroup: Cleanup when resource is deleted
+ * - PublishTranslationGroup: Sync translations between environments
+ * - DuplicateLocales: Copy translations when duplicating resources
+ * - AutoTranslate: Trigger automatic translation using OpenAI
+ *
  * Types:
  * - TokenizeResult, TokenValidationResult: Variable tokenization types
  * - ValidateRequest, ValidationResult, ValidationError: Validation types
  * - TranslateRequest, TranslateResponse: Translation request/response types
  * - BatchTranslateRequest, BatchTranslateResponse: Batch translation types
+ * - AutoTranslateResult, LocaleTranslateResult: Auto-translate result types
  *
  * Usage:
  * ```typescript
@@ -36,9 +44,23 @@
  *   TranslationValidatorService,
  *   OpenAITranslationService,
  *
+ *   // Usecases
+ *   ManageTranslations,
+ *   ManageTranslationsCommand,
+ *   DeleteTranslationGroup,
+ *   DeleteTranslationGroupCommand,
+ *   PublishTranslationGroup,
+ *   PublishTranslationGroupCommand,
+ *   DuplicateLocales,
+ *   DuplicateLocalesCommand,
+ *   AutoTranslate,
+ *   AutoTranslateCommand,
+ *   LocalizationResourceEnum,
+ *
  *   // Types
  *   TranslateRequest,
  *   TranslateResponse,
+ *   AutoTranslateResult,
  * } from '@novu/translation';
  * ```
  */
@@ -51,6 +73,9 @@ export * from './services';
 
 // Types exports
 export * from './types';
+
+// Usecases exports
+export * from './usecases';
 
 // Module exports
 export * from './translation.module';
