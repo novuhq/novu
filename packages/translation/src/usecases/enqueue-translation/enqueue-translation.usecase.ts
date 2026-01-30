@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { TranslationQueueService } from '@novu/application-generic';
-import { ITranslationJobData, JobTopicNameEnum, TranslationResourceTypeEnum } from '@novu/shared';
+import { type ITranslationJobData, JobTopicNameEnum, TranslationResourceTypeEnum } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  EnqueueTranslationCommand,
+  type EnqueueTranslationCommand,
   EnqueueTranslationResourceTypeEnum,
-  EnqueueTranslationResult,
+  type EnqueueTranslationResult,
 } from './enqueue-translation.command';
 
 /**

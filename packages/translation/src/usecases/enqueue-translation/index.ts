@@ -1,2 +1,2 @@
-export * from './enqueue-translation.command';
-export * from './enqueue-translation.usecase';
+export * from "./enqueue-translation.command";
+export * from "./enqueue-translation.usecase";

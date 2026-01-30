@@ -1,2 +1,2 @@
-export * from './duplicate-locales.command';
-export * from './duplicate-locales.usecase';
+export * from "./duplicate-locales.command";
+export * from "./duplicate-locales.usecase";

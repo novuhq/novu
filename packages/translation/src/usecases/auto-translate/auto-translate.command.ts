@@ -1,18 +1,31 @@
-import { IsArray, IsEnum, IsMongoId, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-import { ClientSession } from 'mongoose';
+import {
+	IsArray,
+	IsEnum,
+	IsMongoId,
+	IsNotEmpty,
+	IsObject,
+	IsOptional,
+	IsString,
+} from "class-validator";
+import type { ClientSession } from "mongoose";
 
 /**
  * Resource types that support translation management
  */
 export enum LocalizationResourceEnum {
-  WORKFLOW = 'workflow',
-  LAYOUT = 'layout',
+	WORKFLOW = "workflow",
+	LAYOUT = "layout",
 }
 
 /**
  * Content type hints for better translation quality
  */
-export type TranslationContentType = 'email' | 'sms' | 'push' | 'in-app' | 'chat';
+export type TranslationContentType =
+	| "email"
+	| "sms"
+	| "push"
+	| "in-app"
+	| "chat";
 
 /**
  * Command for automatically translating content using OpenAI
@@ -49,181 +62,185 @@ export type TranslationContentType = 'email' | 'sms' | 'push' | 'in-app' | 'chat
  * ```
  */
 export class AutoTranslateCommand {
-  /**
-   * Resource identifier (workflow slug or layout identifier)
-   */
-  @IsString()
-  @IsNotEmpty()
-  resourceId: string;
+	/**
+	 * Resource identifier (workflow slug or layout identifier)
+	 */
+	@IsString()
+	@IsNotEmpty()
+	resourceId: string;
 
-  /**
-   * Internal resource ID (MongoDB ObjectId)
-   */
-  @IsMongoId()
-  @IsOptional()
-  resourceInternalId?: string;
+	/**
+	 * Internal resource ID (MongoDB ObjectId)
+	 */
+	@IsMongoId()
+	@IsOptional()
+	resourceInternalId?: string;
 
-  /**
-   * Type of resource being translated
-   */
-  @IsEnum(LocalizationResourceEnum)
-  @IsNotEmpty()
-  resourceType: LocalizationResourceEnum;
+	/**
+	 * Type of resource being translated
+	 */
+	@IsEnum(LocalizationResourceEnum)
+	@IsNotEmpty()
+	resourceType: LocalizationResourceEnum;
 
-  /**
-   * Organization ID (used for settings lookup)
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  organizationId: string;
+	/**
+	 * Organization ID (used for settings lookup)
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	organizationId: string;
 
-  /**
-   * Environment ID
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  environmentId: string;
+	/**
+	 * Environment ID
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	environmentId: string;
 
-  /**
-   * User requesting the translation
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  userId: string;
+	/**
+	 * User requesting the translation
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	userId: string;
 
-  /**
-   * Optional: Override default target locales from org settings
-   * Array of BCP-47 locale codes (e.g., ['es_ES', 'fr_FR'])
-   */
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  targetLocales?: string[];
+	/**
+	 * Optional: Override default target locales from org settings
+	 * Array of BCP-47 locale codes (e.g., ['es_ES', 'fr_FR'])
+	 */
+	@IsArray()
+	@IsString({ each: true })
+	@IsOptional()
+	targetLocales?: string[];
 
-  /**
-   * Optional: Source locale override (default from org settings)
-   */
-  @IsString()
-  @IsOptional()
-  sourceLocale?: string;
+	/**
+	 * Optional: Source locale override (default from org settings)
+	 */
+	@IsString()
+	@IsOptional()
+	sourceLocale?: string;
 
-  /**
-   * Content to translate, keyed by content identifier
-   * Key format: 'step.<stepId>.<field>' or 'layout.<field>'
-   *
-   * @example
-   * {
-   *   'step.email-1.subject': 'Welcome!',
-   *   'step.email-1.body': '<p>Hello {{name}}</p>',
-   *   'step.sms-1.content': 'Hi {{name}}, thanks for signing up!',
-   * }
-   */
-  @IsObject()
-  @IsNotEmpty()
-  sourceContent: Record<string, string>;
+	/**
+	 * Content to translate, keyed by content identifier
+	 * Key format: 'step.<stepId>.<field>' or 'layout.<field>'
+	 *
+	 * @example
+	 * {
+	 *   'step.email-1.subject': 'Welcome!',
+	 *   'step.email-1.body': '<p>Hello {{name}}</p>',
+	 *   'step.sms-1.content': 'Hi {{name}}, thanks for signing up!',
+	 * }
+	 */
+	@IsObject()
+	@IsNotEmpty()
+	sourceContent: Record<string, string>;
 
-  /**
-   * Optional: Content type hint for better translation quality
-   * Used when all content is of the same type
-   */
-  @IsString()
-  @IsOptional()
-  contentType?: TranslationContentType;
+	/**
+	 * Optional: Content type hint for better translation quality
+	 * Used when all content is of the same type
+	 */
+	@IsString()
+	@IsOptional()
+	contentType?: TranslationContentType;
 
-  /**
-   * Optional: Custom instructions for translation
-   * E.g., "Use formal language" or "Keep technical terms in English"
-   */
-  @IsString()
-  @IsOptional()
-  customInstructions?: string;
+	/**
+	 * Optional: Custom instructions for translation
+	 * E.g., "Use formal language" or "Keep technical terms in English"
+	 */
+	@IsString()
+	@IsOptional()
+	customInstructions?: string;
 
-  /**
-   * Optional: Skip validation step for faster processing
-   * Not recommended for production use
-   */
-  @IsOptional()
-  skipValidation?: boolean;
+	/**
+	 * Optional: Skip validation step for faster processing
+	 * Not recommended for production use
+	 */
+	@IsOptional()
+	skipValidation?: boolean;
 
-  /**
-   * Optional MongoDB session for transaction support
-   * Note: This is an internal field, not validated by class-validator.
-   * It's passed programmatically, not from external input.
-   */
-  session?: ClientSession | null;
+	/**
+	 * Optional MongoDB session for transaction support
+	 * Note: This is an internal field, not validated by class-validator.
+	 * It's passed programmatically, not from external input.
+	 */
+	session?: ClientSession | null;
 
-  /**
-   * Create and validate a command instance
-   */
-  static create(data: Omit<AutoTranslateCommand, 'session'> & { session?: ClientSession | null }): AutoTranslateCommand {
-    const command = new AutoTranslateCommand();
-    Object.assign(command, data);
-    return command;
-  }
+	/**
+	 * Create and validate a command instance
+	 */
+	static create(
+		data: Omit<AutoTranslateCommand, "session"> & {
+			session?: ClientSession | null;
+		},
+	): AutoTranslateCommand {
+		const command = new AutoTranslateCommand();
+		Object.assign(command, data);
+		return command;
+	}
 }
 
 /**
  * Result for a single locale translation
  */
 export interface LocaleTranslateResult {
-  /**
-   * Target locale code
-   */
-  locale: string;
+	/**
+	 * Target locale code
+	 */
+	locale: string;
 
-  /**
-   * Whether translation was successful
-   */
-  success: boolean;
+	/**
+	 * Whether translation was successful
+	 */
+	success: boolean;
 
-  /**
-   * Translated content by key (matches sourceContent keys)
-   */
-  content?: Record<string, string>;
+	/**
+	 * Translated content by key (matches sourceContent keys)
+	 */
+	content?: Record<string, string>;
 
-  /**
-   * Error message if translation failed
-   */
-  error?: string;
+	/**
+	 * Error message if translation failed
+	 */
+	error?: string;
 
-  /**
-   * Validation warnings (non-fatal issues)
-   */
-  warnings?: string[];
+	/**
+	 * Validation warnings (non-fatal issues)
+	 */
+	warnings?: string[];
 }
 
 /**
  * Complete result from auto-translate operation
  */
 export interface AutoTranslateResult {
-  /**
-   * Overall success status (true if all locales succeeded)
-   */
-  success: boolean;
+	/**
+	 * Overall success status (true if all locales succeeded)
+	 */
+	success: boolean;
 
-  /**
-   * Source locale used for translation
-   */
-  sourceLocale: string;
+	/**
+	 * Source locale used for translation
+	 */
+	sourceLocale: string;
 
-  /**
-   * Results for each target locale
-   */
-  results: LocaleTranslateResult[];
+	/**
+	 * Results for each target locale
+	 */
+	results: LocaleTranslateResult[];
 
-  /**
-   * Total processing metadata
-   */
-  metadata: {
-    totalLocales: number;
-    successfulLocales: number;
-    failedLocales: number;
-    totalTokensUsed: number;
-    totalLatencyMs: number;
-  };
+	/**
+	 * Total processing metadata
+	 */
+	metadata: {
+		totalLocales: number;
+		successfulLocales: number;
+		failedLocales: number;
+		totalTokensUsed: number;
+		totalLatencyMs: number;
+	};
 
-  /**
-   * ID of the LocalizationGroup where translations were stored
-   */
-  localizationGroupId?: string;
+	/**
+	 * ID of the LocalizationGroup where translations were stored
+	 */
+	localizationGroupId?: string;
 }

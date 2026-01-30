@@ -1,2 +1,2 @@
-export * from './delete-translation-group.command';
-export * from './delete-translation-group.usecase';
+export * from "./delete-translation-group.command";
+export * from "./delete-translation-group.usecase";

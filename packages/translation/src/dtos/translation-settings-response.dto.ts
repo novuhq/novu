@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
-import { OpenAIModelEnum } from '../dal';
+import { OpenAIModelEnum } from "../dal";
 
 /**
  * Response DTO for translation settings
@@ -24,82 +24,82 @@ import { OpenAIModelEnum } from '../dal';
  * ```
  */
 export class TranslationSettingsResponseDto {
-  @ApiProperty({
-    description: 'Unique identifier for the translation settings',
-    example: '507f1f77bcf86cd799439011',
-  })
-  _id: string;
+	@ApiProperty({
+		description: "Unique identifier for the translation settings",
+		example: "507f1f77bcf86cd799439011",
+	})
+	_id: string;
 
-  @ApiProperty({
-    description: 'Organization ID these settings belong to',
-    example: '507f1f77bcf86cd799439012',
-  })
-  _organizationId: string;
+	@ApiProperty({
+		description: "Organization ID these settings belong to",
+		example: "507f1f77bcf86cd799439012",
+	})
+	_organizationId: string;
 
-  /**
-   * Indicates whether an API key has been configured
-   * Used to show appropriate UI state without exposing the key
-   */
-  @ApiProperty({
-    description: 'Whether an OpenAI API key is configured',
-    example: true,
-  })
-  hasApiKey: boolean;
+	/**
+	 * Indicates whether an API key has been configured
+	 * Used to show appropriate UI state without exposing the key
+	 */
+	@ApiProperty({
+		description: "Whether an OpenAI API key is configured",
+		example: true,
+	})
+	hasApiKey: boolean;
 
-  /**
-   * Last 4 characters of the API key for identification
-   * Only populated if hasApiKey is true
-   */
-  @ApiPropertyOptional({
-    description: 'Last 4 characters of the API key (for identification)',
-    example: '1234',
-  })
-  apiKeyLast4?: string;
+	/**
+	 * Last 4 characters of the API key for identification
+	 * Only populated if hasApiKey is true
+	 */
+	@ApiPropertyOptional({
+		description: "Last 4 characters of the API key (for identification)",
+		example: "1234",
+	})
+	apiKeyLast4?: string;
 
-  /**
-   * OpenAI model configured for translation
-   */
-  @ApiProperty({
-    description: 'OpenAI model for translation',
-    enum: OpenAIModelEnum,
-    example: OpenAIModelEnum.GPT_4O_MINI,
-  })
-  openaiModel: OpenAIModelEnum;
+	/**
+	 * OpenAI model configured for translation
+	 */
+	@ApiProperty({
+		description: "OpenAI model for translation",
+		enum: OpenAIModelEnum,
+		example: OpenAIModelEnum.GPT_4O_MINI,
+	})
+	openaiModel: OpenAIModelEnum;
 
-  /**
-   * Default source locale for translations
-   */
-  @ApiProperty({
-    description: 'Default source locale (BCP-47 format)',
-    example: 'en_US',
-  })
-  defaultLocale: string;
+	/**
+	 * Default source locale for translations
+	 */
+	@ApiProperty({
+		description: "Default source locale (BCP-47 format)",
+		example: "en_US",
+	})
+	defaultLocale: string;
 
-  /**
-   * Configured target locales for translation
-   */
-  @ApiProperty({
-    description: 'Target locales for translation',
-    type: [String],
-    example: ['es_ES', 'fr_FR', 'de_DE'],
-  })
-  targetLocales: string[];
+	/**
+	 * Configured target locales for translation
+	 */
+	@ApiProperty({
+		description: "Target locales for translation",
+		type: [String],
+		example: ["es_ES", "fr_FR", "de_DE"],
+	})
+	targetLocales: string[];
 
-  /**
-   * Settings creation timestamp
-   */
-  @ApiProperty({
-    description: 'When the settings were created',
-    example: '2024-01-15T10:30:00.000Z',
-  })
-  createdAt: string;
+	/**
+	 * Settings creation timestamp
+	 */
+	@ApiProperty({
+		description: "When the settings were created",
+		example: "2024-01-15T10:30:00.000Z",
+	})
+	createdAt: string;
 
-  /**
-   * Settings last update timestamp
-   */
-  @ApiProperty({
-    description: 'When the settings were last updated',
-    example: '2024-01-15T10:30:00.000Z',
-  })
-  updatedAt: string;
+	/**
+	 * Settings last update timestamp
+	 */
+	@ApiProperty({
+		description: "When the settings were last updated",
+		example: "2024-01-15T10:30:00.000Z",
+	})
+	updatedAt: string;
 }

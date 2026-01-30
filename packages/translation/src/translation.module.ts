@@ -1,33 +1,35 @@
-import { Module, DynamicModule, Global, Logger, Provider } from '@nestjs/common';
 import {
-  TranslationQueueService,
-  WorkflowInMemoryProviderService,
-} from '@novu/application-generic';
+	type DynamicModule,
+	Global,
+	Logger,
+	Module,
+	type Provider,
+} from "@nestjs/common";
 import {
-  LocalizationGroupRepository,
-  LocalizationRepository,
-} from '@novu/dal';
+	TranslationQueueService,
+	WorkflowInMemoryProviderService,
+} from "@novu/application-generic";
+import { LocalizationGroupRepository, LocalizationRepository } from "@novu/dal";
+import {
+	TranslationController,
+	TranslationSettingsController,
+} from "./controllers";
+import { TranslationSettingsRepository } from "./dal";
+import {
+	OpenAITranslationService,
+	TranslationValidatorService,
+	VariableTokenizerService,
+} from "./services";
+import {
+	AutoTranslate,
+	DeleteTranslationGroup,
+	DuplicateLocales,
+	EnqueueTranslation,
+	ManageTranslations,
+	PublishTranslationGroup,
+} from "./usecases";
 
-import { TranslationSettingsRepository } from './dal';
-import {
-  VariableTokenizerService,
-  TranslationValidatorService,
-  OpenAITranslationService,
-} from './services';
-import {
-  ManageTranslations,
-  DeleteTranslationGroup,
-  PublishTranslationGroup,
-  DuplicateLocales,
-  AutoTranslate,
-  EnqueueTranslation,
-} from './usecases';
-import {
-  TranslationSettingsController,
-  TranslationController,
-} from './controllers';
-
-const LOG_CONTEXT = 'TranslationModule';
+const LOG_CONTEXT = "TranslationModule";
 
 /**
  * Create the optional TranslationQueueService provider
@@ -37,24 +39,32 @@ const LOG_CONTEXT = 'TranslationModule';
  * and handle its absence gracefully.
  */
 const createQueueServiceProvider = (): Provider[] => {
-  try {
-    return [
-      {
-        provide: TranslationQueueService,
-        useFactory: (workflowInMemoryProviderService: WorkflowInMemoryProviderService | null) => {
-          if (!workflowInMemoryProviderService) {
-            Logger.warn('WorkflowInMemoryProviderService not available, TranslationQueueService disabled', LOG_CONTEXT);
-            return null;
-          }
-          return new TranslationQueueService(workflowInMemoryProviderService);
-        },
-        inject: [{ token: WorkflowInMemoryProviderService, optional: true }],
-      },
-    ];
-  } catch (error) {
-    Logger.warn(`TranslationQueueService initialization failed: ${error}`, LOG_CONTEXT);
-    return [];
-  }
+	try {
+		return [
+			{
+				provide: TranslationQueueService,
+				useFactory: (
+					workflowInMemoryProviderService: WorkflowInMemoryProviderService | null,
+				) => {
+					if (!workflowInMemoryProviderService) {
+						Logger.warn(
+							"WorkflowInMemoryProviderService not available, TranslationQueueService disabled",
+							LOG_CONTEXT,
+						);
+						return null;
+					}
+					return new TranslationQueueService(workflowInMemoryProviderService);
+				},
+				inject: [{ token: WorkflowInMemoryProviderService, optional: true }],
+			},
+		];
+	} catch (error) {
+		Logger.warn(
+			`TranslationQueueService initialization failed: ${error}`,
+			LOG_CONTEXT,
+		);
+		return [];
+	}
 };
 
 /**
@@ -97,93 +107,97 @@ const createQueueServiceProvider = (): Provider[] => {
 @Global()
 @Module({})
 export class TranslationModule {
-  /**
-   * Register the translation module as a root module
-   *
-   * This method should be called once in the root application module.
-   * It provides all translation services, repositories, and usecases as singletons.
-   *
-   * @param options - Module options
-   * @param options.includeControllers - Whether to include controllers (for API app)
-   * @param options.includeQueueService - Whether to include the queue service (for async translation)
-   * @returns Dynamic module configuration
-   */
-  static forRoot(options?: { includeControllers?: boolean; includeQueueService?: boolean }): DynamicModule {
-    const controllers = options?.includeControllers
-      ? [TranslationSettingsController, TranslationController]
-      : [];
+	/**
+	 * Register the translation module as a root module
+	 *
+	 * This method should be called once in the root application module.
+	 * It provides all translation services, repositories, and usecases as singletons.
+	 *
+	 * @param options - Module options
+	 * @param options.includeControllers - Whether to include controllers (for API app)
+	 * @param options.includeQueueService - Whether to include the queue service (for async translation)
+	 * @returns Dynamic module configuration
+	 */
+	static forRoot(options?: {
+		includeControllers?: boolean;
+		includeQueueService?: boolean;
+	}): DynamicModule {
+		const controllers = options?.includeControllers
+			? [TranslationSettingsController, TranslationController]
+			: [];
 
-    const queueProviders = options?.includeQueueService !== false
-      ? createQueueServiceProvider()
-      : [];
+		const queueProviders =
+			options?.includeQueueService !== false
+				? createQueueServiceProvider()
+				: [];
 
-    return {
-      module: TranslationModule,
-      controllers,
-      providers: [
-        // Repositories
-        {
-          provide: TranslationSettingsRepository,
-          useFactory: () => new TranslationSettingsRepository(),
-        },
-        {
-          provide: LocalizationGroupRepository,
-          useFactory: () => new LocalizationGroupRepository(),
-        },
-        {
-          provide: LocalizationRepository,
-          useFactory: () => new LocalizationRepository(),
-        },
-        // Services
-        VariableTokenizerService,
-        TranslationValidatorService,
-        OpenAITranslationService,
-        // Queue service (optional)
-        ...queueProviders,
-        // Usecases
-        ManageTranslations,
-        DeleteTranslationGroup,
-        PublishTranslationGroup,
-        DuplicateLocales,
-        AutoTranslate,
-        EnqueueTranslation,
-      ],
-      exports: [
-        // Repositories
-        TranslationSettingsRepository,
-        LocalizationGroupRepository,
-        LocalizationRepository,
-        // Services
-        VariableTokenizerService,
-        TranslationValidatorService,
-        OpenAITranslationService,
-        // Queue service (optional)
-        TranslationQueueService,
-        // Usecases
-        ManageTranslations,
-        DeleteTranslationGroup,
-        PublishTranslationGroup,
-        DuplicateLocales,
-        AutoTranslate,
-        EnqueueTranslation,
-      ],
-      global: true,
-    };
-  }
+		return {
+			module: TranslationModule,
+			controllers,
+			providers: [
+				// Repositories
+				{
+					provide: TranslationSettingsRepository,
+					useFactory: () => new TranslationSettingsRepository(),
+				},
+				{
+					provide: LocalizationGroupRepository,
+					useFactory: () => new LocalizationGroupRepository(),
+				},
+				{
+					provide: LocalizationRepository,
+					useFactory: () => new LocalizationRepository(),
+				},
+				// Services
+				VariableTokenizerService,
+				TranslationValidatorService,
+				OpenAITranslationService,
+				// Queue service (optional)
+				...queueProviders,
+				// Usecases
+				ManageTranslations,
+				DeleteTranslationGroup,
+				PublishTranslationGroup,
+				DuplicateLocales,
+				AutoTranslate,
+				EnqueueTranslation,
+			],
+			exports: [
+				// Repositories
+				TranslationSettingsRepository,
+				LocalizationGroupRepository,
+				LocalizationRepository,
+				// Services
+				VariableTokenizerService,
+				TranslationValidatorService,
+				OpenAITranslationService,
+				// Queue service (optional)
+				TranslationQueueService,
+				// Usecases
+				ManageTranslations,
+				DeleteTranslationGroup,
+				PublishTranslationGroup,
+				DuplicateLocales,
+				AutoTranslate,
+				EnqueueTranslation,
+			],
+			global: true,
+		};
+	}
 
-  /**
-   * Register the translation module for feature modules
-   *
-   * Use this in feature modules that need access to translation services.
-   * The services will be provided from the root module's singletons.
-   *
-   * @returns Dynamic module configuration
-   */
-  static forFeature(): DynamicModule {
-    return {
-      module: TranslationModule,
-      providers: [],
-      exports: [],
-    };
-  }
+	/**
+	 * Register the translation module for feature modules
+	 *
+	 * Use this in feature modules that need access to translation services.
+	 * The services will be provided from the root module's singletons.
+	 *
+	 * @returns Dynamic module configuration
+	 */
+	static forFeature(): DynamicModule {
+		return {
+			module: TranslationModule,
+			providers: [],
+			exports: [],
+		};
+	}
 }

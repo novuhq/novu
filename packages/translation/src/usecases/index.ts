@@ -34,61 +34,44 @@
  * - Handles validation and partial failures
  */
 
-// ManageTranslations
-export {
-  ManageTranslationsCommand,
-  LocalizationResourceEnum,
-} from './manage-translations';
-export {
-  ManageTranslations,
-  ManageTranslationsResult,
-} from './manage-translations';
-
-// DeleteTranslationGroup
-export {
-  DeleteTranslationGroupCommand,
-} from './delete-translation-group';
-export {
-  DeleteTranslationGroup,
-  DeleteTranslationGroupResult,
-} from './delete-translation-group';
-
-// PublishTranslationGroup
-export {
-  PublishTranslationGroupCommand,
-  UserSessionData,
-} from './publish-translation-group';
-export {
-  PublishTranslationGroup,
-  PublishTranslationGroupResult,
-} from './publish-translation-group';
-
-// DuplicateLocales
-export {
-  DuplicateLocalesCommand,
-} from './duplicate-locales';
-export {
-  DuplicateLocales,
-  DuplicateLocalesResult,
-} from './duplicate-locales';
-
 // AutoTranslate
 export {
-  AutoTranslateCommand,
-  AutoTranslateResult,
-  LocaleTranslateResult,
-  TranslationContentType,
-} from './auto-translate';
+	AutoTranslate,
+	AutoTranslateCommand,
+	AutoTranslateResult,
+	LocaleTranslateResult,
+	TranslationContentType,
+} from "./auto-translate";
+// DeleteTranslationGroup
 export {
-  AutoTranslate,
-} from './auto-translate';
-
+	DeleteTranslationGroup,
+	DeleteTranslationGroupCommand,
+	DeleteTranslationGroupResult,
+} from "./delete-translation-group";
+// DuplicateLocales
+export {
+	DuplicateLocales,
+	DuplicateLocalesCommand,
+	DuplicateLocalesResult,
+} from "./duplicate-locales";
 // EnqueueTranslation
 export {
-  EnqueueTranslationCommand,
-  EnqueueTranslationResourceTypeEnum,
-  EnqueueTranslationResult,
-} from './enqueue-translation';
+	EnqueueTranslation,
+	EnqueueTranslationCommand,
+	EnqueueTranslationResourceTypeEnum,
+	EnqueueTranslationResult,
+} from "./enqueue-translation";
+// ManageTranslations
 export {
-  EnqueueTranslation,
-} from './enqueue-translation';
+	LocalizationResourceEnum,
+	ManageTranslations,
+	ManageTranslationsCommand,
+	ManageTranslationsResult,
+} from "./manage-translations";
+// PublishTranslationGroup
+export {
+	PublishTranslationGroup,
+	PublishTranslationGroupCommand,
+	PublishTranslationGroupResult,
+	UserSessionData,
+} from "./publish-translation-group";

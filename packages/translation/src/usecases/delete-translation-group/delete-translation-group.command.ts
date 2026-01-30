@@ -1,12 +1,18 @@
-import { IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ClientSession } from 'mongoose';
+import {
+	IsEnum,
+	IsMongoId,
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+} from "class-validator";
+import type { ClientSession } from "mongoose";
 
 /**
  * Resource types that support translation management
  */
 export enum LocalizationResourceEnum {
-  WORKFLOW = 'workflow',
-  LAYOUT = 'layout',
+	WORKFLOW = "workflow",
+	LAYOUT = "layout",
 }
 
 /**
@@ -35,61 +41,65 @@ export enum LocalizationResourceEnum {
  * ```
  */
 export class DeleteTranslationGroupCommand {
-  /**
-   * Resource identifier (workflow slug or layout identifier)
-   */
-  @IsString()
-  @IsNotEmpty()
-  resourceId: string;
+	/**
+	 * Resource identifier (workflow slug or layout identifier)
+	 */
+	@IsString()
+	@IsNotEmpty()
+	resourceId: string;
 
-  /**
-   * Internal resource ID (MongoDB ObjectId)
-   * Used for precise matching when resourceId is not unique
-   */
-  @IsMongoId()
-  @IsOptional()
-  resourceInternalId?: string;
+	/**
+	 * Internal resource ID (MongoDB ObjectId)
+	 * Used for precise matching when resourceId is not unique
+	 */
+	@IsMongoId()
+	@IsOptional()
+	resourceInternalId?: string;
 
-  /**
-   * Type of resource being deleted
-   */
-  @IsEnum(LocalizationResourceEnum)
-  @IsNotEmpty()
-  resourceType: LocalizationResourceEnum;
+	/**
+	 * Type of resource being deleted
+	 */
+	@IsEnum(LocalizationResourceEnum)
+	@IsNotEmpty()
+	resourceType: LocalizationResourceEnum;
 
-  /**
-   * Organization ID
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  organizationId: string;
+	/**
+	 * Organization ID
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	organizationId: string;
 
-  /**
-   * Environment ID
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  environmentId: string;
+	/**
+	 * Environment ID
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	environmentId: string;
 
-  /**
-   * User performing the action
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  userId: string;
+	/**
+	 * User performing the action
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	userId: string;
 
-  /**
-   * Optional MongoDB session for transaction support
-   */
-  @IsOptional()
-  session?: ClientSession | null;
+	/**
+	 * Optional MongoDB session for transaction support
+	 */
+	@IsOptional()
+	session?: ClientSession | null;
 
-  /**
-   * Create and validate a command instance
-   */
-  static create(data: Omit<DeleteTranslationGroupCommand, 'session'> & { session?: ClientSession | null }): DeleteTranslationGroupCommand {
-    const command = new DeleteTranslationGroupCommand();
-    Object.assign(command, data);
-    return command;
-  }
+	/**
+	 * Create and validate a command instance
+	 */
+	static create(
+		data: Omit<DeleteTranslationGroupCommand, "session"> & {
+			session?: ClientSession | null;
+		},
+	): DeleteTranslationGroupCommand {
+		const command = new DeleteTranslationGroupCommand();
+		Object.assign(command, data);
+		return command;
+	}
 }

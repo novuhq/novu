@@ -1,21 +1,28 @@
-import { IsEnum, IsMongoId, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-import { ClientSession } from 'mongoose';
+import {
+	IsEnum,
+	IsMongoId,
+	IsNotEmpty,
+	IsObject,
+	IsOptional,
+	IsString,
+} from "class-validator";
+import type { ClientSession } from "mongoose";
 
 /**
  * Resource types that support translation management
  */
 export enum LocalizationResourceEnum {
-  WORKFLOW = 'workflow',
-  LAYOUT = 'layout',
+	WORKFLOW = "workflow",
+	LAYOUT = "layout",
 }
 
 /**
  * User session data for command execution
  */
 export interface UserSessionData {
-  _id: string;
-  organizationId: string;
-  environmentId: string;
+	_id: string;
+	organizationId: string;
+	environmentId: string;
 }
 
 /**
@@ -45,74 +52,78 @@ export interface UserSessionData {
  * ```
  */
 export class PublishTranslationGroupCommand {
-  /**
-   * User performing the publish action
-   */
-  @IsObject()
-  @IsNotEmpty()
-  user: UserSessionData;
+	/**
+	 * User performing the publish action
+	 */
+	@IsObject()
+	@IsNotEmpty()
+	user: UserSessionData;
 
-  /**
-   * Resource identifier (workflow slug or layout identifier)
-   */
-  @IsString()
-  @IsNotEmpty()
-  resourceId: string;
+	/**
+	 * Resource identifier (workflow slug or layout identifier)
+	 */
+	@IsString()
+	@IsNotEmpty()
+	resourceId: string;
 
-  /**
-   * Internal resource ID (MongoDB ObjectId)
-   */
-  @IsMongoId()
-  @IsOptional()
-  resourceInternalId?: string;
+	/**
+	 * Internal resource ID (MongoDB ObjectId)
+	 */
+	@IsMongoId()
+	@IsOptional()
+	resourceInternalId?: string;
 
-  /**
-   * Resource name for display purposes
-   */
-  @IsString()
-  @IsOptional()
-  resourceName?: string;
+	/**
+	 * Resource name for display purposes
+	 */
+	@IsString()
+	@IsOptional()
+	resourceName?: string;
 
-  /**
-   * Type of resource being published
-   */
-  @IsEnum(LocalizationResourceEnum)
-  @IsNotEmpty()
-  resourceType: LocalizationResourceEnum;
+	/**
+	 * Type of resource being published
+	 */
+	@IsEnum(LocalizationResourceEnum)
+	@IsNotEmpty()
+	resourceType: LocalizationResourceEnum;
 
-  /**
-   * Source environment to copy translations from
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  sourceEnvironmentId: string;
+	/**
+	 * Source environment to copy translations from
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	sourceEnvironmentId: string;
 
-  /**
-   * Target environment to copy translations to
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  targetEnvironmentId: string;
+	/**
+	 * Target environment to copy translations to
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	targetEnvironmentId: string;
 
-  /**
-   * Target internal resource ID (MongoDB ObjectId) in target environment
-   */
-  @IsMongoId()
-  @IsOptional()
-  targetResourceInternalId?: string;
+	/**
+	 * Target internal resource ID (MongoDB ObjectId) in target environment
+	 */
+	@IsMongoId()
+	@IsOptional()
+	targetResourceInternalId?: string;
 
-  /**
-   * Optional MongoDB session for transaction support
-   */
-  @IsOptional()
-  session?: ClientSession | null;
+	/**
+	 * Optional MongoDB session for transaction support
+	 */
+	@IsOptional()
+	session?: ClientSession | null;
 
-  /**
-   * Create and validate a command instance
-   */
-  static create(data: Omit<PublishTranslationGroupCommand, 'session'> & { session?: ClientSession | null }): PublishTranslationGroupCommand {
-    const command = new PublishTranslationGroupCommand();
-    Object.assign(command, data);
-    return command;
-  }
+	/**
+	 * Create and validate a command instance
+	 */
+	static create(
+		data: Omit<PublishTranslationGroupCommand, "session"> & {
+			session?: ClientSession | null;
+		},
+	): PublishTranslationGroupCommand {
+		const command = new PublishTranslationGroupCommand();
+		Object.assign(command, data);
+		return command;
+	}
 }

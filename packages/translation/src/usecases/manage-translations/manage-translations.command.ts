@@ -1,12 +1,20 @@
-import { IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-import { ClientSession } from 'mongoose';
+import {
+	IsBoolean,
+	IsEnum,
+	IsMongoId,
+	IsNotEmpty,
+	IsObject,
+	IsOptional,
+	IsString,
+} from "class-validator";
+import type { ClientSession } from "mongoose";
 
 /**
  * Resource types that support translation management
  */
 export enum LocalizationResourceEnum {
-  WORKFLOW = 'workflow',
-  LAYOUT = 'layout',
+	WORKFLOW = "workflow",
+	LAYOUT = "layout",
 }
 
 /**
@@ -42,82 +50,86 @@ export enum LocalizationResourceEnum {
  * ```
  */
 export class ManageTranslationsCommand {
-  /**
-   * Whether translations should be enabled for this resource
-   */
-  @IsBoolean()
-  @IsNotEmpty()
-  enabled: boolean;
+	/**
+	 * Whether translations should be enabled for this resource
+	 */
+	@IsBoolean()
+	@IsNotEmpty()
+	enabled: boolean;
 
-  /**
-   * Resource identifier (workflow slug or layout identifier)
-   */
-  @IsString()
-  @IsNotEmpty()
-  resourceId: string;
+	/**
+	 * Resource identifier (workflow slug or layout identifier)
+	 */
+	@IsString()
+	@IsNotEmpty()
+	resourceId: string;
 
-  /**
-   * Internal resource ID (MongoDB ObjectId)
-   */
-  @IsMongoId()
-  @IsOptional()
-  resourceInternalId?: string;
+	/**
+	 * Internal resource ID (MongoDB ObjectId)
+	 */
+	@IsMongoId()
+	@IsOptional()
+	resourceInternalId?: string;
 
-  /**
-   * Resource name for display purposes
-   */
-  @IsString()
-  @IsOptional()
-  resourceName?: string;
+	/**
+	 * Resource name for display purposes
+	 */
+	@IsString()
+	@IsOptional()
+	resourceName?: string;
 
-  /**
-   * Type of resource being managed
-   */
-  @IsEnum(LocalizationResourceEnum)
-  @IsNotEmpty()
-  resourceType: LocalizationResourceEnum;
+	/**
+	 * Type of resource being managed
+	 */
+	@IsEnum(LocalizationResourceEnum)
+	@IsNotEmpty()
+	resourceType: LocalizationResourceEnum;
 
-  /**
-   * Organization ID
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  organizationId: string;
+	/**
+	 * Organization ID
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	organizationId: string;
 
-  /**
-   * Environment ID
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  environmentId: string;
+	/**
+	 * Environment ID
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	environmentId: string;
 
-  /**
-   * User performing the action
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  userId: string;
+	/**
+	 * User performing the action
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	userId: string;
 
-  /**
-   * Optional MongoDB session for transaction support
-   */
-  @IsOptional()
-  session?: ClientSession | null;
+	/**
+	 * Optional MongoDB session for transaction support
+	 */
+	@IsOptional()
+	session?: ClientSession | null;
 
-  /**
-   * Full resource entity (used on initial enable to extract translatable content)
-   * This is passed when enabling translations for the first time or after updates
-   */
-  @IsObject()
-  @IsOptional()
-  resourceEntity?: Record<string, unknown>;
+	/**
+	 * Full resource entity (used on initial enable to extract translatable content)
+	 * This is passed when enabling translations for the first time or after updates
+	 */
+	@IsObject()
+	@IsOptional()
+	resourceEntity?: Record<string, unknown>;
 
-  /**
-   * Create and validate a command instance
-   */
-  static create(data: Omit<ManageTranslationsCommand, 'session'> & { session?: ClientSession | null }): ManageTranslationsCommand {
-    const command = new ManageTranslationsCommand();
-    Object.assign(command, data);
-    return command;
-  }
+	/**
+	 * Create and validate a command instance
+	 */
+	static create(
+		data: Omit<ManageTranslationsCommand, "session"> & {
+			session?: ClientSession | null;
+		},
+	): ManageTranslationsCommand {
+		const command = new ManageTranslationsCommand();
+		Object.assign(command, data);
+		return command;
+	}
 }

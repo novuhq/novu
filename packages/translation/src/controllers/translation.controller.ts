@@ -14,20 +14,19 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '@novu/application-generic';
-import { UserSessionData } from '@novu/shared';
-
-import { AutoTranslate, AutoTranslateCommand } from '../usecases/auto-translate';
+import type { UserSessionData } from '@novu/shared';
 import {
-  EnqueueTranslation,
+  type AutoTranslateRequestDto,
+  type AutoTranslateResponseDto,
+  TranslationJobStatus,
+  type TranslationStatusDto,
+} from '../dtos';
+import { type AutoTranslate, AutoTranslateCommand } from '../usecases/auto-translate';
+import {
+  type EnqueueTranslation,
   EnqueueTranslationCommand,
   EnqueueTranslationResourceTypeEnum,
 } from '../usecases/enqueue-translation';
-import {
-  AutoTranslateRequestDto,
-  AutoTranslateResponseDto,
-  TranslationStatusDto,
-  TranslationJobStatus,
-} from '../dtos';
 
 /**
  * Controller for translation operations

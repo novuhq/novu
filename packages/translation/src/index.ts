@@ -87,23 +87,17 @@
  * ```
  */
 
-// DAL exports
-export * from './dal';
-
-// Services exports
-export * from './services';
-
-// Types exports
-export * from './types';
-
-// Usecases exports
-export * from './usecases';
-
 // Controllers exports
-export * from './controllers';
-
+export * from "./controllers";
+// DAL exports
+export * from "./dal";
 // DTOs exports
-export * from './dtos';
-
+export * from "./dtos";
+// Services exports
+export * from "./services";
 // Module exports
-export * from './translation.module';
+export * from "./translation.module";
+// Types exports
+export * from "./types";
+// Usecases exports
+export * from "./usecases";

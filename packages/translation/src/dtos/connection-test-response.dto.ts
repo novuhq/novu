@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 /**
  * Response DTO for connection test endpoint
@@ -26,48 +26,48 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  * ```
  */
 export class ConnectionTestResponseDto {
-  /**
-   * Whether the connection test was successful
-   */
-  @ApiProperty({
-    description: 'Whether the connection test succeeded',
-    example: true,
-  })
-  success: boolean;
+	/**
+	 * Whether the connection test was successful
+	 */
+	@ApiProperty({
+		description: "Whether the connection test succeeded",
+		example: true,
+	})
+	success: boolean;
 
-  /**
-   * Human-readable status message
-   */
-  @ApiProperty({
-    description: 'Status message describing the result',
-    example: 'Connection successful',
-  })
-  message: string;
+	/**
+	 * Human-readable status message
+	 */
+	@ApiProperty({
+		description: "Status message describing the result",
+		example: "Connection successful",
+	})
+	message: string;
 
-  /**
-   * The model that was tested (if successful)
-   */
-  @ApiPropertyOptional({
-    description: 'OpenAI model used for the test',
-    example: 'gpt-4o-mini',
-  })
-  model?: string;
+	/**
+	 * The model that was tested (if successful)
+	 */
+	@ApiPropertyOptional({
+		description: "OpenAI model used for the test",
+		example: "gpt-4o-mini",
+	})
+	model?: string;
 
-  /**
-   * Latency of the test request in milliseconds
-   */
-  @ApiPropertyOptional({
-    description: 'Response latency in milliseconds',
-    example: 245,
-  })
-  latencyMs?: number;
+	/**
+	 * Latency of the test request in milliseconds
+	 */
+	@ApiPropertyOptional({
+		description: "Response latency in milliseconds",
+		example: 245,
+	})
+	latencyMs?: number;
 
-  /**
-   * Error details if the test failed
-   */
-  @ApiPropertyOptional({
-    description: 'Error details if the test failed',
-    example: 'Incorrect API key provided',
-  })
-  error?: string;
+	/**
+	 * Error details if the test failed
+	 */
+	@ApiPropertyOptional({
+		description: "Error details if the test failed",
+		example: "Incorrect API key provided",
+	})
+	error?: string;
 }

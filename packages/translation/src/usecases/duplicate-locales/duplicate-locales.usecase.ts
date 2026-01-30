@@ -1,36 +1,39 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 import {
-  LocalizationGroupRepository,
-  LocalizationRepository,
-  LocalizationGroupEntity,
-  LocalizationResourceEnum as DalLocalizationResourceEnum,
-} from '@novu/dal';
+	LocalizationResourceEnum as DalLocalizationResourceEnum,
+	type LocalizationGroupEntity,
+	type LocalizationGroupRepository,
+	type LocalizationRepository,
+} from "@novu/dal";
 
-import { DuplicateLocalesCommand, LocalizationResourceEnum } from './duplicate-locales.command';
+import {
+	type DuplicateLocalesCommand,
+	LocalizationResourceEnum,
+} from "./duplicate-locales.command";
 
 /**
  * Result of duplicating locales
  */
 export interface DuplicateLocalesResult {
-  /**
-   * Whether the operation was successful
-   */
-  success: boolean;
+	/**
+	 * Whether the operation was successful
+	 */
+	success: boolean;
 
-  /**
-   * The new LocalizationGroup for the duplicated resource
-   */
-  targetGroup?: LocalizationGroupEntity;
+	/**
+	 * The new LocalizationGroup for the duplicated resource
+	 */
+	targetGroup?: LocalizationGroupEntity;
 
-  /**
-   * Number of localizations duplicated
-   */
-  duplicatedLocalizations: number;
+	/**
+	 * Number of localizations duplicated
+	 */
+	duplicatedLocalizations: number;
 
-  /**
-   * Message describing the operation result
-   */
-  message: string;
+	/**
+	 * Message describing the operation result
+	 */
+	message: string;
 }
 
 /**
@@ -65,141 +68,144 @@ export interface DuplicateLocalesResult {
  */
 @Injectable()
 export class DuplicateLocales {
-  private readonly logger = new Logger(DuplicateLocales.name);
+	private readonly logger = new Logger(DuplicateLocales.name);
 
-  constructor(
-    private readonly localizationGroupRepository: LocalizationGroupRepository,
-    private readonly localizationRepository: LocalizationRepository
-  ) {}
+	constructor(
+		private readonly localizationGroupRepository: LocalizationGroupRepository,
+		private readonly localizationRepository: LocalizationRepository,
+	) {}
 
-  /**
-   * Execute the duplicate locales command
-   *
-   * @param command - The command containing source/target resource info
-   * @returns Result with new group and duplication counts
-   */
-  async execute(command: DuplicateLocalesCommand): Promise<DuplicateLocalesResult> {
-    const {
-      sourceResourceId,
-      sourceResourceInternalId,
-      sourceResourceType,
-      targetResourceId,
-      targetResourceInternalId,
-      targetResourceName,
-      organizationId,
-      environmentId,
-      session,
-    } = command;
+	/**
+	 * Execute the duplicate locales command
+	 *
+	 * @param command - The command containing source/target resource info
+	 * @returns Result with new group and duplication counts
+	 */
+	async execute(
+		command: DuplicateLocalesCommand,
+	): Promise<DuplicateLocalesResult> {
+		const {
+			sourceResourceId,
+			sourceResourceInternalId,
+			sourceResourceType,
+			targetResourceId,
+			targetResourceInternalId,
+			targetResourceName,
+			organizationId,
+			environmentId,
+			session,
+		} = command;
 
-    // Convert to DAL enum
-    const dalResourceType = this.convertToDalResourceType(sourceResourceType);
+		// Convert to DAL enum
+		const dalResourceType = this.convertToDalResourceType(sourceResourceType);
 
-    // Step 1: Find source LocalizationGroup
-    let sourceGroup: LocalizationGroupEntity | null = null;
+		// Step 1: Find source LocalizationGroup
+		let sourceGroup: LocalizationGroupEntity | null = null;
 
-    if (sourceResourceInternalId) {
-      sourceGroup = await this.localizationGroupRepository.findByResource(
-        dalResourceType,
-        sourceResourceInternalId,
-        environmentId,
-        organizationId
-      );
-    }
+		if (sourceResourceInternalId) {
+			sourceGroup = await this.localizationGroupRepository.findByResource(
+				dalResourceType,
+				sourceResourceInternalId,
+				environmentId,
+				organizationId,
+			);
+		}
 
-    if (!sourceGroup) {
-      this.logger.debug(
-        `No source LocalizationGroup found for ${sourceResourceType}:${sourceResourceId}, nothing to duplicate`
-      );
+		if (!sourceGroup) {
+			this.logger.debug(
+				`No source LocalizationGroup found for ${sourceResourceType}:${sourceResourceId}, nothing to duplicate`,
+			);
 
-      return {
-        success: true,
-        duplicatedLocalizations: 0,
-        message: `No translations to duplicate from ${sourceResourceType} "${sourceResourceId}"`,
-      };
-    }
+			return {
+				success: true,
+				duplicatedLocalizations: 0,
+				message: `No translations to duplicate from ${sourceResourceType} "${sourceResourceId}"`,
+			};
+		}
 
-    // Step 2: Create new LocalizationGroup for target
-    const targetGroup = await this.localizationGroupRepository.getOrCreateForResource(
-      dalResourceType,
-      targetResourceId,
-      targetResourceName || sourceGroup.resourceName,
-      targetResourceInternalId,
-      environmentId,
-      organizationId,
-      session
-    );
+		// Step 2: Create new LocalizationGroup for target
+		const targetGroup =
+			await this.localizationGroupRepository.getOrCreateForResource(
+				dalResourceType,
+				targetResourceId,
+				targetResourceName || sourceGroup.resourceName,
+				targetResourceInternalId,
+				environmentId,
+				organizationId,
+				session,
+			);
 
-    if (!targetGroup) {
-      throw new Error('Failed to create target LocalizationGroup');
-    }
+		if (!targetGroup) {
+			throw new Error("Failed to create target LocalizationGroup");
+		}
 
-    this.logger.debug(
-      `Created target LocalizationGroup ${targetGroup._id} for ${sourceResourceType}:${targetResourceId}`
-    );
+		this.logger.debug(
+			`Created target LocalizationGroup ${targetGroup._id} for ${sourceResourceType}:${targetResourceId}`,
+		);
 
-    // Step 3: Find all source localizations
-    const sourceLocalizations = await this.localizationRepository.find(
-      {
-        _localizationGroupId: sourceGroup._id,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      }
-    );
+		// Step 3: Find all source localizations
+		const sourceLocalizations = await this.localizationRepository.find({
+			_localizationGroupId: sourceGroup._id,
+			_environmentId: environmentId,
+			_organizationId: organizationId,
+		});
 
-    if (sourceLocalizations.length === 0) {
-      this.logger.debug(
-        `No localizations found in source group ${sourceGroup._id}`
-      );
+		if (sourceLocalizations.length === 0) {
+			this.logger.debug(
+				`No localizations found in source group ${sourceGroup._id}`,
+			);
 
-      return {
-        success: true,
-        targetGroup,
-        duplicatedLocalizations: 0,
-        message: `Translation group created but no localizations to duplicate`,
-      };
-    }
+			return {
+				success: true,
+				targetGroup,
+				duplicatedLocalizations: 0,
+				message: `Translation group created but no localizations to duplicate`,
+			};
+		}
 
-    // Step 4: Duplicate each localization
-    let duplicatedCount = 0;
+		// Step 4: Duplicate each localization
+		let duplicatedCount = 0;
 
-    for (const sourceLocalization of sourceLocalizations) {
-      await this.localizationRepository.create(
-        {
-          _localizationGroupId: targetGroup._id,
-          locale: sourceLocalization.locale,
-          content: sourceLocalization.content,
-          _environmentId: environmentId,
-          _organizationId: organizationId,
-        },
-        { session }
-      );
+		for (const sourceLocalization of sourceLocalizations) {
+			await this.localizationRepository.create(
+				{
+					_localizationGroupId: targetGroup._id,
+					locale: sourceLocalization.locale,
+					content: sourceLocalization.content,
+					_environmentId: environmentId,
+					_organizationId: organizationId,
+				},
+				{ session },
+			);
 
-      duplicatedCount++;
-    }
+			duplicatedCount++;
+		}
 
-    this.logger.log(
-      `Duplicated ${duplicatedCount} localizations from ${sourceResourceId} to ${targetResourceId}`
-    );
+		this.logger.log(
+			`Duplicated ${duplicatedCount} localizations from ${sourceResourceId} to ${targetResourceId}`,
+		);
 
-    return {
-      success: true,
-      targetGroup,
-      duplicatedLocalizations: duplicatedCount,
-      message: `Duplicated ${duplicatedCount} translation(s) to ${sourceResourceType} "${targetResourceId}"`,
-    };
-  }
+		return {
+			success: true,
+			targetGroup,
+			duplicatedLocalizations: duplicatedCount,
+			message: `Duplicated ${duplicatedCount} translation(s) to ${sourceResourceType} "${targetResourceId}"`,
+		};
+	}
 
-  /**
-   * Convert local enum to DAL enum
-   */
-  private convertToDalResourceType(resourceType: LocalizationResourceEnum): DalLocalizationResourceEnum {
-    switch (resourceType) {
-      case LocalizationResourceEnum.WORKFLOW:
-        return DalLocalizationResourceEnum.WORKFLOW;
-      case LocalizationResourceEnum.LAYOUT:
-        return DalLocalizationResourceEnum.LAYOUT;
-      default:
-        throw new Error(`Unknown resource type: ${resourceType}`);
-    }
-  }
+	/**
+	 * Convert local enum to DAL enum
+	 */
+	private convertToDalResourceType(
+		resourceType: LocalizationResourceEnum,
+	): DalLocalizationResourceEnum {
+		switch (resourceType) {
+			case LocalizationResourceEnum.WORKFLOW:
+				return DalLocalizationResourceEnum.WORKFLOW;
+			case LocalizationResourceEnum.LAYOUT:
+				return DalLocalizationResourceEnum.LAYOUT;
+			default:
+				throw new Error(`Unknown resource type: ${resourceType}`);
+		}
+	}
 }

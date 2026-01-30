@@ -25,5 +25,5 @@
  * ```
  */
 
-export * from './translation-settings.controller';
-export * from './translation.controller';
+export * from "./translation.controller";
+export * from "./translation-settings.controller";

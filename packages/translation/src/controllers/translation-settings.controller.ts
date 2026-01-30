@@ -13,15 +13,15 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '@novu/application-generic';
-import { UserSessionData } from '@novu/shared';
+import type { UserSessionData } from '@novu/shared';
 
-import { TranslationSettingsRepository } from '../dal';
-import { OpenAITranslationService } from '../services';
-import {
+import type { TranslationSettingsRepository } from '../dal';
+import type {
   ConnectionTestResponseDto,
   TranslationSettingsResponseDto,
   UpdateTranslationSettingsDto,
 } from '../dtos';
+import type { OpenAITranslationService } from '../services';
 
 /**
  * Controller for managing organization translation settings

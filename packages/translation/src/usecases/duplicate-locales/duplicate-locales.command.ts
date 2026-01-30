@@ -1,12 +1,18 @@
-import { IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ClientSession } from 'mongoose';
+import {
+	IsEnum,
+	IsMongoId,
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+} from "class-validator";
+import type { ClientSession } from "mongoose";
 
 /**
  * Resource types that support translation management
  */
 export enum LocalizationResourceEnum {
-  WORKFLOW = 'workflow',
-  LAYOUT = 'layout',
+	WORKFLOW = "workflow",
+	LAYOUT = "layout",
 }
 
 /**
@@ -39,81 +45,85 @@ export enum LocalizationResourceEnum {
  * ```
  */
 export class DuplicateLocalesCommand {
-  /**
-   * Source resource identifier to copy translations from
-   */
-  @IsString()
-  @IsNotEmpty()
-  sourceResourceId: string;
+	/**
+	 * Source resource identifier to copy translations from
+	 */
+	@IsString()
+	@IsNotEmpty()
+	sourceResourceId: string;
 
-  /**
-   * Source internal resource ID (MongoDB ObjectId)
-   */
-  @IsMongoId()
-  @IsOptional()
-  sourceResourceInternalId?: string;
+	/**
+	 * Source internal resource ID (MongoDB ObjectId)
+	 */
+	@IsMongoId()
+	@IsOptional()
+	sourceResourceInternalId?: string;
 
-  /**
-   * Type of resource (must match for both source and target)
-   */
-  @IsEnum(LocalizationResourceEnum)
-  @IsNotEmpty()
-  sourceResourceType: LocalizationResourceEnum;
+	/**
+	 * Type of resource (must match for both source and target)
+	 */
+	@IsEnum(LocalizationResourceEnum)
+	@IsNotEmpty()
+	sourceResourceType: LocalizationResourceEnum;
 
-  /**
-   * Target resource identifier to copy translations to
-   */
-  @IsString()
-  @IsNotEmpty()
-  targetResourceId: string;
+	/**
+	 * Target resource identifier to copy translations to
+	 */
+	@IsString()
+	@IsNotEmpty()
+	targetResourceId: string;
 
-  /**
-   * Target internal resource ID (MongoDB ObjectId)
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  targetResourceInternalId: string;
+	/**
+	 * Target internal resource ID (MongoDB ObjectId)
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	targetResourceInternalId: string;
 
-  /**
-   * Target resource name for display purposes
-   */
-  @IsString()
-  @IsOptional()
-  targetResourceName?: string;
+	/**
+	 * Target resource name for display purposes
+	 */
+	@IsString()
+	@IsOptional()
+	targetResourceName?: string;
 
-  /**
-   * Organization ID (same for both source and target)
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  organizationId: string;
+	/**
+	 * Organization ID (same for both source and target)
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	organizationId: string;
 
-  /**
-   * Environment ID (same for both source and target)
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  environmentId: string;
+	/**
+	 * Environment ID (same for both source and target)
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	environmentId: string;
 
-  /**
-   * User performing the duplication
-   */
-  @IsMongoId()
-  @IsNotEmpty()
-  userId: string;
+	/**
+	 * User performing the duplication
+	 */
+	@IsMongoId()
+	@IsNotEmpty()
+	userId: string;
 
-  /**
-   * Optional MongoDB session for transaction support
-   */
-  @IsOptional()
-  session?: ClientSession | null;
+	/**
+	 * Optional MongoDB session for transaction support
+	 */
+	@IsOptional()
+	session?: ClientSession | null;
 
-  /**
-   * Create and validate a command instance
-   */
-  static create(data: Omit<DuplicateLocalesCommand, 'session'> & { session?: ClientSession | null }): DuplicateLocalesCommand {
-    const command = new DuplicateLocalesCommand();
-    Object.assign(command, data);
-    return command;
-  }
+	/**
+	 * Create and validate a command instance
+	 */
+	static create(
+		data: Omit<DuplicateLocalesCommand, "session"> & {
+			session?: ClientSession | null;
+		},
+	): DuplicateLocalesCommand {
+		const command = new DuplicateLocalesCommand();
+		Object.assign(command, data);
+		return command;
+	}
 }
