@@ -382,20 +382,6 @@ export class TopicSubscribersRepository extends BaseRepository<
 
     return countMap;
   }
-
-  buildContextExactMatchQuery(contextKeys?: string[]): Record<string, unknown> {
-    // undefined or empty array = match only "no context" subscriptions
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match filtering (order-insensitive)
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
-  }
 }
 
 function isErrorWithWriteErrors(e: unknown): e is { writeErrors?: unknown; message?: string; result?: unknown } {

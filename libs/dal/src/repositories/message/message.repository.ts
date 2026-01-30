@@ -1170,18 +1170,4 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       ...this.buildContextExactMatchQuery(contextKeys),
     };
   }
-
-  private buildContextExactMatchQuery(contextKeys: string[]): MessageQuery {
-    // empty array = inbox has no (default) context, only match messages with no context
-    if (contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match filtering
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
-  }
 }

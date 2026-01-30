@@ -9,13 +9,22 @@ import {
 import {
   DeliveryLifecycleStatusEnum,
   DigestTypeEnum,
+  FeatureFlagsKeysEnum,
   IDigestBaseMetadata,
   IWorkflowStepMetadata,
+  SeverityLevelEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
 } from '@novu/shared';
 import { InstrumentUsecase } from '../../instrumentation';
-import { WorkflowRunRepository, WorkflowRunStatusEnum } from '../../services/analytic-logs';
+import {
+  TraceLogRepository,
+  WorkflowRunRepository,
+  WorkflowRunStatusEnum,
+  WorkflowRunTraceInput,
+} from '../../services/analytic-logs';
+import { LogRepository } from '../../services/analytic-logs/log.repository';
+import { FeatureFlagsService } from '../../services/feature-flags';
 import { getNestedValue } from '../../utils';
 import { PlatformException } from '../../utils/exceptions';
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
@@ -29,7 +38,9 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
-    private workflowRunRepository: WorkflowRunRepository
+    private workflowRunRepository: WorkflowRunRepository,
+    private traceLogRepository: TraceLogRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -107,6 +118,51 @@ export class CreateNotificationJobs {
         userId: command.userId,
         externalSubscriberId: command.subscriber.subscriberId,
       });
+
+      const isTracesWriteEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED,
+        organization: { _id: command.organizationId },
+        environment: { _id: command.environmentId },
+        user: { _id: command.userId },
+        defaultValue: false,
+      });
+
+      if (isTracesWriteEnabled) {
+        const traceData: WorkflowRunTraceInput = {
+          created_at: LogRepository.formatDateTime64(new Date(notification.createdAt)),
+          organization_id: notification._organizationId,
+          environment_id: notification._environmentId,
+          user_id: command.userId || '',
+          external_subscriber_id: command.subscriber.subscriberId || '',
+          subscriber_id: notification._subscriberId,
+          event_type: 'workflow_run_status_processing',
+          title: 'Workflow run processing',
+          message: '',
+          raw_data: '',
+          status: 'pending',
+          entity_id: notification._id,
+          workflow_run_identifier: notification._id,
+          workflow_id: notification._templateId,
+          provider_id: '',
+          workflow_name: command.template.name,
+          trigger_identifier:
+            command.template.triggers?.[0]?.identifier || command.template.name.toLowerCase().replace(/\s+/g, '_'),
+          transaction_id: notification.transactionId,
+          channels: JSON.stringify(notification.channels || []),
+          subscriber_to: notification.to ? JSON.stringify(notification.to) : '',
+          payload: notification.payload ? JSON.stringify(notification.payload) : '',
+          control_values: notification.controls ? JSON.stringify(notification.controls) : '',
+          topics: notification.topics ? JSON.stringify(notification.topics) : '',
+          is_digest: false,
+          digested_workflow_run_id: '',
+          delivery_lifecycle_status: DeliveryLifecycleStatusEnum.PENDING,
+          delivery_lifecycle_detail: '',
+          severity: notification.severity || SeverityLevelEnum.NONE,
+          critical: notification.critical || false,
+          context_keys: notification.contextKeys || [],
+        };
+        await this.traceLogRepository.createWorkflowRun([traceData]);
+      }
     } catch (error) {
       console.error(
         { error: error instanceof Error ? error.message : 'Unknown error', notificationId: notification._id },
