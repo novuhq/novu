@@ -41,6 +41,7 @@ import {
   slugify,
   TriggerTypeEnum,
 } from '@novu/shared';
+import { ManageTranslations } from '@novu/translation';
 import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 import { CreateWorkflowCommand } from './create-workflow.command';
@@ -60,7 +61,8 @@ export class CreateWorkflow {
     protected moduleRef: ModuleRef,
     private upsertPreferences: UpsertPreferences,
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
-    private resourceValidatorService: ResourceValidatorService
+    private resourceValidatorService: ResourceValidatorService,
+    private manageTranslations: ManageTranslations
   ) {}
 
   @InstrumentUsecase()
@@ -149,19 +151,8 @@ export class CreateWorkflow {
     workflowEntity: WorkflowWithPreferencesResponseDto,
     session?: ClientSession | null
   ) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
     try {
-      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
-        strict: false,
-      });
-
-      await manageTranslations.execute({
+      await this.manageTranslations.execute({
         enabled: command.isTranslationEnabled,
         resourceId: workflowIdentifier,
         resourceType: LocalizationResourceEnum.WORKFLOW,

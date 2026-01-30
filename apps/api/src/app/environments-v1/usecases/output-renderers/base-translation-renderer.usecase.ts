@@ -5,6 +5,13 @@ import { LocalizationResourceEnum, NotificationTemplateEntity, OrganizationEntit
 import { createLiquidEngine } from '@novu/framework/internal';
 import { FullPayloadForRender } from './render-command';
 
+// TODO: Implement Translate service in @novu/translation package
+// The Translate class provides runtime translation capabilities for content rendering:
+// - createContext(): Creates a translation context with i18n instance and liquid engine
+// - execute(): Translates content using the provided context
+// - executeWithContext(): Translates content with an existing context
+// This requires integration with localization data and liquid template processing
+
 type TranslationContext = {
   i18nInstance: unknown;
   liquidEngine: unknown;

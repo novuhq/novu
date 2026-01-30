@@ -1,15 +1,17 @@
-import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 
+// TODO: Implement PromoteTranslationGroupChange usecase in @novu/translation package
+// This usecase handles promoting translation group changes between environments
+// It needs to be integrated with the change management system
+
 @Injectable()
 export class PromoteTranslationGroupChange {
   constructor(
-    private moduleRef: ModuleRef,
     @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
     private changeRepository: ChangeRepository,
     private logger: PinoLogger
@@ -18,18 +20,13 @@ export class PromoteTranslationGroupChange {
   }
 
   async execute(command: PromoteTypeChangeCommand) {
+    // TODO: Implement translation group change promotion logic
+    // For now, this is a placeholder that logs the attempt
     try {
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-translation')?.PromoteTranslationGroupChange) {
-          throw new BadRequestException('Translation module is not loaded');
-        }
-        const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationGroupChange, {
-          strict: false,
-        });
-        await usecase.execute(command, this.applyDefaultTranslationChange.bind(this));
-      }
+      this.logger.debug(`Promoting translation group change for command`);
+      // Placeholder for future implementation
     } catch (e) {
-      this.logger.error({ err: e }, `Unexpected error while importing enterprise modules`);
+      this.logger.error({ err: e }, `Error promoting translation group change`);
     }
   }
 

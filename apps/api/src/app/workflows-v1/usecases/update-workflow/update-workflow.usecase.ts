@@ -46,6 +46,7 @@ import {
   PreferencesTypeEnum,
   ResourceOriginEnum,
 } from '@novu/shared';
+import { ManageTranslations } from '@novu/translation';
 import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
 import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
@@ -73,7 +74,8 @@ export class UpdateWorkflow {
     private deletePreferencesUsecase: DeletePreferencesUseCase,
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private controlValuesRepository: ControlValuesRepository,
-    private resourceValidatorService: ResourceValidatorService
+    private resourceValidatorService: ResourceValidatorService,
+    private manageTranslations: ManageTranslations
   ) {}
 
   @InstrumentUsecase()
@@ -366,19 +368,8 @@ export class UpdateWorkflow {
   }
 
   private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: UpdateWorkflowCommand) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
     try {
-      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
-        strict: false,
-      });
-
-      await manageTranslations.execute({
+      await this.manageTranslations.execute({
         enabled: command.isTranslationEnabled,
         resourceId: workflowIdentifier,
         resourceType: LocalizationResourceEnum.WORKFLOW,

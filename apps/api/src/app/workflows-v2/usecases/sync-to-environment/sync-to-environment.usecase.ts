@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, Optional } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { Instrument, InstrumentUsecase, SendWebhookMessage } from '@novu/application-generic';
 import {
   ClientSession,
@@ -16,6 +15,7 @@ import {
   WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
+import { PublishTranslationGroup } from '@novu/translation';
 import {
   LayoutSyncToEnvironmentCommand,
   LayoutSyncToEnvironmentUseCase,
@@ -50,7 +50,7 @@ export class SyncToEnvironmentUseCase {
     private preferencesRepository: PreferencesRepository,
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
     private layoutSyncToEnvironmentUseCase: LayoutSyncToEnvironmentUseCase,
-    private moduleRef: ModuleRef,
+    private publishTranslationGroupUseCase: PublishTranslationGroup,
     private notificationTemplateRepository: NotificationTemplateRepository,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
@@ -147,20 +147,9 @@ export class SyncToEnvironmentUseCase {
     resourceType: LocalizationResourceEnum,
     command: SyncToEnvironmentCommand
   ): Promise<void> {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
-    const publishTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.PublishTranslationGroup, {
-      strict: false,
-    });
-
     const { user, targetEnvironmentId } = command;
 
-    await publishTranslationGroup.execute({
+    await this.publishTranslationGroupUseCase.execute({
       user,
       resourceId,
       resourceType,

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { Instrument, InstrumentUsecase, PinoLogger, SendWebhookMessage } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { UserSessionData, WebhookEventEnum, WebhookObjectTypeEnum, WorkflowStatusEnum } from '@novu/shared';
+import { ManageTranslations } from '@novu/translation';
 import { WorkflowWithPreferencesResponseDto } from '../../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 import { WorkflowResponseDto } from '../../dtos';
@@ -18,7 +18,7 @@ export class PatchWorkflowUsecase {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getWorkflowUseCase: GetWorkflowUseCase,
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
-    private moduleRef: ModuleRef,
+    private manageTranslations: ManageTranslations,
     private logger: PinoLogger,
     private sendWebhookMessage: SendWebhookMessage
   ) {}
@@ -152,19 +152,8 @@ export class PatchWorkflowUsecase {
   }
 
   private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: PatchWorkflowCommand) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
     try {
-      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
-        strict: false,
-      });
-
-      await manageTranslations.execute({
+      await this.manageTranslations.execute({
         enabled: command.isTranslationEnabled,
         resourceId: workflowIdentifier,
         resourceType: LocalizationResourceEnum.WORKFLOW,

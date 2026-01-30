@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, LocalizationResourceEnum } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
+import { DuplicateLocales } from '@novu/translation';
 import { LayoutResponseDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { UpsertLayout, UpsertLayoutCommand } from '../upsert-layout';
@@ -15,7 +15,7 @@ export class DuplicateLayoutUseCase {
     private upsertLayoutUseCase: UpsertLayout,
     private controlValuesRepository: ControlValuesRepository,
     private analyticsService: AnalyticsService,
-    private moduleRef: ModuleRef,
+    private duplicateLocalesUseCase: DuplicateLocales,
     private logger: PinoLogger
   ) {}
 
@@ -77,19 +77,8 @@ export class DuplicateLayoutUseCase {
     targetResourceId: string;
     command: DuplicateLayoutCommand;
   }) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
     try {
-      const duplicateLocales = this.moduleRef.get(require('@novu/ee-translation')?.DuplicateLocales, {
-        strict: false,
-      });
-
-      await duplicateLocales.execute({
+      await this.duplicateLocalesUseCase.execute({
         sourceResourceId,
         sourceResourceType: LocalizationResourceEnum.LAYOUT,
         targetResourceId,

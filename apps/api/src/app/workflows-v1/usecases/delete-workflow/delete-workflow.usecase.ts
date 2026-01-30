@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import {
   DeletePreferencesCommand,
   DeletePreferencesUseCase,
@@ -17,6 +16,7 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { PreferencesTypeEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
+import { DeleteTranslationGroup } from '@novu/translation';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { DeleteWorkflowCommand } from './delete-workflow.command';
 
@@ -28,7 +28,7 @@ export class DeleteWorkflowUseCase {
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private deletePreferencesUsecase: DeletePreferencesUseCase,
-    private moduleRef: ModuleRef,
+    private deleteTranslationGroup: DeleteTranslationGroup,
     private logger: PinoLogger,
     private sendWebhookMessage: SendWebhookMessage
   ) {}
@@ -93,7 +93,7 @@ export class DeleteWorkflowUseCase {
         })
       );
 
-      await this.deleteTranslationGroup(command);
+      await this.deleteWorkflowTranslationGroup(command);
 
       await this.notificationTemplateRepository.delete({
         _id: workflow._id,
@@ -103,20 +103,9 @@ export class DeleteWorkflowUseCase {
     });
   }
 
-  private async deleteTranslationGroup(command: DeleteWorkflowCommand) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
+  private async deleteWorkflowTranslationGroup(command: DeleteWorkflowCommand) {
     try {
-      const deleteTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.DeleteTranslationGroup, {
-        strict: false,
-      });
-
-      await deleteTranslationGroup.execute({
+      await this.deleteTranslationGroup.execute({
         resourceId: command.workflowIdOrInternalId,
         resourceType: LocalizationResourceEnum.WORKFLOW,
         organizationId: command.organizationId,

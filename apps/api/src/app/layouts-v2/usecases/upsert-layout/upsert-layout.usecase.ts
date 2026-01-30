@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import {
   AnalyticsService,
   GetLayoutCommand as GetLayoutCommandV0,
@@ -18,6 +17,7 @@ import {
   ResourceTypeEnum,
   slugify,
 } from '@novu/shared';
+import { ManageTranslations } from '@novu/translation';
 import { LayoutDto } from '../../../layouts-v1/dtos';
 import {
   CreateLayoutCommand,
@@ -45,7 +45,7 @@ export class UpsertLayout {
     private analyticsService: AnalyticsService,
     private buildLayoutIssuesUsecase: BuildLayoutIssuesUsecase,
     private getLayoutUseCase: GetLayoutUseCase,
-    private moduleRef: ModuleRef,
+    private manageTranslations: ManageTranslations,
     private logger: PinoLogger
   ) {}
 
@@ -214,19 +214,8 @@ export class UpsertLayout {
   }
 
   private async toggleTranslationsForLayout(command: UpsertLayoutCommand, layoutDto: LayoutDto) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
     try {
-      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
-        strict: false,
-      });
-
-      await manageTranslations.execute({
+      await this.manageTranslations.execute({
         enabled: command.layoutDto.isTranslationEnabled,
         resourceId: layoutDto.identifier,
         resourceType: LocalizationResourceEnum.LAYOUT,

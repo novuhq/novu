@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { LocalizationResourceEnum } from '@novu/dal';
 import { ResourceOriginEnum } from '@novu/shared';
+import { PublishTranslationGroup } from '@novu/translation';
 import { LayoutResponseDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { UpsertLayout, UpsertLayoutCommand, UpsertLayoutDataCommand } from '../upsert-layout';
@@ -28,7 +28,7 @@ export class LayoutSyncToEnvironmentUseCase {
   constructor(
     private getLayoutUseCase: GetLayoutUseCase,
     private upsertLayoutUseCase: UpsertLayout,
-    private moduleRef: ModuleRef
+    private publishTranslationGroupUseCase: PublishTranslationGroup
   ) {}
 
   @InstrumentUsecase()
@@ -87,20 +87,9 @@ export class LayoutSyncToEnvironmentUseCase {
     resourceType: LocalizationResourceEnum,
     command: LayoutSyncToEnvironmentCommand
   ): Promise<void> {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
-    const publishTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.PublishTranslationGroup, {
-      strict: false,
-    });
-
     const { user, targetEnvironmentId } = command;
 
-    await publishTranslationGroup.execute({
+    await this.publishTranslationGroupUseCase.execute({
       user,
       resourceId,
       resourceType,

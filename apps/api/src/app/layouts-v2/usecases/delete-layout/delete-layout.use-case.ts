@@ -1,8 +1,8 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository, LocalizationResourceEnum } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
+import { DeleteTranslationGroup } from '@novu/translation';
 import { LayoutResponseDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { DeleteLayoutCommand } from './delete-layout.command';
@@ -14,7 +14,7 @@ export class DeleteLayoutUseCase {
     private layoutRepository: LayoutRepository,
     private controlValuesRepository: ControlValuesRepository,
     private analyticsService: AnalyticsService,
-    private moduleRef: ModuleRef,
+    private deleteTranslationGroupUseCase: DeleteTranslationGroup,
     private logger: PinoLogger
   ) {}
 
@@ -42,7 +42,7 @@ export class DeleteLayoutUseCase {
       organizationId,
     });
 
-    await this.deleteTranslationGroup(layout, command);
+    await this.deleteLayoutTranslationGroup(layout, command);
 
     await this.layoutRepository.deleteLayout(layout._id!, environmentId, organizationId);
 
@@ -80,23 +80,9 @@ export class DeleteLayoutUseCase {
     );
   }
 
-  private async deleteTranslationGroup(layout: LayoutResponseDto, command: DeleteLayoutCommand) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
+  private async deleteLayoutTranslationGroup(layout: LayoutResponseDto, command: DeleteLayoutCommand) {
     try {
-      const deleteTranslationGroupUseCase = this.moduleRef.get(
-        require('@novu/ee-translation')?.DeleteTranslationGroup,
-        {
-          strict: false,
-        }
-      );
-
-      await deleteTranslationGroupUseCase.execute({
+      await this.deleteTranslationGroupUseCase.execute({
         resourceId: layout.layoutId,
         resourceType: LocalizationResourceEnum.LAYOUT,
         organizationId: command.organizationId,

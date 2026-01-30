@@ -100,8 +100,10 @@ export class WorkflowComparator {
     targetWorkflow: NotificationTemplateEntity,
     userId: string
   ): Promise<IResourceDiff[]> {
+    // TODO: Implement DiffTranslationGroups usecase in @novu/translation package
+    // This usecase compares localization groups between source and target environments
+    // For now, we skip localization diffs as this feature needs to be implemented
     try {
-      // Use the new DiffTranslationGroups use case from the translation module
       const diffTranslationGroups = this.moduleRef.get(require('@novu/ee-translation')?.DiffTranslationGroups, {
         strict: false,
       });

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { LocalizationResourceEnum, PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { PreferencesTypeEnum, ResourceOriginEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { DuplicateLocales } from '@novu/translation';
 import { DuplicateWorkflowDto, StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
 import { WorkflowNotDuplicableException } from '../../exceptions/workflow-not-duplicable-exception';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
@@ -22,7 +22,7 @@ export class DuplicateWorkflowUseCase {
     private getWorkflowUseCase: GetWorkflowUseCase,
     private preferencesRepository: PreferencesRepository,
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
-    private moduleRef: ModuleRef,
+    private duplicateLocalesUseCase: DuplicateLocales,
     private logger: PinoLogger
   ) {}
 
@@ -128,19 +128,8 @@ export class DuplicateWorkflowUseCase {
     targetResourceId: string;
     command: DuplicateWorkflowCommand;
   }) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
-    if (!isEnterprise || isSelfHosted) {
-      return;
-    }
-
     try {
-      const duplicateLocales = this.moduleRef.get(require('@novu/ee-translation')?.DuplicateLocales, {
-        strict: false,
-      });
-
-      await duplicateLocales.execute({
+      await this.duplicateLocalesUseCase.execute({
         sourceResourceId,
         sourceResourceType: LocalizationResourceEnum.WORKFLOW,
         targetResourceId,
