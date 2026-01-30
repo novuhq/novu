@@ -164,8 +164,8 @@
 
 ## 8. Documentation & Cleanup
 
-- [ ] 8.1 Update CLAUDE.md with translation package info
-- [ ] 8.2 Add README to packages/translation
-- [ ] 8.3 Verify all tests pass
-- [ ] 8.4 Run linter and fix issues
+- [x] 8.1 Update CLAUDE.md with translation package info
+- [x] 8.2 Add README to packages/translation
+- [ ] 8.3 Verify all tests pass (requires pnpm install)
+- [ ] 8.4 Run linter and fix issues (requires pnpm install)
 - [ ] 8.5 Final code review

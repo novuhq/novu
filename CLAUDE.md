@@ -1,3 +1,22 @@
+<!-- OPENSPEC:START -->
+# OpenSpec Instructions
+
+These instructions are for AI assistants working in this project.
+
+Always open `@/openspec/AGENTS.md` when the request:
+- Mentions planning or proposals (words like proposal, spec, change, plan)
+- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
+- Sounds ambiguous and you need the authoritative spec before coding
+
+Use `@/openspec/AGENTS.md` to learn:
+- How to create and apply change proposals
+- Spec format and conventions
+- Project structure and guidelines
+
+Keep this managed block so 'openspec update' can refresh the instructions.
+
+<!-- OPENSPEC:END -->
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -32,6 +51,7 @@ Novu is a notification infrastructure platform built as a **monorepo using Nx** 
 - `react` - React notification components (inbox, preferences)
 - `providers` - Channel integrations (email, SMS, push, chat providers)
 - `shared` - Common types, constants, utilities
+- `translation` - AI-powered translation services (ReNovu extension)
 
 ## Development Commands
 
@@ -147,3 +167,28 @@ pnpm typecheck      # Run TypeScript checks
 ## Development Guidance
 
 - No need to run npm typecheck commands, as we will see it ourself
+
+## ReNovu Extensions
+
+### Translation Package (`packages/translation`)
+
+AI-powered translation feature for self-hosted deployments, replacing enterprise `@novu/ee-translation`.
+
+**Key Features:**
+- OpenAI GPT integration (gpt-4o-mini, gpt-4o, gpt-4-turbo)
+- Variable tokenization to protect `{{variables}}` during translation
+- HTML validation for translated content
+- Organization-level API key management (AES-256 encrypted)
+- Async translation via Bull queue (optional)
+
+**API Endpoints:**
+- `GET/PUT/DELETE /v1/translation-settings` - Manage organization settings
+- `POST /v1/translation-settings/test` - Test OpenAI connection
+- `POST /v1/translations/auto-translate` - Trigger translation (sync or async)
+
+**Configuration:**
+1. Dashboard → Translations → Settings button
+2. Enter OpenAI API key
+3. Select model and configure locales
+
+See `packages/translation/README.md` for detailed documentation.
