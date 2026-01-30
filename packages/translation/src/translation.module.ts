@@ -17,6 +17,10 @@ import {
   DuplicateLocales,
   AutoTranslate,
 } from './usecases';
+import {
+  TranslationSettingsController,
+  TranslationController,
+} from './controllers';
 
 /**
  * TranslationModule provides translation services, repositories, and usecases
@@ -47,6 +51,10 @@ import {
  * - DuplicateLocales: Copy translations when duplicating resources
  * - AutoTranslate: Trigger automatic translation using OpenAI
  *
+ * Controllers (available when using forRoot with controllers):
+ * - TranslationSettingsController: API for managing translation settings
+ * - TranslationController: API for triggering translations
+ *
  * Note: This module should be imported in apps/api/src/app.module.ts
  * during Phase 5 of implementation.
  */
@@ -59,11 +67,18 @@ export class TranslationModule {
    * This method should be called once in the root application module.
    * It provides all translation services, repositories, and usecases as singletons.
    *
+   * @param options - Module options
+   * @param options.includeControllers - Whether to include controllers (for API app)
    * @returns Dynamic module configuration
    */
-  static forRoot(): DynamicModule {
+  static forRoot(options?: { includeControllers?: boolean }): DynamicModule {
+    const controllers = options?.includeControllers
+      ? [TranslationSettingsController, TranslationController]
+      : [];
+
     return {
       module: TranslationModule,
+      controllers,
       providers: [
         // Repositories
         {

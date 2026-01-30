@@ -21,6 +21,18 @@
  * - DuplicateLocales: Copy translations when duplicating resources
  * - AutoTranslate: Trigger automatic translation using OpenAI
  *
+ * Phase 4: API Controllers
+ * - TranslationSettingsController: Manage organization translation settings
+ * - TranslationController: Trigger translations and check job status
+ *
+ * DTOs:
+ * - UpdateTranslationSettingsDto: Request DTO for updating settings
+ * - TranslationSettingsResponseDto: Response DTO with masked API key
+ * - ConnectionTestResponseDto: Response for connection test
+ * - AutoTranslateRequestDto: Request DTO for auto-translate
+ * - AutoTranslateResponseDto: Response DTO for auto-translate
+ * - TranslationStatusDto: Status DTO for async jobs
+ *
  * Types:
  * - TokenizeResult, TokenValidationResult: Variable tokenization types
  * - ValidateRequest, ValidationResult, ValidationError: Validation types
@@ -57,6 +69,16 @@
  *   AutoTranslateCommand,
  *   LocalizationResourceEnum,
  *
+ *   // Controllers
+ *   TranslationSettingsController,
+ *   TranslationController,
+ *
+ *   // DTOs
+ *   UpdateTranslationSettingsDto,
+ *   TranslationSettingsResponseDto,
+ *   AutoTranslateRequestDto,
+ *   AutoTranslateResponseDto,
+ *
  *   // Types
  *   TranslateRequest,
  *   TranslateResponse,
@@ -76,6 +98,12 @@ export * from './types';
 
 // Usecases exports
 export * from './usecases';
+
+// Controllers exports
+export * from './controllers';
+
+// DTOs exports
+export * from './dtos';
 
 // Module exports
 export * from './translation.module';
