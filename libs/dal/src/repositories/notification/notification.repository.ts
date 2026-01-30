@@ -346,18 +346,4 @@ export class NotificationRepository extends BaseRepository<
   estimatedDocumentCount() {
     return this.MongooseModel.estimatedDocumentCount();
   }
-
-  private buildContextExactMatchQuery(contextKeys: string[]) {
-    // empty array = inbox has no context, only match notifications with no context
-    if (contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match filtering
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
-  }
 }

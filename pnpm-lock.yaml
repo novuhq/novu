@@ -1391,6 +1391,9 @@ importers:
       ioredis:
         specifier: ^5.2.4
         version: 5.3.2
+      json-logic-js:
+        specifier: ^2.0.5
+        version: 2.0.5
       lodash:
         specifier: ^4.17.15
         version: 4.17.21
@@ -1449,6 +1452,9 @@ importers:
       '@types/inline-css':
         specifier: ^3.0.3
         version: 3.0.3
+      '@types/json-logic-js':
+        specifier: ^2.0.8
+        version: 2.0.8
       '@types/mocha':
         specifier: ^10.0.8
         version: 10.0.8

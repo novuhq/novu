@@ -1,11 +1,10 @@
-import { TopicEntity, TopicWithPreferences } from '@novu/dal';
 import { ISubscribersDefine, SubscriberSourceEnum } from '@novu/shared';
-import { IProcessSubscriberBulkJobDto } from '../dtos';
+import { IProcessSubscriberBulkJobDto, SubscriberTopicPreference } from '../dtos';
 import { BaseTriggerCommand } from '../usecases/trigger-base/trigger-base.usecase';
 
 export function mapSubscribersToJobs(
   subscriberSource: SubscriberSourceEnum,
-  subscribers: { subscriberId: string; topics?: TopicWithPreferences[] }[] | ISubscribersDefine[],
+  subscribers: { subscriberId: string; topics?: SubscriberTopicPreference[] }[] | ISubscribersDefine[],
   command: BaseTriggerCommand
 ): IProcessSubscriberBulkJobDto[] {
   return subscribers.map((subscriber) => {
