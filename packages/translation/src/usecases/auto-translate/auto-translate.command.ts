@@ -147,8 +147,9 @@ export class AutoTranslateCommand {
 
   /**
    * Optional MongoDB session for transaction support
+   * Note: This is an internal field, not validated by class-validator.
+   * It's passed programmatically, not from external input.
    */
-  @IsOptional()
   session?: ClientSession | null;
 
   /**

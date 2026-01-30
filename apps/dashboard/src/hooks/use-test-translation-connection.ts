@@ -23,7 +23,10 @@ export function useTestTranslationConnection() {
 
   return useMutation<ConnectionTestResponseDto, Error, void>({
     mutationFn: async () => {
-      return testTranslationConnection({ environment: currentEnvironment! });
+      if (!currentEnvironment) {
+        throw new Error('Environment not available. Please try again.');
+      }
+      return testTranslationConnection({ environment: currentEnvironment });
     },
     onError: (error) => {
       showErrorToast(error?.message || 'Connection test failed. Please check your API key.', 'Connection test failed');

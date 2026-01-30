@@ -221,6 +221,10 @@ export class TranslationSettingsController {
 
   /**
    * Map entity to response DTO with masked API key
+   *
+   * Security: We only extract the last 4 characters of the API key
+   * to display as a visual indicator, then immediately discard the key.
+   * The full decrypted key is never stored in the response object.
    */
   private mapToResponseDto(settings: {
     _id: string;
@@ -232,17 +236,26 @@ export class TranslationSettingsController {
     createdAt: string;
     updatedAt: string;
   }): TranslationSettingsResponseDto {
-    const hasApiKey = !!settings.openaiApiKey;
-    const apiKeyLast4 = hasApiKey && settings.openaiApiKey
-      ? settings.openaiApiKey.slice(-4)
-      : undefined;
+    // Extract only the info we need from the API key, then discard
+    const hasApiKey = !!settings.openaiApiKey && settings.openaiApiKey.length > 0;
+    // Extract last 4 chars safely - we never store the full key in response
+    let apiKeyLast4: string | undefined;
+    if (hasApiKey && settings.openaiApiKey) {
+      apiKeyLast4 = settings.openaiApiKey.slice(-4);
+    }
+
+    // Validate openaiModel is a valid enum value
+    const validModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'];
+    const openaiModel = validModels.includes(settings.openaiModel)
+      ? (settings.openaiModel as 'gpt-4o-mini' | 'gpt-4o' | 'gpt-4-turbo')
+      : 'gpt-4o-mini';
 
     return {
       _id: settings._id,
       _organizationId: settings._organizationId,
       hasApiKey,
       apiKeyLast4,
-      openaiModel: settings.openaiModel as any,
+      openaiModel,
       defaultLocale: settings.defaultLocale,
       targetLocales: settings.targetLocales,
       createdAt: settings.createdAt,

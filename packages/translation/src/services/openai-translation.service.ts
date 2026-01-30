@@ -521,7 +521,17 @@ Rules:
     }
 
     if (customInstructions) {
-      prompt += `\n- Additional instructions: ${customInstructions}`;
+      // Sanitize custom instructions to prevent prompt injection
+      // - Limit length to 500 characters
+      // - Replace newlines with spaces to prevent structure manipulation
+      // - Trim whitespace
+      const sanitizedInstructions = customInstructions
+        .slice(0, 500)
+        .replace(/[\r\n]+/g, ' ')
+        .trim();
+      if (sanitizedInstructions.length > 0) {
+        prompt += `\n- Additional instructions: ${sanitizedInstructions}`;
+      }
     }
 
     prompt += `

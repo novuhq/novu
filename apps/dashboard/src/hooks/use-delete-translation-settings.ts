@@ -21,7 +21,10 @@ export function useDeleteTranslationSettings() {
 
   return useMutation<void, Error, void>({
     mutationFn: async () => {
-      return deleteTranslationSettings({ environment: currentEnvironment! });
+      if (!currentEnvironment) {
+        throw new Error('Environment not available. Please try again.');
+      }
+      return deleteTranslationSettings({ environment: currentEnvironment });
     },
     onMutate: async () => {
       const queryKey = [QueryKeys.translationSettings, currentEnvironment?._id];

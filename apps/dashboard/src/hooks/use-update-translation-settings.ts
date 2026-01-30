@@ -23,7 +23,10 @@ export function useUpdateTranslationSettings() {
 
   return useMutation<TranslationSettingsDto, Error, UpdateTranslationSettingsDto>({
     mutationFn: async (data) => {
-      return updateTranslationSettings({ data, environment: currentEnvironment! });
+      if (!currentEnvironment) {
+        throw new Error('Environment not available. Please try again.');
+      }
+      return updateTranslationSettings({ data, environment: currentEnvironment });
     },
     onMutate: async (newSettings) => {
       const queryKey = [QueryKeys.translationSettings, currentEnvironment?._id];
