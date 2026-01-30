@@ -13,10 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/primitives/table';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { useTranslationSettings } from '@/hooks/use-translation-settings';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ListNoResults } from '../list-no-results';
@@ -187,13 +188,23 @@ export function TranslationList(props: TranslationListProps) {
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings } = useFetchOrganizationSettings();
   const { subscription } = useFetchSubscription();
+  const { data: translationSettings } = useTranslationSettings();
 
-  const canUseTranslationFeature =
-    getFeatureForTierAsBoolean(
-      FeatureNameEnum.AUTO_TRANSLATIONS,
-      subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) &&
-    (!IS_SELF_HOSTED || IS_ENTERPRISE);
+  // For self-hosted (ReNovu): check if OpenAI API key is configured
+  const hasOpenAIKeyConfigured = translationSettings?.hasApiKey ?? false;
+
+  // For cloud (Novu): check tier/subscription features
+  const hasCloudFeatureAccess = getFeatureForTierAsBoolean(
+    FeatureNameEnum.AUTO_TRANSLATIONS,
+    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+  );
+
+  // Determine if the translation feature can be used:
+  // - Self-hosted: requires OpenAI API key
+  // - Cloud: requires tier/subscription (or also accepts OpenAI key as override)
+  const canUseTranslationFeature = IS_SELF_HOSTED
+    ? hasOpenAIKeyConfigured
+    : hasCloudFeatureAccess || hasOpenAIKeyConfigured;
 
   // Only make API call if user has proper tier
   const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =

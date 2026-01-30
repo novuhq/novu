@@ -87,29 +87,34 @@
 
 ## 6. Dashboard
 
-- [ ] 6.1 Create Translation Settings page
-  - [ ] 6.1.1 `pages/settings/translation-settings.tsx`
-  - [ ] 6.1.2 OpenAI API key form with mask/reveal
-  - [ ] 6.1.3 Model selector dropdown
-  - [ ] 6.1.4 Default locale selector
-  - [ ] 6.1.5 Target locales multi-select
-  - [ ] 6.1.6 Test connection button
-  - [ ] 6.1.7 Save/clear functionality
-- [ ] 6.2 Create supporting components
-  - [ ] 6.2.1 `components/settings/translation/openai-config-form.tsx`
-  - [ ] 6.2.2 `components/settings/translation/target-locales-selector.tsx`
-  - [ ] 6.2.3 `components/settings/translation/test-connection-button.tsx`
-- [ ] 6.3 Create API client functions
-  - [ ] 6.3.1 `api/translation-settings.ts`
-- [ ] 6.4 Create hooks
-  - [ ] 6.4.1 `hooks/use-translation-settings.ts`
-  - [ ] 6.4.2 `hooks/use-save-translation-settings.ts`
-- [ ] 6.5 Update navigation
-  - [ ] 6.5.1 Add route to `routes.ts`
-  - [ ] 6.5.2 Add menu item to settings navigation
-- [ ] 6.6 Update `use-is-translation-enabled.ts`
-  - [ ] 6.6.1 Remove `(!IS_SELF_HOSTED || IS_ENTERPRISE)` check
-  - [ ] 6.6.2 Add `hasOpenAIKeyConfigured` check
+- [x] 6.1 Create/Enhance Translation Settings UI (TranslationSettingsDrawer)
+  - [x] 6.1.1 `components/translations/translation-settings-drawer.tsx` (enhanced existing)
+  - [x] 6.1.2 OpenAI API key form with mask/reveal (SecretInput)
+  - [x] 6.1.3 Model selector dropdown (gpt-4o-mini, gpt-4o, gpt-4-turbo)
+  - [x] 6.1.4 Default locale selector (existing, kept)
+  - [x] 6.1.5 Target locales multi-select (existing, kept)
+  - [x] 6.1.6 Test connection button with success/failure feedback
+  - [x] 6.1.7 Save/clear functionality (enhanced to include OpenAI config)
+- [x] 6.2 Create supporting components (integrated in drawer)
+  - [x] 6.2.1 OpenAI config section in TranslationSettingsDrawer
+  - [x] 6.2.2 Target locales selector (existing LocaleSelect component)
+  - [x] 6.2.3 Test connection button with InlineToast feedback
+- [x] 6.3 Create API client functions
+  - [x] 6.3.1 `api/translation-settings.ts` (already created)
+- [x] 6.4 Create hooks
+  - [x] 6.4.1 `hooks/use-translation-settings.ts` (already created)
+  - [x] 6.4.2 `hooks/use-update-translation-settings.ts` (already created)
+  - [x] 6.4.3 `hooks/use-test-translation-connection.ts` (already created)
+  - [x] 6.4.4 `hooks/use-delete-translation-settings.ts` (already created)
+- [x] 6.5 Update navigation
+  - [x] 6.5.1 Route already exists in `routes.ts` (TRANSLATION_SETTINGS)
+  - [x] 6.5.2 Added Settings button to Translations page header
+- [x] 6.6 Update `use-is-translation-enabled.ts`
+  - [x] 6.6.1 Removed `(!IS_SELF_HOSTED || IS_ENTERPRISE)` check
+  - [x] 6.6.2 Added `hasOpenAIKeyConfigured` check using `useTranslationSettings`
+  - [x] 6.6.3 Updated `translation-list.tsx` with same pattern
+  - [x] 6.6.4 Updated `translation-onboarding-page.tsx` with API key config prompt
+  - [x] 6.6.5 Updated `translation-list-upgrade-cta.tsx` for self-hosted users
 - [ ] 6.7 Write E2E tests for settings page
 
 ## 7. Background Jobs

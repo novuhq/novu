@@ -1,7 +1,7 @@
 import { DEFAULT_LOCALE, PermissionsEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiBookMarkedLine, RiRouteFill } from 'react-icons/ri';
+import { RiBookMarkedLine, RiRouteFill, RiSettings4Line } from 'react-icons/ri';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
@@ -9,8 +9,10 @@ import { Form, FormControl, FormField, FormItem } from '@/components/primitives/
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { TimelineContainer, TimelineStep } from '@/components/primitives/timeline';
+import { IS_SELF_HOSTED } from '@/config';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTranslationSettings } from '@/hooks/use-translation-settings';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { EmptyTranslationsIllustration } from './empty-translations-illustration';
@@ -23,10 +25,15 @@ type TranslationOnboardingFormData = {
 export const TranslationOnboardingPage = () => {
   const { environmentSlug } = useParams<{ environmentSlug: string }>();
   const { data: organizationSettings, isLoading } = useFetchOrganizationSettings();
+  const { data: translationSettings } = useTranslationSettings();
   const updateOrganizationSettings = useUpdateOrganizationSettings();
   const has = useHasPermission();
   const canWrite = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
   const navigate = useNavigate();
+
+  // For self-hosted (ReNovu): check if OpenAI API key is configured
+  const hasOpenAIKeyConfigured = translationSettings?.hasApiKey ?? false;
+  const needsApiKeyConfiguration = IS_SELF_HOSTED && !hasOpenAIKeyConfigured;
 
   const form = useForm<TranslationOnboardingFormData>({
     defaultValues: {
@@ -65,6 +72,12 @@ export const TranslationOnboardingPage = () => {
     }
   };
 
+  const handleConfigureTranslation = () => {
+    if (environmentSlug) {
+      navigate(buildRoute(ROUTES.TRANSLATION_SETTINGS, { environmentSlug }));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -79,9 +92,31 @@ export const TranslationOnboardingPage = () => {
         {/* Header Section */}
         <EmptyTranslationsIllustration />
         <div className="flex flex-col gap-1">
-          <h2 className="text-text-strong text-base font-medium">No translations yet — Let’s set things up</h2>
+          <h2 className="text-text-strong text-base font-medium">No translations yet — Let's set things up</h2>
           <p className="text-text-soft text-xs font-medium">Start localizing your notifications in just a few steps.</p>
         </div>
+
+        {/* Show API key configuration prompt for self-hosted without API key */}
+        {needsApiKeyConfiguration && (
+          <InlineToast
+            variant="warning"
+            title="OpenAI API Key Required"
+            description={
+              <span className="flex flex-col gap-2">
+                <span>Configure your OpenAI API key to enable automatic translations.</span>
+                <Button
+                  variant="secondary"
+                  mode="outline"
+                  size="xs"
+                  onClick={handleConfigureTranslation}
+                  leadingIcon={RiSettings4Line}
+                >
+                  Configure Translation Settings
+                </Button>
+              </span>
+            }
+          />
+        )}
 
         <div className="flex flex-col items-start">
           <Form {...form}>
