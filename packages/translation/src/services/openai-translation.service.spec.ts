@@ -243,7 +243,7 @@ describe('OpenAITranslationService', () => {
     });
 
     it('should use default model when not specified', async () => {
-      const settingsWithoutModel = { ...mockSettings, openaiModel: undefined };
+      const settingsWithoutModel = { ...mockSettings, openaiModel: undefined as unknown as OpenAIModelEnum };
       settingsRepository.findByOrganization.mockResolvedValue(settingsWithoutModel as TranslationSettingsEntity);
 
       const mockCreate = jest.fn().mockResolvedValue({

@@ -13,6 +13,7 @@ import {
   ApiKeyNotConfiguredError,
   RateLimitError,
   InvalidResponseError,
+  ValidationResult,
 } from '../types/translation.types';
 
 /**
@@ -190,7 +191,7 @@ export class OpenAITranslationService {
       const translated = this.tokenizer.detokenize(rawTranslation.trim(), variableMap);
 
       // 5. Validate the result
-      let validation = undefined;
+      let validation: ValidationResult | undefined;
       if (!skipValidation) {
         validation = this.validator.validate({
           original: content,

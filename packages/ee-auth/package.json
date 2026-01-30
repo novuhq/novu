@@ -1,0 +1,22 @@
+{
+  "name": "@novu/ee-auth",
+  "version": "0.0.1",
+  "description": "Stub package for enterprise auth (ReNovu self-hosted)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch"
+  },
+  "peerDependencies": {
+    "@nestjs/common": ">=10.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "typescript": "^5.6.2"
+  },
+  "nx": {
+    "tags": ["type:stub"]
+  }
+}
