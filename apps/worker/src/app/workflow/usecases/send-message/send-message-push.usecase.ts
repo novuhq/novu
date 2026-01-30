@@ -754,7 +754,7 @@ export class SendMessagePush extends SendMessageBase {
     return message;
   }
 
-  private getIntegrationHandler(integration): IPushHandler {
+  private getIntegrationHandler(integration: IntegrationEntity): IPushHandler {
     const pushFactory = new PushFactory();
     const pushHandler = pushFactory.getHandler(integration);
 
