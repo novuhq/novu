@@ -3,5 +3,10 @@ export { InboundParseQueueService } from './inbound-parse-queue.service';
 export { QueueBaseService } from './queue-base.service';
 export { StandardQueueService } from './standard-queue.service';
 export { SubscriberProcessQueueService } from './subscriber-process-queue.service';
+export {
+  ITranslationBulkJobParams,
+  ITranslationJobParams,
+  TranslationQueueService,
+} from './translation-queue.service';
 export { WebSocketsQueueService } from './web-sockets-queue.service';
 export { WorkflowQueueService } from './workflow-queue.service';

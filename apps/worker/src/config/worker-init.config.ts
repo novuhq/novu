@@ -2,6 +2,7 @@ import { Provider } from '@nestjs/common';
 
 import { JobTopicNameEnum } from '@novu/shared';
 
+import { TranslationWorker } from '../app/translation/services';
 import { StandardWorker, WorkflowWorker } from '../app/workflow/services';
 import { SubscriberProcessWorker } from '../app/workflow/services/subscriber-process.worker';
 import { InboundParseWorker } from '../app/workflow/workers/inbound-parse.worker.service';
@@ -10,7 +11,8 @@ type WorkerClass =
   | typeof StandardWorker
   | typeof WorkflowWorker
   | typeof SubscriberProcessWorker
-  | typeof InboundParseWorker;
+  | typeof InboundParseWorker
+  | typeof TranslationWorker;
 
 type WorkerModuleTree = { workerClass: WorkerClass; queueDependencies: JobTopicNameEnum[] };
 
@@ -32,6 +34,10 @@ export const WORKER_MAPPING: WorkerDepTree = {
   [JobTopicNameEnum.INBOUND_PARSE_MAIL]: {
     workerClass: InboundParseWorker,
     queueDependencies: [],
+  },
+  [JobTopicNameEnum.TRANSLATION]: {
+    workerClass: TranslationWorker,
+    queueDependencies: [], // Translation worker has no queue dependencies
   },
 };
 
@@ -63,7 +69,7 @@ export const UNIQUE_WORKER_DEPENDENCIES = [...new Set(WORKER_DEPENDENCIES)];
 export const ACTIVE_WORKERS: Provider[] | any[] = [];
 
 if (!workersToProcess.length) {
-  ACTIVE_WORKERS.push(StandardWorker, WorkflowWorker, SubscriberProcessWorker, InboundParseWorker);
+  ACTIVE_WORKERS.push(StandardWorker, WorkflowWorker, SubscriberProcessWorker, InboundParseWorker, TranslationWorker);
 } else {
   workersToProcess.forEach((queue) => {
     const workerClass = WORKER_MAPPING[queue]?.workerClass;

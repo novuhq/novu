@@ -150,4 +150,16 @@ export class AutoTranslateResponseDto {
     example: '507f1f77bcf86cd799439011',
   })
   localizationGroupId?: string;
+
+  /**
+   * Job reference ID for async translation (only present when async=true)
+   *
+   * Use this ID to poll the /translations/status/:jobId endpoint
+   * for translation progress and results.
+   */
+  @ApiPropertyOptional({
+    description: 'Job reference ID for async translation. Poll /translations/status/:jobId for results.',
+    example: 'trans_507f1f77-bcf8-6cd7-9943-9011abcdef12',
+  })
+  jobReferenceId?: string;
 }

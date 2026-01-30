@@ -38,11 +38,13 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
     "mongoose": "^8.0.0",
-    "openai": "^4.20.0"
+    "openai": "^4.20.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/jest": "29.5.2",
     "@types/node": "^20.15.0",
+    "@types/uuid": "^9.0.0",
     "jest": "^27.1.0",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",

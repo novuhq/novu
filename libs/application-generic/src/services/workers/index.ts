@@ -1,6 +1,7 @@
 export { ActiveJobsMetricWorkerService } from './active-jobs-metric-worker.service';
 export { StandardWorkerService } from './standard-worker.service';
 export { SubscriberProcessWorkerService } from './subscriber-process-worker.service';
+export { TranslationWorkerService } from './translation-worker.service';
 export { WebSocketsWorkerService } from './web-sockets-worker.service';
 export {
   WorkerBaseService,

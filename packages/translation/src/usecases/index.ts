@@ -82,3 +82,13 @@ export {
 export {
   AutoTranslate,
 } from './auto-translate';
+
+// EnqueueTranslation
+export {
+  EnqueueTranslationCommand,
+  EnqueueTranslationResourceTypeEnum,
+  EnqueueTranslationResult,
+} from './enqueue-translation';
+export {
+  EnqueueTranslation,
+} from './enqueue-translation';

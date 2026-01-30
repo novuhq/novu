@@ -6,15 +6,22 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  Optional,
   Param,
   Post,
+  Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 
 import { AutoTranslate, AutoTranslateCommand } from '../usecases/auto-translate';
+import {
+  EnqueueTranslation,
+  EnqueueTranslationCommand,
+  EnqueueTranslationResourceTypeEnum,
+} from '../usecases/enqueue-translation';
 import {
   AutoTranslateRequestDto,
   AutoTranslateResponseDto,
@@ -47,7 +54,8 @@ export class TranslationController {
   private readonly logger = new Logger(TranslationController.name);
 
   constructor(
-    private readonly autoTranslate: AutoTranslate
+    private readonly autoTranslate: AutoTranslate,
+    @Optional() private readonly enqueueTranslation: EnqueueTranslation | null
   ) {}
 
   /**
@@ -57,7 +65,11 @@ export class TranslationController {
    * (or specified override locales). The translations are stored
    * in the database and can be used for localized notifications.
    *
-   * Process:
+   * Supports two modes:
+   * - Synchronous (default): Waits for translation to complete and returns results
+   * - Asynchronous (async=true): Enqueues job and returns job reference for polling
+   *
+   * Process (sync mode):
    * 1. Validate request and get org translation settings
    * 2. Tokenize variables in content to protect during translation
    * 3. Call OpenAI for each target locale
@@ -65,24 +77,56 @@ export class TranslationController {
    * 5. Store in LocalizationGroup/Localization
    * 6. Return results with metadata
    *
+   * Process (async mode):
+   * 1. Validate request
+   * 2. Enqueue job to translation queue
+   * 3. Return job reference ID immediately
+   * 4. Poll /translations/status/:jobId for results
+   *
    * @param user - Authenticated user session
    * @param dto - Translation request with content and options
-   * @returns Translation results for each locale
+   * @param async - If true, enqueue for background processing
+   * @returns Translation results (sync) or job reference (async)
    */
   @Post('auto-translate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Auto-translate content',
-    description: 'Translates content to all configured target locales using OpenAI.',
+    description: 'Translates content to all configured target locales using OpenAI. Set async=true for background processing.',
+  })
+  @ApiQuery({
+    name: 'async',
+    required: false,
+    type: Boolean,
+    description: 'If true, enqueue job for background processing and return job reference',
   })
   async triggerAutoTranslate(
     @UserSession() user: UserSessionData,
-    @Body() dto: AutoTranslateRequestDto
+    @Body() dto: AutoTranslateRequestDto,
+    @Query('async') asyncMode?: string
   ): Promise<AutoTranslateResponseDto> {
+    const isAsync = asyncMode === 'true' || asyncMode === '1';
+
     this.logger.log(
-      `Auto-translate requested for resource: ${dto.resourceId} (${dto.resourceType}) by org: ${user.organizationId}`
+      `Auto-translate requested for resource: ${dto.resourceId} (${dto.resourceType}) by org: ${user.organizationId} [async=${isAsync}]`
     );
 
+    // Async mode: enqueue job and return immediately
+    if (isAsync) {
+      return await this.handleAsyncTranslation(user, dto);
+    }
+
+    // Sync mode: process immediately
+    return await this.handleSyncTranslation(user, dto);
+  }
+
+  /**
+   * Handle synchronous translation - process immediately and wait for result
+   */
+  private async handleSyncTranslation(
+    user: UserSessionData,
+    dto: AutoTranslateRequestDto
+  ): Promise<AutoTranslateResponseDto> {
     const startTime = Date.now();
 
     const result = await this.autoTranslate.execute(
@@ -128,6 +172,95 @@ export class TranslationController {
         totalLatencyMs: result.metadata.totalLatencyMs,
       },
       localizationGroupId: result.localizationGroupId,
+    };
+  }
+
+  /**
+   * Handle asynchronous translation - enqueue job and return reference
+   */
+  private async handleAsyncTranslation(
+    user: UserSessionData,
+    dto: AutoTranslateRequestDto
+  ): Promise<AutoTranslateResponseDto> {
+    if (!this.enqueueTranslation) {
+      this.logger.warn('Async translation requested but EnqueueTranslation not available');
+
+      return {
+        success: false,
+        sourceLocale: dto.sourceLocale || 'en_US',
+        results: [{
+          locale: 'all',
+          success: false,
+          error: 'Async translation not available. Use sync mode or contact support.',
+        }],
+        metadata: {
+          totalLocales: 0,
+          successfulLocales: 0,
+          failedLocales: 1,
+          totalTokensUsed: 0,
+          totalLatencyMs: 0,
+        },
+      };
+    }
+
+    // Map resource type
+    const resourceTypeEnum = dto.resourceType === 'workflow'
+      ? EnqueueTranslationResourceTypeEnum.WORKFLOW
+      : EnqueueTranslationResourceTypeEnum.LAYOUT;
+
+    const result = await this.enqueueTranslation.execute(
+      EnqueueTranslationCommand.create({
+        resourceId: dto.resourceId,
+        resourceInternalId: dto.resourceInternalId,
+        resourceType: resourceTypeEnum,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+        sourceContent: dto.sourceContent,
+        targetLocales: dto.targetLocales,
+        sourceLocale: dto.sourceLocale,
+        contentType: dto.contentType,
+        customInstructions: dto.customInstructions,
+      })
+    );
+
+    if (!result.success) {
+      return {
+        success: false,
+        sourceLocale: dto.sourceLocale || 'en_US',
+        results: [{
+          locale: 'all',
+          success: false,
+          error: result.error || 'Failed to enqueue translation job',
+        }],
+        metadata: {
+          totalLocales: 0,
+          successfulLocales: 0,
+          failedLocales: 1,
+          totalTokensUsed: 0,
+          totalLatencyMs: 0,
+        },
+      };
+    }
+
+    this.logger.log(`Translation job enqueued: ${result.jobReferenceId}`);
+
+    // Return job reference for polling
+    return {
+      success: true,
+      sourceLocale: dto.sourceLocale || 'en_US',
+      results: [{
+        locale: 'pending',
+        success: true,
+      }],
+      metadata: {
+        totalLocales: dto.targetLocales?.length || 0,
+        successfulLocales: 0,
+        failedLocales: 0,
+        totalTokensUsed: 0,
+        totalLatencyMs: 0,
+      },
+      jobReferenceId: result.jobReferenceId,
     };
   }
 

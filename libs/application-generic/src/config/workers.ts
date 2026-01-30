@@ -2,6 +2,7 @@ enum WorkerEnum {
   INBOUND_PARSE_MAIL = 'InboundParseMailWorker',
   SUBSCRIBER_PROCESS = 'SubscriberProcessWorker',
   STANDARD = 'StandardWorker',
+  TRANSLATION = 'TranslationWorker',
   WEB_SOCKET = 'WebSocketWorker',
   WORKFLOW = 'WorkflowWorker',
 }
@@ -31,6 +32,12 @@ const getWorkerConfig = (worker: WorkerEnum): IWorkerConfig => {
       concurrency: getDefaultConcurrency() ?? 200,
       lockDuration: getDefaultLockDuration() ?? 90000,
     },
+    [WorkerEnum.TRANSLATION]: {
+      // Lower concurrency for translation jobs as they involve external API calls
+      concurrency: getDefaultConcurrency() ?? 50,
+      // Longer lock duration for potentially slow OpenAI API calls
+      lockDuration: getDefaultLockDuration() ?? 180000,
+    },
     [WorkerEnum.WEB_SOCKET]: {
       concurrency: getDefaultConcurrency() ?? 400,
       lockDuration: getDefaultLockDuration() ?? 90000,
@@ -49,6 +56,8 @@ export const getInboundParseMailWorkerOptions = () => getWorkerConfig(WorkerEnum
 export const getSubscriberProcessWorkerOptions = () => getWorkerConfig(WorkerEnum.SUBSCRIBER_PROCESS);
 
 export const getStandardWorkerOptions = () => getWorkerConfig(WorkerEnum.STANDARD);
+
+export const getTranslationWorkerOptions = () => getWorkerConfig(WorkerEnum.TRANSLATION);
 
 export const getWebSocketWorkerOptions = () => getWorkerConfig(WorkerEnum.WEB_SOCKET);
 

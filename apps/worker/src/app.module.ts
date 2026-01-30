@@ -15,12 +15,14 @@ import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { HealthModule } from './app/health/health.module';
 import { SharedModule } from './app/shared/shared.module';
 import { TelemetryModule } from './app/telemetry/telemetry.module';
+import { TranslationWorkerModule } from './app/translation/translation.module';
 import { WorkflowModule } from './app/workflow/workflow.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   SharedModule,
   HealthModule,
   WorkflowModule,
+  TranslationWorkerModule.forRoot(),
   TelemetryModule,
 ];
 

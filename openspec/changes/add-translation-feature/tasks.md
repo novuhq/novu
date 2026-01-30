@@ -119,19 +119,48 @@
 
 ## 7. Background Jobs
 
-- [ ] 7.1 Create translation job queue in worker
-  - [ ] 7.1.1 Define job interface and queue name
-  - [ ] 7.1.2 Create job producer (queue translations)
-  - [ ] 7.1.3 Create job consumer (process translations)
-- [ ] 7.2 Implement job processor
-  - [ ] 7.2.1 Fetch resource content
-  - [ ] 7.2.2 Call OpenAI translation service
-  - [ ] 7.2.3 Validate and store results
-  - [ ] 7.2.4 Handle errors and retry
-- [ ] 7.3 Add progress tracking
+- [x] 7.1 Create translation job queue in worker
+  - [x] 7.1.1 Define job interface and queue name (`packages/shared/src/config/job-queue.ts`)
+    - Added `TRANSLATION` to `JobTopicNameEnum`
+    - Added `TRANSLATION_QUEUE` to `ObservabilityBackgroundTransactionEnum`
+    - Added `ITranslationJobData` interface
+    - Added `TranslationResourceTypeEnum` and `TranslationJobStatusEnum`
+  - [x] 7.1.2 Create job producer (`libs/application-generic/src/services/queues/translation-queue.service.ts`)
+    - `TranslationQueueService` extends `QueueBaseService`
+    - Exponential backoff (5s initial, 5 attempts)
+    - Organization-level groupId for rate limiting
+  - [x] 7.1.3 Create job consumer (`apps/worker/src/app/translation/`)
+    - `TranslationWorker` extends `TranslationWorkerService`
+    - NewRelic transaction tracing
+    - Context propagation via AsyncLocalStorage
+    - Organization validation before processing
+- [x] 7.2 Implement job processor
+  - [x] 7.2.1 Fetch resource content (via job data payload)
+  - [x] 7.2.2 Call OpenAI translation service (via `AutoTranslate` usecase)
+  - [x] 7.2.3 Validate and store results (handled by `AutoTranslate`)
+  - [x] 7.2.4 Handle errors and retry (exponential backoff, error logging)
+- [ ] 7.3 Add progress tracking (Future enhancement)
   - [ ] 7.3.1 Store job progress in Redis
   - [ ] 7.3.2 WebSocket updates for real-time status
 - [ ] 7.4 Write tests for job processor
+
+### Additional Phase 7 Deliverables:
+- [x] 7.5 Base services in `libs/application-generic`
+  - `TranslationWorkerService` - Base worker class
+  - `TranslationQueueService` - Queue producer service
+  - `ITranslationDataDto` - Job data DTO
+  - `getTranslationWorkerOptions()` - Worker config (50 concurrency, 180s lock)
+- [x] 7.6 `EnqueueTranslation` usecase in `packages/translation`
+  - Generates unique job reference IDs
+  - Maps resource types between packages
+  - Gracefully handles missing queue service
+- [x] 7.7 Controller async mode support
+  - `POST /translations/auto-translate?async=true` for background processing
+  - Returns `jobReferenceId` for status polling
+- [x] 7.8 Worker module registration
+  - `TranslationWorkerModule` in `apps/worker`
+  - Updated `worker-init.config.ts` with TranslationWorker
+  - Updated `app.module.ts` to include TranslationWorkerModule
 
 ## 8. Documentation & Cleanup
 
