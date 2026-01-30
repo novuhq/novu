@@ -2,10 +2,6 @@ import { isActionStepType } from '@novu/application-generic';
 import { JobEntity } from '@novu/dal';
 
 export const shouldHaltOnStepFailure = (job: JobEntity): boolean => {
-  if (!job.type) {
-    return job.step.shouldStopOnFail === true;
-  }
-
   /*
    * Action steps always stop on failure across all versions (v1 & v2)
    */
