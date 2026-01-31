@@ -35,7 +35,20 @@ export class SocketWorkerService {
     this.socketWorkerApiKey = process.env.INTERNAL_SERVICES_API_KEY;
   }
 
-  async sendMessage({
+  async sendMessage(params: SendMessageParams): Promise<void> {
+    switch (params.event) {
+      case WebSocketEventEnum.RECEIVED:
+        return this.handleReceivedEvent(params);
+      case WebSocketEventEnum.UNREAD:
+        return this.handleUnreadEvent(params);
+      case WebSocketEventEnum.UNSEEN:
+        return this.handleUnseenEvent(params);
+      default:
+        return this.sendMessageInternal(params);
+    }
+  }
+
+  private async handleReceivedEvent({
     userId,
     event,
     data,
@@ -44,51 +57,53 @@ export class SocketWorkerService {
     subscriberId,
     contextKeys,
   }: SendMessageParams): Promise<void> {
-    if (event === WebSocketEventEnum.RECEIVED) {
-      const { messageId } = data || {};
-      const storedMessage = await this.messageRepository.findOne({
-        _id: messageId,
-        _environmentId: environmentId,
-      });
+    const { messageId } = data || {};
+    const storedMessage = await this.messageRepository.findOne({
+      _id: messageId,
+      _environmentId: environmentId,
+    });
 
-      if (!storedMessage) {
-        Logger.error(`Message with id ${messageId} not found in environment ${environmentId}`, LOG_CONTEXT);
+    if (!storedMessage) {
+      Logger.error(`Message with id ${messageId} not found in environment ${environmentId}`, LOG_CONTEXT);
 
-        return;
-      }
-
-      await this.sendMessageInternal({
-        userId,
-        event,
-        data: { message: storedMessage },
-        organizationId,
-        environmentId,
-        subscriberId,
-        contextKeys,
-      });
-
-      // Only recalculate the counts if we send a messageId/message.
-      if (messageId) {
-        await Promise.all([
-          this.sendUnseenCount(userId, environmentId, organizationId, contextKeys),
-          this.sendUnreadCount(userId, environmentId, organizationId, contextKeys),
-        ]);
-      }
-    } else if (event === WebSocketEventEnum.UNREAD) {
-      await this.sendUnreadCount(userId, environmentId, organizationId, contextKeys);
-    } else if (event === WebSocketEventEnum.UNSEEN) {
-      await this.sendUnseenCount(userId, environmentId, organizationId, contextKeys);
-    } else {
-      await this.sendMessageInternal({
-        userId,
-        event,
-        data,
-        organizationId,
-        environmentId,
-        subscriberId,
-        contextKeys,
-      });
+      return;
     }
+
+    await this.sendMessageInternal({
+      userId,
+      event,
+      data: { message: storedMessage },
+      organizationId,
+      environmentId,
+      subscriberId,
+      contextKeys,
+    });
+
+    // Only recalculate the counts if we send a messageId/message.
+    if (messageId) {
+      await Promise.all([
+        this.sendUnseenCount(userId, environmentId, organizationId, contextKeys),
+        this.sendUnreadCount(userId, environmentId, organizationId, contextKeys),
+      ]);
+    }
+  }
+
+  private async handleUnreadEvent({
+    userId,
+    environmentId,
+    organizationId,
+    contextKeys,
+  }: SendMessageParams): Promise<void> {
+    await this.sendUnreadCount(userId, environmentId, organizationId, contextKeys);
+  }
+
+  private async handleUnseenEvent({
+    userId,
+    environmentId,
+    organizationId,
+    contextKeys,
+  }: SendMessageParams): Promise<void> {
+    await this.sendUnseenCount(userId, environmentId, organizationId, contextKeys);
   }
 
   private async sendMessageInternal({
