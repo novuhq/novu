@@ -26,6 +26,11 @@ export interface SendMessageParams {
 export class SocketWorkerService {
   private readonly socketWorkerUrl: string | undefined;
   private readonly socketWorkerApiKey: string | undefined;
+  private readonly UNREAD_COUNT_LIMIT = 101;
+  private readonly UNREAD_COUNT_PAGINATION_THRESHOLD = 100;
+  private readonly SEVERITY_COUNT_LIMIT = 99;
+  private readonly HTTP_TIMEOUT_MS = 3000;
+  private readonly HTTP_RETRY_LIMIT = 2;
 
   constructor(
     private featureFlagsService: FeatureFlagsService,
@@ -133,9 +138,9 @@ export class SocketWorkerService {
         responseType: 'json',
         http2: true,
         dnsCache: true,
-        timeout: 3000,
+        timeout: this.HTTP_TIMEOUT_MS,
         retry: {
-          limit: 2,
+          limit: this.HTTP_RETRY_LIMIT,
           methods: ['POST'],
           statusCodes: [408, 429, 500, 502, 503, 504],
         },
@@ -179,7 +184,7 @@ export class SocketWorkerService {
           userId,
           ChannelTypeEnum.IN_APP,
           { read: false },
-          { limit: 101 },
+          { limit: this.UNREAD_COUNT_LIMIT },
           contextKeys,
           undefined,
           'primary'
@@ -189,7 +194,7 @@ export class SocketWorkerService {
           userId,
           ChannelTypeEnum.IN_APP,
           { read: false, snoozed: false },
-          { limit: 99 },
+          { limit: this.SEVERITY_COUNT_LIMIT },
           contextKeys
         ),
       ]);
@@ -211,7 +216,9 @@ export class SocketWorkerService {
       }
 
       const paginationIndication: UnreadCountPaginationIndication =
-        unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
+        unreadCount > this.UNREAD_COUNT_PAGINATION_THRESHOLD
+          ? { unreadCount: this.UNREAD_COUNT_PAGINATION_THRESHOLD, hasMore: true }
+          : { unreadCount, hasMore: false };
 
       await this.sendMessageInternal({
         userId,
