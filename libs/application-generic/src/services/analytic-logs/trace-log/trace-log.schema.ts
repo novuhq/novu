@@ -37,7 +37,7 @@ const schemaDefinition = {
   entity_id: { type: CHString() }, // ID of the related entity, request-> request.id, step_run-> job._id, workflow_run-> notification._id
 
   // Data retention
-  expires_at: { type: CHDate() },
+  expires_at: { type: CHDateTime64(3, 'UTC') },
 
   // Step run metadata
   step_run_type: { type: CHString('') }, // default value is empty string
@@ -80,7 +80,7 @@ const clickhouseSchemaOptions = {
   table_name: TABLE_NAME,
   engine: 'MergeTree',
   order_by: `(${ORDER_BY.join(', ')})` as any,
-  additional_options: ['PARTITION BY toYYYYMM(created_at)', `TTL toDateTime(${TTL})`],
+  additional_options: ['PARTITION BY toYYYYMM(created_at)', `TTL ${TTL}`],
 };
 
 export const traceLogSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
