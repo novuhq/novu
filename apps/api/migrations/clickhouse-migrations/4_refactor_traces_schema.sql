@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS traces_temp (
     entity_id String,
     
     -- Data retention
-    expires_at DateTime64(3, 'UTC'),
+    expires_at Date,
     
     -- Existing metadata
     step_run_type LowCardinality(String) DEFAULT '',
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS traces_temp (
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (organization_id, environment_id, entity_type, toDate(created_at), entity_id)
-TTL toDateTime(expires_at)
+TTL expires_at
 SETTINGS index_granularity = 8192, async_insert = 1;
 
 -- Step 2: Create materialized view to populate traces_temp from new inserts into traces
@@ -84,7 +84,7 @@ AS SELECT
     status,
     entity_type,
     entity_id,
-    expires_at,
+    toDate(expires_at) AS expires_at,
     step_run_type,
     workflow_run_identifier,
     workflow_id,
