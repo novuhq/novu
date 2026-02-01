@@ -7,7 +7,6 @@
 -- Step 0: Add workflow run columns to the original traces table
 -- These columns must be added before creating the MV so data flows correctly
 ALTER TABLE traces ADD COLUMN IF NOT EXISTS workflow_name String DEFAULT '';
-ALTER TABLE traces ADD COLUMN IF NOT EXISTS trigger_identifier String DEFAULT '';
 ALTER TABLE traces ADD COLUMN IF NOT EXISTS transaction_id String DEFAULT '';
 ALTER TABLE traces ADD COLUMN IF NOT EXISTS channels String DEFAULT '';
 ALTER TABLE traces ADD COLUMN IF NOT EXISTS subscriber_to String DEFAULT '';
@@ -55,9 +54,8 @@ CREATE TABLE IF NOT EXISTS traces_temp (
     workflow_id String DEFAULT '',
     provider_id LowCardinality(String) DEFAULT '',
     
-    -- Workflow run columns (15 new columns)
+    -- Workflow run columns (14 new columns)
     workflow_name String DEFAULT '',
-    trigger_identifier String DEFAULT '',
     transaction_id String DEFAULT '',
     channels String DEFAULT '',
     subscriber_to String DEFAULT '',
@@ -108,7 +106,6 @@ AS SELECT
     workflow_id,
     coalesce(provider_id, '') AS provider_id,
     workflow_name,
-    trigger_identifier,
     transaction_id,
     channels,
     subscriber_to,
