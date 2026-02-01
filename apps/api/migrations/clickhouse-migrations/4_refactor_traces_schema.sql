@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS traces_temp (
     entity_id String,
     
     -- Data retention
-    expires_at Date,
+    expires_at DateTime64(3, 'UTC'),
     
     -- Existing metadata
     step_run_type LowCardinality(String) DEFAULT '',
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS traces_temp (
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (organization_id, environment_id, entity_type, toDate(created_at), entity_id)
-TTL expires_at
+TTL toDateTime(expires_at)
 SETTINGS index_granularity = 8192, async_insert = 1;
 
 -- Step 2: Create materialized view to populate traces_temp from new inserts into traces
@@ -100,7 +100,7 @@ AS SELECT
     status,
     entity_type,
     entity_id,
-    toDate(expires_at) AS expires_at,
+    expires_at,
     step_run_type,
     workflow_run_identifier,
     workflow_id,
@@ -120,7 +120,7 @@ AS SELECT
     critical,
     context_keys
 FROM traces
-WHERE created_at > toDateTime64('2026-02-02 00:00:00', 3, 'UTC');
+WHERE created_at > toDateTime64('2026-02-01 00:00:00', 3, 'UTC');
 
 -- Step 3: Create delivery_trend_counts_temp table for migration from step_runs to traces
 -- Similar to traces_temp, this allows backfilling historical data separately
