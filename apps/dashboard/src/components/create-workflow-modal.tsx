@@ -1,10 +1,11 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DuplicateWorkflowDto } from '@novu/shared';
-import { useState } from 'react';
+import { AiResourceTypeEnum, DuplicateWorkflowDto } from '@novu/shared';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiArrowRightSLine, RiCloseLine, RiLoopLeftLine, RiRouteFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { Sparkling } from '@/components/icons/sparkling';
 import { Button } from '@/components/primitives/button';
@@ -29,13 +30,15 @@ import { Textarea } from '@/components/primitives/textarea';
 import { ExternalLink } from '@/components/shared/external-link';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useAIGenerateWorkflow } from '@/hooks/use-ai-generate-workflow';
+import { useAiChat } from '@/hooks/use-ai-chat';
+import { useCreateAiChat } from '@/hooks/use-create-ai-chat';
 import { useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useDuplicateWorkflow } from '@/hooks/use-duplicate-workflow';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Form, FormControl, FormField, FormItem, FormMessage, FormRoot } from './primitives/form/form';
+import { showErrorToast } from './primitives/sonner-helpers';
 
 type CreateWorkflowTab = 'guided' | 'manual';
 
@@ -76,15 +79,11 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
     onValueChange: handleClose,
   });
 
-  const { aiGenerateWorkflow, isLoading: isAiLoading } = useAIGenerateWorkflow({
-    onSuccess: (result) => {
-      navigate(
-        buildRoute(ROUTES.EDIT_WORKFLOW, {
-          environmentSlug: currentEnvironment?.slug ?? '',
-          workflowSlug: result.workflow.slug,
-        })
-      );
-    },
+  const chatId = useMemo(() => uuidv4(), []);
+
+  const { sendPrompt } = useAiChat({
+    id: chatId,
+    resourceType: AiResourceTypeEnum.WORKFLOW,
   });
 
   const duplicateWorkflow = useDuplicateWorkflow({ workflowSlug: workflowId || '' });
@@ -92,7 +91,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   const { submit: submitWorkflow, isLoading: isSubmitting } =
     mode === 'duplicate' ? duplicateWorkflow : createWorkflowHook;
 
-  const isLoading = isAiLoading || isSubmitting;
+  const isLoading = isSubmitting;
   const isLoadingTemplate = mode === 'duplicate' && isLoadingWorkflow;
 
   const template: DuplicateWorkflowDto | undefined =
@@ -105,8 +104,35 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
         }
       : undefined;
 
+  const { createAiChat, isPending: isCreatingChat } = useCreateAiChat();
+
   async function handleGuidedSubmit({ prompt }: { prompt: string }) {
-    await aiGenerateWorkflow(prompt.trim());
+    const { _id: chatId } = await createAiChat(
+      { resourceType: AiResourceTypeEnum.WORKFLOW },
+      {
+        onError: (error) => {
+          showErrorToast(error instanceof Error ? error.message : 'Failed to create chat', undefined, {
+            duration: 5000,
+          });
+        },
+      }
+    );
+    sendPrompt({ prompt, chatId });
+
+    setTimeout(() => {
+      navigate(
+        buildRoute(ROUTES.EDIT_WORKFLOW, {
+          environmentSlug: currentEnvironment?.slug ?? '',
+          workflowSlug: 'new',
+        }),
+        {
+          state: {
+            prompt,
+            chatId,
+          },
+        }
+      );
+    }, 500);
   }
 
   const isDuplicateMode = mode === 'duplicate';
@@ -186,8 +212,8 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
                 trailingIcon={RiArrowRightSLine}
                 type="submit"
                 form="generate-workflow"
-                disabled={isLoading}
-                isLoading={isLoading}
+                disabled={isLoading || isCreatingChat}
+                isLoading={isLoading || isCreatingChat}
               >
                 {buttonText}
               </Button>

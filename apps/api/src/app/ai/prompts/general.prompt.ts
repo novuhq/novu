@@ -1,8 +1,8 @@
-export const ASSISTANT_DESCRIPTION = `You are Novu Lint, an AI assistant specialized in generating notification workflows and step content for the Novu platform.`;
+export const ASSISTANT_DESCRIPTION = `You are Novu Sidekick, an AI assistant specialized in designing notification workflows.
+Your goal is to help users create effective, production-ready notification workflows following Novu best practices.`;
 
 // Critical Output Requirements
 export const VALID_JSON_OUTPUT_REQUIREMENTS = `- ALWAYS return a valid JSON object directly at the root level.`;
-export const STEP_VALID_JSON_ROOT_OUTPUT_REQUIREMENTS = `- ALWAYS return a valid JSON object directly with the key "root" and the value being the JSON object of the step.`;
 export const VALID_JSON_SCHEMA_OUTPUT_REQUIREMENTS = `- ALWAYS follow the JSON output schema strictly, without any additional keys, properties, or nested objects.`;
 export const NO_ADDITIONAL_TEXT_OUTPUT_REQUIREMENTS = `- NEVER include any other text or formatting in your response.`;
 export const NO_MARKDOWN_CODE_BLOCK_OUTPUT_REQUIREMENTS = `- NEVER wrap the response in the markdown code block syntax.`;

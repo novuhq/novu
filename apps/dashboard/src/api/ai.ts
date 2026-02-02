@@ -1,5 +1,11 @@
-import { AiConversationStatusEnum, AiMessageRoleEnum, IEnvironment, WorkflowResponseDto } from '@novu/shared';
-import { postV2 } from './api.client';
+import {
+  AiConversationStatusEnum,
+  AiMessageRoleEnum,
+  AiResourceTypeEnum,
+  IEnvironment,
+  WorkflowResponseDto,
+} from '@novu/shared';
+import { getApiBaseUrl, getV2, postV2 } from './api.client';
 
 export type GenerateWorkflowRequest = {
   prompt: string;
@@ -30,17 +36,60 @@ export type GenerateWorkflowResponse = {
   reasoning: WorkflowReasoning;
 };
 
-export async function generateWorkflow({
+export type AiChatResponseDto = {
+  _id: string;
+  _organizationId: string;
+  _environmentId: string;
+  _userId: string;
+
+  resourceType: AiResourceTypeEnum;
+  resourceId?: string;
+
+  messages: unknown[];
+  activeStreamId?: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function createAiChat({
   environment,
-  prompt,
+  resourceType,
+  resourceId,
 }: {
   environment: IEnvironment;
-  prompt: string;
-}): Promise<GenerateWorkflowResponse> {
-  const { data: responseData } = await postV2<{ data: GenerateWorkflowResponse }>('/ai/generate-workflow', {
+  resourceType: AiResourceTypeEnum;
+  resourceId?: string;
+}): Promise<AiChatResponseDto> {
+  const { data: responseData } = await postV2<{ data: AiChatResponseDto }>('/ai/chat', {
     environment,
-    body: { prompt },
+    body: { resourceType, resourceId },
   });
 
   return responseData;
+}
+
+export async function fetchLatestChat({
+  environment,
+  resourceType,
+  resourceId,
+}: {
+  environment: IEnvironment;
+  resourceType: AiResourceTypeEnum;
+  resourceId: string;
+}): Promise<AiChatResponseDto> {
+  const { data: responseData } = await getV2<{ data: AiChatResponseDto }>(
+    `/ai/chat/${resourceType}/${resourceId}/latest`,
+    { environment }
+  );
+
+  return responseData;
+}
+
+export function getChatSteamUrl(): string {
+  return `${getApiBaseUrl()}/v2/ai/chat-stream`;
+}
+
+export function getChatStreamResumeUrl(id: string): string {
+  return `${getApiBaseUrl()}/v2/ai/chat/${id}/stream`;
 }

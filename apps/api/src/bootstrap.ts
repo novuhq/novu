@@ -115,7 +115,18 @@ export async function bootstrap(
   app.use(bodyParser.json({ verify: rawBodyBuffer }));
   app.use(bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer }));
 
-  app.use(compression());
+  app.use(
+    compression({
+      filter: (req, res) => {
+        // the compression middleware buffers the response to compress it, which breaks SSE streaming
+        if (res.getHeader('Content-Type') === 'text/event-stream') {
+          return false;
+        }
+
+        return compression.filter(req, res);
+      },
+    })
+  );
 
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AiConversationStatusEnum, AiMessageRoleEnum } from '@novu/shared';
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
-import { WorkflowResponseDto } from '../../workflows-v2/dtos';
+import { AiResourceTypeEnum } from '@novu/shared';
+import { UIMessage } from 'ai';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export enum WorkflowSuggestionType {
   WELCOME = 'welcome',
@@ -13,63 +13,39 @@ export enum WorkflowSuggestionType {
   CUSTOM = 'custom',
 }
 
-export class GenerateWorkflowDto {
+export class StreamGenerationDto {
+  @ApiProperty({ description: 'Chat ID' })
+  @IsString()
+  id: string;
+
   @ApiProperty({
-    description: 'Natural language description of the workflow to generate',
-    example: 'Create a welcome email workflow that sends a personalized greeting to new users',
+    description: 'Chat message to send to the AI',
   })
   @IsNotEmpty()
-  @IsString()
-  @MaxLength(2000)
-  prompt: string;
-}
-
-export class ChannelRecommendationDto {
-  @ApiProperty({ description: 'Channel type', example: 'email' })
-  channel: string;
-
-  @ApiProperty({ description: 'Reason for recommending this channel' })
-  reason: string;
-
-  @ApiProperty({ description: 'Priority of the channel in the workflow' })
-  priority: number;
-}
-
-export class WorkflowReasoningDto {
-  @ApiProperty({ description: 'Summary of the AI reasoning for this workflow design' })
-  summary: string;
+  message: UIMessage;
 
   @ApiProperty({
-    description: 'List of recommended channels with reasoning',
-    type: [ChannelRecommendationDto],
+    description: 'Type of resource to determine the AI agent to use',
+    enum: AiResourceTypeEnum,
+    example: AiResourceTypeEnum.WORKFLOW,
   })
-  channelRecommendations: ChannelRecommendationDto[];
-
-  @ApiProperty({ description: 'Best practices applied to this workflow' })
-  bestPractices: string[];
+  @IsNotEmpty()
+  @IsEnum(AiResourceTypeEnum)
+  resourceType: AiResourceTypeEnum;
 }
 
-export class AiMessageDto {
-  @ApiProperty({ description: 'Message role', enum: AiMessageRoleEnum })
-  role: AiMessageRoleEnum;
+export class CreateChatDto {
+  @ApiProperty({
+    description: 'Type of resource to create a chat for',
+    enum: AiResourceTypeEnum,
+    example: AiResourceTypeEnum.WORKFLOW,
+  })
+  @IsNotEmpty()
+  @IsEnum(AiResourceTypeEnum)
+  resourceType: AiResourceTypeEnum;
 
-  @ApiProperty({ description: 'Message content' })
-  content: string;
-
-  @ApiProperty({ description: 'Message timestamp' })
-  timestamp: Date;
-}
-
-export class AiConversationDto {
-  @ApiProperty({ description: 'Conversation messages', type: [AiMessageDto] })
-  messages: AiMessageDto[];
-
-  @ApiProperty({ description: 'Conversation status', enum: AiConversationStatusEnum })
-  status: AiConversationStatusEnum;
-
-  @ApiProperty({ description: 'Generated workflow configuration', type: WorkflowResponseDto })
-  workflow: WorkflowResponseDto;
-
-  @ApiProperty({ description: 'AI reasoning for the workflow design', type: WorkflowReasoningDto })
-  reasoning: WorkflowReasoningDto;
+  @ApiProperty({ description: 'Resource ID to create a chat for' })
+  @IsString()
+  @IsOptional()
+  resourceId?: string;
 }

@@ -1,19 +1,17 @@
-import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
-import { StepMetadata, WorkflowMetadata } from '../schemas/workflow-generation.schema';
-import { formatVariableSchemaForPrompt } from '../usecases/generate-workflow/variable-schema.utils';
+import { z } from 'zod';
+import { stepInputSchema } from '../schemas/steps-control.schema';
+import { DraftWorkflowState } from '../tools';
+import { formatVariableSchemaForPrompt } from '../tools/variable-schema.utils';
 import {
-  ASSISTANT_DESCRIPTION,
   GENERAL_CONTENT_GUIDELINES,
   NO_ADDITIONAL_TEXT_OUTPUT_REQUIREMENTS,
   NO_MARKDOWN_CODE_BLOCK_OUTPUT_REQUIREMENTS,
-  STEP_VALID_JSON_ROOT_OUTPUT_REQUIREMENTS,
   VALID_JSON_SCHEMA_OUTPUT_REQUIREMENTS,
 } from './general.prompt';
 import { EXAMPLE_BLOCK_EDITOR_JSON } from './maily-blocks';
 
 // Step Critical Output Requirements
 export const STEP_CRITICAL_OUTPUT_REQUIREMENTS = `## CRITICAL OUTPUT FORMAT:
-${STEP_VALID_JSON_ROOT_OUTPUT_REQUIREMENTS}
 ${VALID_JSON_SCHEMA_OUTPUT_REQUIREMENTS}
 ${NO_ADDITIONAL_TEXT_OUTPUT_REQUIREMENTS}
 ${NO_MARKDOWN_CODE_BLOCK_OUTPUT_REQUIREMENTS}`;
@@ -27,7 +25,8 @@ export const STEP_CONTENT_GUIDELINES = `${GENERAL_CONTENT_GUIDELINES}
 - Never put hardcoded URLs, names, product names, etc. in the content. Always use the existing variables or create new variables if needed, for example: {{ payload.actionUrl }}, {{ subscriber.firstName }}, {{ payload.productName }}.`;
 
 export const STEP_CONTENT_PROMPTS = {
-  email: `${ASSISTANT_DESCRIPTION}
+  email: `Add an email step to the workflow.
+Best for: detailed content, formal communications, receipts, newsletters.
 
 ## Your task
 Generate the email step content. Choose either HTML or Block editor format.
@@ -132,7 +131,8 @@ ${EXAMPLE_BLOCK_EDITOR_JSON}
 \`\`\`
 `,
 
-  in_app: `${ASSISTANT_DESCRIPTION}
+  in_app: `Add an in-app notification step to the workflow.
+Best for: real-time notifications within the app, high engagement, activity feeds.
 
 ## Your task
 Generate the in-app notification content.
@@ -159,7 +159,8 @@ ${STEP_CONTENT_GUIDELINES}
 ## Personalization
 Use Liquid templating: {{ subscriber.firstName }}, {{ payload.variableName }}`,
 
-  sms: `${ASSISTANT_DESCRIPTION}
+  sms: `Add an SMS step to the workflow.
+Best for: urgent, time-sensitive alerts, verification codes.
 
 ## Your task
 Generate the SMS message content.
@@ -185,7 +186,8 @@ Use Liquid templating: {{ subscriber.firstName }}, {{ payload.variableName }}
 ## Example
 "Hi {{ subscriber.firstName }}, your order #{{ payload.orderNumber }} has shipped! Track it here: {{ payload.trackingUrl }}"`,
 
-  push: `${ASSISTANT_DESCRIPTION}
+  push: `Add a push notification step to the workflow.
+Best for: mobile app engagement, re-engagement, time-sensitive updates.
 
 ## Your task
 Generate the push notification content.
@@ -213,7 +215,8 @@ Use Liquid templating: {{ subscriber.firstName }}, {{ payload.variableName }}
 Title: "Your order is on its way!"
 Body: "{{ subscriber.firstName }}, your package will arrive by {{ payload.deliveryDate }}. Tap to track."`,
 
-  chat: `${ASSISTANT_DESCRIPTION}
+  chat: `Add a chat step to the workflow for Slack, Discord, or Teams integrations.
+Best for: team notifications, developer alerts, workspace updates.
 
 ## Your task
 Generate the chat message content for platforms like Slack or Discord.
@@ -239,7 +242,8 @@ Use Liquid templating: {{ subscriber.firstName }}, {{ payload.variableName }}
 ## Example
 "Hey {{ subscriber.firstName }}! 👋 Your {{ payload.projectName }} deployment completed successfully. View the details: {{ payload.deploymentUrl }}"`,
 
-  delay: `${ASSISTANT_DESCRIPTION}
+  delay: `Add a delay step to pause workflow execution.
+Place BEFORE the channel steps it should delay.
 
 ## Your task
 Generate the delay step configuration.
@@ -258,7 +262,8 @@ ${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
   - Wait 24 hours before follow-up emails
   - Wait 5-10 minutes between push and email for urgent notifications`,
 
-  digest: `${ASSISTANT_DESCRIPTION}
+  digest: `Add a digest step to batch multiple notifications into one.
+Place BEFORE the channel steps it should affect.
 
 ## Your task
 Generate the digest step configuration.
@@ -278,7 +283,8 @@ ${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
   - Daily digest of all notifications
   - Group by specific key (e.g., "payload.projectId") for per-project digests`,
 
-  throttle: `${ASSISTANT_DESCRIPTION}
+  throttle: `Add a throttle step to limit notification frequency.
+Prevents over-notifying users by limiting how often they receive notifications.
 
 ## Your task
 Generate the throttle step configuration.
@@ -301,25 +307,14 @@ ${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
   - Throttle by specific key (e.g., "payload.alertType") for grouped limits`,
 };
 
-export const buildStepPrompt = ({
-  step,
-  workflowMetadata,
-  userPrompt,
-  variableSchema,
-}: {
-  step: StepMetadata;
-  workflowMetadata: WorkflowMetadata;
-  userPrompt: string;
-  variableSchema?: JSONSchemaDto;
-}): string => {
-  const { name: workflowName, description, steps, reasoning } = workflowMetadata;
+export function buildStepSystemPrompt(basePrompt: string, draftState: DraftWorkflowState): string {
+  const variableSchema = draftState.getFullVariableSchema();
+  const variableSchemaPrompt = formatVariableSchemaForPrompt(variableSchema);
 
-  const stepsOverview = steps.map((s, i) => `${i + 1}. ${s.name} (${s.type})`).join('\n');
-  const variableSchemaSection = variableSchema ? formatVariableSchemaForPrompt(variableSchema) : '';
-
-  const variableInstructions = variableSchemaSection
-    ? `## Available Variables Context
-IMPORTANT: When using variables, prefer reusing the existing variables listed below to maintain consistency across the workflow. 
+  if (variableSchemaPrompt) {
+    return `${basePrompt}
+## Available Variables Context
+IMPORTANT: When using variables, prefer reusing the existing variables listed below to maintain consistency across the workflow.
 - Only introduce new payload variables if they are truly needed for this step's specific content.
 
 ### Variable Semantics
@@ -330,21 +325,12 @@ IMPORTANT: Always use the variables in the appropriate context when the content 
 - steps.*: Steps's data like events, event count, in the digest step, etc.
 - context.*: Context is a user-defined data object that stores metadata (like tenant, region, or app details) to organize and personalize notifications.
 
-${variableSchemaSection}`
-    : '';
+${variableSchemaPrompt}`;
+  }
 
-  return `Generate the content for step: **${step.name}** (type: ${step.type})
+  return basePrompt;
+}
 
-## Context of the user's workflow request
-${userPrompt}
-
-## The Generated Workflow Context
-- **Workflow Name**: ${workflowName}
-- **Description**: ${description || 'Not specified'}
-- **Design Rationale**: ${reasoning.summary}
-
-## The Generated Workflow Steps Overview
-${stepsOverview}
-
-${variableInstructions}`;
-};
+export function buildStepUserPrompt(input: z.infer<typeof stepInputSchema>): string {
+  return `Step: ${input.name}\nIntent: ${input.intent}\nStep ID: ${input.stepId}`;
+}

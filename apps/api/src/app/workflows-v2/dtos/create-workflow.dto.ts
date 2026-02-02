@@ -28,6 +28,17 @@ import {
 import { PreferencesRequestDto } from './preferences.request.dto';
 import { WorkflowCommonsFields } from './workflow-commons.dto';
 
+export type StepCreateDto =
+  | InAppStepUpsertDto
+  | EmailStepUpsertDto
+  | SmsStepUpsertDto
+  | PushStepUpsertDto
+  | ChatStepUpsertDto
+  | DelayStepUpsertDto
+  | DigestStepUpsertDto
+  | ThrottleStepUpsertDto
+  | CustomStepUpsertDto;
+
 @ApiExtraModels(
   InAppStepUpsertDto,
   EmailStepUpsertDto,

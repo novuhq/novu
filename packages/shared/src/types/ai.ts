@@ -13,3 +13,29 @@ export enum AiMessageRoleEnum {
   ASSISTANT = 'assistant',
   SYSTEM = 'system',
 }
+
+export enum AiWorkflowToolsEnum {
+  SET_WORKFLOW_METADATA = 'setWorkflowMetadata',
+  ADD_EMAIL_STEP = 'addEmailStep',
+  ADD_IN_APP_STEP = 'addInAppStep',
+  ADD_SMS_STEP = 'addSmsStep',
+  ADD_PUSH_STEP = 'addPushStep',
+  ADD_CHAT_STEP = 'addChatStep',
+  ADD_DIGEST_STEP = 'addDigestStep',
+  ADD_DELAY_STEP = 'addDelayStep',
+  ADD_THROTTLE_STEP = 'addThrottleStep',
+  COMPLETE_WORKFLOW = 'completeWorkflow',
+}
+
+export enum AiWorkflowToolsNameEnum {
+  SET_WORKFLOW_METADATA = `tool-setWorkflowMetadata`,
+  ADD_EMAIL_STEP = 'tool-addEmailStep',
+  ADD_IN_APP_STEP = 'tool-addInAppStep',
+  ADD_SMS_STEP = 'tool-addSmsStep',
+  ADD_PUSH_STEP = 'tool-addPushStep',
+  ADD_CHAT_STEP = 'tool-addChatStep',
+  ADD_DIGEST_STEP = 'tool-addDigestStep',
+  ADD_DELAY_STEP = 'tool-addDelayStep',
+  ADD_THROTTLE_STEP = 'tool-addThrottleStep',
+  COMPLETE_WORKFLOW = 'tool-completeWorkflow',
+}

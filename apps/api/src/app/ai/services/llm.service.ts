@@ -2,7 +2,18 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { BadRequestException, Injectable, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { generateObject, generateText, LanguageModel, ModelMessage, streamText } from 'ai';
+import {
+  extractReasoningMiddleware,
+  generateObject,
+  generateText,
+  LanguageModel,
+  ModelMessage,
+  StreamTextResult,
+  stepCountIs,
+  streamText,
+  ToolSet,
+  wrapLanguageModel,
+} from 'ai';
 import { z } from 'zod';
 
 export type LlmProvider = 'openai' | 'anthropic';
@@ -12,7 +23,7 @@ export type LlmConfig = {
   apiKey: string;
   model: string;
   maxOutputTokens: number;
-  temperature: number;
+  temperature?: number;
   maxRetries: number;
 };
 
@@ -42,6 +53,23 @@ export type ChatStreamInput = {
   temperature?: number;
 };
 
+export type AgentMessage = {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+};
+
+export type AgentStreamInput<TTools extends ToolSet> = {
+  systemPrompt: string;
+  messages: ModelMessage[];
+  tools: TTools;
+  stopAfterSteps?: number;
+  onStepFinish?: Parameters<typeof streamText<TTools, never>>[0]['onStepFinish'];
+  onError?: Parameters<typeof streamText<TTools, never>>[0]['onError'];
+  maxOutputTokens?: number;
+  providerOptions?: Parameters<typeof streamText<TTools, never>>[0]['providerOptions'];
+  experimental_transform?: Parameters<typeof streamText<TTools, never>>[0]['experimental_transform'];
+};
+
 @Injectable()
 export class LlmService implements OnModuleInit {
   private config: LlmConfig | null = null;
@@ -67,12 +95,15 @@ export class LlmService implements OnModuleInit {
       return;
     }
 
+    const modelId = process.env.AI_LLM_MODEL || this.getDefaultModel(provider);
+    const isReasoning = this.isReasoningModel(modelId);
+
     this.config = {
       provider,
       apiKey,
-      model: process.env.AI_LLM_MODEL || this.getDefaultModel(provider),
+      model: modelId,
       maxOutputTokens: parseInt(process.env.AI_LLM_MAX_OUTPUT_TOKENS || '4096', 10),
-      temperature: parseFloat(process.env.AI_LLM_TEMPERATURE || '0.7'),
+      ...(isReasoning ? {} : { temperature: parseFloat(process.env.AI_LLM_TEMPERATURE || '0.7') }),
       maxRetries: parseInt(process.env.AI_LLM_MAX_RETRIES || '3', 10),
     };
     this.maxSchemaValidationRetries = parseInt(process.env.AI_LLM_SCHEMA_VALIDATION_RETRIES || '3', 10);
@@ -83,14 +114,25 @@ export class LlmService implements OnModuleInit {
     this.logger.info(`LLM service initialized with provider: ${provider}`);
   }
 
+  private isReasoningModel(modelId: string): boolean {
+    return (
+      modelId.startsWith('o1') || modelId.startsWith('o3') || modelId.startsWith('o4') || modelId.startsWith('gpt-5')
+    );
+  }
+
   private createModel(provider: LlmProvider, apiKey: string, modelId: string): LanguageModel {
     if (provider === 'anthropic') {
       const anthropic = createAnthropic({ apiKey });
+      const middleware = extractReasoningMiddleware({ tagName: 'thinking' });
 
-      return anthropic(modelId);
+      return wrapLanguageModel({ model: anthropic(modelId), middleware: [middleware] });
     }
 
     const openai = createOpenAI({ apiKey });
+
+    if (this.isReasoningModel(modelId)) {
+      return openai.responses(modelId);
+    }
 
     return openai(modelId);
   }
@@ -328,5 +370,28 @@ export class LlmService implements OnModuleInit {
     };
 
     yield* this.streamWithRetries(async (signal) => streamText({ ...args, abortSignal: signal }));
+  }
+
+  streamAgent<TTools extends ToolSet>(input: AgentStreamInput<TTools>): StreamTextResult<TTools, never> {
+    if (!this.isConfigured || !this.model || !this.config) {
+      throw new Error('LLM service not configured. Please set AI_LLM_API_KEY environment variable.');
+    }
+
+    const isReasoning = this.isReasoningModel(this.config.model);
+
+    return streamText({
+      model: this.model,
+      system: input.systemPrompt,
+      messages: input.messages,
+      tools: input.tools,
+      stopWhen: stepCountIs(input.stopAfterSteps ?? 15),
+      maxRetries: this.config.maxRetries,
+      maxOutputTokens: input.maxOutputTokens ?? this.config.maxOutputTokens,
+      onStepFinish: input.onStepFinish,
+      onError: input.onError,
+      providerOptions: input.providerOptions,
+      experimental_transform: input.experimental_transform,
+      ...(isReasoning ? {} : { temperature: 0 }),
+    });
   }
 }

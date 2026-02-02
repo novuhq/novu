@@ -71,10 +71,12 @@ const MenuItem = ({
 };
 
 export const AddStepMenu = ({
+  disabled = false,
   visible = false,
   className,
   onMenuItemClick,
 }: {
+  disabled?: boolean;
   visible?: boolean;
   className?: string;
   onMenuItemClick: (stepType: StepTypeEnum) => void;
@@ -89,12 +91,12 @@ export const AddStepMenu = ({
 
   return (
     <Popover
-      open={isPopoverOpen}
+      open={isPopoverOpen && !disabled}
       onOpenChange={(newIsOpen) => {
         setIsPopoverOpen(newIsOpen);
       }}
     >
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild disabled={disabled}>
         <span data-testid="add-step-menu-button">
           <Node
             variant="sm"

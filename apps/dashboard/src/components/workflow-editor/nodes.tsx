@@ -483,10 +483,6 @@ export const AddNode = (props: NodeProps<NodeType>) => {
   const { id, data } = props;
   const isIntersecting = intersectingNodeId === id;
 
-  if (isReadOnly) {
-    return null;
-  }
-
   return (
     <AnimatePresence>
       <motion.div
@@ -516,7 +512,12 @@ export const AddNode = (props: NodeProps<NodeType>) => {
           <span className="text-label-xs text-text-soft">Drop here</span>
         </div>
         {!isIntersecting && (
-          <AddStepMenu visible className="-mt-1" onMenuItemClick={(stepType) => addNode(data.index, stepType)} />
+          <AddStepMenu
+            disabled={isReadOnly}
+            visible
+            className="-mt-1"
+            onMenuItemClick={(stepType) => addNode(data.index, stepType)}
+          />
         )}
       </motion.div>
     </AnimatePresence>
