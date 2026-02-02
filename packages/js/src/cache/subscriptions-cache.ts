@@ -135,7 +135,7 @@ export class SubscriptionsCache {
 
       let hasUpdates = false;
       const updatedSubscriptions = subscriptions.map((subscription) => {
-        const subscriptionPreferences = preferencesBySubscription.get(subscription.id);
+        const subscriptionPreferences = preferencesBySubscription.get(subscription.identifier);
         if (subscriptionPreferences) {
           hasUpdates = true;
 
@@ -159,7 +159,7 @@ export class SubscriptionsCache {
       const subscription = this.#itemCache.get(key);
       if (!subscription) continue;
 
-      const subscriptionPreferences = preferencesBySubscription.get(subscription.id);
+      const subscriptionPreferences = preferencesBySubscription.get(subscription.identifier);
       if (subscriptionPreferences) {
         const updatedSubscription = this.createUpdatedSubscription(subscription, subscriptionPreferences);
         this.#itemCache.set(key, updatedSubscription);

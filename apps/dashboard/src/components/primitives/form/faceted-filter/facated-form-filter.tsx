@@ -30,9 +30,16 @@ export function FacetedFormFilter({
   className,
   trailingNode,
   disabled,
+  searchQuery: controlledSearchQuery,
+  onSearchQueryChange,
+  isLoading = false,
 }: FacetedFilterProps) {
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [internalSearchQuery, setInternalSearchQuery] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const isSearchControlled = controlledSearchQuery !== undefined && onSearchQueryChange !== undefined;
+  const searchQuery = isSearchControlled ? controlledSearchQuery : internalSearchQuery;
+  const setSearchQuery = isSearchControlled ? onSearchQueryChange : setInternalSearchQuery;
 
   const selectedValues = React.useMemo(() => new Set(selected), [selected]);
   const currentValue = React.useMemo(() => value, [value]);
@@ -140,6 +147,7 @@ export function FacetedFormFilter({
       onSelect: handleSelect,
       searchQuery,
       onSearchChange: (value: string) => setSearchQuery(value),
+      isLoading,
     };
 
     return type === 'single' ? <SingleFilterContent {...filterProps} /> : <MultiFilterContent {...filterProps} />;

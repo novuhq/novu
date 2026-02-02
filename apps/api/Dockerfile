@@ -1,4 +1,4 @@
-FROM node:20-alpine3.19 AS dev_base
+FROM node:20-alpine3.20 AS dev_base
 RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -32,7 +32,6 @@ WORKDIR /usr/src/app/apps/api
 
 RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.example.env dist/.env
-RUN cp src/.env.test dist/.env.test
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
 
@@ -43,28 +42,28 @@ FROM dev AS assets
 
 WORKDIR /usr/src/app
 
-# Remove all dependencies so later we can only install prod dependencies without devDependencies
-RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
+# Remove source files but KEEP node_modules (already compiled)
+RUN pnpm recursive exec -- rm -rf ./src
 
 # ------- PRODUCTION BUILD ----------
-FROM dev_base AS prod
+FROM node:20-alpine3.20 AS prod
 
 ARG PACKAGE_PATH
 
 ENV CI=true
+ENV NX_DAEMON=false
 
+RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@10.16.1
+
+# Set non-root user
+USER 1000
 WORKDIR /usr/src/app
 
 COPY --chown=1000:1000 ./meta .
 
-# Get the build artifacts that only include dist folders
+# Copy build artifacts AND pre-compiled node_modules from assets
 COPY --chown=1000:1000 --from=assets /usr/src/app .
 
-RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
-    --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
- pnpm install --filter "{${PACKAGE_PATH}}..." \
- --frozen-lockfile \
- --unsafe-perm
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 

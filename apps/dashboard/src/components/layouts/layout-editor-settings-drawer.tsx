@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { formatDistanceToNow } from 'date-fns';
@@ -74,8 +74,8 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
     const isReadOnly =
       layout?.origin === ResourceOriginEnum.EXTERNAL || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
-    const form = useForm<LayoutSettingsFormData>({
-      resolver: zodResolver(layoutSchema),
+    const form = useForm({
+      resolver: standardSchemaResolver(layoutSchema),
       defaultValues: {
         name: layout?.name || '',
         layoutId: layout?.layoutId || '',
@@ -297,7 +297,7 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
                     name="isTranslationEnabled"
                     render={({ field }) => (
                       <TranslationToggleSection
-                        value={field.value}
+                        value={field.value ?? false}
                         onChange={field.onChange}
                         isReadOnly={isReadOnly}
                         resourceId={layout?.layoutId}

@@ -374,7 +374,7 @@ describe('Session', () => {
     const subscriber = { _id: 'subscriber-id' };
     const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
-    const mockContexts = [{ key: 'teamId:team-123' }, { key: 'projectId:project-456' }];
+    const mockContexts = [{ key: 'projectId:project-456' }, { key: 'teamId:team-123' }];
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);

@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { useCallback, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { MAX_NESTING_DEPTH } from './constants';
@@ -32,7 +32,7 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
 
   const methods = useForm<SchemaEditorFormValues>({
     defaultValues: initialTransformedValues,
-    resolver: zodResolver(editorSchema),
+    resolver: standardSchemaResolver(editorSchema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });

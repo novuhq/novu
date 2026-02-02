@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
   type CreateWorkflowDto,
   DuplicateWorkflowDto,
@@ -31,8 +31,8 @@ interface CreateWorkflowFormProps {
 }
 
 export function CreateWorkflowForm({ onSubmit, template }: CreateWorkflowFormProps) {
-  const form = useForm<z.infer<typeof workflowSchema>>({
-    resolver: zodResolver(workflowSchema),
+  const form = useForm({
+    resolver: standardSchemaResolver(workflowSchema),
     defaultValues: {
       description: template?.description ?? '',
       workflowId: slugify(template?.name ?? ''),
