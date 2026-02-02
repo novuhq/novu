@@ -1,6 +1,7 @@
 import { RulesLogic } from '@novu/js';
 import type { CustomDataType, DirectionEnum, IEnvironment, SeverityLevelEnum } from '@novu/shared';
 import { Topic } from '@/components/topics/types';
+import { convertContextKeysToPayload } from '@/utils/context-variable-utils';
 import { delV2, getV2, patchV2, postV2 } from './api.client';
 
 export type ListTopicsResponse = {
@@ -113,24 +114,7 @@ export const addSubscribersToTopic = async ({
   subscribers: string[];
   contextKeys?: string[];
 }) => {
-  // Convert contextKeys array to ContextPayload object
-  // contextKeys format: ["tenant:org-acme", "app:jira"]
-  // ContextPayload format: { tenant: "org-acme", app: "jira" }
-  let context: Record<string, string> | undefined;
-  if (contextKeys && contextKeys.length > 0) {
-    const contextObj = contextKeys.reduce(
-      (acc, key) => {
-        const [type, id] = key.split(':');
-        if (type && id) {
-          acc[type] = id;
-        }
-        return acc;
-      },
-      {} as Record<string, string>
-    );
-    // Only set context if we have at least one valid key-value pair
-    context = Object.keys(contextObj).length > 0 ? contextObj : undefined;
-  }
+  const context = convertContextKeysToPayload(contextKeys);
 
   const { data } = await postV2<{
     data: {
