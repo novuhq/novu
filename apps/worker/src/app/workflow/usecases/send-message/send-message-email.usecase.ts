@@ -43,7 +43,6 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { addBreadcrumb } from '@sentry/node';
 import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
@@ -132,10 +131,6 @@ export class SendMessageEmail extends SendMessageBase {
     if (!step) throw new PlatformException('Email channel step not found');
     if (!step.template) throw new PlatformException('Email channel template not found');
 
-    addBreadcrumb({
-      message: 'Sending Email',
-    });
-
     if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -162,6 +157,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const bridgeOutputs = command.bridgeData?.outputs;
+    console.log('bridgeOptions', JSON.stringify(bridgeOutputs, null, 2));
     const [template, overrideLayoutId] = await Promise.all([
       this.processVariants(command),
       this.getOverrideLayoutId(command, !!bridgeOutputs),
