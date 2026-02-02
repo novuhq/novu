@@ -164,7 +164,7 @@ jobs:
       - name: Setup Docker
         uses: crazy-max/ghaction-setup-docker@v2
         with:
-          version: v24.0.6
+          version: v27.0.3
           daemon-config: |
             {
               "features": {
@@ -180,7 +180,7 @@ jobs:
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: "image=moby/buildkit:v0.13.1"
+          driver-opts: "image=moby/buildkit:v0.15.0"
 
       - uses: ./.github/actions/free-space
         name: Extend space in Action Container
