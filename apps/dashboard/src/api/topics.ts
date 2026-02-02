@@ -106,11 +106,30 @@ export const addSubscribersToTopic = async ({
   environment,
   topicKey,
   subscribers,
+  contextKeys,
 }: {
   environment: IEnvironment;
   topicKey: string;
   subscribers: string[];
+  contextKeys?: string[];
 }) => {
+  // Convert contextKeys array to ContextPayload object
+  // contextKeys format: ["tenant:org-acme", "app:jira"]
+  // ContextPayload format: { tenant: "org-acme", app: "jira" }
+  const context =
+    contextKeys && contextKeys.length > 0
+      ? contextKeys.reduce(
+          (acc, key) => {
+            const [type, id] = key.split(':');
+            if (type && id) {
+              acc[type] = id;
+            }
+            return acc;
+          },
+          {} as Record<string, string>
+        )
+      : undefined;
+
   const { data } = await postV2<{
     data: {
       succeeded: string[];
@@ -120,7 +139,10 @@ export const addSubscribersToTopic = async ({
     };
   }>(`/topics/${encodeURIComponent(topicKey)}/subscriptions`, {
     environment,
-    body: { subscriberIds: subscribers },
+    body: {
+      subscriberIds: subscribers,
+      ...(context && { context }),
+    },
   });
 
   return data;
