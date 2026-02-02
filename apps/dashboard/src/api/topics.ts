@@ -116,19 +116,21 @@ export const addSubscribersToTopic = async ({
   // Convert contextKeys array to ContextPayload object
   // contextKeys format: ["tenant:org-acme", "app:jira"]
   // ContextPayload format: { tenant: "org-acme", app: "jira" }
-  const context =
-    contextKeys && contextKeys.length > 0
-      ? contextKeys.reduce(
-          (acc, key) => {
-            const [type, id] = key.split(':');
-            if (type && id) {
-              acc[type] = id;
-            }
-            return acc;
-          },
-          {} as Record<string, string>
-        )
-      : undefined;
+  let context: Record<string, string> | undefined;
+  if (contextKeys && contextKeys.length > 0) {
+    const contextObj = contextKeys.reduce(
+      (acc, key) => {
+        const [type, id] = key.split(':');
+        if (type && id) {
+          acc[type] = id;
+        }
+        return acc;
+      },
+      {} as Record<string, string>
+    );
+    // Only set context if we have at least one valid key-value pair
+    context = Object.keys(contextObj).length > 0 ? contextObj : undefined;
+  }
 
   const { data } = await postV2<{
     data: {
