@@ -54,7 +54,7 @@ export class GenerateWorkflowUseCase {
       origin: ResourceOriginEnum.NOVU_CLOUD,
       __source: WorkflowCreationSourceEnum.AI,
       active: true,
-      steps: stepsWithControlValues,
+      steps: stepsWithControlValues as any,
     };
 
     const workflow = await this.upsertWorkflowUseCase.execute(
@@ -80,7 +80,7 @@ export class GenerateWorkflowUseCase {
       ],
       status: AiConversationStatusEnum.ACTIVE,
       workflow,
-      reasoning,
+      reasoning: reasoning as any,
     };
 
     return conversation;
