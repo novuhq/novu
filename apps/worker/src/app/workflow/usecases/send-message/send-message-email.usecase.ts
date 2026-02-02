@@ -181,6 +181,7 @@ export class SendMessageEmail extends SendMessageBase {
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
+    const bridgeFrom = (bridgeOutputs as EmailOutput)?.from;
 
     const payload = {
       senderName: step.template.senderName,
@@ -330,9 +331,9 @@ export class SendMessageEmail extends SendMessageBase {
         to: email,
         subject,
         html: (bridgeOutputs as EmailOutput)?.body || html,
-        from: integration?.credentials.from || 'no-reply@novu.co',
+        from: bridgeFrom?.email || integration?.credentials.from || 'no-reply@novu.co',
         attachments,
-        senderName,
+        senderName: bridgeFrom?.name || senderName,
         id: message._id,
         replyTo: replyToAddress,
         notificationDetails: {
