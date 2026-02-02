@@ -40,12 +40,12 @@ export const buildDynamicFormSchema = ({
 }: {
   to: JSONSchemaDefinition;
 }): z.ZodObject<{
-  to: z.ZodObject<Record<string, z.ZodTypeAny>>;
-  payload: z.ZodEffects<z.ZodString, any, string>;
+  to: z.ZodObject<Record<string, z.ZodType>>;
+  payload: z.ZodType;
 }> => {
   const properties = typeof to === 'object' ? (to.properties ?? {}) : {};
   const requiredFields = typeof to === 'object' ? (to.required ?? []) : [];
-  const keys: Record<string, z.ZodTypeAny> = Object.keys(properties).reduce((acc, key) => {
+  const keys: Record<string, z.ZodType> = Object.keys(properties).reduce((acc, key) => {
     const value = properties[key];
 
     if (typeof value !== 'object') {
@@ -53,20 +53,25 @@ export const buildDynamicFormSchema = ({
     }
 
     const isRequired = requiredFields.includes(key);
-    let zodValue: z.ZodString | z.ZodNumber | z.ZodOptional<z.ZodString | z.ZodNumber>;
+    let zodValue:
+      | z.ZodString
+      | z.ZodNumber
+      | z.ZodOptional<z.ZodString | z.ZodNumber>
+      | z.ZodEmail
+      | z.ZodOptional<z.ZodEmail>;
 
     if (value.type === 'string') {
-      zodValue = z.string().min(1);
-
-      if (key === 'subscriberId') {
-        zodValue = zodValue.regex(
-          VALID_ID_REGEX,
-          'SubscriberId must be a string of alphanumeric characters, -, _, and . or a valid email address.'
-        );
-      }
-
       if (value.format === 'email') {
-        zodValue = zodValue.email();
+        zodValue = z.email();
+      } else {
+        zodValue = z.string().min(1);
+
+        if (key === 'subscriberId') {
+          zodValue = zodValue.regex(
+            VALID_ID_REGEX,
+            'SubscriberId must be a string of alphanumeric characters, -, _, and . or a valid email address.'
+          );
+        }
       }
     } else {
       zodValue = z.number().min(1);
@@ -80,19 +85,20 @@ export const buildDynamicFormSchema = ({
   }, {});
 
   return z.object({
-    to: z
-      .object({
-        ...keys,
-      })
-      .passthrough(),
-    payload: z.string().transform((str, ctx) => {
-      try {
-        return JSON.parse(str);
-      } catch (e) {
-        ctx.addIssue({ code: 'custom', message: 'Payload must be valid JSON' });
-        return z.NEVER;
-      }
+    to: z.looseObject({
+      ...keys,
     }),
+    payload: z.string().refine(
+      (str) => {
+        try {
+          JSON.parse(str);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Payload must be valid JSON' }
+    ),
   });
 };
 
@@ -118,5 +124,5 @@ const WorkflowPreferencesSchema = z.object({
 
 export const UserPreferencesFormSchema = z.object({
   user: WorkflowPreferencesSchema.nullable(),
-  severity: z.nativeEnum(SeverityLevelEnum).default(SeverityLevelEnum.NONE),
+  severity: z.enum(Object.values(SeverityLevelEnum) as [string, ...string[]]).default(SeverityLevelEnum.NONE),
 });

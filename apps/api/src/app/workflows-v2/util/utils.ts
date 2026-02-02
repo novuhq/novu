@@ -23,7 +23,7 @@ export function collectKeys(obj, prefix = ''): string[] {
       if (isObject(value) && !isArray(value)) {
         result.push(...(collectKeys(value, newKey) as string[]));
       } else {
-        result.push(newKey);
+        result.push(newKey as string);
       }
 
       return result;

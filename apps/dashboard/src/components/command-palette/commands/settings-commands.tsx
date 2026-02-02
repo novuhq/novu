@@ -1,10 +1,16 @@
+import { PermissionsEnum } from '@novu/shared';
 import { RiDatabase2Line, RiMoneyDollarCircleLine, RiSettings4Line, RiUserAddLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { IS_SELF_HOSTED } from '@/config';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { ROUTES } from '@/utils/routes';
 import { Command, CommandExecutionContext } from '../command-types';
 
 export function useSettingsCommands(_context: CommandExecutionContext): Command[] {
   const navigate = useNavigate();
+  const hasPermission = useHasPermission();
+  const hasBillingPermission = hasPermission({ permission: PermissionsEnum.BILLING_WRITE });
+  const canShowBilling = !IS_SELF_HOSTED && hasBillingPermission;
 
   const commands: Command[] = [
     {
@@ -37,7 +43,10 @@ export function useSettingsCommands(_context: CommandExecutionContext): Command[
       keywords: ['team', 'members', 'invite', 'settings'],
       execute: () => navigate(ROUTES.SETTINGS_TEAM),
     },
-    {
+  ];
+
+  if (canShowBilling) {
+    commands.push({
       id: 'settings-billing',
       label: 'Billing Settings',
       description: 'Manage billing and subscription settings',
@@ -46,8 +55,8 @@ export function useSettingsCommands(_context: CommandExecutionContext): Command[
       priority: 'medium',
       keywords: ['billing', 'subscription', 'payment', 'invoice', 'settings'],
       execute: () => navigate(ROUTES.SETTINGS_BILLING),
-    },
-  ];
+    });
+  }
 
   return commands;
 }

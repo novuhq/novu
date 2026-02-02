@@ -1,10 +1,14 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { TopicSubscription } from '@/api/topics';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { ContextFilter } from '@/components/contexts/context-filter';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { TopicDrawer } from '@/components/topics/topic-drawer';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscriberSubscriptions } from '@/hooks/use-fetch-subscriber-subscriptions';
 import { itemVariants, listVariants } from '@/utils/animation';
 import { useDeleteSubscription } from '../hooks/use-delete-subscription';
@@ -17,8 +21,12 @@ type SubscriberSubscriptionsProps = {
 };
 
 export function SubscriberSubscriptions({ subscriberId }: SubscriberSubscriptionsProps) {
+  const isContextPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED);
+  const [contextKeys, setContextKeys] = useState<string[]>(['']);
+
   const { data, isPending } = useFetchSubscriberSubscriptions({
     subscriberId,
+    contextKeys: isContextPreferencesEnabled ? contextKeys : undefined,
   });
   const { mutateAsync: deleteSubscription } = useDeleteSubscription();
   const [selectedSubscription, setSelectedSubscription] = useState<TopicSubscription | null>(null);
@@ -63,23 +71,7 @@ export function SubscriberSubscriptions({ subscriberId }: SubscriberSubscription
     setIsSubscriptionPreferencesDrawerOpen(true);
   };
 
-  if (isPending) {
-    return (
-      <div className="flex h-full w-full flex-col border-t border-t-neutral-200 p-4">
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-[62px] w-full rounded-lg" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   const subscriptions = data?.data || [];
-
-  if (subscriptions.length === 0) {
-    return <SubscriptionsEmptyState />;
-  }
 
   return (
     <>
@@ -94,18 +86,38 @@ export function SubscriberSubscriptions({ subscriberId }: SubscriberSubscription
           ease: [0.4, 0, 0.2, 1],
         }}
       >
-        <motion.div className="flex flex-col" initial="hidden" animate="visible" variants={listVariants}>
-          {subscriptions.map((subscription: TopicSubscription) => (
-            <motion.div key={subscription._id} variants={itemVariants}>
-              <SubscriptionItem
-                subscription={subscription}
-                onDeleteSubscription={handleDeleteSubscription}
-                onViewTopic={handleViewTopic}
-                onViewSubscriptionPreferences={handleViewSubscriptionPreferences}
-              />
-            </motion.div>
-          ))}
-        </motion.div>
+        {isContextPreferencesEnabled && (
+          <SidebarContent size="md" className="min-h-max overflow-x-auto border-b border-neutral-200 py-2 px-2">
+            <div className="flex items-center gap-2">
+              <ContextFilter contextKeys={contextKeys} onContextKeysChange={setContextKeys} defaultOnClear={true} />
+            </div>
+          </SidebarContent>
+        )}
+
+        {isPending ? (
+          <div className="flex h-full w-full flex-col p-4">
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} className="h-[62px] w-full rounded-lg" />
+              ))}
+            </div>
+          </div>
+        ) : subscriptions.length === 0 ? (
+          <SubscriptionsEmptyState />
+        ) : (
+          <motion.div className="flex flex-col" initial="hidden" animate="visible" variants={listVariants}>
+            {subscriptions.map((subscription: TopicSubscription) => (
+              <motion.div key={subscription._id} variants={itemVariants}>
+                <SubscriptionItem
+                  subscription={subscription}
+                  onDeleteSubscription={handleDeleteSubscription}
+                  onViewTopic={handleViewTopic}
+                  onViewSubscriptionPreferences={handleViewSubscriptionPreferences}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </motion.div>
       <TopicDrawer
         open={isTopicDrawerOpen}

@@ -1,4 +1,5 @@
 import { ChannelTypeEnum, PreferencesTypeEnum } from '@novu/shared';
+import { createHash } from 'crypto';
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { PreferencesDBModel } from './preferences.entity';
@@ -77,6 +78,10 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       type: [Schema.Types.String],
       default: undefined,
     },
+    contextKeysHash: {
+      type: Schema.Types.String,
+      default: undefined,
+    },
   },
   { ...schemaOptions, minimize: false }
 );
@@ -88,9 +93,47 @@ preferencesSchema.plugin(mongooseDelete, {
   use$neOperator: false,
 });
 
+const CONTEXT_FILTERING_PREFERENCE_TYPES = [
+  PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+  PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+  PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+] as const;
+
+function shouldApplyContextKeysHash(type: PreferencesTypeEnum): boolean {
+  return CONTEXT_FILTERING_PREFERENCE_TYPES.includes(type as (typeof CONTEXT_FILTERING_PREFERENCE_TYPES)[number]);
+}
+
+function generateContextKeysHash(contextKeys: string[] | undefined): string {
+  if (!contextKeys || contextKeys.length === 0) {
+    return 'DEFAULT_CONTEXT';
+  }
+
+  const sorted = [...contextKeys].sort();
+
+  return createHash('sha256').update(JSON.stringify(sorted)).digest('hex').substring(0, 16);
+}
+
+preferencesSchema.pre('save', function (next) {
+  if (shouldApplyContextKeysHash(this.type)) {
+    this.contextKeysHash = generateContextKeysHash(this.contextKeys);
+  }
+
+  next();
+});
+
+preferencesSchema.pre('insertMany', (next, docs: PreferencesDBModel[]) => {
+  for (const doc of docs) {
+    if (shouldApplyContextKeysHash(doc.type)) {
+      doc.contextKeysHash = generateContextKeysHash(doc.contextKeys);
+    }
+  }
+
+  next();
+});
+
 // Subscriber Global Preferences
 // Ensures one global preference per subscriber per context (SUBSCRIBER_GLOBAL type)
-// Includes contextKeys to allow multiple preferences for different contexts
+// Includes contextKeysHash to allow multiple preferences for different contexts
 // Partial filter ensures this only applies to SUBSCRIBER_GLOBAL type,
 // preventing conflicts with other preference types
 preferencesSchema.index(
@@ -98,19 +141,20 @@ preferencesSchema.index(
     _environmentId: 1,
     _subscriberId: 1,
     type: 1,
-    contextKeys: 1,
+    contextKeysHash: 1,
   },
   {
     unique: true,
     partialFilterExpression: {
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+      contextKeysHash: { $exists: true },
     },
   }
 );
 
 // Subscriber Workflow Preferences
 // Ensures one workflow preference per subscriber per template per context (SUBSCRIBER_WORKFLOW type)
-// Includes contextKeys to allow multiple preferences for different contexts
+// Includes contextKeysHash to allow multiple preferences for different contexts
 // Partial filter ensures this only applies to SUBSCRIBER_WORKFLOW type,
 // preventing conflicts with other preference types
 preferencesSchema.index(
@@ -119,12 +163,13 @@ preferencesSchema.index(
     _subscriberId: 1,
     _templateId: 1,
     type: 1,
-    contextKeys: 1,
+    contextKeysHash: 1,
   },
   {
     unique: true,
     partialFilterExpression: {
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+      contextKeysHash: { $exists: true },
     },
   }
 );
@@ -148,7 +193,7 @@ preferencesSchema.index(
 );
 
 // Ensures one workflow preference per subscriber per template per topic subscription per context (SUBSCRIPTION_SUBSCRIBER_WORKFLOW type)
-// Includes contextKeys to allow multiple preferences for different contexts
+// Includes contextKeysHash to allow multiple preferences for different contexts
 // Only for this type (via partial filter).
 preferencesSchema.index(
   {
@@ -157,12 +202,13 @@ preferencesSchema.index(
     _topicSubscriptionId: 1,
     _templateId: 1,
     type: 1,
-    contextKeys: 1,
+    contextKeysHash: 1,
   },
   {
     unique: true,
     partialFilterExpression: {
       type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      contextKeysHash: { $exists: true },
     },
   }
 );

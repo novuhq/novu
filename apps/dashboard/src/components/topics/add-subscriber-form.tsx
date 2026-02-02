@@ -6,10 +6,11 @@ import { useAddTopicSubscribers } from './hooks/use-topic-subscribers';
 
 type AddSubscriberFormProps = {
   topicKey: string;
+  contextKeys?: string[];
   onSuccess?: () => void;
 };
 
-export function AddSubscriberForm({ topicKey, onSuccess }: AddSubscriberFormProps) {
+export function AddSubscriberForm({ topicKey, contextKeys, onSuccess }: AddSubscriberFormProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const { mutate: addSubscribers, isPending } = useAddTopicSubscribers();
 
@@ -20,6 +21,7 @@ export function AddSubscriberForm({ topicKey, onSuccess }: AddSubscriberFormProp
       {
         topicKey,
         subscribers: [subscriber.subscriberId.trim()],
+        contextKeys,
       },
       {
         onSuccess: () => {

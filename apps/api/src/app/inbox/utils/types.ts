@@ -66,6 +66,8 @@ export type NotificationFilter = {
   seen?: boolean;
   data?: string;
   severity?: SeverityLevelEnum | SeverityLevelEnum[];
+  createdGte?: number;
+  createdLte?: number;
 };
 
 export type InboxPreference = {
