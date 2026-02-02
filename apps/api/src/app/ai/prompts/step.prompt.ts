@@ -1,4 +1,6 @@
+import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { StepMetadata, WorkflowMetadata } from '../schemas/workflow-generation.schema';
+import { formatVariableSchemaForPrompt } from '../usecases/generate-workflow/variable-schema.utils';
 import {
   ASSISTANT_DESCRIPTION,
   GENERAL_CONTENT_GUIDELINES,
@@ -7,6 +9,7 @@ import {
   STEP_VALID_JSON_ROOT_OUTPUT_REQUIREMENTS,
   VALID_JSON_SCHEMA_OUTPUT_REQUIREMENTS,
 } from './general.prompt';
+import { EXAMPLE_BLOCK_EDITOR_JSON } from './maily-blocks';
 
 // Step Critical Output Requirements
 export const STEP_CRITICAL_OUTPUT_REQUIREMENTS = `## CRITICAL OUTPUT FORMAT:
@@ -20,7 +23,8 @@ export const STEP_CONTENT_GUIDELINES = `${GENERAL_CONTENT_GUIDELINES}
 - Use appropriate formatting and styling only when it is necessary to improve the readability of the content
 - Align content with the workflow's purpose and the user's original request
 - Keep the content consistent with the other steps in the workflow
-- Use appropriate personalization with Liquid templating ({{ subscriber.firstName }}, {{ payload.* }})`;
+- Use appropriate personalization with Liquid templating ({{ subscriber.firstName }}, {{ payload.* }})
+- Never put hardcoded URLs, names, product names, etc. in the content. Always use the existing variables or create new variables if needed, for example: {{ payload.actionUrl }}, {{ subscriber.firstName }}, {{ payload.productName }}.`;
 
 export const STEP_CONTENT_PROMPTS = {
   email: `${ASSISTANT_DESCRIPTION}
@@ -46,13 +50,12 @@ ${STEP_CONTENT_GUIDELINES}
 - editorType: "html"
 - body: string - Email body always in the HTML format. Use semantic HTML with inline styles. Structure with headings, paragraphs, and styled buttons.
 
-## Email Content Guidelines
+## Email Content Requirements
 - Subject lines should be compelling and under 60 characters
 - Keep paragraphs short and scannable
-- Include clear call-to-action buttons
-- Structure: greeting -> main content -> CTA button -> closing
+- Include clear call-to-action buttons when necessary
 
-## HTML Format Guidelines
+## HTML Format Requirements
 - Body must be valid HTML with inline styles for email client compatibility
 - Use semantic HTML: <h1>, <h2>, <p>, <a>, <table> for layout
 - Add inline styles for colors, spacing, fonts (e.g., style="color: #333; margin: 16px 0;")
@@ -60,32 +63,74 @@ ${STEP_CONTENT_GUIDELINES}
 - Use tables for layout to ensure compatibility across email clients. Avoid flexbox or grid; apply inline styles to table cells only when needed for spacing or typography.
 - Include variables using Liquid syntax: {{ subscriber.firstName }}, {{ payload.variableName }}
 
-Example button:
+### Example only for the HTML format:
 <a href="{{ payload.actionUrl }}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: 600;">Click Here</a>
 
-## Block Editor Format Guidelines
-- Body must be in Maily TipTap JSON format with proper node structure
-- Use heading nodes for titles (level 1 for main, level 2 for sections)
-- Use paragraph nodes for body text
-- Use spacer nodes between sections (height: 16 or 24)
-- Use button nodes for CTAs with good contrast colors
-- Include variables using variable nodes with id like "subscriber.firstName" or "payload.variableName"
+## Block Editor Format Guideline
+1. Use heading nodes for titles (level 1 for main, level 2 for sections).
+2. Use text node for body text.
+3. Use spacer nodes between sections (height: 16 or 24).
+4. Use button nodes for CTAs with good contrast colors.
 
-Example block structure:
-{
-  "type": "doc",
-  "content": [
-    { "type": "heading", "attrs": { "level": 1, "textAlign": null }, "content": [{ "type": "text", "text": "Welcome!" }] },
-    { "type": "spacer", "attrs": { "height": 16 } },
-    { "type": "paragraph", "attrs": { "textAlign": null }, "content": [
-      { "type": "text", "text": "Hi " },
-      { "type": "variable", "attrs": { "id": "subscriber.firstName" } },
-      { "type": "text", "text": ", thanks for joining!" }
-    ]},
-    { "type": "spacer", "attrs": { "height": 24 } },
-    { "type": "button", "attrs": { "text": "Get Started", "url": "{{ payload.actionUrl }}", "variant": "filled", "buttonColor": "#007bff", "textColor": "#ffffff" } }
-  ]
-}`,
+### Block Editor nodes must follow these requirements:
+1. Maily TipTap JSON format with proper node structure is required.
+2. Never wrap variable names in any node attributes with curly braces "{{" and "}}".
+  - Always use the variable name directly, without any templating syntax.
+  - Correct examples:
+    - "subscriber.firstName"
+    - "payload.variableName"
+    - "current.payload.variableName"
+  - Incorrect examples:
+    - "{{subscriber.firstName}}"
+    - "{{ payload.variableName }}"
+    - "{{current.payload.variableName}}"
+3. Text variables should be defined using "variable" nodes with "id" attribute like "id": "subscriber.firstName" or "id": "payload.variableName". The "aliasFor" attribute is optional and should be used only when the variable is accessed inside the repeat node.
+4. The "repeat" node must always have the "each" attribute, for example "each": "payload.items".
+  To access the items in the array, you must use the "variable" node with:
+  - "id" attribute (required)
+  - "aliasFor" attribute (required)
+  Rules for the "variable" node only when used in the "repeat" node:
+  - The "id" attribute must use the special prefix "current.", for example: "id": "current.variableName"
+  - The "aliasFor" attribute must consist of: <each value> + "." + <variable name>, for example: "aliasFor": "payload.items.variableName"
+  - Never use any other prefix than "current." in the "variable" node "id" attribute when accessing array items.
+  - Example: { "type": "variable", "attrs": { "id": "current.variableName", "aliasFor": "payload.items.variableName" } }
+5. "button" or "image" nodes can contain the variable but always within the "url" attribute and with "isUrlVariable" or "isTextVariable" boolean attributes defined. 
+  - Example: { "type": "button", "attrs": { "text": "payload.actionUrl", "isTextVariable": true } }
+  - Example: { "type": "button", "attrs": { "url": "payload.actionUrl", "isUrlVariable": true } }
+6. "inlineImage" node can contain the variable but always within "src" attribute with "isSrcVariable" boolean attribute defined or within the "externalLink" attribute with "isExternalLinkVariable" boolean attribute defined.
+  - Example: { "type": "inlineImage", "attrs": { "src": "payload.imageUrl", "isSrcVariable": true } }
+  - Example: { "type": "inlineImage", "attrs": { "externalLink": "payload.imageUrl, "isExternalLinkVariable": true } }
+
+### Digest Step Special Variables
+1. "steps.<digest-step-id>.events"
+  - This is a special variable available **only** for steps that come after a digest step.
+  - The variable name is dynamic and depends on the digest step ID, for example:
+    - "steps.digest-step.events"
+    - "steps.digest-step-2.events"
+  - It must be used with the "repeat" node only to iterate over the digested events payload.
+  - To access the digested events "payload" data, use the "variable" node with attributes:
+    - "id" attribute (required):
+      - Must start with the "current.payload" prefix.
+      - Format: "current.payload.<variableName>"
+        Example: "id": "current.payload.variableName"
+      - Never use any prefix other than "current.payload" in the "variable" node "id" attribute when accessing digested events.
+    - "aliasFor" attribute (required):
+      - Format: "aliasFor": "steps.<digest-step-id>.events.payload.<variableName>"
+      - Example: "aliasFor": "steps.digest-step.events.payload.variableName"
+    - Example: { "type": "variable", "attrs": { "id": "current.payload.variableName", "aliasFor": "steps.digest-step.events.payload.variableName" } }
+
+2. "steps.<digest-step-id>.eventCount"
+  - This is a special variable available **only** for steps that come after a digest step.
+  - The variable name is dynamic and depends on the digest step ID, for example:
+    - "steps.digest-step.eventCount"
+    - "steps.digest-step-2.eventCount"
+  - It is used to access the **number of digested events**.
+
+### Example only for the Block Editor JSON structure, always use it as a reference:
+\`\`\`json
+${EXAMPLE_BLOCK_EDITOR_JSON}
+\`\`\`
+`,
 
   in_app: `${ASSISTANT_DESCRIPTION}
 
@@ -260,14 +305,33 @@ export const buildStepPrompt = ({
   step,
   workflowMetadata,
   userPrompt,
+  variableSchema,
 }: {
   step: StepMetadata;
   workflowMetadata: WorkflowMetadata;
   userPrompt: string;
+  variableSchema?: JSONSchemaDto;
 }): string => {
   const { name: workflowName, description, steps, reasoning } = workflowMetadata;
 
   const stepsOverview = steps.map((s, i) => `${i + 1}. ${s.name} (${s.type})`).join('\n');
+  const variableSchemaSection = variableSchema ? formatVariableSchemaForPrompt(variableSchema) : '';
+
+  const variableInstructions = variableSchemaSection
+    ? `## Available Variables Context
+IMPORTANT: When using variables, prefer reusing the existing variables listed below to maintain consistency across the workflow. 
+- Only introduce new payload variables if they are truly needed for this step's specific content.
+
+### Variable Semantics
+IMPORTANT: Always use the variables in the appropriate context when the content is created.
+- workflow.*: Current workflow meta data like workflowId, name, description, tags, severity, etc.
+- subscriber.*: Subscriber's / recipient's personal information like first name, last name, email, phone, etc.
+- payload.*: Payload's data like action URL, product name, order number, etc.
+- steps.*: Steps's data like events, event count, in the digest step, etc.
+- context.*: Context is a user-defined data object that stores metadata (like tenant, region, or app details) to organize and personalize notifications.
+
+${variableSchemaSection}`
+    : '';
 
   return `Generate the content for step: **${step.name}** (type: ${step.type})
 
@@ -280,5 +344,7 @@ ${userPrompt}
 - **Design Rationale**: ${reasoning.summary}
 
 ## The Generated Workflow Steps Overview
-${stepsOverview}`;
+${stepsOverview}
+
+${variableInstructions}`;
 };

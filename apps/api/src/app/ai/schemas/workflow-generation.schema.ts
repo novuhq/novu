@@ -48,7 +48,11 @@ export const stepMetadataSchema = z.object({
 });
 
 export const workflowMetadataSchema = z.object({
-  name: z.string().min(1).max(MAX_NAME_LENGTH).describe('Human-readable workflow name'),
+  name: z
+    .string()
+    .min(1)
+    .max(MAX_NAME_LENGTH)
+    .describe('Human readable workflow name (e.g., "Welcome Email", "Order Confirmation")'),
   description: z.string().nullable().describe('Workflow description'),
   tags: z.array(z.string()).max(5).nullable().describe('Tags for categorizing the workflow (max 5)'),
   severity: z.enum(severityValues).describe('Severity of the workflow'),
