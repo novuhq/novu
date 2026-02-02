@@ -11,14 +11,14 @@ ${CRITICAL_OUTPUT_REQUIREMENTS}
 ${GENERAL_CONTENT_GUIDELINES}
 
 ## Required Output Properties
-- name: Human-readable workflow name
+- name: Always provide a human readable workflow name (e.g., "Welcome Email", "Order Confirmation")
 - description: Clear description of the workflow's purpose
 - tags: Relevant categorization tags (max 5)
 - severity: "low", "medium", "high", or "none" based on importance
-- steps: Array of step metadata (name and type only)
+- steps: Array of step metadata (name and type only). Always provide a human readable step name (e.g., "Welcome Email", "Order Confirmation Push"), never in kebab-case.
 - reasoning: Explain your design decisions
 
-## Available Step Types
+### Available Step Types
 - **email**: Email notifications
 - **in_app**: In-app notifications (Inbox)
 - **sms**: SMS text messages

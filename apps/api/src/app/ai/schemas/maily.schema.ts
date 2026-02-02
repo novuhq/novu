@@ -28,6 +28,12 @@ const mailyLinkMarkSchema = z.object({
     target: z.enum(['_blank', '_self']).nullable(),
     rel: z.string().nullable(),
     isUrlVariable: z.boolean().nullable(),
+    aliasFor: z
+      .string()
+      .nullable()
+      .describe(
+        'Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.'
+      ),
   }),
 });
 
@@ -41,6 +47,12 @@ const mailyVariableNodeSchema = z.object({
   type: z.literal('variable'),
   attrs: z.object({
     id: z.string().describe('Variable name like subscriber.firstName or payload.companyName'),
+    aliasFor: z
+      .string()
+      .nullable()
+      .describe(
+        'Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.'
+      ),
     fallback: z.string().nullable(),
   }),
 });
@@ -89,6 +101,12 @@ const mailyButtonSchema = z.object({
     paddingBottom: z.number().nullable(),
     paddingLeft: z.number().nullable(),
     width: z.string().nullable(),
+    aliasFor: z
+      .string()
+      .nullable()
+      .describe(
+        'Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.'
+      ),
   }),
 });
 
@@ -122,6 +140,32 @@ const mailyImageSchema = z.object({
     externalLink: z.string().nullable().describe('Optional link when image is clicked'),
     isExternalLinkVariable: z.boolean().nullable(),
     borderRadius: z.number().nullable(),
+    aliasFor: z
+      .string()
+      .nullable()
+      .describe(
+        'Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.'
+      ),
+  }),
+});
+
+const mailyInlineImageSchema = z.object({
+  type: z.literal('inlineImage'),
+  attrs: z.object({
+    height: z.number().nullable(),
+    width: z.number().nullable(),
+    src: z.string().describe('Image source URL'),
+    isSrcVariable: z.boolean().nullable(),
+    alt: z.string().nullable(),
+    title: z.string().nullable(),
+    externalLink: z.string().nullable(),
+    isExternalLinkVariable: z.boolean().nullable(),
+    aliasFor: z
+      .string()
+      .nullable()
+      .describe(
+        'Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.'
+      ),
   }),
 });
 
@@ -134,6 +178,12 @@ const mailyLogoSchema = z.object({
     title: z.string().nullable(),
     size: z.enum(['sm', 'md', 'lg']).nullable().describe('Logo size: sm=40px, md=48px, lg=64px'),
     alignment: z.enum(['left', 'center', 'right']).nullable(),
+    aliasFor: z
+      .string()
+      .nullable()
+      .describe(
+        'Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.'
+      ),
   }),
 });
 
@@ -187,6 +237,7 @@ const mailyLeafNodeSchema = z.union([
   mailySpacerSchema,
   mailyDividerSchema,
   mailyImageSchema,
+  mailyInlineImageSchema,
   mailyLogoSchema,
   mailyFooterSchema,
   mailyBlockquoteSchema,
