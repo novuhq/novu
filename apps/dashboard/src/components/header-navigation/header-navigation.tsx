@@ -4,7 +4,7 @@ import { RiSearchLine } from 'react-icons/ri';
 import { useCommandPalette } from '@/components/command-palette/hooks/use-command-palette';
 import { InboxButton } from '@/components/inbox-button';
 import { UserProfile } from '@/components/user-profile';
-import { RegionSelector } from '@/context/region/region-selector';
+import { RegionSelector } from '@/context/region';
 import { cn } from '@/utils/ui';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
 import { useEnvironment } from '../../context/environment/hooks';

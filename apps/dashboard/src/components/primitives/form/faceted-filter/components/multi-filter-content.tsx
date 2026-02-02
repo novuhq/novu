@@ -16,6 +16,7 @@ type MultiFilterContentProps = {
   size: SizeType;
   hideSearch?: boolean;
   hideClear?: boolean;
+  isLoading?: boolean;
 };
 
 export function MultiFilterContent({
@@ -30,6 +31,7 @@ export function MultiFilterContent({
   size,
   hideSearch = false,
   hideClear = false,
+  isLoading = false,
 }: MultiFilterContentProps) {
   const { focusedIndex, setFocusedIndex } = useKeyboardNavigation({
     options,
@@ -54,31 +56,41 @@ export function MultiFilterContent({
       showNavigationFooter={true}
     >
       <div className={cn('flex flex-col gap-1 p-1')}>
-        {options.map((option, index) => {
-          const isSelected = selectedValues.has(option.value);
-          const isFocused = index === focusedIndex;
+        {isLoading ? (
+          <div className="flex items-center justify-center p-4">
+            <span className="text-xs text-neutral-400">Loading...</span>
+          </div>
+        ) : options.length === 0 && searchQuery ? (
+          <div className="flex items-center justify-center p-4">
+            <span className="text-xs text-neutral-400">No results found</span>
+          </div>
+        ) : (
+          options.map((option, index) => {
+            const isSelected = selectedValues.has(option.value);
+            const isFocused = index === focusedIndex;
 
-          return (
-            <div
-              key={option.value}
-              onClick={() => onSelect(option.value)}
-              onMouseEnter={() => setFocusedIndex(index)}
-              className={cn(
-                'flex cursor-pointer items-center rounded-[6px] p-1 hover:bg-[#F8F8F8]',
-                isSelected && 'bg-[#F8F8F8]',
-                isFocused && 'ring-1 ring-neutral-200'
-              )}
-            >
-              {option.icon && <option.icon className="mr-2 h-4 w-4 text-[#737373]" />}
-              <span className="text-xs font-normal text-[#404040]">{option.label}</span>
-              {isSelected && (
-                <div className={'ml-auto'}>
-                  <Check className="h-2.5 w-2.5 text-neutral-600" />
-                </div>
-              )}
-            </div>
-          );
-        })}
+            return (
+              <div
+                key={option.value}
+                onClick={() => onSelect(option.value)}
+                onMouseEnter={() => setFocusedIndex(index)}
+                className={cn(
+                  'flex cursor-pointer items-center rounded-[6px] p-1 hover:bg-[#F8F8F8]',
+                  isSelected && 'bg-[#F8F8F8]',
+                  isFocused && 'ring-1 ring-neutral-200'
+                )}
+              >
+                {option.icon && <option.icon className="mr-2 h-4 w-4 text-[#737373]" />}
+                <span className="text-xs font-normal text-[#404040]">{option.label}</span>
+                {isSelected && (
+                  <div className={'ml-auto'}>
+                    <Check className="h-2.5 w-2.5 text-neutral-600" />
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     </BaseFilterContent>
   );

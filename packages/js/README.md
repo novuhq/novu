@@ -81,3 +81,20 @@ const novu = new Novu({
 ```
 
 > Note: When HMAC encryption is enabled and `context` is provided, the `contextHash` is required. The hash is order-independent, so `{a:1, b:2}` produces the same hash as `{b:2, a:1}`.
+
+## Socket Options
+
+You can provide custom socket configuration options using the `socketOptions` parameter. These options will be merged with the default socket configuration when initializing the WebSocket connection.
+
+```ts
+const novu = new Novu({
+  applicationIdentifier: 'YOUR_NOVU_APPLICATION_IDENTIFIER',
+  subscriber: 'YOUR_INTERNAL_SUBSCRIBER_ID',
+  socketOptions: {
+    reconnectionDelay: 5000,
+    timeout: 20000,
+    path: '/my-custom-path',
+    // ... other socket.io-client options
+  },
+});
+```

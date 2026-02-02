@@ -22,5 +22,5 @@ export class SubscriberSessionResponseDto {
   readonly isDevelopmentMode: boolean;
   readonly applicationIdentifier?: string;
   readonly schedule?: Schedule;
-  readonly contextKeys?: string[];
+  readonly contextKeys: string[];
 }

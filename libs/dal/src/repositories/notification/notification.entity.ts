@@ -4,7 +4,18 @@ import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
-import { TopicPreferencesSummary } from '../topic';
+
+export interface TopicPreferenceEvaluation {
+  condition?: Record<string, unknown>;
+  result: boolean;
+  subscriptionIdentifier: string;
+}
+
+export type NotificationTopic = {
+  _topicId: string;
+  topicKey: string;
+  preferenceEvaluation?: TopicPreferenceEvaluation;
+};
 
 export class NotificationEntity {
   _id: string;
@@ -17,11 +28,7 @@ export class NotificationEntity {
 
   _subscriberId: string;
 
-  topics: {
-    _topicId: string;
-    topicKey: string;
-    preferenceEvaluation?: TopicPreferencesSummary;
-  }[];
+  topics: NotificationTopic[];
 
   transactionId: string;
 

@@ -421,7 +421,7 @@ export class Session {
       context
     );
 
-    return contexts.map((context) => context.key).sort();
+    return contexts.map((context) => context.key);
   }
 
   private async getMaxSnoozeDurationHours(apiServiceLevel: ApiServiceLevelEnum) {

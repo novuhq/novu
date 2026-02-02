@@ -1,4 +1,4 @@
-FROM node:20-alpine3.19 as dev_base
+FROM node:20-alpine3.20 as dev_base
 RUN apk add g++ make py3-pip
 
 ENV NX_DAEMON=false
@@ -32,7 +32,6 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 WORKDIR /usr/src/app/apps/inbound-mail
 
-RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
 

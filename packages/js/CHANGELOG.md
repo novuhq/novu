@@ -1,3 +1,19 @@
+## v3.13.0 (2026-01-28)
+
+### 🚀 Features
+
+- **api-service,js:** ensure backwards compatibility for context prefs fixes NV-7072 ([#9890](https://github.com/novuhq/novu/pull/9890))
+- **api-service,js:** context bound topic subscriptions fixes NV-6980 ([#9840](https://github.com/novuhq/novu/pull/9840))
+
+### 🩹 Fixes
+
+- **js:** Inbox requestLock error when not available fixes NV-7033 ([#9844](https://github.com/novuhq/novu/pull/9844))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Dima Grossman @scopsy
+
 ## v3.12.0 (2026-01-07)
 
 ### 🚀 Features

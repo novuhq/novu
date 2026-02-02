@@ -1,7 +1,8 @@
-import { SignIn as SignInForm } from '@clerk/clerk-react';
+import { SignIn as SignInForm, useAuth } from '@clerk/clerk-react';
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
-import { ROUTES } from '@/utils/routes';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { AuthSideBanner } from '../components/auth/auth-side-banner';
 import { RegionPicker } from '../components/auth/region-picker';
 import { PageMeta } from '../components/page-meta';
@@ -12,6 +13,8 @@ import { getReferrer, getUtmParams } from '../utils/tracking';
 
 export const SignInPage = () => {
   const segment = useSegment();
+  const { isSignedIn } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const utmParams = getUtmParams();
@@ -22,6 +25,12 @@ export const SignInPage = () => {
       referrer,
     });
   }, []);
+
+  useEffect(() => {
+    if (isSignedIn) {
+      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: 'default' }));
+    }
+  }, [isSignedIn]);
 
   return (
     <div className="flex min-h-screen w-full flex-col md:max-w-[1100px] md:flex-row md:gap-36">

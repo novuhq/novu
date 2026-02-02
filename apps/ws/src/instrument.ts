@@ -8,6 +8,6 @@ if (process.env.SENTRY_DSN) {
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${version}`,
-    ignoreErrors: ['Non-Error exception captured'],
+    ignoreErrors: ['Non-Error exception captured', 'timeout reached while waiting for fetchSockets response'],
   });
 }

@@ -3,25 +3,25 @@ import * as z from 'zod';
 import { capitalize } from './string';
 
 export type ZodValue =
-  | z.AnyZodObject
+  | z.ZodObject
   | z.ZodString
   | z.ZodNumber
-  | z.ZodNullable<z.ZodTypeAny>
-  | z.ZodEffects<z.ZodTypeAny>
-  | z.ZodDefault<z.ZodTypeAny>
-  | z.ZodEnum<[string, ...string[]]>
-  | z.ZodOptional<z.ZodTypeAny>
+  | z.ZodNullable<z.ZodType>
+  | z.ZodDefault<z.ZodType>
+  | z.ZodEnum
+  | z.ZodOptional<z.ZodType>
   | z.ZodBoolean
   | z.ZodAny
-  | z.ZodUnion<z.ZodUnionOptions>;
+  | z.ZodUnion
+  | z.ZodType;
 
 const handleStringFormat = ({ value, key, format }: { value: z.ZodString; key: string; format: string }) => {
   if (format === 'email') {
-    return value.email();
+    return z.email();
   } else if (format === 'uri') {
     return value
       .transform((val) => (val === '' ? undefined : val))
-      .refine((val) => !val || z.string().url().safeParse(val).success, {
+      .refine((val) => !val || z.url().safeParse(val).success, {
         message: `${capitalize(key)} must be a valid URI`,
       });
   }
@@ -49,28 +49,24 @@ const handleStringType = ({
   const { format, pattern, enum: enumValues, default: defaultValue, minLength } = jsonSchema;
   const isRequired = requiredFields.includes(key);
 
-  let stringValue:
-    | z.ZodString
-    | z.ZodEffects<z.ZodTypeAny>
-    | z.ZodEnum<[string, ...string[]]>
-    | z.ZodDefault<z.ZodTypeAny> = z.string();
+  let stringValue: z.ZodType = z.string();
 
   if (format) {
     stringValue = handleStringFormat({
-      value: stringValue,
+      value: stringValue as z.ZodString,
       key,
       format,
-    });
+    }) as z.ZodType;
   } else if (pattern) {
     stringValue = handleStringPattern({
-      value: stringValue,
+      value: stringValue as z.ZodString,
       key,
       pattern,
-    });
+    }) as z.ZodType;
   } else if (enumValues) {
     stringValue = z.enum(enumValues as [string, ...string[]]);
   } else if (isRequired || minLength) {
-    stringValue = stringValue.min(minLength ?? 1);
+    stringValue = (stringValue as z.ZodString).min(minLength ?? 1);
   }
 
   if (defaultValue) {
@@ -108,15 +104,18 @@ const getZodValueByType = (jsonSchema: JSONSchemaDefinition, key: string): ZodVa
   const { type, default: defaultValue, required } = jsonSchema;
 
   if (type === 'object') {
-    let zodValue = buildDynamicZodSchema(jsonSchema, key) as z.ZodTypeAny;
+    let zodValue = buildDynamicZodSchema(jsonSchema, key) as z.ZodType;
 
     if (defaultValue) {
       zodValue = zodValue.default(defaultValue as object);
     }
 
     zodValue = zodValue.transform((val) => {
-      const hasAnyRequiredEmpty = required?.some((field) => val[field] === '' || val[field] === undefined);
-      // remove object if any required field is empty or undefined
+      const valAsRecord = val as Record<string, unknown>;
+      const hasAnyRequiredEmpty = required?.some(
+        (field) => valAsRecord[field] === '' || valAsRecord[field] === undefined
+      );
+
       return hasAnyRequiredEmpty ? undefined : val;
     });
     return zodValue.nullable();
@@ -145,7 +144,7 @@ export const buildDynamicZodSchema = (obj: JSONSchemaDefinition, key = ''): ZodV
     const properties = obj.properties ?? {};
     const requiredFields = obj.required ?? [];
 
-    const keys: Record<string, z.ZodTypeAny> = Object.keys(properties).reduce((acc, key) => {
+    const keys: Record<string, z.ZodType> = Object.keys(properties).reduce((acc, key) => {
       const jsonSchemaProp = properties[key];
 
       if (typeof jsonSchemaProp !== 'object') {

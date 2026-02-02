@@ -180,6 +180,49 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
     expect(update2.status).to.equal(200);
     expect(update2.body.data.enabled).to.equal(false);
   });
+
+  it('should return external subscriptionIdentifier (not internal MongoDB ID) in response', async () => {
+    const topicKey = `topic-${Date.now()}`;
+    const subscriptionIdentifier = `subscription-${Date.now()}`;
+    const workflow = await session.createTemplate({
+      noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          content: 'Test email content',
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Test notification content',
+        },
+      ],
+    });
+
+    const subscriptionResponse = await createSubscription({
+      session,
+      topicKey,
+      body: {
+        identifier: subscriptionIdentifier,
+      },
+    });
+    expect(subscriptionResponse.status).to.equal(201);
+
+    const response = await updateSubscriptionPreferences(session, subscriptionIdentifier, workflow._id, {
+      enabled: true,
+    });
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data.subscriptionId, 'Should return external subscriptionIdentifier').to.equal(
+      subscriptionIdentifier
+    );
+    expect(
+      response.body.data.subscriptionId,
+      'Should not be a MongoDB ObjectId format (24 hex characters)'
+    ).to.not.match(/^[0-9a-fA-F]{24}$/);
+    expect(response.body.data.subscriptionId, 'Should match the subscription identifier used in the request').to.equal(
+      subscriptionIdentifier
+    );
+  });
 });
 
 async function updateSubscriptionPreferences(

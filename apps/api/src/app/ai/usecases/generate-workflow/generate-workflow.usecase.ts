@@ -74,7 +74,7 @@ export class GenerateWorkflowUseCase {
       origin: ResourceOriginEnum.NOVU_CLOUD,
       __source: WorkflowCreationSourceEnum.AI,
       active: true,
-      steps: stepsWithControlValues,
+      steps: stepsWithControlValues as any,
       payloadSchema: hasPayloadProperties(payloadSchema) ? payloadSchema : null,
     };
 
@@ -101,7 +101,7 @@ export class GenerateWorkflowUseCase {
       ],
       status: AiConversationStatusEnum.ACTIVE,
       workflow,
-      reasoning,
+      reasoning: reasoning as any,
     };
 
     return conversation;

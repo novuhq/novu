@@ -5,12 +5,42 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository } from '../log.repository';
 import { getInsertOptions } from '../shared';
-import { EventType, ORDER_BY, TABLE_NAME, Trace, traceLogSchema } from './trace-log.schema';
+import {
+  EventType,
+  ORDER_BY,
+  RequestTraceInput,
+  StepRunTraceInput,
+  TABLE_NAME,
+  Trace,
+  traceLogSchema,
+  WorkflowRunTraceInput,
+} from './trace-log.schema';
 
 const TRACE_INSERT_OPTIONS: InsertOptions = getInsertOptions(
   process.env.TRACES_ASYNC_INSERT,
   process.env.TRACES_WAIT_ASYNC_INSERT
 );
+
+const WORKFLOW_RUN_FIELD_DEFAULTS = {
+  step_run_type: '' as const,
+  workflow_run_identifier: '',
+  workflow_id: '',
+  provider_id: '',
+  workflow_name: '',
+  transaction_id: '',
+  channels: '',
+  subscriber_to: '',
+  payload: '',
+  control_values: '',
+  topics: '',
+  is_digest: false,
+  digested_workflow_run_id: '',
+  delivery_lifecycle_status: '',
+  delivery_lifecycle_detail: '',
+  severity: '',
+  critical: false,
+  context_keys: [] as string[],
+};
 
 @Injectable()
 export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Trace> {
@@ -80,20 +110,32 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     }
   }
 
-  async createStepRun(traceData: Omit<Trace, 'id' | 'expires_at' | 'entity_type'>[]): Promise<void> {
+  async createStepRun(traceData: StepRunTraceInput[]): Promise<void> {
     return this.createMany(
       traceData.map((trace) => ({
+        ...WORKFLOW_RUN_FIELD_DEFAULTS,
         ...trace,
         entity_type: 'step_run',
       }))
     );
   }
 
-  async createRequest(traceData: Omit<Trace, 'id' | 'expires_at' | 'entity_type'>[]): Promise<void> {
+  async createRequest(traceData: RequestTraceInput[]): Promise<void> {
     return this.createMany(
       traceData.map((trace) => ({
+        ...WORKFLOW_RUN_FIELD_DEFAULTS,
         ...trace,
         entity_type: 'request',
+      }))
+    );
+  }
+
+  async createWorkflowRun(traceData: WorkflowRunTraceInput[]): Promise<void> {
+    return this.createMany(
+      traceData.map((trace) => ({
+        step_run_type: '',
+        ...trace,
+        entity_type: 'workflow_run',
       }))
     );
   }
@@ -498,6 +540,32 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Invalid push device token was removed from subscriber';
     case 'topic_subscription_preference_evaluation':
       return 'Topic subscription preference evaluated';
+
+    // Workflow run status events
+    case 'workflow_run_status_processing':
+      return 'Workflow run processing';
+    case 'workflow_run_status_completed':
+      return 'Workflow run completed';
+    case 'workflow_run_status_error':
+      return 'Workflow run error';
+
+    // Workflow run delivery lifecycle events
+    case 'workflow_run_delivery_pending':
+      return 'Workflow run delivery pending';
+    case 'workflow_run_delivery_sent':
+      return 'Workflow run delivery sent';
+    case 'workflow_run_delivery_errored':
+      return 'Workflow run delivery errored';
+    case 'workflow_run_delivery_skipped':
+      return 'Workflow run delivery skipped';
+    case 'workflow_run_delivery_canceled':
+      return 'Workflow run delivery canceled';
+    case 'workflow_run_delivery_merged':
+      return 'Workflow run delivery merged';
+    case 'workflow_run_delivery_delivered':
+      return 'Workflow run delivery delivered';
+    case 'workflow_run_delivery_interacted':
+      return 'Workflow run delivery interacted';
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
       const _exhaustiveCheck: never = eventType;

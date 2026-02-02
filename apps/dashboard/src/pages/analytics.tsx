@@ -113,8 +113,6 @@ export function AnalyticsPage() {
   });
 
   const chartsData = { ...trendsCharts, ...workflowCharts };
-  const isChartsLoading = isTrendsLoading || isWorkflowLoading;
-  const chartsError = trendsError || workflowError;
 
   const { messagesDeliveredData, activeSubscribersData, avgMessagesPerSubscriberData, totalInteractionsData } =
     useMetricData(metricsCharts);
@@ -181,14 +179,20 @@ export function AnalyticsPage() {
             </motion.div>
 
             <motion.div variants={ANIMATION_VARIANTS.section}>
-              <ChartsSection charts={chartsData} isLoading={isChartsLoading} error={chartsError} />
+              <ChartsSection
+                charts={chartsData}
+                isTrendsLoading={isTrendsLoading}
+                isWorkflowLoading={isWorkflowLoading}
+                trendsError={trendsError}
+                workflowError={workflowError}
+              />
             </motion.div>
 
             <motion.div variants={ANIMATION_VARIANTS.section}>
               <WorkflowRunsTrendChart
                 data={chartsData?.[ReportTypeEnum.WORKFLOW_RUNS_TREND] as WorkflowRunsTrendDataPoint[]}
-                isLoading={isChartsLoading}
-                error={chartsError}
+                isLoading={isWorkflowLoading}
+                error={workflowError}
               />
             </motion.div>
 
@@ -196,15 +200,15 @@ export function AnalyticsPage() {
               <div className="lg:col-span-8">
                 <ActiveSubscribersTrendChart
                   data={chartsData?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] as ActiveSubscribersTrendDataPoint[]}
-                  isLoading={isChartsLoading}
-                  error={chartsError}
+                  isLoading={isTrendsLoading}
+                  error={trendsError}
                 />
               </div>
               <div className="lg:col-span-4 h-full">
                 <ProvidersByVolume
                   data={chartsData?.[ReportTypeEnum.PROVIDER_BY_VOLUME] as ProviderVolumeDataPoint[]}
-                  isLoading={isChartsLoading}
-                  error={chartsError}
+                  isLoading={isTrendsLoading}
+                  error={trendsError}
                 />
               </div>
             </motion.div>

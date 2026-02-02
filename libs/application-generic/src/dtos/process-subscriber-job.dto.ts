@@ -1,4 +1,4 @@
-import { SubscriberEntity, TopicEntity, TopicWithPreferences } from '@novu/dal';
+import { SubscriberEntity } from '@novu/dal';
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
   ISubscribersDefine,
@@ -10,6 +10,7 @@ import {
 } from '@novu/shared';
 
 import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';
+import { SubscriberTopicPreference } from './subscriber-topic-preference.dto';
 
 export interface IProcessSubscriberDataDto {
   environmentId: string;
@@ -26,7 +27,7 @@ export interface IProcessSubscriberDataDto {
   subscriber: ISubscribersDefine;
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;
-  topics?: TopicWithPreferences[];
+  topics?: SubscriberTopicPreference[];
   requestCategory?: TriggerRequestCategoryEnum;
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
   controls?: StatelessControls;
