@@ -117,7 +117,7 @@ const TopicSubscribers = (props: TopicSubscribersProps) => {
           'flex flex-col gap-4': !readOnly,
         })}
       >
-        {!readOnly && <AddSubscriberForm topicKey={topicKey} />}
+        {!readOnly && <AddSubscriberForm topicKey={topicKey} contextKeys={contextKeys} />}
       </div>
       <div
         className={cn('border-b border-b-neutral-200 px-3 py-2', {

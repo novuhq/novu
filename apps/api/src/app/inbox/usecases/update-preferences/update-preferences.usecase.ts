@@ -231,7 +231,7 @@ export class UpdatePreferences {
         level: PreferenceLevelEnum.TEMPLATE,
         enabled: builtPreferences.all.enabled,
         condition: builtPreferences.all.condition,
-        subscriptionId: internalSubscriptionId,
+        subscriptionId: command.subscriptionIdentifier,
         channels,
         workflow: {
           id: workflow._id,
@@ -254,7 +254,6 @@ export class UpdatePreferences {
           template: workflow,
           subscriber,
           includeInactiveChannels: command.includeInactiveChannels,
-          subscriptionId: internalSubscriptionId,
           contextKeys: command.contextKeys,
         } as GetSubscriberTemplatePreferenceCommand)
       );

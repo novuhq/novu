@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateEntity, SubscriberEntity, TopicWithPreferences } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import {
   ISubscribersDefine,
   ITenantDefine,
@@ -11,7 +11,7 @@ import {
 } from '@novu/shared';
 import _ from 'lodash';
 
-import { IProcessSubscriberBulkJobDto } from '../../dtos';
+import { IProcessSubscriberBulkJobDto, SubscriberTopicPreference } from '../../dtos';
 import { PinoLogger } from '../../logging';
 import { CacheService } from '../../services';
 import { buildUsageKey } from '../../services/cache/key-builders';
@@ -76,7 +76,7 @@ export abstract class TriggerBase {
     subscribers:
       | {
           subscriberId: string;
-          topics?: Array<TopicWithPreferences>;
+          topics?: Array<SubscriberTopicPreference>;
         }[]
       | ISubscribersDefine[],
     subscriberSource: SubscriberSourceEnum

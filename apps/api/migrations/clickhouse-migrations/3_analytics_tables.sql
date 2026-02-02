@@ -15,7 +15,6 @@ PARTITION BY toYYYYMM(date)
 ORDER BY (organization_id, environment_id, date, workflow_id, step_type);
 
 -- Materialized view populates from step_runs table (completed messaging steps)
--- NOTE: This MV is dropped and recreated in migration 4 to use traces table instead
 CREATE MATERIALIZED VIEW IF NOT EXISTS delivery_trend_counts_mv
 TO delivery_trend_counts
 AS SELECT

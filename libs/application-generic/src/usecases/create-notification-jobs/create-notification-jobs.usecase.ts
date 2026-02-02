@@ -141,12 +141,10 @@ export class CreateNotificationJobs {
           raw_data: '',
           status: 'pending',
           entity_id: notification._id,
-          workflow_run_identifier: notification._id,
+          workflow_run_identifier: command.identifier,
           workflow_id: notification._templateId,
           provider_id: '',
           workflow_name: command.template.name,
-          trigger_identifier:
-            command.template.triggers?.[0]?.identifier || command.template.name.toLowerCase().replace(/\s+/g, '_'),
           transaction_id: notification.transactionId,
           channels: JSON.stringify(notification.channels || []),
           subscriber_to: notification.to ? JSON.stringify(notification.to) : '',
