@@ -32,10 +32,10 @@ const excludeEmpty = ({
   limit,
   offset,
   after,
-  createdAfter,
-  createdBefore,
+  createdGte,
+  createdLte,
 }: ListNotificationsArgs) =>
-  Object.entries({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after, createdAfter, createdBefore })
+  Object.entries({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after, createdGte, createdLte })
     .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
     .reduce((acc, [key, value]) => {
       // @ts-expect-error
@@ -55,10 +55,12 @@ const getCacheKey = ({
   limit,
   offset,
   after,
-  createdAfter,
-  createdBefore,
+  createdGte,
+  createdLte,
 }: ListNotificationsArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after, createdAfter, createdBefore }));
+  return JSON.stringify(
+    excludeEmpty({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after, createdGte, createdLte })
+  );
 };
 
 const getFilterKey = ({
@@ -69,10 +71,13 @@ const getFilterKey = ({
   snoozed,
   seen,
   severity,
-  createdAfter,
-  createdBefore,
-}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed' | 'seen' | 'severity' | 'createdAfter' | 'createdBefore'>): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity, createdAfter, createdBefore }));
+  createdGte,
+  createdLte,
+}: Pick<
+  ListNotificationsArgs,
+  'tags' | 'data' | 'read' | 'archived' | 'snoozed' | 'seen' | 'severity' | 'createdGte' | 'createdLte'
+>): string => {
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity, createdGte, createdLte }));
 };
 
 const getFilter = (key: string): NotificationFilter => {
@@ -320,8 +325,8 @@ export class NotificationsCache {
         archived: args.archived,
         seen: args.seen,
         severity: args.severity,
-        createdAfter: args.createdAfter,
-        createdBefore: args.createdBefore,
+        createdGte: args.createdGte,
+        createdLte: args.createdLte,
       });
     }
   }

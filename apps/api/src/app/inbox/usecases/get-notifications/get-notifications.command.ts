@@ -1,16 +1,5 @@
 import { SeverityLevelEnum } from '@novu/shared';
-import {
-  IsArray,
-  IsBoolean,
-  IsDateString,
-  IsDefined,
-  IsInt,
-  IsMongoId,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsDefined, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { CursorPaginationParams } from '../../../shared/types';
@@ -61,10 +50,10 @@ export class GetNotificationsCommand extends EnvironmentWithSubscriber implement
   readonly severity?: SeverityLevelEnum | SeverityLevelEnum[];
 
   @IsOptional()
-  @IsDateString()
-  readonly createdAfter?: string;
+  @IsInt()
+  readonly createdGte?: number;
 
   @IsOptional()
-  @IsDateString()
-  readonly createdBefore?: string;
+  @IsInt()
+  readonly createdLte?: number;
 }

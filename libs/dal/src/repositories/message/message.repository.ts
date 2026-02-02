@@ -278,8 +278,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       data,
       severity: severityArray,
       contextKeys,
-      createdAfter,
-      createdBefore,
+      createdGte,
+      createdLte,
     }: {
       environmentId: string;
       subscriberId: string;
@@ -292,8 +292,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       data?: Record<string, unknown>;
       severity?: SeverityLevelEnum[];
       contextKeys?: string[];
-      createdAfter?: Date;
-      createdBefore?: Date;
+      createdGte?: Date;
+      createdLte?: Date;
     },
     options: { limit: number; offset: number; after?: string }
   ) {
@@ -367,13 +367,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     }
 
-    if (createdAfter || createdBefore) {
+    if (createdGte || createdLte) {
       const createdAtFilter: { $gte?: Date; $lte?: Date } = {};
-      if (createdAfter) {
-        createdAtFilter.$gte = createdAfter;
+      if (createdGte) {
+        createdAtFilter.$gte = createdGte;
       }
-      if (createdBefore) {
-        createdAtFilter.$lte = createdBefore;
+      if (createdLte) {
+        createdAtFilter.$lte = createdLte;
       }
       query.createdAt = createdAtFilter;
     }

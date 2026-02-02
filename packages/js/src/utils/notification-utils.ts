@@ -45,8 +45,8 @@ export const isSameFilter = (filter1: NotificationFilter, filter2: NotificationF
     filter1.snoozed === filter2.snoozed &&
     filter1.seen === filter2.seen &&
     areSeveritiesEqual(filter1.severity, filter2.severity) &&
-    filter1.createdAfter === filter2.createdAfter &&
-    filter1.createdBefore === filter2.createdBefore
+    filter1.createdGte === filter2.createdGte &&
+    filter1.createdLte === filter2.createdLte
   );
 };
 
@@ -156,25 +156,23 @@ export function checkBasicFilters(
  */
 export function checkNotificationTimeframeFilter(
   notificationCreatedAt: string,
-  createdAfter?: string,
-  createdBefore?: string
+  createdGte?: number,
+  createdLte?: number
 ): boolean {
-  if (!createdAfter && !createdBefore) {
+  if (!createdGte && !createdLte) {
     return true;
   }
 
   const createdAtDate = new Date(notificationCreatedAt).getTime();
 
-  if (createdAfter) {
-    const afterDate = new Date(createdAfter).getTime();
-    if (createdAtDate < afterDate) {
+  if (createdGte) {
+    if (createdAtDate < createdGte) {
       return false;
     }
   }
 
-  if (createdBefore) {
-    const beforeDate = new Date(createdBefore).getTime();
-    if (createdAtDate > beforeDate) {
+  if (createdLte) {
+    if (createdAtDate > createdLte) {
       return false;
     }
   }
@@ -191,6 +189,6 @@ export function checkNotificationMatchesFilter(notification: Notification, filte
     checkBasicFilters(notification, filter) &&
     checkNotificationTagFilter(notification.tags, filter.tags) &&
     checkNotificationDataFilter(notification.data, filter.data) &&
-    checkNotificationTimeframeFilter(notification.createdAt, filter.createdAfter, filter.createdBefore)
+    checkNotificationTimeframeFilter(notification.createdAt, filter.createdGte, filter.createdLte)
   );
 }

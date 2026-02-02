@@ -27,8 +27,8 @@ import { useNovu } from './NovuProvider';
  *
  * // Get notifications from a specific time period
  * const { notifications } = useNotifications({
- *   createdAfter: '2024-01-01T00:00:00.000Z',
- *   createdBefore: '2024-12-31T23:59:59.999Z'
+ *   createdGte: 1704067200000,
+ *   createdLte: 1735689599999
  * });
  * ```
  */
@@ -40,8 +40,8 @@ export type UseNotificationsProps = {
   snoozed?: NotificationFilter['snoozed'];
   seen?: NotificationFilter['seen'];
   severity?: NotificationFilter['severity'];
-  createdAfter?: NotificationFilter['createdAfter'];
-  createdBefore?: NotificationFilter['createdBefore'];
+  createdGte?: NotificationFilter['createdGte'];
+  createdLte?: NotificationFilter['createdLte'];
   limit?: number;
   onSuccess?: (data: Notification[]) => void;
   onError?: (error: NovuError) => void;
@@ -82,8 +82,8 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     snoozed = false,
     seen,
     severity,
-    createdAfter,
-    createdBefore,
+    createdGte,
+    createdLte,
     limit = 10,
     onSuccess,
     onError,
@@ -97,8 +97,8 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     snoozed,
     seen,
     severity,
-    createdAfter,
-    createdBefore,
+    createdGte,
+    createdLte,
   });
   const novu = useNovu();
   const [data, setData] = useState<Array<Notification>>();

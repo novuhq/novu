@@ -72,8 +72,8 @@ export class InboxService {
     seen,
     data,
     severity,
-    createdAfter,
-    createdBefore,
+    createdGte,
+    createdLte,
   }: {
     tags?: string[];
     read?: boolean;
@@ -85,8 +85,8 @@ export class InboxService {
     offset?: number;
     data?: Record<string, unknown>;
     severity?: SeverityLevelEnum | SeverityLevelEnum[];
-    createdAfter?: string;
-    createdBefore?: string;
+    createdGte?: number;
+    createdLte?: number;
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
     const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
@@ -122,11 +122,11 @@ export class InboxService {
     } else if (severity) {
       searchParams.append('severity', severity);
     }
-    if (createdAfter) {
-      searchParams.append('createdAfter', createdAfter);
+    if (createdGte) {
+      searchParams.append('createdGte', `${createdGte}`);
     }
-    if (createdBefore) {
-      searchParams.append('createdBefore', createdBefore);
+    if (createdLte) {
+      searchParams.append('createdLte', `${createdLte}`);
     }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);

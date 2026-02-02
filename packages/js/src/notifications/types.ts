@@ -13,8 +13,8 @@ export type ListNotificationsArgs = {
   after?: string;
   offset?: number;
   useCache?: boolean;
-  createdAfter?: string;
-  createdBefore?: string;
+  createdGte?: number;
+  createdLte?: number;
 };
 
 export type ListNotificationsResponse = { notifications: Notification[]; hasMore: boolean; filter: NotificationFilter };
@@ -27,8 +27,8 @@ export type FilterCountArgs = {
   snoozed?: boolean;
   seen?: boolean;
   severity?: SeverityLevelEnum | SeverityLevelEnum[];
-  createdAfter?: string;
-  createdBefore?: string;
+  createdGte?: number;
+  createdLte?: number;
 };
 
 export type FiltersCountArgs = {
@@ -40,8 +40,8 @@ export type FiltersCountArgs = {
     seen?: boolean;
     data?: Record<string, unknown>;
     severity?: SeverityLevelEnum | SeverityLevelEnum[];
-    createdAfter?: string;
-    createdBefore?: string;
+    createdGte?: number;
+    createdLte?: number;
   }>;
 };
 
