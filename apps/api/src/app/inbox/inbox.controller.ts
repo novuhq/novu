@@ -141,6 +141,8 @@ export class InboxController {
         seen: query.seen,
         data: query.data,
         severity: query.severity,
+        createdGte: query.createdGte,
+        createdLte: query.createdLte,
       })
     );
   }
