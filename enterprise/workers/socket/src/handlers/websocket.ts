@@ -29,7 +29,7 @@ export async function handleWebSocketUpgrade(context: Context) {
       'X-Organization-Id': organizationId,
       'X-Environment-Id': environmentId,
       'X-JWT-Token': jwtToken || '',
-      'X-Context-Keys': contextKeys !== undefined ? JSON.stringify(contextKeys) : '',
+      'X-Context-Keys': JSON.stringify(contextKeys),
     },
     body: context.req.raw.body,
   });
