@@ -42,10 +42,14 @@ export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
                 onClick={onEditSenderClick}
                 className="group flex items-center gap-1 text-left hover:text-foreground-950 focus:outline-none"
               >
-                {displaySenderName} <span className="text-foreground-600 text-xs">{`<${displaySenderEmail}>`}</span>
-                {onEditSenderClick && (
-                  <RiEdit2Line className="text-foreground-600 size-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
-                )}
+                {displaySenderName}
+                <span className="text-foreground-600 text-xs">
+                  {'<'}
+                  <span className="text-foreground-600 text-xs underline decoration-dotted">{displaySenderEmail}</span>
+                  {'>'}
+                </span>
+
+                {onEditSenderClick && <RiEdit2Line className="text-foreground-600 size-3.5" />}
               </button>
             )}
           </div>
