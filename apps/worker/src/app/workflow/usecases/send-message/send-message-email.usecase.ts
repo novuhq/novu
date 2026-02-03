@@ -157,7 +157,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const bridgeOutputs = command.bridgeData?.outputs;
-    console.log('bridgeOptions', JSON.stringify(bridgeOutputs, null, 2));
+
     const [template, overrideLayoutId] = await Promise.all([
       this.processVariants(command),
       this.getOverrideLayoutId(command, !!bridgeOutputs),
