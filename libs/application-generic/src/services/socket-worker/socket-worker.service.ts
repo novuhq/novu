@@ -12,6 +12,11 @@ type UnreadCountPaginationIndication = {
   hasMore: boolean;
 };
 
+type UnseenCountPaginationIndication = {
+  unseenCount: number;
+  hasMore: boolean;
+};
+
 export interface SendMessageParams {
   userId: string;
   event: string;
@@ -262,10 +267,29 @@ export class SocketWorkerService {
     contextKeys?: string[]
   ): Promise<void> {
     try {
+      const unseenCount = await this.messageRepository.getCount(
+        environmentId,
+        userId,
+        ChannelTypeEnum.IN_APP,
+        { seen: false },
+        { limit: this.UNREAD_COUNT_LIMIT },
+        contextKeys,
+        undefined,
+        'primary'
+      );
+
+      const paginationIndication: UnseenCountPaginationIndication =
+        unseenCount > this.UNREAD_COUNT_PAGINATION_THRESHOLD
+          ? { unseenCount: this.UNREAD_COUNT_PAGINATION_THRESHOLD, hasMore: true }
+          : { unseenCount, hasMore: false };
+
       await this.sendMessageInternal({
         userId,
         event: WebSocketEventEnum.UNSEEN,
-        data: {},
+        data: {
+          unseenCount: paginationIndication.unseenCount,
+          hasMore: paginationIndication.hasMore,
+        },
         organizationId,
         environmentId,
         contextKeys,
