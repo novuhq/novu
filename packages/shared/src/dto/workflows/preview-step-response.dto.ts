@@ -20,6 +20,10 @@ export class PushRenderOutput extends RenderOutput {
 export class EmailRenderOutput extends RenderOutput {
   subject: string;
   body: string;
+  from?: {
+    email?: string;
+    name?: string;
+  };
 }
 
 export class DigestOutputProcessor {

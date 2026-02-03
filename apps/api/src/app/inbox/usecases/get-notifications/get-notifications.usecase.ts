@@ -64,6 +64,8 @@ export class GetNotifications {
         seen: command.seen,
         data: parsedData,
         severity,
+        createdGte: command.createdGte ? new Date(command.createdGte) : undefined,
+        createdLte: command.createdLte ? new Date(command.createdLte) : undefined,
       },
       {
         limit: command.limit,
@@ -88,6 +90,8 @@ export class GetNotifications {
       seen: command.seen,
       data: parsedData,
       severity: command.severity,
+      createdGte: command.createdGte,
+      createdLte: command.createdLte,
     };
 
     return {

@@ -304,7 +304,7 @@ export class RunJob {
           tags: notification.tags || [],
           severity: notification.severity,
           statelessPreferences: job.preferences,
-          contextKeys: job.contextKeys,
+          contextKeys: job.contextKeys || [],
           workflow,
         })
       );

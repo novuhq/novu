@@ -1,10 +1,6 @@
 export type HttpClientOptions = {
   apiVersion?: string;
   apiUrl?: string;
-  /**
-   * @deprecated User-Agent header is not reliable in browsers. Use Novu-Client-Version instead.
-   */
-  userAgent?: string;
   headers?: Record<string, string>;
 };
 
@@ -21,19 +17,13 @@ export class HttpClient {
   private headers: Record<string, string>;
 
   constructor(options: HttpClientOptions = {}) {
-    const {
-      apiVersion = DEFAULT_API_VERSION,
-      apiUrl = this.DEFAULT_BACKEND_URL,
-      userAgent = DEFAULT_CLIENT_VERSION,
-      headers = {},
-    } = options || {};
+    const { apiVersion = DEFAULT_API_VERSION, apiUrl = this.DEFAULT_BACKEND_URL, headers = {} } = options || {};
     this.apiVersion = apiVersion;
     this.apiUrl = `${apiUrl}/${apiVersion}`;
     this.headers = {
       'Novu-API-Version': NOVU_API_VERSION,
       'Novu-Client-Version': DEFAULT_CLIENT_VERSION,
       'Content-Type': 'application/json',
-      'User-Agent': userAgent, // Deprecated: Doesn't work in browsers, kept for backward compatibility
       ...headers,
     };
   }

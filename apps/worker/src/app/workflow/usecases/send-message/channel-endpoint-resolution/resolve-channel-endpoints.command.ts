@@ -11,8 +11,7 @@ export class ResolveChannelEndpointsCommand extends EnvironmentWithUserCommand {
   @IsEnum(ChannelTypeEnum)
   channelType: ChannelTypeEnum;
 
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  contextKeys?: string[];
+  contextKeys: string[];
 }

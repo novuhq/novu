@@ -27,7 +27,6 @@ const WORKFLOW_RUN_FIELD_DEFAULTS = {
   workflow_id: '',
   provider_id: '',
   workflow_name: '',
-  trigger_identifier: '',
   transaction_id: '',
   channels: '',
   subscriber_to: '',

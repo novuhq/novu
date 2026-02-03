@@ -43,7 +43,6 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { addBreadcrumb } from '@sentry/node';
 import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
@@ -132,10 +131,6 @@ export class SendMessageEmail extends SendMessageBase {
     if (!step) throw new PlatformException('Email channel step not found');
     if (!step.template) throw new PlatformException('Email channel template not found');
 
-    addBreadcrumb({
-      message: 'Sending Email',
-    });
-
     if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -162,6 +157,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const bridgeOutputs = command.bridgeData?.outputs;
+
     const [template, overrideLayoutId] = await Promise.all([
       this.processVariants(command),
       this.getOverrideLayoutId(command, !!bridgeOutputs),
@@ -181,6 +177,7 @@ export class SendMessageEmail extends SendMessageBase {
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
+    const bridgeFrom = (bridgeOutputs as EmailOutput)?.from;
 
     const payload = {
       senderName: step.template.senderName,
@@ -214,7 +211,7 @@ export class SendMessageEmail extends SendMessageBase {
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
-      ...(command.contextKeys && { contextKeys: command.contextKeys }),
+      contextKeys: command.contextKeys,
     });
 
     let replyToAddress: string | undefined;
@@ -330,9 +327,9 @@ export class SendMessageEmail extends SendMessageBase {
         to: email,
         subject,
         html: (bridgeOutputs as EmailOutput)?.body || html,
-        from: integration?.credentials.from || 'no-reply@novu.co',
+        from: bridgeFrom?.email || integration?.credentials.from || 'no-reply@novu.co',
         attachments,
-        senderName,
+        senderName: bridgeFrom?.name || senderName,
         id: message._id,
         replyTo: replyToAddress,
         notificationDetails: {
