@@ -166,6 +166,7 @@ export class MarkMessageAs {
         event: eventMessage,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
+        contextKeys: [],
       },
       groupId: subscriber._organizationId,
     });
