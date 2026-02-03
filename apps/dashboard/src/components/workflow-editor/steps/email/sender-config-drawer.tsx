@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
-import { FormControl, FormItem, FormLabel } from '@/components/primitives/form/form';
+import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
 import {
@@ -32,6 +32,7 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
   const [localEmail, setLocalEmail] = useState('');
   const [localName, setLocalName] = useState('');
   const [localUseDefaults, setLocalUseDefaults] = useState(true);
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -42,18 +43,36 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
       setLocalEmail(fromEmail || '');
       setLocalName(fromName || '');
       setLocalUseDefaults(fromEmail === undefined && fromName === undefined);
+      setEmailError('');
     }
   }, [open, getValues]);
+
+  const validateEmail = (email: string): boolean => {
+    if (!email) {
+      return true;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    return emailRegex.test(email);
+  };
 
   const handleToggleDefaults = (checked: boolean) => {
     setLocalUseDefaults(checked);
     if (checked) {
       setLocalEmail('');
       setLocalName('');
+      setEmailError('');
     }
   };
 
   const handleSave = async () => {
+    if (!localUseDefaults && localEmail && !validateEmail(localEmail)) {
+      setEmailError('Please enter a valid email address');
+
+      return;
+    }
+
     if (localUseDefaults) {
       setValue('from.email', undefined, { shouldDirty: true });
       setValue('from.name', undefined, { shouldDirty: true });
@@ -149,10 +168,16 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
                   disabled={localUseDefaults}
                   value={localEmail}
                   onChange={(e) => {
-                    setLocalEmail(e.target.value);
+                    const newEmail = e.target.value;
+                    setLocalEmail(newEmail);
+                    if (emailError && (!newEmail || validateEmail(newEmail))) {
+                      setEmailError('');
+                    }
                   }}
+                  state={emailError ? 'error' : undefined}
                 />
               </FormControl>
+              {emailError && <FormMessage>{emailError}</FormMessage>}
             </FormItem>
           </div>
         </SheetMain>
