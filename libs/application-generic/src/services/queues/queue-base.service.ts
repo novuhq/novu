@@ -1,11 +1,11 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { IJobData, JobTopicNameEnum } from '@novu/shared';
 
 import { BulkJobOptions, BullMqService, JobsOptions, Queue, QueueOptions } from '../bull-mq';
 
 const LOG_CONTEXT = 'QueueService';
 
-export class QueueBaseService {
+export class QueueBaseService implements OnModuleDestroy {
   private instance: BullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;

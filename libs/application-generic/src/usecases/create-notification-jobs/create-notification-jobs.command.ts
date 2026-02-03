@@ -50,10 +50,9 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   tenant?: ITenantDefine;
 
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  contextKeys?: string[];
+  contextKeys: string[];
 
   bridgeUrl?: string;
 

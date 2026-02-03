@@ -23,7 +23,7 @@ export interface IProcessSubscriberDataDto {
   overrides: TriggerOverrides;
   tenant?: ITenantDefine;
   actor?: SubscriberEntity;
-  contextKeys?: string[];
+  contextKeys: string[];
   subscriber: ISubscribersDefine;
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;

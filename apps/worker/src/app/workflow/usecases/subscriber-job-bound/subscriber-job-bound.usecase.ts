@@ -227,7 +227,7 @@ export class SubscriberJobBound {
       }),
       severity,
       critical,
-      ...(contextKeys && { contextKeys }),
+      contextKeys,
     };
 
     if (actor) {

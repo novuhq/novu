@@ -1,11 +1,11 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { getMachineInfo, loadOrCreateMachineId } from '../utils/machine.utils';
 import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
 
 @Injectable()
-export class MachineInfoService {
+export class MachineInfoService implements OnApplicationBootstrap {
   private machineId: string;
 
   constructor(private readonly httpService: HttpService) {}
