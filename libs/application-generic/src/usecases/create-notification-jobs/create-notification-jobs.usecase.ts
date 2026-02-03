@@ -102,7 +102,7 @@ export class CreateNotificationJobs {
       tags: command.template.tags,
       severity: command.severity,
       critical: command.critical,
-      ...(command.contextKeys && { contextKeys: command.contextKeys }),
+      contextKeys: command.contextKeys,
     });
 
     await this.createWorkflowRun(notification, command);
@@ -157,7 +157,7 @@ export class CreateNotificationJobs {
           delivery_lifecycle_detail: '',
           severity: notification.severity || SeverityLevelEnum.NONE,
           critical: notification.critical || false,
-          context_keys: notification.contextKeys || [],
+          context_keys: notification.contextKeys,
         };
         await this.traceLogRepository.createWorkflowRun([traceData]);
       }
@@ -194,7 +194,7 @@ export class CreateNotificationJobs {
       providerId,
       ...this.overloadActorData(command),
       preferences: command.preferences,
-      ...(command.contextKeys && { contextKeys: command.contextKeys }),
+      contextKeys: command.contextKeys,
     };
   }
 
@@ -293,7 +293,7 @@ export class CreateNotificationJobs {
         _actorId: command.actor?._id,
         actorId: command.actor?.subscriberId,
       }),
-      ...(command.contextKeys && { contextKeys: command.contextKeys }),
+      contextKeys: command.contextKeys,
     };
   }
 
