@@ -174,7 +174,7 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
                       setEmailError('');
                     }
                   }}
-                  state={emailError ? 'error' : undefined}
+                  hasError={!!emailError}
                 />
               </FormControl>
               {emailError && <FormMessage>{emailError}</FormMessage>}
