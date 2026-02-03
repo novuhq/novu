@@ -31,7 +31,7 @@ export interface SendMessageParams {
 export class SocketWorkerService {
   private readonly socketWorkerUrl: string | undefined;
   private readonly socketWorkerApiKey: string | undefined;
-  private readonly UNREAD_COUNT_LIMIT = 100;
+  private readonly UNREAD_COUNT_LIMIT = 101;
   private readonly UNREAD_COUNT_PAGINATION_THRESHOLD = 100;
   private readonly SEVERITY_COUNT_LIMIT = 99;
   private readonly HTTP_TIMEOUT_MS = 3000;
