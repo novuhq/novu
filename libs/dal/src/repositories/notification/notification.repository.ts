@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, DeliveryLifecycleStatusEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { subMonths, subWeeks } from 'date-fns';
 import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 
@@ -345,5 +345,57 @@ export class NotificationRepository extends BaseRepository<
 
   estimatedDocumentCount() {
     return this.MongooseModel.estimatedDocumentCount();
+  }
+
+  /**
+   * Atomically transitions a notification's delivery lifecycle status forward only.
+   * Prevents backward transitions and returns whether the update succeeded.
+   */
+  async tryDeliveryLifecycleTransition(
+    notificationId: string,
+    organizationId: string,
+    environmentId: string,
+    targetStatus: DeliveryLifecycleStatusEnum,
+    statusOrderMap: Record<DeliveryLifecycleStatusEnum, number>,
+    terminalStatuses: DeliveryLifecycleStatusEnum[]
+  ): Promise<{ isUpdated: boolean; previousStatus?: DeliveryLifecycleStatusEnum }> {
+    const targetOrder = statusOrderMap[targetStatus];
+    const isTerminal = terminalStatuses.includes(targetStatus);
+
+    const progressionStatuses = Object.entries(statusOrderMap)
+      .filter(([, order]) => order >= 0 && order < targetOrder)
+      .map(([status]) => status as DeliveryLifecycleStatusEnum);
+
+    const condition: FilterQuery<NotificationDBModel> = isTerminal
+      ? {
+          $or: [
+            { lastEmittedDeliveryLifecycle: { $exists: false } },
+            { lastEmittedDeliveryLifecycle: null },
+            { lastEmittedDeliveryLifecycle: DeliveryLifecycleStatusEnum.PENDING },
+          ],
+        }
+      : {
+          $or: [
+            { lastEmittedDeliveryLifecycle: { $exists: false } },
+            { lastEmittedDeliveryLifecycle: null },
+            { lastEmittedDeliveryLifecycle: { $in: progressionStatuses } },
+          ],
+        };
+
+    const result = await this.findOneAndUpdate(
+      {
+        _id: notificationId,
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+        ...condition,
+      },
+      { $set: { lastEmittedDeliveryLifecycle: targetStatus } },
+      { returnDocument: 'before' }
+    );
+
+    return {
+      isUpdated: result !== null,
+      previousStatus: result?.lastEmittedDeliveryLifecycle,
+    };
   }
 }

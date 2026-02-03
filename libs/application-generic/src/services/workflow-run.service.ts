@@ -23,6 +23,7 @@ import {
   WorkflowRunTraceInput,
 } from './analytic-logs';
 import { LogRepository } from './analytic-logs/log.repository';
+import { DELIVERY_LIFECYCLE_ORDER, TERMINAL_STATUSES } from './delivery-lifecycle.constants';
 import { FeatureFlagsService } from './feature-flags';
 
 export type NotificationForTrace = {
@@ -98,7 +99,123 @@ export class WorkflowRunService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async updateDeliveryLifecycle({
+  async updateDeliveryLifecycle(params: WorkflowStatusUpdateParams): Promise<void> {
+    const isTransitionEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_DELIVERY_LIFECYCLE_TRANSITION_ENABLED,
+      organization: { _id: params.organizationId },
+      environment: { _id: params.environmentId },
+      user: { _id: null },
+      defaultValue: false,
+    });
+
+    if (isTransitionEnabled) {
+      return this.updateDeliveryLifecycleWithTransition(params);
+    }
+
+    return this.updateDeliveryLifecycleLegacy(params);
+  }
+
+  private async updateDeliveryLifecycleWithTransition({
+    notificationId,
+    environmentId,
+    organizationId,
+    _subscriberId,
+    workflowStatus,
+    deliveryLifecycleStatus: providedStatus,
+    deliveryLifecycleDetail: providedDetail,
+    notification,
+    currentJob,
+  }: WorkflowStatusUpdateParams): Promise<void> {
+    try {
+      let deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
+      let deliveryLifecycleDetail: DeliveryLifecycleDetail | undefined;
+
+      const [jobs, messages] = await Promise.all([
+        this.getJobsForWorkflowRun(notificationId, environmentId, organizationId, _subscriberId),
+        this.getMessagesForWorkflowRun(notificationId, environmentId, organizationId, _subscriberId),
+      ]);
+
+      if (providedStatus) {
+        deliveryLifecycleStatus = providedStatus;
+        deliveryLifecycleDetail = providedDetail;
+      } else {
+        const result = this.buildDeliveryLifecycle(jobs, messages);
+        deliveryLifecycleStatus = result.deliveryLifecycleStatus;
+        deliveryLifecycleDetail = result.deliveryLifecycleDetail;
+      }
+
+      if (deliveryLifecycleStatus === DeliveryLifecycleStatusEnum.PENDING) {
+        return;
+      }
+
+      const isInAppChannel = currentJob?.type === 'in_app';
+
+      const { emittedStatuses, isUpdated } = await this.transitionDeliveryLifecycle({
+        notificationId,
+        organizationId,
+        environmentId,
+        targetStatus: deliveryLifecycleStatus,
+        isInAppChannel,
+      });
+
+      if (isUpdated) {
+        await this.workflowRunRepository.updateWorkflowRunState(
+          notificationId,
+          workflowStatus,
+          {
+            organizationId,
+            environmentId,
+          },
+          deliveryLifecycleStatus,
+          deliveryLifecycleDetail
+        );
+
+        for (const emittedStatus of emittedStatuses) {
+          await this.createWorkflowRunTraceUpdate(
+            notificationId,
+            workflowStatus,
+            organizationId,
+            environmentId,
+            emittedStatus,
+            emittedStatus === deliveryLifecycleStatus ? deliveryLifecycleDetail : undefined,
+            notification
+          );
+        }
+
+        this.logger.debug(
+          {
+            notificationId,
+            organizationId,
+            environmentId,
+            deliveryLifecycleStatus,
+            deliveryLifecycleDetail,
+            emittedStatuses,
+          },
+          `Updated workflow run delivery lifecycle to ${deliveryLifecycleStatus}${deliveryLifecycleDetail ? ` with reason: ${deliveryLifecycleDetail}` : ''}`
+        );
+      } else {
+        this.logger.trace(
+          {
+            notificationId,
+            organizationId,
+            environmentId,
+            targetStatus: deliveryLifecycleStatus,
+          },
+          'Skipped workflow run delivery lifecycle update - already at or past this status'
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          notificationId,
+        },
+        'Failed to update workflow run delivery lifecycle based on jobs'
+      );
+    }
+  }
+
+  private async updateDeliveryLifecycleLegacy({
     notificationId,
     environmentId,
     organizationId,
@@ -153,18 +270,6 @@ export class WorkflowRunService {
       );
 
       if (shouldTrace) {
-        await this.handleDeliveredInAppTrace(
-          deliveryLifecycleStatus,
-          currentJob,
-          jobs,
-          messages,
-          notificationId,
-          workflowStatus,
-          organizationId,
-          environmentId,
-          notification
-        );
-
         await this.createWorkflowRunTraceUpdate(
           notificationId,
           workflowStatus,
@@ -175,6 +280,13 @@ export class WorkflowRunService {
           notification
         );
       }
+
+      this.seedDeliveryLifecycleState({
+        notificationId,
+        organizationId,
+        environmentId,
+        targetStatus: deliveryLifecycleStatus,
+      }).catch(() => {});
 
       this.logger.debug(
         {
@@ -223,144 +335,6 @@ export class WorkflowRunService {
         'Failed to get workflow run delivery lifecycle'
       );
     }
-  }
-
-  /**
-   * Determines whether a trace should be created for the given delivery lifecycle status.
-   * This method prevents duplicate traces by ensuring each status is only traced once per workflow run.
-   *
-   * @param currentJob - Present during job execution, undefined for webhooks/external triggers.
-   *                     Used to identify which job triggered the status update.
-   */
-  private shouldCreateTrace(
-    deliveryLifecycleStatus: DeliveryLifecycleStatusEnum,
-    jobs: JobResult[],
-    messages: MessageResult[],
-    isWorkflowComplete: boolean,
-    currentJob?: Pick<JobEntity, 'type' | '_id'>
-  ): boolean {
-    const terminalStatuses = [
-      DeliveryLifecycleStatusEnum.SKIPPED,
-      DeliveryLifecycleStatusEnum.CANCELED,
-      DeliveryLifecycleStatusEnum.ERRORED,
-      DeliveryLifecycleStatusEnum.MERGED,
-    ];
-
-    // Terminal statuses are only traced when workflow is complete to ensure final state accuracy
-    if (terminalStatuses.includes(deliveryLifecycleStatus)) {
-      return isWorkflowComplete;
-    }
-
-    const channelJobs = jobs.filter((job) => job.type && ['in_app', 'email', 'sms', 'chat', 'push'].includes(job.type));
-
-    switch (deliveryLifecycleStatus) {
-      case DeliveryLifecycleStatusEnum.SENT: {
-        const completedWithMessage = channelJobs.filter(
-          (job) => job.status === JobStatusEnum.COMPLETED && messages.some((m) => m._jobId === job._id)
-        );
-
-        if (completedWithMessage.length === 0) {
-          return false;
-        }
-
-        // SENT requires currentJob - only emit when the job execution creates the message
-        if (!currentJob) {
-          return false;
-        }
-
-        return completedWithMessage.some((job) => job._id === currentJob._id);
-      }
-      case DeliveryLifecycleStatusEnum.DELIVERED: {
-        const deliveredMessages = messages.filter((m) => !!m.deliveredAt);
-
-        if (deliveredMessages.length === 0) {
-          return false;
-        }
-
-        // Count how many jobs have delivered messages - used to ensure "first to deliver wins"
-        const jobsWithDeliveredMessages = channelJobs.filter((job) =>
-          deliveredMessages.some((m) => m._jobId === job._id)
-        );
-
-        /*
-         * Job execution path (currentJob is set):
-         * Only emit if THIS job delivered AND it's the first delivery.
-         *
-         * Why both checks? When email job runs, its message has no deliveredAt yet (set by webhook later).
-         * So jobsWithDeliveredMessages is still 1 (from in_app). Without checking isCurrentJobDelivered,
-         * we'd emit duplicate DELIVERED for email even though it didn't deliver.
-         */
-        if (currentJob) {
-          const isCurrentJobDelivered = deliveredMessages.some((m) => m._jobId === currentJob._id);
-
-          return isCurrentJobDelivered && jobsWithDeliveredMessages.length === 1;
-        }
-
-        /*
-         * Webhook/external path (no currentJob):
-         * Only emit if exactly one job has delivered - first to deliver wins.
-         */
-        return jobsWithDeliveredMessages.length === 1;
-      }
-      case DeliveryLifecycleStatusEnum.INTERACTED: {
-        const interactedMessages = messages.filter((m) => m.seen || m.read || m.snoozedUntil || m.archived);
-
-        return interactedMessages.length >= 1;
-      }
-      default:
-        return true;
-    }
-  }
-
-  /**
-   * Handles creating a SENT trace for in_app notifications when they reach DELIVERED status.
-   *
-   * This is needed because in_app notifications are delivered immediately upon creation
-   * (stored in the database), which means they can skip the SENT lifecycle status.
-   * However, for observability and analytics purposes, we still want to track the SENT event
-   * separately. This ensures we have both SENT and DELIVERED traces for in_app notifications,
-   * providing a complete lifecycle view that matches other channel types.
-   */
-  private async handleDeliveredInAppTrace(
-    deliveryLifecycleStatus: DeliveryLifecycleStatusEnum,
-    currentJob: Pick<JobEntity, 'type' | '_id'> | undefined,
-    jobs: JobResult[],
-    messages: MessageResult[],
-    notificationId: string,
-    workflowStatus: WorkflowRunStatusEnum,
-    organizationId: string,
-    environmentId: string,
-    notification: NotificationForTrace | null | undefined
-  ): Promise<void> {
-    if (deliveryLifecycleStatus === DeliveryLifecycleStatusEnum.DELIVERED) {
-      const isCurrentJobInApp = currentJob?.type === 'in_app';
-
-      if (isCurrentJobInApp && this.hasSentConditionMet(jobs, messages)) {
-        await this.createWorkflowRunTraceUpdate(
-          notificationId,
-          workflowStatus,
-          organizationId,
-          environmentId,
-          DeliveryLifecycleStatusEnum.SENT,
-          undefined,
-          notification
-        );
-      }
-    }
-  }
-
-  /**
-   * Checks if SENT conditions are met (completed channel jobs with messages).
-   * Used to determine if a SENT trace should be emitted.
-   */
-  private hasSentConditionMet(jobs: JobResult[], messages: MessageResult[]): boolean {
-    const channelJobs = jobs.filter((job) => job.type && ['in_app', 'email', 'sms', 'chat', 'push'].includes(job.type));
-
-    return channelJobs.some((job) => {
-      if (job.status !== JobStatusEnum.COMPLETED) return false;
-
-      return messages.some((message) => message._jobId === job._id);
-    });
   }
 
   private async createWorkflowRunTraceUpdate(
@@ -691,6 +665,189 @@ export class WorkflowRunService {
       deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
       deliveryLifecycleDetail: DeliveryLifecycleDetail.UNKNOWN_ERROR,
     };
+  }
+
+  /**
+   * Determines whether a trace should be created for the given delivery lifecycle status.
+   * This method prevents duplicate traces by ensuring each status is only traced once per workflow run.
+   *
+   * @param currentJob - Present during job execution, undefined for webhooks/external triggers.
+   *                     Used to identify which job triggered the status update.
+   */
+  private shouldCreateTrace(
+    deliveryLifecycleStatus: DeliveryLifecycleStatusEnum,
+    jobs: JobResult[],
+    messages: MessageResult[],
+    isWorkflowComplete: boolean,
+    currentJob?: Pick<JobEntity, 'type' | '_id'>
+  ): boolean {
+    const terminalStatuses = [
+      DeliveryLifecycleStatusEnum.SKIPPED,
+      DeliveryLifecycleStatusEnum.CANCELED,
+      DeliveryLifecycleStatusEnum.ERRORED,
+      DeliveryLifecycleStatusEnum.MERGED,
+    ];
+
+    if (terminalStatuses.includes(deliveryLifecycleStatus)) {
+      return isWorkflowComplete;
+    }
+
+    const channelJobs = jobs.filter((job) => job.type && ['in_app', 'email', 'sms', 'chat', 'push'].includes(job.type));
+
+    switch (deliveryLifecycleStatus) {
+      case DeliveryLifecycleStatusEnum.SENT: {
+        const completedWithMessage = channelJobs.filter(
+          (job) => job.status === JobStatusEnum.COMPLETED && messages.some((m) => m._jobId === job._id)
+        );
+
+        if (completedWithMessage.length === 0) {
+          return false;
+        }
+
+        if (!currentJob) {
+          return false;
+        }
+
+        return completedWithMessage.some((job) => job._id === currentJob._id);
+      }
+      case DeliveryLifecycleStatusEnum.DELIVERED: {
+        const deliveredMessages = messages.filter((m) => !!m.deliveredAt);
+
+        if (deliveredMessages.length === 0) {
+          return false;
+        }
+
+        const jobsWithDeliveredMessages = channelJobs.filter((job) =>
+          deliveredMessages.some((m) => m._jobId === job._id)
+        );
+
+        if (currentJob) {
+          const isCurrentJobDelivered = deliveredMessages.some((m) => m._jobId === currentJob._id);
+
+          return isCurrentJobDelivered && jobsWithDeliveredMessages.length === 1;
+        }
+
+        return jobsWithDeliveredMessages.length === 1;
+      }
+      case DeliveryLifecycleStatusEnum.INTERACTED: {
+        const interactedMessages = messages.filter((m) => m.seen || m.read || m.snoozedUntil || m.archived);
+
+        return interactedMessages.length >= 1;
+      }
+      default:
+        return true;
+    }
+  }
+
+  private async seedDeliveryLifecycleState(params: {
+    notificationId: string;
+    organizationId: string;
+    environmentId: string;
+    targetStatus: DeliveryLifecycleStatusEnum;
+  }): Promise<void> {
+    try {
+      await this.notificationRepository.tryDeliveryLifecycleTransition(
+        params.notificationId,
+        params.organizationId,
+        params.environmentId,
+        params.targetStatus,
+        DELIVERY_LIFECYCLE_ORDER,
+        TERMINAL_STATUSES
+      );
+    } catch (error) {
+      this.logger.trace(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          notificationId: params.notificationId,
+          targetStatus: params.targetStatus,
+        },
+        'Shadow seeding delivery lifecycle state failed'
+      );
+    }
+  }
+
+  private async transitionDeliveryLifecycle(params: {
+    notificationId: string;
+    organizationId: string;
+    environmentId: string;
+    targetStatus: DeliveryLifecycleStatusEnum;
+    isInAppChannel?: boolean;
+  }): Promise<{ emittedStatuses: DeliveryLifecycleStatusEnum[]; isUpdated: boolean }> {
+    const emittedStatuses: DeliveryLifecycleStatusEnum[] = [];
+
+    if (params.isInAppChannel && params.targetStatus === DeliveryLifecycleStatusEnum.DELIVERED) {
+      const sentResult = await this.tryDeliveryLifecycleTransition({
+        ...params,
+        targetStatus: DeliveryLifecycleStatusEnum.SENT,
+      });
+
+      if (sentResult.isUpdated) {
+        emittedStatuses.push(DeliveryLifecycleStatusEnum.SENT);
+        this.logger.debug(
+          {
+            notificationId: params.notificationId,
+            status: DeliveryLifecycleStatusEnum.SENT,
+          },
+          'Emitted synthetic SENT for in_app channel'
+        );
+      }
+    }
+
+    const result = await this.tryDeliveryLifecycleTransition(params);
+    if (result.isUpdated) {
+      emittedStatuses.push(params.targetStatus);
+      this.logger.debug(
+        {
+          notificationId: params.notificationId,
+          status: params.targetStatus,
+          previousStatus: result.previousStatus,
+        },
+        'Delivery lifecycle transitioned'
+      );
+    } else {
+      this.logger.trace(
+        {
+          notificationId: params.notificationId,
+          targetStatus: params.targetStatus,
+          previousStatus: result.previousStatus,
+        },
+        'Delivery lifecycle transition skipped - already at or past this status'
+      );
+    }
+
+    return {
+      emittedStatuses,
+      isUpdated: emittedStatuses.length > 0,
+    };
+  }
+
+  private async tryDeliveryLifecycleTransition(params: {
+    notificationId: string;
+    organizationId: string;
+    environmentId: string;
+    targetStatus: DeliveryLifecycleStatusEnum;
+  }): Promise<{ isUpdated: boolean; previousStatus?: DeliveryLifecycleStatusEnum }> {
+    try {
+      return await this.notificationRepository.tryDeliveryLifecycleTransition(
+        params.notificationId,
+        params.organizationId,
+        params.environmentId,
+        params.targetStatus,
+        DELIVERY_LIFECYCLE_ORDER,
+        TERMINAL_STATUSES
+      );
+    } catch (error) {
+      this.logger.error(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          notificationId: params.notificationId,
+          targetStatus: params.targetStatus,
+        },
+        'Failed to transition delivery lifecycle'
+      );
+
+      return { isUpdated: false };
+    }
   }
 }
 
