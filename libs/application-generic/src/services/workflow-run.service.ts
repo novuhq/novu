@@ -133,7 +133,13 @@ export class WorkflowRunService {
         return;
       }
 
-      const shouldTrace = this.shouldCreateTrace(deliveryLifecycleStatus, jobs, messages, isWorkflowComplete);
+      const shouldTrace = this.shouldCreateTrace(
+        deliveryLifecycleStatus,
+        jobs,
+        messages,
+        isWorkflowComplete,
+        currentJob
+      );
 
       await this.workflowRunRepository.updateWorkflowRunState(
         notificationId,
@@ -219,11 +225,19 @@ export class WorkflowRunService {
     }
   }
 
+  /**
+   * Determines whether a trace should be created for the given delivery lifecycle status.
+   * This method prevents duplicate traces by ensuring each status is only traced once per workflow run.
+   *
+   * @param currentJob - Present during job execution, undefined for webhooks/external triggers.
+   *                     Used to identify which job triggered the status update.
+   */
   private shouldCreateTrace(
     deliveryLifecycleStatus: DeliveryLifecycleStatusEnum,
     jobs: JobResult[],
     messages: MessageResult[],
-    isWorkflowComplete: boolean
+    isWorkflowComplete: boolean,
+    currentJob?: Pick<JobEntity, 'type' | '_id'>
   ): boolean {
     const terminalStatuses = [
       DeliveryLifecycleStatusEnum.SKIPPED,
@@ -232,22 +246,61 @@ export class WorkflowRunService {
       DeliveryLifecycleStatusEnum.MERGED,
     ];
 
+    // Terminal statuses are only traced when workflow is complete to ensure final state accuracy
     if (terminalStatuses.includes(deliveryLifecycleStatus)) {
       return isWorkflowComplete;
     }
 
+    const channelJobs = jobs.filter((job) => job.type && ['in_app', 'email', 'sms', 'chat', 'push'].includes(job.type));
+
     switch (deliveryLifecycleStatus) {
       case DeliveryLifecycleStatusEnum.SENT: {
-        const completedWithMessage = jobs.filter(
+        const completedWithMessage = channelJobs.filter(
           (job) => job.status === JobStatusEnum.COMPLETED && messages.some((m) => m._jobId === job._id)
         );
 
-        return completedWithMessage.length >= 1;
+        if (completedWithMessage.length === 0) {
+          return false;
+        }
+
+        // SENT requires currentJob - only emit when the job execution creates the message
+        if (!currentJob) {
+          return false;
+        }
+
+        return completedWithMessage.some((job) => job._id === currentJob._id);
       }
       case DeliveryLifecycleStatusEnum.DELIVERED: {
         const deliveredMessages = messages.filter((m) => !!m.deliveredAt);
 
-        return deliveredMessages.length >= 1;
+        if (deliveredMessages.length === 0) {
+          return false;
+        }
+
+        // Count how many jobs have delivered messages - used to ensure "first to deliver wins"
+        const jobsWithDeliveredMessages = channelJobs.filter((job) =>
+          deliveredMessages.some((m) => m._jobId === job._id)
+        );
+
+        /*
+         * Job execution path (currentJob is set):
+         * Only emit if THIS job delivered AND it's the first delivery.
+         *
+         * Why both checks? When email job runs, its message has no deliveredAt yet (set by webhook later).
+         * So jobsWithDeliveredMessages is still 1 (from in_app). Without checking isCurrentJobDelivered,
+         * we'd emit duplicate DELIVERED for email even though it didn't deliver.
+         */
+        if (currentJob) {
+          const isCurrentJobDelivered = deliveredMessages.some((m) => m._jobId === currentJob._id);
+
+          return isCurrentJobDelivered && jobsWithDeliveredMessages.length === 1;
+        }
+
+        /*
+         * Webhook/external path (no currentJob):
+         * Only emit if exactly one job has delivered - first to deliver wins.
+         */
+        return jobsWithDeliveredMessages.length === 1;
       }
       case DeliveryLifecycleStatusEnum.INTERACTED: {
         const interactedMessages = messages.filter((m) => m.seen || m.read || m.snoozedUntil || m.archived);
@@ -554,6 +607,7 @@ export class WorkflowRunService {
     const skippedJobs = channelJobs.filter(
       (job) => job.deliveryLifecycleState?.status && job.deliveryLifecycleState.status === 'skipped'
     );
+
     if (allStepsFinished && skippedJobs.length > 0) {
       // Priority order for delivery lifecycle details (highest → lowest):
       // 1. SUBSCRIBER_PREFERENCE - User preference settings
