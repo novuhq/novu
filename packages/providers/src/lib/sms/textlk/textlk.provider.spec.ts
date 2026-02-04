@@ -34,17 +34,24 @@ export class TextLkSmsProvider implements ISmsProvider {
       message: options.content,
     };
 
-    const response = await axios.post(BASE_URL, payload, {
-      headers: {
-        'Authorization': `Bearer ${this.config.apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    });
+    try {
+      const response = await axios.post(BASE_URL, payload, {
+        headers: {
+          Authorization: `Bearer ${this.config.apiKey}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        timeout: 30000,
+      });
 
-    return {
-      id: response.data.uid || new Date().getTime().toString(),
-      date: new Date().toISOString(),
-    };
+      return {
+        id: response.data?.uid ?? new Date().getTime().toString(),
+        date: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(
+        `Text.lk SMS send failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }
