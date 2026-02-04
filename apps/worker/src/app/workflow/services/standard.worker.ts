@@ -1,6 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   BullMqService,
+  FeatureFlagsService,
   getStandardWorkerOptions,
   IStandardDataDto,
   Job,
@@ -12,7 +13,7 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, JobRepository } from '@novu/dal';
-import { JobStatusEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, JobStatusEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   HandleLastFailedJob,
   HandleLastFailedJobCommand,
@@ -38,7 +39,8 @@ export class StandardWorker extends StandardWorkerService {
     @Inject(forwardRef(() => WorkflowInMemoryProviderService))
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private organizationRepository: CommunityOrganizationRepository,
-    private jobRepository: JobRepository
+    private jobRepository: JobRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 
@@ -93,10 +95,29 @@ export class StandardWorker extends StandardWorkerService {
     };
   }
 
+  private async isKillSwitchEnabled(data: IStandardDataDto): Promise<boolean> {
+    return this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
+      defaultValue: false,
+      organization: { _id: data._organizationId },
+      environment: { _id: data._environmentId },
+      component: 'worker',
+    });
+  }
+
   private getWorkerProcessor() {
     return async ({ data }: { data: IStandardDataDto }) => {
+      const isKillSwitchEnabled = await this.isKillSwitchEnabled(data);
+
+      if (isKillSwitchEnabled) {
+        Logger.log(`Kill switch enabled for organizationId ${data._organizationId}. Skipping job.`, LOG_CONTEXT);
+
+        return;
+      }
+
       if (data.skipProcessing) {
         Logger.log(`Skipping job ${data._id} - skipProcessing flag is set,`, LOG_CONTEXT);
+
         return;
       }
 
