@@ -1,9 +1,9 @@
-import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
-import { PropsWithChildren } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { buttonVariants } from '@/components/primitives/button';
 import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { ROUTES } from '@/utils/routes';
+import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
+import { PropsWithChildren } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type EEAuthProviderProps = PropsWithChildren;
 
@@ -11,13 +11,17 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   const navigate = useNavigate();
   const { children } = props;
 
-  if (EE_AUTH_PROVIDER === 'better-auth') {
-    // @ts-expect-error - Better Auth wrapper has different props via vite alias
+  // Check community self-hosted first to match build-time alias precedence in vite.config.ts
+  if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
+    // For community self-hosted, use the self-hosted ClerkProvider
+    // (which is aliased via Vite at build time to ./src/utils/self-hosted/index.tsx)
+    // @ts-expect-error - Self-hosted ClerkProvider has simpler props
     return <_ClerkProvider>{children}</_ClerkProvider>;
   }
 
-  if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
-    return <>{children}</>;
+  if (EE_AUTH_PROVIDER === 'better-auth') {
+    // @ts-expect-error - Better Auth wrapper has different props via vite alias
+    return <_ClerkProvider>{children}</_ClerkProvider>;
   }
 
   return (
