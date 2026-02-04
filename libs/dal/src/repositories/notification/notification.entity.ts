@@ -1,5 +1,5 @@
 import {
-  DeliveryLifecycleStatusEnum,
+  DeliveryLifecycleEventType,
   ISubscribersDefine,
   SeverityLevelEnum,
   StatelessControls,
@@ -59,7 +59,7 @@ export class NotificationEntity {
   severity?: SeverityLevelEnum;
   critical?: boolean;
   contextKeys?: string[];
-  lastEmittedDeliveryLifecycle?: DeliveryLifecycleStatusEnum;
+  lastEmittedDeliveryEvent?: DeliveryLifecycleEventType;
 }
 
 export type NotificationDBModel = ChangePropsValueType<

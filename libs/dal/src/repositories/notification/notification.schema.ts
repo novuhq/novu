@@ -1,4 +1,4 @@
-import { DeliveryLifecycleStatusEnum, SeverityLevelEnum } from '@novu/shared';
+import { SeverityLevelEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { NotificationDBModel } from './notification.entity';
@@ -70,9 +70,8 @@ const notificationSchema = new Schema<NotificationDBModel>(
       type: [Schema.Types.String],
       default: undefined,
     },
-    lastEmittedDeliveryLifecycle: {
+    lastEmittedDeliveryEvent: {
       type: Schema.Types.String,
-      enum: Object.values(DeliveryLifecycleStatusEnum),
     },
   },
   schemaOptions

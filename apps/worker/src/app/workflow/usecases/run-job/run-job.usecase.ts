@@ -751,10 +751,11 @@ export class RunJob {
   }
 
   /**
-   * Conditionally updates the delivery lifecycle only if there are no remaining action steps
-   * in the workflow. This optimization avoids unnecessary calculations for workflows that
-   * will complete quickly. Also skips updating if the current job itself is an action step.
-   * Additionally, skips execution if the current step is the last step in the workflow, because it will be updated as part of the workflow run finalization.
+   * Conditionally updates the delivery lifecycle only if there ARE remaining action steps
+   * (delay, digest, etc.) in the workflow. This ensures users get timely updates before
+   * long-running steps. Skips updating if the current job itself is an action step, or
+   * if there are no remaining action steps (next step will complete quickly anyway).
+   * Also skips if the current step is the last step in the workflow, because it will be updated as part of the workflow run finalization.
    */
   private async conditionallyUpdateDeliveryLifecycle(
     job: JobEntity,
@@ -799,11 +800,12 @@ export class RunJob {
 
     const hasActionSteps = await this.hasRemainingActionSteps(job, workflowWithSteps);
 
-    if (hasActionSteps) {
+    if (!hasActionSteps) {
       this.logger.trace(
         { nv: { jobId: job._id, stepId: job.step?._id } },
-        'Skipping delivery lifecycle update for step with action type'
+        'Skipping delivery lifecycle update - no remaining action steps (next step is quick)'
       );
+
       return;
     }
 

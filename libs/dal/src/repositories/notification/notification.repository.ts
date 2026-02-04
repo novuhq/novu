@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, DeliveryLifecycleStatusEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, DeliveryLifecycleEventType, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { subMonths, subWeeks } from 'date-fns';
 import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 
@@ -9,23 +9,23 @@ import { NotificationDBModel, NotificationEntity } from './notification.entity';
 import { NotificationFeedItemEntity } from './notification.feed.Item.entity';
 import { Notification } from './notification.schema';
 
-const DELIVERY_LIFECYCLE_ORDER: Record<DeliveryLifecycleStatusEnum, number> = {
-  [DeliveryLifecycleStatusEnum.PENDING]: 0,
-  [DeliveryLifecycleStatusEnum.SENT]: 1,
-  [DeliveryLifecycleStatusEnum.DELIVERED]: 2,
-  [DeliveryLifecycleStatusEnum.INTERACTED]: 3,
-  [DeliveryLifecycleStatusEnum.SKIPPED]: -1,
-  [DeliveryLifecycleStatusEnum.CANCELED]: -1,
-  [DeliveryLifecycleStatusEnum.ERRORED]: -1,
-  [DeliveryLifecycleStatusEnum.MERGED]: -1,
+const DELIVERY_LIFECYCLE_ORDER: Record<DeliveryLifecycleEventType, number> = {
+  workflow_run_delivery_pending: 0,
+  workflow_run_delivery_sent: 1,
+  workflow_run_delivery_delivered: 2,
+  workflow_run_delivery_interacted: 3,
+  workflow_run_delivery_skipped: -1,
+  workflow_run_delivery_canceled: -1,
+  workflow_run_delivery_errored: -1,
+  workflow_run_delivery_merged: -1,
 };
 
-const TERMINAL_STATUSES = [
-  DeliveryLifecycleStatusEnum.SKIPPED,
-  DeliveryLifecycleStatusEnum.CANCELED,
-  DeliveryLifecycleStatusEnum.ERRORED,
-  DeliveryLifecycleStatusEnum.MERGED,
-  DeliveryLifecycleStatusEnum.INTERACTED,
+const TERMINAL_EVENTS: DeliveryLifecycleEventType[] = [
+  'workflow_run_delivery_skipped',
+  'workflow_run_delivery_canceled',
+  'workflow_run_delivery_errored',
+  'workflow_run_delivery_merged',
+  'workflow_run_delivery_interacted',
 ];
 
 export class NotificationRepository extends BaseRepository<
@@ -367,35 +367,35 @@ export class NotificationRepository extends BaseRepository<
   }
 
   /**
-   * Atomically transitions a notification's delivery lifecycle status forward only.
+   * Atomically transitions a notification's delivery lifecycle event forward only.
    * Prevents backward transitions and returns whether the update succeeded.
    */
   async tryDeliveryLifecycleTransition(
     notificationId: string,
     organizationId: string,
     environmentId: string,
-    targetStatus: DeliveryLifecycleStatusEnum
-  ): Promise<{ isUpdated: boolean; previousStatus?: DeliveryLifecycleStatusEnum }> {
-    const targetOrder = DELIVERY_LIFECYCLE_ORDER[targetStatus];
-    const isTerminal = TERMINAL_STATUSES.includes(targetStatus);
+    targetEvent: DeliveryLifecycleEventType
+  ): Promise<{ isUpdated: boolean; previousEvent?: DeliveryLifecycleEventType }> {
+    const targetOrder = DELIVERY_LIFECYCLE_ORDER[targetEvent];
+    const isTerminal = TERMINAL_EVENTS.includes(targetEvent);
 
-    const progressionStatuses = Object.entries(DELIVERY_LIFECYCLE_ORDER)
+    const progressionEvents = Object.entries(DELIVERY_LIFECYCLE_ORDER)
       .filter(([, order]) => order >= 0 && order < targetOrder)
-      .map(([status]) => status as DeliveryLifecycleStatusEnum);
+      .map(([event]) => event as DeliveryLifecycleEventType);
 
     const condition: FilterQuery<NotificationDBModel> = isTerminal
       ? {
           $or: [
-            { lastEmittedDeliveryLifecycle: { $exists: false } },
-            { lastEmittedDeliveryLifecycle: null },
-            { lastEmittedDeliveryLifecycle: DeliveryLifecycleStatusEnum.PENDING },
+            { lastEmittedDeliveryEvent: { $exists: false } },
+            { lastEmittedDeliveryEvent: null },
+            { lastEmittedDeliveryEvent: 'workflow_run_delivery_pending' },
           ],
         }
       : {
           $or: [
-            { lastEmittedDeliveryLifecycle: { $exists: false } },
-            { lastEmittedDeliveryLifecycle: null },
-            { lastEmittedDeliveryLifecycle: { $in: progressionStatuses } },
+            { lastEmittedDeliveryEvent: { $exists: false } },
+            { lastEmittedDeliveryEvent: null },
+            { lastEmittedDeliveryEvent: { $in: progressionEvents } },
           ],
         };
 
@@ -406,13 +406,13 @@ export class NotificationRepository extends BaseRepository<
         _environmentId: environmentId,
         ...condition,
       },
-      { $set: { lastEmittedDeliveryLifecycle: targetStatus } },
+      { $set: { lastEmittedDeliveryEvent: targetEvent } },
       { returnDocument: 'before' }
     );
 
     return {
       isUpdated: result !== null,
-      previousStatus: result?.lastEmittedDeliveryLifecycle,
+      previousEvent: result?.lastEmittedDeliveryEvent as DeliveryLifecycleEventType | undefined,
     };
   }
 }

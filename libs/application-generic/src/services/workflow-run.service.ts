@@ -11,6 +11,7 @@ import {
 } from '@novu/dal';
 import {
   DeliveryLifecycleDetail,
+  DeliveryLifecycleEventType,
   DeliveryLifecycleStatusEnum,
   FeatureFlagsKeysEnum,
   SeverityLevelEnum,
@@ -25,6 +26,17 @@ import {
 } from './analytic-logs';
 import { LogRepository } from './analytic-logs/log.repository';
 import { FeatureFlagsService } from './feature-flags';
+
+const DELIVERY_STATUS_TO_EVENT: Record<DeliveryLifecycleStatusEnum, DeliveryLifecycleEventType> = {
+  [DeliveryLifecycleStatusEnum.PENDING]: 'workflow_run_delivery_pending',
+  [DeliveryLifecycleStatusEnum.SENT]: 'workflow_run_delivery_sent',
+  [DeliveryLifecycleStatusEnum.ERRORED]: 'workflow_run_delivery_errored',
+  [DeliveryLifecycleStatusEnum.SKIPPED]: 'workflow_run_delivery_skipped',
+  [DeliveryLifecycleStatusEnum.CANCELED]: 'workflow_run_delivery_canceled',
+  [DeliveryLifecycleStatusEnum.MERGED]: 'workflow_run_delivery_merged',
+  [DeliveryLifecycleStatusEnum.DELIVERED]: 'workflow_run_delivery_delivered',
+  [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_delivery_interacted',
+};
 
 export type WorkflowRunStatusEventType = Extract<EventType, `workflow_run_status_${string}`>;
 
@@ -507,17 +519,6 @@ export class WorkflowRunService {
         return;
       }
 
-      const deliveryLifecycleEventTypeMap: Record<DeliveryLifecycleStatusEnum, EventType> = {
-        [DeliveryLifecycleStatusEnum.PENDING]: 'workflow_run_delivery_pending',
-        [DeliveryLifecycleStatusEnum.SENT]: 'workflow_run_delivery_sent',
-        [DeliveryLifecycleStatusEnum.ERRORED]: 'workflow_run_delivery_errored',
-        [DeliveryLifecycleStatusEnum.SKIPPED]: 'workflow_run_delivery_skipped',
-        [DeliveryLifecycleStatusEnum.CANCELED]: 'workflow_run_delivery_canceled',
-        [DeliveryLifecycleStatusEnum.MERGED]: 'workflow_run_delivery_merged',
-        [DeliveryLifecycleStatusEnum.DELIVERED]: 'workflow_run_delivery_delivered',
-        [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_delivery_interacted',
-      };
-
       const traceData: WorkflowRunTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: notification._organizationId,
@@ -525,7 +526,7 @@ export class WorkflowRunService {
         user_id: '',
         external_subscriber_id: notification.to?.subscriberId || '',
         subscriber_id: notification._subscriberId,
-        event_type: deliveryLifecycleEventTypeMap[deliveryLifecycleStatus],
+        event_type: DELIVERY_STATUS_TO_EVENT[deliveryLifecycleStatus],
         title: `Workflow run ${deliveryLifecycleStatus}`,
         entity_id: notification._id,
         workflow_run_identifier: workflow.triggers?.[0]?.identifier || workflow.name.toLowerCase().replace(/\s+/g, '_'),
@@ -681,17 +682,6 @@ export class WorkflowRunService {
         return;
       }
 
-      const deliveryLifecycleEventTypeMap: Record<DeliveryLifecycleStatusEnum, EventType> = {
-        [DeliveryLifecycleStatusEnum.PENDING]: 'workflow_run_delivery_pending',
-        [DeliveryLifecycleStatusEnum.SENT]: 'workflow_run_delivery_sent',
-        [DeliveryLifecycleStatusEnum.ERRORED]: 'workflow_run_delivery_errored',
-        [DeliveryLifecycleStatusEnum.SKIPPED]: 'workflow_run_delivery_skipped',
-        [DeliveryLifecycleStatusEnum.CANCELED]: 'workflow_run_delivery_canceled',
-        [DeliveryLifecycleStatusEnum.MERGED]: 'workflow_run_delivery_merged',
-        [DeliveryLifecycleStatusEnum.DELIVERED]: 'workflow_run_delivery_delivered',
-        [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_delivery_interacted',
-      };
-
       const traceData: WorkflowRunTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: notification._organizationId,
@@ -699,7 +689,7 @@ export class WorkflowRunService {
         user_id: context.userId || '',
         external_subscriber_id: notification.to?.subscriberId || '',
         subscriber_id: notification._subscriberId,
-        event_type: deliveryLifecycleEventTypeMap[deliveryLifecycleStatus],
+        event_type: DELIVERY_STATUS_TO_EVENT[deliveryLifecycleStatus],
         title: `Workflow run ${deliveryLifecycleStatus}`,
         message: '',
         raw_data: '',
@@ -1067,19 +1057,20 @@ export class WorkflowRunService {
     environmentId: string;
     targetStatus: DeliveryLifecycleStatusEnum;
   }): Promise<void> {
+    const targetEvent = DELIVERY_STATUS_TO_EVENT[params.targetStatus];
     try {
       await this.notificationRepository.tryDeliveryLifecycleTransition(
         params.notificationId,
         params.organizationId,
         params.environmentId,
-        params.targetStatus
+        targetEvent
       );
     } catch (error) {
       this.logger.trace(
         {
           error: error instanceof Error ? error.message : 'Unknown error',
           notificationId: params.notificationId,
-          targetStatus: params.targetStatus,
+          targetEvent,
         },
         'Shadow seeding delivery lifecycle state failed'
       );
@@ -1099,7 +1090,7 @@ export class WorkflowRunService {
     if (params.isInAppChannel && params.targetStatus === DeliveryLifecycleStatusEnum.DELIVERED) {
       const sentResult = await this.tryNotificationDeliveryLifecycleTransition({
         ...params,
-        targetStatus: DeliveryLifecycleStatusEnum.SENT,
+        targetEvent: 'workflow_run_delivery_sent',
       });
 
       if (sentResult.isUpdated) {
@@ -1107,21 +1098,24 @@ export class WorkflowRunService {
         this.logger.debug(
           {
             notificationId: params.notificationId,
-            status: DeliveryLifecycleStatusEnum.SENT,
+            event: 'workflow_run_delivery_sent',
           },
           'Emitted synthetic SENT for in_app channel'
         );
       }
     }
 
-    const result = await this.tryNotificationDeliveryLifecycleTransition(params);
+    const result = await this.tryNotificationDeliveryLifecycleTransition({
+      ...params,
+      targetEvent: DELIVERY_STATUS_TO_EVENT[params.targetStatus],
+    });
     if (result.isUpdated) {
       emittedStatuses.push(params.targetStatus);
       this.logger.debug(
         {
           notificationId: params.notificationId,
-          status: params.targetStatus,
-          previousStatus: result.previousStatus,
+          event: DELIVERY_STATUS_TO_EVENT[params.targetStatus],
+          previousEvent: result.previousEvent,
         },
         'Delivery lifecycle transitioned'
       );
@@ -1129,10 +1123,10 @@ export class WorkflowRunService {
       this.logger.trace(
         {
           notificationId: params.notificationId,
-          targetStatus: params.targetStatus,
-          previousStatus: result.previousStatus,
+          targetEvent: DELIVERY_STATUS_TO_EVENT[params.targetStatus],
+          previousEvent: result.previousEvent,
         },
-        'Delivery lifecycle transition skipped - already at or past this status'
+        'Delivery lifecycle transition skipped - already at or past this event'
       );
     }
 
@@ -1146,21 +1140,21 @@ export class WorkflowRunService {
     notificationId: string;
     organizationId: string;
     environmentId: string;
-    targetStatus: DeliveryLifecycleStatusEnum;
-  }): Promise<{ isUpdated: boolean; previousStatus?: DeliveryLifecycleStatusEnum }> {
+    targetEvent: DeliveryLifecycleEventType;
+  }): Promise<{ isUpdated: boolean; previousEvent?: DeliveryLifecycleEventType }> {
     try {
       return await this.notificationRepository.tryDeliveryLifecycleTransition(
         params.notificationId,
         params.organizationId,
         params.environmentId,
-        params.targetStatus
+        params.targetEvent
       );
     } catch (error) {
       this.logger.error(
         {
           error: error instanceof Error ? error.message : 'Unknown error',
           notificationId: params.notificationId,
-          targetStatus: params.targetStatus,
+          targetEvent: params.targetEvent,
         },
         'Failed to transition delivery lifecycle'
       );
