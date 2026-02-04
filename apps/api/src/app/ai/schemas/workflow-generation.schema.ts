@@ -3,6 +3,12 @@ import { z } from 'zod';
 
 const severityValues = Object.values(SeverityLevelEnum) as [SeverityLevelEnum, ...SeverityLevelEnum[]];
 
+export const organizationMetaInputSchema = z.object({});
+
+export const organizationMetaOutputSchema = z.object({
+  channels: z.array(z.string()).describe('Available channels'),
+});
+
 export const workflowMetadataInputSchema = z.object({
   userRequest: z.string().describe('The user request that describes what workflow they want to create'),
 });
@@ -26,6 +32,11 @@ export const workflowMetadataOutputSchema = z.object({
   severity: z
     .enum(severityValues)
     .describe('Workflow severity: HIGH for critical alerts, MEDIUM for important, LOW for informational'),
+  critical: z
+    .boolean()
+    .describe(
+      'Whether the workflow is critical. Deliver messages regardless of user preferences e.g., account blocked, security issues'
+    ),
 });
 
 export const completeWorkflowInputSchema = z.object({

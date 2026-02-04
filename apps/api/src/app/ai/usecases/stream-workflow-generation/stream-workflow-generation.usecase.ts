@@ -1,9 +1,10 @@
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { Injectable } from '@nestjs/common';
 import { PinoLogger, ResourceValidatorService } from '@novu/application-generic';
-import { ResourceOriginEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { ChannelTypeEnum, ResourceOriginEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { convertToModelMessages, generateId, smoothStream } from 'ai';
 import { z } from 'zod';
+import { GetActiveIntegrations } from '../../../integrations/usecases/get-active-integration/get-active-integration.usecase';
 import { WorkflowResponseDto } from '../../../workflows-v2/dtos';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../workflows-v2/usecases/get-workflow';
 import {
@@ -31,7 +32,8 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
     private readonly upsertWorkflowUseCase: UpsertWorkflowUseCase,
     private readonly upsertChatUseCase: UpsertChatUseCase,
     private readonly getWorkflowUseCase: GetWorkflowUseCase,
-    private readonly resourceValidatorService: ResourceValidatorService
+    private readonly resourceValidatorService: ResourceValidatorService,
+    private readonly getActiveIntegrationsUsecase: GetActiveIntegrations
   ) {}
 
   async execute({ writer, command }: StreamGenerationContext): Promise<void> {
@@ -50,7 +52,13 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
     this.logger.info(`AI Streaming workflow generation for prompt: ${content.substring(0, 100)}...`);
 
     const draftState = new DraftWorkflowState();
-    const tools = createWorkflowGenerationTools({ writer, llmService: this.llmService, draftState });
+    const tools = createWorkflowGenerationTools({
+      command,
+      writer,
+      llmService: this.llmService,
+      draftState,
+      getActiveIntegrationsUsecase: this.getActiveIntegrationsUsecase,
+    });
 
     const result = this.llmService.streamAgent({
       systemPrompt: CREATE_WORKFLOW_AGENT_SYSTEM_PROMPT,
@@ -155,6 +163,35 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
       active: true,
       severity: metadata.severity,
       steps: [],
+      ...(metadata.critical
+        ? {
+            preferences: {
+              user: {
+                all: {
+                  enabled: true,
+                  readOnly: true,
+                },
+                channels: {
+                  [ChannelTypeEnum.IN_APP]: {
+                    enabled: true,
+                  },
+                  [ChannelTypeEnum.EMAIL]: {
+                    enabled: true,
+                  },
+                  [ChannelTypeEnum.SMS]: {
+                    enabled: true,
+                  },
+                  [ChannelTypeEnum.PUSH]: {
+                    enabled: true,
+                  },
+                  [ChannelTypeEnum.CHAT]: {
+                    enabled: true,
+                  },
+                },
+              },
+            },
+          }
+        : {}),
     };
 
     try {

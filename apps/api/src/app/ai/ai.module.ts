@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ResourceValidatorService } from '@novu/application-generic';
 import { AiChatRepository } from '@novu/dal';
+import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
 import { WorkflowModule } from '../workflows-v2/workflow.module';
 import { AiController } from './ai.controller';
@@ -25,7 +26,7 @@ const REPOSITORIES = [AiChatRepository];
 const SERVICES = [LlmService, AiAgentFactory];
 
 @Module({
-  imports: [SharedModule, WorkflowModule],
+  imports: [SharedModule, WorkflowModule, IntegrationModule],
   controllers: [AiController],
   providers: [...USE_CASES, ...SERVICES, ...REPOSITORIES],
   exports: [...USE_CASES, ...SERVICES],

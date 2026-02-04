@@ -8,6 +8,111 @@ const ThrottleTypeEnum = {
   DYNAMIC: 'dynamic',
 } as const;
 
+const aiJsonLogicVarSchema = z
+  .object({
+    var: z
+      .string()
+      .describe(
+        'Path to the variable value. Use "payload." prefix for trigger payload data (e.g., "payload.amount"), "subscriber." prefix for subscriber data (e.g., "subscriber.firstName")'
+      ),
+  })
+  .describe('Variable reference to access payload or subscriber data');
+
+const aiJsonLogicValueSchema = z.union([
+  z.string().describe('String literal value'),
+  z.number().describe('Numeric literal value'),
+  z.boolean().describe('Boolean literal value'),
+  z.null().describe('Null value'),
+  aiJsonLogicVarSchema,
+]);
+
+type JsonLogicCondition =
+  | { and: JsonLogicCondition[] }
+  | { or: JsonLogicCondition[] }
+  | { '!': JsonLogicCondition[] }
+  | { '==': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '!=': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '>': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '>=': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '<': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { '<=': z.infer<typeof aiJsonLogicValueSchema>[] }
+  | { in: unknown[] };
+
+const aiJsonLogicComparisonSchema = z.union([
+  z
+    .object({
+      '==': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values to compare for equality'),
+    })
+    .describe('Equality comparison'),
+  z
+    .object({
+      '!=': z
+        .array(aiJsonLogicValueSchema)
+        .min(2)
+        .max(2)
+        .describe('Array of exactly 2 values to compare for inequality'),
+    })
+    .describe('Inequality comparison'),
+  z
+    .object({
+      '>': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values: first > second'),
+    })
+    .describe('Greater than comparison'),
+  z
+    .object({
+      '>=': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values: first >= second'),
+    })
+    .describe('Greater than or equal comparison'),
+  z
+    .object({
+      '<': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values: first < second'),
+    })
+    .describe('Less than comparison'),
+  z
+    .object({
+      '<=': z.array(aiJsonLogicValueSchema).min(2).max(2).describe('Array of exactly 2 values: first <= second'),
+    })
+    .describe('Less than or equal comparison'),
+  z
+    .object({
+      in: z
+        .array(z.union([aiJsonLogicValueSchema, z.array(aiJsonLogicValueSchema)]))
+        .min(2)
+        .max(2)
+        .describe(
+          'Array of [value, array] - checks if first element exists in second element (which should be an array)'
+        ),
+    })
+    .describe('Check if value exists in array'),
+]);
+
+const aiJsonLogicConditionSchema: z.ZodType<JsonLogicCondition> = z.lazy(() =>
+  z.union([
+    z
+      .object({
+        and: z.array(aiJsonLogicConditionSchema).min(1).describe('Array of conditions that must ALL be true'),
+      })
+      .describe('Logical AND - all conditions must be true'),
+    z
+      .object({
+        or: z.array(aiJsonLogicConditionSchema).min(1).describe('Array of conditions where at least ONE must be true'),
+      })
+      .describe('Logical OR - at least one condition must be true'),
+    z
+      .object({
+        '!': z.array(aiJsonLogicConditionSchema).length(1).describe('Single condition to negate'),
+      })
+      .describe('Logical NOT - negates the condition'),
+    aiJsonLogicComparisonSchema,
+  ])
+);
+
+export const aiSkipConditionSchema = aiJsonLogicConditionSchema
+  .nullable()
+  .describe(
+    'JSONLogic filter conditions for conditionally skipping the step execution. When condition evaluates to true, the step will be SKIPPED. Use { var: "payload.field" } to access trigger payload data, { var: "subscriber.field" } for subscriber data. Example: { "==": [{ "var": "subscriber.isOnline" }, "false"] } skips the step when subscriber.isOnline equals "false" meaning the subscriber is offline'
+  );
+
 /**
  * AI-compatible control schemas for OpenAI structured outputs. Link: https://platform.openai.com/docs/guides/structured-outputs#supported-schemas
  * OpenAI's strict mode requires all properties to be in the 'required' array.
@@ -95,21 +200,42 @@ export const aiDelayControlSchema = z.discriminatedUnion('type', [
   aiDelayTimedControlSchema,
 ]);
 
-const aiDigestRegularControlSchema = z.object({
-  type: z
-    .literal(DigestTypeEnum.REGULAR)
-    .nullable()
-    .describe('Regular digest type, always use "regular" for AI generation'),
-  amount: z.number().min(1).describe('Amount of time for digest window'),
-  unit: z.nativeEnum(TimeUnitEnum).describe('Time unit for digest window'),
-  digestKey: z.string().nullable().describe('Key to group notifications for digest'),
-});
+const aiDigestRegularControlSchema = z
+  .object({
+    type: z
+      .literal(DigestTypeEnum.REGULAR)
+      .nullable()
+      .describe('Regular digest type, always use "regular" for AI generation'),
+    amount: z.number().min(1).describe('Amount of time for digest window'),
+    unit: z.nativeEnum(TimeUnitEnum).describe('Time unit for digest window'),
+    digestKey: z.string().nullable().describe('Key to group notifications for digest'),
+    lookBackWindow: z
+      .object({
+        amount: z.number().min(1).describe('Amount of time for look back window'),
+        unit: z.nativeEnum(TimeUnitEnum).describe('Time unit for look back window'),
+        extendToSchedule: z.boolean().nullable().describe('Extend the digest window to the schedule'),
+      })
+      .nullable()
+      .describe('Look back window for digest'),
+    extendToSchedule: z.boolean().nullable().describe('Extend the digest window to the schedule'),
+  })
+  .describe(
+    'Always groups events within the configured time window. A digest is created on the first event and delivered only when the window ends.'
+  );
 
-const aiDigestTimedControlSchema = z.object({
-  type: z.literal(DigestTypeEnum.TIMED).nullable().describe('Timed digest type, always use "timed" for AI generation'),
-  cron: z.string().min(1).describe('Cron expression for timed digest'),
-  digestKey: z.string().nullable().describe('Key to group notifications for digest'),
-});
+const aiDigestTimedControlSchema = z
+  .object({
+    type: z
+      .literal(DigestTypeEnum.TIMED)
+      .nullable()
+      .describe('Timed digest type, always use "timed" for AI generation'),
+    cron: z.string().min(1).describe('Cron expression for timed digest'),
+    digestKey: z.string().nullable().describe('Key to group notifications for digest'),
+    extendToSchedule: z.boolean().nullable().describe('Extend the digest window to the schedule'),
+  })
+  .describe(
+    'Collects events until a specific scheduled time (UTC). Once the scheduled time is reached, the workflow continues with all collected events.'
+  );
 
 export const aiDigestControlSchema = z.union([aiDigestRegularControlSchema, aiDigestTimedControlSchema]);
 
@@ -157,6 +283,7 @@ export const stepInputSchema = z.object({
   stepId: z.string().describe('Unique step identifier (lowercase, kebab-case, e.g., "welcome-email")'),
   name: z.string().min(1).max(100).describe('Human readable step name, never in kebab-case'),
   intent: z.string().describe('Brief description of what this step should accomplish'),
+  skip: aiSkipConditionSchema,
 });
 
 export const emailStepOutputSchema = z.object({

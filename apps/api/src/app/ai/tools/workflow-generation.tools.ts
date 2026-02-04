@@ -1,6 +1,8 @@
 import { AiWorkflowToolsEnum, StepTypeEnum } from '@novu/shared';
 import { generateId, tool, UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
+import { GetActiveIntegrationsCommand } from '../../integrations/usecases/get-active-integration/get-active-integration.command';
+import { GetActiveIntegrations } from '../../integrations/usecases/get-active-integration/get-active-integration.usecase';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { WorkflowResponseDto } from '../../workflows-v2/dtos';
 import { UpsertStepDataCommand } from '../../workflows-v2/usecases';
@@ -19,10 +21,13 @@ import {
 } from '../schemas/steps-control.schema';
 import {
   completeWorkflowInputSchema,
+  organizationMetaInputSchema,
+  organizationMetaOutputSchema,
   workflowMetadataInputSchema,
   workflowMetadataOutputSchema,
 } from '../schemas/workflow-generation.schema';
 import { LlmService } from '../services/llm.service';
+import { StreamGenerationCommand } from '../usecases';
 import { writeToolReasoningInChunks } from './utils';
 import {
   buildFullVariableSchema,
@@ -89,17 +94,37 @@ export class DraftWorkflowState {
 }
 
 export function createWorkflowGenerationTools({
+  command,
   writer,
   llmService,
   draftState,
+  getActiveIntegrationsUsecase,
 }: {
+  command: StreamGenerationCommand;
   writer: UIMessageStreamWriter;
   llmService: LlmService;
   draftState: DraftWorkflowState;
+  getActiveIntegrationsUsecase: GetActiveIntegrations;
 }) {
   return {
+    [AiWorkflowToolsEnum.RETRIEVE_ORGANIZATION_META]: tool({
+      description: `Retrieve the organization metadata like available channels, workflow examples. Call this FIRST to retrieve the organization metadata.`,
+      inputSchema: organizationMetaInputSchema,
+      outputSchema: organizationMetaOutputSchema,
+      execute: async (_: z.infer<typeof organizationMetaInputSchema>) => {
+        const activeIntegrations = await getActiveIntegrationsUsecase.execute(
+          GetActiveIntegrationsCommand.create({
+            environmentId: command.user.environmentId,
+            organizationId: command.user.organizationId,
+            userId: command.user._id,
+            returnCredentials: false,
+          })
+        );
+        return { success: true, channels: activeIntegrations.map((integration) => integration.channel) };
+      },
+    }),
     [AiWorkflowToolsEnum.SET_WORKFLOW_METADATA]: tool({
-      description: `Set the workflow metadata including name, description, tags, and severity. 
+      description: `Set the workflow metadata including name, description, tags, criticality, and severity. 
 Call this FIRST to establish the workflow foundation before adding any steps.
 Provide the user's original request so the content can be generated appropriately.`,
       inputSchema: workflowMetadataInputSchema,
@@ -158,6 +183,12 @@ The email content will be generated based on the intent.`,
         if (result.controlValues?.editorType === 'block') {
           result.controlValues.body = JSON.stringify(result.controlValues.body ?? {}) as any;
         }
+        if (input.skip) {
+          result.controlValues = {
+            ...result.controlValues,
+            skip: input.skip,
+          } as any;
+        }
 
         draftState.addStepAndExtractVariables(result);
 
@@ -186,6 +217,13 @@ The notification content will be generated based on the intent.`,
           temperature: 0,
         });
 
+        if (input.skip) {
+          result.controlValues = {
+            ...result.controlValues,
+            skip: input.skip,
+          } as any;
+        }
+
         draftState.addStepAndExtractVariables(result);
 
         return { success: true, ...result };
@@ -212,6 +250,13 @@ The SMS content will be generated based on the intent.`,
           schema: smsStepOutputSchema,
           temperature: 0,
         });
+
+        if (input.skip) {
+          result.controlValues = {
+            ...result.controlValues,
+            skip: input.skip,
+          } as any;
+        }
 
         draftState.addStepAndExtractVariables(result);
 
@@ -240,6 +285,13 @@ The push notification content will be generated based on the intent.`,
           temperature: 0,
         });
 
+        if (input.skip) {
+          result.controlValues = {
+            ...result.controlValues,
+            skip: input.skip,
+          } as any;
+        }
+
         draftState.addStepAndExtractVariables(result);
 
         return { success: true, ...result };
@@ -266,6 +318,13 @@ The chat message content will be generated based on the intent.`,
           schema: chatStepOutputSchema,
           temperature: 0,
         });
+
+        if (input.skip) {
+          result.controlValues = {
+            ...result.controlValues,
+            skip: input.skip,
+          } as any;
+        }
 
         draftState.addStepAndExtractVariables(result);
 
@@ -294,6 +353,13 @@ The digest configuration will be generated based on the intent.`,
           temperature: 0,
         });
 
+        if (input.skip) {
+          result.controlValues = {
+            ...result.controlValues,
+            skip: input.skip,
+          } as any;
+        }
+
         draftState.addStepAndExtractVariables(result);
 
         return { success: true, ...result };
@@ -321,6 +387,13 @@ The delay configuration will be generated based on the intent.`,
           temperature: 0,
         });
 
+        if (input.skip) {
+          result.controlValues = {
+            ...result.controlValues,
+            skip: input.skip,
+          } as any;
+        }
+
         draftState.addStepAndExtractVariables(result);
 
         return { success: true, ...result };
@@ -347,6 +420,13 @@ The throttle configuration will be generated based on the intent.`,
           schema: throttleStepOutputSchema,
           temperature: 0,
         });
+
+        if (input.skip) {
+          result.controlValues = {
+            ...result.controlValues,
+            skip: input.skip,
+          } as any;
+        }
 
         draftState.addStepAndExtractVariables(result);
 

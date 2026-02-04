@@ -2,22 +2,11 @@ import { z } from 'zod';
 import { stepInputSchema } from '../schemas/steps-control.schema';
 import { DraftWorkflowState } from '../tools';
 import { formatVariableSchemaForPrompt } from '../tools/variable-schema.utils';
-import {
-  GENERAL_CONTENT_GUIDELINES,
-  NO_ADDITIONAL_TEXT_OUTPUT_REQUIREMENTS,
-  NO_MARKDOWN_CODE_BLOCK_OUTPUT_REQUIREMENTS,
-  VALID_JSON_SCHEMA_OUTPUT_REQUIREMENTS,
-} from './general.prompt';
+import { getVariableSchemaPrompt } from './general.prompt';
 import { EXAMPLE_BLOCK_EDITOR_JSON } from './maily-blocks';
 
-// Step Critical Output Requirements
-export const STEP_CRITICAL_OUTPUT_REQUIREMENTS = `## CRITICAL OUTPUT FORMAT:
-${VALID_JSON_SCHEMA_OUTPUT_REQUIREMENTS}
-${NO_ADDITIONAL_TEXT_OUTPUT_REQUIREMENTS}
-${NO_MARKDOWN_CODE_BLOCK_OUTPUT_REQUIREMENTS}`;
-
 // Step Content Guidelines
-export const STEP_CONTENT_GUIDELINES = `${GENERAL_CONTENT_GUIDELINES}
+export const STEP_CONTENT_GUIDELINES = `## Step Content Guidelines:
 - Use appropriate formatting and styling only when it is necessary to improve the readability of the content
 - Align content with the workflow's purpose and the user's original request
 - Keep the content consistent with the other steps in the workflow
@@ -31,20 +20,18 @@ Best for: detailed content, formal communications, receipts, newsletters.
 ## Your task
 Generate the email step content. Choose either HTML or Block editor format.
 
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
 ${STEP_CONTENT_GUIDELINES}
 
 ## Schema Requirements (choose one editorType)
 
 ### Option 1: Block Editor Format (Recommended for simple email layouts)
-- ALWAYS return required properties: subject, editorType, body
+- Always return required properties: subject, editorType, body
 - subject: string - Email subject line.
 - editorType: "block"
 - body: object - Email body in Maily TipTap JSON format
 
 ### Option 2: HTML Format (Recommended for complex email layouts)
-- ALWAYS return required properties: subject, editorType, body
+- Always return required properties: subject, editorType, body
 - subject: string - Email subject line
 - editorType: "html"
 - body: string - Email body always in the HTML format. Use semantic HTML with inline styles. Structure with headings, paragraphs, and styled buttons.
@@ -137,17 +124,7 @@ Best for: real-time notifications within the app, high engagement, activity feed
 ## Your task
 Generate the in-app notification content.
 
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
 ${STEP_CONTENT_GUIDELINES}
-
-## Schema Requirements
-- subject: string | null - Notification title (required if body is null)
-- body: string | null - Notification message (required if subject is null)
-- avatar: string | null - Avatar image URL (set to null if not needed)
-- primaryAction: object | null - Main action button { label: string, redirect: { url: string, target: "_self" | "_blank" } | null }
-- secondaryAction: object | null - Secondary action (set to null if not needed)
-- redirect: object | null - Click redirect { url: string, target: "_self" | "_blank" } (set to null if not needed)
 
 ## Content Guidelines
 - Can be slightly longer than push notifications
@@ -165,12 +142,7 @@ Best for: urgent, time-sensitive alerts, verification codes.
 ## Your task
 Generate the SMS message content.
 
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
 ${STEP_CONTENT_GUIDELINES}
-
-## Schema Requirements
-- body: string (required) - SMS message text
 
 ## Content Guidelines
 - Keep messages under 160 characters to avoid splitting into multiple messages
@@ -192,13 +164,7 @@ Best for: mobile app engagement, re-engagement, time-sensitive updates.
 ## Your task
 Generate the push notification content.
 
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
 ${STEP_CONTENT_GUIDELINES}
-
-## Schema Requirements
-- subject: string (required) - Push notification title
-- body: string (required) - Push notification body
 
 ## Content Guidelines
 - Title should be under 50 characters (gets truncated on most devices)
@@ -221,12 +187,7 @@ Best for: team notifications, developer alerts, workspace updates.
 ## Your task
 Generate the chat message content for platforms like Slack or Discord.
 
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
 ${STEP_CONTENT_GUIDELINES}
-
-## Schema Requirements
-- body: string (required) - Chat message content
 
 ## Content Guidelines
 - Keep messages conversational and natural
@@ -248,13 +209,6 @@ Place BEFORE the channel steps it should delay.
 ## Your task
 Generate the delay step configuration.
 
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
-## Schema Requirements
-- type: "regular" (required) - Delay type
-- amount: number (required) - Number of time units to wait
-- unit: string (required) - One of: "seconds", "minutes", "hours", "days", "weeks", "months"
-
 ## Usage Guidelines
 - Use delays to space out multi-channel notifications
 - Common patterns:
@@ -268,17 +222,17 @@ Place BEFORE the channel steps it should affect.
 ## Your task
 Generate the digest step configuration.
 
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
-## Schema Requirements
-- type: "regular" | null - Digest type (set to null for default behavior)
-- amount: number (required) - Number of time units for the digest window
-- unit: string (required) - One of: "seconds", "minutes", "hours", "days", "weeks", "months"
-- digestKey: string | null - Key to group events (set to null to group all events together)
+## Available Digest Types
+- "regular" type is the default type and should be used with look back window
+  - With look back window configured: it creates a digest only if a recent message was sent. If no message was sent during the look-back window, the event is sent immediately and no digest is created.
+  - Without look back window configured: it always groups events within the configured time window. A digest is created on the first event and delivered only when the window ends.
+- "timed" type should be used with cron expression
+  - Collects events until a specific scheduled time (UTC). Once the scheduled time is reached, the workflow continues with all collected events.
 
 ## Usage Guidelines
 - Use digest to batch multiple events into a single notification
 - Common patterns:
+  - Pass first event immediately and then create a digest for the rest of the events.
   - Batch activity updates every hour
   - Daily digest of all notifications
   - Group by specific key (e.g., "payload.projectId") for per-project digests`,
@@ -288,16 +242,6 @@ Prevents over-notifying users by limiting how often they receive notifications.
 
 ## Your task
 Generate the throttle step configuration.
-
-${STEP_CRITICAL_OUTPUT_REQUIREMENTS}
-
-## Schema Requirements
-- type: "fixed" | "dynamic" - Throttle type (fixed for time-window based throttling)
-- amount: number (required for fixed) - Number of time units for throttle window
-- unit: string (required for fixed) - One of: "seconds", "minutes", "hours", "days", "weeks", "months"
-- threshold: number (required) - Maximum number of notifications allowed in the window
-- throttleKey: string (required for fixed) - Key to group throttle rules
-- dynamicKey: string (required for dynamic) - Key for dynamic grouping
 
 ## Usage Guidelines
 - Use throttle to prevent notification fatigue
@@ -313,19 +257,8 @@ export function buildStepSystemPrompt(basePrompt: string, draftState: DraftWorkf
 
   if (variableSchemaPrompt) {
     return `${basePrompt}
-## Available Variables Context
-IMPORTANT: When using variables, prefer reusing the existing variables listed below to maintain consistency across the workflow.
-- Only introduce new payload variables if they are truly needed for this step's specific content.
 
-### Variable Semantics
-IMPORTANT: Always use the variables in the appropriate context when the content is created.
-- workflow.*: Current workflow meta data like workflowId, name, description, tags, severity, etc.
-- subscriber.*: Subscriber's / recipient's personal information like first name, last name, email, phone, etc.
-- payload.*: Payload's data like action URL, product name, order number, etc.
-- steps.*: Steps's data like events, event count, in the digest step, etc.
-- context.*: Context is a user-defined data object that stores metadata (like tenant, region, or app details) to organize and personalize notifications.
-
-${variableSchemaPrompt}`;
+## ${getVariableSchemaPrompt(variableSchemaPrompt)}`;
   }
 
   return basePrompt;

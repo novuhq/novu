@@ -1,5 +1,4 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "jest.enable": false,
   "editor.defaultFormatter": "biomejs.biome",
@@ -39,5 +38,6 @@
   "vsicons.presets.nestjs": true,
   "biome.enabled": true,
   "biome.lsp.bin": "node_modules/.bin/biome",
-  "terminal.integrated.scrollback": 30000
+  "terminal.integrated.scrollback": 30000,
+  "typescript.tsdk": "./node_modules/typescript/lib"
 }

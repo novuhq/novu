@@ -15,6 +15,7 @@ export enum AiMessageRoleEnum {
 }
 
 export enum AiWorkflowToolsEnum {
+  RETRIEVE_ORGANIZATION_META = 'retrieveOrganizationMeta',
   SET_WORKFLOW_METADATA = 'setWorkflowMetadata',
   ADD_EMAIL_STEP = 'addEmailStep',
   ADD_IN_APP_STEP = 'addInAppStep',
@@ -28,6 +29,7 @@ export enum AiWorkflowToolsEnum {
 }
 
 export enum AiWorkflowToolsNameEnum {
+  RETRIEVE_ORGANIZATION_META = `tool-retrieveOrganizationMeta`,
   SET_WORKFLOW_METADATA = `tool-setWorkflowMetadata`,
   ADD_EMAIL_STEP = 'tool-addEmailStep',
   ADD_IN_APP_STEP = 'tool-addInAppStep',
