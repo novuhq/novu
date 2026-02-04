@@ -75,6 +75,7 @@ export class EventsController {
       defaultValue: false,
       organization: { _id: user.organizationId },
       environment: { _id: user.environmentId },
+      component: 'trigger',
     });
 
     if (isKillSwitchEnabled) {

@@ -101,6 +101,7 @@ export class StandardWorker extends StandardWorkerService {
       defaultValue: false,
       organization: { _id: data._organizationId },
       environment: { _id: data._environmentId },
+      component: 'worker',
     });
   }
 

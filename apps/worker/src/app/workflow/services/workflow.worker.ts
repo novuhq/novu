@@ -42,6 +42,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
       defaultValue: false,
       organization: { _id: data.organizationId },
       environment: { _id: data.environmentId },
+      component: 'worker',
     });
   }
 

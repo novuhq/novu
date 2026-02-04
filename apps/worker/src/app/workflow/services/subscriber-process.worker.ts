@@ -38,6 +38,7 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
       defaultValue: false,
       organization: { _id: data.organizationId },
       environment: { _id: data.environmentId },
+      component: 'worker',
     });
   }
 
