@@ -48,7 +48,7 @@ export type NotificationForTrace = {
   contextKeys?: string[];
 };
 
-export type TemplateForTrace = {
+export type WorkflowForTrace = {
   name: string;
   triggers?: Array<{ identifier?: string }>;
 };
@@ -167,7 +167,7 @@ export class WorkflowRunService {
       });
 
       let notification: NotificationForTrace | null | undefined = passedNotification;
-      let template: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | null | undefined;
+      let workflow: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | null | undefined;
 
       if (isUpdated) {
         notification =
@@ -198,7 +198,7 @@ export class WorkflowRunService {
             }
           ));
 
-        template = notification
+        workflow = notification
           ? await this.notificationTemplateRepository.findOne(
               {
                 _id: notification._templateId,
@@ -221,7 +221,7 @@ export class WorkflowRunService {
           },
           deliveryLifecycleStatus,
           deliveryLifecycleDetail,
-          { notification: notification as never, template }
+          { notification: notification as never, workflow }
         );
 
         for (const emittedStatus of emittedStatuses) {
@@ -231,7 +231,7 @@ export class WorkflowRunService {
             { organizationId, environmentId },
             emittedStatus === deliveryLifecycleStatus ? deliveryLifecycleDetail : undefined,
             notification,
-            template
+            workflow
           );
         }
 
@@ -272,7 +272,7 @@ export class WorkflowRunService {
           statusToEmit,
           { organizationId, environmentId },
           notification,
-          template
+          workflow
         );
       }
     } catch (error) {
@@ -386,7 +386,7 @@ export class WorkflowRunService {
             },
             DeliveryLifecycleStatusEnum.SENT,
             undefined,
-            { notification: notification as never, template }
+            { notification: notification as never, workflow: template }
           );
 
           await this.createWorkflowRunTraceUpdate(
@@ -417,7 +417,7 @@ export class WorkflowRunService {
         },
         deliveryLifecycleStatus,
         deliveryLifecycleDetail,
-        { notification: notification as never, template }
+        { notification: notification as never, workflow: template }
       );
 
       if (shouldTrace) {
@@ -454,7 +454,7 @@ export class WorkflowRunService {
         organizationId,
         environmentId,
         targetStatus: deliveryLifecycleStatus,
-      }).catch(() => {});
+      });
 
       this.logger.debug(
         {
@@ -511,7 +511,7 @@ export class WorkflowRunService {
     environmentId: string,
     deliveryLifecycleStatus: DeliveryLifecycleStatusEnum,
     passedNotification?: NotificationForTrace | null,
-    passedTemplate?: TemplateForTrace | null
+    passedWorkflow?: WorkflowForTrace | null
   ): Promise<void> {
     try {
       const isTracesWriteEnabled = await this.featureFlagsService.getFlag({
@@ -559,7 +559,7 @@ export class WorkflowRunService {
       }
 
       const template =
-        passedTemplate ??
+        passedWorkflow ??
         (await this.notificationTemplateRepository.findOne(
           {
             _id: notification._templateId,
@@ -635,7 +635,7 @@ export class WorkflowRunService {
     status: WorkflowRunStatusEventType,
     context: { organizationId: string; environmentId: string; userId?: string },
     passedNotification?: NotificationForTrace | null,
-    passedTemplate?: TemplateForTrace | null
+    passedWorkflow?: WorkflowForTrace | null
   ): Promise<void> {
     try {
       const isTracesWriteEnabled = await this.featureFlagsService.getFlag({
@@ -683,7 +683,7 @@ export class WorkflowRunService {
       }
 
       const template =
-        passedTemplate ??
+        passedWorkflow ??
         (await this.notificationTemplateRepository.findOne(
           {
             _id: notification._templateId,
@@ -761,7 +761,7 @@ export class WorkflowRunService {
     context: { organizationId: string; environmentId: string; userId?: string },
     deliveryLifecycleDetail?: DeliveryLifecycleDetail,
     passedNotification?: NotificationForTrace | null,
-    passedTemplate?: TemplateForTrace | null
+    passedWorkflow?: WorkflowForTrace | null
   ): Promise<void> {
     try {
       const isTracesWriteEnabled = await this.featureFlagsService.getFlag({
@@ -809,7 +809,7 @@ export class WorkflowRunService {
       }
 
       const template =
-        passedTemplate ??
+        passedWorkflow ??
         (await this.notificationTemplateRepository.findOne(
           {
             _id: notification._templateId,

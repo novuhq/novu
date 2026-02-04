@@ -196,7 +196,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     deliveryLifecycleDetail?: DeliveryLifecycleDetail,
     prefetchedData?: {
       notification?: QueryNotificationEntity | null;
-      template?: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | null;
+      workflow?: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | null;
     }
   ): Promise<void> {
     try {
@@ -254,7 +254,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       }
 
       const workflow =
-        prefetchedData?.template ??
+        prefetchedData?.workflow ??
         (await this.notificationTemplateRepository.findOne(
           {
             _id: notification._templateId,
