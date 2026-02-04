@@ -250,6 +250,43 @@ export class WorkflowRunService {
         return;
       }
 
+      const isInAppChannel = currentJob?.type === 'in_app';
+
+      // Handle in-app transition: SENT -> DELIVERED
+      if (isInAppChannel && deliveryLifecycleStatus === DeliveryLifecycleStatusEnum.DELIVERED) {
+        // First, try to create SENT trace
+        const shouldTraceSent = this.shouldCreateTrace(
+          DeliveryLifecycleStatusEnum.SENT,
+          jobs,
+          messages,
+          isWorkflowComplete,
+          currentJob
+        );
+
+        if (shouldTraceSent) {
+          await this.workflowRunRepository.updateWorkflowRunState(
+            notificationId,
+            workflowStatus,
+            {
+              organizationId,
+              environmentId,
+            },
+            DeliveryLifecycleStatusEnum.SENT,
+            undefined
+          );
+
+          await this.createWorkflowRunTraceUpdate(
+            notificationId,
+            workflowStatus,
+            organizationId,
+            environmentId,
+            DeliveryLifecycleStatusEnum.SENT,
+            undefined,
+            notification
+          );
+        }
+      }
+
       const shouldTrace = this.shouldCreateTrace(
         deliveryLifecycleStatus,
         jobs,
@@ -708,7 +745,11 @@ export class WorkflowRunService {
           return false;
         }
 
-        return completedWithMessage.some((job) => job._id === currentJob._id);
+        // Only create trace if this is the first job completing with a message
+        // This prevents duplicate SENT traces in workflows like email -> email
+        const isCurrentJobInCompleted = completedWithMessage.some((job) => job._id === currentJob._id);
+
+        return isCurrentJobInCompleted && completedWithMessage.length === 1;
       }
       case DeliveryLifecycleStatusEnum.DELIVERED: {
         const deliveredMessages = messages.filter((m) => !!m.deliveredAt);
