@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import { TextLkSmsProvider } from './textlk.provider';
 
-// Mock axios so we don't actually send SMS during tests
 const mockPost = vi.fn();
 
 vi.mock('axios', () => ({
@@ -24,20 +23,18 @@ describe('TextLkSmsProvider', () => {
       apiKey: 'test-api-key',
     });
 
-    await provider.sendMessage({
+    const result = await provider.sendMessage({
       to: '+94771234567',
       content: 'Hello World',
+      from: 'MyCompany'
     });
 
-    // Check if axios.post was called
     expect(mockPost).toHaveBeenCalled();
-    
-    // Check if called with the right URL and Payload
     expect(mockPost).toHaveBeenCalledWith(
       'https://app.text.lk/api/v3/sms/send',
       {
         recipient: '+94771234567',
-        sender_id: 'Text.lk',
+        sender_id: 'MyCompany',
         type: 'plain',
         message: 'Hello World',
       },
@@ -49,5 +46,10 @@ describe('TextLkSmsProvider', () => {
         },
       }
     );
+
+    expect(result).toEqual({
+      id: 'mock-uid-123',
+      date: expect.any(String),
+    });
   });
 });

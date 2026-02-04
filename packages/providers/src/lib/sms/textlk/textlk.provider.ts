@@ -20,10 +20,10 @@ export class TextLkSmsProvider implements ISmsProvider {
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
     const BASE_URL = 'https://app.text.lk/api/v3/sms/send';
-    
+
     const payload = {
       recipient: options.to,
-      sender_id: 'Text.lk', // Default sender. This can be made configurable later if requested.
+      sender_id: options.from || 'Text.lk',
       type: 'plain',
       message: options.content,
     };
