@@ -92,6 +92,30 @@ const messageResultProjection: ProjectionFromPick<MessageResult> = {
   _jobId: 1,
 };
 
+const notificationProjection = {
+  _id: 1,
+  _templateId: 1,
+  _organizationId: 1,
+  _environmentId: 1,
+  _subscriberId: 1,
+  transactionId: 1,
+  channels: 1,
+  to: 1,
+  payload: 1,
+  controls: 1,
+  topics: 1,
+  _digestedNotificationId: 1,
+  createdAt: 1,
+  severity: 1,
+  critical: 1,
+  contextKeys: 1,
+} as const;
+
+const workflowProjection = {
+  name: 1,
+  triggers: 1,
+} as const;
+
 @Injectable()
 export class WorkflowRunService {
   constructor(
@@ -166,51 +190,19 @@ export class WorkflowRunService {
         isInAppChannel,
       });
 
-      let notification: NotificationForTrace | null | undefined = passedNotification;
-      let workflow: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | null | undefined;
+      let notification: NotificationForTrace | null = passedNotification ?? null;
+      let workflow: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | null = null;
 
       if (isUpdated) {
-        notification =
-          passedNotification ??
-          (await this.notificationRepository.findOne(
-            {
-              _id: notificationId,
-              _organizationId: organizationId,
-              _environmentId: environmentId,
-            },
-            {
-              _id: 1,
-              _templateId: 1,
-              _organizationId: 1,
-              _environmentId: 1,
-              _subscriberId: 1,
-              transactionId: 1,
-              channels: 1,
-              to: 1,
-              payload: 1,
-              controls: 1,
-              topics: 1,
-              _digestedNotificationId: 1,
-              createdAt: 1,
-              severity: 1,
-              critical: 1,
-              contextKeys: 1,
-            }
-          ));
-
-        workflow = notification
-          ? await this.notificationTemplateRepository.findOne(
-              {
-                _id: notification._templateId,
-                _environmentId: environmentId,
-              },
-              {
-                name: 1,
-                triggers: 1,
-              },
-              { readPreference: 'secondaryPreferred' }
-            )
-          : null;
+        const result = await this.getNotificationAndWorkflow(
+          notificationId,
+          organizationId,
+          environmentId,
+          passedNotification,
+          null
+        );
+        notification = result.notification;
+        workflow = result.workflow;
 
         await this.workflowRunRepository.updateWorkflowRunState(
           notificationId,
@@ -263,6 +255,18 @@ export class WorkflowRunService {
         workflowStatus === WorkflowRunStatusEnum.ERROR ||
         workflowStatus === WorkflowRunStatusEnum.SUCCESS
       ) {
+        if (!notification || !workflow) {
+          const result = await this.getNotificationAndWorkflow(
+            notificationId,
+            organizationId,
+            environmentId,
+            notification,
+            workflow
+          );
+          notification = result.notification;
+          workflow = result.workflow;
+        }
+
         const statusToEmit =
           workflowStatus === WorkflowRunStatusEnum.COMPLETED || workflowStatus === WorkflowRunStatusEnum.SUCCESS
             ? ('workflow_run_status_completed' as const)
@@ -323,47 +327,13 @@ export class WorkflowRunService {
 
       const isInAppChannel = currentJob?.type === 'in_app';
 
-      const notification =
-        passedNotification ??
-        (await this.notificationRepository.findOne(
-          {
-            _id: notificationId,
-            _organizationId: organizationId,
-            _environmentId: environmentId,
-          },
-          {
-            _id: 1,
-            _templateId: 1,
-            _organizationId: 1,
-            _environmentId: 1,
-            _subscriberId: 1,
-            transactionId: 1,
-            channels: 1,
-            to: 1,
-            payload: 1,
-            controls: 1,
-            topics: 1,
-            _digestedNotificationId: 1,
-            createdAt: 1,
-            severity: 1,
-            critical: 1,
-            contextKeys: 1,
-          }
-        ));
-
-      const template = notification
-        ? await this.notificationTemplateRepository.findOne(
-            {
-              _id: notification._templateId,
-              _environmentId: environmentId,
-            },
-            {
-              name: 1,
-              triggers: 1,
-            },
-            { readPreference: 'secondaryPreferred' }
-          )
-        : null;
+      const { notification, workflow } = await this.getNotificationAndWorkflow(
+        notificationId,
+        organizationId,
+        environmentId,
+        passedNotification,
+        null
+      );
 
       // Handle in-app transition: SENT -> DELIVERED
       if (isInAppChannel && deliveryLifecycleStatus === DeliveryLifecycleStatusEnum.DELIVERED) {
@@ -386,7 +356,7 @@ export class WorkflowRunService {
             },
             DeliveryLifecycleStatusEnum.SENT,
             undefined,
-            { notification: notification as never, workflow: template }
+            { notification: notification as never, workflow }
           );
 
           await this.createWorkflowRunTraceUpdate(
@@ -395,7 +365,7 @@ export class WorkflowRunService {
             environmentId,
             DeliveryLifecycleStatusEnum.SENT,
             notification,
-            template
+            workflow
           );
         }
       }
@@ -417,7 +387,7 @@ export class WorkflowRunService {
         },
         deliveryLifecycleStatus,
         deliveryLifecycleDetail,
-        { notification: notification as never, workflow: template }
+        { notification: notification as never, workflow }
       );
 
       if (shouldTrace) {
@@ -427,7 +397,7 @@ export class WorkflowRunService {
           environmentId,
           deliveryLifecycleStatus,
           notification,
-          template
+          workflow
         );
       }
 
@@ -445,7 +415,7 @@ export class WorkflowRunService {
           statusToEmit,
           { organizationId, environmentId },
           notification,
-          template
+          workflow
         );
       }
 
@@ -526,53 +496,15 @@ export class WorkflowRunService {
         return;
       }
 
-      const notification =
-        passedNotification ??
-        (await this.notificationRepository.findOne(
-          {
-            _id: notificationId,
-            _organizationId: organizationId,
-            _environmentId: environmentId,
-          },
-          {
-            _id: 1,
-            _templateId: 1,
-            _organizationId: 1,
-            _environmentId: 1,
-            _subscriberId: 1,
-            transactionId: 1,
-            channels: 1,
-            to: 1,
-            payload: 1,
-            controls: 1,
-            topics: 1,
-            _digestedNotificationId: 1,
-            createdAt: 1,
-            severity: 1,
-            critical: 1,
-            contextKeys: 1,
-          }
-        ));
+      const { notification, workflow } = await this.getNotificationAndWorkflow(
+        notificationId,
+        organizationId,
+        environmentId,
+        passedNotification,
+        passedWorkflow
+      );
 
-      if (!notification) {
-        return;
-      }
-
-      const template =
-        passedWorkflow ??
-        (await this.notificationTemplateRepository.findOne(
-          {
-            _id: notification._templateId,
-            _environmentId: environmentId,
-          },
-          {
-            name: 1,
-            triggers: 1,
-          },
-          { readPreference: 'secondaryPreferred' }
-        ));
-
-      if (!template) {
+      if (!notification || !workflow) {
         return;
       }
 
@@ -597,9 +529,9 @@ export class WorkflowRunService {
         event_type: deliveryLifecycleEventTypeMap[deliveryLifecycleStatus],
         title: `Workflow run ${deliveryLifecycleStatus}`,
         entity_id: notification._id,
-        workflow_run_identifier: template.triggers?.[0]?.identifier || template.name.toLowerCase().replace(/\s+/g, '_'),
+        workflow_run_identifier: workflow.triggers?.[0]?.identifier || workflow.name.toLowerCase().replace(/\s+/g, '_'),
         workflow_id: notification._templateId,
-        workflow_name: template.name,
+        workflow_name: workflow.name,
         transaction_id: notification.transactionId,
         channels: JSON.stringify(notification.channels || []),
         subscriber_to: notification.to ? JSON.stringify(notification.to) : '',
@@ -650,53 +582,15 @@ export class WorkflowRunService {
         return;
       }
 
-      const notification =
-        passedNotification ??
-        (await this.notificationRepository.findOne(
-          {
-            _id: notificationId,
-            _organizationId: context.organizationId,
-            _environmentId: context.environmentId,
-          },
-          {
-            _id: 1,
-            _templateId: 1,
-            _organizationId: 1,
-            _environmentId: 1,
-            _subscriberId: 1,
-            transactionId: 1,
-            channels: 1,
-            to: 1,
-            payload: 1,
-            controls: 1,
-            topics: 1,
-            _digestedNotificationId: 1,
-            createdAt: 1,
-            severity: 1,
-            critical: 1,
-            contextKeys: 1,
-          }
-        ));
+      const { notification, workflow } = await this.getNotificationAndWorkflow(
+        notificationId,
+        context.organizationId,
+        context.environmentId,
+        passedNotification,
+        passedWorkflow
+      );
 
-      if (!notification) {
-        return;
-      }
-
-      const template =
-        passedWorkflow ??
-        (await this.notificationTemplateRepository.findOne(
-          {
-            _id: notification._templateId,
-            _environmentId: context.environmentId,
-          },
-          {
-            name: 1,
-            triggers: 1,
-          },
-          { readPreference: 'secondaryPreferred' }
-        ));
-
-      if (!template) {
+      if (!notification || !workflow) {
         return;
       }
 
@@ -710,9 +604,9 @@ export class WorkflowRunService {
         event_type: status,
         title: `Workflow run ${status.replace('workflow_run_status_', '')}`,
         entity_id: notification._id,
-        workflow_run_identifier: template.triggers?.[0]?.identifier || template.name.toLowerCase().replace(/\s+/g, '_'),
+        workflow_run_identifier: workflow.triggers?.[0]?.identifier || workflow.name.toLowerCase().replace(/\s+/g, '_'),
         workflow_id: notification._templateId,
-        workflow_name: template.name,
+        workflow_name: workflow.name,
         transaction_id: notification.transactionId,
         channels: JSON.stringify(notification.channels || []),
         subscriber_to: notification.to ? JSON.stringify(notification.to) : '',
@@ -776,53 +670,15 @@ export class WorkflowRunService {
         return;
       }
 
-      const notification =
-        passedNotification ??
-        (await this.notificationRepository.findOne(
-          {
-            _id: notificationId,
-            _organizationId: context.organizationId,
-            _environmentId: context.environmentId,
-          },
-          {
-            _id: 1,
-            _templateId: 1,
-            _organizationId: 1,
-            _environmentId: 1,
-            _subscriberId: 1,
-            transactionId: 1,
-            channels: 1,
-            to: 1,
-            payload: 1,
-            controls: 1,
-            topics: 1,
-            _digestedNotificationId: 1,
-            createdAt: 1,
-            severity: 1,
-            critical: 1,
-            contextKeys: 1,
-          }
-        ));
+      const { notification, workflow } = await this.getNotificationAndWorkflow(
+        notificationId,
+        context.organizationId,
+        context.environmentId,
+        passedNotification,
+        passedWorkflow
+      );
 
-      if (!notification) {
-        return;
-      }
-
-      const template =
-        passedWorkflow ??
-        (await this.notificationTemplateRepository.findOne(
-          {
-            _id: notification._templateId,
-            _environmentId: context.environmentId,
-          },
-          {
-            name: 1,
-            triggers: 1,
-          },
-          { readPreference: 'secondaryPreferred' }
-        ));
-
-      if (!template) {
+      if (!notification || !workflow) {
         return;
       }
 
@@ -850,10 +706,10 @@ export class WorkflowRunService {
         raw_data: '',
         status: '',
         entity_id: notification._id,
-        workflow_run_identifier: template.triggers?.[0]?.identifier || template.name.toLowerCase().replace(/\s+/g, '_'),
+        workflow_run_identifier: workflow.triggers?.[0]?.identifier || workflow.name.toLowerCase().replace(/\s+/g, '_'),
         workflow_id: notification._templateId,
         provider_id: '',
-        workflow_name: template.name,
+        workflow_name: workflow.name,
         transaction_id: notification.transactionId,
         channels: JSON.stringify(notification.channels || []),
         subscriber_to: notification.to ? JSON.stringify(notification.to) : '',
@@ -937,6 +793,45 @@ export class WorkflowRunService {
     );
 
     return messages;
+  }
+
+  private async getNotificationAndWorkflow(
+    notificationId: string,
+    organizationId: string,
+    environmentId: string,
+    passedNotification?: NotificationForTrace | null,
+    passedWorkflow?: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | WorkflowForTrace | null
+  ): Promise<{
+    notification: NotificationForTrace | null;
+    workflow: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | null;
+  }> {
+    const notification =
+      passedNotification ??
+      (await this.notificationRepository.findOne(
+        {
+          _id: notificationId,
+          _organizationId: organizationId,
+          _environmentId: environmentId,
+        },
+        notificationProjection
+      ));
+
+    if (!notification) {
+      return { notification: null, workflow: null };
+    }
+
+    const workflow =
+      (passedWorkflow as Pick<NotificationTemplateEntity, 'name' | 'triggers'>) ??
+      (await this.notificationTemplateRepository.findOne(
+        {
+          _id: notification._templateId,
+          _environmentId: environmentId,
+        },
+        workflowProjection,
+        { readPreference: 'secondaryPreferred' }
+      ));
+
+    return { notification, workflow };
   }
 
   /**
