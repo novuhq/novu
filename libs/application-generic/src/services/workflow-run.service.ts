@@ -1098,8 +1098,9 @@ export class WorkflowRunService {
   }): Promise<{ emittedStatuses: DeliveryLifecycleStatusEnum[]; isUpdated: boolean }> {
     const emittedStatuses: DeliveryLifecycleStatusEnum[] = [];
 
+    // produce synthetic SENT for in_app channel when DELIVERED is reached
     if (params.isInAppChannel && params.targetStatus === DeliveryLifecycleStatusEnum.DELIVERED) {
-      const sentResult = await this.tryDeliveryLifecycleTransition({
+      const sentResult = await this.tryNotificationDeliveryLifecycleTransition({
         ...params,
         targetStatus: DeliveryLifecycleStatusEnum.SENT,
       });
@@ -1116,7 +1117,7 @@ export class WorkflowRunService {
       }
     }
 
-    const result = await this.tryDeliveryLifecycleTransition(params);
+    const result = await this.tryNotificationDeliveryLifecycleTransition(params);
     if (result.isUpdated) {
       emittedStatuses.push(params.targetStatus);
       this.logger.debug(
@@ -1144,7 +1145,7 @@ export class WorkflowRunService {
     };
   }
 
-  private async tryDeliveryLifecycleTransition(params: {
+  private async tryNotificationDeliveryLifecycleTransition(params: {
     notificationId: string;
     organizationId: string;
     environmentId: string;
