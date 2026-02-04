@@ -751,11 +751,17 @@ export class RunJob {
   }
 
   /**
-   * Conditionally updates the delivery lifecycle only if there ARE remaining action steps
-   * (delay, digest, etc.) in the workflow. This ensures users get timely updates before
-   * long-running steps. Skips updating if the current job itself is an action step, or
-   * if there are no remaining action steps (next step will complete quickly anyway).
-   * Also skips if the current step is the last step in the workflow, because it will be updated as part of the workflow run finalization.
+   * Conditionally updates the delivery lifecycle based on workflow state and feature flags.
+   *
+   * When IS_DELIVERY_LIFECYCLE_TRANSITION_ENABLED is ON:
+   * - Optimizes by skipping updates when there are no remaining action steps (delay, digest, etc.)
+   * - Also skips for the last step since finalization handles it via state machine transitions
+   * - The transition-based approach correctly handles "all at once" finalization scenarios
+   *
+   * When IS_DELIVERY_LIFECYCLE_TRANSITION_ENABLED is OFF:
+   * - Always calls updateDeliveryLifecycle for channel steps
+   * - The legacy shouldCreateTrace logic requires incremental calls to work correctly
+   *   (it checks for length === 1 to prevent duplicates)
    */
   private async conditionallyUpdateDeliveryLifecycle(
     job: JobEntity,
@@ -775,38 +781,48 @@ export class RunJob {
       return;
     }
 
-    const workflowWithSteps: SelectedWorkflowFields | null =
-      workflow ??
-      (await this.notificationTemplateRepository.findOne(
-        {
-          _id: job._templateId,
-          _environmentId: job._environmentId,
-        },
-        SELECTED_WORKFLOW_FIELDS_PROJECTION
-      ));
+    const isTransitionEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_DELIVERY_LIFECYCLE_TRANSITION_ENABLED,
+      organization: { _id: job._organizationId },
+      environment: { _id: job._environmentId },
+      defaultValue: false,
+    });
 
-    if (!workflowWithSteps || !workflowWithSteps.steps) {
-      return;
-    }
+    if (isTransitionEnabled) {
+      const workflowWithSteps: SelectedWorkflowFields | null =
+        workflow ??
+        (await this.notificationTemplateRepository.findOne(
+          {
+            _id: job._templateId,
+            _environmentId: job._environmentId,
+          },
+          SELECTED_WORKFLOW_FIELDS_PROJECTION
+        ));
 
-    const isLastStep = await this.isLastStepInWorkflow(job, workflowWithSteps);
-    if (isLastStep) {
-      this.logger.trace(
-        { nv: { jobId: job._id, stepId: job.step?._id } },
-        'Skipping delivery lifecycle update for last step in workflow'
-      );
-      return;
-    }
+      if (!workflowWithSteps || !workflowWithSteps.steps) {
+        return;
+      }
 
-    const hasActionSteps = await this.hasRemainingActionSteps(job, workflowWithSteps);
+      const isLastStep = await this.isLastStepInWorkflow(job, workflowWithSteps);
+      if (isLastStep) {
+        this.logger.trace(
+          { nv: { jobId: job._id, stepId: job.step?._id } },
+          'Skipping delivery lifecycle update for last step in workflow (transition enabled)'
+        );
 
-    if (!hasActionSteps) {
-      this.logger.trace(
-        { nv: { jobId: job._id, stepId: job.step?._id } },
-        'Skipping delivery lifecycle update - no remaining action steps (next step is quick)'
-      );
+        return;
+      }
 
-      return;
+      const hasActionSteps = await this.hasRemainingActionSteps(job, workflowWithSteps);
+
+      if (!hasActionSteps) {
+        this.logger.trace(
+          { nv: { jobId: job._id, stepId: job.step?._id } },
+          'Skipping delivery lifecycle update - no remaining action steps (transition enabled)'
+        );
+
+        return;
+      }
     }
 
     await this.workflowRunService.updateDeliveryLifecycle({
