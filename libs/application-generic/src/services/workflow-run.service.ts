@@ -6,6 +6,7 @@ import {
   MessageEntity,
   MessageRepository,
   NotificationRepository,
+  NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
 import {
@@ -26,6 +27,8 @@ import { LogRepository } from './analytic-logs/log.repository';
 import { DELIVERY_LIFECYCLE_ORDER, TERMINAL_STATUSES } from './delivery-lifecycle.constants';
 import { FeatureFlagsService } from './feature-flags';
 
+export type WorkflowRunStatusEventType = Extract<EventType, `workflow_run_status_${string}`>;
+
 export type NotificationForTrace = {
   _id: string;
   _templateId: string;
@@ -43,6 +46,11 @@ export type NotificationForTrace = {
   severity?: string;
   critical?: boolean;
   contextKeys?: string[];
+};
+
+export type TemplateForTrace = {
+  name: string;
+  triggers?: Array<{ identifier?: string }>;
 };
 
 export interface WorkflowStatusUpdateParams {
@@ -123,7 +131,7 @@ export class WorkflowRunService {
     workflowStatus,
     deliveryLifecycleStatus: providedStatus,
     deliveryLifecycleDetail: providedDetail,
-    notification,
+    notification: passedNotification,
     currentJob,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
@@ -158,7 +166,52 @@ export class WorkflowRunService {
         isInAppChannel,
       });
 
+      let notification: NotificationForTrace | null | undefined = passedNotification;
+      let template: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | null | undefined;
+
       if (isUpdated) {
+        notification =
+          passedNotification ??
+          (await this.notificationRepository.findOne(
+            {
+              _id: notificationId,
+              _organizationId: organizationId,
+              _environmentId: environmentId,
+            },
+            {
+              _id: 1,
+              _templateId: 1,
+              _organizationId: 1,
+              _environmentId: 1,
+              _subscriberId: 1,
+              transactionId: 1,
+              channels: 1,
+              to: 1,
+              payload: 1,
+              controls: 1,
+              topics: 1,
+              _digestedNotificationId: 1,
+              createdAt: 1,
+              severity: 1,
+              critical: 1,
+              contextKeys: 1,
+            }
+          ));
+
+        template = notification
+          ? await this.notificationTemplateRepository.findOne(
+              {
+                _id: notification._templateId,
+                _environmentId: environmentId,
+              },
+              {
+                name: 1,
+                triggers: 1,
+              },
+              { readPreference: 'secondaryPreferred' }
+            )
+          : null;
+
         await this.workflowRunRepository.updateWorkflowRunState(
           notificationId,
           workflowStatus,
@@ -167,18 +220,18 @@ export class WorkflowRunService {
             environmentId,
           },
           deliveryLifecycleStatus,
-          deliveryLifecycleDetail
+          deliveryLifecycleDetail,
+          { notification: notification as never, template }
         );
 
         for (const emittedStatus of emittedStatuses) {
-          await this.createWorkflowRunTraceUpdate(
+          await this.createDeliveryLifecycleTrace(
             notificationId,
-            workflowStatus,
-            organizationId,
-            environmentId,
             emittedStatus,
+            { organizationId, environmentId },
             emittedStatus === deliveryLifecycleStatus ? deliveryLifecycleDetail : undefined,
-            notification
+            notification,
+            template
           );
         }
 
@@ -204,6 +257,24 @@ export class WorkflowRunService {
           'Skipped workflow run delivery lifecycle update - already at or past this status'
         );
       }
+
+      if (
+        workflowStatus === WorkflowRunStatusEnum.COMPLETED ||
+        workflowStatus === WorkflowRunStatusEnum.ERROR ||
+        workflowStatus === WorkflowRunStatusEnum.SUCCESS
+      ) {
+        const statusToEmit =
+          workflowStatus === WorkflowRunStatusEnum.COMPLETED || workflowStatus === WorkflowRunStatusEnum.SUCCESS
+            ? ('workflow_run_status_completed' as const)
+            : ('workflow_run_status_error' as const);
+        await this.createWorkflowStatusTrace(
+          notificationId,
+          statusToEmit,
+          { organizationId, environmentId },
+          notification,
+          template
+        );
+      }
     } catch (error) {
       this.logger.error(
         {
@@ -223,7 +294,7 @@ export class WorkflowRunService {
     workflowStatus,
     deliveryLifecycleStatus: providedStatus,
     deliveryLifecycleDetail: providedDetail,
-    notification,
+    notification: passedNotification,
     currentJob,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
@@ -252,6 +323,48 @@ export class WorkflowRunService {
 
       const isInAppChannel = currentJob?.type === 'in_app';
 
+      const notification =
+        passedNotification ??
+        (await this.notificationRepository.findOne(
+          {
+            _id: notificationId,
+            _organizationId: organizationId,
+            _environmentId: environmentId,
+          },
+          {
+            _id: 1,
+            _templateId: 1,
+            _organizationId: 1,
+            _environmentId: 1,
+            _subscriberId: 1,
+            transactionId: 1,
+            channels: 1,
+            to: 1,
+            payload: 1,
+            controls: 1,
+            topics: 1,
+            _digestedNotificationId: 1,
+            createdAt: 1,
+            severity: 1,
+            critical: 1,
+            contextKeys: 1,
+          }
+        ));
+
+      const template = notification
+        ? await this.notificationTemplateRepository.findOne(
+            {
+              _id: notification._templateId,
+              _environmentId: environmentId,
+            },
+            {
+              name: 1,
+              triggers: 1,
+            },
+            { readPreference: 'secondaryPreferred' }
+          )
+        : null;
+
       // Handle in-app transition: SENT -> DELIVERED
       if (isInAppChannel && deliveryLifecycleStatus === DeliveryLifecycleStatusEnum.DELIVERED) {
         // First, try to create SENT trace
@@ -272,17 +385,17 @@ export class WorkflowRunService {
               environmentId,
             },
             DeliveryLifecycleStatusEnum.SENT,
-            undefined
+            undefined,
+            { notification: notification as never, template }
           );
 
           await this.createWorkflowRunTraceUpdate(
             notificationId,
-            workflowStatus,
             organizationId,
             environmentId,
             DeliveryLifecycleStatusEnum.SENT,
-            undefined,
-            notification
+            notification,
+            template
           );
         }
       }
@@ -303,18 +416,36 @@ export class WorkflowRunService {
           environmentId,
         },
         deliveryLifecycleStatus,
-        deliveryLifecycleDetail
+        deliveryLifecycleDetail,
+        { notification: notification as never, template }
       );
 
       if (shouldTrace) {
         await this.createWorkflowRunTraceUpdate(
           notificationId,
-          workflowStatus,
           organizationId,
           environmentId,
           deliveryLifecycleStatus,
-          deliveryLifecycleDetail,
-          notification
+          notification,
+          template
+        );
+      }
+
+      if (
+        workflowStatus === WorkflowRunStatusEnum.COMPLETED ||
+        workflowStatus === WorkflowRunStatusEnum.ERROR ||
+        workflowStatus === WorkflowRunStatusEnum.SUCCESS
+      ) {
+        const statusToEmit =
+          workflowStatus === WorkflowRunStatusEnum.COMPLETED || workflowStatus === WorkflowRunStatusEnum.SUCCESS
+            ? ('workflow_run_status_completed' as const)
+            : ('workflow_run_status_error' as const);
+        await this.createWorkflowStatusTrace(
+          notificationId,
+          statusToEmit,
+          { organizationId, environmentId },
+          notification,
+          template
         );
       }
 
@@ -376,12 +507,11 @@ export class WorkflowRunService {
 
   private async createWorkflowRunTraceUpdate(
     notificationId: string,
-    workflowStatus: WorkflowRunStatusEnum,
     organizationId: string,
     environmentId: string,
     deliveryLifecycleStatus: DeliveryLifecycleStatusEnum,
-    deliveryLifecycleDetail?: DeliveryLifecycleDetail,
-    passedNotification?: NotificationForTrace | null
+    passedNotification?: NotificationForTrace | null,
+    passedTemplate?: TemplateForTrace | null
   ): Promise<void> {
     try {
       const isTracesWriteEnabled = await this.featureFlagsService.getFlag({
@@ -428,17 +558,19 @@ export class WorkflowRunService {
         return;
       }
 
-      const template = await this.notificationTemplateRepository.findOne(
-        {
-          _id: notification._templateId,
-          _environmentId: environmentId,
-        },
-        {
-          name: 1,
-          triggers: 1,
-        },
-        { readPreference: 'secondaryPreferred' }
-      );
+      const template =
+        passedTemplate ??
+        (await this.notificationTemplateRepository.findOne(
+          {
+            _id: notification._templateId,
+            _environmentId: environmentId,
+          },
+          {
+            name: 1,
+            triggers: 1,
+          },
+          { readPreference: 'secondaryPreferred' }
+        ));
 
       if (!template) {
         return;
@@ -455,14 +587,6 @@ export class WorkflowRunService {
         [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_delivery_interacted',
       };
 
-      const statusMap: Record<WorkflowRunStatusEnum, WorkflowRunTraceInput['status']> = {
-        [WorkflowRunStatusEnum.PROCESSING]: 'pending',
-        [WorkflowRunStatusEnum.PENDING]: 'pending',
-        [WorkflowRunStatusEnum.COMPLETED]: 'success',
-        [WorkflowRunStatusEnum.SUCCESS]: 'success',
-        [WorkflowRunStatusEnum.ERROR]: 'error',
-      };
-
       const traceData: WorkflowRunTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: notification._organizationId,
@@ -472,9 +596,259 @@ export class WorkflowRunService {
         subscriber_id: notification._subscriberId,
         event_type: deliveryLifecycleEventTypeMap[deliveryLifecycleStatus],
         title: `Workflow run ${deliveryLifecycleStatus}`,
+        entity_id: notification._id,
+        workflow_run_identifier: template.triggers?.[0]?.identifier || template.name.toLowerCase().replace(/\s+/g, '_'),
+        workflow_id: notification._templateId,
+        workflow_name: template.name,
+        transaction_id: notification.transactionId,
+        channels: JSON.stringify(notification.channels || []),
+        subscriber_to: notification.to ? JSON.stringify(notification.to) : '',
+        payload: notification.payload ? JSON.stringify(notification.payload) : '',
+        control_values: notification.controls ? JSON.stringify(notification.controls) : '',
+        topics: notification.topics ? JSON.stringify(notification.topics) : '',
+        is_digest: !!notification._digestedNotificationId,
+        digested_workflow_run_id: notification._digestedNotificationId || '',
+        provider_id: '',
+        delivery_lifecycle_status: '',
+        delivery_lifecycle_detail: '',
         message: '',
         raw_data: '',
-        status: statusMap[workflowStatus],
+        status: '',
+        severity: notification.severity || SeverityLevelEnum.NONE,
+        critical: notification.critical || false,
+        context_keys: notification.contextKeys || [],
+      };
+      await this.traceLogRepository.createWorkflowRun([traceData]);
+    } catch (error) {
+      this.logger.error(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          notificationId,
+        },
+        'Failed to create workflow run trace update'
+      );
+    }
+  }
+
+  async createWorkflowStatusTrace(
+    notificationId: string,
+    status: WorkflowRunStatusEventType,
+    context: { organizationId: string; environmentId: string; userId?: string },
+    passedNotification?: NotificationForTrace | null,
+    passedTemplate?: TemplateForTrace | null
+  ): Promise<void> {
+    try {
+      const isTracesWriteEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED,
+        organization: { _id: context.organizationId },
+        environment: { _id: context.environmentId },
+        user: { _id: null },
+        defaultValue: false,
+      });
+
+      if (!isTracesWriteEnabled) {
+        return;
+      }
+
+      const notification =
+        passedNotification ??
+        (await this.notificationRepository.findOne(
+          {
+            _id: notificationId,
+            _organizationId: context.organizationId,
+            _environmentId: context.environmentId,
+          },
+          {
+            _id: 1,
+            _templateId: 1,
+            _organizationId: 1,
+            _environmentId: 1,
+            _subscriberId: 1,
+            transactionId: 1,
+            channels: 1,
+            to: 1,
+            payload: 1,
+            controls: 1,
+            topics: 1,
+            _digestedNotificationId: 1,
+            createdAt: 1,
+            severity: 1,
+            critical: 1,
+            contextKeys: 1,
+          }
+        ));
+
+      if (!notification) {
+        return;
+      }
+
+      const template =
+        passedTemplate ??
+        (await this.notificationTemplateRepository.findOne(
+          {
+            _id: notification._templateId,
+            _environmentId: context.environmentId,
+          },
+          {
+            name: 1,
+            triggers: 1,
+          },
+          { readPreference: 'secondaryPreferred' }
+        ));
+
+      if (!template) {
+        return;
+      }
+
+      const traceData: WorkflowRunTraceInput = {
+        created_at: LogRepository.formatDateTime64(new Date()),
+        organization_id: notification._organizationId,
+        environment_id: notification._environmentId,
+        user_id: context.userId || '',
+        external_subscriber_id: notification.to?.subscriberId || '',
+        subscriber_id: notification._subscriberId,
+        event_type: status,
+        title: `Workflow run ${status.replace('workflow_run_status_', '')}`,
+        entity_id: notification._id,
+        workflow_run_identifier: template.triggers?.[0]?.identifier || template.name.toLowerCase().replace(/\s+/g, '_'),
+        workflow_id: notification._templateId,
+        workflow_name: template.name,
+        transaction_id: notification.transactionId,
+        channels: JSON.stringify(notification.channels || []),
+        subscriber_to: notification.to ? JSON.stringify(notification.to) : '',
+        payload: notification.payload ? JSON.stringify(notification.payload) : '',
+        control_values: notification.controls ? JSON.stringify(notification.controls) : '',
+        topics: notification.topics ? JSON.stringify(notification.topics) : '',
+        is_digest: !!notification._digestedNotificationId,
+        digested_workflow_run_id: notification._digestedNotificationId || '',
+        severity: notification.severity || SeverityLevelEnum.NONE,
+        critical: notification.critical || false,
+        context_keys: notification.contextKeys || [],
+        message: '',
+        raw_data: '',
+        status: '',
+        provider_id: '',
+        delivery_lifecycle_status: '',
+        delivery_lifecycle_detail: '',
+      };
+
+      await this.traceLogRepository.createWorkflowRun([traceData]);
+
+      this.logger.debug(
+        {
+          notificationId,
+          status,
+          organizationId: context.organizationId,
+          environmentId: context.environmentId,
+        },
+        `Created workflow status trace: ${status}`
+      );
+    } catch (error) {
+      this.logger.error(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          notificationId,
+          status,
+        },
+        'Failed to create workflow status trace'
+      );
+    }
+  }
+
+  async createDeliveryLifecycleTrace(
+    notificationId: string,
+    deliveryLifecycleStatus: DeliveryLifecycleStatusEnum,
+    context: { organizationId: string; environmentId: string; userId?: string },
+    deliveryLifecycleDetail?: DeliveryLifecycleDetail,
+    passedNotification?: NotificationForTrace | null,
+    passedTemplate?: TemplateForTrace | null
+  ): Promise<void> {
+    try {
+      const isTracesWriteEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED,
+        organization: { _id: context.organizationId },
+        environment: { _id: context.environmentId },
+        user: { _id: null },
+        defaultValue: false,
+      });
+
+      if (!isTracesWriteEnabled) {
+        return;
+      }
+
+      const notification =
+        passedNotification ??
+        (await this.notificationRepository.findOne(
+          {
+            _id: notificationId,
+            _organizationId: context.organizationId,
+            _environmentId: context.environmentId,
+          },
+          {
+            _id: 1,
+            _templateId: 1,
+            _organizationId: 1,
+            _environmentId: 1,
+            _subscriberId: 1,
+            transactionId: 1,
+            channels: 1,
+            to: 1,
+            payload: 1,
+            controls: 1,
+            topics: 1,
+            _digestedNotificationId: 1,
+            createdAt: 1,
+            severity: 1,
+            critical: 1,
+            contextKeys: 1,
+          }
+        ));
+
+      if (!notification) {
+        return;
+      }
+
+      const template =
+        passedTemplate ??
+        (await this.notificationTemplateRepository.findOne(
+          {
+            _id: notification._templateId,
+            _environmentId: context.environmentId,
+          },
+          {
+            name: 1,
+            triggers: 1,
+          },
+          { readPreference: 'secondaryPreferred' }
+        ));
+
+      if (!template) {
+        return;
+      }
+
+      const deliveryLifecycleEventTypeMap: Record<DeliveryLifecycleStatusEnum, EventType> = {
+        [DeliveryLifecycleStatusEnum.PENDING]: 'workflow_run_delivery_pending',
+        [DeliveryLifecycleStatusEnum.SENT]: 'workflow_run_delivery_sent',
+        [DeliveryLifecycleStatusEnum.ERRORED]: 'workflow_run_delivery_errored',
+        [DeliveryLifecycleStatusEnum.SKIPPED]: 'workflow_run_delivery_skipped',
+        [DeliveryLifecycleStatusEnum.CANCELED]: 'workflow_run_delivery_canceled',
+        [DeliveryLifecycleStatusEnum.MERGED]: 'workflow_run_delivery_merged',
+        [DeliveryLifecycleStatusEnum.DELIVERED]: 'workflow_run_delivery_delivered',
+        [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_delivery_interacted',
+      };
+
+      const traceData: WorkflowRunTraceInput = {
+        created_at: LogRepository.formatDateTime64(new Date()),
+        organization_id: notification._organizationId,
+        environment_id: notification._environmentId,
+        user_id: context.userId || '',
+        external_subscriber_id: notification.to?.subscriberId || '',
+        subscriber_id: notification._subscriberId,
+        event_type: deliveryLifecycleEventTypeMap[deliveryLifecycleStatus],
+        title: `Workflow run ${deliveryLifecycleStatus}`,
+        message: '',
+        raw_data: '',
+        status: '',
         entity_id: notification._id,
         workflow_run_identifier: template.triggers?.[0]?.identifier || template.name.toLowerCase().replace(/\s+/g, '_'),
         workflow_id: notification._templateId,
@@ -488,20 +862,33 @@ export class WorkflowRunService {
         topics: notification.topics ? JSON.stringify(notification.topics) : '',
         is_digest: !!notification._digestedNotificationId,
         digested_workflow_run_id: notification._digestedNotificationId || '',
-        delivery_lifecycle_status: deliveryLifecycleStatus,
-        delivery_lifecycle_detail: deliveryLifecycleDetail || '',
+        delivery_lifecycle_status: '',
+        delivery_lifecycle_detail: '',
         severity: notification.severity || SeverityLevelEnum.NONE,
         critical: notification.critical || false,
         context_keys: notification.contextKeys || [],
       };
+
       await this.traceLogRepository.createWorkflowRun([traceData]);
+
+      this.logger.debug(
+        {
+          notificationId,
+          deliveryLifecycleStatus,
+          deliveryLifecycleDetail,
+          organizationId: context.organizationId,
+          environmentId: context.environmentId,
+        },
+        `Created delivery lifecycle trace: ${deliveryLifecycleStatus}`
+      );
     } catch (error) {
       this.logger.error(
         {
           error: error instanceof Error ? error.message : 'Unknown error',
           notificationId,
+          deliveryLifecycleStatus,
         },
-        'Failed to create workflow run trace update'
+        'Failed to create delivery lifecycle trace'
       );
     }
   }

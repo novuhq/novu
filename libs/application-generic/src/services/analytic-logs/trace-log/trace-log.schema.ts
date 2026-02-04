@@ -214,7 +214,7 @@ export type EventType =
 
 export type EntityType = 'request' | 'step_run' | 'workflow_run';
 
-export type TraceStatus = 'success' | 'error' | 'warning' | 'pending';
+export type TraceStatus = 'success' | 'error' | 'warning' | 'pending' | '';
 
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 
