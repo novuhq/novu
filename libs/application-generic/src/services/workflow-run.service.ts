@@ -24,7 +24,6 @@ import {
   WorkflowRunTraceInput,
 } from './analytic-logs';
 import { LogRepository } from './analytic-logs/log.repository';
-import { DELIVERY_LIFECYCLE_ORDER, TERMINAL_STATUSES } from './delivery-lifecycle.constants';
 import { FeatureFlagsService } from './feature-flags';
 
 export type WorkflowRunStatusEventType = Extract<EventType, `workflow_run_status_${string}`>;
@@ -1073,9 +1072,7 @@ export class WorkflowRunService {
         params.notificationId,
         params.organizationId,
         params.environmentId,
-        params.targetStatus,
-        DELIVERY_LIFECYCLE_ORDER,
-        TERMINAL_STATUSES
+        params.targetStatus
       );
     } catch (error) {
       this.logger.trace(
@@ -1156,9 +1153,7 @@ export class WorkflowRunService {
         params.notificationId,
         params.organizationId,
         params.environmentId,
-        params.targetStatus,
-        DELIVERY_LIFECYCLE_ORDER,
-        TERMINAL_STATUSES
+        params.targetStatus
       );
     } catch (error) {
       this.logger.error(

@@ -9,6 +9,25 @@ import { NotificationDBModel, NotificationEntity } from './notification.entity';
 import { NotificationFeedItemEntity } from './notification.feed.Item.entity';
 import { Notification } from './notification.schema';
 
+const DELIVERY_LIFECYCLE_ORDER: Record<DeliveryLifecycleStatusEnum, number> = {
+  [DeliveryLifecycleStatusEnum.PENDING]: 0,
+  [DeliveryLifecycleStatusEnum.SENT]: 1,
+  [DeliveryLifecycleStatusEnum.DELIVERED]: 2,
+  [DeliveryLifecycleStatusEnum.INTERACTED]: 3,
+  [DeliveryLifecycleStatusEnum.SKIPPED]: -1,
+  [DeliveryLifecycleStatusEnum.CANCELED]: -1,
+  [DeliveryLifecycleStatusEnum.ERRORED]: -1,
+  [DeliveryLifecycleStatusEnum.MERGED]: -1,
+};
+
+const TERMINAL_STATUSES = [
+  DeliveryLifecycleStatusEnum.SKIPPED,
+  DeliveryLifecycleStatusEnum.CANCELED,
+  DeliveryLifecycleStatusEnum.ERRORED,
+  DeliveryLifecycleStatusEnum.MERGED,
+  DeliveryLifecycleStatusEnum.INTERACTED,
+];
+
 export class NotificationRepository extends BaseRepository<
   NotificationDBModel,
   NotificationEntity,
@@ -355,14 +374,12 @@ export class NotificationRepository extends BaseRepository<
     notificationId: string,
     organizationId: string,
     environmentId: string,
-    targetStatus: DeliveryLifecycleStatusEnum,
-    statusOrderMap: Record<DeliveryLifecycleStatusEnum, number>,
-    terminalStatuses: DeliveryLifecycleStatusEnum[]
+    targetStatus: DeliveryLifecycleStatusEnum
   ): Promise<{ isUpdated: boolean; previousStatus?: DeliveryLifecycleStatusEnum }> {
-    const targetOrder = statusOrderMap[targetStatus];
-    const isTerminal = terminalStatuses.includes(targetStatus);
+    const targetOrder = DELIVERY_LIFECYCLE_ORDER[targetStatus];
+    const isTerminal = TERMINAL_STATUSES.includes(targetStatus);
 
-    const progressionStatuses = Object.entries(statusOrderMap)
+    const progressionStatuses = Object.entries(DELIVERY_LIFECYCLE_ORDER)
       .filter(([, order]) => order >= 0 && order < targetOrder)
       .map(([status]) => status as DeliveryLifecycleStatusEnum);
 
