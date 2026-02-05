@@ -74,7 +74,7 @@ export class StandardWorker extends StandardWorkerService {
       const message = data.payload?.message;
 
       if (!message) {
-        throw new Error(`Job data is missing required fields${JSON.stringify(data)}`);
+        throw new Error(`Job data is missing required fields: ${JSON.stringify(data)}`);
       }
 
       return {
