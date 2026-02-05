@@ -390,7 +390,7 @@ export class RunJob {
       throw caughtError;
     } finally {
       if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
-        await this.tryQueueNextJobs(job, notification);
+        await this.tryQueueNextJobs(job, notification, !!error);
       } else if (!isJobExtendedToSubscriberSchedule) {
         // Update workflow run status based on step runs when halting on step failure
         await this.workflowRunService.updateDeliveryLifecycle({
@@ -469,8 +469,16 @@ export class RunJob {
    * Attempts to queue subsequent jobs in the workflow chain.
    * If queueNextJob.execute returns undefined, we stop the workflow.
    * Otherwise, we continue trying to queue the next job in the chain.
+   *
+   * @param hasCurrentJobError - If true, the current job failed with an error. When the workflow
+   *   ends (no next job), we skip creating the status trace here and let setJobAsFailed handle it
+   *   to avoid duplicate traces and ensure correct error status.
    */
-  private async tryQueueNextJobs(job: JobEntity, notification?: PartialNotificationEntity | null): Promise<void> {
+  private async tryQueueNextJobs(
+    job: JobEntity,
+    notification?: PartialNotificationEntity | null,
+    hasCurrentJobError = false
+  ): Promise<void> {
     let currentJob: JobEntity | null = job;
     let nextJob: JobEntity | null = null;
     if (!currentJob) {
@@ -491,16 +499,18 @@ export class RunJob {
         });
 
         if (!nextJob) {
-          // Update workflow run status when there is no next job (workflow complete)
-          await this.workflowRunService.updateDeliveryLifecycle({
-            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
-            notificationId: currentJob._notificationId,
-            environmentId: currentJob._environmentId,
-            organizationId: currentJob._organizationId,
-            _subscriberId: currentJob._subscriberId,
-            notification,
-            currentJob: { type: currentJob.type, _id: currentJob._id },
-          });
+          if (!hasCurrentJobError) {
+            // Update workflow run status when there is no next job (workflow complete successfully)
+            await this.workflowRunService.updateDeliveryLifecycle({
+              workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+              notificationId: currentJob._notificationId,
+              environmentId: currentJob._environmentId,
+              organizationId: currentJob._organizationId,
+              _subscriberId: currentJob._subscriberId,
+              notification,
+              currentJob: { type: currentJob.type, _id: currentJob._id },
+            });
+          }
 
           return;
         }
@@ -589,7 +599,7 @@ export class RunJob {
         );
 
         const isHaltingWorkflow = shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error as Error);
-        const isLastJobInWorkflow = !jobAfterNext || isHaltingWorkflow;
+        const isLastJobFailed = !jobAfterNext || isHaltingWorkflow;
 
         await this.setJobAsFailed.execute(
           SetJobAsFailedCommand.create({
@@ -597,7 +607,7 @@ export class RunJob {
             jobId: nextJob._id,
             organizationId: nextJob._organizationId,
             userId: nextJob._userId,
-            isLastJobInWorkflow,
+            isLastJobFailed,
           }),
           error as Error
         );
