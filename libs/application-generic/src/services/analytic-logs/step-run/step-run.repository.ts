@@ -68,11 +68,15 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
   async create(job: JobEntity, options: StepOptions = {}): Promise<void> {
     try {
+      const organizationIdString = job._organizationId?.toString() || String(job._organizationId);
+      const environmentIdString = job._environmentId?.toString() || String(job._environmentId);
+      const userIdString = job._userId?.toString() || String(job._userId);
+
       const isEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
-        organization: { _id: job._organizationId },
-        environment: { _id: job._environmentId },
-        user: { _id: job._userId },
+        organization: { _id: organizationIdString },
+        environment: { _id: environmentIdString },
+        user: { _id: userIdString },
         defaultValue: false,
       });
 

@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase, WorkflowRunService, WorkflowRunStatusEnum } from '@novu/application-generic';
+import {
+  InstrumentUsecase,
+  StepRunRepository,
+  WorkflowRunService,
+  WorkflowRunStatusEnum,
+} from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 
 import { SetJobAsFailedCommand } from './set-job-as.command';
@@ -11,7 +16,8 @@ export class SetJobAsFailed {
   constructor(
     private updateJobStatus: UpdateJobStatus,
     private jobRepository: JobRepository,
-    private workflowRunService: WorkflowRunService
+    private workflowRunService: WorkflowRunService,
+    private stepRunRepository: StepRunRepository
   ) {}
 
   @InstrumentUsecase()
@@ -29,6 +35,12 @@ export class SetJobAsFailed {
     }
 
     await this.jobRepository.setError(command.organizationId, command.jobId, error);
+
+    await this.stepRunRepository.create(jobEntity, {
+      status: JobStatusEnum.FAILED,
+      errorCode: 'job_failed',
+      errorMessage: error.message,
+    });
 
     await this.workflowRunService.updateDeliveryLifecycle({
       notificationId: jobEntity._notificationId,
