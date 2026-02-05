@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { IDestroy } from '@novu/application-generic';
@@ -13,7 +13,7 @@ const nr = require('newrelic');
 const LOG_CONTEXT = 'WSGateway';
 
 @WebSocketGateway()
-export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy {
+export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy, OnModuleDestroy {
   private isShutdown = false;
 
   constructor(

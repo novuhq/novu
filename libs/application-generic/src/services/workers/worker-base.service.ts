@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 
 import { BullMqService, Processor, Worker, WorkerOptions } from '../bull-mq';
@@ -10,7 +10,7 @@ export type WorkerProcessor = string | Processor<any, unknown, string> | undefin
 
 export { WorkerOptions };
 
-export class WorkerBaseService implements INovuWorker {
+export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
   private instance: BullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;

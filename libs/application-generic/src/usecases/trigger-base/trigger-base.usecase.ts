@@ -30,7 +30,7 @@ export type BaseTriggerCommand = {
   overrides: TriggerOverrides;
   template: NotificationTemplateEntity;
   actor?: SubscriberEntity | undefined;
-  contextKeys?: string[];
+  contextKeys: string[];
   tenant: ITenantDefine | null;
   requestCategory?: TriggerRequestCategoryEnum;
   controls?: StatelessControls;

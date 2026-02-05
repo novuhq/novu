@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   BullMqService,
+  FeatureFlagsService,
   getSubscriberProcessWorkerOptions,
   IProcessSubscriberDataDto,
   PinoLogger,
@@ -11,7 +12,7 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { SubscriberJobBound } from '../usecases/subscriber-job-bound/subscriber-job-bound.usecase';
 
 const nr = require('newrelic');
@@ -23,15 +24,34 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
   constructor(
     private subscriberJobBoundUsecase: SubscriberJobBound,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private organizationRepository: CommunityOrganizationRepository
+    private organizationRepository: CommunityOrganizationRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
+  private async isKillSwitchEnabled(data: IProcessSubscriberDataDto): Promise<boolean> {
+    return this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
+      defaultValue: false,
+      organization: { _id: data.organizationId },
+      environment: { _id: data.environmentId },
+      component: 'worker',
+    });
+  }
+
   public getWorkerProcessor() {
     return async ({ data }: { data: IProcessSubscriberDataDto }) => {
+      const isKillSwitchEnabled = await this.isKillSwitchEnabled(data);
+
+      if (isKillSwitchEnabled) {
+        Logger.log(`Kill switch enabled for organizationId ${data.organizationId}. Skipping job.`, LOG_CONTEXT);
+
+        return;
+      }
+
       const organizationExists = await this.organizationExist(data);
 
       if (!organizationExists) {

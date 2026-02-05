@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { FeatureFlagsService, HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
@@ -52,6 +52,8 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
     if (isLruCacheEnabled) {
       const cached = apiKeyUserCache.get(hashedApiKey);
       if (cached) {
+        await this.checkKillSwitch(cached);
+
         return cached;
       }
 
@@ -63,9 +65,13 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
 
     const fetchPromise = this.authService
       .getUserByApiKey(apiKey)
-      .then((user) => {
+      .then(async (user) => {
         if (user && isLruCacheEnabled) {
           apiKeyUserCache.set(hashedApiKey, user);
+        }
+
+        if (user) {
+          await this.checkKillSwitch(user);
         }
 
         return user;
@@ -81,5 +87,19 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
     }
 
     return fetchPromise;
+  }
+
+  private async checkKillSwitch(user: UserSessionData): Promise<void> {
+    const isKillSwitchEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
+      defaultValue: false,
+      organization: { _id: user.organizationId },
+      environment: { _id: user.environmentId },
+      component: 'api',
+    });
+
+    if (isKillSwitchEnabled) {
+      throw new ServiceUnavailableException('Service temporarily unavailable for this organization');
+    }
   }
 }

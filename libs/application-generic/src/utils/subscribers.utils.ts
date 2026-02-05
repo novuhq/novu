@@ -14,6 +14,7 @@ export function mapSubscribersToJobs(
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
+        contextKeys: command.contextKeys,
         transactionId: command.transactionId,
         requestId: command.requestId,
         identifier: command.identifier,
@@ -38,9 +39,6 @@ export function mapSubscribersToJobs(
     }
     if (command.tenant) {
       job.data.tenant = command.tenant;
-    }
-    if (command.contextKeys) {
-      job.data.contextKeys = command.contextKeys;
     }
 
     return job;
