@@ -57,8 +57,6 @@ export const envValidators = {
   AI_LLM_MAX_OUTPUT_TOKENS: num({ default: 4096 }),
   AI_LLM_TEMPERATURE: num({ default: 0.7 }),
   AI_LLM_MAX_RETRIES: num({ default: 3 }),
-  AI_LLM_SCHEMA_VALIDATION_RETRIES: num({ default: 3 }),
-  AI_LLM_REQUEST_TIMEOUT_MS: num({ default: 120000 }),
 
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&

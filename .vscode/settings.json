@@ -38,6 +38,5 @@
   "vsicons.presets.nestjs": true,
   "biome.enabled": true,
   "biome.lsp.bin": "node_modules/.bin/biome",
-  "terminal.integrated.scrollback": 30000,
-  "typescript.tsdk": "./node_modules/typescript/lib"
+  "terminal.integrated.scrollback": 30000
 }

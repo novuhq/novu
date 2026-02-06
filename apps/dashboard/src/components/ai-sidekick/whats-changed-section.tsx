@@ -1,4 +1,4 @@
-import { ToolUIPart } from 'ai';
+import { DynamicToolUIPart } from 'ai';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
@@ -20,7 +20,7 @@ type WorkflowCompletionSummary = {
 };
 
 type WhatsChangedSectionProps = {
-  completedToolPart: ToolUIPart;
+  completedToolPart: DynamicToolUIPart;
   onApplyAll?: () => void;
   onDiscard?: () => void;
   onTryAgain?: () => void;

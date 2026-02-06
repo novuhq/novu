@@ -1,42 +1,80 @@
-import { AiResourceTypeEnum } from '@novu/shared';
-import { generateId } from 'ai';
-import { useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { AiAgentTypeEnum, AiResourceTypeEnum } from '@novu/shared';
+import { generateId, UIMessage, UITools } from 'ai';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAiChatStream } from '@/hooks/use-ai-chat-stream';
+import { useCreateAiChat } from '@/hooks/use-create-ai-chat';
 import { useFetchLatestAiChat } from '@/hooks/use-fetch-latest-ai-chat';
 import { BroomSparkle } from '../icons/broom-sparkle';
 import { useWorkflow } from '../workflow-editor/workflow-provider';
 import { ChatBody, ChatBodySkeleton } from './chat-body';
-import { ChatMessage } from './types';
 
 export function AiSidekickPanel() {
+  const [inputText, setInputText] = useState('');
+  const isMountedRef = useRef(false);
   const location = useLocation();
+  const { workflow, isPending: isFetchingWorkflow } = useWorkflow();
   const { areEnvironmentsInitialLoading } = useEnvironment();
-  const { workflow } = useWorkflow();
-  const { workflowSlug = '' } = useParams<{ workflowSlug?: string; stepSlug?: string }>();
-  const isNewWorkflowSlug = workflowSlug === 'new';
-  const prompt = location.state ? (location.state?.prompt as string | undefined) : undefined;
-
-  const { latestChat, isPending: isFetchingChat } = useFetchLatestAiChat({
-    resourceType: AiResourceTypeEnum.WORKFLOW,
-    resourceId: workflow?._id,
-  });
-  const shouldResume = latestChat ? !!latestChat.activeStreamId : !!prompt && isNewWorkflowSlug;
-  const isFetchingChatOnWorkflowEditor = isFetchingChat && !isNewWorkflowSlug;
-
-  const initialMessages: ChatMessage[] = useMemo(() => {
-    return !!prompt && isNewWorkflowSlug
-      ? [{ role: 'user', id: generateId(), parts: [{ type: 'text', text: prompt }] }]
-      : ((latestChat?.messages ?? []) as ChatMessage[]);
-  }, [prompt, latestChat, isNewWorkflowSlug]);
+  const { refetch } = useWorkflow();
 
   const chatId = useMemo(() => {
     if (location.state && 'chatId' in location.state) {
       return location.state.chatId as string;
     }
 
-    return latestChat?._id ?? generateId();
-  }, [location, latestChat]);
+    return generateId();
+  }, [location]);
+
+  const { setMessages, sendPrompt, stop, status, isGenerating, messages, dataParts, resume } = useAiChatStream<{
+    reasoning: { toolCallId: string; text: string };
+  }>({
+    id: chatId,
+    agentType: AiAgentTypeEnum.ADD_WORKFLOW_STEPS,
+    onData: async (data) => {
+      const dataType = (data as { type: string }).type;
+      if (isMountedRef.current && (dataType === 'data-step-added' || dataType === 'data-workflow-completed')) {
+        refetch({ cancelRefetch: true });
+      }
+    },
+  });
+
+  const { latestChat, isPending: isFetchingAiChat } = useFetchLatestAiChat({
+    resourceType: AiResourceTypeEnum.WORKFLOW,
+    resourceId: workflow?._id,
+  });
+
+  const { createAiChat, isPending: isCreatingAiChat } = useCreateAiChat();
+
+  useEffect(() => {
+    if (latestChat) {
+      setMessages(
+        latestChat.messages as UIMessage<unknown, { reasoning: { toolCallId: string; text: string } }, UITools>[]
+      );
+      resume();
+    }
+  }, [latestChat, setMessages, resume]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      stop();
+    };
+  }, [stop]);
+
+  const handleSendMessage = async (message: string) => {
+    const messageToSend = message.trim();
+    if (!latestChat) {
+      const chat = await createAiChat({ resourceType: AiResourceTypeEnum.WORKFLOW });
+      sendPrompt({ chatId: chat._id, prompt: messageToSend });
+    } else if (messageToSend) {
+      sendPrompt({ chatId, prompt: messageToSend });
+    }
+    setInputText('');
+  };
+
+  const isLoading = isFetchingWorkflow || isFetchingAiChat || areEnvironmentsInitialLoading;
 
   return (
     <div className="flex h-full min-w-[350px] w-[350px] flex-col overflow-hidden border-r bg-white">
@@ -58,10 +96,19 @@ export function AiSidekickPanel() {
           </span>
         </div>
       </div>
-      {isFetchingChatOnWorkflowEditor || areEnvironmentsInitialLoading ? (
+      {isLoading ? (
         <ChatBodySkeleton />
       ) : (
-        <ChatBody chatId={chatId} prompt={prompt} resume={shouldResume} initialMessages={initialMessages} />
+        <ChatBody
+          inputText={inputText}
+          onInputChange={setInputText}
+          isGenerating={isGenerating}
+          status={status}
+          onSubmit={handleSendMessage}
+          messages={messages}
+          dataParts={dataParts}
+          isSubmitDisabled={isCreatingAiChat}
+        />
       )}
     </div>
   );

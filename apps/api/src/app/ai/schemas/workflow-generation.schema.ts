@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const severityValues = Object.values(SeverityLevelEnum) as [SeverityLevelEnum, ...SeverityLevelEnum[]];
 
-export const organizationMetaInputSchema = z.object({});
+export const organizationMetaInputSchema = z.object({}).describe('No input required');
 
 export const organizationMetaOutputSchema = z.object({
   channels: z.array(z.string()).describe('Available channels'),

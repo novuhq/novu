@@ -18,6 +18,7 @@ export const useFetchLatestAiChat = ({
     queryFn: () => fetchLatestChat({ environment: currentEnvironment!, resourceType, resourceId: resourceId! }),
     enabled: !!currentEnvironment && !!resourceType && !!resourceId,
     refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   return {

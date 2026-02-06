@@ -1,8 +1,8 @@
-import { UIMessage, useChat } from '@ai-sdk/react';
-import { AiResourceTypeEnum } from '@novu/shared';
+import { UIMessage, useChat as useChatStream } from '@ai-sdk/react';
+import { AiAgentTypeEnum } from '@novu/shared';
 import { ChatOnDataCallback, ChatOnToolCallCallback, DataUIPart, DefaultChatTransport, UIDataTypes, UITools } from 'ai';
-import { useCallback, useEffect, useMemo } from 'react';
-import { getChatSteamUrl, getChatStreamResumeUrl } from '@/api/ai';
+import { useCallback, useMemo } from 'react';
+import { getChatSteamUrl } from '@/api/ai';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getToken } from '@/utils/auth';
 import { useDataRef } from './use-data-ref';
@@ -18,9 +18,8 @@ export type ToolInvocationPart = {
 };
 
 type UseAiChatOptions<D extends UIDataTypes = UIDataTypes, T extends UITools = UITools> = {
-  id?: string;
-  resume?: boolean;
-  resourceType: AiResourceTypeEnum;
+  id: string;
+  agentType: AiAgentTypeEnum;
   initialMessages?: UIMessage<unknown, D, T>[];
   onData?: ChatOnDataCallback<UIMessage>;
   onToolCall?: ChatOnToolCallCallback<UIMessage>;
@@ -28,11 +27,9 @@ type UseAiChatOptions<D extends UIDataTypes = UIDataTypes, T extends UITools = U
   onError?: (error: Error) => void;
 };
 
-export function useAiChat<D extends UIDataTypes = UIDataTypes, T extends UITools = UITools>({
+export function useAiChatStream<D extends UIDataTypes = UIDataTypes, T extends UITools = UITools>({
   id,
-  resume,
-  resourceType,
-  initialMessages = [],
+  agentType,
   onData,
   onToolCall,
   onFinish,
@@ -40,7 +37,7 @@ export function useAiChat<D extends UIDataTypes = UIDataTypes, T extends UITools
 }: UseAiChatOptions<D, T>) {
   const { currentEnvironment } = useEnvironment();
   const environmentIdRef = useDataRef(currentEnvironment?._id);
-  const resourceTypeRef = useDataRef(resourceType);
+  const agentTypeRef = useDataRef(agentType);
 
   const transport = useMemo(() => {
     return new DefaultChatTransport({
@@ -54,52 +51,41 @@ export function useAiChat<D extends UIDataTypes = UIDataTypes, T extends UITools
           ...(environmentIdRef.current && { 'Novu-Environment-Id': environmentIdRef.current }),
         };
       },
-      prepareReconnectToStreamRequest: ({ id }) => {
-        return {
-          api: getChatStreamResumeUrl(id),
-        };
-      },
       prepareSendMessagesRequest: (options) => {
         return {
           body: {
             id: options.id,
-            message: options.messages[options.messages.length - 1],
-            resourceType: resourceTypeRef.current,
+            message: options.messages.length > 0 ? options.messages[options.messages.length - 1] : null,
+            agentType: agentTypeRef.current,
             ...options.body,
           },
         };
       },
     });
-  }, [environmentIdRef, resourceTypeRef]);
+  }, [environmentIdRef, agentTypeRef]);
 
-  const { messages, sendMessage, status, error, stop, setMessages } = useChat<UIMessage<unknown, D, T>>({
+  const { messages, sendMessage, status, error, stop, setMessages } = useChatStream<UIMessage<unknown, D, T>>({
     id,
-    resume,
     transport,
-    messages: initialMessages ?? [],
-    // Throttle the messages and data updates to 50ms:
     experimental_throttle: 50,
     onFinish,
     onData,
     onToolCall,
     onError,
   });
-  const isGenerating = status === 'streaming' || status === 'submitted';
-  const generatingRef = useDataRef(status);
 
-  useEffect(() => {
-    return () => {
-      if (generatingRef.current) {
-        stop();
-      }
-    };
-  }, [generatingRef, stop]);
+  const isGenerating = status === 'streaming' || status === 'submitted';
 
   const sendPrompt = useCallback(
-    ({ chatId, prompt }: { chatId: string; prompt: string }) =>
-      sendMessage({ text: prompt }, { body: { id: chatId, resourceType } }),
-    [sendMessage, resourceType]
+    ({ chatId, prompt }: { chatId?: string; prompt: string }) => {
+      return sendMessage({ text: prompt }, { body: { id: chatId, agentType } });
+    },
+    [sendMessage, agentType]
   );
+
+  const resume = useCallback(() => {
+    sendMessage(undefined);
+  }, [sendMessage]);
 
   const isReady = status === 'ready';
 
@@ -139,6 +125,7 @@ export function useAiChat<D extends UIDataTypes = UIDataTypes, T extends UITools
     error,
     stop,
     setMessages,
+    resume,
     isGenerating,
     isReady,
     reasoningParts,

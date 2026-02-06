@@ -107,10 +107,11 @@ const aiJsonLogicConditionSchema: z.ZodType<JsonLogicCondition> = z.lazy(() =>
   ])
 );
 
-export const aiSkipConditionSchema = aiJsonLogicConditionSchema
+export const aiSkipConditionSchema = z
+  .union([aiJsonLogicConditionSchema, aiJsonLogicVarSchema])
   .nullable()
   .describe(
-    'JSONLogic filter conditions for conditionally skipping the step execution. When condition evaluates to true, the step will be SKIPPED. Use { var: "payload.field" } to access trigger payload data, { var: "subscriber.field" } for subscriber data. Example: { "==": [{ "var": "subscriber.isOnline" }, "false"] } skips the step when subscriber.isOnline equals "false" meaning the subscriber is offline'
+    'JSONLogic condition for conditionally skipping step execution. When condition evaluates to true, step is SKIPPED. Use comparison operators with variable references. Examples: { "==": [{ "var": "subscriber.isOnline" }, true] } skips when online. { "!=": [{ "var": "payload.priority" }, "high"] } skips when not high priority.'
   );
 
 /**

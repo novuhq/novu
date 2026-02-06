@@ -1,28 +1,25 @@
-import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
+import { toUIMessageStream } from '@ai-sdk/langchain';
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, ResourceValidatorService } from '@novu/application-generic';
-import { ChannelTypeEnum, ResourceOriginEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { convertToModelMessages, generateId, smoothStream } from 'ai';
-import { z } from 'zod';
+import { PinoLogger } from '@novu/application-generic';
+import { createUIMessageStream, generateId, UIMessage } from 'ai';
+import { createAgent, createMiddleware } from 'langchain';
 import { GetActiveIntegrations } from '../../../integrations/usecases/get-active-integration/get-active-integration.usecase';
 import { WorkflowResponseDto } from '../../../workflows-v2/dtos';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../workflows-v2/usecases/get-workflow';
 import {
   UpsertStepDataCommand,
   UpsertWorkflowCommand,
-  UpsertWorkflowDataCommand,
   UpsertWorkflowUseCase,
 } from '../../../workflows-v2/usecases/upsert-workflow';
-import { CREATE_WORKFLOW_AGENT_SYSTEM_PROMPT } from '../../prompts';
-import { workflowMetadataOutputSchema } from '../../schemas/workflow-generation.schema';
+import { ADD_WORKFLOW_STEPS_AGENT_SYSTEM_PROMPT } from '../../prompts';
+import { CheckpointerService } from '../../services/checkpointer.service';
 import { LlmService } from '../../services/llm.service';
-import { writeToolReasoningInChunks } from '../../tools/utils';
 import { createWorkflowGenerationTools, DraftWorkflowState } from '../../tools/workflow-generation.tools';
-import { BaseStreamGenerationAgent, StreamGenerationContext } from '../../types';
-import { StreamGenerationCommand } from '../stream-generation';
+import { createErrorTransform } from '../../transforms/error-transform';
+import { createToolOutputTransform } from '../../transforms/tool-output-transform';
+import { BaseStreamGenerationAgent, StreamGenerationCommand, StreamGenerationContext } from '../../types';
+import { GetChatCommand, GetChatUseCase } from '../get-chat';
 import { UpsertChatCommand, UpsertChatUseCase } from '../upsert-chat';
-
-type WorkflowMetadata = z.infer<typeof workflowMetadataOutputSchema>;
 
 @Injectable()
 export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgent {
@@ -30,190 +27,155 @@ export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgen
     private readonly logger: PinoLogger,
     private readonly llmService: LlmService,
     private readonly upsertWorkflowUseCase: UpsertWorkflowUseCase,
-    private readonly upsertChatUseCase: UpsertChatUseCase,
     private readonly getWorkflowUseCase: GetWorkflowUseCase,
-    private readonly resourceValidatorService: ResourceValidatorService,
-    private readonly getActiveIntegrationsUsecase: GetActiveIntegrations
+    private readonly getActiveIntegrationsUsecase: GetActiveIntegrations,
+    private readonly checkpointerService: CheckpointerService,
+    private readonly getChatUseCase: GetChatUseCase,
+    private readonly upsertChatUseCase: UpsertChatUseCase
   ) {}
 
-  async execute({ writer, command }: StreamGenerationContext): Promise<void> {
-    if (!this.llmService.isAvailable()) {
-      throw new Error('LLM service not configured');
+  async execute({ command }: StreamGenerationContext): Promise<ReadableStream> {
+    if (!command.chatId) {
+      throw new Error('Chat ID is required for adding workflow steps');
     }
-    await this.resourceValidatorService.validateWorkflowLimit(command.user.environmentId);
 
-    const agentMessages = await convertToModelMessages(command.messages);
-    const lastUserMessage = agentMessages.filter((m) => m.role === 'user').pop();
-    const content =
-      typeof lastUserMessage?.content === 'string'
-        ? lastUserMessage?.content
-        : (lastUserMessage?.content.find((p) => p.type === 'text')?.text ?? '');
+    const chat = await this.getChatUseCase.execute(
+      GetChatCommand.create({
+        id: command.chatId,
+        user: command.user,
+      })
+    );
 
-    this.logger.info(`AI Streaming workflow generation for prompt: ${content.substring(0, 100)}...`);
+    const workflowId = chat.resourceId;
+    if (!workflowId) {
+      throw new Error('Chat does not have an associated workflow');
+    }
+
+    const existingWorkflow = await this.getWorkflowUseCase.execute(
+      GetWorkflowCommand.create({
+        workflowIdOrInternalId: workflowId,
+        user: command.user,
+      })
+    );
+
+    const allMessages = chat.messages as UIMessage[];
+
+    const agentMessages = command.messages;
+    if (agentMessages && agentMessages.length > 0) {
+      const lastUserMessage = agentMessages.filter((m) => m.type === 'human').pop();
+      const content: string =
+        typeof lastUserMessage?.content === 'string'
+          ? lastUserMessage.content
+          : ((lastUserMessage?.content.find((p) => p.type === 'text')?.text as string) ?? '');
+
+      this.logger.info(
+        `AI Adding steps to workflow ${existingWorkflow.slug} for prompt: ${content.substring(0, 100)}...`
+      );
+    } else {
+      this.logger.info(`AI Adding steps to workflow ${existingWorkflow.slug} resumed`);
+    }
 
     const draftState = new DraftWorkflowState();
+    draftState.setWorkflow(existingWorkflow);
+
     const tools = createWorkflowGenerationTools({
       command,
-      writer,
       llmService: this.llmService,
       draftState,
       getActiveIntegrationsUsecase: this.getActiveIntegrationsUsecase,
     });
 
-    const result = this.llmService.streamAgent({
-      systemPrompt: CREATE_WORKFLOW_AGENT_SYSTEM_PROMPT,
-      messages: agentMessages,
+    const agent = createAgent({
+      model: this.llmService.getModel(),
       tools,
-      stopAfterSteps: 15,
-      providerOptions: {
-        openai: {
-          reasoningEffort: 'medium',
-        } satisfies OpenAIResponsesProviderOptions,
+      systemPrompt: ADD_WORKFLOW_STEPS_AGENT_SYSTEM_PROMPT,
+      checkpointer: this.checkpointerService.getCheckpointer(),
+      middleware: [
+        createMiddleware({
+          name: 'WorkflowStepsPersistenceMiddleware',
+          wrapToolCall: async (request, handler) => {
+            const toolName = request.toolCall.name;
+            const writer = request.runtime.writer;
+
+            const result = await handler(request);
+
+            switch (toolName) {
+              case 'addEmailStep':
+              case 'addInAppStep':
+              case 'addSmsStep':
+              case 'addPushStep':
+              case 'addChatStep':
+              case 'addDigestStep':
+              case 'addDelayStep':
+              case 'addThrottleStep': {
+                const workflow = draftState.getWorkflow();
+                const latestStep = draftState.getSteps().pop();
+                if (!workflow || !latestStep) {
+                  throw new Error('Workflow or latest step not found');
+                }
+
+                await this.addWorkflowStep({ workflowId: workflow._id, command, step: latestStep, draftState });
+
+                writer?.({ type: 'step-added', step: latestStep });
+
+                this.logger.info({ stepCount: draftState.getSteps().length }, `AI Step added: ${toolName}`);
+                break;
+              }
+
+              case 'completeWorkflow': {
+                const workflow = draftState.getWorkflow();
+                if (!workflow) {
+                  throw new Error('Workflow not found');
+                }
+
+                await this.updateWorkflowPayloadSchema({ workflowId: workflow._id, command, draftState });
+
+                writer?.({ type: 'workflow-completed', workflowSlug: workflow.slug });
+
+                this.logger.info('AI Workflow step addition completed');
+                break;
+              }
+            }
+
+            return result;
+          },
+        }),
+      ],
+    });
+
+    const uiMessageStream = createUIMessageStream({
+      originalMessages: allMessages,
+      generateId,
+      onFinish: async ({ messages }) => {
+        await this.upsertChatUseCase.execute(
+          UpsertChatCommand.create({
+            id: command.chatId,
+            messages,
+            activeStreamId: null,
+            user: command.user,
+          })
+        );
       },
-      experimental_transform: smoothStream({
-        delayInMs: 5, // optional: defaults to 10ms
-        chunking: 'line', // optional: defaults to 'word'
-      }),
-      onStepFinish: async ({ toolResults }) => {
-        for (const toolResult of toolResults) {
-          const toolName = toolResult.toolName;
-          const toolCallId = toolResult.toolCallId;
-          const output = 'output' in toolResult ? toolResult.output : undefined;
-          this.logger.info(`AI Tool result: ${toolName}`);
+      execute: async ({ writer }) => {
+        const agentStream = await agent.stream(agentMessages ? { messages: agentMessages } : null, {
+          configurable: {
+            thread_id: command.chatId,
+          },
+          signal: command.signal,
+          streamMode: ['values', 'messages', 'custom'],
+          context: {
+            logger: this.logger,
+          },
+          recursionLimit: 200,
+        });
 
-          switch (toolName) {
-            case 'setWorkflowMetadata': {
-              const metadata = output as { success: boolean } & WorkflowMetadata;
-              if (metadata?.success) {
-                const workflow = await this.createWorkflow(command, metadata, draftState);
-                // Update the chat with the active stream ID
-                await this.upsertChatUseCase.execute(
-                  UpsertChatCommand.create({ id: command.chatId, resourceId: workflow._id, user: command.user })
-                );
-
-                writer.write({ type: 'data-workflow-created', data: workflow.slug });
-              }
-              break;
-            }
-
-            case 'addEmailStep':
-            case 'addInAppStep':
-            case 'addSmsStep':
-            case 'addPushStep':
-            case 'addChatStep':
-            case 'addDigestStep':
-            case 'addDelayStep':
-            case 'addThrottleStep': {
-              const workflow = draftState.getWorkflow();
-              const latestStep = draftState.getSteps().pop();
-              if (!workflow || !latestStep) {
-                throw new Error('Workflow or latest step not found');
-              }
-
-              await this.addWorkflowStep({ workflowId: workflow._id, command, step: latestStep, draftState });
-
-              await writeToolReasoningInChunks({
-                id: generateId(),
-                toolCallId,
-                text: `\n\n✅ **Done!**`,
-                writer,
-              });
-
-              writer.write({ type: 'data-step-added', data: latestStep });
-
-              this.logger.info({ stepCount: draftState.getSteps().length }, `AI Step added: ${toolName}`);
-              break;
-            }
-
-            case 'completeWorkflow': {
-              const workflow = draftState.getWorkflow();
-              if (!workflow) {
-                throw new Error('Workflow or latest step not found');
-              }
-
-              await this.updateWorkflowPayloadSchema({ workflowId: workflow._id, command, draftState });
-
-              writer.write({ type: 'data-workflow-completed', data: workflow.slug });
-
-              this.logger.info('AI Workflow generation completed');
-              break;
-            }
-          }
-        }
-      },
-      onError: ({ error }) => {
-        this.logger.error({ error }, 'AI Agent error');
+        await writer.merge(
+          toUIMessageStream(agentStream).pipeThrough(createToolOutputTransform()).pipeThrough(createErrorTransform())
+        );
       },
     });
 
-    writer.merge(result.toUIMessageStream({ sendReasoning: true }));
-  }
-
-  private async createWorkflow(
-    command: StreamGenerationCommand,
-    metadata: WorkflowMetadata,
-    draftState: DraftWorkflowState
-  ): Promise<WorkflowResponseDto> {
-    const workflowDto: UpsertWorkflowDataCommand = {
-      name: metadata.name,
-      description: metadata.description,
-      tags: metadata.tags,
-      __source: WorkflowCreationSourceEnum.AI,
-      origin: ResourceOriginEnum.NOVU_CLOUD,
-      active: true,
-      severity: metadata.severity,
-      steps: [],
-      ...(metadata.critical
-        ? {
-            preferences: {
-              user: {
-                all: {
-                  enabled: true,
-                  readOnly: true,
-                },
-                channels: {
-                  [ChannelTypeEnum.IN_APP]: {
-                    enabled: true,
-                  },
-                  [ChannelTypeEnum.EMAIL]: {
-                    enabled: true,
-                  },
-                  [ChannelTypeEnum.SMS]: {
-                    enabled: true,
-                  },
-                  [ChannelTypeEnum.PUSH]: {
-                    enabled: true,
-                  },
-                  [ChannelTypeEnum.CHAT]: {
-                    enabled: true,
-                  },
-                },
-              },
-            },
-          }
-        : {}),
-    };
-
-    try {
-      const persistedWorkflow = await this.upsertWorkflowUseCase.execute(
-        UpsertWorkflowCommand.create({
-          user: command.user,
-          workflowDto,
-        })
-      );
-      draftState.setWorkflow(persistedWorkflow);
-
-      this.logger.info(
-        { _id: persistedWorkflow._id, slug: persistedWorkflow.slug },
-        `AI Workflow created with metadata: ${workflowDto.name}`
-      );
-
-      return persistedWorkflow;
-    } catch (error) {
-      this.logger.error({ error }, 'Failed to create workflow with metadata');
-
-      throw error;
-    }
+    return uiMessageStream;
   }
 
   private async addWorkflowStep({

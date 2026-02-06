@@ -8,6 +8,11 @@ export enum AiResourceTypeEnum {
   WORKFLOW = 'workflow',
 }
 
+export enum AiAgentTypeEnum {
+  CREATE_WORKFLOW = 'create-workflow',
+  ADD_WORKFLOW_STEPS = 'add-workflow-steps',
+}
+
 export enum AiMessageRoleEnum {
   USER = 'user',
   ASSISTANT = 'assistant',

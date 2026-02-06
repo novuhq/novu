@@ -48,6 +48,7 @@ export class UpsertChatUseCase {
     const updateData: Record<string, unknown> = {
       messages,
       activeStreamId: activeStreamId,
+      resourceType,
       resourceId,
     };
 

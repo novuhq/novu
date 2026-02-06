@@ -1,5 +1,5 @@
 import { AiWorkflowToolsEnum } from '@novu/shared';
-import { DataUIPart, ToolUIPart } from 'ai';
+import { DataUIPart, DynamicToolUIPart, ToolUIPart } from 'ai';
 import { useEffect, useRef, useState } from 'react';
 import {
   ChainOfThought,
@@ -69,14 +69,6 @@ const TOOL_DISPLAY_CONFIG: Record<
   },
 };
 
-function extractToolName(type: string): string {
-  if (type.startsWith('tool-')) {
-    return type.replace('tool-', '');
-  }
-
-  return type;
-}
-
 function getToolStatus(state?: string): 'complete' | 'active' | 'pending' {
   if (state === 'output-available') return 'complete';
   if (state === 'streaming' || state === 'partial-call') return 'active';
@@ -85,8 +77,8 @@ function getToolStatus(state?: string): 'complete' | 'active' | 'pending' {
 }
 
 type ChatChainOfThoughtProps = {
-  toolParts: ToolUIPart[];
-  toolReasoningParts: DataUIPart<{ 'tool-reasoning': { toolCallId: string; text: string } }>[];
+  toolParts: DynamicToolUIPart[];
+  toolReasoningParts: DataUIPart<{ reasoning: { toolCallId: string; text: string } }>[];
   isStreaming: boolean;
 };
 
@@ -127,7 +119,7 @@ export function ChatChainOfThought({ toolParts, toolReasoningParts, isStreaming 
       <ChainOfThoughtHeader>{isStreaming ? <Shimmer>{headerText}</Shimmer> : headerText}</ChainOfThoughtHeader>
       <ChainOfThoughtContent>
         {toolParts.map((tool, index) => {
-          const toolName = extractToolName(tool.type);
+          const toolName = tool.toolName;
           const status = getToolStatus(tool.state);
           const toolReasoning = toolReasoningParts.filter((p) => p.data.toolCallId === tool.toolCallId);
 
@@ -142,7 +134,7 @@ export function ChatChainOfThought({ toolParts, toolReasoningParts, isStreaming 
               status={status}
             >
               {toolReasoning.length > 0 && (
-                <StyledMessageResponse>{toolReasoning.map((p) => p.data.text).join('')}</StyledMessageResponse>
+                <StyledMessageResponse>{toolReasoning.map((p) => p.data.text).join('\n')}</StyledMessageResponse>
               )}
             </ChainOfThoughtStep>
           );

@@ -5,6 +5,7 @@ import {
   IEnvironment,
   WorkflowResponseDto,
 } from '@novu/shared';
+import { UIMessage } from 'ai';
 import { getApiBaseUrl, getV2, postV2 } from './api.client';
 
 export type GenerateWorkflowRequest = {
@@ -45,7 +46,7 @@ export type AiChatResponseDto = {
   resourceType: AiResourceTypeEnum;
   resourceId?: string;
 
-  messages: unknown[];
+  messages: UIMessage[];
   activeStreamId?: string | null;
 
   createdAt: string;
@@ -83,6 +84,17 @@ export async function fetchLatestChat({
     { environment }
   );
 
+  return responseData;
+}
+
+export async function fetchChat({
+  environment,
+  id,
+}: {
+  environment: IEnvironment;
+  id: string;
+}): Promise<AiChatResponseDto> {
+  const { data: responseData } = await getV2<{ data: AiChatResponseDto }>(`/ai/chat/${id}`, { environment });
   return responseData;
 }
 

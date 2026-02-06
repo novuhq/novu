@@ -6,9 +6,11 @@ import { SharedModule } from '../shared/shared.module';
 import { WorkflowModule } from '../workflows-v2/workflow.module';
 import { AiController } from './ai.controller';
 import { AiAgentFactory, LlmService } from './services';
+import { CheckpointerService } from './services/checkpointer.service';
 import { GetChatUseCase } from './usecases/get-chat';
 import { GetLatestChatUseCase } from './usecases/get-latest-chat';
 import { GetSuggestionsUseCase } from './usecases/get-suggestions';
+import { StreamCreateWorkflowUseCase } from './usecases/stream-create-workflow';
 import { StreamWorkflowGenerationUseCase } from './usecases/stream-workflow-generation';
 import { UpsertChatUseCase } from './usecases/upsert-chat';
 
@@ -16,9 +18,11 @@ const USE_CASES = [
   GetChatUseCase,
   GetLatestChatUseCase,
   GetSuggestionsUseCase,
+  StreamCreateWorkflowUseCase,
   StreamWorkflowGenerationUseCase,
   UpsertChatUseCase,
   ResourceValidatorService,
+  CheckpointerService,
 ];
 
 const REPOSITORIES = [AiChatRepository];

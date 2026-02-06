@@ -1,11 +1,10 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
-import { zodResolver } from '@hookform/resolvers/zod';
-import { AiResourceTypeEnum, DuplicateWorkflowDto } from '@novu/shared';
-import { useMemo, useState } from 'react';
+import { AiAgentTypeEnum, AiResourceTypeEnum, DuplicateWorkflowDto } from '@novu/shared';
+import { ChatOnDataCallback, generateId, UIMessage } from 'ai';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiArrowRightSLine, RiCloseLine, RiLoopLeftLine, RiRouteFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { Sparkling } from '@/components/icons/sparkling';
 import { Button } from '@/components/primitives/button';
@@ -30,15 +29,22 @@ import { Textarea } from '@/components/primitives/textarea';
 import { ExternalLink } from '@/components/shared/external-link';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useAiChat } from '@/hooks/use-ai-chat';
+import { useAiChatStream } from '@/hooks/use-ai-chat-stream';
 import { useCreateAiChat } from '@/hooks/use-create-ai-chat';
 import { useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useDuplicateWorkflow } from '@/hooks/use-duplicate-workflow';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { StyledMessageResponse } from './ai-sidekick/chat-message-response';
 import { Form, FormControl, FormField, FormItem, FormMessage, FormRoot } from './primitives/form/form';
 import { showErrorToast } from './primitives/sonner-helpers';
+
+export type WorkflowCreatedEvent = {
+  type: 'workflow-created';
+  workflowSlug: string;
+  chatId: string;
+};
 
 type CreateWorkflowTab = 'guided' | 'manual';
 
@@ -53,6 +59,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const [open, setOpen] = useState(true);
+  const createdWorkflowSlugRef = useRef<string | null>(null);
   const [tab, setTab] = useState<CreateWorkflowTab>('guided');
 
   const { workflow, isPending: isLoadingWorkflow } = useFetchWorkflow({
@@ -79,19 +86,32 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
     onValueChange: handleClose,
   });
 
-  const chatId = useMemo(() => uuidv4(), []);
+  const handleData = useCallback<ChatOnDataCallback<UIMessage>>((data) => {
+    if (
+      data &&
+      typeof data === 'object' &&
+      'type' in data &&
+      (data as { type: string }).type === 'data-workflow-created'
+    ) {
+      const workflowCreatedEvent = data.data as unknown as WorkflowCreatedEvent;
+      createdWorkflowSlugRef.current = workflowCreatedEvent.workflowSlug;
+    }
+  }, []);
 
-  const { sendPrompt } = useAiChat({
+  const chatId = useMemo(() => generateId(), []);
+  const { sendPrompt, messages, isGenerating } = useAiChatStream({
     id: chatId,
-    resourceType: AiResourceTypeEnum.WORKFLOW,
+    agentType: AiAgentTypeEnum.CREATE_WORKFLOW,
+    onData: handleData,
   });
 
   const duplicateWorkflow = useDuplicateWorkflow({ workflowSlug: workflowId || '' });
   const createWorkflowHook = useCreateWorkflow();
   const { submit: submitWorkflow, isLoading: isSubmitting } =
     mode === 'duplicate' ? duplicateWorkflow : createWorkflowHook;
+  const { createAiChat, isPending: isCreatingAiChat } = useCreateAiChat();
 
-  const isLoading = isSubmitting;
+  const isLoading = isSubmitting || isGenerating || isCreatingAiChat;
   const isLoadingTemplate = mode === 'duplicate' && isLoadingWorkflow;
 
   const template: DuplicateWorkflowDto | undefined =
@@ -104,36 +124,40 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
         }
       : undefined;
 
-  const { createAiChat, isPending: isCreatingChat } = useCreateAiChat();
-
   async function handleGuidedSubmit({ prompt }: { prompt: string }) {
-    const { _id: chatId } = await createAiChat(
+    await createAiChat(
       { resourceType: AiResourceTypeEnum.WORKFLOW },
       {
         onError: (error) => {
-          showErrorToast(error instanceof Error ? error.message : 'Failed to create chat', undefined, {
-            duration: 5000,
-          });
+          showErrorToast(error.message || 'There was an error creating the chat.', 'Failed to create chat');
+        },
+        onSuccess: async (chat) => {
+          await sendPrompt({ chatId: chat._id, prompt });
+          setTimeout(() => {
+            navigate(
+              buildRoute(ROUTES.EDIT_WORKFLOW, {
+                environmentSlug: currentEnvironment?.slug ?? '',
+                workflowSlug: createdWorkflowSlugRef.current ?? '',
+              }),
+              { state: { chatId: chat._id } }
+            );
+          }, 1000);
         },
       }
     );
-    sendPrompt({ prompt, chatId });
-
-    setTimeout(() => {
-      navigate(
-        buildRoute(ROUTES.EDIT_WORKFLOW, {
-          environmentSlug: currentEnvironment?.slug ?? '',
-          workflowSlug: 'new',
-        }),
-        {
-          state: {
-            prompt,
-            chatId,
-          },
-        }
-      );
-    }, 500);
   }
+
+  const reasoningText = useMemo(() => {
+    const workflowReasoningParts = messages
+      .filter((m) => m.role === 'assistant')
+      .flatMap((m) => m.parts.filter((p) => p.type === 'data-reasoning'));
+
+    return workflowReasoningParts
+      .map((p) =>
+        'data' in p && p.data && typeof p.data === 'object' && 'text' in p.data ? (p.data as { text: string }).text : ''
+      )
+      .join('\n');
+  }, [messages]);
 
   const isDuplicateMode = mode === 'duplicate';
   const showTabs = !isDuplicateMode;
@@ -192,7 +216,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
               </>
             )}
 
-            {showGuidedContent && <GuidedModeContent onSubmit={handleGuidedSubmit} />}
+            {showGuidedContent && <GuidedModeContent onSubmit={handleGuidedSubmit} reasoningText={reasoningText} />}
 
             {showManualContent &&
               (isLoadingTemplate ? (
@@ -212,8 +236,8 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
                 trailingIcon={RiArrowRightSLine}
                 type="submit"
                 form="generate-workflow"
-                disabled={isLoading || isCreatingChat}
-                isLoading={isLoading || isCreatingChat}
+                disabled={isLoading}
+                isLoading={isLoading}
               >
                 {buttonText}
               </Button>
@@ -246,11 +270,12 @@ const schema = z.object({
 
 type GuidedModeContentProps = {
   onSubmit: (values: z.infer<typeof schema>) => void;
+  isGenerating?: boolean;
+  reasoningText?: string;
 };
 
-function GuidedModeContent({ onSubmit }: GuidedModeContentProps) {
+function GuidedModeContent({ onSubmit, reasoningText }: GuidedModeContentProps) {
   const form = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
     defaultValues: {
       prompt: '',
     },
@@ -258,6 +283,17 @@ function GuidedModeContent({ onSubmit }: GuidedModeContentProps) {
 
   function handleSuggestionClick(suggestion: string) {
     form.setValue('prompt', suggestion);
+  }
+
+  if (reasoningText) {
+    return (
+      <div className="flex flex-1 flex-col gap-2 p-3 pb-6">
+        <div className="flex flex-col items-start gap-2 py-4">
+          <Sparkling className="size-8 animate-pulse" />
+        </div>
+        <StyledMessageResponse>{reasoningText}</StyledMessageResponse>
+      </div>
+    );
   }
 
   return (
