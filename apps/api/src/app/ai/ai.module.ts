@@ -11,7 +11,7 @@ import { GetChatUseCase } from './usecases/get-chat';
 import { GetLatestChatUseCase } from './usecases/get-latest-chat';
 import { GetSuggestionsUseCase } from './usecases/get-suggestions';
 import { StreamCreateWorkflowUseCase } from './usecases/stream-create-workflow';
-import { StreamWorkflowGenerationUseCase } from './usecases/stream-workflow-generation';
+import { StreamWorkflowStepsGenerationUseCase } from './usecases/stream-workflow-steps-generation';
 import { UpsertChatUseCase } from './usecases/upsert-chat';
 
 const USE_CASES = [
@@ -19,7 +19,7 @@ const USE_CASES = [
   GetLatestChatUseCase,
   GetSuggestionsUseCase,
   StreamCreateWorkflowUseCase,
-  StreamWorkflowGenerationUseCase,
+  StreamWorkflowStepsGenerationUseCase,
   UpsertChatUseCase,
   ResourceValidatorService,
   CheckpointerService,

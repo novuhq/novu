@@ -22,7 +22,7 @@ import { GetChatCommand, GetChatUseCase } from '../get-chat';
 import { UpsertChatCommand, UpsertChatUseCase } from '../upsert-chat';
 
 @Injectable()
-export class StreamWorkflowGenerationUseCase implements BaseStreamGenerationAgent {
+export class StreamWorkflowStepsGenerationUseCase implements BaseStreamGenerationAgent {
   constructor(
     private readonly logger: PinoLogger,
     private readonly llmService: LlmService,
