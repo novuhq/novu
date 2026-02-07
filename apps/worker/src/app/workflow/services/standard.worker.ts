@@ -229,7 +229,10 @@ export class StandardWorker extends StandardWorkerService {
           isLastJobInWorkflow = !hasNextJob || shouldHaltOnFailure;
         }
 
-        await this.setJobAsFailed.execute(SetJobAsFailedCommand.create({ ...minimalData, isLastJobInWorkflow }), error);
+        await this.setJobAsFailed.execute(
+          SetJobAsFailedCommand.create({ ...minimalData, isLastJobFailed: isLastJobInWorkflow }),
+          error
+        );
       }
 
       if (shouldHandleLastFailedJob) {

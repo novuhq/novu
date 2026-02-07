@@ -1,7 +1,6 @@
 import { Trace, TraceStatus, WorkflowRunStatusEnum } from '@novu/application-generic';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { TraceResponseDto } from '../dtos/get-request.response.dto';
-import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
 import { StepExecutionDetailDto } from '../dtos/workflow-run-response.dto';
 

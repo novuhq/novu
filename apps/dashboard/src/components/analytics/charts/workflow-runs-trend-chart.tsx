@@ -1,6 +1,8 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { Line, LineChart, XAxis } from 'recharts';
 import { type WorkflowRunsTrendDataPoint } from '../../../api/activity';
+import { useFeatureFlag } from '../../../hooks/use-feature-flag';
 
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
@@ -10,7 +12,7 @@ import { generateDummyWorkflowRunsData } from './chart-dummy-data';
 import { type WorkflowRunsChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
 
-const chartConfig = {
+const legacyChartConfig = {
   success: {
     label: 'Success',
     color: '#34d399',
@@ -18,6 +20,17 @@ const chartConfig = {
   pending: {
     label: 'Pending',
     color: '#facc15',
+  },
+  error: {
+    label: 'Error',
+    color: '#ef4444',
+  },
+} satisfies ChartConfig;
+
+const finalStatusChartConfig = {
+  success: {
+    label: 'Success',
+    color: '#34d399',
   },
   error: {
     label: 'Error',
@@ -62,7 +75,7 @@ type WorkflowRunsTrendChartProps = {
   error?: Error | null;
 };
 
-export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsTrendChartProps) {
+function LegacyWorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsTrendChartProps) {
   const chartData = useMemo(() => {
     return data?.map((dataPoint) => ({
       date: new Date(dataPoint.timestamp).toLocaleDateString('en-US', {
@@ -77,16 +90,17 @@ export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsT
   }, [data]);
 
   const hasDataChecker = useCallback(
-    createDateBasedHasDataChecker<WorkflowRunsChartData>((dataPoint: WorkflowRunsChartData) => {
-      return (dataPoint.completed || 0) > 0 || (dataPoint.processing || 0) > 0 || (dataPoint.error || 0) > 0;
-    }),
+    createDateBasedHasDataChecker<WorkflowRunsChartData>(
+      (dataPoint: WorkflowRunsChartData) =>
+        (dataPoint.completed || 0) > 0 || (dataPoint.processing || 0) > 0 || (dataPoint.error || 0) > 0
+    ),
     []
   );
 
-  const renderChart = useCallback((data: WorkflowRunsChartData[], includeTooltip = true) => {
+  const renderChart = useCallback((chartDataToRender: WorkflowRunsChartData[], includeTooltip = true) => {
     return (
-      <ChartContainer config={chartConfig} className="h-[160px] w-full">
-        <LineChart accessibilityLayer data={data}>
+      <ChartContainer config={legacyChartConfig} className="h-[160px] w-full">
+        <LineChart accessibilityLayer data={chartDataToRender}>
           <XAxis
             dataKey="date"
             axisLine={{ stroke: '#e5e7eb', strokeDasharray: '3 3', strokeWidth: 1 }}
@@ -109,9 +123,7 @@ export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsT
   }, []);
 
   const renderEmptyState = useCallback(
-    (dummyData: WorkflowRunsChartData[]) => {
-      return renderChart(dummyData, false);
-    },
+    (dummyData: WorkflowRunsChartData[]) => renderChart(dummyData, false),
     [renderChart]
   );
 
@@ -132,4 +144,82 @@ export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsT
       {renderChart}
     </ChartWrapper>
   );
+}
+
+function FinalStatusWorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsTrendChartProps) {
+  const chartData = useMemo(() => {
+    return data?.map((dataPoint) => ({
+      date: new Date(dataPoint.timestamp).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      completed: dataPoint.completed,
+      error: dataPoint.error,
+      timestamp: dataPoint.timestamp,
+    }));
+  }, [data]);
+
+  const hasDataChecker = useCallback(
+    createDateBasedHasDataChecker<WorkflowRunsChartData>(
+      (dataPoint: WorkflowRunsChartData) => (dataPoint.completed || 0) > 0 || (dataPoint.error || 0) > 0
+    ),
+    []
+  );
+
+  const renderChart = useCallback((chartDataToRender: WorkflowRunsChartData[], includeTooltip = true) => {
+    return (
+      <ChartContainer config={finalStatusChartConfig} className="h-[160px] w-full">
+        <LineChart accessibilityLayer data={chartDataToRender}>
+          <XAxis
+            dataKey="date"
+            axisLine={{ stroke: '#e5e7eb', strokeDasharray: '3 3', strokeWidth: 1 }}
+            tickLine={false}
+            tick={{ fontSize: 10, fill: '#99a0ae', textAnchor: 'middle' }}
+            tickFormatter={(value, index) => {
+              if (index % 2 === 0) return value;
+
+              return '';
+            }}
+            domain={['dataMin', 'dataMax']}
+          />
+          {includeTooltip && <ChartTooltip cursor={false} content={<NovuTooltip showTotal={false} />} />}
+          <Line dataKey="completed" name="Completed" stroke="#34d399" strokeWidth={2} dot={false} type="monotone" />
+          <Line dataKey="error" name="Error" stroke="#ef4444" strokeWidth={2} dot={false} type="monotone" />
+        </LineChart>
+      </ChartContainer>
+    );
+  }, []);
+
+  const renderEmptyState = useCallback(
+    (dummyData: WorkflowRunsChartData[]) => renderChart(dummyData, false),
+    [renderChart]
+  );
+
+  return (
+    <ChartWrapper
+      title="Workflow runs"
+      data={chartData}
+      isLoading={isLoading}
+      error={error}
+      hasDataChecker={hasDataChecker}
+      loadingSkeleton={<WorkflowRunsTrendChartSkeleton />}
+      dummyDataGenerator={generateDummyWorkflowRunsData}
+      emptyStateRenderer={renderEmptyState}
+      infoTooltip={ANALYTICS_TOOLTIPS.WORKFLOW_RUNS_TREND}
+      emptyStateTitle="Not enough data to show"
+      emptyStateTooltip={ANALYTICS_TOOLTIPS.INSUFFICIENT_DATE_RANGE}
+    >
+      {renderChart}
+    </ChartWrapper>
+  );
+}
+
+export function WorkflowRunsTrendChart(props: WorkflowRunsTrendChartProps) {
+  const isFinalStatusOnly = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TREND_FROM_TRACES_ENABLED);
+
+  if (isFinalStatusOnly) {
+    return <FinalStatusWorkflowRunsTrendChart {...props} />;
+  }
+
+  return <LegacyWorkflowRunsTrendChart {...props} />;
 }

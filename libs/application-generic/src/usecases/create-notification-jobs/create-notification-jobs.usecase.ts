@@ -128,22 +128,19 @@ export class CreateNotificationJobs {
       });
 
       if (isTracesWriteEnabled) {
-        const traceData: WorkflowRunTraceInput = {
-          created_at: LogRepository.formatDateTime64(new Date(notification.createdAt)),
-          organization_id: notification._organizationId,
-          environment_id: notification._environmentId,
-          user_id: command.userId || '',
-          external_subscriber_id: command.subscriber.subscriberId || '',
+        const workflowRunIdentifier =
+          command.template.triggers?.[0]?.identifier || command.template.name.toLowerCase().replace(/\s+/g, '_');
+
+        const baseTraceData: Omit<WorkflowRunTraceInput, 'event_type' | 'title'> = {
+          created_at: LogRepository.formatDateTime64(new Date()),
+          organization_id: command.organizationId,
+          environment_id: command.environmentId,
+          user_id: command.userId,
+          external_subscriber_id: command.subscriber.subscriberId,
           subscriber_id: notification._subscriberId,
-          event_type: 'workflow_run_status_processing',
-          title: 'Workflow run processing',
-          message: '',
-          raw_data: '',
-          status: 'pending',
           entity_id: notification._id,
-          workflow_run_identifier: command.identifier,
+          workflow_run_identifier: workflowRunIdentifier,
           workflow_id: notification._templateId,
-          provider_id: '',
           workflow_name: command.template.name,
           transaction_id: notification.transactionId,
           channels: JSON.stringify(notification.channels || []),
@@ -151,15 +148,31 @@ export class CreateNotificationJobs {
           payload: notification.payload ? JSON.stringify(notification.payload) : '',
           control_values: notification.controls ? JSON.stringify(notification.controls) : '',
           topics: notification.topics ? JSON.stringify(notification.topics) : '',
-          is_digest: false,
-          digested_workflow_run_id: '',
-          delivery_lifecycle_status: DeliveryLifecycleStatusEnum.PENDING,
+          is_digest: !!notification._digestedNotificationId,
+          digested_workflow_run_id: notification._digestedNotificationId || '',
+          provider_id: '',
+          delivery_lifecycle_status: '',
           delivery_lifecycle_detail: '',
+          message: '',
+          raw_data: '',
+          status: '',
           severity: notification.severity || SeverityLevelEnum.NONE,
           critical: notification.critical || false,
           context_keys: notification.contextKeys,
         };
-        await this.traceLogRepository.createWorkflowRun([traceData]);
+
+        await this.traceLogRepository.createWorkflowRun([
+          {
+            ...baseTraceData,
+            event_type: 'workflow_run_status_processing',
+            title: 'Workflow run processing',
+          },
+          {
+            ...baseTraceData,
+            event_type: 'workflow_run_delivery_pending',
+            title: 'Workflow run pending',
+          },
+        ]);
       }
     } catch (error) {
       console.error(
