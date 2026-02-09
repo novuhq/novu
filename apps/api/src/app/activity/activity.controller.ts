@@ -1,5 +1,5 @@
 import { ClassSerializerInterceptor, Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions, UserSession } from '@novu/application-generic';
 import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -26,6 +26,7 @@ import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.
 @Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
+@ApiTags('Activity')
 @SdkGroupName('Activity')
 export class ActivityController {
   constructor(
@@ -60,7 +61,7 @@ export class ActivityController {
   @SdkGroupName('Activity.Requests')
   @SdkMethodName('retrieve')
   @ApiOperation({
-    summary: 'Retrieve activity request',
+    summary: 'Retrieve an activity request',
     description: 'Retrieve detailed traces and information for a specific activity request by ID.',
   })
   async getRequestTraces(@UserSession() user, @Param('requestId') requestId: string): Promise<GetRequestResponseDto> {
@@ -101,7 +102,7 @@ export class ActivityController {
   @SdkGroupName('Activity.WorkflowRuns')
   @SdkMethodName('retrieve')
   @ApiOperation({
-    summary: 'Retrieve workflow run',
+    summary: 'Retrieve a workflow run',
     description: 'Retrieve detailed information for a specific workflow run by ID.',
   })
   async getWorkflowRun(
