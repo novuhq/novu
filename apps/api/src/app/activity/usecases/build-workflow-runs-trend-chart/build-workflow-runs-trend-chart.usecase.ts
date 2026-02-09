@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase, PinoLogger, WorkflowRunRepository } from '@novu/application-generic';
+import {
+  FeatureFlagsService,
+  InstrumentUsecase,
+  PinoLogger,
+  TraceLogRepository,
+  WorkflowRunRepository,
+} from '@novu/application-generic';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { WorkflowRunsTrendDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildWorkflowRunsTrendChartCommand } from './build-workflow-runs-trend-chart.command';
 
@@ -7,6 +14,8 @@ import { BuildWorkflowRunsTrendChartCommand } from './build-workflow-runs-trend-
 export class BuildWorkflowRunsTrendChart {
   constructor(
     private workflowRunRepository: WorkflowRunRepository,
+    private traceLogRepository: TraceLogRepository,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(BuildWorkflowRunsTrendChart.name);
@@ -16,6 +25,81 @@ export class BuildWorkflowRunsTrendChart {
   async execute(command: BuildWorkflowRunsTrendChartCommand): Promise<WorkflowRunsTrendDataPointDto[]> {
     const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
+    const isTraceBasedEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TREND_FROM_TRACES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+      environment: { _id: environmentId },
+    });
+
+    if (isTraceBasedEnabled) {
+      return this.buildChartFromTraces(startDate, endDate, environmentId, organizationId, workflowIds);
+    }
+
+    return this.buildChartFromWorkflowRuns(startDate, endDate, environmentId, organizationId, workflowIds);
+  }
+
+  private async buildChartFromTraces(
+    startDate: Date,
+    endDate: Date,
+    environmentId: string,
+    organizationId: string,
+    workflowIds?: string[]
+  ): Promise<WorkflowRunsTrendDataPointDto[]> {
+    const workflowRuns = await this.traceLogRepository.getWorkflowRunsTrendData(
+      environmentId,
+      organizationId,
+      startDate,
+      endDate,
+      workflowIds
+    );
+
+    const dataByDate = new Map<string, WorkflowRunsTrendDataPointDto>();
+
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const dateKey = currentDate.toISOString().split('T')[0];
+      dataByDate.set(dateKey, {
+        timestamp: dateKey,
+        processing: 0,
+        completed: 0,
+        error: 0,
+      });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    for (const workflowRun of workflowRuns) {
+      const existingDataPoint = dataByDate.get(workflowRun.date);
+      if (existingDataPoint) {
+        const count = parseInt(workflowRun.count, 10);
+        const updatedDataPoint = { ...existingDataPoint };
+
+        switch (workflowRun.event_type) {
+          case 'workflow_run_status_processing':
+            updatedDataPoint.processing += count;
+            break;
+          case 'workflow_run_status_completed':
+            updatedDataPoint.completed += count;
+            break;
+          case 'workflow_run_status_error':
+            updatedDataPoint.error += count;
+            break;
+        }
+
+        dataByDate.set(workflowRun.date, updatedDataPoint);
+      }
+    }
+
+    return Array.from(dataByDate.values());
+  }
+
+  private async buildChartFromWorkflowRuns(
+    startDate: Date,
+    endDate: Date,
+    environmentId: string,
+    organizationId: string,
+    workflowIds?: string[]
+  ): Promise<WorkflowRunsTrendDataPointDto[]> {
     const workflowRuns = await this.workflowRunRepository.getWorkflowRunsTrendData(
       environmentId,
       organizationId,

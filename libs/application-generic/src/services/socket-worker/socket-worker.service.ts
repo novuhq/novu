@@ -24,7 +24,7 @@ export interface SendMessageParams {
   organizationId?: string;
   environmentId?: string;
   subscriberId?: string;
-  contextKeys?: string[];
+  contextKeys: string[];
 }
 
 @Injectable()
@@ -92,8 +92,8 @@ export class SocketWorkerService {
     // Only recalculate the counts if we send a messageId/message.
     if (messageId) {
       await Promise.all([
-        this.sendUnseenCount(userId, environmentId, organizationId, contextKeys),
-        this.sendUnreadCount(userId, environmentId, organizationId, contextKeys),
+        this.sendUnseenCount(userId, environmentId, contextKeys, organizationId),
+        this.sendUnreadCount(userId, environmentId, contextKeys, organizationId),
       ]);
     }
   }
@@ -104,7 +104,7 @@ export class SocketWorkerService {
     organizationId,
     contextKeys,
   }: SendMessageParams): Promise<void> {
-    await this.sendUnreadCount(userId, environmentId, organizationId, contextKeys);
+    await this.sendUnreadCount(userId, environmentId, contextKeys, organizationId);
   }
 
   private async handleUnseenEvent({
@@ -113,7 +113,7 @@ export class SocketWorkerService {
     organizationId,
     contextKeys,
   }: SendMessageParams): Promise<void> {
-    await this.sendUnseenCount(userId, environmentId, organizationId, contextKeys);
+    await this.sendUnseenCount(userId, environmentId, contextKeys, organizationId);
   }
 
   private async sendMessageInternal({
@@ -194,8 +194,8 @@ export class SocketWorkerService {
   private async sendUnreadCountChange(
     userId: string,
     environmentId: string,
-    organizationId?: string,
-    contextKeys?: string[]
+    contextKeys: string[],
+    organizationId?: string
   ): Promise<void> {
     try {
       const [unreadCount, severityCounts] = await Promise.all([
@@ -263,8 +263,8 @@ export class SocketWorkerService {
   private async sendUnseenCountChange(
     userId: string,
     environmentId: string,
-    organizationId?: string,
-    contextKeys?: string[]
+    contextKeys: string[],
+    organizationId?: string
   ): Promise<void> {
     try {
       const unseenCount = await this.messageRepository.getCount(
@@ -305,19 +305,19 @@ export class SocketWorkerService {
   async sendUnseenCount(
     userId: string,
     environmentId: string,
-    organizationId?: string,
-    contextKeys?: string[]
+    contextKeys: string[],
+    organizationId?: string
   ): Promise<void> {
-    return this.sendUnseenCountChange(userId, environmentId, organizationId, contextKeys);
+    return this.sendUnseenCountChange(userId, environmentId, contextKeys, organizationId);
   }
 
   async sendUnreadCount(
     userId: string,
     environmentId: string,
-    organizationId?: string,
-    contextKeys?: string[]
+    contextKeys: string[],
+    organizationId?: string
   ): Promise<void> {
-    return this.sendUnreadCountChange(userId, environmentId, organizationId, contextKeys);
+    return this.sendUnreadCountChange(userId, environmentId, contextKeys, organizationId);
   }
 
   async isEnabled(environmentId?: string): Promise<boolean> {

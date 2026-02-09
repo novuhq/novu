@@ -267,6 +267,57 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
       previousPeriod,
     };
   }
+
+  async getWorkflowRunsTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    workflowIds?: string[]
+  ): Promise<Array<{ date: string; event_type: string; count: string }>> {
+    const workflowFilter =
+      workflowIds && workflowIds.length > 0 ? `AND workflow_id IN {workflowIds:Array(String)}` : '';
+
+    const query = `
+      SELECT 
+        toDate(created_at) as date,
+        event_type,
+        count(*) as count
+      FROM traces
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND entity_type = 'workflow_run'
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type IN ('workflow_run_status_processing', 'workflow_run_status_completed', 'workflow_run_status_error')
+        ${workflowFilter}
+      GROUP BY date, event_type
+      ORDER BY date, event_type
+    `;
+
+    const params: Record<string, unknown> = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    if (workflowIds && workflowIds.length > 0) {
+      params.workflowIds = workflowIds;
+    }
+
+    const result = await this.clickhouseService.query<{
+      date: string;
+      event_type: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
 }
 
 export function mapEventTypeToTitle(eventType: EventType): string {
