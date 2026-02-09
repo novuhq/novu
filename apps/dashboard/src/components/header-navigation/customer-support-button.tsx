@@ -1,5 +1,4 @@
 import { RiQuestionFill } from 'react-icons/ri';
-import { useBootIntercom } from '@/hooks/use-boot-intercom';
 import { usePlainChat } from '@/hooks/use-plain-chat';
 import { IS_SELF_HOSTED } from '../../config';
 import { openInNewTab } from '../../utils/url';
@@ -9,7 +8,6 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export const CustomerSupportButton = () => {
-  useBootIntercom();
   const { showPlainLiveChat } = usePlainChat();
   const isContextualHelpEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXTUAL_HELP_DRAWER_ENABLED);
 
