@@ -1,7 +1,7 @@
+import { DeliveryLifecycleEventType } from '@novu/shared';
 import {
   CHArray,
   CHBoolean,
-  CHDate,
   CHDateTime64,
   CHLowCardinality,
   CHString,
@@ -203,18 +203,11 @@ export type EventType =
   | 'workflow_run_status_processing'
   | 'workflow_run_status_completed'
   | 'workflow_run_status_error'
-  | 'workflow_run_delivery_pending'
-  | 'workflow_run_delivery_sent'
-  | 'workflow_run_delivery_errored'
-  | 'workflow_run_delivery_skipped'
-  | 'workflow_run_delivery_canceled'
-  | 'workflow_run_delivery_merged'
-  | 'workflow_run_delivery_delivered'
-  | 'workflow_run_delivery_interacted';
+  | DeliveryLifecycleEventType;
 
 export type EntityType = 'request' | 'step_run' | 'workflow_run';
 
-export type TraceStatus = 'success' | 'error' | 'warning' | 'pending';
+export type TraceStatus = 'success' | 'error' | 'warning' | 'pending' | '';
 
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 

@@ -33,7 +33,7 @@
     "@nestjs/terminus": "10.2.3",
     "@nestjs/testing": "10.4.18",
     "jsonwebtoken": "9.0.3",
-    "newrelic": "^12.8.1",
+    "newrelic": "^13.12.0",
     "reflect-metadata": "0.2.2"
   },
   "dependencies": {
@@ -113,7 +113,7 @@
     "@types/got": "^9.6.12",
     "@types/jest": "29.5.2",
     "@types/json-logic-js": "^2.0.8",
-    "@types/newrelic": "^9.14.6",
+    "@types/newrelic": "^9.14.8",
     "@types/sanitize-html": "^2.11.0",
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
