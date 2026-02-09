@@ -119,7 +119,6 @@
     "react-resizable-panels": "^2.1.7",
     "react-router-dom": "^7.12.0",
     "react-timezone-select": "^3.2.8",
-    "react-use-intercom": "^2.0.0",
     "recharts": "2.15.4",
     "sonner": "^1.7.0",
     "svix-react": "^1.13.4",
