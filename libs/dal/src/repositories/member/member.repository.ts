@@ -117,7 +117,7 @@ export class MemberRepository implements IMemberRepository {
     options?: any,
     batchSize?: number | undefined
   ): AsyncGenerator<any, any, unknown> {
-    return this.memberRepository.findBatch(query, select, options, batchSize);
+    yield* this.memberRepository.findBatch(query, select, options, batchSize);
   }
 
   insertMany(data: any, ordered: boolean): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: any }> {

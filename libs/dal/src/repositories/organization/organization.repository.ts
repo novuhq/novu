@@ -75,7 +75,7 @@ export class OrganizationRepository implements IOrganizationRepository {
     options?: any,
     batchSize?: number | undefined
   ): AsyncGenerator<any, any, unknown> {
-    return this.organizationRepository.findBatch(query, select, options, batchSize);
+    yield* this.organizationRepository.findBatch(query, select, options, batchSize);
   }
 
   insertMany(data: any, ordered: boolean): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: any }> {

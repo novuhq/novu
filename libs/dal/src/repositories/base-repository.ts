@@ -230,13 +230,21 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     options: { limit?: number; sort?: any; skip?: number } = {},
     batchSize = 500
   ) {
+    let batch: T_MappedEntity[] = [];
     for await (const doc of this._model
       .find(query, select, {
         sort: options.sort || null,
       })
       .batchSize(batchSize)
       .cursor()) {
-      yield this.mapEntity(doc);
+      batch.push(this.mapEntity(doc));
+      if (batch.length >= batchSize) {
+        yield batch;
+        batch = [];
+      }
+    }
+    if (batch.length > 0) {
+      yield batch;
     }
   }
 

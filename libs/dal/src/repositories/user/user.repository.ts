@@ -61,13 +61,13 @@ export class UserRepository implements IUserRepository {
     return this.userRepository.find(query, select, options);
   }
 
-  findBatch(
+  async *findBatch(
     query: any,
     select?: string | undefined,
     options?: any,
     batchSize?: number | undefined
   ): AsyncGenerator<any, any, unknown> {
-    return this.userRepository.findBatch(query, select, options, batchSize);
+    yield* this.userRepository.findBatch(query, select, options, batchSize);
   }
 
   insertMany(

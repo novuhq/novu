@@ -43,7 +43,7 @@ export class TriggerBroadcast extends TriggerBase {
         {},
         subscriberFetchBatchSize
       )) {
-        subscribers.push(subscriber);
+        subscribers.push(...subscriber);
         if (subscribers.length === subscriberFetchBatchSize) {
           await this.sendToProcessSubscriberService(command, subscribers, SubscriberSourceEnum.BROADCAST);
           totalProcessed += subscribers.length;
