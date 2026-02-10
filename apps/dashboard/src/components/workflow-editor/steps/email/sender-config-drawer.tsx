@@ -135,7 +135,7 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
               </FormLabel>
               <FormControl>
                 <InputRoot>
-                  <InputWrapper className="flex h-[2.35rem] items-center">
+                  <InputWrapper className="flex h-[2.35rem] items-center px-0">
                     <ControlInput
                       placeholder={
                         localUseDefaults ? integrationName || 'Acme Inc.' : integrationName || 'e.g. Acme Security'
@@ -170,7 +170,7 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
               </FormLabel>
               <FormControl>
                 <InputRoot hasError={!!emailError}>
-                  <InputWrapper className="flex h-[2.35rem] items-center">
+                  <InputWrapper className="flex h-[2.35rem] items-center px-0">
                     <ControlInput
                       placeholder={
                         localUseDefaults

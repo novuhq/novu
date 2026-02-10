@@ -46,10 +46,13 @@ export const EmailEditorPreview = ({
 }: EmailEditorPreviewProps) => {
   const [activeTab, setActiveTab] = useState('desktop');
 
+  const previewFrom =
+    previewData?.result?.type === ChannelTypeEnum.EMAIL ? previewData.result.preview.from : undefined;
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
       <div className="flex w-full items-center justify-between px-4 pb-0 pt-4">
-        <EmailPreviewHeader />
+        <EmailPreviewHeader previewFrom={previewFrom} />
         <div>
           <TabsList>
             <TabsTrigger value="mobile">

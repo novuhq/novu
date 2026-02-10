@@ -9,10 +9,15 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { usePreviewStep } from '@/hooks/use-preview-step';
 import { cn } from '@/utils/ui';
 
-type MiniEmailPreviewProps = HTMLAttributes<HTMLDivElement>;
+type MiniEmailPreviewProps = HTMLAttributes<HTMLDivElement> & {
+  previewFrom?: {
+    email?: string;
+    name?: string;
+  };
+};
 
 const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
-  const { className, children, ...rest } = props;
+  const { className, children, previewFrom, ...rest } = props;
   return (
     <div
       className={cn(
@@ -22,7 +27,7 @@ const MiniEmailPreview = (props: MiniEmailPreviewProps) => {
       {...rest}
     >
       <div className="flex flex-col gap-1 py-1">
-        <EmailPreviewHeader className="px-2 text-sm" />
+        <EmailPreviewHeader className="px-2 text-sm" previewFrom={previewFrom} />
         <Separator className="before:bg-neutral-alpha-100" />
         <div className="relative z-10 line-clamp-3 space-y-1 px-2 pt-2 text-xs">{children}</div>
       </div>
@@ -106,7 +111,7 @@ export function ConfigureEmailStepPreview(props: ConfigureEmailStepPreviewProps)
 
   if (previewData.result.type === 'email') {
     return (
-      <MiniEmailPreview className={className} {...rest}>
+      <MiniEmailPreview className={className} previewFrom={previewData.result.preview.from} {...rest}>
         <span className="text-foreground-600 max-w-[20ch] truncate">{previewData.result.preview.subject}</span>
         <span> - </span>
         <span className="text-foreground-400">{getPlainText(previewData.result.preview.body)}</span>
