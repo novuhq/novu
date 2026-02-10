@@ -1,6 +1,6 @@
 import { RegionSelector, useRegion } from '@/context/region';
 import { OrganizationList as OrganizationListForm, useOrganization } from '@clerk/clerk-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { clerkSignupAppearance } from '../../utils/clerk-appearance';
 import { ROUTES } from '../../utils/routes';
@@ -150,10 +150,14 @@ export default function OrganizationCreate() {
   const { organization } = useOrganization();
   const { selectedRegion } = useRegion();
   const track = useTelemetry();
+  const hasTrackedRef = useRef(false);
+  const trackedOrgIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Track when an organization is successfully created/selected
-    if (organization) {
+    if (organization?.id && !hasTrackedRef.current && trackedOrgIdRef.current !== organization.id) {
+      hasTrackedRef.current = true;
+      trackedOrgIdRef.current = organization.id;
+
       track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
         location: 'web',
         organizationId: organization.id,
@@ -161,7 +165,7 @@ export default function OrganizationCreate() {
         region: selectedRegion,
       });
     }
-  }, [organization, track, selectedRegion]);
+  }, [organization?.id, organization?.name, selectedRegion, track]);
 
   return (
     <div className="flex w-full flex-1 flex-row items-center justify-center">

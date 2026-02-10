@@ -289,6 +289,10 @@
     {
       "includes": ["**/*.dto.ts"],
       "plugins": ["./biome-plugins/api-property-record-type.grit"]
+    },
+    {
+      "includes": ["**/*.command.ts"],
+      "plugins": ["./biome-plugins/command-session-exclusion.grit"]
     }
   ],
   "assist": {

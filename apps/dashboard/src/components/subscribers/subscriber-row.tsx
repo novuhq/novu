@@ -1,4 +1,5 @@
 import { ISubscriberResponseDto, PermissionsEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -26,6 +27,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
 import { formatDateSimple } from '@/utils/format-date';
 import { Protect } from '@/utils/protect';
+import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useSubscribersUrlState } from './hooks/use-subscribers-url-state';
@@ -60,6 +62,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
   const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
+  const queryClient = useQueryClient();
   const { navigateToSubscribersFirstPage, navigateToEditSubscriberPage } = useSubscribersNavigate();
   const { handleNavigationAfterDelete } = useSubscribersUrlState();
 
@@ -104,7 +107,11 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
     const hasSingleSubscriber = subscribersCount === 1;
 
     if (hasSingleSubscriber) {
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchSubscribers],
+      });
       navigateToSubscribersFirstPage();
+
       return;
     }
 

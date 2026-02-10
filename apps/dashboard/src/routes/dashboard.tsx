@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-// @ts-ignore
+// @ts-expect-error
 import { IntercomProvider } from 'react-use-intercom';
 import { AiDrawerProvider } from '@/components/ai-drawer';
 import { CommandPalette } from '@/components/command-palette';

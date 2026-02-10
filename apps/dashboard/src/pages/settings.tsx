@@ -1,4 +1,4 @@
-import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
+import { UserProfile as ClerkUserProfile, OrganizationProfile } from '@clerk/clerk-react';
 import type { Appearance } from '@clerk/types';
 import {
   ApiServiceLevelEnum,
@@ -15,9 +15,11 @@ import { Card } from '@/components/primitives/card';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { OrganizationSettings } from '@/components/settings/organization-settings';
-import { IS_SELF_HOSTED } from '@/config';
+import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { TeamMembers } from '@/utils/better-auth/components/team-members';
+import { UserProfile as BetterAuthUserProfile } from '@/utils/better-auth/index';
 import { ROUTES } from '@/utils/routes';
 import { Plan } from '../components/billing/plan';
 import { DashboardLayout } from '../components/dashboard-layout';
@@ -86,6 +88,7 @@ export function SettingsPage() {
   const hasBillingPermission = has({ permission: PermissionsEnum.BILLING_WRITE });
 
   const clerkAppearance = getClerkComponentAppearance(isRbacEnabled);
+  const UserProfile = EE_AUTH_PROVIDER === 'clerk' ? ClerkUserProfile : BetterAuthUserProfile;
 
   function checkRbacEnabled(subscription: GetSubscriptionDto | undefined, featureFlag: boolean) {
     const apiServiceLevel = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
@@ -207,10 +210,13 @@ export function SettingsPage() {
                       variant="tip"
                     />
                   )}
-                  <OrganizationProfile appearance={clerkAppearance}>
-                    <OrganizationProfile.Page label="members" />
-                    <OrganizationProfile.Page label="general" />
-                  </OrganizationProfile>
+                  {EE_AUTH_PROVIDER === 'clerk' ? (
+                    <OrganizationProfile appearance={clerkAppearance}>
+                      <OrganizationProfile.Page label="members" />
+                    </OrganizationProfile>
+                  ) : (
+                    <TeamMembers appearance={clerkAppearance} />
+                  )}
                 </div>
               </Card>
             </motion.div>

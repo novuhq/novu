@@ -5,6 +5,14 @@ const emailOutputSchema = {
   properties: {
     subject: { type: 'string', minLength: 1 },
     body: { type: 'string' },
+    from: {
+      type: 'object',
+      properties: {
+        email: { type: 'string' },
+        name: { type: 'string' },
+      },
+      additionalProperties: false,
+    },
   },
   required: ['subject', 'body'],
   additionalProperties: false,

@@ -220,16 +220,16 @@ const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
  *    - steps.
  *    - steps.digest-step (must be existing step ID)
  *    - steps.digest-step.events
- *    - steps.digest-step.events[0]
- *    - steps.digest-step.events[0].id
- *    - steps.digest-step.events[0].payload
- *    - steps.digest-step.events[0].payload.anyNewField (allows any new field after payload)
- *    - steps.digest-step.events[0].payload.deeply.nested.field
+ *    - steps.digest-step.events.0
+ *    - steps.digest-step.events.0.id
+ *    - steps.digest-step.events.0.payload
+ *    - steps.digest-step.events.0.payload.anyNewField (allows any new field after payload)
+ *    - steps.digest-step.events.0.payload.deeply.nested.field
  *    Invalid:
  *    - steps.invalid-step (must use existing step ID)
- *    - steps.digest-step.payload (must use events[n].payload pattern)
- *    - steps.digest-step.events.payload (must use events[n] pattern)
- *    - steps.digest-step.invalidProp (only events[] is allowed)
+ *    - steps.digest-step.payload (must use events.n.payload pattern)
+ *    - steps.digest-step.events.payload (must use events.n pattern)
+ *    - steps.digest-step.invalidProp (only events.n is allowed)
  *
  * Autocomplete Behavior:
  * 1. Shows suggestions when typing partial prefixes:
@@ -244,7 +244,7 @@ const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
  * 3. Allows new variables after valid prefixes:
  *    - subscriber.data.* (any new field)
  *    - payload.* (any new field)
- *    - steps.{valid-step}.events[n].payload.* (any new field)
+ *    - steps.{valid-step}.events.n.payload.* (any new field)
  */
 export const completions =
   (
@@ -382,7 +382,7 @@ function getMatchingVariables(
     return acc;
   }, []);
 
-  // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, context.tenant.data, steps.digest-step.events[0].payload.foo
+  // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, context.tenant.data, steps.digest-step.events.0.payload.foo
   const baseNamespaces = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ...stepPayloadNamespaces];
   const namespaces = isContextEnabled ? [...baseNamespaces, CONTEXT_NAMESPACE] : baseNamespaces;
 

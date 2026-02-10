@@ -278,6 +278,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       data,
       severity: severityArray,
       contextKeys,
+      createdGte,
+      createdLte,
     }: {
       environmentId: string;
       subscriberId: string;
@@ -290,6 +292,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       data?: Record<string, unknown>;
       severity?: SeverityLevelEnum[];
       contextKeys?: string[];
+      createdGte?: Date;
+      createdLte?: Date;
     },
     options: { limit: number; offset: number; after?: string }
   ) {
@@ -361,6 +365,17 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         ...flatData,
         ...query,
       };
+    }
+
+    if (createdGte || createdLte) {
+      const createdAtFilter: { $gte?: Date; $lte?: Date } = {};
+      if (createdGte) {
+        createdAtFilter.$gte = createdGte;
+      }
+      if (createdLte) {
+        createdAtFilter.$lte = createdLte;
+      }
+      query.createdAt = createdAtFilter;
     }
 
     return await this.cursorPagination({
@@ -1168,20 +1183,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return {
       ...restQuery,
       ...this.buildContextExactMatchQuery(contextKeys),
-    };
-  }
-
-  private buildContextExactMatchQuery(contextKeys: string[]): MessageQuery {
-    // empty array = inbox has no (default) context, only match messages with no context
-    if (contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // non-empty array = exact match filtering
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
     };
   }
 }

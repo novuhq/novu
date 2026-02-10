@@ -1,3 +1,7 @@
+## v3.13.0 (2026-01-28)
+
+This was a version bump only for @novu/react to align it with other projects, there were no code changes.
+
 ## v3.12.0 (2026-01-07)
 
 This was a version bump only for @novu/react to align it with other projects, there were no code changes.

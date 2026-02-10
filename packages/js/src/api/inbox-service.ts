@@ -72,6 +72,8 @@ export class InboxService {
     seen,
     data,
     severity,
+    createdGte,
+    createdLte,
   }: {
     tags?: string[];
     read?: boolean;
@@ -83,6 +85,8 @@ export class InboxService {
     offset?: number;
     data?: Record<string, unknown>;
     severity?: SeverityLevelEnum | SeverityLevelEnum[];
+    createdGte?: number;
+    createdLte?: number;
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
     const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
@@ -117,6 +121,12 @@ export class InboxService {
       }
     } else if (severity) {
       searchParams.append('severity', severity);
+    }
+    if (createdGte) {
+      searchParams.append('createdGte', `${createdGte}`);
+    }
+    if (createdLte) {
+      searchParams.append('createdLte', `${createdLte}`);
     }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);

@@ -1,11 +1,11 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { IJobData, JobTopicNameEnum } from '@novu/shared';
 
 import { BulkJobOptions, BullMqService, JobsOptions, Queue, QueueOptions } from '../bull-mq';
 
 const LOG_CONTEXT = 'QueueService';
 
-export class QueueBaseService {
+export class QueueBaseService implements OnModuleDestroy {
   private instance: BullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;
@@ -85,7 +85,7 @@ export class QueueBaseService {
     };
 
     const payloadSize = this.calculatePayloadSize(params.data);
-    Logger.log(
+    Logger.debug(
       `Adding job to queue. Topic: ${this.topic}, Job: ${params.name}, Payload size: ${payloadSize} bytes`,
       LOG_CONTEXT
     );
@@ -107,7 +107,7 @@ export class QueueBaseService {
       );
     }
 
-    Logger.log(
+    Logger.debug(
       `Adding bulk jobs to queue. Topic: ${this.topic}, Count: ${data.length}, Total payload size: ${totalPayloadSize} bytes, Avg payload size: ${avgPayloadSize} bytes`,
       LOG_CONTEXT
     );

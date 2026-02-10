@@ -13,6 +13,10 @@ const organizationSchema = new Schema<OrganizationDBModel>(
       enum: ApiServiceLevelEnum,
       default: ApiServiceLevelEnum.FREE,
     },
+    isTrial: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     branding: {
       fontColor: Schema.Types.String,
       contentBackground: Schema.Types.String,

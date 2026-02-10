@@ -51,7 +51,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      *
      * See https://clerk.com/docs/organizations/force-organizations#limit-access-using-the-clerk-middleware-helper
      */
-    if (clerkUser && !clerkOrganization && window.location.pathname !== ROUTES.SIGNUP_ORGANIZATION_LIST) {
+    const isOnOrgListPage = window.location.pathname === ROUTES.SIGNUP_ORGANIZATION_LIST;
+    const isOnInvitationPage = window.location.pathname === ROUTES.INVITATION_ACCEPT;
+
+    if (clerkUser && !clerkOrganization && !isOnOrgListPage && !isOnInvitationPage) {
+      const pendingInvitationId = sessionStorage.getItem('pendingInvitationId');
+
+      if (pendingInvitationId) {
+        return redirectTo({ url: `${ROUTES.INVITATION_ACCEPT}?id=${pendingInvitationId}` });
+      }
+
       return redirectTo({ url: ROUTES.SIGNUP_ORGANIZATION_LIST });
     }
   }, [isUserLoaded, isOrganizationLoaded, clerkUser, clerkOrganization, redirectTo]);

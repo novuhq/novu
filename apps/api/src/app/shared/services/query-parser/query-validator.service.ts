@@ -20,6 +20,10 @@ export class QueryValidatorService {
     private allowedNamespaces: string[]
   ) {}
 
+  private normalizeArrayNotation(path: string): string {
+    return path.replace(/\[(\d+)\]/g, '.$1');
+  }
+
   private isInvalidFieldReference(field: unknown) {
     return !field || typeof field !== 'object' || !('var' in field);
   }
@@ -37,7 +41,11 @@ export class QueryValidatorService {
       (prefix) => fieldValue.startsWith(prefix) && fieldValue.length > prefix.length
     );
 
-    return !fieldValue || (!this.allowedVariables.includes(fieldValue) && !isWithinAllowedPrefixes);
+    const normalizedFieldValue = this.normalizeArrayNotation(fieldValue);
+    const normalizedAllowedVariables = this.allowedVariables.map((v) => this.normalizeArrayNotation(v));
+    const isInAllowedVariables = normalizedAllowedVariables.includes(normalizedFieldValue);
+
+    return !fieldValue || (!isInAllowedVariables && !isWithinAllowedPrefixes);
   }
 
   private getLogicalOperatorIssue(operator: string, path: number[]): QueryIssue {

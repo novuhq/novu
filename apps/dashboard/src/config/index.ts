@@ -6,7 +6,9 @@ export const LAUNCH_DARKLY_CLIENT_SIDE_ID = import.meta.env.VITE_LAUNCH_DARKLY_C
 
 export const HUBSPOT_PORTAL_ID = import.meta.env.VITE_HUBSPOT_EMBED;
 
-export const IS_EE_AUTH_ENABLED = import.meta.env.VITE_IS_EE_AUTH_ENABLED === 'true';
+export const EE_AUTH_PROVIDER = (window._env_?.VITE_EE_AUTH_PROVIDER ||
+  import.meta.env.VITE_EE_AUTH_PROVIDER ||
+  'clerk') as 'clerk' | 'better-auth';
 
 export const CLERK_PUBLISHABLE_KEY =
   window._env_?.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '';
@@ -14,6 +16,12 @@ export const CLERK_PUBLISHABLE_KEY =
 export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
 
 export const API_HOSTNAME = window._env_?.VITE_API_HOSTNAME || import.meta.env.VITE_API_HOSTNAME;
+
+export const BETTER_AUTH_BASE_URL =
+  window._env_?.VITE_BETTER_AUTH_BASE_URL ||
+  import.meta.env.VITE_BETTER_AUTH_BASE_URL ||
+  API_HOSTNAME ||
+  'http://localhost:3000';
 
 export const IS_EU = API_HOSTNAME === 'https://eu.api.novu.co';
 
@@ -38,8 +46,12 @@ export const IS_SELF_HOSTED = (window._env_?.VITE_SELF_HOSTED || import.meta.env
 
 export const IS_ENTERPRISE = (window._env_?.VITE_NOVU_ENTERPRISE || import.meta.env.VITE_NOVU_ENTERPRISE) === 'true';
 
-if (!IS_SELF_HOSTED && !CLERK_PUBLISHABLE_KEY) {
+if (!IS_SELF_HOSTED && EE_AUTH_PROVIDER === 'clerk' && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
+}
+
+if (!IS_SELF_HOSTED && EE_AUTH_PROVIDER === 'better-auth' && !BETTER_AUTH_BASE_URL) {
+  throw new Error('Missing Better Auth Base URL');
 }
 
 export const SELF_HOSTED_UPGRADE_REDIRECT_URL = 'https://go.novu.co/hosted-upgrade';

@@ -142,6 +142,7 @@ describe('Standard Worker', () => {
       WorkflowInMemoryProviderService
     );
     const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
+    const featureFlagsService = moduleRef.get<FeatureFlagsService>(FeatureFlagsService);
 
     standardWorker = new StandardWorker(
       handleLastFailedJob,
@@ -150,7 +151,8 @@ describe('Standard Worker', () => {
       webhookFilterBackoffStrategy,
       workflowInMemoryProviderService,
       organizationRepository,
-      jobRepository
+      jobRepository,
+      featureFlagsService
     );
   });
 

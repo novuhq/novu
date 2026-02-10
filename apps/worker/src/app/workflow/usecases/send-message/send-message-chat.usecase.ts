@@ -100,7 +100,7 @@ export class SendMessageChat extends SendMessageBase {
 
       // Check if there are any active channels
       if (channels.length === 0) {
-        if (command.contextKeys && command.contextKeys.length > 0) {
+        if (command.contextKeys.length > 0) {
           await this.createExecutionDetail(
             command,
             DetailEnum.SUBSCRIBER_CONTEXT_NO_ACTIVE_CHANNEL,
@@ -595,7 +595,7 @@ export class SendMessageChat extends SendMessageBase {
       tags: command.tags,
       severity: command.severity,
       stepId: command.step.stepId,
-      ...(command.contextKeys && { contextKeys: command.contextKeys }),
+      contextKeys: command.contextKeys,
       ...(channelData &&
         channelData.length > 0 && { channelData: channelData.map((data) => this.redactChannelData(data)) }),
       ...additionalFields,

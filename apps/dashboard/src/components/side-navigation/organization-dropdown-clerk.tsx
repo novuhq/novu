@@ -22,8 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { useRegion } from '@/context/region';
-import { DEFAULT_REGION, getRegionCodeFromAws } from '@/context/region/region-config';
+import { DEFAULT_REGION, getRegionCodeFromAws, useRegion } from '@/context/region';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';

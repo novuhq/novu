@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { IDestroy } from '@novu/application-generic';
@@ -13,7 +13,7 @@ const nr = require('newrelic');
 const LOG_CONTEXT = 'WSGateway';
 
 @WebSocketGateway()
-export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy {
+export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy, OnModuleDestroy {
   private isShutdown = false;
 
   constructor(
@@ -153,18 +153,12 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     );
 
     // Store contexts in socket metadata for filtering
-    // undefined = FF OFF, [] = FF ON with no context, ['key'] = FF ON with context
     connection.data.contextKeys = subscriber.contextKeys;
 
     // Join single user room (no per-context rooms needed)
     await connection.join(subscriber._id);
 
-    const contextDisplay =
-      subscriber.contextKeys === undefined
-        ? 'FF disabled'
-        : subscriber.contextKeys.length === 0
-          ? 'no context'
-          : subscriber.contextKeys.join(', ');
+    const contextDisplay = subscriber.contextKeys.length === 0 ? 'no context' : subscriber.contextKeys.join(', ');
     Logger.log(
       `Connection ${connection.id} accepted for ${subscriber._id} with contexts: ${contextDisplay}`,
       LOG_CONTEXT
@@ -173,7 +167,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     await this.subscriberOnlineService.handleConnection(subscriber);
   }
 
-  async sendMessage(userId: string, event: string, data: any, contextKeys?: string[]) {
+  async sendMessage(userId: string, event: string, data: any, contextKeys: string[]) {
     if (!this.server) {
       Logger.error('No sw server available to send message', LOG_CONTEXT);
 
@@ -182,49 +176,30 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
 
     const sockets = await this.server.in(userId).fetchSockets();
 
-    // FF OFF: message contextKeys is undefined, broadcast to all sockets
-    if (contextKeys === undefined) {
-      Logger.log(`Sending event ${event} to all ${sockets.length} socket(s) (FF disabled)`, LOG_CONTEXT);
-      for (const socket of sockets) {
-        socket.emit(event, data);
-      }
-
-      return;
-    }
-
-    // FF ON: filter by exact context match
-    const messageContextKeys = contextKeys;
-
     Logger.log(
-      `Sending event ${event} to ${userId} with message contexts: ${messageContextKeys.length === 0 ? 'none' : messageContextKeys.join(', ')} (${sockets.length} socket(s))`,
+      `Sending event ${event} to ${userId} with message contexts: ${contextKeys.length === 0 ? 'none' : contextKeys.join(', ')} (${sockets.length} socket(s))`,
       LOG_CONTEXT
     );
 
     for (const socket of sockets) {
       const inboxContextKeys = socket.data.contextKeys;
 
-      if (this.isExactMatch(messageContextKeys, inboxContextKeys)) {
+      if (this.isExactMatch(contextKeys, inboxContextKeys)) {
         socket.emit(event, data);
         Logger.log(
-          `Delivered to socket ${socket.id} with inbox contexts: ${inboxContextKeys?.length === 0 ? 'none' : inboxContextKeys?.join(', ')}`,
+          `Delivered to socket ${socket.id} with inbox contexts: ${inboxContextKeys.length === 0 ? 'none' : inboxContextKeys.join(', ')}`,
           LOG_CONTEXT
         );
       } else {
         Logger.log(
-          `Skipped socket ${socket.id} - contexts mismatch. Message: [${messageContextKeys.join(', ') || 'none'}], Inbox: [${inboxContextKeys?.join(', ') || 'none'}]`,
+          `Skipped socket ${socket.id} - contexts mismatch. Message: [${contextKeys.join(', ') || 'none'}], Inbox: [${inboxContextKeys.join(', ') || 'none'}]`,
           LOG_CONTEXT
         );
       }
     }
   }
 
-  private isExactMatch(messageContextKeys: string[], inboxContextKeys?: string[]): boolean {
-    // When FF is OFF, inbox contextKeys will be undefined - should never happen here since we early return above
-    // This is just a safety check
-    if (inboxContextKeys === undefined) {
-      return true;
-    }
-
+  private isExactMatch(messageContextKeys: string[], inboxContextKeys: string[]): boolean {
     if (messageContextKeys.length === 0) {
       return inboxContextKeys.length === 0;
     }
@@ -249,7 +224,6 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     Logger.log(`Sending individualized unread counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
 
     for (const socket of sockets) {
-      // Preserve undefined (FF OFF) vs [] (FF ON, no context)
       const contextKeys = socket.data.contextKeys;
 
       try {
@@ -299,8 +273,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
           hasMore: paginationIndication.hasMore,
         });
 
-        const contextDisplay =
-          contextKeys === undefined ? 'FF disabled' : contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
+        const contextDisplay = contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
 
         Logger.log(
           `Sent unread count to socket ${socket.id} with contexts [${contextDisplay}]: ${counts.total}`,
@@ -324,7 +297,6 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     Logger.log(`Sending individualized unseen counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
 
     for (const socket of sockets) {
-      // Preserve undefined (FF OFF) vs [] (FF ON, no context)
       const contextKeys = socket.data.contextKeys;
 
       try {
@@ -347,8 +319,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
           hasMore: paginationIndication.hasMore,
         });
 
-        const contextDisplay =
-          contextKeys === undefined ? 'FF disabled' : contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
+        const contextDisplay = contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
 
         Logger.log(
           `Sent unseen count to socket ${socket.id} with contexts [${contextDisplay}]: ${unseenCount}`,
