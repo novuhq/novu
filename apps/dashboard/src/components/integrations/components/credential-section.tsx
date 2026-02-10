@@ -253,11 +253,10 @@ function PushResources({ credential, integrationId }: { credential: IConfigCrede
         <InlineToast
           variant={'tip'}
           className="mt-3"
-          title="Enable Push Channel"
-          description="Have your existing app send push events to Novu, read the docs for the full setup."
+          description="Configure your existing app to send push events to Novu. Refer to the documentation for the complete setup."
           ctaLabel="View Guide"
           onCtaClick={() => {
-            window.open('https://docs.novu.co/platform/concepts/integrations/push', '_blank');
+            window.open('https://docs.novu.co/platform/integrations/push/push-activity-tracking', '_blank');
           }}
         />
       </div>

@@ -37,6 +37,7 @@
     "reflect-metadata": "0.2.2"
   },
   "dependencies": {
+    "p-queue": "^8.0.1",
     "@aws-sdk/client-s3": "^3.567.0",
     "@aws-sdk/s3-request-presigner": "^3.567.0",
     "@azure/storage-blob": "^12.11.0",
