@@ -3,6 +3,7 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { PinoLogger } from '../../logging';
 import { BullMqService, Job, Processor, WorkerOptions } from '../bull-mq';
 import { INovuWorker } from '../readiness';
+import { getSqsDefaultConcurrency } from '../../config/workers';
 import { ISqsConsumerOptions, ISqsMessageMeta, SqsConsumerService, SqsService } from '../sqs';
 
 const LOG_CONTEXT = 'WorkerService';
@@ -97,11 +98,13 @@ export class WorkerBaseService implements INovuWorker {
       return;
     }
 
+    const sqsConcurrency = getSqsDefaultConcurrency() ?? options?.concurrency ?? 30;
+
     const sqsConsumerOptions: ISqsConsumerOptions = {
       maxNumberOfMessages: 10,
       waitTimeSeconds: 20,
       visibilityTimeout: 90,
-      maxConcurrency: options?.concurrency ?? 30,
+      maxConcurrency: sqsConcurrency,
     };
 
     this.sqsConsumer = new SqsConsumerService(

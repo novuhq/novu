@@ -103,10 +103,11 @@ export class SqsConsumerService {
       visibilityTimeout,
       shouldDeleteMessages: false,
       messageSystemAttributeNames: ['ApproximateReceiveCount'],
-      handleMessageBatch: async (messages: Message[]): Promise<Message[]> => {
-        await this.dispatchBatch(messages);
+      handleMessage: async (message: Message): Promise<Message> => {
+        await this.pool.acquire();
+        this.processAndDelete(message);
 
-        return [];
+        return message;
       },
     });
 
@@ -123,26 +124,6 @@ export class SqsConsumerService {
     );
 
     this.setupEventHandlers();
-  }
-
-  /**
-   * Dispatch each message in the batch to the concurrency pool.
-   * Each message independently acquires a slot before processing starts.
-   *
-   * When all slots are occupied, acquire() blocks - this provides natural
-   * backpressure: sqs-consumer won't poll again until handleMessageBatch returns,
-   * and handleMessageBatch won't return until all messages have acquired a slot.
-   *
-   * Processing itself is fire-and-forget (no await on processAndDelete).
-   * Deletion is handled manually per message after processing completes.
-   */
-  private async dispatchBatch(messages: Message[]): Promise<void> {
-    await Promise.all(
-      messages.map(async (message) => {
-        await this.pool.acquire();
-        this.processAndDelete(message);
-      })
-    );
   }
 
   /**
@@ -230,6 +211,16 @@ export class SqsConsumerService {
         },
         'SQS message timeout error',
         LOG_CONTEXT
+      );
+    });
+
+    this.consumer.on('message_processed', (message) => {
+      this.logger?.debug(
+        {
+          messageId: message.MessageId,
+          topic: this.topic,
+        },
+        'SQS message dispatched to processing pool'
       );
     });
 

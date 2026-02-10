@@ -17,6 +17,9 @@ const getDefaultConcurrency = () =>
 const getDefaultLockDuration = () =>
   process.env.WORKER_DEFAULT_LOCK_DURATION ? Number(process.env.WORKER_DEFAULT_LOCK_DURATION) : undefined;
 
+export const getSqsDefaultConcurrency = () =>
+  process.env.SQS_DEFAULT_CONCURRENCY ? Number(process.env.SQS_DEFAULT_CONCURRENCY) : undefined;
+
 const getWorkerConfig = (worker: WorkerEnum): IWorkerConfig => {
   const workersConfig = {
     [WorkerEnum.INBOUND_PARSE_MAIL]: {
