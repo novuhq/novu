@@ -1,6 +1,6 @@
 import { workflow } from '@novu/framework';
 import { z } from 'zod';
-import { type IRenderEmailPayload, renderUsageReportEmail } from './email';
+import { renderUsageReportEmail } from './email';
 
 export const usageReportWorkflow = workflow(
   'monthly-usage-report',
@@ -10,7 +10,7 @@ export const usageReportWorkflow = workflow(
       async (controls) => {
         return {
           subject: controls.subject,
-          body: await renderUsageReportEmail(payload as IRenderEmailPayload, controls),
+          body: await renderUsageReportEmail(payload, controls),
         };
       },
       {

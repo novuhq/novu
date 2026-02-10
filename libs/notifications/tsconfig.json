@@ -14,6 +14,6 @@
     "jsx": "react",
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/workflows/usage-report/email.tsx"],
   "exclude": ["node_modules/**"]
 }

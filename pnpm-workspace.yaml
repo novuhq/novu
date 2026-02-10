@@ -9,8 +9,6 @@ packages:
   - 'enterprise/packages/*'
   # playground apps
   - 'playground/*'
-  # react-email preview directories
-  - 'libs/notifications/.react-email'
 
 # Pnpm configuration
 # Wait 24 hours (1440 minutes) before allowing packages to be installed
