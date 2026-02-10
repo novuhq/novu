@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { JobEntity, JobStatusEnum, MessageEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { StepType } from '..';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { ClickHouseBatchService } from '../clickhouse-batch.service';
 import { LogRepository, SchemaKeys } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import { ORDER_BY, StepRun, stepRunSchema, TABLE_NAME } from './step-run.schema';
@@ -33,9 +34,10 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
   constructor(
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger,
-    protected readonly featureFlagsService: FeatureFlagsService
+    protected readonly featureFlagsService: FeatureFlagsService,
+    @Optional() protected readonly batchService?: ClickHouseBatchService
   ) {
-    super(clickhouseService, logger, stepRunSchema, ORDER_BY, featureFlagsService);
+    super(clickhouseService, logger, stepRunSchema, ORDER_BY, featureFlagsService, batchService);
     this.logger.setContext(this.constructor.name);
   }
 

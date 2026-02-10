@@ -162,7 +162,7 @@ export class TriggerEvent {
       // We might have a single actor for every trigger, so we only need to check for it once
       let actorProcessed: SubscriberEntity | undefined;
       if (mappedCommand.actor) {
-        this.logger.info(mappedCommand, 'Processing actor');
+        this.logger.debug(mappedCommand, 'Processing actor');
 
         try {
           actorProcessed = await this.createOrUpdateSubscriberUsecase.execute(

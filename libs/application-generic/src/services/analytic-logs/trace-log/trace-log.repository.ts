@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { ClickHouseBatchService } from '../clickhouse-batch.service';
 import { LogRepository } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import {
@@ -50,9 +51,10 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
   constructor(
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger,
-    protected readonly featureFlagsService: FeatureFlagsService
+    protected readonly featureFlagsService: FeatureFlagsService,
+    @Optional() protected readonly batchService?: ClickHouseBatchService
   ) {
-    super(clickhouseService, logger, traceLogSchema, ORDER_BY, featureFlagsService);
+    super(clickhouseService, logger, traceLogSchema, ORDER_BY, featureFlagsService, batchService);
     this.logger.setContext(this.constructor.name);
   }
 
