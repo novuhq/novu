@@ -50,7 +50,7 @@ const mockCloudflareSchedulerService = {
 } as unknown as CloudflareSchedulerService;
 
 const mockFeatureFlagsService = {
-  getFlag: async () => 'off',
+  getFlag: async () => false,
 } as unknown as FeatureFlagsService;
 
 const mockOrganizationRepository = {

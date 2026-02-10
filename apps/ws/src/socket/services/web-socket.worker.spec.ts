@@ -34,7 +34,7 @@ const mockSqsService = {
 } as unknown as SqsService;
 
 const mockFeatureFlagsService = {
-  getFlag: async () => 'off',
+  getFlag: async () => false,
 } as unknown as FeatureFlagsService;
 
 const mockLogger = {
