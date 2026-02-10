@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
-import { Input } from '@/components/primitives/input';
+import { InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
 import {
   Sheet,
@@ -16,7 +16,10 @@ import {
 } from '@/components/primitives/sheet';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useParseVariables } from '@/hooks/use-parse-variables';
 import { usePrimaryEmailIntegration } from '@/hooks/use-primary-email-integration';
 
 type SenderConfigDrawerProps = {
@@ -28,6 +31,8 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
   const { getValues, setValue } = useFormContext();
   const { saveForm } = useSaveForm();
   const { senderEmail: integrationEmail, senderName: integrationName } = usePrimaryEmailIntegration();
+  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   const [localEmail, setLocalEmail] = useState('');
   const [localName, setLocalName] = useState('');
@@ -129,16 +134,22 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
                 </Tooltip>
               </FormLabel>
               <FormControl>
-                <Input
-                  placeholder={
-                    localUseDefaults ? integrationName || 'Acme Inc.' : integrationName || 'e.g. Acme Security'
-                  }
-                  disabled={localUseDefaults}
-                  value={localName}
-                  onChange={(e) => {
-                    setLocalName(e.target.value);
-                  }}
-                />
+                <InputRoot>
+                  <InputWrapper className="flex h-[2.35rem] items-center px-0">
+                    <ControlInput
+                      placeholder={
+                        localUseDefaults ? integrationName || 'Acme Inc.' : integrationName || 'e.g. Acme Security'
+                      }
+                      disabled={localUseDefaults}
+                      value={localName}
+                      onChange={setLocalName}
+                      variables={variables}
+                      isAllowedVariable={isAllowedVariable}
+                      size="sm"
+                      indentWithTab={false}
+                    />
+                  </InputWrapper>
+                </InputRoot>
               </FormControl>
             </FormItem>
 
@@ -158,24 +169,29 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
                 </Tooltip>
               </FormLabel>
               <FormControl>
-                <Input
-                  type="email"
-                  placeholder={
-                    localUseDefaults
-                      ? integrationEmail || 'noreply@novu.co'
-                      : integrationEmail || 'e.g. noreply@acme.com'
-                  }
-                  disabled={localUseDefaults}
-                  value={localEmail}
-                  onChange={(e) => {
-                    const newEmail = e.target.value;
-                    setLocalEmail(newEmail);
-                    if (emailError && (!newEmail || validateEmail(newEmail))) {
-                      setEmailError('');
-                    }
-                  }}
-                  hasError={!!emailError}
-                />
+                <InputRoot hasError={!!emailError}>
+                  <InputWrapper className="flex h-[2.35rem] items-center px-0">
+                    <ControlInput
+                      placeholder={
+                        localUseDefaults
+                          ? integrationEmail || 'noreply@novu.co'
+                          : integrationEmail || 'e.g. noreply@acme.com'
+                      }
+                      disabled={localUseDefaults}
+                      value={localEmail}
+                      onChange={(newEmail) => {
+                        setLocalEmail(newEmail);
+                        if (emailError && (!newEmail || validateEmail(newEmail))) {
+                          setEmailError('');
+                        }
+                      }}
+                      variables={variables}
+                      isAllowedVariable={isAllowedVariable}
+                      size="sm"
+                      indentWithTab={false}
+                    />
+                  </InputWrapper>
+                </InputRoot>
               </FormControl>
               {emailError && <FormMessage>{emailError}</FormMessage>}
             </FormItem>

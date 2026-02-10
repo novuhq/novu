@@ -27,8 +27,6 @@ export const IS_EU = API_HOSTNAME === 'https://eu.api.novu.co';
 
 export const WEBSOCKET_HOSTNAME = window._env_?.VITE_WEBSOCKET_HOSTNAME || import.meta.env.VITE_WEBSOCKET_HOSTNAME;
 
-export const INTERCOM_APP_ID = import.meta.env.VITE_INTERCOM_APP_ID;
-
 export const SEGMENT_KEY = import.meta.env.VITE_SEGMENT_KEY;
 
 export const MIXPANEL_KEY = import.meta.env.VITE_MIXPANEL_KEY;

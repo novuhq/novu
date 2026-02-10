@@ -6,6 +6,7 @@ import { generateObjectId } from '../../utils/generate-id';
 import { Prettify } from '../../utils/prettify.type';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
+import { ClickHouseBatchService } from './clickhouse-batch.service';
 
 // Define operators as const assertion to maintain literal types
 const CLICKHOUSE_OPERATORS = [
@@ -99,7 +100,8 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     protected readonly logger: PinoLogger,
     protected readonly schema: TSchema,
     protected readonly schemaOrderBy: SchemaKeys<TSchema>[],
-    protected readonly featureFlagsService: FeatureFlagsService
+    protected readonly featureFlagsService: FeatureFlagsService,
+    protected readonly batchService?: ClickHouseBatchService
   ) {
     this.initialize();
   }
@@ -182,14 +184,15 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     let allConditions: WhereCondition<InferClickhouseSchemaType<TSchema>>[] = [];
 
     if ('__unsafe' in rawWhere) {
-      // Unsafe mode - log for monitoring but allow
-      this.logger.warn('Using unsafe WHERE clause without tenant enforcement', {
-        table: this.table,
-        conditionsCount: rawWhere.conditions.length,
-      });
+      this.logger.warn(
+        {
+          table: this.table,
+          conditionsCount: rawWhere.conditions.length,
+        },
+        'Using unsafe WHERE clause without tenant enforcement'
+      );
       allConditions = rawWhere.conditions;
     } else {
-      // Safe mode - enforce tenant context
       const enforcedConditions = this.buildEnforcedConditions(rawWhere.enforced);
       allConditions = [...enforcedConditions, ...(rawWhere.conditions || [])];
     }
@@ -286,12 +289,76 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     },
     options: InsertOptions
   ): Promise<void> {
-    // Use provided id (e.g., ID for request entities), otherwise generate a new unique id
     const id: string = data?.id || `${this.identifierPrefix}${generateObjectId()}`;
     const expirationDate = await this.getExpirationDate(context);
     const expiresAt = LogRepository.formatDateTime64(expirationDate);
 
-    await this.clickhouseService.insert(this.table, [{ ...data, id, expires_at: expiresAt }], options);
+    const row = { ...data, id, expires_at: expiresAt };
+
+    const shouldUseBatching = await this.shouldUseBatching(context);
+
+    if (shouldUseBatching && this.batchService) {
+      const batchConfig = this.getBatchConfig();
+      this.batchService.add(this.table, row, {
+        maxBatchSize: batchConfig.maxBatchSize,
+        flushIntervalMs: batchConfig.flushIntervalMs,
+        insertOptions: options,
+      });
+    } else {
+      await this.clickhouseService.insert(this.table, [row], options);
+    }
+  }
+
+  protected async shouldUseBatching(context: {
+    organizationId?: string;
+    environmentId?: string;
+    userId?: string;
+  }): Promise<boolean> {
+    if (!this.batchService || !this.clickhouseService.client) {
+      return false;
+    }
+
+    try {
+      const isBatchingEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CLICKHOUSE_BATCHING_ENABLED,
+        defaultValue: false,
+        organization: context.organizationId ? { _id: context.organizationId } : undefined,
+        environment: context.environmentId ? { _id: context.environmentId } : undefined,
+        user: context.userId ? { _id: context.userId } : undefined,
+      });
+
+      return isBatchingEnabled;
+    } catch (error) {
+      this.logger.warn(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          table: this.table,
+        },
+        'Failed to check batching feature flag, falling back to direct insert'
+      );
+
+      return false;
+    }
+  }
+
+  protected getBatchConfig(): { maxBatchSize: number; flushIntervalMs: number } {
+    const tableName = this.table.toUpperCase();
+    const defaultMaxBatchSize = 500;
+    const defaultFlushIntervalMs = 3000; // 3 seconds
+
+    const maxBatchSizeEnv = process.env[`${tableName}_BATCH_SIZE`];
+    const parsedMaxBatchSize = maxBatchSizeEnv ? parseInt(maxBatchSizeEnv, 10) : defaultMaxBatchSize;
+    const maxBatchSize =
+      Number.isFinite(parsedMaxBatchSize) && parsedMaxBatchSize > 0 ? parsedMaxBatchSize : defaultMaxBatchSize;
+
+    const flushIntervalMsEnv = process.env[`${tableName}_FLUSH_INTERVAL_MS`];
+    const parsedFlushIntervalMs = flushIntervalMsEnv ? parseInt(flushIntervalMsEnv, 10) : defaultFlushIntervalMs;
+    const flushIntervalMs =
+      Number.isFinite(parsedFlushIntervalMs) && parsedFlushIntervalMs > 0
+        ? parsedFlushIntervalMs
+        : defaultFlushIntervalMs;
+
+    return { maxBatchSize, flushIntervalMs };
   }
 
   protected async insertMany(
@@ -307,11 +374,22 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     const expirationDate = await this.getExpirationDate(context);
     const expiresAt = LogRepository.formatDateTime64(expirationDate);
 
-    await this.clickhouseService.insert(
-      this.table,
-      data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt })),
-      options
-    );
+    const rows = data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt }));
+
+    const shouldUseBatching = await this.shouldUseBatching(context);
+
+    if (shouldUseBatching && this.batchService) {
+      const batchConfig = this.getBatchConfig();
+      for (const row of rows) {
+        this.batchService.add(this.table, row, {
+          maxBatchSize: batchConfig.maxBatchSize,
+          flushIntervalMs: batchConfig.flushIntervalMs,
+          insertOptions: options,
+        });
+      }
+    } else {
+      await this.clickhouseService.insert(this.table, rows, options);
+    }
   }
 
   // Overload for column array selection

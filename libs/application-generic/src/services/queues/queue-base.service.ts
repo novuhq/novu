@@ -85,7 +85,7 @@ export class QueueBaseService implements OnModuleDestroy {
     };
 
     const payloadSize = this.calculatePayloadSize(params.data);
-    Logger.log(
+    Logger.debug(
       `Adding job to queue. Topic: ${this.topic}, Job: ${params.name}, Payload size: ${payloadSize} bytes`,
       LOG_CONTEXT
     );
@@ -107,7 +107,7 @@ export class QueueBaseService implements OnModuleDestroy {
       );
     }
 
-    Logger.log(
+    Logger.debug(
       `Adding bulk jobs to queue. Topic: ${this.topic}, Count: ${data.length}, Total payload size: ${totalPayloadSize} bytes, Avg payload size: ${avgPayloadSize} bytes`,
       LOG_CONTEXT
     );
