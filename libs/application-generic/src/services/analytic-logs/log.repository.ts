@@ -314,7 +314,7 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     environmentId?: string;
     userId?: string;
   }): Promise<boolean> {
-    if (!this.batchService || !this.clickhouseService.client || this.table !== 'traces') {
+    if (!this.batchService || !this.clickhouseService.client) {
       return false;
     }
 
