@@ -377,8 +377,8 @@ export class TopicsController {
   @SdkGroupName('Topics.Subscriptions')
   @SdkMethodName('getSubscription')
   @ApiOperation({
-    summary: 'Get a topic subscription',
-    description: `Get a subscription by its unique identifier for a topic.`,
+    summary: 'Retrieve a topic subscription',
+    description: `Retrieve a subscription by its unique identifier for a topic.`,
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiParam({

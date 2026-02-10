@@ -121,7 +121,7 @@ export const Inbox = React.memo((props: InboxProps) => {
   } satisfies StandardNovuOptions;
 
   return (
-    <InternalNovuProvider {...providerProps} userAgentType="components">
+    <InternalNovuProvider {...providerProps}>
       <InboxChild {...propsWithoutSubscriberId} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />
     </InternalNovuProvider>
   );

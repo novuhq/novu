@@ -9,6 +9,10 @@ import {
 } from '../components/variable/utils/digest-variables';
 import { isNamespaceOnlyVariable } from './liquid';
 
+function normalizeArrayNotation(path: string): string {
+  return path.replace(/\[(\d+)\]/g, '.$1');
+}
+
 export interface LiquidVariable {
   type?: 'variable' | 'digest' | 'new-variable' | 'local';
   name: string;
@@ -202,8 +206,9 @@ export function parseStepVariables(
 
     const pathWithFilters = variable.aliasFor || variable.name;
     const [path] = pathWithFilters.split('|');
+    const normalizedPath = normalizeArrayNotation(path);
 
-    if (result.primitives.some((primitive) => primitive.name === path)) {
+    if (result.primitives.some((primitive) => normalizeArrayNotation(primitive.name) === normalizedPath)) {
       return true;
     }
 

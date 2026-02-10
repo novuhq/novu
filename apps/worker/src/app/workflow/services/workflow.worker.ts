@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   BullMqService,
+  FeatureFlagsService,
   getWorkflowWorkerOptions,
   IWorkflowDataDto,
   PinoLogger,
@@ -14,7 +15,7 @@ import {
   WorkflowWorkerService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
 const nr = require('newrelic');
 
@@ -25,7 +26,8 @@ export class WorkflowWorker extends WorkflowWorkerService {
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     private organizationRepository: CommunityOrganizationRepository,
     sqsService: SqsService,
-    protected logger: PinoLogger
+    protected logger: PinoLogger,
+    private featureFlagsService: FeatureFlagsService
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
     this.logger.setContext(this.constructor.name);
@@ -37,8 +39,26 @@ export class WorkflowWorker extends WorkflowWorkerService {
     return getWorkflowWorkerOptions();
   }
 
+  private async isKillSwitchEnabled(data: IWorkflowDataDto): Promise<boolean> {
+    return this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
+      defaultValue: false,
+      organization: { _id: data.organizationId },
+      environment: { _id: data.environmentId },
+      component: 'worker',
+    });
+  }
+
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: IWorkflowDataDto }) => {
+      const isKillSwitchEnabled = await this.isKillSwitchEnabled(data);
+
+      if (isKillSwitchEnabled) {
+        this.logger.warn(`Kill switch enabled for organizationId ${data.organizationId}. Skipping job.`);
+
+        return;
+      }
+
       const organizationExists = await this.organizationExist(data);
 
       if (!organizationExists) {

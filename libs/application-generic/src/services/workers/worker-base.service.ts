@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { PinoLogger } from '../../logging';
 import { BullMqService, Job, Processor, WorkerOptions } from '../bull-mq';
@@ -30,7 +30,7 @@ export type SqsFailedHandler = (job: Job<any, unknown, string>, error: Error) =>
 
 export { WorkerOptions };
 
-export class WorkerBaseService implements INovuWorker {
+export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
   public bullMqService: BullMqService;
   private sqsConsumer?: SqsConsumerService;
   private sqsCompletedHandler?: SqsCompletedHandler;

@@ -3,7 +3,7 @@ import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Instrument } from '../../instrumentation';
 import { FeatureFlagsService, LogRepository, StepType } from '../../services';
-import { EntityType, EventType, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
+import { EventType, StepRunTraceInput, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
 import { mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
 import { DetailEnum } from './types';
@@ -178,7 +178,7 @@ export class CreateExecutionDetails {
     // Handle dynamic provider selection messages
     const eventType = this.getEventType(command.detail);
 
-    const traceData = {
+    const traceData: StepRunTraceInput = {
       created_at: LogRepository.formatDateTime64(new Date(createdAt)),
       organization_id: command.organizationId,
       environment_id: command.environmentId,
@@ -190,7 +190,6 @@ export class CreateExecutionDetails {
       message: null,
       raw_data: command.raw || null,
       status: this.mapExecutionStatusToTraceStatus(command.status),
-      entity_type: 'step_run' as EntityType,
       entity_id: command.jobId,
       step_run_type: command.channel as StepType,
       workflow_run_identifier: command.workflowRunIdentifier,

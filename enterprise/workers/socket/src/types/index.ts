@@ -11,11 +11,11 @@ export interface IConnectionMetadata {
   environmentId: string;
   connectedAt: number;
   jwtToken: string;
-  contextKeys?: string[];
+  contextKeys: string[];
 }
 
 export interface IWebSocketRoom {
-  sendToUser(userId: string, event: string, data: unknown, contextKeys?: string[]): Promise<void>;
+  sendToUser(userId: string, event: string, data: unknown, contextKeys: string[]): Promise<void>;
   getActiveConnectionsForUser(userId: string): number;
   getTotalActiveConnections(): number;
   getConnectionCapacity(): { current: number; max: number; available: number };

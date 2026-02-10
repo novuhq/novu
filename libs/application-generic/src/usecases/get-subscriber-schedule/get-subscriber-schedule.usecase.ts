@@ -14,7 +14,15 @@ export class GetSubscriberSchedule {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberScheduleCommand): Promise<Schedule | undefined> {
-    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+      enabled: useContextFiltering,
+    });
 
     const subscriberGlobalPreference = await this.preferencesRepository.findOne(
       {
@@ -29,31 +37,5 @@ export class GetSubscriberSchedule {
     );
 
     return subscriberGlobalPreference?.schedule;
-  }
-
-  @Instrument()
-  private async buildContextExactMatchQuery(
-    contextKeys: string[] | undefined,
-    organizationId: string
-  ): Promise<Record<string, unknown>> {
-    const useContextFiltering = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-    });
-
-    if (!useContextFiltering) {
-      return {};
-    }
-
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
   }
 }

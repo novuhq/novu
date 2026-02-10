@@ -1,6 +1,7 @@
 import { RulesLogic } from '@novu/js';
 import type { CustomDataType, DirectionEnum, IEnvironment, SeverityLevelEnum } from '@novu/shared';
 import { Topic } from '@/components/topics/types';
+import { convertContextKeysToPayload } from '@/utils/context-variable-utils';
 import { delV2, getV2, patchV2, postV2 } from './api.client';
 
 export type ListTopicsResponse = {
@@ -106,11 +107,15 @@ export const addSubscribersToTopic = async ({
   environment,
   topicKey,
   subscribers,
+  contextKeys,
 }: {
   environment: IEnvironment;
   topicKey: string;
   subscribers: string[];
+  contextKeys?: string[];
 }) => {
+  const context = convertContextKeysToPayload(contextKeys);
+
   const { data } = await postV2<{
     data: {
       succeeded: string[];
@@ -120,7 +125,10 @@ export const addSubscribersToTopic = async ({
     };
   }>(`/topics/${encodeURIComponent(topicKey)}/subscriptions`, {
     environment,
-    body: { subscriberIds: subscribers },
+    body: {
+      subscriberIds: subscribers,
+      ...(context && { context }),
+    },
   });
 
   return data;

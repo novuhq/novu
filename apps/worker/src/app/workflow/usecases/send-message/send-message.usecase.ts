@@ -458,7 +458,7 @@ export class SendMessage {
   private async resolveContext(command: SendMessageCommand): Promise<ContextResolved> {
     const { contextKeys, environmentId, organizationId } = command;
 
-    if (!contextKeys || contextKeys.length === 0) {
+    if (contextKeys.length === 0) {
       return {} as ContextResolved;
     }
 
@@ -484,16 +484,10 @@ export class SendMessage {
     subscriberId: string;
     _environmentId: string;
   }) {
-    return await this.subscriberRepository.findOne(
-      {
-        _environmentId,
-        subscriberId,
-      },
-      undefined,
-      {
-        readPreference: 'secondaryPreferred',
-      }
-    );
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      subscriberId,
+    });
   }
 
   @Instrument()

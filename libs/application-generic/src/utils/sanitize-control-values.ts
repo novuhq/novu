@@ -82,12 +82,14 @@ function sanitizeEmail(controlValues: EmailControlType) {
     content: [{ type: 'paragraph' }],
   });
 
-  const emailControls: EmailControlType = {
+  const emailControls: Required<EmailControlType> = {
+    editorType: controlValues.editorType,
     subject: sanitizeEmptyInput(controlValues.subject, ' '),
     body: sanitizeEmptyInput(controlValues.body, EMPTY_TIP_TAP),
     skip: controlValues.skip,
     disableOutputSanitization: controlValues.disableOutputSanitization,
     layoutId: controlValues.layoutId,
+    from: controlValues.from,
   };
 
   return filterNullishValues(emailControls);

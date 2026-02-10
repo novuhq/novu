@@ -56,13 +56,13 @@ export class CreateSubscriptionsUsecase {
 
   @InstrumentUsecase()
   async execute(command: CreateSubscriptionsCommand): Promise<CreateSubscriptionsResponseDto> {
-    const isContextEnabled = await this.featureFlagsService.getFlag({
+    const useContextFiltering = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
       defaultValue: false,
       organization: { _id: command.organizationId },
     });
 
-    const contextKeys = isContextEnabled
+    const contextKeys = useContextFiltering
       ? (command.contextKeys ??
         (await this.resolveContexts(command.environmentId, command.organizationId, command.context)))
       : undefined; // FF OFF: always ignore context
@@ -114,7 +114,10 @@ export class CreateSubscriptionsUsecase {
         buildDefaultSubscriptionIdentifier(command.topicKey, sub.subscriberId, contextKeys),
     }));
 
-    const contextQuery = await this.buildContextExactMatchQuery(contextKeys, command.organizationId);
+    const contextQuery = this.topicSubscribersRepository.buildContextExactMatchQuery(contextKeys, {
+      enabled: useContextFiltering,
+    });
+
     const existingSubscriptions = await this.topicSubscribersRepository.find({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -137,7 +140,12 @@ export class CreateSubscriptionsUsecase {
 
     for (const subscription of existingSubscriptions) {
       const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
-      const preferences = await this.fetchPreferencesForSubscription(command, subscription, workflows);
+      const preferences = await this.fetchPreferencesForSubscription(
+        command,
+        subscription,
+        workflows,
+        useContextFiltering
+      );
 
       subscriptionData.push({
         _id: subscription._id.toString(),
@@ -237,7 +245,12 @@ export class CreateSubscriptionsUsecase {
       for (const subscription of newSubscriptions.updated) {
         const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
 
-        const preferences = await this.fetchPreferencesForSubscription(command, subscription, workflows);
+        const preferences = await this.fetchPreferencesForSubscription(
+          command,
+          subscription,
+          workflows,
+          useContextFiltering
+        );
 
         subscriptionData.push({
           _id: subscription._id.toString(),
@@ -406,13 +419,16 @@ export class CreateSubscriptionsUsecase {
   private async fetchPreferencesForSubscription(
     command: CreateSubscriptionsCommand,
     subscription: TopicSubscribersEntity,
-    workflows: NotificationTemplateEntity[]
+    workflows: NotificationTemplateEntity[],
+    useContextFiltering: boolean
   ): Promise<SubscriptionPreferenceDto[] | undefined> {
     if (!command.preferences || command.preferences.length === 0 || workflows.length === 0) {
       return undefined;
     }
 
-    const contextQuery = await this.buildContextExactMatchQuery(subscription.contextKeys, command.organizationId);
+    const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(subscription.contextKeys, {
+      enabled: useContextFiltering,
+    });
 
     const preferencesEntities = await this.preferencesRepository.find({
       _environmentId: command.environmentId,
@@ -644,31 +660,6 @@ export class CreateSubscriptionsUsecase {
       context
     );
 
-    return contexts.map((ctx) => ctx.key).sort();
-  }
-
-  private async buildContextExactMatchQuery(
-    contextKeys: string[] | undefined,
-    organizationId: string
-  ): Promise<Record<string, unknown>> {
-    const useContextFiltering = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-    });
-
-    if (!useContextFiltering) {
-      return {};
-    }
-
-    if (contextKeys === undefined || contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
+    return contexts.map((ctx) => ctx.key);
   }
 }

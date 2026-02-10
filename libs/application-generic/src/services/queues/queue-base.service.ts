@@ -1,13 +1,14 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { FeatureFlagsKeysEnum, JobTopicNameEnum, QueueBackendMode } from '@novu/shared';
 import { PinoLogger } from '../../logging';
+
 import { BulkJobOptions, BullMqService, JobsOptions, Queue, QueueOptions } from '../bull-mq';
 import { FeatureFlagsService } from '../feature-flags';
 import { SqsService } from '../sqs';
 
 const LOG_CONTEXT = 'QueueService';
 
-export class QueueBaseService {
+export class QueueBaseService implements OnModuleDestroy {
   private bullMqService: BullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;

@@ -20,7 +20,7 @@ import { toMerged } from 'es-toolkit';
 import { LRUCache } from 'lru-cache';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
-import type { EventType, Trace } from '../../services/analytic-logs';
+import type { EventType, RequestTraceInput } from '../../services/analytic-logs';
 import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { AnalyticsService } from '../../services/analytics.service';
 import { FeatureFlagsService } from '../../services/feature-flags';
@@ -162,7 +162,7 @@ export class TriggerEvent {
       // We might have a single actor for every trigger, so we only need to check for it once
       let actorProcessed: SubscriberEntity | undefined;
       if (mappedCommand.actor) {
-        this.logger.info(mappedCommand, 'Processing actor');
+        this.logger.debug(mappedCommand, 'Processing actor');
 
         try {
           actorProcessed = await this.createOrUpdateSubscriberUsecase.execute(
@@ -254,7 +254,7 @@ export class TriggerEvent {
     eventType: EventType;
     status?: 'success' | 'error' | 'warning';
     message?: string;
-    rawData?: any;
+    rawData?: unknown;
     workflowId?: string;
   }): Promise<void> {
     const { command, eventType, status = 'success', message, rawData, workflowId } = params;
@@ -264,19 +264,18 @@ export class TriggerEvent {
     }
 
     try {
-      const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+      const traceData: RequestTraceInput = {
         created_at: LogRepository.formatDateTime64(new Date()),
         organization_id: command.organizationId,
         environment_id: command.environmentId,
         user_id: command.userId,
-        subscriber_id: null,
-        external_subscriber_id: null,
+        subscriber_id: '',
+        external_subscriber_id: '',
         event_type: eventType,
         title: mapEventTypeToTitle(eventType),
-        message: message || null,
-        raw_data: rawData ? JSON.stringify(rawData) : null,
+        message: message || '',
+        raw_data: rawData ? JSON.stringify(rawData) : '',
         status,
-        entity_type: 'request',
         entity_id: command.requestId,
         workflow_run_identifier: command.identifier,
         workflow_id: workflowId || '',

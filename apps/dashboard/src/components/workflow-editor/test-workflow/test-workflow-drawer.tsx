@@ -95,15 +95,13 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   useEffect(() => {
     if (!isOpen || !workflow?.workflowId || !currentEnvironment?._id) return;
 
-    if (Object.keys(payloadData).length === 0) {
-      const initialData =
-        initialPayload && Object.keys(initialPayload).length > 0
-          ? initialPayload
-          : getInitialPayload(workflow.workflowId, currentEnvironment._id, workflow, isPayloadSchemaEnabled);
-      setPayloadData(initialData);
-    }
+    const initialData =
+      initialPayload && Object.keys(initialPayload).length > 0
+        ? initialPayload
+        : getInitialPayload(workflow.workflowId, currentEnvironment._id, workflow, isPayloadSchemaEnabled);
+    setPayloadData(initialData);
 
-    if (!subscriberData && currentUser) {
+    if (currentUser) {
       const initialSubscriber = getInitialSubscriber(workflow.workflowId, currentEnvironment._id, {
         _id: currentUser._id,
         firstName: currentUser.firstName ?? undefined,
@@ -115,11 +113,9 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       }
     }
 
-    if (!contextData) {
-      const initialContext = getInitialContext(workflow.workflowId, currentEnvironment._id);
-      if (initialContext) {
-        setContextData(initialContext);
-      }
+    const initialContext = getInitialContext(workflow.workflowId, currentEnvironment._id);
+    if (initialContext) {
+      setContextData(initialContext);
     }
   }, [
     isOpen,
@@ -129,9 +125,6 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     initialPayload,
     isPayloadSchemaEnabled,
     workflow,
-    payloadData,
-    subscriberData,
-    contextData,
   ]);
 
   const subscriberIdToFetch = subscriberData?.subscriberId || '';

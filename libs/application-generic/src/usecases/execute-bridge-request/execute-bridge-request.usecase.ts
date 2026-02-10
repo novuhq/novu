@@ -191,7 +191,7 @@ export class ExecuteBridgeRequest {
       command.action
     );
 
-    this.logger.info(
+    this.logger.debug(
       `Resolved bridge URL: ${bridgeUrl} for environment ${command.environmentId} and origin ${command.workflowOrigin}`
     );
 
@@ -260,7 +260,7 @@ export class ExecuteBridgeRequest {
 
     const headers = await this.buildRequestHeaders(command);
 
-    this.logger.info(`Making bridge request to \`${url}\``);
+    this.logger.debug(`Making bridge request to \`${url}\``);
     try {
       return await request(url, {
         ...options,

@@ -9,6 +9,7 @@ import {
   CreateOrUpdateSubscriberUseCase,
   CreateTenant,
   cacheService,
+  clickHouseBatchService,
   clickHouseService,
   createNestLoggingModuleOptions,
   DalServiceHealthIndicator,
@@ -30,6 +31,7 @@ import {
   UpdateSubscriberChannel,
   UpdateTenant,
   WorkflowRunRepository,
+  WorkflowRunService,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -94,6 +96,8 @@ const ANALYTICS_PROVIDERS = [
 
   // Services
   clickHouseService,
+  clickHouseBatchService,
+  WorkflowRunService,
 ];
 
 const PROVIDERS = [

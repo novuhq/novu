@@ -153,6 +153,7 @@ describe('Standard Worker', () => {
       WorkflowInMemoryProviderService
     );
     const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
+    const featureFlagsService = moduleRef.get<FeatureFlagsService>(FeatureFlagsService);
 
     standardWorker = new StandardWorker(
       handleLastFailedJob,
@@ -163,7 +164,8 @@ describe('Standard Worker', () => {
       organizationRepository,
       jobRepository,
       mockSqsService,
-      mockLogger
+      mockLogger,
+      featureFlagsService
     );
   });
 

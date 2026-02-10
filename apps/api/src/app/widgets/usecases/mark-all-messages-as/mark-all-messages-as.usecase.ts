@@ -92,6 +92,7 @@ export class MarkAllMessagesAs {
           event: eventMessage,
           userId: subscriber._id,
           _environmentId: command.environmentId,
+          contextKeys: [],
         },
         groupId: subscriber._organizationId,
       });

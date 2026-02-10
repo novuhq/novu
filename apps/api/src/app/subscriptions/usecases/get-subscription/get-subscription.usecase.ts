@@ -47,7 +47,19 @@ export class GetSubscription {
       command.identifier = stripContextFromIdentifier(command.identifier);
     }
 
-    const contextQuery = await this.buildContextExactMatchQuery(command.contextKeys, command.organizationId);
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    // Admin API (topics-v2): contextKeys undefined → no context filtering (identifier is sufficient)
+    const contextQuery =
+      command.contextKeys === undefined
+        ? {}
+        : this.topicSubscribersRepository.buildContextExactMatchQuery(command.contextKeys, {
+            enabled: useContextFiltering,
+          });
 
     const subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
@@ -174,38 +186,5 @@ export class GetSubscription {
     );
 
     return computedPreferences.filter((pref): pref is NonNullable<typeof pref> => pref !== null);
-  }
-
-  private async buildContextExactMatchQuery(
-    contextKeys: string[] | undefined,
-    organizationId: string
-  ): Promise<Record<string, unknown>> {
-    const useContextFiltering = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-    });
-
-    if (!useContextFiltering) {
-      return {}; // FF OFF: no context filtering (pre-feature behavior)
-    }
-
-    // Admin API (topics-v2): contextKeys undefined → no context filtering (identifier is sufficient)
-    if (contextKeys === undefined) {
-      return {};
-    }
-
-    // Subscriber API (inbox): contextKeys always provided as array
-    // Empty array → match only subscriptions with no context
-    if (contextKeys.length === 0) {
-      return {
-        $or: [{ contextKeys: { $exists: false } }, { contextKeys: [] }],
-      };
-    }
-
-    // Non-empty array → exact context match for security
-    return {
-      contextKeys: { $all: contextKeys, $size: contextKeys.length },
-    };
   }
 }

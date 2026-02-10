@@ -25,6 +25,15 @@ describe('Context-aware topic subscriptions - /inbox/topics (with context) #novu
     session = new UserSession();
     await session.initialize();
 
+    // Wrap testAgent to include Novu-Client-Version header for context-aware behavior
+    const agent = session.testAgent;
+    session.testAgent = {
+      get: (url: string) => agent.get(url).set('Novu-Client-Version', '@novu/js@3.13.0'),
+      post: (url: string) => agent.post(url).set('Novu-Client-Version', '@novu/js@3.13.0'),
+      patch: (url: string) => agent.patch(url).set('Novu-Client-Version', '@novu/js@3.13.0'),
+      delete: (url: string) => agent.delete(url).set('Novu-Client-Version', '@novu/js@3.13.0'),
+    } as any;
+
     await setIntegrationConfig(session.environment._id, session.environment._organizationId);
 
     const sessionAResponse = await initializeSessionWithContext(session, CONTEXT_A);
