@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   NotificationEntity,
   NotificationRepository,
@@ -15,6 +15,7 @@ import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { ClickHouseBatchService } from '../clickhouse-batch.service';
 import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
@@ -71,9 +72,10 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     protected readonly logger: PinoLogger,
     protected readonly featureFlagsService: FeatureFlagsService,
     private readonly notificationRepository: NotificationRepository,
-    private readonly notificationTemplateRepository: NotificationTemplateRepository
+    private readonly notificationTemplateRepository: NotificationTemplateRepository,
+    @Optional() protected readonly batchService?: ClickHouseBatchService
   ) {
-    super(clickhouseService, logger, workflowRunSchema, ORDER_BY, featureFlagsService);
+    super(clickhouseService, logger, workflowRunSchema, ORDER_BY, featureFlagsService, batchService);
     this.logger.setContext(this.constructor.name);
   }
 

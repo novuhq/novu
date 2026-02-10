@@ -9,6 +9,7 @@ import {
   CreateOrUpdateSubscriberUseCase,
   CreateTenant,
   cacheService,
+  clickHouseBatchService,
   clickHouseService,
   createNestLoggingModuleOptions,
   DalServiceHealthIndicator,
@@ -95,6 +96,7 @@ const ANALYTICS_PROVIDERS = [
 
   // Services
   clickHouseService,
+  clickHouseBatchService,
   WorkflowRunService,
 ];
 

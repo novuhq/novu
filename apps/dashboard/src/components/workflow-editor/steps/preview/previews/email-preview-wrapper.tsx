@@ -43,6 +43,7 @@ export function EmailCorePreview({
     return {
       subject: previewData.result.preview?.subject || '',
       body: previewData.result.preview?.body || '',
+      from: previewData.result.preview?.from,
     };
   }, [previewData?.result]);
 
@@ -76,7 +77,7 @@ export function EmailCorePreview({
       <div className="">
         <div className="bg-bg-white overflow-auto rounded-lg border border-neutral-200">
           <div className="flex w-full items-center justify-between px-3 pb-0 pt-3">
-            <EmailPreviewHeader />
+            <EmailPreviewHeader previewFrom={emailPreviewContent?.from} />
             <div>
               <TabsList>
                 <TabsTrigger value="mobile">
