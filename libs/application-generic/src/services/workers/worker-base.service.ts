@@ -101,6 +101,7 @@ export class WorkerBaseService implements INovuWorker {
       maxNumberOfMessages: 10,
       waitTimeSeconds: 20,
       visibilityTimeout: 90,
+      maxConcurrency: options?.concurrency ?? 30,
     };
 
     this.sqsConsumer = new SqsConsumerService(

@@ -1,4 +1,4 @@
-import type { Message } from '@aws-sdk/client-sqs';
+import { DeleteMessageCommand, type Message } from '@aws-sdk/client-sqs';
 import { Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Consumer } from 'sqs-consumer';
@@ -10,8 +10,69 @@ const LOG_CONTEXT = 'SqsConsumerService';
 
 export type SqsMessageProcessor<T = unknown> = (data: T, meta: ISqsMessageMeta) => Promise<void>;
 
+/**
+ * In-memory concurrency pool that mirrors BullMQ's concurrency model.
+ * Each slot represents one in-flight message being processed on the event loop.
+ *
+ * - acquire() returns immediately if a slot is free, otherwise queues the caller
+ * - release() frees a slot and wakes the next waiting caller
+ * - drain() resolves when all active slots are released (for graceful shutdown)
+ */
+class ConcurrencyPool {
+  private active = 0;
+  private waitQueue: Array<{ resolve: () => void }> = [];
+  private drainResolver?: () => void;
+
+  constructor(private readonly max: number) {}
+
+  async acquire(): Promise<void> {
+    if (this.active < this.max) {
+      this.active++;
+
+      return;
+    }
+
+    return new Promise<void>((resolve) => {
+      this.waitQueue.push({ resolve });
+    });
+  }
+
+  release(): void {
+    this.active--;
+
+    if (this.waitQueue.length > 0) {
+      const next = this.waitQueue.shift();
+      this.active++;
+      next.resolve();
+    } else if (this.active === 0 && this.drainResolver) {
+      this.drainResolver();
+      this.drainResolver = undefined;
+    }
+  }
+
+  async drain(): Promise<void> {
+    if (this.active === 0) {
+      return;
+    }
+
+    return new Promise<void>((resolve) => {
+      this.drainResolver = resolve;
+    });
+  }
+
+  get activeCount(): number {
+    return this.active;
+  }
+
+  get waitingCount(): number {
+    return this.waitQueue.length;
+  }
+}
+
 export class SqsConsumerService {
   private consumer: Consumer;
+  private pool: ConcurrencyPool;
+  private queueUrl: string;
   private isStarted = false;
   private isPaused = false;
 
@@ -22,24 +83,30 @@ export class SqsConsumerService {
     private readonly logger?: PinoLogger,
     private readonly options: ISqsConsumerOptions = {}
   ) {
-    const queueUrl = this.sqsService.getQueueUrl(this.topic);
-    if (!queueUrl) {
+    this.queueUrl = this.sqsService.getQueueUrl(this.topic);
+    if (!this.queueUrl) {
       throw new Error(`No queue URL configured for topic: ${this.topic}`);
     }
 
     const batchSize = this.options.maxNumberOfMessages ?? 10;
     const waitTime = this.options.waitTimeSeconds ?? 20;
     const visibilityTimeout = this.options.visibilityTimeout ?? 90;
+    const maxConcurrency = this.options.maxConcurrency ?? 30;
+
+    this.pool = new ConcurrencyPool(maxConcurrency);
 
     this.consumer = Consumer.create({
-      queueUrl,
+      queueUrl: this.queueUrl,
       sqs: this.sqsService.getClient(),
       batchSize,
       waitTimeSeconds: waitTime,
       visibilityTimeout,
+      shouldDeleteMessages: false,
       messageSystemAttributeNames: ['ApproximateReceiveCount'],
       handleMessageBatch: async (messages: Message[]): Promise<Message[]> => {
-        return await this.processMessageBatch(messages);
+        await this.dispatchBatch(messages);
+
+        return [];
       },
     });
 
@@ -49,45 +116,81 @@ export class SqsConsumerService {
         batchSize,
         waitTimeSeconds: waitTime,
         visibilityTimeout,
+        maxConcurrency,
       },
-      'SQS consumer configured with parallel batch processing',
+      'SQS consumer configured with slot-based concurrency',
       LOG_CONTEXT
     );
 
     this.setupEventHandlers();
   }
 
-  private async processMessageBatch(messages: Message[]): Promise<Message[]> {
-    const results = await Promise.allSettled(messages.map((message) => this.processMessage(message)));
+  /**
+   * Dispatch each message in the batch to the concurrency pool.
+   * Each message independently acquires a slot before processing starts.
+   *
+   * When all slots are occupied, acquire() blocks - this provides natural
+   * backpressure: sqs-consumer won't poll again until handleMessageBatch returns,
+   * and handleMessageBatch won't return until all messages have acquired a slot.
+   *
+   * Processing itself is fire-and-forget (no await on processAndDelete).
+   * Deletion is handled manually per message after processing completes.
+   */
+  private async dispatchBatch(messages: Message[]): Promise<void> {
+    await Promise.all(
+      messages.map(async (message) => {
+        await this.pool.acquire();
+        this.processAndDelete(message);
+      })
+    );
+  }
 
-    const successfulMessages: Message[] = [];
-    results.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        successfulMessages.push(messages[index]);
-      } else {
+  /**
+   * Process a single message and delete it from SQS on success.
+   *
+   * On success: delete the message from SQS (manual ack), release the slot.
+   * On failure: don't delete - SQS retries via visibility timeout, release the slot.
+   */
+  private processAndDelete(message: Message): void {
+    const messageId = message.MessageId || 'unknown';
+
+    this.processMessage(message)
+      .then(async () => {
+        try {
+          await this.sqsService.getClient().send(
+            new DeleteMessageCommand({
+              QueueUrl: this.queueUrl,
+              ReceiptHandle: message.ReceiptHandle,
+            })
+          );
+
+          this.logger?.debug({ messageId, topic: this.topic }, 'SQS message processed and deleted');
+        } catch (deleteError) {
+          Logger.error(
+            {
+              error: deleteError instanceof Error ? deleteError.message : String(deleteError),
+              messageId,
+              topic: this.topic,
+            },
+            'Failed to delete SQS message after successful processing',
+            LOG_CONTEXT
+          );
+        }
+      })
+      .catch((error) => {
         Logger.error(
           {
-            error: result.reason instanceof Error ? result.reason.message : String(result.reason),
-            messageId: messages[index].MessageId,
+            error: error instanceof Error ? error.message : String(error),
+            messageId,
             topic: this.topic,
           },
           'SQS message failed, will be retried via visibility timeout',
           LOG_CONTEXT
         );
-      }
-    });
-
-    this.logger?.debug(
-      {
-        topic: this.topic,
-        total: messages.length,
-        succeeded: successfulMessages.length,
-        failed: messages.length - successfulMessages.length,
-      },
-      'SQS batch processing complete'
-    );
-
-    return successfulMessages;
+      })
+      .finally(() => {
+        this.pool.release();
+      });
   }
 
   private async processMessage(message: Message): Promise<void> {
@@ -127,16 +230,6 @@ export class SqsConsumerService {
         },
         'SQS message timeout error',
         LOG_CONTEXT
-      );
-    });
-
-    this.consumer.on('message_processed', (message) => {
-      this.logger?.debug(
-        {
-          messageId: message.MessageId,
-          topic: this.topic,
-        },
-        'SQS message processed successfully'
       );
     });
 
@@ -185,18 +278,32 @@ export class SqsConsumerService {
 
   public async stop(): Promise<void> {
     if (!this.isStarted) {
+      await this.pool.drain();
+
       return;
     }
 
     this.consumer.stop({ abort: false });
     this.isStarted = false;
     this.isPaused = false;
+
+    Logger.log(
+      { topic: this.topic, activeSlots: this.pool.activeCount },
+      'SQS consumer stopped, draining in-flight messages',
+      LOG_CONTEXT
+    );
+
+    await this.pool.drain();
+
+    Logger.log(`SQS consumer for ${this.topic} fully drained and stopped`, LOG_CONTEXT);
   }
 
-  public getStatus(): { isRunning: boolean; isPaused: boolean } {
+  public getStatus(): { isRunning: boolean; isPaused: boolean; activeSlots: number; waitingSlots: number } {
     return {
       isRunning: this.consumer.status.isRunning,
       isPaused: this.isPaused,
+      activeSlots: this.pool.activeCount,
+      waitingSlots: this.pool.waitingCount,
     };
   }
 }
