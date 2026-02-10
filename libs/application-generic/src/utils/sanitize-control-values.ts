@@ -242,7 +242,24 @@ function parseAmount(amount?: unknown) {
 
 function filterNullishValues<T extends Record<string, unknown>>(obj: T): T {
   if (typeof obj === 'object' && obj !== null) {
-    return Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== null && value !== undefined)) as T;
+    if (Array.isArray(obj)) {
+      return obj as T;
+    }
+
+    const result = {} as T;
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== null && value !== undefined) {
+        if (Array.isArray(value)) {
+          result[key as keyof T] = value as T[keyof T];
+        } else if (typeof value === 'object' && value !== null) {
+          result[key as keyof T] = filterNullishValues(value as Record<string, unknown>) as T[keyof T];
+        } else {
+          result[key as keyof T] = value as T[keyof T];
+        }
+      }
+    }
+
+    return result;
   }
 
   return obj;
