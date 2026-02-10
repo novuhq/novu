@@ -7,14 +7,23 @@ const LOG_CONTEXT = 'SqsService';
 
 @Injectable()
 export class SqsService {
-  private client: SQSClient;
+  private client?: SQSClient;
   private queueUrls: Map<JobTopicNameEnum, string>;
   private producers: Map<JobTopicNameEnum, Producer>;
 
   constructor() {
-    this.initializeClient();
     this.loadQueueUrls();
-    this.initializeProducers();
+
+    const hasConfiguredQueues = Array.from(this.queueUrls.values()).some((url) => url && url.trim() !== '');
+
+    if (hasConfiguredQueues) {
+      this.initializeClient();
+      this.initializeProducers();
+    } else {
+      this.producers = new Map();
+      Logger.log('No SQS queue URLs configured, skipping client initialization', LOG_CONTEXT);
+    }
+
     this.validateConfiguration();
   }
 
@@ -90,6 +99,10 @@ export class SqsService {
   }
 
   public getClient(): SQSClient {
+    if (!this.client) {
+      throw new Error('SQS client not initialized - no queues are configured');
+    }
+
     return this.client;
   }
 

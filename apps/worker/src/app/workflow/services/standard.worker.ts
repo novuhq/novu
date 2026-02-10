@@ -62,6 +62,8 @@ export class StandardWorker extends StandardWorkerService {
     this.setSqsFailedHandler(async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<boolean> => {
       return await this.jobHasFailed(job, error);
     });
+
+    this.startSqsConsumer();
   }
 
   private getWorkerOptions(): WorkerOptions {

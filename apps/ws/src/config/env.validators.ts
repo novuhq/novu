@@ -28,5 +28,8 @@ export const envValidators = {
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
   SQS_DEFAULT_CONCURRENCY: num({ default: undefined }),
+  SQS_DEFAULT_VISIBILITY_TIMEOUT: num({ default: undefined }),
+  SQS_DEFAULT_BATCH_SIZE: num({ default: undefined }),
+  SQS_DEFAULT_WAIT_TIME_SECONDS: num({ default: undefined }),
   LAUNCH_DARKLY_SDK_KEY: str({ default: undefined }),
 } satisfies Record<string, ValidatorSpec<unknown>>;

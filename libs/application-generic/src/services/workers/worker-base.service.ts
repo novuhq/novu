@@ -3,8 +3,23 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { PinoLogger } from '../../logging';
 import { BullMqService, Job, Processor, WorkerOptions } from '../bull-mq';
 import { INovuWorker } from '../readiness';
-import { getSqsDefaultConcurrency } from '../../config/workers';
-import { ISqsConsumerOptions, ISqsMessageMeta, SqsConsumerService, SqsService } from '../sqs';
+import {
+  getSqsDefaultBatchSize,
+  getSqsDefaultConcurrency,
+  getSqsDefaultVisibilityTimeout,
+  getSqsDefaultWaitTimeSeconds,
+} from '../../config/workers';
+import {
+  createSqsJobAdapter,
+  ISqsConsumerOptions,
+  ISqsMessageMeta,
+  SQS_DEFAULT_BATCH_SIZE,
+  SQS_DEFAULT_MAX_CONCURRENCY,
+  SQS_DEFAULT_VISIBILITY_TIMEOUT,
+  SQS_DEFAULT_WAIT_TIME_SECONDS,
+  SqsConsumerService,
+  SqsService,
+} from '../sqs';
 
 const LOG_CONTEXT = 'WorkerService';
 
@@ -98,12 +113,12 @@ export class WorkerBaseService implements INovuWorker {
       return;
     }
 
-    const sqsConcurrency = getSqsDefaultConcurrency() ?? options?.concurrency ?? 30;
+    const sqsConcurrency = getSqsDefaultConcurrency() ?? options?.concurrency ?? SQS_DEFAULT_MAX_CONCURRENCY;
 
     const sqsConsumerOptions: ISqsConsumerOptions = {
-      maxNumberOfMessages: 10,
-      waitTimeSeconds: 20,
-      visibilityTimeout: 90,
+      maxNumberOfMessages: getSqsDefaultBatchSize() ?? SQS_DEFAULT_BATCH_SIZE,
+      waitTimeSeconds: getSqsDefaultWaitTimeSeconds() ?? SQS_DEFAULT_WAIT_TIME_SECONDS,
+      visibilityTimeout: getSqsDefaultVisibilityTimeout() ?? SQS_DEFAULT_VISIBILITY_TIMEOUT,
       maxConcurrency: sqsConcurrency,
     };
 
@@ -115,8 +130,14 @@ export class WorkerBaseService implements INovuWorker {
       sqsConsumerOptions
     );
 
-    this.sqsConsumer.start();
-    Logger.log(`SQS consumer for ${this.topic} initialized and started`, LOG_CONTEXT);
+    Logger.log(`SQS consumer for ${this.topic} initialized (pending start)`, LOG_CONTEXT);
+  }
+
+  public startSqsConsumer(): void {
+    if (this.sqsConsumer) {
+      this.sqsConsumer.start();
+      Logger.log(`SQS consumer for ${this.topic} started`, LOG_CONTEXT);
+    }
   }
 
   private wrapForSqs(processor: Processor<any, unknown, string>): (data: any, meta: ISqsMessageMeta) => Promise<void> {
@@ -126,15 +147,7 @@ export class WorkerBaseService implements INovuWorker {
         return;
       }
 
-      const jobMock = {
-        id: jobId,
-        name: this.topic,
-        data,
-        attemptsMade: meta.receiveCount,
-        opts: {},
-        progress: async () => {},
-        remove: async () => {},
-      } as Job<any, unknown, string>;
+      const jobMock = createSqsJobAdapter(data, meta, this.topic, jobId);
 
       try {
         await processor(jobMock);

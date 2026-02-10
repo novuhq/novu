@@ -4,7 +4,14 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { Consumer } from 'sqs-consumer';
 import { PinoLogger } from '../../logging';
 import { SqsService } from './sqs.service';
-import { ISqsConsumerOptions, ISqsMessageMeta } from './types';
+import {
+  ISqsConsumerOptions,
+  ISqsMessageMeta,
+  SQS_DEFAULT_BATCH_SIZE,
+  SQS_DEFAULT_MAX_CONCURRENCY,
+  SQS_DEFAULT_VISIBILITY_TIMEOUT,
+  SQS_DEFAULT_WAIT_TIME_SECONDS,
+} from './types';
 
 const LOG_CONTEXT = 'SqsConsumerService';
 
@@ -21,7 +28,7 @@ export type SqsMessageProcessor<T = unknown> = (data: T, meta: ISqsMessageMeta) 
 class ConcurrencyPool {
   private active = 0;
   private waitQueue: Array<{ resolve: () => void }> = [];
-  private drainResolver?: () => void;
+  private drainResolvers: Array<() => void> = [];
 
   constructor(private readonly max: number) {}
 
@@ -40,13 +47,15 @@ class ConcurrencyPool {
   release(): void {
     this.active--;
 
-    if (this.waitQueue.length > 0) {
-      const next = this.waitQueue.shift();
+    const next = this.waitQueue.shift();
+    if (next) {
       this.active++;
       next.resolve();
-    } else if (this.active === 0 && this.drainResolver) {
-      this.drainResolver();
-      this.drainResolver = undefined;
+    } else if (this.active === 0 && this.drainResolvers.length > 0) {
+      for (const resolve of this.drainResolvers) {
+        resolve();
+      }
+      this.drainResolvers = [];
     }
   }
 
@@ -56,7 +65,7 @@ class ConcurrencyPool {
     }
 
     return new Promise<void>((resolve) => {
-      this.drainResolver = resolve;
+      this.drainResolvers.push(resolve);
     });
   }
 
@@ -88,10 +97,10 @@ export class SqsConsumerService {
       throw new Error(`No queue URL configured for topic: ${this.topic}`);
     }
 
-    const batchSize = this.options.maxNumberOfMessages ?? 10;
-    const waitTime = this.options.waitTimeSeconds ?? 20;
-    const visibilityTimeout = this.options.visibilityTimeout ?? 90;
-    const maxConcurrency = this.options.maxConcurrency ?? 30;
+    const batchSize = this.options.maxNumberOfMessages ?? SQS_DEFAULT_BATCH_SIZE;
+    const waitTime = this.options.waitTimeSeconds ?? SQS_DEFAULT_WAIT_TIME_SECONDS;
+    const visibilityTimeout = this.options.visibilityTimeout ?? SQS_DEFAULT_VISIBILITY_TIMEOUT;
+    const maxConcurrency = this.options.maxConcurrency ?? SQS_DEFAULT_MAX_CONCURRENCY;
 
     this.pool = new ConcurrencyPool(maxConcurrency);
 
@@ -188,30 +197,6 @@ export class SqsConsumerService {
   private setupEventHandlers(): void {
     this.consumer.on('error', (err) => {
       Logger.error({ error: err.message, topic: this.topic }, 'SQS consumer error', LOG_CONTEXT);
-    });
-
-    this.consumer.on('processing_error', (err, message) => {
-      Logger.error(
-        {
-          error: err.message,
-          messageId: message?.MessageId,
-          topic: this.topic,
-        },
-        'SQS message processing error',
-        LOG_CONTEXT
-      );
-    });
-
-    this.consumer.on('timeout_error', (err, message) => {
-      Logger.error(
-        {
-          error: err.message,
-          messageId: message?.MessageId,
-          topic: this.topic,
-        },
-        'SQS message timeout error',
-        LOG_CONTEXT
-      );
     });
 
     this.consumer.on('message_processed', (message) => {
