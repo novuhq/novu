@@ -54,6 +54,14 @@ export class StandardWorker extends StandardWorkerService {
     this.bullMqWorker.on('completed', async (job: Job<IStandardDataDto, void, string>): Promise<void> => {
       await this.jobHasCompleted(job);
     });
+
+    this.setSqsCompletedHandler(async (job: Job<IStandardDataDto, void, string>): Promise<void> => {
+      await this.jobHasCompleted(job);
+    });
+
+    this.setSqsFailedHandler(async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<boolean> => {
+      return await this.jobHasFailed(job, error);
+    });
   }
 
   private getWorkerOptions(): WorkerOptions {
@@ -176,7 +184,7 @@ export class StandardWorker extends StandardWorkerService {
     }
   }
 
-  private async jobHasFailed(job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> {
+  private async jobHasFailed(job: Job<IStandardDataDto, void, string>, error: Error): Promise<boolean> {
     let jobId;
 
     nr.noticeError(error);
@@ -221,8 +229,12 @@ export class StandardWorker extends StandardWorkerService {
           })
         );
       }
+
+      return hasToBackoff && !hasReachedMaxAttempts;
     } catch (anotherError) {
       Logger.error(anotherError, `Failed to set job ${jobId} as failed`, LOG_CONTEXT);
+
+      return true;
     }
   }
 

@@ -3,17 +3,22 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { PinoLogger } from '../../logging';
 import { BullMqService, Job, Processor, WorkerOptions } from '../bull-mq';
 import { INovuWorker } from '../readiness';
-import { ISqsConsumerOptions, SqsConsumerService, SqsService } from '../sqs';
+import { ISqsConsumerOptions, ISqsMessageMeta, SqsConsumerService, SqsService } from '../sqs';
 
 const LOG_CONTEXT = 'WorkerService';
 
 export type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
+
+export type SqsCompletedHandler = (job: Job<any, unknown, string>) => Promise<void>;
+export type SqsFailedHandler = (job: Job<any, unknown, string>, error: Error) => Promise<boolean>;
 
 export { WorkerOptions };
 
 export class WorkerBaseService implements INovuWorker {
   public bullMqService: BullMqService;
   private sqsConsumer?: SqsConsumerService;
+  private sqsCompletedHandler?: SqsCompletedHandler;
+  private sqsFailedHandler?: SqsFailedHandler;
 
   public readonly DEFAULT_ATTEMPTS = 3;
 
@@ -41,11 +46,33 @@ export class WorkerBaseService implements INovuWorker {
     }
   }
 
+  /*
+   * Register a handler called when an SQS message is successfully processed.
+   * Mirrors BullMQ's `worker.on('completed', ...)` event.
+   */
+  public setSqsCompletedHandler(handler: SqsCompletedHandler): void {
+    this.sqsCompletedHandler = handler;
+  }
+
+  /*
+   * Register a handler called when an SQS message processing fails.
+   * Mirrors BullMQ's `worker.on('failed', ...)` event.
+   *
+   * The handler must return a boolean indicating whether SQS should retry the message:
+   * - `true`: re-throw the error so SQS retries (message stays in queue)
+   * - `false`: absorb the error so SQS deletes the message (failure handled in DB)
+   */
+  public setSqsFailedHandler(handler: SqsFailedHandler): void {
+    this.sqsFailedHandler = handler;
+  }
+
   private shouldSkipProcessing(data: any, jobId: string): boolean {
     if (data?.skipProcessing) {
       Logger.log({ topic: this.topic, jobId }, 'Skipping job - marked for skip during migration', LOG_CONTEXT);
+
       return true;
     }
+
     return false;
   }
 
@@ -54,6 +81,7 @@ export class WorkerBaseService implements INovuWorker {
       if (this.shouldSkipProcessing(job.data, job.id)) {
         return;
       }
+
       return await processor(job);
     };
   }
@@ -65,13 +93,14 @@ export class WorkerBaseService implements INovuWorker {
   private initSqsConsumer(processor: Processor<any, unknown, string>, options?: WorkerOptions): void {
     if (!this.sqsService?.isConfigured(this.topic)) {
       Logger.log(`SQS consumer for ${this.topic} not configured, skipping initialization`, LOG_CONTEXT);
+
       return;
     }
 
     const sqsConsumerOptions: ISqsConsumerOptions = {
       maxNumberOfMessages: 10,
       waitTimeSeconds: 20,
-      visibilityTimeout: 300,
+      visibilityTimeout: 90,
     };
 
     this.sqsConsumer = new SqsConsumerService(
@@ -86,28 +115,57 @@ export class WorkerBaseService implements INovuWorker {
     Logger.log(`SQS consumer for ${this.topic} initialized and started`, LOG_CONTEXT);
   }
 
-  private wrapForSqs(processor: Processor<any, unknown, string>): (data: any) => Promise<void> {
-    return async (data: any): Promise<void> => {
+  private wrapForSqs(processor: Processor<any, unknown, string>): (data: any, meta: ISqsMessageMeta) => Promise<void> {
+    return async (data: any, meta: ISqsMessageMeta): Promise<void> => {
       const jobId = data._id || data.identifier || 'unknown';
       if (this.shouldSkipProcessing(data, jobId)) {
         return;
       }
 
-      /* *
-       * Create a Job-like mock for SQS messages to match BullMQ Job API
-       * SQS consumer handles retries, so attemptsMade is always 0 at processor level
-       * */
       const jobMock = {
         id: jobId,
         name: this.topic,
         data,
-        attemptsMade: 0,
+        attemptsMade: meta.receiveCount,
         opts: {},
         progress: async () => {},
         remove: async () => {},
-      };
+      } as Job<any, unknown, string>;
 
-      await processor(jobMock as Job<any, unknown, string>);
+      try {
+        await processor(jobMock);
+
+        if (this.sqsCompletedHandler) {
+          try {
+            await this.sqsCompletedHandler(jobMock);
+          } catch (handlerError) {
+            Logger.error(
+              handlerError,
+              `SQS completed handler failed for job ${jobId} on topic ${this.topic}`,
+              LOG_CONTEXT
+            );
+          }
+        }
+      } catch (error) {
+        let shouldRetry = true;
+
+        if (this.sqsFailedHandler) {
+          try {
+            shouldRetry = await this.sqsFailedHandler(jobMock, error as Error);
+          } catch (handlerError) {
+            Logger.error(
+              handlerError,
+              `SQS failed handler error for job ${jobId} on topic ${this.topic}, defaulting to retry`,
+              LOG_CONTEXT
+            );
+            shouldRetry = true;
+          }
+        }
+
+        if (shouldRetry) {
+          throw error;
+        }
+      }
     };
   }
 
@@ -119,6 +177,7 @@ export class WorkerBaseService implements INovuWorker {
     }
 
     const sqsRunning = this.sqsConsumer.getStatus().isRunning;
+
     return bullMqRunning || sqsRunning;
   }
 
@@ -130,6 +189,7 @@ export class WorkerBaseService implements INovuWorker {
     }
 
     const sqsPaused = this.sqsConsumer.getStatus().isPaused;
+
     return bullMqPaused && sqsPaused;
   }
 

@@ -4,11 +4,11 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { Consumer } from 'sqs-consumer';
 import { PinoLogger } from '../../logging';
 import { SqsService } from './sqs.service';
-import { ISqsConsumerOptions } from './types';
+import { ISqsConsumerOptions, ISqsMessageMeta } from './types';
 
 const LOG_CONTEXT = 'SqsConsumerService';
 
-export type SqsMessageProcessor<T = unknown> = (data: T) => Promise<void>;
+export type SqsMessageProcessor<T = unknown> = (data: T, meta: ISqsMessageMeta) => Promise<void>;
 
 export class SqsConsumerService {
   private consumer: Consumer;
@@ -29,7 +29,7 @@ export class SqsConsumerService {
 
     const batchSize = this.options.maxNumberOfMessages ?? 10;
     const waitTime = this.options.waitTimeSeconds ?? 20;
-    const visibilityTimeout = this.options.visibilityTimeout ?? 300;
+    const visibilityTimeout = this.options.visibilityTimeout ?? 90;
 
     this.consumer = Consumer.create({
       queueUrl,
@@ -37,44 +37,68 @@ export class SqsConsumerService {
       batchSize,
       waitTimeSeconds: waitTime,
       visibilityTimeout,
-      handleMessage: async (message: Message): Promise<Message> => {
-        await this.processMessage(message);
-        return message;
+      messageSystemAttributeNames: ['ApproximateReceiveCount'],
+      handleMessageBatch: async (messages: Message[]): Promise<Message[]> => {
+        return await this.processMessageBatch(messages);
       },
     });
 
     Logger.log(
       {
         topic: this.topic,
-        concurrency: batchSize,
+        batchSize,
         waitTimeSeconds: waitTime,
         visibilityTimeout,
       },
-      'SQS consumer configured with parallel message processing',
+      'SQS consumer configured with parallel batch processing',
       LOG_CONTEXT
     );
 
     this.setupEventHandlers();
   }
 
+  private async processMessageBatch(messages: Message[]): Promise<Message[]> {
+    const results = await Promise.allSettled(messages.map((message) => this.processMessage(message)));
+
+    const successfulMessages: Message[] = [];
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        successfulMessages.push(messages[index]);
+      } else {
+        Logger.error(
+          {
+            error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+            messageId: messages[index].MessageId,
+            topic: this.topic,
+          },
+          'SQS message failed, will be retried via visibility timeout',
+          LOG_CONTEXT
+        );
+      }
+    });
+
+    this.logger?.debug(
+      {
+        topic: this.topic,
+        total: messages.length,
+        succeeded: successfulMessages.length,
+        failed: messages.length - successfulMessages.length,
+      },
+      'SQS batch processing complete'
+    );
+
+    return successfulMessages;
+  }
+
   private async processMessage(message: Message): Promise<void> {
-    try {
-      const data = JSON.parse(message.Body || '{}');
-      await this.processor(data);
-    } catch (error) {
-      // Log error with more details and re-throw so sqs-consumer can handle retry logic
-      Logger.error(
-        {
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-          messageId: message.MessageId,
-          topic: this.topic,
-        },
-        'Error processing SQS message',
-        LOG_CONTEXT
-      );
-      throw error;
-    }
+    const data = JSON.parse(message.Body || '{}');
+    const receiveCount = parseInt(message.Attributes?.ApproximateReceiveCount || '1', 10);
+    const meta: ISqsMessageMeta = {
+      messageId: message.MessageId || 'unknown',
+      receiveCount,
+    };
+
+    await this.processor(data, meta);
   }
 
   private setupEventHandlers(): void {
@@ -128,6 +152,7 @@ export class SqsConsumerService {
   public start(): void {
     if (this.isStarted) {
       Logger.warn(`SQS consumer for ${this.topic} is already running`, LOG_CONTEXT);
+
       return;
     }
 
@@ -150,6 +175,7 @@ export class SqsConsumerService {
   public async resume(): Promise<void> {
     if (!this.isPaused) {
       Logger.warn(`Cannot resume SQS consumer for ${this.topic}: not in paused state`, LOG_CONTEXT);
+
       return;
     }
 
