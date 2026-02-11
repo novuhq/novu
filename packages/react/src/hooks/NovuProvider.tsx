@@ -58,7 +58,17 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
         defaultSchedule,
         context,
       }),
-    [applicationIdentifier, subscriberHash, subscriberObj, context, contextHash, backendUrl, apiUrl, socketUrl, useCache]
+    [
+      applicationIdentifier,
+      subscriberHash,
+      subscriberObj,
+      context,
+      contextHash,
+      backendUrl,
+      apiUrl,
+      socketUrl,
+      useCache,
+    ]
   );
 
   return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;

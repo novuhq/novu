@@ -1,9 +1,9 @@
-import { buttonVariants } from '@/components/primitives/button';
-import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
-import { ROUTES } from '@/utils/routes';
 import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buttonVariants } from '@/components/primitives/button';
+import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { ROUTES } from '@/utils/routes';
 
 type EEAuthProviderProps = PropsWithChildren;
 

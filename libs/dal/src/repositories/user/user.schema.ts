@@ -34,7 +34,6 @@ const userSchema = new Schema<UserDBModel>(
       lastFailedAttempt: Schema.Types.Date,
     },
     servicesHashes: {
-      intercom: Schema.Types.String,
       plain: Schema.Types.String,
     },
     jobTitle: Schema.Types.String,

@@ -1,8 +1,11 @@
 import { BeforeApplicationShutdown, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import PQueue from 'p-queue';
 import { QueueBaseService } from '../queues';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
+
+const nr = require('newrelic');
 
 type Row = Record<string, unknown>;
 
@@ -33,8 +36,8 @@ interface TableBuffer {
 
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_RETRY_DELAY_MS = 1000;
-const DEFAULT_QUEUE_CONCURRENCY = 1;
-const DEFAULT_MAX_QUEUE_DEPTH = 10000;
+const DEFAULT_QUEUE_CONCURRENCY = 100;
+const DEFAULT_MAX_QUEUE_DEPTH = 50_000;
 const DEFAULT_BACKPRESSURE_MODE: 'drop' | 'block' = 'drop';
 const DEFAULT_BACKPRESSURE_TIMEOUT_MS = 1500;
 const SHUTDOWN_POLL_INTERVAL_MS = 10_000;
@@ -68,12 +71,10 @@ const SHUTDOWN_MAX_ATTEMPTS = 10;
  * Shutdown Strategy:
  * - Uses beforeApplicationShutdown instead of onModuleDestroy to ensure all workers
  *   complete their graceful shutdown (which waits for in-flight jobs) before the
- *   batch service sets isShuttingDown=true and flushes pending logs
  */
 @Injectable()
 export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, BeforeApplicationShutdown {
   private buffers: Map<string, TableBuffer> = new Map();
-  private isShuttingDown = false;
 
   constructor(
     private readonly clickhouseService: ClickHouseService,
@@ -88,12 +89,6 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
   }
 
   async add<T extends Record<string, unknown>>(table: string, row: T, config: BatchConfig): Promise<void> {
-    if (this.isShuttingDown) {
-      this.logger.warn({ table, rowCount: 1 }, 'Attempted to add row during shutdown, row will be dropped');
-
-      return;
-    }
-
     if (!this.clickhouseService.client) {
       this.logger.debug({ table }, 'ClickHouse client not initialized, skipping batch add');
 
@@ -229,46 +224,62 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
     const maxRetries = buffer.config.maxRetries ?? DEFAULT_MAX_RETRIES;
     const retryDelayMs = buffer.config.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
 
-    try {
-      await this.flushBatchWithRetry(table, batchToFlush, buffer.config.insertOptions, maxRetries, retryDelayMs);
+    const _this = this;
 
-      buffer.metrics.totalFlushed += batchToFlush.length;
+    return new Promise<void>((resolve) => {
+      nr.startBackgroundTransaction(
+        ObservabilityBackgroundTransactionEnum.CLICKHOUSE_BATCH_FLUSH,
+        `ClickHouse-${table}`,
+        function processFlush() {
+          const transaction = nr.getTransaction();
 
-      this.logger.debug(
-        {
-          table,
-          rowCount: batchToFlush.length,
-          totalFlushed: buffer.metrics.totalFlushed,
-        },
-        'Successfully flushed batch to ClickHouse'
+          _this
+            .flushBatchWithRetry(table, batchToFlush, buffer.config.insertOptions, maxRetries, retryDelayMs)
+            .then(() => {
+              buffer.metrics.totalFlushed += batchToFlush.length;
+
+              _this.logger.debug(
+                {
+                  table,
+                  rowCount: batchToFlush.length,
+                  totalFlushed: buffer.metrics.totalFlushed,
+                },
+                'Successfully flushed batch to ClickHouse'
+              );
+            })
+            .catch((error) => {
+              nr.noticeError(error);
+              buffer.metrics.totalFailed += batchToFlush.length;
+
+              _this.logger.error(
+                {
+                  err: error,
+                  table,
+                  rowCount: batchToFlush.length,
+                  totalFailed: buffer.metrics.totalFailed,
+                  errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                },
+                'Failed to flush batch to ClickHouse after retries'
+              );
+
+              buffer.rows = [...batchToFlush, ...buffer.rows];
+
+              _this.logger.warn(
+                {
+                  table,
+                  rowCount: batchToFlush.length,
+                  bufferSize: buffer.rows.length,
+                },
+                'Re-queued failed batch back into buffer'
+              );
+            })
+            .finally(() => {
+              transaction.end();
+              resolve();
+            });
+        }
       );
-    } catch (error) {
-      buffer.metrics.totalFailed += batchToFlush.length;
-
-      this.logger.error(
-        {
-          err: error,
-          table,
-          rowCount: batchToFlush.length,
-          totalFailed: buffer.metrics.totalFailed,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        },
-        'Failed to flush batch to ClickHouse after retries'
-      );
-
-      if (!this.isShuttingDown) {
-        buffer.rows = [...batchToFlush, ...buffer.rows];
-
-        this.logger.warn(
-          {
-            table,
-            rowCount: batchToFlush.length,
-            bufferSize: buffer.rows.length,
-          },
-          'Re-queued failed batch back into buffer'
-        );
-      }
-    }
+    });
   }
 
   private async flushBatchWithRetry(
@@ -333,8 +344,6 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
   }
 
   async beforeApplicationShutdown(signal?: string): Promise<void> {
-    this.isShuttingDown = true;
-
     this.logger.info({ signal }, 'Starting graceful shutdown of ClickHouse batch service');
 
     for (const [table, buffer] of this.buffers.entries()) {

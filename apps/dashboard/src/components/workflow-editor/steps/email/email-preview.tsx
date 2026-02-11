@@ -12,17 +12,21 @@ import { NovuBranding } from './novu-branding';
 type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement> & {
   minimalHeader?: boolean;
   onEditSenderClick?: () => void;
+  previewFrom?: {
+    email?: string;
+    name?: string;
+  };
 };
 
 export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
-  const { className, children, minimalHeader = false, onEditSenderClick, ...rest } = props;
+  const { className, children, minimalHeader = false, onEditSenderClick, previewFrom, ...rest } = props;
   const { senderEmail, senderName, isLoading } = usePrimaryEmailIntegration();
   const formContext = useFormContext();
   const fromEmail = formContext?.watch('from.email');
   const fromName = formContext?.watch('from.name');
 
-  const displaySenderName = fromName || senderName || 'Acme Inc.';
-  const displaySenderEmail = fromEmail || senderEmail || 'noreply@novu.co';
+  const displaySenderName = previewFrom?.name || fromName || senderName || 'Acme Inc.';
+  const displaySenderEmail = previewFrom?.email || fromEmail || senderEmail || 'noreply@novu.co';
 
   return (
     <div className={cn('flex gap-2', className)} {...rest}>

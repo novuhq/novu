@@ -1,5 +1,6 @@
 export * from './braze.handler';
 export * from './email-webhook.handler';
+export * from './gms-email.handler';
 export * from './emailjs.handler';
 export * from './infobip.handler';
 export * from './mailersend.handler';

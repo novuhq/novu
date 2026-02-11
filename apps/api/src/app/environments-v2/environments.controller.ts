@@ -44,7 +44,7 @@ export class EnvironmentsController {
 
   @Get('/:environmentId/tags')
   @ApiOperation({
-    summary: 'Get environment tags',
+    summary: 'List environment tags',
     description:
       'Retrieve all unique tags used in workflows within the specified environment. These tags can be used for filtering workflows.',
   })
