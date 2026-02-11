@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
-import { ResourceTypeEnum } from '../types/sync.types';
+import { ResourceTypeEnum, SyncActionEnum } from '../types/sync.types';
 
 export class ResourceToPublishDto {
   @ApiProperty({
@@ -54,27 +54,39 @@ export class PublishEnvironmentRequestDto {
 }
 
 export class SyncedWorkflowDto {
-  @ApiProperty({ description: 'Resource type' })
-  resourceType: string;
+  @ApiProperty({
+    description: 'Resource type',
+    enum: Object.values(ResourceTypeEnum),
+    enumName: 'ResourceTypeEnum',
+  })
+  resourceType: ResourceTypeEnum;
 
-  @ApiProperty({ description: 'Workflow ID' })
+  @ApiProperty({ description: 'Resource ID' })
   resourceId: string;
 
-  @ApiProperty({ description: 'Workflow name' })
+  @ApiProperty({ description: 'Resource name' })
   resourceName: string;
 
-  @ApiProperty({ description: 'Sync action performed' })
-  action: 'created' | 'updated' | 'skipped' | 'deleted';
+  @ApiProperty({
+    description: 'Sync action performed',
+    enum: Object.values(SyncActionEnum),
+    enumName: 'SyncActionEnum',
+  })
+  action: SyncActionEnum;
 }
 
 export class FailedWorkflowDto {
-  @ApiProperty({ description: 'Resource type' })
-  resourceType: string;
+  @ApiProperty({
+    description: 'Resource type',
+    enum: Object.values(ResourceTypeEnum),
+    enumName: 'ResourceTypeEnum',
+  })
+  resourceType: ResourceTypeEnum;
 
-  @ApiProperty({ description: 'Workflow ID' })
+  @ApiProperty({ description: 'Resource ID' })
   resourceId: string;
 
-  @ApiProperty({ description: 'Workflow name' })
+  @ApiProperty({ description: 'Resource name' })
   resourceName: string;
 
   @ApiProperty({ description: 'Error message' })
@@ -85,13 +97,17 @@ export class FailedWorkflowDto {
 }
 
 export class SkippedWorkflowDto {
-  @ApiProperty({ description: 'Resource type' })
-  resourceType: string;
+  @ApiProperty({
+    description: 'Resource type',
+    enum: Object.values(ResourceTypeEnum),
+    enumName: 'ResourceTypeEnum',
+  })
+  resourceType: ResourceTypeEnum;
 
-  @ApiProperty({ description: 'Workflow ID' })
+  @ApiProperty({ description: 'Resource ID' })
   resourceId: string;
 
-  @ApiProperty({ description: 'Workflow name' })
+  @ApiProperty({ description: 'Resource name' })
   resourceName: string;
 
   @ApiProperty({ description: 'Reason for skipping' })
@@ -99,19 +115,23 @@ export class SkippedWorkflowDto {
 }
 
 export class SyncResultDto {
-  @ApiProperty({ description: 'Resource type that was synced' })
-  resourceType: string;
+  @ApiProperty({
+    description: 'Resource type that was synced',
+    enum: Object.values(ResourceTypeEnum),
+    enumName: 'ResourceTypeEnum',
+  })
+  resourceType: ResourceTypeEnum;
 
-  @ApiProperty({ type: [SyncedWorkflowDto], description: 'Successfully synced workflows' })
+  @ApiProperty({ type: [SyncedWorkflowDto], description: 'Successfully synced resources' })
   successful: SyncedWorkflowDto[];
 
-  @ApiProperty({ type: [FailedWorkflowDto], description: 'Failed workflow syncs' })
+  @ApiProperty({ type: [FailedWorkflowDto], description: 'Failed resource syncs' })
   failed: FailedWorkflowDto[];
 
-  @ApiProperty({ type: [SkippedWorkflowDto], description: 'Skipped workflows' })
+  @ApiProperty({ type: [SkippedWorkflowDto], description: 'Skipped resources' })
   skipped: SkippedWorkflowDto[];
 
-  @ApiProperty({ description: 'Total number of workflows processed' })
+  @ApiProperty({ description: 'Total number of resources processed' })
   totalProcessed: number;
 }
 

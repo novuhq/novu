@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { DependencyReasonEnum, ResourceTypeEnum } from '../types/sync.types';
+import { DependencyReasonEnum, DiffActionEnum, ResourceTypeEnum } from '../types/sync.types';
 
 export class DiffEnvironmentRequestDto {
   @ApiPropertyOptional({
@@ -106,10 +106,11 @@ export class ResourceDiffDto {
 
   @ApiProperty({
     description: 'Type of change',
-    enum: ['added', 'modified', 'deleted', 'unchanged', 'moved'],
+    enum: [...Object.values(DiffActionEnum)],
+    enumName: 'DiffActionEnum',
   })
-  @IsEnum(['added', 'modified', 'deleted', 'unchanged', 'moved'])
-  action: 'added' | 'modified' | 'deleted' | 'unchanged' | 'moved';
+  @IsEnum(DiffActionEnum)
+  action: DiffActionEnum;
 
   @ApiPropertyOptional({
     type: 'object',

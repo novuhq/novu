@@ -1,7 +1,7 @@
 import { Instrument, PinoLogger } from '@novu/application-generic';
 import { LayoutEntity } from '@novu/dal';
 import { capitalize } from '../../../../../shared/services/helper/helper.service';
-import { IResourceToPublish, ISyncContext, ISyncResult, ResourceTypeEnum } from '../../../../types/sync.types';
+import { IResourceToPublish, ISyncContext, ISyncResult, ResourceTypeEnum, SyncActionEnum } from '../../../../types/sync.types';
 import { SyncResultBuilder } from '../../builders/sync-result.builder';
 import { SKIP_REASONS, SYNC_ACTIONS } from '../../constants/sync.constants';
 import { IBaseComparator, IBaseDeleteService, IBaseRepositoryService, IBaseSyncService } from '../interfaces';
@@ -10,7 +10,7 @@ interface IResourceSyncDecision<T> {
   resource: T;
   targetResource?: T;
   sync: boolean;
-  action: 'created' | 'updated' | 'skipped';
+  action: SyncActionEnum.CREATED | SyncActionEnum.UPDATED | SyncActionEnum.SKIPPED;
   reason?: string;
 }
 
@@ -162,7 +162,7 @@ export abstract class BaseSyncOperation<T> {
           resultBuilder.addSuccess(
             this.repositoryService.getResourceIdentifier(decision.resource),
             this.getResourceName(decision.resource),
-            decision.action as 'created' | 'updated'
+            decision.action
           );
           this.logger.info(this.getSyncSuccessMessage(this.getResourceName(decision.resource), decision.action));
         } else {
@@ -289,7 +289,7 @@ export abstract class BaseSyncOperation<T> {
     context: ISyncContext,
     resource: T,
     targetResource?: T
-  ): Promise<{ sync: boolean; action: 'created' | 'updated' | 'skipped'; reason?: string }> {
+  ): Promise<{ sync: boolean; action: SyncActionEnum.CREATED | SyncActionEnum.UPDATED | SyncActionEnum.SKIPPED; reason?: string }> {
     if (!targetResource) {
       return { sync: true, action: SYNC_ACTIONS.CREATED };
     }
