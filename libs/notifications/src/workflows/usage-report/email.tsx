@@ -14,7 +14,6 @@ import {
   Text,
 } from '@react-email/components';
 import React from 'react';
-import { ControlValueSchema, PayloadSchemaType } from './schemas';
 
 interface ITopProvider {
   name: string;
@@ -77,7 +76,7 @@ const COLORS = {
 const cardStyle: React.CSSProperties = {
   backgroundColor: COLORS.white,
   borderRadius: '8px',
-  border: `1px solid ${COLORS.borderSoft}`,
+  border: '1px solid rgba(0, 0, 0, 0.08)',
   padding: '12px',
 };
 
@@ -138,6 +137,8 @@ function NovuLogo() {
 }
 
 function RecapHeader({ dateRange }: { dateRange: string }) {
+  const calendarIcon = `data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M17 3H21C21.2652 3 21.5196 3.10536 21.7071 3.29289C21.8946 3.48043 22 3.73478 22 4V20C22 20.2652 21.8946 20.5196 21.7071 20.7071C21.5196 20.8946 21.2652 21 21 21H3C2.73478 21 2.48043 20.8946 2.29289 20.7071C2.10536 20.5196 2 20.2652 2 20V4C2 3.73478 2.10536 3.48043 2.29289 3.29289C2.48043 3.10536 2.73478 3 3 3H7V1H9V3H15V1H17V3ZM20 9V5H17V7H15V5H9V7H7V5H4V9H20ZM20 11H4V19H20V11Z' fill='%23646464'/%3E%3C/svg%3E`;
+
   return (
     <Card
       style={{
@@ -160,20 +161,14 @@ function RecapHeader({ dateRange }: { dateRange: string }) {
       >
         MONTHLY RECAP
       </Text>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' as const }}>
-        <svg
-          width="13"
-          height="13"
-          viewBox="0 0 22 22"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ display: 'block' }}
-        >
-          <path
-            d="M17 3H21C21.2652 3 21.5196 3.10536 21.7071 3.29289C21.8946 3.48043 22 3.73478 22 4V20C22 20.2652 21.8946 20.5196 21.7071 20.7071C21.5196 20.8946 21.2652 21 21 21H3C2.73478 21 2.48043 20.8946 2.29289 20.7071C2.10536 20.5196 2 20.2652 2 20V4C2 3.73478 2.10536 3.48043 2.29289 3.29289C2.48043 3.10536 2.73478 3 3 3H7V1H9V3H15V1H17V3ZM20 9V5H17V7H15V5H9V7H7V5H4V9H20ZM20 11H4V19H20V11Z"
-            fill="#646464"
-          />
-        </svg>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <img
+          src={calendarIcon}
+          alt=""
+          width="24"
+          height="24"
+          style={{ display: 'block', width: '24px', height: '24px' }}
+        />
         <span
           style={{
             fontSize: '14px',
@@ -181,6 +176,7 @@ function RecapHeader({ dateRange }: { dateRange: string }) {
             color: '#646464',
             lineHeight: '16px',
             fontFamily: 'Manrope, sans-serif',
+            whiteSpace: 'nowrap' as const,
           }}
         >
           {dateRange}
@@ -191,8 +187,8 @@ function RecapHeader({ dateRange }: { dateRange: string }) {
 }
 
 function ChangeBadge({ value, isUp }: { value: number; isUp: boolean }) {
-  const arrowUpIcon = `data:image/svg+xml,%3Csvg width='11' height='6' viewBox='0 0 11 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10.3636 5.45455L5.45455 0.545454L0.545455 5.45455' stroke='%231fc16b' stroke-width='1.09091'/%3E%3C/svg%3E`;
-  const arrowDownIcon = `data:image/svg+xml,%3Csvg width='11' height='6' viewBox='0 0 11 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0.545455 0.545454L5.45455 5.45455L10.3636 0.545454' stroke='%23ef4444' stroke-width='1.09091'/%3E%3C/svg%3E`;
+  const arrowUpIcon = `data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 4.66667V11.5474M8 4.66667L11.3333 8M8 4.66667L4.66667 8' stroke='%231FC16B' stroke-width='1.33333' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E`;
+  const arrowDownIcon = `data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 11.3333V4.45263M8 11.3333L4.66667 8M8 11.3333L11.3333 8' stroke='%23ef4444' stroke-width='1.33333' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E`;
 
   return (
     <span
@@ -200,23 +196,21 @@ function ChangeBadge({ value, isUp }: { value: number; isUp: boolean }) {
         display: 'inline-flex',
         alignItems: 'center',
         gap: '4px',
-        fontSize: '10px',
-        fontWeight: 500,
-        color: isUp ? COLORS.success : COLORS.error,
-        backgroundColor: isUp ? COLORS.successBg : COLORS.errorBg,
-        padding: '2px 4px',
+        fontSize: '13px',
+        fontWeight: 600,
+        color: isUp ? '#1FC16B' : COLORS.error,
+        backgroundColor: isUp ? 'rgba(31, 193, 103, 0.1)' : COLORS.errorBg,
+        padding: '4px 8px',
         borderRadius: '3px',
-        fontFamily: "'JetBrains Mono', monospace",
-        letterSpacing: '0.5px',
-        textTransform: 'uppercase',
+        fontFamily: "'Manrope', sans-serif",
       }}
     >
       <img
         src={isUp ? arrowUpIcon : arrowDownIcon}
         alt={isUp ? 'up' : 'down'}
-        width="11"
-        height="6"
-        style={{ display: 'block' }}
+        width="16"
+        height="16"
+        style={{ display: 'block', width: '16px', height: '16px' }}
       />
       {value}%
     </span>
@@ -235,12 +229,36 @@ function StatCardWithChange({
   isUp: boolean;
 }) {
   return (
-    <Card>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <Text style={sectionLabelStyle}>{label}</Text>
+    <Card style={{ padding: '16px 20px', display: 'flex' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <Text
+          style={{
+            fontSize: '11px',
+            fontWeight: 700,
+            letterSpacing: '1.32px',
+            textTransform: 'uppercase',
+            color: '#99A0AE',
+            margin: '0',
+            fontFamily: "'Manrope', sans-serif",
+          }}
+        >
+          {label}
+        </Text>
         <ChangeBadge value={change} isUp={isUp} />
       </div>
-      <Text style={bigNumberStyle}>{formatNumber(value)}</Text>
+      <Text
+        style={{
+          fontSize: '40px',
+          fontWeight: 700,
+          color: '#333333',
+          margin: '0',
+          lineHeight: '1.2',
+          fontFamily: "'Manrope', sans-serif",
+          letterSpacing: '-0.8px',
+        }}
+      >
+        {formatNumber(value)}
+      </Text>
     </Card>
   );
 }
@@ -257,7 +275,7 @@ function StatCardWithDetail({
   detail: React.ReactNode;
 }) {
   return (
-    <Card>
+    <Card style={{ display: 'flex' }}>
       <Text style={sectionLabelStyle}>{label}</Text>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
         <span style={mediumNumberStyle}>{formatNumber(value)}</span>
@@ -275,14 +293,14 @@ function RankedListCard({
   title,
   showWorkflowIcon = false,
 }: {
-  items: PayloadSchemaType['topProviders'];
+  items: ITopProvider[];
   title: string;
   showWorkflowIcon?: boolean;
 }) {
   const valueColor = COLORS.primary;
 
   return (
-    <Card>
+    <Card style={{ display: 'flex' }}>
       <Text style={sectionLabelStyle}>{title}</Text>
       <table role="presentation" width="100%" style={{ marginTop: '12px' }}>
         <tbody>
@@ -308,9 +326,9 @@ function RankedListCard({
   );
 }
 
-function ChannelsSection({ channels }: { channels: PayloadSchemaType['channels'] }) {
+function ChannelsSection({ channels }: { channels: IChannel[] }) {
   return (
-    <Card style={{ marginBottom: '12px' }}>
+    <Card style={{ marginBottom: '12px', display: 'flex' }}>
       <Text style={sectionLabelStyle}>Delivery by Channels</Text>
       <table role="presentation" width="100%" style={{ marginTop: '12px' }}>
         <tbody>
@@ -363,6 +381,7 @@ function FooterCta({ dashboardUrl }: { dashboardUrl: string }) {
         marginBottom: '24px',
         textAlign: 'center' as const,
         padding: '40px 24px',
+        display: 'flex',
       }}
     >
       <Text style={{ ...sectionLabelStyle, letterSpacing: '1.2px', fontSize: '12px', marginBottom: '12px' }}>
@@ -435,11 +454,7 @@ function EmailFooter() {
   );
 }
 
-export function UsageReportEmail({
-  props,
-}: {
-  props: PayloadSchemaType & ControlValueSchema & { previewText?: string; showWorkflowIcon?: boolean };
-}) {
+export function UsageReportEmail({ props }: { props: IEmailProps }) {
   const {
     dateRange,
     messagesSent,
@@ -538,44 +553,6 @@ export function UsageReportEmail({
   );
 }
 
-export type IRenderEmailPayload = Omit<IEmailProps, 'previewText'>;
-
-export interface IEmailControls {
-  previewText?: string;
-}
-
-// Default export for react-email dev server
-// export default function Email() {
-//   return (
-//     <UsageReportEmail
-//       dateRange="Feb 24, 2025 - Mar 24, 2025"
-//       messagesSent={1234}
-//       messagesSentChange={12.5}
-//       messagesSentUp={true}
-//       usersReached={567}
-//       usersReachedChange={8.3}
-//       usersReachedUp={true}
-//       workflowRuns={890}
-//       successRate={98.5}
-//       userInteractions={234}
-//       interactionRate={45.2}
-//       topProviders={[
-//         { name: 'SendGrid', count: 500, icon: 'https://via.placeholder.com/16' },
-//         { name: 'Twilio', count: 300, icon: 'https://via.placeholder.com/16' },
-//       ]}
-//       topWorkflows={[
-//         { name: 'Welcome Email', count: 200 },
-//         { name: 'Password Reset', count: 150 },
-//       ]}
-//       channels={[
-//         { name: 'Email', value: 800, color: '#3b82f6', dashArray: '0' },
-//         { name: 'SMS', value: 200, color: '#10b981', dashArray: '0' },
-//       ]}
-//       dashboardUrl="https://dashboard.example.com"
-//     />
-//   );
-// }
-
-export default async function renderEmail(payload: PayloadSchemaType, controls: ControlValueSchema) {
+export default async function renderEmail(payload: any, controls: any) {
   return await render(<UsageReportEmail props={{ ...payload, ...controls }} />);
 }
