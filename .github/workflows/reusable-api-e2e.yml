@@ -45,6 +45,8 @@ jobs:
         name: Start localstack
 
       - name: Build API & Worker
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         run: CI='' pnpm nx run-many --target=build --all --projects=@novu/api-service,@novu/worker
 
       - name: Start Worker
