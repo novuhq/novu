@@ -51,12 +51,16 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
     this.bullMqService = bullMqServiceInstance;
   }
 
-  public initWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
+  public initWorker(processor: WorkerProcessor, options?: WorkerOptions, deferSqsStart = false): void {
     Logger.log(`Worker ${this.topic} initialized`, LOG_CONTEXT);
 
     if (typeof processor === 'function') {
       this.createWorker(this.wrapForBullMQ(processor), options);
       this.initSqsConsumer(processor, options);
+
+      if (!deferSqsStart) {
+        this.startSqsConsumer();
+      }
     } else {
       this.createWorker(processor, options);
     }

@@ -47,7 +47,7 @@ export class StandardWorker extends StandardWorkerService {
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
-    this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
+    this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions(), true);
 
     this.bullMqWorker.on('failed', async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
